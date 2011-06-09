@@ -78,20 +78,41 @@ public class ODataLocal extends OMultiFileSegment {
 
 	@Override
 	public void open() throws IOException {
-		super.open();
-		holeSegment.open();
+		acquireExclusiveLock();
+		try {
+
+			super.open();
+			holeSegment.open();
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	@Override
 	public void create(final int iStartSize) throws IOException {
-		super.create(iStartSize > -1 ? iStartSize : DEF_START_SIZE);
-		holeSegment.create(-1);
+		acquireExclusiveLock();
+		try {
+
+			super.create(iStartSize > -1 ? iStartSize : DEF_START_SIZE);
+			holeSegment.create(-1);
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	@Override
 	public void close() throws IOException {
-		super.close();
-		holeSegment.close();
+		acquireExclusiveLock();
+		try {
+
+			super.close();
+			holeSegment.close();
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	/**
@@ -131,6 +152,7 @@ public class ODataLocal extends OMultiFileSegment {
 
 		acquireSharedLock();
 		try {
+
 			final long[] pos = getRelativePosition(iPosition);
 			final OFile file = files[(int) pos[0]];
 
@@ -139,7 +161,7 @@ public class ODataLocal extends OMultiFileSegment {
 				// RECORD DELETED
 				return null;
 
-			byte[] content = new byte[recordSize];
+			final byte[] content = new byte[recordSize];
 			file.read(pos[1] + RECORD_FIX_SIZE, content, recordSize);
 			return content;
 
@@ -156,6 +178,7 @@ public class ODataLocal extends OMultiFileSegment {
 	public int getRecordSize(final long iPosition) throws IOException {
 		acquireSharedLock();
 		try {
+
 			final long[] pos = getRelativePosition(iPosition);
 			final OFile file = files[(int) pos[0]];
 
@@ -179,6 +202,7 @@ public class ODataLocal extends OMultiFileSegment {
 	public long setRecord(final long iPosition, final ORecordId iRid, final byte[] iContent) throws IOException {
 		acquireExclusiveLock();
 		try {
+
 			long[] pos = getRelativePosition(iPosition);
 			final OFile file = files[(int) pos[0]];
 
@@ -222,6 +246,7 @@ public class ODataLocal extends OMultiFileSegment {
 	public int deleteRecord(final long iPosition) throws IOException {
 		acquireExclusiveLock();
 		try {
+
 			final long[] pos = getRelativePosition(iPosition);
 			final OFile file = files[(int) pos[0]];
 
@@ -242,7 +267,9 @@ public class ODataLocal extends OMultiFileSegment {
 	public long getHoles() {
 		acquireSharedLock();
 		try {
+
 			return holeSegment.getHoles();
+
 		} finally {
 			releaseSharedLock();
 		}
@@ -256,16 +283,18 @@ public class ODataLocal extends OMultiFileSegment {
 	public List<ODataHoleInfo> getHolesList() {
 		final List<ODataHoleInfo> holes = new ArrayList<ODataHoleInfo>();
 
-		acquireExclusiveLock();
+		acquireSharedLock();
 		try {
+
 			final int tot = holeSegment.getHoles();
 			for (int i = 0; i < tot; ++i) {
 				final ODataHoleInfo h = holeSegment.getHole(i);
 				if (h != null)
 					holes.add(h);
 			}
+
 		} finally {
-			releaseExclusiveLock();
+			releaseSharedLock();
 		}
 		return holes;
 	}
@@ -274,9 +303,32 @@ public class ODataLocal extends OMultiFileSegment {
 		return id;
 	}
 
+	public long loadVersion() throws IOException {
+		acquireExclusiveLock();
+		try {
+
+			return files[0].readHeaderLong(OConstants.SIZE_LONG);
+
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
+	public void saveVersion(final long iVersion) throws IOException {
+		acquireExclusiveLock();
+		try {
+
+			files[0].writeHeaderLong(OConstants.SIZE_LONG, iVersion);
+
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
 	public void handleHole(final long iRecordOffset, final int iRecordSize) throws IOException {
 		acquireExclusiveLock();
 		try {
+
 			long holePositionOffset = iRecordOffset;
 			int holeSize = iRecordSize + RECORD_FIX_SIZE;
 

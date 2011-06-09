@@ -53,7 +53,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass {
 	protected Map<String, OClass>		classes									= new HashMap<String, OClass>();
 	private static final int				CURRENT_VERSION_NUMBER	= 4;
 	private OSharedResourceExternal	lock										= new OSharedResourceExternal();
-	private volatile boolean				loaded									= false;
 
 	public OSchemaShared(final int schemaClusterId) {
 		super(new ODocument());
@@ -501,7 +500,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass {
 
 			((ORecordId) document.getIdentity()).fromString(getDatabase().getStorage().getConfiguration().schemaRecordId);
 			super.load("*:-1 index:0");
-			loaded = true;
 			return this;
 
 		} finally {

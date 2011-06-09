@@ -78,6 +78,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 					if (map != null) {
 						acquireExclusiveLock();
 						try {
+
 							// REDUCE OF 10% LAZY UPDATES
 							int maxUpdates = map.getMaxUpdatesBeforeSave();
 							if (maxUpdates > 10)
@@ -98,6 +99,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 					if (map != null) {
 						acquireExclusiveLock();
 						try {
+
 							// REDUCE OF 10% LAZY UPDATES
 							int maxUpdates = map.getMaxUpdatesBeforeSave();
 							if (maxUpdates > 10)
@@ -106,6 +108,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 							map.setMaxUpdatesBeforeSave(maxUpdates);
 
 							optimize(true);
+
 						} finally {
 							releaseExclusiveLock();
 						}
@@ -143,49 +146,63 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	 */
 	public OIndexInternal create(final String iName, final ODatabaseRecord iDatabase, final String iClusterIndexName,
 			final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, final boolean iAutomatic) {
-		name = iName;
-		configuration = new ODocument(iDatabase);
-		automatic = iAutomatic;
+		acquireExclusiveLock();
+		try {
 
-		if (iClusterIdsToIndex != null)
-			for (int id : iClusterIdsToIndex)
-				clustersToIndex.add(iDatabase.getClusterNameById(id));
+			name = iName;
+			configuration = new ODocument(iDatabase);
+			automatic = iAutomatic;
 
-		installProfilerHooks();
+			if (iClusterIdsToIndex != null)
+				for (int id : iClusterIdsToIndex)
+					clustersToIndex.add(iDatabase.getClusterNameById(id));
 
-		iDatabase.registerListener(this);
+			installProfilerHooks();
 
-		map = new OMVRBTreeDatabaseLazySave<Object, Set<OIdentifiable>>(iDatabase, iClusterIndexName,
-				OStreamSerializerLiteral.INSTANCE, OStreamSerializerListRID.INSTANCE);
-		rebuild(iProgressListener);
-		updateConfiguration();
-		return this;
+			iDatabase.registerListener(this);
+
+			map = new OMVRBTreeDatabaseLazySave<Object, Set<OIdentifiable>>(iDatabase, iClusterIndexName,
+					OStreamSerializerLiteral.INSTANCE, OStreamSerializerListRID.INSTANCE);
+			rebuild(iProgressListener);
+			updateConfiguration();
+			return this;
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public OIndexInternal loadFromConfiguration(final ODocument iConfig) {
-		final ORID rid = (ORID) iConfig.field(CONFIG_MAP_RID, ORID.class);
-		if (rid == null)
-			return null;
+		acquireExclusiveLock();
+		try {
 
-		configuration = iConfig;
-		name = configuration.field(OIndexInternal.CONFIG_NAME);
-		automatic = (Boolean) (configuration.field(OIndexInternal.CONFIG_AUTOMATIC) != null ? configuration
-				.field(OIndexInternal.CONFIG_AUTOMATIC) : true);
-		clustersToIndex.clear();
+			final ORID rid = (ORID) iConfig.field(CONFIG_MAP_RID, ORID.class);
+			if (rid == null)
+				return null;
 
-		final Collection<? extends String> clusters = configuration.field(CONFIG_CLUSTERS);
-		if (clusters != null)
-			clustersToIndex.addAll(clusters);
+			configuration = iConfig;
+			name = configuration.field(OIndexInternal.CONFIG_NAME);
+			automatic = (Boolean) (configuration.field(OIndexInternal.CONFIG_AUTOMATIC) != null ? configuration
+					.field(OIndexInternal.CONFIG_AUTOMATIC) : true);
+			clustersToIndex.clear();
 
-		load(iConfig.getDatabase(), rid);
+			final Collection<? extends String> clusters = configuration.field(CONFIG_CLUSTERS);
+			if (clusters != null)
+				clustersToIndex.addAll(clusters);
 
-		return this;
+			load(iConfig.getDatabase(), rid);
+
+			return this;
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public Set<OIdentifiable> get(final Object iKey) {
 		acquireExclusiveLock();
-
 		try {
+
 			final Set<OIdentifiable> values = map.get(iKey);
 
 			if (values == null)
@@ -200,8 +217,8 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 
 	public boolean contains(final Object iKey) {
 		acquireExclusiveLock();
-
 		try {
+
 			return map.containsKey(iKey);
 
 		} finally {
@@ -270,15 +287,11 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	 * Populates the index with all the existent records. Uses the massive insert intent to speed up and keep the consumed memory low.
 	 */
 	public OIndexInternal rebuild(final OProgressListener iProgressListener) {
-		Object fieldValue;
-		ODocument doc;
-
 		clear();
-
-		acquireExclusiveLock();
 
 		map.getDatabase().declareIntent(new OIntentMassiveInsert());
 
+		acquireExclusiveLock();
 		try {
 
 			int documentIndexed = 0;
@@ -294,8 +307,8 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 			for (String clusterName : clustersToIndex)
 				for (ORecord<?> record : map.getDatabase().browseCluster(clusterName)) {
 					if (record instanceof ODocument) {
-						doc = (ODocument) record;
-						fieldValue = callback.getDocumentValueToIndex(doc);
+						final ODocument doc = (ODocument) record;
+						final Object fieldValue = callback.getDocumentValueToIndex(doc);
 
 						if (fieldValue != null) {
 							put(fieldValue, doc);
@@ -335,8 +348,8 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 
 	public boolean remove(final Object key) {
 		acquireExclusiveLock();
-
 		try {
+
 			return map.remove(key) != null;
 
 		} finally {
@@ -346,9 +359,9 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 
 	public int remove(final OIdentifiable iRecord) {
 		acquireExclusiveLock();
-
-		int tot = 0;
 		try {
+
+			int tot = 0;
 			Set<OIdentifiable> rids;
 			for (Entry<Object, Set<OIdentifiable>> entries : map.entrySet()) {
 				rids = entries.getValue();
@@ -359,19 +372,21 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 					}
 				}
 			}
+
+			return tot;
+
 		} finally {
 			releaseExclusiveLock();
 		}
 
-		return tot;
 	}
 
 	public int count(final OIdentifiable iRecord) {
 		acquireExclusiveLock();
-
-		int tot = 0;
 		try {
+
 			Set<OIdentifiable> rids;
+			int tot = 0;
 			for (Entry<Object, Set<OIdentifiable>> entries : map.entrySet()) {
 				rids = entries.getValue();
 				if (rids != null) {
@@ -380,17 +395,18 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 					}
 				}
 			}
+
+			return tot;
+
 		} finally {
 			releaseExclusiveLock();
 		}
-
-		return tot;
 	}
 
 	public OIndexInternal load() {
 		acquireExclusiveLock();
-
 		try {
+
 			map.load();
 
 		} finally {
@@ -401,14 +417,14 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 
 	public OIndex clear() {
 		acquireExclusiveLock();
-
 		try {
+
 			map.clear();
+			return this;
 
 		} finally {
 			releaseExclusiveLock();
 		}
-		return this;
 	}
 
 	public OIndexInternal delete() {
@@ -417,6 +433,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 		try {
 			map.delete();
 			return this;
+
 		} finally {
 			releaseExclusiveLock();
 		}
@@ -424,15 +441,14 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 
 	public OIndexInternal lazySave() {
 		acquireExclusiveLock();
-
 		try {
+
 			map.lazySave();
+			return this;
 
 		} finally {
 			releaseExclusiveLock();
 		}
-
-		return this;
 	}
 
 	public ORecordBytes getRecord() {
@@ -441,8 +457,8 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 
 	public Iterator<Entry<Object, Set<OIdentifiable>>> iterator() {
 		acquireExclusiveLock();
-
 		try {
+
 			return map.entrySet().iterator();
 
 		} finally {
@@ -452,8 +468,8 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 
 	public Iterable<Object> keys() {
 		acquireExclusiveLock();
-
 		try {
+
 			return map.keySet();
 
 		} finally {
@@ -461,19 +477,10 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 		}
 	}
 
-	protected void load(final ODatabaseRecord iDatabase, final ORID iRecordId) {
-		installProfilerHooks();
-
-		map = new OMVRBTreeDatabaseLazySave<Object, Set<OIdentifiable>>(iDatabase, iRecordId);
-		map.load();
-
-		iDatabase.registerListener(this);
-	}
-
 	public long getSize() {
 		acquireSharedLock();
-
 		try {
+
 			return map.size();
 
 		} finally {
@@ -503,12 +510,26 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	}
 
 	public Set<String> getClusters() {
-		return Collections.unmodifiableSet(clustersToIndex);
+		acquireSharedLock();
+		try {
+
+			return Collections.unmodifiableSet(clustersToIndex);
+
+		} finally {
+			releaseSharedLock();
+		}
 	}
 
 	public OIndexMVRBTreeAbstract addCluster(final String iClusterName) {
-		clustersToIndex.add(iClusterName);
-		return this;
+		acquireExclusiveLock();
+		try {
+
+			clustersToIndex.add(iClusterName);
+			return this;
+
+		} finally {
+			releaseSharedLock();
+		}
 	}
 
 	public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
@@ -516,8 +537,8 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 
 	public void unload() {
 		acquireExclusiveLock();
-
 		try {
+
 			map.unload();
 
 		} finally {
@@ -526,17 +547,24 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	}
 
 	public ODocument updateConfiguration() {
-		configuration.setStatus(STATUS.UNMARSHALLING);
-
+		acquireExclusiveLock();
 		try {
-			configuration.field(OIndexInternal.CONFIG_TYPE, type);
-			configuration.field(OIndexInternal.CONFIG_NAME, name);
-			configuration.field(OIndexInternal.CONFIG_AUTOMATIC, automatic);
-			configuration.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);
-			configuration.field(CONFIG_MAP_RID, map.getRecord().getIdentity());
+
+			configuration.setStatus(STATUS.UNMARSHALLING);
+
+			try {
+				configuration.field(OIndexInternal.CONFIG_TYPE, type);
+				configuration.field(OIndexInternal.CONFIG_NAME, name);
+				configuration.field(OIndexInternal.CONFIG_AUTOMATIC, automatic);
+				configuration.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);
+				configuration.field(CONFIG_MAP_RID, map.getRecord().getIdentity());
+
+			} finally {
+				configuration.setStatus(STATUS.LOADED);
+			}
 
 		} finally {
-			configuration.setStatus(STATUS.LOADED);
+			releaseExclusiveLock();
 		}
 		return configuration;
 	}
@@ -546,8 +574,8 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 			return;
 
 		acquireExclusiveLock();
-
 		try {
+
 			for (ODocument entry : iEntries) {
 				final int status = (Integer) entry.field("s");
 
@@ -558,6 +586,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 				else if (status == OTransactionIndexEntry.STATUSES.REMOVE.ordinal())
 					remove(entry.field("k"), (OIdentifiable) entry.field("v"));
 			}
+
 		} finally {
 			releaseExclusiveLock();
 		}
@@ -628,5 +657,14 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 
 	public void onClose(ODatabase iDatabase) {
 		Orient.instance().getMemoryWatchDog().removeListener(watchDog);
+	}
+
+	protected void load(final ODatabaseRecord iDatabase, final ORID iRecordId) {
+		installProfilerHooks();
+
+		map = new OMVRBTreeDatabaseLazySave<Object, Set<OIdentifiable>>(iDatabase, iRecordId);
+		map.load();
+
+		iDatabase.registerListener(this);
 	}
 }

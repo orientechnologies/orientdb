@@ -17,15 +17,18 @@ package com.orientechnologies.orient.core.storage;
 
 import java.io.IOException;
 
+import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -39,9 +42,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public abstract class OStorageEmbedded extends OStorageAbstract {
+	protected final OLockManager<ORID, Runnable>	lockManager;
 
 	public OStorageEmbedded(final String iName, final String iFilePath, final String iMode) {
 		super(iName, iFilePath, iMode);
+
+		lockManager = new OLockManager<ORID, Runnable>(OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
 	}
 
 	protected abstract ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock);
@@ -84,10 +90,6 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		try {
-			OCluster cluster;
-
-			long beginClusterPosition;
-			long endClusterPosition;
 
 			for (int clusterId : iClusterId) {
 				if (iBeginRange != null)
@@ -100,11 +102,12 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 						// STOP
 						break;
 
-				cluster = getClusterById(clusterId);
+				final OCluster cluster = getClusterById(clusterId);
 
-				beginClusterPosition = iBeginRange != null && iBeginRange.getClusterId() == clusterId ? iBeginRange.getClusterPosition()
-						: 0;
-				endClusterPosition = iEndRange != null && iEndRange.getClusterId() == clusterId ? iEndRange.getClusterPosition() : -1;
+				final long beginClusterPosition = iBeginRange != null && iBeginRange.getClusterId() == clusterId ? iBeginRange
+						.getClusterPosition() : 0;
+				final long endClusterPosition = iEndRange != null && iEndRange.getClusterId() == clusterId ? iEndRange.getClusterPosition()
+						: -1;
 
 				ioRecord = browseCluster(iListener, ioRecord, cluster, beginClusterPosition, endClusterPosition, iLockEntireCluster);
 			}
@@ -190,7 +193,8 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 					// PASS THROUGH
 					throw e;
 				} catch (Exception e) {
-					OLogManager.instance().error(this, "Error on loading record %s. Cause: %s", recordToCheck.getIdentity(), e);
+					OLogManager.instance().error(this, "Error on loading record %s. Cause: %s",
+							recordToCheck != null ? recordToCheck.getIdentity() : null, e);
 				}
 			}
 		} finally {

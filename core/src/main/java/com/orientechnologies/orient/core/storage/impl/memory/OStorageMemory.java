@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -218,13 +219,19 @@ public class OStorageMemory extends OStorageEmbedded {
 
 		final boolean locked = lock.acquireSharedLock();
 		try {
+			lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
 
-			final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
+			try {
+				final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
 
-			if (ppos == null)
-				return null;
+				if (ppos == null)
+					return null;
 
-			return new ORawBuffer(data.readRecord(ppos.dataPosition), ppos.version, ppos.type);
+				return new ORawBuffer(data.readRecord(ppos.dataPosition), ppos.version, ppos.type);
+
+			} finally {
+				lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.SHARED);
+			}
 		} catch (IOException e) {
 			throw new OStorageException("Error on read record in cluster: " + iClusterSegment.getId(), e);
 
@@ -242,21 +249,27 @@ public class OStorageMemory extends OStorageEmbedded {
 		final boolean locked = lock.acquireSharedLock();
 		try {
 
-			OPhysicalPosition ppos = cluster.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
-			if (ppos == null)
-				return -1;
+			lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+			try {
 
-			// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-			if (iVersion > -1 && ppos.version != iVersion)
-				throw new OConcurrentModificationException(
-						"Can't update record "
-								+ iRid
-								+ " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
+				final OPhysicalPosition ppos = cluster.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
+				if (ppos == null)
+					return -1;
 
-			data.updateRecord(ppos.dataPosition, iContent);
+				// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
+				if (iVersion > -1 && ppos.version != iVersion)
+					throw new OConcurrentModificationException(
+							"Can't update record "
+									+ iRid
+									+ " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
 
-			return ++(ppos.version);
+				data.updateRecord(ppos.dataPosition, iContent);
 
+				return ++(ppos.version);
+
+			} finally {
+				lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+			}
 		} catch (IOException e) {
 			throw new OStorageException("Error on update record " + iRid, e);
 
@@ -274,23 +287,30 @@ public class OStorageMemory extends OStorageEmbedded {
 		final boolean locked = lock.acquireSharedLock();
 		try {
 
-			final OPhysicalPosition ppos = cluster.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
+			lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+			try {
 
-			if (ppos == null)
-				return false;
+				final OPhysicalPosition ppos = cluster.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
 
-			// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-			if (iVersion > -1 && ppos.version != iVersion)
-				throw new OConcurrentModificationException(
-						"Can't update record "
-								+ iRid
-								+ " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
+				if (ppos == null)
+					return false;
 
-			cluster.removePhysicalPosition(iRid.clusterPosition, null);
-			data.deleteRecord(ppos.dataPosition);
+				// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
+				if (iVersion > -1 && ppos.version != iVersion)
+					throw new OConcurrentModificationException(
+							"Can't update record "
+									+ iRid
+									+ " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
 
-			return true;
+				cluster.removePhysicalPosition(iRid.clusterPosition, null);
+				data.deleteRecord(ppos.dataPosition);
 
+				return true;
+
+			} finally {
+				lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+			}
+			
 		} catch (IOException e) {
 			throw new OStorageException("Error on delete record " + iRid, e);
 

@@ -17,13 +17,12 @@ package com.orientechnologies.orient.core.index;
 
 import java.util.Collection;
 
-import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
-public interface OIndexManager extends OSharedResource {
+public interface OIndexManager {
 	public static final String	CONFIG_INDEXES	= "indexes";
 	public static final String	DICTIONARY_NAME	= "dictionary";
 

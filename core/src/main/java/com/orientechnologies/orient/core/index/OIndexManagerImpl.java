@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
@@ -41,13 +40,12 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 @SuppressWarnings("unchecked")
 public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndexManager {
-	public static final String			CONFIG_INDEXES			= "indexes";
-	public static final String			DICTIONARY_NAME			= "dictionary";
-	private static final String			QUERY_CREATE				= "create index %s %s";
-	private static final String			QUERY_DROP					= "drop index %s";
-	private Map<String, OIndex>			indexes							= new HashMap<String, OIndex>();
-	private String									defaultClusterName	= OStorage.CLUSTER_INDEX_NAME;
-	private OSharedResourceExternal	lock								= new OSharedResourceExternal();
+	public static final String	CONFIG_INDEXES			= "indexes";
+	public static final String	DICTIONARY_NAME			= "dictionary";
+	private static final String	QUERY_CREATE				= "create index %s %s";
+	private static final String	QUERY_DROP					= "drop index %s";
+	private Map<String, OIndex>	indexes							= new HashMap<String, OIndex>();
+	private String							defaultClusterName	= OStorage.CLUSTER_INDEX_NAME;
 
 	public OIndexManagerImpl(final ODatabaseRecord iDatabase) {
 		super(new ODocument(iDatabase));
@@ -130,6 +128,7 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 
 	public synchronized OIndex createIndexInternal(final String iName, final String iType, final int[] iClusterIdsToIndex,
 			OIndexCallback iCallback, final OProgressListener iProgressListener, final boolean iAutomatic) {
+
 		final OIndex index = OIndexFactory.instance().newInstance(iType);
 		index.setCallback(iCallback);
 
@@ -142,6 +141,7 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 		save();
 
 		return getIndexInstance(index);
+
 	}
 
 	public synchronized OIndexManager dropIndex(final String iIndexName) {
@@ -152,6 +152,7 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 		indexes.remove(iIndexName.toLowerCase());
 
 		return this;
+
 	}
 
 	public synchronized OIndexManager dropIndexInternal(final String iIndexName) {
@@ -184,6 +185,7 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 				indexes.put(index.getName().toLowerCase(), index);
 			}
 		}
+
 	}
 
 	/**
@@ -219,22 +221,6 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 
 	public synchronized ODictionary<ORecordInternal<?>> getDictionary() {
 		return new ODictionary<ORecordInternal<?>>(getIndex(DICTIONARY_NAME));
-	}
-
-	public void acquireSharedLock() {
-		lock.acquireSharedLock();
-	}
-
-	public void releaseSharedLock() {
-		lock.releaseSharedLock();
-	}
-
-	public void acquireExclusiveLock() {
-		lock.acquireExclusiveLock();
-	}
-
-	public void releaseExclusiveLock() {
-		lock.releaseExclusiveLock();
 	}
 
 	private synchronized OIndex getIndexInstance(final OIndex iIndex) {
