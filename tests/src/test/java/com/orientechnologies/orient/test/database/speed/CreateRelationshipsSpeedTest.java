@@ -24,27 +24,27 @@ import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 public class CreateRelationshipsSpeedTest extends SpeedTestMonoThread {
-  private ODatabaseFlat database;
-  private ORecordFlat   record;
+	private ODatabaseFlat	database;
+	private ORecordFlat		record;
 
-  public CreateRelationshipsSpeedTest() {
-    super(1000000);
-  }
+	public CreateRelationshipsSpeedTest() {
+		super(1000000);
+	}
 
-  @Override
-  public void init() throws IOException {
-    if (!database.getClusterNames().contains("Animal"))
-      database.getStorage().addCluster("Animal", OStorage.CLUSTER_TYPE.PHYSICAL);
+	@Override
+	public void init() throws IOException {
+		if (!database.getClusterNames().contains("Animal"))
+			database.addCluster("Animal", OStorage.CLUSTER_TYPE.PHYSICAL);
 
-    if (!database.getClusterNames().contains("Vaccinate"))
-      database.getStorage().addCluster("Vaccinate", OStorage.CLUSTER_TYPE.PHYSICAL);
-  }
+		if (!database.getClusterNames().contains("Vaccinate"))
+			database.getStorage().addCluster("Vaccinate", OStorage.CLUSTER_TYPE.PHYSICAL);
+	}
 
-  @Override
-  public void cycle() throws UnsupportedEncodingException {
-    record.value(data.getCyclesDone() + "|" + System.currentTimeMillis() + "|AAA").save("Vaccinate");
-    record.value(
-        data.getCyclesDone() + "|Gipsy|Cat|European|Italy|" + (data.getCyclesDone() + 300) + ".00|#Vaccinate:"
-            + data.getCyclesDone()).save("Animal");
-  }
+	@Override
+	public void cycle() throws UnsupportedEncodingException {
+		record.value(data.getCyclesDone() + "|" + System.currentTimeMillis() + "|AAA").save("Vaccinate");
+		record.value(
+				data.getCyclesDone() + "|Gipsy|Cat|European|Italy|" + (data.getCyclesDone() + 300) + ".00|#Vaccinate:"
+						+ data.getCyclesDone()).save("Animal");
+	}
 }
