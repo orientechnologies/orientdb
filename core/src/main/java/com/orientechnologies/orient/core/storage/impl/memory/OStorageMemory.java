@@ -33,9 +33,7 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -73,6 +71,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
 		final boolean locked = lock.acquireExclusiveLock();
 		try {
+
 			addDataSegment(OStorage.DATA_DEFAULT_NAME);
 
 			// ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
@@ -91,12 +90,12 @@ public class OStorageMemory extends OStorageEmbedded {
 		} catch (OStorageException e) {
 			close();
 			throw e;
+
 		} catch (IOException e) {
 			close();
 			throw new OStorageException("Error on creation of storage: " + name, e);
 
 		} finally {
-
 			lock.releaseExclusiveLock(locked);
 		}
 	}
@@ -109,25 +108,26 @@ public class OStorageMemory extends OStorageEmbedded {
 			// REUSED
 			return;
 
-		if (!exists())
-			throw new OStorageException("Can't open the storage '" + name + "' because it not exists in path: " + url);
+		final boolean locked = lock.acquireExclusiveLock();
+		try {
 
-		open = true;
+			if (!exists())
+				throw new OStorageException("Can't open the storage '" + name + "' because it not exists in path: " + url);
+
+			open = true;
+
+		} finally {
+			lock.releaseExclusiveLock(locked);
+		}
 	}
 
 	public void close(final boolean iForce) {
 		final boolean locked = lock.acquireExclusiveLock();
 		try {
-			open = false;
-		} finally {
 
-			lock.releaseExclusiveLock(locked);
-		}
-	}
+			if (!checkForClose(iForce))
+				return;
 
-	public void delete() {
-		final boolean locked = lock.acquireExclusiveLock();
-		try {
 			// CLOSE ALL THE CLUSTERS
 			for (OClusterMemory c : clusters)
 				c.close();
@@ -139,10 +139,14 @@ public class OStorageMemory extends OStorageEmbedded {
 
 			Orient.instance().unregisterStorage(this);
 			open = false;
-		} finally {
 
+		} finally {
 			lock.releaseExclusiveLock(locked);
 		}
+	}
+
+	public void delete() {
+		close(true);
 	}
 
 	public int addCluster(final String iClusterName, final OStorage.CLUSTER_TYPE iClusterType, final Object... iParameters) {
@@ -151,8 +155,8 @@ public class OStorageMemory extends OStorageEmbedded {
 
 			clusters.add(new OClusterMemory(clusters.size(), iClusterName.toLowerCase()));
 			return clusters.size() - 1;
-		} finally {
 
+		} finally {
 			lock.releaseExclusiveLock(locked);
 		}
 	}
@@ -214,6 +218,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
 		final boolean locked = lock.acquireSharedLock();
 		try {
+
 			final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
 
 			if (ppos == null)
@@ -236,6 +241,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
 		final boolean locked = lock.acquireSharedLock();
 		try {
+
 			OPhysicalPosition ppos = cluster.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
 			if (ppos == null)
 				return -1;
@@ -267,6 +273,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
 		final boolean locked = lock.acquireSharedLock();
 		try {
+
 			final OPhysicalPosition ppos = cluster.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
 
 			if (ppos == null)
@@ -298,6 +305,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
 		final boolean locked = lock.acquireSharedLock();
 		try {
+
 			return cluster.getEntries();
 
 		} finally {
@@ -307,16 +315,14 @@ public class OStorageMemory extends OStorageEmbedded {
 
 	public long[] getClusterDataRange(final int iClusterId) {
 		final OCluster cluster = getClusterById(iClusterId);
-
 		final boolean locked = lock.acquireSharedLock();
 		try {
 
 			return new long[] { cluster.getFirstEntryPosition(), cluster.getLastEntryPosition() };
-		} catch (IOException e) {
 
+		} catch (IOException e) {
 			throw new OStorageException("Error on getting last entry position in cluster: " + iClusterId, e);
 		} finally {
-
 			lock.releaseSharedLock(locked);
 		}
 	}
@@ -331,7 +337,6 @@ public class OStorageMemory extends OStorageEmbedded {
 			return tot;
 
 		} finally {
-
 			lock.releaseSharedLock(locked);
 		}
 	}
@@ -339,30 +344,29 @@ public class OStorageMemory extends OStorageEmbedded {
 	public OCluster getClusterByName(final String iClusterName) {
 		final boolean locked = lock.acquireSharedLock();
 		try {
+
 			for (int i = 0; i < clusters.size(); ++i)
 				if (getClusterById(i).getName().equals(iClusterName))
 					return getClusterById(i);
 			return null;
 
 		} finally {
-
 			lock.releaseSharedLock(locked);
 		}
 	}
 
 	public int getClusterIdByName(String iClusterName) {
-		final boolean locked = lock.acquireSharedLock();
-
 		iClusterName = iClusterName.toLowerCase();
 
+		final boolean locked = lock.acquireSharedLock();
 		try {
+
 			for (int i = 0; i < clusters.size(); ++i)
 				if (getClusterById(i).getName().equals(iClusterName))
 					return getClusterById(i).getId();
 			return -1;
 
 		} finally {
-
 			lock.releaseSharedLock(locked);
 		}
 	}
@@ -372,10 +376,17 @@ public class OStorageMemory extends OStorageEmbedded {
 	}
 
 	public String getPhysicalClusterNameById(final int iClusterId) {
-		for (int i = 0; i < clusters.size(); ++i)
-			if (getClusterById(i).getId() == iClusterId)
-				return getClusterById(i).getName();
-		return null;
+		final boolean locked = lock.acquireSharedLock();
+		try {
+
+			for (int i = 0; i < clusters.size(); ++i)
+				if (getClusterById(i).getId() == iClusterId)
+					return getClusterById(i).getName();
+			return null;
+
+		} finally {
+			lock.releaseSharedLock(locked);
+		}
 	}
 
 	public Set<String> getClusterNames() {
@@ -388,27 +399,14 @@ public class OStorageMemory extends OStorageEmbedded {
 			return result;
 
 		} finally {
-
 			lock.releaseSharedLock(locked);
 		}
 	}
 
-	public long count(final String iClassName) {
-		throw new UnsupportedOperationException("count");
-	}
-
-	public List<ORecordSchemaAware<?>> query(final OQuery<?> iQuery, final int iLimit) {
-		throw new UnsupportedOperationException("count");
-	}
-
-	public ORecordSchemaAware<?> queryFirst(final OQuery<?> iQuery) {
-		throw new UnsupportedOperationException("count");
-	}
-
 	public void commit(final OTransaction iTx) {
 		final boolean locked = lock.acquireSharedLock();
-
 		try {
+
 			final List<OTransactionRecordEntry> allEntries = new ArrayList<OTransactionRecordEntry>();
 			final List<OTransactionRecordEntry> tmpEntries = new ArrayList<OTransactionRecordEntry>();
 
@@ -448,19 +446,40 @@ public class OStorageMemory extends OStorageEmbedded {
 	}
 
 	public boolean exists() {
-		return clusters.size() > 0;
+		final boolean locked = lock.acquireSharedLock();
+		try {
+
+			return clusters.size() > 0;
+
+		} finally {
+			lock.releaseSharedLock(locked);
+		}
 	}
 
 	public OCluster getClusterById(int iClusterId) {
-		if (iClusterId == ORID.CLUSTER_ID_INVALID)
-			// GET THE DEFAULT CLUSTER
-			iClusterId = defaultClusterId;
+		final boolean locked = lock.acquireSharedLock();
+		try {
 
-		return clusters.get(iClusterId);
+			if (iClusterId == ORID.CLUSTER_ID_INVALID)
+				// GET THE DEFAULT CLUSTER
+				iClusterId = defaultClusterId;
+
+			return clusters.get(iClusterId);
+
+		} finally {
+			lock.releaseSharedLock(locked);
+		}
 	}
 
 	public Collection<? extends OCluster> getClusters() {
-		return Collections.unmodifiableCollection(clusters);
+		final boolean locked = lock.acquireSharedLock();
+		try {
+
+			return Collections.unmodifiableCollection(clusters);
+
+		} finally {
+			lock.releaseSharedLock(locked);
+		}
 	}
 
 	public int getDefaultClusterId() {
@@ -470,11 +489,15 @@ public class OStorageMemory extends OStorageEmbedded {
 	public long getSize() {
 		long size = 0;
 
-		size += data.getSize();
+		final boolean locked = lock.acquireSharedLock();
+		try {
+			size += data.getSize();
 
-		for (OClusterMemory c : clusters)
-			size += c.getSize();
-
+			for (OClusterMemory c : clusters)
+				size += c.getSize();
+		} finally {
+			lock.releaseSharedLock(locked);
+		}
 		return size;
 	}
 
@@ -483,9 +506,15 @@ public class OStorageMemory extends OStorageEmbedded {
 		if (ppos.dataSegment > 0)
 			return false;
 
-		if (ppos.dataPosition >= data.count())
-			return false;
+		final boolean locked = lock.acquireSharedLock();
+		try {
 
+			if (ppos.dataPosition >= data.count())
+				return false;
+
+		} finally {
+			lock.releaseSharedLock(locked);
+		}
 		return true;
 	}
 

@@ -46,8 +46,15 @@ public class OClusterMemory extends OSharedResourceAbstract implements OCluster 
 	}
 
 	public void close() {
-		entries.clear();
-		removed.clear();
+		acquireExclusiveLock();
+		try {
+
+			entries.clear();
+			removed.clear();
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public void open() throws IOException {
@@ -57,33 +64,75 @@ public class OClusterMemory extends OSharedResourceAbstract implements OCluster 
 	}
 
 	public void delete() throws IOException {
-		close();
-		entries.clear();
+		acquireExclusiveLock();
+		try {
+
+			close();
+			entries.clear();
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public void truncate() throws IOException {
-		entries.clear();
-		removed.clear();
+		acquireExclusiveLock();
+		try {
+
+			entries.clear();
+			removed.clear();
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public long getEntries() {
-		return entries.size() - removed.size();
+		acquireSharedLock();
+		try {
+
+			return entries.size() - removed.size();
+
+		} finally {
+			releaseSharedLock();
+		}
 	}
 
 	public long getSize() {
-		long size = 0;
-		for (OPhysicalPosition e : entries)
-			if (e != null)
-				size += e.recordSize;
-		return size;
+		acquireSharedLock();
+		try {
+
+			long size = 0;
+			for (OPhysicalPosition e : entries)
+				if (e != null)
+					size += e.recordSize;
+			return size;
+
+		} finally {
+			releaseSharedLock();
+		}
 	}
 
 	public long getFirstEntryPosition() {
-		return entries.size() == 0 ? -1 : 0;
+		acquireSharedLock();
+		try {
+
+			return entries.size() == 0 ? -1 : 0;
+
+		} finally {
+			releaseSharedLock();
+		}
 	}
 
 	public long getLastEntryPosition() {
-		return entries.size() - 1;
+		acquireSharedLock();
+		try {
+
+			return entries.size() - 1;
+
+		} finally {
+			releaseSharedLock();
+		}
 	}
 
 	public int getId() {
@@ -95,48 +144,104 @@ public class OClusterMemory extends OSharedResourceAbstract implements OCluster 
 	}
 
 	public long getAvailablePosition() throws IOException {
-		return entries.size();
+		acquireSharedLock();
+		try {
+
+			return entries.size();
+
+		} finally {
+			releaseSharedLock();
+		}
 	}
 
 	public long addPhysicalPosition(final int iDataSegmentId, final long iRecordPosition, final byte iRecordType) {
-		if (removed.size() > 0) {
-			final int recycledPosition = removed.remove(removed.size() - 1);
-			entries.set(recycledPosition, new OPhysicalPosition(iDataSegmentId, iRecordPosition, iRecordType));
-			return recycledPosition;
-		} else {
-			entries.add(new OPhysicalPosition(iDataSegmentId, iRecordPosition, iRecordType));
-			return entries.size() - 1;
+		acquireExclusiveLock();
+		try {
+
+			if (removed.size() > 0) {
+				final int recycledPosition = removed.remove(removed.size() - 1);
+				entries.set(recycledPosition, new OPhysicalPosition(iDataSegmentId, iRecordPosition, iRecordType));
+				return recycledPosition;
+			} else {
+				entries.add(new OPhysicalPosition(iDataSegmentId, iRecordPosition, iRecordType));
+				return entries.size() - 1;
+			}
+
+		} finally {
+			releaseExclusiveLock();
 		}
 	}
 
 	public void updateRecordType(final long iPosition, final byte iRecordType) throws IOException {
-		entries.get((int) iPosition).type = iRecordType;
+		acquireExclusiveLock();
+		try {
+
+			entries.get((int) iPosition).type = iRecordType;
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public void updateVersion(long iPosition, int iVersion) throws IOException {
-		entries.get((int) iPosition).version = iVersion;
+		acquireExclusiveLock();
+		try {
+
+			entries.get((int) iPosition).version = iVersion;
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public OPhysicalPosition getPhysicalPosition(final long iPosition, final OPhysicalPosition iPPosition) {
-		return entries.get((int) iPosition);
+		acquireSharedLock();
+		try {
+
+			return entries.get((int) iPosition);
+			
+		} finally {
+			releaseSharedLock();
+		}
 	}
 
 	public void removePhysicalPosition(final long iPosition, OPhysicalPosition iPPosition) {
-		if (entries.set((int) iPosition, null) != null)
-			// ADD A REMOVED
-			removed.add(new Integer((int) iPosition));
+		acquireExclusiveLock();
+		try {
+
+			if (entries.set((int) iPosition, null) != null)
+				// ADD A REMOVED
+				removed.add(new Integer((int) iPosition));
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public void setPhysicalPosition(final long iPosition, final long iDataPosition) {
-		final OPhysicalPosition ppos = entries.get((int) iPosition);
-		ppos.dataPosition = iDataPosition;
+		acquireExclusiveLock();
+		try {
+
+			final OPhysicalPosition ppos = entries.get((int) iPosition);
+			ppos.dataPosition = iDataPosition;
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public void setPhysicalPosition(final long iPosition, final int iDataId, final long iDataPosition, final byte iRecordType) {
-		final OPhysicalPosition ppos = entries.get((int) iPosition);
-		ppos.dataSegment = iDataId;
-		ppos.dataPosition = iDataPosition;
-		ppos.type = iRecordType;
+		acquireExclusiveLock();
+		try {
+
+			final OPhysicalPosition ppos = entries.get((int) iPosition);
+			ppos.dataSegment = iDataId;
+			ppos.dataPosition = iDataPosition;
+			ppos.type = iRecordType;
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public void synch() {
