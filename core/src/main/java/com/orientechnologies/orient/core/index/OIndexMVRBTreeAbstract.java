@@ -574,7 +574,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 
 		acquireExclusiveLock();
 		try {
-			if (iDocument.field("clear"))
+			if ((Boolean) iDocument.field("clear"))
 				clear();
 
 			for (Entry<String, Object> entry : iDocument) {
