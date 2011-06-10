@@ -1,16 +1,17 @@
 package com.orientechnologies.common.concur.resource;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class OSharedResourceAdaptive {
 	private static final int	UNLOCKED_WAIT_TIME	= 30;
 	private ReadWriteLock			lock								= new ReentrantReadWriteLock();
-	private volatile int			users								= 0;
+	private AtomicInteger			users								= new AtomicInteger(0);
 	private volatile boolean	runningWithoutLock	= false;
 
 	protected boolean acquireExclusiveLock() {
-		if (users > 1) {
+		if (users.get() > 1) {
 			lock.writeLock().lock();
 
 			if (runningWithoutLock)
@@ -29,7 +30,7 @@ public class OSharedResourceAdaptive {
 	}
 
 	protected boolean acquireSharedLock() {
-		if (users > 1) {
+		if (users.get() > 1) {
 			lock.readLock().lock();
 			return true;
 		}
@@ -53,7 +54,7 @@ public class OSharedResourceAdaptive {
 	}
 
 	public int getUsers() {
-		return users;
+		return users.get();
 	}
 
 	public int addUser() {
@@ -61,7 +62,7 @@ public class OSharedResourceAdaptive {
 		lock.writeLock().lock();
 
 		try {
-			return ++users;
+			return users.incrementAndGet();
 
 		} finally {
 			lock.writeLock().unlock();
@@ -69,13 +70,13 @@ public class OSharedResourceAdaptive {
 	}
 
 	public int removeUser() {
-		if (users < 1)
+		if (users.get() < 1)
 			throw new IllegalStateException("Can't remove user of the shared resource " + toString() + " because no user is using it");
 
 		try {
 			lock.writeLock().lock();
 
-			return --users;
+			return users.decrementAndGet();
 
 		} finally {
 			lock.writeLock().unlock();
