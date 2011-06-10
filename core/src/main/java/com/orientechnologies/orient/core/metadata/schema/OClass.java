@@ -27,7 +27,7 @@ import java.util.Iterator;
  */
 public interface OClass extends Comparable<OClass> {
 	public static enum ATTRIBUTES {
-		NAME, SHORTNAME, SUPERCLASS
+		NAME, SHORTNAME, SUPERCLASS, OVERSIZE
 	}
 
 	public <T> T newInstance() throws InstantiationException, IllegalAccessException;

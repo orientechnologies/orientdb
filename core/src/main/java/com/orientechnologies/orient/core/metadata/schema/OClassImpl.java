@@ -504,8 +504,16 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	}
 
 	public OClass setOverSize(final float overSize) {
-		this.overSize = overSize;
+		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		final String cmd = String.format("alter class %s oversize %f", name, overSize);
+		document.getDatabase().command(new OCommandSQL(cmd)).execute();
+		setOverSizeInternal(overSize);
 		return this;
+	}
+
+	public void setOverSizeInternal(final float overSize) {
+		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		this.overSize = overSize;
 	}
 
 	@Override
@@ -619,6 +627,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 			return getShortName();
 		case SUPERCLASS:
 			return getSuperClass();
+		case OVERSIZE:
+			return getOverSize();
 		}
 
 		throw new IllegalArgumentException("Can't find attribute '" + iAttribute + "'");
@@ -640,6 +650,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		case SUPERCLASS:
 			setSuperClassInternal(document.getDatabase().getMetadata().getSchema().getClass(stringValue));
 			break;
+		case OVERSIZE:
+			setOverSizeInternal(Float.parseFloat(stringValue.replace(',', '.')));
+			break;
 		}
 	}
 
@@ -658,6 +671,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 			break;
 		case SUPERCLASS:
 			setSuperClass(document.getDatabase().getMetadata().getSchema().getClass(stringValue));
+			break;
+		case OVERSIZE:
+			setOverSize(Float.parseFloat(stringValue));
 			break;
 		}
 		return this;
