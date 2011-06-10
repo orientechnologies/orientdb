@@ -1086,11 +1086,8 @@ public class OStorageLocal extends OStorageEmbedded {
 					throw new OConcurrentModificationException(
 							"Can't update record "
 									+ iRid
-									+ " because it has been modified by another user (v"
-									+ ppos.version
-									+ " != v"
-									+ iVersion
-									+ ") in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
+									+ " because the version is not the latest one. Probably you are updating an old record or it has been modified by another user (v"
+									+ ppos.version + " != v" + iVersion + ")");
 
 				if (ppos.type != iRecordType)
 					iClusterSegment.updateRecordType(iRid.clusterPosition, iRecordType);
@@ -1149,7 +1146,8 @@ public class OStorageLocal extends OStorageEmbedded {
 					throw new OConcurrentModificationException(
 							"Can't delete the record "
 									+ iRid
-									+ " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
+									+ " because the version is not the latest one. Probably you are deleting an old record or it has been modified by another user (v"
+									+ ppos.version + " != v" + iVersion + ")");
 
 				iClusterSegment.removePhysicalPosition(iRid.clusterPosition, ppos);
 

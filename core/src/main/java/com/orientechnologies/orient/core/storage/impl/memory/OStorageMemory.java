@@ -261,7 +261,8 @@ public class OStorageMemory extends OStorageEmbedded {
 					throw new OConcurrentModificationException(
 							"Can't update record "
 									+ iRid
-									+ " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
+									+ " because the version is not the latest one. Probably you are updating an old record or it has been modified by another user (v"
+									+ ppos.version + " != v" + iVersion + ")");
 
 				data.updateRecord(ppos.dataPosition, iContent);
 
@@ -298,9 +299,10 @@ public class OStorageMemory extends OStorageEmbedded {
 				// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
 				if (iVersion > -1 && ppos.version != iVersion)
 					throw new OConcurrentModificationException(
-							"Can't update record "
+							"Can't delete record "
 									+ iRid
-									+ " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
+									+ " because the version is not the latest one. Probably you are deleting an old record or it has been modified by another user (v"
+									+ ppos.version + " != v" + iVersion + ")");
 
 				cluster.removePhysicalPosition(iRid.clusterPosition, null);
 				data.deleteRecord(ppos.dataPosition);
@@ -310,7 +312,7 @@ public class OStorageMemory extends OStorageEmbedded {
 			} finally {
 				lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
 			}
-			
+
 		} catch (IOException e) {
 			throw new OStorageException("Error on delete record " + iRid, e);
 
