@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -64,7 +65,8 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 		super.reload("*:-1 index:0");
 
 		// RE-ASSIGN ALL THE PROPERTY INDEXES, IF ANY
-		for (OClass c : getDatabase().getMetadata().getSchema().getClasses()) {
+		final Collection<OClass> classes = new ArrayList<OClass>(getDatabase().getMetadata().getSchema().getClasses());
+		for (OClass c : classes) {
 			for (OProperty p : c.properties()) {
 				if (p.getIndex() != null) {
 					p.getIndex().delegate = indexes.get(p.getIndex().delegate.getName().toLowerCase());
