@@ -107,7 +107,7 @@ public class OStorageRemote extends OStorageAbstract {
 	public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iOptions) {
 		addUser();
 
-		final boolean locked = lock.acquireExclusiveLock();
+		lock.acquireExclusiveLock();
 
 		try {
 			openRemoteDatabase(iUserName, iUserPassword);
@@ -126,7 +126,7 @@ public class OStorageRemote extends OStorageAbstract {
 				throw new OStorageException("Can't open the remote storage: " + name, e);
 
 		} finally {
-			lock.releaseExclusiveLock(locked);
+			lock.releaseExclusiveLock();
 		}
 	}
 
@@ -141,7 +141,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public void close(final boolean iForce) {
-		final boolean locked = lock.acquireExclusiveLock();
+		lock.acquireExclusiveLock();
 
 		OChannelBinaryClient network = null;
 		try {
@@ -178,7 +178,7 @@ public class OStorageRemote extends OStorageAbstract {
 			OLogManager.instance().debug(this, "Error on closing remote connection: %s", network);
 		} finally {
 
-			lock.releaseExclusiveLock(locked);
+			lock.releaseExclusiveLock();
 		}
 	}
 
@@ -188,14 +188,14 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public Set<String> getClusterNames() {
-		final boolean locked = lock.acquireSharedLock();
+		lock.acquireSharedLock();
 
 		try {
 			checkConnection();
 			return clustersIds.keySet();
 
 		} finally {
-			lock.releaseSharedLock(locked);
+			lock.releaseSharedLock();
 		}
 	}
 
@@ -1020,14 +1020,14 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	protected void checkConnection() {
-		final boolean locked = lock.acquireSharedLock();
+		lock.acquireSharedLock();
 
 		try {
 			if (networkPool.size() == 0)
 				throw new ODatabaseException("Connection is closed");
 
 		} finally {
-			lock.releaseSharedLock(locked);
+			lock.releaseSharedLock();
 		}
 	}
 
@@ -1062,7 +1062,7 @@ public class OStorageRemote extends OStorageAbstract {
 		OChannelBinaryClient network = null;
 
 		// FIND THE FIRST FREE CHANNEL AVAILABLE
-		final boolean locked = lock.acquireSharedLock();
+		lock.acquireSharedLock();
 
 		try {
 			while (network == null) {
@@ -1077,7 +1077,7 @@ public class OStorageRemote extends OStorageAbstract {
 			}
 
 		} finally {
-			lock.releaseSharedLock(locked);
+			lock.releaseSharedLock();
 		}
 
 		network.writeByte(iCommand);
@@ -1176,7 +1176,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	protected void createConnectionPool() throws IOException, UnknownHostException {
-		final boolean locked = lock.acquireExclusiveLock();
+		lock.acquireExclusiveLock();
 		try {
 			if (networkPool.size() == 0) {
 				// CREATE THE CHANNEL POOL
@@ -1194,7 +1194,7 @@ public class OStorageRemote extends OStorageAbstract {
 			}
 
 		} finally {
-			lock.releaseExclusiveLock(locked);
+			lock.releaseExclusiveLock();
 		}
 	}
 }
