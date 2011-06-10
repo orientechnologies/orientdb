@@ -15,14 +15,15 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveLinked;
+import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
-public abstract class OSegment extends OSharedResourceAdaptiveLinked {
+public abstract class OSegment extends OSharedResourceAdaptive {
 	protected OStorageLocal	storage;
 	protected String				name;
 
 	public OSegment(final OStorageLocal iStorage, String iName) {
-		super(iStorage.getLock());
+		super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
 		storage = iStorage;
 		name = iName;
 	}

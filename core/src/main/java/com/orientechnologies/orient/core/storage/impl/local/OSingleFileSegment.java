@@ -17,21 +17,23 @@ package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.IOException;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveLinked;
+import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 
-public class OSingleFileSegment extends OSharedResourceAdaptiveLinked {
+public class OSingleFileSegment extends OSharedResourceAdaptive {
 	protected OStorageLocal							storage;
 	protected OFile											file;
 	protected OStorageFileConfiguration	config;
 
 	public OSingleFileSegment(OStorageLocal iStorage, final OStorageFileConfiguration iConfig) throws IOException {
-		super(iStorage.getLock());
+		super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
+
 		config = iConfig;
 		storage = iStorage;
 		file = OFileFactory.create(iConfig.type, iStorage.getVariableParser().resolveVariables(iConfig.path), iStorage.getMode());

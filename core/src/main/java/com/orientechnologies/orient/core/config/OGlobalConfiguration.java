@@ -34,6 +34,11 @@ import com.orientechnologies.orient.core.storage.fs.OMMapManager;
  * 
  */
 public enum OGlobalConfiguration {
+	// ENVIRONMENT
+	ENVIRONMENT_CONCURRENT("environment.concurrent",
+			"Tells if runs in multi-threads environment. Setting this to false turns off the internal lock management", Boolean.class,
+			Boolean.TRUE),
+
 	// MEMORY
 	MEMORY_OPTIMIZE_THRESHOLD("memory.optimizeThreshold",
 			"Threshold of heap memory where to start the optimization of memory usage. ", Float.class, 0.85,

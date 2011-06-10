@@ -32,7 +32,8 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 	protected OLevel2RecordCache							level2Cache;
 
 	protected volatile boolean								open		= false;
-	protected OSharedResourceAdaptiveExternal	lock		= new OSharedResourceAdaptiveExternal();
+	protected OSharedResourceAdaptiveExternal	lock		= new OSharedResourceAdaptiveExternal(
+																												OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
 
 	public OStorageAbstract(final String iName, final String iFilePath, final String iMode) {
 		if (OStringSerializerHelper.contains(iName, '/'))
