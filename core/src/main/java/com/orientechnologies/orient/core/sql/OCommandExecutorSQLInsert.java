@@ -117,7 +117,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 		if (pos == -1 || text.charAt(beginValues) != '(')
 			throw new OCommandSQLParsingException("Set of values is missed. Example: ('Bill', 'Stuart', 300)", text, pos);
 
-		final int endValues = text.indexOf(')', beginValues + 1);
+		final int endValues = text.lastIndexOf(')');
 		if (endValues == -1)
 			throw new OCommandSQLParsingException("Missed closed brace", text, beginValues);
 

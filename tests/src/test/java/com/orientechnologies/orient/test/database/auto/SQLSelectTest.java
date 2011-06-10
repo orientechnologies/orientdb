@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test(groups = "sql-select")
@@ -799,6 +800,25 @@ public class SQLSelectTest {
 			record = result.get(i);
 
 			Assert.assertTrue(((Integer) record.field("nr")) >= 10 && ((Integer) record.field("nr")) <= 20);
+		}
+
+		database.close();
+	}
+
+	@Test
+	public void queryParenthesisInStrings() {
+		database.open("admin", "admin");
+
+		Assert.assertNotNull(database.command(new OCommandSQL("INSERT INTO account (name) VALUES ('test (demo)')")).execute());
+
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select * from account where name = 'test (demo)'"))
+				.execute();
+
+		Assert.assertEquals(result.size(), 1);
+
+		for (int i = 0; i < result.size(); ++i) {
+			record = result.get(i);
+			Assert.assertEquals(record.field("name"), "test (demo)");
 		}
 
 		database.close();
