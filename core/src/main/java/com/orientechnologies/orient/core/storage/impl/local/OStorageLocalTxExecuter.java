@@ -189,10 +189,6 @@ public class OStorageLocalTxExecuter {
 		allEntries.clear();
 	}
 
-	protected void rollback() {
-		// TODO
-	}
-
 	private void commitEntry(final OTransactionRealAbstract iTx, final OTransactionRecordEntry txEntry, final boolean iUseLog)
 			throws IOException {
 

@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import java.util.List;
 import java.util.Map.Entry;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -212,17 +211,16 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 	public void executeRollback(final OTransaction iTransaction) {
 	}
 
-	@SuppressWarnings("unchecked")
 	public void executeCommit() {
 		getStorage().commit(currentTx);
 
 		// COMMIT INDEX CHANGES
-		final ODocument indexEntries = currentTx.getIndexEntries();
+		final ODocument indexEntries = currentTx.getIndexChanges();
 
 		if (indexEntries != null) {
 			for (Entry<String, Object> indexEntry : indexEntries) {
 				final OIndex index = getMetadata().getIndexManager().getIndex(indexEntry.getKey());
-				index.commit((List<ODocument>) indexEntry.getValue());
+				index.commit((ODocument) indexEntry.getValue());
 			}
 		}
 	}

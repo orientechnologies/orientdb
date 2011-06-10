@@ -671,7 +671,7 @@ public class OStorageLocal extends OStorageEmbedded {
 	}
 
 	public void commit(final OTransaction iTx) {
-		final boolean locked = lock.acquireSharedLock();
+		final boolean locked = lock.acquireExclusiveLock();
 		try {
 
 			txManager.commitAllPendingRecords((OTransactionRealAbstract) iTx);
@@ -684,7 +684,7 @@ public class OStorageLocal extends OStorageEmbedded {
 			rollback(iTx);
 
 		} finally {
-			lock.releaseSharedLock(locked);
+			lock.releaseExclusiveLock(locked);
 		}
 	}
 
@@ -696,7 +696,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
 		final long timer = OProfiler.getInstance().startChrono();
 
-		final boolean locked = lock.acquireSharedLock();
+		final boolean locked = lock.acquireExclusiveLock();
 		try {
 			saveVersion();
 
@@ -711,7 +711,7 @@ public class OStorageLocal extends OStorageEmbedded {
 			throw new OStorageException("Error on synch", e);
 
 		} finally {
-			lock.releaseSharedLock(locked);
+			lock.releaseExclusiveLock(locked);
 
 			OProfiler.getInstance().stopChrono("storage." + name + ".synch", timer);
 		}
@@ -1086,8 +1086,8 @@ public class OStorageLocal extends OStorageEmbedded {
 					throw new OConcurrentModificationException(
 							"Can't update record "
 									+ iRid
-									+ " because the version is not the latest one. Probably you are updating an old record or it has been modified by another user (v"
-									+ ppos.version + " != v" + iVersion + ")");
+									+ " because the version is not the latest one. Probably you are updating an old record or it has been modified by another user (db=v"
+									+ ppos.version + " your=v" + iVersion + ")");
 
 				if (ppos.type != iRecordType)
 					iClusterSegment.updateRecordType(iRid.clusterPosition, iRecordType);
@@ -1146,8 +1146,8 @@ public class OStorageLocal extends OStorageEmbedded {
 					throw new OConcurrentModificationException(
 							"Can't delete the record "
 									+ iRid
-									+ " because the version is not the latest one. Probably you are deleting an old record or it has been modified by another user (v"
-									+ ppos.version + " != v" + iVersion + ")");
+									+ " because the version is not the latest one. Probably you are deleting an old record or it has been modified by another user (db=v"
+									+ ppos.version + " your=v" + iVersion + ")");
 
 				iClusterSegment.removePhysicalPosition(iRid.clusterPosition, ppos);
 

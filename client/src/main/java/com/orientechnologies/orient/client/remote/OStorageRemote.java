@@ -641,7 +641,7 @@ public class OStorageRemote extends OStorageAbstract {
 					network.writeByte((byte) 0);
 
 					// SEND INDEX ENTRIES
-					network.writeBytes(iTx.getIndexEntries().toStream());
+					network.writeBytes(iTx.getIndexChanges().toStream());
 				} finally {
 					endRequest(network);
 				}

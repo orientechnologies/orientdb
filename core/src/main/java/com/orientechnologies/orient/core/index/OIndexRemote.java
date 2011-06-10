@@ -183,12 +183,11 @@ public class OIndexRemote implements OIndex {
 		return rid;
 	}
 
-	public void commit(List<ODocument> iEntries) {
-		// TODO
-	}
-
 	private OCommandRequest formatCommand(final String iTemplate, final Object... iArgs) {
 		final String text = String.format(iTemplate, iArgs);
 		return new OCommandSQL(text);
+	}
+
+	public void commit(final ODocument iDocument) {
 	}
 }

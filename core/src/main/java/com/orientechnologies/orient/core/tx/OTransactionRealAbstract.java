@@ -32,12 +32,14 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 
 public abstract class OTransactionRealAbstract extends OTransactionAbstract {
-	protected Map<ORID, OTransactionRecordEntry>				recordEntries			= new HashMap<ORID, OTransactionRecordEntry>();
-	protected Map<String, List<OTransactionIndexEntry>>	indexEntries			= new HashMap<String, List<OTransactionIndexEntry>>();
-	protected int																				id;
-	protected int																				newObjectCounter	= -2;
+	protected Map<ORID, OTransactionRecordEntry>		recordEntries			= new HashMap<ORID, OTransactionRecordEntry>();
+	protected Map<String, OTransactionIndexChanges>	indexEntries			= new HashMap<String, OTransactionIndexChanges>();
+	protected int																		id;
+	protected int																		newObjectCounter	= -2;
 
 	protected OTransactionRealAbstract(ODatabaseRecordTx iDatabase, int iId) {
 		super(iDatabase);
@@ -112,32 +114,42 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 		indexEntries.clear();
 	}
 
-	public ODocument getIndexEntries() {
+	public ODocument getIndexChanges() {
 		final StringBuilder value = new StringBuilder();
 
 		final ODocument doc = new ODocument();
-		for (Entry<String, List<OTransactionIndexEntry>> indexEntry : indexEntries.entrySet()) {
+
+		for (Entry<String, OTransactionIndexChanges> indexEntry : indexEntries.entrySet()) {
 			// STORE INDEX NAME
 			final List<ODocument> indexDocs = new ArrayList<ODocument>();
 			doc.field(indexEntry.getKey(), indexDocs);
 
-			// STORE INDEX ENTRIES
-			for (OTransactionIndexEntry entry : indexEntry.getValue()) {
-				final ODocument indexDoc = new ODocument();
+			if (indexEntry.getValue().cleared)
+				doc.field("clear", Boolean.TRUE);
 
-				// END OF INDEX ENTRIES
-				indexDoc.field("s", entry.status.ordinal());
+			// STORE INDEX ENTRIES
+			for (OTransactionIndexChangesPerKey entry : indexEntry.getValue().changesPerKey.values()) {
+				final ODocument indexDoc = new ODocument();
 
 				// SERIALIZE KEY
 				value.setLength(0);
 				ORecordSerializerStringAbstract.fieldTypeToString(value, null, OType.getTypeByClass(entry.key.getClass()), entry.key);
-				indexDoc.field("k", value.toString());
+				final String key = value.toString();
 
-				// SERIALIZE VALUE
-				if (entry.value != null) {
-					value.setLength(0);
-					ORecordSerializerStringAbstract.fieldTypeToString(value, null, OType.getTypeByClass(entry.value.getClass()), entry.value);
-					indexDoc.field("v", value.toString());
+				// SERIALIZE VALUES
+				if (entry.entries != null && !entry.entries.isEmpty()) {
+					indexDoc.field("k", key);
+
+					for (OTransactionIndexEntry e : entry.entries) {
+						final ODocument changeDoc = new ODocument();
+
+						// SERIALIZE OPERATION
+						changeDoc.field("o", e.operation.ordinal());
+
+						value.setLength(0);
+						ORecordSerializerStringAbstract.fieldTypeToString(value, null, OType.getTypeByClass(e.value.getClass()), e.value);
+						changeDoc.field("v", value.toString());
+					}
 				}
 
 				indexDocs.add(indexDoc);
@@ -148,16 +160,28 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 
 	/**
 	 * Bufferizes index changes to be flushed at commit time.
+	 * 
+	 * @return
 	 */
-	public void addIndexEntry(final OIndex delegate, final String iIndexName, final OTransactionIndexEntry.STATUSES iStatus,
+	public OTransactionIndexChanges getIndex(final String iIndexName) {
+		return indexEntries.get(iIndexName);
+	}
+
+	/**
+	 * Bufferizes index changes to be flushed at commit time.
+	 */
+	public void addIndexEntry(final OIndex delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iOperation,
 			final Object iKey, final OIdentifiable iValue) {
-		List<OTransactionIndexEntry> indexEntry = indexEntries.get(iIndexName);
+		OTransactionIndexChanges indexEntry = indexEntries.get(iIndexName);
 		if (indexEntry == null) {
-			indexEntry = new ArrayList<OTransactionIndexEntry>();
+			indexEntry = new OTransactionIndexChanges();
 			indexEntries.put(iIndexName, indexEntry);
 		}
 
-		indexEntry.add(new OTransactionIndexEntry(iStatus, iKey, iValue));
+		if (iOperation == OPERATION.CLEAR)
+			indexEntry.setCleared();
+		else
+			indexEntry.getChangesPerKey(iKey).add(iValue, iOperation);
 	}
 
 	@Override

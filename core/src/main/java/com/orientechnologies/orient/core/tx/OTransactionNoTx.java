@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.tx.OTransactionIndexEntry.STATUSES;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 
 public class OTransactionNoTx extends OTransactionAbstract {
 	public OTransactionNoTx(final ODatabaseRecordTx iDatabase) {
@@ -95,15 +95,15 @@ public class OTransactionNoTx extends OTransactionAbstract {
 	public void setUsingLog(final boolean useLog) {
 	}
 
-	public ODocument getIndexEntries() {
+	public ODocument getIndexChanges() {
 		return null;
 	}
 
-	public OTransactionIndexEntry getIndexEntry(final String iIndexName, final Object iKey) {
+	public OTransactionIndexChangesPerKey getIndexEntry(final String iIndexName, final Object iKey) {
 		return null;
 	}
 
-	public void addIndexEntry(final OIndex delegate, final String iIndexName, final STATUSES iStatus, final Object iKey,
+	public void addIndexEntry(final OIndex delegate, final String iIndexName, final OPERATION iStatus, final Object iKey,
 			final OIdentifiable iValue) {
 		switch (iStatus) {
 		case CLEAR:
@@ -121,5 +121,9 @@ public class OTransactionNoTx extends OTransactionAbstract {
 	}
 
 	public void clearIndexEntries() {
+	}
+
+	public OTransactionIndexChanges getIndex(final String iName) {
+		return null;
 	}
 }

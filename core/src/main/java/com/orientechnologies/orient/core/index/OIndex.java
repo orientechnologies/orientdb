@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.index;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -111,8 +110,8 @@ public interface OIndex {
 	/**
 	 * Commit changes as atomic.
 	 * 
-	 * @param iEntries
+	 * @param oDocument
 	 *          Collection of entries to commit
 	 */
-	public void commit(List<ODocument> iEntries);
+	public void commit(ODocument iDocument);
 }

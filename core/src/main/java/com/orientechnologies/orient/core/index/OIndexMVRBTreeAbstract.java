@@ -19,7 +19,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -46,7 +45,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerLiteral;
-import com.orientechnologies.orient.core.tx.OTransactionIndexEntry;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
 
 /**
@@ -569,22 +568,24 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 		return configuration;
 	}
 
-	public void commit(final List<ODocument> iEntries) {
-		if (iEntries == null)
+	public void commit(final ODocument iDocument) {
+		if (iDocument == null)
 			return;
 
 		acquireExclusiveLock();
 		try {
+			if (iDocument.field("clear"))
+				clear();
 
-			for (ODocument entry : iEntries) {
-				final int status = (Integer) entry.field("s");
+			for (Entry<String, Object> entry : iDocument) {
+				final Object key = entry.getKey();
+				final int operation = (Integer) ((ODocument) entry.getValue()).field("o");
+				final OIdentifiable value = ((ODocument) entry.getValue()).field("v");
 
-				if (status == OTransactionIndexEntry.STATUSES.CLEAR.ordinal())
-					clear();
-				else if (status == OTransactionIndexEntry.STATUSES.PUT.ordinal())
-					put(entry.field("k"), (OIdentifiable) entry.field("v"));
-				else if (status == OTransactionIndexEntry.STATUSES.REMOVE.ordinal())
-					remove(entry.field("k"), (OIdentifiable) entry.field("v"));
+				if (operation == OPERATION.PUT.ordinal())
+					put(key, value);
+				else if (operation == OPERATION.REMOVE.ordinal())
+					remove(key, value);
 			}
 
 		} finally {

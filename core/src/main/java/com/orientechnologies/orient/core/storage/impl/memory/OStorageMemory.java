@@ -261,8 +261,8 @@ public class OStorageMemory extends OStorageEmbedded {
 					throw new OConcurrentModificationException(
 							"Can't update record "
 									+ iRid
-									+ " because the version is not the latest one. Probably you are updating an old record or it has been modified by another user (v"
-									+ ppos.version + " != v" + iVersion + ")");
+									+ " because the version is not the latest one. Probably you are updating an old record or it has been modified by another user (db=v"
+									+ ppos.version + " your=v" + iVersion + ")");
 
 				data.updateRecord(ppos.dataPosition, iContent);
 
@@ -301,8 +301,8 @@ public class OStorageMemory extends OStorageEmbedded {
 					throw new OConcurrentModificationException(
 							"Can't delete record "
 									+ iRid
-									+ " because the version is not the latest one. Probably you are deleting an old record or it has been modified by another user (v"
-									+ ppos.version + " != v" + iVersion + ")");
+									+ " because the version is not the latest one. Probably you are deleting an old record or it has been modified by another user (db=v"
+									+ ppos.version + " your=v" + iVersion + ")");
 
 				cluster.removePhysicalPosition(iRid.clusterPosition, null);
 				data.deleteRecord(ppos.dataPosition);
@@ -426,7 +426,7 @@ public class OStorageMemory extends OStorageEmbedded {
 	}
 
 	public void commit(final OTransaction iTx) {
-		final boolean locked = lock.acquireSharedLock();
+		final boolean locked = lock.acquireExclusiveLock();
 		try {
 
 			final List<OTransactionRecordEntry> allEntries = new ArrayList<OTransactionRecordEntry>();
@@ -454,7 +454,7 @@ public class OStorageMemory extends OStorageEmbedded {
 			rollback(iTx);
 
 		} finally {
-			lock.releaseSharedLock(locked);
+			lock.releaseExclusiveLock(locked);
 		}
 	}
 

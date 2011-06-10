@@ -121,8 +121,8 @@ public class OIndexAbstractDelegate implements OIndex {
 		return delegate.getIdentity();
 	}
 
-	public void commit(final List<ODocument> iEntries) {
-		delegate.commit(iEntries);
+	public void commit(final ODocument iDocument) {
+		delegate.commit(iDocument);
 	}
 
 	public void unload() {

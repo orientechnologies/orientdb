@@ -83,7 +83,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 	}
 
 	@Override
-	public ODocument getIndexEntries() {
+	public ODocument getIndexChanges() {
 		return indexEntries;
 	}
 

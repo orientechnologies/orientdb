@@ -62,10 +62,12 @@ public interface OTransaction {
 
 	public ORecordInternal<?> getRecordEntry(ORecordId rid);
 
-	public ODocument getIndexEntries();
+	public ODocument getIndexChanges();
 
-	public void addIndexEntry(OIndex delegate, final String iIndexName, final OTransactionIndexEntry.STATUSES iStatus,
+	public void addIndexEntry(OIndex delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iStatus,
 			final Object iKey, final OIdentifiable iValue);
 
 	public void clearIndexEntries();
+
+	public OTransactionIndexChanges getIndex(String iName);
 }

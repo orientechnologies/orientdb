@@ -15,9 +15,16 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.tx.OTransaction;
-import com.orientechnologies.orient.core.tx.OTransactionIndexEntry.STATUSES;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 
 /**
  * Transactional wrapper for indexes. Stores changes locally to the transaction until tx.commit(). All the other operations are
@@ -35,32 +42,73 @@ public class OIndexUser extends OIndexAbstractDelegate {
 	}
 
 	@Override
+	public Collection<OIdentifiable> get(Object iKey) {
+		final OTransactionIndexChanges indexChanges = tx.getIndex(delegate.getName());
+
+		final List<OIdentifiable> result;
+		if (indexChanges != null && !indexChanges.cleared)
+			// BEGIN FROM THE UNDERLYING RESULT SET
+			result = new ArrayList<OIdentifiable>(super.get(iKey));
+		else
+			// BEGIN FROM EMPTY RESULT SET
+			result = new ArrayList<OIdentifiable>();
+
+		// FILTER RESULT SET WITH TRANSACTIONAL CHANGES
+		if (indexChanges != null && indexChanges.containsChangesPerKey(iKey)) {
+			final OTransactionIndexChangesPerKey value = indexChanges.getChangesPerKey(iKey);
+			if (value != null) {
+				for (OTransactionIndexEntry entry : value.entries) {
+					if (entry.operation == OPERATION.REMOVE) {
+						if (entry.value == null) {
+							// REMOVE THE ENTIRE KEY, SO RESULT SET IS EMPTY
+							result.clear();
+							break;
+						} else
+							// REMOVE ONLY THIS RID
+							result.remove(entry.value);
+					} else if (entry.operation == OPERATION.PUT) {
+						// ADD ALSO THIS RID
+						result.add(entry.value);
+					}
+				}
+			}
+		}
+
+		return result;
+	}
+
+	@Override
+	public Collection<OIdentifiable> getBetween(Object iRangeFrom, Object iRangeTo) {
+		return super.getBetween(iRangeFrom, iRangeTo);
+	}
+
+	@Override
 	public OIndex put(final Object iKey, final OIdentifiable iValue) {
-		tx.addIndexEntry(delegate, super.getName(), STATUSES.PUT, iKey, iValue);
+		tx.addIndexEntry(delegate, super.getName(), OPERATION.PUT, iKey, iValue);
 		return this;
 	}
 
 	@Override
 	public boolean remove(final Object iKey) {
-		tx.addIndexEntry(delegate, super.getName(), STATUSES.REMOVE, iKey, null);
+		tx.addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, iKey, null);
 		return true;
 	}
 
 	@Override
 	public boolean remove(final Object iKey, final OIdentifiable iRID) {
-		tx.addIndexEntry(delegate, super.getName(), STATUSES.REMOVE, iKey, iRID);
+		tx.addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, iKey, iRID);
 		return true;
 	}
 
 	@Override
 	public int remove(final OIdentifiable iRID) {
-		tx.addIndexEntry(delegate, super.getName(), STATUSES.REMOVE, null, iRID);
+		tx.addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, null, iRID);
 		return 1;
 	}
 
 	@Override
 	public OIndex clear() {
-		tx.addIndexEntry(delegate, super.getName(), STATUSES.CLEAR, null, null);
+		tx.addIndexEntry(delegate, super.getName(), OPERATION.CLEAR, null, null);
 		return this;
 	}
 
