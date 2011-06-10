@@ -210,6 +210,8 @@ public class OMMapManager {
 			// LOAD THE PAGE
 			try {
 				entry = mapBuffer(iFile, iBeginOffset, bufferSize);
+			} catch (IllegalArgumentException e) {
+				throw e;
 			} catch (Exception e) {
 				// REDUCE MAX MEMORY TO FORCE EMPTY BUFFERS
 				maxMemory = maxMemory * 90 / 100;
