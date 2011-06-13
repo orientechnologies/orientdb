@@ -522,20 +522,20 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		// ADD IT IN THE SERVER LIST
 		ODocument servers = dbConfiguration.field("servers");
 		if (servers == null) {
-			servers = new ODocument();
+			servers = new ODocument().addOwner(dbConfiguration);
 			dbConfiguration.field("servers", servers);
 		}
 		servers.field(iAlias, iAddress);
 
 		ODocument clusters = dbConfiguration.field("clusters");
 		if (clusters == null) {
-			clusters = new ODocument();
+			clusters = new ODocument().addOwner(dbConfiguration);
 			dbConfiguration.field("clusters", clusters);
 		}
 
 		ODocument allClusters = clusters.field("*");
 		if (allClusters == null) {
-			allClusters = new ODocument();
+			allClusters = new ODocument().addOwner(clusters);
 			clusters.field("*", allClusters);
 		}
 
