@@ -846,14 +846,17 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 	/**
 	 * Internal.
+	 * 
+	 * @return
 	 */
-	public void addOwner(final ORecordElement iOwner) {
+	public ODocument addOwner(final ORecordElement iOwner) {
 		if (_owners == null)
 			_owners = new ArrayList<WeakReference<ORecordElement>>();
 		this._owners.add(new WeakReference<ORecordElement>(iOwner));
+		return this;
 	}
 
-	public void removeOwner(final ORecordElement iRecordElement) {
+	public ODocument removeOwner(final ORecordElement iRecordElement) {
 		if (_owners != null) {
 			// PROPAGATES TO THE OWNER
 			ORecordElement e;
@@ -865,6 +868,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 				}
 			}
 		}
+		return this;
 	}
 
 	/**
