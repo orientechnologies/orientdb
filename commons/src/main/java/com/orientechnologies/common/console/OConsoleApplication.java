@@ -39,7 +39,7 @@ public class OConsoleApplication {
 	protected PrintStream					out								= System.out;
 	protected PrintStream					err								= System.err;
 
-	protected String							commandSeparator	= ";";
+	protected char								commandSeparator	= ';';
 	protected String							wordSeparator			= " ";
 	protected String[]						helpCommands			= { "help", "?" };
 	protected String[]						exitCommands			= { "exit", "bye", "quit" };
@@ -107,7 +107,8 @@ public class OConsoleApplication {
 	}
 
 	protected boolean executeCommands(final String iCommands) {
-		String[] commandLines = iCommands.split(commandSeparator);
+		String[] commandLines = OStringParser.split(iCommands, commandSeparator, OStringParser.COMMON_JUMP);
+		// String[] commandLines = iCommands.split(commandSeparator);
 		for (String commandLine : commandLines)
 			if (!execute(commandLine))
 				return false;

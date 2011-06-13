@@ -178,6 +178,77 @@ public class OStringParser {
 		return result;
 	}
 
+	public static String[] split(String iText, final char iSplitChar, String iJumpChars) {
+		iText = iText.trim();
+
+		ArrayList<String> fields = new ArrayList<String>();
+		StringBuilder buffer = new StringBuilder();
+		char c;
+		char stringChar = ' ';
+		boolean escape = false;
+		boolean jumpSplitChar = false;
+		boolean charFound;
+
+		for (int i = 0; i < iText.length(); i++) {
+			c = iText.charAt(i);
+
+			if (!escape && c == '\\') {
+				if (iText.charAt(i + 1) == 'u') {
+					i = readUnicode(iText, i + 2, buffer);
+				} else {
+					escape = true;
+				}
+				continue;
+			}
+
+			if (c == '\'' || c == '"') {
+				if (!jumpSplitChar) {
+					jumpSplitChar = true;
+					stringChar = c;
+				} else {
+					if (!escape && c == stringChar)
+						jumpSplitChar = false;
+				}
+			}
+
+			if (c == iSplitChar) {
+				if (!jumpSplitChar) {
+					fields.add(buffer.toString());
+					buffer.setLength(0);
+					continue;
+				}
+			}
+
+			// CHECK IF IT MUST JUMP THE CHAR
+			if (buffer.length() == 0) {
+				charFound = false;
+
+				for (int jumpIndex = 0; jumpIndex < iJumpChars.length(); ++jumpIndex) {
+					if (iJumpChars.charAt(jumpIndex) == c) {
+						charFound = true;
+						break;
+					}
+				}
+
+				if (charFound)
+					continue;
+			}
+
+			buffer.append(c);
+
+			if (escape)
+				escape = false;
+		}
+
+		if (buffer.length() > 0) {
+			fields.add(buffer.toString());
+			buffer.setLength(0);
+		}
+		String[] result = new String[fields.size()];
+		fields.toArray(result);
+		return result;
+	}
+
 	/**
 	 * Jump white spaces.
 	 * 
