@@ -363,7 +363,7 @@ public class OServer {
 			return;
 
 		String type;
-		for (OServerStorageConfiguration stg : OServerMain.server().getConfiguration().storages)
+		for (OServerStorageConfiguration stg : configuration.storages)
 			if (stg.loadOnStartup) {
 				// @COMPATIBILITY
 				if (stg.userName == null)
