@@ -41,7 +41,7 @@ public class OFetchHelper {
 		if (iFetchPlan != null) {
 			// CHECK IF THERE IS SOME FETCH-DEPTH
 			final List<String> planParts = OStringSerializerHelper.split(iFetchPlan, ' ');
-			if (planParts.size() > 1) {
+			if (planParts.size() > 0) {
 				fetchPlan = new HashMap<String, Integer>();
 
 				List<String> parts;
