@@ -110,7 +110,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 			if (!rid.isValid()) {
 				// // TODO: NEED IT FOR REAL?
 				// // NEW RECORD: CHECK IF IT'S ALREADY IN
-				// for (OTransactionEntry entry : entries.values()) {
+				// for (OTransactionRecordEntry entry : recordEntries.values()) {
 				// if (entry.getRecord() == iRecord)
 				// return;
 				// }

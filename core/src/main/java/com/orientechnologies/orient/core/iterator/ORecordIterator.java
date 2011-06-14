@@ -68,7 +68,7 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 
 	@SuppressWarnings("unchecked")
 	protected REC getTransactionEntry() {
-		long physicalRecordTobrowse = current.clusterPosition > -2 && lastClusterPosition > -1 ? lastClusterPosition
+		final long physicalRecordTobrowse = current.clusterPosition > -2 && lastClusterPosition > -1 ? lastClusterPosition
 				- current.clusterPosition : 0;
 
 		if (physicalRecordTobrowse == 0 && txEntries != null) {

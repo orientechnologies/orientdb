@@ -235,7 +235,11 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 
 		current.clusterPosition += iMovement;
 
-		iRecord = loadRecord(iRecord);
+		if (iRecord != null) {
+			iRecord.setIdentity(current);
+			iRecord = lowLevelDatabase.load(iRecord, fetchPlan);
+		} else
+			iRecord = lowLevelDatabase.load(current, fetchPlan);
 
 		if (iRecord != null) {
 			browsedRecords++;
@@ -243,10 +247,6 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 		}
 
 		return null;
-	}
-
-	protected ORecordInternal<?> loadRecord(final ORecordInternal<?> iRecord) {
-		return lowLevelDatabase.executeReadRecord(current, iRecord, fetchPlan, false);
 	}
 
 	protected void updateClusterRange() {

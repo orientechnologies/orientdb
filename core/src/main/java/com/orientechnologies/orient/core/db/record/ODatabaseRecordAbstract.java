@@ -398,8 +398,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				// NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
 				iRecord = ORecordFactory.newInstance(recordBuffer.recordType);
 
-			iRecord.unsetDirty();
-
 			ODatabaseRecord currDb = iRecord.getDatabase();
 			if (currDb == null)
 				currDb = (ODatabaseRecord) databaseOwner;

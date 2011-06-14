@@ -64,7 +64,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		_source = iBuffer;
 		_size = iBuffer != null ? iBuffer.length : 0;
 		if (_source != null && _source.length > 0)
-		_dirty = iDirty;
+			_dirty = iDirty;
 
 		return this;
 	}

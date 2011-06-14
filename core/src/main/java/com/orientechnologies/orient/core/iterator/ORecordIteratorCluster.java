@@ -257,7 +257,12 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 
 		current.clusterPosition += iMovement;
 
-		iRecord = lowLevelDatabase.executeReadRecord(current, iRecord, fetchPlan, false);
+		if (iRecord != null) {
+			iRecord.setIdentity(current);
+			iRecord = lowLevelDatabase.load(iRecord, fetchPlan);
+		} else
+			iRecord = lowLevelDatabase.load(current, fetchPlan);
+
 		if (iRecord != null)
 			browsedRecords++;
 
