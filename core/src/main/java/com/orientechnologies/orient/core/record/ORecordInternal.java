@@ -23,15 +23,13 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  * Generic record representation. The object can be reused across call to the database.
  */
 public interface ORecordInternal<T> extends ORecord<T>, OSerializableStream {
-	public ORecordAbstract<?> fill(ODatabaseRecord iDatabase, ORecordId iRid, int iVersion, byte[] iBuffer);
+	public ORecordAbstract<?> fill(ODatabaseRecord iDatabase, ORecordId iRid, int iVersion, byte[] iBuffer, boolean iDirty);
 
 	public ORecordAbstract<?> setIdentity(int iClusterId, long iClusterPosition);
 
 	public ORecordAbstract<?> setIdentity(ORecordId iIdentity);
 
 	public void unsetDirty();
-
-	public void setStatus(STATUS iStatus);
 
 	public void setVersion(int iVersion);
 

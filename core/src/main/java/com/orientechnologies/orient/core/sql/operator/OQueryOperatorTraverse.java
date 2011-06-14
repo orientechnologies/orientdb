@@ -22,10 +22,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
-import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -100,7 +101,7 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 
 			iEvaluatedRecords.add(target.getIdentity());
 
-			if (target.getInternalStatus() == STATUS.NOT_LOADED)
+			if (target.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
 				try {
 					target.load();
 				} catch (ORecordNotFoundException e) {

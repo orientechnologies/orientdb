@@ -22,8 +22,9 @@ import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
@@ -169,14 +170,14 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 	@Override
 	public ODocument updateConfiguration() {
 		super.updateConfiguration();
-		configuration.setStatus(STATUS.UNMARSHALLING);
+		configuration.setStatus(ORecordElement.STATUS.UNMARSHALLING);
 
 		try {
 			configuration.field(CONFIG_IGNORE_CHARS, ignoreChars);
 			configuration.field(CONFIG_STOP_WORDS, stopWords);
 
 		} finally {
-			configuration.setStatus(STATUS.LOADED);
+			configuration.setStatus(ORecordElement.STATUS.LOADED);
 		}
 		return configuration;
 	}

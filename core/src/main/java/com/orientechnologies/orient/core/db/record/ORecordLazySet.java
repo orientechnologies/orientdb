@@ -75,7 +75,8 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 
 	@SuppressWarnings("unchecked")
 	public <RET> RET setDirty() {
-		return (RET) delegate.setDirty();
+		delegate.setDirty();
+		return (RET) this;
 	}
 
 	public boolean setDatabase(final ODatabaseRecord iDatabase) {
@@ -381,5 +382,13 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 	public void onLazyLoad() {
 		sorted = false;
 		sort();
+	}
+
+	public STATUS getInternalStatus() {
+		return delegate.getInternalStatus();
+	}
+
+	public void setStatus(final STATUS iStatus) {
+		delegate.setStatus(iStatus);
 	}
 }

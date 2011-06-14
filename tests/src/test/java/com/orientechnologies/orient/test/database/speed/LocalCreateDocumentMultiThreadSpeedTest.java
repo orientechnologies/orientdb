@@ -34,24 +34,26 @@ public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadTe
 	private long							foundObjects;
 
 	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-		//System.setProperty("url", "memory:test");
+		// System.setProperty("url", "memory:test");
 		LocalCreateDocumentMultiThreadSpeedTest test = new LocalCreateDocumentMultiThreadSpeedTest();
 		test.data.go(test);
 	}
 
 	public LocalCreateDocumentMultiThreadSpeedTest() {
-		super(1000000, 4, CreateObjectsThread.class);
+		super(1000000, 200, CreateObjectsThread.class);
 	}
 
 	@Override
 	public void init() {
 		database = new ODatabaseDocumentTx(System.getProperty("url"));
 		if (database.exists())
-			database.open("admin", "admin");
-		else
-			database.create();
+			// database.open("admin", "admin");
+			// else
+			database.delete();
 		
-		foundObjects = database.countClusterElements("Account");
+		database.create();
+
+		foundObjects = 0;//database.countClusterElements("Account");
 
 		System.out.println("\nTotal objects in Animal cluster before the test: " + foundObjects);
 	}

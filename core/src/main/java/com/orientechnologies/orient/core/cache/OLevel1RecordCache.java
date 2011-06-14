@@ -155,10 +155,10 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
 	 */
 	@Override
 	public void updateRecord(final ORecordInternal<?> iRecord) {
-		if (existsRecord(iRecord.getIdentity()))
+//		if (existsRecord(iRecord.getIdentity()))
 			super.updateRecord(iRecord);
-		else
-			level2cache.updateRecord(iRecord);
+//		else
+//			level2cache.updateRecord(iRecord);
 	}
 
 	@Override

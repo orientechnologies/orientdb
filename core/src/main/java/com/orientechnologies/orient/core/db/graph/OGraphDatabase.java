@@ -148,13 +148,15 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 			Set<ODocument> edges = iVertex.field(VERTEX_FIELD_OUT_EDGES);
 			if (edges != null) {
 				for (ODocument edge : edges) {
-					otherVertex = edge.field(EDGE_FIELD_IN);
-					if (otherVertex != null) {
-						otherEdges = otherVertex.field(VERTEX_FIELD_IN_EDGES);
-						if (otherEdges != null && otherEdges.remove(edge))
-							save(otherVertex);
+					if (edge != null) {
+						otherVertex = edge.field(EDGE_FIELD_IN);
+						if (otherVertex != null) {
+							otherEdges = otherVertex.field(VERTEX_FIELD_IN_EDGES);
+							if (otherEdges != null && otherEdges.remove(edge))
+								save(otherVertex);
+						}
+						delete(edge);
 					}
-					delete(edge);
 				}
 				edges.clear();
 				iVertex.field(VERTEX_FIELD_OUT_EDGES, edges);
@@ -164,13 +166,15 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 			edges = iVertex.field(VERTEX_FIELD_IN_EDGES);
 			if (edges != null) {
 				for (ODocument edge : edges) {
-					otherVertex = edge.field(EDGE_FIELD_OUT);
-					if (otherVertex != null) {
-						otherEdges = otherVertex.field(VERTEX_FIELD_OUT_EDGES);
-						if (otherEdges != null && otherEdges.remove(edge))
-							save(otherVertex);
+					if (edge != null) {
+						otherVertex = edge.field(EDGE_FIELD_OUT);
+						if (otherVertex != null) {
+							otherEdges = otherVertex.field(VERTEX_FIELD_OUT_EDGES);
+							if (otherEdges != null && otherEdges.remove(edge))
+								save(otherVertex);
+						}
+						delete(edge);
 					}
-					delete(edge);
 				}
 				edges.clear();
 				iVertex.field(VERTEX_FIELD_IN_EDGES, edges);

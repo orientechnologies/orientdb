@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.db.object.OLazyObjectSet;
 import com.orientechnologies.orient.core.db.object.OObjectNotDetachedException;
 import com.orientechnologies.orient.core.db.object.OObjectNotManagedException;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
@@ -349,7 +350,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 				if (iRecord.getDatabase() != underlying)
 					iRecord.setDatabase(underlying);
 
-				if (iRecord.getInternalStatus() == ORecord.STATUS.NOT_LOADED)
+				if (iRecord.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
 					record = (ODocument) record.load();
 
 				pojo = newInstance(record.getClassName());

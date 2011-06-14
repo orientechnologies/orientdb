@@ -35,12 +35,13 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
@@ -549,7 +550,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 		acquireExclusiveLock();
 		try {
 
-			configuration.setStatus(STATUS.UNMARSHALLING);
+			configuration.setStatus(ORecordElement.STATUS.UNMARSHALLING);
 
 			try {
 				configuration.field(OIndexInternal.CONFIG_TYPE, type);
@@ -559,7 +560,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 				configuration.field(CONFIG_MAP_RID, map.getRecord().getIdentity());
 
 			} finally {
-				configuration.setStatus(STATUS.LOADED);
+				configuration.setStatus(ORecordElement.STATUS.LOADED);
 			}
 
 		} finally {

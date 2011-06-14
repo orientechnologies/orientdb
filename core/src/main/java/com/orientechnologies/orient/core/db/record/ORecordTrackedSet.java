@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> implements Set<OIdentifiable>, ORecordElement {
 	protected final ORecord<?>		sourceRecord;
 	protected Map<Object, Object>	map						= new HashMap<Object, Object>();
+	private STATUS								status				= STATUS.NOT_LOADED;
 	protected final static Object	ENTRY_REMOVAL	= new Object();
 
 	public ORecordTrackedSet(final ORecord<?> iSourceRecord) {
@@ -122,7 +123,7 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
 
 	@SuppressWarnings("unchecked")
 	public ORecordTrackedSet setDirty() {
-		if (sourceRecord != null && !sourceRecord.isDirty())
+		if (status != STATUS.UNMARSHALLING && sourceRecord != null && !sourceRecord.isDirty())
 			sourceRecord.setDirty();
 		return this;
 	}
@@ -146,5 +147,13 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
 		}
 
 		return changed;
+	}
+
+	public STATUS getInternalStatus() {
+		return status;
+	}
+
+	public void setStatus(final STATUS iStatus) {
+		status = iStatus;
 	}
 }

@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 @SuppressWarnings("serial")
 public class OTrackedSet<T> extends HashSet<T> implements ORecordElement {
 	protected final ORecord<?>		sourceRecord;
+	private STATUS								status				= STATUS.NOT_LOADED;
 	protected final static Object	ENTRY_REMOVAL	= new Object();
 
 	public OTrackedSet(final ORecord<?> iSourceRecord) {
@@ -59,8 +60,9 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement {
 		super.clear();
 	}
 
+	@SuppressWarnings("unchecked")
 	public OTrackedSet<T> setDirty() {
-		if (sourceRecord != null && !sourceRecord.isDirty())
+		if (status != STATUS.UNMARSHALLING && sourceRecord != null && !sourceRecord.isDirty())
 			sourceRecord.setDirty();
 		return this;
 	}
@@ -75,5 +77,13 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement {
 		if (sourceRecord != null)
 			return sourceRecord.setDatabase(iDatabase);
 		return false;
+	}
+
+	public STATUS getInternalStatus() {
+		return status;
+	}
+
+	public void setStatus(final STATUS iStatus) {
+		status = iStatus;
 	}
 }

@@ -159,16 +159,16 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 	}
 
 	@Override
-	public com.orientechnologies.orient.core.record.ORecord.STATUS getInternalStatus() {
+	public com.orientechnologies.orient.core.db.record.ORecordElement.STATUS getInternalStatus() {
 		return null;
 	}
 
 	@Override
-	public void setStatus(com.orientechnologies.orient.core.record.ORecord.STATUS iStatus) {
+	public void setStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS iStatus) {
 	}
 
 	@Override
-	public ORecordAbstract<?> fill(final ODatabaseRecord iDatabase, final ORecordId iRid, final int iVersion, final byte[] iBuffer) {
+	public ORecordAbstract<?> fill(final ODatabaseRecord iDatabase, final ORecordId iRid, final int iVersion, final byte[] iBuffer, boolean iDirty) {
 		return null;
 	}
 

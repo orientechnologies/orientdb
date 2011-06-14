@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 @SuppressWarnings({ "serial" })
 public class OTrackedList<T> extends ArrayList<T> implements ORecordElement {
 	protected final ORecordInternal<?>	sourceRecord;
+	private STATUS											status	= STATUS.NOT_LOADED;
 
 	public OTrackedList(final ORecordInternal<?> iSourceRecord) {
 		this.sourceRecord = iSourceRecord;
@@ -87,7 +88,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement {
 
 	@SuppressWarnings("unchecked")
 	public <RET> RET setDirty() {
-		if (sourceRecord != null)
+		if (status != STATUS.UNMARSHALLING && sourceRecord != null && !sourceRecord.isDirty())
 			sourceRecord.setDirty();
 		return (RET) this;
 	}
@@ -106,5 +107,13 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement {
 
 	protected boolean rawAdd(T element) {
 		return super.add(element);
+	}
+
+	public STATUS getInternalStatus() {
+		return status;
+	}
+
+	public void setStatus(final STATUS iStatus) {
+		status = iStatus;
 	}
 }

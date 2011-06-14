@@ -429,4 +429,30 @@ public class CRUDDocumentPhysicalTest {
 
 		database.close();
 	}
+
+	@Test
+	public void testDirtyChild() {
+		ODocument parent = new ODocument();
+
+		ODocument child1 = new ODocument().addOwner(parent);
+		parent.field("child1", child1);
+
+		Assert.assertTrue(child1.hasOwners());
+
+		ODocument child2 = new ODocument().addOwner(child1);
+		child1.field("child2", child2);
+
+		Assert.assertTrue(child2.hasOwners());
+
+		// BEFORE FIRST TOSTREAM
+		Assert.assertTrue(parent.isDirty());
+		parent.toStream();
+		// AFTER TOSTREAM
+		Assert.assertTrue(parent.isDirty());
+		// CHANGE FIELDS VALUE (Automaticaly set dirty this child)
+		child1.field("child2", new ODocument());
+		Assert.assertTrue(parent.isDirty());
+
+	}
+
 }

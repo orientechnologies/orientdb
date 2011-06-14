@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
 /**
@@ -150,7 +151,7 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 		if (_fieldValues == null)
 			_fieldValues = _ordered ? new LinkedHashMap<String, T>() : new HashMap<String, T>();
 
-		if (_status == STATUS.LOADED && size() == 0)
+		if (_status == ORecordElement.STATUS.LOADED && size() == 0)
 			// POPULATE FIELDS LAZY
 			deserializeFields();
 	}

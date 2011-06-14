@@ -22,12 +22,13 @@ import java.util.Date;
 import java.util.regex.Pattern;
 
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
-import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
@@ -183,7 +184,7 @@ public class OSQLFilterCondition {
 
 	protected Object evaluate(ORecordSchemaAware<?> iRecord, final Object iValue) {
 		if (iValue instanceof OSQLFilterItem) {
-			if (iRecord.getInternalStatus() == STATUS.NOT_LOADED) {
+			if (iRecord.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
 				try {
 					iRecord = (ORecordSchemaAware<?>) iRecord.load();
 				} catch (ORecordNotFoundException e) {

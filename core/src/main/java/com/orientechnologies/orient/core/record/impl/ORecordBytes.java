@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
@@ -72,7 +73,7 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 	@Override
 	public ORecordBytes fromStream(final byte[] iRecordBuffer) {
 		_source = iRecordBuffer;
-		_status = STATUS.LOADED;
+		_status = ORecordElement.STATUS.LOADED;
 		return this;
 	}
 

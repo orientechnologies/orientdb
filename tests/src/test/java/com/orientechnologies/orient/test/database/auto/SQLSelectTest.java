@@ -258,6 +258,7 @@ public class SQLSelectTest {
 	public void queryCollectionContainsInRecords() {
 		database.open("admin", "admin");
 
+		record.setDatabase(database);
 		record.reset();
 		record.setClassName("Animal");
 		record.field("name", "Cat");

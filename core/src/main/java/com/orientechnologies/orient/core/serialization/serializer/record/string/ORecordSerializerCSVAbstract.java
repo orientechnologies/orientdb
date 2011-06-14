@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.db.object.OLazyObjectMap;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
@@ -168,6 +169,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		String mapValue;
 		Object mapValueObject;
 
+		if (map instanceof ORecordElement)
+			((ORecordElement) map).setStatus(STATUS.UNMARSHALLING);
+
 		for (String item : items) {
 			if (item != null && item.length() > 0) {
 				entry = OStringSerializerHelper.smartSplit(item, OStringSerializerHelper.ENTRY_SEPARATOR);
@@ -205,6 +209,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 			}
 		}
+
+		if (map instanceof ORecordElement)
+			((ORecordElement) map).setStatus(STATUS.LOADED);
+
 		return map;
 	}
 
@@ -507,6 +515,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 		final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR);
 
+		if (coll instanceof ORecordElement)
+			((ORecordElement) coll).setStatus(STATUS.UNMARSHALLING);
+
 		Object objectToAdd;
 		for (String item : items) {
 			objectToAdd = null;
@@ -539,6 +550,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				((Collection<Object>) coll).add(objectToAdd);
 			}
 		}
+
+		if (coll instanceof ORecordElement)
+			((ORecordElement) coll).setStatus(STATUS.LOADED);
 
 		return coll;
 	}

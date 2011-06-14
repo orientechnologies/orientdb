@@ -19,6 +19,7 @@ import java.util.Arrays;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -28,16 +29,16 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<T> {
-	protected ODatabaseRecord		_database;
-	protected ORecordId					_recordId;
-	protected int								_version;
-	protected byte[]						_source;
-	protected int								_size;
-	protected ORecordSerializer	_recordFormat;
-	protected boolean						_pinned		= true;
-	protected boolean						_dirty		= true;
-	protected STATUS						_status		= STATUS.LOADED;
-	protected ORecordListener		_listener	= null;
+	protected ODatabaseRecord				_database;
+	protected ORecordId							_recordId;
+	protected int										_version;
+	protected byte[]								_source;
+	protected int										_size;
+	protected ORecordSerializer			_recordFormat;
+	protected boolean								_pinned		= true;
+	protected boolean								_dirty		= true;
+	protected ORecordElement.STATUS	_status		= ORecordElement.STATUS.LOADED;
+	protected ORecordListener				_listener	= null;
 
 	public ORecordAbstract() {
 	}
@@ -53,14 +54,17 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		unsetDirty();
 	}
 
-	public ORecordAbstract<?> fill(final ODatabaseRecord iDatabase, final ORecordId iRid, final int iVersion, final byte[] iBuffer) {
+	public ORecordAbstract<?> fill(final ODatabaseRecord iDatabase, final ORecordId iRid, final int iVersion, final byte[] iBuffer,
+			boolean iDirty) {
 		_database = iDatabase;
 		_recordId.clusterId = iRid.clusterId;
 		_recordId.clusterPosition = iRid.clusterPosition;
 		_version = iVersion;
-		_status = STATUS.LOADED;
+		_status = ORecordElement.STATUS.LOADED;
 		_source = iBuffer;
 		_size = iBuffer != null ? iBuffer.length : 0;
+		if (_source != null && _source.length > 0)
+		_dirty = iDirty;
 
 		return this;
 	}
@@ -96,7 +100,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	}
 
 	public ORecordAbstract<T> reset() {
-		_status = STATUS.LOADED;
+		_status = ORecordElement.STATUS.LOADED;
 
 		setDirty();
 		if (_recordId != null)
@@ -120,7 +124,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		_dirty = false;
 		_source = iRecordBuffer;
 		_size = iRecordBuffer != null ? iRecordBuffer.length : 0;
-		_status = STATUS.LOADED;
+		_status = ORecordElement.STATUS.LOADED;
 
 		invokeListenerEvent(ORecordListener.EVENT.UNMARSHALL);
 
@@ -133,7 +137,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	}
 
 	public ORecordAbstract<T> setDirty() {
-		if (!_dirty)
+		if (!_dirty && _status != STATUS.UNMARSHALLING)
 			_dirty = true;
 		_source = null;
 		return this;
@@ -204,7 +208,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	}
 
 	public ORecordAbstract<T> unload() {
-		_status = STATUS.NOT_LOADED;
+		_status = ORecordElement.STATUS.NOT_LOADED;
 		_source = null;
 		unsetDirty();
 		invokeListenerEvent(ORecordListener.EVENT.UNLOAD);
@@ -333,11 +337,11 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		return _recordId.compareTo(iOther.getIdentity());
 	}
 
-	public STATUS getInternalStatus() {
+	public ORecordElement.STATUS getInternalStatus() {
 		return _status;
 	}
 
-	public void setStatus(final STATUS iStatus) {
+	public void setStatus(final ORecordElement.STATUS iStatus) {
 		this._status = iStatus;
 	}
 

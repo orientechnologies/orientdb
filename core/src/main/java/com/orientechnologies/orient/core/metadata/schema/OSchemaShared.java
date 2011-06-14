@@ -28,13 +28,13 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -329,6 +329,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass {
 		lock.acquireExclusiveLock();
 		try {
 
+			getDatabase();
 			super.reload(null);
 			fromStream();
 			return (RET) this;
@@ -465,7 +466,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass {
 	@Override
 	@OBeforeSerialization
 	public ODocument toStream() {
-		document.setStatus(STATUS.UNMARSHALLING);
+		document.setStatus(ORecordElement.STATUS.UNMARSHALLING);
 
 		try {
 			document.field("schemaVersion", CURRENT_VERSION_NUMBER);
@@ -477,7 +478,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass {
 			document.field("classes", cc, OType.EMBEDDEDSET);
 
 		} finally {
-			document.setStatus(STATUS.LOADED);
+			document.setStatus(ORecordElement.STATUS.LOADED);
 		}
 
 		return document;
@@ -498,8 +499,9 @@ public class OSchemaShared extends ODocumentWrapperNoClass {
 		lock.acquireExclusiveLock();
 		try {
 
+			getDatabase();
 			((ORecordId) document.getIdentity()).fromString(getDatabase().getStorage().getConfiguration().schemaRecordId);
-			super.load("*:-1 index:0");
+			super.reload("*:-1 index:0");
 			return this;
 
 		} finally {

@@ -23,6 +23,8 @@ import java.util.Map;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
@@ -30,7 +32,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -195,7 +196,7 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 	 */
 	@Override
 	public ODocument toStream() {
-		document.setStatus(STATUS.UNMARSHALLING);
+		document.setStatus(ORecordElement.STATUS.UNMARSHALLING);
 
 		try {
 			ORecordTrackedSet idxs = new ORecordTrackedSet(document);
@@ -206,7 +207,7 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 			document.field(CONFIG_INDEXES, idxs, OType.EMBEDDEDSET);
 
 		} finally {
-			document.setStatus(STATUS.LOADED);
+			document.setStatus(ORecordElement.STATUS.LOADED);
 		}
 		document.setDirty();
 

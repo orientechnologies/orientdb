@@ -1042,10 +1042,10 @@ public class OStorageRemote extends OStorageAbstract {
 			final ORecordInternal<?> record = ORecordFactory.newInstance(network.readByte());
 
 			if (record instanceof ORecordSchemaAware<?>)
-				((ORecordSchemaAware<?>) record).fill(iDatabase, classId, network.readRID(), network.readInt(), network.readBytes());
+				((ORecordSchemaAware<?>) record).fill(iDatabase, classId, network.readRID(), network.readInt(), network.readBytes(), false);
 			else
 				// DISCARD CLASS ID
-				record.fill(iDatabase, network.readRID(), network.readInt(), network.readBytes());
+				record.fill(iDatabase, network.readRID(), network.readInt(), network.readBytes(), false);
 
 			return record;
 		}

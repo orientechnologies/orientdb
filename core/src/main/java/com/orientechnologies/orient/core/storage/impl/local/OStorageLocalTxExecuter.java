@@ -31,8 +31,8 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
-import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
+import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.core.tx.OTxListener;
 
 public class OStorageLocalTxExecuter {
@@ -97,6 +97,14 @@ public class OStorageLocalTxExecuter {
 			if (buffer == null)
 				throw new OTransactionException("Can't retrieve the updated record #" + iRid);
 
+			// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
+			if (iVersion > -1 && buffer.version != iVersion)
+				throw new OConcurrentModificationException(
+						"Can't update the record "
+								+ iRid
+								+ " because the version is not the latest one. Probably you are updating an old record or it has been modified by another user (db=v"
+								+ buffer.version + " your=v" + iVersion + ")");
+
 			final long dataOffset;
 			if (buffer.buffer != null) {
 				// CREATE A COPY OF IT IN DATASEGMENT. IF TX FAILS AT THIS POINT UN-REFERENCED DATA WILL REMAIN UNTIL NEXT DEFRAG
@@ -132,10 +140,11 @@ public class OStorageLocalTxExecuter {
 			if (iVersion > -1 && ppos.version != iVersion)
 				throw new OConcurrentModificationException(
 						"Can't delete the record #"
-								+ iClusterSegment.getId()
+								+ iClusterSegment
 								+ ":"
 								+ iPosition
-								+ " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
+								+ " because the version is not the latest one. Probably you are deleting an old record or it has been modified by another user (db=v"
+								+ ppos.version + " your=v" + iVersion + ")");
 
 			// SAVE INTO THE LOG THE POSITION OF THE RECORD JUST DELETED
 			txSegment.addLog(OTxSegment.OPERATION_DELETE, iTxId, iClusterSegment.getId(), iPosition, ppos.dataPosition);

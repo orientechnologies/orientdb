@@ -382,7 +382,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				if (record != null) {
 					callbackHooks(TYPE.BEFORE_READ, record);
 
-					if (record.getInternalStatus() == ORecord.STATUS.NOT_LOADED)
+					if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
 						record.reload();
 
 					callbackHooks(TYPE.AFTER_READ, record);
@@ -404,12 +404,12 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			if (currDb == null)
 				currDb = (ODatabaseRecord) databaseOwner;
 
-			iRecord.fill(currDb, iRid, recordBuffer.version, recordBuffer.buffer);
+			iRecord.fill(currDb, iRid, recordBuffer.version, recordBuffer.buffer, false);
 
 			callbackHooks(TYPE.BEFORE_READ, iRecord);
 
 			iRecord.fromStream(recordBuffer.buffer);
-			iRecord.setStatus(ORecord.STATUS.LOADED);
+			iRecord.setStatus(ORecordElement.STATUS.LOADED);
 
 			callbackHooks(TYPE.AFTER_READ, iRecord);
 
@@ -493,20 +493,16 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 			if (isNew) {
 				// UPDATE INFORMATION: CLUSTER ID+POSITION
-				iRecord.fill(iRecord.getDatabase(), rid, 0, stream);
+				iRecord.fill(iRecord.getDatabase(), rid, 0, stream, stream == null || stream.length == 0);
 				// NOTIFY IDENTITY HAS CHANGED
 				iRecord.onAfterIdentityChanged(iRecord);
 			} else {
 				// UPDATE INFORMATION: VERSION
-				iRecord.fill(iRecord.getDatabase(), rid, (int) result, stream);
+				iRecord.fill(iRecord.getDatabase(), rid, (int) result, stream, stream == null || stream.length == 0);
 			}
 
 			if (stream != null && stream.length > 0)
 				callbackHooks(wasNew ? TYPE.AFTER_CREATE : TYPE.AFTER_UPDATE, iRecord);
-
-			if (stream != null && stream.length > 0)
-				// FILLED RECORD
-				iRecord.unsetDirty();
 
 			// ADD/UPDATE IT IN CACHE IF IT'S ACTIVE
 			getLevel1Cache().updateRecord(iRecord);

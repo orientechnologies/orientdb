@@ -28,10 +28,11 @@ import java.util.Set;
 
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
@@ -392,7 +393,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	@Override
 	@OBeforeSerialization
 	public ODocument toStream() {
-		document.setStatus(STATUS.UNMARSHALLING);
+		document.setStatus(ORecordElement.STATUS.UNMARSHALLING);
 
 		try {
 			document.field("name", name);
@@ -412,7 +413,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 				document.field("superClass", superClass.getName());
 
 		} finally {
-			document.setStatus(STATUS.LOADED);
+			document.setStatus(ORecordElement.STATUS.LOADED);
 		}
 
 		return document;

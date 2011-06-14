@@ -26,6 +26,21 @@ import com.orientechnologies.orient.core.record.ORecord;
  */
 public interface ORecordElement {
 	/**
+	 * Available record statuses.
+	 */
+	public enum STATUS {
+		NOT_LOADED, LOADED, MARSHALLING, UNMARSHALLING
+	}
+
+	/**
+	 * Returns the current status of the record.
+	 * 
+	 */
+	public STATUS getInternalStatus();
+
+	public void setStatus(STATUS iStatus);
+
+	/**
 	 * Marks the instance as dirty. The dirty status could be propagated up if the implementation supports ownership concept.
 	 * 
 	 * @return The object it self. Useful to call methods in chain.
@@ -37,4 +52,5 @@ public interface ORecordElement {
 	public void onAfterIdentityChanged(ORecord<?> iRecord);
 
 	public boolean setDatabase(ODatabaseRecord iDatabase);
+
 }

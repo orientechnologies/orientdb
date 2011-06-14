@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 @SuppressWarnings("serial")
 public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordElement {
 	final protected ORecord<?>		sourceRecord;
+	private STATUS								status				= STATUS.NOT_LOADED;
 	protected final static Object	ENTRY_REMOVAL	= new Object();
 
 	public OTrackedMap(final ORecord<?> iSourceRecord) {
@@ -63,9 +64,9 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
 		super.putAll(m);
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public OTrackedMap setDirty() {
-		if (sourceRecord != null)
+	@SuppressWarnings({ "unchecked" })
+	public OTrackedMap<T> setDirty() {
+		if (status != STATUS.UNMARSHALLING && sourceRecord != null && !sourceRecord.isDirty())
 			sourceRecord.setDirty();
 		return this;
 	}
@@ -93,5 +94,13 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
 		}
 
 		return changed;
+	}
+
+	public STATUS getInternalStatus() {
+		return status;
+	}
+
+	public void setStatus(final STATUS iStatus) {
+		status = iStatus;
 	}
 }

@@ -27,13 +27,6 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
  */
 public interface ORecord<T> extends ORecordElement, OIdentifiable {
 	/**
-	 * Available record statuses.
-	 */
-	public enum STATUS {
-		NOT_LOADED, LOADED, MARSHALLING, UNMARSHALLING
-	}
-
-	/**
 	 * Remove all the dependencies by other records. All the relationships remain in form of RecordID. If some links contain dirty
 	 * records, the detach can't be complete and this method returns false.
 	 * 
@@ -120,12 +113,6 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable {
 	 * @return The object it self. Useful to call methods in chain.
 	 */
 	public <RET extends ORecord<T>> RET unpin();
-
-	/**
-	 * Returns the current status of the record.
-	 * 
-	 */
-	public STATUS getInternalStatus();
 
 	/**
 	 * Loads the record content in memory. If the record is in cache will be returned a new instance, so pay attention to use the

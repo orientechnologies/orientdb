@@ -91,7 +91,7 @@ public class Orient extends OSharedResourceAbstract {
 
 			if (engine == null)
 				throw new OConfigurationException("Error on opening database: the engine '" + engineName + "' was not found. URL was: "
-						+ iURL);
+						+ iURL + ". registered engines are: " + engines.keySet());
 
 			// SEARCH FOR DB-NAME
 			iURL = iURL.substring(pos + 1);

@@ -550,7 +550,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			final byte recordType = channel.readByte();
 
 			final ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
-			record.fill(connection.database, rid, 0, buffer);
+			record.fill(connection.database, rid, 0, buffer, true);
 			connection.database.save(record);
 
 			channel.acquireExclusiveLock();
@@ -572,7 +572,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			final int version = channel.readInt();
 			final byte recordType = channel.readByte();
 			final ORecordInternal<?> newRecord = ORecordFactory.newInstance(recordType);
-			newRecord.fill(connection.database, rid, version, buffer);
+			newRecord.fill(connection.database, rid, version, buffer, true);
 
 			if (((OSchemaProxy) connection.database.getMetadata().getSchema()).getIdentity().equals(rid))
 				// || ((OIndexManagerImpl) connection.database.getMetadata().getIndexManager()).getDocument().getIdentity().equals(rid)) {

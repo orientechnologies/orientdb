@@ -19,6 +19,8 @@ import java.text.ParseException;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -27,7 +29,6 @@ import com.orientechnologies.orient.core.index.OIndexManagerImpl;
 import com.orientechnologies.orient.core.index.OPropertyIndex;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
@@ -532,7 +533,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	@Override
 	@OBeforeSerialization
 	public ODocument toStream() {
-		document.setStatus(STATUS.UNMARSHALLING);
+		document.setStatus(ORecordElement.STATUS.UNMARSHALLING);
 
 		try {
 			document.field("name", name);
@@ -555,7 +556,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 			}
 
 		} finally {
-			document.setStatus(STATUS.LOADED);
+			document.setStatus(ORecordElement.STATUS.LOADED);
 		}
 		return document;
 	}

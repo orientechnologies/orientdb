@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Date;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -43,8 +44,8 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	public abstract boolean containsField(String name);
 
 	public ORecordSchemaAwareAbstract<T> fill(final ODatabaseRecord iDatabase, final int iClassId, final ORecordId iRid,
-			final int iVersion, final byte[] iBuffer) {
-		fill(iDatabase, iRid, iVersion, iBuffer);
+			final int iVersion, final byte[] iBuffer, boolean iDirty) {
+		fill(iDatabase, iRid, iVersion, iBuffer, iDirty);
 		setClass(null);
 		return this;
 	}
@@ -139,7 +140,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	}
 
 	protected void checkForFields() {
-		if (_status == STATUS.LOADED && size() == 0)
+		if (_status == ORecordElement.STATUS.LOADED && size() == 0)
 			// POPULATE FIELDS LAZY
 			deserializeFields();
 	}
@@ -148,9 +149,9 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 		if (_source == null)
 			return;
 
-		_status = STATUS.UNMARSHALLING;
+		_status = ORecordElement.STATUS.UNMARSHALLING;
 		_recordFormat.fromStream(_database, _source, this);
-		_status = STATUS.LOADED;
+		_status = ORecordElement.STATUS.LOADED;
 	}
 
 	protected void setClass(final OClass iClass) {
@@ -271,7 +272,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	}
 
 	protected void checkForLoading() {
-		if (_status == STATUS.NOT_LOADED && _database != null)
+		if (_status == ORecordElement.STATUS.NOT_LOADED && _database != null)
 			reload();
 	}
 }
