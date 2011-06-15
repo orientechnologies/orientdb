@@ -37,7 +37,6 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
@@ -144,7 +143,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		database.getMetadata().getIndexManager().load();
 
 		for (Entry<OProperty, String> e : propertyIndexes.entrySet()) {
-			final OIndexInternal idx = (OIndexInternal) database.getMetadata().getIndexManager().getIndex(e.getValue());
+			final OIndex idx = database.getMetadata().getIndexManager().getIndex(e.getValue());
 
 			((OPropertyImpl) e.getKey()).setIndex(idx);
 			idx.setCallback(e.getKey().getIndex());
@@ -214,7 +213,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
 
 		do {
-			final String indexName = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+			final String indexName = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
 
 			if (indexName == null || indexName.length() == 0)
 				return;
