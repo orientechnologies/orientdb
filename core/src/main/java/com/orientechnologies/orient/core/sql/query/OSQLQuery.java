@@ -24,7 +24,6 @@ import java.util.Map.Entry;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.query.OQueryAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -84,16 +83,11 @@ public abstract class OSQLQuery<T extends Object> extends OQueryAbstract<T> impl
 	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
 		final OMemoryInputStream buffer = new OMemoryInputStream(iStream);
 		try {
-			if (!OFetchHelper.isFetchPlanValid(fetchPlan)) {
-				throw new OSerializationException("Fetch plan '" + fetchPlan + "' is invalid");
-			}
 			text = buffer.getAsString();
 			limit = buffer.getAsInteger();
 			beginRange = new ORecordId().fromStream(buffer.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
 			endRange = new ORecordId().fromStream(buffer.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
-			fetchPlan = buffer.getAsString();
-			if (fetchPlan.length() == 0)
-				fetchPlan = null;
+			setFetchPlan(buffer.getAsString());
 
 			byte[] paramBuffer = buffer.getAsByteArray();
 
@@ -121,9 +115,6 @@ public abstract class OSQLQuery<T extends Object> extends OQueryAbstract<T> impl
 
 	public byte[] toStream() throws OSerializationException {
 		final OMemoryOutputStream buffer = new OMemoryOutputStream();
-		if (!OFetchHelper.isFetchPlanValid(fetchPlan)) {
-			throw new OSerializationException("Fetch plan '" + fetchPlan + "' is invalid");
-		}
 		try {
 			buffer.add(text); // TEXT AS STRING
 			buffer.add(limit); // LIMIT AS INTEGER

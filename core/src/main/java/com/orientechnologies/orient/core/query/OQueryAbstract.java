@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.query;
 
 import com.orientechnologies.orient.core.command.OCommandRequestAbstract;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.id.ORecordId;
 
 @SuppressWarnings("serial")
@@ -52,7 +53,13 @@ public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAb
 	}
 
 	public OQuery<T> setFetchPlan(final String fetchPlan) {
-		this.fetchPlan = fetchPlan;
+		if (!OFetchHelper.isFetchPlanValid(fetchPlan)) {
+			throw new IllegalArgumentException("Fetch plan '" + fetchPlan + "' is invalid");
+		}
+		if (fetchPlan != null && fetchPlan.length() == 0)
+			this.fetchPlan = null;
+		else
+			this.fetchPlan = fetchPlan;
 		return this;
 	}
 

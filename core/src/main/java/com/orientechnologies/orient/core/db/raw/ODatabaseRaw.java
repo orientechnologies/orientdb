@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.record.ORecordFactory;
@@ -188,6 +189,10 @@ public class ODatabaseRaw implements ODatabase {
 	public ORawBuffer read(final ORecordId iRid, final String iFetchPlan) {
 		if (!iRid.isValid())
 			return null;
+		
+		if (!OFetchHelper.isFetchPlanValid(iFetchPlan)){
+			throw new IllegalArgumentException("Fetch plan '" + iFetchPlan + "' is invalid");
+		}
 
 		try {
 			return storage.readRecord(databaseOwner, iRid, iFetchPlan);
