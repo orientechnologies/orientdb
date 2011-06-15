@@ -65,6 +65,8 @@ public class OHttpUtils {
 	public static final String	STATUS_ERROR_DESCRIPTION						= "Internal Server Error";
 	public static final int			STATUS_AUTH_CODE										= 401;
 	public static final String	STATUS_AUTH_DESCRIPTION							= "Unauthorized";
+	public static final int			STATUS_CONFLICT_CODE								= 409;
+	public static final String	STATUS_CONFLICT_DESCRIPTION					= "Conflict";
 
 	public static String[] getParts(String iURI) {
 		if (iURI == null || iURI.length() == 0)
@@ -75,4 +77,5 @@ public class OHttpUtils {
 
 		return iURI.split(URL_SEPARATOR);
 	}
+
 }

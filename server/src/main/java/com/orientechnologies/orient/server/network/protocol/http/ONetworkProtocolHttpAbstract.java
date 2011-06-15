@@ -165,9 +165,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
 		if (e instanceof ORecordNotFoundException)
 			errorCode = 404;
-		else if (e instanceof OConcurrentModificationException)
-			errorCode = 409;
-		else if (e instanceof OLockException) {
+		else if (e instanceof OConcurrentModificationException) {
+			errorCode = OHttpUtils.STATUS_CONFLICT_CODE;
+			errorReason = OHttpUtils.STATUS_CONFLICT_DESCRIPTION;
+		} else if (e instanceof OLockException) {
 			errorCode = 423;
 		} else if (e instanceof IllegalArgumentException)
 			errorCode = OHttpUtils.STATUS_INTERNALERROR;
@@ -330,7 +331,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 						}
 					} else if (line.startsWith(OHttpUtils.HEADER_IF_MATCH))
 						iRequest.ifMatch = line.substring(OHttpUtils.HEADER_IF_MATCH.length());
-					
+
 					else if (line.startsWith(OHttpUtils.HEADER_X_FORWARDED_FOR))
 						getData().caller = line.substring(OHttpUtils.HEADER_X_FORWARDED_FOR.length());
 
