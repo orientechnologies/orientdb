@@ -78,6 +78,13 @@
 				<exclude>*.*</exclude>
 			</excludes>
 		</fileSet>
+		<fileSet> <!-- Just to create an empty log directory... -->
+			<directory>${basedir}/../server/config</directory>
+			<outputDirectory>databases</outputDirectory>
+			<excludes>
+				<exclude>*.*</exclude>
+			</excludes>
+		</fileSet>
 	</fileSets>
 	<files>
 		<file>
