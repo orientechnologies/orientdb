@@ -412,6 +412,11 @@ public class OSchemaShared extends ODocumentWrapperNoClass {
 		return cls;
 	}
 
+	public void changeClassName(String iOldName, String iNewName) {
+		OClass clazz = classes.remove(iOldName);
+		classes.put(iNewName, clazz);
+	}
+
 	/**
 	 * Binds ODocument to POJO.
 	 */

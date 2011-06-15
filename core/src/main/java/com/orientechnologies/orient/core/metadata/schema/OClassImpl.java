@@ -29,7 +29,6 @@ import java.util.Set;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -137,6 +136,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
 	public void setNameInternal(final String iName) {
 		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		owner.changeClassName(name, iName);
 		name = iName;
 	}
 
