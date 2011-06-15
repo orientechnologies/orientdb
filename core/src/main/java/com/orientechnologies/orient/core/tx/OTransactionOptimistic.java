@@ -170,7 +170,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
 	@Override
 	public String toString() {
-		return "OTransactionOptimistic [id=" + id + ", status=" + status + ", entries=" + recordEntries.size() + "]";
+		return "OTransactionOptimistic [id=" + id + ", status=" + status + ", recEntries=" + recordEntries.size() + ", idxEntries="
+				+ indexEntries.size() + "]";
 	}
 
 	public boolean isUsingLog() {

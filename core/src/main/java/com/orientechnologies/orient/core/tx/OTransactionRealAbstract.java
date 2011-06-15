@@ -162,6 +162,9 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 				entries.field(key, operations);
 			}
 		}
+		
+		indexEntries.clear();
+		
 		return result;
 	}
 
