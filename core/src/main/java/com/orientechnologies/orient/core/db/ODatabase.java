@@ -185,6 +185,24 @@ public interface ODatabase {
 	public String getClusterNameById(int iClusterId);
 
 	/**
+	 * Returns the total size of records contained in the cluster defined by its name.
+	 * 
+	 * @param iClusterName
+	 *          Cluster name
+	 * @return Total size of records contained.
+	 */
+	public long getClusterRecordSizeByName(String iClusterName);
+
+	/**
+	 * Returns the total size of records contained in the cluster defined by its id.
+	 * 
+	 * @param iClusterId
+	 *          Cluster id
+	 * @return The name of searched cluster.
+	 */
+	public long getClusterRecordSizeById(int iClusterId);
+
+	/**
 	 * Checks if the database is closed.
 	 * 
 	 * @return true if is closed, otherwise false.

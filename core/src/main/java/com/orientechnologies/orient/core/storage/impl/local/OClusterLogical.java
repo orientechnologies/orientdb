@@ -276,4 +276,9 @@ public class OClusterLogical implements OCluster {
 	public long getSize() {
 		return 0;
 	}
+	
+	public long getRecordsSize() throws IOException {
+		return 0;
+	}
+	
 }

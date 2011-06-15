@@ -133,6 +133,14 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 		return underlying.getClusterNameById(iClusterId);
 	}
 
+	public long getClusterRecordSizeById(int iClusterId) {
+		return underlying.getClusterRecordSizeById(iClusterId);
+	}
+
+	public long getClusterRecordSizeByName(String iClusterName) {
+		return underlying.getClusterRecordSizeByName(iClusterName);
+	}
+
 	public int addCluster(final String iClusterName, final CLUSTER_TYPE iType) {
 		checkOpeness();
 		return underlying.addCluster(iClusterName, iType);

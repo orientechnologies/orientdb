@@ -113,6 +113,10 @@ public class OClusterMemory extends OSharedResourceAbstract implements OCluster 
 		}
 	}
 
+	public long getRecordsSize() throws IOException {
+		return getSize();
+	}
+
 	public long getFirstEntryPosition() {
 		acquireSharedLock();
 		try {
@@ -199,7 +203,7 @@ public class OClusterMemory extends OSharedResourceAbstract implements OCluster 
 		try {
 
 			return entries.get((int) iPosition);
-			
+
 		} finally {
 			releaseSharedLock();
 		}

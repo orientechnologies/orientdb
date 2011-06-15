@@ -111,6 +111,13 @@ public interface OCluster {
 	 * @return
 	 */
 	public long getSize();
+	
+	/**
+	 * Returns the size of the record contained in the cluster in bytes.
+	 * 
+	 * @return
+	 */
+	public long getRecordsSize() throws IOException;
 
 	public OClusterPositionIterator absoluteIterator() throws IOException;
 

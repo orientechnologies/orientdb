@@ -466,4 +466,17 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 	public String getType() {
 		return TYPE;
 	}
+
+	public long getRecordsSize() throws IOException {
+		long size = 0l;
+		OClusterPositionIterator it = absoluteIterator();
+		OPhysicalPosition pos = new OPhysicalPosition();
+		while (it.hasNext()) {
+			Long position = it.next();
+			pos = getPhysicalPosition(position.longValue(), pos);
+			if (pos.dataPosition > -1)
+				size += storage.getDataSegment(pos.dataSegment).getRecordSize(pos.dataPosition);
+		}
+		return size;
+	}
 }

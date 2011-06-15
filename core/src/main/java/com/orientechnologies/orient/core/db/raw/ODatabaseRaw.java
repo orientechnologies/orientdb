@@ -189,8 +189,8 @@ public class ODatabaseRaw implements ODatabase {
 	public ORawBuffer read(final ORecordId iRid, final String iFetchPlan) {
 		if (!iRid.isValid())
 			return null;
-		
-		if (!OFetchHelper.isFetchPlanValid(iFetchPlan)){
+
+		if (!OFetchHelper.isFetchPlanValid(iFetchPlan)) {
 			throw new IllegalArgumentException("Fetch plan '" + iFetchPlan + "' is invalid");
 		}
 
@@ -272,6 +272,26 @@ public class ODatabaseRaw implements ODatabase {
 
 		// PHIYSICAL CLUSTER
 		return storage.getPhysicalClusterNameById(iClusterId);
+	}
+
+	public long getClusterRecordSizeById(int iClusterId) {
+		try {
+			return storage.getClusterById(iClusterId).getRecordsSize();
+		} catch (Exception e) {
+			OLogManager.instance().exception("Error on reading records size for cluster with id '" + iClusterId + "'", e,
+					ODatabaseException.class);
+		}
+		return 0l;
+	}
+
+	public long getClusterRecordSizeByName(String iClusterName) {
+		try {
+			return storage.getClusterById(getClusterIdByName(iClusterName)).getRecordsSize();
+		} catch (Exception e) {
+			OLogManager.instance().exception("Error on reading records size for cluster '" + iClusterName + "'", e,
+					ODatabaseException.class);
+		}
+		return 0l;
 	}
 
 	public int addCluster(final String iClusterName, final OStorage.CLUSTER_TYPE iType) {
