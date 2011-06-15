@@ -132,9 +132,10 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 	public Object execute(final Map<Object, Object> iArgs) {
 		if (destField == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
-
+ 
 		if (!(database instanceof ODatabaseDocumentTx))
-			throw new OCommandSQLParsingException("This command supports only the database type ODatabaseDocumentTx");
+			throw new OCommandSQLParsingException("This command supports only the database type ODatabaseDocumentTx and type '"
+					+ database.getClass() + "' was found");
 
 		final ODatabaseDocumentTx db = (ODatabaseDocumentTx) database;
 
