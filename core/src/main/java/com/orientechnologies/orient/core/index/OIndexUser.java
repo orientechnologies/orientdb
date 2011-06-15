@@ -19,8 +19,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
@@ -34,19 +34,19 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTran
  * 
  */
 public class OIndexUser extends OIndexAbstractDelegate {
-	private final OTransaction	tx;
+	protected ODatabaseRecord	database;
 
-	public OIndexUser(final OTransaction iTransaction) {
-		super(null);
-		tx = iTransaction;
+	public OIndexUser(final ODatabaseRecord iDatabase, final OIndex iDelegate) {
+		super(iDelegate);
+		database = iDatabase;
 	}
 
 	@Override
 	public Collection<OIdentifiable> get(Object iKey) {
-		final OTransactionIndexChanges indexChanges = tx.getIndex(delegate.getName());
+		final OTransactionIndexChanges indexChanges = database.getTransaction().getIndex(delegate.getName());
 
 		final List<OIdentifiable> result;
-		if (indexChanges != null && !indexChanges.cleared)
+		if (indexChanges == null || !indexChanges.cleared)
 			// BEGIN FROM THE UNDERLYING RESULT SET
 			result = new ArrayList<OIdentifiable>(super.get(iKey));
 		else
@@ -84,37 +84,37 @@ public class OIndexUser extends OIndexAbstractDelegate {
 
 	@Override
 	public OIndex put(final Object iKey, final OIdentifiable iValue) {
-		tx.addIndexEntry(delegate, super.getName(), OPERATION.PUT, iKey, iValue);
+		database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.PUT, iKey, iValue);
 		return this;
 	}
 
 	@Override
 	public boolean remove(final Object iKey) {
-		tx.addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, iKey, null);
+		database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, iKey, null);
 		return true;
 	}
 
 	@Override
 	public boolean remove(final Object iKey, final OIdentifiable iRID) {
-		tx.addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, iKey, iRID);
+		database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, iKey, iRID);
 		return true;
 	}
 
 	@Override
 	public int remove(final OIdentifiable iRID) {
-		tx.addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, null, iRID);
+		database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, null, iRID);
 		return 1;
 	}
 
 	@Override
 	public OIndex clear() {
-		tx.addIndexEntry(delegate, super.getName(), OPERATION.CLEAR, null, null);
+		database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.CLEAR, null, null);
 		return this;
 	}
 
 	@Override
 	public void unload() {
-		tx.clearIndexEntries();
+		database.getTransaction().clearIndexEntries();
 		super.unload();
 	}
 }

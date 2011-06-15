@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
@@ -117,45 +118,51 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 	public ODocument getIndexChanges() {
 		final StringBuilder value = new StringBuilder();
 
-		final ODocument doc = new ODocument();
+		final ODocument result = new ODocument();
 
 		for (Entry<String, OTransactionIndexChanges> indexEntry : indexEntries.entrySet()) {
-			// STORE INDEX NAME
-			final List<ODocument> indexDocs = new ArrayList<ODocument>();
-			doc.field(indexEntry.getKey(), indexDocs);
+			final ODocument indexDoc = new ODocument();
+			result.field(indexEntry.getKey(), indexDoc);
 
 			if (indexEntry.getValue().cleared)
-				doc.field("clear", Boolean.TRUE);
+				indexDoc.field("clear", Boolean.TRUE);
+
+			final ODocument entries = new ODocument();
+			indexDoc.field("entries", entries);
 
 			// STORE INDEX ENTRIES
 			for (OTransactionIndexChangesPerKey entry : indexEntry.getValue().changesPerKey.values()) {
-				final ODocument indexDoc = new ODocument();
-
 				// SERIALIZE KEY
 				value.setLength(0);
 				ORecordSerializerStringAbstract.fieldTypeToString(value, null, OType.getTypeByClass(entry.key.getClass()), entry.key);
-				final String key = value.toString();
+				String key = value.toString();
+
+				if (key.length() > 1 && key.charAt(0) == '"' && key.charAt(key.length() - 1) == '"')
+					key = key.substring(1, key.length() - 1);
+
+				List<ODocument> operations = new ArrayList<ODocument>();
 
 				// SERIALIZE VALUES
 				if (entry.entries != null && !entry.entries.isEmpty()) {
-					indexDoc.field("k", key);
-
 					for (OTransactionIndexEntry e : entry.entries) {
 						final ODocument changeDoc = new ODocument();
 
 						// SERIALIZE OPERATION
 						changeDoc.field("o", e.operation.ordinal());
 
-						value.setLength(0);
-						ORecordSerializerStringAbstract.fieldTypeToString(value, null, OType.getTypeByClass(e.value.getClass()), e.value);
-						changeDoc.field("v", value.toString());
+						if (e.value.getIdentity().isNew())
+							((ORecord<?>) e.value).save();
+
+						changeDoc.field("v", e.value.getIdentity());
+
+						operations.add(changeDoc);
 					}
 				}
 
-				indexDocs.add(indexDoc);
+				entries.field(key, operations);
 			}
 		}
-		return doc;
+		return result;
 	}
 
 	/**

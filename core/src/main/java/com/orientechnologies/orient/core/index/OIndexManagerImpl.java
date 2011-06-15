@@ -24,7 +24,6 @@ import java.util.Map;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
@@ -42,12 +41,12 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 @SuppressWarnings("unchecked")
 public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndexManager {
-	public static final String	CONFIG_INDEXES			= "indexes";
-	public static final String	DICTIONARY_NAME			= "dictionary";
-	private static final String	QUERY_CREATE				= "create index %s %s";
-	private static final String	QUERY_DROP					= "drop index %s";
-	private Map<String, OIndex>	indexes							= new HashMap<String, OIndex>();
-	private String							defaultClusterName	= OStorage.CLUSTER_INDEX_NAME;
+	public static final String					CONFIG_INDEXES			= "indexes";
+	public static final String					DICTIONARY_NAME			= "dictionary";
+	private static final String					QUERY_CREATE				= "create index %s %s";
+	private static final String					QUERY_DROP					= "drop index %s";
+	private Map<String, OIndexInternal>	indexes							= new HashMap<String, OIndexInternal>();
+	private String											defaultClusterName	= OStorage.CLUSTER_INDEX_NAME;
 
 	public OIndexManagerImpl(final ODatabaseRecord iDatabase) {
 		super(new ODocument(iDatabase));
@@ -96,11 +95,16 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 		createIndex(DICTIONARY_NAME, OProperty.INDEX_TYPE.DICTIONARY.toString(), null, null, null, false);
 	}
 
-	public synchronized Collection<OIndex> getIndexes() {
+	public synchronized Collection<? extends OIndex> getIndexes() {
 		return Collections.unmodifiableCollection(indexes.values());
 	}
 
 	public synchronized OIndex getIndex(final String iName) {
+		final OIndex index = indexes.get(iName.toLowerCase());
+		return new OIndexUser(getDatabase(), getIndexInstance(index));
+	}
+
+	public synchronized OIndex getIndexInternal(final String iName) {
 		final OIndex index = indexes.get(iName.toLowerCase());
 		return getIndexInstance(index);
 	}
@@ -132,7 +136,7 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 	public synchronized OIndex createIndexInternal(final String iName, final String iType, final int[] iClusterIdsToIndex,
 			OIndexCallback iCallback, final OProgressListener iProgressListener, final boolean iAutomatic) {
 
-		final OIndex index = OIndexFactory.instance().newInstance(iType);
+		final OIndexInternal index = OIndexFactory.instance().newInstance(getDatabase(), iType);
 		index.setCallback(iCallback);
 
 		reload();
@@ -180,10 +184,10 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 		final Collection<ODocument> idxs = document.field(CONFIG_INDEXES);
 
 		if (idxs != null) {
-			OIndex index;
+			OIndexInternal index;
 			for (ODocument d : idxs) {
-				index = OIndexFactory.instance().newInstance((String) d.field(OIndexInternal.CONFIG_TYPE));
-				d.setDatabase(document.getDatabase());
+				index = OIndexFactory.instance().newInstance(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE));
+				d.setDatabase(getDatabase());
 				((OIndexInternal) index).loadFromConfiguration(d);
 				indexes.put(index.getName().toLowerCase(), index);
 			}
@@ -201,8 +205,8 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 		try {
 			ORecordTrackedSet idxs = new ORecordTrackedSet(document);
 
-			for (OIndex i : indexes.values()) {
-				idxs.add(((OIndexInternal) i).updateConfiguration());
+			for (OIndexInternal i : indexes.values()) {
+				idxs.add(i.updateConfiguration());
 			}
 			document.field(CONFIG_INDEXES, idxs, OType.EMBEDDEDSET);
 

@@ -16,10 +16,11 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.factory.ODynamicFactory;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 
-public class OIndexFactory extends ODynamicFactory<String, Class<? extends OIndex>> {
+public class OIndexFactory extends ODynamicFactory<String, Class<? extends OIndexInternal>> {
 	private static final OIndexFactory	instance	= new OIndexFactory();
 
 	/**
@@ -33,18 +34,17 @@ public class OIndexFactory extends ODynamicFactory<String, Class<? extends OInde
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T extends OIndex> T newInstance(final String iIndexType) {
+	public <T extends OIndexInternal> T newInstance(final ODatabaseRecord iDatabase, final String iIndexType) {
 		if (iIndexType == null)
 			throw new IllegalArgumentException("Index type is null");
 
-		final Class<? extends OIndex> indexClass = registry.get(iIndexType);
+		final Class<? extends OIndexInternal> indexClass = registry.get(iIndexType);
 
 		if (indexClass == null)
 			throw new OConfigurationException("Index type '" + iIndexType + "' is not configured");
 
 		try {
-			final OIndex index = indexClass.newInstance();
-			return (T) index;
+			return (T) indexClass.newInstance();
 		} catch (Exception e) {
 			throw new OConfigurationException("Can't create index type '" + iIndexType + "'", e);
 		}

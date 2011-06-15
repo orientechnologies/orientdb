@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.index;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -35,6 +34,34 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public class OIndexAbstractDelegate implements OIndex {
 	protected OIndex	delegate;
+//
+//	public void checkEntry(OIdentifiable iRecord, Object iKey) {
+//		delegate.checkEntry(iRecord, iKey);
+//	}
+//
+//	public OIndexInternal rebuild() {
+//		return delegate.rebuild();
+//	}
+//
+//	public OIndexInternal rebuild(OProgressListener iProgressListener) {
+//		return delegate.rebuild(iProgressListener);
+//	}
+//
+//	public int count(OIdentifiable iRecord) {
+//		return delegate.count(iRecord);
+//	}
+//
+//	public OIndexInternal load() {
+//		return delegate.load();
+//	}
+//
+//	public OIndexInternal loadFromConfiguration(ODocument iConfig) {
+//		return delegate.loadFromConfiguration(iConfig);
+//	}
+//
+//	public ODocument updateConfiguration() {
+//		return delegate.updateConfiguration();
+//	}
 
 	public OIndexAbstractDelegate(final OIndex iDelegate) {
 		this.delegate = iDelegate;

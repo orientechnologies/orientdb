@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -36,7 +37,6 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
@@ -569,24 +569,34 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 		return configuration;
 	}
 
+	@SuppressWarnings("unchecked")
 	public void commit(final ODocument iDocument) {
 		if (iDocument == null)
 			return;
 
 		acquireExclusiveLock();
 		try {
-			if ((Boolean) iDocument.field("clear"))
+			final Boolean clearAll = (Boolean) iDocument.field("clear");
+			if (clearAll != null && clearAll)
 				clear();
 
-			for (Entry<String, Object> entry : iDocument) {
-				final Object key = entry.getKey();
-				final int operation = (Integer) ((ODocument) entry.getValue()).field("o");
-				final OIdentifiable value = ((ODocument) entry.getValue()).field("v");
+			final ODocument entries = iDocument.field("entries");
 
-				if (operation == OPERATION.PUT.ordinal())
-					put(key, value);
-				else if (operation == OPERATION.REMOVE.ordinal())
-					remove(key, value);
+			for (Entry<String, Object> entry : entries) {
+				final Object key = entry.getKey();
+
+				final List<ODocument> operations = (List<ODocument>) entry.getValue();
+				if (operations != null) {
+					for (ODocument op : operations) {
+						final int operation = (Integer) op.rawField("o");
+						final OIdentifiable value = op.field("v");
+
+						if (operation == OPERATION.PUT.ordinal())
+							put(key, value);
+						else if (operation == OPERATION.REMOVE.ordinal())
+							remove(key, value);
+					}
+				}
 			}
 
 		} finally {

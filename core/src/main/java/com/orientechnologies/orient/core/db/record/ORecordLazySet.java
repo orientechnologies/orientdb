@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -158,11 +159,33 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 	}
 
 	public Object[] toArray() {
-		return delegate.toArray();
+		Object[] result = delegate.toArray();
+
+		if (newItems != null && !newItems.isEmpty()) {
+			int start = result.length;
+			result = Arrays.copyOf(result, start + newItems.size());
+
+			for (ORecord<?> r : newItems.keySet()) {
+				result[start++] = r;
+			}
+		}
+
+		return result;
 	}
 
 	public <T> T[] toArray(final T[] a) {
-		return delegate.toArray(a);
+		T[] result = delegate.toArray(a);
+
+		if (newItems != null && !newItems.isEmpty()) {
+			int start = result.length;
+			result = Arrays.copyOf(result, start + newItems.size());
+
+			for (ORecord<?> r : newItems.keySet()) {
+				result[start++] = (T) r;
+			}
+		}
+
+		return result;
 	}
 
 	/**

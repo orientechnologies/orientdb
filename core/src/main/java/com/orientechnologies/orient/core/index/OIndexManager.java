@@ -30,7 +30,7 @@ public interface OIndexManager {
 
 	public void create();
 
-	public Collection<OIndex> getIndexes();
+	public Collection<? extends OIndex> getIndexes();
 
 	public OIndex getIndex(final String iName);
 

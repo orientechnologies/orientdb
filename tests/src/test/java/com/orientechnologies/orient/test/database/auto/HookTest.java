@@ -72,7 +72,7 @@ public class HookTest extends ORecordHookAbstract {
 	public void testHookRead() {
 		// TEST HOOKS ON READ
 		List<Profile> result = database.query(new OSQLSynchQuery<Profile>("select * from Profile where nick = 'HookTest'"));
-		Assert.assertFalse(result.size() == 0);
+		Assert.assertEquals(result.size(), 1);
 
 		for (int i = 0; i < result.size(); ++i) {
 			Assert.assertEquals(callbackCount, 46);
