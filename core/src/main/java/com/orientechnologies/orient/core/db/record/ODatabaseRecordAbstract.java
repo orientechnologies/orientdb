@@ -376,18 +376,20 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, getClusterNameById(iRid.getClusterId()),
 					iRid.getClusterId());
 
-			if (!iIgnoreCache) {
+			// SEARCH IN LOCAL TX
+			ORecordInternal<?> record = getTransaction().getRecordEntry(iRid);
+			if (record == null && !iIgnoreCache)
 				// SEARCH INTO THE CACHE
-				final ORecordInternal<?> record = getLevel1Cache().findRecord(iRid);
-				if (record != null) {
-					callbackHooks(TYPE.BEFORE_READ, record);
+				record = getLevel1Cache().findRecord(iRid);
 
-					if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
-						record.reload();
+			if (record != null) {
+				callbackHooks(TYPE.BEFORE_READ, record);
 
-					callbackHooks(TYPE.AFTER_READ, record);
-					return (RET) record;
-				}
+				if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
+					record.reload();
+
+				callbackHooks(TYPE.AFTER_READ, record);
+				return (RET) record;
 			}
 
 			final ORawBuffer recordBuffer = underlying.read(iRid, iFetchPlan);
