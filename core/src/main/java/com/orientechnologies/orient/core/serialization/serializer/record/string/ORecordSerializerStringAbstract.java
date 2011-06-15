@@ -400,6 +400,9 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 				}
 		}
 
-		return integer ? new Integer(iValue) : new Float(iValue);
+		if (integer)
+			return new Integer(iValue);
+		else
+			return new Float(iValue);
 	}
 }
