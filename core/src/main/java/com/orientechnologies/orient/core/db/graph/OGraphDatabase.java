@@ -118,6 +118,9 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	public ODocument createVertex(String iClassName) {
 		if (iClassName == null)
 			iClassName = VERTEX_CLASS_NAME;
+		else
+			checkVertexClass(iClassName);
+
 		return new ODocument(this, iClassName);
 	}
 
@@ -235,6 +238,8 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 
 		if (iInVertex == null)
 			throw new IllegalArgumentException("iInVertex is null");
+
+		checkVertexClass(iClassName);
 
 		final boolean safeMode = beginBlock();
 
@@ -359,8 +364,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	 * @return
 	 */
 	public Set<OIdentifiable> getOutEdges(final ODocument iVertex, final String iLabel) {
-		if (!iVertex.getSchemaClass().isSubClassOf(vertexBaseClass))
-			throw new IllegalArgumentException("The document received is not a vertex");
+		checkVertexClass(iVertex);
 
 		final ORecordLazySet set = iVertex.field(VERTEX_FIELD_OUT_EDGES);
 
@@ -392,8 +396,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	 * @return
 	 */
 	public Set<OIdentifiable> getOutEdgesHavingProperties(final ODocument iVertex, final Map<String, Object> iProperties) {
-		if (!iVertex.getSchemaClass().isSubClassOf(vertexBaseClass))
-			throw new IllegalArgumentException("The document received is not a vertex");
+		checkVertexClass(iVertex);
 
 		return filterEdgesByProperties((ORecordLazySet) iVertex.field(VERTEX_FIELD_OUT_EDGES), iProperties);
 	}
@@ -408,8 +411,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	 * @return
 	 */
 	public Set<OIdentifiable> getOutEdgesHavingProperties(final ODocument iVertex, Iterable<String> iProperties) {
-		if (!iVertex.getSchemaClass().isSubClassOf(vertexBaseClass))
-			throw new IllegalArgumentException("The document received is not a vertex");
+		checkVertexClass(iVertex);
 
 		return filterEdgesByProperties((ORecordLazySet) iVertex.field(VERTEX_FIELD_OUT_EDGES), iProperties);
 	}
@@ -419,8 +421,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	}
 
 	public Set<OIdentifiable> getInEdges(final ODocument iVertex, final String iLabel) {
-		if (!iVertex.getSchemaClass().isSubClassOf(vertexBaseClass))
-			throw new IllegalArgumentException("The document received is not a vertex");
+		checkVertexClass(iVertex);
 
 		final ORecordLazySet set = iVertex.field(VERTEX_FIELD_IN_EDGES);
 
@@ -452,8 +453,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	 * @return
 	 */
 	public Set<OIdentifiable> getInEdgesHavingProperties(final ODocument iVertex, Iterable<String> iProperties) {
-		if (!iVertex.getSchemaClass().isSubClassOf(vertexBaseClass))
-			throw new IllegalArgumentException("The document received is not a vertex");
+		checkVertexClass(iVertex);
 
 		return filterEdgesByProperties((ORecordLazySet) iVertex.field(VERTEX_FIELD_IN_EDGES), iProperties);
 	}
@@ -468,21 +468,17 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	 * @return
 	 */
 	public Set<OIdentifiable> getInEdgesHavingProperties(final ODocument iVertex, final Map<String, Object> iProperties) {
-		if (!iVertex.getSchemaClass().isSubClassOf(vertexBaseClass))
-			throw new IllegalArgumentException("The document received is not a vertex");
-
+		checkVertexClass(iVertex);
 		return filterEdgesByProperties((ORecordLazySet) iVertex.field(VERTEX_FIELD_IN_EDGES), iProperties);
 	}
 
 	public ODocument getInVertex(final ODocument iEdge) {
-		if (!iEdge.getSchemaClass().isSubClassOf(edgeBaseClass))
-			throw new IllegalArgumentException("The document received is not an edge");
+		checkEdgeClass(iEdge);
 		return iEdge.field(EDGE_FIELD_IN);
 	}
 
 	public ODocument getOutVertex(final ODocument iEdge) {
-		if (!iEdge.getSchemaClass().isSubClassOf(edgeBaseClass))
-			throw new IllegalArgumentException("The document received is not an edge");
+		checkEdgeClass(iEdge);
 		return iEdge.field(EDGE_FIELD_OUT);
 	}
 
@@ -589,6 +585,27 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 			}
 
 		return result;
+	}
+
+	public void checkVertexClass(final ODocument iVertex) {
+		if (!iVertex.getSchemaClass().isSubClassOf(vertexBaseClass))
+			throw new IllegalArgumentException("The document received is not a vertex. Found class '" + iVertex.getSchemaClass() + "'");
+	}
+
+	public void checkVertexClass(final String iVertexTypeName) {
+		if (iVertexTypeName != null) {
+			final OClass cls = getMetadata().getSchema().getClass(iVertexTypeName);
+			if (cls == null)
+				throw new IllegalArgumentException("The class '" + iVertexTypeName + "' was not found");
+
+			if (!cls.isSubClassOf(vertexBaseClass))
+				throw new IllegalArgumentException("The class '" + iVertexTypeName + "' doesn't extend the vertex type");
+		}
+	}
+
+	public void checkEdgeClass(final ODocument iEdge) {
+		if (!iEdge.getSchemaClass().isSubClassOf(edgeBaseClass))
+			throw new IllegalArgumentException("The document received is not an edge. Found class '" + iEdge.getSchemaClass() + "'");
 	}
 
 	protected boolean beginBlock() {
