@@ -22,7 +22,9 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.index.OIndexManagerImpl;
+import com.orientechnologies.orient.core.index.OIndexManagerProxy;
+import com.orientechnologies.orient.core.index.OIndexManagerRemote;
+import com.orientechnologies.orient.core.index.OIndexManagerShared;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
@@ -31,14 +33,15 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.metadata.security.OSecurityProxy;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
 public class OMetadata {
-	protected ODatabaseRecord	database;
-	protected int							schemaClusterId;
+	protected ODatabaseRecord			database;
+	protected int									schemaClusterId;
 
-	protected OSchemaProxy		schema;
-	protected OSecurity				security;
-	protected OIndexManager		indexManager;
+	protected OSchemaProxy				schema;
+	protected OSecurity						security;
+	protected OIndexManagerProxy	indexManager;
 
 	public OMetadata(final ODatabaseRecord iDatabase) {
 		this.database = iDatabase;
@@ -47,15 +50,11 @@ public class OMetadata {
 	public void load() {
 		final long timer = OProfiler.getInstance().startChrono();
 
-		init();
-
 		try {
+			init(true);
+
 			if (schemaClusterId == -1 || database.countClusterElements(OStorage.CLUSTER_INTERNAL_NAME) == 0)
 				return;
-
-			indexManager.load();
-			security.load();
-			schema.load();
 		} finally {
 			OProfiler.getInstance().stopChrono("OMetadata.load", timer);
 		}
@@ -64,16 +63,14 @@ public class OMetadata {
 	public void create() throws IOException {
 		final long timer = OProfiler.getInstance().startChrono();
 
-		init();
-
 		try {
-			// CREATE RECORD FOR SCHEMA
+			init(false);
+
 			schema.create();
 			security.create();
 			indexManager.create();
 		} finally {
-
-			OProfiler.getInstance().stopChrono("OMetadata.create", timer);
+			OProfiler.getInstance().stopChrono("OMetadata.load", timer);
 		}
 	}
 
@@ -85,7 +82,7 @@ public class OMetadata {
 		return security;
 	}
 
-	public OIndexManager getIndexManager() {
+	public OIndexManagerProxy getIndexManager() {
 		return indexManager;
 	}
 
@@ -93,12 +90,27 @@ public class OMetadata {
 		return schemaClusterId;
 	}
 
-	private void init() {
+	private void init(final boolean iLoad) {
+		// ODatabaseRecordThreadLocal.INSTANCE.set(database);
+
 		schemaClusterId = database.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME);
+
+		indexManager = new OIndexManagerProxy(database.getStorage().getResource(OIndexManager.class.getSimpleName(),
+				new Callable<OIndexManager>() {
+					public OIndexManager call() {
+						if (database.getStorage() instanceof OStorageEmbedded)
+							return new OIndexManagerShared(database);
+						else
+							return new OIndexManagerRemote(database);
+					}
+				}), database);
 
 		schema = new OSchemaProxy(database.getStorage().getResource(OSchema.class.getSimpleName(), new Callable<OSchemaShared>() {
 			public OSchemaShared call() {
-				return new OSchemaShared(schemaClusterId);
+				final OSchemaShared instance = new OSchemaShared(schemaClusterId);
+				if (iLoad)
+					instance.load();
+				return instance;
 			}
 		}), database);
 
@@ -110,10 +122,12 @@ public class OMetadata {
 			security = new OSecurityProxy(database.getStorage().getResource(OSecurity.class.getSimpleName(),
 					new Callable<OSecurityShared>() {
 						public OSecurityShared call() {
-							return new OSecurityShared();
+							final OSecurityShared instance = new OSecurityShared();
+							if (iLoad)
+								instance.load();
+							return instance;
 						}
 					}), database);
 
-		indexManager = new OIndexManagerImpl(database);
 	}
 }

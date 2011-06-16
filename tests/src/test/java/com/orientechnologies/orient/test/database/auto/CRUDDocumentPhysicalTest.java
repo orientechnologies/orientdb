@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,6 +50,18 @@ public class CRUDDocumentPhysicalTest {
 	@Parameters(value = "url")
 	public CRUDDocumentPhysicalTest(final String iURL) {
 		url = iURL;
+	}
+
+	@Test
+	public void testPool() throws IOException {
+		final ODatabaseDocumentTx[] dbs = new ODatabaseDocumentTx[ODatabaseDocumentPool.global().getMaxSize()];
+
+		for (int i = 0; i < 10; ++i) {
+			for (int db = 0; db < dbs.length; ++db)
+				dbs[db] = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+			for (int db = 0; db < dbs.length; ++db)
+				dbs[db].close();
+		}
 	}
 
 	@Test
@@ -281,6 +294,8 @@ public class CRUDDocumentPhysicalTest {
 		Assert.assertEquals(result.size(), 1);
 		ODocument dexter = result.get(0);
 		((Collection<String>) dexter.field("tag_list")).add("actor");
+		
+		dexter.setDirty();
 		dexter.save();
 
 		result = database

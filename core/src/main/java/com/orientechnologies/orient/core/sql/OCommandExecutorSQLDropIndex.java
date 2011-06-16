@@ -19,7 +19,6 @@ import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.index.OIndexManagerImpl;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -90,7 +89,7 @@ public class OCommandExecutorSQLDropIndex extends OCommandExecutorSQLPermissionA
 
 			prop.dropIndexInternal();
 		} else {
-			((OIndexManagerImpl) database.getMetadata().getIndexManager()).dropIndexInternal(name);
+			database.getMetadata().getIndexManager().dropIndex(name);
 		}
 
 		return null;

@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.testng.Assert;
@@ -22,6 +23,7 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.graph.OGraphDatabasePool;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -29,10 +31,24 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 @Test
 public class GraphDatabaseTest {
 	private OGraphDatabase	database;
+	private String					url;
 
 	@Parameters(value = "url")
 	public GraphDatabaseTest(String iURL) {
 		database = new OGraphDatabase(iURL);
+		url = iURL;
+	}
+
+	@Test
+	public void testPool() throws IOException {
+		final OGraphDatabase[] dbs = new OGraphDatabase[OGraphDatabasePool.global().getMaxSize()];
+
+		for (int i = 0; i < 10; ++i) {
+			for (int db = 0; db < dbs.length; ++db)
+				dbs[db] = OGraphDatabasePool.global().acquire(url, "admin", "admin");
+			for (int db = 0; db < dbs.length; ++db)
+				dbs[db].close();
+		}
 	}
 
 	@Test

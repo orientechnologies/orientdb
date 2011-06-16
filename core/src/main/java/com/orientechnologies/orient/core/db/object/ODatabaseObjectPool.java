@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.db.object;
 
 import com.orientechnologies.orient.core.db.ODatabasePoolAbstract;
 import com.orientechnologies.orient.core.db.ODatabasePoolBase;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 
 public class ODatabaseObjectPool extends ODatabasePoolBase<ODatabaseObjectTx> {
@@ -33,7 +34,12 @@ public class ODatabaseObjectPool extends ODatabasePoolBase<ODatabaseObjectTx> {
 							if (iAdditionalArgs.length < 2)
 								throw new OSecurityAccessException("Username and/or password missed");
 
-							return new ODatabaseObjectTxPooled((ODatabaseObjectPool) owner, iDatabaseName, iAdditionalArgs[0], iAdditionalArgs[1]);
+							final ODatabaseObjectTxPooled db = new ODatabaseObjectTxPooled((ODatabaseObjectPool) owner, iDatabaseName,
+									iAdditionalArgs[0], iAdditionalArgs[1]);
+
+							ODatabaseRecordThreadLocal.INSTANCE.set(db.getUnderlying());
+
+							return db;
 						}
 
 						public ODatabaseObjectTx reuseResource(final String iKey, final String[] iAdditionalArgs, final ODatabaseObjectTx iValue) {
@@ -43,6 +49,9 @@ public class ODatabaseObjectPool extends ODatabasePoolBase<ODatabaseObjectTx> {
 								iValue.getStorage().open(iAdditionalArgs[0], iAdditionalArgs[1], null);
 							else
 								iValue.getMetadata().getSecurity().authenticate(iAdditionalArgs[0], iAdditionalArgs[1]);
+
+							ODatabaseRecordThreadLocal.INSTANCE.set(iValue.getUnderlying());
+
 							return iValue;
 						}
 					};

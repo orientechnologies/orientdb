@@ -34,52 +34,42 @@ public class OSecurityProxy extends OProxedResource<OSecurityShared> implements 
 	}
 
 	public OUser create() {
-		setDatabaseInThreadLocal();
 		return delegate.create();
 	}
 
 	public void load() {
-		setDatabaseInThreadLocal();
 		delegate.load();
 	}
 
 	public OUser authenticate(final String iUsername, final String iUserPassword) {
-		setDatabaseInThreadLocal();
 		return delegate.authenticate(iUsername, iUserPassword);
 	}
 
 	public OUser getUser(final String iUserName) {
-		setDatabaseInThreadLocal();
 		return delegate.getUser(iUserName);
 	}
 
 	public OUser createUser(final String iUserName, final String iUserPassword, final String[] iRoles) {
-		setDatabaseInThreadLocal();
 		return delegate.createUser(iUserName, iUserPassword, iRoles);
 	}
 
 	public ORole getRole(final String iRoleName) {
-		setDatabaseInThreadLocal();
 		return delegate.getRole(iRoleName);
 	}
 
 	public ORole createRole(final String iRoleName, final ALLOW_MODES iAllowMode) {
-		setDatabaseInThreadLocal();
 		return delegate.createRole(iRoleName, iAllowMode);
 	}
 
 	public ORole createRole(final String iRoleName, final ORole iParent, final ALLOW_MODES iAllowMode) {
-		setDatabaseInThreadLocal();
 		return delegate.createRole(iRoleName, iParent, iAllowMode);
 	}
 
 	public List<ODocument> getUsers() {
-		setDatabaseInThreadLocal();
 		return delegate.getUsers();
 	}
 
 	public List<ODocument> getRoles() {
-		setDatabaseInThreadLocal();
 		return delegate.getRoles();
 	}
 

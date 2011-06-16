@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
@@ -208,6 +209,10 @@ public class OStorageLocalTxExecuter {
 
 		final OCluster cluster = txEntry.clusterName != null ? storage.getClusterByName(txEntry.clusterName) : storage
 				.getClusterById(rid.clusterId);
+
+		if (cluster.getName().equals(OStorage.CLUSTER_INDEX_NAME))
+			// AVOID TO COMMIT INDEX STUFF
+			return;
 
 		if (!(cluster instanceof OClusterLocal))
 			// ONLY LOCAL CLUSTER ARE INVOLVED IN TX

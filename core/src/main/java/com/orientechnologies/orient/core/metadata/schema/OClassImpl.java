@@ -28,6 +28,8 @@ import java.util.Set;
 
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -63,7 +65,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	 * Constructor used in unmarshalling.
 	 */
 	protected OClassImpl(final OSchemaShared iOwner) {
-		document = new ODocument(iOwner.getDocument().getDatabase());
+		document = new ODocument(getDatabase());
 		owner = iOwner;
 	}
 
@@ -555,7 +557,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	 * Returns the number of the records of this class.
 	 */
 	public long count() {
-		return owner.getDocument().getDatabase().countClusterElements(clusterIds);
+		return getDatabase().countClusterElements(clusterIds);
+	}
+
+	private ODatabaseRecord getDatabase() {
+		return ODatabaseRecordThreadLocal.INSTANCE.get();
 	}
 
 	/**
@@ -565,7 +571,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	 */
 	public void truncate() throws IOException {
 		for (int id : clusterIds) {
-			owner.getDocument().getDatabase().getStorage().getClusterById(id).truncate();
+			getDatabase().getStorage().getClusterById(id).truncate();
 		}
 	}
 
@@ -721,9 +727,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		fixedSize += iType.size;
 
 		if (iLinkedType != null)
-			prop.setLinkedType(iLinkedType);
+			prop.setLinkedTypeInternal(iLinkedType);
 		else if (iLinkedClass != null)
-			prop.setLinkedClass(iLinkedClass);
+			prop.setLinkedClassInternal(iLinkedClass);
 		return prop;
 	}
 }

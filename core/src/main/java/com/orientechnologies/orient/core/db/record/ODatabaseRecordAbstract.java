@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
@@ -83,11 +84,15 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			throw new ODatabaseException("Error on opening database '" + getName() + "'", t);
 		}
 		level1Cache = new OLevel1RecordCache(this);
+
+		ODatabaseRecordThreadLocal.INSTANCE.set(this);
 	}
 
 	@Override
 	public <DB extends ODatabase> DB open(final String iUserName, final String iUserPassword) {
-		try {
+		ODatabaseRecordThreadLocal.INSTANCE.set(this);
+
+		try {	
 			super.open(iUserName, iUserPassword);
 			level1Cache.startup();
 
@@ -116,6 +121,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 	@Override
 	public <DB extends ODatabase> DB create() {
+		ODatabaseRecordThreadLocal.INSTANCE.set(this);
+		
 		try {
 			super.create();
 

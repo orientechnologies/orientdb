@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import java.util.Iterator;
+
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -32,6 +34,10 @@ public class ORecordTrackedList extends OTrackedList<OIdentifiable> {
 		super(iSourceRecord);
 	}
 
+	public Iterator<OIdentifiable> rawIterator() {
+		return iterator();
+	}
+
 	/**
 	 * The item's identity doesn't affect nothing.
 	 */
@@ -47,7 +53,11 @@ public class ORecordTrackedList extends OTrackedList<OIdentifiable> {
 	public boolean setDatabase(final ODatabaseRecord iDatabase) {
 		boolean changed = false;
 
-		for (Object o : this) {
+		// USE RAW ITERATOR TO AVOID CONVERSIONS
+		final Iterator<OIdentifiable> it = rawIterator();
+		while (it.hasNext()) {
+			final OIdentifiable o = it.next();
+
 			if (o instanceof ORecordElement)
 				if (((ORecordElement) o).setDatabase(iDatabase))
 					changed = true;

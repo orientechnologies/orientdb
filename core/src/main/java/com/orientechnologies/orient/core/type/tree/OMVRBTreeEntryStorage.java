@@ -80,7 +80,7 @@ public class OMVRBTreeEntryStorage<K, V> extends OMVRBTreeEntryPersistent<K, V> 
 		}
 		record.unsetDirty();
 
-		flush2Record();
+		super.save();
 
 		return this;
 	}

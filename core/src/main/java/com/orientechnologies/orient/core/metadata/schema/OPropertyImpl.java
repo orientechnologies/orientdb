@@ -19,18 +19,19 @@ import java.text.ParseException;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexManagerImpl;
 import com.orientechnologies.orient.core.index.OPropertyIndex;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 /**
@@ -120,7 +121,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	 * @return
 	 */
 	public OPropertyIndex createIndex(final INDEX_TYPE iType) {
-		index = new OPropertyIndex(document.getDatabase(), owner, new String[] { name }, iType.toString());
+		index = new OPropertyIndex(getDatabase(), owner, new String[] { name }, iType.toString());
 		return index;
 	}
 
@@ -139,17 +140,17 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	 * @return
 	 */
 	public OPropertyIndex createIndexInternal(final String iType, final OProgressListener iProgressListener) {
-		index = new OPropertyIndex(document.getDatabase(), owner, new String[] { name }, iType, iProgressListener);
+		index = new OPropertyIndex(getDatabase(), owner, new String[] { name }, iType, iProgressListener);
 		saveInternal();
 		return index;
 	}
 
 	public OPropertyIndex setIndex(final OIndex iIndex) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		final String cmd = String.format("alter property %s index %s", getFullName(), iIndex.getIdentity());
-		document.getDatabase().command(new OCommandSQL(cmd)).execute();
+		getDatabase().command(new OCommandSQL(cmd)).execute();
 
-		final OIndex idx = document.getDatabase().getMetadata().getIndexManager().getIndex(iIndex.getIdentity());
+		final OIndex idx = getDatabase().getMetadata().getIndexManager().getIndex(iIndex.getIdentity());
 		index = new OPropertyIndex(idx, new String[] { name });
 
 		return index;
@@ -158,9 +159,9 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	public OPropertyIndex setIndexInternal(final String iIndexName) {
 		final OIndex idx;
 		if (iIndexName.startsWith("#")) {
-			idx = document.getDatabase().getMetadata().getIndexManager().getIndex(new ORecordId(iIndexName));
+			idx = getDatabase().getMetadata().getIndexManager().getIndex(new ORecordId(iIndexName));
 		} else {
-			idx = document.getDatabase().getMetadata().getIndexManager().getIndex(iIndexName);
+			idx = getDatabase().getMetadata().getIndexManager().getIndex(iIndexName);
 		}
 		index = new OPropertyIndex(idx, new String[] { name });
 		saveInternal();
@@ -172,7 +173,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	 */
 	public OPropertyImpl dropIndex() {
 		if (index != null) {
-			document.getDatabase().getMetadata().getIndexManager().dropIndex(index.getUnderlying().getName());
+			getDatabase().getMetadata().getIndexManager().dropIndex(index.getUnderlying().getName());
 			index = null;
 		}
 		return this;
@@ -183,8 +184,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	 */
 	public void dropIndexInternal() {
 		if (index != null) {
-			((OIndexManagerImpl) document.getDatabase().getMetadata().getIndexManager()).dropIndexInternal(index.getUnderlying()
-					.getName());
+			getDatabase().getMetadata().getIndexManager().dropIndex(index.getUnderlying().getName());
 			saveInternal();
 			index = null;
 		}
@@ -214,14 +214,15 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	}
 
 	public OPropertyImpl setLinkedClass(final OClass iLinkedClass) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		final String cmd = String.format("alter property %s linkedclass %s", getFullName(), iLinkedClass);
-		document.getDatabase().command(new OCommandSQL(cmd)).execute();
+		getDatabase().command(new OCommandSQL(cmd)).execute();
+		this.linkedClass = iLinkedClass;
 		return this;
 	}
 
 	public void setLinkedClassInternal(final OClass iLinkedClass) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		this.linkedClass = iLinkedClass;
 		saveInternal();
 	}
@@ -231,15 +232,16 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	}
 
 	public OPropertyImpl setLinkedType(final OType iLinkedType) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		final String cmd = String.format("alter property %s linkedtype %s", getFullName(), iLinkedType);
-		document.getDatabase().command(new OCommandSQL(cmd)).execute();
+		getDatabase().command(new OCommandSQL(cmd)).execute();
+		this.linkedType = iLinkedType;
 		return this;
 	}
 
-	public void setLinkedTypeInternal(final OType linkedType) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
-		this.linkedType = linkedType;
+	public void setLinkedTypeInternal(final OType iLinkedType) {
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		this.linkedType = iLinkedType;
 		saveInternal();
 	}
 
@@ -248,14 +250,15 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	}
 
 	public OPropertyImpl setNotNull(final boolean iNotNull) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		final String cmd = String.format("alter property %s notnull %s", getFullName(), iNotNull);
-		document.getDatabase().command(new OCommandSQL(cmd)).execute();
+		getDatabase().command(new OCommandSQL(cmd)).execute();
+		notNull = iNotNull;
 		return this;
 	}
 
 	public void setNotNullInternal(final boolean iNotNull) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		notNull = iNotNull;
 		saveInternal();
 	}
@@ -265,15 +268,17 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	}
 
 	public OPropertyImpl setMandatory(final boolean iMandatory) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		final String cmd = String.format("alter property %s mandatory %s", getFullName(), iMandatory);
-		document.getDatabase().command(new OCommandSQL(cmd)).execute();
+		getDatabase().command(new OCommandSQL(cmd)).execute();
+		this.mandatory = iMandatory;
+
 		return this;
 	}
 
-	public void setMandatoryInternal(final boolean mandatory) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
-		this.mandatory = mandatory;
+	public void setMandatoryInternal(final boolean iMandatory) {
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		this.mandatory = iMandatory;
 		saveInternal();
 	}
 
@@ -282,16 +287,18 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	}
 
 	public OPropertyImpl setMin(final String iMin) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		final String cmd = String.format("alter property %s min %s", getFullName(), iMin);
-		document.getDatabase().command(new OCommandSQL(cmd)).execute();
+		getDatabase().command(new OCommandSQL(cmd)).execute();
+		this.min = iMin;
+		checkForDateFormat(iMin);
 		return this;
 	}
 
-	public void setMinInternal(String min) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
-		this.min = min;
-		checkForDateFormat(min);
+	public void setMinInternal(String iMin) {
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		this.min = iMin;
+		checkForDateFormat(iMin);
 		saveInternal();
 	}
 
@@ -300,16 +307,18 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	}
 
 	public OPropertyImpl setMax(final String iMax) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		final String cmd = String.format("alter property %s max %s", getFullName(), iMax);
-		document.getDatabase().command(new OCommandSQL(cmd)).execute();
+		getDatabase().command(new OCommandSQL(cmd)).execute();
+		this.max = iMax;
+		checkForDateFormat(iMax);
 		return this;
 	}
 
-	public void setMaxInternal(final String max) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
-		this.max = max;
-		checkForDateFormat(max);
+	public void setMaxInternal(final String iMax) {
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		this.max = iMax;
+		checkForDateFormat(iMax);
 		saveInternal();
 	}
 
@@ -318,22 +327,24 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	}
 
 	public OPropertyImpl setRegexp(final String iRegexp) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		final String cmd = String.format("alter property %s regexp %s", getFullName(), iRegexp);
-		document.getDatabase().command(new OCommandSQL(cmd)).execute();
+		getDatabase().command(new OCommandSQL(cmd)).execute();
+		this.regexp = iRegexp;
 		return this;
 	}
 
 	public void setRegexpInternal(final String iRegexp) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		this.regexp = iRegexp;
 		saveInternal();
 	}
 
 	public OPropertyImpl setType(final OType iType) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		final String cmd = String.format("alter property %s type %s", getFullName(), iType.toString());
-		document.getDatabase().command(new OCommandSQL(cmd)).execute();
+		getDatabase().command(new OCommandSQL(cmd)).execute();
+		type = iType;
 		return this;
 	}
 
@@ -343,7 +354,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	 * @param iType
 	 */
 	public void setTypeInternal(final OType iType) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		if (iType == type)
 			// NO CHANGES
 			return;
@@ -407,7 +418,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 			setIndexInternal(stringValue);
 			break;
 		case LINKEDCLASS:
-			setLinkedClassInternal(document.getDatabase().getMetadata().getSchema().getClass(stringValue));
+			setLinkedClassInternal(getDatabase().getMetadata().getSchema().getClass(stringValue));
 			break;
 		case LINKEDTYPE:
 			setLinkedTypeInternal(OType.valueOf(stringValue));
@@ -444,7 +455,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
 		switch (attribute) {
 		case LINKEDCLASS:
-			setLinkedClass(document.getDatabase().getMetadata().getSchema().getClass(stringValue));
+			setLinkedClass(getDatabase().getMetadata().getSchema().getClass(stringValue));
 			break;
 		case LINKEDTYPE:
 			setLinkedType(OType.valueOf(stringValue));
@@ -457,6 +468,9 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 			break;
 		case MAX:
 			setMax(stringValue);
+			break;
+		case NAME:
+			setName(stringValue);
 			break;
 		case NOTNULL:
 			setNotNull(Boolean.parseBoolean(stringValue));
@@ -516,10 +530,13 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		if (document.field("linkedType") != null)
 			linkedType = OType.getById(((Integer) document.field("linkedType")).byteValue());
 
-		if (document.field("index") != null) {
+		OIndex underlyingIndex = getDatabase().getMetadata().getIndexManager().getIndex(getFullName());
+
+		if (underlyingIndex != null)
+			index = new OPropertyIndex(underlyingIndex, new String[] { name });
+		else if (document.field("index") != null) {
 			if (document.field("index-type") == null) {
-				final OIndex underlyingIndex = document.getDatabase().getMetadata().getIndexManager()
-						.getIndex((ORecordId) document.field("index", ORID.class));
+				underlyingIndex = getDatabase().getMetadata().getIndexManager().getIndex((ORecordId) document.field("index", ORID.class));
 
 				if (underlyingIndex != null)
 					index = new OPropertyIndex(underlyingIndex, new String[] { name });
@@ -562,7 +579,8 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	}
 
 	private void saveInternal() {
-		((OSchemaProxy) document.getDatabase().getMetadata().getSchema()).saveInternal();
+		if (getDatabase().getStorage() instanceof OStorageEmbedded)
+			((OSchemaProxy) getDatabase().getMetadata().getSchema()).saveInternal();
 	}
 
 	private void checkForDateFormat(final String iDateAsString) {
@@ -579,5 +597,9 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 				throw new OSchemaException("Invalid datetime format setted", e);
 			}
 		}
+	}
+
+	protected ODatabaseRecord getDatabase() {
+		return ODatabaseRecordThreadLocal.INSTANCE.get();
 	}
 }

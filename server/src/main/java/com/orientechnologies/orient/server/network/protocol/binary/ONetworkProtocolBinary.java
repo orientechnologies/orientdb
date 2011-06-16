@@ -724,10 +724,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 					if (result == null) {
 						// NULL VALUE
 						channel.writeByte((byte) 'n');
-					} else if (result instanceof ORecord<?>) {
+					} else if (result instanceof OIdentifiable) {
 						// RECORD
 						channel.writeByte((byte) 'r');
-						writeIdentifiable((ORecordInternal<?>) result);
+						writeIdentifiable((OIdentifiable) result);
 					} else if (result instanceof Collection<?>) {
 						channel.writeByte((byte) 'l');
 						final Collection<OIdentifiable> list = (Collection<OIdentifiable>) result;

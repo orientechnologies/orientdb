@@ -147,11 +147,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 
 				rid.clusterPosition = positionInPhyCluster;
 
-				// TRY IN TX
-				record = database.getTransaction().getRecordEntry(rid);
-				if (record == null)
-					// TRY IN CACHE
-					record = database.getLevel1Cache().findRecord(rid);
+				record = database.load(rid);
 
 				if (record != null && record.getRecordType() != ODocument.RECORD_TYPE)
 					// WRONG RECORD TYPE: JUMP IT

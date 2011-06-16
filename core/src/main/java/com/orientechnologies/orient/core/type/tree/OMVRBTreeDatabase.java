@@ -22,6 +22,7 @@ import java.util.Set;
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexException;
@@ -68,6 +69,10 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> implement
 	protected OMVRBTreeEntryDatabase<K, V> createEntry(final OMVRBTreeEntry<K, V> parent) {
 		adjustPageSize();
 		return new OMVRBTreeEntryDatabase<K, V>(parent, parent.getPageSplitItems());
+	}
+
+	public void setDatabase(ODatabaseRecord database) {
+		this.database = database;
 	}
 
 	@Override
@@ -143,6 +148,7 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> implement
 
 	@Override
 	public OMVRBTreePersistent<K, V> save() throws IOException {
+		record.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
 		record.save(clusterName);
 		return this;
 	}
@@ -202,9 +208,11 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> implement
 
 		if (--users == 0) {
 			super.commitChanges(database);
-			cache.clear();
-			entryPoints.clear();
-			root = null;
+			// cache.clear();
+			// entryPoints.clear();
+			// lastSearchKey = null;
+			// lastSearchNode = null;
+			// root = null;
 		}
 	}
 

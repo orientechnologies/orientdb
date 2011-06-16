@@ -43,6 +43,7 @@ public class OIndexUser extends OIndexAbstractDelegate {
 
 	@Override
 	public Collection<OIdentifiable> get(Object iKey) {
+
 		final OTransactionIndexChanges indexChanges = database.getTransaction().getIndex(delegate.getName());
 
 		final List<OIdentifiable> result;

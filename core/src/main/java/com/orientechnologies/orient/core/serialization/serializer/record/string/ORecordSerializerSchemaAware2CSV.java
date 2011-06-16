@@ -24,6 +24,7 @@ import java.util.Set;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -68,7 +69,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 			} else
 				iMarshalledRecords.add(identityRecord);
 
-		final ODatabaseRecord database = record.getDatabase();
+		final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
 
 		if (!iOnlyDelta && record.getSchemaClass() != null) {
 			// MARSHALL THE CLASSNAME

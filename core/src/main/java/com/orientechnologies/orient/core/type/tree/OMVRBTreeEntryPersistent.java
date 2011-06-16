@@ -22,6 +22,7 @@ import java.util.Set;
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -186,7 +187,47 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		return this;
 	}
 
+	/**
+	 * Assures that all the links versus parent, left and right are consistent.
+	 * 
+	 */
 	public OMVRBTreeEntryPersistent<K, V> save() throws OSerializationException {
+		if (!record.isDirty())
+			return this;
+
+		final boolean isNew = record.getIdentity().isNew();
+
+		// toStream();
+
+		if (record.isDirty()) {
+			// SAVE IF IT'S DIRTY YET
+			record.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
+			record.save(pTree.getClusterName());
+		}
+
+		// RE-ASSIGN RID
+		if (isNew) {
+			final ORecordId rid = (ORecordId) record.getIdentity();
+
+			if (left != null) {
+				left.parentRid = rid;
+				left.markDirty();
+			}
+
+			if (right != null) {
+				right.parentRid = rid;
+				right.markDirty();
+			}
+
+			if (parent != null) {
+				parentRid = parent.record.getIdentity();
+				if (parent.left == this)
+					parent.leftRid = rid;
+				else if (parent.right == this)
+					parent.rightRid = rid;
+				parent.markDirty();
+			}
+		}
 		return this;
 	}
 
@@ -715,6 +756,8 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 	}
 
 	public final byte[] toStream() throws OSerializationException {
+		record.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
+
 		// CHECK IF THE RECORD IS PENDING TO BE MARSHALLED
 		final Integer identityRecord = System.identityHashCode(record);
 		final Set<Integer> marshalledRecords = OSerializationThreadLocal.INSTANCE.get();
@@ -853,48 +896,6 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 	@Override
 	protected OMVRBTreeEntry<K, V> getRightInMemory() {
 		return right;
-	}
-
-	/**
-	 * Assure that all the links versus parent, left and right are consistent.
-	 * 
-	 * @param iMarshalledRecords
-	 */
-	protected void flush2Record() throws OSerializationException {
-		if (!record.isDirty())
-			return;
-
-		final boolean isNew = record.getIdentity().isNew();
-
-		// toStream();
-
-		if (record.isDirty())
-			// SAVE IF IT'S DIRTY YET
-			record.save(pTree.getClusterName());
-
-		// RE-ASSIGN RID
-		if (isNew) {
-			final ORecordId rid = (ORecordId) record.getIdentity();
-
-			if (left != null) {
-				left.parentRid = rid;
-				left.markDirty();
-			}
-
-			if (right != null) {
-				right.parentRid = rid;
-				right.markDirty();
-			}
-
-			if (parent != null) {
-				parentRid = parent.record.getIdentity();
-				if (parent.left == this)
-					parent.leftRid = rid;
-				else if (parent.right == this)
-					parent.rightRid = rid;
-				parent.markDirty();
-			}
-		}
 	}
 
 	@Override

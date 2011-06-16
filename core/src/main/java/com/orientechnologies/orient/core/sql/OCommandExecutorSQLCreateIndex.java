@@ -20,7 +20,6 @@ import java.util.Map;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexManagerImpl;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -104,13 +103,12 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 
 			idx = prop.createIndexInternal(indexType.toUpperCase(), progressListener).getUnderlying();
 		} else {
-			idx = ((OIndexManagerImpl) database.getMetadata().getIndexManager()).createIndexInternal(name, indexType.toUpperCase(), null,
-					null, null, false);
+			idx = database.getMetadata().getIndexManager().createIndex(name, indexType.toUpperCase(), null, null, null, false);
 		}
 
-		if (idx != null)
-			return idx.getSize();
+//		if (idx != null)
+//			return idx.getSize();
 
-		return null;
+		return database.getMetadata().getIndexManager().getDocument().getIdentity();
 	}
 }

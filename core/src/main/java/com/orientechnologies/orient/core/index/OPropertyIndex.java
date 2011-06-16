@@ -39,8 +39,8 @@ public class OPropertyIndex implements OIndexCallback {
 		fields = iFields;
 		final String indexName = getIndexName(iClass, iFields);
 
-		delegate = ((OIndexManagerImpl) iDatabase.getMetadata().getIndexManager()).createIndexInternal(indexName, iType,
-				iClass.getClusterIds(), this, iProgressListener, true);
+		delegate = iDatabase.getMetadata().getIndexManager()
+				.createIndex(indexName, iType, iClass.getClusterIds(), this, iProgressListener, true);
 	}
 
 	public OPropertyIndex(final ODatabaseRecord iDatabase, final OClass iClass, final String[] iFields, final String iType) {
@@ -59,8 +59,10 @@ public class OPropertyIndex implements OIndexCallback {
 		// GENERATE THE KEY
 		final Object key = generateKey(iRecord);
 
+		final OIndexInternal idx = delegate.getInternal();
+
 		try {
-			((OIndexInternal) delegate).checkEntry(iRecord, key);
+			idx.checkEntry(iRecord, key);
 		} catch (OIndexException e) {
 			OLogManager.instance().exception("Invalid constraints on index '%s' for key '%s' in record %s for the fields '%s'", e,
 					OIndexException.class, delegate.getName(), key, iRecord.getIdentity(), Arrays.toString(fields));

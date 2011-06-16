@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
@@ -24,6 +25,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.object.ODatabaseObjectPool;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -37,13 +39,28 @@ public class ObjectTreeTest {
 	private ODatabaseObjectTx	database;
 	protected long						startRecordNumber;
 	private long							beginCities;
+	private String						url;
 
 	@Parameters(value = "url")
 	public ObjectTreeTest(String iURL) {
 		Orient.instance().registerEngine(new OEngineRemote());
 
+		url = iURL;
+
 		database = new ODatabaseObjectTx(iURL);
 		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain");
+	}
+
+	@Test
+	public void testPool() throws IOException {
+		final ODatabaseObjectTx[] dbs = new ODatabaseObjectTx[ODatabaseObjectPool.global().getMaxSize()];
+
+		for (int i = 0; i < 10; ++i) {
+			for (int db = 0; db < dbs.length; ++db)
+				dbs[db] = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+			for (int db = 0; db < dbs.length; ++db)
+				dbs[db].close();
+		}
 	}
 
 	@Test

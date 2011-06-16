@@ -114,4 +114,6 @@ public interface OIndex {
 	 *          Collection of entries to commit
 	 */
 	public void commit(ODocument iDocument);
+
+	public OIndexInternal getInternal();
 }

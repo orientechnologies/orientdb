@@ -134,7 +134,10 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 			for (OTransactionIndexChangesPerKey entry : indexEntry.getValue().changesPerKey.values()) {
 				// SERIALIZE KEY
 				value.setLength(0);
-				ORecordSerializerStringAbstract.fieldTypeToString(value, null, OType.getTypeByClass(entry.key.getClass()), entry.key);
+				if (entry.key != null)
+					ORecordSerializerStringAbstract.fieldTypeToString(value, null, OType.getTypeByClass(entry.key.getClass()), entry.key);
+				else
+					value.append('*');
 				String key = value.toString();
 
 				if (key.length() > 1 && key.charAt(0) == '"' && key.charAt(key.length() - 1) == '"')
@@ -162,9 +165,9 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 				entries.field(key, operations);
 			}
 		}
-		
+
 		indexEntries.clear();
-		
+
 		return result;
 	}
 

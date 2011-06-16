@@ -88,7 +88,7 @@ public class OMVRBTreeEntryDatabase<K, V> extends OMVRBTreeEntryPersistent<K, V>
 		if (!record.isDirty())
 			return this;
 
-		flush2Record();
+		super.save();
 
 		if (parent != null)
 			if (!parent.record.getIdentity().equals(parentRid))

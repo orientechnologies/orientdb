@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.db.graph;
 
 import com.orientechnologies.orient.core.db.ODatabasePoolAbstract;
 import com.orientechnologies.orient.core.db.ODatabasePoolBase;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 
 public class OGraphDatabasePool extends ODatabasePoolBase<OGraphDatabase> {
@@ -34,7 +35,12 @@ public class OGraphDatabasePool extends ODatabasePoolBase<OGraphDatabase> {
 							if (iAdditionalArgs.length < 2)
 								throw new OSecurityAccessException("Username and/or password missed");
 
-							return new OGraphDatabasePooled((OGraphDatabasePool) owner, iDatabaseName, iAdditionalArgs[0], iAdditionalArgs[1]);
+							final OGraphDatabasePooled db = new OGraphDatabasePooled((OGraphDatabasePool) owner, iDatabaseName,
+									iAdditionalArgs[0], iAdditionalArgs[1]);
+
+							ODatabaseRecordThreadLocal.INSTANCE.set(db);
+
+							return db;
 						}
 
 						public OGraphDatabase reuseResource(final String iKey, final String[] iAdditionalArgs, final OGraphDatabase iValue) {
@@ -44,6 +50,9 @@ public class OGraphDatabasePool extends ODatabasePoolBase<OGraphDatabase> {
 								iValue.getStorage().open(iAdditionalArgs[0], iAdditionalArgs[1], null);
 							else
 								iValue.getMetadata().getSecurity().authenticate(iAdditionalArgs[0], iAdditionalArgs[1]);
+
+							ODatabaseRecordThreadLocal.INSTANCE.set(iValue);
+
 							return iValue;
 						}
 					};

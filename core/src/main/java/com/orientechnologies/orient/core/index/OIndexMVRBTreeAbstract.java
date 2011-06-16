@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -203,7 +204,9 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 		acquireExclusiveLock();
 		try {
 
-			final Set<OIdentifiable> values = map.get(iKey);
+			final ORecordLazySet values = (ORecordLazySet) map.get(iKey);
+			if (values != null)
+				values.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
 
 			if (values == null)
 				return ORecordLazySet.EMPTY_SET;
@@ -443,6 +446,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 		acquireExclusiveLock();
 		try {
 
+			map.setDatabase( ODatabaseRecordThreadLocal.INSTANCE.get() );
 			map.lazySave();
 			return this;
 
@@ -499,6 +503,10 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	@Override
 	public String toString() {
 		return name + " (" + (type != null ? type : "?") + ")" + (map != null ? " " + map : "");
+	}
+
+	public OIndexInternal getInternal() {
+		return this;
 	}
 
 	public OIndexCallback getCallback() {
@@ -593,8 +601,14 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 
 						if (operation == OPERATION.PUT.ordinal())
 							put(key, value);
-						else if (operation == OPERATION.REMOVE.ordinal())
-							remove(key, value);
+						else if (operation == OPERATION.REMOVE.ordinal()) {
+							if (key.equals("*"))
+								remove(value);
+							else if (value == null)
+								remove(key);
+							else
+								remove(key, value);
+						}
 					}
 				}
 			}

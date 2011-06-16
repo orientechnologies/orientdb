@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.orient.core.db.ODatabasePoolAbstract;
 import com.orientechnologies.orient.core.db.ODatabasePoolBase;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 
 public class ODatabaseDocumentPool extends ODatabasePoolBase<ODatabaseDocumentTx> {
@@ -34,8 +35,12 @@ public class ODatabaseDocumentPool extends ODatabasePoolBase<ODatabaseDocumentTx
 							if (iAdditionalArgs.length < 2)
 								throw new OSecurityAccessException("Username and/or password missed");
 
-							return new ODatabaseDocumentTxPooled((ODatabaseDocumentPool) owner, iDatabaseName, iAdditionalArgs[0],
-									iAdditionalArgs[1]);
+							final ODatabaseDocumentTxPooled db = new ODatabaseDocumentTxPooled((ODatabaseDocumentPool) owner, iDatabaseName,
+									iAdditionalArgs[0], iAdditionalArgs[1]);
+
+							ODatabaseRecordThreadLocal.INSTANCE.set(db);
+
+							return db;
 						}
 
 						public ODatabaseDocumentTx reuseResource(final String iKey, final String[] iAdditionalArgs,
@@ -46,6 +51,9 @@ public class ODatabaseDocumentPool extends ODatabasePoolBase<ODatabaseDocumentTx
 								iValue.getStorage().open(iAdditionalArgs[0], iAdditionalArgs[1], null);
 							else
 								iValue.getMetadata().getSecurity().authenticate(iAdditionalArgs[0], iAdditionalArgs[1]);
+
+							ODatabaseRecordThreadLocal.INSTANCE.set(iValue);
+
 							return iValue;
 						}
 					};

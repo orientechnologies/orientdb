@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexManagerImpl;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -220,7 +219,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 
 		if (indexEntries != null) {
 			for (Entry<String, Object> indexEntry : indexEntries) {
-				final OIndex index = ((OIndexManagerImpl) getMetadata().getIndexManager()).getIndexInternal(indexEntry.getKey());
+				final OIndex index = getMetadata().getIndexManager().getIndexInternal(indexEntry.getKey());
 				index.commit((ODocument) indexEntry.getValue());
 			}
 		}

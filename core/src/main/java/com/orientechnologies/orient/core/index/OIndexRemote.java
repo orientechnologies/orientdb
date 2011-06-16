@@ -23,10 +23,13 @@ import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
@@ -38,26 +41,24 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
  */
 @SuppressWarnings("unchecked")
 public class OIndexRemote implements OIndex {
-	private final ODatabaseRecord	database;
-	private final String					wrappedType;
-	private final ORID						rid;
+	private final String				wrappedType;
+	private final ORID					rid;
 
-	private String								name;
+	private String							name;
 
-	private final static String		QUERY_GET				= "select from index:%s where key = ?";
-	private final static String		QUERY_GET_RANGE	= "select from index:%s where key between ? and ?";
-	private final static String		QUERY_PUT				= "insert into index:%s (key,rid) values (%s,%s)";
-	private final static String		QUERY_REMOVE		= "delete from index:%s where key = %s";
-	private final static String		QUERY_REMOVE2		= "delete from index:%s where key = %s and rid = %s";
-	private final static String		QUERY_REMOVE3		= "delete from index:%s where rid = ?";
-	private final static String		QUERY_CONTAINS	= "select count(*) as size from	index:%s where key = ?";
-	private final static String		QUERY_SIZE			= "select count(*) as size from index:%s";
-	private final static String		QUERY_KEYS			= "select key from index:%s";
-	private final static String		QUERY_ENTRIES		= "select key, rid from index:%s";
-	private final static String		QUERY_CLEAR			= "delete from index:%s";
+	private final static String	QUERY_GET				= "select from index:%s where key = ?";
+	private final static String	QUERY_GET_RANGE	= "select from index:%s where key between ? and ?";
+	private final static String	QUERY_PUT				= "insert into index:%s (key,rid) values (%s,%s)";
+	private final static String	QUERY_REMOVE		= "delete from index:%s where key = %s";
+	private final static String	QUERY_REMOVE2		= "delete from index:%s where key = %s and rid = %s";
+	private final static String	QUERY_REMOVE3		= "delete from index:%s where rid = ?";
+	private final static String	QUERY_CONTAINS	= "select count(*) as size from	index:%s where key = ?";
+	private final static String	QUERY_SIZE			= "select count(*) as size from index:%s";
+	private final static String	QUERY_KEYS			= "select key from index:%s";
+	private final static String	QUERY_ENTRIES		= "select key, rid from index:%s";
+	private final static String	QUERY_CLEAR			= "delete from index:%s";
 
-	public OIndexRemote(final ODatabaseRecord iDatabase, final String iName, final String iWrappedType, final ORID iRid) {
-		this.database = iDatabase;
+	public OIndexRemote(final String iName, final String iWrappedType, final ORID iRid) {
 		this.name = iName;
 		this.wrappedType = iWrappedType;
 		this.rid = iRid;
@@ -79,17 +80,17 @@ public class OIndexRemote implements OIndex {
 
 	public Collection<OIdentifiable> get(final Object iKey) {
 		final OCommandRequest cmd = formatCommand(QUERY_GET, name);
-		return (Collection<OIdentifiable>) database.command(cmd).execute(iKey);
+		return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(iKey);
 	}
 
 	public Collection<OIdentifiable> getBetween(final Object iRangeFrom, final Object iRangeTo) {
 		final OCommandRequest cmd = formatCommand(QUERY_GET_RANGE, name);
-		return (Collection<OIdentifiable>) database.command(cmd).execute(iRangeFrom, iRangeTo);
+		return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
 	}
 
 	public boolean contains(final Object iKey) {
 		final OCommandRequest cmd = formatCommand(QUERY_CONTAINS, name);
-		final List<ODocument> result = database.command(cmd).execute();
+		final List<ODocument> result = getDatabase().command(cmd).execute();
 		return (Long) result.get(0).field("size") > 0;
 	}
 
@@ -102,7 +103,7 @@ public class OIndexRemote implements OIndex {
 			((ORecord<?>) iValue).save();
 
 		final OCommandRequest cmd = formatCommand(QUERY_PUT, name, iKey, iValue.getIdentity());
-		database.command(cmd).execute();
+		getDatabase().command(cmd).execute();
 		return this;
 	}
 
@@ -111,7 +112,7 @@ public class OIndexRemote implements OIndex {
 			iKey = "'" + iKey + "'";
 
 		final OCommandRequest cmd = formatCommand(QUERY_REMOVE, name, iKey);
-		return Boolean.parseBoolean((String) database.command(cmd).execute(iKey));
+		return Boolean.parseBoolean((String) getDatabase().command(cmd).execute(iKey));
 	}
 
 	public boolean remove(Object iKey, final OIdentifiable iRID) {
@@ -119,38 +120,37 @@ public class OIndexRemote implements OIndex {
 			iKey = "'" + iKey + "'";
 
 		final OCommandRequest cmd = formatCommand(QUERY_REMOVE2, name, iKey, iRID.getIdentity());
-		return Boolean.parseBoolean((String) database.command(cmd).execute(iKey, iRID));
+		return Boolean.parseBoolean((String) getDatabase().command(cmd).execute(iKey, iRID));
 	}
 
 	public int remove(final OIdentifiable iRecord) {
 		final OCommandRequest cmd = formatCommand(QUERY_REMOVE3, name, iRecord.getIdentity());
-		return (Integer) database.command(cmd).execute(iRecord);
+		return (Integer) getDatabase().command(cmd).execute(iRecord);
 	}
 
 	public OIndex clear() {
 		final OCommandRequest cmd = formatCommand(QUERY_CLEAR, name);
-		database.command(cmd).execute();
+		getDatabase().command(cmd).execute();
 		return this;
 	}
 
 	public Iterable<Object> keys() {
 		final OCommandRequest cmd = formatCommand(QUERY_KEYS, name);
-		return (Iterable<Object>) database.command(cmd).execute();
+		return (Iterable<Object>) getDatabase().command(cmd).execute();
 	}
 
 	public Iterator<Entry<Object, Set<OIdentifiable>>> iterator() {
 		final OCommandRequest cmd = formatCommand(QUERY_ENTRIES, name);
-		return (Iterator<Entry<Object, Set<OIdentifiable>>>) database.command(cmd).execute();
+		return (Iterator<Entry<Object, Set<OIdentifiable>>>) getDatabase().command(cmd).execute();
 	}
 
 	public long getSize() {
 		final OCommandRequest cmd = formatCommand(QUERY_SIZE, name);
-		final List<ODocument> result = database.command(cmd).execute();
+		final List<ODocument> result = getDatabase().command(cmd).execute();
 		return (Long) result.get(0).field("size");
 	}
 
 	public void unload() {
-
 	}
 
 	public boolean isAutomatic() {
@@ -189,5 +189,13 @@ public class OIndexRemote implements OIndex {
 	}
 
 	public void commit(final ODocument iDocument) {
+	}
+
+	public OIndexInternal getInternal() {
+		return null;
+	}
+
+	protected ODatabaseComplex<ORecordInternal<?>> getDatabase() {
+		return ODatabaseRecordThreadLocal.INSTANCE.get();
 	}
 }
