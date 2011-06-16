@@ -54,6 +54,7 @@ public class ODatabaseDocumentPool extends ODatabasePoolBase<ODatabaseDocumentTx
 	}
 
 	public static ODatabaseDocumentPool global() {
+		globalInstance.setup();
 		return globalInstance;
 	}
 }

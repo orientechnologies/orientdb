@@ -31,7 +31,7 @@ public class OResourcePool<K, V> {
 
 	public OResourcePool(final int iMaxResources, final OResourcePoolListener<K, V> iListener) {
 		listener = iListener;
-		sem = new Semaphore(iMaxResources, true);
+		sem = new Semaphore(iMaxResources + 1, true);
 	}
 
 	public V getResource(K iKey, final long iMaxWaitMillis, String... iAdditionalArgs) throws OLockException {

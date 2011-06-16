@@ -47,6 +47,10 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
 		dbPool.close();
 	}
 
+	public int getMaxSize() {
+		return dbPool.getMaxSize();
+	}
+
 	public Map<String, OResourcePool<String, DB>> getPools() {
 		return dbPool.getPools();
 	}

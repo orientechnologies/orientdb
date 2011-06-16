@@ -127,4 +127,8 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
 
 			}
 	}
+
+	public int getMaxSize() {
+		return maxSize;
+	}
 }

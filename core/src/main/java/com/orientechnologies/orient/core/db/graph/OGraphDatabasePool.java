@@ -52,6 +52,7 @@ public class OGraphDatabasePool extends ODatabasePoolBase<OGraphDatabase> {
 	}
 
 	public static OGraphDatabasePool global() {
+		globalInstance.setup();
 		return globalInstance;
 	}
 }
