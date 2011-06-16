@@ -26,6 +26,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -69,7 +70,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	private Set<ORecordHook>										hooks							= new HashSet<ORecordHook>();
 	private boolean															retainRecords			= true;
 	private OLevel1RecordCache									level1Cache;
-	private boolean															mvcc							= true;
+	private boolean															mvcc;
 	private ODictionary<ORecordInternal<?>>			dictionary;
 
 	public ODatabaseRecordAbstract(final String iURL, final Class<? extends ORecordInternal<?>> iRecordClass) {
@@ -85,6 +86,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		}
 		level1Cache = new OLevel1RecordCache(this);
 
+		mvcc = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
+
 		ODatabaseRecordThreadLocal.INSTANCE.set(this);
 	}
 
@@ -92,7 +95,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	public <DB extends ODatabase> DB open(final String iUserName, final String iUserPassword) {
 		ODatabaseRecordThreadLocal.INSTANCE.set(this);
 
-		try {	
+		try {
 			super.open(iUserName, iUserPassword);
 			level1Cache.startup();
 
@@ -122,7 +125,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	@Override
 	public <DB extends ODatabase> DB create() {
 		ODatabaseRecordThreadLocal.INSTANCE.set(this);
-		
+
 		try {
 			super.create();
 
