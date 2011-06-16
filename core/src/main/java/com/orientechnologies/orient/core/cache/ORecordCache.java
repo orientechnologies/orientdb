@@ -57,10 +57,11 @@ public class ORecordCache extends LinkedHashMap<ORID, ORecordInternal<?>> {
 
 		int entryNum = 0;
 		int i = 0;
-		for (ORID rid : keySet()) {
-			if (entryNum++ >= iThreshold)
-				// ADD ONLY AFTER THRESHOLD. THIS IS TO GET THE LESS USED
-				ridToRemove[i++] = rid;
+		for (java.util.Map.Entry<ORID, ORecordInternal<?>> ridEntry : entrySet()) {
+			if (!ridEntry.getValue().isDirty() && !ridEntry.getValue().isPinned())
+				if (entryNum++ >= iThreshold)
+					// ADD ONLY AFTER THRESHOLD. THIS IS TO GET THE LESS USED
+					ridToRemove[i++] = ridEntry.getKey();
 
 			if (i >= ridToRemove.length)
 				break;
