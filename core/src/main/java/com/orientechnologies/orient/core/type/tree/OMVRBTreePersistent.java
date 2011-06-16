@@ -223,6 +223,9 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			if (debug)
 				System.out.printf("\n------------\nOptimizing: total items %d, root is %s...", size(), pRoot.toString());
 
+			lastSearchKey = null;
+			lastSearchNode = null;
+			
 			// COMPUTE THE DISTANCE BETWEEN NODES
 			final int distance;
 			if (nodes <= entryPointsSize)

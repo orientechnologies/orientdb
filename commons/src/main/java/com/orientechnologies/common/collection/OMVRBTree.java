@@ -2645,7 +2645,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	}
 
 	protected OMVRBTreeEntry<K, V> getLastSearchNodeForSameKey(final Object key) {
-		if (lastSearchKey != null)
+		if (key != null && lastSearchKey != null)
 			if (comparator != null)
 				return comparator.compare((K) key, (K) lastSearchKey) == 0 ? lastSearchNode : null;
 			else
