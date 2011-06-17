@@ -239,7 +239,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		if (iInVertex == null)
 			throw new IllegalArgumentException("iInVertex is null");
 
-		checkVertexClass(iClassName);
+		checkEdgeClass(iClassName);
 
 		final boolean safeMode = beginBlock();
 
@@ -606,6 +606,17 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	public void checkEdgeClass(final ODocument iEdge) {
 		if (!iEdge.getSchemaClass().isSubClassOf(edgeBaseClass))
 			throw new IllegalArgumentException("The document received is not an edge. Found class '" + iEdge.getSchemaClass() + "'");
+	}
+
+	public void checkEdgeClass(final String iEdgeTypeName) {
+		if (iEdgeTypeName != null) {
+			final OClass cls = getMetadata().getSchema().getClass(iEdgeTypeName);
+			if (cls == null)
+				throw new IllegalArgumentException("The class '" + iEdgeTypeName + "' was not found");
+
+			if (!cls.isSubClassOf(edgeBaseClass))
+				throw new IllegalArgumentException("The class '" + iEdgeTypeName + "' doesn't extend the edge type");
+		}
 	}
 
 	protected boolean beginBlock() {
