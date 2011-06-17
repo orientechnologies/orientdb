@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexFullText;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.index.OIndexNotUnique;
 import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -376,7 +377,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		if (prop != null && prop.isIndexed()) {
 			// TODO: IMPROVE THIS MANAGEMENT
 			// ONLY EQUALS IS SUPPORTED NOW!
-			final OIndex idx = prop.getIndex().getUnderlying();
+			OIndex idx = prop.getIndex().getUnderlying();
+			idx = idx.getInternal();
+
 			if (((idx instanceof OIndexUnique || idx instanceof OIndexNotUnique) && iCondition.getOperator() instanceof OQueryOperatorEquals)
 					|| idx instanceof OIndexFullText && iCondition.getOperator() instanceof OQueryOperatorContainsText) {
 				Object value = iCondition.getLeft() == iItem ? iCondition.getRight() : iCondition.getLeft();
