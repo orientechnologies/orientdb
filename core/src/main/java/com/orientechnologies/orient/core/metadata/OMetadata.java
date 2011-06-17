@@ -98,10 +98,16 @@ public class OMetadata {
 		indexManager = new OIndexManagerProxy(database.getStorage().getResource(OIndexManager.class.getSimpleName(),
 				new Callable<OIndexManager>() {
 					public OIndexManager call() {
+						OIndexManager instance;
 						if (database.getStorage() instanceof OStorageEmbedded)
-							return new OIndexManagerShared(database);
+							instance = new OIndexManagerShared(database);
 						else
-							return new OIndexManagerRemote(database);
+							instance = new OIndexManagerRemote(database);
+
+						if (iLoad)
+							instance.load();
+
+						return instance;
 					}
 				}), database);
 

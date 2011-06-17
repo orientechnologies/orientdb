@@ -61,11 +61,13 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 		super.reload("*:-1 index:0");
 
 		// RE-ASSIGN ALL THE PROPERTY INDEXES, IF ANY
-		final Collection<OClass> classes = new ArrayList<OClass>(getDatabase().getMetadata().getSchema().getClasses());
-		for (OClass c : classes) {
-			for (OProperty p : c.properties()) {
-				if (p.getIndex() != null) {
-					p.getIndex().delegate = indexes.get(p.getIndex().delegate.getName().toLowerCase());
+		if (getDatabase().getMetadata().getSchema() != null) {
+			final Collection<OClass> classes = new ArrayList<OClass>(getDatabase().getMetadata().getSchema().getClasses());
+			for (OClass c : classes) {
+				for (OProperty p : c.properties()) {
+					if (p.getIndex() != null) {
+						p.getIndex().delegate = indexes.get(p.getIndex().delegate.getName().toLowerCase());
+					}
 				}
 			}
 		}
