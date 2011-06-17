@@ -29,6 +29,32 @@
 This document enlist the last changes to the OrientDB project.
 
 -------------------------------------------------------------------------------
+VERSION 1.0rc2 - (June, 17th 2011)
+-------------------------------------------------------------------------------
+- Fixed multi-threads problems
+- Speeded up index searching
+- Refactored schema, index and security managers to work in multi-threads
+- When use remote as protocol, triggers now work at server-side level
+- New SQL BETWEEN operator, useful specially against indexes to execute
+  ranged queries
+- New SQL ALTER CLASS and ALTER PROPERTy to refactor the db schema
+- New Console DROP DATABASE command
+- New Console INDEXES command that displays the configured indexes
+- New DATE type to handle dates only with YYYY/MM/SS
+- New SQL distinct() function
+- New SQL union(), intersect() and difference() functions to work with
+  collections
+- MVCC (Multi-version Concurrency Control) system is enabled also outside
+  transactions by default, but can be turned off
+- Supported +, -, *, / and % math operations in SQL Query
+- Enforced security checks
+- GraphDB support multiple edges between two vertexes
+- Core is Java5 compatible, the server needs Java6
+- 80 issues fixed in total!
+
+Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.0rc2
+
+-------------------------------------------------------------------------------
 VERSION 1.0rc1 - (May, 3rd 2011)
 -------------------------------------------------------------------------------
 - New defrag algorithm to reduce holes and therefore disk space
