@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.intent.OIntentMassiveRead;
 import com.orientechnologies.orient.core.iterator.ORecordIterator;
@@ -128,14 +129,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			@ConsoleParameter(name = "url", description = "The url of the remote server or the database to connect in the format '<mode>:<path>'") String iURL,
 			@ConsoleParameter(name = "user", description = "User name") String iUserName,
 			@ConsoleParameter(name = "password", description = "User password") String iUserPassword) throws IOException {
-		if (currentDatabase != null){
+		if (currentDatabase != null) {
 			currentDatabase.close();
 			currentDatabase = null;
 			currentDatabaseName = null;
 			currentRecord = null;
 		}
 
-		if (serverAdmin != null){
+		if (serverAdmin != null) {
 			serverAdmin.close();
 			serverAdmin = null;
 		}
@@ -593,6 +594,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			out.println("Current database: " + currentDatabaseName);
 			clusters();
 			classes();
+			indexes();
 		}
 	}
 
@@ -647,6 +649,33 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			}
 			out.println("-------------------------------+----+-------------+-------------------------------+-----------+-----------+----------+------+------+");
 		}
+	}
+
+	@ConsoleCommand(description = "Display all indexes")
+	public void indexes() {
+		if (currentDatabaseName != null) {
+			out.println("\nINDEXES:");
+			out.println("----------------------------------------------+------------+----+-----------+");
+			out.println(" NAME                                         | TYPE       |AUTO| RECORDS   |");
+			out.println("----------------------------------------------+------------+----+-----------+");
+
+			int totalIndexes = 0;
+			long totalRecords = 0;
+			for (OIndex index : currentDatabase.getMetadata().getIndexManager().getIndexes()) {
+				try {
+					out.printf(" %-45s| %-10s | %1s  |%10d |\n", index.getName(), index.getType(), index.isAutomatic() ? "Y" : "N",
+							index.getSize());
+
+					totalIndexes++;
+					totalRecords += index.getSize();
+				} catch (Exception e) {
+				}
+			}
+			out.println("----------------------------------------------+------------+----+-----------+");
+			out.printf(" TOTAL = %-3d                                                %15d |\n", totalIndexes, totalRecords);
+			out.println("----------------------------------------------------------------------------+\n");
+		} else
+			out.println("No database selected yet.");
 	}
 
 	@ConsoleCommand(description = "Display all the configured clusters")
