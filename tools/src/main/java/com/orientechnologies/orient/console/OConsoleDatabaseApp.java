@@ -22,6 +22,7 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -1063,7 +1064,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		if (iIndex == 0) {
 			out.printf("\n");
 			printHeaderLine(iColumns);
-			out.print("  #| REC ID |");
+			out.print("  #| RID     |");
 			int col = 0;
 			for (String colName : iColumns) {
 				if (col++ > 0)
@@ -1075,7 +1076,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		}
 
 		// FORMAT THE LINE DYNAMICALLY
-		StringBuilder format = new StringBuilder("%3d|%8s");
+		StringBuilder format = new StringBuilder("%3d|%9s");
 		List<Object> vargs = new ArrayList<Object>();
 		vargs.add(iIndex);
 		vargs.add(iRecord.getIdentity());
@@ -1096,8 +1097,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 					value = "[" + ((Collection<?>) value).size() + "]";
 				else if (value instanceof ORecord<?>)
 					value = ((ORecord<?>) value).getIdentity().toString();
-
-				if (value instanceof byte[])
+				else if (value instanceof Date)
+					value = currentDatabase.getStorage().getConfiguration().getDateTimeFormatInstance().format((Date) value);
+				else if (value instanceof byte[])
 					value = "byte[" + ((byte[]) value).length + "]";
 
 				vargs.add(value);
@@ -1105,13 +1107,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 			out.println(String.format(format.toString(), vargs.toArray()));
 		} catch (Throwable t) {
-			out.printf("%3d|%8s|%s\n", iIndex, iRecord.getIdentity(), "Error on loading record dued to: " + t);
+			out.printf("%3d|%9s|%s\n", iIndex, iRecord.getIdentity(), "Error on loading record dued to: " + t);
 		}
 	}
 
 	private void printHeaderLine(final List<String> iColumns) {
 		if (iColumns.size() > 0) {
-			out.print("---+--------");
+			out.print("---+---------");
 			for (int i = 0; i < iColumns.size(); ++i) {
 				out.print("+");
 				for (int k = 0; k < 20; ++k)
