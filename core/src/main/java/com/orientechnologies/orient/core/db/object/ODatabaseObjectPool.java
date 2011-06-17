@@ -43,14 +43,15 @@ public class ODatabaseObjectPool extends ODatabasePoolBase<ODatabaseObjectTx> {
 						}
 
 						public ODatabaseObjectTx reuseResource(final String iKey, final String[] iAdditionalArgs, final ODatabaseObjectTx iValue) {
+							ODatabaseRecordThreadLocal.INSTANCE.set(iValue.getUnderlying());
+
 							((ODatabaseObjectTxPooled) iValue).reuse(owner);
+
 							if (iValue.getStorage().isClosed())
 								// STORAGE HAS BEEN CLOSED: REOPEN IT
 								iValue.getStorage().open(iAdditionalArgs[0], iAdditionalArgs[1], null);
 							else
 								iValue.getMetadata().getSecurity().authenticate(iAdditionalArgs[0], iAdditionalArgs[1]);
-
-							ODatabaseRecordThreadLocal.INSTANCE.set(iValue.getUnderlying());
 
 							return iValue;
 						}

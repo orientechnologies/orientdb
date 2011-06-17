@@ -44,14 +44,15 @@ public class OGraphDatabasePool extends ODatabasePoolBase<OGraphDatabase> {
 						}
 
 						public OGraphDatabase reuseResource(final String iKey, final String[] iAdditionalArgs, final OGraphDatabase iValue) {
+							ODatabaseRecordThreadLocal.INSTANCE.set(iValue);
+
 							((OGraphDatabasePooled) iValue).reuse(owner);
+
 							if (iValue.getStorage().isClosed())
 								// STORAGE HAS BEEN CLOSED: REOPEN IT
 								iValue.getStorage().open(iAdditionalArgs[0], iAdditionalArgs[1], null);
 							else
 								iValue.getMetadata().getSecurity().authenticate(iAdditionalArgs[0], iAdditionalArgs[1]);
-
-							ODatabaseRecordThreadLocal.INSTANCE.set(iValue);
 
 							return iValue;
 						}

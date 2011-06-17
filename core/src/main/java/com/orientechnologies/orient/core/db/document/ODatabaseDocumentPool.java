@@ -45,14 +45,14 @@ public class ODatabaseDocumentPool extends ODatabasePoolBase<ODatabaseDocumentTx
 
 						public ODatabaseDocumentTx reuseResource(final String iKey, final String[] iAdditionalArgs,
 								final ODatabaseDocumentTx iValue) {
+							ODatabaseRecordThreadLocal.INSTANCE.set(iValue);
+
 							((ODatabaseDocumentTxPooled) iValue).reuse(owner);
 							if (iValue.getStorage().isClosed())
 								// STORAGE HAS BEEN CLOSED: REOPEN IT
 								iValue.getStorage().open(iAdditionalArgs[0], iAdditionalArgs[1], null);
 							else
 								iValue.getMetadata().getSecurity().authenticate(iAdditionalArgs[0], iAdditionalArgs[1]);
-
-							ODatabaseRecordThreadLocal.INSTANCE.set(iValue);
 
 							return iValue;
 						}
