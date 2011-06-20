@@ -110,11 +110,12 @@ function ODatabase(databasePath) {
 	ODatabase.prototype.setParseResponseLinks = function(iParseResponseLinks) {
 		this.parseResponseLink = iParseResponseLinks;
 	}
-	
+
 	ODatabase.prototype.getRemoveObjectCircleReferences = function() {
 		return this.removeObjectCircleReferences;
 	}
-	ODatabase.prototype.setRemoveObjectCircleReferences = function(iRemoveObjectCircleReferences) {
+	ODatabase.prototype.setRemoveObjectCircleReferences = function(
+			iRemoveObjectCircleReferences) {
 		this.removeObjectCircleReferences = iRemoveObjectCircleReferences;
 	}
 
@@ -174,7 +175,7 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : "GET",
 			url : urlPrefix + 'query/' + this.encodedDatabaseName + '/sql/'
-			+ iQuery + iLimit + iFetchPlan,
+					+ iQuery + iLimit + iFetchPlan,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -207,7 +208,7 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : "GET",
 			url : urlPrefix + 'document/' + this.encodedDatabaseName + '/'
-			+ iRID + iFetchPlan,
+					+ iRID + iFetchPlan,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -223,42 +224,41 @@ function ODatabase(databasePath) {
 	}
 
 	ODatabase.prototype.save = function(obj) {
-        if (this.databaseInfo == null) {
-            this.open();
-        }
+		if (this.databaseInfo == null) {
+			this.open();
+		}
 
-		
-        var rid = obj['@rid'];
-        var methodType = rid == null || rid == '-1:-1' ? 'POST' : 'PUT';
-        if (this.removeObjectCircleReferences && typeof obj == 'object'){
+		var rid = obj['@rid'];
+		var methodType = rid == null || rid == '-1:-1' ? 'POST' : 'PUT';
+		if (this.removeObjectCircleReferences && typeof obj == 'object') {
 			this.removeCircleReferences(obj, {});
 		}
 		var url = urlPrefix + 'document/' + this.encodedDatabaseName;
-		if(rid)
+		if (rid)
 			url += '/' + this.URLEncode(rid);
-        $.ajax({
-            type : methodType,
-            url :url,
-            data :$.toJSON(obj),
-            processData : false,
-            context : this,
-            async : false,
-            success : function(msg) {
-                this.setErrorMessage(null);
-                this.setCommandResponse(msg);
-                this.setCommandResult(msg);
-            },
-            error : function(msg) {
-                this.handleResponse(null);
-                this.setErrorMessage('Save error: ' + msg.responseText);
-            }
-        });
-        if (methodType == 'PUT'){
-            return rid;    
-        } else {
-            return this.getCommandResult();
-        }
-    }
+		$.ajax({
+			type : methodType,
+			url : url,
+			data : $.toJSON(obj),
+			processData : false,
+			context : this,
+			async : false,
+			success : function(msg) {
+				this.setErrorMessage(null);
+				this.setCommandResponse(msg);
+				this.setCommandResult(msg);
+			},
+			error : function(msg) {
+				this.handleResponse(null);
+				this.setErrorMessage('Save error: ' + msg.responseText);
+			}
+		});
+		if (methodType == 'PUT') {
+			return rid;
+		} else {
+			return this.getCommandResult();
+		}
+	}
 
 	ODatabase.prototype.remove = function(obj, onsuccess, onerror) {
 		if (this.databaseInfo == null)
@@ -273,7 +273,8 @@ function ODatabase(databasePath) {
 		rid = this.URLEncode(rid);
 		$.ajax({
 			type : 'DELETE',
-			url : urlPrefix + 'document/' + this.encodedDatabaseName + '/' + rid,
+			url : urlPrefix + 'document/' + this.encodedDatabaseName + '/'
+					+ rid,
 			processData : false,
 			context : this,
 			async : false,
@@ -286,7 +287,7 @@ function ODatabase(databasePath) {
 			},
 			error : function(msg) {
 				this.handleResponse(null);
-				this.setErrorMessage('Save error: ' + msg.responseText);
+				this.setErrorMessage('Remove error: ' + msg.responseText);
 				if (onerror) {
 					onerror();
 				}
@@ -302,7 +303,7 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : "GET",
 			url : urlPrefix + 'class/' + this.encodedDatabaseName + '/'
-			+ iClassName,
+					+ iClassName,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -324,7 +325,7 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : "POST",
 			url : urlPrefix + 'class/' + this.encodedDatabaseName + '/'
-			+ iClassName,
+					+ iClassName,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -346,7 +347,7 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : "GET",
 			url : urlPrefix + 'cluster/' + this.encodedDatabaseName + '/'
-			+ iClassName,
+					+ iClassName,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -361,17 +362,26 @@ function ODatabase(databasePath) {
 		return this.getCommandResult();
 	}
 
-	ODatabase.prototype.executeCommand = function(iCommand) {
-		if (this.databaseInfo == null) {
+	ODatabase.prototype.executeCommand = function(iCommand, iLanguage, iLimit) {
+		if (this.databaseInfo == null)
 			this.open();
-		}
+
+		if (!iLanguage)
+			iLanguage = "sql";
+
+		if (!iLimit)
+			iLimit = -1;
+
+		var dataType = this.evalResponse ? null : 'text';
+
 		iCommand = this.URLEncode(iCommand);
 		$.ajax({
 			type : "POST",
-			url : urlPrefix + 'command/' + this.encodedDatabaseName + '/sql/'
-			+ iCommand + "/",
+			url : urlPrefix + 'command/' + this.encodedDatabaseName + '/'
+					+ iLanguage + '/' + iCommand + "/" + iLimit,
 			context : this,
 			async : false,
+			'dataType' : dataType,
 			success : function(msg) {
 				this.setErrorMessage(null);
 				this.handleResponse(msg);
@@ -454,7 +464,7 @@ function ODatabase(databasePath) {
 
 	ODatabase.prototype.handleResponse = function(iResponse) {
 		if (typeof iResponse != 'object')
-		iResponse = this.URLDecodeU(iResponse);
+			iResponse = this.URLDecodeU(iResponse);
 		this.setCommandResponse(iResponse);
 		if (iResponse != null)
 			this.setCommandResult(this.transformResponse(iResponse));
@@ -477,7 +487,7 @@ function ODatabase(databasePath) {
 	ODatabase.prototype.parseConnections = function(obj) {
 		if (typeof obj == 'object') {
 			var linkMap = {
-					"foo" : 0
+				"foo" : 0
 			};
 			linkMap = this.createObjectsLinksMap(obj, linkMap);
 			if (linkMap["foo"] == 1) {
@@ -533,7 +543,7 @@ function ODatabase(databasePath) {
 				this.getObjectFromLinksMap(value, linkMap);
 			} else {
 				if (value.length > 0 && value.charAt(0) == '#'
-					&& linkMap[value] != null) {
+						&& linkMap[value] != null) {
 					obj[field] = linkMap[value];
 				}
 			}
@@ -545,8 +555,9 @@ function ODatabase(databasePath) {
 		linkMap = this.removeCircleReferencesPopulateMap(obj, linkMap);
 		this.removeCircleReferencesChangeObject(obj, linkMap);
 	}
-	
-	ODatabase.prototype.removeCircleReferencesPopulateMap = function(obj, linkMap){
+
+	ODatabase.prototype.removeCircleReferencesPopulateMap = function(obj,
+			linkMap) {
 		for (field in obj) {
 			var value = obj[field];
 			if (typeof value == 'object' && !$.isArray(value)) {
@@ -555,7 +566,8 @@ function ODatabase(databasePath) {
 					if (linkMap[rid] == null || !linkMap[rid]) {
 						linkMap[rid] = value;
 					}
-					linkMap = this.removeCircleReferencesPopulateMap(value, linkMap);
+					linkMap = this.removeCircleReferencesPopulateMap(value,
+							linkMap);
 				}
 			} else if (typeof value == 'object' && $.isArray(value)) {
 				for (i in value) {
@@ -567,14 +579,14 @@ function ODatabase(databasePath) {
 								linkMap[rid] = arrayValue;
 							}
 						}
-						linkMap = this.removeCircleReferencesPopulateMap(arrayValue, linkMap);
+						linkMap = this.removeCircleReferencesPopulateMap(
+								arrayValue, linkMap);
 					}
 				}
 			}
 		}
 		return linkMap;
 	}
-	
 
 	ODatabase.prototype.removeCircleReferencesChangeObject = function(obj,
 			linkMap) {
@@ -594,7 +606,7 @@ function ODatabase(databasePath) {
 						}
 					}
 				}
-				if (inspectObject){
+				if (inspectObject) {
 					this.removeCircleReferencesChangeObject(value, linkMap);
 				}
 			} else if (typeof value == 'object' && $.isArray(value)) {
@@ -614,8 +626,9 @@ function ODatabase(databasePath) {
 								}
 							}
 						}
-						if (inspectObject){
-							this.removeCircleReferencesChangeObject(arrayValue, linkMap);
+						if (inspectObject) {
+							this.removeCircleReferencesChangeObject(arrayValue,
+									linkMap);
 						}
 					}
 				}
@@ -630,28 +643,58 @@ function ODatabase(databasePath) {
 			return '#' + rid;
 		}
 	}
-	
-	
-	
-	/*!
+
+	/*
+	 * !
 	 * 
 	 * jQuery URL Encoder Decoder Plugin
 	 * 
 	 * http://0061276.netsolhost.com/tony/testurl.html
-	 *
+	 * 
 	 */
-	ODatabase.prototype.URLEncode = function(c){var o='';var x=0;c=c.toString();var r=/(^[a-zA-Z0-9_.]*)/;
-	  while(x<c.length){var m=r.exec(c.substr(x));
-	    if(m!=null && m.length>1 && m[1]!=''){o+=m[1];x+=m[1].length;
-	    }else{if(c[x]==' ')o+='+';else{var d=c.charCodeAt(x);var h=d.toString(16);
-	    o+='%'+(h.length<2?'0':'')+h.toUpperCase();}x++;}}return o;},
-	ODatabase.prototype.URLDecode = function(s){var o=s;var binVal,t;var r=/(%[^%]{2})/;
-	  while((m=r.exec(o))!=null && m.length>1 && m[1]!=''){b=parseInt(m[1].substr(1),16);
-	  t=String.fromCharCode(b);o=o.replace(m[1],t);}return o;}
-	ODatabase.prototype.URLDecodeU = function(s){var o=s;var binVal,t;var r=/(u[^u]{2})/;
-		  while((m=r.exec(o))!=null && m.length>1 && m[1]!=''){b=parseInt(m[1].substr(1),16);
-		  t=String.fromCharCode(b);o=o.replace(m[1],t);}return o;}
-
+	ODatabase.prototype.URLEncode = function(c) {
+		var o = '';
+		var x = 0;
+		c = c.toString();
+		var r = /(^[a-zA-Z0-9_.]*)/;
+		while (x < c.length) {
+			var m = r.exec(c.substr(x));
+			if (m != null && m.length > 1 && m[1] != '') {
+				o += m[1];
+				x += m[1].length;
+			} else {
+				if (c[x] == ' ')
+					o += '+';
+				else {
+					var d = c.charCodeAt(x);
+					var h = d.toString(16);
+					o += '%' + (h.length < 2 ? '0' : '') + h.toUpperCase();
+				}
+				x++;
+			}
+		}
+		return o;
+	}, ODatabase.prototype.URLDecode = function(s) {
+		var o = s;
+		var binVal, t;
+		var r = /(%[^%]{2})/;
+		while ((m = r.exec(o)) != null && m.length > 1 && m[1] != '') {
+			b = parseInt(m[1].substr(1), 16);
+			t = String.fromCharCode(b);
+			o = o.replace(m[1], t);
+		}
+		return o;
+	}
+	ODatabase.prototype.URLDecodeU = function(s) {
+		var o = s;
+		var binVal, t;
+		var r = /(u[^u]{2})/;
+		while ((m = r.exec(o)) != null && m.length > 1 && m[1] != '') {
+			b = parseInt(m[1].substr(1), 16);
+			t = String.fromCharCode(b);
+			o = o.replace(m[1], t);
+		}
+		return o;
+	}
 
 }
-
