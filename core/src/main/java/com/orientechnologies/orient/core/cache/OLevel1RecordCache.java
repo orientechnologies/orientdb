@@ -51,7 +51,7 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
 	}
 
 	public void pushRecord(final ORecordInternal<?> iRecord) {
-		if (maxSize == 0 || !iRecord.isPinned())
+		if (!enabled || !iRecord.isPinned())
 			// PRECONDITIONS
 			return;
 
