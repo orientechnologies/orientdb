@@ -674,7 +674,9 @@ function ODatabase(databasePath) {
 			}
 		}
 		return o;
-	}, ODatabase.prototype.URLDecode = function(s) {
+	}
+
+	ODatabase.prototype.URLDecode = function(s) {
 		var o = s;
 		var binVal, t;
 		var r = /(%[^%]{2})/;
@@ -685,16 +687,29 @@ function ODatabase(databasePath) {
 		}
 		return o;
 	}
-	ODatabase.prototype.URLDecodeU = function(s) {
-		var o = s;
-		var binVal, t;
-		var r = /(u[^u]{2})/;
-		while ((m = r.exec(o)) != null && m.length > 1 && m[1] != '') {
-			b = parseInt(m[1].substr(1), 16);
-			t = String.fromCharCode(b);
-			o = o.replace(m[1], t);
+
+	ODatabase.prototype.URLDecodeU = function(string) {
+		string = string.replace(/\r\n/g, "\n");
+		var utftext = "";
+
+		for ( var n = 0; n < string.length; n++) {
+
+			var c = string.charCodeAt(n);
+
+			if (c < 128) {
+				utftext += String.fromCharCode(c);
+			} else if ((c > 127) && (c < 2048)) {
+				utftext += String.fromCharCode((c >> 6) | 192);
+				utftext += String.fromCharCode((c & 63) | 128);
+			} else {
+				utftext += String.fromCharCode((c >> 12) | 224);
+				utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+				utftext += String.fromCharCode((c & 63) | 128);
+			}
+
 		}
-		return o;
+
+		return utftext;
 	}
 
 }
