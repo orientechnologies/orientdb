@@ -17,9 +17,10 @@ package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import java.util.List;
 
+import com.orientechnologies.orient.core.command.OCommandManager;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -31,10 +32,12 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
 	@Override
 	@SuppressWarnings("unchecked")
 	public boolean execute(final OHttpRequest iRequest) throws Exception {
-		String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: command/<database>/sql/[<command-text>]");
+		final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: command/<database>/<language>/<command-text>[/limit]");
 
 		// TRY TO GET THE COMMAND FROM THE URL, THEN FROM THE CONTENT
+		final String language = urlParts.length > 2 ? urlParts[2].trim() : "sql";
 		final String text = urlParts.length > 3 ? urlParts[3].trim() : iRequest.content;
+		final int limit = urlParts.length > 4 ? Integer.parseInt(urlParts[4].trim()) : -1;
 
 		iRequest.data.commandInfo = "Command";
 		iRequest.data.commandDetail = text;
@@ -46,7 +49,10 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
 		try {
 			db = getProfiledDatabaseInstance(iRequest);
 
-			response = db.command(new OCommandSQL(text)).execute();
+			final OCommandRequestText cmd = (OCommandRequestText) OCommandManager.instance().getRequester(language);
+			cmd.setText(text);
+			cmd.setLimit(limit);
+			response = db.command(cmd).execute();
 
 		} finally {
 			if (db != null)
