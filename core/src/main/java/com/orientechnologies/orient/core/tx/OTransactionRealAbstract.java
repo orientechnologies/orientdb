@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
@@ -162,7 +163,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 					}
 				}
 
-				entries.field(key, operations);
+				entries.field(OStringSerializerHelper.encode(key), operations);
 			}
 		}
 

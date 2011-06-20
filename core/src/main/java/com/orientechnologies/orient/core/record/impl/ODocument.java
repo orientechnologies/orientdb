@@ -1128,6 +1128,19 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		if (iPropertyName.length() == 0)
 			throw new IllegalArgumentException("Field name is empty");
 
+		for (int i = 0; i < iPropertyName.length(); ++i) {
+			final char c = iPropertyName.charAt(i);
+			if (c == ':' || c == ',')
+				throw new IllegalArgumentException("Invalid property name");
+		}
+
+		// if (!Character.isJavaIdentifierStart(iPropertyName.charAt(0)))
+		// throw new IllegalArgumentException("Invalid property name");
+		//
+		// for (int i = 1; i < iPropertyName.length(); ++i)
+		// if (!Character.isJavaIdentifierPart(iPropertyName.charAt(i)))
+		// throw new IllegalArgumentException("Invalid property name");
+
 		return iPropertyName;
 	}
 }

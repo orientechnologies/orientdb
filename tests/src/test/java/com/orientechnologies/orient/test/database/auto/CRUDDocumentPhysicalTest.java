@@ -294,7 +294,7 @@ public class CRUDDocumentPhysicalTest {
 		Assert.assertEquals(result.size(), 1);
 		ODocument dexter = result.get(0);
 		((Collection<String>) dexter.field("tag_list")).add("actor");
-		
+
 		dexter.setDirty();
 		dexter.save();
 
@@ -399,6 +399,71 @@ public class CRUDDocumentPhysicalTest {
 		List<ODocument> result = database.command(query).execute(params);
 
 		Assert.assertTrue(result.size() != 0);
+
+		database.close();
+	}
+
+	@Test
+	public void commandWrongParameterNames() {
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+		ODocument doc = database.newInstance();
+
+		try {
+			doc.field("a:b", 10);
+			Assert.assertFalse(true);
+		} catch (IllegalArgumentException e) {
+			Assert.assertTrue(true);
+		}
+
+		try {
+			doc.field("a,b", 10);
+			Assert.assertFalse(true);
+		} catch (IllegalArgumentException e) {
+			Assert.assertTrue(true);
+		}
+//
+//		try {
+//			doc.field("a.b", 10);
+//			Assert.assertFalse(true);
+//		} catch (IllegalArgumentException e) {
+//			Assert.assertTrue(true);
+//		}
+//
+//		try {
+//			doc.field("a;b", 10);
+//			Assert.assertFalse(true);
+//		} catch (IllegalArgumentException e) {
+//			Assert.assertTrue(true);
+//		}
+//
+//		try {
+//			doc.field("a-b", 10);
+//			Assert.assertFalse(true);
+//		} catch (IllegalArgumentException e) {
+//			Assert.assertTrue(true);
+//		}
+//
+//		try {
+//			doc.field("a/b", 10);
+//			Assert.assertFalse(true);
+//		} catch (IllegalArgumentException e) {
+//			Assert.assertTrue(true);
+//		}
+//
+//		try {
+//			doc.field("a#b", 10);
+//			Assert.assertFalse(true);
+//		} catch (IllegalArgumentException e) {
+//			Assert.assertTrue(true);
+//		}
+//
+//		try {
+//			doc.field("a@b", 10);
+//			Assert.assertFalse(true);
+//		} catch (IllegalArgumentException e) {
+//			Assert.assertTrue(true);
+//		}
 
 		database.close();
 	}
