@@ -344,6 +344,9 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 	public List<ODistributedServerNodeRemote> getNodeList() {
 		lock.acquireSharedLock();
+		if (nodes.isEmpty())
+			return null;
+
 		try {
 			return new ArrayList<ODistributedServerNodeRemote>(nodes.values());
 		} finally {
