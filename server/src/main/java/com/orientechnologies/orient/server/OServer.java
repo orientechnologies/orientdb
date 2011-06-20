@@ -87,7 +87,7 @@ public class OServer {
 		threadGroup = new ThreadGroup("OrientDB Server");
 
 		// REGISTER THE COMMAND SCRIPT
-		OCommandManager.instance().register(OCommandScript.class, OCommandExecutorScript.class);
+		OCommandManager.instance().registerExecutor(OCommandScript.class, OCommandExecutorScript.class);
 
 		OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(true);
 		System.setProperty("com.sun.management.jmxremote", "true");
