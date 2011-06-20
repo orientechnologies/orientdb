@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexFullText;
-import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.index.OIndexNotUnique;
 import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -190,7 +189,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		resultCount++;
 		addResult(iRecord.copy());
 
-		if (limit > -1 && resultCount >= limit || request.getLimit() > -1 && resultCount >= request.getLimit())
+		if (orderedFields == null && limit > -1 && resultCount >= limit || request.getLimit() > -1 && resultCount >= request.getLimit())
 			// BREAK THE EXECUTION
 			return false;
 
@@ -667,10 +666,22 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			request.getResultListener().result(result);
 
 		} else if (tempResult != null) {
+			int limitIndex = 0;
 			// TEMP RESULT: RETURN ALL THE RECORDS AT THE END
-			for (ODocument doc : tempResult)
+			for (ODocument doc : tempResult) {
 				// CALL THE LISTENER
-				processRecordAsResult(doc);
+				if (orderedFields != null && limit > 0) {
+					if (limitIndex < limit) {
+						limitIndex++;
+						processRecordAsResult(doc);
+					} else
+						// LIMIT REACHED
+						break;
+
+				} else {
+					processRecordAsResult(doc);
+				}
+			}
 			tempResult.clear();
 			tempResult = null;
 
