@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Copyright (c) 1999-2010 Luca Garulli - LICENSE: Apache 2.0 -->
+<project basedir="." default="compile" name="orientdb-graphdb">
+	<property name="project.jar-classpath" value="orientdb-server-${version}.jar" />
+	<property name="project.jar-mainclass" value="com.orientechnologies.orient.server.OServerMain" />
+
+  <import file="../_base/base-build.xml" />
+</project>
