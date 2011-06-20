@@ -75,6 +75,11 @@ public abstract class OSQLQuery<T extends Object> extends OQueryAbstract<T> impl
 		return text;
 	}
 
+	public OCommandRequestText setText(final String iText) {
+		text = iText;
+		return this;
+	}
+
 	@Override
 	public String toString() {
 		return "OSQLQuery [text=" + text + "]";

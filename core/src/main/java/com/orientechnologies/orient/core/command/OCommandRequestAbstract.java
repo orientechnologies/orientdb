@@ -29,9 +29,10 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
  */
 @SuppressWarnings("serial")
 public abstract class OCommandRequestAbstract implements OCommandRequestInternal {
-	protected ODatabaseRecord			database;
+	protected ODatabaseRecord					database;
 	protected OCommandResultListener	resultListener;
 	protected OProgressListener				progressListener;
+	protected int											limit	= -1;
 	protected Map<Object, Object>			parameters;
 
 	protected OCommandRequestAbstract() {
@@ -87,4 +88,14 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
 
 	public void reset() {
 	}
+
+	public int getLimit() {
+		return limit;
+	}
+
+	public OCommandRequestAbstract setLimit(final int limit) {
+		this.limit = limit;
+		return this;
+	}
+
 }

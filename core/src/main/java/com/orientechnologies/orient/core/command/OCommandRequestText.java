@@ -26,4 +26,6 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  */
 public interface OCommandRequestText extends OCommandRequestInternal, OSerializableStream {
 	public String getText();
+
+	public OCommandRequestText setText(String iText);
 }

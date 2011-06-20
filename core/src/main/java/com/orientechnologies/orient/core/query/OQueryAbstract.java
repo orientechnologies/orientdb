@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 
 @SuppressWarnings("serial")
 public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAbstract implements OQuery<T> {
-	protected int				limit				= -1;
 	protected ORecordId	beginRange	= new ORecordId();
 	protected ORecordId	endRange		= new ORecordId();
 	protected String		fetchPlan;
@@ -37,15 +36,6 @@ public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAb
 	@SuppressWarnings("unchecked")
 	public <RET> RET execute(final Object... iArgs) {
 		return (RET) run(iArgs);
-	}
-
-	public int getLimit() {
-		return limit;
-	}
-
-	public OQueryAbstract<T> setLimit(final int limit) {
-		this.limit = limit;
-		return this;
 	}
 
 	public String getFetchPlan() {

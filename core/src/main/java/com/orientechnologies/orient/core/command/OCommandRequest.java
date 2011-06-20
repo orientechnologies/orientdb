@@ -24,4 +24,19 @@ package com.orientechnologies.orient.core.command;
  */
 public interface OCommandRequest {
 	public <RET> RET execute(Object... iArgs);
+
+	/**
+	 * Returns the limit of result set. -1 means no limits.
+	 * 
+	 */
+	public int getLimit();
+
+	/**
+	 * Sets the maximum items the command can returns. -1 means no limits.
+	 * 
+	 * @param iLimit
+	 *          -1 = no limit. 1 to N to limit the result set.
+	 * @return
+	 */
+	public OCommandRequest setLimit(final int iLimit);
 }

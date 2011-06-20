@@ -82,7 +82,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	private Map<String, Object>											projections						= null;
 	private List<OPair<String, String>>							orderedFields;
 	private List<ODocument>													tempResult;
-	private int																			limit									= -1;
 	private int																			resultCount;
 	private ORecordId																rangeFrom;
 	private ORecordId																rangeTo;

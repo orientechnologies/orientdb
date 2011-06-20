@@ -36,21 +36,6 @@ public interface OQuery<T extends Object> extends OCommandRequest {
 	public T runFirst(Object... iArgs);
 
 	/**
-	 * Returns the limit of result set. 0 means no limits.
-	 * 
-	 */
-	public int getLimit();
-
-	/**
-	 * Sets the maximum items the query can returns. 0 means no limits.
-	 * 
-	 * @param iLimit
-	 *          0 to N
-	 * @return
-	 */
-	public OQuery<T> setLimit(final int iLimit);
-
-	/**
 	 * Returns the fetch plan if any
 	 * 
 	 * @return Fetch plan as unique string or null if it was not defined.

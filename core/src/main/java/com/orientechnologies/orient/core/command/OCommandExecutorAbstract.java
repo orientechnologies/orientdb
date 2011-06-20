@@ -27,9 +27,11 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
  * @author Luca Garulli
  * 
  */
+@SuppressWarnings("unchecked")
 public abstract class OCommandExecutorAbstract extends OCommandToParse implements OCommandExecutor {
-	protected ODatabaseRecord	database;
-	protected OProgressListener		progressListener;
+	protected ODatabaseRecord		database;
+	protected OProgressListener	progressListener;
+	protected int								limit	= -1;
 
 	public OCommandExecutorAbstract init(final ODatabaseRecord iDatabase, final String iText) {
 		database = iDatabase;
@@ -58,9 +60,18 @@ public abstract class OCommandExecutorAbstract extends OCommandToParse implement
 		return progressListener;
 	}
 
-	@SuppressWarnings("unchecked")
 	public <RET extends OCommandExecutor> RET setProgressListener(OProgressListener progressListener) {
 		this.progressListener = progressListener;
 		return (RET) this;
 	}
+
+	public int getLimit() {
+		return limit;
+	}
+
+	public <RET extends OCommandExecutor> RET setLimit(final int iLimit) {
+		this.limit = iLimit;
+		return (RET) this;
+	}
+
 }

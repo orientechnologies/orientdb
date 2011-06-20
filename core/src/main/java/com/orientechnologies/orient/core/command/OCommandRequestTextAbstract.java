@@ -66,6 +66,11 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
 		return text;
 	}
 
+	public OCommandRequestText setText(final String iText) {
+		this.text = iText;
+		return this;
+	}
+
 	public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
 		final OMemoryInputStream buffer = new OMemoryInputStream(iStream);
 		try {

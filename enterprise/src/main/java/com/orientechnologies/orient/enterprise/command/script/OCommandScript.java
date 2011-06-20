@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestTextAbstract;
  * @author Luca Garulli
  * 
  */
+@SuppressWarnings("serial")
 public class OCommandScript extends OCommandRequestTextAbstract {
 	private String	language;
 

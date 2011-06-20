@@ -69,4 +69,13 @@ public class OCommandSQLPojoWrapper implements OCommandRequest {
 		return (RET) result;
 	}
 
+	public int getLimit() {
+		return command.getLimit();
+	}
+
+	public OCommandRequest setLimit(final int iLimit) {
+		command.setLimit(iLimit);
+		return this;
+	}
+
 }

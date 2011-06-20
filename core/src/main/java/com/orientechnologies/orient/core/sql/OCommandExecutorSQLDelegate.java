@@ -31,14 +31,15 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract {
 	@SuppressWarnings("unchecked")
 	public OCommandExecutorSQLDelegate parse(final OCommandRequestText iCommand) {
 		if (iCommand instanceof OCommandRequestText) {
-			OCommandRequestText sql = iCommand;
-			final String text = sql.getText();
+			OCommandRequestText textRequest = iCommand;
+			final String text = textRequest.getText();
 			final String textUpperCase = text.toUpperCase();
 
 			delegate = (OCommandExecutorSQLAbstract) OSQLEngine.getInstance().getCommand(textUpperCase);
 			if (delegate == null)
 				throw new IllegalArgumentException("Can't find a command executor for the command request: " + iCommand);
 
+			delegate.setLimit(iCommand.getLimit());
 			delegate.parse(iCommand);
 			delegate.setProgressListener(progressListener);
 		} else

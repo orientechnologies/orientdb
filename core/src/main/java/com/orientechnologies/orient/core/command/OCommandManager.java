@@ -24,16 +24,38 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class OCommandManager {
+	private Map<String, Class<? extends OCommandRequest>>															commandRequesters	= new HashMap<String, Class<? extends OCommandRequest>>();
 	private Map<Class<? extends OCommandRequest>, Class<? extends OCommandExecutor>>	commandReqExecMap	= new HashMap<Class<? extends OCommandRequest>, Class<? extends OCommandExecutor>>();
 	private static OCommandManager																										instance					= new OCommandManager();
 
 	protected OCommandManager() {
-		register(OSQLAsynchQuery.class, OCommandExecutorSQLDelegate.class);
-		register(OSQLSynchQuery.class, OCommandExecutorSQLDelegate.class);
-		register(OCommandSQL.class, OCommandExecutorSQLDelegate.class);
+		registerRequester("sql", OCommandSQL.class);
+
+		registerExecutor(OSQLAsynchQuery.class, OCommandExecutorSQLDelegate.class);
+		registerExecutor(OSQLSynchQuery.class, OCommandExecutorSQLDelegate.class);
+		registerExecutor(OCommandSQL.class, OCommandExecutorSQLDelegate.class);
 	}
 
-	public OCommandManager register(final Class<? extends OCommandRequest> iRequest, final Class<? extends OCommandExecutor> iExecutor) {
+	public OCommandManager registerRequester(final String iType, final Class<? extends OCommandRequest> iRequest) {
+		commandRequesters.put(iType, iRequest);
+		return this;
+	}
+
+	public OCommandRequest getRequester(final String iType) {
+		final Class<? extends OCommandRequest> reqClass = commandRequesters.get(iType);
+
+		if (reqClass == null)
+			throw new IllegalArgumentException("Can't find a command requester for type: " + iType);
+
+		try {
+			return reqClass.newInstance();
+		} catch (Exception e) {
+			throw new IllegalArgumentException("Can't create the command requester of class " + reqClass + " for type: " + iType, e);
+		}
+	}
+
+	public OCommandManager registerExecutor(final Class<? extends OCommandRequest> iRequest,
+			final Class<? extends OCommandExecutor> iExecutor) {
 		commandReqExecMap.put(iRequest, iExecutor);
 		return this;
 	}
