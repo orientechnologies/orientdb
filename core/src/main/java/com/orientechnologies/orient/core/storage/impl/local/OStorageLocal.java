@@ -193,10 +193,7 @@ public class OStorageLocal extends OStorageEmbedded {
 			txManager.open();
 
 		} catch (Exception e) {
-			open = false;
-			dataSegments = new ODataLocal[0];
-			clusters = new OCluster[0];
-			clusterMap.clear();
+			close(true);
 			throw new OStorageException("Can't open local storage: " + url + ", with mode=" + mode, e);
 		} finally {
 			lock.releaseExclusiveLock();
