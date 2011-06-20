@@ -41,6 +41,10 @@ public class OCommandManager {
 		return this;
 	}
 
+	public boolean existsRequester(final String iType) {
+		return commandRequesters.containsKey(iType);
+	}
+
 	public OCommandRequest getRequester(final String iType) {
 		final Class<? extends OCommandRequest> reqClass = commandRequesters.get(iType);
 

@@ -46,6 +46,18 @@
 			<type>pom</type>
 			<scope>compile</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.tinkerpop</groupId>
+			<artifactId>gremlin</artifactId>
+			<version>1.2-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.tinkerpop.blueprints</groupId>
+			<artifactId>blueprints-orient-graph</artifactId>
+			<version>0.9-SNAPSHOT</version>
+			<type>jar</type>
+			<scope>compile</scope>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
