@@ -331,8 +331,12 @@ public class OProfiler implements OProfilerMBean {
 		return instance;
 	}
 
-	public void registerHookValue(final String iName, OProfilerHookValue iHookValue) {
+	public void registerHookValue(final String iName, final OProfilerHookValue iHookValue) {
 		hooks.put(iName, iHookValue);
+	}
+
+	public void unregisterHookValue(final String iName) {
+		hooks.remove(iName);
 	}
 
 	private void init() {
