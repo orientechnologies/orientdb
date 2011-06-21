@@ -36,6 +36,8 @@ public interface OIndexInternal extends OIndex, Iterable<Entry<Object, Set<OIden
 
 	public void checkEntry(final OIdentifiable iRecord, final Object iKey);
 
+	public void close();
+
 	public OIndexInternal rebuild();
 
 	/**
@@ -51,8 +53,6 @@ public interface OIndexInternal extends OIndex, Iterable<Entry<Object, Set<OIden
 	 * @return Times the record is found, 0 if not found at all
 	 */
 	public int count(final OIdentifiable iRecord);
-
-	public OIndexInternal load();
 
 	public OIndexInternal loadFromConfiguration(ODocument iConfig);
 

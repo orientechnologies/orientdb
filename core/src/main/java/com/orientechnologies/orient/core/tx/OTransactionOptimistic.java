@@ -42,22 +42,24 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 	}
 
 	public void rollback() {
-		status = TXSTATUS.ROLLBACKING;
+		if (isActive()) {
+			status = TXSTATUS.ROLLBACKING;
 
-		// INVALIDATE THE CACHE
-		database.getLevel1Cache().removeRecords(recordEntries.keySet());
+			// INVALIDATE THE CACHE
+			database.getLevel1Cache().removeRecords(recordEntries.keySet());
 
-		// REMOVE ALL THE ENTRIES AND INVALIDATE THE DOCUMENTS TO AVOID TO BE RE-USED DIRTY AT USER-LEVEL. IN THIS WAY RE-LOADING MUST
-		// EXECUTED
-		for (OTransactionRecordEntry v : recordEntries.values()) {
-			v.getRecord().unload();
+			// REMOVE ALL THE ENTRIES AND INVALIDATE THE DOCUMENTS TO AVOID TO BE RE-USED DIRTY AT USER-LEVEL. IN THIS WAY RE-LOADING MUST
+			// EXECUTED
+			for (OTransactionRecordEntry v : recordEntries.values()) {
+				v.getRecord().unload();
+			}
+			recordEntries.clear();
+			indexEntries.clear();
+
+			newObjectCounter = -2;
+
+			status = TXSTATUS.INVALID;
 		}
-		recordEntries.clear();
-		indexEntries.clear();
-
-		newObjectCounter = -2;
-
-		status = TXSTATUS.INVALID;
 	}
 
 	public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan) {

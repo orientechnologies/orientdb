@@ -17,6 +17,8 @@ package com.orientechnologies.orient.core.db.object;
 
 import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 import com.orientechnologies.orient.core.db.ODatabasePooled;
+import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 /**
@@ -41,6 +43,7 @@ public class ODatabaseObjectTxPooled extends ODatabaseObjectTx implements ODatab
 
 	public void reuse(final Object iOwner) {
 		ownerPool = (ODatabaseObjectPool) iOwner;
+		getMetadata().reload();
 	}
 
 	@Override
@@ -78,6 +81,11 @@ public class ODatabaseObjectTxPooled extends ODatabaseObjectTx implements ODatab
 
 		checkOpeness();
 		rollback();
+
+		getMetadata().close();
+		((ODatabaseRaw) ((ODatabaseRecord) underlying.getUnderlying()).getUnderlying()).callOnCloseListeners();
+		getLevel1Cache().clear();
+
 		ownerPool.release(this);
 		ownerPool = null;
 	}

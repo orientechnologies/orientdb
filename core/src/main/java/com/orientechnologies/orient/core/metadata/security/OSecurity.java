@@ -45,4 +45,6 @@ public interface OSecurity {
 	public List<ODocument> getUsers();
 
 	public List<ODocument> getRoles();
+
+	public void close();
 }

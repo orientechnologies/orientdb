@@ -136,4 +136,23 @@ public class OMetadata {
 					}), database);
 
 	}
+
+	/**
+	 * Reloads the internal objects.
+	 */
+	public void reload() {
+		schema.reload();
+		indexManager.load();
+		security.load();
+	}
+	
+
+	/**
+	 * Closes internal objects
+	 */
+	public void close() {
+		schema.close();
+		indexManager.close();
+		security.close();
+	}
 }

@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 import com.orientechnologies.orient.core.db.ODatabasePooled;
+import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 /**
@@ -41,6 +42,7 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
 
 	public void reuse(final Object iOwner) {
 		ownerPool = (ODatabaseDocumentPool) iOwner;
+		getMetadata().reload();
 	}
 
 	@Override
@@ -74,6 +76,10 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
 
 		checkOpeness();
 		rollback();
+
+		getMetadata().close();
+		((ODatabaseRaw) underlying.getUnderlying()).callOnCloseListeners();
+
 		getLevel1Cache().clear();
 		ownerPool.release(this);
 		ownerPool = null;

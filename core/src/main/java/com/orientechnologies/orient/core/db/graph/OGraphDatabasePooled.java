@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.db.graph;
 
 import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 import com.orientechnologies.orient.core.db.ODatabasePooled;
+import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 /**
@@ -41,6 +42,7 @@ public class OGraphDatabasePooled extends OGraphDatabase implements ODatabasePoo
 
 	public void reuse(final Object iOwner) {
 		ownerPool = (OGraphDatabasePool) iOwner;
+		getMetadata().reload();
 	}
 
 	@Override
@@ -77,6 +79,11 @@ public class OGraphDatabasePooled extends OGraphDatabase implements ODatabasePoo
 
 		checkOpeness();
 		rollback();
+
+		getMetadata().close();
+		((ODatabaseRaw) underlying.getUnderlying()).callOnCloseListeners();
+		getLevel1Cache().clear();
+
 		ownerPool.release(this);
 		ownerPool = null;
 	}

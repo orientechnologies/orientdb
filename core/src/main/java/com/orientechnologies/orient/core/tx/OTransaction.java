@@ -69,5 +69,12 @@ public interface OTransaction {
 
 	public void clearIndexEntries();
 
-	public OTransactionIndexChanges getIndex(String iName);
+	public OTransactionIndexChanges getIndexChanges(String iName);
+
+	/**
+	 * Tells if the transaction is active.
+	 * 
+	 * @return
+	 */
+	public boolean isActive();
 }

@@ -331,7 +331,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass {
 
 			getDatabase();
 			super.reload(null);
-			fromStream();
 			return (RET) this;
 
 		} finally {
@@ -587,5 +586,10 @@ public class OSchemaShared extends ODocumentWrapperNoClass {
 	private ODatabaseRecord getDatabase() {
 		document.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
 		return document.getDatabase();
+	}
+
+	public void close() {
+		classes.clear();
+		document.reset();
 	}
 }

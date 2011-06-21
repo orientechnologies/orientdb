@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,7 +26,6 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -59,19 +57,6 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 		// RELOAD IT
 		((ORecordId) document.getIdentity()).fromString(getDatabase().getStorage().getConfiguration().indexMgrRecordId);
 		super.reload("*:-1 index:0");
-
-		// RE-ASSIGN ALL THE PROPERTY INDEXES, IF ANY
-		if (getDatabase().getMetadata().getSchema() != null) {
-			final Collection<OClass> classes = new ArrayList<OClass>(getDatabase().getMetadata().getSchema().getClasses());
-			for (OClass c : classes) {
-				for (OProperty p : c.properties()) {
-					if (p.getIndex() != null) {
-						p.getIndex().delegate = indexes.get(p.getIndex().delegate.getName().toLowerCase());
-					}
-				}
-			}
-		}
-
 		return this;
 	}
 
@@ -93,6 +78,13 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 		getDatabase().getStorage().getConfiguration().update();
 
 		createIndex(DICTIONARY_NAME, OProperty.INDEX_TYPE.DICTIONARY.toString(), null, null, null, false);
+	}
+
+	public synchronized void close() {
+		for (OIndexInternal idx : indexes.values())
+			idx.close();
+
+		indexes.clear();
 	}
 
 	public synchronized OIndex createIndex(final String iName, final String iType, final int[] iClusterIdsToIndex,

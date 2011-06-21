@@ -19,6 +19,7 @@ import java.util.Arrays;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -30,42 +31,41 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class OPropertyIndex implements OIndexCallback {
-	protected OIndex						delegate;
+	protected String						indexName;
 	protected String[]					fields;
 	protected static final char	FIELD_SEPARATOR	= '+';
 
 	public OPropertyIndex(final ODatabaseRecord iDatabase, final OClass iClass, final String[] iFields, final String iType,
 			final OProgressListener iProgressListener) {
 		fields = iFields;
-		final String indexName = getIndexName(iClass, iFields);
+		indexName = getIndexName(iClass, iFields);
 
-		delegate = iDatabase.getMetadata().getIndexManager()
-				.createIndex(indexName, iType, iClass.getClusterIds(), this, iProgressListener, true);
+		iDatabase.getMetadata().getIndexManager().createIndex(indexName, iType, iClass.getClusterIds(), this, iProgressListener, true);
 	}
 
 	public OPropertyIndex(final ODatabaseRecord iDatabase, final OClass iClass, final String[] iFields, final String iType) {
 		fields = iFields;
-		final String indexName = getIndexName(iClass, iFields);
+		indexName = getIndexName(iClass, iFields);
 
-		delegate = iDatabase.getMetadata().getIndexManager().createIndex(indexName, iType, iClass.getClusterIds(), this, null, true);
+		iDatabase.getMetadata().getIndexManager().createIndex(indexName, iType, iClass.getClusterIds(), this, null, true);
 	}
 
-	public OPropertyIndex(final OIndex iIndex, final String[] iFields) {
+	public OPropertyIndex(final OClass iClass, final String[] iFields) {
 		fields = iFields;
-		delegate = iIndex;
+		indexName = getIndexName(iClass, iFields);
 	}
 
 	public void checkEntry(final ODocument iRecord) {
 		// GENERATE THE KEY
 		final Object key = generateKey(iRecord);
 
-		final OIndexInternal idx = delegate.getInternal();
+		final OIndexInternal idx = getUnderlying().getInternal();
 
 		try {
 			idx.checkEntry(iRecord, key);
 		} catch (OIndexException e) {
 			OLogManager.instance().exception("Invalid constraints on index '%s' for key '%s' in record %s for the fields '%s'", e,
-					OIndexException.class, delegate.getName(), key, iRecord.getIdentity(), Arrays.toString(fields));
+					OIndexException.class, indexName, key, iRecord.getIdentity(), Arrays.toString(fields));
 		}
 	}
 
@@ -73,7 +73,7 @@ public class OPropertyIndex implements OIndexCallback {
 	}
 
 	public OIndex getUnderlying() {
-		return delegate;
+		return ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getIndexManager().getIndex(indexName);
 	}
 
 	public Object getDocumentValueToIndex(ODocument iDocument) {
@@ -101,7 +101,7 @@ public class OPropertyIndex implements OIndexCallback {
 
 	@Override
 	public String toString() {
-		return delegate != null ? delegate.toString() : "no-index";
+		return indexName;
 	}
 
 	private String getIndexName(final OClass iClass, final String[] iFields) {

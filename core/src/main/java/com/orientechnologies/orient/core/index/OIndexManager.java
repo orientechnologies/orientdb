@@ -46,4 +46,6 @@ public interface OIndexManager {
 	public void setDefaultClusterName(String defaultClusterName);
 
 	public ODictionary<ORecordInternal<?>> getDictionary();
+
+	public void close();
 }

@@ -21,6 +21,8 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
@@ -42,9 +44,9 @@ public class OIndexUser extends OIndexAbstractDelegate {
 	}
 
 	@Override
-	public Collection<OIdentifiable> get(Object iKey) {
+	public Collection<OIdentifiable> get(final Object iKey) {
 
-		final OTransactionIndexChanges indexChanges = database.getTransaction().getIndex(delegate.getName());
+		final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
 
 		final List<OIdentifiable> result;
 		if (indexChanges == null || !indexChanges.cleared)
@@ -83,9 +85,28 @@ public class OIndexUser extends OIndexAbstractDelegate {
 		return super.getBetween(iRangeFrom, iRangeTo);
 	}
 
+	public long getSize() {
+		final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+
+		long tot;
+		if (indexChanges == null || !indexChanges.cleared)
+			// BEGIN FROM 0
+			tot = 0;
+		else
+			tot = delegate.getSize();
+
+		return tot;
+	}
+
 	@Override
-	public OIndex put(final Object iKey, final OIdentifiable iValue) {
-		database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.PUT, iKey, iValue);
+	public OIndex put(final Object iKey, OIdentifiable iValue) {
+		final ORID rid = iValue.getIdentity();
+
+		if (!rid.isValid())
+			// EARLY SAVE IT
+			((ORecord<?>) iValue).save();
+
+		database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.PUT, iKey, rid);
 		return this;
 	}
 

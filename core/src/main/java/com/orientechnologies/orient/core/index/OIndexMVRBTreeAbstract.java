@@ -129,8 +129,17 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 						map.getInMemoryEntries());
 			}
 		};
+	}
 
-		Orient.instance().getMemoryWatchDog().addListener(watchDog);
+	public void close() {
+		acquireExclusiveLock();
+		try {
+
+			map.commitChanges(ODatabaseRecordThreadLocal.INSTANCE.get());
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	/**
@@ -158,12 +167,11 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 				for (int id : iClusterIdsToIndex)
 					clustersToIndex.add(iDatabase.getClusterNameById(id));
 
-			installProfilerHooks();
-
-			iDatabase.registerListener(this);
-
 			map = new OMVRBTreeDatabaseLazySave<Object, Set<OIdentifiable>>(iDatabase, iClusterIndexName,
 					OStreamSerializerLiteral.INSTANCE, OStreamSerializerListRID.INSTANCE);
+
+			installHooks(iDatabase);
+
 			rebuild(iProgressListener);
 			updateConfiguration();
 			return this;
@@ -191,7 +199,10 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 			if (clusters != null)
 				clustersToIndex.addAll(clusters);
 
-			load(iConfig.getDatabase(), rid);
+			map = new OMVRBTreeDatabaseLazySave<Object, Set<OIdentifiable>>(iConfig.getDatabase(), rid);
+			map.load();
+
+			installHooks(iConfig.getDatabase());
 
 			return this;
 
@@ -406,18 +417,6 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 		}
 	}
 
-	public OIndexInternal load() {
-		acquireExclusiveLock();
-		try {
-
-			map.load();
-
-		} finally {
-			releaseExclusiveLock();
-		}
-		return this;
-	}
-
 	public OIndex clear() {
 		acquireExclusiveLock();
 		try {
@@ -446,7 +445,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 		acquireExclusiveLock();
 		try {
 
-			map.setDatabase( ODatabaseRecordThreadLocal.INSTANCE.get() );
+			map.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
 			map.lazySave();
 			return this;
 
@@ -626,7 +625,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 		return automatic;
 	}
 
-	protected void installProfilerHooks() {
+	protected void installHooks(final ODatabaseRecord iDatabase) {
 		OProfiler.getInstance().registerHookValue("index." + name + ".items", new OProfilerHookValue() {
 			public Object getValue() {
 				acquireSharedLock();
@@ -655,6 +654,18 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 				return map != null ? map.getOptimizeThreshold() : "-";
 			}
 		});
+
+		Orient.instance().getMemoryWatchDog().addListener(watchDog);
+		iDatabase.registerListener(this);
+	}
+
+	protected void uninstallHooks(final ODatabaseRecord iDatabase) {
+		OProfiler.getInstance().unregisterHookValue("index." + name + ".items");
+		OProfiler.getInstance().unregisterHookValue("index." + name + ".entryPointSize");
+		OProfiler.getInstance().unregisterHookValue("index." + name + ".maxUpdateBeforeSave");
+		OProfiler.getInstance().unregisterHookValue("index." + name + ".optimizationThreshold");
+		Orient.instance().getMemoryWatchDog().removeListener(watchDog);
+		iDatabase.unregisterListener(this);
 	}
 
 	public void onCreate(ODatabase iDatabase) {
@@ -669,28 +680,51 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	public void onBeforeTxBegin(ODatabase iDatabase) {
 	}
 
-	public void onBeforeTxRollback(ODatabase iDatabase) {
+	public void onBeforeTxRollback(final ODatabase iDatabase) {
 	}
 
-	public void onAfterTxRollback(ODatabase iDatabase) {
+	public void onAfterTxRollback(final ODatabase iDatabase) {
+		acquireExclusiveLock();
+		try {
+
+			map.unload();
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
-	public void onBeforeTxCommit(ODatabase iDatabase) {
+	public void onBeforeTxCommit(final ODatabase iDatabase) {
+		acquireExclusiveLock();
+		try {
+
+			map.commitChanges((ODatabaseRecord) iDatabase);
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
-	public void onAfterTxCommit(ODatabase iDatabase) {
+	public void onAfterTxCommit(final ODatabase iDatabase) {
+		acquireExclusiveLock();
+		try {
+
+			map.onAfterTxCommit();
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
-	public void onClose(ODatabase iDatabase) {
-		Orient.instance().getMemoryWatchDog().removeListener(watchDog);
-	}
+	public void onClose(final ODatabase iDatabase) {
+		acquireExclusiveLock();
+		try {
 
-	protected void load(final ODatabaseRecord iDatabase, final ORID iRecordId) {
-		installProfilerHooks();
+			map.commitChanges((ODatabaseRecord) iDatabase);
+			Orient.instance().getMemoryWatchDog().removeListener(watchDog);
 
-		map = new OMVRBTreeDatabaseLazySave<Object, Set<OIdentifiable>>(iDatabase, iRecordId);
-		map.load();
-
-		iDatabase.registerListener(this);
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 }

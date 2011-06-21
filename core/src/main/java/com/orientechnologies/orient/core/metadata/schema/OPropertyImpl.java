@@ -23,8 +23,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OPropertyIndex;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -150,20 +148,13 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		final String cmd = String.format("alter property %s index %s", getFullName(), iIndex.getIdentity());
 		getDatabase().command(new OCommandSQL(cmd)).execute();
 
-		final OIndex idx = getDatabase().getMetadata().getIndexManager().getIndex(iIndex.getIdentity());
-		index = new OPropertyIndex(idx, new String[] { name });
+		index = new OPropertyIndex(owner, new String[] { name });
 
 		return index;
 	}
 
 	public OPropertyIndex setIndexInternal(final String iIndexName) {
-		final OIndex idx;
-		if (iIndexName.startsWith("#")) {
-			idx = getDatabase().getMetadata().getIndexManager().getIndex(new ORecordId(iIndexName));
-		} else {
-			idx = getDatabase().getMetadata().getIndexManager().getIndex(iIndexName);
-		}
-		index = new OPropertyIndex(idx, new String[] { name });
+		index = new OPropertyIndex(owner, new String[] { name });
 		saveInternal();
 		return index;
 	}
@@ -530,21 +521,10 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		if (document.field("linkedType") != null)
 			linkedType = OType.getById(((Integer) document.field("linkedType")).byteValue());
 
-		OIndex underlyingIndex = getDatabase().getMetadata().getIndexManager().getIndex(getFullName());
+		final OIndex underlyingIndex = getDatabase().getMetadata().getIndexManager().getIndex(getFullName());
 
 		if (underlyingIndex != null)
-			index = new OPropertyIndex(underlyingIndex, new String[] { name });
-		else if (document.field("index") != null) {
-			if (document.field("index-type") == null) {
-				underlyingIndex = getDatabase().getMetadata().getIndexManager().getIndex((ORecordId) document.field("index", ORID.class));
-
-				if (underlyingIndex != null)
-					index = new OPropertyIndex(underlyingIndex, new String[] { name });
-				else
-					// REMOVE WRONG INDEX REF
-					document.removeField("index");
-			}
-		}
+			index = new OPropertyIndex(owner, new String[] { name });
 	}
 
 	@Override
@@ -563,15 +543,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
 			document.field("linkedClass", linkedClass != null ? linkedClass.getName() : null);
 			document.field("linkedType", linkedType != null ? linkedType.id : null);
-
-			// SAVE THE INDEX
-			if (index != null) {
-				index.getUnderlying().lazySave();
-				document.field("index", index.getUnderlying().getIdentity());
-			} else {
-				document.field("index", ORecordId.EMPTY_RECORD_ID);
-			}
-
 		} finally {
 			document.setStatus(ORecordElement.STATUS.LOADED);
 		}

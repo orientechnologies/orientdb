@@ -133,16 +133,16 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 			getStorage().getConfiguration().update();
 
+			if (getStorage() instanceof OStorageEmbedded) {
+				registerHook(new OUserTrigger());
+				registerHook(new OPropertyIndexManager());
+			}
+
 			// CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
 			metadata = new OMetadata(this);
 			metadata.create();
 
 			user = getMetadata().getSecurity().getUser(OUser.ADMIN);
-
-			if (getStorage() instanceof OStorageEmbedded) {
-				registerHook(new OUserTrigger());
-				registerHook(new OPropertyIndexManager());
-			}
 		} catch (Exception e) {
 			throw new ODatabaseException("Can't create database", e);
 		}
@@ -153,7 +153,10 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	public void close() {
 		super.close();
 
-		metadata = null;
+		if (metadata != null) {
+			metadata.close();
+			metadata = null;
+		}
 		hooks.clear();
 		dictionary = null;
 

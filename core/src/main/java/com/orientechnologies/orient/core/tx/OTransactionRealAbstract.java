@@ -177,7 +177,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 	 * 
 	 * @return
 	 */
-	public OTransactionIndexChanges getIndex(final String iIndexName) {
+	public OTransactionIndexChanges getIndexChanges(final String iIndexName) {
 		return indexEntries.get(iIndexName);
 	}
 

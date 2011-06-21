@@ -97,7 +97,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 		// WAKE UP LISTENERS
 		for (ODatabaseListener listener : underlying.getListeners())
 			try {
-				listener.onBeforeTxCommit(underlying);
+				listener.onBeforeTxCommit(this);
 			} catch (Throwable t) {
 				try {
 					rollback();
@@ -133,28 +133,30 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 	}
 
 	public ODatabaseRecord rollback() {
-		// WAKE UP LISTENERS
-		for (ODatabaseListener listener : underlying.getListeners())
+		if (currentTx.isActive()) {
+			// WAKE UP LISTENERS
+			for (ODatabaseListener listener : underlying.getListeners())
+				try {
+					listener.onBeforeTxRollback(underlying);
+				} catch (Throwable t) {
+					OLogManager.instance().error(this, "Error before tx rollback", t);
+				}
+
 			try {
-				listener.onBeforeTxRollback(underlying);
-			} catch (Throwable t) {
-				OLogManager.instance().error(this, "Error before tx rollback", t);
+				currentTx.rollback();
+			} finally {
+				setDefaultTransactionMode();
 			}
 
-		try {
-			currentTx.rollback();
-		} finally {
-			setDefaultTransactionMode();
+			// WAKE UP LISTENERS
+			for (ODatabaseListener listener : underlying.getListeners())
+				try {
+					listener.onAfterTxRollback(underlying);
+				} catch (Throwable t) {
+					OLogManager.instance().error(this, "Error after tx rollback", t);
+				}
 		}
-
-		// WAKE UP LISTENERS
-		for (ODatabaseListener listener : underlying.getListeners())
-			try {
-				listener.onAfterTxRollback(underlying);
-			} catch (Throwable t) {
-				OLogManager.instance().error(this, "Error after tx rollback", t);
-			}
-
+		
 		return this;
 	}
 

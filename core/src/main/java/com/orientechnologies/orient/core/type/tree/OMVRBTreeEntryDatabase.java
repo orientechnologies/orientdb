@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 
@@ -74,6 +75,7 @@ public class OMVRBTreeEntryDatabase<K, V> extends OMVRBTreeEntryPersistent<K, V>
 	@Override
 	public OMVRBTreeEntryDatabase<K, V> load() throws IOException {
 		try {
+			record.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
 			record.reload();
 		} catch (Exception e) {
 			// ERROR, MAYBE THE RECORD WASN'T CREATED
@@ -123,6 +125,7 @@ public class OMVRBTreeEntryDatabase<K, V> extends OMVRBTreeEntryPersistent<K, V>
 		rightRid = null;
 
 		// DELETE MYSELF
+		record.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
 		record.delete();
 
 		// FORCE REMOVING OF K/V AND SEIALIZED K/V AS WELL

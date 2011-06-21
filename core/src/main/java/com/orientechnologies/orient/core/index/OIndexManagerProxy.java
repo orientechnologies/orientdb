@@ -32,6 +32,13 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
 	}
 
 	public OIndexManager load() {
+		return this;
+	}
+
+	/**
+	 * Force reloading of indexes.
+	 */
+	public OIndexManager reload() {
 		return delegate.load();
 	}
 
@@ -56,7 +63,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
 		return delegate.createIndex(iName, iType, iClusterIdsToIndex, iCallback, iProgressListener, iAutomatic);
 	}
 
-	public OIndex getIndexInternal(String iName) {
+	public OIndex getIndexInternal(final String iName) {
 		return ((OIndexManagerShared) delegate).getIndexInternal(iName);
 	}
 
@@ -64,7 +71,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
 		return ((OIndexManagerShared) delegate).getDocument();
 	}
 
-	public OIndexManager dropIndex(String iIndexName) {
+	public OIndexManager dropIndex(final String iIndexName) {
 		return delegate.dropIndex(iIndexName);
 	}
 
@@ -72,11 +79,14 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
 		return delegate.getDefaultClusterName();
 	}
 
-	public void setDefaultClusterName(String defaultClusterName) {
+	public void setDefaultClusterName(final String defaultClusterName) {
 		delegate.setDefaultClusterName(defaultClusterName);
 	}
 
 	public ODictionary<ORecordInternal<?>> getDictionary() {
 		return delegate.getDictionary();
+	}
+
+	public void close() {
 	}
 }

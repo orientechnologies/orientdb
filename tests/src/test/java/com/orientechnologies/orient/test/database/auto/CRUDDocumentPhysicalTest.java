@@ -312,9 +312,9 @@ public class CRUDDocumentPhysicalTest {
 		for (ODocument rec : database.browseCluster("Profile")) {
 			Assert.assertFalse(rec.isDirty());
 
-			List<?> followers = rec.field("followers");
+			Collection<?> followers = rec.field("followers");
 			if (followers != null && followers.size() > 0) {
-				followers.remove(followers.size() - 1);
+				followers.remove(followers.iterator().next());
 				Assert.assertTrue(rec.isDirty());
 				break;
 			}
@@ -422,48 +422,48 @@ public class CRUDDocumentPhysicalTest {
 		} catch (IllegalArgumentException e) {
 			Assert.assertTrue(true);
 		}
-//
-//		try {
-//			doc.field("a.b", 10);
-//			Assert.assertFalse(true);
-//		} catch (IllegalArgumentException e) {
-//			Assert.assertTrue(true);
-//		}
-//
-//		try {
-//			doc.field("a;b", 10);
-//			Assert.assertFalse(true);
-//		} catch (IllegalArgumentException e) {
-//			Assert.assertTrue(true);
-//		}
-//
-//		try {
-//			doc.field("a-b", 10);
-//			Assert.assertFalse(true);
-//		} catch (IllegalArgumentException e) {
-//			Assert.assertTrue(true);
-//		}
-//
-//		try {
-//			doc.field("a/b", 10);
-//			Assert.assertFalse(true);
-//		} catch (IllegalArgumentException e) {
-//			Assert.assertTrue(true);
-//		}
-//
-//		try {
-//			doc.field("a#b", 10);
-//			Assert.assertFalse(true);
-//		} catch (IllegalArgumentException e) {
-//			Assert.assertTrue(true);
-//		}
-//
-//		try {
-//			doc.field("a@b", 10);
-//			Assert.assertFalse(true);
-//		} catch (IllegalArgumentException e) {
-//			Assert.assertTrue(true);
-//		}
+		//
+		// try {
+		// doc.field("a.b", 10);
+		// Assert.assertFalse(true);
+		// } catch (IllegalArgumentException e) {
+		// Assert.assertTrue(true);
+		// }
+		//
+		// try {
+		// doc.field("a;b", 10);
+		// Assert.assertFalse(true);
+		// } catch (IllegalArgumentException e) {
+		// Assert.assertTrue(true);
+		// }
+		//
+		// try {
+		// doc.field("a-b", 10);
+		// Assert.assertFalse(true);
+		// } catch (IllegalArgumentException e) {
+		// Assert.assertTrue(true);
+		// }
+		//
+		// try {
+		// doc.field("a/b", 10);
+		// Assert.assertFalse(true);
+		// } catch (IllegalArgumentException e) {
+		// Assert.assertTrue(true);
+		// }
+		//
+		// try {
+		// doc.field("a#b", 10);
+		// Assert.assertFalse(true);
+		// } catch (IllegalArgumentException e) {
+		// Assert.assertTrue(true);
+		// }
+		//
+		// try {
+		// doc.field("a@b", 10);
+		// Assert.assertFalse(true);
+		// } catch (IllegalArgumentException e) {
+		// Assert.assertTrue(true);
+		// }
 
 		database.close();
 	}

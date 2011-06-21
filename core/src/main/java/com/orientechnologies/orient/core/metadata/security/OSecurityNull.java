@@ -65,4 +65,7 @@ public class OSecurityNull implements OSecurity {
 	public OUser authenticate(String iUsername, String iUserPassword) {
 		return null;
 	}
+
+	public void close() {
+	}
 }

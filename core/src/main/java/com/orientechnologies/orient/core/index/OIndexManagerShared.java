@@ -65,8 +65,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 	}
 
 	public synchronized OIndexManager dropIndex(final String iIndexName) {
-		reload();
-
 		final OIndex idx = indexes.remove(iIndexName.toLowerCase());
 		if (idx != null) {
 			idx.delete();

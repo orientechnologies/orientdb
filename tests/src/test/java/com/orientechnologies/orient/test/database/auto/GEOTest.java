@@ -61,7 +61,6 @@ public class GEOTest {
 	@Test(dependsOnMethods = "geoSchema")
 	public void checkGeoIndexes() {
 		database.open("admin", "admin");
-		database.getMetadata().getIndexManager().load();
 
 		final OPropertyIndex xIndex = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndex();
 		Assert.assertNotNull(xIndex);
@@ -75,7 +74,6 @@ public class GEOTest {
 	@Test(dependsOnMethods = "checkGeoIndexes")
 	public void queryCreatePoints() {
 		database.open("admin", "admin");
-		database.getMetadata().getIndexManager().load();
 
 		ODocument point = new ODocument(database);
 
@@ -95,7 +93,7 @@ public class GEOTest {
 	@Test(dependsOnMethods = "queryCreatePoints")
 	public void queryDistance() {
 		database.open("admin", "admin");
-		database.getMetadata().getIndexManager().load();
+		;
 
 		Assert.assertEquals(database.countClass("MapPoint"), 10000);
 
@@ -115,7 +113,7 @@ public class GEOTest {
 	@Test(dependsOnMethods = "queryDistance")
 	public void spatialRange() {
 		database.open("admin", "admin");
-		database.getMetadata().getIndexManager().load();
+		;
 
 		final OPropertyIndex xIndex = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndex();
 		Assert.assertNotNull(xIndex);

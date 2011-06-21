@@ -30,18 +30,18 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 public class OTransactionNoTx extends OTransactionAbstract {
 	public OTransactionNoTx(final ODatabaseRecordTx iDatabase) {
 		super(iDatabase);
-		status = TXSTATUS.BEGUN;
+		status = TXSTATUS.INVALID;
 	}
 
 	public void begin() {
 	}
 
 	public void commit() {
-		// invokeCommitAgainstListeners();
+		status = TXSTATUS.INVALID;
 	}
 
 	public void rollback() {
-		// invokeRollbackAgainstListeners();
+		status = TXSTATUS.INVALID;
 	}
 
 	public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan) {
@@ -123,7 +123,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
 	public void clearIndexEntries() {
 	}
 
-	public OTransactionIndexChanges getIndex(final String iName) {
+	public OTransactionIndexChanges getIndexChanges(final String iName) {
 		return null;
 	}
 }

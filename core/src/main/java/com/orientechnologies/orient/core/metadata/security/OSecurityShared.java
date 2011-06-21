@@ -215,11 +215,13 @@ public class OSecurityShared extends OSharedResourceAbstract implements OSecurit
 		}
 	}
 
+	public void close() {
+	}
+
 	public void load() {
 	}
 
 	private ODatabaseRecord getDatabase() {
 		return ODatabaseRecordThreadLocal.INSTANCE.get();
 	}
-
 }

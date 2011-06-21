@@ -173,6 +173,7 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 		return result;
 	}
 
+	@SuppressWarnings("unchecked")
 	public <T> T[] toArray(final T[] a) {
 		T[] result = delegate.toArray(a);
 

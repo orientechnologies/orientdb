@@ -41,6 +41,10 @@ public class OSecurityProxy extends OProxedResource<OSecurityShared> implements 
 		delegate.load();
 	}
 
+	public void close() {
+		delegate.close();
+	}
+
 	public OUser authenticate(final String iUsername, final String iUserPassword) {
 		return delegate.authenticate(iUsername, iUserPassword);
 	}

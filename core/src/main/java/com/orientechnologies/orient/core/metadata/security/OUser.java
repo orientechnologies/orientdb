@@ -59,7 +59,7 @@ public class OUser extends ODocumentWrapper {
 	public OUser(ODatabaseRecord iDatabase, String iUserName, final String iUserPassword) {
 		super(iDatabase, "OUser");
 		document.field("name", iUserName);
-		setPassword(encryptPassword(iUserPassword));
+		setPassword(iUserPassword);
 		setAccountStatus(STATUSES.ACTIVE);
 	}
 

@@ -140,31 +140,31 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 	private void rebuildAutomaticIndexes() {
 		listener.onMessage("\nRebuilding " + propertyIndexes.size() + " automatic indexes...");
 
-		database.getMetadata().getIndexManager().load();
+		database.getMetadata().getIndexManager().reload();
 
 		for (Entry<OProperty, String> e : propertyIndexes.entrySet()) {
 			final OIndex idx = database.getMetadata().getIndexManager().getIndex(e.getValue());
+			if (idx != null) {
+				idx.setCallback(e.getKey().getIndex());
 
-			((OPropertyImpl) e.getKey()).setIndex(idx);
-			idx.setCallback(e.getKey().getIndex());
+				listener.onMessage("\n- Index '" + idx.getName() + "'...");
 
-			listener.onMessage("\n- Index '" + idx.getName() + "'...");
+				// idx.rebuild(new OProgressListener() {
+				// public boolean onProgress(Object iTask, long iCounter, float iPercent) {
+				// if (iPercent % 10 == 0)
+				// listener.onMessage(".");
+				// return false;
+				// }
+				//
+				// public void onCompletition(Object iTask, boolean iSucceed) {
+				// }
+				//
+				// public void onBegin(Object iTask, long iTotal) {
+				// }
+				// });
 
-			// idx.rebuild(new OProgressListener() {
-			// public boolean onProgress(Object iTask, long iCounter, float iPercent) {
-			// if (iPercent % 10 == 0)
-			// listener.onMessage(".");
-			// return false;
-			// }
-			//
-			// public void onCompletition(Object iTask, boolean iSucceed) {
-			// }
-			//
-			// public void onBegin(Object iTask, long iTotal) {
-			// }
-			// });
-
-			listener.onMessage("OK (" + idx.getSize() + " records)");
+				listener.onMessage("OK (" + idx.getSize() + " records)");
+			}
 		}
 	}
 

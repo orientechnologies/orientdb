@@ -390,17 +390,7 @@ public class ODatabaseRaw implements ODatabase {
 		if (status != STATUS.OPEN)
 			return;
 
-		// WAKE UP DB LIFECYCLE LISTENER
-		for (ODatabaseLifecycleListener it : Orient.instance().getDbLifecycleListeners())
-			it.onClose(getDatabaseOwner());
-
-		// WAKE UP LISTENERS
-		for (ODatabaseListener listener : listeners)
-			try {
-				listener.onClose(this);
-			} catch (Throwable t) {
-				t.printStackTrace();
-			}
+		callOnCloseListeners();
 		listeners.clear();
 
 		if (storage != null)
@@ -440,5 +430,19 @@ public class ODatabaseRaw implements ODatabase {
 		}
 
 		return (DB) this;
+	}
+
+	public void callOnCloseListeners() {
+		// WAKE UP DB LIFECYCLE LISTENER
+		for (ODatabaseLifecycleListener it : Orient.instance().getDbLifecycleListeners())
+			it.onClose(getDatabaseOwner());
+
+		// WAKE UP LISTENERS
+		for (ODatabaseListener listener : listeners)
+			try {
+				listener.onClose(getDatabaseOwner());
+			} catch (Throwable t) {
+				t.printStackTrace();
+			}
 	}
 }

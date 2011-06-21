@@ -37,6 +37,10 @@ public abstract class OTransactionAbstract implements OTransaction {
 
 	public abstract void setUsingLog(boolean useLog);
 
+	public boolean isActive() {
+		return status != TXSTATUS.INVALID;
+	}
+
 	public TXSTATUS getStatus() {
 		return status;
 	}

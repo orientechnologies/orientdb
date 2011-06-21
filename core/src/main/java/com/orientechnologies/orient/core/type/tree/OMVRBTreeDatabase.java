@@ -20,12 +20,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 
 /**
@@ -34,15 +31,13 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
  * 
  */
 @SuppressWarnings("serial")
-public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> implements ODatabaseListener {
+public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
 	protected ODatabaseRecord	database;
-	private int								users;
 
 	public OMVRBTreeDatabase(final ODatabaseRecord iDatabase, final ORID iRID) {
 		super(iDatabase.getClusterNameById(iRID.getClusterId()), iRID);
 		database = iDatabase;
 		record.setDatabase(iDatabase);
-		init(iDatabase);
 	}
 
 	public OMVRBTreeDatabase(final ODatabaseRecord iDatabase, String iClusterName, final OStreamSerializer iKeySerializer,
@@ -50,13 +45,11 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> implement
 		super(iClusterName, iKeySerializer, iValueSerializer);
 		database = iDatabase;
 		record.setDatabase(iDatabase);
-		init(iDatabase);
 	}
 
 	public void delete() {
 		clear();
 		record.delete();
-		deinit(database);
 	}
 
 	@Override
@@ -153,34 +146,7 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> implement
 		return this;
 	}
 
-	public void onOpen(final ODatabase iDatabase) {
-	}
-
-	public void onBeforeTxBegin(ODatabase iDatabase) {
-	}
-
-	public void onBeforeTxRollback(ODatabase iDatabase) {
-	}
-
-	public void onAfterTxRollback(final ODatabase iDatabase) {
-		try {
-
-			cache.clear();
-			entryPoints.clear();
-			if (root != null && ((OMVRBTreeEntryDatabase<K, V>) root).record.getIdentity().isPersistent()) {
-				if (record.getDatabase() != null && !record.getDatabase().isClosed())
-					((OMVRBTreeEntryDatabase<K, V>) root).load();
-			}
-		} catch (IOException e) {
-			throw new OIndexException("Error on loading root node");
-		}
-	}
-
-	public void onBeforeTxCommit(final ODatabase iDatabase) {
-		super.commitChanges(database);
-	}
-
-	public void onAfterTxCommit(final ODatabase iDatabase) {
+	public void onAfterTxCommit() {
 		if (cache.keySet().size() == 0)
 			return;
 
@@ -197,37 +163,5 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> implement
 				cache.remove(rid);
 			}
 		}
-	}
-
-	/**
-	 * Assure to save all the data without the optimization.
-	 */
-	public void onClose(final ODatabase iDatabase) {
-		if (database.isClosed())
-			return;
-
-		if (--users == 0) {
-			super.commitChanges(database);
-			// cache.clear();
-			// entryPoints.clear();
-			// lastSearchKey = null;
-			// lastSearchNode = null;
-			// root = null;
-		}
-	}
-
-	public void onCreate(ODatabase iDatabase) {
-	}
-
-	public void onDelete(ODatabase iDatabase) {
-	}
-
-	private void init(final ODatabaseRecord iDatabase) {
-		users++;
-		iDatabase.registerListener(this);
-	}
-
-	private void deinit(final ODatabaseRecord iDatabase) {
-		iDatabase.unregisterListener(this);
 	}
 }
