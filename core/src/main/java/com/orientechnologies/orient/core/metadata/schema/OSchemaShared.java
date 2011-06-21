@@ -522,6 +522,10 @@ public class OSchemaShared extends ODocumentWrapperNoClass {
 
 	public void saveInternal() {
 		getDatabase();
+
+		if (document.getDatabase().getTransaction().isActive())
+			throw new OSchemaException("Can't change the schema while a transaction is active. Schema changes is not transactional");
+
 		lock.acquireExclusiveLock();
 		try {
 
