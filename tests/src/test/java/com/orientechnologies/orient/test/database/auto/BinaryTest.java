@@ -35,7 +35,23 @@ public class BinaryTest {
 	}
 
 	@Test
-	public void testBasicCreate() {
+	public void testMixedCreateEmbedded() {
+		database.open("admin", "admin");
+
+		ODocument doc = new ODocument(database);
+		doc.field("binary", "Binary data".getBytes());
+
+		doc.save();
+		rid = doc.getIdentity();
+
+		doc = database.load(rid);
+		Assert.assertEquals(new String((byte[]) doc.field("binary")), "Binary data");
+
+		database.close();
+	}
+
+	@Test
+	public void testBasicCreateExternal() {
 		database.open("admin", "admin");
 
 		ORecordBytes record = new ORecordBytes(database, "This is a test".getBytes());
@@ -45,8 +61,8 @@ public class BinaryTest {
 		database.close();
 	}
 
-	@Test(dependsOnMethods = "testBasicCreate")
-	public void testBasicRead() {
+	@Test(dependsOnMethods = "testBasicCreateExternal")
+	public void testBasicReadExternal() {
 		database.open("admin", "admin");
 
 		ORecordBytes record = database.load(rid);
@@ -56,8 +72,8 @@ public class BinaryTest {
 		database.close();
 	}
 
-	@Test(dependsOnMethods = "testBasicRead")
-	public void testMixedCreate() {
+	@Test(dependsOnMethods = "testBasicReadExternal")
+	public void testMixedCreateExternal() {
 		database.open("admin", "admin");
 
 		ODocument doc = new ODocument(database);
@@ -69,8 +85,8 @@ public class BinaryTest {
 		database.close();
 	}
 
-	@Test(dependsOnMethods = "testMixedCreate")
-	public void testMixedRead() {
+	@Test(dependsOnMethods = "testMixedCreateExternal")
+	public void testMixedReadExternal() {
 		database.open("admin", "admin");
 
 		ODocument doc = new ODocument(database, rid);

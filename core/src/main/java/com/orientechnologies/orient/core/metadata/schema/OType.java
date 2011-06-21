@@ -300,8 +300,8 @@ public enum OType {
 		try {
 			if (iTargetClass.isAssignableFrom(byte[].class)) {
 				return OBase64Utils.decode(iValue.toString());
-			} else if (iValue.getClass().isAssignableFrom(byte[].class) && Array.class.isAssignableFrom(iTargetClass)) {
-				return OBase64Utils.decode((byte[]) iValue);
+			} else if (iValue.getClass().isAssignableFrom(byte[].class)) {
+				return iValue;
 			} else if (iTargetClass.isEnum()) {
 				if (iValue instanceof Number)
 					return ((Class<Enum>) iTargetClass).getEnumConstants()[((Number) iValue).intValue()];
