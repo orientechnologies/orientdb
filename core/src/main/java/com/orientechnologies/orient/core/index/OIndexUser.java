@@ -91,9 +91,9 @@ public class OIndexUser extends OIndexAbstractDelegate {
 		long tot;
 		if (indexChanges == null || !indexChanges.cleared)
 			// BEGIN FROM 0
-			tot = 0;
-		else
 			tot = delegate.getSize();
+		else
+			tot = 0;
 
 		return tot;
 	}
