@@ -35,15 +35,10 @@ public class OLogManager {
 		setLevel(iLevel, FileHandler.class);
 	}
 
-	public void log(final Object iRequester, final Level iLevel, final String iMessage, final Throwable iException,
+	public String log(final Object iRequester, final Level iLevel, final String iMessage, final Throwable iException,
 			final Object... iAdditionalArgs) {
 		if (iMessage == null)
-			return;
-
-		final Logger log = iRequester != null ? Logger.getLogger(iRequester.getClass().getName()) : Logger.getLogger("");
-
-		if (!log.isLoggable(iLevel))
-			return;
+			return null;
 
 		final StringBuilder buffer = new StringBuilder();
 		buffer.append('\n');
@@ -66,10 +61,15 @@ public class OLogManager {
 			buffer.append(iMessage);
 		}
 
-		if (iException != null)
-			log.log(iLevel, buffer.toString(), iException);
-		else
-			log.log(iLevel, buffer.toString());
+		final Logger log = iRequester != null ? Logger.getLogger(iRequester.getClass().getName()) : Logger.getLogger("");
+		if (log.isLoggable(iLevel)) {
+			if (iException != null)
+				log.log(iLevel, buffer.toString(), iException);
+			else
+				log.log(iLevel, buffer.toString());
+		}
+
+		return buffer.toString();
 	}
 
 	public void debug(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
@@ -102,40 +102,44 @@ public class OLogManager {
 			log(iRequester, Level.INFO, iMessage, null, iAdditionalArgs);
 	}
 
-	public void info(final Object iRequester, final String iMessage, final Throwable iException, final Object... iAdditionalArgs) {
+	public String info(final Object iRequester, final String iMessage, final Throwable iException, final Object... iAdditionalArgs) {
 		if (isInfoEnabled())
-			log(iRequester, Level.INFO, iMessage, iException, iAdditionalArgs);
+			return log(iRequester, Level.INFO, iMessage, iException, iAdditionalArgs);
+		return null;
 	}
 
-	public void warn(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
+	public String warn(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
 		if (isWarnEnabled())
-			log(iRequester, Level.WARNING, iMessage, null, iAdditionalArgs);
+			return log(iRequester, Level.WARNING, iMessage, null, iAdditionalArgs);
+		return null;
 	}
 
-	public void warn(final Object iRequester, final String iMessage, final Throwable iException, final Object... iAdditionalArgs) {
+	public String warn(final Object iRequester, final String iMessage, final Throwable iException, final Object... iAdditionalArgs) {
 		if (isWarnEnabled())
-			log(iRequester, Level.WARNING, iMessage, iException, iAdditionalArgs);
+			return log(iRequester, Level.WARNING, iMessage, iException, iAdditionalArgs);
+		return null;
 	}
 
-	public void error(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
-		log(iRequester, Level.SEVERE, iMessage, null, iAdditionalArgs);
+	public String error(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
+		return log(iRequester, Level.SEVERE, iMessage, null, iAdditionalArgs);
 	}
 
-	public void error(final Object iRequester, final String iMessage, final Throwable iException, final Object... iAdditionalArgs) {
+	public String error(final Object iRequester, final String iMessage, final Throwable iException, final Object... iAdditionalArgs) {
 		if (isErrorEnabled())
-			log(iRequester, Level.SEVERE, iMessage, iException, iAdditionalArgs);
+			return log(iRequester, Level.SEVERE, iMessage, iException, iAdditionalArgs);
+		return null;
 	}
 
-	public void config(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
-		log(iRequester, Level.CONFIG, iMessage, null, iAdditionalArgs);
+	public String config(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
+		return log(iRequester, Level.CONFIG, iMessage, null, iAdditionalArgs);
 	}
 
 	public void error(final Object iRequester, final String iMessage, final Throwable iException,
 			final Class<? extends OException> iExceptionClass, final Object... iAdditionalArgs) {
-		error(iRequester, iMessage, iException, iAdditionalArgs);
+		final String msg = error(iRequester, iMessage, iException, iAdditionalArgs);
 
 		try {
-			throw iExceptionClass.getConstructor(String.class, Throwable.class).newInstance(iMessage, iException);
+			throw iExceptionClass.getConstructor(String.class, Throwable.class).newInstance(msg, iException);
 		} catch (NoSuchMethodException e) {
 		} catch (IllegalArgumentException e) {
 		} catch (SecurityException e) {
