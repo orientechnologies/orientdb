@@ -618,6 +618,7 @@ public class OStorageRemote extends OStorageAbstract {
 				final OChannelBinaryClient network = beginRequest(OChannelBinaryProtocol.REQUEST_TX_COMMIT);
 				try {
 					network.writeInt(((OTransactionRealAbstract) iTx).getId());
+					network.writeByte((byte) (((OTransactionRealAbstract) iTx).isUsingLog() ? 1 : 0));
 
 					final List<OTransactionRecordEntry> tmpEntries = new ArrayList<OTransactionRecordEntry>();
 

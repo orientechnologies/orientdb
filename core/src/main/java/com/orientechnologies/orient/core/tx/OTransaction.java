@@ -79,4 +79,7 @@ public interface OTransaction {
 	 * @return
 	 */
 	public boolean isActive();
+
+	public boolean isUsingLog();
+
 }

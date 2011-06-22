@@ -38,6 +38,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 	public OTransactionOptimisticProxy(final ODatabaseRecordTx iDatabase, final OChannelBinary iChannel) throws IOException {
 		super(iDatabase);
 		clientTxId = iChannel.readInt();
+		setUsingLog(iChannel.readByte() == 1);
 
 		while (iChannel.readByte() == 1) {
 			try {

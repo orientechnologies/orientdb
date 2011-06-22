@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
-import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 public abstract class OTransactionAbstract implements OTransaction {
@@ -32,8 +31,6 @@ public abstract class OTransactionAbstract implements OTransaction {
 	protected OTransactionAbstract(ODatabaseRecordTx iDatabase) {
 		database = iDatabase;
 	}
-
-	public abstract boolean isUsingLog();
 
 	public abstract void setUsingLog(boolean useLog);
 
