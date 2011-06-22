@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.hook.OHookThreadLocal;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
@@ -396,6 +397,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				record = getLevel1Cache().findRecord(iRid);
 
 			if (record != null) {
+				if (!OFetchHelper.isFetchPlanValid(iFetchPlan)){
+					throw new IllegalArgumentException("Fetch plan '" + iFetchPlan + "' is invalid");
+				}
 				callbackHooks(TYPE.BEFORE_READ, record);
 
 				if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
