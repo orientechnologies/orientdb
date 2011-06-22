@@ -115,6 +115,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 		currentResultSet = new ArrayList<ORecordInternal<?>>();
 
+		OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
+
 		properties.put("limit", "20");
 		properties.put("debug", "false");
 	}
@@ -179,7 +181,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 		out.print("Disconnecting from the database [" + currentDatabaseName + "]...");
 
+		final OStorage stg = Orient.instance().getStorage(currentDatabase.getURL());
+
 		currentDatabase.close();
+
+		// FORCE CLOSING OF STORAGE: THIS CLEAN UP REMOTE CONNECTIONS
+		if (stg != null)
+			stg.close(true);
+
 		currentDatabase = null;
 		currentDatabaseName = null;
 		currentRecord = null;
@@ -294,6 +303,46 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		out.println("--------------------------------------------------");
 	}
 
+	@ConsoleCommand(description = "Begins a transaction. All the changes will remain local")
+	public void begin() throws IOException {
+		checkCurrentDatabase();
+
+		if (currentDatabase.getTransaction().isActive()) {
+			out.println("Error: an active transaction is running right now (id=" + currentDatabase.getTransaction().getId()
+					+ "). Commit or rollback it before to start a new one.");
+			return;
+		}
+
+		currentDatabase.begin();
+		out.println("Transaction " + currentDatabase.getTransaction().getId() + " is running");
+	}
+
+	@ConsoleCommand(description = "Commits transaction changes to the database")
+	public void commit() throws IOException {
+		checkCurrentDatabase();
+
+		if (!currentDatabase.getTransaction().isActive()) {
+			out.println("Error: no active transaction is running right now.");
+			return;
+		}
+
+		currentDatabase.commit();
+		out.println("Transaction " + currentDatabase.getTransaction().getId() + " has been committed");
+	}
+
+	@ConsoleCommand(description = "Rollbacks transaction changes to the previous state")
+	public void rollback() throws IOException {
+		checkCurrentDatabase();
+
+		if (!currentDatabase.getTransaction().isActive()) {
+			out.println("Error: no active transaction is running right now.");
+			return;
+		}
+
+		currentDatabase.rollback();
+		out.println("Transaction " + currentDatabase.getTransaction().getId() + " has been rollbacked");
+	}
+
 	@ConsoleCommand(splitInWords = false, description = "Truncate the class content in the current database")
 	public void truncateClass(
 			@ConsoleParameter(name = "class-name", description = "The name of the class to truncate") String iCommandText) {
@@ -325,11 +374,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	@ConsoleCommand(splitInWords = false, description = "Update records in the database")
 	public void update(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
 		sqlCommand("update", iCommandText, "\nUpdated %d record(s) in %f sec(s).\n");
+		currentDatabase.getLevel1Cache().invalidate();
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Delete records from the database")
 	public void delete(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
 		sqlCommand("delete", iCommandText, "\nDelete %d record(s) in %f sec(s).\n");
+		currentDatabase.getLevel1Cache().invalidate();
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Grant privileges to a role")

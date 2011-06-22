@@ -147,6 +147,15 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
 		}
 	}
 
+	public void invalidate() {
+		acquireExclusiveLock();
+		try {
+			entries.clear();
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
 	@Override
 	public String toString() {
 		return "DB level1 cache records=" + getSize() + ", maxSize=" + maxSize;
