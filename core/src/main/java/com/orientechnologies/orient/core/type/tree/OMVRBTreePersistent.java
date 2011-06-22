@@ -138,7 +138,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		try {
 			// DISCONNECT ALL THE NODES
 			for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints)
-				entryPoint.disconnect(true, 0);
+				entryPoint.disconnectLinked(true);
 			entryPoints.clear();
 
 			recordsToCommit.clear();
@@ -153,14 +153,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.unload", timer);
 		}
-	}
-
-	/**
-	 * Frees all the in memory objects. It's called under hard memory pressure.
-	 */
-	public void freeInMemoryResources() {
-		OLogManager.instance().debug(this, "Removing %d entrypoints from memory", entryPoints.size());
-		entryPoints.clear();
 	}
 
 	/**
@@ -246,7 +238,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 			for (int i = 0; i < entryPoints.size(); ++i) {
 				currNode = entryPoints.get(i);
-
 				for (OMVRBTreeEntryPersistent<K, V> e = (OMVRBTreeEntryPersistent<K, V>) currNode.getFirstInMemory(); e != null; e = e
 						.getNextInMemory()) {
 
@@ -298,23 +289,37 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 					break;
 			}
 
-			// SWAP TMP AND REAL ENTRY POINT COLLECTIONS
-			entryPoints.clear();
-			entryPoints = newEntryPoints;
+			// REMOVE NOT REFERENCED ENTRY POINTS
+			for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints) {
+				if (entryPoint.parent == null && entryPoint.left == null && entryPoint.right == null && entryPoint != root) {
+					// CHECK IF IT'S NOT PART OF NEW ENTRYPOINTS
+					boolean found = false;
+					for (OMVRBTreeEntryPersistent<K, V> e : newEntryPoints) {
+						if (e == entryPoint) {
+							// IT'S AN ENTRYPOINT
+							found = true;
+							break;
+						}
+					}
 
-			if (debug) {
-				System.out.printf("\nEntrypoints (%d): ", entryPoints.size());
-				for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints) {
-					if (debug)
-						System.out.printf(entryPoint.record.getIdentity() + " ");
+					if (!found) {
+						// NODE NOT REFERENCED: REMOVE IT FROM THE CACHE
+						cache.remove(entryPoint.record.getIdentity());
+						entryPoint.clear();
+					}
 				}
 			}
 
-			// FREE ALL THE NODES BUT THE ENTRY POINTS AND PUT THE ENTRYPOINT INTO THE CACHE
+			final List<OMVRBTreeEntryPersistent<K, V>> oldEntryPoints = entryPoints;
+			entryPoints = newEntryPoints;
+
+			// FREE ALL THE NODES READING THE OLD ENTRY POINTS BUT THE NEW ENTRY POINTS
 			int totalDisconnected = 0;
-			for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints) {
+			for (OMVRBTreeEntryPersistent<K, V> entryPoint : oldEntryPoints) {
 				totalDisconnected += entryPoint.disconnectLinked(false);
 			}
+
+			oldEntryPoints.clear();
 
 			if (isRuntimeCheckEnabled()) {
 				for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints)
@@ -427,17 +432,19 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 							if (wasNew) {
 								if (node.record.getIdentity().getClusterPosition() < -1) {
+									// TX RECORD
 									if (cache.get(node.record) != node)
 										// INSERT A COPY TO PREVENT CHANGES
 										cache.put(node.record.getIdentity().copy(), node);
-								} else
-								// NEW RID: MAKE DIRTY THE LINKED NODES
-								if (node.parent != null)
-									(node.parent).markDirty();
-								if (node.left != null)
-									(node.left).markDirty();
-								if (node.right != null)
-									(node.right).markDirty();
+								} else {
+									// NEW RID: MAKE DIRTY THE LINKED NODES
+									if (node.parent != null)
+										(node.parent).markDirty();
+									if (node.left != null)
+										(node.left).markDirty();
+									if (node.right != null)
+										(node.right).markDirty();
+								}
 
 								cache.put(node.record.getIdentity(), node);
 							}
@@ -840,5 +847,15 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
 		record.setDatabase(database);
 		return database;
+	}
+
+	protected boolean isEntryPoint(final OMVRBTreeEntry<K, V> iEntry) {
+		for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints) {
+			if (entryPoint == iEntry) {
+				// IT'S AN ENTRYPOINT
+				return true;
+			}
+		}
+		return false;
 	}
 }

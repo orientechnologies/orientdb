@@ -70,7 +70,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 */
 	transient int															modCount						= 0;
 	protected transient boolean								runtimeCheckEnabled	= false;
-	protected boolean													debug								= false;
+	protected transient boolean								debug								= false;
 
 	protected Object													lastSearchKey;
 	protected OMVRBTreeEntry<K, V>						lastSearchNode;

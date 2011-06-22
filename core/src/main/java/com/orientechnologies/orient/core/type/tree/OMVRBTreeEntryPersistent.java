@@ -250,56 +250,26 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 	 */
 	protected int disconnect(final boolean iForceDirty, final int iLevel) {
 		if (record == null)
-			// DIRTY NODE, JUST REMOVE IT
+			// DIRTY NODE, JUST REMOVE IT, THIS IS SUPPOSED TO NEVER HAPPEN
 			return 1;
-
-		if (this == tree.getRoot() || record.isDirty() && !iForceDirty)
-			// DON'T REMOVE IT
-			return 0;
-
-		boolean isEntryPoint = false;
-		for (OMVRBTreeEntryPersistent<K, V> entryPoint : pTree.entryPoints) {
-			if (entryPoint == this) {
-				// IT'S AN ENTRYPOINT: DON'T DISCONNECT IT BUT GO RECURSIVELY IN DEPTH
-				isEntryPoint = true;
-				break;
-			}
-		}
 
 		int totalDisconnected = 0;
 
-		if (!isEntryPoint) {
-			// REMOVE ME FROM THE CACHE
-			if (pTree.cache.remove(record.getIdentity()) == null)
-				OLogManager.instance().debug(this, "Can't find current node into the cache. Is the cache invalid?");
+		if ((!record.isDirty() || iForceDirty)) {
 
-			totalDisconnected = 1;
+			if (!pTree.isEntryPoint(this)) {
+				// REMOVE ME FROM THE CACHE
+				if (pTree.cache.remove(record.getIdentity()) == null)
+					OLogManager.instance().debug(this, "Can't find current node into the cache. Is the cache invalid?");
 
-			if (tree.isDebug()) {
-				final StringBuilder spaces = new StringBuilder();
-				for (int i = 0; i < iLevel + 3; ++i)
-					spaces.append(" ");
+				totalDisconnected = 1;
 
-				System.out.printf("\n%sDisconnected tree node %s with parent %s, left %s, right %s (%s)...", spaces, this, parentRid,
-						leftRid, rightRid, System.identityHashCode(this));
+				clear();
 			}
-
-			// SPEED UP MEMORY CLAIM BY RESETTING INTERNAL FIELDS
-			keys = null;
-			if (inStream != null) {
-				inStream.close();
-				values = null;
-				inStream = null;
-			}
-			serializedKeys = null;
-			serializedValues = null;
-			pTree = null;
-			record = null;
-			size = 0;
 		}
 
-		// DISCONNECT FROM THE PARENT
 		if (parent != null) {
+			// DISCONNECT RECURSIVELY THE PARENT NODE
 			if (parent.left == this) {
 				parent.left = null;
 			} else if (parent.right == this) {
@@ -307,32 +277,51 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 			} else
 				OLogManager.instance().warn(this, "Current node's parent doesn't link it correctly");
 
+			totalDisconnected += parent.disconnect(iForceDirty, iLevel + 1);
+
 			parent = null;
 		}
 
-		// DISCONNECT RECURSIVELY THE LEFT NODE
 		if (left != null) {
-			// DISCONNECT MYSELF FROM THE LEFT NODE
-			int disconnected = left.disconnect(iForceDirty, iLevel + 1);
+			// DISCONNECT RECURSIVELY THE LEFT NODE
+			if (left.parent == this)
+				left.parent = null;
+			else
+				OLogManager.instance().warn(this, "Current node's right doesn't link it correctly");
 
-			if (disconnected > 0) {
-				totalDisconnected += disconnected;
-				left = null;
-			}
+			totalDisconnected += left.disconnect(iForceDirty, iLevel + 1);
+			left = null;
 		}
 
-		// DISCONNECT RECURSIVELY THE RIGHT NODE
 		if (right != null) {
-			// DISCONNECT MYSELF FROM THE RIGHT NODE
-			int disconnected = right.disconnect(iForceDirty, iLevel + 1);
+			// DISCONNECT RECURSIVELY THE RIGHT NODE
+			if (right.parent == this)
+				right.parent = null;
+			else
+				OLogManager.instance().warn(this, "Current node's left doesn't link it correctly");
 
-			if (disconnected > 0) {
-				totalDisconnected += disconnected;
-				right = null;
-			}
+			totalDisconnected += right.disconnect(iForceDirty, iLevel + 1);
+			right = null;
 		}
 
 		return totalDisconnected;
+	}
+
+	public void clear() {
+		// SPEED UP MEMORY CLAIM BY RESETTING INTERNAL FIELDS
+		keys = null;
+		values = null;
+		if (inStream != null) {
+			inStream.close();
+			inStream = null;
+		}
+		serializedKeys = null;
+		serializedValues = null;
+		pTree = null;
+		tree = null;
+		record.recycle(null);
+		record = null;
+		size = 0;
 	}
 
 	/**
@@ -343,30 +332,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 	 * @param iSource
 	 */
 	protected int disconnectLinked(final boolean iForce) {
-		if (record == null || record.isDirty())
-			// DIRTY NODE OR IS ROOT
-			return 0;
-
-		int freed = 0;
-
-		if (tree.isDebug())
-			System.out.printf("\nChecking for disconnection of the node %s with parent %s, left %s, right %s (%s)...", this, parentRid,
-					leftRid, rightRid, System.identityHashCode(this));
-
-		if (left != null) {
-			if (tree.isDebug())
-				System.out.printf("\n-> left = %s (%s)", left, System.identityHashCode(left));
-
-			freed += left.disconnect(iForce, 0);
-		}
-		if (right != null) {
-			if (tree.isDebug())
-				System.out.printf("\n-> right = %s (%s)", right, System.identityHashCode(right));
-
-			freed += right.disconnect(iForce, 0);
-		}
-
-		return freed;
+		return disconnect(iForce, 0);
 	}
 
 	public int getDepthInMemory() {
