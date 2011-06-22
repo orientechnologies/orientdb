@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -134,6 +135,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				} else
 					connection = OClientConnectionManager.instance().connect(connection.protocol.getChannel().socket, this);
 			}
+
+			ODatabaseRecordThreadLocal.INSTANCE.set(connection.database);
 
 			++data.totalRequests;
 

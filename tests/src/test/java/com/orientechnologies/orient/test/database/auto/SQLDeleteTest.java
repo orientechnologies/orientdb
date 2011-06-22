@@ -22,6 +22,7 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -30,9 +31,11 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 @Test(groups = "sql-delete")
 public class SQLDeleteTest {
 	private ODatabaseDocument	database;
+	private String						url;
 
 	@Parameters(value = "url")
 	public SQLDeleteTest(String iURL) {
+		url = iURL;
 		database = new ODatabaseDocumentTx(iURL);
 	}
 
@@ -40,12 +43,14 @@ public class SQLDeleteTest {
 	public void deleteWithWhereOperator() {
 		database.open("admin", "admin");
 
+		database.command(new OCommandSQL("insert into Profile (sex, salary) values ('female', 2100)")).execute();
+
 		final Long total = database.countClass("Profile");
 
 		final List<ODocument> resultset = database.query(new OSQLSynchQuery<Object>(
-				"select from Profile set sex = 'male' where salary > 100"));
+				"select from Profile where sex = 'female' and salary = 2100"));
 
-		final Number records = (Number) database.command(new OCommandSQL("delete from Profile set sex = 'male' where salary > 100"))
+		final Number records = (Number) database.command(new OCommandSQL("delete from Profile where sex = 'female' and salary = 2100"))
 				.execute();
 
 		Assert.assertEquals(records.intValue(), resultset.size());
@@ -53,5 +58,24 @@ public class SQLDeleteTest {
 		Assert.assertEquals(database.countClass("Profile"), total - records.intValue());
 
 		database.close();
+	}
+
+	@Test
+	public void deleteInPool() {
+		ODatabaseDocumentTx db = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+		final Long total = db.countClass("Profile");
+
+		final List<ODocument> resultset = db.query(new OSQLSynchQuery<Object>(
+				"select from Profile where sex = 'male' and salary > 120 and salary <= 133"));
+
+		final Number records = (Number) db.command(
+				new OCommandSQL("delete from Profile where sex = 'male' and salary > 120 and salary <= 133")).execute();
+
+		Assert.assertEquals(records.intValue(), resultset.size());
+
+		Assert.assertEquals(db.countClass("Profile"), total - records.intValue());
+
+		db.close();
 	}
 }
