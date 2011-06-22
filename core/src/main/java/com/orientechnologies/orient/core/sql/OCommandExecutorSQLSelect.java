@@ -257,6 +257,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		if (word.toString().equals(KEYWORD_LIMIT))
 			// GO BACK
 			currentPos -= KEYWORD_LIMIT.length();
+
+		if (word.toString().equals(KEYWORD_RANGE))
+			// GO BACK
+			currentPos -= KEYWORD_RANGE.length();
 	}
 
 	protected void extractRange(final StringBuilder word) {
