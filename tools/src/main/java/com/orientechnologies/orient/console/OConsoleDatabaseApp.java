@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
@@ -74,14 +75,14 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.enterprise.command.script.OCommandScript;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
-	protected ODatabaseDocument					currentDatabase;
-	protected String										currentDatabaseName;
-	protected ORecordInternal<?>				currentRecord;
-	protected List<ORecordInternal<?>>	currentResultSet;
-	protected OServerAdmin							serverAdmin;
-	private int													lastPercentStep;
-	private String											currentDatabaseUserName;
-	private String											currentDatabaseUserPassword;
+	protected ODatabaseDocument		currentDatabase;
+	protected String							currentDatabaseName;
+	protected ORecordInternal<?>	currentRecord;
+	protected List<OIdentifiable>	currentResultSet;
+	protected OServerAdmin				serverAdmin;
+	private int										lastPercentStep;
+	private String								currentDatabaseUserName;
+	private String								currentDatabaseUserPassword;
 
 	public static void main(String[] args) {
 		try {
@@ -113,7 +114,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	protected void onBefore() {
 		super.onBefore();
 
-		currentResultSet = new ArrayList<ORecordInternal<?>>();
+		currentResultSet = new ArrayList<OIdentifiable>();
 
 		OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
 
@@ -460,7 +461,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		long start = System.currentTimeMillis();
 		currentDatabase.query(new OSQLAsynchQuery<ODocument>(iQueryText, limit, new OCommandResultListener() {
 			public boolean result(final Object iRecord) {
-				final ORecordSchemaAwareAbstract<?> record = (ORecordSchemaAwareAbstract<?>) iRecord;
+				final OIdentifiable record = (OIdentifiable) iRecord;
 
 				dumpRecordInTable(currentResultSet.size(), record, columns);
 				currentResultSet.add(record);
@@ -621,7 +622,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 				throw new OException("The record requested is not part of current result set (0"
 						+ (currentResultSet.size() > 0 ? "-" + (currentResultSet.size() - 1) : "") + ")");
 
-			currentRecord = currentResultSet.get(recNumber);
+			currentRecord = (ORecordInternal<?>) currentResultSet.get(recNumber).getRecord();
 		}
 
 		dumpRecordDetails();
@@ -1086,16 +1087,17 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			throw new OException("The is no current object selected: create a new one or load it");
 	}
 
-	protected void dumpRecordInTable(final int iIndex, final ORecordSchemaAwareAbstract<?> iRecord, final List<String> iColumns) {
+	protected void dumpRecordInTable(final int iIndex, final OIdentifiable iRecord, final List<String> iColumns) {
 		// CHECK IF HAVE TO ADD NEW COLUMN (BECAUSE IT CAN BE SCHEMA-LESS)
 		final List<String> recordColumns = new ArrayList<String>();
-		for (String fieldName : iRecord.fieldNames())
-			recordColumns.add(fieldName);
+		if (iRecord instanceof ODocument)
+			for (String fieldName : ((ODocument) iRecord).fieldNames())
+				recordColumns.add(fieldName);
 
 		dumpRecordInTable(iIndex, iRecord, recordColumns, iColumns);
 	}
 
-	protected void dumpRecordInTable(final int iIndex, final ORecordInternal<?> iRecord, final List<String> iRecordColumns,
+	protected void dumpRecordInTable(final int iIndex, final OIdentifiable iRecord, final List<String> iRecordColumns,
 			final List<String> iColumns) {
 		// CHECK IF HAVE TO ADD NEW COLUMN (BECAUSE IT CAN BE SCHEMA-LESS)
 		for (String fieldName : iRecordColumns) {
@@ -1163,8 +1165,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	}
 
 	private void printHeaderLine(final List<String> iColumns) {
+		out.print("---+---------");
 		if (iColumns.size() > 0) {
-			out.print("---+---------");
 			for (int i = 0; i < iColumns.size(); ++i) {
 				out.print("+");
 				for (int k = 0; k < 20; ++k)

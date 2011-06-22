@@ -19,7 +19,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
  * Helper class that sorts a list of ODocument instances following criterias.
@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class ODocumentSorter {
-	public static void sort(List<ODocument> ioResultSet, List<OPair<String, String>> iOrderCriteria) {
+	public static void sort(List<OIdentifiable> ioResultSet, List<OPair<String, String>> iOrderCriteria) {
 		Collections.sort(ioResultSet, new ODocumentComparator(iOrderCriteria));
 	}
 }

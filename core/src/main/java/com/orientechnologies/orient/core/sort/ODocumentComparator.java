@@ -19,6 +19,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 
@@ -28,7 +29,7 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
  * @author Luca Garulli
  * 
  */
-public class ODocumentComparator implements Comparator<ODocument> {
+public class ODocumentComparator implements Comparator<OIdentifiable> {
 	private List<OPair<String, String>>	orderCriteria;
 
 	public ODocumentComparator(final List<OPair<String, String>> iOrderCriteria) {
@@ -36,18 +37,18 @@ public class ODocumentComparator implements Comparator<ODocument> {
 	}
 
 	@SuppressWarnings("unchecked")
-	public int compare(final ODocument iDoc1, final ODocument iDoc2) {
+	public int compare(final OIdentifiable iDoc1, final OIdentifiable iDoc2) {
 		Object fieldValue1;
 		Object fieldValue2;
 
 		int partialResult = 0;
 
 		for (OPair<String, String> field : orderCriteria) {
-			fieldValue1 = iDoc1.field(field.getKey());
+			fieldValue1 = ((ODocument) iDoc1.getRecord()).field(field.getKey());
 			if (fieldValue1 == null)
 				return factor(-1, field.getValue());
 
-			fieldValue2 = iDoc2.field(field.getKey());
+			fieldValue2 = ((ODocument) iDoc2.getRecord()).field(field.getKey());
 			if (fieldValue2 == null)
 				return factor(1, field.getValue());
 

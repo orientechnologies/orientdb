@@ -18,15 +18,18 @@ package com.orientechnologies.orient.core.sql;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -81,7 +84,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	private OSQLFilter															compiledFilter;
 	private Map<String, Object>											projections						= null;
 	private List<OPair<String, String>>							orderedFields;
-	private List<ODocument>													tempResult;
+	private List<OIdentifiable>											tempResult;
 	private int																			resultCount;
 	private ORecordId																rangeFrom;
 	private ORecordId																rangeTo;
@@ -184,9 +187,20 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		return true;
 	}
 
-	protected boolean addResult(final ORecordInternal<?> iRecord) {
+	protected boolean addResult(final OIdentifiable iRecord) {
 		resultCount++;
-		addResult(iRecord.copy());
+
+		final OIdentifiable recordCopy = iRecord instanceof ORecord<?> ? ((ORecord<?>) iRecord).copy() : iRecord.getIdentity().copy();
+
+		if (orderedFields != null || flattenTarget != null) {
+			// ORDER BY CLAUSE: COLLECT ALL THE RECORDS AND ORDER THEM AT THE END
+			if (tempResult == null)
+				tempResult = new ArrayList<OIdentifiable>();
+
+			tempResult.add(recordCopy);
+		} else
+			// CALL THE LISTENER NOW
+			processRecordAsResult(recordCopy);
 
 		if (orderedFields == null && limit > -1 && resultCount >= limit || request.getLimit() > -1 && resultCount >= request.getLimit())
 			// BREAK THE EXECUTION
@@ -316,18 +330,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			throw new OCommandSQLParsingException("Invalid LIMIT value setted to '" + word
 					+ "' but it should be a valid integer. Example: LIMIT 10", text, currentPos);
 		}
-	}
-
-	private void addResult(final ORecord<?> iRecord) {
-		if (orderedFields != null || flattenTarget != null) {
-			// ORDER BY CLAUSE: COLLECT ALL THE RECORDS AND ORDER THEM AT THE END
-			if (tempResult == null)
-				tempResult = new ArrayList<ODocument>();
-
-			tempResult.add((ODocument) iRecord);
-		} else
-			// CALL THE LISTENER NOW
-			processRecordAsResult(iRecord);
 	}
 
 	private boolean searchForIndexes(final List<ORecord<?>> iResultSet, final OClass iSchemaClass) {
@@ -503,12 +505,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		if (flattenTarget == null)
 			return;
 
-		final List<ODocument> finalResult = new ArrayList<ODocument>();
+		final List<OIdentifiable> finalResult = new ArrayList<OIdentifiable>();
 		Object fieldValue;
 		if (tempResult != null)
-			for (ODocument record : tempResult) {
+			for (OIdentifiable id : tempResult) {
 				if (flattenTarget instanceof OSQLFilterItem)
-					fieldValue = ((OSQLFilterItem) flattenTarget).getValue(record);
+					fieldValue = ((OSQLFilterItem) flattenTarget).getValue((ORecordInternal<?>) id.getRecord());
 				else
 					fieldValue = flattenTarget.toString();
 
@@ -525,7 +527,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		tempResult = finalResult;
 	}
 
-	private void processRecordAsResult(final ORecord<?> iRecord) {
+	private void processRecordAsResult(final OIdentifiable iRecord) {
 		if (projections != null) {
 			// APPLY PROJECTIONS
 			final ODocument doc = (ODocument) iRecord;
@@ -638,12 +640,20 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 					addResult((ORecord<?>) r);
 				}
 		} else {
-			if (anyFunctionAggregates) {
-				for (Entry<String, Object> projection : projections.entrySet()) {
-					if (projection.getValue() instanceof OSQLFunctionRuntime) {
-						final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection.getValue();
-						f.setResult(index.getSize());
-					}
+
+			// ADD ALL THE ITEMS AS RESULT
+			for (Iterator<Entry<Object, Set<OIdentifiable>>> it = index.iterator(); it.hasNext();) {
+				for (Iterator<OIdentifiable> collIt = ((ORecordLazySet) it.next().getValue()).rawIterator(); collIt.hasNext();)
+					addResult(collIt.next());
+			}
+
+		}
+
+		if (anyFunctionAggregates) {
+			for (Entry<String, Object> projection : projections.entrySet()) {
+				if (projection.getValue() instanceof OSQLFunctionRuntime) {
+					final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection.getValue();
+					f.setResult(index.getSize());
 				}
 			}
 		}
@@ -671,7 +681,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		} else if (tempResult != null) {
 			int limitIndex = 0;
 			// TEMP RESULT: RETURN ALL THE RECORDS AT THE END
-			for (ODocument doc : tempResult) {
+			for (OIdentifiable doc : tempResult) {
 				// CALL THE LISTENER
 				if (orderedFields != null && limit > 0) {
 					if (limitIndex < limit) {

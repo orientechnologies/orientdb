@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.db.record;
 import java.util.Comparator;
 
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.ORecord;
 
 /**
  * Base interface for identifiable objects.
@@ -27,4 +28,6 @@ import com.orientechnologies.orient.core.id.ORID;
  */
 public interface OIdentifiable extends Comparable<OIdentifiable>, Comparator<OIdentifiable> {
 	public ORID getIdentity();
+
+	public ORecord<?> getRecord();
 }

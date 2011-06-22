@@ -21,8 +21,10 @@ import java.io.OutputStream;
 import java.util.List;
 
 import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
@@ -250,5 +252,9 @@ public class ORecordId implements ORID {
 
 	public ORID getIdentity() {
 		return this;
+	}
+
+	public ORecord<?> getRecord() {
+		return ODatabaseRecordThreadLocal.INSTANCE.get().load(this);
 	}
 }
