@@ -106,9 +106,11 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 			idx = database.getMetadata().getIndexManager().createIndex(name, indexType.toUpperCase(), null, null, null, false);
 		}
 
-//		if (idx != null)
-//			return idx.getSize();
+		if (idx != null)
+			return idx.getSize();
 
-		return database.getMetadata().getIndexManager().getDocument().getIdentity();
+		return null;
+		//
+		// return database.getMetadata().getIndexManager().getDocument().getIdentity();
 	}
 }

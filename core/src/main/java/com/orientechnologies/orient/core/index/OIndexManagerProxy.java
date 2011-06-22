@@ -87,6 +87,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
 		return delegate.getDictionary();
 	}
 
-	public void close() {
+	public void flush() {
+		delegate.flush();
 	}
 }

@@ -497,7 +497,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			throws IOException {
 		out.println("\nCreating index...");
 
-		sqlCommand("create", iCommandText, "\nCreated index (saved in %s) in %f sec(s).\n");
+		sqlCommand("create", iCommandText, "\nCreated index successfully with %d entries in %f sec(s).\n");
 		updateDatabaseInfo();
 		out.println("\nIndex created successfully");
 	}

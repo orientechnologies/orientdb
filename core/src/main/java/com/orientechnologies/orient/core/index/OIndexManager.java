@@ -47,5 +47,5 @@ public interface OIndexManager {
 
 	public ODictionary<ORecordInternal<?>> getDictionary();
 
-	public void close();
+	public void flush();
 }

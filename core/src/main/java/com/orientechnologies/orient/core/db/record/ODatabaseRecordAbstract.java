@@ -152,12 +152,13 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 	@Override
 	public void close() {
-		super.close();
-
 		if (metadata != null) {
 			metadata.close();
 			metadata = null;
 		}
+
+		super.close();
+
 		hooks.clear();
 		dictionary = null;
 
@@ -397,7 +398,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				record = getLevel1Cache().findRecord(iRid);
 
 			if (record != null) {
-				if (!OFetchHelper.isFetchPlanValid(iFetchPlan)){
+				if (!OFetchHelper.isFetchPlanValid(iFetchPlan)) {
 					throw new IllegalArgumentException("Fetch plan '" + iFetchPlan + "' is invalid");
 				}
 				callbackHooks(TYPE.BEFORE_READ, record);

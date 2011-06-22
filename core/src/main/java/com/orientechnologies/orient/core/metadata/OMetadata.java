@@ -151,8 +151,8 @@ public class OMetadata {
 	 * Closes internal objects
 	 */
 	public void close() {
+		indexManager.flush();
 		schema.close();
-		indexManager.close();
 		security.close();
 	}
 }

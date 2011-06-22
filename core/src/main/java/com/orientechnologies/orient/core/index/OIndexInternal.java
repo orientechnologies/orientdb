@@ -36,7 +36,7 @@ public interface OIndexInternal extends OIndex, Iterable<Entry<Object, Set<OIden
 
 	public void checkEntry(final OIdentifiable iRecord, final Object iKey);
 
-	public void close();
+	public void flush();
 
 	public OIndexInternal rebuild();
 

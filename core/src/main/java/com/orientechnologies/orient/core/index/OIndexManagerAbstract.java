@@ -80,11 +80,9 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 		createIndex(DICTIONARY_NAME, OProperty.INDEX_TYPE.DICTIONARY.toString(), null, null, null, false);
 	}
 
-	public synchronized void close() {
+	public synchronized void flush() {
 		for (OIndexInternal idx : indexes.values())
-			idx.close();
-
-		indexes.clear();
+			idx.flush();
 	}
 
 	public synchronized OIndex createIndex(final String iName, final String iType, final int[] iClusterIdsToIndex,

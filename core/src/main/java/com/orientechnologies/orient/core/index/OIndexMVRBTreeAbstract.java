@@ -87,15 +87,8 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 		};
 	}
 
-	public void close() {
-		acquireExclusiveLock();
-		try {
-
-			map.commitChanges();
-
-		} finally {
-			releaseExclusiveLock();
-		}
+	public void flush() {
+		lazySave();
 	}
 
 	/**
@@ -718,7 +711,8 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 
 			final int saved = map.optimize(true);
 
-			OLogManager.instance().debug(this, "Completed! Saved %d and now %d entries reside in memory", saved, map.getInMemoryEntries());
+			OLogManager.instance()
+					.debug(this, "Completed! Saved %d and now %d entries reside in memory", saved, map.getInMemoryEntries());
 
 		} finally {
 			releaseExclusiveLock();

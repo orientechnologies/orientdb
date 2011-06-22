@@ -56,9 +56,9 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 	public synchronized OIndex createIndex(final String iName, final String iType, final int[] iClusterIdsToIndex,
 			OIndexCallback iCallback, final OProgressListener iProgressListener, final boolean iAutomatic) {
 		final String text = String.format(QUERY_CREATE, iName, iType);
-		final ORecordId rid = getDatabase().command(new OCommandSQL(text)).execute();
+		getDatabase().command(new OCommandSQL(text)).execute();
 
-		document.setIdentity(rid);
+		document.setIdentity(new ORecordId(document.getDatabase().getStorage().getConfiguration().indexMgrRecordId));
 		reload();
 
 		return indexes.get(iName.toLowerCase());
