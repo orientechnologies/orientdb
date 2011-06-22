@@ -33,9 +33,10 @@ public class OIndexNotUnique extends OIndexMVRBTreeAbstract {
 	}
 
 	public OIndex put(final Object iKey, final OIdentifiable iSingleValue) {
+		checkForOptimization();
 		acquireExclusiveLock();
-
 		try {
+
 			Set<OIdentifiable> values = map.get(iKey);
 			if (values == null)
 				values = new ORecordLazySet(configuration.getDatabase());
@@ -54,9 +55,10 @@ public class OIndexNotUnique extends OIndexMVRBTreeAbstract {
 	}
 
 	public boolean remove(final Object iKey, final OIdentifiable iValue) {
+		checkForOptimization();
 		acquireExclusiveLock();
-
 		try {
+
 			final Set<OIdentifiable> recs = get(iKey);
 			if (recs != null && !recs.isEmpty()) {
 				if (recs.remove(iValue)) {

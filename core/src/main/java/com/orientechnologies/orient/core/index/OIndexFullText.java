@@ -128,6 +128,7 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 			if (stopWords.contains(word))
 				continue;
 
+			checkForOptimization();
 			acquireExclusiveLock();
 
 			try {
@@ -151,9 +152,10 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 	}
 
 	public boolean remove(final Object iKey, final OIdentifiable value) {
+		checkForOptimization();
 		acquireExclusiveLock();
-
 		try {
+			
 			final Set<OIdentifiable> recs = get(iKey);
 			if (recs != null && !recs.isEmpty()) {
 				if (recs.remove(value)) {

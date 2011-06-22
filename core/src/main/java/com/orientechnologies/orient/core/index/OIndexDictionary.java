@@ -32,9 +32,10 @@ public class OIndexDictionary extends OIndexMVRBTreeAbstract {
 	}
 
 	public OIndex put(final Object iKey, final OIdentifiable iSingleValue) {
+		checkForOptimization();
 		acquireExclusiveLock();
-
 		try {
+			
 			Set<OIdentifiable> values = map.get(iKey);
 
 			if (values == null)

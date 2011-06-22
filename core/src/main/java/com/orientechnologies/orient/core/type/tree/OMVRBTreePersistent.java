@@ -29,6 +29,7 @@ import com.orientechnologies.common.collection.OMVRBTreeEventListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -223,9 +224,10 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			if (debug)
 				System.out.printf("\n------------\nOptimizing: total items %d, root is %s...", size(), pRoot.toString());
 
+			lastSearchFound = false;
 			lastSearchKey = null;
 			lastSearchNode = null;
-			
+
 			// COMPUTE THE DISTANCE BETWEEN NODES
 			final int distance;
 			if (nodes <= entryPointsSize)
@@ -361,7 +363,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 		try {
 			final V v = internalPut(key, value);
-			commitChanges(null);
+			commitChanges();
 			return v;
 		} finally {
 
@@ -377,7 +379,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			for (Entry<? extends K, ? extends V> entry : map.entrySet()) {
 				internalPut(entry.getKey(), entry.getValue());
 			}
-			commitChanges(null);
+			commitChanges();
 
 		} finally {
 			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.putAll", timer);
@@ -390,7 +392,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 		try {
 			V v = super.remove(key);
-			commitChanges(null);
+			commitChanges();
 			return v;
 		} finally {
 
@@ -398,7 +400,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		}
 	}
 
-	public int commitChanges(final ODatabaseRecord iDatabase) {
+	public int commitChanges() {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		int totalCommitted = 0;
@@ -414,10 +416,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 					for (OMVRBTreeEntryPersistent<K, V> node : tmp)
 						if (node.record.isDirty()) {
-							if (iDatabase != null)
-								// REPLACE THE DATABASE WITH THE NEW ACQUIRED
-								node.record.setDatabase(iDatabase);
-
 							boolean wasNew = node.record.getIdentity().isNew();
 
 							// CREATE THE RECORD
@@ -452,10 +450,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 			if (record.isDirty()) {
 				// TREE IS CHANGED AS WELL
-				if (iDatabase != null)
-					// REPLACE THE DATABASE WITH THE NEW ACQUIRED
-					record.setDatabase(iDatabase);
-
 				save();
 			}
 
@@ -840,5 +834,11 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		if (debug && p != null)
 			System.out.printf("\nRotating to the right the node %s", ((OMVRBTreeEntryPersistent<K, V>) p).record.getIdentity());
 		super.rotateRight(p);
+	}
+
+	protected ODatabaseRecord getDatabase() {
+		final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
+		record.setDatabase(database);
+		return database;
 	}
 }

@@ -46,8 +46,8 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> {
 	 * Do nothing since all the changes will be committed expressly at lazySave() time or on closing.
 	 */
 	@Override
-	public synchronized int commitChanges(final ODatabaseRecord iDatabase) {
-		if (database.getTransaction() instanceof OTransactionOptimistic || maxUpdatesBeforeSave == 0
+	public synchronized int commitChanges() {
+		if (getDatabase().getTransaction() instanceof OTransactionOptimistic || maxUpdatesBeforeSave == 0
 				|| (maxUpdatesBeforeSave > 0 && ++updates >= maxUpdatesBeforeSave)) {
 			updates = 0;
 			return lazySave();
@@ -62,7 +62,7 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> {
 	}
 
 	public int lazySave() {
-		return super.commitChanges(database);
+		return super.commitChanges();
 	}
 
 	@Override

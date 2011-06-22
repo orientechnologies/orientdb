@@ -313,7 +313,6 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		// DISCONNECT RECURSIVELY THE LEFT NODE
 		if (left != null) {
 			// DISCONNECT MYSELF FROM THE LEFT NODE
-			left.parent = null;
 			int disconnected = left.disconnect(iForceDirty, iLevel + 1);
 
 			if (disconnected > 0) {
@@ -325,7 +324,6 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		// DISCONNECT RECURSIVELY THE RIGHT NODE
 		if (right != null) {
 			// DISCONNECT MYSELF FROM THE RIGHT NODE
-			right.parent = null;
 			int disconnected = right.disconnect(iForceDirty, iLevel + 1);
 
 			if (disconnected > 0) {

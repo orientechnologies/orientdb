@@ -20,7 +20,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
@@ -32,22 +31,17 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
  */
 @SuppressWarnings("serial")
 public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
-	protected ODatabaseRecord	database;
-
 	public OMVRBTreeDatabase(final ODatabaseRecord iDatabase, final ORID iRID) {
 		super(iDatabase.getClusterNameById(iRID.getClusterId()), iRID);
-		database = iDatabase;
-		record.setDatabase(iDatabase);
 	}
 
 	public OMVRBTreeDatabase(final ODatabaseRecord iDatabase, String iClusterName, final OStreamSerializer iKeySerializer,
 			final OStreamSerializer iValueSerializer) {
 		super(iClusterName, iKeySerializer, iValueSerializer);
-		database = iDatabase;
-		record.setDatabase(iDatabase);
 	}
 
 	public void delete() {
+		getDatabase();
 		clear();
 		record.delete();
 	}
@@ -62,10 +56,6 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
 	protected OMVRBTreeEntryDatabase<K, V> createEntry(final OMVRBTreeEntry<K, V> parent) {
 		adjustPageSize();
 		return new OMVRBTreeEntryDatabase<K, V>(parent, parent.getPageSplitItems());
-	}
-
-	public void setDatabase(ODatabaseRecord database) {
-		this.database = database;
 	}
 
 	@Override
@@ -121,17 +111,13 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
 		return entry;
 	}
 
-	public ODatabaseRecord getDatabase() {
-		return database;
-	}
-
 	@Override
 	public OMVRBTreePersistent<K, V> load() {
 		if (!record.getIdentity().isValid())
 			// NOTHING TO LOAD
 			return this;
 
-		record.setDatabase(database);
+		getDatabase();
 		record.reload();
 		record.recycle(this);
 		fromStream(record.toStream());
@@ -141,7 +127,7 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
 
 	@Override
 	public OMVRBTreePersistent<K, V> save() throws IOException {
-		record.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
+		getDatabase();
 		record.save(clusterName);
 		return this;
 	}

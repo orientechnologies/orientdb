@@ -75,7 +75,7 @@ public class LocalCreateDocumentMultiThreadIndexedSpeedTest extends OrientMultiT
 			database.declareIntent(new OIntentMassiveInsert());
 			database.begin(TXTYPE.NOTX);
 
-			synchronized (this) {
+			synchronized (LocalCreateDocumentMultiThreadIndexedSpeedTest.class) {
 				OClass c = database.getMetadata().getSchema().getClass("Account");
 				if (c == null)
 					c = database.getMetadata().getSchema().createClass("Account");

@@ -33,9 +33,10 @@ public class OIndexUnique extends OIndexMVRBTreeAbstract {
 	}
 
 	public OIndex put(final Object iKey, final OIdentifiable iSingleValue) {
+		checkForOptimization();
 		acquireExclusiveLock();
-
 		try {
+			
 			Set<OIdentifiable> values = map.get(iKey);
 
 			if (values == null)

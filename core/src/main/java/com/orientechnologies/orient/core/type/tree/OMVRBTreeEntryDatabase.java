@@ -47,7 +47,6 @@ public class OMVRBTreeEntryDatabase<K, V> extends OMVRBTreeEntryPersistent<K, V>
 	 */
 	public OMVRBTreeEntryDatabase(OMVRBTreeEntry<K, V> iParent, int iPosition) {
 		super(iParent, iPosition);
-		record.setDatabase(((OMVRBTreeDatabase<K, V>) pTree).database);
 	}
 
 	/**
@@ -63,13 +62,11 @@ public class OMVRBTreeEntryDatabase<K, V> extends OMVRBTreeEntryPersistent<K, V>
 	public OMVRBTreeEntryDatabase(OMVRBTreeDatabase<K, V> iTree, OMVRBTreeEntryDatabase<K, V> iParent, ORID iRecordId)
 			throws IOException {
 		super(iTree, iParent, iRecordId);
-		record.setDatabase(iTree.database);
 		load();
 	}
 
 	public OMVRBTreeEntryDatabase(OMVRBTreeDatabase<K, V> iTree, K key, V value, OMVRBTreeEntryDatabase<K, V> iParent) {
 		super(iTree, key, value, iParent);
-		record.setDatabase(iTree.database);
 	}
 
 	@Override

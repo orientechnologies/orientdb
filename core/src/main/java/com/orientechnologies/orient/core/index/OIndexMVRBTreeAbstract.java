@@ -69,64 +69,20 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	@ODocumentInstance
 	protected ODocument																							configuration;
 	private Listener																								watchDog;
+	private volatile int																						optimization		= 0;
 
 	public OIndexMVRBTreeAbstract(final String iType) {
 		type = iType;
 
 		watchDog = new Listener() {
 			public void memoryUsageLow(final TYPE iType, final long usedMemory, final long maxMemory) {
-				if (iType == TYPE.JVM) {
-					if (map != null) {
-						acquireExclusiveLock();
-						try {
-
-							// REDUCE OF 10% LAZY UPDATES
-							int maxUpdates = map.getMaxUpdatesBeforeSave();
-							if (maxUpdates > 10)
-								maxUpdates *= 0.90;
-
-							map.setMaxUpdatesBeforeSave(maxUpdates);
-
-							optimize(false);
-						} finally {
-							releaseExclusiveLock();
-						}
-					}
-				}
+				if (iType == TYPE.JVM)
+					optimization = 1;
 			}
 
 			public void memoryUsageCritical(final TYPE iType, final long usedMemory, final long maxMemory) {
-				if (iType == TYPE.JVM) {
-					if (map != null) {
-						acquireExclusiveLock();
-						try {
-
-							// REDUCE OF 10% LAZY UPDATES
-							int maxUpdates = map.getMaxUpdatesBeforeSave();
-							if (maxUpdates > 10)
-								maxUpdates *= 0.50;
-
-							map.setMaxUpdatesBeforeSave(maxUpdates);
-
-							optimize(true);
-
-						} finally {
-							releaseExclusiveLock();
-						}
-					}
-				}
-			}
-
-			private void optimize(final boolean iHardMode) {
-				OLogManager.instance().debug(this, "Forcing optimization of Index %s (%d items). Found %d entries in memory...", name,
-						map.size(), map.getInMemoryEntries());
-
-				if (iHardMode)
-					map.freeInMemoryResources();
-				final int saved = map.optimize(true);
-
-				OLogManager.instance().debug(this, "Completed! Saved %d and now %d entries reside in memory", saved,
-						map.getInMemoryEntries());
+				if (iType == TYPE.JVM)
+					optimization = 2;
 			}
 		};
 	}
@@ -135,7 +91,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 		acquireExclusiveLock();
 		try {
 
-			map.commitChanges(ODatabaseRecordThreadLocal.INSTANCE.get());
+			map.commitChanges();
 
 		} finally {
 			releaseExclusiveLock();
@@ -199,7 +155,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 			if (clusters != null)
 				clustersToIndex.addAll(clusters);
 
-			map = new OMVRBTreeDatabaseLazySave<Object, Set<OIdentifiable>>(iConfig.getDatabase(), rid);
+			map = new OMVRBTreeDatabaseLazySave<Object, Set<OIdentifiable>>(getDatabase(), rid);
 			map.load();
 
 			installHooks(iConfig.getDatabase());
@@ -212,6 +168,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	}
 
 	public Set<OIdentifiable> get(final Object iKey) {
+		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 
@@ -230,6 +187,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	}
 
 	public boolean contains(final Object iKey) {
+		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 
@@ -270,6 +228,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 		if (iRangeFrom.getClass() != iRangeTo.getClass())
 			throw new IllegalArgumentException("Range from-to parameters are of different types");
 
+		checkForOptimization();
 		acquireExclusiveLock();
 
 		try {
@@ -303,8 +262,9 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	public OIndexInternal rebuild(final OProgressListener iProgressListener) {
 		clear();
 
-		map.getDatabase().declareIntent(new OIntentMassiveInsert());
+		getDatabase().declareIntent(new OIntentMassiveInsert());
 
+		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 
@@ -313,13 +273,13 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 			long documentTotal = 0;
 
 			for (String cluster : clustersToIndex)
-				documentTotal += map.getDatabase().countClusterElements(cluster);
+				documentTotal += getDatabase().countClusterElements(cluster);
 
 			if (iProgressListener != null)
 				iProgressListener.onBegin(this, documentTotal);
 
 			for (String clusterName : clustersToIndex)
-				for (ORecord<?> record : map.getDatabase().browseCluster(clusterName)) {
+				for (ORecord<?> record : getDatabase().browseCluster(clusterName)) {
 					if (record instanceof ODocument) {
 						final ODocument doc = (ODocument) record;
 						final Object fieldValue = callback.getDocumentValueToIndex(doc);
@@ -349,7 +309,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 			throw new OIndexException("Error on rebuilding the index for clusters: " + clustersToIndex, e);
 
 		} finally {
-			map.getDatabase().declareIntent(null);
+			getDatabase().declareIntent(null);
 			releaseExclusiveLock();
 		}
 
@@ -361,6 +321,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	}
 
 	public boolean remove(final Object key) {
+		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 
@@ -372,6 +333,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	}
 
 	public int remove(final OIdentifiable iRecord) {
+		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 
@@ -396,6 +358,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	}
 
 	public int count(final OIdentifiable iRecord) {
+		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 
@@ -418,6 +381,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	}
 
 	public OIndex clear() {
+		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 
@@ -430,6 +394,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	}
 
 	public OIndexInternal delete() {
+		checkForOptimization();
 		acquireExclusiveLock();
 
 		try {
@@ -442,10 +407,10 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	}
 
 	public OIndexInternal lazySave() {
+		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 
-			map.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
 			map.lazySave();
 			return this;
 
@@ -459,6 +424,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	}
 
 	public Iterator<Entry<Object, Set<OIdentifiable>>> iterator() {
+		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 
@@ -470,6 +436,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	}
 
 	public Iterable<Object> keys() {
+		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 
@@ -481,6 +448,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	}
 
 	public long getSize() {
+		checkForOptimization();
 		acquireSharedLock();
 		try {
 
@@ -517,6 +485,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	}
 
 	public Set<String> getClusters() {
+		checkForOptimization();
 		acquireSharedLock();
 		try {
 
@@ -528,6 +497,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	}
 
 	public OIndexMVRBTreeAbstract addCluster(final String iClusterName) {
+		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 
@@ -543,6 +513,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	}
 
 	public void unload() {
+		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 
@@ -554,6 +525,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	}
 
 	public ODocument updateConfiguration() {
+		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 
@@ -581,6 +553,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 		if (iDocument == null)
 			return;
 
+		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 			final Boolean clearAll = (Boolean) iDocument.field("clear");
@@ -684,6 +657,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	}
 
 	public void onAfterTxRollback(final ODatabase iDatabase) {
+		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 
@@ -695,10 +669,11 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	}
 
 	public void onBeforeTxCommit(final ODatabase iDatabase) {
+		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 
-			map.commitChanges((ODatabaseRecord) iDatabase);
+			map.commitChanges();
 
 		} finally {
 			releaseExclusiveLock();
@@ -706,6 +681,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	}
 
 	public void onAfterTxCommit(final ODatabase iDatabase) {
+		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 
@@ -717,14 +693,48 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	}
 
 	public void onClose(final ODatabase iDatabase) {
+		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 
-			map.commitChanges((ODatabaseRecord) iDatabase);
+			map.commitChanges();
 			Orient.instance().getMemoryWatchDog().removeListener(watchDog);
 
 		} finally {
 			releaseExclusiveLock();
 		}
+	}
+
+	protected void optimize(final boolean iHardMode) {
+		if (map == null)
+			return;
+
+		acquireExclusiveLock();
+		try {
+
+			OLogManager.instance().info(this,
+					"Forcing " + (iHardMode ? "hard" : "soft") + " optimization of Index %s (%d items). Found %d entries in memory...", name,
+					map.size(), map.getInMemoryEntries());
+
+			final int saved = map.optimize(true);
+
+			OLogManager.instance().info(this, "Completed! Saved %d and now %d entries reside in memory", saved, map.getInMemoryEntries());
+
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
+	protected void checkForOptimization() {
+		if (optimization > 0) {
+			final boolean hardMode = optimization == 2;
+			optimization = 0;
+
+			optimize(hardMode);
+		}
+	}
+
+	protected ODatabaseRecord getDatabase() {
+		return ODatabaseRecordThreadLocal.INSTANCE.get();
 	}
 }
