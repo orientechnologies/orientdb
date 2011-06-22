@@ -110,7 +110,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 		try {
 			currentTx.commit();
 		} catch (RuntimeException e) {
-			getLevel1Cache().clear();
+			currentTx.rollback();
 			throw e;
 		} finally {
 			setDefaultTransactionMode();

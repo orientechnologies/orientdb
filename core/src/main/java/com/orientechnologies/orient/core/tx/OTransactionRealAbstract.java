@@ -198,7 +198,6 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 			indexEntry.getChangesPerKey(iKey).add(iValue, iOperation);
 	}
 
-	@Override
 	protected void checkTransaction() {
 		if (status == TXSTATUS.INVALID)
 			throw new OTransactionException("Invalid state of the transaction. The transaction must be begun.");

@@ -82,6 +82,9 @@ public interface OStorage extends OSharedContainer {
 	// TX OPERATIONS
 	public void commit(OTransaction iTx);
 
+	// TX OPERATIONS
+	public void rollback(OTransaction iTx);
+
 	// MISC
 	public OStorageConfiguration getConfiguration();
 

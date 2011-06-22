@@ -187,6 +187,11 @@ public class OStorageRemoteThread implements OStorage {
 		delegate.commit(iTx);
 	}
 
+	public void rollback(OTransaction iTx) {
+		delegate.setSessionId(sessionId);
+		delegate.rollback(iTx);
+	}
+
 	public int getClusterIdByName(final String iClusterName) {
 		delegate.setSessionId(sessionId);
 		return delegate.getClusterIdByName(iClusterName);

@@ -36,30 +36,37 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 	}
 
 	public void commit() {
+		checkTransaction();
 		status = TXSTATUS.COMMITTING;
 		database.executeCommit();
+
+		recordEntries.clear();
+		indexEntries.clear();
+
 		status = TXSTATUS.INVALID;
 	}
 
 	public void rollback() {
-		if (isActive()) {
-			status = TXSTATUS.ROLLBACKING;
+		checkTransaction();
 
-			// INVALIDATE THE CACHE
-			database.getLevel1Cache().removeRecords(recordEntries.keySet());
+		status = TXSTATUS.ROLLBACKING;
 
-			// REMOVE ALL THE ENTRIES AND INVALIDATE THE DOCUMENTS TO AVOID TO BE RE-USED DIRTY AT USER-LEVEL. IN THIS WAY RE-LOADING MUST
-			// EXECUTED
-			for (OTransactionRecordEntry v : recordEntries.values()) {
-				v.getRecord().unload();
-			}
-			recordEntries.clear();
-			indexEntries.clear();
+		database.getStorage().rollback(this);
 
-			newObjectCounter = -2;
+		// INVALIDATE THE CACHE
+		database.getLevel1Cache().invalidate();
 
-			status = TXSTATUS.INVALID;
+		// REMOVE ALL THE ENTRIES AND INVALIDATE THE DOCUMENTS TO AVOID TO BE RE-USED DIRTY AT USER-LEVEL. IN THIS WAY RE-LOADING MUST
+		// EXECUTED
+		for (OTransactionRecordEntry v : recordEntries.values()) {
+			v.getRecord().unload();
 		}
+		recordEntries.clear();
+		indexEntries.clear();
+
+		newObjectCounter = -2;
+
+		status = TXSTATUS.INVALID;
 	}
 
 	public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan) {

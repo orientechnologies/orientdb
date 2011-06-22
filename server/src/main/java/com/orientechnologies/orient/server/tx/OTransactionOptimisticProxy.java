@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 public class OTransactionOptimisticProxy extends OTransactionOptimistic {
+	private final Map<ORecordId, ORecord<?>>	createdRecords	= new HashMap<ORecordId, ORecord<?>>();
 	private final Map<ORecordId, ORecord<?>>	updatedRecords	= new HashMap<ORecordId, ORecord<?>>();
 	private int																clientTxId;
 	private ODocument													indexEntries		= null;
@@ -53,6 +54,9 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 				case OTransactionRecordEntry.CREATED:
 					entry.clusterName = iChannel.readString();
 					entry.getRecord().fromStream(iChannel.readBytes());
+
+					// SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW RID TO SEND BACK TO THE REQUESTER
+					createdRecords.put(rid.copy(), entry.getRecord());
 					break;
 
 				case OTransactionRecordEntry.UPDATED:
@@ -85,6 +89,10 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 	@Override
 	public ODocument getIndexChanges() {
 		return indexEntries;
+	}
+
+	public Map<ORecordId, ORecord<?>> getCreatedRecords() {
+		return createdRecords;
 	}
 
 	public Map<ORecordId, ORecord<?>> getUpdatedRecords() {

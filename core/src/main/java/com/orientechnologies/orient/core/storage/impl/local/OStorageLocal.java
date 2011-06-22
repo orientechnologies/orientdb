@@ -686,6 +686,12 @@ public class OStorageLocal extends OStorageEmbedded {
 	}
 
 	public void rollback(final OTransaction iTx) {
+		try {
+			txManager.getTxSegment().rollback(iTx);
+		} catch (IOException ioe) {
+			OLogManager.instance().error(this,
+					"Error executing rollback for transaction with id '" + iTx.getId() + "' cause: " + ioe.getMessage(), ioe);
+		}
 	}
 
 	public void synch() {

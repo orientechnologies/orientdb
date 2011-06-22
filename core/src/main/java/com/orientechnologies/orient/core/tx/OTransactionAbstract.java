@@ -49,11 +49,6 @@ public abstract class OTransactionAbstract implements OTransaction {
 		return database;
 	}
 
-	protected void checkTransaction() {
-		if (status == TXSTATUS.INVALID)
-			throw new OTransactionException("Invalid state of the transaction. The transaction must be begun.");
-	}
-
 	public static void updateCacheFromEntries(final OStorage iStorage, final OTransaction iTx,
 			final Iterable<? extends OTransactionRecordEntry> iEntries) throws IOException {
 		final OLevel1RecordCache dbCache = (OLevel1RecordCache) iTx.getDatabase().getLevel1Cache();

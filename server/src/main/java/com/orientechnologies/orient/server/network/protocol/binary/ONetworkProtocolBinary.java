@@ -763,6 +763,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				try {
 					sendOk(lastClientTxId);
 
+					// SEND BACK ALL THE RECORD IDS FOR THE CREATED RECORDS
+					channel.writeInt(tx.getCreatedRecords().size());
+					for (Entry<ORecordId, ORecord<?>> entry : tx.getCreatedRecords().entrySet()) {
+						channel.writeRID(entry.getKey());
+						channel.writeRID(entry.getValue().getIdentity());
+					}
 					// SEND BACK ALL THE NEW VERSIONS FOR THE UPDATED RECORDS
 					channel.writeInt(tx.getUpdatedRecords().size());
 					for (Entry<ORecordId, ORecord<?>> entry : tx.getUpdatedRecords().entrySet()) {

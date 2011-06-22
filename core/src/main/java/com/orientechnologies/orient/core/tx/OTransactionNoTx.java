@@ -27,21 +27,24 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 
+/**
+ * No operation transaction.
+ * 
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * 
+ */
 public class OTransactionNoTx extends OTransactionAbstract {
 	public OTransactionNoTx(final ODatabaseRecordTx iDatabase) {
 		super(iDatabase);
-		status = TXSTATUS.INVALID;
 	}
 
 	public void begin() {
 	}
 
 	public void commit() {
-		status = TXSTATUS.INVALID;
 	}
 
 	public void rollback() {
-		status = TXSTATUS.INVALID;
 	}
 
 	public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan) {
@@ -125,5 +128,9 @@ public class OTransactionNoTx extends OTransactionAbstract {
 
 	public OTransactionIndexChanges getIndexChanges(final String iName) {
 		return null;
+	}
+
+	public int getId() {
+		return 0;
 	}
 }

@@ -16,10 +16,8 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
@@ -27,6 +25,7 @@ import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.tx.OTransaction;
 
 /**
  * Handle the records that wait to be committed. This class is not synchronized because the caller is responsible of it.<br/>
@@ -174,7 +173,7 @@ public class OTxSegment extends OSingleFileSegment {
 				offset += OConstants.SIZE_BYTE;
 				offset += OConstants.SIZE_BYTE;
 
-				txId = file.readShort(offset);
+				txId = file.readInt(offset);
 
 				if (txId != iTxId)
 					// NO MY TX, EXIT
@@ -203,6 +202,10 @@ public class OTxSegment extends OSingleFileSegment {
 		}
 	}
 
+	public void rollback(OTransaction iTx) throws IOException {
+		recoverTransaction(iTx.getId());
+	}
+
 	private void recoverTransactions() throws IOException {
 		OLogManager.instance().debug(
 				this,
@@ -213,9 +216,9 @@ public class OTxSegment extends OSingleFileSegment {
 		int recoveredRecords = 0;
 		int rec;
 
-		Map<Integer, Integer> txToRecover = scanForTransactionsToRecover();
-		for (Entry<Integer, Integer> entry : txToRecover.entrySet()) {
-			rec = recoverTransaction(entry.getKey(), entry.getValue());
+		Set<Integer> txToRecover = scanForTransactionsToRecover();
+		for (Integer txId : txToRecover) {
+			rec = recoverTransaction(txId);
 
 			if (rec > 0) {
 				recoveredTxs++;
@@ -235,16 +238,15 @@ public class OTxSegment extends OSingleFileSegment {
 
 	}
 
-	private Map<Integer, Integer> scanForTransactionsToRecover() throws IOException {
+	private Set<Integer> scanForTransactionsToRecover() throws IOException {
 		byte status;
-		int reqId;
 		int txId;
 
 		int offset;
 
 		// SCAN ALL THE FILE SEARCHING FOR THE TRANSACTIONS TO RECOVER
-		Map<Integer, Integer> txToRecover = new HashMap<Integer, Integer>();
-		Map<Integer, Integer> txToNotRecover = new HashMap<Integer, Integer>();
+		Set<Integer> txToRecover = new HashSet<Integer>();
+		Set<Integer> txToNotRecover = new HashSet<Integer>();
 
 		int size = (file.getFilledUpTo() / RECORD_SIZE);
 		for (int i = 0; i < size; ++i) {
@@ -254,34 +256,24 @@ public class OTxSegment extends OSingleFileSegment {
 			offset += OConstants.SIZE_BYTE;
 			offset += OConstants.SIZE_BYTE;
 
-			reqId = file.readShort(offset);
-			offset += OConstants.SIZE_SHORT;
-
-			txId = file.readShort(offset);
+			txId = file.readInt(offset);
 
 			switch (status) {
 			case STATUS_FREE:
 				// NOT RECOVER IT SINCE IF FIND AT LEAST ONE "FREE" STATUS MEANS THAT ALL THE LOGS WAS COMMITTED BUT THE USER DIDN'T
 				// RECEIVED THE ACK
-				txToNotRecover.put(reqId, txId);
+				txToNotRecover.add(txId);
 				break;
 
 			case STATUS_COMMITTING:
 				// TO RECOVER UNLESS THE REQ/TX IS IN THE MAP txToNotRecover
-				txToRecover.put(reqId, txId);
+				txToRecover.add(txId);
 				break;
 			}
 		}
 
 		// FILTER THE TX MAP TO RECOVER BY REMOVING THE TX WITH AT LEAST ONE "FREE" STATUS
-		Entry<Integer, Integer> entry;
-		for (Iterator<Entry<Integer, Integer>> it = txToRecover.entrySet().iterator(); it.hasNext();) {
-			entry = it.next();
-			if (txToNotRecover.containsKey(entry.getKey()) && txToNotRecover.get(entry.getKey()).equals(entry.getValue()))
-				// NO TO RECOVER SINCE AT LEAST ONE "FREE" STATUS MEANS THAT ALL THE LOGS WAS COMMITTED BUT THE USER DIDN'T
-				// RECEIVED THE ACK
-				it.remove();
-		}
+		txToRecover.removeAll(txToNotRecover);
 
 		return txToRecover;
 	}
@@ -295,10 +287,9 @@ public class OTxSegment extends OSingleFileSegment {
 	 * 
 	 * @throws IOException
 	 */
-	private int recoverTransaction(int iReqId, int iTxId) throws IOException {
+	private int recoverTransaction(int iTxId) throws IOException {
 		byte status;
 		byte operation;
-		int reqId;
 		int txId;
 		long oldDataOffset;
 
@@ -321,38 +312,33 @@ public class OTxSegment extends OSingleFileSegment {
 				operation = file.readByte(offset);
 				offset += OConstants.SIZE_BYTE;
 
-				reqId = file.readShort(offset);
+				txId = file.readInt(offset);
 
-				if (reqId == iReqId) {
-					// REQ ID FOUND
+				if (txId == iTxId) {
+					// TX ID FOUND
+					offset += OConstants.SIZE_INT;
+
+					rid.clusterId = file.readShort(offset);
 					offset += OConstants.SIZE_SHORT;
-					txId = file.readInt(offset);
 
-					if (txId == iTxId) {
-						// TX ID FOUND
-						offset += OConstants.SIZE_INT;
+					rid.clusterPosition = file.readLong(offset);
+					offset += OConstants.SIZE_LONG;
 
-						rid.clusterId = file.readShort(offset);
-						offset += OConstants.SIZE_SHORT;
+					oldDataOffset = file.readLong(offset);
 
-						rid.clusterPosition = file.readLong(offset);
-						offset += OConstants.SIZE_LONG;
+					//TODO THIS NEED TO BE FIXED!
+					//recoverTransactionEntry(status, operation, txId, rid, oldDataOffset, ppos);
+					recordsRecovered++;
 
-						oldDataOffset = file.readLong(offset);
-
-						recoverTransactionEntry(status, operation, reqId, txId, rid, oldDataOffset, ppos);
-						recordsRecovered++;
-
-						// CLEAR THE ENTRY BY WRITING '0'
-						file.writeByte(i * RECORD_SIZE + OConstants.SIZE_SHORT + OConstants.SIZE_INT, STATUS_FREE);
-					}
+					// CLEAR THE ENTRY BY WRITING '0'
+					file.writeByte(i * RECORD_SIZE + OConstants.SIZE_SHORT + OConstants.SIZE_INT, STATUS_FREE);
 				}
 			}
 		}
 		return recordsRecovered;
 	}
 
-	private void recoverTransactionEntry(byte status, byte operation, int reqId, int txId, final ORecordId iRid, long oldDataOffset,
+	private void recoverTransactionEntry(byte status, byte operation, int txId, final ORecordId iRid, long oldDataOffset,
 			OPhysicalPosition ppos) throws IOException {
 
 		final OCluster cluster = storage.getClusterById(iRid.clusterId);
@@ -362,9 +348,8 @@ public class OTxSegment extends OSingleFileSegment {
 
 		final OClusterLocal logCluster = (OClusterLocal) cluster;
 
-		OLogManager.instance().info(this,
-				"Recovering tx <%d> by req <%d>. Operation <%d> was in status <%d> on record %s in data space %d...", txId, reqId,
-				operation, status, iRid, oldDataOffset);
+		OLogManager.instance().info(this, "Recovering tx <%d>. Operation <%d> was in status <%d> on record %s in data space %d...",
+				txId, operation, status, iRid, oldDataOffset);
 
 		switch (operation) {
 		case OPERATION_CREATE:

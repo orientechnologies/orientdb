@@ -50,6 +50,8 @@ public interface OTransaction {
 
 	public void deleteRecord(ORecordInternal<?> iRecord);
 
+	public int getId();
+
 	public TXSTATUS getStatus();
 
 	public Iterable<? extends OTransactionRecordEntry> getRecordEntries();

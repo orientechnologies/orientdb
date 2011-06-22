@@ -635,6 +635,7 @@ public class OStorageRemote extends OStorageAbstract {
 							allEntries.addAll(tmpEntries);
 							tmpEntries.clear();
 						}
+
 					}
 
 					// END OF RECORD ENTRIES
@@ -648,6 +649,19 @@ public class OStorageRemote extends OStorageAbstract {
 
 				try {
 					beginResponse(network);
+					final int createdRecords = network.readInt();
+					ORecordId currentRid;
+					ORecordId createdRid;
+					for (int i = 0; i < createdRecords; i++) {
+						currentRid = network.readRID();
+						createdRid = network.readRID();
+						for (OTransactionRecordEntry txEntry : allEntries) {
+							if (txEntry.getRecord().getIdentity().equals(currentRid)) {
+								txEntry.getRecord().setIdentity(createdRid);
+								break;
+							}
+						}
+					}
 					final int updatedRecords = network.readInt();
 					ORecordId rid;
 					for (int i = 0; i < updatedRecords; ++i) {
@@ -677,6 +691,9 @@ public class OStorageRemote extends OStorageAbstract {
 
 			}
 		} while (true);
+	}
+
+	public void rollback(OTransaction iTx) {
 	}
 
 	public int getClusterIdByName(final String iClusterName) {

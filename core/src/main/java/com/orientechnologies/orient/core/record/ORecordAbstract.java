@@ -228,12 +228,6 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 			if (result == null)
 				throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found");
 
-			if (result != this) {
-				// GET CONTENT
-				// result.toStream();
-				// fromStream(result.toStream());
-			}
-
 			return (ORecordInternal<T>) result;
 		} catch (Exception e) {
 			throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found", e);
