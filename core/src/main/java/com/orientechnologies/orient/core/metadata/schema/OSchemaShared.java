@@ -412,8 +412,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass {
 	}
 
 	public void changeClassName(String iOldName, String iNewName) {
-		OClass clazz = classes.remove(iOldName);
-		classes.put(iNewName, clazz);
+		OClass clazz = classes.remove(iOldName.toLowerCase());
+		classes.put(iNewName.toLowerCase(), clazz);
 	}
 
 	/**
