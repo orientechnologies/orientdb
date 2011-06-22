@@ -136,7 +136,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 					connection = OClientConnectionManager.instance().connect(connection.protocol.getChannel().socket, this);
 			}
 
-			ODatabaseRecordThreadLocal.INSTANCE.set(connection.database);
+			if (connection != null)
+				ODatabaseRecordThreadLocal.INSTANCE.set(connection.database);
 
 			++data.totalRequests;
 
