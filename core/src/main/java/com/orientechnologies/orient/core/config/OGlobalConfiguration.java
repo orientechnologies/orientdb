@@ -117,7 +117,7 @@ public enum OGlobalConfiguration {
 
 	// FILE
 	FILE_LOCK("file.lock", "Locks files when used. Default is false for local connections and true when runs as Server",
-			boolean.class, false),
+			boolean.class, true),
 
 	FILE_DEFRAG_STRATEGY(
 			"file.defrag.strategy",
