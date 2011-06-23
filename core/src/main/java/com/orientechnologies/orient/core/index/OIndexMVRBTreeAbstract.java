@@ -705,13 +705,13 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 		acquireExclusiveLock();
 		try {
 
-			OLogManager.instance().warn(this,
+			OLogManager.instance().debug(this,
 					"Forcing " + (iHardMode ? "hard" : "soft") + " optimization of Index %s (%d items). Found %d entries in memory...", name,
 					map.size(), map.getInMemoryEntries());
 
 			final int freed = map.optimize(true);
 
-			OLogManager.instance().warn(this, "Completed! Freed %d entries and now %d entries reside in memory", freed,
+			OLogManager.instance().debug(this, "Completed! Freed %d entries and now %d entries reside in memory", freed,
 					map.getInMemoryEntries());
 
 		} finally {
