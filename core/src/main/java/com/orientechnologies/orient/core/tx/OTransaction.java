@@ -82,4 +82,5 @@ public interface OTransaction {
 
 	public boolean isUsingLog();
 
+	public void setUsingLog(boolean useLog);
 }

@@ -32,8 +32,6 @@ public abstract class OTransactionAbstract implements OTransaction {
 		database = iDatabase;
 	}
 
-	public abstract void setUsingLog(boolean useLog);
-
 	public boolean isActive() {
 		return status != TXSTATUS.INVALID;
 	}
