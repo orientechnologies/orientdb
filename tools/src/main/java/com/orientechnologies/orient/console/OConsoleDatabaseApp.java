@@ -567,7 +567,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	public void dropClass(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText)
 			throws IOException {
 		sqlCommand("drop", iCommandText, "\nRemoved class in %f sec(s).\n");
-		currentDatabase.getMetadata().getSchema().reload();
+		updateDatabaseInfo();
 		out.println("\nClass removed successfully");
 	}
 
@@ -1387,7 +1387,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	}
 
 	private void updateDatabaseInfo() {
-		currentDatabase.close();
-		currentDatabase.open(currentDatabaseUserName, currentDatabaseUserPassword);
+		currentDatabase.getMetadata().getSchema().reload();
 	}
 }
