@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.sql.operator;
 
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
@@ -38,11 +39,18 @@ public class OQueryOperatorIs extends OQueryOperatorEquality {
 			return iLeft != null;
 		else if (OSQLHelper.NOT_NULL.equals(iLeft))
 			return iRight != null;
-		else if ("defined".equals(iLeft))
-			return iRight != null;
-		else if ("defined".equals(iRight))
-			return iRight != null;
-		else
+		else if (OSQLHelper.DEFINED.equals(iLeft)) {
+			return evaluateDefined(iRecord, (String) iRight);
+		} else if (OSQLHelper.DEFINED.equals(iRight)) {
+			return evaluateDefined(iRecord, (String) iLeft);
+		} else
 			return iLeft == iRight;
+	}
+
+	protected boolean evaluateDefined(final ORecordInternal<?> iRecord, String iFieldName) {
+		if (iRecord instanceof ODocument) {
+			return ((ODocument) iRecord).containsField(iFieldName);
+		}
+		return false;
 	}
 }

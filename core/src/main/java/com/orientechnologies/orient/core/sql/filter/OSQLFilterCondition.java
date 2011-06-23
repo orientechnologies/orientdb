@@ -23,7 +23,6 @@ import java.util.regex.Pattern;
 
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -78,7 +77,12 @@ public class OSQLFilterCondition {
 	private Object[] checkForConversion(final ORecordSchemaAware<?> iRecord, final Object l, final Object r) {
 		Object[] result = null;
 
-		if (l != null && r != null && !l.getClass().isAssignableFrom(r.getClass()) && !r.getClass().isAssignableFrom(l.getClass()))
+		// DEFINED OPERATOR
+		if ((r instanceof String && r.equals(OSQLHelper.DEFINED)) || (l instanceof String && l.equals(OSQLHelper.DEFINED))) {
+			result = new Object[] { ((OSQLFilterItemAbstract) this.left).getName(), r };
+		}
+
+		else if (l != null && r != null && !l.getClass().isAssignableFrom(r.getClass()) && !r.getClass().isAssignableFrom(l.getClass()))
 			// INTEGERS
 			if (r instanceof Integer && !(l instanceof Number)) {
 				if (l instanceof String && ((String) l).indexOf('.') > -1)
@@ -126,6 +130,8 @@ public class OSQLFilterCondition {
 		final String stringValue = iValue.toString();
 
 		if (NULL_VALUE.equals(stringValue))
+			return null;
+		if (OSQLHelper.DEFINED.equals(stringValue))
 			return null;
 
 		if (OStringSerializerHelper.contains(stringValue, '.') || OStringSerializerHelper.contains(stringValue, ','))

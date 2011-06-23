@@ -46,6 +46,7 @@ public class OSQLHelper {
 
 	public static final String	VALUE_NOT_PARSED	= "_NOT_PARSED_";
 	public static final String	NOT_NULL					= "_NOT_NULL_";
+	public static final String	DEFINED						= "DEFINED";
 
 	public static int nextWord(final String iText, final String iTextUpperCase, int ioCurrentPosition, final StringBuilder ioWord,
 			final boolean iForceUpperCase) {
@@ -124,6 +125,9 @@ public class OSQLHelper {
 			else if (upperCase.equals("NOT NULL"))
 				// NULL
 				fieldValue = NOT_NULL;
+			else if (upperCase.equals("DEFINED"))
+				// NULL
+				fieldValue = DEFINED;
 			else if (upperCase.equals("TRUE"))
 				// BOOLEAN, TRUE
 				fieldValue = Boolean.TRUE;
