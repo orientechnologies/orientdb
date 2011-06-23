@@ -49,7 +49,6 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 		currentClusterIdx = 0; // START FROM THE FIRST CLUSTER
 
 		updateClusterRange();
-
 		current.clusterPosition = firstClusterPosition - 1;
 
 		totalAvailableRecords = database.countClusterElements(clusterIds);
@@ -125,6 +124,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 			// CLUSTER EXHAUSTED, TRY WITH THE PREVIOUS ONE
 			currentClusterIdx--;
 			updateClusterRange();
+			current.clusterPosition = lastClusterPosition + 1;
 		}
 
 		throw new NoSuchElementException();
@@ -160,6 +160,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 			if (currentClusterIdx >= clusterIds.length)
 				break;
 			updateClusterRange();
+			current.clusterPosition = firstClusterPosition - 1;
 		}
 
 		throw new NoSuchElementException();
