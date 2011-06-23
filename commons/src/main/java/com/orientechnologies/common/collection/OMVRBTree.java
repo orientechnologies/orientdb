@@ -2281,7 +2281,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 				p.getParent().setRight(replacement);
 
 			// Null out links so they are OK to use by fixAfterDeletion.
-			p.setLeft(p.setRight(p.setParent(null)));
+			p.setLeft(null);
+			p.setRight(null);
+			p.setParent(null);
 
 			// Fix replacement
 			if (p.getColor() == BLACK)
@@ -2576,6 +2578,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		OMVRBTreeEntry<K, V> prevNode = null;
 		int i = 0;
 		for (OMVRBTreeEntry<K, V> e = iRootNode.getFirstInMemory(); e != null; e = e.getNextInMemory()) {
+			if (e.getSize() == 0)
+				OLogManager.instance().error(this, "[OMVRBTree.checkTreeStructure] Node %s has 0 items\n", e);
+
 			if (prevNode != null) {
 				if (prevNode.getTree() == null)
 					OLogManager.instance().error(this, "[OMVRBTree.checkTreeStructure] Freed record %d found in memory\n", i);
