@@ -33,7 +33,7 @@ public class OMMapBufferEntry implements Comparable<OMMapBufferEntry> {
 	static {
 		// GET SUN JDK METHOD TO CLEAN MMAP BUFFERS
 		try {
-			sunClass = Class.forName("sun.nio.ch.DirectBuffer");
+			//sunClass = Class.forName("sun.nio.ch.DirectBuffer");
 		} catch (Exception e) {
 			// IGNORE IT AND USE GC TO FREE RESOURCES
 		}
