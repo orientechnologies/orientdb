@@ -722,9 +722,8 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	protected void checkForOptimization() {
 		if (optimization > 0) {
 			final boolean hardMode = optimization == 2;
-			optimization = 0;
-
 			optimize(hardMode);
+			optimization = 0;
 		}
 	}
 
