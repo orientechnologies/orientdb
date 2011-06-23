@@ -76,6 +76,7 @@ public class OMVRBTreeEntryDatabase<K, V> extends OMVRBTreeEntryPersistent<K, V>
 			record.reload();
 		} catch (Exception e) {
 			// ERROR, MAYBE THE RECORD WASN'T CREATED
+			OLogManager.instance().warn(this, "Error on loading index node record %s", e, record.getIdentity());
 		}
 		record.recycle(this);
 		fromStream(record.toStream());
