@@ -1158,7 +1158,8 @@ public class OStorageRemote extends OStorageAbstract {
 						network.getLockWrite().lock();
 						networkPool.add(network);
 
-						System.out.println("Created new connection " + networkPool.size());
+						if (debug)
+							System.out.println("Created new connection " + networkPool.size());
 					} else {
 						if (debug)
 							System.out.println("-> req (waiting) : " + getSessionId());
