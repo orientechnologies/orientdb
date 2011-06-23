@@ -71,6 +71,9 @@ public class OStorageRemote extends OStorageAbstract {
 	private static final String[]							DEFAULT_PORTS			= new String[] { "2424" };
 	private static final String								ADDRESS_SEPARATOR	= ";";
 
+	public static final String								PARAM_MIN_POOL		= "minpool";
+	public static final String								PARAM_MAX_POOL		= "maxpool";
+
 	private OStorageRemoteServiceThread				serviceThread;
 	private OContextConfiguration							clientConfiguration;
 	private int																connectionRetry;
@@ -112,7 +115,7 @@ public class OStorageRemote extends OStorageAbstract {
 		lock.acquireExclusiveLock();
 
 		try {
-			openRemoteDatabase(iUserName, iUserPassword);
+			openRemoteDatabase(iUserName, iUserPassword, iOptions);
 
 			configuration = new OStorageConfiguration(this);
 			configuration.load();
@@ -940,7 +943,7 @@ public class OStorageRemote extends OStorageAbstract {
 				if (OLogManager.instance().isDebugEnabled())
 					OLogManager.instance().debug(this, "Retrying to connect to remote server #" + retry + "/" + connectionRetry + "...");
 
-				openRemoteDatabase(null, null);
+				openRemoteDatabase(null, null, null);
 
 				retry = 0;
 
@@ -959,7 +962,18 @@ public class OStorageRemote extends OStorageAbstract {
 		throw new OStorageException(iMessage, iException);
 	}
 
-	protected void openRemoteDatabase(final String iUserName, final String iUserPassword) throws IOException {
+	protected void openRemoteDatabase(final String iUserName, final String iUserPassword, final Map<String, Object> iOptions)
+			throws IOException {
+		minPool = OGlobalConfiguration.CLIENT_CHANNEL_MIN_POOL.getValueAsInteger();
+		maxPool = OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.getValueAsInteger();
+
+		if (iOptions != null && iOptions.size() > 0) {
+			if (iOptions.containsKey(PARAM_MIN_POOL))
+				minPool = Integer.parseInt(iOptions.get(PARAM_MIN_POOL).toString());
+			if (iOptions.containsKey(PARAM_MAX_POOL))
+				maxPool = Integer.parseInt(iOptions.get(PARAM_MAX_POOL).toString());
+		}
+
 		createConnectionPool();
 
 		OChannelBinaryClient network = null;
@@ -1299,13 +1313,9 @@ public class OStorageRemote extends OStorageAbstract {
 	protected void createConnectionPool() throws IOException, UnknownHostException {
 		synchronized (networkPool) {
 
+			// CREATE THE CHANNEL POOL
 			if (networkPool.size() == 0) {
-				// CREATE THE CHANNEL POOL
-
-				minPool = OGlobalConfiguration.CLIENT_CHANNEL_MIN_POOL.getValueAsInteger();
-				maxPool = OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.getValueAsInteger();
-
-				// CONNECT TO THE SERVER
+				// ALWAYS CREATE AT LEAST ONE CONNECTION
 				final OChannelBinaryClient firstChannel = createNetworkConnection();
 				networkPool.add(firstChannel);
 				serviceThread = new OStorageRemoteServiceThread(new OStorageRemoteThread(this, Integer.MIN_VALUE), firstChannel);

@@ -21,7 +21,6 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
@@ -47,7 +46,6 @@ public class LocalCreateDocumentMultiThreadIndexedSpeedTest extends OrientMultiT
 
 	public LocalCreateDocumentMultiThreadIndexedSpeedTest() {
 		super(1000000, 5, CreateObjectsThread.class);
-		OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.setValue(2);
 
 		OProfiler.getInstance().startRecording();
 	}
@@ -55,6 +53,9 @@ public class LocalCreateDocumentMultiThreadIndexedSpeedTest extends OrientMultiT
 	@Override
 	public void init() {
 		database = new ODatabaseDocumentTx(System.getProperty("url"));
+		database.setProperty("minPool", 2);
+		database.setProperty("maxPool", 3);
+
 		if (database.getURL().startsWith("remote:"))
 			database.open("admin", "admin");
 		else {
