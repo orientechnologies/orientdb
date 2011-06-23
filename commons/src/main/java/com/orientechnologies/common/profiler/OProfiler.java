@@ -350,7 +350,7 @@ public class OProfiler implements OProfilerMBean {
 
 	private synchronized long updateEntry(Map<String, OProfilerEntry> iValues, final String iName, final long iValue) {
 		if (recording < 0)
-			return -1;
+			return iValue;
 
 		OProfilerEntry c = iValues.get(iName);
 

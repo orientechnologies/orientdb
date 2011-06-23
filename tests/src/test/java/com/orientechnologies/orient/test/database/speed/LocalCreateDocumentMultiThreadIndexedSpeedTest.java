@@ -20,6 +20,8 @@ import java.util.Date;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
@@ -38,13 +40,16 @@ public class LocalCreateDocumentMultiThreadIndexedSpeedTest extends OrientMultiT
 	private long							foundObjects;
 
 	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-		//System.setProperty("url", "remote:localhost/demo");
+		System.setProperty("url", "remote:localhost/demo");
 		LocalCreateDocumentMultiThreadIndexedSpeedTest test = new LocalCreateDocumentMultiThreadIndexedSpeedTest();
 		test.data.go(test);
 	}
 
 	public LocalCreateDocumentMultiThreadIndexedSpeedTest() {
 		super(1000000, 5, CreateObjectsThread.class);
+		OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.setValue(2);
+
+		OProfiler.getInstance().startRecording();
 	}
 
 	@Override
@@ -125,5 +130,8 @@ public class LocalCreateDocumentMultiThreadIndexedSpeedTest extends OrientMultiT
 
 		if (database != null)
 			database.close();
+
+		System.out.println(OProfiler.getInstance().dump());
+
 	}
 }

@@ -29,6 +29,7 @@ import java.util.Set;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.distributed.OClientClusterManager;
 import com.orientechnologies.orient.core.Orient;
@@ -166,9 +167,11 @@ public class OStorageRemote extends OStorageAbstract {
 				serviceThread.interrupt();
 			}
 
-			for (OChannelBinaryClient n : networkPool)
-				n.close();
-			networkPool.clear();
+			synchronized (networkPool) {
+				for (OChannelBinaryClient n : networkPool)
+					n.close();
+				networkPool.clear();
+			}
 
 			level2Cache.shutdown();
 
@@ -962,9 +965,9 @@ public class OStorageRemote extends OStorageAbstract {
 		OChannelBinaryClient network = null;
 		try {
 			network = beginRequest(OChannelBinaryProtocol.REQUEST_DB_OPEN);
-			
+
 			network.writeString(name).writeString(iUserName).writeString(iUserPassword);
-			
+
 		} finally {
 			endRequest(network);
 		}
@@ -1085,8 +1088,11 @@ public class OStorageRemote extends OStorageAbstract {
 		lock.acquireSharedLock();
 
 		try {
-			if (networkPool.size() == 0)
-				throw new ODatabaseException("Connection is closed");
+			synchronized (networkPool) {
+
+				if (networkPool.size() == 0)
+					throw new ODatabaseException("Connection is closed");
+			}
 
 		} finally {
 			lock.releaseSharedLock();
@@ -1127,7 +1133,8 @@ public class OStorageRemote extends OStorageAbstract {
 			System.out.println("-> req: " + getSessionId());
 
 		// FIND THE FIRST FREE CHANNEL AVAILABLE
-		synchronized (this) {
+		synchronized (networkPool) {
+			final int beginCursor = networkPoolCursor;
 
 			while (network == null) {
 				network = networkPool.get(networkPoolCursor);
@@ -1138,15 +1145,35 @@ public class OStorageRemote extends OStorageAbstract {
 
 				networkPoolCursor++;
 
-				if (networkPoolCursor >= networkPool.size()) {
+				if (networkPoolCursor >= networkPool.size())
+					// RESTART FROM THE FIRST ONE
 					networkPoolCursor = 0;
 
-					if (debug)
-						System.out.println("-> req (waiting) : " + getSessionId());
+				if (networkPoolCursor == beginCursor) {
+					// COMPLETE ROUND AND NOT FREE CONNECTIONS FOUND
 
-					try {
-						wait(1000);
-					} catch (InterruptedException e) {
+					if (networkPool.size() < maxPool) {
+						// CREATE NEW CONNECTION
+						network = createNetworkConnection();
+						network.getLockWrite().lock();
+						networkPool.add(network);
+
+						System.out.println("Created new connection " + networkPool.size());
+					} else {
+						if (debug)
+							System.out.println("-> req (waiting) : " + getSessionId());
+
+						final long startToWait = System.currentTimeMillis();
+						try {
+							networkPool.wait(5000);
+						} catch (InterruptedException e) {
+							OProfiler.getInstance().updateCounter("network.connectionPool.timeout", +1);
+						}
+
+						final long elapsed = OProfiler.getInstance().stopChrono("network.connectionPool.waitingTime", startToWait);
+
+						if (debug)
+							System.out.println("Waiting for connection = elapsed: " + elapsed);
 					}
 				}
 			}
@@ -1176,8 +1203,8 @@ public class OStorageRemote extends OStorageAbstract {
 
 		iNetwork.getLockWrite().unlock();
 
-		synchronized (this) {
-			notifyAll();
+		synchronized (networkPool) {
+			networkPool.notifyAll();
 		}
 	}
 
@@ -1230,7 +1257,6 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 
 		synchronized (clusterConfiguration) {
-
 			clusterConfiguration.reset();
 
 			// UPDATE IT
@@ -1270,8 +1296,8 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	protected void createConnectionPool() throws IOException, UnknownHostException {
-		lock.acquireExclusiveLock();
-		try {
+		synchronized (networkPool) {
+
 			if (networkPool.size() == 0) {
 				// CREATE THE CHANNEL POOL
 
@@ -1283,12 +1309,11 @@ public class OStorageRemote extends OStorageAbstract {
 				networkPool.add(firstChannel);
 				serviceThread = new OStorageRemoteServiceThread(new OStorageRemoteThread(this, Integer.MIN_VALUE), firstChannel);
 
+				// CREATE THE MINIMUM POOL
 				for (int i = 1; i < minPool; ++i)
 					networkPool.add(createNetworkConnection());
 			}
 
-		} finally {
-			lock.releaseExclusiveLock();
 		}
 	}
 }
