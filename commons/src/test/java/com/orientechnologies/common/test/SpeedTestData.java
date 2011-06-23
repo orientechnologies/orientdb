@@ -135,12 +135,12 @@ public class SpeedTestData {
 		buffer.append(++partialTimerCounter);
 		buffer.append(" elapsed: ");
 		buffer.append(e);
-		buffer.append(" ns");
+		buffer.append(" ms");
 
 		if (partialTimer > 0) {
 			buffer.append(" (from last partial: ");
 			buffer.append(e - partialTimer);
-			buffer.append(" ns)");
+			buffer.append(" ms)");
 		}
 
 		System.out.println(buffer);
