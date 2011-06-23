@@ -57,7 +57,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 
 			synchronized (this) {
 				try {
-					wait();
+					wait(1000);
 				} catch (InterruptedException e) {
 				}
 			}

@@ -38,7 +38,7 @@ public class LocalCreateDocumentMultiThreadIndexedSpeedTest extends OrientMultiT
 	private long							foundObjects;
 
 	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-		// System.setProperty("url", "memory:test");
+		//System.setProperty("url", "remote:localhost/demo");
 		LocalCreateDocumentMultiThreadIndexedSpeedTest test = new LocalCreateDocumentMultiThreadIndexedSpeedTest();
 		test.data.go(test);
 	}
@@ -50,12 +50,14 @@ public class LocalCreateDocumentMultiThreadIndexedSpeedTest extends OrientMultiT
 	@Override
 	public void init() {
 		database = new ODatabaseDocumentTx(System.getProperty("url"));
-		if (database.exists())
-			// database.open("admin", "admin");
-			// else
-			database.delete();
+		if (database.getURL().startsWith("remote:"))
+			database.open("admin", "admin");
+		else {
+			if (database.exists())
+				database.delete();
 
-		database.create();
+			database.create();
+		}
 
 		foundObjects = 0;// database.countClusterElements("Account");
 
