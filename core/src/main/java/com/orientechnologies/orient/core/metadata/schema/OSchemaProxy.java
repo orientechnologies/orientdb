@@ -121,7 +121,7 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
 	}
 
 	public <RET extends ODocumentWrapper> RET reload() {
-		return (RET) delegate;
+		return (RET) delegate.reload();
 	}
 
 	public <RET extends ODocumentWrapper> RET save() {

@@ -49,7 +49,7 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OSchemaShared extends ODocumentWrapperNoClass {
+public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema {
 	protected Map<String, OClass>		classes									= new HashMap<String, OClass>();
 	private static final int				CURRENT_VERSION_NUMBER	= 4;
 	private OSharedResourceExternal	lock										= new OSharedResourceExternal();

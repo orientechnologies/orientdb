@@ -541,7 +541,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 			document.field("max", max);
 			document.field("regexp", regexp);
 
-			document.field("linkedClass", linkedClass != null ? linkedClass.getName() : null);
+			document.field("linkedClass", linkedClass != null ? linkedClass.getName() : linkedClassName);
 			document.field("linkedType", linkedType != null ? linkedType.id : null);
 		} finally {
 			document.setStatus(ORecordElement.STATUS.LOADED);
