@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.index;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -86,14 +87,25 @@ public class OIndexUser extends OIndexAbstractDelegate {
 	}
 
 	public long getSize() {
-		final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+		long tot = delegate.getSize();
 
-		long tot;
-		if (indexChanges == null || !indexChanges.cleared)
-			// BEGIN FROM 0
-			tot = delegate.getSize();
-		else
-			tot = 0;
+		final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+		if (indexChanges != null) {
+			if (indexChanges.cleared)
+				// BEGIN FROM 0
+				tot = 0;
+
+			for (Entry<Object, OTransactionIndexChangesPerKey> entry : indexChanges.changesPerKey.entrySet()) {
+				for (OTransactionIndexEntry e : entry.getValue().entries) {
+					if (e.operation == OPERATION.REMOVE) {
+						if (e.value == null)
+							// KEY REMOVED
+							tot--;
+					} else if (e.operation == OPERATION.PUT) {
+					}
+				}
+			}
+		}
 
 		return tot;
 	}
