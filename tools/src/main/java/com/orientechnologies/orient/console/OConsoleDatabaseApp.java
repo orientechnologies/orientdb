@@ -1137,7 +1137,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		StringBuilder format = new StringBuilder("%3d|%9s");
 		List<Object> vargs = new ArrayList<Object>();
 		vargs.add(iIndex);
-		vargs.add(iRecord.getIdentity());
+
+		if (iRecord.getIdentity().isValid())
+			vargs.add(iRecord.getIdentity());
+		else
+			vargs.add("");
 
 		try {
 			Object value = null;
