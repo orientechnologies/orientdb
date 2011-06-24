@@ -39,11 +39,11 @@ public class OQueryOperatorIs extends OQueryOperatorEquality {
 			return iLeft != null;
 		else if (OSQLHelper.NOT_NULL.equals(iLeft))
 			return iRight != null;
-		else if (OSQLHelper.DEFINED.equals(iLeft)) {
+		else if (OSQLHelper.DEFINED.equals(iLeft))
 			return evaluateDefined(iRecord, (String) iRight);
-		} else if (OSQLHelper.DEFINED.equals(iRight)) {
+		else if (OSQLHelper.DEFINED.equals(iRight))
 			return evaluateDefined(iRecord, (String) iLeft);
-		} else
+		else
 			return iLeft == iRight;
 	}
 
