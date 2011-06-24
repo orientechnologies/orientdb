@@ -30,6 +30,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OPropertyIndex;
 import com.orientechnologies.orient.core.iterator.ORecordIterator;
@@ -533,6 +534,75 @@ public class CRUDDocumentPhysicalTest {
 		child1.field("child2", new ODocument());
 		Assert.assertTrue(parent.isDirty());
 
+	}
+
+	@Test
+	public void testInvalidFetchplanLoad() {
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+		ODocument doc = database.newInstance();
+		doc.field("test", "test");
+		doc.save();
+		ORID docRid = doc.getIdentity().copy();
+		// RELOAD THE DOCUMENT, THIS WILL PUT IT IN L1 CACHE
+		doc = database.load(docRid, "*:-1");
+		try {
+			// LOAD DOCUMENT, CHECK BEFORE GETTING IT FROM L1 CACHE
+			doc = database.load(docRid, "invalid");
+			Assert.fail("Should throw IllegalArgumentException");
+		} catch (Exception e) {
+		}
+		// INVALIDATE L1 CACHE TO CHECK THE L2 CACHE
+		database.getLevel1Cache().invalidate();
+		try {
+			// LOAD DOCUMENT, CHECK BEFORE GETTING IT FROM L2 CACHE
+			doc = database.load(docRid, "invalid");
+			Assert.fail("Should throw IllegalArgumentException");
+		} catch (Exception e) {
+		}
+		// CLEAR THE L2 CACHE TO CHECK THE RAW READ
+		database.getLevel2Cache().clear();
+		try {
+			// LOAD DOCUMENT NOT IN ANY CACHE
+			doc = database.load(docRid, "invalid");
+			Assert.fail("Should throw IllegalArgumentException");
+		} catch (Exception e) {
+		}
+		// CLOSE DB AND RE-TEST THE LOAD TO MAKE SURE
+		database.close();
+		database = null;
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+		try {
+			// LOAD DOCUMENT NOT IN ANY CACHE
+			doc = database.load(docRid, "invalid");
+			Assert.fail("Should throw IllegalArgumentException");
+		} catch (Exception e) {
+		}
+		// LOAD DOCUMENT, THIS WILL PUT IT IN L1 CACHE
+		database.load(docRid);
+		try {
+			// LOAD DOCUMENT, CHECK BEFORE GETTING IT FROM L1 CACHE
+			doc = database.load(docRid, "invalid");
+			Assert.fail("Should throw IllegalArgumentException");
+		} catch (Exception e) {
+		}
+		// CLEAR L1 CACHE, THIS WILL PUT IT IN L2 CACHE
+		database.getLevel1Cache().clear();
+		try {
+			// LOAD DOCUMENT, CHECK BEFORE GETTING IT FROM L2 CACHE
+			doc = database.load(docRid, "invalid");
+			Assert.fail("Should throw IllegalArgumentException");
+		} catch (Exception e) {
+		}
+		// CLEAR THE L2 CACHE TO CHECK THE RAW READ
+		database.getLevel2Cache().clear();
+		try {
+			// LOAD DOCUMENT NOT IN ANY CACHE
+			doc = database.load(docRid, "invalid");
+			Assert.fail("Should throw IllegalArgumentException");
+		} catch (Exception e) {
+		}
+		doc.delete();
+		database.close();
 	}
 
 }
