@@ -1131,7 +1131,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		for (int i = 0; i < iPropertyName.length(); ++i) {
 			final char c = iPropertyName.charAt(i);
 			if (c == ':' || c == ',')
-				throw new IllegalArgumentException("Invalid property name");
+				throw new IllegalArgumentException("Invalid field name '" + iPropertyName + "'");
 		}
 
 		// if (!Character.isJavaIdentifierStart(iPropertyName.charAt(0)))
