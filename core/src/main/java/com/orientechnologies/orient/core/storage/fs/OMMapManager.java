@@ -381,6 +381,9 @@ public class OMMapManager {
 	 *         found position.
 	 */
 	private static int searchEntry(final List<OMMapBufferEntry> fileEntries, final long iBeginOffset, final int iSize) {
+		if (fileEntries == null || fileEntries.size() == 0)
+			return -1;
+
 		int high = fileEntries.size() - 1;
 		if (high < 0)
 			// NOT FOUND
