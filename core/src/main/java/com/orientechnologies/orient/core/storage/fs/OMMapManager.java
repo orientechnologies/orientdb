@@ -218,6 +218,13 @@ public class OMMapManager {
 		p = (position + 2) * -1;
 		if (p < 0)
 			p = 0;
+
+		if (fileEntries == null) {
+			// IN CASE THE CLEAN HAS REMOVED THE LIST
+			fileEntries = new ArrayList<OMMapBufferEntry>();
+			bufferPoolPerFile.put(iFile, fileEntries);
+		}
+
 		fileEntries.add(p, entry);
 
 		// TEST
