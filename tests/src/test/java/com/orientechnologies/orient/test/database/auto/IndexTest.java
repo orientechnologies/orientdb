@@ -24,8 +24,11 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
@@ -109,6 +112,73 @@ public class IndexTest {
 
 		List<?> result = database.query(new OSQLSynchQuery<Object>("select from index:profile.nick where key = 'Jay'"));
 		Assert.assertTrue(result.size() > 0);
+
+		database.close();
+	}
+
+	@Test
+	public void testIndexSQL() {
+		database.open("admin", "admin");
+
+		database.command(new OCommandSQL("create index idx unique")).execute();
+		Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("idx"));
+
+		database.command(new OCommandSQL("insert into index:IDX (key,rid) values (10,#3:0)")).execute();
+		database.command(new OCommandSQL("insert into index:IDX (key,rid) values (20,#3:1)")).execute();
+
+		List<ODocument> result = database.command(new OCommandSQL("select from index:IDX")).execute();
+		Assert.assertNotNull(result);
+		Assert.assertEquals(result.size(), 2);
+		for (ODocument d : result) {
+			Assert.assertTrue(d.containsField("key"));
+			Assert.assertTrue(d.containsField("rid"));
+
+			if (d.field("key").equals(10))
+				Assert.assertEquals(d.rawField("rid"), new ORecordId("#3:0"));
+			else if (d.field("key").equals(20))
+				Assert.assertEquals(d.rawField("rid"), new ORecordId("#3:1"));
+			else
+				Assert.assertTrue(false);
+		}
+
+		result = database.command(new OCommandSQL("select key, rid from index:IDX")).execute();
+		Assert.assertNotNull(result);
+		Assert.assertEquals(result.size(), 2);
+		for (ODocument d : result) {
+			Assert.assertTrue(d.containsField("key"));
+			Assert.assertTrue(d.containsField("rid"));
+
+			if (d.field("key").equals(10))
+				Assert.assertEquals(d.rawField("rid"), new ORecordId("#3:0"));
+			else if (d.field("key").equals(20))
+				Assert.assertEquals(d.rawField("rid"), new ORecordId("#3:1"));
+			else
+				Assert.assertTrue(false);
+		}
+
+		result = database.command(new OCommandSQL("select key from index:IDX")).execute();
+		Assert.assertNotNull(result);
+		Assert.assertEquals(result.size(), 2);
+		for (ODocument d : result) {
+			Assert.assertTrue(d.containsField("key"));
+			Assert.assertFalse(d.containsField("rid"));
+		}
+
+		result = database.command(new OCommandSQL("select rid from index:IDX")).execute();
+		Assert.assertNotNull(result);
+		Assert.assertEquals(result.size(), 2);
+		for (ODocument d : result) {
+			Assert.assertFalse(d.containsField("key"));
+			Assert.assertTrue(d.containsField("rid"));
+		}
+
+		result = database.command(new OCommandSQL("select rid from index:IDX where key = 10")).execute();
+		Assert.assertNotNull(result);
+		Assert.assertEquals(result.size(), 1);
+		for (ODocument d : result) {
+			Assert.assertFalse(d.containsField("key"));
+			Assert.assertTrue(d.containsField("rid"));
+		}
 
 		database.close();
 	}

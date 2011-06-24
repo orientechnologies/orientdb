@@ -626,6 +626,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				throw new OCommandExecutionException("'Key' field is required for queries against indexes");
 
 			final Object right = compiledFilter.getRootCondition().getRight();
+			final Object keyValue = OSQLHelper.getValue(right);
 
 			Collection<OIdentifiable> result = null;
 			if (compiledFilter.getRootCondition().getOperator() instanceof OQueryOperatorBetween) {
@@ -633,18 +634,20 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				result = index.getBetween(OSQLHelper.getValue(values[0]), OSQLHelper.getValue(values[2]));
 
 			} else
-				result = index.get(OSQLHelper.getValue(right));
+				result = index.get(keyValue);
 
 			if (result != null)
 				for (OIdentifiable r : result) {
-					addResult((ORecord<?>) r);
+					addResult(createIndexEntryAsDocument(keyValue, r));
 				}
 		} else {
 
 			// ADD ALL THE ITEMS AS RESULT
 			for (Iterator<Entry<Object, Set<OIdentifiable>>> it = index.iterator(); it.hasNext();) {
-				for (Iterator<OIdentifiable> collIt = ((ORecordLazySet) it.next().getValue()).rawIterator(); collIt.hasNext();)
-					addResult(collIt.next());
+				final Entry<Object, Set<OIdentifiable>> current = it.next();
+
+				for (Iterator<OIdentifiable> collIt = ((ORecordLazySet) current.getValue()).rawIterator(); collIt.hasNext();)
+					addResult(createIndexEntryAsDocument(current.getKey(), collIt.next()));
 			}
 
 		}
@@ -657,6 +660,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				}
 			}
 		}
+	}
+
+	private ODocument createIndexEntryAsDocument(final Object iKey, final OIdentifiable iValue) {
+		final ODocument doc = new ODocument();
+		doc.field("key", iKey);
+		doc.field("rid", iValue);
+		doc.unsetDirty();
+		return doc;
 	}
 
 	private Object processResult() {
