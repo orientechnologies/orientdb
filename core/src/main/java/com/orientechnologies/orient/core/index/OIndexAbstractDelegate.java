@@ -84,8 +84,12 @@ public class OIndexAbstractDelegate implements OIndex {
 		return delegate.keys();
 	}
 
-	public Collection<OIdentifiable> getBetween(final Object iRangeFrom, final Object iRangeTo) {
-		return delegate.getBetween(iRangeFrom, iRangeTo);
+	public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo) {
+		return delegate.getValuesBetween(iRangeFrom, iRangeTo);
+	}
+
+	public Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo) {
+		return delegate.getEntriesBetween(iRangeFrom, iRangeTo);
 	}
 
 	public long getSize() {

@@ -93,7 +93,6 @@ public class GEOTest {
 	@Test(dependsOnMethods = "queryCreatePoints")
 	public void queryDistance() {
 		database.open("admin", "admin");
-		;
 
 		Assert.assertEquals(database.countClass("MapPoint"), 10000);
 
@@ -113,7 +112,6 @@ public class GEOTest {
 	@Test(dependsOnMethods = "queryDistance")
 	public void spatialRange() {
 		database.open("admin", "admin");
-		;
 
 		final OPropertyIndex xIndex = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndex();
 		Assert.assertNotNull(xIndex);
@@ -121,8 +119,8 @@ public class GEOTest {
 		final OPropertyIndex yIndex = database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndex();
 		Assert.assertNotNull(yIndex);
 
-		final Collection<OIdentifiable> xResult = xIndex.getUnderlying().getBetween(52.20472, 82.20472);
-		final Collection<OIdentifiable> yResult = yIndex.getUnderlying().getBetween(0.14056, 30.14056);
+		final Collection<OIdentifiable> xResult = xIndex.getUnderlying().getValuesBetween(52.20472, 82.20472);
+		final Collection<OIdentifiable> yResult = yIndex.getUnderlying().getValuesBetween(0.14056, 30.14056);
 
 		xResult.retainAll(yResult);
 

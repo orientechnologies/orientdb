@@ -529,8 +529,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 	private void processRecordAsResult(final OIdentifiable iRecord) {
 		if (projections != null) {
+			if (projections.size() == 1 && projections.keySet().iterator().next().equalsIgnoreCase("@rid")) {
+				// SPECIAL CASE
+				request.getResultListener().result(iRecord.getIdentity());
+				return;
+			}
+
 			// APPLY PROJECTIONS
-			final ODocument doc = (ODocument) iRecord;
+			final ODocument doc = (ODocument) iRecord.getRecord();
 			final ODocument result = new ODocument(database);
 
 			boolean canExcludeResult = false;
@@ -631,15 +637,29 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			Collection<OIdentifiable> result = null;
 			if (compiledFilter.getRootCondition().getOperator() instanceof OQueryOperatorBetween) {
 				final Object[] values = (Object[]) compiledFilter.getRootCondition().getRight();
-				result = index.getBetween(OSQLHelper.getValue(values[0]), OSQLHelper.getValue(values[2]));
 
-			} else
+				if (projections.size() == 1 && projections.keySet().iterator().next().equalsIgnoreCase("@rid")) {
+					// SPECIAL CASE
+					result = index.getValuesBetween(OSQLHelper.getValue(values[0]), OSQLHelper.getValue(values[2]));
+
+					for (OIdentifiable e : result)
+						addResult(e.getIdentity());
+
+				} else {
+					final Collection<ODocument> entries = index.getEntriesBetween(OSQLHelper.getValue(values[0]),
+							OSQLHelper.getValue(values[2]));
+
+					for (OIdentifiable r : entries)
+						addResult(createIndexEntryAsDocument(keyValue, r.getIdentity()));
+				}
+
+			} else {
 				result = index.get(keyValue);
 
-			if (result != null)
-				for (OIdentifiable r : result) {
+				for (OIdentifiable r : result)
 					addResult(createIndexEntryAsDocument(keyValue, r.getIdentity()));
-				}
+			}
+
 		} else {
 
 			// ADD ALL THE ITEMS AS RESULT

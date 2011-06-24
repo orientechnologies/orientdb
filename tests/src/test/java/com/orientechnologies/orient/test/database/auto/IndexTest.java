@@ -121,6 +121,7 @@ public class IndexTest {
 		database.open("admin", "admin");
 
 		database.command(new OCommandSQL("create index idx unique")).execute();
+		database.getMetadata().getIndexManager().reload();
 		Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("idx"));
 
 		database.command(new OCommandSQL("insert into index:IDX (key,rid) values (10,#3:0)")).execute();

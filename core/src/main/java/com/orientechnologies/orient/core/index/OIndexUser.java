@@ -82,8 +82,8 @@ public class OIndexUser extends OIndexAbstractDelegate {
 	}
 
 	@Override
-	public Collection<OIdentifiable> getBetween(Object iRangeFrom, Object iRangeTo) {
-		return super.getBetween(iRangeFrom, iRangeTo);
+	public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, Object iRangeTo) {
+		return super.getValuesBetween(iRangeFrom, iRangeTo);
 	}
 
 	public long getSize() {

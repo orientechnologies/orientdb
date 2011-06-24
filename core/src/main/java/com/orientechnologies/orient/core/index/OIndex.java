@@ -87,7 +87,9 @@ public interface OIndex {
 
 	public Iterable<Object> keys();
 
-	public Collection<OIdentifiable> getBetween(Object iRangeFrom, Object iRangeTo);
+	public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, Object iRangeTo);
+
+	public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo);
 
 	public long getSize();
 

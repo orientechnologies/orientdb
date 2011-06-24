@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.index;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -198,11 +199,11 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	 *          Starting range
 	 * @param iRangeTo
 	 *          Ending range
-	 * @see #getBetween(Object, Object, boolean)
+	 * @see #getValuesBetween(Object, Object, boolean)
 	 * @return
 	 */
-	public Set<OIdentifiable> getBetween(final Object iRangeFrom, final Object iRangeTo) {
-		return getBetween(iRangeFrom, iRangeTo, true);
+	public Set<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo) {
+		return getValuesBetween(iRangeFrom, iRangeTo, true);
 	}
 
 	/**
@@ -214,10 +215,10 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	 *          Ending range
 	 * @param iInclusive
 	 *          Include from/to bounds
-	 * @see #getBetween(Object, Object)
+	 * @see #getValuesBetween(Object, Object)
 	 * @return
 	 */
-	public Set<OIdentifiable> getBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
+	public Set<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
 		if (iRangeFrom.getClass() != iRangeTo.getClass())
 			throw new IllegalArgumentException("Range from-to parameters are of different types");
 
@@ -232,6 +233,59 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 			final Set<OIdentifiable> result = new ORecordLazySet(configuration.getDatabase());
 			for (Set<OIdentifiable> v : subSet.values()) {
 				result.addAll(v);
+			}
+
+			return result;
+
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
+	/**
+	 * Returns a set of documents with key between the range passed as parameter. Range bounds are included.
+	 * 
+	 * @param iRangeFrom
+	 *          Starting range
+	 * @param iRangeTo
+	 *          Ending range
+	 * @see #getEntriesBetween(Object, Object, boolean)
+	 * @return
+	 */
+	public Set<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo) {
+		return getEntriesBetween(iRangeFrom, iRangeTo, true);
+	}
+
+	/**
+	 * Returns a set of documents with key between the range passed as parameter.
+	 * 
+	 * @param iRangeFrom
+	 *          Starting range
+	 * @param iRangeTo
+	 *          Ending range
+	 * @param iInclusive
+	 *          Include from/to bounds
+	 * @see #getEntriesBetween(Object, Object)
+	 * @return
+	 */
+	public Set<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
+		if (iRangeFrom.getClass() != iRangeTo.getClass())
+			throw new IllegalArgumentException("Range from-to parameters are of different types");
+
+		checkForOptimization();
+		acquireExclusiveLock();
+
+		try {
+			final Set<ODocument> result = new HashSet<ODocument>();
+
+			final ONavigableMap<Object, Set<OIdentifiable>> subSet = map.subMap(iRangeFrom, iInclusive, iRangeTo, iInclusive);
+			if (subSet != null) {
+				for (Entry<Object, Set<OIdentifiable>> v : subSet.entrySet()) {
+					for (OIdentifiable id : v.getValue()) {
+						result.add(new ODocument().field("key", v.getKey()));
+						result.add(new ODocument().field("rid", id.getIdentity()));
+					}
+				}
 			}
 
 			return result;
