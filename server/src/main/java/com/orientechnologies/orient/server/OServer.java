@@ -130,7 +130,7 @@ public class OServer {
 	@SuppressWarnings("unchecked")
 	public void startup(final OServerConfiguration iConfiguration) throws InstantiationException, IllegalAccessException,
 			ClassNotFoundException, IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException {
-		OLogManager.instance().info(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " is starting up...");
+		OLogManager.instance().info(this, "OrientDB Server v" + OConstants.getVersion() + " is starting up...");
 
 		loadConfiguration(iConfiguration);
 

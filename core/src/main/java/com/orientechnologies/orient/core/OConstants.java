@@ -24,4 +24,19 @@ public class OConstants {
 
 	public static final String	ORIENT_VERSION	= "1.0rc3-SNAPSHOT";
 	public static final String	ORIENT_URL			= "www.orientechnologies.com";
+
+	public static String getVersion() {
+		final StringBuilder buffer = new StringBuilder();
+		buffer.append(OConstants.ORIENT_VERSION);
+
+		final String buildNumber = System.getProperty("orientdb.build.number");
+
+		if (buildNumber != null) {
+			buffer.append(" (build ");
+			buffer.append(buildNumber);
+			buffer.append(")");
+		}
+
+		return buffer.toString();
+	}
 }

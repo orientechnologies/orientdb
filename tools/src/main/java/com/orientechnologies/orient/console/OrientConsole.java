@@ -38,7 +38,10 @@ public abstract class OrientConsole extends OConsoleApplication {
 	@Override
 	protected void onBefore() {
 		Orient.instance().registerEngine(new OEngineRemote());
-		printClusterInfo();
+		printApplicationInfo();
+	}
+
+	protected void printApplicationInfo() {
 	}
 
 	@Override
@@ -49,10 +52,5 @@ public abstract class OrientConsole extends OConsoleApplication {
 	@Override
 	public void help() {
 		super.help();
-	}
-
-	private void printClusterInfo() {
-		out.println("ORIENT database v." + OConstants.ORIENT_VERSION + " " + OConstants.ORIENT_URL);
-		out.println("Type 'help' to display all the commands supported.");
 	}
 }

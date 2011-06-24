@@ -37,6 +37,7 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -1320,6 +1321,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 				out.print(" Error!");
 		else
 			out.print(iSucceed ? "] Done." : " Error!");
+	}
+
+	protected void printApplicationInfo() {
+		out.println("OrientDB console v." + OConstants.getVersion() + " " + OConstants.ORIENT_URL);
+		out.println("Type 'help' to display all the commands supported.");
 	}
 
 	private static boolean setTerminalToCBreak() throws IOException, InterruptedException {

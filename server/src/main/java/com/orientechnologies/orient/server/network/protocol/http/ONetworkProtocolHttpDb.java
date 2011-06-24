@@ -49,7 +49,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.post.OS
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutDocument;
 
 public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
-	private static final String	ORIENT_SERVER_DB	= "OrientDB Server v." + OConstants.ORIENT_VERSION;
+	private static final String	ORIENT_SERVER_DB	= "OrientDB Server v." + OConstants.getVersion();
 
 	@Override
 	public void config(final OServer iServer, final Socket iSocket, final OClientConnection iConnection,
