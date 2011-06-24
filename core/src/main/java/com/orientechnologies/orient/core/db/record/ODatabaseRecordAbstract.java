@@ -398,9 +398,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				record = getLevel1Cache().findRecord(iRid);
 
 			if (record != null) {
-				if (!OFetchHelper.isFetchPlanValid(iFetchPlan)) {
-					throw new IllegalArgumentException("Fetch plan '" + iFetchPlan + "' is invalid");
-				}
+				OFetchHelper.checkFetchPlanValid(iFetchPlan);
 				callbackHooks(TYPE.BEFORE_READ, record);
 
 				if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)

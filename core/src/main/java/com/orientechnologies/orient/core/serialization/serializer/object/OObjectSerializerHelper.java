@@ -50,7 +50,6 @@ import com.orientechnologies.orient.core.db.object.OLazyObjectMap;
 import com.orientechnologies.orient.core.db.object.OLazyObjectSet;
 import com.orientechnologies.orient.core.db.object.OObjectNotDetachedException;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -193,6 +192,7 @@ public class OObjectSerializerHelper {
 	@SuppressWarnings("rawtypes")
 	public static Object fromStream(final ODocument iRecord, final Object iPojo, final OEntityManager iEntityManager,
 			final OUserObject2RecordHandler iObj2RecHandler, final String iFetchPlan) {
+		OFetchHelper.checkFetchPlanValid(iFetchPlan);
 		final long timer = OProfiler.getInstance().startChrono();
 
 		final Class<?> pojoClass = iPojo.getClass();
@@ -272,6 +272,7 @@ public class OObjectSerializerHelper {
 					setFieldValue(iPojo, fieldName, unserializeFieldValue(iPojo, fieldName, fieldValue));
 				}
 			}
+
 		}
 
 		// BIND LINKS FOLLOWING THE FETCHING PLAN

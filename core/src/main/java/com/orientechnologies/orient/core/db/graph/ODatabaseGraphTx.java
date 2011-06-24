@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OGraphException;
+import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.OGraphVertexIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -142,6 +143,7 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 				// NOT FOUND
 				return null;
 		}
+		OFetchHelper.checkFetchPlanValid(iFetchPlan);
 		if (doc.getClassName() == null)
 			throw new OGraphException(
 					"The document loaded has no class, while it should be a OGraphVertex, OGraphEdge or any subclass of its");

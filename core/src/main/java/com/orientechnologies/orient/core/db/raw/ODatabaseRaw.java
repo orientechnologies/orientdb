@@ -190,9 +190,7 @@ public class ODatabaseRaw implements ODatabase {
 		if (!iRid.isValid())
 			return null;
 
-		if (!OFetchHelper.isFetchPlanValid(iFetchPlan)) {
-			throw new IllegalArgumentException("Fetch plan '" + iFetchPlan + "' is invalid");
-		}
+		OFetchHelper.checkFetchPlanValid(iFetchPlan);
 
 		try {
 			return storage.readRecord(databaseOwner, iRid, iFetchPlan);

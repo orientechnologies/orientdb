@@ -545,6 +545,40 @@ public class CRUDDocumentPhysicalTest {
 		ORID docRid = doc.getIdentity().copy();
 		// RELOAD THE DOCUMENT, THIS WILL PUT IT IN L1 CACHE
 		doc = database.load(docRid, "*:-1");
+		doc = testInvalidFetchPlanInvalidateL1Cache(doc, docRid);
+		doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(1, 0));
+		doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(1, 1));
+		doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(1, 2));
+		doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(2, 0));
+		doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(2, 1));
+		doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(2, 2));
+		doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(3, 0));
+		doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(3, 1));
+		doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(3, 2));
+		doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(4, 0));
+		doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(4, 1));
+		// CLOSE DB AND RE-TEST THE LOAD TO MAKE SURE
+		database.close();
+		database = null;
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+		doc = testInvalidFetchPlanClearL1Cache(doc, docRid);
+		doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(1, 0));
+		doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(1, 1));
+		doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(1, 2));
+		doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(2, 0));
+		doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(2, 1));
+		doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(2, 2));
+		doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(3, 0));
+		doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(3, 1));
+		doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(3, 2));
+		doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(4, 0));
+		doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(4, 1));
+		doc = database.load(docRid);
+		doc.delete();
+		database.close();
+	}
+
+	private ODocument testInvalidFetchPlanInvalidateL1Cache(ODocument doc, ORID docRid) {
 		try {
 			// LOAD DOCUMENT, CHECK BEFORE GETTING IT FROM L1 CACHE
 			doc = database.load(docRid, "invalid");
@@ -567,10 +601,10 @@ public class CRUDDocumentPhysicalTest {
 			Assert.fail("Should throw IllegalArgumentException");
 		} catch (Exception e) {
 		}
-		// CLOSE DB AND RE-TEST THE LOAD TO MAKE SURE
-		database.close();
-		database = null;
-		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+		return doc;
+	}
+
+	private ODocument testInvalidFetchPlanClearL1Cache(ODocument doc, ORID docRid) {
 		try {
 			// LOAD DOCUMENT NOT IN ANY CACHE
 			doc = database.load(docRid, "invalid");
@@ -578,7 +612,10 @@ public class CRUDDocumentPhysicalTest {
 		} catch (Exception e) {
 		}
 		// LOAD DOCUMENT, THIS WILL PUT IT IN L1 CACHE
-		database.load(docRid);
+		try {
+			database.load(docRid);
+		} catch (Exception e) {
+		}
 		try {
 			// LOAD DOCUMENT, CHECK BEFORE GETTING IT FROM L1 CACHE
 			doc = database.load(docRid, "invalid");
@@ -601,8 +638,7 @@ public class CRUDDocumentPhysicalTest {
 			Assert.fail("Should throw IllegalArgumentException");
 		} catch (Exception e) {
 		}
-		doc.delete();
-		database.close();
+		return doc;
 	}
 
 }

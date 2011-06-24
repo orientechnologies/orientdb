@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.tx;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -75,6 +76,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 		OTransactionRecordEntry txEntry = recordEntries.get(iRid);
 
 		if (txEntry != null) {
+			OFetchHelper.checkFetchPlanValid(iFetchPlan);
 			switch (txEntry.status) {
 			case OTransactionRecordEntry.LOADED:
 			case OTransactionRecordEntry.UPDATED:

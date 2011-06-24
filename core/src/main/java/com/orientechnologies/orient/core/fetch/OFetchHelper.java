@@ -139,6 +139,25 @@ public class OFetchHelper {
 		}
 	}
 
+	public static void checkFetchPlanValid(final String iFetchPlan) {
+
+		if (iFetchPlan != null && iFetchPlan.length() > 0) {
+			// CHECK IF THERE IS SOME FETCH-DEPTH
+			final List<String> planParts = OStringSerializerHelper.split(iFetchPlan, ' ');
+			if (planParts.size() > 0) {
+				for (String planPart : planParts) {
+					final List<String> parts = OStringSerializerHelper.split(planPart, ':');
+					if (parts.size() != 2) {
+						throw new IllegalArgumentException("Fetch plan '" + iFetchPlan + "' is invalid");
+					}
+				}
+			} else {
+				throw new IllegalArgumentException("Fetch plan '" + iFetchPlan + "' is invalid");
+			}
+		}
+
+	}
+
 	public static boolean isFetchPlanValid(final String iFetchPlan) {
 
 		if (iFetchPlan != null && iFetchPlan.length() > 0) {

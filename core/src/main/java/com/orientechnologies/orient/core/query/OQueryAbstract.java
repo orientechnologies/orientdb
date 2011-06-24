@@ -43,9 +43,7 @@ public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAb
 	}
 
 	public OQuery<T> setFetchPlan(final String fetchPlan) {
-		if (!OFetchHelper.isFetchPlanValid(fetchPlan)) {
-			throw new IllegalArgumentException("Fetch plan '" + fetchPlan + "' is invalid");
-		}
+		OFetchHelper.checkFetchPlanValid(fetchPlan);
 		if (fetchPlan != null && fetchPlan.length() == 0)
 			this.fetchPlan = null;
 		else
