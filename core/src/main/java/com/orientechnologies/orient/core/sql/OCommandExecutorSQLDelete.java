@@ -136,9 +136,12 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 	/**
 	 * Delete the current record.
 	 */
-	@SuppressWarnings("unchecked")
 	public boolean result(final Object iRecord) {
-		((ORecordAbstract<Object>) iRecord).delete();
+		final ORecordAbstract<?> record = (ORecordAbstract<?>) iRecord;
+		record.setDatabase(database);
+		
+		record.delete();
+		
 		recordCount++;
 		return true;
 	}
