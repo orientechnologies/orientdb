@@ -638,7 +638,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 			if (result != null)
 				for (OIdentifiable r : result) {
-					addResult(createIndexEntryAsDocument(keyValue, r));
+					addResult(createIndexEntryAsDocument(keyValue, r.getIdentity()));
 				}
 		} else {
 
@@ -647,7 +647,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				final Entry<Object, Set<OIdentifiable>> current = it.next();
 
 				for (Iterator<OIdentifiable> collIt = ((ORecordLazySet) current.getValue()).rawIterator(); collIt.hasNext();)
-					addResult(createIndexEntryAsDocument(current.getKey(), collIt.next()));
+					addResult(createIndexEntryAsDocument(current.getKey(), collIt.next().getIdentity()));
 			}
 
 		}
