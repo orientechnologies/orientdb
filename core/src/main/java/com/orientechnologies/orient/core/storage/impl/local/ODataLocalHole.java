@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.TreeMap;
 
 import com.orientechnologies.common.collection.OMVRBTreeMemory;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -39,27 +40,16 @@ import com.orientechnologies.orient.core.exception.OStorageException;
  * = 12 bytes<br/>
  */
 public class ODataLocalHole extends OSingleFileSegment {
-	private static final int																		DEF_START_SIZE						= 262144;
-	private static final int																		RECORD_SIZE								= 12;
-	private int																									maxHoleSize								= -1;
+	private static final int																		DEF_START_SIZE			= 262144;
+	private static final int																		RECORD_SIZE					= 12;
+	private int																									maxHoleSize					= -1;
 
-	private final List<Integer>																	freeHoles									= new ArrayList<Integer>();
-	private final static ODataHoleInfo													cursor										= new ODataHoleInfo();
+	private final List<Integer>																	freeHoles						= new ArrayList<Integer>();
+	private final static ODataHoleInfo													cursor							= new ODataHoleInfo();
 
-	private final List<ODataHoleInfo>														availableHolesList				= new ArrayList<ODataHoleInfo>();
-	private final OMVRBTreeMemory<ODataHoleInfo, ODataHoleInfo>	availableHolesBySize			= new OMVRBTreeMemory<ODataHoleInfo, ODataHoleInfo>();
-	private final OMVRBTreeMemory<ODataHoleInfo, ODataHoleInfo>	availableHolesByPosition	= new OMVRBTreeMemory<ODataHoleInfo, ODataHoleInfo>(
-																																														new Comparator<ODataHoleInfo>() {
-																																															public int compare(
-																																																	final ODataHoleInfo o1,
-																																																	final ODataHoleInfo o2) {
-																																																if (o1.dataOffset == o2.dataOffset)
-																																																	return 0;
-																																																if (o1.dataOffset > o2.dataOffset)
-																																																	return 1;
-																																																return -1;
-																																															}
-																																														});
+	private final List<ODataHoleInfo>														availableHolesList	= new ArrayList<ODataHoleInfo>();
+	private final TreeMap<ODataHoleInfo, ODataHoleInfo>					availableHolesBySize;
+	private final TreeMap<ODataHoleInfo, ODataHoleInfo>	availableHolesByPosition;
 
 	private final String																				PROFILER_DATA_RECYCLED_COMPLETE;
 	private final String																				PROFILER_DATA_RECYCLED_PARTIAL;
@@ -75,6 +65,18 @@ public class ODataLocalHole extends OSingleFileSegment {
 		PROFILER_DATA_RECYCLED_NOTFOUND = "storage." + storage.getName() + ".data.recycled.notFound";
 		PROFILER_DATA_HOLE_CREATE = "storage." + storage.getName() + ".data.createHole";
 		PROFILER_DATA_HOLE_UPDATE = "storage." + storage.getName() + ".data.updateHole";
+
+		availableHolesBySize = new TreeMap<ODataHoleInfo, ODataHoleInfo>();
+		availableHolesByPosition = new TreeMap<ODataHoleInfo, ODataHoleInfo>(new Comparator<ODataHoleInfo>() {
+			public int compare(final ODataHoleInfo o1, final ODataHoleInfo o2) {
+				if (o1.dataOffset == o2.dataOffset)
+					return 0;
+				if (o1.dataOffset > o2.dataOffset)
+					return 1;
+				return -1;
+			}
+		});
+
 	}
 
 	@Override
