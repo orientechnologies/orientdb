@@ -130,7 +130,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 		compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(iRequest.getDatabase(), text.substring(pos, endPosition));
 
-		currentPos = compiledFilter.currentPos + pos;
+		currentPos = compiledFilter.currentPos < 0 ? -1 : compiledFilter.currentPos + pos;
 
 		if (currentPos > -1 && currentPos < text.length()) {
 			currentPos = OStringParser.jump(text, currentPos, " \r\n");

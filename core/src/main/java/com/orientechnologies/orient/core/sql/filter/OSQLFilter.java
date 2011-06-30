@@ -406,7 +406,7 @@ public class OSQLFilter extends OCommandToParse {
 
 	private boolean jumpWhiteSpaces() {
 		currentPos = OStringParser.jumpWhiteSpaces(text, currentPos);
-		return currentPos < text.length();
+		return currentPos > -1;
 	}
 
 	@Override

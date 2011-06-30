@@ -58,7 +58,7 @@ public class OSQLHelper {
 		ioWord.setLength(0);
 
 		ioCurrentPosition = OStringParser.jumpWhiteSpaces(iText, ioCurrentPosition);
-		if (ioCurrentPosition >= iText.length())
+		if (ioCurrentPosition < 0)
 			return -1;
 
 		final String word = OStringParser.getWordFromString(iForceUpperCase ? iTextUpperCase : iText, ioCurrentPosition,

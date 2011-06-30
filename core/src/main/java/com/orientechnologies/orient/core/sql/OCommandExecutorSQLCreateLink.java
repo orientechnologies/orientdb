@@ -132,12 +132,12 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 	public Object execute(final Map<Object, Object> iArgs) {
 		if (destField == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
- 
-		if (!(database instanceof ODatabaseDocumentTx))
+
+		if (!(database.getDatabaseOwner() instanceof ODatabaseDocumentTx))
 			throw new OCommandSQLParsingException("This command supports only the database type ODatabaseDocumentTx and type '"
 					+ database.getClass() + "' was found");
 
-		final ODatabaseDocumentTx db = (ODatabaseDocumentTx) database;
+		final ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getDatabaseOwner();
 
 		OClass sourceClass = database.getMetadata().getSchema().getClass(sourceClassName);
 		if (sourceClass == null)
@@ -179,62 +179,61 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 						// TODO
 					} else {
 						// SEARCH THE DESTINATION RECORD
-						if (value instanceof String) {
-							target = null;
+						target = null;
 
+						if (value instanceof String)
 							if (((String) value).length() == 0)
 								value = null;
-							else {
+							else
 								value = "'" + value + "'";
-								result = database.<OCommandRequest> command(new OSQLSynchQuery<ODocument>(cmd + value)).execute();
 
-								if (result == null || result.size() == 0)
-									// throw new
-									// OCommandExecutionException("Can't create link because the destination record was not found in class '"
-									// + destClass.getName() + "' and with the field '" + destField + "' equals to " + value);
-									value = null;
-								else if (result.size() > 1)
-									throw new OCommandExecutionException("Can't create link because multiple records was found in class '"
-											+ destClass.getName() + "' with value " + value + " in field '" + destField + "'");
-								else {
-									target = result.get(0);
-									value = target;
-								}
-							}
+						result = database.<OCommandRequest> command(new OSQLSynchQuery<ODocument>(cmd + value)).execute();
 
-							if (target != null && inverse) {
-								// INVERSE RELATIONSHIP
-								oldValue = target.field(linkName);
-
-								if (oldValue != null) {
-									if (!multipleRelationship)
-										multipleRelationship = true;
-
-									Collection<ODocument> coll;
-									if (oldValue instanceof Collection) {
-										// ADD IT IN THE EXISTENT COLLECTION
-										coll = (Collection<ODocument>) oldValue;
-										target.setDirty();
-									} else {
-										// CREATE A NEW COLLECTION FOR BOTH
-										coll = new ArrayList<ODocument>(2);
-										target.field(linkName, coll);
-										coll.add((ODocument) oldValue);
-									}
-									coll.add(doc);
-								} else {
-									target.field(linkName, doc);
-								}
-								target.save();
-
-							} else {
-								// SET THE REFERENCE
-								doc.field(linkName, value);
-								doc.save();
-							}
-
-							total++;
+						if (result == null || result.size() == 0)
+							// throw new
+							// OCommandExecutionException("Can't create link because the destination record was not found in class '"
+							// + destClass.getName() + "' and with the field '" + destField + "' equals to " + value);
+							value = null;
+						else if (result.size() > 1)
+							throw new OCommandExecutionException("Can't create link because multiple records was found in class '"
+									+ destClass.getName() + "' with value " + value + " in field '" + destField + "'");
+						else {
+							target = result.get(0);
+							value = target;
 						}
+
+						if (target != null && inverse) {
+							// INVERSE RELATIONSHIP
+							oldValue = target.field(linkName);
+
+							if (oldValue != null) {
+								if (!multipleRelationship)
+									multipleRelationship = true;
+
+								Collection<ODocument> coll;
+								if (oldValue instanceof Collection) {
+									// ADD IT IN THE EXISTENT COLLECTION
+									coll = (Collection<ODocument>) oldValue;
+									target.setDirty();
+								} else {
+									// CREATE A NEW COLLECTION FOR BOTH
+									coll = new ArrayList<ODocument>(2);
+									target.field(linkName, coll);
+									coll.add((ODocument) oldValue);
+								}
+								coll.add(doc);
+							} else {
+								target.field(linkName, doc);
+							}
+							target.save();
+
+						} else {
+							// SET THE REFERENCE
+							doc.field(linkName, value);
+							doc.save();
+						}
+
+						total++;
 					}
 				}
 
