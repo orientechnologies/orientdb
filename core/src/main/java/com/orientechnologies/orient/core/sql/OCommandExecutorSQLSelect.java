@@ -52,9 +52,15 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-import com.orientechnologies.orient.core.sql.operator.*;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsText;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
@@ -130,7 +136,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 		compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(iRequest.getDatabase(), text.substring(pos, endPosition));
 
-		currentPos = compiledFilter.currentPos < 0 ? -1 : compiledFilter.currentPos + pos;
+		currentPos = compiledFilter.currentPos < 0 ? endPosition : compiledFilter.currentPos + pos;
 
 		if (currentPos > -1 && currentPos < text.length()) {
 			currentPos = OStringParser.jump(text, currentPos, " \r\n");
@@ -380,73 +386,73 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			OIndex idx = prop.getIndex().getUnderlying();
 			idx = idx.getInternal();
 
-            final boolean indexCanBeUsedInEqualityOperators =
-                    (idx instanceof OIndexUnique || idx instanceof OIndexNotUnique);
-            final Object origValue = iCondition.getLeft() == iItem ? iCondition.getRight() : iCondition.getLeft();
-            final OIndex underlyingIndex = prop.getIndex().getUnderlying();
+			final boolean indexCanBeUsedInEqualityOperators = (idx instanceof OIndexUnique || idx instanceof OIndexNotUnique);
+			final Object origValue = iCondition.getLeft() == iItem ? iCondition.getRight() : iCondition.getLeft();
+			final OIndex underlyingIndex = prop.getIndex().getUnderlying();
 
-            if(indexCanBeUsedInEqualityOperators && iCondition.getOperator() instanceof OQueryOperatorBetween) {
-                final Object[] betweenValues = (Object[])origValue;
-                fillSearchIndexResultSet(iResultSet,
-                        underlyingIndex.getValuesBetween(OSQLHelper.getValue(
-                                betweenValues[0]), OSQLHelper.getValue(betweenValues[2])));
-                return true;
-            }
+			if (indexCanBeUsedInEqualityOperators && iCondition.getOperator() instanceof OQueryOperatorBetween) {
+				final Object[] betweenValues = (Object[]) origValue;
+				fillSearchIndexResultSet(iResultSet,
+						underlyingIndex.getValuesBetween(OSQLHelper.getValue(betweenValues[0]), OSQLHelper.getValue(betweenValues[2])));
+				return true;
+			}
 
-             final Object value = OSQLHelper.getValue(origValue);
+			final Object value = OSQLHelper.getValue(origValue);
 
-            if(value == null)
-                return false;
+			if (value == null)
+				return false;
 
-            if (( indexCanBeUsedInEqualityOperators && iCondition.getOperator() instanceof OQueryOperatorEquals)
+			if ((indexCanBeUsedInEqualityOperators && iCondition.getOperator() instanceof OQueryOperatorEquals)
 					|| idx instanceof OIndexFullText && iCondition.getOperator() instanceof OQueryOperatorContainsText) {
-                fillSearchIndexResultSet(iResultSet, underlyingIndex.get(value));
-                return true;
-            }
+				fillSearchIndexResultSet(iResultSet, underlyingIndex.get(value));
+				return true;
+			}
 
-            if(indexCanBeUsedInEqualityOperators && iCondition.getOperator() instanceof OQueryOperatorMajor) {
-                fillSearchIndexResultSet(iResultSet, underlyingIndex.getValuesMajor(value, false));
-                return true;
-            }
+			if (indexCanBeUsedInEqualityOperators && iCondition.getOperator() instanceof OQueryOperatorMajor) {
+				fillSearchIndexResultSet(iResultSet, underlyingIndex.getValuesMajor(value, false));
+				return true;
+			}
 
-            if(indexCanBeUsedInEqualityOperators && iCondition.getOperator() instanceof OQueryOperatorMajorEquals) {
-                fillSearchIndexResultSet(iResultSet, underlyingIndex.getValuesMajor(value, true));
-                return true;
-            }
+			if (indexCanBeUsedInEqualityOperators && iCondition.getOperator() instanceof OQueryOperatorMajorEquals) {
+				fillSearchIndexResultSet(iResultSet, underlyingIndex.getValuesMajor(value, true));
+				return true;
+			}
 
-            if(indexCanBeUsedInEqualityOperators && iCondition.getOperator() instanceof OQueryOperatorMinor) {
-                fillSearchIndexResultSet(iResultSet, underlyingIndex.getValuesMinor(value, false));
-                return true;
-            }
+			if (indexCanBeUsedInEqualityOperators && iCondition.getOperator() instanceof OQueryOperatorMinor) {
+				fillSearchIndexResultSet(iResultSet, underlyingIndex.getValuesMinor(value, false));
+				return true;
+			}
 
-            if(indexCanBeUsedInEqualityOperators && iCondition.getOperator() instanceof OQueryOperatorMinorEquals) {
-                fillSearchIndexResultSet(iResultSet, underlyingIndex.getValuesMinor(value, true));
-                return true;
-            }
+			if (indexCanBeUsedInEqualityOperators && iCondition.getOperator() instanceof OQueryOperatorMinorEquals) {
+				fillSearchIndexResultSet(iResultSet, underlyingIndex.getValuesMinor(value, true));
+				return true;
+			}
 
 		}
 
 		return false;
 	}
 
-    /**
-     * Copies or loads by their {@link ORID}s records that are returned from property index in
-     * {@link #searchIndexedProperty} method to the search result.
-     *
-     * @param resultSet         Search result.
-     * @param indexResultSet    Result of index search.
-     */
-    private void fillSearchIndexResultSet(List<ORecord<?>> resultSet, Collection<OIdentifiable> indexResultSet) {
-        if (indexResultSet != null && indexResultSet.size() > 0)
-            for (Object o : indexResultSet) {
-                if (o instanceof ORID)
-                    resultSet.add(database.load((ORID) o));
-                else
-                    resultSet.add((ORecord<?>) o);
-            }
-    }
+	/**
+	 * Copies or loads by their {@link ORID}s records that are returned from property index in {@link #searchIndexedProperty} method
+	 * to the search result.
+	 * 
+	 * @param resultSet
+	 *          Search result.
+	 * @param indexResultSet
+	 *          Result of index search.
+	 */
+	private void fillSearchIndexResultSet(List<ORecord<?>> resultSet, Collection<OIdentifiable> indexResultSet) {
+		if (indexResultSet != null && indexResultSet.size() > 0)
+			for (Object o : indexResultSet) {
+				if (o instanceof ORID)
+					resultSet.add(database.load((ORID) o));
+				else
+					resultSet.add((ORecord<?>) o);
+			}
+	}
 
-    protected boolean filter(final ORecordInternal<?> iRecord) {
+	protected boolean filter(final ORecordInternal<?> iRecord) {
 		return compiledFilter.evaluate(database, (ORecordSchemaAware<?>) iRecord);
 	}
 
@@ -673,7 +679,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			final Object keyValue = OSQLHelper.getValue(right);
 
 			Collection<OIdentifiable> result = null;
-            final OQueryOperator indexOperator = compiledFilter.getRootCondition().getOperator();
+			final OQueryOperator indexOperator = compiledFilter.getRootCondition().getOperator();
 			if (indexOperator instanceof OQueryOperatorBetween) {
 				final Object[] values = (Object[]) compiledFilter.getRootCondition().getRight();
 
@@ -692,74 +698,74 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 						addResult(createIndexEntryAsDocument(keyValue, r.getIdentity()));
 				}
 
-			} else if(indexOperator instanceof OQueryOperatorMajor) {
-                final Object value = compiledFilter.getRootCondition().getRight();
-                if (projections != null && projections.size() == 1 && projections.keySet().iterator().next().equalsIgnoreCase("@rid")) {
-                    // SPECIAL CASE
-                    result = index.getValuesMajor(OSQLHelper.getValue(value), false);
+			} else if (indexOperator instanceof OQueryOperatorMajor) {
+				final Object value = compiledFilter.getRootCondition().getRight();
+				if (projections != null && projections.size() == 1 && projections.keySet().iterator().next().equalsIgnoreCase("@rid")) {
+					// SPECIAL CASE
+					result = index.getValuesMajor(OSQLHelper.getValue(value), false);
 
-                    for (OIdentifiable e : result)
-                        addResult(e.getIdentity());
+					for (OIdentifiable e : result)
+						addResult(e.getIdentity());
 
-                } else {
-                    final Collection<ODocument> entries = index.getEntriesMajor(OSQLHelper.getValue(value), false);
+				} else {
+					final Collection<ODocument> entries = index.getEntriesMajor(OSQLHelper.getValue(value), false);
 
-                    for (ODocument document : entries)
-                        addResult(document);
-                }
-            } else if(indexOperator instanceof OQueryOperatorMajorEquals) {
-                final Object value = compiledFilter.getRootCondition().getRight();
-                if (projections != null && projections.size() == 1 && projections.keySet().iterator().next().equalsIgnoreCase("@rid")) {
-                    // SPECIAL CASE
-                    result = index.getValuesMajor(OSQLHelper.getValue(value), true);
+					for (ODocument document : entries)
+						addResult(document);
+				}
+			} else if (indexOperator instanceof OQueryOperatorMajorEquals) {
+				final Object value = compiledFilter.getRootCondition().getRight();
+				if (projections != null && projections.size() == 1 && projections.keySet().iterator().next().equalsIgnoreCase("@rid")) {
+					// SPECIAL CASE
+					result = index.getValuesMajor(OSQLHelper.getValue(value), true);
 
-                    for (OIdentifiable e : result)
-                        addResult(e.getIdentity());
+					for (OIdentifiable e : result)
+						addResult(e.getIdentity());
 
-                } else {
-                    final Collection<ODocument> entries = index.getEntriesMajor(OSQLHelper.getValue(value), true);
+				} else {
+					final Collection<ODocument> entries = index.getEntriesMajor(OSQLHelper.getValue(value), true);
 
-                    for (ODocument document : entries)
-                        addResult(document);
-                }
-            } else if(indexOperator instanceof OQueryOperatorMinor) {
-                final Object value = compiledFilter.getRootCondition().getRight();
-                if (projections != null && projections.size() == 1 && projections.keySet().iterator().next().equalsIgnoreCase("@rid")) {
-                    // SPECIAL CASE
-                    result = index.getValuesMinor(OSQLHelper.getValue(value), false);
+					for (ODocument document : entries)
+						addResult(document);
+				}
+			} else if (indexOperator instanceof OQueryOperatorMinor) {
+				final Object value = compiledFilter.getRootCondition().getRight();
+				if (projections != null && projections.size() == 1 && projections.keySet().iterator().next().equalsIgnoreCase("@rid")) {
+					// SPECIAL CASE
+					result = index.getValuesMinor(OSQLHelper.getValue(value), false);
 
-                    for (OIdentifiable e : result)
-                        addResult(e.getIdentity());
+					for (OIdentifiable e : result)
+						addResult(e.getIdentity());
 
-                } else {
-                    final Collection<ODocument> entries = index.getEntriesMinor(OSQLHelper.getValue(value), false);
+				} else {
+					final Collection<ODocument> entries = index.getEntriesMinor(OSQLHelper.getValue(value), false);
 
-                    for (ODocument document : entries)
-                        addResult(document);
-                }
-            } else if(indexOperator instanceof OQueryOperatorMinorEquals) {
-                final Object value = compiledFilter.getRootCondition().getRight();
-                if (projections != null && projections.size() == 1 && projections.keySet().iterator().next().equalsIgnoreCase("@rid")) {
-                    // SPECIAL CASE
-                    result = index.getValuesMinor(OSQLHelper.getValue(value), true);
+					for (ODocument document : entries)
+						addResult(document);
+				}
+			} else if (indexOperator instanceof OQueryOperatorMinorEquals) {
+				final Object value = compiledFilter.getRootCondition().getRight();
+				if (projections != null && projections.size() == 1 && projections.keySet().iterator().next().equalsIgnoreCase("@rid")) {
+					// SPECIAL CASE
+					result = index.getValuesMinor(OSQLHelper.getValue(value), true);
 
-                    for (OIdentifiable e : result)
-                        addResult(e.getIdentity());
+					for (OIdentifiable e : result)
+						addResult(e.getIdentity());
 
-                } else {
-                    final Collection<ODocument> entries = index.getEntriesMinor(OSQLHelper.getValue(value), true);
+				} else {
+					final Collection<ODocument> entries = index.getEntriesMinor(OSQLHelper.getValue(value), true);
 
-                    for (ODocument document : entries)
-                        addResult(document);
-                }
-            } else {
-                result = index.get(keyValue);
+					for (ODocument document : entries)
+						addResult(document);
+				}
+			} else {
+				result = index.get(keyValue);
 
-                for (OIdentifiable r : result)
-                    addResult(createIndexEntryAsDocument(keyValue, r.getIdentity()));
-            }
+				for (OIdentifiable r : result)
+					addResult(createIndexEntryAsDocument(keyValue, r.getIdentity()));
+			}
 
-        } else {
+		} else {
 
 			// ADD ALL THE ITEMS AS RESULT
 			for (Iterator<Entry<Object, Set<OIdentifiable>>> it = index.iterator(); it.hasNext();) {

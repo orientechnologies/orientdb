@@ -169,7 +169,7 @@ public class OSQLFilter extends OCommandToParse {
 			}
 		}
 
-		return currentPos < text.length();
+		return currentPos > -1;
 	}
 
 	private OSQLFilterCondition extractConditions(final OSQLFilterCondition iParentCondition) {
