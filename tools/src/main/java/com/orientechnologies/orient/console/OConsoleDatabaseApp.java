@@ -57,6 +57,7 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveRead;
 import com.orientechnologies.orient.core.iterator.ORecordIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -1254,7 +1255,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 				out.printf("\n!Error on displaying record " + currentRecord.getIdentity() + ". Cause: " + e.getMessage());
 			}
 
-			if (currentResultSet.size() >= limit) {
+			if (limit > -1 && currentResultSet.size() >= limit) {
 				printHeaderLine(columns);
 				out.println("\nResultset contains more items not displayed (max=" + limit + ")");
 				return;
