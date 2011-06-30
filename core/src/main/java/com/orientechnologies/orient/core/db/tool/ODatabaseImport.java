@@ -421,14 +421,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		}
 
 		OPropertyImpl prop = (OPropertyImpl) iClass.getProperty(propName);
-		if (prop == null) {
+		if (prop == null)
 			// CREATE IT
 			prop = (OPropertyImpl) iClass.createProperty(propName, type);
-		} else {
-			if (prop.getId() != id)
-				throw new OSchemaException("Imported property '" + iClass.getName() + "." + propName
-						+ "' has an id different from the original: " + id);
-		}
 
 		prop.setMandatory(mandatory);
 		prop.setNotNull(notNull);

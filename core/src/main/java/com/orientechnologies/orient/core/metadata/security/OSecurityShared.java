@@ -173,6 +173,8 @@ public class OSecurityShared extends OSharedResourceAbstract implements OSecurit
 			roleClass.createProperty("rules", OType.EMBEDDEDMAP, OType.BYTE);
 
 			final OClass userClass = getDatabase().getMetadata().getSchema().createClass("OUser");
+			userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(false);
+			userClass.createProperty("password", OType.STRING).setMandatory(true).setNotNull(false);
 			userClass.createProperty("roles", OType.LINKSET, roleClass);
 
 			// CREATE ROLES AND USERS
