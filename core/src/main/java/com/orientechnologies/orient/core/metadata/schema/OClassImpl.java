@@ -140,6 +140,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		owner.changeClassName(name, iName);
 		name = iName;
+		owner.saveInternal();
 	}
 
 	public String getShortName() {
