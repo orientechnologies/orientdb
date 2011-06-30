@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.intent;
 
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
-import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 
@@ -38,12 +37,15 @@ public class OIntentMassiveInsert implements OIntent {
 		iDatabase.getDatabaseOwner().getLevel1Cache().setEnable(previousLevel1CacheEnabled);
 		iDatabase.getDatabaseOwner().getLevel2Cache().setEnable(previousLevel2CacheEnabled);
 
-		final ODatabaseComplex<?> ownerDb = iDatabase.getDatabaseOwner();
+		ODatabaseComplex<?> ownerDb = iDatabase.getDatabaseOwner();
 
 		if (ownerDb instanceof ODatabaseRecord)
 			((ODatabaseRecord) ownerDb).setRetainRecords(previousRetainRecords);
 
-		if (ownerDb instanceof ODatabaseObject)
+		while (ownerDb.getDatabaseOwner() != ownerDb)
+			ownerDb = ownerDb.getDatabaseOwner();
+
+		if (ownerDb instanceof ODatabasePojoAbstract)
 			((ODatabasePojoAbstract<?>) ownerDb).setRetainObjects(previousRetainObjects);
 	}
 }
