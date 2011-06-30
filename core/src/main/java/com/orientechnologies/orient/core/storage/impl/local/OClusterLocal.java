@@ -15,10 +15,12 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import java.io.File;
 import java.io.IOException;
 
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OStorageClusterHoleConfiguration;
+import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfiguration;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
@@ -146,6 +148,19 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 		} finally {
 			releaseExclusiveLock();
 		}
+	}
+
+	public void set(ATTRIBUTES iAttribute, Object iValue) throws IOException {
+		if (iAttribute == null)
+			throw new IllegalArgumentException("attribute is null");
+
+		final String stringValue = iValue != null ? iValue.toString() : null;
+
+		switch (iAttribute) {
+		case NAME:
+			setNameInternal(stringValue);
+		}
+
 	}
 
 	/**
@@ -478,5 +493,43 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 				size += storage.getDataSegment(pos.dataSegment).getRecordSize(pos.dataPosition);
 		}
 		return size;
+	}
+
+	private void setNameInternal(String iNewName) {
+		if (storage.getClusterIdByName(iNewName) > -1)
+			throw new IllegalArgumentException("Cluster with name '" + iNewName + "' already exists");
+		acquireExclusiveLock();
+		try {
+			for (int i = 0; i < files.length; i++) {
+				final File osFile = files[i].getOsFile();
+				if (osFile.getName().startsWith(name)) {
+					final File newFile = new File(storage.getStoragePath() + "/" + iNewName
+							+ osFile.getName().substring(osFile.getName().lastIndexOf(name) + name.length()));
+					for (OStorageFileConfiguration conf : config.infoFiles) {
+						if (conf.parent.name.equals(name))
+							conf.parent.name = iNewName;
+						if (conf.path.endsWith(osFile.getName()))
+							conf.path = new String(conf.path.replace(osFile.getName(), newFile.getName()));
+					}
+					boolean renamed = osFile.renameTo(newFile);
+					while (!renamed) {
+						try {
+							Thread.sleep(100);
+						} catch (InterruptedException e) {
+						}
+						System.gc();
+						renamed = osFile.renameTo(newFile);
+					}
+				}
+			}
+			config.name = iNewName;
+			holeSegment.rename(name, iNewName);
+			storage.renameCluster(name, iNewName);
+			name = iNewName;
+			storage.getConfiguration().update();
+		} finally {
+			releaseExclusiveLock();
+		}
+
 	}
 }

@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import java.io.File;
 import java.io.IOException;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -144,6 +145,23 @@ public class OClusterLocalHole extends OSingleFileSegment {
 				canShrink = false;
 		}
 		return false;
+	}
+
+	public void rename(String iOldName, String iNewName) {
+		final File osFile = file.getOsFile();
+		if (osFile.getName().startsWith(iOldName)) {
+			final File newFile = new File(storage.getStoragePath() + "/" + iNewName
+					+ osFile.getName().substring(osFile.getName().lastIndexOf(iOldName) + iOldName.length()));
+			boolean renamed = osFile.renameTo(newFile);
+			while (!renamed) {
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+				}
+				System.gc();
+				renamed = osFile.renameTo(newFile);
+			}
+		}
 	}
 
 	/**

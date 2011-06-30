@@ -87,6 +87,18 @@ public class OClusterMemory extends OSharedResourceAbstract implements OCluster 
 		}
 	}
 
+	public void set(ATTRIBUTES iAttribute, Object iValue) throws IOException {
+		if (iAttribute == null)
+			throw new IllegalArgumentException("attribute is null");
+
+		final String stringValue = iValue != null ? iValue.toString() : null;
+
+		switch (iAttribute) {
+		case NAME:
+			name = stringValue;
+		}
+	}
+
 	public long getEntries() {
 		acquireSharedLock();
 		try {

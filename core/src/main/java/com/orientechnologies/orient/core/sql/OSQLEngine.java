@@ -109,6 +109,8 @@ public class OSQLEngine {
 				OCommandExecutorSQLTruncateClass.class);
 		commands.put(OCommandExecutorSQLTruncateCluster.KEYWORD_TRUNCATE + " " + OCommandExecutorSQLTruncateCluster.KEYWORD_CLUSTER,
 				OCommandExecutorSQLTruncateCluster.class);
+		commands.put(OCommandExecutorSQLAlterCluster.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterCluster.KEYWORD_CLUSTER,
+				OCommandExecutorSQLAlterCluster.class);
 
 		// MISC FUNCTIONS
 		registerFunction(OSQLFunctionFormat.NAME, new OSQLFunctionFormat());

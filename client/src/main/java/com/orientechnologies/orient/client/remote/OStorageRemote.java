@@ -209,6 +209,23 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 	}
 
+	/**
+	 * Method that completes the cluster rename operation. <strong>IT WILL NOT RENAME A CLUSTER, IT JUST CHANGES THE NAME IN THE
+	 * INTERNAL MAPPING</strong>
+	 */
+	public void renameCluster(String iOldName, String iNewName) {
+		lock.acquireSharedLock();
+
+		try {
+			checkConnection();
+			final Integer clusterId = clustersIds.remove(iOldName);
+			clustersIds.put(iNewName, clusterId);
+
+		} finally {
+			lock.releaseSharedLock();
+		}
+	}
+
 	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType) {
 		checkConnection();
 

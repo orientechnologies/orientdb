@@ -247,6 +247,15 @@ public class OStorageRemoteThread implements OStorage {
 		return delegate.getClusterById(iId);
 	}
 
+	/**
+	 * Method that completes the cluster rename operation. <strong>IT WILL NOT RENAME A CLUSTER, IT JUST CHANGES THE NAME IN THE
+	 * INTERNAL MAPPING</strong>
+	 */
+	public void renameCluster(String iOldName, String iNewName) {
+		delegate.setSessionId(sessionId);
+		delegate.renameCluster(iOldName, iNewName);
+	}
+
 	public long getVersion() {
 		delegate.setSessionId(sessionId);
 		return delegate.getVersion();

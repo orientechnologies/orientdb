@@ -30,6 +30,10 @@ import java.io.IOException;
  */
 public interface OCluster {
 
+	public static enum ATTRIBUTES {
+		NAME
+	}
+
 	public void create(int iStartSize) throws IOException;
 
 	public void open() throws IOException;
@@ -37,6 +41,8 @@ public interface OCluster {
 	public void close() throws IOException;
 
 	public void delete() throws IOException;
+
+	public void set(ATTRIBUTES iAttribute, Object iValue) throws IOException;
 
 	/**
 	 * Truncates the cluster content. All the entries will be removed.
@@ -111,7 +117,7 @@ public interface OCluster {
 	 * @return
 	 */
 	public long getSize();
-	
+
 	/**
 	 * Returns the size of the record contained in the cluster in bytes.
 	 * 

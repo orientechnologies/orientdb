@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeStorage;
 
 /**
@@ -44,6 +45,7 @@ public class OClusterLogical implements OCluster {
 
 	private OSharedResourceExternal										lock	= new OSharedResourceExternal();
 	public static final String												TYPE	= "LOGICAL";
+	private OStorage																	storage;
 
 	/**
 	 * Constructor called on creation of the object.
@@ -67,6 +69,7 @@ public class OClusterLogical implements OCluster {
 
 			total = new OPhysicalPosition(0, -1, (byte) 0);
 			map.put(new Long(-1), total);
+			storage = iStorage;
 
 		} catch (Exception e) {
 			throw new ODatabaseException("Error on creating internal map for logical cluster: " + iName, e);
@@ -126,6 +129,20 @@ public class OClusterLogical implements OCluster {
 	public void delete() throws IOException {
 		close();
 		map.delete();
+	}
+
+	public void set(ATTRIBUTES iAttribute, Object iValue) throws IOException {
+		if (iAttribute == null)
+			throw new IllegalArgumentException("attribute is null");
+
+		final String stringValue = iValue != null ? iValue.toString() : null;
+
+		switch (iAttribute) {
+		case NAME:
+			storage.renameCluster(name, stringValue);
+			name = stringValue;
+		}
+
 	}
 
 	/**
@@ -276,9 +293,9 @@ public class OClusterLogical implements OCluster {
 	public long getSize() {
 		return 0;
 	}
-	
+
 	public long getRecordsSize() throws IOException {
 		return 0;
 	}
-	
+
 }

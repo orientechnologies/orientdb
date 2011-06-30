@@ -580,4 +580,7 @@ public class OStorageMemory extends OStorageEmbedded {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	public void renameCluster(String iOldName, String iNewName) {
+	}
 }

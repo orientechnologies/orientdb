@@ -169,4 +169,6 @@ public interface OStorage extends OSharedContainer {
 	 *          Cluster id
 	 */
 	public long[] getClusterDataRange(int currentClusterId);
+
+	public void renameCluster(String iOldName, String iNewName);
 }

@@ -57,7 +57,6 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveRead;
 import com.orientechnologies.orient.core.iterator.ORecordIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -241,7 +240,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			@ConsoleParameter(name = "position", description = "cluster id to replace an empty position or 'append' to append at the end") String iPosition) {
 		checkCurrentDatabase();
 
-		final int position = iPosition.toUpperCase().equals("append") ? -1 : Integer.parseInt(iPosition);
+		final int position = iPosition.toLowerCase().equals("append") ? -1 : Integer.parseInt(iPosition);
 
 		out.println("Creating cluster [" + iClusterName + "] of type '" + iClusterType + "' in database " + currentDatabaseName
 				+ (position == -1 ? " as last one" : " in place of #" + position) + "...");
@@ -278,6 +277,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			out.println("Cluster correctly removed");
 		else
 			out.println("Can't find the cluster to remove");
+		updateDatabaseInfo();
+	}
+
+	@ConsoleCommand(splitInWords = false, description = "Alters a cluster in the current database. The cluster can be physical or logical")
+	public void alterCluster(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
+		sqlCommand("alter", iCommandText, "\nCluster updated successfully\n");
 		updateDatabaseInfo();
 	}
 

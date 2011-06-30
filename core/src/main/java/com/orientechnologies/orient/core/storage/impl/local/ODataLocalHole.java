@@ -21,7 +21,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.TreeMap;
 
-import com.orientechnologies.common.collection.OMVRBTreeMemory;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
@@ -40,22 +39,22 @@ import com.orientechnologies.orient.core.exception.OStorageException;
  * = 12 bytes<br/>
  */
 public class ODataLocalHole extends OSingleFileSegment {
-	private static final int																		DEF_START_SIZE			= 262144;
-	private static final int																		RECORD_SIZE					= 12;
-	private int																									maxHoleSize					= -1;
+	private static final int														DEF_START_SIZE			= 262144;
+	private static final int														RECORD_SIZE					= 12;
+	private int																					maxHoleSize					= -1;
 
-	private final List<Integer>																	freeHoles						= new ArrayList<Integer>();
-	private final static ODataHoleInfo													cursor							= new ODataHoleInfo();
+	private final List<Integer>													freeHoles						= new ArrayList<Integer>();
+	private final static ODataHoleInfo									cursor							= new ODataHoleInfo();
 
-	private final List<ODataHoleInfo>														availableHolesList	= new ArrayList<ODataHoleInfo>();
-	private final TreeMap<ODataHoleInfo, ODataHoleInfo>					availableHolesBySize;
+	private final List<ODataHoleInfo>										availableHolesList	= new ArrayList<ODataHoleInfo>();
+	private final TreeMap<ODataHoleInfo, ODataHoleInfo>	availableHolesBySize;
 	private final TreeMap<ODataHoleInfo, ODataHoleInfo>	availableHolesByPosition;
 
-	private final String																				PROFILER_DATA_RECYCLED_COMPLETE;
-	private final String																				PROFILER_DATA_RECYCLED_PARTIAL;
-	private final String																				PROFILER_DATA_RECYCLED_NOTFOUND;
-	private final String																				PROFILER_DATA_HOLE_CREATE;
-	private final String																				PROFILER_DATA_HOLE_UPDATE;
+	private final String																PROFILER_DATA_RECYCLED_COMPLETE;
+	private final String																PROFILER_DATA_RECYCLED_PARTIAL;
+	private final String																PROFILER_DATA_RECYCLED_NOTFOUND;
+	private final String																PROFILER_DATA_HOLE_CREATE;
+	private final String																PROFILER_DATA_HOLE_UPDATE;
 
 	public ODataLocalHole(final OStorageLocal iStorage, final OStorageFileConfiguration iConfig) throws IOException {
 		super(iStorage, iConfig);

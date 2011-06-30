@@ -893,6 +893,15 @@ public class OStorageLocal extends OStorageEmbedded {
 		return result;
 	}
 
+	/**
+	 * Method that completes the cluster rename operation. <strong>IT WILL NOT RENAME A CLUSTER, IT JUST CHANGES THE NAME IN THE
+	 * INTERNAL MAPPING</strong>
+	 */
+	public void renameCluster(String iOldName, String iNewName) {
+		OCluster cls = clusterMap.remove(iOldName);
+		clusterMap.put(iNewName, cls);
+	}
+
 	protected int registerDataSegment(final OStorageDataConfiguration iConfig) throws IOException {
 		checkOpeness();
 
