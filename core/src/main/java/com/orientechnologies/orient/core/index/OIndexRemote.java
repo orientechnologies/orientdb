@@ -47,6 +47,14 @@ public class OIndexRemote implements OIndex {
 	private String							name;
 
 	private final static String	QUERY_GET							= "select from index:%s where key = ?";
+    private final static String	QUERY_GET_MAJOR				        = "select from index:%s where key > ?";
+    private final static String	QUERY_GET_MAJOR_EQUALS				= "select from index:%s where key >= ?";
+    private final static String	QUERY_GET_VALUE_MAJOR				= "select @rid from index:%s where key > ?";
+    private final static String	QUERY_GET_VALUE_MAJOR_EQUALS		= "select @rid from index:%s where key >= ?";
+    private final static String	QUERY_GET_MINOR				        = "select from index:%s where key < ?";
+    private final static String	QUERY_GET_MINOR_EQUALS				= "select from index:%s where key <= ?";
+    private final static String	QUERY_GET_VALUE_MINOR				= "select @rid from index:%s where key < ?";
+    private final static String	QUERY_GET_VALUE_MINOR_EQUALS		= "select @rid from index:%s where key <= ?";
 	private final static String	QUERY_GET_RANGE				= "select from index:%s where key between ? and ?";
 	private final static String	QUERY_GET_VALUE_RANGE	= "select @rid from index:%s where key between ? and ?";
 	private final static String	QUERY_PUT							= "insert into index:%s (key,rid) values (%s,%s)";
@@ -94,7 +102,43 @@ public class OIndexRemote implements OIndex {
 		return (Collection<ODocument>) getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
 	}
 
-	public boolean contains(final Object iKey) {
+    public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive) {
+        final OCommandRequest cmd;
+        if(isInclusive)
+           cmd = formatCommand(QUERY_GET_VALUE_MAJOR_EQUALS, name);
+        else
+           cmd = formatCommand(QUERY_GET_VALUE_MAJOR, name);
+        return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(fromKey);
+    }
+
+    public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive) {
+        final OCommandRequest cmd;
+        if(isInclusive)
+           cmd = formatCommand(QUERY_GET_MAJOR_EQUALS, name);
+        else
+           cmd = formatCommand(QUERY_GET_MAJOR, name);
+        return (Collection<ODocument>) getDatabase().command(cmd).execute(fromKey);
+    }
+
+    public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive) {
+        final OCommandRequest cmd;
+        if(isInclusive)
+           cmd = formatCommand(QUERY_GET_VALUE_MINOR_EQUALS, name);
+        else
+           cmd = formatCommand(QUERY_GET_VALUE_MINOR, name);
+        return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(toKey);
+    }
+
+    public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive) {
+        final OCommandRequest cmd;
+        if(isInclusive)
+           cmd = formatCommand(QUERY_GET_MINOR_EQUALS, name);
+        else
+           cmd = formatCommand(QUERY_GET_MINOR, name);
+        return (Collection<ODocument>) getDatabase().command(cmd).execute(toKey);
+    }
+
+    public boolean contains(final Object iKey) {
 		final OCommandRequest cmd = formatCommand(QUERY_CONTAINS, name);
 		final List<ODocument> result = getDatabase().command(cmd).execute();
 		return (Long) result.get(0).field("size") > 0;

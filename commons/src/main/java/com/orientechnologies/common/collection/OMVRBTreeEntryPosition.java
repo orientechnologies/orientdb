@@ -24,7 +24,12 @@ public class OMVRBTreeEntryPosition<K, V> {
 	public OMVRBTreeEntry<K, V>	entry;
 	public int									position;
 
-	public OMVRBTreeEntryPosition(OMVRBTreeEntry<K, V> entry) {
+    public OMVRBTreeEntryPosition(OMVRBTreeEntryPosition<K, V> entryPosition) {
+        this.entry = entryPosition.entry;
+        this.position = entryPosition.position;
+    }
+
+    public OMVRBTreeEntryPosition(OMVRBTreeEntry<K, V> entry) {
 		assign(entry);
 	}
 

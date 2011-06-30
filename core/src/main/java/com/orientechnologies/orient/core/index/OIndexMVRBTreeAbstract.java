@@ -53,9 +53,9 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
 
 /**
  * Handles indexing when records change.
- * 
+ *
  * @author Luca Garulli
- * 
+ *
  */
 public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract implements OIndexInternal, ODatabaseListener {
 	protected static final String																		CONFIG_MAP_RID	= "mapRid";
@@ -94,7 +94,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 
 	/**
 	 * Creates the index.
-	 * 
+	 *
 	 * @param iDatabase
 	 *          Current Database instance
 	 * @param iProperty
@@ -194,7 +194,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 
 	/**
 	 * Returns a set of records with key between the range passed as parameter. Range bounds are included.
-	 * 
+	 *
 	 * @param iRangeFrom
 	 *          Starting range
 	 * @param iRangeTo
@@ -206,9 +206,143 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 		return getValuesBetween(iRangeFrom, iRangeTo, true);
 	}
 
-	/**
+    /**
+	 * Returns a set of records with keys greater than passed  parameter.
+	 *
+	 * @param fromKey
+	 *          Starting key.
+     * @param isInclusive
+     *          Indicates whether record with passed key will be included.
+     *
+	 * @return set of records with keys greater than passed  parameter.
+	 */
+    public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive) {
+        checkForOptimization();
+        acquireExclusiveLock();
+
+        try {
+            final ONavigableMap<Object, Set<OIdentifiable>> subSet = map.tailMap(fromKey, isInclusive);
+            if (subSet == null)
+                return ORecordLazySet.EMPTY_SET;
+
+            final Set<OIdentifiable> result = new ORecordLazySet(configuration.getDatabase());
+            for (Set<OIdentifiable> v : subSet.values()) {
+                result.addAll(v);
+            }
+
+            return result;
+       } finally {
+            releaseExclusiveLock();
+        }
+    }
+
+    /**
+	 * Returns a set of documents that contains fields ("key", "rid") where "key" - index key,
+     * "rid" - record id of records with keys greater than passed parameter.
+	 *
+	 * @param fromKey
+	 *          Starting key.
+     * @param isInclusive
+     *          Indicates whether record with passed key will be included.
+     *
+	 * @return set of records with key greater than passed  parameter.
+	 */
+    public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive) {
+        checkForOptimization();
+        acquireExclusiveLock();
+
+        try {
+            final Set<ODocument> result = new HashSet<ODocument>();
+
+            final ONavigableMap<Object, Set<OIdentifiable>> subSet = map.tailMap(fromKey, isInclusive);
+            if (subSet != null) {
+                for (Entry<Object, Set<OIdentifiable>> v : subSet.entrySet()) {
+                    for (OIdentifiable id : v.getValue()) {
+                        final ODocument document = new ODocument();
+                        document.field("key", v.getKey());
+                        document.field("rid", id.getIdentity());
+                        document.unsetDirty();
+                        result.add(document);
+                    }
+                }
+            }
+
+            return result;
+        } finally {
+            releaseExclusiveLock();
+        }
+    }
+
+    /**
+	 * Returns a set of records with keys less than passed  parameter.
+	 *
+	 * @param toKey
+	 *          Ending key.
+     * @param isInclusive
+     *          Indicates whether record with passed key will be included.
+     *
+	 * @return set of records with keys less than passed  parameter.
+	 */
+    public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive) {
+        checkForOptimization();
+        acquireExclusiveLock();
+
+        try {
+            final ONavigableMap<Object, Set<OIdentifiable>> subSet = map.headMap(toKey, isInclusive);
+            if (subSet == null)
+                return ORecordLazySet.EMPTY_SET;
+
+            final Set<OIdentifiable> result = new ORecordLazySet(configuration.getDatabase());
+            for (Set<OIdentifiable> v : subSet.values()) {
+                result.addAll(v);
+            }
+
+            return result;
+       } finally {
+            releaseExclusiveLock();
+        }
+    }
+
+    /**
+	 * Returns a set of documents that contains fields ("key", "rid") where "key" - index key,
+     * "rid" - record id of records with keys less than passed parameter.
+	 *
+	 * @param toKey
+	 *          Ending key.
+     * @param isInclusive
+     *          Indicates whether record with passed key will be included.
+     *
+	 * @return set of records with key greater than passed  parameter.
+	 */
+    public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive) {
+        checkForOptimization();
+        acquireExclusiveLock();
+
+        try {
+            final Set<ODocument> result = new HashSet<ODocument>();
+
+            final ONavigableMap<Object, Set<OIdentifiable>> subSet = map.headMap(toKey, isInclusive);
+            if (subSet != null) {
+                for (Entry<Object, Set<OIdentifiable>> v : subSet.entrySet()) {
+                    for (OIdentifiable id : v.getValue()) {
+                        final ODocument document = new ODocument();
+                        document.field("key", v.getKey());
+                        document.field("rid", id.getIdentity());
+                        document.unsetDirty();
+                        result.add(document);
+                    }
+                }
+            }
+
+            return result;
+        } finally {
+            releaseExclusiveLock();
+        }
+    }
+
+    /**
 	 * Returns a set of records with key between the range passed as parameter.
-	 * 
+	 *
 	 * @param iRangeFrom
 	 *          Starting range
 	 * @param iRangeTo
@@ -244,7 +378,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 
 	/**
 	 * Returns a set of documents with key between the range passed as parameter. Range bounds are included.
-	 * 
+	 *
 	 * @param iRangeFrom
 	 *          Starting range
 	 * @param iRangeTo
@@ -258,7 +392,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 
 	/**
 	 * Returns a set of documents with key between the range passed as parameter.
-	 * 
+	 *
 	 * @param iRangeFrom
 	 *          Starting range
 	 * @param iRangeTo
@@ -760,13 +894,13 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 		try {
 
 			OLogManager.instance().debug(this,
-					"Forcing " + (iHardMode ? "hard" : "soft") + " optimization of Index %s (%d items). Found %d entries in memory...", name,
-					map.size(), map.getInMemoryEntries());
+                    "Forcing " + (iHardMode ? "hard" : "soft") + " optimization of Index %s (%d items). Found %d entries in memory...", name,
+                    map.size(), map.getInMemoryEntries());
 
 			final int freed = map.optimize(true);
 
 			OLogManager.instance().debug(this, "Completed! Freed %d entries and now %d entries reside in memory", freed,
-					map.getInMemoryEntries());
+                    map.getInMemoryEntries());
 
 		} finally {
 			releaseExclusiveLock();

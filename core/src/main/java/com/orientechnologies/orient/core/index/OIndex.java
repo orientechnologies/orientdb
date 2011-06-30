@@ -91,6 +91,56 @@ public interface OIndex {
 
 	public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo);
 
+    /**
+	 * Returns a set of records with keys greater than passed  parameter.
+	 *
+	 * @param fromKey
+	 *          Starting key.
+     * @param isInclusive
+     *          Indicates whether record with passed key will be included.
+     *
+	 * @return set of records with keys greater than passed  parameter.
+	 */
+    public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive);
+
+    /**
+	 * Returns a set of documents that contains fields ("key", "rid") where "key" - index key,
+     * "rid" - record id of records with keys greater than passed parameter.
+	 *
+	 * @param fromKey
+	 *          Starting key.
+     * @param isInclusive
+     *          Indicates whether record with passed key will be included.
+     *
+	 * @return set of records with key greater than passed  parameter.
+	 */
+    public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive);
+
+    /**
+	 * Returns a set of records with keys less than passed  parameter.
+	 *
+	 * @param toKey
+	 *          Ending key.
+     * @param isInclusive
+     *          Indicates whether record with passed key will be included.
+     *
+	 * @return set of records with keys less than passed  parameter.
+	 */
+    public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive);
+
+    /**
+	 * Returns a set of documents that contains fields ("key", "rid") where "key" - index key,
+     * "rid" - record id of records with keys less than passed parameter.
+	 *
+	 * @param toKey
+	 *          Ending key.
+     * @param isInclusive
+     *          Indicates whether record with passed key will be included.
+     *
+	 * @return set of records with key greater than passed  parameter.
+	 */
+    public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive);
+
 	public long getSize();
 
 	public OIndex lazySave();

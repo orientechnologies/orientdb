@@ -1633,7 +1633,11 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			}
 
 			final OMVRBTreeEntryPosition<K, V> nextEntry() {
-				final OMVRBTreeEntryPosition<K, V> e = next;
+                final OMVRBTreeEntryPosition<K, V> e;
+                if(next != null)
+				    e = new OMVRBTreeEntryPosition<K, V>(next);
+                else
+                    e = null;
 				if (e == null || e.entry == null || e.getKey() == fenceKey)
 					throw new NoSuchElementException();
 				if (m.modCount != expectedModCount)
@@ -1644,7 +1648,11 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			}
 
 			final OMVRBTreeEntryPosition<K, V> prevEntry() {
-				final OMVRBTreeEntryPosition<K, V> e = next;
+				final OMVRBTreeEntryPosition<K, V> e;
+                if(next != null)
+                    e =  new OMVRBTreeEntryPosition<K, V>(next);
+                else
+                    e = null;
 				if (e == null || e.entry == null || e.getKey() == fenceKey)
 					throw new NoSuchElementException();
 				if (m.modCount != expectedModCount)
@@ -1685,7 +1693,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			}
 
 			public Map.Entry<K, V> next() {
-				return nextEntry().entry;
+                final Map.Entry<K, V> e = OMVRBTree.exportEntry(next);
+                nextEntry();
+				return e;
 			}
 
 			public void remove() {
@@ -1713,7 +1723,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			}
 
 			public Map.Entry<K, V> next() {
-				return prevEntry().entry;
+                final Map.Entry<K, V> e = OMVRBTree.exportEntry(next);
+                prevEntry();
+				return e;
 			}
 
 			public void remove() {
@@ -2239,8 +2251,8 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	/**
 	 * Delete node p, and then re-balance the tree.
 	 * 
-	 * @param iIndex
-	 *          -1 = delete the node, otherwise the item inside of it
+	 * @param p
+	 *          node to delete
 	 */
 	void deleteEntry(OMVRBTreeEntry<K, V> p) {
 		size--;

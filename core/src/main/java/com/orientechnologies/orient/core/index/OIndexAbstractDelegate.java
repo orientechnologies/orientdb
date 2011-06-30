@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import sun.misc.FormattedFloatingDecimal;
 
 /**
  * Generic abstract wrapper for indexes. It delegates all the operations to the wrapped OIndex instance.
@@ -92,7 +93,23 @@ public class OIndexAbstractDelegate implements OIndex {
 		return delegate.getEntriesBetween(iRangeFrom, iRangeTo);
 	}
 
-	public long getSize() {
+    public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive) {
+        return delegate.getValuesMajor(fromKey, isInclusive);
+    }
+
+    public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive) {
+        return delegate.getEntriesMajor(fromKey, isInclusive);
+    }
+
+    public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive) {
+        return delegate.getValuesMinor(toKey, isInclusive);
+    }
+
+    public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive) {
+        return delegate.getEntriesMinor(toKey, isInclusive);
+    }
+
+    public long getSize() {
 		return delegate.getSize();
 	}
 
