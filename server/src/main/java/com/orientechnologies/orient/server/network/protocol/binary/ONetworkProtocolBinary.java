@@ -464,6 +464,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			if (rid.clusterId == 0 && rid.clusterPosition == 0) {
 				// @COMPATIBILITY 0.9.25
 				// SEND THE DB CONFIGURATION INSTEAD SINCE IT WAS ON RECORD 0:0
+				OFetchHelper.checkFetchPlanValid(fetchPlanString);
 				channel.acquireExclusiveLock();
 				try {
 					sendOk(lastClientTxId);
@@ -475,7 +476,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 					channel.releaseExclusiveLock();
 				}
 			} else {
-				final ORecordInternal<?> record = connection.database.load(rid);
+				final ORecordInternal<?> record = connection.database.load(rid, fetchPlanString);
 
 				// if (rid.equals(((OSchemaImpl) connection.database.getMetadata().getSchema()).getDocument().getIdentity()))
 				// connection.database.getMetadata().getSchema().reload();
