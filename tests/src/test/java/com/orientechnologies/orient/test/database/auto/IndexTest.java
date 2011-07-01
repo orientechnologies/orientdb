@@ -18,7 +18,10 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -96,21 +99,44 @@ public class IndexTest {
 		database.close();
 	}
 
-	// @Test(dependsOnMethods = "testDuplicatedIndexOnUnique")
-	// public void testIndexSize() {
-	// database.open("admin", "admin");
-	// int profileSize = ((List<Profile>) database
-	// .command(new OSQLSynchQuery<Profile>("select * from Profile where nick is not null")).execute()).size();
-	// database.getMetadata().getIndexManager().reload();
-	// Assert.assertEquals(database.getMetadata().getIndexManager().getIndex("Profile.nick").getSize(), profileSize);
-	// for (int i = 0; i < 10; i++) {
-	// Profile profile = new Profile("Yay-" + i, "Jay", "Miner", null);
-	// database.save(profile);
-	// profileSize++;
-	// Assert.assertEquals(database.getMetadata().getIndexManager().getIndex("Profile.nick").get("Yay-" + i).size(), 1);
-	// }
-	// database.close();
-	// }
+	@Test(dependsOnMethods = "testDuplicatedIndexOnUnique")
+	public void testIndexEntries() {
+		database.open("admin", "admin");
+		List<Profile> result = database.command(new OSQLSynchQuery<Profile>("select * from Profile where nick is not null")).execute();
+
+		for (Profile p : result)
+			database.getRecordByUserObject(p, false);
+
+		OIndex idx = database.getMetadata().getIndexManager().getIndex("Profile.nick");
+
+		Assert.assertEquals(idx.getSize(), result.size());
+
+		Iterator<Entry<Object, Set<OIdentifiable>>> it = idx.iterator();
+		while (it.hasNext()) {
+			it.next();
+		}
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "testDuplicatedIndexOnUnique")
+	public void testIndexSize() {
+		database.open("admin", "admin");
+
+		List<Profile> result = database.command(new OSQLSynchQuery<Profile>("select * from Profile where nick is not null")).execute();
+
+		int profileSize = result.size();
+
+		database.getMetadata().getIndexManager().reload();
+		Assert.assertEquals(database.getMetadata().getIndexManager().getIndex("Profile.nick").getSize(), profileSize);
+		for (int i = 0; i < 10; i++) {
+			Profile profile = new Profile("Yay-" + i, "Jay", "Miner", null);
+			database.save(profile);
+			profileSize++;
+			Assert.assertEquals(database.getMetadata().getIndexManager().getIndex("Profile.nick").get("Yay-" + i).size(), 1);
+		}
+		database.close();
+	}
 
 	@Test(dependsOnMethods = "testUseOfIndex")
 	public void testChangeOfIndexToNotUnique() {
