@@ -29,12 +29,12 @@ public class OMVRBTreeSpeedTest extends SpeedTestMonoThread {
 	@Override
 	@Test(enabled = false)
 	public void cycle() {
-		final int NUMS = 1000000;
+		final int NUMS = 100;
 
 		tree.put(1, 1);
 		tree.put(55, 1);
 
-		System.out.println("Inserting " + NUMS + " values in OBTreeMap...");
+		System.out.println("Inserting " + NUMS + " values in OrientDB-TreeMap...");
 		for (int i = 0; i < NUMS; ++i) {
 			tree.put(getKey(i), i);
 			// printTree();
