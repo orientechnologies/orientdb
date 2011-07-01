@@ -99,6 +99,23 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLPermission
 			throw new OCommandExecutionException("Source class '" + className + "' not found");
 
 		cls.setInternal(attribute, value);
+		renameCluster();
 		return null;
+	}
+
+	private void renameCluster() {
+		if (attribute.equals(OClass.ATTRIBUTES.NAME) && checkClusterRenameOk(database.getStorage().getClusterIdByName(value))) {
+			database.command(new OCommandSQL("alter cluster " + className + " name " + value)).execute();
+		}
+	}
+
+	private boolean checkClusterRenameOk(int clusterId) {
+		for (OClass clazz : database.getMetadata().getSchema().getClasses()) {
+			if (clazz.getName().equals(value))
+				continue;
+			else if (clazz.getDefaultClusterId() == clusterId || Arrays.asList(clazz.getClusterIds()).contains(clusterId))
+				return false;
+		}
+		return true;
 	}
 }
