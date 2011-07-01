@@ -648,7 +648,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			if (_status != STATUS.UNMARSHALLING) {
 				setDirty();
 
-				if (knownProperty && _trackingChanges) {
+				if (_trackingChanges && _recordId.isValid()) {
 					// SAVE THE OLD VALUE IN A SEPARATE MAP
 					if (_fieldOriginalValues == null)
 						_fieldOriginalValues = new HashMap<String, Object>();

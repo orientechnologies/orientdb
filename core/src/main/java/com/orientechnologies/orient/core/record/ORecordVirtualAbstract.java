@@ -67,6 +67,7 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 	@Override
 	public void unsetDirty() {
 		_source = null;
+		_fieldOriginalValues = null;
 		super.unsetDirty();
 	}
 
