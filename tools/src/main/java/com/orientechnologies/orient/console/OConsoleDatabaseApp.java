@@ -365,10 +365,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 	@ConsoleCommand(description = "Load a record in memory and set it as the current one")
 	public void loadRecord(
-			@ConsoleParameter(name = "record-id", description = "The unique Record Id of the record to load. If you don't have the Record Id execute a query first") String iRecordId) {
+			@ConsoleParameter(name = "record-id", description = "The unique Record Id of the record to load. If you don't have the Record Id execute a query first") String iRecordId,
+			@ConsoleParameter(name = "fetch-plan", description = "The fetch plan to load the record with") String iFetchPlan) {
 		checkCurrentDatabase();
 
-		currentRecord = currentDatabase.load(new ORecordId(iRecordId));
+		currentRecord = currentDatabase.load(new ORecordId(iRecordId), iFetchPlan);
 		displayRecord(null);
 
 		out.println("OK");
