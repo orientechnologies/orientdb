@@ -22,7 +22,6 @@ import java.io.IOException;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
-import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -38,8 +37,8 @@ public class TestUtils {
 	}
 
 	public static void deleteDatabase(final ODatabase database) throws IOException {
-		if (database.getStorage() instanceof OStorageRemote) {
-			new OServerAdmin((OStorageRemote) database.getStorage()).connect("root", getServerRootPassword()).deleteDatabase();
+		if (database.getURL().startsWith("remote:")) {
+			new OServerAdmin(database.getURL()).connect("root", getServerRootPassword()).deleteDatabase();
 		} else {
 			database.delete();
 		}

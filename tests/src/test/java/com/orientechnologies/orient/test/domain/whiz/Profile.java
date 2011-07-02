@@ -33,6 +33,7 @@ public class Profile {
 	private String				name;
 	private String				surname;
 	private Address				location;
+	private Long					hash;
 	private Profile				invitedBy;
 	private String				value;
 
@@ -137,5 +138,14 @@ public class Profile {
 
 	public String getId() {
 		return id;
+	}
+
+	public Long getHash() {
+		return hash;
+	}
+
+	public Profile setHash(Long hash) {
+		this.hash = hash;
+		return this;
 	}
 }

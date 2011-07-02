@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -630,4 +631,25 @@ public class IndexTest {
 		database.close();
 	}
 
+	public void LongTypes() {
+		database.open("admin", "admin");
+
+		database.getMetadata().getSchema().getClass("Profile").createProperty("hash", OType.LONG).createIndex(INDEX_TYPE.UNIQUE);
+
+		OIndex idx = database.getMetadata().getIndexManager().getIndex("Profile.hash");
+
+		for (int i = 0; i < 5; i++) {
+			Profile profile = new Profile("HashTest1").setHash(100l + i);
+			database.save(profile);
+		}
+
+		Iterator<Entry<Object, Set<OIdentifiable>>> it = idx.iterator();
+		while (it.hasNext()) {
+			Object v = it.next();
+		}
+
+		Assert.assertEquals(idx.getSize(), 5);
+
+		database.close();
+	}
 }

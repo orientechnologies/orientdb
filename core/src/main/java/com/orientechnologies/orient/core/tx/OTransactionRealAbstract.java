@@ -141,10 +141,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 					value.append('*');
 				String key = value.toString();
 
-				if (key.length() > 1 && key.charAt(0) == '"' && key.charAt(key.length() - 1) == '"')
-					key = key.substring(1, key.length() - 1);
-
-				List<ODocument> operations = new ArrayList<ODocument>();
+				final List<ODocument> operations = new ArrayList<ODocument>();
 
 				// SERIALIZE VALUES
 				if (entry.entries != null && !entry.entries.isEmpty()) {
