@@ -695,7 +695,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 							OSQLHelper.getValue(values[2]));
 
 					for (OIdentifiable r : entries)
-						addResult(createIndexEntryAsDocument(keyValue, r.getIdentity()));
+						addResult(r);
 				}
 
 			} else if (indexOperator instanceof OQueryOperatorMajor) {

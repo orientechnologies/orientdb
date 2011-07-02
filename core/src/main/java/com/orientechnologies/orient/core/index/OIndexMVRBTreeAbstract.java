@@ -418,8 +418,11 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 			if (subSet != null) {
 				for (Entry<Object, Set<OIdentifiable>> v : subSet.entrySet()) {
 					for (OIdentifiable id : v.getValue()) {
-						result.add(new ODocument().field("key", v.getKey()));
-						result.add(new ODocument().field("rid", id.getIdentity()));
+						final ODocument document = new ODocument();
+						document.field("key", v.getKey());
+						document.field("rid", id.getIdentity());
+						document.unsetDirty();
+						result.add(document);
 					}
 				}
 			}

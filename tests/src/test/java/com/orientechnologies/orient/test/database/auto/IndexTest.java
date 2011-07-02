@@ -24,8 +24,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
@@ -50,6 +49,16 @@ public class IndexTest {
 	private ODatabaseObjectTx	database;
 	protected long						startRecordNumber;
 
+    @BeforeMethod
+    public void beforeMethod() {
+        database.open("admin", "admin");
+    }
+
+    @AfterMethod
+    public void afterMethod() {
+        database.close();
+    }
+
 	@Parameters(value = "url")
 	public IndexTest(String iURL) {
 		Orient.instance().registerEngine(new OEngineRemote());
@@ -60,8 +69,6 @@ public class IndexTest {
 
 	@Test
 	public void testDuplicatedIndexOnUnique() {
-		database.open("admin", "admin");
-
 		Profile jayMiner = new Profile("Jay", "Jay", "Miner", null);
 		database.save(jayMiner);
 
@@ -76,13 +83,10 @@ public class IndexTest {
 		} catch (OIndexException e) {
 			Assert.assertTrue(true);
 		}
-		database.close();
 	}
 
 	@Test(dependsOnMethods = "testDuplicatedIndexOnUnique")
 	public void testUseOfIndex() {
-		database.open("admin", "admin");
-
 		final List<Profile> result = database.command(new OSQLSynchQuery<Profile>("select * from Profile where nick = 'Jay'"))
 				.execute();
 
@@ -96,13 +100,10 @@ public class IndexTest {
 
 			Assert.assertTrue(record.getName().toString().equalsIgnoreCase("Jay"));
 		}
-
-		database.close();
 	}
 
 	@Test(dependsOnMethods = "testDuplicatedIndexOnUnique")
 	public void testIndexEntries() {
-		database.open("admin", "admin");
 		List<Profile> result = database.command(new OSQLSynchQuery<Profile>("select * from Profile where nick is not null")).execute();
 
 		for (Profile p : result)
@@ -116,14 +117,10 @@ public class IndexTest {
 		while (it.hasNext()) {
 			it.next();
 		}
-
-		database.close();
 	}
 
 	@Test(dependsOnMethods = "testDuplicatedIndexOnUnique")
 	public void testIndexSize() {
-		database.open("admin", "admin");
-
 		List<Profile> result = database.command(new OSQLSynchQuery<Profile>("select * from Profile where nick is not null")).execute();
 
 		int profileSize = result.size();
@@ -136,41 +133,28 @@ public class IndexTest {
 			profileSize++;
 			Assert.assertEquals(database.getMetadata().getIndexManager().getIndex("Profile.nick").get("Yay-" + i).size(), 1);
 		}
-		database.close();
 	}
 
 	@Test(dependsOnMethods = "testUseOfIndex")
 	public void testChangeOfIndexToNotUnique() {
-		database.open("admin", "admin");
 		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndex();
 		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(INDEX_TYPE.NOTUNIQUE);
-		database.close();
 	}
 
 	@Test(dependsOnMethods = "testChangeOfIndexToNotUnique")
 	public void testDuplicatedIndexOnNotUnique() {
-		database.open("admin", "admin");
-
 		Profile nickNolte = new Profile("Jay", "Nick", "Nolte", null);
 		database.save(nickNolte);
-
-		database.close();
 	}
 
 	@Test(dependsOnMethods = "testDuplicatedIndexOnNotUnique")
 	public void testQueryIndex() {
-		database.open("admin", "admin");
-
 		List<?> result = database.query(new OSQLSynchQuery<Object>("select from index:profile.nick where key = 'Jay'"));
 		Assert.assertTrue(result.size() > 0);
-
-		database.close();
 	}
 
 	@Test
 	public void testIndexSQL() {
-		database.open("admin", "admin");
-
 		database.command(new OCommandSQL("create index idx unique")).execute();
 		database.getMetadata().getIndexManager().reload();
 		Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("idx"));
@@ -231,13 +215,10 @@ public class IndexTest {
 			Assert.assertFalse(d.containsField("key"));
 			Assert.assertTrue(d.containsField("rid"));
 		}
-
-		database.close();
 	}
 
 	@Test(dependsOnMethods = "testQueryIndex")
 	public void testChangeOfIndexToUnique() {
-		database.open("admin", "admin");
 		try {
 			database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndex();
 			database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(INDEX_TYPE.UNIQUE);
@@ -245,13 +226,10 @@ public class IndexTest {
 		} catch (OIndexException e) {
 			Assert.assertTrue(true);
 		}
-
-		database.close();
 	}
 
 	@Test(dependsOnMethods = "populateIndexDocuments")
 	public void testValuesMajor() {
-		database.open("admin", "admin");
 		database.command(new OCommandSQL("create index equalityIdx unique")).execute();
 
 		database.getMetadata().getIndexManager().reload();
@@ -287,12 +265,10 @@ public class IndexTest {
 		Assert.assertEquals(indexCollection.size(), 0);
 
 		database.command(new OCommandSQL("drop index equalityIdx")).execute();
-		database.close();
 	}
 
 	@Test(dependsOnMethods = "populateIndexDocuments")
 	public void testEntriesMajor() {
-		database.open("admin", "admin");
 		database.command(new OCommandSQL("create index equalityIdx unique")).execute();
 
 		database.getMetadata().getIndexManager().reload();
@@ -331,12 +307,10 @@ public class IndexTest {
 		Assert.assertEquals(indexCollection.size(), 0);
 
 		database.command(new OCommandSQL("drop index equalityIdx")).execute();
-		database.close();
 	}
 
 	@Test(dependsOnMethods = "populateIndexDocuments")
 	public void testValuesMinor() {
-		database.open("admin", "admin");
 		database.command(new OCommandSQL("create index equalityIdx unique")).execute();
 
 		database.getMetadata().getIndexManager().reload();
@@ -372,12 +346,10 @@ public class IndexTest {
 		Assert.assertEquals(indexCollection.size(), 0);
 
 		database.command(new OCommandSQL("drop index equalityIdx")).execute();
-		database.close();
 	}
 
 	@Test(dependsOnMethods = "populateIndexDocuments")
 	public void testEntriesMinor() {
-		database.open("admin", "admin");
 		database.command(new OCommandSQL("create index equalityIdx unique")).execute();
 
 		database.getMetadata().getIndexManager().reload();
@@ -416,14 +388,36 @@ public class IndexTest {
 		Assert.assertEquals(indexCollection.size(), 0);
 
 		database.command(new OCommandSQL("drop index equalityIdx")).execute();
-		database.close();
+	}
+
+    @Test(dependsOnMethods = "populateIndexDocuments")
+	public void testBetweenEntries() {
+		database.command(new OCommandSQL("create index equalityIdx unique")).execute();
+
+		database.getMetadata().getIndexManager().reload();
+		Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("equalityIdx"));
+
+		for (int key = 0; key <= 5; key++) {
+			database.command(new OCommandSQL("insert into index:equalityIdx (key,rid) values (" + key + ",#10:" + key + ")")).execute();
+		}
+
+		final OIndex index = database.getMetadata().getIndexManager().getIndex("equalityIdx");
+
+		final Collection<Integer> betweenResults = new ArrayList<Integer>(Arrays.asList(1, 2, 3));
+		Collection<ODocument> indexCollection = index.getEntriesBetween(1,3);
+		Assert.assertEquals(indexCollection.size(), 3);
+		for (ODocument doc : indexCollection) {
+			betweenResults.remove(doc.<Integer> field("key"));
+			Assert.assertEquals(doc.<ORecordId> rawField("rid"), new ORecordId(10, doc.<Integer> field("key").longValue()));
+		}
+		Assert.assertEquals(betweenResults.size(), 0);
+
+		database.command(new OCommandSQL("drop index equalityIdx")).execute();
 	}
 
 	@Test(dependsOnMethods = "populateIndexDocuments")
 	public void testIndexInMajorSelect() {
-		database.open("admin", "admin");
 		if (database.getStorage() instanceof OStorageRemote || database.getStorage() instanceof OStorageRemoteThread) {
-			database.close();
 			return;
 		}
 
@@ -454,15 +448,11 @@ public class IndexTest {
 		Assert.assertEquals(expectedNicks.size(), 0);
 		long newIndexQueries = OProfiler.getInstance().getCounter("Query.indexUsage");
 		Assert.assertEquals(newIndexQueries, indexQueries + 1);
-
-		database.close();
 	}
 
 	@Test(dependsOnMethods = "populateIndexDocuments")
 	public void testIndexInMajorEqualsSelect() {
-		database.open("admin", "admin");
 		if (database.getStorage() instanceof OStorageRemote || database.getStorage() instanceof OStorageRemoteThread) {
-			database.close();
 			return;
 		}
 
@@ -494,15 +484,11 @@ public class IndexTest {
 		Assert.assertEquals(expectedNicks.size(), 0);
 		long newIndexQueries = OProfiler.getInstance().getCounter("Query.indexUsage");
 		Assert.assertEquals(newIndexQueries, indexQueries + 1);
-
-		database.close();
 	}
 
 	@Test(dependsOnMethods = "populateIndexDocuments")
 	public void testIndexInMinorSelect() {
-		database.open("admin", "admin");
 		if (database.getStorage() instanceof OStorageRemote || database.getStorage() instanceof OStorageRemoteThread) {
-			database.close();
 			return;
 		}
 
@@ -533,15 +519,11 @@ public class IndexTest {
 		Assert.assertEquals(expectedNicks.size(), 0);
 		long newIndexQueries = OProfiler.getInstance().getCounter("Query.indexUsage");
 		Assert.assertEquals(newIndexQueries, indexQueries + 1);
-
-		database.close();
 	}
 
 	@Test(dependsOnMethods = "populateIndexDocuments")
 	public void testIndexInMinorEqualsSelect() {
-		database.open("admin", "admin");
 		if (database.getStorage() instanceof OStorageRemote || database.getStorage() instanceof OStorageRemoteThread) {
-			database.close();
 			return;
 		}
 
@@ -572,15 +554,11 @@ public class IndexTest {
 		Assert.assertEquals(expectedNicks.size(), 0);
 		long newIndexQueries = OProfiler.getInstance().getCounter("Query.indexUsage");
 		Assert.assertEquals(newIndexQueries, indexQueries + 1);
-
-		database.close();
 	}
 
 	@Test(dependsOnMethods = "populateIndexDocuments")
 	public void testIndexBetweenSelect() {
-		database.open("admin", "admin");
 		if (database.getStorage() instanceof OStorageRemote || database.getStorage() instanceof OStorageRemoteThread) {
-			database.close();
 			return;
 		}
 
@@ -611,13 +589,9 @@ public class IndexTest {
 		Assert.assertEquals(expectedNicks.size(), 0);
 		long newIndexQueries = OProfiler.getInstance().getCounter("Query.indexUsage");
 		Assert.assertEquals(newIndexQueries, indexQueries + 1);
-
-		database.close();
 	}
 
 	public void populateIndexDocuments() {
-		database.open("admin", "admin");
-
 		for (int i = 0; i <= 5; i++) {
 			final Profile profile = new Profile("ZZZJayLongNickIndex" + i, "NickIndex" + i, "NolteIndex" + i, null);
 			database.save(profile);
@@ -627,13 +601,9 @@ public class IndexTest {
 			final Profile profile = new Profile("00" + i, "NickIndex" + i, "NolteIndex" + i, null);
 			database.save(profile);
 		}
-
-		database.close();
 	}
 
 	public void LongTypes() {
-		database.open("admin", "admin");
-
 		database.getMetadata().getSchema().getClass("Profile").createProperty("hash", OType.LONG).createIndex(INDEX_TYPE.UNIQUE);
 
 		OIndex idx = database.getMetadata().getIndexManager().getIndex("Profile.hash");
@@ -649,7 +619,5 @@ public class IndexTest {
 		}
 
 		Assert.assertEquals(idx.getSize(), 5);
-
-		database.close();
 	}
 }
