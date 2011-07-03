@@ -656,7 +656,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	@ConsoleCommand(aliases = { "status" }, description = "Display information about the database")
 	public void info() {
 		if (currentDatabaseName != null) {
-			out.println("Current database: " + currentDatabaseName);
+			out.println("Current database: " + currentDatabaseName + " (url=" + currentDatabase.getURL() + ")");
 			clusters();
 			classes();
 			indexes();
@@ -765,7 +765,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			}
 			out.println("----------------------------------------------+------+---------------------+-----------+");
 			out.printf(" TOTAL                                                                 %15d |\n", totalElements);
-			out.println("---------------------------------------------------------------------------------------+\n");
+			out.println("---------------------------------------------------------------------------------------+");
 		} else
 			out.println("No database selected yet.");
 	}
