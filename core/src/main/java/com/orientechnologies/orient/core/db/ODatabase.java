@@ -83,7 +83,7 @@ public interface ODatabase {
 	 * @param iIntent
 	 *          The intent
 	 */
-	public void declareIntent(final OIntent iIntent);
+	public boolean declareIntent(final OIntent iIntent);
 
 	/**
 	 * Checks if the database exists.

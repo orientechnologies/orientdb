@@ -329,15 +329,22 @@ public class ODatabaseRaw implements ODatabase {
 		return storage.getDefaultClusterId();
 	}
 
-	public void declareIntent(final OIntent iIntent) {
-		if (currentIntent != null)
+	public boolean declareIntent(final OIntent iIntent) {
+		if (currentIntent != null) {
+			if (iIntent != null && iIntent.getClass().equals(currentIntent.getClass()))
+				// SAME INTENT: JUMP IT
+				return false;
+
 			// END CURRENT INTENT
 			currentIntent.end(this);
+		}
 
 		currentIntent = iIntent;
 
 		if (iIntent != null)
 			iIntent.begin(this);
+
+		return true;
 	}
 
 	public ODatabaseRecord getDatabaseOwner() {

@@ -176,9 +176,9 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 		return underlying.getDefaultClusterId();
 	}
 
-	public void declareIntent(final OIntent iIntent) {
+	public boolean declareIntent(final OIntent iIntent) {
 		checkOpeness();
-		underlying.declareIntent(iIntent);
+		return underlying.declareIntent(iIntent);
 	}
 
 	public <DBTYPE extends ODatabase> DBTYPE getUnderlying() {
