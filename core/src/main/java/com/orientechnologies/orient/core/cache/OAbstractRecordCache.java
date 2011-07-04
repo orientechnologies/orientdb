@@ -16,6 +16,8 @@
 package com.orientechnologies.orient.core.cache;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
@@ -102,13 +104,18 @@ public abstract class OAbstractRecordCache extends OSharedResourceAbstract {
 			return;
 
 		acquireExclusiveLock();
+		final Set<ORID> toRemove = new HashSet<ORID>();
 		try {
 			for (ORID entry : entries.keySet()) {
 				if (entry.getClusterId() == clusterId) {
-					entries.remove(entry);
+					toRemove.add(entry);
 				}
 			}
+			for (ORID ridToRemove : toRemove) {
+				entries.remove(ridToRemove);
+			}
 		} finally {
+			toRemove.clear();
 			releaseExclusiveLock();
 		}
 	}
@@ -242,7 +249,7 @@ public abstract class OAbstractRecordCache extends OSharedResourceAbstract {
 
 						entries.removeEldestItems(threshold);
 
-						OLogManager.instance().debug(this, "Low memory: auto reduce the record cache size from %d to %d", oldSize, threshold);
+						OLogManager.instance().warn(this, "Low memory: auto reduce the record cache size from %d to %d", oldSize, threshold);
 					} catch (Exception e) {
 						OLogManager.instance().error(this, "Error while freeing resources", e);
 					} finally {
@@ -258,7 +265,7 @@ public abstract class OAbstractRecordCache extends OSharedResourceAbstract {
 				if (iType == TYPE.JVM) {
 					acquireExclusiveLock();
 					try {
-						OLogManager.instance().debug(this, "Clearing %d resources", entries.size());
+						OLogManager.instance().warn(this, "Clearing %d resources", entries.size());
 						entries.clear();
 					} catch (Exception e) {
 						OLogManager.instance().error(this, "Error while freeing resources", e);

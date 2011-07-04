@@ -308,6 +308,10 @@ public class ODatabaseRaw implements ODatabase {
 		return storage.dropCluster(iClusterName);
 	}
 
+	public boolean dropCluster(int iClusterId) {
+		return storage.dropCluster(iClusterId);
+	}
+
 	public int addDataSegment(final String iSegmentName, final String iSegmentFileName) {
 		return storage.addDataSegment(iSegmentName, iSegmentFileName);
 	}
@@ -449,5 +453,9 @@ public class ODatabaseRaw implements ODatabase {
 			} catch (Throwable t) {
 				t.printStackTrace();
 			}
+	}
+
+	protected boolean isClusterBoundedToClass(int iClusterId) {
+		return false;
 	}
 }

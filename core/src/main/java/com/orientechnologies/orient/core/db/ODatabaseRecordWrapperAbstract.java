@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -22,11 +23,13 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
+import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -83,7 +86,14 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 	@Override
 	public boolean dropCluster(final String iClusterName) {
 		checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
+		checkClusterBoundedToClass(getClusterIdByName(iClusterName));
 		return super.dropCluster(iClusterName);
+	}
+
+	public boolean dropCluster(int iClusterId) {
+		checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
+		checkClusterBoundedToClass(iClusterId);
+		return super.dropCluster(iClusterId);
 	}
 
 	@Override
@@ -269,5 +279,20 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 	public <DBTYPE extends ODatabaseComplex<?>> DBTYPE unregisterHook(final ORecordHook iHookImpl) {
 		underlying.unregisterHook(iHookImpl);
 		return (DBTYPE) this;
+	}
+
+	protected void checkClusterBoundedToClass(int iClusterId) {
+		for (OClass clazz : getMetadata().getSchema().getClasses()) {
+			if (clazz.getDefaultClusterId() == iClusterId)
+				throw new OSchemaException("Can't drop the cluster '" + getClusterNameById(iClusterId) + "' because the class ['"
+						+ clazz.getName() + "'] are bound to it. Drop these classes before to drop the cluster");
+			else if (clazz.getClusterIds().length > 1) {
+				for (int i : clazz.getClusterIds()) {
+					if (i == iClusterId)
+						throw new OSchemaException("Can't drop the cluster '" + getClusterNameById(iClusterId) + "' because the class ['"
+								+ clazz.getName() + "'] are bound to it. Drop these classes before to drop the cluster");
+				}
+			}
+		}
 	}
 }

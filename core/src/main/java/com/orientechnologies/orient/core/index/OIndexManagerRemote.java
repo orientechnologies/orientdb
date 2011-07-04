@@ -72,7 +72,10 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 		indexes.remove(iIndexName.toLowerCase());
 
 		return this;
-
+	}
+	
+	public OIndexManager dropClassIndexes(String iIndexName) {
+		return null;
 	}
 
 	public synchronized OIndexManager setDirty() {

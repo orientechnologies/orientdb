@@ -316,6 +316,11 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema {
 				((OClassImpl) cls.getSuperClass()).baseClasses.remove(cls);
 			}
 
+			for (OProperty property : cls.properties()) {
+				if (property.isIndexed())
+					property.dropIndex();
+			}
+
 			classes.remove(key);
 			saveInternal();
 

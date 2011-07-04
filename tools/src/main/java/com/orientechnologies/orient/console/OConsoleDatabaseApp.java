@@ -260,14 +260,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 		out.println("Dropping cluster [" + iClusterName + "] in database " + currentDatabaseName + "...");
 
-		boolean result = currentDatabase.getStorage().dropCluster(iClusterName);
+		boolean result = currentDatabase.dropCluster(iClusterName);
 
 		if (!result) {
 			// TRY TO GET AS CLUSTER ID
 			try {
 				int clusterId = Integer.parseInt(iClusterName);
 				if (clusterId > -1) {
-					result = currentDatabase.getStorage().dropCluster(clusterId);
+					result = currentDatabase.dropCluster(clusterId);
 				}
 			} catch (Exception e) {
 			}

@@ -265,7 +265,22 @@ public interface ODatabase {
 	 */
 	public int addPhysicalCluster(String iClusterName, String iClusterFileName, int iStartSize);
 
+	/**
+	 * 
+	 * Drops a cluster by its name. Physical clusters will be completely deleted
+	 * 
+	 * @param iClusterName
+	 * @return
+	 */
 	public boolean dropCluster(String iClusterName);
+
+	/**
+	 * Drops a cluster by its id. Physical clusters will be completely deleted
+	 * 
+	 * @param iClusterId
+	 * @return
+	 */
+	public boolean dropCluster(int iClusterId);
 
 	/**
 	 * Internal. Adds a data segment where to store record content.
