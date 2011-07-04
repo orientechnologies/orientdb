@@ -17,8 +17,8 @@ package com.orientechnologies.orient.core.sql;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -472,7 +472,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		final String projectionString = text.substring(currentPos, fromPosition).trim();
 		if (projectionString.length() > 0 && !projectionString.equals("*")) {
 			// EXTRACT PROJECTIONS
-			projections = new HashMap<String, Object>();
+			projections = new LinkedHashMap<String, Object>();
 			final List<String> items = OStringSerializerHelper.smartSplit(projectionString, ',');
 
 			String fieldName;
