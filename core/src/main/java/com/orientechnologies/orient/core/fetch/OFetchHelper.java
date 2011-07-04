@@ -68,7 +68,8 @@ public class OFetchHelper {
 
 		Object fieldValue;
 		Integer depthLevel;
-		final Integer anyFieldDepthLevel = iFetchPlan != null ? iFetchPlan.get(ANY_FIELD) : Integer.valueOf(-1);
+		final Integer anyFieldDepthLevel = (iFetchPlan != null && iFetchPlan.get(ANY_FIELD) != null) ? iFetchPlan.get(ANY_FIELD)
+				: Integer.valueOf(-1);
 		try {
 			// BROWSE ALL THE DOCUMENT'S FIELDS
 			for (String fieldName : iRootRecord.fieldNames()) {
