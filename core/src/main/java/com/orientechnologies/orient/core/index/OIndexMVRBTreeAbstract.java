@@ -124,8 +124,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 
 			installHooks(iDatabase);
 
-			if (automatic)
-				rebuild(iProgressListener);
+			rebuild(iProgressListener);
 			updateConfiguration();
 			return this;
 
@@ -498,7 +497,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 		} finally {
 			if (intentInstalled)
 				getDatabase().declareIntent(null);
-			
+
 			releaseExclusiveLock();
 		}
 
