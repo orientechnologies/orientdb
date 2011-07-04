@@ -34,7 +34,7 @@ import java.util.Map.Entry;
  * @copyrights Orient Technologies.com
  */
 public class OProfiler implements OProfilerMBean {
-	private long														recording	= -1;
+	private volatile long										recording	= -1;
 	private Map<String, Long>								counters;
 	private Map<String, OProfilerEntry>			chronos;
 	private Map<String, OProfilerEntry>			stats;
@@ -78,21 +78,23 @@ public class OProfiler implements OProfilerMBean {
 	/*
 	 * (non-Javadoc)
 	 */
-	public synchronized void updateCounter(final String iStatName, final long iPlus) {
+	public void updateCounter(final String iStatName, final long iPlus) {
+		if (iStatName == null)
+			return;
+
 		// CHECK IF STATISTICS ARE ACTIVED
 		if (recording < 0)
 			return;
 
-		if (iStatName == null)
-			return;
+		synchronized (counters) {
+			Long stat = counters.get(iStatName);
 
-		Long stat = counters.get(iStatName);
+			long oldValue = stat == null ? 0 : stat.longValue();
 
-		long oldValue = stat == null ? 0 : stat.longValue();
+			stat = new Long(oldValue + iPlus);
 
-		stat = new Long(oldValue + iPlus);
-
-		counters.put(iStatName, stat);
+			counters.put(iStatName, stat);
+		}
 	}
 
 	// ----------------------------------------------------------------------------
@@ -101,20 +103,22 @@ public class OProfiler implements OProfilerMBean {
 	 * 
 	 * @see com.orientechnologies.common.profiler.ProfileMBean#getStatistic(java.lang.String)
 	 */
-	public synchronized long getCounter(final String iStatName) {
+	public long getCounter(final String iStatName) {
+		if (iStatName == null)
+			return -1;
+
 		// CHECK IF STATISTICS ARE ACTIVED
 		if (recording < 0)
 			return -1;
 
-		if (iStatName == null)
-			return -1;
+		synchronized (counters) {
+			Long stat = counters.get(iStatName);
 
-		Long stat = counters.get(iStatName);
+			if (stat == null)
+				return -1;
 
-		if (stat == null)
-			return -1;
-
-		return stat.longValue();
+			return stat.longValue();
+		}
 	}
 
 	/*
@@ -122,7 +126,7 @@ public class OProfiler implements OProfilerMBean {
 	 * 
 	 * @see com.orientechnologies.common.profiler.ProfileMBean#dump()
 	 */
-	public synchronized String dump() {
+	public String dump() {
 		final float maxMem = Runtime.getRuntime().maxMemory() / 1000000f;
 		final float totMem = Runtime.getRuntime().totalMemory() / 1000000f;
 		final float freeMem = maxMem - totMem;
@@ -153,18 +157,29 @@ public class OProfiler implements OProfilerMBean {
 	 * 
 	 * @see com.orientechnologies.common.profiler.ProfileMBean#reset()
 	 */
-	public synchronized void reset() {
+	public void reset() {
 		lastReset = new Date();
 
-		if (counters != null)
-			counters.clear();
-		if (chronos != null)
-			chronos.clear();
-		if (stats != null)
-			stats.clear();
+		if (counters != null) {
+			synchronized (counters) {
+				counters.clear();
+			}
+		}
+
+		if (chronos != null) {
+			synchronized (chronos) {
+				chronos.clear();
+			}
+		}
+
+		if (stats != null) {
+			synchronized (stats) {
+				stats.clear();
+			}
+		}
 	}
 
-	public synchronized long startChrono() {
+	public long startChrono() {
 		// CHECK IF CHRONOS ARE ACTIVED
 		if (recording < 0)
 			return -1;
@@ -185,26 +200,27 @@ public class OProfiler implements OProfilerMBean {
 	 * 
 	 * @see com.orientechnologies.common.profiler.ProfileMBean#dumpStatistics()
 	 */
-	public synchronized String dumpCounters() {
+	public String dumpCounters() {
 		// CHECK IF STATISTICS ARE ACTIVED
 		if (recording < 0)
 			return "Counters: <no recording>";
 
-		Long stat;
-		StringBuilder buffer = new StringBuilder();
+		final StringBuilder buffer = new StringBuilder();
 
-		buffer.append("DUMPING COUNTERS (last reset on: " + lastReset.toString() + ")...");
+		synchronized (counters) {
+			buffer.append("DUMPING COUNTERS (last reset on: " + lastReset.toString() + ")...");
 
-		buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
-		buffer.append(String.format("\n%50s | Value                                                             |", "Name"));
-		buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+			buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+			buffer.append(String.format("\n%50s | Value                                                             |", "Name"));
+			buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
 
-		final List<String> keys = new ArrayList<String>(counters.keySet());
-		Collections.sort(keys);
+			final List<String> keys = new ArrayList<String>(counters.keySet());
+			Collections.sort(keys);
 
-		for (String k : keys) {
-			stat = counters.get(k);
-			buffer.append(String.format("\n%-50s | %-65d |", k, stat));
+			for (String k : keys) {
+				final Long stat = counters.get(k);
+				buffer.append(String.format("\n%-50s | %-65d |", k, stat));
+			}
 		}
 
 		buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
@@ -219,30 +235,31 @@ public class OProfiler implements OProfilerMBean {
 		return dumpEntries(stats, new StringBuilder("DUMPING STATISTICS (last reset on: " + lastReset.toString() + "). Times in ms..."));
 	}
 
-	public synchronized String dumpHookValues() {
+	public String dumpHookValues() {
 		if (recording < 0)
 			return "HookValues: <no recording>";
 
-		if (hooks.size() == 0)
-			return "";
+		final StringBuilder buffer = new StringBuilder();
 
-		OProfilerHookValue hook;
-		StringBuilder buffer = new StringBuilder();
+		synchronized (hooks) {
+			if (hooks.size() == 0)
+				return "";
 
-		buffer.append("HOOK VALUES:");
+			buffer.append("HOOK VALUES:");
 
-		buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
-		buffer.append(String.format("\n%50s | Value                                                             |", "Name"));
-		buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+			buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+			buffer.append(String.format("\n%50s | Value                                                             |", "Name"));
+			buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
 
-		final List<String> keys = new ArrayList<String>(hooks.keySet());
-		Collections.sort(keys);
+			final List<String> keys = new ArrayList<String>(hooks.keySet());
+			Collections.sort(keys);
 
-		Object hookValue;
-		for (String k : keys) {
-			hook = hooks.get(k);
-			hookValue = hook.getValue();
-			buffer.append(String.format("\n%-50s | %-65s |", k, hookValue != null ? hookValue.toString() : "null"));
+			Object hookValue;
+			for (String k : keys) {
+				final OProfilerHookValue hook = hooks.get(k);
+				hookValue = hook.getValue();
+				buffer.append(String.format("\n%-50s | %-65s |", k, hookValue != null ? hookValue.toString() : "null"));
+			}
 		}
 
 		buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
@@ -255,32 +272,36 @@ public class OProfiler implements OProfilerMBean {
 	 * @see com.orientechnologies.common.profiler.ProfileMBean#getStatistics()
 	 */
 	public String[] getCountersAsString() {
-		String[] output = new String[counters.size()];
-		int i = 0;
-		for (Entry<String, Long> entry : counters.entrySet()) {
-			output[i++] = entry.getKey() + ": " + entry.getValue().toString();
+		synchronized (counters) {
+			final String[] output = new String[counters.size()];
+			int i = 0;
+			for (Entry<String, Long> entry : counters.entrySet()) {
+				output[i++] = entry.getKey() + ": " + entry.getValue().toString();
+			}
+			return output;
 		}
-		return output;
 	}
 
 	public String[] getChronosAsString() {
-		String[] output = new String[chronos.size()];
-		int i = 0;
-		for (Entry<String, OProfilerEntry> entry : chronos.entrySet()) {
-			output[i++] = entry.getKey() + ": " + entry.getValue().toString();
+		synchronized (chronos) {
+			final String[] output = new String[chronos.size()];
+			int i = 0;
+			for (Entry<String, OProfilerEntry> entry : chronos.entrySet()) {
+				output[i++] = entry.getKey() + ": " + entry.getValue().toString();
+			}
+			return output;
 		}
-
-		return output;
 	}
 
 	public String[] getStatsAsString() {
-		String[] output = new String[stats.size()];
-		int i = 0;
-		for (Entry<String, OProfilerEntry> entry : stats.entrySet()) {
-			output[i++] = entry.getKey() + ": " + entry.getValue().toString();
+		synchronized (stats) {
+			final String[] output = new String[stats.size()];
+			int i = 0;
+			for (Entry<String, OProfilerEntry> entry : stats.entrySet()) {
+				output[i++] = entry.getKey() + ": " + entry.getValue().toString();
+			}
+			return output;
 		}
-
-		return output;
 	}
 
 	public Date getLastReset() {
@@ -288,29 +309,39 @@ public class OProfiler implements OProfilerMBean {
 	}
 
 	public List<String> getCounters() {
-		List<String> list = new ArrayList<String>(counters.keySet());
-		Collections.sort(list);
-		return list;
+		synchronized (counters) {
+			final List<String> list = new ArrayList<String>(counters.keySet());
+			Collections.sort(list);
+			return list;
+		}
 	}
 
 	public List<String> getChronos() {
-		List<String> list = new ArrayList<String>(chronos.keySet());
-		Collections.sort(list);
-		return list;
+		synchronized (chronos) {
+			final List<String> list = new ArrayList<String>(chronos.keySet());
+			Collections.sort(list);
+			return list;
+		}
 	}
 
 	public List<String> getStats() {
-		List<String> list = new ArrayList<String>(stats.keySet());
-		Collections.sort(list);
-		return list;
+		synchronized (stats) {
+			final List<String> list = new ArrayList<String>(stats.keySet());
+			Collections.sort(list);
+			return list;
+		}
 	}
 
 	public OProfilerEntry getStat(final String iStatName) {
-		return stats.get(iStatName);
+		synchronized (stats) {
+			return stats.get(iStatName);
+		}
 	}
 
 	public OProfilerEntry getChrono(final String iChronoName) {
-		return chronos.get(iChronoName);
+		synchronized (chronos) {
+			return chronos.get(iChronoName);
+		}
 	}
 
 	public boolean isRecording() {
@@ -332,11 +363,15 @@ public class OProfiler implements OProfilerMBean {
 	}
 
 	public void registerHookValue(final String iName, final OProfilerHookValue iHookValue) {
-		hooks.put(iName, iHookValue);
+		synchronized (hooks) {
+			hooks.put(iName, iHookValue);
+		}
 	}
 
 	public void unregisterHookValue(final String iName) {
-		hooks.remove(iName);
+		synchronized (hooks) {
+			hooks.remove(iName);
+		}
 	}
 
 	private void init() {
@@ -352,27 +387,29 @@ public class OProfiler implements OProfilerMBean {
 		if (recording < 0)
 			return iValue;
 
-		OProfilerEntry c = iValues.get(iName);
+		synchronized (iValues) {
+			OProfilerEntry c = iValues.get(iName);
 
-		if (c == null) {
-			// CREATE NEW CHRONO
-			c = new OProfilerEntry();
-			iValues.put(iName, c);
+			if (c == null) {
+				// CREATE NEW CHRONO
+				c = new OProfilerEntry();
+				iValues.put(iName, c);
+			}
+
+			c.name = iName;
+			c.items++;
+			c.last = iValue;
+			c.total += c.last;
+			c.average = c.total / c.items;
+
+			if (c.last < c.min)
+				c.min = c.last;
+
+			if (c.last > c.max)
+				c.max = c.last;
+
+			return c.last;
 		}
-
-		c.name = iName;
-		c.items++;
-		c.last = iValue;
-		c.total += c.last;
-		c.average = c.total / c.items;
-
-		if (c.last < c.min)
-			c.min = c.last;
-
-		if (c.last > c.max)
-			c.max = c.last;
-
-		return c.last;
 	}
 
 	private synchronized String dumpEntries(final Map<String, OProfilerEntry> iValues, final StringBuilder iBuffer) {
@@ -380,25 +417,27 @@ public class OProfiler implements OProfilerMBean {
 		if (recording < 0)
 			return "<no recording>";
 
-		if (iValues.size() == 0)
-			return "";
+		synchronized (iValues) {
+			if (iValues.size() == 0)
+				return "";
 
-		OProfilerEntry c;
+			OProfilerEntry c;
 
-		iBuffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
-		iBuffer.append(String.format("\n%50s | %10s %10s %10s %10s %10s %10s |", "Name", "last", "total", "min", "max", "average",
-				"items"));
-		iBuffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+			iBuffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+			iBuffer.append(String.format("\n%50s | %10s %10s %10s %10s %10s %10s |", "Name", "last", "total", "min", "max", "average",
+					"items"));
+			iBuffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
 
-		final List<String> keys = new ArrayList<String>(iValues.keySet());
-		Collections.sort(keys);
+			final List<String> keys = new ArrayList<String>(iValues.keySet());
+			Collections.sort(keys);
 
-		for (String k : keys) {
-			c = iValues.get(k);
-			iBuffer.append(String.format("\n%-50s | %10d %10d %10d %10d %10d %10d |", k, c.last, c.total, c.min, c.max, c.average,
-					c.items));
+			for (String k : keys) {
+				c = iValues.get(k);
+				iBuffer.append(String.format("\n%-50s | %10d %10d %10d %10d %10d %10d |", k, c.last, c.total, c.min, c.max, c.average,
+						c.items));
+			}
+			iBuffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+			return iBuffer.toString();
 		}
-		iBuffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
-		return iBuffer.toString();
 	}
 }
