@@ -124,7 +124,8 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 
 			installHooks(iDatabase);
 
-			rebuild(iProgressListener);
+			if (automatic)
+				rebuild(iProgressListener);
 			updateConfiguration();
 			return this;
 
@@ -448,7 +449,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	public OIndexInternal rebuild(final OProgressListener iProgressListener) {
 		clear();
 
-		getDatabase().declareIntent(new OIntentMassiveInsert());
+		final boolean intentInstalled = getDatabase().declareIntent(new OIntentMassiveInsert());
 
 		checkForOptimization();
 		acquireExclusiveLock();
@@ -495,7 +496,9 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 			throw new OIndexException("Error on rebuilding the index for clusters: " + clustersToIndex, e);
 
 		} finally {
-			getDatabase().declareIntent(null);
+			if (intentInstalled)
+				getDatabase().declareIntent(null);
+			
 			releaseExclusiveLock();
 		}
 
