@@ -106,7 +106,7 @@ public enum OGlobalConfiguration {
 			"Auto optimize the TreeMap every X tree rotations. This force the optimization of the tree after many changes to recompute entrypoints. -1 means never",
 			Integer.class, 200000),
 
-	MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Number of entry points to start searching entries", Integer.class, 16),
+	MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Number of entry points to start searching entries", Integer.class, 64),
 
 	MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR("mvrbtree.optimizeEntryPointsFactor",
 			"Multiplicand factor to apply to entry-points list (parameter mvrbtree.entrypoints) to determine if needs of optimization",
