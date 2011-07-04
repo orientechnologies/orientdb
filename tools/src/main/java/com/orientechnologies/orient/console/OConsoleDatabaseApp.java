@@ -363,16 +363,17 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		sqlCommand("truncate", iCommandText, "\nTruncated %d record(s) in %f sec(s).\n");
 	}
 
-	@ConsoleCommand(description = "Load a record in memory and set it as the current one")
+	@ConsoleCommand(description = "Load a record in memory using passed fetch plan")
 	public void loadRecord(
 			@ConsoleParameter(name = "record-id", description = "The unique Record Id of the record to load. If you don't have the Record Id execute a query first") String iRecordId,
 			@ConsoleParameter(name = "fetch-plan", description = "The fetch plan to load the record with") String iFetchPlan) {
-		checkCurrentDatabase();
+		loadRecordInternal(iRecordId, iFetchPlan);
+	}
 
-		currentRecord = currentDatabase.load(new ORecordId(iRecordId), iFetchPlan);
-		displayRecord(null);
-
-		out.println("OK");
+	@ConsoleCommand(description = "Load a record in memory and set it as the current one")
+	public void loadRecord(
+			@ConsoleParameter(name = "record-id", description = "The unique Record Id of the record to load. If you don't have the Record Id execute a query first") String iRecordId) {
+		loadRecordInternal(iRecordId, null);
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Insert a new record into the database")
@@ -1085,6 +1086,15 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		}
 
 		out.println("+------------------------------------+--------------------------------+");
+	}
+
+	protected void loadRecordInternal(String iRecordId, String iFetchPlan) {
+		checkCurrentDatabase();
+
+		currentRecord = currentDatabase.load(new ORecordId(iRecordId), iFetchPlan);
+		displayRecord(null);
+
+		out.println("OK");
 	}
 
 	protected void checkCurrentDatabase() {

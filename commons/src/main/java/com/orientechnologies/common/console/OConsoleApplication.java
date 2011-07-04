@@ -225,12 +225,13 @@ public class OConsoleApplication {
 		if (lastMethodInvoked != null)
 			syntaxError(lastCommandInvoked.toString(), lastMethodInvoked);
 
-		out.println("!Unrecognized command: " + iCommand);
+		out.println("!Unrecognized command: '" + iCommand + "'");
 		return true;
 	}
 
 	protected void syntaxError(String iCommand, Method m) {
-		out.print("!Wrong syntax. Expected: " + iCommand + " ");
+		out.print("!Wrong syntax. If you're using a file make sure all commands are delimited by ';'\n\r\n\r Expected: " + iCommand
+				+ " ");
 
 		String paramName = null;
 		String paramDescription = null;
