@@ -28,6 +28,7 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
+import com.orientechnologies.orient.core.OMemoryWatchDog;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 public class OMMapManager {
@@ -445,11 +446,7 @@ public class OMMapManager {
 			} catch (Exception e) {
 				OLogManager.instance()
 						.debug(iEntry, "Can't write memory buffer to disk. Retrying (" + (i + 1) + "/" + FORCE_RETRY + ")...");
-				try {
-					System.gc();
-					Thread.sleep(FORCE_DELAY);
-				} catch (InterruptedException e1) {
-				}
+				OMemoryWatchDog.freeMemory(FORCE_DELAY);
 			}
 		}
 

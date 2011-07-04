@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 
 import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.OMemoryWatchDog;
 import com.orientechnologies.orient.core.config.OStorageClusterHoleConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfiguration;
@@ -513,11 +514,7 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 					}
 					boolean renamed = osFile.renameTo(newFile);
 					while (!renamed) {
-						try {
-							Thread.sleep(100);
-						} catch (InterruptedException e) {
-						}
-						System.gc();
+						OMemoryWatchDog.freeMemory(100);
 						renamed = osFile.renameTo(newFile);
 					}
 				}

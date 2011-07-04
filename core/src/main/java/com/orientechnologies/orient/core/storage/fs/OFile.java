@@ -28,6 +28,7 @@ import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.OMemoryWatchDog;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 
@@ -176,11 +177,7 @@ public abstract class OFile {
 		if (osFile != null) {
 			boolean deleted = osFile.delete();
 			while (!deleted) {
-				try {
-					Thread.sleep(100);
-				} catch (InterruptedException e) {
-				}
-				System.gc();
+				OMemoryWatchDog.freeMemory(100);
 				deleted = osFile.delete();
 			}
 		}
@@ -192,17 +189,12 @@ public abstract class OFile {
 				fileLock = channel.tryLock(0, 1, false);
 				break;
 			} catch (OverlappingFileLockException e) {
-				try {
-					OLogManager.instance().debug(this,
-							"Can't open file '" + osFile.getAbsolutePath() + "' because it's locked. Waiting %d ms and retry %d/%d...",
-							LOCK_WAIT_TIME, i, LOCK_MAX_RETRIES);
+				OLogManager.instance().debug(this,
+						"Can't open file '" + osFile.getAbsolutePath() + "' because it's locked. Waiting %d ms and retry %d/%d...",
+						LOCK_WAIT_TIME, i, LOCK_MAX_RETRIES);
 
-					// FORCE FINALIZATION TO COLLECT ALL THE PENDING BUFFERS
-					System.runFinalization();
-
-					Thread.sleep(LOCK_WAIT_TIME);
-				} catch (InterruptedException ex) {
-				}
+				// FORCE FINALIZATION TO COLLECT ALL THE PENDING BUFFERS
+				OMemoryWatchDog.freeMemory(LOCK_WAIT_TIME);
 			}
 		}
 

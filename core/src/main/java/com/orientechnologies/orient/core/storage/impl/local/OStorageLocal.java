@@ -32,6 +32,7 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.common.util.OArrays;
+import com.orientechnologies.orient.core.OMemoryWatchDog;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
@@ -355,17 +356,12 @@ public class OStorageLocal extends OStorageEmbedded {
 				} else
 					return;
 
-				try {
-					OLogManager.instance().debug(this,
-							"Can't delete database files because are locked by the OrientDB process yet: waiting a %d ms and retry %d/%d...",
-							DELETE_WAIT_TIME, i, DELETE_MAX_RETRIES);
+				OLogManager.instance().debug(this,
+						"Can't delete database files because are locked by the OrientDB process yet: waiting a %d ms and retry %d/%d...",
+						DELETE_WAIT_TIME, i, DELETE_MAX_RETRIES);
 
-					// FORCE FINALIZATION TO COLLECT ALL THE PENDING BUFFERS
-					System.gc();
-
-					Thread.sleep(DELETE_WAIT_TIME);
-				} catch (InterruptedException e) {
-				}
+				// FORCE FINALIZATION TO COLLECT ALL THE PENDING BUFFERS
+				OMemoryWatchDog.freeMemory(DELETE_WAIT_TIME);
 			}
 
 			throw new OStorageException("Can't delete database '" + name + "' located in: " + dbDir + ". Database files seems locked");

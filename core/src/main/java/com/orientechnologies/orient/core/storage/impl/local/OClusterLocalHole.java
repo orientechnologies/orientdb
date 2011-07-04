@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.OMemoryWatchDog;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 
 /**
@@ -154,11 +155,7 @@ public class OClusterLocalHole extends OSingleFileSegment {
 					+ osFile.getName().substring(osFile.getName().lastIndexOf(iOldName) + iOldName.length()));
 			boolean renamed = osFile.renameTo(newFile);
 			while (!renamed) {
-				try {
-					Thread.sleep(100);
-				} catch (InterruptedException e) {
-				}
-				System.gc();
+				OMemoryWatchDog.freeMemory(100);
 				renamed = osFile.renameTo(newFile);
 			}
 		}

@@ -70,7 +70,7 @@ public class OMemoryWatchDog {
 
 		final NotificationEmitter memEmitter = (NotificationEmitter) memBean;
 		memEmitter.addNotificationListener(new NotificationListener() {
-			public void handleNotification(Notification n, Object hb) {
+			public synchronized void handleNotification(Notification n, Object hb) {
 				if (n.getType().equals(MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED)) {
 					alertTimes++;
 					long maxMemory = tenuredGenPool.getUsage().getMax();
@@ -95,11 +95,7 @@ public class OMemoryWatchDog {
 					long threshold;
 					do {
 						// INVOKE GC AND WAIT A BIT
-						System.gc();
-						try {
-							Thread.sleep(400);
-						} catch (InterruptedException e) {
-						}
+						freeMemory(100);
 
 						// RECHECK IF MEMORY IS OK NOW
 						maxMemory = tenuredGenPool.getUsage().getMax();
@@ -177,5 +173,15 @@ public class OMemoryWatchDog {
 			}
 		}
 		throw new AssertionError("Could not find tenured space");
+	}
+
+	public static void freeMemory(final long iDelayTime) {
+		// INVOKE GC AND WAIT A BIT
+		System.gc();
+		if (iDelayTime > 0)
+			try {
+				Thread.sleep(iDelayTime);
+			} catch (InterruptedException e) {
+			}
 	}
 }
