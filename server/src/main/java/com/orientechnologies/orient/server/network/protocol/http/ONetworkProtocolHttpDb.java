@@ -25,6 +25,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteClass;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDocument;
+import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteIndex;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteProperty;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetClass;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetCluster;
@@ -35,6 +36,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.get.OSe
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDocument;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDocumentByClass;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetFileDownload;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetIndex;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetQuery;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetServer;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStorageAllocation;
@@ -47,6 +49,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.post.OS
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostStudio;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostUploadSingleFile;
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutDocument;
+import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutIndex;
 
 public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 	private static final String	ORIENT_SERVER_DB	= "OrientDB Server v." + OConstants.getVersion();
@@ -71,6 +74,7 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 		registerCommand(new OServerCommandGetServer());
 		registerCommand(new OServerCommandGetStorageAllocation());
 		registerCommand(new OServerCommandGetFileDownload());
+		registerCommand(new OServerCommandGetIndex());
 
 		registerCommand(new OServerCommandPostClass());
 		registerCommand(new OServerCommandPostCommand());
@@ -81,11 +85,13 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 		registerCommand(new OServerCommandPostUploadSingleFile());
 
 		registerCommand(new OServerCommandPutDocument());
+		registerCommand(new OServerCommandPutIndex());
 
 		registerCommand(new OServerCommandDeleteClass());
 		registerCommand(new OServerCommandDeleteDatabase());
 		registerCommand(new OServerCommandDeleteDocument());
 		registerCommand(new OServerCommandDeleteProperty());
+		registerCommand(new OServerCommandDeleteIndex());
 
 		registerCommand(new OServerCommandOptions());
 

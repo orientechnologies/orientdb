@@ -6,10 +6,13 @@
 <meta name="description" content="OrientDB" />
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <script src="www/js/jquery-1.5.1.min.js" type="text/javascript">
-</script>
 	
-<script src="www/js/orientdb-api.js" type="text/javascript">
 </script>
+
+<script src="www/js/orientdb-api.js" type="text/javascript">
+	
+</script>
+<script src="www/js/jquery.json-2.2.min.js" type="text/javascript"></script>
 <script type="text/javascript">
 	var orientServer;
 
@@ -273,7 +276,7 @@
 									+ " record(s)");
 		}
 	}
-	
+
 	function databaseInfo() {
 		orientServer = new ODatabase('http://localhost:2480/inesistente');
 		databaseInfo = orientServer.open('admin', 'admin');
@@ -287,6 +290,35 @@
 		}
 	}
 
+	function indexPut() {
+		connectLogged();
+		commandResult = orientServer.indexPut("dictionary", "config", {
+			name : 'Luke'
+		});
+		if (commandResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text("Index put ok: " + commandResult);
+		}
+	}
+	function indexGet() {
+		connectLogged();
+		commandResult = orientServer.indexGet("dictionary", "config");
+		if (commandResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text("Index get ok: " + commandResult);
+		}
+	}
+	function indexRemove() {
+		connectLogged();
+		commandResult = orientServer.indexRemove("dictionary", "config");
+		if (commandResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text("Index remove ok: " + commandResult);
+		}
+	}
 	function disconnect() {
 		if (orientServer == null) {
 			orientServer = new ODatabase('http://localhost:2480/demo');
@@ -303,57 +335,41 @@
 </script>
 </head>
 <body>
-<span id="connectionStatusLabel">Status: </span>
-<span id="connectionStatus">Disconnected</span>
-<br />
-<span id="outputLabel">Output: </span>
-<textarea id="output" rows="5" cols="40"></textarea>
-<br />
-<button type="button" onclick="javascript:connect();">Test
-Connect</button>
-<button type="button" onclick="javascript:connectProxiedAdmin();">Test
-Connect Proxied Admin</button>
-<button type="button" onclick="javascript:connectProxiedWriter();">Test
-Connect Proxied Writer</button>
-<button type="button" onclick="javascript:connectLogged();">Test
-Connect Logged</button>
-<button type="button" onclick="javascript:disconnect();">Test
-Disconnect</button>
-<br />
-<button type="button" onclick="javascript:schema();">Test
-Schema</button>
-<button type="button" onclick="javascript:security();">Test
-Security</button>
-<button type="button" onclick="javascript:classInfo();">Test
-Class Info</button>
-<button type="button" onclick="javascript:browseCluster();">Test
-Browse Cluster</button>
-<button type="button" onclick="javascript:serverInfo();">Test
-Server Info</button>
-<button type="button" onclick="javascript:databaseInfo();">Test
-Database Info</button>
-<br />
-<button type="button" onclick="javascript:query();">Test Query</button>
-<button type="button" onclick="javascript:queryFetched();">Test
-Query Fetched</button>
-<button type="button" onclick="javascript:queryLimited();">Test
-Query Limited</button>
-<button type="button" onclick="javascript:queryFetchedAndLimited();">Test
-Query Fetched and Limited</button>
-<button type="button" onclick="javascript:queryFetchedAndLimited2();">Test
-Query Fetched and Limited 2</button>
-<br />
-<button type="button" onclick="javascript:insert();">Test
-Insert</button>
-<button type="button" onclick="javascript:remove();">Test
-Delete</button>
-<button type="button" onclick="javascript:load();">Test Load</button>
-<button type="button" onclick="javascript:loadFetched();">Test
-LoadFetched</button>
-<button type="button" onclick="javascript:loadFetched2();">Test
-LoadFetched 2</button>
-<br />
-<button type="button" onclick="javascript:testCode();">Test
-Code</button>
+	<span id="connectionStatusLabel">Status: </span>
+	<span id="connectionStatus">Disconnected</span>
+	<br />
+	<span id="outputLabel">Output: </span>
+	<textarea id="output" rows="5" cols="40"></textarea>
+	<br />
+	<button type="button" onclick="javascript:connect();">Test Connect</button>
+	<button type="button" onclick="javascript:connectProxiedAdmin();">Test Connect Proxied Admin</button>
+	<button type="button" onclick="javascript:connectProxiedWriter();">Test Connect Proxied Writer</button>
+	<button type="button" onclick="javascript:connectLogged();">Test Connect Logged</button>
+	<button type="button" onclick="javascript:disconnect();">Test Disconnect</button>
+	<br />
+	<button type="button" onclick="javascript:schema();">Test Schema</button>
+	<button type="button" onclick="javascript:security();">Test Security</button>
+	<button type="button" onclick="javascript:classInfo();">Test Class Info</button>
+	<button type="button" onclick="javascript:browseCluster();">Test Browse Cluster</button>
+	<button type="button" onclick="javascript:serverInfo();">Test Server Info</button>
+	<button type="button" onclick="javascript:databaseInfo();">Test Database Info</button>
+	<br />
+	<button type="button" onclick="javascript:query();">Test Query</button>
+	<button type="button" onclick="javascript:queryFetched();">Test Query Fetched</button>
+	<button type="button" onclick="javascript:queryLimited();">Test Query Limited</button>
+	<button type="button" onclick="javascript:queryFetchedAndLimited();">Test Query Fetched and Limited</button>
+	<button type="button" onclick="javascript:queryFetchedAndLimited2();">Test Query Fetched and Limited 2</button>
+	<br />
+	<button type="button" onclick="javascript:insert();">Test Insert</button>
+	<button type="button" onclick="javascript:remove();">Test Delete</button>
+	<button type="button" onclick="javascript:load();">Test Load</button>
+	<button type="button" onclick="javascript:loadFetched();">Test LoadFetched</button>
+	<button type="button" onclick="javascript:loadFetched2();">Test LoadFetched 2</button>
+	<br />
+	<button type="button" onclick="javascript:indexPut();">Test Index Put</button>
+	<button type="button" onclick="javascript:indexGet();">Test Index Get</button>
+	<button type="button" onclick="javascript:indexRemove();">Test Index Remove</button>
+	<br />
+	<button type="button" onclick="javascript:testCode();">Test Code</button>
 </body>
 </html>

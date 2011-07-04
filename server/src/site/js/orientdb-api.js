@@ -272,7 +272,7 @@ function ODatabase(databasePath) {
 
 		rid = this.URLEncode(rid);
 		$.ajax({
-			type : 'DELETE',
+			type : "DELETE",
 			url : urlPrefix + 'document/' + this.encodedDatabaseName + '/'
 					+ rid,
 			processData : false,
@@ -293,6 +293,85 @@ function ODatabase(databasePath) {
 				}
 			}
 		});
+		return this.getCommandResult();
+	}
+
+	ODatabase.prototype.indexPut = function(iIndexName, iKey, iValue) {
+		if (this.databaseInfo == null)
+			this.open();
+
+		var req = urlPrefix + 'index/' + this.encodedDatabaseName + '/'
+				+ iIndexName + "/" + iKey;
+
+		var content;
+		if (typeof iValue == "object")
+			content = $.toJSON(iValue);
+		else {
+			req += "/" + iValue;
+			content = null;
+		}
+
+		$.ajax({
+			type : "PUT",
+			url : req,
+			context : this,
+			async : false,
+			data : content,
+			success : function(msg) {
+				this.setErrorMessage(null);
+				this.handleResponse(msg);
+			},
+			error : function(msg) {
+				this.handleResponse(null);
+				this.setErrorMessage('Index put error: ' + msg.responseText);
+			}
+		});
+		return this.getCommandResult();
+	}
+
+	ODatabase.prototype.indexGet = function(iIndexName, iKey) {
+		if (this.databaseInfo == null)
+			this.open();
+
+		$.ajax({
+			type : "GET",
+			url : urlPrefix + 'index/' + this.encodedDatabaseName + '/'
+					+ iIndexName + "/" + iKey,
+			context : this,
+			async : false,
+			success : function(msg) {
+				this.setErrorMessage(null);
+				this.handleResponse(msg);
+			},
+			error : function(msg) {
+				this.handleResponse(null);
+				this.setErrorMessage('Index get error: ' + msg.responseText);
+			}
+		});
+		return this.getCommandResult();
+	}
+
+	ODatabase.prototype.indexRemove = function(iIndexName, iKey) {
+		if (this.databaseInfo == null)
+			this.open();
+
+		$
+				.ajax({
+					type : "DELETE",
+					url : urlPrefix + 'index/' + this.encodedDatabaseName + '/'
+							+ iIndexName + "/" + iKey,
+					context : this,
+					async : false,
+					success : function(msg) {
+						this.setErrorMessage(null);
+						this.handleResponse(msg);
+					},
+					error : function(msg) {
+						this.handleResponse(null);
+						this.setErrorMessage('Index remove error: '
+								+ msg.responseText);
+					}
+				});
 		return this.getCommandResult();
 	}
 
