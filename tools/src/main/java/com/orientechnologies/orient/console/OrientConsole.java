@@ -17,7 +17,6 @@ package com.orientechnologies.orient.console;
 
 import com.orientechnologies.common.console.OConsoleApplication;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
-import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 
 public abstract class OrientConsole extends OConsoleApplication {

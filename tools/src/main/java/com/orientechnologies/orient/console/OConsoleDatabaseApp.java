@@ -1043,6 +1043,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		out.println(iConfigName + " = " + value);
 	}
 
+	@ConsoleCommand(description = "Sleep X milliseconds")
+	public void sleep(final String iTime) {
+		try {
+			Thread.sleep(Long.parseLong(iTime));
+		} catch (InterruptedException e) {
+		}
+	}
+
 	@ConsoleCommand(description = "Change the value of a configuration value")
 	public void configSet(
 			@ConsoleParameter(name = "config-name", description = "Name of the configuration") final String iConfigName,
