@@ -788,7 +788,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	}
 
 	private ODocument createIndexEntryAsDocument(final Object iKey, final OIdentifiable iValue) {
-		final ODocument doc = new ODocument();
+		final ODocument doc = new ODocument().setOrdered(true);
 		doc.field("key", iKey);
 		doc.field("rid", iValue);
 		doc.unsetDirty();
@@ -799,7 +799,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		if (anyFunctionAggregates) {
 			// EXECUTE AGGREGATIONS
 			Object value;
-			final ODocument result = new ODocument(database);
+			final ODocument result = new ODocument(database).setOrdered(true);
 			for (Entry<String, Object> projection : projections.entrySet()) {
 				if (projection.getValue() instanceof OSQLFilterItemField)
 					value = ((OSQLFilterItemField) projection.getValue()).getValue(result);
