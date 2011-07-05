@@ -150,8 +150,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		final ODistributedServerNodeRemote node;
 
 		lock.acquireExclusiveLock();
-
 		try {
+
 			if (nodes.containsKey(key)) {
 				// ALREADY REGISTERED, MAYBE IT WAS DISCONNECTED. INVOKE THE RECONNECTION
 				node = nodes.get(key);
@@ -201,7 +201,9 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	 * @param iForce
 	 */
 	public void becameLeader(final boolean iForce) {
-		synchronized (lock) {
+		lock.acquireExclusiveLock();
+		try {
+
 			if (discoveryListener != null)
 				// I'M ALREADY THE LEADER, DO NOTHING
 				return;
@@ -223,6 +225,9 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 			// START HEARTBEAT FOR CONNECTIONS
 			Orient.getTimer().schedule(new ODistributedServerNodeChecker(this), networkHeartbeatDelay, networkHeartbeatDelay);
+
+		} finally {
+			lock.releaseExclusiveLock();
 		}
 	}
 
@@ -331,6 +336,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	public ODistributedServerNodeRemote getNode(final String iNodeName) {
 		lock.acquireSharedLock();
 		try {
+
 			final ODistributedServerNodeRemote node = nodes.get(iNodeName);
 			if (node == null)
 				throw new IllegalArgumentException("Node '" + iNodeName + "' is not configured on server: " + getId());
@@ -344,11 +350,13 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 	public List<ODistributedServerNodeRemote> getNodeList() {
 		lock.acquireSharedLock();
-		if (nodes.isEmpty())
-			return null;
-
 		try {
+
+			if (nodes.isEmpty())
+				return null;
+
 			return new ArrayList<ODistributedServerNodeRemote>(nodes.values());
+
 		} finally {
 			lock.releaseSharedLock();
 		}
@@ -357,6 +365,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	public void removeNode(final ODistributedServerNodeRemote iNode) {
 		lock.acquireExclusiveLock();
 		try {
+
 			OLogManager.instance().warn(this, "Removed server node %s:%d from distributed cluster", iNode.networkAddress,
 					iNode.networkPort);
 
@@ -428,6 +437,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 		lock.acquireSharedLock();
 		try {
+
 			if (nodes.isEmpty())
 				return;
 
