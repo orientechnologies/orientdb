@@ -37,6 +37,7 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
+import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -658,6 +659,16 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	public void info() {
 		if (currentDatabaseName != null) {
 			out.println("Current database: " + currentDatabaseName + " (url=" + currentDatabase.getURL() + ")");
+
+			OStorage stg = currentDatabase.getStorage();
+			if (stg instanceof OStorageRemoteThread) {
+				final ODocument clusterConfig = ((OStorageRemoteThread) stg).getClusterConfiguration();
+				if (clusterConfig != null)
+					out.println("\nCluster configuration: " + clusterConfig.toJSON("indent:2"));
+				else
+					out.println("\nCluster configuration: none");
+			}
+
 			clusters();
 			classes();
 			indexes();
