@@ -33,7 +33,7 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 	protected Map<String, T>			_fieldOriginalValues;
 	protected Map<String, OType>	_fieldTypes;
 	protected boolean							_trackingChanges	= true;
-	protected boolean							_ordered					= false;
+	protected boolean							_ordered					= true;
 	protected boolean							_lazyLoad					= true;
 
 	public ORecordVirtualAbstract() {
