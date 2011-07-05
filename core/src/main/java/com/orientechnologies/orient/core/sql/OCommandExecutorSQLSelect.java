@@ -581,7 +581,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 			// APPLY PROJECTIONS
 			final ODocument doc = (ODocument) iRecord.getRecord();
-			final ODocument result = new ODocument(database);
+			final ODocument result = new ODocument(database).setOrdered(true);
 
 			boolean canExcludeResult = false;
 

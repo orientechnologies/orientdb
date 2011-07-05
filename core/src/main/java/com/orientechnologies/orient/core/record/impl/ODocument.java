@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -449,7 +450,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		checkForLoading();
 		checkForFields();
 
-		return new HashSet<String>(_fieldValues.keySet());
+		return new LinkedHashSet<String>(_fieldValues.keySet());
 	}
 
 	/**
