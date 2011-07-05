@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.Iterator;
 import java.util.List;
 
 import org.testng.Assert;
@@ -42,12 +43,20 @@ public class SQLSelectProjectionsTest {
 	public void queryProjectionOk() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>(" select nick, followings, followers from Profile "))
+		List<ODocument> result = database
+				.command(
+						new OSQLSynchQuery<ODocument>(
+								" select nick, followings, followers from Profile where nick is defined and followings is defined and followers is defined"))
 				.execute();
 
 		Assert.assertTrue(result.size() != 0);
 
 		for (ODocument d : result) {
+			Iterator<String> colNames = d.fieldNames().iterator();
+			Assert.assertEquals(colNames.next(), "nick");
+			Assert.assertEquals(colNames.next(), "followings");
+			Assert.assertEquals(colNames.next(), "followers");
+
 			Assert.assertNull(d.getClassName());
 			Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
 		}
