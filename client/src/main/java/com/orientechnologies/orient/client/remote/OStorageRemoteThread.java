@@ -93,7 +93,7 @@ public class OStorageRemoteThread implements OStorage {
 	}
 
 	public void setSessionId(final int iSessionId) {
-		delegate.setSessionId(sessionId);
+		sessionId = iSessionId;
 		delegate.setSessionId(iSessionId);
 	}
 
