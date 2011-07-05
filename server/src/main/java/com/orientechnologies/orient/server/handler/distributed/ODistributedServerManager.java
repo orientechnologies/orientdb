@@ -431,7 +431,6 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	 * 
 	 * @throws IOException
 	 */
-	@SuppressWarnings("unchecked")
 	public void distributeRequest(final OTransactionRecordEntry iTransactionEntry) throws IOException {
 		final HashMap<ODistributedServerNodeRemote, SYNCH_TYPE> nodeList;
 
@@ -450,11 +449,11 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 			nodeList = new HashMap<ODistributedServerNodeRemote, ODistributedServerNodeRemote.SYNCH_TYPE>();
 			if (servers.field("synch") != null)
-				for (String s : ((Map<String, Object>) servers.field("synch")).keySet()) {
+				for (String s : (String[]) servers.field("synch")) {
 					nodeList.put(nodes.get(s), ODistributedServerNodeRemote.SYNCH_TYPE.SYNCHRONOUS);
 				}
 			if (servers.field("asynch") != null)
-				for (String s : ((Map<String, Object>) servers.field("asynch")).keySet()) {
+				for (String s : (String[]) servers.field("asynch")) {
 					nodeList.put(nodes.get(s), ODistributedServerNodeRemote.SYNCH_TYPE.ASYNCHRONOUS);
 				}
 
@@ -504,8 +503,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	// return addServerInConfiguration(iDatabaseName, getId(), getId(), "{\"*\":{\"owner\":{\"" + getId() + "\":{}}}}");
 	// }
 
-	public ODocument addServerInConfiguration(final String iDatabaseName, final String iAlias, final String iAddress,
-			final boolean iSynchronous) {
+	public ODocument addServerInConfiguration(final String iDatabaseName, final String iAddress, final boolean iSynchronous) {
 		final StringBuilder cfg = new StringBuilder();
 
 		cfg.append("{ \"*\" : { ");
@@ -513,17 +511,15 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		cfg.append(getId());
 		cfg.append("\", ");
 		cfg.append(iSynchronous ? "\"synch\"" : "\"asynch\"");
-		cfg.append(" : { \"");
-		cfg.append(iAlias);
-		cfg.append("\" : \"");
-		cfg.append(iAlias);
-		cfg.append("\" } } }");
+		cfg.append(" : [ \"");
+		cfg.append(iAddress);
+		cfg.append("\" ] } }");
 
-		return addServerInConfiguration(iDatabaseName, iAlias, iAddress, cfg.toString());
+		return addServerInConfiguration(iDatabaseName, iAddress, cfg.toString());
 	}
 
 	@SuppressWarnings("unchecked")
-	public ODocument addServerInConfiguration(final String iDatabaseName, final String iAlias, final String iAddress,
+	public ODocument addServerInConfiguration(final String iDatabaseName, final String iAddress,
 			final String iServerClusterConfiguration) {
 
 		ODocument dbConfiguration = clusterDbConfigurations.get(iDatabaseName);
@@ -533,12 +529,13 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		}
 
 		// ADD IT IN THE SERVER LIST
-		ODocument servers = dbConfiguration.field("servers");
+		List<String> servers = dbConfiguration.field("servers");
 		if (servers == null) {
-			servers = new ODocument().addOwner(dbConfiguration);
+			servers = new ArrayList<String>();
 			dbConfiguration.field("servers", servers);
 		}
-		servers.field(iAlias, iAddress);
+
+		servers.add(iAddress);
 
 		ODocument clusters = dbConfiguration.field("clusters");
 		if (clusters == null) {
@@ -572,7 +569,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 			}
 		}
 
-		OLogManager.instance().info(this, "Updated server node configuration: %s", dbConfiguration.toJSON(""));
+		OLogManager.instance().warn(this, "Updated server node configuration: %s", dbConfiguration.toJSON(""));
 
 		broadcastClusterConfiguration(iDatabaseName);
 

@@ -117,7 +117,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 			sendOk(lastClientTxId);
 
-			manager.addServerInConfiguration(dbUrl, remoteServerName, engineName, synchronousMode);
+			manager.addServerInConfiguration(dbUrl, remoteServerName, synchronousMode);
 
 			break;
 		}
@@ -172,7 +172,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			final ODocument config = (ODocument) new ODocument().fromStream(channel.readBytes());
 			manager.setClusterConfiguration(connection.database.getName(), config);
 
-			OLogManager.instance().warn(this, "Changed distributed server configuration:\n%s", config.toJSON());
+			OLogManager.instance().warn(this, "Changed distributed server configuration:\n%s", config.toJSON(""));
 
 			sendOk(lastClientTxId);
 			break;
