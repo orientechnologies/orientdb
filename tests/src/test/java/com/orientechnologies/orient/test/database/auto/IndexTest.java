@@ -24,7 +24,10 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
@@ -42,6 +45,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.database.base.OrientTest;
+import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 
 @Test(groups = { "index" })
@@ -49,15 +53,15 @@ public class IndexTest {
 	private ODatabaseObjectTx	database;
 	protected long						startRecordNumber;
 
-    @BeforeMethod
-    public void beforeMethod() {
-        database.open("admin", "admin");
-    }
+	@BeforeMethod
+	public void beforeMethod() {
+		database.open("admin", "admin");
+	}
 
-    @AfterMethod
-    public void afterMethod() {
-        database.close();
-    }
+	@AfterMethod
+	public void afterMethod() {
+		database.close();
+	}
 
 	@Parameters(value = "url")
 	public IndexTest(String iURL) {
@@ -390,7 +394,7 @@ public class IndexTest {
 		database.command(new OCommandSQL("drop index equalityIdx")).execute();
 	}
 
-    @Test(dependsOnMethods = "populateIndexDocuments")
+	@Test(dependsOnMethods = "populateIndexDocuments")
 	public void testBetweenEntries() {
 		database.command(new OCommandSQL("create index equalityIdx unique")).execute();
 
@@ -404,7 +408,7 @@ public class IndexTest {
 		final OIndex index = database.getMetadata().getIndexManager().getIndex("equalityIdx");
 
 		final Collection<Integer> betweenResults = new ArrayList<Integer>(Arrays.asList(1, 2, 3));
-		Collection<ODocument> indexCollection = index.getEntriesBetween(1,3);
+		Collection<ODocument> indexCollection = index.getEntriesBetween(1, 3);
 		Assert.assertEquals(indexCollection.size(), 3);
 		for (ODocument doc : indexCollection) {
 			betweenResults.remove(doc.<Integer> field("key"));
@@ -615,9 +619,47 @@ public class IndexTest {
 
 		Iterator<Entry<Object, Set<OIdentifiable>>> it = idx.iterator();
 		while (it.hasNext()) {
-			Object v = it.next();
+			it.next();
 		}
 
 		Assert.assertEquals(idx.getSize(), 5);
+	}
+
+	public void indexLinks() {
+		database.getMetadata().getSchema().getClass("Whiz").getProperty("account").createIndex(INDEX_TYPE.NOTUNIQUE);
+
+		final List<Account> result = database.command(new OSQLSynchQuery<Profile>("select * from Account limit 1")).execute();
+
+		// Assert.assertEquals(result.size(), 1);
+
+		OIndex idx = database.getMetadata().getIndexManager().getIndex("Whiz.account");
+
+		for (int i = 0; i < 5; i++) {
+			ODocument whiz = new ODocument(database.getUnderlying(), "Whiz");
+
+			whiz.field("id", i);
+			whiz.field("text", "This is a test");
+			whiz.field("account", result.get(0).getRid());
+
+			whiz.save();
+		}
+
+		Assert.assertEquals(idx.getSize(), 1);
+
+		List<ODocument> indexedResult = database.getUnderlying()
+				.command(new OSQLSynchQuery<Profile>("select * from Whiz where account = ?")).execute(result.get(0).getRid());
+
+		Assert.assertEquals(indexedResult.size(), 5);
+
+		ODocument whiz = new ODocument(database.getUnderlying(), "Whiz");
+		whiz.field("id", 100);
+		whiz.field("text", "This is a test!");
+		whiz.field("account", new ODocument(database.getUnderlying(), "Company").field("id", 9999));
+		whiz.save();
+
+		Assert.assertTrue(((ODocument) whiz.field("account")).getIdentity().isValid());
+		
+		((ODocument) whiz.field("account")).delete();
+		whiz.delete();
 	}
 }

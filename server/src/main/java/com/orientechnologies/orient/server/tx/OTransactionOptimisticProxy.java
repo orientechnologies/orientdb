@@ -42,34 +42,33 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
 		while (iChannel.readByte() == 1) {
 			try {
-				OTransactionEntryProxy entry = new OTransactionEntryProxy();
+				final byte recordStatus = iChannel.readByte();
 
-				final ORecordId rid = (ORecordId) entry.getRecord().getIdentity();
-
-				entry.status = iChannel.readByte();
+				final ORecordId rid = new ORecordId();
 				rid.clusterId = iChannel.readShort();
 				rid.clusterPosition = iChannel.readLong();
-				((OTransactionRecordProxy) entry.getRecord()).setRecordType(iChannel.readByte());
+
+				final OTransactionEntryProxy entry = new OTransactionEntryProxy(iChannel.readByte());
+				entry.status = recordStatus;
 
 				switch (entry.status) {
 				case OTransactionRecordEntry.CREATED:
 					entry.clusterName = iChannel.readString();
-					entry.getRecord().fromStream(iChannel.readBytes());
+					entry.getRecord().fill(iDatabase, rid, 0, iChannel.readBytes(), true);
 
 					// SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW RID TO SEND BACK TO THE REQUESTER
 					createdRecords.put(rid.copy(), entry.getRecord());
 					break;
 
 				case OTransactionRecordEntry.UPDATED:
-					entry.getRecord().setVersion(iChannel.readInt());
-					entry.getRecord().fromStream(iChannel.readBytes());
+					entry.getRecord().fill(iDatabase, rid, iChannel.readInt(), iChannel.readBytes(), true);
 
 					// SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW VERSIONS TO SEND BACK TO THE REQUESTER
 					updatedRecords.put(rid, entry.getRecord());
 					break;
 
 				case OTransactionRecordEntry.DELETED:
-					entry.getRecord().setVersion(iChannel.readInt());
+					entry.getRecord().fill(iDatabase, rid, iChannel.readInt(), null, false);
 					break;
 
 				default:

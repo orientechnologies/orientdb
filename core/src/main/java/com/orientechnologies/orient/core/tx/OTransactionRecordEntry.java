@@ -19,14 +19,14 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 
 public class OTransactionRecordEntry {
 
-	public static final byte		LOADED	= 0;
-	public static final byte		UPDATED	= 1;
-	public static final byte		DELETED	= 2;
-	public static final byte		CREATED	= 3;
+	public static final byte			LOADED	= 0;
+	public static final byte			UPDATED	= 1;
+	public static final byte			DELETED	= 2;
+	public static final byte			CREATED	= 3;
 
-	public byte									status;
-	private ORecordInternal<?>	record;
-	public String								clusterName;
+	public byte										status;
+	protected ORecordInternal<?>	record;
+	public String									clusterName;
 
 	public OTransactionRecordEntry(final ORecordInternal<?> iRecord, final byte iStatus, final String iClusterName) {
 		// CLONE RECORD AND CONTENT

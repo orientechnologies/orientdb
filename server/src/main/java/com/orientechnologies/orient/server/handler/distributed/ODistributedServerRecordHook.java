@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
-import com.orientechnologies.orient.server.tx.OTransactionRecordProxy;
 
 /**
  * Record hook implementation. Catches all the relevant events and propagates to the cluster's slave nodes.
@@ -49,9 +48,6 @@ public class ODistributedServerRecordHook implements ORecordHook, ODatabaseLifec
 	public boolean onTrigger(final TYPE iType, final ORecord<?> iRecord) {
 		// if (!manager.isDistributedConfiguration())
 		// return;
-
-		if (iRecord instanceof OTransactionRecordProxy)
-			return false;
 
 		try {
 			switch (iType) {
