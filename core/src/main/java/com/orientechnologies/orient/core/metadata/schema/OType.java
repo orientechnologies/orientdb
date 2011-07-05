@@ -156,6 +156,9 @@ public enum OType {
 					return type;
 			}
 
+		if (ORecord.class.isAssignableFrom(iClass))
+			return OType.LINK;
+
 		return null;
 	}
 

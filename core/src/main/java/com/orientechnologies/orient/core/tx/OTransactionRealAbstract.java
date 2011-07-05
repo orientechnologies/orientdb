@@ -128,7 +128,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 			if (indexEntry.getValue().cleared)
 				indexDoc.field("clear", Boolean.TRUE);
 
-			final ODocument entries = new ODocument();
+			final List<ODocument> entries = new ArrayList<ODocument>();
 			indexDoc.field("entries", entries);
 
 			// STORE INDEX ENTRIES
@@ -160,7 +160,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 					}
 				}
 
-				entries.field(OStringSerializerHelper.encode(key), operations);
+				entries.add(new ODocument().field("k", OStringSerializerHelper.encode(key)).field("ops", operations));
 			}
 		}
 
