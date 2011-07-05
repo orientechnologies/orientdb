@@ -30,10 +30,10 @@ import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 public class OTransactionOptimisticProxy extends OTransactionOptimistic {
-	private final Map<ORecordId, ORecord<?>>	createdRecords	= new HashMap<ORecordId, ORecord<?>>();
-	private final Map<ORecordId, ORecord<?>>	updatedRecords	= new HashMap<ORecordId, ORecord<?>>();
+	private final Map<ORecordId, ORecord<?>>	createdRecords			= new HashMap<ORecordId, ORecord<?>>();
+	private final Map<ORecordId, ORecord<?>>	updatedRecords			= new HashMap<ORecordId, ORecord<?>>();
 	private int																clientTxId;
-	private ODocument													indexEntries		= null;
+	private ODocument													remoteIndexEntries	= null;
 
 	public OTransactionOptimisticProxy(final ODatabaseRecordTx iDatabase, final OChannelBinary iChannel) throws IOException {
 		super(iDatabase);
@@ -83,12 +83,12 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 			}
 		}
 
-		indexEntries = new ODocument(iChannel.readBytes());
+		remoteIndexEntries = new ODocument(iChannel.readBytes());
 	}
 
 	@Override
 	public ODocument getIndexChanges() {
-		return indexEntries;
+		return remoteIndexEntries.merge(super.getIndexChanges(), true, true);
 	}
 
 	public Map<ORecordId, ORecord<?>> getCreatedRecords() {

@@ -105,31 +105,36 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 			Object key = null;
 			Object value = VALUE_NOT_FOUND;
 
-			if (KEYWORD_KEY.equalsIgnoreCase(compiledFilter.getRootCondition().getLeft().toString()))
-				// FOUND KEY ONLY
-				key = compiledFilter.getRootCondition().getRight();
-			else if (compiledFilter.getRootCondition().getLeft() instanceof OSQLFilterCondition) {
-				// KEY AND VALUE
-				final OSQLFilterCondition leftCondition = (OSQLFilterCondition) compiledFilter.getRootCondition().getLeft();
-				if (KEYWORD_KEY.equalsIgnoreCase(leftCondition.getLeft().toString()))
-					key = leftCondition.getRight();
+			if (compiledFilter.getRootCondition() == null) {
+				final long total = index.getSize();
+				index.clear();
+				return total;
+			} else {
+				if (KEYWORD_KEY.equalsIgnoreCase(compiledFilter.getRootCondition().getLeft().toString()))
+					// FOUND KEY ONLY
+					key = compiledFilter.getRootCondition().getRight();
+				else if (compiledFilter.getRootCondition().getLeft() instanceof OSQLFilterCondition) {
+					// KEY AND VALUE
+					final OSQLFilterCondition leftCondition = (OSQLFilterCondition) compiledFilter.getRootCondition().getLeft();
+					if (KEYWORD_KEY.equalsIgnoreCase(leftCondition.getLeft().toString()))
+						key = leftCondition.getRight();
 
-				final OSQLFilterCondition rightCondition = (OSQLFilterCondition) compiledFilter.getRootCondition().getRight();
-				if (KEYWORD_RID.equalsIgnoreCase(rightCondition.getLeft().toString()))
-					value = rightCondition.getRight();
+					final OSQLFilterCondition rightCondition = (OSQLFilterCondition) compiledFilter.getRootCondition().getRight();
+					if (KEYWORD_RID.equalsIgnoreCase(rightCondition.getLeft().toString()))
+						value = rightCondition.getRight();
 
+				}
+
+				if (key == null)
+					throw new OCommandExecutionException("'Key' field is required for queries against indexes");
+
+				final boolean result;
+				if (value != VALUE_NOT_FOUND)
+					result = index.remove(key, (OIdentifiable) value);
+				else
+					result = index.remove(key);
+				return result ? 1 : 0;
 			}
-
-			if (key == null)
-				throw new OCommandExecutionException("'Key' field is required for queries against indexes");
-
-			final boolean result;
-			if (value != VALUE_NOT_FOUND)
-				result = index.remove(key, (OIdentifiable) value);
-			else
-				result = index.remove(key);
-
-			return result;
 		}
 	}
 
@@ -139,9 +144,9 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 	public boolean result(final Object iRecord) {
 		final ORecordAbstract<?> record = (ORecordAbstract<?>) iRecord;
 		record.setDatabase(database);
-		
+
 		record.delete();
-		
+
 		recordCount++;
 		return true;
 	}
