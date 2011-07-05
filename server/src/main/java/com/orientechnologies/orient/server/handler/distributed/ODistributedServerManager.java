@@ -597,7 +597,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 					try {
 						ch.writeByte(OChannelBinaryProtocol.PUSH_DATA);
-						ch.writeInt(-10);
+						ch.writeInt(Integer.MIN_VALUE);
 						ch.writeByte(OChannelDistributedProtocol.PUSH_DISTRIBUTED_CONFIG);
 						ch.writeBytes(clusterDbConfigurations.get(iDatabaseName).toStream());
 

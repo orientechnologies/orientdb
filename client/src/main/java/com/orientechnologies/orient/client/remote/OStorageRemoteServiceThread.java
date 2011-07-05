@@ -32,12 +32,9 @@ public class OStorageRemoteServiceThread extends OSoftThread {
 	private final OStorageRemoteThread	storage;
 	private OChannelBinaryClient				network;
 
-	public static final int							REQ_ID	= -10;
-
 	public OStorageRemoteServiceThread(final OStorageRemoteThread iStorageRemote, final OChannelBinaryClient iFirstChannel) {
 		super("ClientService");
 		storage = iStorageRemote;
-		storage.setSessionId(REQ_ID);
 		network = iFirstChannel;
 		start();
 	}
