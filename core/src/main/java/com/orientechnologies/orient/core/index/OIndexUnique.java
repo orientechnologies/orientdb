@@ -38,6 +38,7 @@ public class OIndexUnique extends OIndexMVRBTreeAbstract {
 		try {
 			
 			Set<OIdentifiable> values = map.get(iKey);
+			checkForOptimization();
 
 			if (values == null)
 				values = new ORecordLazySet(configuration.getDatabase());
