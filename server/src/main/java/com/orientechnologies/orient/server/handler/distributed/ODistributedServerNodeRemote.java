@@ -64,7 +64,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 	private OChannelBinaryClient									channel;
 	private OContextConfiguration									configuration;
 	private volatile STATUS												status					= STATUS.DISCONNECTED;
-	private List<OTransactionRecordEntry>								bufferedChanges	= new ArrayList<OTransactionRecordEntry>();
+	private List<OTransactionRecordEntry>					bufferedChanges	= new ArrayList<OTransactionRecordEntry>();
 	private int																		clientTxId;
 	private long																	lastHeartBeat		= 0;
 	private static AtomicInteger									serialClientId	= new AtomicInteger(-1);
@@ -159,7 +159,8 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 			if (databaseEntry == null)
 				return;
 
-			OLogManager.instance().info(this, "-> Sending request to remote server %s in %s mode...", this, iRequestType);
+			if (OLogManager.instance().isDebugEnabled())
+				OLogManager.instance().debug(this, "-> Sending request to remote server %s in %s mode...", this, iRequestType);
 
 			final ORecordInternal<?> record = iRequest.getRecord();
 
@@ -340,11 +341,12 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 	}
 
 	public void sendConfiguration(final String iDatabaseName) {
-		OLogManager.instance().info(this, "Sending configuration to distributed server node %s:%d...", networkAddress, networkPort);
-
 		final OServerNodeDatabaseEntry dbEntry = databases.get(iDatabaseName);
 		if (dbEntry == null)
-			throw new IllegalArgumentException("Database name '" + iDatabaseName + "' is not configured as distributed");
+			return;
+
+		OLogManager.instance().info(this, "Sending distributed configuration for database '%s' to server node %s:%d...", iDatabaseName,
+				networkAddress, networkPort);
 
 		try {
 			channel.acquireExclusiveLock();

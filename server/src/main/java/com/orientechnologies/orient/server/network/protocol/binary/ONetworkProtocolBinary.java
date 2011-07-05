@@ -91,6 +91,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	protected int											lastRequestType;
 	protected int											lastClientTxId;
 	private OServerUserConfiguration	serverUser;
+	private boolean										firstConnection	= true;
 
 	public ONetworkProtocolBinary() {
 		super(Orient.getThreadGroup(), "IO-Binary");
@@ -128,6 +129,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			if (lastClientTxId > -1)
 				connection = OClientConnectionManager.instance().getConnection(lastClientTxId);
+			else if (firstConnection)
+				firstConnection = false;
 			else {
 				if (connection == null) {
 					sendShutdown();

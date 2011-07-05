@@ -18,8 +18,10 @@ package com.orientechnologies.orient.server.handler.distributed;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -431,6 +433,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	 * 
 	 * @throws IOException
 	 */
+	@SuppressWarnings("unchecked")
 	public void distributeRequest(final OTransactionRecordEntry iTransactionEntry) throws IOException {
 		final HashMap<ODistributedServerNodeRemote, SYNCH_TYPE> nodeList;
 
@@ -449,11 +452,11 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 			nodeList = new HashMap<ODistributedServerNodeRemote, ODistributedServerNodeRemote.SYNCH_TYPE>();
 			if (servers.field("synch") != null)
-				for (String s : (String[]) servers.field("synch")) {
+				for (String s : (Collection<String>) servers.field("synch")) {
 					nodeList.put(nodes.get(s), ODistributedServerNodeRemote.SYNCH_TYPE.SYNCHRONOUS);
 				}
 			if (servers.field("asynch") != null)
-				for (String s : (String[]) servers.field("asynch")) {
+				for (String s : (Collection<String>) servers.field("asynch")) {
 					nodeList.put(nodes.get(s), ODistributedServerNodeRemote.SYNCH_TYPE.ASYNCHRONOUS);
 				}
 
@@ -529,9 +532,9 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		}
 
 		// ADD IT IN THE SERVER LIST
-		List<String> servers = dbConfiguration.field("servers");
+		Collection<String> servers = dbConfiguration.field("servers");
 		if (servers == null) {
-			servers = new ArrayList<String>();
+			servers = new LinkedHashSet<String>();
 			dbConfiguration.field("servers", servers);
 		}
 
@@ -589,8 +592,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 			if (c.protocol.getChannel() instanceof OChannelBinary) {
 				ch = (OChannelBinary) c.protocol.getChannel();
 
-				OLogManager.instance().info(this, "Sending the configuration to the connected client %s...",
-						ch.socket.getRemoteSocketAddress());
+				OLogManager.instance().info(this, "Sending distributed configuration for database '%s' to the connected client %s...",
+						iDatabaseName, ch.socket.getRemoteSocketAddress());
 
 				try {
 					ch.acquireExclusiveLock();

@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -315,5 +316,9 @@ public class OStorageRemoteThread implements OStorage {
 
 	public <T> T removeResource(final String iName) {
 		return (T) delegate.removeResource(iName);
+	}
+
+	public ODocument getClusterConfiguration() {
+		return delegate.getClusterConfiguration();
 	}
 }

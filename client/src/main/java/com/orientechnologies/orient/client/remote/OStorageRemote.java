@@ -89,6 +89,7 @@ public class OStorageRemote extends OStorageAbstract {
 	private int																minPool;
 	private int																maxPool;
 	private final boolean											debug							= false;
+	private ODocument													clusterConfiguration;
 
 	public OStorageRemote(final String iURL, final String iMode) throws IOException {
 		super(iURL, iURL, iMode);
@@ -936,6 +937,10 @@ public class OStorageRemote extends OStorageAbstract {
 		throw new UnsupportedOperationException("getVersion");
 	}
 
+	public ODocument getClusterConfiguration() {
+		return clusterConfiguration;
+	}
+
 	/**
 	 * Handles exceptions. In case of IO errors retries to reconnect until the configured retry times has reached.
 	 * 
@@ -1277,8 +1282,6 @@ public class OStorageRemote extends OStorageAbstract {
 		if (iContent == null)
 			return;
 
-		ODocument clusterConfiguration;
-
 		synchronized (OClientClusterManager.INSTANCE) {
 
 			// GET DATABASE'S CLUSTER CONFIGURATION
@@ -1295,8 +1298,8 @@ public class OStorageRemote extends OStorageAbstract {
 			// UPDATE IT
 			clusterConfiguration.fromStream(iContent);
 
-			if (OLogManager.instance().isInfoEnabled())
-				OLogManager.instance().info(this, "Received new cluster configuration: %s", clusterConfiguration.toJSON(""));
+			if (OLogManager.instance().isDebugEnabled())
+				OLogManager.instance().debug(this, "Received new cluster configuration: %s", clusterConfiguration.toJSON(""));
 		}
 	}
 
