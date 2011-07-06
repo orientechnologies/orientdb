@@ -374,14 +374,20 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	 *          Value to search
 	 * @return true if the property was indexed and found, otherwise false
 	 */
-	private boolean searchIndexedProperty(final List<ORecord<?>> iResultSet, final OClass iSchemaClass,
+	private boolean searchIndexedProperty(final List<ORecord<?>> iResultSet, OClass iSchemaClass,
 			final OSQLFilterCondition iCondition, final Object iItem) {
 		if (iItem == null || !(iItem instanceof OSQLFilterItemField))
 			return false;
 
 		final OSQLFilterItemField item = (OSQLFilterItemField) iItem;
 
-		final OProperty prop = iSchemaClass.getProperty(item.getName());
+		OProperty prop = iSchemaClass.getProperty(item.getName());
+
+		while ((prop == null || !prop.isIndexed()) && iSchemaClass.getSuperClass() != null) {
+			iSchemaClass = iSchemaClass.getSuperClass();
+			prop = iSchemaClass.getProperty(item.getName());
+		}
+
 		if (prop != null && prop.isIndexed()) {
 			OIndex idx = prop.getIndex().getUnderlying();
 			idx = idx.getInternal();
