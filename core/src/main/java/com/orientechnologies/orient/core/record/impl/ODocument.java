@@ -886,6 +886,9 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 					e.setDirty();
 			}
 		}
+		// THIS IS IMPORTANT TO BE SURE THAT FIELDS ARE LOADED BEFORE IT'S TOO LATE AND THE RECORD _SOURCE IS NULL
+		checkForFields();
+		
 		return super.setDirty();
 	}
 
