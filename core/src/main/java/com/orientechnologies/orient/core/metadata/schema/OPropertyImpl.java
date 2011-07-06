@@ -148,13 +148,13 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		final String cmd = String.format("alter property %s index %s", getFullName(), iIndex.getIdentity());
 		getDatabase().command(new OCommandSQL(cmd)).execute();
 
-		index = new OPropertyIndex(owner, new String[] { name });
+		index = new OPropertyIndex(getDatabase(), owner, new String[] { name });
 
 		return index;
 	}
 
 	public OPropertyIndex setIndexInternal(final String iIndexName) {
-		index = new OPropertyIndex(owner, new String[] { name });
+		index = new OPropertyIndex(getDatabase(), owner, new String[] { name });
 		saveInternal();
 		return index;
 	}
@@ -524,7 +524,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		final OIndex underlyingIndex = getDatabase().getMetadata().getIndexManager().getIndex(getFullName());
 
 		if (underlyingIndex != null)
-			index = new OPropertyIndex(owner, new String[] { name });
+			index = new OPropertyIndex(getDatabase(), owner, new String[] { name });
 	}
 
 	@Override

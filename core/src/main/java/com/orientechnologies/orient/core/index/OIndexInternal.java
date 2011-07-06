@@ -38,13 +38,6 @@ public interface OIndexInternal extends OIndex, Iterable<Entry<Object, Set<OIden
 
 	public void flush();
 
-	public OIndexInternal rebuild();
-
-	/**
-	 * Populate the index with all the existent records.
-	 */
-	public OIndexInternal rebuild(final OProgressListener iProgressListener);
-
 	/**
 	 * Counts the times a value is indexed in all the keys
 	 * 

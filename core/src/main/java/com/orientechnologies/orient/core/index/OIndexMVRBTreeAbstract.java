@@ -438,15 +438,17 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 		return map.getRecord().getIdentity();
 	}
 
-	public OIndexInternal rebuild() {
+	public long rebuild() {
 		return rebuild(null);
 	}
 
 	/**
 	 * Populates the index with all the existent records. Uses the massive insert intent to speed up and keep the consumed memory low.
 	 */
-	public OIndexInternal rebuild(final OProgressListener iProgressListener) {
+	public long rebuild(final OProgressListener iProgressListener) {
 		clear();
+
+		long documentIndexed = 0;
 
 		final boolean intentInstalled = getDatabase().declareIntent(new OIntentMassiveInsert());
 
@@ -454,7 +456,6 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 		acquireExclusiveLock();
 		try {
 
-			int documentIndexed = 0;
 			int documentNum = 0;
 			long documentTotal = 0;
 
@@ -501,7 +502,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 			releaseExclusiveLock();
 		}
 
-		return this;
+		return documentIndexed;
 	}
 
 	public boolean remove(final Object iKey, final OIdentifiable iValue) {

@@ -91,55 +91,55 @@ public interface OIndex {
 
 	public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo);
 
-    /**
-	 * Returns a set of records with keys greater than passed  parameter.
-	 *
+	/**
+	 * Returns a set of records with keys greater than passed parameter.
+	 * 
 	 * @param fromKey
 	 *          Starting key.
-     * @param isInclusive
-     *          Indicates whether record with passed key will be included.
-     *
-	 * @return set of records with keys greater than passed  parameter.
+	 * @param isInclusive
+	 *          Indicates whether record with passed key will be included.
+	 * 
+	 * @return set of records with keys greater than passed parameter.
 	 */
-    public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive);
+	public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive);
 
-    /**
-	 * Returns a set of documents that contains fields ("key", "rid") where "key" - index key,
-     * "rid" - record id of records with keys greater than passed parameter.
-	 *
+	/**
+	 * Returns a set of documents that contains fields ("key", "rid") where "key" - index key, "rid" - record id of records with keys
+	 * greater than passed parameter.
+	 * 
 	 * @param fromKey
 	 *          Starting key.
-     * @param isInclusive
-     *          Indicates whether record with passed key will be included.
-     *
-	 * @return set of records with key greater than passed  parameter.
+	 * @param isInclusive
+	 *          Indicates whether record with passed key will be included.
+	 * 
+	 * @return set of records with key greater than passed parameter.
 	 */
-    public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive);
+	public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive);
 
-    /**
-	 * Returns a set of records with keys less than passed  parameter.
-	 *
+	/**
+	 * Returns a set of records with keys less than passed parameter.
+	 * 
 	 * @param toKey
 	 *          Ending key.
-     * @param isInclusive
-     *          Indicates whether record with passed key will be included.
-     *
-	 * @return set of records with keys less than passed  parameter.
+	 * @param isInclusive
+	 *          Indicates whether record with passed key will be included.
+	 * 
+	 * @return set of records with keys less than passed parameter.
 	 */
-    public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive);
+	public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive);
 
-    /**
-	 * Returns a set of documents that contains fields ("key", "rid") where "key" - index key,
-     * "rid" - record id of records with keys less than passed parameter.
-	 *
+	/**
+	 * Returns a set of documents that contains fields ("key", "rid") where "key" - index key, "rid" - record id of records with keys
+	 * less than passed parameter.
+	 * 
 	 * @param toKey
 	 *          Ending key.
-     * @param isInclusive
-     *          Indicates whether record with passed key will be included.
-     *
-	 * @return set of records with key greater than passed  parameter.
+	 * @param isInclusive
+	 *          Indicates whether record with passed key will be included.
+	 * 
+	 * @return set of records with key greater than passed parameter.
 	 */
-    public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive);
+	public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive);
 
 	public long getSize();
 
@@ -152,6 +152,13 @@ public interface OIndex {
 	public String getType();
 
 	public boolean isAutomatic();
+
+	public long rebuild();
+
+	/**
+	 * Populate the index with all the existent records.
+	 */
+	public long rebuild(final OProgressListener iProgressListener);
 
 	public void setCallback(final OIndexCallback iCallback);
 

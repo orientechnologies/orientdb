@@ -151,4 +151,12 @@ public class OIndexAbstractDelegate implements OIndex {
 	public void unload() {
 		delegate.unload();
 	}
+
+	public long rebuild() {
+		return delegate.rebuild();
+	}
+
+	public long rebuild(final OProgressListener iProgressListener) {
+		return delegate.rebuild(iProgressListener);
+	}
 }

@@ -68,6 +68,7 @@ public class OIndexRemote implements OIndex {
 	private final static String	QUERY_SIZE										= "select count(*) as size from index:%s";
 	private final static String	QUERY_KEYS										= "select key from index:%s";
 	private final static String	QUERY_ENTRIES									= "select key, rid from index:%s";
+	private final static String	QUERY_REBUILD									= "rebuild index %s";
 	private final static String	QUERY_CLEAR										= "delete from index:%s";
 
 	public OIndexRemote(final String iName, final String iWrappedType, final ORID iRid) {
@@ -181,6 +182,11 @@ public class OIndexRemote implements OIndex {
 		return (Integer) getDatabase().command(cmd).execute(iRecord);
 	}
 
+	public long rebuild() {
+		final OCommandRequest cmd = formatCommand(QUERY_REBUILD, name);
+		return (Long) getDatabase().command(cmd).execute();
+	}
+
 	public OIndex clear() {
 		final OCommandRequest cmd = formatCommand(QUERY_CLEAR, name);
 		getDatabase().command(cmd).execute();
@@ -263,5 +269,9 @@ public class OIndexRemote implements OIndex {
 
 	protected ODatabaseComplex<ORecordInternal<?>> getDatabase() {
 		return ODatabaseRecordThreadLocal.INSTANCE.get();
+	}
+
+	public long rebuild(final OProgressListener iProgressListener) {
+		return rebuild();
 	}
 }

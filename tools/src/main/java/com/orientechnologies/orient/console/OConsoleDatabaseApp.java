@@ -573,6 +573,16 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		out.println("\nIndex removed successfully");
 	}
 
+	@ConsoleCommand(splitInWords = false, description = "rebuild an index if it's automatic")
+	public void rebuildIndex(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText)
+			throws IOException {
+		out.println("\nRebuilding index...");
+
+		sqlCommand("rebuild", iCommandText, "\nRebuilt index. Found %d link(s) in %f sec(s).\n");
+		updateDatabaseInfo();
+		out.println("\nIndex rebuilt successfully");
+	}
+
 	@ConsoleCommand(splitInWords = false, description = "Remove a class from the schema")
 	public void dropClass(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText)
 			throws IOException {

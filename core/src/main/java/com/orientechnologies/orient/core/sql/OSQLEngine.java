@@ -91,6 +91,8 @@ public class OSQLEngine {
 				OCommandExecutorSQLCreateIndex.class);
 		commands.put(OCommandExecutorSQLDropIndex.KEYWORD_DROP + " " + OCommandExecutorSQLDropIndex.KEYWORD_INDEX,
 				OCommandExecutorSQLDropIndex.class);
+		commands.put(OCommandExecutorSQLRebuildIndex.KEYWORD_REBUILD + " " + OCommandExecutorSQLRebuildIndex.KEYWORD_INDEX,
+				OCommandExecutorSQLRebuildIndex.class);
 		commands.put(OCommandExecutorSQLCreateClass.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateClass.KEYWORD_CLASS,
 				OCommandExecutorSQLCreateClass.class);
 		commands.put(OCommandExecutorSQLAlterClass.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterClass.KEYWORD_CLASS,

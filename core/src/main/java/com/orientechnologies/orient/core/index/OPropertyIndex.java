@@ -50,9 +50,12 @@ public class OPropertyIndex implements OIndexCallback {
 		iDatabase.getMetadata().getIndexManager().createIndex(indexName, iType, iClass.getClusterIds(), this, null, true);
 	}
 
-	public OPropertyIndex(final OClass iClass, final String[] iFields) {
+	public OPropertyIndex(final ODatabaseRecord iDatabase, final OClass iClass, final String[] iFields) {
 		fields = iFields;
 		indexName = getIndexName(iClass, iFields);
+		OIndex idx = iDatabase.getMetadata().getIndexManager().getIndex(indexName);
+		if (idx != null)
+			idx.setCallback(this);
 	}
 
 	public void checkEntry(final ODocument iRecord) {
