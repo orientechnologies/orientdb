@@ -433,7 +433,6 @@ public class TTYConsoleReader implements OConsoleReader {
 		File file = new File(HISTORY_FILE_NAME);
 		if (!file.exists()) {
 			try {
-				file.mkdirs();
 				file.createNewFile();
 			} catch (IOException ioe) {
 				OLogManager.instance().error(this, "Error creating history file.", ioe, "");
@@ -441,7 +440,6 @@ public class TTYConsoleReader implements OConsoleReader {
 		} else if (!read) {
 			file.delete();
 			try {
-				file.mkdirs();
 				file.createNewFile();
 			} catch (IOException ioe) {
 				OLogManager.instance().error(this, "Error creating history file.", ioe, "");
