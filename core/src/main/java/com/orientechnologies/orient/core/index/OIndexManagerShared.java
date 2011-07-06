@@ -55,9 +55,9 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 		final OIndexInternal index = OIndexFactory.instance().newInstance(getDatabase(), iType);
 		index.setCallback(iCallback);
 
-		indexes.put(iName.toLowerCase(), index);
-
 		index.create(iName, getDatabase(), defaultClusterName, iClusterIdsToIndex, iProgressListener, iAutomatic);
+		indexes.put(iName.toLowerCase(), index);
+		
 		setDirty();
 		save();
 

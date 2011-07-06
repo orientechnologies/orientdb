@@ -36,7 +36,7 @@ public class OIndexUnique extends OIndexMVRBTreeAbstract {
 		checkForOptimization();
 		acquireExclusiveLock();
 		try {
-			
+
 			Set<OIdentifiable> values = map.get(iKey);
 			checkForOptimization();
 
@@ -45,11 +45,14 @@ public class OIndexUnique extends OIndexMVRBTreeAbstract {
 			else if (values.size() == 1) {
 				// CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
 				if (!values.contains(iSingleValue))
-					throw new OIndexException("Found duplicated key '" + iKey + "' on unique index '" + name + "'");
+					throw new OIndexException("Found duplicated key '" + iKey + "' on unique index '" + name + "' for record "
+							+ iSingleValue.getIdentity() + ". The record already present in the index is "
+							+ values.iterator().next().getIdentity());
 				else
 					return this;
 			} else if (values.size() > 1)
-				throw new OIndexException("Found duplicated key '" + iKey + "' on unique index '" + name + "'");
+				throw new OIndexException("Found duplicated key '" + iKey + "' on unique index '" + name + "' for record "
+						+ iSingleValue.getIdentity() + ". The record already present in the index are " + values);
 
 			values.add(iSingleValue);
 
