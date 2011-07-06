@@ -312,6 +312,10 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 		boolean integer = true;
 		char c;
 
+		if (iValue.charAt(0) == ORID.PREFIX)
+			// RID
+			return OType.LINK;
+
 		for (int index = 0; index < iValue.length(); ++index) {
 			c = iValue.charAt(index);
 			if (c < '0' || c > '9')
@@ -351,9 +355,10 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 	}
 
 	/**
-	 * Parse a string returning the value with the closer type. Numbers by default are INTEGER if haven't decimal separator, otherwise
-	 * FLOAT. To treat all the number types numbers are postponed with a character that tells the type: b=byte, s=short, l=long,
-	 * f=float, d=double, t=date. Most of the code is equals to getType() but has been copied to speed-up it.
+	 * Parses a string returning the value with the closer type. Numbers by default are INTEGER if haven't decimal separator,
+	 * otherwise FLOAT. To treat all the number types numbers are postponed with a character that tells the type: b=byte, s=short,
+	 * l=long, f=float, d=double, t=date. If starts with # it's a RecordID. Most of the code is equals to getType() but has been
+	 * copied to speed-up it.
 	 * 
 	 * @param iUnusualSymbols
 	 *          Localized decimal number separators
@@ -368,6 +373,10 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 		if (iValue.length() > 1 && iValue.charAt(0) == '"' && iValue.charAt(iValue.length() - 1) == '"')
 			// STRING
 			return iValue.substring(1, iValue.length() - 1);
+
+		if (iValue.charAt(0) == ORID.PREFIX)
+			// RID
+			return new ORecordId(iValue);
 
 		boolean integer = true;
 		char c;
