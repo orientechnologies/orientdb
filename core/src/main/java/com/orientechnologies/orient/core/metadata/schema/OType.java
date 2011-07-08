@@ -303,9 +303,9 @@ public enum OType {
 			return iValue;
 
 		try {
-			if (iTargetClass.isAssignableFrom(byte[].class)) {
+			if (byte[].class.isAssignableFrom(iTargetClass)) {
 				return OBase64Utils.decode(iValue.toString());
-			} else if (iValue.getClass().isAssignableFrom(byte[].class)) {
+			} else if (byte[].class.isAssignableFrom(iValue.getClass())) {
 				return iValue;
 			} else if (iTargetClass.isEnum()) {
 				if (iValue instanceof Number)

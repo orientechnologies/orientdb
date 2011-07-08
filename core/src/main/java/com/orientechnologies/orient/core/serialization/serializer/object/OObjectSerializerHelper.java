@@ -302,7 +302,7 @@ public class OObjectSerializerHelper {
 				Class<?> fieldClass;
 				boolean propagate = false;
 
-				if (type.isAssignableFrom(List.class)) {
+				if (List.class.isAssignableFrom(type)) {
 
 					final Collection<ODocument> list = (Collection<ODocument>) iLinked;
 					final List<Object> targetList = new OLazyObjectList<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner())
@@ -313,14 +313,14 @@ public class OObjectSerializerHelper {
 						targetList.addAll(list);
 					}
 
-				} else if (type.isAssignableFrom(Set.class)) {
+				} else if (Set.class.isAssignableFrom(type)) {
 
 					final Collection<Object> set = (Collection<Object>) iLinked;
 					final Set<Object> target = new OLazyObjectSet<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner(),
 							iRoot, set).setFetchPlan(iFetchPlan);
 
 					fieldValue = target;
-				} else if (type.isAssignableFrom(Map.class)) {
+				} else if (Map.class.isAssignableFrom(type)) {
 
 					final Map<String, Object> map = (Map<String, Object>) iLinked;
 					final Map<String, Object> target = new OLazyObjectMap<Object>((ODatabaseObjectTx) iRecord.getDatabase()
