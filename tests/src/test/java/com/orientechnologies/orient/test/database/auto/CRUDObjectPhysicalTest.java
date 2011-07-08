@@ -105,6 +105,9 @@ public class CRUDObjectPhysicalTest {
 	public void readAndBrowseDescendingAndCheckHoleUtilization() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
 
+		database.getLevel1Cache().invalidate();
+		database.getLevel2Cache().clear();
+		
 		// BROWSE ALL THE OBJECTS
 		int i = 0;
 		for (Account a : database.browseClass(Account.class).setFetchPlan("*:-1")) {
