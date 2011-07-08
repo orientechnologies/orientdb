@@ -127,6 +127,10 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 		return new ODictionary<ORecordInternal<?>>(idx);
 	}
 
+	public ODocument getConfiguration() {
+		return getDocument();
+	}
+
 	protected ODatabaseRecord getDatabase() {
 		document.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
 		return document.getDatabase();

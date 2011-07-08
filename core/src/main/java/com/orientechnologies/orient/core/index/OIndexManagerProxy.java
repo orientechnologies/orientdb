@@ -67,8 +67,8 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
 		return ((OIndexManagerShared) delegate).getIndexInternal(iName);
 	}
 
-	public ODocument getDocument() {
-		return ((OIndexManagerShared) delegate).getDocument();
+	public ODocument getConfiguration() {
+		return delegate.getConfiguration();
 	}
 
 	public OIndexManager dropIndex(final String iIndexName) {

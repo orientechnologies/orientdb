@@ -21,6 +21,7 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public interface OIndexManager {
 	public static final String	CONFIG_INDEXES	= "indexes";
@@ -48,4 +49,6 @@ public interface OIndexManager {
 	public ODictionary<ORecordInternal<?>> getDictionary();
 
 	public void flush();
+
+	public ODocument getConfiguration();
 }
