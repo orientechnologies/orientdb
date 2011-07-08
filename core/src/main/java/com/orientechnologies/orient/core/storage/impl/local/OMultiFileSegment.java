@@ -29,14 +29,14 @@ import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 public class OMultiFileSegment extends OSegment {
 	protected OStorageSegmentConfiguration	config;
 	protected OFile[]												files	= new OFile[0];
-	private String													fileExtension;
-	private String													type;
-	private long														maxSize;
+	private final String										fileExtension;
+	private final String										type;
+	private final long											maxSize;
 	@SuppressWarnings("unused")
-	private String													defrag;
+	private final String										defrag;
 	private int															fileStartSize;
 	private int															fileMaxSize;
-	private int															fileIncrementSize;
+	private final int												fileIncrementSize;
 
 	public OMultiFileSegment(final OStorageLocal iStorage, final OStorageSegmentConfiguration iConfig, final String iFileExtension,
 			final int iRoundMaxSize) throws IOException {
@@ -102,6 +102,7 @@ public class OMultiFileSegment extends OSegment {
 	 */
 	public void create(final int iStartSize) throws IOException {
 		files = new OFile[1];
+		fileStartSize = iStartSize;
 		createNewFile();
 	}
 
