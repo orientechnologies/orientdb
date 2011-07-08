@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -77,7 +78,7 @@ public class OIndexRemote implements OIndex {
 		this.rid = iRid;
 	}
 
-	public OIndex create(final String iName, final ODatabaseRecord iDatabase, final String iClusterIndexName,
+	public OIndex create(final String iName, final OType iKeyType, final ODatabaseRecord iDatabase, final String iClusterIndexName,
 			final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, final boolean iAutomatic) {
 		name = iName;
 		// final OCommandRequest cmd = formatCommand(QUERY_CREATE, name, wrappedType);
@@ -273,5 +274,9 @@ public class OIndexRemote implements OIndex {
 
 	public long rebuild(final OProgressListener iProgressListener) {
 		return rebuild();
+	}
+
+	public OType getKeyType() {
+		return null;
 	}
 }

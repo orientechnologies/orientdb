@@ -22,6 +22,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -36,18 +37,20 @@ public class OPropertyIndex implements OIndexCallback {
 	protected static final char	FIELD_SEPARATOR	= '+';
 
 	public OPropertyIndex(final ODatabaseRecord iDatabase, final OClass iClass, final String[] iFields, final String iType,
-			final OProgressListener iProgressListener) {
+			final OType iKeyType, final OProgressListener iProgressListener) {
 		fields = iFields;
 		indexName = getIndexName(iClass, iFields);
 
-		iDatabase.getMetadata().getIndexManager().createIndex(indexName, iType, iClass.getClusterIds(), this, iProgressListener, true);
+		iDatabase.getMetadata().getIndexManager()
+				.createIndex(indexName, iType, iKeyType, iClass.getClusterIds(), this, iProgressListener, true);
 	}
 
-	public OPropertyIndex(final ODatabaseRecord iDatabase, final OClass iClass, final String[] iFields, final String iType) {
+	public OPropertyIndex(final ODatabaseRecord iDatabase, final OClass iClass, final String[] iFields, final String iType,
+			final OType iKeyType) {
 		fields = iFields;
 		indexName = getIndexName(iClass, iFields);
 
-		iDatabase.getMetadata().getIndexManager().createIndex(indexName, iType, iClass.getClusterIds(), this, null, true);
+		iDatabase.getMetadata().getIndexManager().createIndex(indexName, iType, iKeyType, iClass.getClusterIds(), this, null, true);
 	}
 
 	public OPropertyIndex(final ODatabaseRecord iDatabase, final OClass iClass, final String[] iFields) {

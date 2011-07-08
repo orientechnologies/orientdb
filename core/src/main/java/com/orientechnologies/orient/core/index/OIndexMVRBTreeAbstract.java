@@ -68,6 +68,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	protected Set<String>																						clustersToIndex	= new LinkedHashSet<String>();
 	protected OIndexCallback																				callback;
 	protected boolean																								automatic;
+	protected OType																									keyType;
 
 	@ODocumentInstance
 	protected ODocument																							configuration;
@@ -106,14 +107,16 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	 * @param iProgressListener
 	 *          Listener to get called on progress
 	 */
-	public OIndexInternal create(final String iName, final ODatabaseRecord iDatabase, final String iClusterIndexName,
-			final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, final boolean iAutomatic) {
+	public OIndexInternal create(final String iName, final OType iKeyType, final ODatabaseRecord iDatabase,
+			final String iClusterIndexName, final int[] iClusterIdsToIndex, final OProgressListener iProgressListener,
+			final boolean iAutomatic) {
 		acquireExclusiveLock();
 		try {
 
 			name = iName;
 			configuration = new ODocument(iDatabase);
 			automatic = iAutomatic;
+			keyType = iKeyType;
 
 			if (iClusterIdsToIndex != null)
 				for (int id : iClusterIdsToIndex)
@@ -145,6 +148,11 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 			name = configuration.field(OIndexInternal.CONFIG_NAME);
 			automatic = (Boolean) (configuration.field(OIndexInternal.CONFIG_AUTOMATIC) != null ? configuration
 					.field(OIndexInternal.CONFIG_AUTOMATIC) : true);
+
+			final String configuredKeyType = configuration.field(OIndexInternal.CONFIG_KEYTYPE);
+			if (configuredKeyType != null)
+				keyType = OType.valueOf(configuredKeyType.toUpperCase());
+
 			clustersToIndex.clear();
 
 			final Collection<? extends String> clusters = configuration.field(CONFIG_CLUSTERS);
@@ -724,6 +732,8 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 				configuration.field(OIndexInternal.CONFIG_TYPE, type);
 				configuration.field(OIndexInternal.CONFIG_NAME, name);
 				configuration.field(OIndexInternal.CONFIG_AUTOMATIC, automatic);
+				if (keyType != null)
+					configuration.field(OIndexInternal.CONFIG_KEYTYPE, keyType.toString());
 				configuration.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);
 				configuration.field(CONFIG_MAP_RID, map.getRecord().getIdentity());
 
@@ -916,6 +926,16 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 		}
 	}
 
+	protected void checkForKeyType(final Object iKey) {
+		if (keyType == null) {
+			// RECOGNIZE THE KEY TYPE AT RUN-TIME
+			keyType = OType.getTypeByClass(iKey.getClass());
+
+			if (keyType != null)
+				updateConfiguration();
+		}
+	}
+
 	protected void checkForOptimization() {
 		if (optimization > 0) {
 			final boolean hardMode = optimization == 2;
@@ -926,5 +946,9 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 
 	protected ODatabaseRecord getDatabase() {
 		return ODatabaseRecordThreadLocal.INSTANCE.get();
+	}
+
+	public OType getKeyType() {
+		return keyType;
 	}
 }

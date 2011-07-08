@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.index.OIndexNotUnique;
 import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -403,10 +404,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				return true;
 			}
 
-			final Object value = OSQLHelper.getValue(origValue);
+			Object value = OSQLHelper.getValue(origValue);
 
 			if (value == null)
 				return false;
+
+			value = OType.convert(value, underlyingIndex.getKeyType().getDefaultJavaType());
 
 			if ((indexCanBeUsedInEqualityOperators && iCondition.getOperator() instanceof OQueryOperatorEquals)
 					|| idx instanceof OIndexFullText && iCondition.getOperator() instanceof OQueryOperatorContainsText) {

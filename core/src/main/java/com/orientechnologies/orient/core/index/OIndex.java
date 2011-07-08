@@ -24,6 +24,7 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -50,10 +51,12 @@ public interface OIndex {
 	 *          Listener to get called on progress
 	 * @param iAutomatic
 	 */
-	public OIndex create(String iName, final ODatabaseRecord iDatabase, final String iClusterIndexName,
+	public OIndex create(String iName, final OType iKeyType, final ODatabaseRecord iDatabase, final String iClusterIndexName,
 			final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, final boolean iAutomatic);
 
 	public void unload();
+
+	public OType getKeyType();
 
 	public Iterator<Entry<Object, Set<OIdentifiable>>> iterator();
 

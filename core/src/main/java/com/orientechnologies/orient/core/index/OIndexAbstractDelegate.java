@@ -24,6 +24,7 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -43,9 +44,9 @@ public class OIndexAbstractDelegate implements OIndex {
 		return (OIndexInternal) delegate;
 	}
 
-	public OIndex create(final String iName, final ODatabaseRecord iDatabase, final String iClusterIndexName,
+	public OIndex create(final String iName, final OType iKeyType, final ODatabaseRecord iDatabase, final String iClusterIndexName,
 			final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, final boolean iAutomatic) {
-		return delegate.create(iName, iDatabase, iClusterIndexName, iClusterIdsToIndex, iProgressListener, iAutomatic);
+		return delegate.create(iName, iKeyType, iDatabase, iClusterIndexName, iClusterIdsToIndex, iProgressListener, iAutomatic);
 	}
 
 	public Iterator<Entry<Object, Set<OIdentifiable>>> iterator() {
@@ -158,5 +159,9 @@ public class OIndexAbstractDelegate implements OIndex {
 
 	public long rebuild(final OProgressListener iProgressListener) {
 		return delegate.rebuild(iProgressListener);
+	}
+
+	public OType getKeyType() {
+		return delegate.getKeyType();
 	}
 }

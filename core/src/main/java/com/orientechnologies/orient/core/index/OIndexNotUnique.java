@@ -37,6 +37,8 @@ public class OIndexNotUnique extends OIndexMVRBTreeAbstract {
 		acquireExclusiveLock();
 		try {
 
+			checkForKeyType(iKey);
+			
 			Set<OIdentifiable> values = map.get(iKey);
 			checkForOptimization();
 			if (values == null)

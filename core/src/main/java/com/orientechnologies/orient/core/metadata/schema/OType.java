@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import java.lang.reflect.Array;
+import java.text.ParseException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -24,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -370,8 +372,18 @@ public enum OType {
 				set.addAll((Collection<? extends Object>) iValue);
 				return set;
 
-			} else if (iTargetClass.equals(Date.class) && iValue instanceof Number) {
-				return new Date(((Number) iValue).longValue());
+			} else if (iTargetClass.equals(Date.class)) {
+				if (iValue instanceof Number)
+					return new Date(((Number) iValue).longValue());
+				if (iValue instanceof String) {
+					try {
+						return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance()
+								.parse((String) iValue);
+					} catch (ParseException e) {
+						return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateFormatInstance()
+								.parse((String) iValue);
+					}
+				}
 			}
 		} catch (Exception e) {
 			OLogManager.instance().debug(OType.class, "Error in conversion of value '%s' to type '%s'", iValue, iTargetClass);

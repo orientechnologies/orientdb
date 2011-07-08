@@ -396,7 +396,7 @@ public class IndexTest {
 
 	@Test(dependsOnMethods = "populateIndexDocuments")
 	public void testBetweenEntries() {
-		database.command(new OCommandSQL("create index equalityIdx unique")).execute();
+		database.command(new OCommandSQL("create index equalityIdx unique integer")).execute();
 
 		database.getMetadata().getIndexManager().reload();
 		Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("equalityIdx"));

@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -77,7 +78,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 		getDatabase().getStorage().getConfiguration().indexMgrRecordId = document.getIdentity().toString();
 		getDatabase().getStorage().getConfiguration().update();
 
-		createIndex(DICTIONARY_NAME, OProperty.INDEX_TYPE.DICTIONARY.toString(), null, null, null, false);
+		createIndex(DICTIONARY_NAME, OProperty.INDEX_TYPE.DICTIONARY.toString(), OType.STRING, null, null, null, false);
 	}
 
 	public synchronized void flush() {
@@ -85,9 +86,9 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 			idx.flush();
 	}
 
-	public synchronized OIndex createIndex(final String iName, final String iType, final int[] iClusterIdsToIndex,
-			OIndexCallback iCallback, final OProgressListener iProgressListener) {
-		return createIndex(iName, iType, iClusterIdsToIndex, iCallback, iProgressListener, false);
+	public synchronized OIndex createIndex(final String iName, final String iType, final OType iKeyType,
+			final int[] iClusterIdsToIndex, OIndexCallback iCallback, final OProgressListener iProgressListener) {
+		return createIndex(iName, iType, iKeyType, iClusterIdsToIndex, iCallback, iProgressListener, false);
 	}
 
 	public synchronized Collection<? extends OIndex> getIndexes() {
@@ -123,7 +124,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 	public synchronized ODictionary<ORecordInternal<?>> getDictionary() {
 		OIndex idx = getIndex(DICTIONARY_NAME);
 		if (idx == null)
-			idx = createIndex(DICTIONARY_NAME, OProperty.INDEX_TYPE.DICTIONARY.toString(), null, null, null, false);
+			idx = createIndex(DICTIONARY_NAME, OProperty.INDEX_TYPE.DICTIONARY.toString(), OType.STRING, null, null, null, false);
 		return new ODictionary<ORecordInternal<?>>(idx);
 	}
 

@@ -21,7 +21,9 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 
@@ -38,6 +40,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 
 	private String							name;
 	private String							indexType;
+	private OType								keyType;
 
 	public OCommandExecutorSQLCreateIndex parse(final OCommandRequestText iRequest) {
 		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
@@ -74,6 +77,20 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 		if (indexType == null)
 			throw new OCommandSQLParsingException("Index type is null", text, pos);
 
+		oldPos = pos;
+		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+		if (pos == -1) {
+			if (name.indexOf('.') > 0) {
+				final String[] parts = name.split("\\.");
+
+				final OClass cls = database.getMetadata().getSchema().getClass(parts[0]);
+				final OProperty prop = cls.getProperty(parts[1]);
+				keyType = prop.getType();
+			}
+		} else
+			// GET THE LINK TYPE
+			keyType = OType.valueOf(word.toString());
+
 		return this;
 	}
 
@@ -103,14 +120,12 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 
 			idx = prop.createIndexInternal(indexType.toUpperCase(), progressListener).getUnderlying();
 		} else {
-			idx = database.getMetadata().getIndexManager().createIndex(name, indexType.toUpperCase(), null, null, null, false);
+			idx = database.getMetadata().getIndexManager().createIndex(name, indexType.toUpperCase(), keyType, null, null, null, false);
 		}
 
 		if (idx != null)
 			return idx.getSize();
 
 		return null;
-		//
-		// return database.getMetadata().getIndexManager().getDocument().getIdentity();
 	}
 }

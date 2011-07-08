@@ -119,7 +119,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	 * @return
 	 */
 	public OPropertyIndex createIndex(final INDEX_TYPE iType) {
-		index = new OPropertyIndex(getDatabase(), owner, new String[] { name }, iType.toString());
+		index = new OPropertyIndex(getDatabase(), owner, new String[] { name }, iType.toString(), type);
 		return index;
 	}
 
@@ -138,7 +138,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	 * @return
 	 */
 	public OPropertyIndex createIndexInternal(final String iType, final OProgressListener iProgressListener) {
-		index = new OPropertyIndex(getDatabase(), owner, new String[] { name }, iType, iProgressListener);
+		index = new OPropertyIndex(getDatabase(), owner, new String[] { name }, iType, type, iProgressListener);
 		saveInternal();
 		return index;
 	}

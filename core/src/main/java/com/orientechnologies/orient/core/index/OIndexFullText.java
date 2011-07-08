@@ -23,8 +23,8 @@ import java.util.Set;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
@@ -52,13 +52,13 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 
 	public OIndexFullText(final String iName, final ODatabaseRecord iDatabase, final int[] iClusterIdsToIndex,
 			final boolean iAutomatic) {
-		this(iName, iDatabase, DEF_CLUSTER_NAME, iClusterIdsToIndex, iAutomatic);
+		this(iName, OType.STRING, iDatabase, DEF_CLUSTER_NAME, iClusterIdsToIndex, iAutomatic);
 	}
 
-	public OIndexFullText(final String iName, final ODatabaseRecord iDatabase, final String iClusterIndexName,
+	public OIndexFullText(final String iName, final OType iKeyType, final ODatabaseRecord iDatabase, final String iClusterIndexName,
 			final int[] iClusterIdsToIndex, final boolean iAutomatic) {
 		this();
-		create(iName, iDatabase, iClusterIndexName, iClusterIdsToIndex, null, iAutomatic);
+		create(iName, OType.STRING, iDatabase, iClusterIndexName, iClusterIdsToIndex, null, iAutomatic);
 	}
 
 	/**
@@ -156,7 +156,7 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 		checkForOptimization();
 		acquireExclusiveLock();
 		try {
-			
+
 			final Set<OIdentifiable> recs = get(iKey);
 			if (recs != null && !recs.isEmpty()) {
 				if (recs.remove(value)) {

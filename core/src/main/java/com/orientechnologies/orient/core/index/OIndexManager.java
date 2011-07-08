@@ -20,6 +20,7 @@ import java.util.Collection;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -37,8 +38,8 @@ public interface OIndexManager {
 
 	public OIndex getIndex(final ORID iRID);
 
-	public OIndex createIndex(final String iName, final String iType, final int[] iClusterIdsToIndex, OIndexCallback iCallback,
-			final OProgressListener iProgressListener, final boolean iAutomatic);
+	public OIndex createIndex(final String iName, final String iType, final OType iKeyType, final int[] iClusterIdsToIndex,
+			OIndexCallback iCallback, final OProgressListener iProgressListener, final boolean iAutomatic);
 
 	public OIndexManager dropIndex(final String iIndexName);
 

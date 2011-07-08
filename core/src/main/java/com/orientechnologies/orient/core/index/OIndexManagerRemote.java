@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 public class OIndexManagerRemote extends OIndexManagerAbstract {
-	private static final String	QUERY_CREATE	= "create index %s %s";
+	private static final String	QUERY_CREATE	= "create index %s %s %s";
 	private static final String	QUERY_DROP		= "drop index %s";
 
 	public OIndexManagerRemote(final ODatabaseRecord iDatabase) {
@@ -53,9 +53,9 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 		return null;
 	}
 
-	public synchronized OIndex createIndex(final String iName, final String iType, final int[] iClusterIdsToIndex,
-			OIndexCallback iCallback, final OProgressListener iProgressListener, final boolean iAutomatic) {
-		final String text = String.format(QUERY_CREATE, iName, iType);
+	public synchronized OIndex createIndex(final String iName, final String iType, final OType iKeyType,
+			final int[] iClusterIdsToIndex, OIndexCallback iCallback, final OProgressListener iProgressListener, final boolean iAutomatic) {
+		final String text = String.format(QUERY_CREATE, iName, iType, iKeyType);
 		getDatabase().command(new OCommandSQL(text)).execute();
 
 		document.setIdentity(new ORecordId(document.getDatabase().getStorage().getConfiguration().indexMgrRecordId));
@@ -73,7 +73,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 
 		return this;
 	}
-	
+
 	public OIndexManager dropClassIndexes(String iIndexName) {
 		return null;
 	}

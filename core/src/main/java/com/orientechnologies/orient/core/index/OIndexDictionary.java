@@ -35,7 +35,9 @@ public class OIndexDictionary extends OIndexMVRBTreeAbstract {
 		checkForOptimization();
 		acquireExclusiveLock();
 		try {
-			
+
+			checkForKeyType(iKey);
+
 			Set<OIdentifiable> values = map.get(iKey);
 			checkForOptimization();
 

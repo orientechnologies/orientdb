@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -58,9 +59,9 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
 		return delegate.getIndex(iRID);
 	}
 
-	public OIndex createIndex(String iName, String iType, int[] iClusterIdsToIndex, OIndexCallback iCallback,
+	public OIndex createIndex(String iName, String iType, final OType iKeyType, int[] iClusterIdsToIndex, OIndexCallback iCallback,
 			OProgressListener iProgressListener, boolean iAutomatic) {
-		return delegate.createIndex(iName, iType, iClusterIdsToIndex, iCallback, iProgressListener, iAutomatic);
+		return delegate.createIndex(iName, iType, iKeyType, iClusterIdsToIndex, iCallback, iProgressListener, iAutomatic);
 	}
 
 	public OIndex getIndexInternal(final String iName) {

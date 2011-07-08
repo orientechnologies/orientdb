@@ -49,15 +49,15 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 		return null;
 	}
 
-	public synchronized OIndex createIndex(final String iName, final String iType, final int[] iClusterIdsToIndex,
-			OIndexCallback iCallback, final OProgressListener iProgressListener, final boolean iAutomatic) {
+	public synchronized OIndex createIndex(final String iName, final String iType, final OType iKeyType,
+			final int[] iClusterIdsToIndex, OIndexCallback iCallback, final OProgressListener iProgressListener, final boolean iAutomatic) {
 
 		final OIndexInternal index = OIndexFactory.instance().newInstance(getDatabase(), iType);
 		index.setCallback(iCallback);
 
-		index.create(iName, getDatabase(), defaultClusterName, iClusterIdsToIndex, iProgressListener, iAutomatic);
+		index.create(iName, iKeyType, getDatabase(), defaultClusterName, iClusterIdsToIndex, iProgressListener, iAutomatic);
 		indexes.put(iName.toLowerCase(), index);
-		
+
 		setDirty();
 		save();
 
