@@ -88,7 +88,6 @@ public class OServerConfigurationLoaderXml {
 				Object example = rootClass.getConstructor(OServerConfigurationLoaderXml.class).newInstance(this);
 				marshaller.marshal(example, System.out);
 			} catch (Exception ex) {
-				throw new IOException(ex);
 			}
 
 			throw new IOException(e);

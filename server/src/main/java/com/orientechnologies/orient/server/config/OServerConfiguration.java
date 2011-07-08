@@ -45,6 +45,9 @@ public class OServerConfiguration {
 	@XmlElementRef(type = OServerUserConfiguration.class)
 	public OServerUserConfiguration[]					users;
 
+	@XmlElementRef(type = OServerSecurityConfiguration.class)
+	public OServerSecurityConfiguration				security;
+
 	@XmlElementWrapper
 	@XmlElementRef(type = OServerEntryConfiguration.class)
 	public OServerEntryConfiguration[]				properties;
@@ -65,6 +68,7 @@ public class OServerConfiguration {
 		location = FILE_NAME;
 		network = new OServerNetworkConfiguration(iFactory);
 		storages = new OServerStorageConfiguration[0];
+		security = new OServerSecurityConfiguration(iFactory);
 	}
 
 	public String getStoragePath(String iURL) {

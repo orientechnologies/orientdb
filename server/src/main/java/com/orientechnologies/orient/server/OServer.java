@@ -338,7 +338,7 @@ public class OServer {
 
 		} catch (IOException e) {
 			OLogManager.instance()
-					.error(this, "Error on reading server configuration from file: " + iFile, OConfigurationException.class);
+					.error(this, "Error on reading server configuration from file: " + iFile, e, OConfigurationException.class);
 		}
 		return null;
 	}
