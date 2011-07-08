@@ -266,6 +266,10 @@ public class OProfiler implements OProfilerMBean {
 		return buffer.toString();
 	}
 
+	public Object getHookValue(final String iName) {
+		return hooks.get(iName).getValue();
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -311,6 +315,14 @@ public class OProfiler implements OProfilerMBean {
 	public List<String> getCounters() {
 		synchronized (counters) {
 			final List<String> list = new ArrayList<String>(counters.keySet());
+			Collections.sort(list);
+			return list;
+		}
+	}
+
+	public List<String> getHooks() {
+		synchronized (hooks) {
+			final List<String> list = new ArrayList<String>(hooks.keySet());
 			Collections.sort(list);
 			return list;
 		}

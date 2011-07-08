@@ -127,6 +127,15 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedServerAb
 			json.endCollection(2, true);
 
 			json.beginObject(1, true, "profiler");
+			json.beginCollection(2, true, "hookValues");
+			for (String h : OProfiler.getInstance().getHooks()) {
+				json.beginObject(3);
+				writeField(json, 3, "name", h);
+				writeField(json, 3, "value", OProfiler.getInstance().getHookValue(h));
+				json.endObject(3);
+			}
+			json.endCollection(2, false);
+			
 			json.beginCollection(2, true, "counters");
 			for (String c : OProfiler.getInstance().getCounters()) {
 				json.beginObject(3);
