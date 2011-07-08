@@ -62,7 +62,7 @@ public class TransactionAtomicTest {
 
 		record1.reload(null, true);
 
-		Assert.assertTrue(record1.value().equals("This is the third version"));
+		Assert.assertEquals(record1.value(), "This is the third version");
 
 		db1.close();
 		db2.close();
