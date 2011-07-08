@@ -21,10 +21,12 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.client.remote.OStorageRemote;
+import com.orientechnologies.orient.client.remote.ORemoteServerEventListener;
+import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
 /**
@@ -38,15 +40,18 @@ public class DbListenerTest {
 
 	protected String							dbUrl;
 
-	protected int									onAfterTxCommit			= 0;
-	protected int									onAfterTxRollback		= 0;
-	protected int									onBeforeTxBegin			= 0;
-	protected int									onBeforeTxCommit		= 0;
-	protected int									onBeforeTxRollback	= 0;
-	protected int									onClose							= 0;
-	protected int									onCreate						= 0;
-	protected int									onDelete						= 0;
-	protected int									onOpen							= 0;
+	protected int									onAfterTxCommit								= 0;
+	protected int									onAfterTxRollback							= 0;
+	protected int									onBeforeTxBegin								= 0;
+	protected int									onBeforeTxCommit							= 0;
+	protected int									onBeforeTxRollback						= 0;
+	protected int									onClose												= 0;
+	protected int									onCreate											= 0;
+	protected int									onDelete											= 0;
+	protected int									onOpen												= 0;
+
+	protected int									onRecordPulled								= 0;
+	protected int									onClusterConfigurationChange	= 0;
 
 	public class DbListener implements ODatabaseListener {
 		public void onAfterTxCommit(ODatabase iDatabase) {
@@ -94,7 +99,7 @@ public class DbListenerTest {
 
 	@Test
 	public void testEmbeddedDbListeners() throws IOException {
-		if (database.getStorage() instanceof OStorageRemote || database.getURL().startsWith("remote:"))
+		if (database.getURL().startsWith("remote:"))
 			return;
 
 		if (database.exists())
@@ -137,20 +142,8 @@ public class DbListenerTest {
 
 	@Test
 	public void testRemoteDbListeners() throws IOException {
-		if (!(database.getStorage() instanceof OStorageRemote) || !database.getURL().startsWith("remote:"))
+		if (!database.getURL().startsWith("remote:"))
 			return;
-
-		if (database.exists())
-			TestUtils.deleteDatabase(database);
-
-		database.registerListener(new DbListener());
-
-		TestUtils.createDatabase(database, dbUrl);
-
-		Assert.assertEquals(onCreate, 1);
-
-		database.close();
-		Assert.assertEquals(onClose, 1);
 
 		database.registerListener(new DbListener());
 
@@ -173,9 +166,28 @@ public class DbListenerTest {
 		Assert.assertEquals(onBeforeTxRollback, 1);
 		Assert.assertEquals(onAfterTxRollback, 1);
 
-		TestUtils.deleteDatabase(database);
-		Assert.assertEquals(onClose, 2);
-		Assert.assertEquals(onDelete, 1);
+		database.close();
+		Assert.assertEquals(onClose, 1);
+	}
 
+	@Test
+	public void testAsynchEventListeners() throws IOException {
+		if (!database.getURL().startsWith("remote:"))
+			return;
+
+		database.open("admin", "admin");
+
+		((OStorageRemoteThread) database.getStorage()).addRemoteServerEventListener(new ORemoteServerEventListener() {
+
+			public void onRecordPulled(ORecord<?> iRecord) {
+				onRecordPulled++;
+			}
+
+			public void onClusterConfigurationChange(byte[] clusterConfig) {
+				onClusterConfigurationChange++;
+			}
+		});
+		
+		database.close();
 	}
 }

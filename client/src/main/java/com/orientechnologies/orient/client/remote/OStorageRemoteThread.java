@@ -17,6 +17,7 @@ package com.orientechnologies.orient.client.remote;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -320,5 +321,17 @@ public class OStorageRemoteThread implements OStorage {
 
 	public ODocument getClusterConfiguration() {
 		return delegate.getClusterConfiguration();
+	}
+
+	public List<ORemoteServerEventListener> getRemoteServerEventListeners() {
+		return delegate.getRemoteServerEventListeners();
+	}
+
+	public void addRemoteServerEventListener(final ORemoteServerEventListener iListener) {
+		delegate.addRemoteServerEventListener(iListener);
+	}
+
+	public void removeRemoteServerEventListener(final ORemoteServerEventListener iListener) {
+		delegate.removeRemoteServerEventListener(iListener);
 	}
 }

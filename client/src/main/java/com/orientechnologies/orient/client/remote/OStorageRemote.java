@@ -67,29 +67,30 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
  * This object is bound to each remote ODatabase instances.
  */
 public class OStorageRemote extends OStorageAbstract {
-	private static final String								DEFAULT_HOST			= "localhost";
-	private static final String[]							DEFAULT_PORTS			= new String[] { "2424" };
-	private static final String								ADDRESS_SEPARATOR	= ";";
+	private static final String											DEFAULT_HOST								= "localhost";
+	private static final String[]										DEFAULT_PORTS								= new String[] { "2424" };
+	private static final String											ADDRESS_SEPARATOR						= ";";
 
-	public static final String								PARAM_MIN_POOL		= "minpool";
-	public static final String								PARAM_MAX_POOL		= "maxpool";
+	public static final String											PARAM_MIN_POOL							= "minpool";
+	public static final String											PARAM_MAX_POOL							= "maxpool";
 
-	private OStorageRemoteServiceThread				serviceThread;
-	private OContextConfiguration							clientConfiguration;
-	private int																connectionRetry;
-	private int																connectionRetryDelay;
+	private OStorageRemoteServiceThread							serviceThread;
+	private OContextConfiguration										clientConfiguration;
+	private int																			connectionRetry;
+	private int																			connectionRetryDelay;
 
-	private static List<OChannelBinaryClient>	networkPool				= new ArrayList<OChannelBinaryClient>();
-	protected List<OPair<String, String[]>>		serverURLs				= new ArrayList<OPair<String, String[]>>();
-	protected int															retry							= 0;
-	protected final Map<String, Integer>			clustersIds				= new HashMap<String, Integer>();
-	protected final Map<String, String>				clustersTypes			= new HashMap<String, String>();
-	protected int															defaultClusterId;
-	private int																networkPoolCursor	= 0;
-	private int																minPool;
-	private int																maxPool;
-	private final boolean											debug							= false;
-	private ODocument													clusterConfiguration;
+	private static List<OChannelBinaryClient>				networkPool									= new ArrayList<OChannelBinaryClient>();
+	protected List<OPair<String, String[]>>					serverURLs									= new ArrayList<OPair<String, String[]>>();
+	protected int																		retry												= 0;
+	protected final Map<String, Integer>						clustersIds									= new HashMap<String, Integer>();
+	protected final Map<String, String>							clustersTypes								= new HashMap<String, String>();
+	protected int																		defaultClusterId;
+	private int																			networkPoolCursor						= 0;
+	private int																			minPool;
+	private int																			maxPool;
+	private final boolean														debug												= false;
+	private ODocument																clusterConfiguration;
+	private final List<ORemoteServerEventListener>	remoteServerEventListeners	= new ArrayList<ORemoteServerEventListener>();
 
 	public OStorageRemote(final String iURL, final String iMode) throws IOException {
 		super(iURL, iURL, iMode);
@@ -108,6 +109,18 @@ public class OStorageRemote extends OStorageAbstract {
 
 	public void setSessionId(final int iSessionId) {
 		OStorageRemoteThreadLocal.INSTANCE.get().sessionId = iSessionId;
+	}
+
+	public List<ORemoteServerEventListener> getRemoteServerEventListeners() {
+		return remoteServerEventListeners;
+	}
+
+	public void addRemoteServerEventListener(final ORemoteServerEventListener iListener) {
+		remoteServerEventListeners.add(iListener);
+	}
+
+	public void removeRemoteServerEventListener(final ORemoteServerEventListener iListener) {
+		remoteServerEventListeners.remove(iListener);
 	}
 
 	public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iOptions) {

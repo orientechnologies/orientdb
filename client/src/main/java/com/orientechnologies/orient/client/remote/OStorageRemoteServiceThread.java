@@ -55,12 +55,22 @@ public class OStorageRemoteServiceThread extends OSoftThread {
 
 			switch (request) {
 			case OChannelBinaryProtocol.REQUEST_PUSH_RECORD:
+				final ORecordInternal<?> record = (ORecordInternal<?>) OStorageRemote.readIdentifiable(network, null);
+
+				for (ORemoteServerEventListener listener : storage.getRemoteServerEventListeners())
+					listener.onRecordPulled(record);
+
 				// ASYNCHRONOUS PUSH INTO THE LEVEL2 CACHE
-				storage.getLevel2Cache().updateRecord((ORecordInternal<?>) OStorageRemote.readIdentifiable(network, null));
+				storage.getLevel2Cache().updateRecord(record);
 				break;
 
 			case OChannelDistributedProtocol.PUSH_DISTRIBUTED_CONFIG:
-				storage.updateClusterConfiguration(network.readBytes());
+				final byte[] clusterConfig = network.readBytes();
+
+				for (ORemoteServerEventListener listener : storage.getRemoteServerEventListeners())
+					listener.onClusterConfigurationChange(clusterConfig);
+
+				storage.updateClusterConfiguration(clusterConfig);
 				break;
 			}
 
