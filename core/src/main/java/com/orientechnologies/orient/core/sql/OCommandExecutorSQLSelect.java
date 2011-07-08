@@ -453,7 +453,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	 */
 	private void fillSearchIndexResultSet(List<ORecord<?>> resultSet, Collection<OIdentifiable> indexResultSet) {
 		if (indexResultSet != null && indexResultSet.size() > 0)
-			for (Object o : indexResultSet) {
+			for (OIdentifiable o : indexResultSet) {
+				if (rangeFrom != null && o.getIdentity().compareTo(rangeFrom) <= 0)
+					continue;
+
+				if (rangeTo != null && o.getIdentity().compareTo(rangeTo) > 0)
+					continue;
+
 				if (o instanceof ORID)
 					resultSet.add(database.load((ORID) o));
 				else
