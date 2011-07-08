@@ -231,6 +231,9 @@ public class ODataLocalHole extends OSingleFileSegment {
 
 		final boolean offsetChanged = iNewDataOffset != iHole.dataOffset;
 		final boolean sizeChanged = iNewRecordSize != iHole.size;
+		
+		if (maxHoleSize < iNewRecordSize)
+			maxHoleSize = iNewRecordSize;
 
 		// IN MEMORY
 		if (offsetChanged)
