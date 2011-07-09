@@ -1,0 +1,143 @@
+<div id="tab-query">
+	<table style="width: 100%;" cellpadding="0" cellspacing="0">
+		<tr>
+			<td valign="top">
+				<table style="width: 100%;" cellpadding="0" cellspacing="0">
+					<tr>
+						<td valign="top">
+							<table style="width: 100%;" cellpadding="0" cellspacing="0">
+								<tr>
+									<td style="border: 1px solid gray; width: 90%;"><textarea
+											id="queryText" title="value">
+                                                                select gremlin('current.out.in') as value from 5:1
+                                                            </textarea>
+									</td>
+								</tr>
+								<tr>
+									<td valign="top">
+										<table id="queryResultTable" width="100%">
+										</table>
+										<div id="queryResultTableNav"></div></td>
+								</tr>
+							</table></td>
+						<td valign="top">
+							<table>
+								<tr>
+									<td>
+										<button onclick="javascript:executeQuery()"
+											class="ui-button-text-icon"
+											style="width: 90px; text-align: center">
+											Execute<br /> <img border="0" alt="Execute"
+												src="images/execute.png" align="top" />
+										</button></td>
+								</tr>
+								<tr>
+									<td align="left">Limit: <input id="limit" size="1"
+										value="20" />
+									</td>
+								</tr>
+								<tr>
+									<td style="font-size: 10pt;"><a
+										href="http://code.google.com/p/orient/wiki/SQLQuery"
+										target="help">SQL syntax</a>
+									</td>
+								</tr>
+								<tr>
+									<td style="font-size: 10pt;"><a
+										href="http://code.google.com/p/orient/wiki/SQLWhere"
+										target="help">SQL operators</a>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										<button id="deleteRecord" class="ui-button-text-icon"
+											style="width: 90px; text-align: center">
+											Delete <img border="0" alt="Delete record"
+												src="images/delete.png" align="top" />
+										</button></td>
+								</tr>
+								<tr>
+									<td>
+										<button id="editRecord" class="ui-button-text-icon"
+											style="width: 90px; text-align: center">
+											Edit <img border="0" alt="Edit record" src="images/set.png"
+												align="top" />
+										</button></td>
+								</tr>
+								<tr>
+									<td>
+										<button id="graphRecord" class="ui-button-text-icon"
+											style="width: 90px; text-align: center">
+											Graph <img border="0" alt="Graph record"
+												src="images/graph.png" align="top" />
+										</button></td>
+								</tr>
+							</table></td>
+					</tr>
+				</table></td>
+		</tr>
+	</table>
+</div>
+
+<script language="javascript">
+	jQuery("#queryText").val((jQuery.trim(jQuery("#queryText").val())));
+
+	$("#editRecord").click(
+			function() {
+				var selectedRow = jQuery("#queryResultTable").jqGrid(
+						'getGridParam', 'selrow');
+				if (selectedRow != null)
+					displayDocument(queryResult.result[selectedRow - 1],
+							orientServer);
+			});
+	$("#graphRecord").click(
+			function() {
+				var selectedRow = jQuery("#queryResultTable").jqGrid(
+						'getGridParam', 'selrow');
+				if (selectedRow != null)
+					displayGraph(queryResult.result[selectedRow - 1]);
+			});
+
+	function queryResponse(data) {
+		displayResultSet(data["result"], data["schema"]);
+	}
+
+	function executeQuery() {
+		startTimer();
+
+		var code = queryEditor.getCode();
+		queryEditor.setCode(jQuery.trim(code));
+		controller.parameter('queryRequest', queryEditor.getCode());
+
+		queryResult = orientServer.query(code + "/" + $('#limit').val());
+		controller.parameter('queryResponse', queryResult);
+
+		if (queryResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			queryResponse(queryResult);
+		}
+	}
+
+	function clearResultset() {
+		jQuery("#queryResultTable").jqGrid('clearGridData');
+	}
+
+	var previous = controller.parameter('queryRequest');
+	if (previous != null)
+		$('#queryText').val(previous);
+
+	previous = controller.parameter('queryResponse');
+	if (previous != null)
+		queryResponse(previous);
+
+	queryEditor = CodeMirror.fromTextArea('queryText', {
+		width : "920px",
+		height : "60px",
+		parserfile : "parsesql.js",
+		stylesheet : "styles/codemirror/sqlcolors.css",
+		path : "js/codemirror/",
+		textWrapping : false,
+		onLoad : controller.parameter('queryLoad')
+	});
+</script>
