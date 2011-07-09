@@ -7,279 +7,251 @@
 -->
 </style>
 <div id="tab-database">
-<button onclick="javascript:askDatabaseInfo()"
-	class="ui-button-text-icon">Refresh <img border="0"
-	alt="Refresh" src="images/execute.png" align="top" /></button>
-<div id="tabs-db">
-<ul>
-	<li><a href="#tab-db-schema"><span>Schema</span></a></li>
-	<li><a href="#tab-db-structure"><span>Structure</span></a></li>
-	<li><a href="#tab-db-allocation"><span>Allocation</span></a></li>
-	<li><a href="#tab-db-security"><span>Security</span></a></li>
-	<li><a href="#tab-db-config"><span>Configuration</span></a></li>
-</ul>
-<div id="tab-db-schema">
-<table style="width: 100%;" cellpadding="5">
-	<tr>
-		<td valign="top">
-		<table width="100%">
-			<tr>
-				<td width="600">
-				<table id="databaseClasses" cellspacing="0" cellpadding="5"
-					border="1" width="100%">
-				</table>
-				</td>
-				<td valign="top" align="left" width="150">
-				<table>
-					<tr>
-						<td>
-						<button id="queryClass" class="ui-button-text-icon"
-							style="text-align: left">Query <img border="0"
-							alt="Query" src="images/execute.png" align="top" /></button>
-						</td>
-					</tr>
-					<tr>
-						<td>
-						<button id="createObject" class="ui-button-text-icon"
-							style="text-align: left">Create object <img border="0"
-							alt="Create object" src="images/set.png" align="top" /></button>
-						</td>
-					</tr>
-					<tr>
-						<td>
-						<button id="deleteClass" class="ui-button-text-icon"
-							style="text-align: left">Delete class <img border="0"
-							alt="Delete record" src="images/delete.png" align="top" /></button>
-						</td>
-					</tr>
-				</table>
-				</td>
-				<td valign="top" class="help">Select the class to display the
-				properties associated. Each class can store its records into one or
-				multiple <b>Clusters</b> (see "Structure" tab). A class can be <b>schema-less</b>
-				(has no properties), <b>schema-full</b> (all properties as
-				mandatories) or with a <b>partial schema</b>.</td>
-			</tr>
-			<tr>
-				<td valign="top" align="left">
-				<table>
-					<tr>
-						<td>
-						<button id="addClass" class="ui-button-text-icon"
-							style="text-align: left">Add class <img border="0"
-							alt="New record" src="images/add.png" align="top" /></button>
-						</td>
-						<td>
-					</tr>
-				</table>
-				</td>
-			</tr>
-		</table>
-		</td>
-	</tr>
-	<tr>
-		<td valign="top">
-		<table width="100%">
-			<tr>
-				<td valign="top" width="850">
-				<table id="classProperties" style="width: 100%;" cellspacing="0"
-					cellpadding="5" border="1">
-				</table>
-				</td>
-				<td valign="top" align="left">
-				<table>
-					<tr>
-						<td>
-						<button id="deleteProperty" class="ui-button-text-icon"
-							style="text-align: left">Delete property <img border="0"
-							alt="Delete record" src="images/delete.png" align="top" /></button>
-						</td>
-					</tr>
-				</table>
-				</td>
-			</tr>
-			<tr>
-				<td valign="top" align="left">
-				<table>
-					<tr>
-						<td>
-						<button id="addProperty" " class="ui-button-text-icon"
-							style="text-align: left">Add property <img border="0"
-							alt="New record" src="images/add.png" align="top" /></button>
-						</td>
-					</tr>
-				</table>
-				</td>
-			</tr>
-		</table>
-		</td>
-	</tr>
-</table>
-</div>
-<div id="tab-db-structure">
-<table style="width: 100%;" cellpadding="5">
-	<tr>
-		<td valign="top" class="help"><b><a
-			href="http://code.google.com/p/orient/wiki/Concepts#Cluster">Clusters</a></b>
-		are sets of records grouped by a mean. Any mean you want to assign.
-		You can use a Cluster like a Table of the Relational DBMS world,
-		namely to group records of the same type. Or you could want to group
-		records by different logics. <br />
-		<br />
-		There are two kinds of clusters: <b><a
-			href="http://code.google.com/p/orient/wiki/Concepts#Local_Physical_Cluster">Physical</a></b>
-		and <b><a
-			href="http://code.google.com/p/orient/wiki/Concepts#Logical_Cluster">Logical</a></b>.
-		The first one uses ad-hoc files to speed up the I/O while the second
-		one saves more space but it's slower. The suggestion is to use
-		Physical Clusters for the records accessed often and where you need
-		light speed.</td>
-	</tr>
-	<tr>
-		<td valign="top" width="500">
-		<table id="databaseClusters" style="width: 100%;" cellspacing="0"
-			cellpadding="5" border="1">
-		</table>
-		</td>
-	</tr>
-	<tr>
-		<td valign="top" align="left">
-		<table>
-			<tr>
-				<td>
-				<button id="addPhysicalCluster" class="ui-button-text-icon"
-					style="text-align: left">Add Physical Cluster <img
-					border="0" alt="Add Physical Cluster" src="images/add.png"
-					align="top" /></button>
-				</td>
-				<td>
-				<button id="addLogicalCluster" class="ui-button-text-icon"
-					style="text-align: left">Add Logical Cluster <img
-					border="0" alt="Add Logical Cluster" src="images/add.png"
-					align="top" /></button>
-				</td>
-				<td>
-				<button id="removeCluster" class="ui-button-text-icon"
-					style="text-align: left">Remove Cluster <img border="0"
-					alt="Remove Cluster" src="images/delete.png" align="top" /></button>
-				</td>
-			</tr>
-		</table>
-		</td>
-	</tr>
-	<tr>
-		<td valign="top" class="help"><b><a
-			href="http://code.google.com/p/orient/wiki/Concepts#Data_Segment">Data
-		segments</a></b> are the segments that contain data pointed by Clusters.</td>
-	</tr>
-	<tr>
-		<td valign="top" width="500">
-		<table id="databaseDataSegments" style="width: 100%;" cellspacing="0"
-			cellpadding="5" border="1">
-		</table>
-		</td>
-	</tr>
-	<tr>
-		<td valign="top" class="help"><b>Tx Segment</b> handles the
-		transaction log for the entire database. It's used in Transactions.</td>
-	</tr>
-	<tr>
-		<td valign="top" width="500">
-		<table id="databaseTxSegment" style="width: 100%;" cellspacing="0"
-			cellpadding="5" border="1">
-		</table>
-		</td>
-	</tr>
-</table>
-</div>
-<div id="tab-db-allocation">
-<table style="width: 100%;" cellpadding="5">
-	<tr>
-		<td valign="top" class="help"><canvas id="allocation-canvas"
-			width="850" height="500"></canvas></td>
-		<td>
-		<td valign="top">
-		<table>
-			<tr>
-				<td>
-				<table cellpadding="5" cellspacing="5">
-					<tr>
-						<td colspan="2">Legenda:</td>
-					</tr>
-					<tr>
-						<td>Data:</td>
-						<td id='data-value' style='background-color: #00FF00'
-							align="center">?</td>
-					</tr>
-					<tr>
-						<td>Free:</td>
-						<td id='holes-value' style='background-color: #FF0000'
-							align="center">?</td>
-					</tr>
-				</table>
-				</td>
-			</tr>
-			<tr>
-				<td>
-				<table id='allocation-data' cellpadding="2" cellspacing="2"
-					width="100%" border="0"></table>
-				</td>
-			</tr>
-		</table>
-		</td>
-	</tr>
-</table>
-</div>
-<div id="tab-db-security">
-<div id="tabs-security">
-<ul>
-	<li><a href="#tab-security-users"><span>Users</span></a></li>
-	<li><a href="#tab-security-roles"><span>Roles</span></a></li>
-</ul>
-<div id="tab-security-users">
-<table id="databaseUsers" style="width: 100%;" cellspacing="0"
-	cellpadding="5" border="1">
-</table>
-</div>
-<div id="tab-security-roles">
-<table style="width: 100%;" cellpadding="5" cellspacing="0">
-	<tr>
-		<td>
-		<table id="databaseRoles" style="width: 100%;" cellspacing="0"
-			cellpadding="5" border="1">
-		</table>
-		</td>
-		<td>
-		<table id="databaseRolesRules" style="width: 100%;" cellspacing="0"
-			cellpadding="5" border="1">
-		</table>
-		</td>
-	</tr>
-</table>
-</div>
-</div>
-</div>
-<div id="tab-db-config">
-<table style="width: 100%;" cellpadding="5">
-	<tr>
-		<td valign="top">
-		<table id="databaseConfig" style="width: 100%;" cellspacing="0"
-			cellpadding="5" border="1">
-		</table>
-		</td>
-		<td valign="top" class="help"></td>
-	</tr>
-	<tr>
-		<td valign="top">
-		<table id="databaseConfigProperties" style="width: 100%;"
-			cellspacing="0" cellpadding="5" border="1">
-		</table>
-		</td>
-		<td valign="top" class="help"></td>
-	</tr>
-</table>
-</div>
-</div>
+	<button onclick="javascript:askDatabaseInfo()" class="ui-button-text-icon">
+		Refresh <img border="0" alt="Refresh" src="images/execute.png" align="top" />
+	</button>
+	<div id="tabs-db">
+		<ul>
+			<li><a href="#tab-db-schema"><span>Schema</span> </a></li>
+			<li><a href="#tab-db-structure"><span>Structure</span> </a></li>
+			<li><a href="#tab-db-allocation"><span>Allocation</span> </a></li>
+			<li><a href="#tab-db-security"><span>Security</span> </a></li>
+			<li><a href="#tab-db-config"><span>Configuration</span> </a></li>
+		</ul>
+		<div id="tab-db-schema">
+			<table style="width: 100%;" cellpadding="5">
+				<tr>
+					<td valign="top">
+						<table width="100%">
+							<tr>
+								<td width="600">
+									<table id="databaseClasses" cellspacing="0" cellpadding="5" border="1" width="100%">
+									</table>
+								</td>
+								<td valign="top" align="left" width="150">
+									<table>
+										<tr>
+											<td>
+												<button id="queryClass" class="ui-button-text-icon" style="text-align: left">
+													Query <img border="0" alt="Query" src="images/execute.png" align="top" />
+												</button>
+											</td>
+										</tr>
+										<tr>
+											<td>
+												<button id="createObject" class="ui-button-text-icon" style="text-align: left">
+													Create object <img border="0" alt="Create object" src="images/set.png" align="top" />
+												</button>
+											</td>
+										</tr>
+										<tr>
+											<td>
+												<button id="deleteClass" class="ui-button-text-icon" style="text-align: left">
+													Delete class <img border="0" alt="Delete record" src="images/delete.png" align="top" />
+												</button>
+											</td>
+										</tr>
+									</table>
+								</td>
+								<td valign="top" class="help">Select the class to display the properties associated. Each class can store its records into one or
+									multiple <b>Clusters</b> (see "Structure" tab). A class can be <b>schema-less</b> (has no properties), <b>schema-full</b> (all properties as
+									mandatories) or with a <b>partial schema</b>.</td>
+							</tr>
+							<tr>
+								<td valign="top" align="left">
+									<table>
+										<tr>
+											<td>
+												<button id="addClass" class="ui-button-text-icon" style="text-align: left">
+													Add class <img border="0" alt="New record" src="images/add.png" align="top" />
+												</button>
+											</td>
+											<td>
+										</tr>
+									</table>
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+				<tr>
+					<td valign="top">
+						<table width="100%">
+							<tr>
+								<td valign="top" width="850">
+									<table id="classProperties" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+									</table>
+								</td>
+								<td valign="top" align="left">
+									<table>
+										<tr>
+											<td>
+												<button id="deleteProperty" class="ui-button-text-icon" style="text-align: left">
+													Delete property <img border="0" alt="Delete record" src="images/delete.png" align="top" />
+												</button>
+											</td>
+										</tr>
+									</table>
+								</td>
+							</tr>
+							<tr>
+								<td valign="top" align="left">
+									<table>
+										<tr>
+											<td>
+												<button id="addProperty" " class="ui-button-text-icon" style="text-align: left">
+													Add property <img border="0" alt="New record" src="images/add.png" align="top" />
+												</button>
+											</td>
+										</tr>
+									</table>
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div id="tab-db-structure">
+			<table style="width: 100%;" cellpadding="5">
+				<tr>
+					<td valign="top" class="help"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Cluster">Clusters</a> </b> are sets of records
+						grouped by a mean. Any mean you want to assign. You can use a Cluster like a Table of the Relational DBMS world, namely to group records of the
+						same type. Or you could want to group records by different logics. <br /> <br /> There are two kinds of clusters: <b><a
+							href="http://code.google.com/p/orient/wiki/Concepts#Local_Physical_Cluster">Physical</a> </b> and <b><a
+							href="http://code.google.com/p/orient/wiki/Concepts#Logical_Cluster">Logical</a> </b>. The first one uses ad-hoc files to speed up the I/O while
+						the second one saves more space but it's slower. The suggestion is to use Physical Clusters for the records accessed often and where you need
+						light speed.</td>
+				</tr>
+				<tr>
+					<td valign="top" width="500">
+						<table id="databaseClusters" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+						</table>
+					</td>
+				</tr>
+				<tr>
+					<td valign="top" align="left">
+						<table>
+							<tr>
+								<td>
+									<button id="addPhysicalCluster" class="ui-button-text-icon" style="text-align: left">
+										Add Physical Cluster <img border="0" alt="Add Physical Cluster" src="images/add.png" align="top" />
+									</button>
+								</td>
+								<td>
+									<button id="addLogicalCluster" class="ui-button-text-icon" style="text-align: left">
+										Add Logical Cluster <img border="0" alt="Add Logical Cluster" src="images/add.png" align="top" />
+									</button>
+								</td>
+								<td>
+									<button id="removeCluster" class="ui-button-text-icon" style="text-align: left">
+										Remove Cluster <img border="0" alt="Remove Cluster" src="images/delete.png" align="top" />
+									</button>
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+				<tr>
+					<td valign="top" class="help"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Data_Segment">Data segments</a> </b> are the
+						segments that contain data pointed by Clusters.</td>
+				</tr>
+				<tr>
+					<td valign="top" width="500">
+						<table id="databaseDataSegments" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+						</table>
+					</td>
+				</tr>
+				<tr>
+					<td valign="top" class="help"><b>Tx Segment</b> handles the transaction log for the entire database. It's used in Transactions.</td>
+				</tr>
+				<tr>
+					<td valign="top" width="500">
+						<table id="databaseTxSegment" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+						</table>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div id="tab-db-allocation">
+			<table style="width: 100%;" cellpadding="5">
+				<tr>
+					<td valign="top" class="help"><canvas id="allocation-canvas" width="850" height="500"></canvas></td>
+					<td>
+					<td valign="top">
+						<table>
+							<tr>
+								<td>
+									<table cellpadding="5" cellspacing="5">
+										<tr>
+											<td colspan="2">Legenda:</td>
+										</tr>
+										<tr>
+											<td>Data:</td>
+											<td id='data-value' style='background-color: #00FF00' align="center">?</td>
+										</tr>
+										<tr>
+											<td>Free:</td>
+											<td id='holes-value' style='background-color: #FF0000' align="center">?</td>
+										</tr>
+									</table>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<table id='allocation-data' cellpadding="2" cellspacing="2" width="100%" border="0"></table>
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div id="tab-db-security">
+			<div id="tabs-security">
+				<ul>
+					<li><a href="#tab-security-users"><span>Users</span> </a></li>
+					<li><a href="#tab-security-roles"><span>Roles</span> </a></li>
+				</ul>
+				<div id="tab-security-users">
+					<table id="databaseUsers" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+					</table>
+				</div>
+				<div id="tab-security-roles">
+					<table style="width: 100%;" cellpadding="5" cellspacing="0">
+						<tr>
+							<td>
+								<table id="databaseRoles" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+								</table>
+							</td>
+							<td>
+								<table id="databaseRolesRules" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+								</table>
+							</td>
+						</tr>
+					</table>
+				</div>
+			</div>
+		</div>
+		<div id="tab-db-config">
+			<table style="width: 100%;" cellpadding="5">
+				<tr>
+					<td valign="top">
+						<table id="databaseConfig" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+						</table>
+					</td>
+					<td valign="top" class="help"></td>
+				</tr>
+				<tr>
+					<td valign="top">
+						<table id="databaseConfigProperties" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+						</table>
+					</td>
+					<td valign="top" class="help"></td>
+				</tr>
+			</table>
+		</div>
+	</div>
 </div>
 
 <script language="javascript">
@@ -635,7 +607,8 @@
 		fillDynaTable(
 				$('#databaseClasses'),
 				"Classes",
-				[ 'id', 'name', 'clusters', 'defaultCluster', 'records' ],
+				[ 'id', 'name', 'alias', 'clusters', 'defaultCluster',
+						'records' ],
 				[ {
 					name : 'id',
 					index : 'id',
@@ -644,6 +617,17 @@
 					name : 'name',
 					index : 'name',
 					width : 280,
+					editable : true,
+					editrules : {
+						required : true
+					},
+					formoptions : {
+						elmprefix : '(*)'
+					}
+				}, {
+					name : 'alias',
+					index : 'alias',
+					width : 100,
 					editable : true,
 					editrules : {
 						required : true

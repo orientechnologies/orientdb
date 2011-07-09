@@ -18,7 +18,9 @@ package com.orientechnologies.orient.server.network.protocol.http.command.get;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
@@ -82,12 +84,15 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 			json.beginObject();
 			if (db.getMetadata().getSchema().getClasses() != null) {
 				json.beginCollection(1, false, "classes");
+				Set<String> exportedNames = new HashSet<String>();
 				for (OClass cls : db.getMetadata().getSchema().getClasses()) {
-					try {
-						exportClass(db, json, cls);
-					} catch (Exception e) {
-						OLogManager.instance().error(this, "Error on exporting class '" + cls + "'", e);
-					}
+					if (!exportedNames.contains(cls.getName()))
+						try {
+							exportClass(db, json, cls);
+							exportedNames.add(cls.getName());
+						} catch (Exception e) {
+							OLogManager.instance().error(this, "Error on exporting class '" + cls + "'", e);
+						}
 				}
 				json.endCollection(1, true);
 			}
@@ -224,6 +229,7 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 		json.beginObject(2, true, null);
 		json.writeAttribute(3, true, "id", cls.getId());
 		json.writeAttribute(3, true, "name", cls.getName());
+		json.writeAttribute(3, true, "alias", cls.getShortName());
 		json.writeAttribute(3, true, "clusters", cls.getClusterIds());
 		json.writeAttribute(3, true, "defaultCluster", cls.getDefaultClusterId());
 		try {
