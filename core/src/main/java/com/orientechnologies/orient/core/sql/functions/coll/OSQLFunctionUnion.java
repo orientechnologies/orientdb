@@ -18,6 +18,8 @@ package com.orientechnologies.orient.core.sql.functions.coll;
 import java.util.Collection;
 import java.util.HashSet;
 
+import com.orientechnologies.orient.core.record.ORecord;
+
 /**
  * This operator can work as aggregate or inline. If only one argument is passed than aggregates, otherwise executes, and returns, a
  * UNION of the collections received as parameters. Works also with no collection values.
@@ -32,7 +34,7 @@ public class OSQLFunctionUnion extends OSQLFunctionCollAbstract {
 		super(NAME, 1, -1);
 	}
 
-	public Object execute(final Object[] iParameters) {
+	public Object execute(ORecord<?> iCurrentRecord, final Object[] iParameters) {
 		if (iParameters.length == 1) {
 			// AGGREGATION MODE (STATEFULL)
 			final Object value = iParameters[0];

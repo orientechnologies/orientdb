@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql.functions.math;
 
+import com.orientechnologies.orient.core.record.ORecord;
+
 /**
  * Compute the average value for a field. Uses the context to save the last average number. When different Number class are used,
  * take the class with most precision.
@@ -32,7 +34,7 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
 		super(NAME, 1, 1);
 	}
 
-	public Object execute(final Object[] iParameters) {
+	public Object execute(ORecord<?> iCurrentRecord, final Object[] iParameters) {
 		Number value = (Number) iParameters[0];
 
 		total++;

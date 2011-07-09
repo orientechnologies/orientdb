@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.sql.functions.misc;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
@@ -40,7 +41,7 @@ public class OSQLFunctionSysdate extends OSQLFunctionAbstract {
 		now = new Date();
 	}
 
-	public Object execute(final Object[] iParameters) {
+	public Object execute(ORecord<?> iCurrentRecord, final Object[] iParameters) {
 		if (iParameters.length == 0)
 			return now;
 

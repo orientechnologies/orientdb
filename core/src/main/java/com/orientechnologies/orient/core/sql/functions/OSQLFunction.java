@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql.functions;
 
+import com.orientechnologies.orient.core.record.ORecord;
+
 /**
  * Interface that defines a SQL Function. Functions can be state-less if registered as instance, or state-full when registered as
  * class. State-less functions are reused across queries, so don't keep any run-time information inside of it. State-full functions,
@@ -26,7 +28,7 @@ package com.orientechnologies.orient.core.sql.functions;
  */
 public interface OSQLFunction {
 
-	public Object execute(final Object[] funcParams);
+	public Object execute(ORecord<?> iCurrentRecord, Object[] iFuncParams);
 
 	public boolean aggregateResults(Object[] configuredParameters);
 

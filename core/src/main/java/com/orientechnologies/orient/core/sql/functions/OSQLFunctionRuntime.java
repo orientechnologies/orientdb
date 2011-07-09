@@ -66,7 +66,7 @@ public class OSQLFunctionRuntime {
 				runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i]).execute(iRecord);
 		}
 
-		return function.execute(runtimeParameters);
+		return function.execute(iRecord, runtimeParameters);
 	}
 
 	public Object getResult() {

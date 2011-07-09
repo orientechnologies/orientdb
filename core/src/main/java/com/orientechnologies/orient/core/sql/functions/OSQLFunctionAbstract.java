@@ -51,7 +51,7 @@ public abstract class OSQLFunctionAbstract implements OSQLFunction {
 		return name + "()";
 	}
 
-	public boolean aggregateResults(Object[] configuredParameters) {
+	public boolean aggregateResults(final Object[] iConfiguredParameters) {
 		return false;
 	}
 

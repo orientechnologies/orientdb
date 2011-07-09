@@ -60,8 +60,8 @@ public abstract class OSQLFunctionMathAbstract extends OSQLFunctionAbstract {
 		return iClass1;
 	}
 
-	public final boolean aggregateResults(final Object[] configuredParameters) {
-		return configuredParameters.length == 1;
+	public final boolean aggregateResults(final Object[] iConfiguredParameters) {
+		return iConfiguredParameters.length == 1;
 	}
 
 }

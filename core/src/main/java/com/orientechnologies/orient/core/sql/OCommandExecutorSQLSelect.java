@@ -527,6 +527,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 					// BY PASS THIS AS PROJECTION BUT TREAT IT AS SPECIAL
 					projections = null;
+
+					if (!anyFunctionAggregates && flattenTarget instanceof OSQLFunctionRuntime
+							&& ((OSQLFunctionRuntime) flattenTarget).aggregateResults())
+						anyFunctionAggregates = true;
+
 					continue;
 				}
 
@@ -570,6 +575,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			for (OIdentifiable id : tempResult) {
 				if (flattenTarget instanceof OSQLFilterItem)
 					fieldValue = ((OSQLFilterItem) flattenTarget).getValue((ORecordInternal<?>) id.getRecord());
+				else if (flattenTarget instanceof OSQLFunctionRuntime)
+					fieldValue = ((OSQLFunctionRuntime) flattenTarget).getResult();
 				else
 					fieldValue = flattenTarget.toString();
 

@@ -18,6 +18,8 @@ package com.orientechnologies.orient.core.sql.functions.coll;
 import java.util.Collection;
 import java.util.HashSet;
 
+import com.orientechnologies.orient.core.record.ORecord;
+
 /**
  * This operator can work as aggregate or inline. If only one argument is passed than aggregates, otherwise executes, and returns,
  * the INTERSECTION of the collections received as parameters.
@@ -32,7 +34,7 @@ public class OSQLFunctionIntersect extends OSQLFunctionCollAbstract {
 		super(NAME, 1, 1);
 	}
 
-	public Object execute(final Object[] iParameters) {
+	public Object execute(ORecord<?> iCurrentRecord, final Object[] iParameters) {
 		Object value = iParameters[0];
 
 		if (value == null || !(value instanceof Collection<?>))
