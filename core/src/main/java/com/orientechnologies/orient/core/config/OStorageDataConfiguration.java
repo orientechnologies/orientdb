@@ -19,7 +19,7 @@ public class OStorageDataConfiguration extends OStorageSegmentConfiguration {
 
 	public OStorageDataHoleConfiguration	holeFile;
 
-	private static final String						START_SIZE			= "10Mb";
+	private static final String						START_SIZE			= "1Mb";
 	private static final String						INCREMENT_SIZE	= "100%";
 
 	public OStorageDataConfiguration(final OStorageConfiguration iRoot, final String iSegmentName) {

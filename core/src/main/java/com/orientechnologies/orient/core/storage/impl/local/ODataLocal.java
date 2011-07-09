@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -43,12 +44,12 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
  */
 public class ODataLocal extends OMultiFileSegment {
 	static final String							DEF_EXTENSION		= ".oda";
-	private static final int				DEF_START_SIZE	= 10000000;
 	public static final int					RECORD_FIX_SIZE	= 14;
 	protected final int							id;
 	protected final ODataLocalHole	holeSegment;
 	protected int										defragMaxHoleDistance;
 	protected int										defragStrategy;
+	protected long									defStartSize;
 
 	private final String						PROFILER_HOLE_FIND_CLOSER;
 	private final String						PROFILER_UPDATE_REUSED_ALL;
@@ -65,6 +66,7 @@ public class ODataLocal extends OMultiFileSegment {
 				iConfig.fileType, iConfig.maxSize);
 		holeSegment = new ODataLocalHole(iStorage, iConfig.holeFile);
 
+		defStartSize = OFileUtils.getSizeAsNumber(iConfig.fileStartSize);
 		defragMaxHoleDistance = OGlobalConfiguration.FILE_DEFRAG_HOLE_MAX_DISTANCE.getValueAsInteger();
 		defragStrategy = OGlobalConfiguration.FILE_DEFRAG_STRATEGY.getValueAsInteger();
 
@@ -94,7 +96,7 @@ public class ODataLocal extends OMultiFileSegment {
 		acquireExclusiveLock();
 		try {
 
-			super.create(iStartSize > -1 ? iStartSize : DEF_START_SIZE);
+			super.create((int) (iStartSize > -1 ? iStartSize : defStartSize));
 			holeSegment.create(-1);
 
 		} finally {
