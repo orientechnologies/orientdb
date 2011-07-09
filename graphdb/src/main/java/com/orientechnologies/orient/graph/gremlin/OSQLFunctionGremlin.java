@@ -88,7 +88,10 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 			List<Object> resultCollection = null;
 
 			while (it.hasNext()) {
-				final Object current = it.next();
+				Object current = it.next();
+
+				if (current instanceof OrientElement)
+					current = ((OrientElement) current).getRawElement();
 
 				if (finalResult != null) {
 					if (resultCollection == null)
