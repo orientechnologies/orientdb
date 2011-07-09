@@ -60,7 +60,7 @@ public class OCommandGremlinExecutor extends OCommandExecutorAbstract {
 
 			if (result instanceof GremlinPipeline) {
 				final List<Object> coll = new ArrayList<Object>();
-				Iterator<?> it = ((GremlinPipeline<?, ?>) result).iterator();
+				final Iterator<?> it = ((GremlinPipeline<?, ?>) result).iterator();
 				while (it.hasNext())
 					coll.add(it.next());
 
