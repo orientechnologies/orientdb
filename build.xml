@@ -148,15 +148,30 @@
 	</target>
 	
 	<target name="installg" depends="install">
+    <subant target="install">
+      <property name="global.lib" value="../${graph.release}/lib"/>
+      <property name="version" value="${version}"/>
+      
+	  	<fileset dir="graphdb"      includes="build.xml" />
+    </subant>
+
     <copy todir="${graph.release}">
       <fileset dir="${db.release}"/>
     </copy>
-
-    <copy todir="${graph.release}/bin/" flatten="true">
+  
+    <copy todir="${graph.release}/www/">
+      <fileset dir="graphdb/src/site"/>
+    </copy>
+  
+    <copy todir="${graph.release}/bin/" flatten="true" overwrite="true">
       <fileset dir="graphdb/script" includes="*.sh *.bat" />
       <filterset>
         <filter token="VERSION" value="${version}"/>
       </filterset>
+    </copy>
+
+    <copy todir="${graph.release}/config" flatten="true" overwrite="true">
+      <fileset dir="graphdb/config" includes="*.xml"/>
     </copy>
     
     <copy todir="${graph.release}/lib" flatten="true">
@@ -196,7 +211,7 @@
 
   <target name="release" depends="install">
 		<delete file="../releases/orientdb-${version}.zip" />
-		<zip destfile="../releases/orientdb-${version}.zip" basedir="${db.release}" level="9" update="false" excludes="*.log.*" />
+		<zip destfile="../releases/orientdb-${version}.zip" basedir="${db.release}" level="9" update="false" excludes="**/*.log.*" />
 	</target>
     
 </project>
