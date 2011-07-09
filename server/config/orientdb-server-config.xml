@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <orient-server>
 	<handlers>
-		<handler
-			class="com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager">
+		<handler class="com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager">
 			<parameters>
 				<parameter name="name" value="default" />
 				<parameter name="security.algorithm" value="Blowfish" />
@@ -16,25 +15,16 @@
 	</handlers>
 	<network>
 		<protocols>
-			<!-- Default registered protocol. It reads commands using the HTTP protocol 
-				and write data locally -->
-			<protocol
-				implementation="com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary"
-				name="binary" />
-			<protocol
-				implementation="com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb"
-				name="http" />
-			<protocol
-				implementation="com.orientechnologies.orient.server.network.protocol.distributed.ONetworkProtocolDistributed"
-				name="distributed" />
+			<!-- Default registered protocol. It reads commands using the HTTP protocol and write data locally -->
+			<protocol implementation="com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary" name="binary" />
+			<protocol implementation="com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb" name="http" />
+			<protocol implementation="com.orientechnologies.orient.server.network.protocol.distributed.ONetworkProtocolDistributed" name="distributed" />
 		</protocols>
 		<listeners>
-			<listener protocol="distributed" port-range="2424-2430"
-				ip-address="127.0.0.1" />
+			<listener protocol="distributed" port-range="2424-2430" ip-address="127.0.0.1" />
 			<listener protocol="http" port-range="2480-2490" ip-address="127.0.0.1">
 				<parameters>
-					<!-- Connection's custom parameters. If not specified the global configuration 
-						will be taken -->
+					<!-- Connection's custom parameters. If not specified the global configuration will be taken -->
 				</parameters>
 				<commands>
 					<command
@@ -42,8 +32,7 @@
 						implementation="com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent">
 						<parameters>
 							<!-- Don't cache html resources in development mode -->
-							<entry name="http.cache:*.htm *.html"
-								value="Cache-Control: no-cache, no-store, max-age=0, must-revalidate\r\nPragma: no-cache" />
+							<entry name="http.cache:*.htm *.html" value="Cache-Control: no-cache, no-store, max-age=0, must-revalidate\r\nPragma: no-cache" />
 							<!-- Default caching -->
 							<entry name="http.cache:default" value="Cache-Control: max-age=120" />
 						</parameters>
@@ -56,17 +45,13 @@
 	</network>
 	<storages>
 		<!-- Default in-memory storage. Data are not saved permanently. -->
-		<storage path="memory:temp" name="temp" userName="admin"
-			userPassword="admin" loaded-at-startup="true" />
+		<storage path="memory:temp" name="temp" userName="admin" userPassword="admin" loaded-at-startup="true" />
 	</storages>
 	<users>
 	</users>
 	<properties>
-		<!-- Caches static contents. If enabled the files will be kept in memory 
-			the first time are loaded. Changes to the files will be taken on the next 
-			restart -->
+		<!-- Caches static contents. If enabled the files will be kept in memory the first time are loaded. Changes to the files will be taken on the next restart -->
 		<entry name="server.cache.file.static" value="false" />
-		<entry name="server.cache.http.static" value="true" />
 
 		<!-- Enable/Disable logging. Levels are: finer, fine, finest, info, warning -->
 		<entry name="log.console.level" value="info" />

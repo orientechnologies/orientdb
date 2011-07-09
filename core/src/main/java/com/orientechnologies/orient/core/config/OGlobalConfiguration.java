@@ -223,9 +223,6 @@ public enum OGlobalConfiguration {
 	// SERVER
 	SERVER_CACHE_FILE_STATIC("server.cache.file.static", "Cache static resources after loaded", Boolean.class, false),
 
-	SERVER_CACHE_HTTP_STATIC("server.cache.http.static", "Cache static resources setting high cache expiration in HTTP headers",
-			Boolean.class, true),
-
 	// DISTRIBUTED SERVERS
 	DISTRIBUTED_ASYNC_TIME_DELAY("distributed.async.timeDelay",
 			"Delay time (in ms) of synchronization with slave nodes. 0 means early synchronization", Integer.class, 0),
