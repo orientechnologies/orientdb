@@ -229,6 +229,7 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 		json.beginObject(2, true, null);
 		json.writeAttribute(3, true, "id", cls.getId());
 		json.writeAttribute(3, true, "name", cls.getName());
+		json.writeAttribute(3, true, "superClass", cls.getSuperClass() != null ? cls.getSuperClass().getName() : "");
 		json.writeAttribute(3, true, "alias", cls.getShortName());
 		json.writeAttribute(3, true, "clusters", cls.getClusterIds());
 		json.writeAttribute(3, true, "defaultCluster", cls.getDefaultClusterId());

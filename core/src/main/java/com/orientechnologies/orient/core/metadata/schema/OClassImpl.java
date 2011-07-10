@@ -662,6 +662,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 			setOverSizeInternal(Float.parseFloat(stringValue.replace(',', '.')));
 			break;
 		}
+		
+		owner.saveInternal();
 	}
 
 	public OClass set(final ATTRIBUTES attribute, final Object iValue) {

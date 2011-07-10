@@ -84,11 +84,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		return name;
 	}
 
-	public OProperty setName(final String iName) {
-		this.name = iName;
-		return this;
-	}
-
 	public String getFullName() {
 		return owner.getName() + "." + name;
 	}
@@ -155,7 +150,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
 	public OPropertyIndex setIndexInternal(final String iIndexName) {
 		index = new OPropertyIndex(getDatabase(), owner, new String[] { name });
-		saveInternal();
 		return index;
 	}
 
@@ -193,6 +187,18 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		return owner;
 	}
 
+	public OProperty setName(final String iName) {
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		final String cmd = String.format("alter property %s name %s", getFullName(), iName);
+		getDatabase().command(new OCommandSQL(cmd)).execute();
+		this.name = iName;
+		return this;
+	}
+
+	public void setNameInternal(final String iName) {
+		this.name = iName;
+	}
+
 	/**
 	 * Returns the linked class in lazy mode because while unmarshalling the class could be not loaded yet.
 	 * 
@@ -215,7 +221,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	public void setLinkedClassInternal(final OClass iLinkedClass) {
 		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		this.linkedClass = iLinkedClass;
-		saveInternal();
 	}
 
 	public OType getLinkedType() {
@@ -233,7 +238,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	public void setLinkedTypeInternal(final OType iLinkedType) {
 		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		this.linkedType = iLinkedType;
-		saveInternal();
 	}
 
 	public boolean isNotNull() {
@@ -251,7 +255,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	public void setNotNullInternal(final boolean iNotNull) {
 		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		notNull = iNotNull;
-		saveInternal();
 	}
 
 	public boolean isMandatory() {
@@ -270,7 +273,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	public void setMandatoryInternal(final boolean iMandatory) {
 		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		this.mandatory = iMandatory;
-		saveInternal();
 	}
 
 	public String getMin() {
@@ -290,7 +292,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		this.min = iMin;
 		checkForDateFormat(iMin);
-		saveInternal();
 	}
 
 	public String getMax() {
@@ -310,7 +311,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		this.max = iMax;
 		checkForDateFormat(iMax);
-		saveInternal();
 	}
 
 	public String getRegexp() {
@@ -328,7 +328,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	public void setRegexpInternal(final String iRegexp) {
 		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		this.regexp = iRegexp;
-		saveInternal();
 	}
 
 	public OPropertyImpl setType(final OType iType) {
@@ -365,7 +364,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 			throw new IllegalArgumentException("Can't change property type from " + type + " to " + iType);
 
 		type = iType;
-		saveInternal();
 	}
 
 	public Object get(final ATTRIBUTES iAttribute) {
@@ -436,6 +434,8 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 			setTypeInternal(OType.valueOf(stringValue.toUpperCase()));
 			break;
 		}
+
+		saveInternal();
 	}
 
 	public void set(final ATTRIBUTES attribute, final Object iValue) {

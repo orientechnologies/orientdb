@@ -607,7 +607,7 @@
 		fillDynaTable(
 				$('#databaseClasses'),
 				"Classes",
-				[ 'id', 'name', 'alias', 'clusters', 'defaultCluster',
+				[ 'id', 'name', 'superClass', 'alias', 'clusters', 'defaultCluster',
 						'records' ],
 				[ {
 					name : 'id',
@@ -627,11 +627,16 @@
 				}, {
 					name : 'alias',
 					index : 'alias',
-					width : 100,
+					width : 80,
 					editable : true,
-					editrules : {
-						required : true
-					},
+					formoptions : {
+						elmprefix : '(*)'
+					}
+				}, {
+					name : 'superClass',
+					index : 'superClass',
+					width : 150,
+					editable : true,
 					formoptions : {
 						elmprefix : '(*)'
 					}
