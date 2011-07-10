@@ -34,7 +34,7 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, OSQLFilterCondition iCondition, final Object iLeft,
+	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
 		if (!iRight.getClass().isArray())
 			throw new IllegalArgumentException("Found '" + iRight + "' while was expected: " + getSyntax());
@@ -57,5 +57,10 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
 	@Override
 	public String getSyntax() {
 		return "<left> " + keyword + " <minRange> AND <maxRange>";
+	}
+
+	@Override
+	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
+		return OIndexReuseType.INDEX_METHOD;
 	}
 }

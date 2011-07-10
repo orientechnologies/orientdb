@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -54,6 +55,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
+import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsText;
@@ -338,35 +340,82 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	}
 
 	private boolean searchForIndexes(final List<ORecord<?>> iResultSet, final OClass iSchemaClass) {
-		return analyzeQueryBranch(iResultSet, iSchemaClass, compiledFilter.getRootCondition());
-	}
+		final List<OSearchInIndexTriple> searchInIndexTriples = new LinkedList<OSearchInIndexTriple>();
+		analyzeQueryBranch(iSchemaClass, compiledFilter.getRootCondition(), searchInIndexTriples);
 
-	private boolean analyzeQueryBranch(final List<ORecord<?>> iResultSet, final OClass iSchemaClass,
-			final OSQLFilterCondition iCondition) {
-		if (iCondition == null)
+		if (searchInIndexTriples.isEmpty())
 			return false;
 
-		if (iCondition.getLeft() != null)
-			if (iCondition.getLeft() instanceof OSQLFilterCondition)
-				analyzeQueryBranch(iResultSet, iSchemaClass, (OSQLFilterCondition) iCondition.getLeft());
+		for (OSearchInIndexTriple indexTriple : searchInIndexTriples) {
+			final OIndex idx = indexTriple.index.getInternal();
+			final OQueryOperator operator = indexTriple.indexOperator;
+			final Object key = indexTriple.key;
 
-		if (iCondition.getRight() != null)
-			if (iCondition.getRight() instanceof OSQLFilterCondition)
-				analyzeQueryBranch(iResultSet, iSchemaClass, (OSQLFilterCondition) iCondition.getRight());
+			final boolean indexCanBeUsedInEqualityOperators = (idx instanceof OIndexUnique || idx instanceof OIndexNotUnique);
 
-		if (!searchIndexedProperty(iResultSet, iSchemaClass, iCondition, iCondition.getLeft()))
-			if (!searchIndexedProperty(iResultSet, iSchemaClass, iCondition, iCondition.getRight()))
-				return false;
+			if (indexCanBeUsedInEqualityOperators && operator instanceof OQueryOperatorBetween) {
+				final Object[] betweenKeys = (Object[]) key;
+				fillSearchIndexResultSet(iResultSet,
+						indexTriple.index.getValuesBetween(OSQLHelper.getValue(betweenKeys[0]), OSQLHelper.getValue(betweenKeys[2])));
+				return true;
+			}
 
-		// INDEX FOUND
-		return true;
+			if ((indexCanBeUsedInEqualityOperators && operator instanceof OQueryOperatorEquals) || idx instanceof OIndexFullText
+					&& operator instanceof OQueryOperatorContainsText) {
+				fillSearchIndexResultSet(iResultSet, indexTriple.index.get(key));
+				return true;
+			}
+
+			if (indexCanBeUsedInEqualityOperators && operator instanceof OQueryOperatorMajor) {
+				fillSearchIndexResultSet(iResultSet, idx.getValuesMajor(key, false));
+				return true;
+			}
+
+			if (indexCanBeUsedInEqualityOperators && operator instanceof OQueryOperatorMajorEquals) {
+				fillSearchIndexResultSet(iResultSet, idx.getValuesMajor(key, true));
+				return true;
+			}
+
+			if (indexCanBeUsedInEqualityOperators && operator instanceof OQueryOperatorMinor) {
+				fillSearchIndexResultSet(iResultSet, idx.getValuesMinor(key, false));
+				return true;
+			}
+
+			if (indexCanBeUsedInEqualityOperators && operator instanceof OQueryOperatorMinorEquals) {
+				fillSearchIndexResultSet(iResultSet, idx.getValuesMinor(key, true));
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void analyzeQueryBranch(final OClass iSchemaClass, final OSQLFilterCondition iCondition,
+			final List<OSearchInIndexTriple> iSearchInIndexTriples) {
+		if (iCondition == null)
+			return;
+
+		final OQueryOperator operator = iCondition.getOperator();
+		if (operator == null)
+			if (iCondition.getLeft() != null && iCondition.getRight() == null) {
+				analyzeQueryBranch(iSchemaClass, (OSQLFilterCondition) iCondition.getLeft(), iSearchInIndexTriples);
+				return;
+			} else {
+				return;
+			}
+
+		final OIndexReuseType indexReuseType = operator.getIndexReuseType(iCondition.getLeft(), iCondition.getRight());
+		if (indexReuseType.equals(OIndexReuseType.ANY_INDEX)) {
+			analyzeQueryBranch(iSchemaClass, (OSQLFilterCondition) iCondition.getLeft(), iSearchInIndexTriples);
+			analyzeQueryBranch(iSchemaClass, (OSQLFilterCondition) iCondition.getRight(), iSearchInIndexTriples);
+		} else if (indexReuseType.equals(OIndexReuseType.INDEX_METHOD)) {
+			if (!searchIndexedProperty(iSchemaClass, iCondition, iCondition.getLeft(), iSearchInIndexTriples))
+				searchIndexedProperty(iSchemaClass, iCondition, iCondition.getRight(), iSearchInIndexTriples);
+		}
 	}
 
 	/**
 	 * Searches a value in index if the property defines it.
 	 * 
-	 * @param iResultSet
-	 *          result set to fill
 	 * @param iSchemaClass
 	 *          Schema class
 	 * @param iCondition
@@ -375,8 +424,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	 *          Value to search
 	 * @return true if the property was indexed and found, otherwise false
 	 */
-	private boolean searchIndexedProperty(final List<ORecord<?>> iResultSet, OClass iSchemaClass,
-			final OSQLFilterCondition iCondition, final Object iItem) {
+	private boolean searchIndexedProperty(OClass iSchemaClass, final OSQLFilterCondition iCondition, final Object iItem,
+			final List<OSearchInIndexTriple> iSearchInIndexTriples) {
 		if (iItem == null || !(iItem instanceof OSQLFilterItemField))
 			return false;
 
@@ -390,17 +439,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		}
 
 		if (prop != null && prop.isIndexed()) {
-			OIndex idx = prop.getIndex().getUnderlying();
-			idx = idx.getInternal();
-
-			final boolean indexCanBeUsedInEqualityOperators = (idx instanceof OIndexUnique || idx instanceof OIndexNotUnique);
 			final Object origValue = iCondition.getLeft() == iItem ? iCondition.getRight() : iCondition.getLeft();
 			final OIndex underlyingIndex = prop.getIndex().getUnderlying();
 
-			if (indexCanBeUsedInEqualityOperators && iCondition.getOperator() instanceof OQueryOperatorBetween) {
-				final Object[] betweenValues = (Object[]) origValue;
-				fillSearchIndexResultSet(iResultSet,
-						underlyingIndex.getValuesBetween(OSQLHelper.getValue(betweenValues[0]), OSQLHelper.getValue(betweenValues[2])));
+			if (iCondition.getOperator() instanceof OQueryOperatorBetween) {
+				iSearchInIndexTriples.add(new OSearchInIndexTriple(iCondition.getOperator(), origValue, underlyingIndex));
 				return true;
 			}
 
@@ -411,32 +454,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 			value = OType.convert(value, underlyingIndex.getKeyType().getDefaultJavaType());
 
-			if ((indexCanBeUsedInEqualityOperators && iCondition.getOperator() instanceof OQueryOperatorEquals)
-					|| idx instanceof OIndexFullText && iCondition.getOperator() instanceof OQueryOperatorContainsText) {
-				fillSearchIndexResultSet(iResultSet, underlyingIndex.get(value));
-				return true;
-			}
+			if (value == null)
+				return false;
 
-			if (indexCanBeUsedInEqualityOperators && iCondition.getOperator() instanceof OQueryOperatorMajor) {
-				fillSearchIndexResultSet(iResultSet, underlyingIndex.getValuesMajor(value, false));
-				return true;
-			}
-
-			if (indexCanBeUsedInEqualityOperators && iCondition.getOperator() instanceof OQueryOperatorMajorEquals) {
-				fillSearchIndexResultSet(iResultSet, underlyingIndex.getValuesMajor(value, true));
-				return true;
-			}
-
-			if (indexCanBeUsedInEqualityOperators && iCondition.getOperator() instanceof OQueryOperatorMinor) {
-				fillSearchIndexResultSet(iResultSet, underlyingIndex.getValuesMinor(value, false));
-				return true;
-			}
-
-			if (indexCanBeUsedInEqualityOperators && iCondition.getOperator() instanceof OQueryOperatorMinorEquals) {
-				fillSearchIndexResultSet(iResultSet, underlyingIndex.getValuesMinor(value, true));
-				return true;
-			}
-
+			iSearchInIndexTriples.add(new OSearchInIndexTriple(iCondition.getOperator(), value, underlyingIndex));
+			return true;
 		}
 
 		return false;
@@ -652,8 +674,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			OProfiler.getInstance().updateCounter("Query.indexUsage", 1);
 
 			// FOUND USING INDEXES
-			for (ORecord<?> record : resultSet)
-				addResult(record);
+			for (ORecord<?> record : resultSet) {
+				if (filter((ORecordInternal<?>) record))
+					addResult(record);
+			}
 		} else
 			// NO INDEXES: SCAN THE ENTIRE CLUSTER
 			scanEntireClusters(clusterIds);
@@ -862,5 +886,17 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			return ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getResult();
 
 		return null;
+	}
+
+	private static final class OSearchInIndexTriple {
+		private OSearchInIndexTriple(OQueryOperator indexOperator, Object key, OIndex index) {
+			this.indexOperator = indexOperator;
+			this.key = key;
+			this.index = index;
+		}
+
+		private OQueryOperator	indexOperator;
+		private Object					key;
+		private OIndex					index;
 	}
 }

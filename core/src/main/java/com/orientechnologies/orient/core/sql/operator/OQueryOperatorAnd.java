@@ -37,4 +37,11 @@ public class OQueryOperatorAnd extends OQueryOperator {
 			return false;
 		return (Boolean) iLeft && (Boolean) iRight;
 	}
+
+	@Override
+	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
+		if (iLeft == null || iRight == null)
+			return OIndexReuseType.NO_INDEX;
+		return OIndexReuseType.ANY_INDEX;
+	}
 }

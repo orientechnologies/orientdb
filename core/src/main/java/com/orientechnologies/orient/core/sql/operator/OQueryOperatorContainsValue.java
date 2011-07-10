@@ -50,7 +50,7 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
 
 			if (condition != null) {
 				// CHECK AGAINST A CONDITION
-				for (Object o : map.values())
+				for (final Object o : map.values())
 					if ((Boolean) condition.evaluate((ORecordSchemaAware<?>) o))
 						return true;
 			} else
@@ -61,12 +61,17 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
 
 			if (condition != null)
 				// CHECK AGAINST A CONDITION
-				for (Object o : map.values())
+				for (final Object o : map.values())
 					if ((Boolean) condition.evaluate((ORecordSchemaAware<?>) o))
 						return true;
 					else
 						return map.containsValue(iLeft);
 		}
 		return false;
+	}
+
+	@Override
+	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
+		return OIndexReuseType.NO_INDEX;
 	}
 }

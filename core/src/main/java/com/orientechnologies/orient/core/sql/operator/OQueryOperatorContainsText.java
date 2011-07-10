@@ -65,7 +65,7 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
 		else
 			fieldValue = iCondition.getLeft().toString();
 
-		String className = iTargetClasses.get(0);
+		final String className = iTargetClasses.get(0);
 
 		final OProperty prop = iDatabase.getMetadata().getSchema().getClass(className).getProperty(fieldName);
 		if (prop == null)
@@ -82,5 +82,10 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
 
 	public boolean isIgnoreCase() {
 		return ignoreCase;
+	}
+
+	@Override
+	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
+		return OIndexReuseType.INDEX_METHOD;
 	}
 }

@@ -31,8 +31,13 @@ public class OQueryOperatorMatches extends OQueryOperatorEqualityNotNulls {
 	}
 
 	@Override
-	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, OSQLFilterCondition iCondition, final Object iLeft,
+	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
 		return iLeft.toString().matches((String) iRight);
+	}
+
+	@Override
+	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
+		return OIndexReuseType.NO_INDEX;
 	}
 }

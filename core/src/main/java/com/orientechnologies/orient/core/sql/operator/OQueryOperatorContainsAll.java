@@ -35,7 +35,7 @@ public class OQueryOperatorContainsAll extends OQueryOperatorEqualityNotNulls {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, OSQLFilterCondition iCondition, final Object iLeft,
+	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
 		final OSQLFilterCondition condition;
 
@@ -52,13 +52,13 @@ public class OQueryOperatorContainsAll extends OQueryOperatorEqualityNotNulls {
 
 			if (condition != null) {
 				// CHECK AGAINST A CONDITION
-				for (ORecordSchemaAware<?> o : collection) {
+				for (final ORecordSchemaAware<?> o : collection) {
 					if ((Boolean) condition.evaluate(o) == Boolean.FALSE)
 						return false;
 				}
 			} else {
 				// CHECK AGAINST A SINGLE VALUE
-				for (Object o : collection) {
+				for (final Object o : collection) {
 					if (!OQueryOperatorEquals.equals(iRight, o))
 						return false;
 				}
@@ -69,18 +69,23 @@ public class OQueryOperatorContainsAll extends OQueryOperatorEqualityNotNulls {
 			final Collection<ORecordSchemaAware<?>> collection = (Collection<ORecordSchemaAware<?>>) iRight;
 
 			if (condition != null) {
-				for (ORecordSchemaAware<?> o : collection) {
+				for (final ORecordSchemaAware<?> o : collection) {
 					if ((Boolean) condition.evaluate(o) == Boolean.FALSE)
 						return false;
 				}
 			} else {
 				// CHECK AGAINST A SINGLE VALUE
-				for (Object o : collection) {
+				for (final Object o : collection) {
 					if (!OQueryOperatorEquals.equals(iLeft, o))
 						return false;
 				}
 			}
 		}
 		return true;
+	}
+
+	@Override
+	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
+		return OIndexReuseType.NO_INDEX;
 	}
 }

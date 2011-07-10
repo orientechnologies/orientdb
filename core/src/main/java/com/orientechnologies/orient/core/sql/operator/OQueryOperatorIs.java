@@ -33,7 +33,7 @@ public class OQueryOperatorIs extends OQueryOperatorEquality {
 	}
 
 	@Override
-	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, OSQLFilterCondition iCondition, final Object iLeft,
+	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
 		if (OSQLHelper.NOT_NULL.equals(iRight))
 			return iLeft != null;
@@ -47,10 +47,15 @@ public class OQueryOperatorIs extends OQueryOperatorEquality {
 			return iLeft == iRight;
 	}
 
-	protected boolean evaluateDefined(final ORecordInternal<?> iRecord, String iFieldName) {
+	protected boolean evaluateDefined(final ORecordInternal<?> iRecord, final String iFieldName) {
 		if (iRecord instanceof ODocument) {
 			return ((ODocument) iRecord).containsField(iFieldName);
 		}
 		return false;
+	}
+
+	@Override
+	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
+		return OIndexReuseType.NO_INDEX;
 	}
 }

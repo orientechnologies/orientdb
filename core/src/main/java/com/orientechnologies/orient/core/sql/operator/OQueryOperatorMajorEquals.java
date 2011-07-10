@@ -33,11 +33,18 @@ public class OQueryOperatorMajorEquals extends OQueryOperatorEqualityNotNulls {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, OSQLFilterCondition iCondition, final Object iLeft,
+	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
 		final Object right = OType.convert(iRight, iLeft.getClass());
 		if (right == null)
 			return false;
 		return ((Comparable<Object>) iLeft).compareTo(right) >= 0;
+	}
+
+	@Override
+	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
+		if (iRight == null || iLeft == null)
+			return OIndexReuseType.NO_INDEX;
+		return OIndexReuseType.INDEX_METHOD;
 	}
 }

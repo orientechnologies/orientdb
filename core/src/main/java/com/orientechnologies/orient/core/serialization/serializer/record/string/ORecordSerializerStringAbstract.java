@@ -186,90 +186,57 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 
 		switch (iType) {
 		case STRING:
-			iBuffer.append('"');
-			iBuffer.append(OStringSerializerHelper.encode(iValue.toString()));
-			iBuffer.append('"');
+            simpleValueToStream(iBuffer, iType, iValue);
 			OProfiler.getInstance().stopChrono("serializer.rec.str.string2string", timer);
 			break;
 
 		case BOOLEAN:
-			iBuffer.append(String.valueOf(iValue));
+            simpleValueToStream(iBuffer, iType, iValue);
 			OProfiler.getInstance().stopChrono("serializer.rec.str.bool2string", timer);
 			break;
 
 		case INTEGER:
-			iBuffer.append(String.valueOf(iValue));
+            simpleValueToStream(iBuffer, iType, iValue);
 			OProfiler.getInstance().stopChrono("serializer.rec.str.int2string", timer);
 			break;
 
 		case FLOAT:
-			iBuffer.append(String.valueOf(iValue));
-			iBuffer.append('f');
+            simpleValueToStream(iBuffer, iType, iValue);
 			OProfiler.getInstance().stopChrono("serializer.rec.str.float2string", timer);
 			break;
 
 		case LONG:
-			iBuffer.append(String.valueOf(iValue));
-			iBuffer.append('l');
+            simpleValueToStream(iBuffer, iType, iValue);
 			OProfiler.getInstance().stopChrono("serializer.rec.str.long2string", timer);
 			break;
 
 		case DOUBLE:
-			iBuffer.append(String.valueOf(iValue));
-			iBuffer.append('d');
+            simpleValueToStream(iBuffer, iType, iValue);
 			OProfiler.getInstance().stopChrono("serializer.rec.str.double2string", timer);
 			break;
 
 		case SHORT:
-			iBuffer.append(String.valueOf(iValue));
-			iBuffer.append('s');
+            simpleValueToStream(iBuffer, iType, iValue);
 			OProfiler.getInstance().stopChrono("serializer.rec.str.short2string", timer);
 			break;
 
 		case BYTE:
-			if (iValue instanceof Character)
-				iBuffer.append((int) ((Character) iValue).charValue());
-			else if (iValue instanceof String)
-				iBuffer.append(String.valueOf((int) ((String) iValue).charAt(0)));
-			else
-				iBuffer.append(String.valueOf(iValue));
-			iBuffer.append('b');
+            simpleValueToStream(iBuffer, iType, iValue);
 			OProfiler.getInstance().stopChrono("serializer.rec.str.byte2string", timer);
 			break;
 
 		case BINARY:
-			iBuffer.append('"');
-			if (iValue instanceof Byte)
-				iBuffer.append(new String(new byte[] { ((Byte) iValue).byteValue() }));
-			else
-				iBuffer.append(OBase64Utils.encodeBytes((byte[]) iValue));
-			iBuffer.append('"');
+            simpleValueToStream(iBuffer, iType, iValue);
 			OProfiler.getInstance().stopChrono("serializer.rec.str.binary2string", timer);
 			break;
 
 		case DATE:
-			if (iValue instanceof Date) {
-				// RESET HOURS, MINUTES, SECONDS AND MILLISECONDS
-				Calendar calendar = Calendar.getInstance();
-				calendar.setTime((Date) iValue);
-				calendar.set(Calendar.HOUR_OF_DAY, 0);
-				calendar.set(Calendar.MINUTE, 0);
-				calendar.set(Calendar.SECOND, 0);
-				calendar.set(Calendar.MILLISECOND, 0);
-
-				iBuffer.append(calendar.getTimeInMillis());
-			} else
-				iBuffer.append(iValue);
-			iBuffer.append('a');
+            simpleValueToStream(iBuffer, iType, iValue);
 			OProfiler.getInstance().stopChrono("serializer.rec.str.date2string", timer);
 			break;
 
 		case DATETIME:
-			if (iValue instanceof Date)
-				iBuffer.append(((Date) iValue).getTime());
-			else
-				iBuffer.append(iValue);
-			iBuffer.append('t');
+            simpleValueToStream(iBuffer, iType, iValue);
 			OProfiler.getInstance().stopChrono("serializer.rec.str.datetime2string", timer);
 			break;
 
@@ -301,7 +268,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 	 * Parse a string returning the closer type. Numbers by default are INTEGER if haven't decimal separator, otherwise FLOAT. To
 	 * treat all the number types numbers are postponed with a character that tells the type: b=byte, s=short, l=long, f=float,
 	 * d=double, t=date.
-	 * 
+	 *
 	 * @param iUnusualSymbols
 	 *          Localized decimal number separators
 	 * @param iValue
@@ -359,7 +326,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 	 * otherwise FLOAT. To treat all the number types numbers are postponed with a character that tells the type: b=byte, s=short,
 	 * l=long, f=float, d=double, t=date. If starts with # it's a RecordID. Most of the code is equals to getType() but has been
 	 * copied to speed-up it.
-	 * 
+	 *
 	 * @param iUnusualSymbols
 	 *          Localized decimal number separators
 	 * @param iValue
@@ -414,4 +381,87 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 		else
 			return new Float(iValue);
 	}
+
+    public static void simpleValueToStream(final StringBuilder iBuffer, final OType iType, final Object iValue) {
+        if (iValue == null || iType == null)
+            return;
+        switch (iType) {
+            case STRING:
+                iBuffer.append('"');
+                iBuffer.append(OStringSerializerHelper.encode(iValue.toString()));
+                iBuffer.append('"');
+                break;
+
+            case BOOLEAN:
+                iBuffer.append(String.valueOf(iValue));
+                break;
+
+            case INTEGER:
+                iBuffer.append(String.valueOf(iValue));
+                break;
+
+            case FLOAT:
+                iBuffer.append(String.valueOf(iValue));
+                iBuffer.append('f');
+                break;
+
+            case LONG:
+                iBuffer.append(String.valueOf(iValue));
+                iBuffer.append('l');
+                break;
+
+            case DOUBLE:
+                iBuffer.append(String.valueOf(iValue));
+                iBuffer.append('d');
+                break;
+
+            case SHORT:
+                iBuffer.append(String.valueOf(iValue));
+                iBuffer.append('s');
+                break;
+
+            case BYTE:
+                if (iValue instanceof Character)
+                    iBuffer.append((int) ((Character) iValue).charValue());
+                else if (iValue instanceof String)
+                    iBuffer.append(String.valueOf((int) ((String) iValue).charAt(0)));
+                else
+                    iBuffer.append(String.valueOf(iValue));
+                iBuffer.append('b');
+                break;
+
+            case BINARY:
+                iBuffer.append('"');
+                if (iValue instanceof Byte)
+                    iBuffer.append(new String(new byte[]{((Byte) iValue).byteValue()}));
+                else
+                    iBuffer.append(OBase64Utils.encodeBytes((byte[]) iValue));
+                iBuffer.append('"');
+                break;
+
+            case DATE:
+                if (iValue instanceof Date) {
+                    // RESET HOURS, MINUTES, SECONDS AND MILLISECONDS
+                    Calendar calendar = Calendar.getInstance();
+                    calendar.setTime((Date) iValue);
+                    calendar.set(Calendar.HOUR_OF_DAY, 0);
+                    calendar.set(Calendar.MINUTE, 0);
+                    calendar.set(Calendar.SECOND, 0);
+                    calendar.set(Calendar.MILLISECOND, 0);
+
+                    iBuffer.append(calendar.getTimeInMillis());
+                } else
+                    iBuffer.append(iValue);
+                iBuffer.append('a');
+                break;
+
+            case DATETIME:
+                if (iValue instanceof Date)
+                    iBuffer.append(((Date) iValue).getTime());
+                else
+                    iBuffer.append(iValue);
+                iBuffer.append('t');
+                break;
+       }
+    }
 }

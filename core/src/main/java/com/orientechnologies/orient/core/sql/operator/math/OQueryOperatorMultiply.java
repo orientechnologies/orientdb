@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.sql.operator.math;
 
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 
 /**
@@ -54,4 +55,11 @@ public class OQueryOperatorMultiply extends OQueryOperator {
 
 		return null;
 	}
+
+    @Override
+    public OIndexReuseType getIndexReuseType(Object iLeft, Object iRight) {
+        if (iLeft instanceof Number && iRight instanceof Number)
+            return OIndexReuseType.INDEX_KEY;
+        return OIndexReuseType.NO_INDEX;
+    }
 }

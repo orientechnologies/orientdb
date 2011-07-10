@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -34,7 +35,7 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
 	}
 
 	@Override
-	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, OSQLFilterCondition iCondition, final Object iLeft,
+	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
 		return equals(iLeft, iRight);
 	}
@@ -54,4 +55,15 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
 			return iLeft.equals(right);
 		}
 	}
+
+	@Override
+	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
+		if (iLeft instanceof OIdentifiable && iRight instanceof OIdentifiable)
+			return OIndexReuseType.NO_INDEX;
+		if (iRight == null || iLeft == null)
+			return OIndexReuseType.NO_INDEX;
+
+		return OIndexReuseType.INDEX_METHOD;
+	}
+
 }

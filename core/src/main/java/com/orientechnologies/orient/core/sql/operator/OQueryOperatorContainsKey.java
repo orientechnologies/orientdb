@@ -39,13 +39,18 @@ public class OQueryOperatorContainsKey extends OQueryOperatorEqualityNotNulls {
 
 		if (iLeft instanceof Map<?, ?>) {
 
-			Map<String, ?> map = (Map<String, ?>) iLeft;
+			final Map<String, ?> map = (Map<String, ?>) iLeft;
 			return map.containsKey(iRight);
 		} else if (iRight instanceof Map<?, ?>) {
 
-			Map<String, ?> map = (Map<String, ?>) iRight;
+			final Map<String, ?> map = (Map<String, ?>) iRight;
 			return map.containsKey(iLeft);
 		}
 		return false;
+	}
+
+	@Override
+	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
+		return OIndexReuseType.NO_INDEX;
 	}
 }

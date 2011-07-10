@@ -51,13 +51,13 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 
 			if (condition != null) {
 				// CHECK AGAINST A CONDITION
-				for (Object o : collection) {
+				for (final Object o : collection) {
 					if ((Boolean) condition.evaluate((ORecordSchemaAware<?>) o) == Boolean.TRUE)
 						return true;
 				}
 			} else {
 				// CHECK AGAINST A SINGLE VALUE
-				for (Object o : collection) {
+				for (final Object o : collection) {
 					if (OQueryOperatorEquals.equals(iRight, o))
 						return true;
 				}
@@ -68,13 +68,13 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 			final Collection<ORecordSchemaAware<?>> collection = (Collection<ORecordSchemaAware<?>>) iRight;
 
 			if (condition != null) {
-				for (ORecordSchemaAware<?> o : collection) {
+				for (final ORecordSchemaAware<?> o : collection) {
 					if ((Boolean) condition.evaluate(o) == Boolean.TRUE)
 						return true;
 				}
 			} else {
 				// CHECK AGAINST A SINGLE VALUE
-				for (Object o : collection) {
+				for (final Object o : collection) {
 					if (OQueryOperatorEquals.equals(iLeft, o))
 						return true;
 				}
@@ -82,4 +82,10 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 		}
 		return false;
 	}
+
+	@Override
+	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
+		return OIndexReuseType.NO_INDEX;
+	}
+
 }

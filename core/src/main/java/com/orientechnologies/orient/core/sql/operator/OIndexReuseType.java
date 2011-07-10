@@ -15,31 +15,10 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
-
 /**
- * NOT operator.
  * 
- * @author Luca Garulli
- * 
+ *
  */
-public class OQueryOperatorNot extends OQueryOperator {
-
-	public OQueryOperatorNot() {
-		super("NOT", 10, true);
-	}
-
-	@Override
-	public Object evaluateRecord(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-			final Object iRight) {
-		if (iLeft == null)
-			return false;
-		return !(Boolean) iLeft;
-	}
-
-	@Override
-	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
-		return OIndexReuseType.NO_INDEX;
-	}
+public enum OIndexReuseType {
+	LEFT_INDEX, RIGHT_INDEX, ANY_INDEX, BOTH_INDEXES, NO_INDEX, INDEX_METHOD, INDEX_KEY
 }

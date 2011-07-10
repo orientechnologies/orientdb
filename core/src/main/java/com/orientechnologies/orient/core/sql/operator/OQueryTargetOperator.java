@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
  * 
  */
 public abstract class OQueryTargetOperator extends OQueryOperator {
-	protected OQueryTargetOperator(String iKeyword, int iPrecedence, boolean iLogical) {
+	protected OQueryTargetOperator(final String iKeyword, final int iPrecedence, final boolean iLogical) {
 		super(iKeyword, iPrecedence, iLogical);
 	}
 
@@ -41,7 +41,8 @@ public abstract class OQueryTargetOperator extends OQueryOperator {
 	 * At run-time the evaluation per record must return always true since the recordset are filtered at the begin.
 	 */
 	@Override
-	public Object evaluateRecord(ORecordInternal<?> iRecord, OSQLFilterCondition iCondition, Object iLeft, Object iRight) {
+	public Object evaluateRecord(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+			final Object iRight) {
 		return true;
 	}
 

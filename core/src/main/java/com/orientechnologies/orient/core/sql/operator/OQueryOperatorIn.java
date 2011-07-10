@@ -34,7 +34,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, OSQLFilterCondition iCondition, final Object iLeft,
+	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
 		if (iLeft instanceof Collection<?>) {
 			final Collection<Object> sourceCollection = (Collection<Object>) iLeft;
@@ -42,15 +42,15 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 			if (iRight instanceof Collection<?>) {
 				// AGAINST COLLECTION OF ITEMS
 				final Collection<Object> collectionToMatch = (Collection<Object>) iRight;
-				for (Object o1 : sourceCollection) {
-					for (Object o2 : collectionToMatch) {
+				for (final Object o1 : sourceCollection) {
+					for (final Object o2 : collectionToMatch) {
 						if (OQueryOperatorEquals.equals(o1, o2))
 							return true;
 					}
 				}
 			} else {
 				// AGAINST SINGLE ITEM
-				for (Object o : sourceCollection) {
+				for (final Object o : sourceCollection) {
 					if (OQueryOperatorEquals.equals(iRight, o))
 						return true;
 				}
@@ -58,25 +58,30 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 		} else if (iRight instanceof Collection<?>) {
 
 			final Collection<Object> sourceCollection = (Collection<Object>) iRight;
-			for (Object o : sourceCollection) {
+			for (final Object o : sourceCollection) {
 				if (OQueryOperatorEquals.equals(iLeft, o))
 					return true;
 			}
 		} else if (iLeft.getClass().isArray()) {
 
-			for (Object o : (Object[]) iLeft) {
+			for (final Object o : (Object[]) iLeft) {
 				if (OQueryOperatorEquals.equals(iRight, o))
 					return true;
 			}
 		} else if (iRight.getClass().isArray()) {
 
-			for (Object o : (Object[]) iRight) {
+			for (final Object o : (Object[]) iRight) {
 				if (OQueryOperatorEquals.equals(iLeft, o))
 					return true;
 			}
 		}
 
 		return false;
+	}
+
+	@Override
+	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
+		return OIndexReuseType.NO_INDEX;
 	}
 
 }

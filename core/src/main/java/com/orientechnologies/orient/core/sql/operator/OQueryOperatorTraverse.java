@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
@@ -104,7 +103,7 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 			if (target.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
 				try {
 					target.load();
-				} catch (ORecordNotFoundException e) {
+				} catch (final ORecordNotFoundException e) {
 					// INVALID RID
 					return false;
 				}
@@ -113,15 +112,15 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 				return true;
 
 			// TRAVERSE THE DOCUMENT ITSELF
-			for (String cfgField : cfgFields) {
+			for (final String cfgField : cfgFields) {
 				if (cfgField.equalsIgnoreCase(OSQLFilterItemFieldAny.FULL_NAME)) {
 					// ANY
-					for (String fieldName : target.fieldNames())
+					for (final String fieldName : target.fieldNames())
 						if (traverse(iRecord, iRootCondition, iCondition, target.rawField(fieldName), iLevel + 1, iEvaluatedRecords))
 							return true;
 				} else if (cfgField.equalsIgnoreCase(OSQLFilterItemFieldAny.FULL_NAME)) {
 					// ALL
-					for (String fieldName : target.fieldNames())
+					for (final String fieldName : target.fieldNames())
 						if (!traverse(iRecord, iRootCondition, iCondition, target.rawField(fieldName), iLevel + 1, iEvaluatedRecords))
 							return false;
 					return true;
@@ -133,22 +132,22 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 
 		} else if (iTarget instanceof OQueryRuntimeValueMulti) {
 
-			OQueryRuntimeValueMulti multi = (OQueryRuntimeValueMulti) iTarget;
-			for (Object o : multi.values) {
+			final OQueryRuntimeValueMulti multi = (OQueryRuntimeValueMulti) iTarget;
+			for (final Object o : multi.values) {
 				if (traverse(iRecord, iRootCondition, iCondition, o, iLevel + 1, iEvaluatedRecords) == Boolean.TRUE)
 					return true;
 			}
 		} else if (iTarget instanceof Collection<?>) {
 
-			Collection<Object> collection = (Collection<Object>) iTarget;
-			for (Object o : collection) {
+			final Collection<Object> collection = (Collection<Object>) iTarget;
+			for (final Object o : collection) {
 				if (traverse(iRecord, iRootCondition, iCondition, o, iLevel + 1, iEvaluatedRecords) == Boolean.TRUE)
 					return true;
 			}
 		} else if (iTarget instanceof Map<?, ?>) {
 
-			Map<String, ODocument> map = (Map<String, ODocument>) iTarget;
-			for (ODocument o : map.values()) {
+			final Map<String, ODocument> map = (Map<String, ODocument>) iTarget;
+			for (final ODocument o : map.values()) {
 				if (traverse(iRecord, iRootCondition, iCondition, o, iLevel + 1, iEvaluatedRecords) == Boolean.TRUE)
 					return true;
 			}
@@ -186,6 +185,11 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 
 	public String[] getCfgFields() {
 		return cfgFields;
+	}
+
+	@Override
+	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
+		return OIndexReuseType.NO_INDEX;
 	}
 
 	@Override

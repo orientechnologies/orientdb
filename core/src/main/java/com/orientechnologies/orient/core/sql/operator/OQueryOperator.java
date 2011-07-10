@@ -46,6 +46,8 @@ public abstract class OQueryOperator {
 	public abstract Object evaluateRecord(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight);
 
+	public abstract OIndexReuseType getIndexReuseType(Object iLeft, Object iRight);
+
 	@Override
 	public String toString() {
 		return keyword;

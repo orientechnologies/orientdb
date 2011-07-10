@@ -45,20 +45,20 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
 			final Object iRight) {
 		if (iLeft instanceof OQueryRuntimeValueMulti) {
 			// LEFT = MULTI
-			OQueryRuntimeValueMulti left = (OQueryRuntimeValueMulti) iLeft;
+			final OQueryRuntimeValueMulti left = (OQueryRuntimeValueMulti) iLeft;
 
 			if (left.values.length == 0)
 				return false;
 
 			if (left.getDefinition().getName().equals(OSQLFilterItemFieldAll.NAME)) {
 				// ALL VALUES
-				for (Object v : left.values)
+				for (final Object v : left.values)
 					if (v == null || !evaluateExpression(iRecord, iCondition, v, iRight))
 						return false;
 				return true;
 			} else {
 				// ANY VALUES
-				for (Object v : left.values)
+				for (final Object v : left.values)
 					if (v != null && evaluateExpression(iRecord, iCondition, v, iRight))
 						return true;
 				return false;
@@ -66,20 +66,20 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
 
 		} else if (iRight instanceof OQueryRuntimeValueMulti) {
 			// RIGHT = MULTI
-			OQueryRuntimeValueMulti right = (OQueryRuntimeValueMulti) iRight;
+			final OQueryRuntimeValueMulti right = (OQueryRuntimeValueMulti) iRight;
 
 			if (right.values.length == 0)
 				return false;
 
 			if (right.getDefinition().getName().equals(OSQLFilterItemFieldAll.NAME)) {
 				// ALL VALUES
-				for (Object v : right.values)
+				for (final Object v : right.values)
 					if (v == null || !evaluateExpression(iRecord, iCondition, iLeft, v))
 						return false;
 				return true;
 			} else {
 				// ANY VALUES
-				for (Object v : right.values)
+				for (final Object v : right.values)
 					if (v != null && evaluateExpression(iRecord, iCondition, iLeft, v))
 						return true;
 				return false;
