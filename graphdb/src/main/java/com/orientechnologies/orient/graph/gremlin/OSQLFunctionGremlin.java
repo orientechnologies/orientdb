@@ -45,6 +45,10 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 
 	private List<Object>				result;
 
+	private OrientGraph					graph	= null;
+
+	private ScriptEngine				engine;
+
 	public OSQLFunctionGremlin() {
 		super(NAME, 1, 1);
 	}
@@ -56,9 +60,11 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 
 		final ODocument document = (ODocument) iCurrentRecord;
 
-		final ScriptEngine engine = new GremlinScriptEngine();
-		final OrientGraph graph = new OrientGraph(iCurrentRecord.getDatabase().getURL());
-		engine.getBindings(ScriptContext.ENGINE_SCOPE).put("g", graph);
+		if (engine == null) {
+			engine = new GremlinScriptEngine();
+			graph = new OrientGraph(iCurrentRecord.getDatabase().getURL());
+			engine.getBindings(ScriptContext.ENGINE_SCOPE).put("g", graph);
+		}
 
 		final OrientElement graphElement;
 
