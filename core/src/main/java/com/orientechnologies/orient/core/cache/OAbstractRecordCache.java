@@ -265,7 +265,7 @@ public abstract class OAbstractRecordCache extends OSharedResourceAbstract {
 				if (iType == TYPE.JVM) {
 					acquireExclusiveLock();
 					try {
-						OLogManager.instance().warn(this, "Clearing %d resources", entries.size());
+						OLogManager.instance().debug(this, "Clearing %d resources", entries.size());
 						entries.clear();
 					} catch (Exception e) {
 						OLogManager.instance().error(this, "Error while freeing resources", e);
