@@ -89,9 +89,9 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	protected int																								serverOutSynchMaxBuffers;
 	protected boolean																						serverElectedForLeadership;
 
-	private ODistributedServerDiscoverySignaler									discoverySignaler;
-	private ODistributedServerDiscoveryListener									discoveryListener;
-	private ODistributedServerLeaderChecker											leaderCheckerTask;
+	private volatile ODistributedServerDiscoverySignaler				discoverySignaler;
+	private volatile ODistributedServerDiscoveryListener				discoveryListener;
+	private volatile ODistributedServerLeaderChecker						leaderCheckerTask;
 	private ODistributedServerRecordHook												trigger;
 	private final OSharedResourceExternal												lock										= new OSharedResourceExternal();
 
