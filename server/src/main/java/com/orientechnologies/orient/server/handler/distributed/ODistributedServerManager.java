@@ -157,8 +157,10 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 			if (nodes.containsKey(key)) {
 				// ALREADY REGISTERED, MAYBE IT WAS DISCONNECTED. INVOKE THE RECONNECTION
 				node = nodes.get(key);
-				if (node.getStatus() == ODistributedServerNodeRemote.STATUS.CONNECTED)
+				if (node.getStatus() == ODistributedServerNodeRemote.STATUS.CONNECTED) {
+					node.checkConnection();
 					return;
+				}
 			} else {
 				node = new ODistributedServerNodeRemote(this, iServerAddress, iServerPort);
 				nodes.put(key, node);

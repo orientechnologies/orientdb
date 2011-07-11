@@ -395,6 +395,9 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 	}
 
 	public boolean sendHeartBeat(final int iNetworkTimeout) throws InterruptedException {
+		if (channel == null)
+			return false;
+
 		configuration.setValue(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT, iNetworkTimeout);
 		OLogManager.instance()
 				.debug(this, "Sending keepalive message to distributed server node %s:%d...", networkAddress, networkPort);
@@ -565,14 +568,29 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 	}
 
 	public void beginResponse() throws IOException {
-		channel.beginResponse(clientTxId);
+		if (channel != null)
+			channel.beginResponse(clientTxId);
 	}
 
 	public void endResponse() {
-		channel.endResponse();
+		if (channel != null)
+			channel.endResponse();
 	}
 
 	public String getName() {
 		return networkAddress + ":" + networkPort;
+	}
+
+	/**
+	 * Check if a remote node is really connected.
+	 * 
+	 * @return true if it's connected, otherwise false
+	 */
+	public boolean checkConnection() {
+		final boolean connected = channel.socket.isConnected();
+		if (!connected)
+			status = STATUS.DISCONNECTED;
+
+		return connected;
 	}
 }
