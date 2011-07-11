@@ -274,6 +274,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 				throw new IllegalArgumentException("Record ID not found in request");
 
 			final ODocument doc = new ODocument(db, new ORecordId(rid));
+			doc.load();
 			doc.delete();
 			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid
 					+ " deleted successfully.");
