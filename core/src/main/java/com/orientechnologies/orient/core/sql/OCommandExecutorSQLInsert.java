@@ -166,10 +166,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 			// CREATE NEW DOCUMENT
 			ODocument doc = className != null ? new ODocument(database, className) : new ODocument(database);
 
-			// BIND VALUES
-			for (int i = 0; i < fieldNames.size(); ++i) {
-				doc.field(fieldNames.get(i), OSQLHelper.getValue(fieldValues[i], doc));
-			}
+			OSQLHelper.bindParameters(doc, fieldNames, fieldValues, iArgs);
 
 			if (clusterName != null)
 				doc.save(clusterName);

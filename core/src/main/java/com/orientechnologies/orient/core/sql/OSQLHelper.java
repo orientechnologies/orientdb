@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.sql;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandToParse;
@@ -25,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerCSVAbstract;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
@@ -254,5 +256,25 @@ public class OSQLHelper {
 			return ((OSQLFilterItem) iObject).getValue(iRecord);
 
 		return iObject;
+	}
+
+	public static void bindParameters(final ODocument iDocument, final List<String> iFieldNames, final Object[] iFieldValues,
+			final Map<Object, Object> iArgs) {
+		int paramCounter = 0;
+
+		// BIND VALUES
+		for (int i = 0; i < iFieldNames.size(); ++i) {
+			if (iFieldValues[i] instanceof OSQLFilterItemField) {
+				OSQLFilterItemField f = (OSQLFilterItemField) iFieldValues[i];
+				if (f.getName().equals("?"))
+					// POSITIONAL PARAMETER
+					iDocument.field(iFieldNames.get(i), iArgs.get(paramCounter++));
+				else if (f.getName().startsWith(":"))
+					// NAMED PARAMETER
+					iDocument.field(iFieldNames.get(i), iArgs.get(f.getName().substring(1)));
+			} else
+				iDocument.field(iFieldNames.get(i), OSQLHelper.getValue(iFieldValues[i], iDocument));
+		}
+
 	}
 }

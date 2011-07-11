@@ -21,6 +21,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
@@ -40,6 +41,19 @@ public class SQLInsertTest {
 		ODocument doc = (ODocument) database.command(
 				new OCommandSQL("insert into Profile (name, surname, salary, location, dummy) values ('Luca','Smith', 109.9, 13:3, name)"))
 				.execute();
+
+		Assert.assertTrue(doc != null);
+
+		database.close();
+	}
+
+	@Test
+	public void insertWithWildcards() {
+		database.open("admin", "admin");
+
+		ODocument doc = (ODocument) database.command(
+				new OCommandSQL("insert into Profile (name, surname, salary, location, dummy) values (?,?,?,?,?)")).execute("Marc",
+				"Smith", 120.0, new ORecordId(13, 3), "hooray");
 
 		Assert.assertTrue(doc != null);
 
