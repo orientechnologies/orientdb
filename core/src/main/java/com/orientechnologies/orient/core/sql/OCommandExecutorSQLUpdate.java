@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -50,14 +51,16 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 	private static final String									KEYWORD_ADD			= "ADD";
 	private static final String									KEYWORD_PUT			= "PUT";
 	private static final String									KEYWORD_REMOVE	= "REMOVE";
-	private Map<String, Object>									setEntries			= new HashMap<String, Object>();
-	private Map<String, Object>									addEntries			= new HashMap<String, Object>();
-	private Map<String, OPair<String, Object>>	putEntries			= new HashMap<String, OPair<String, Object>>();
-	private Map<String, Object>									removeEntries		= new HashMap<String, Object>();
+	private Map<String, Object>									setEntries			= new LinkedHashMap<String, Object>();
+	private Map<String, Object>									addEntries			= new LinkedHashMap<String, Object>();
+	private Map<String, OPair<String, Object>>	putEntries			= new LinkedHashMap<String, OPair<String, Object>>();
+	private Map<String, Object>									removeEntries		= new LinkedHashMap<String, Object>();
 	private OQuery<?>														query;
 	private int																	recordCount			= 0;
 	private String															subjectName;
 	private static final Object									EMPTY_VALUE			= new Object();
+	private int																	fieldCounter		= 0;
+	private Map<Object, Object>									parameters;
 
 	@SuppressWarnings("unchecked")
 	public OCommandExecutorSQLUpdate parse(final OCommandRequestText iRequest) {
@@ -119,6 +122,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 		if (subjectName == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 
+		parameters = iArgs;
+
 		database.query(query, iArgs);
 		return recordCount;
 	}
@@ -128,19 +133,15 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 	 */
 	@SuppressWarnings("unchecked")
 	public boolean result(final Object iRecord) {
-		ODocument record = (ODocument) iRecord;
+		final ODocument record = (ODocument) iRecord;
 
 		boolean recordUpdated = false;
 
 		// BIND VALUES TO UPDATE
 		Object v;
-		for (Map.Entry<String, Object> entry : setEntries.entrySet()) {
-			v = entry.getValue();
 
-			if (v instanceof OSQLFilterItem)
-				v = ((OSQLFilterItem) v).getValue(record);
-
-			record.field(entry.getKey(), v);
+		if (setEntries.size() > 0) {
+			OSQLHelper.bindParameters(record, setEntries, parameters);
 			recordUpdated = true;
 		}
 

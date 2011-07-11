@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -43,8 +44,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 	private String							className				= null;
 	private String							clusterName			= null;
 	private String							indexName				= null;
-	private List<String>				fieldNames;
-	private Object[]						fieldValues;
+	private Map<String, Object>	fields;
 
 	@SuppressWarnings("unchecked")
 	public OCommandExecutorSQLInsert parse(final OCommandRequestText iRequest) {
@@ -53,8 +53,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 		init(iRequest.getDatabase(), iRequest.getText());
 
 		className = null;
-		fieldNames = null;
-		fieldValues = null;
+		fields = null;
 
 		StringBuilder word = new StringBuilder();
 
@@ -100,7 +99,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 		if (endFields == -1)
 			throw new OCommandSQLParsingException("Missed closed brace", text, beginFields);
 
-		fieldNames = new ArrayList<String>();
+		final ArrayList<String> fieldNames = new ArrayList<String>();
 		OStringSerializerHelper.getParameters(text, beginFields, fieldNames);
 		if (fieldNames.size() == 0)
 			throw new OCommandSQLParsingException("Set of fields is empty. Example: (name, surname)", text, endFields);
@@ -130,9 +129,13 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 			throw new OCommandSQLParsingException("Fields not match with values", text, beginValues);
 
 		// TRANSFORM FIELD VALUES
-		fieldValues = new Object[values.size()];
+		final Object[] fieldValues = new Object[values.size()];
 		for (int i = 0; i < values.size(); ++i)
 			fieldValues[i] = OSQLHelper.parseValue(database, this, values.get(i));
+
+		fields = new LinkedHashMap<String, Object>();
+		for (int i = 0; i < fieldNames.size(); ++i)
+			fields.put(fieldNames.get(i), fieldValues[i]);
 
 		return this;
 	}
@@ -141,7 +144,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 	 * Execute the INSERT and return the ODocument object created.
 	 */
 	public Object execute(final Map<Object, Object> iArgs) {
-		if (fieldNames == null)
+		if (fields == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 
 		if (indexName != null) {
@@ -150,23 +153,13 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 				throw new OCommandExecutionException("Target index '" + indexName + "' not found");
 
 			// BIND VALUES
-			Object key = null;
-			OIdentifiable value = null;
-			for (int i = 0; i < fieldNames.size(); ++i) {
-				final String fieldName = fieldNames.get(i);
-				if (fieldName.equalsIgnoreCase(KEYWORD_KEY))
-					key = fieldValues[i];
-				else if (fieldName.equalsIgnoreCase(KEYWORD_RID))
-					value = (OIdentifiable) fieldValues[i];
-			}
-
-			index.put(key, value);
+			index.put(fields.get(KEYWORD_KEY), (OIdentifiable) fields.get(KEYWORD_RID));
 			return null;
 		} else {
 			// CREATE NEW DOCUMENT
 			ODocument doc = className != null ? new ODocument(database, className) : new ODocument(database);
 
-			OSQLHelper.bindParameters(doc, fieldNames, fieldValues, iArgs);
+			OSQLHelper.bindParameters(doc, fields, iArgs);
 
 			if (clusterName != null)
 				doc.save(clusterName);
