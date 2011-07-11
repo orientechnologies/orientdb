@@ -52,7 +52,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	private OPropertyIndex		index;
 
 	private boolean						mandatory;
-	private boolean						notNull;
+	private boolean						notNull	= true;
 	private String						min;
 	private String						max;
 	private String						regexp;

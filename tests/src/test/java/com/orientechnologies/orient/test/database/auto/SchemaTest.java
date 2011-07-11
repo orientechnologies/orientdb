@@ -23,6 +23,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -152,6 +153,16 @@ public class SchemaTest {
 		database.open("admin", "admin");
 
 		Assert.assertTrue(database.getStorage().countRecords() > 0);
+
+		database.close();
+	}
+
+	@Test(expectedExceptions = OValidationException.class)
+	public void checkErrorOnUserNoPasswd() {
+		database = new ODatabaseFlat(url);
+		database.open("admin", "admin");
+
+		database.getMetadata().getSecurity().createUser("error", null, null);
 
 		database.close();
 	}
