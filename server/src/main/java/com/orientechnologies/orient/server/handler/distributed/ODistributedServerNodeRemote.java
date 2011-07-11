@@ -85,6 +85,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 
 	public void connect(final int iTimeout, final String iClusterName, final SecretKey iSecurityKey) throws IOException {
 		configuration.setValue(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT, iTimeout);
+
 		channel = new OChannelBinaryClient(networkAddress, networkPort, configuration);
 
 		OChannelBinaryProtocol.checkProtocolVersion(channel);
@@ -171,16 +172,15 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 
 				switch (iRequest.status) {
 				case OTransactionRecordEntry.CREATED:
-					channel.getLockWrite().lock();
+					channel.beginRequest();
 					try {
 						channel.writeByte(OChannelBinaryProtocol.REQUEST_RECORD_CREATE);
 						channel.writeInt(databaseEntry.sessionId);
 						channel.writeShort((short) record.getIdentity().getClusterId());
 						channel.writeBytes(record.toStream());
 						channel.writeByte(record.getRecordType());
-						channel.flush();
 					} finally {
-						channel.getLockWrite().unlock();
+						channel.endRequest();
 					}
 
 					response = new Callable<Object>() {
@@ -216,7 +216,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 					break;
 
 				case OTransactionRecordEntry.UPDATED:
-					channel.getLockWrite().lock();
+					channel.beginRequest();
 					try {
 						channel.writeByte(OChannelBinaryProtocol.REQUEST_RECORD_UPDATE);
 						channel.writeInt(databaseEntry.sessionId);
@@ -225,9 +225,8 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 						channel.writeBytes(record.toStream());
 						channel.writeInt(record.getVersion());
 						channel.writeByte(record.getRecordType());
-						channel.flush();
 					} finally {
-						channel.getLockWrite().unlock();
+						channel.endRequest();
 					}
 
 					response = new Callable<Object>() {
@@ -262,17 +261,16 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 					break;
 
 				case OTransactionRecordEntry.DELETED:
-					channel.getLockWrite().lock();
+					channel.beginRequest();
 					try {
 						channel.writeByte(OChannelBinaryProtocol.REQUEST_RECORD_DELETE);
 						channel.writeInt(databaseEntry.sessionId);
 						channel.writeShort((short) record.getIdentity().getClusterId());
 						channel.writeLong(record.getIdentity().getClusterPosition());
 						channel.writeInt(record.getVersion());
-						channel.flush();
 
 					} finally {
-						channel.getLockWrite().unlock();
+						channel.endRequest();
 					}
 
 					response = new Callable<Object>() {
@@ -372,23 +370,23 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 				networkAddress, networkPort);
 
 		try {
-			channel.acquireExclusiveLock();
-
 			try {
+				channel.beginRequest();
+
 				channel.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_CONFIG);
 				channel.writeInt(dbEntry.sessionId);
 				channel.writeBytes(manager.getClusterConfiguration(iDatabaseName).toStream());
-				channel.flush();
-
-				try {
-					beginResponse(dbEntry.sessionId);
-				} finally {
-					endResponse();
-				}
 
 			} finally {
-				channel.releaseExclusiveLock();
+				channel.endRequest();
 			}
+
+			try {
+				beginResponse(dbEntry.sessionId);
+			} finally {
+				endResponse();
+			}
+
 		} catch (Exception e) {
 			OLogManager.instance().warn(this, "Error on sending configuration to server node", toString());
 		}
@@ -403,18 +401,16 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 				.debug(this, "Sending keepalive message to distributed server node %s:%d...", networkAddress, networkPort);
 
 		try {
-			channel.acquireExclusiveLock();
-
-			channel.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_HEARTBEAT);
-			channel.writeInt(clientTxId);
-			channel.flush();
-
-			// long remoteVersion = -1;
+			channel.beginRequest();
+			try {
+				channel.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_HEARTBEAT);
+				channel.writeInt(clientTxId);
+			} finally {
+				channel.endRequest();
+			}
 
 			try {
 				channel.beginResponse(clientTxId);
-				// remoteVersion = channel.readLong();
-
 			} finally {
 				channel.endResponse();
 			}
@@ -422,21 +418,9 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 			// RESET LAST HEARTBEAT
 			lastHeartBeat = System.currentTimeMillis();
 
-			// CHECK DATABASE VERSION
-			// if (remoteVersion != dbVersion) {
-			// OLogManager.instance().warn(this,
-			// "Database version doesn't match between current node (" + dbVersion + ") and remote (" + remoteVersion + ")");
-			//
-			// throw new ODistributedException("Database version doesn't match between current node (" + dbVersion + ") and remote ("
-			// + remoteVersion + ")");
-			// }
-
 		} catch (Exception e) {
 			OLogManager.instance().debug(this, "Error on sending heartbeat to server node", e, toString());
 			return false;
-
-		} finally {
-			channel.releaseExclusiveLock();
 		}
 
 		return true;
@@ -454,23 +438,14 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 		}
 	}
 
-	public void startSynchronization() throws InterruptedException {
-		channel.acquireExclusiveLock();
-		try {
-			if (status != STATUS.CONNECTED) {
-				// SEND THE LAST CONFIGURATION TO THE NODE
-				// sendConfiguration(iDatabaseName);
+	public void startSynchronization() throws InterruptedException, IOException {
+		if (status != STATUS.CONNECTED) {
+			// SEND THE LAST CONFIGURATION TO THE NODE
+			// sendConfiguration(iDatabaseName);
 
-				synchronizeDelta();
+			synchronizeDelta();
 
-				status = STATUS.CONNECTED;
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
-
-		} finally {
-			channel.releaseExclusiveLock();
+			status = STATUS.CONNECTED;
 		}
 	}
 
@@ -482,7 +457,9 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 
 		final String dbName = iDatabase.getName();
 
-		channel.acquireExclusiveLock();
+		final OServerNodeDatabaseEntry databaseEntry;
+
+		channel.beginRequest();
 		try {
 			status = STATUS.SYNCHRONIZING;
 
@@ -504,23 +481,22 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 
 			OLogManager.instance().info(this, "Database exported correctly");
 
-			final OServerNodeDatabaseEntry databaseEntry = new OServerNodeDatabaseEntry();
+			databaseEntry = new OServerNodeDatabaseEntry();
 			databaseEntry.databaseName = dbName;
 			databaseEntry.userName = iDbUser;
 			databaseEntry.userPassword = iDbPasswd;
-
-			try {
-				channel.beginResponse(clientTxId);
-				databaseEntry.sessionId = channel.readInt();
-				databaseEntry.version = channel.readLong();
-
-				databases.put(dbName, databaseEntry);
-			} finally {
-				channel.endResponse();
-			}
-
 		} finally {
-			channel.releaseExclusiveLock();
+			channel.endRequest();
+		}
+
+		try {
+			channel.beginResponse(clientTxId);
+			databaseEntry.sessionId = channel.readInt();
+			databaseEntry.version = channel.readLong();
+
+			databases.put(dbName, databaseEntry);
+		} finally {
+			channel.endResponse();
 		}
 
 		status = STATUS.CONNECTED;
@@ -587,10 +563,23 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 	 * @return true if it's connected, otherwise false
 	 */
 	public boolean checkConnection() {
-		final boolean connected = channel.socket.isConnected();
+		boolean connected = false;
+
+		if (channel != null && channel.socket != null)
+			try {
+				connected = channel.socket.isConnected();
+			} catch (Exception e) {
+			}
+
 		if (!connected)
 			status = STATUS.DISCONNECTED;
 
 		return connected;
+	}
+
+	public void disconnect() {
+		if (channel != null)
+			channel.close();
+		channel = null;
 	}
 }

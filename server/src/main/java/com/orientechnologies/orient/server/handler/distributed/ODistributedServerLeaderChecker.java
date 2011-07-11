@@ -38,8 +38,10 @@ public class ODistributedServerLeaderChecker extends TimerTask {
 
 	@Override
 	public void run() {
-		if (manager.getStatus() != ODistributedServerManager.STATUS.ONLINE)
+		if (manager.isLeader() || manager.getStatus() != ODistributedServerManager.STATUS.ONLINE) {
+			cancel();
 			return;
+		}
 
 		final long time = System.currentTimeMillis() - manager.getLastHeartBeat();
 		if (time > heartBeatDelay) {

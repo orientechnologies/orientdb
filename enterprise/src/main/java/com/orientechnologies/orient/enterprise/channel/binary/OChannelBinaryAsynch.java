@@ -38,6 +38,15 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 		super(iSocket, iConfig);
 	}
 
+	public void beginRequest() {
+		lockWrite.lock();
+	}
+
+	public void endRequest() throws IOException {
+		out.flush();
+		lockWrite.unlock();
+	}
+
 	public int beginResponse(final int iRequesterId) throws IOException {
 		// WAIT FOR THE RESPONSE
 		do {

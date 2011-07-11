@@ -126,10 +126,18 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	public void receivedLeaderConnection(final ONetworkProtocolDistributed iNetworkProtocolDistributed) {
 		OLogManager.instance().info(this, "Joined the cluster '" + name + "'");
 
+		if (discoveryListener != null) {
+			// TURN OFF THE LISTENER
+			discoveryListener.sendShutdown();
+			discoveryListener = null;
+			OLogManager.instance().info(this, "Turned off listener of remote nodes");
+		}
+
 		// STOP TO SEND PACKETS TO BEING DISCOVERED
 		if (discoverySignaler != null) {
 			discoverySignaler.sendShutdown();
 			discoverySignaler = null;
+			OLogManager.instance().info(this, "Turned off thread of discovering leader node");
 		}
 
 		leaderConnection = iNetworkProtocolDistributed;
@@ -157,10 +165,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 			if (nodes.containsKey(key)) {
 				// ALREADY REGISTERED, MAYBE IT WAS DISCONNECTED. INVOKE THE RECONNECTION
 				node = nodes.get(key);
-				if (node.getStatus() == ODistributedServerNodeRemote.STATUS.CONNECTED) {
-					node.checkConnection();
-					return;
-				}
+				// if (node.getStatus() == ODistributedServerNodeRemote.STATUS.CONNECTED && node.checkConnection())
+				// return;
 			} else {
 				node = new ODistributedServerNodeRemote(this, iServerAddress, iServerPort);
 				nodes.put(key, node);
@@ -183,6 +189,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	 * Handle the failure of a node
 	 */
 	public void handleNodeFailure(final ODistributedServerNodeRemote node) {
+		node.disconnect();
+
 		// ERROR
 		OLogManager.instance().warn(this, "Remote server node %s:%d seems down, retrying to connect...", node.networkAddress,
 				node.networkPort);
@@ -211,6 +219,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 			if (discoveryListener != null)
 				// I'M ALREADY THE LEADER, DO NOTHING
 				return;
+
+			nodes.clear();
 
 			if (iForce)
 				leaderConnection = null;
@@ -385,9 +395,9 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	}
 
 	/**
-	 * Tells if there is a distributed configuration active right now.
+	 * Tells if current node is the leader.
 	 */
-	public boolean isDistributedConfiguration() {
+	public boolean isLeader() {
 		return !nodes.isEmpty();
 	}
 
