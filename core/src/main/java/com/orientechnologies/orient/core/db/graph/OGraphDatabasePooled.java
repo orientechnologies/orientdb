@@ -43,6 +43,7 @@ public class OGraphDatabasePooled extends OGraphDatabase implements ODatabasePoo
 	public void reuse(final Object iOwner) {
 		ownerPool = (OGraphDatabasePool) iOwner;
 		getMetadata().reload();
+		checkForGraphSchema();
 	}
 
 	@Override
