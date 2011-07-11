@@ -75,8 +75,6 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 					if (dirtyFields.contains(propEntry.getKey().getName())) {
 						// REMOVE IT
 						originalValue = iRecord.getOriginalValue(propEntry.getKey().getName());
-						if (originalValue != null)
-							originalValue = originalValue.toString();
 
 						index = propEntry.getKey().getIndex().getUnderlying();
 
