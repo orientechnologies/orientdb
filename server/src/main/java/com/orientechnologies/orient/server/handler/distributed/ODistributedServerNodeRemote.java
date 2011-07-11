@@ -167,9 +167,11 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 			status = STATUS.SYNCHRONIZING;
 
 			try {
+				final Callable<Object> response;
+
 				switch (iRequest.status) {
 				case OTransactionRecordEntry.CREATED:
-					channel.acquireExclusiveLock();
+					channel.getLockWrite().lock();
 					try {
 						channel.writeByte(OChannelBinaryProtocol.REQUEST_RECORD_CREATE);
 						channel.writeInt(databaseEntry.sessionId);
@@ -177,37 +179,44 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 						channel.writeBytes(record.toStream());
 						channel.writeByte(record.getRecordType());
 						channel.flush();
-
-						final Callable<Object> response = new Callable<Object>() {
-							@Override
-							public Object call() throws Exception {
-								try {
-									beginResponse(databaseEntry.sessionId);
-									databaseEntry.version++;
-									channel.readLong();
-
-								} finally {
-									endResponse();
-								}
-								return null;
-							}
-						};
-
-						if (iRequestType == SYNCH_TYPE.ASYNCHRONOUS)
-							asynchExecutor.submit(new FutureTask<Object>(response));
-						else
-							try {
-								response.call();
-							} catch (Exception e) {
-							}
-
 					} finally {
-						channel.releaseExclusiveLock();
+						channel.getLockWrite().unlock();
 					}
+
+					response = new Callable<Object>() {
+						@Override
+						public Object call() throws Exception {
+							beginResponse(databaseEntry.sessionId);
+							try {
+								databaseEntry.version++;
+								final long clusterPosition = channel.readLong();
+
+								if (clusterPosition != record.getIdentity().getClusterPosition())
+									handleError(iRequest, iRequestType, new ODistributedException("Error on distributed insert for database '"
+											+ record.getDatabase().getName() + "': the recordId received from the remote server node '" + getName()
+											+ "' is different from the current one. Master=" + record.getIdentity() + ", " + getName() + "=#"
+											+ record.getIdentity().getClusterId() + ":" + clusterPosition
+											+ ". Unsharing the database against the remote server node..."));
+
+							} finally {
+								endResponse();
+							}
+							return null;
+						}
+					};
+
+					if (iRequestType == SYNCH_TYPE.ASYNCHRONOUS)
+						asynchExecutor.submit(new FutureTask<Object>(response));
+					else
+						try {
+							response.call();
+						} catch (Exception e) {
+						}
+
 					break;
 
 				case OTransactionRecordEntry.UPDATED:
-					channel.acquireExclusiveLock();
+					channel.getLockWrite().lock();
 					try {
 						channel.writeByte(OChannelBinaryProtocol.REQUEST_RECORD_UPDATE);
 						channel.writeInt(databaseEntry.sessionId);
@@ -217,37 +226,43 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 						channel.writeInt(record.getVersion());
 						channel.writeByte(record.getRecordType());
 						channel.flush();
-
-						final Callable<Object> response = new Callable<Object>() {
-							@Override
-							public Object call() throws Exception {
-								try {
-									beginResponse(databaseEntry.sessionId);
-									databaseEntry.version++;
-									channel.readInt();
-
-								} finally {
-									endResponse();
-								}
-								return null;
-							}
-						};
-
-						if (iRequestType == SYNCH_TYPE.ASYNCHRONOUS)
-							asynchExecutor.submit(new FutureTask<Object>(response));
-						else
-							try {
-								response.call();
-							} catch (Exception e) {
-							}
-
 					} finally {
-						channel.releaseExclusiveLock();
+						channel.getLockWrite().unlock();
 					}
+
+					response = new Callable<Object>() {
+						@Override
+						public Object call() throws Exception {
+							beginResponse(databaseEntry.sessionId);
+							try {
+								databaseEntry.version++;
+								final int version = channel.readInt();
+
+								if (version != record.getVersion())
+									handleError(iRequest, iRequestType, new ODistributedException("Error on distributed update for database '"
+											+ record.getDatabase().getName() + "': the version received from the remote server node '" + getName()
+											+ "' is different from the current one. Master=" + record.getVersion() + ", " + getName() + "=" + version
+											+ ". Unsharing the database against the remote server node..."));
+
+							} finally {
+								endResponse();
+							}
+							return null;
+						}
+					};
+
+					if (iRequestType == SYNCH_TYPE.ASYNCHRONOUS)
+						asynchExecutor.submit(new FutureTask<Object>(response));
+					else
+						try {
+							response.call();
+						} catch (Exception e) {
+						}
+
 					break;
 
 				case OTransactionRecordEntry.DELETED:
-					channel.acquireExclusiveLock();
+					channel.getLockWrite().lock();
 					try {
 						channel.writeByte(OChannelBinaryProtocol.REQUEST_RECORD_DELETE);
 						channel.writeInt(databaseEntry.sessionId);
@@ -256,54 +271,62 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 						channel.writeInt(record.getVersion());
 						channel.flush();
 
-						final Callable<Object> response = new Callable<Object>() {
-							@Override
-							public Object call() throws Exception {
-								try {
-									beginResponse(databaseEntry.sessionId);
-									databaseEntry.version++;
-									channel.readByte();
-
-								} finally {
-									endResponse();
-								}
-								return null;
-							}
-						};
-
-						if (iRequestType == SYNCH_TYPE.ASYNCHRONOUS)
-							asynchExecutor.submit(new FutureTask<Object>(response));
-						else
-							try {
-								response.call();
-							} catch (Exception e) {
-							}
-
 					} finally {
-						channel.releaseExclusiveLock();
+						channel.getLockWrite().unlock();
 					}
+
+					response = new Callable<Object>() {
+						@Override
+						public Object call() throws Exception {
+							try {
+								beginResponse(databaseEntry.sessionId);
+								databaseEntry.version++;
+								channel.readByte();
+
+							} finally {
+								endResponse();
+							}
+							return null;
+						}
+					};
+
+					if (iRequestType == SYNCH_TYPE.ASYNCHRONOUS)
+						asynchExecutor.submit(new FutureTask<Object>(response));
+					else
+						try {
+							response.call();
+						} catch (Exception e) {
+						}
+
 					break;
 				}
 
 				status = STATUS.CONNECTED;
 
-			} catch (InterruptedException e) {
-				handleError(iRequest, iRequestType, e);
 			} catch (IOException e) {
 				handleError(iRequest, iRequestType, e);
 			}
 		}
 	}
 
-	protected void handleError(final OTransactionRecordEntry iRequest, final SYNCH_TYPE iRequestType, Exception e) throws IOException {
+	protected void handleError(final OTransactionRecordEntry iRequest, final SYNCH_TYPE iRequestType, final Exception iException)
+			throws IOException {
 		manager.handleNodeFailure(this);
+
+		if (channel != null) {
+			try {
+				channel.close();
+			} catch (Exception e) {
+			}
+			channel = null;
+		}
 
 		if (iRequestType == SYNCH_TYPE.SYNCHRONOUS) {
 			// SYNCHRONOUS CASE: RE-THROW THE EXCEPTION NOW TO BEING PROPAGATED UP TO THE CLIENT
-			if (e instanceof IOException)
-				throw (IOException) e;
+			if (iException instanceof IOException)
+				throw (IOException) iException;
 			else
-				throw new IOException("Timeout on get lock against channel", e);
+				throw new IOException("Timeout on get lock against channel", iException);
 		} else
 			// BUFFER THE REQUEST TO BE RE-EXECUTED WHEN RECONNECTED
 			bufferChange(iRequest);
@@ -547,5 +570,9 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 
 	public void endResponse() {
 		channel.endResponse();
+	}
+
+	public String getName() {
+		return networkAddress + ":" + networkPort;
 	}
 }

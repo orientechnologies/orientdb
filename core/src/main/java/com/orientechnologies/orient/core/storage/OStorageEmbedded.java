@@ -189,7 +189,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 					// PASS THROUGH
 					throw e;
 				} catch (Exception e) {
-					OLogManager.instance().error(this, "Error on loading record %s. Cause: %s",
+					OLogManager.instance().error(this, "Error on loading record %s. Cause: %s", e,
 							recordToCheck != null ? recordToCheck.getIdentity() : null, e);
 				}
 			}
