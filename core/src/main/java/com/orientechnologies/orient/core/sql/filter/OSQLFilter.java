@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 
@@ -224,7 +225,7 @@ public class OSQLFilter extends OCommandToParse {
 		String word;
 		word = nextWord(true, " 0123456789'\"");
 
-		for (OQueryOperator op : OSQLHelper.getRecordOperators()) {
+		for (OQueryOperator op : OSQLEngine.getInstance().getRecordOperators()) {
 			if (word.startsWith(op.keyword)) {
 				final List<String> params = new ArrayList<String>();
 				// CHECK FOR PARAMETERS

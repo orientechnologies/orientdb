@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 
 /**
  * SQL Helper class
@@ -73,16 +72,6 @@ public class OSQLHelper {
 		}
 
 		return ioCurrentPosition;
-	}
-
-	public static OQueryOperator[] getRecordOperators() {
-		return OSQLEngine.RECORD_OPERATORS;
-	}
-
-	public static void registerOperator(final OQueryOperator iOperator) {
-		OQueryOperator[] ops = new OQueryOperator[OSQLEngine.RECORD_OPERATORS.length + 1];
-		System.arraycopy(OSQLEngine.RECORD_OPERATORS, 0, ops, 0, OSQLEngine.RECORD_OPERATORS.length);
-		OSQLEngine.RECORD_OPERATORS = ops;
 	}
 
 	/**

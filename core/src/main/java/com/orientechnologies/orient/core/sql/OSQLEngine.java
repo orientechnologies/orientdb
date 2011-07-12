@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIs;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorLike;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMatches;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNot;
@@ -67,8 +68,8 @@ public class OSQLEngine {
 	public static OQueryOperator[]																		RECORD_OPERATORS			= { new OQueryOperatorAnd(),
 			new OQueryOperatorOr(), new OQueryOperatorNotEquals(), new OQueryOperatorNot(), new OQueryOperatorEquals(),
 			new OQueryOperatorMinorEquals(), new OQueryOperatorMinor(), new OQueryOperatorMajorEquals(), new OQueryOperatorContainsAll(),
-			new OQueryOperatorMajor(), new OQueryOperatorLike(), new OQueryOperatorIs(), new OQueryOperatorIn(),
-			new OQueryOperatorContainsKey(), new OQueryOperatorContainsValue(), new OQueryOperatorContainsText(),
+			new OQueryOperatorMajor(), new OQueryOperatorLike(), new OQueryOperatorMatches(), new OQueryOperatorIs(),
+			new OQueryOperatorIn(), new OQueryOperatorContainsKey(), new OQueryOperatorContainsValue(), new OQueryOperatorContainsText(),
 			new OQueryOperatorContains(), new OQueryOperatorContainsText(), new OQueryOperatorTraverse(), new OQueryOperatorBetween(),
 			new OQueryOperatorPlus(), new OQueryOperatorMinus(), new OQueryOperatorMultiply(), new OQueryOperatorDivide(),
 			new OQueryOperatorMod()																														};
@@ -131,6 +132,16 @@ public class OSQLEngine {
 
 		// GEO FUNCTIONS
 		registerFunction(OSQLFunctionDistance.NAME, new OSQLFunctionDistance());
+	}
+
+	public OQueryOperator[] getRecordOperators() {
+		return RECORD_OPERATORS;
+	}
+
+	public static void registerOperator(final OQueryOperator iOperator) {
+		final OQueryOperator[] ops = new OQueryOperator[RECORD_OPERATORS.length + 1];
+		System.arraycopy(RECORD_OPERATORS, 0, ops, 0, RECORD_OPERATORS.length);
+		RECORD_OPERATORS = ops;
 	}
 
 	public void registerFunction(final String iName, final OSQLFunction iFunction) {
