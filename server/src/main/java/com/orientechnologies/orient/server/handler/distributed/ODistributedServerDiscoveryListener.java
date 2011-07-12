@@ -98,18 +98,18 @@ public class ODistributedServerDiscoveryListener extends OSoftThread {
 					return;
 				}
 
-				String serverAddress = parts[++i];
-				serverAddress = dgram.getAddress().getHostAddress();
+				String configuredServerAddress = parts[++i];
+				String sourceServerAddress = dgram.getAddress().getHostAddress();
 				final int serverPort = Integer.parseInt(parts[++i]);
 
 				// CHECK IF THE PACKET WAS SENT BY MYSELF
-				if (serverAddress.equals(binaryNetworkListener.getInboundAddr().getHostName())
+				if (configuredServerAddress.equals(binaryNetworkListener.getInboundAddr().getHostName())
 						&& serverPort == binaryNetworkListener.getInboundAddr().getPort())
 					// IT'S ME, JUST IGNORE
 					return;
 
 				// GOOD PACKET, PASS TO THE DISTRIBUTED NODE MANAGER THIS INFO
-				serverNode.joinNode(serverAddress, serverPort);
+				serverNode.joinNode(new String[] { sourceServerAddress, configuredServerAddress }, serverPort);
 
 			} catch (Exception e) {
 				// WRONG PACKET

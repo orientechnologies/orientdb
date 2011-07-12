@@ -17,6 +17,7 @@ package com.orientechnologies.orient.server.handler.distributed;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -150,39 +151,49 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	/**
 	 * Callback invoked by OClusterDiscoveryListener when a good packed has been received.
 	 * 
-	 * @param iServerAddress
-	 *          Server address where to connect
+	 * @param iServerAddresses
+	 *          Array of Server addresses where to connect. The order will be respected.
+	 * @param iSourceServerAddress
 	 * @param iServerPort
 	 *          Server port
 	 */
-	public void joinNode(final String iServerAddress, final int iServerPort) {
-		final String key = getNodeName(iServerAddress, iServerPort);
-		final ODistributedServerNodeRemote node;
+	public void joinNode(final String[] iServerAddresses, final int iServerPort) {
+		Throwable lastException = null;
 
-		lock.acquireExclusiveLock();
-		try {
+		for (String serverAddress : iServerAddresses) {
+			final String key = getNodeName(serverAddress, iServerPort);
+			final ODistributedServerNodeRemote node;
 
-			if (nodes.containsKey(key)) {
-				// ALREADY REGISTERED, MAYBE IT WAS DISCONNECTED. INVOKE THE RECONNECTION
-				node = nodes.get(key);
-				// if (node.getStatus() == ODistributedServerNodeRemote.STATUS.CONNECTED && node.checkConnection())
-				// return;
-			} else {
-				node = new ODistributedServerNodeRemote(this, iServerAddress, iServerPort);
-				nodes.put(key, node);
+			lock.acquireExclusiveLock();
+			try {
+
+				if (nodes.containsKey(key)) {
+					// ALREADY REGISTERED, MAYBE IT WAS DISCONNECTED. INVOKE THE RECONNECTION
+					node = nodes.get(key);
+					// if (node.getStatus() == ODistributedServerNodeRemote.STATUS.CONNECTED && node.checkConnection())
+					// return;
+				} else {
+					node = new ODistributedServerNodeRemote(this, serverAddress, iServerPort);
+					nodes.put(key, node);
+				}
+
+			} finally {
+				lock.releaseExclusiveLock();
 			}
 
-		} finally {
-			lock.releaseExclusiveLock();
+			try {
+				node.connect(networkTimeoutNode, name, securityKey);
+				node.startSynchronization();
+				return;
+
+			} catch (Exception e) {
+				lastException = e;
+			}
 		}
 
-		try {
-			node.connect(networkTimeoutNode, name, securityKey);
-			node.startSynchronization();
-		} catch (Exception e) {
-			OLogManager.instance().error(this, "Can't connect to distributed server node: %s:%d", e, node.networkAddress,
-					node.networkPort);
-		}
+		OLogManager.instance().error(this, "Can't connect to distributed server node using addresses %s:%d and %s:%d", lastException,
+				iServerAddresses[0], iServerPort, iServerAddresses[1], iServerPort);
+
 	}
 
 	/**
@@ -351,11 +362,24 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		lock.acquireSharedLock();
 		try {
 
-			final ODistributedServerNodeRemote node = nodes.get(iNodeName);
-			if (node == null)
-				throw new IllegalArgumentException("Node '" + iNodeName + "' is not configured on server: " + getId());
+			ODistributedServerNodeRemote node = nodes.get(iNodeName);
+			if (node != null)
+				return node;
 
-			return node;
+			// TRY TO RESOLVE NETWORK HOST NAME
+			final String[] parts = iNodeName.split(":");
+			if (parts.length == 2)
+				try {
+					final InetAddress address = InetAddress.getByName(parts[0]);
+					if (address != null) {
+						node = nodes.get(address.getHostAddress() + ":" + parts[1]);
+						if (node != null)
+							return node;
+					}
+				} catch (UnknownHostException e) {
+				}
+
+			throw new IllegalArgumentException("Node '" + iNodeName + "' is not configured on server: " + getId());
 
 		} finally {
 			lock.releaseSharedLock();
