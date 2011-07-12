@@ -254,11 +254,8 @@ public abstract class OChannelBinary extends OChannel {
 		else {
 			writeInt(iCollection.size());
 
-			int i = 0;
-			for (String s : iCollection) {
+			for (String s : iCollection)
 				writeString(s);
-				i++;
-			}
 		}
 
 		return this;
@@ -284,18 +281,29 @@ public abstract class OChannelBinary extends OChannel {
 	@Override
 	public void close() {
 		try {
-			if (in != null)
-				in.close();
-		} catch (IOException e) {
+			acquireExclusiveLock();
+		} catch (InterruptedException e1) {
+			return;
 		}
 
 		try {
-			if (out != null)
-				out.close();
-		} catch (IOException e) {
-		}
+			try {
+				if (in != null)
+					in.close();
+			} catch (IOException e) {
+			}
 
-		super.close();
+			try {
+				if (out != null)
+					out.close();
+			} catch (IOException e) {
+			}
+
+			super.close();
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public int readStatus() throws IOException {

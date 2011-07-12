@@ -334,4 +334,12 @@ public class OStorageRemoteThread implements OStorage {
 	public void removeRemoteServerEventListener(final ORemoteServerEventListener iListener) {
 		delegate.removeRemoteServerEventListener(iListener);
 	}
+
+	public void closeChannel(final OChannelBinaryClient network) {
+		delegate.closeChannel(network);
+	}
+
+	protected void handleException(final String iMessage, final Exception iException) {
+		delegate.handleException(iMessage, iException);
+	}
 }

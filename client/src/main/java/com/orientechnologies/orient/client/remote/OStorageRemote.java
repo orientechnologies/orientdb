@@ -18,6 +18,7 @@ package com.orientechnologies.orient.client.remote;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -91,6 +92,9 @@ public class OStorageRemote extends OStorageAbstract {
 	private final boolean														debug												= false;
 	private ODocument																clusterConfiguration;
 	private final List<ORemoteServerEventListener>	remoteServerEventListeners	= new ArrayList<ORemoteServerEventListener>();
+	private String																	connectionUserName;
+	private String																	connectionUserPassword;
+	private Map<String, Object>											connectionOptions;
 
 	public OStorageRemote(final String iURL, final String iMode) throws IOException {
 		super(iURL, iURL, iMode);
@@ -128,8 +132,12 @@ public class OStorageRemote extends OStorageAbstract {
 
 		lock.acquireExclusiveLock();
 
+		connectionUserName = iUserName;
+		connectionUserPassword = iUserPassword;
+		connectionOptions = new HashMap<String, Object>(iOptions); // CREATE A COPY TO AVOID USER MANIPULATION POST OPEN
+
 		try {
-			openRemoteDatabase(iUserName, iUserPassword, iOptions);
+			openRemoteDatabase();
 
 			configuration = new OStorageConfiguration(this);
 			configuration.load();
@@ -521,7 +529,7 @@ public class OStorageRemote extends OStorageAbstract {
 				// PASS THROUGH
 				throw e;
 			} catch (Exception e) {
-				handleException("Error on read record count in clusters: " + iClusterIds, e);
+				handleException("Error on read record count in clusters: " + Arrays.toString(iClusterIds), e);
 
 			}
 		} while (true);
@@ -968,7 +976,9 @@ public class OStorageRemote extends OStorageAbstract {
 		if (!(iException instanceof IOException))
 			throw new OStorageException(iMessage, iException);
 
-		while (retry < connectionRetry) {
+		final long lostConnectionTime = System.currentTimeMillis();
+
+		for (retry = 0; retry < connectionRetry; ++retry) {
 			// WAIT THE DELAY BEFORE TO RETRY
 			try {
 				Thread.sleep(connectionRetryDelay);
@@ -979,35 +989,33 @@ public class OStorageRemote extends OStorageAbstract {
 				if (OLogManager.instance().isDebugEnabled())
 					OLogManager.instance().debug(this, "Retrying to connect to remote server #" + retry + "/" + connectionRetry + "...");
 
-				openRemoteDatabase(null, null, null);
-
-				retry = 0;
+				openRemoteDatabase();
 
 				OLogManager.instance().info(this,
-						"Connection re-acquired in transparent way: no errors will be thrown at application level");
+						"Connection re-acquired in transparent way after %dms and %d retries: no errors will be thrown at application level",
+						System.currentTimeMillis() - lostConnectionTime, retry + 1);
 
+				// RECONNECTED!
 				return;
+
 			} catch (Throwable t) {
-				++retry;
+				// DO NOTHING BUT CONTINUE IN THE LOOP
 			}
 		}
-
-		retry = 0;
 
 		// RECONNECTION FAILED: THROW+LOG THE ORIGINAL EXCEPTION
 		throw new OStorageException(iMessage, iException);
 	}
 
-	protected void openRemoteDatabase(final String iUserName, final String iUserPassword, final Map<String, Object> iOptions)
-			throws IOException {
+	protected void openRemoteDatabase() throws IOException {
 		minPool = OGlobalConfiguration.CLIENT_CHANNEL_MIN_POOL.getValueAsInteger();
 		maxPool = OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.getValueAsInteger();
 
-		if (iOptions != null && iOptions.size() > 0) {
-			if (iOptions.containsKey(PARAM_MIN_POOL))
-				minPool = Integer.parseInt(iOptions.get(PARAM_MIN_POOL).toString());
-			if (iOptions.containsKey(PARAM_MAX_POOL))
-				maxPool = Integer.parseInt(iOptions.get(PARAM_MAX_POOL).toString());
+		if (connectionOptions != null && connectionOptions.size() > 0) {
+			if (connectionOptions.containsKey(PARAM_MIN_POOL))
+				minPool = Integer.parseInt(connectionOptions.get(PARAM_MIN_POOL).toString());
+			if (connectionOptions.containsKey(PARAM_MAX_POOL))
+				maxPool = Integer.parseInt(connectionOptions.get(PARAM_MAX_POOL).toString());
 		}
 
 		createConnectionPool();
@@ -1016,7 +1024,7 @@ public class OStorageRemote extends OStorageAbstract {
 		try {
 			network = beginRequest(OChannelBinaryProtocol.REQUEST_DB_OPEN);
 
-			network.writeString(name).writeString(iUserName).writeString(iUserPassword);
+			network.writeString(name).writeString(connectionUserName).writeString(connectionUserPassword);
 
 		} finally {
 			endRequest(network);
@@ -1113,15 +1121,11 @@ public class OStorageRemote extends OStorageAbstract {
 			port = Integer.parseInt(server.getValue()[server.getValue().length - 1]);
 
 			OLogManager.instance().debug(this, "Trying to connect to the remote host %s:%d...", server.getKey(), port);
-			try {
-				final OChannelBinaryClient network = new OChannelBinaryClient(server.getKey(), port, clientConfiguration);
+			final OChannelBinaryClient network = new OChannelBinaryClient(server.getKey(), port, clientConfiguration);
 
-				OChannelBinaryProtocol.checkProtocolVersion(network);
+			OChannelBinaryProtocol.checkProtocolVersion(network);
 
-				return network;
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+			return network;
 		}
 
 		final StringBuilder buffer = new StringBuilder();
@@ -1245,17 +1249,31 @@ public class OStorageRemote extends OStorageAbstract {
 
 		try {
 			iNetwork.flush();
-		} catch (IOException e) {
+			// } catch (IOException e) {
 			// IGNORE IT BECAUSE IT COULD BE CALLED AFTER A NETWORK ERROR TO RELEASE THE SOCKET
+		} finally {
+
+			iNetwork.getLockWrite().unlock();
+
+			if (debug)
+				System.out.println("<- req: " + getSessionId());
+
+			synchronized (networkPool) {
+				networkPool.notifyAll();
+			}
 		}
+	}
 
-		if (debug)
-			System.out.println("<- req: " + getSessionId());
-
-		iNetwork.getLockWrite().unlock();
-
+	/**
+	 * Closes the channel and remove it from the pool.
+	 * 
+	 * @param iNetwork
+	 *          Channel to close and remove
+	 */
+	protected void closeChannel(final OChannelBinaryClient iNetwork) {
+		iNetwork.close();
 		synchronized (networkPool) {
-			networkPool.notifyAll();
+			networkPool.remove(iNetwork);
 		}
 	}
 
@@ -1346,6 +1364,15 @@ public class OStorageRemote extends OStorageAbstract {
 
 	protected void createConnectionPool() throws IOException, UnknownHostException {
 		synchronized (networkPool) {
+			if (!networkPool.isEmpty()) {
+				// CHECK EXISTENT NETWORK CONNECTIONS
+				final List<OChannelBinaryClient> editableList = new ArrayList<OChannelBinaryClient>(networkPool);
+				for (OChannelBinaryClient net : editableList) {
+					if (!net.isConnected())
+						// CLOSE IT AND REMOVE FROM THE LIST
+						closeChannel(net);
+				}
+			}
 
 			// CREATE THE CHANNEL POOL
 			if (networkPool.size() == 0) {

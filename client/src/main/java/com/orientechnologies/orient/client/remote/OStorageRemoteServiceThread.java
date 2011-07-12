@@ -48,6 +48,8 @@ public class OStorageRemoteServiceThread extends OSoftThread {
 				// EXCEPTION RECEIVED (THE SOCKET HAS BEEN CLOSED?) ASSURE TO UNLOCK THE READ AND EXIT THIS THREAD
 				network.endResponse();
 				sendShutdown();
+				storage.closeChannel(network);
+				storage.handleException("Network connection lost", ioe);
 				return;
 			}
 
@@ -78,6 +80,7 @@ public class OStorageRemoteServiceThread extends OSoftThread {
 
 		} catch (Exception e) {
 			// OLogManager.instance().error(this, "Error in service thread", e);
+			sendShutdown();
 		}
 	}
 }

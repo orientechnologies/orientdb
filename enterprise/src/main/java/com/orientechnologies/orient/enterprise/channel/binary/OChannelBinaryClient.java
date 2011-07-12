@@ -53,4 +53,21 @@ public class OChannelBinaryClient extends OChannelBinaryAsynch {
 		socket.close();
 		socket.connect(address, timeout);
 	}
+
+	/**
+	 * Tells if the channel is connected.
+	 * 
+	 * @return true if it's connected, otherwise false.
+	 */
+	public boolean isConnected() {
+		if (socket != null && socket.isConnected() && !socket.isInputShutdown() && !socket.isOutputShutdown()) {
+			try {
+				out.flush();
+				return true;
+			} catch (IOException e) {
+			}
+		}
+
+		return false;
+	}
 }

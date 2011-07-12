@@ -54,8 +54,16 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 
 			if (!channelRead) {
 				channelRead = true;
-				currentStatus = readByte();
-				currentTxId = readInt();
+
+				try {
+					currentStatus = readByte();
+					currentTxId = readInt();
+
+				} catch (IOException e) {
+					// UNLOCK THE RESOURCE AND PROPAGATES THE EXCEPTION
+					lockRead.unlock();
+					throw e;
+				}
 			}
 
 			if (currentTxId == iRequesterId)

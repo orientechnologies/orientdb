@@ -135,17 +135,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			@ConsoleParameter(name = "url", description = "The url of the remote server or the database to connect in the format '<mode>:<path>'") String iURL,
 			@ConsoleParameter(name = "user", description = "User name") String iUserName,
 			@ConsoleParameter(name = "password", description = "User password") String iUserPassword) throws IOException {
-		if (currentDatabase != null) {
-			currentDatabase.close();
-			currentDatabase = null;
-			currentDatabaseName = null;
-			currentRecord = null;
-		}
-
-		if (serverAdmin != null) {
-			serverAdmin.close();
-			serverAdmin = null;
-		}
+		disconnect();
 
 		currentDatabaseUserName = iUserName;
 		currentDatabaseUserPassword = iUserPassword;
@@ -176,27 +166,29 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	@ConsoleCommand(aliases = { "close database" }, description = "Disconnect from the current database")
 	public void disconnect() {
 		if (serverAdmin != null) {
+			out.print("\nDisconnecting from remote server [" + serverAdmin.getURL() + "]...");
 			serverAdmin.close();
 			serverAdmin = null;
+			out.println("OK");
 		}
 
-		checkCurrentDatabase();
+		if (currentDatabase != null) {
+			out.print("\nDisconnecting from the database [" + currentDatabaseName + "]...");
 
-		out.print("Disconnecting from the database [" + currentDatabaseName + "]...");
+			final OStorage stg = Orient.instance().getStorage(currentDatabase.getURL());
 
-		final OStorage stg = Orient.instance().getStorage(currentDatabase.getURL());
+			currentDatabase.close();
 
-		currentDatabase.close();
+			// FORCE CLOSING OF STORAGE: THIS CLEAN UP REMOTE CONNECTIONS
+			if (stg != null)
+				stg.close(true);
 
-		// FORCE CLOSING OF STORAGE: THIS CLEAN UP REMOTE CONNECTIONS
-		if (stg != null)
-			stg.close(true);
+			currentDatabase = null;
+			currentDatabaseName = null;
+			currentRecord = null;
 
-		currentDatabase = null;
-		currentDatabaseName = null;
-		currentRecord = null;
-
-		out.println("OK");
+			out.println("OK");
+		}
 	}
 
 	@ConsoleCommand(description = "Create a new database")

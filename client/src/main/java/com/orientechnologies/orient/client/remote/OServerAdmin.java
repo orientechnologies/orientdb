@@ -260,4 +260,8 @@ public class OServerAdmin {
 	public void close() {
 		storage.close();
 	}
+
+	public String getURL() {
+		return storage != null ? storage.getURL() : null;
+	}
 }
