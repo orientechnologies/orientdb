@@ -70,12 +70,38 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			data.commandInfo = "Cluster connection";
 			final String clusterName = channel.readString();
 			final byte[] encodedSecurityKey = channel.readBytes();
+			final long runningSince = channel.readLong();
 
 			if (!clusterName.equals(manager.getName()) || !Arrays.equals(encodedSecurityKey, manager.getSecurityKey()))
 				throw new OSecurityException("Invalid combination of cluster name and key received");
 
-			manager.receivedLeaderConnection(this);
-			sendOk(lastClientTxId);
+			channel.acquireExclusiveLock();
+			try {
+				sendOk(lastClientTxId);
+
+				if (manager.isLeader()) {
+					OLogManager.instance().warn(this,
+							"Received remote connection from the leader node %s, but current node is leader itself: split network problem?",
+							channel.socket.getRemoteSocketAddress());
+
+					if (runningSince > manager.getRunningSince()) {
+						// OTHER NODE IS OLDER: WINS
+						OLogManager.instance().warn(this, "Current node becames Non-Leader since the other node is running since longer time");
+						manager.receivedLeaderConnection(this);
+						channel.writeByte((byte) 1);
+					} else {
+						OLogManager.instance().warn(this, "Current node remains Leader since it's running since longer time");
+						// THIS NODE IS OLDER: WIN! REFUSE THE CONNECTION
+						channel.writeByte((byte) 0);
+					}
+				} else {
+					manager.receivedLeaderConnection(this);
+					channel.writeByte((byte) 1);
+				}
+
+			} finally {
+				channel.releaseExclusiveLock();
+			}
 			break;
 		}
 
@@ -89,10 +115,14 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 			ODistributedRequesterThreadLocal.INSTANCE.set(true);
 
-			sendOk(lastClientTxId);
-
-			channel.writeInt(connection.id);
-			channel.writeLong(connection.database.getStorage().getVersion());
+			channel.acquireExclusiveLock();
+			try {
+				sendOk(lastClientTxId);
+				channel.writeInt(connection.id);
+				channel.writeLong(connection.database.getStorage().getVersion());
+			} finally {
+				channel.releaseExclusiveLock();
+			}
 			break;
 		}
 
@@ -115,7 +145,12 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 			remoteServerNode.shareDatabase(connection.database, remoteServerName, dbUser, dbPassword, engineName, synchronousMode);
 
-			sendOk(lastClientTxId);
+			channel.acquireExclusiveLock();
+			try {
+				sendOk(lastClientTxId);
+			} finally {
+				channel.releaseExclusiveLock();
+			}
 
 			manager.addServerInConfiguration(dbUrl, remoteServerName, synchronousMode);
 
@@ -151,13 +186,19 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 				OLogManager.instance().info(this, "Importing database '%s' via streaming from remote server node...", dbName);
 
-				new ODatabaseImport(connection.database, new OChannelBinaryInputStream(channel), this).importDatabase();
+				channel.acquireExclusiveLock();
+				try {
+					new ODatabaseImport(connection.database, new OChannelBinaryInputStream(channel), this).importDatabase();
 
-				OLogManager.instance().info(this, "Database imported correctly", dbName);
+					OLogManager.instance().info(this, "Database imported correctly", dbName);
 
-				sendOk(lastClientTxId);
-				channel.writeInt(connection.id);
-				channel.writeLong(connection.database.getStorage().getVersion());
+					sendOk(lastClientTxId);
+					channel.writeInt(connection.id);
+					channel.writeLong(connection.database.getStorage().getVersion());
+				} finally {
+					channel.releaseExclusiveLock();
+				}
+
 			} finally {
 				manager.updateHeartBeatTime();
 				manager.setStatus(ODistributedServerManager.STATUS.ONLINE);
@@ -174,14 +215,27 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 			OLogManager.instance().warn(this, "Changed distributed server configuration:\n%s", config.toJSON(""));
 
-			sendOk(lastClientTxId);
+			channel.acquireExclusiveLock();
+			try {
+				sendOk(lastClientTxId);
+			} finally {
+				channel.releaseExclusiveLock();
+			}
 			break;
 		}
 
 		default:
 			// BINARY REQUESTS
 			super.parseCommand();
+			return;
 		}
+
+		try {
+			channel.flush();
+		} catch (Throwable t) {
+			OLogManager.instance().debug(this, "Error on send data over the network", t);
+		}
+
 	}
 
 	@Override

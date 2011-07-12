@@ -38,6 +38,7 @@ public class ODistributedServerDiscoverySignaler extends OPollerThread {
 	private DatagramSocket						socket;
 	private ODistributedServerManager	manager;
 	private boolean										forceLeadership;
+	private TimerTask									runningTask;
 
 	public ODistributedServerDiscoverySignaler(final ODistributedServerManager iManager,
 			final OServerNetworkListener iNetworkListener, final boolean iForceLeadership) {
@@ -59,22 +60,21 @@ public class ODistributedServerDiscoverySignaler extends OPollerThread {
 	}
 
 	private void startTimeoutPresenceTask() {
-		Orient.getTimer().schedule(new TimerTask() {
+		runningTask = new TimerTask() {
 			@Override
 			public void run() {
 				try {
-					if (running)
+					if (running && !manager.isLeaderConnected())
 						// TIMEOUT: STOP TO SEND PACKETS TO BEING DISCOVERED
 						manager.becameLeader(forceLeadership);
-
-					shutdown();
-					cancel();
 
 				} catch (Exception e) {
 					// AVOID THE TIMER IS NOT SCHEDULED ANYMORE IN CASE OF EXCEPTION
 				}
 			}
-		}, manager.networkTimeoutLeader);
+		};
+
+		Orient.getTimer().schedule(runningTask, manager.networkTimeoutLeader);
 	}
 
 	@Override
@@ -91,7 +91,8 @@ public class ODistributedServerDiscoverySignaler extends OPollerThread {
 
 	@Override
 	protected void execute() throws Exception {
-		OLogManager.instance().warn(this, "Discovering servers using IP Multicast on %s:%d...", dgram.getAddress(), dgram.getPort());
+		OLogManager.instance().debug(this, "Sending node presence signal over the network against IP Multicast %s:%d...",
+				dgram.getAddress(), dgram.getPort());
 
 		try {
 			socket.send(dgram);
@@ -109,6 +110,9 @@ public class ODistributedServerDiscoverySignaler extends OPollerThread {
 
 	@Override
 	public void shutdown() {
+		if (runningTask != null)
+			runningTask.cancel();
+
 		try {
 			if (socket != null)
 				socket.close();

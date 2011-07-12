@@ -83,7 +83,17 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 		asynchExecutor = Executors.newSingleThreadExecutor();
 	}
 
-	public void connect(final int iTimeout, final String iClusterName, final SecretKey iSecurityKey) throws IOException {
+	/**
+	 * Connects the current node versus a remote node.
+	 * 
+	 * @param iTimeout
+	 * @param iClusterName
+	 * @param iSecurityKey
+	 * @return true if the node has been connected, otherwise false. False is the case the other node is a Leader too and wins the
+	 *         conflicts.
+	 * @throws IOException
+	 */
+	public boolean connect(final int iTimeout, final String iClusterName, final SecretKey iSecurityKey) throws IOException {
 		configuration.setValue(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT, iTimeout);
 
 		channel = new OChannelBinaryClient(networkAddress, networkPort, configuration);
@@ -100,9 +110,18 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 
 		channel.writeString(iClusterName);
 		channel.writeBytes(iSecurityKey.getEncoded());
+		channel.writeLong(manager.getRunningSince());
 
 		channel.flush();
 		channel.readStatus();
+
+		final boolean connected = channel.readByte() == 1;
+		if (!connected) {
+			OLogManager.instance().warn(this, "Remote server node %s:%d has refused the connection because it's the new Leader",
+					networkAddress, networkPort);
+			manager.abandonLeadership();
+			return false;
+		}
 
 		// CONNECT EACH DATABASES
 		final List<OServerNodeDatabaseEntry> servers = new ArrayList<OServerNodeDatabaseEntry>(databases.values());
@@ -150,6 +169,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 					(System.currentTimeMillis() - lastHeartBeat) / 1000);
 
 		lastHeartBeat = System.currentTimeMillis();
+		return true;
 	}
 
 	public void sendRequest(final OTransactionRecordEntry iRequest, final SYNCH_TYPE iRequestType) throws IOException {
@@ -237,11 +257,11 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 								databaseEntry.version++;
 								final int version = channel.readInt();
 
-								if (version != record.getVersion())
-									handleError(iRequest, iRequestType, new ODistributedException("Error on distributed update for database '"
-											+ record.getDatabase().getName() + "': the version received from the remote server node '" + getName()
-											+ "' is different from the current one. Master=" + record.getVersion() + ", " + getName() + "=" + version
-											+ ". Unsharing the database against the remote server node..."));
+//								if (version != record.getVersion())
+//									handleError(iRequest, iRequestType, new ODistributedException("Error on distributed update for database '"
+//											+ record.getDatabase().getName() + "': the version received from the remote server node '" + getName()
+//											+ "' is different from the current one. Master=" + record.getVersion() + ", " + getName() + "=" + version
+//											+ ". Unsharing the database against the remote server node..."));
 
 							} finally {
 								endResponse();
@@ -472,25 +492,25 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 			channel.writeString(iDbUser);
 			channel.writeString(iDbPasswd);
 			channel.writeString(iEngineName);
-
-			OLogManager.instance().info(this, "Exporting database '%s' via streaming to remote server node: %s...", iDatabase.getName(),
-					iRemoteServerName);
-
-			// START THE EXPORT GIVING AS OUTPUTSTREAM THE CHANNEL TO STREAM THE EXPORT
-			new ODatabaseExport(iDatabase, new OChannelBinaryOutputStream(channel), this).exportDatabase();
-
-			OLogManager.instance().info(this, "Database exported correctly");
-
-			databaseEntry = new OServerNodeDatabaseEntry();
-			databaseEntry.databaseName = dbName;
-			databaseEntry.userName = iDbUser;
-			databaseEntry.userPassword = iDbPasswd;
 		} finally {
 			channel.endRequest();
 		}
 
+		OLogManager.instance().info(this, "Exporting database '%s' via streaming to remote server node: %s...", iDatabase.getName(),
+				iRemoteServerName);
+
+		// START THE EXPORT GIVING AS OUTPUTSTREAM THE CHANNEL TO STREAM THE EXPORT
+		new ODatabaseExport(iDatabase, new OChannelBinaryOutputStream(channel), this).exportDatabase();
+
+		OLogManager.instance().info(this, "Database exported correctly");
+
+		databaseEntry = new OServerNodeDatabaseEntry();
+		databaseEntry.databaseName = dbName;
+		databaseEntry.userName = iDbUser;
+		databaseEntry.userPassword = iDbPasswd;
+
+		channel.beginResponse(clientTxId);
 		try {
-			channel.beginResponse(clientTxId);
 			databaseEntry.sessionId = channel.readInt();
 			databaseEntry.version = channel.readLong();
 

@@ -38,10 +38,15 @@ public class ODistributedServerLeaderChecker extends TimerTask {
 
 	@Override
 	public void run() {
-		if (manager.isLeader() || manager.getStatus() != ODistributedServerManager.STATUS.ONLINE) {
+		if (manager.isLeader()) {
+			// THE NODE IS THE LEADER: CANCEL THIS TASK
 			cancel();
 			return;
 		}
+
+		if (manager.getStatus() != ODistributedServerManager.STATUS.ONLINE)
+			// THE NODE IS NOT ONLINE, IGNORE THE HEARTBEAT
+			return;
 
 		final long time = System.currentTimeMillis() - manager.getLastHeartBeat();
 		if (time > heartBeatDelay) {
@@ -50,12 +55,11 @@ public class ODistributedServerLeaderChecker extends TimerTask {
 					.instance()
 					.warn(
 							this,
-							"No heartbeat message has been received from the Leader node (last was %d ms ago). Resend presence message in broadcast...",
+							"No heartbeat message has been received from the Leader node (last was %d ms ago)",
 							time);
 
 			cancel();
-
-			manager.broadcastPresence(manager.serverElectedForLeadership);
+			manager.becameLeader(false);
 		}
 	}
 }

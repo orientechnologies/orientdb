@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -105,15 +104,19 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 	private OServerNetworkListener															distributedNetworkListener;
 	private ONetworkProtocolDistributed													leaderConnection;
+	final private long																					startupDate							= System.currentTimeMillis();
 	public long																									lastHeartBeat;
 	private Map<String, ODocument>															clusterDbConfigurations	= new HashMap<String, ODocument>();
 
 	private volatile STATUS																			status									= STATUS.ONLINE;
+	private boolean																							leader									= false;
 
 	@Override
 	public void startup() {
 		trigger = new ODistributedServerRecordHook(this);
-		broadcastPresence(serverElectedForLeadership);
+
+		// LAUNCH THE SIGNAL AND WAIT FOR A CONNECTION
+		discoverySignaler = new ODistributedServerDiscoverySignaler(this, distributedNetworkListener, serverElectedForLeadership);
 	}
 
 	@Override
@@ -127,18 +130,13 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	public void receivedLeaderConnection(final ONetworkProtocolDistributed iNetworkProtocolDistributed) {
 		OLogManager.instance().info(this, "Joined the cluster '" + name + "'");
 
+		leader = false;
+
 		if (discoveryListener != null) {
 			// TURN OFF THE LISTENER
 			discoveryListener.sendShutdown();
 			discoveryListener = null;
 			OLogManager.instance().info(this, "Turned off listener of remote nodes");
-		}
-
-		// STOP TO SEND PACKETS TO BEING DISCOVERED
-		if (discoverySignaler != null) {
-			discoverySignaler.sendShutdown();
-			discoverySignaler = null;
-			OLogManager.instance().info(this, "Turned off thread of discovering leader node");
 		}
 
 		leaderConnection = iNetworkProtocolDistributed;
@@ -156,6 +154,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	 * @param iSourceServerAddress
 	 * @param iServerPort
 	 *          Server port
+	 * @throws IOException
+	 * @throws InterruptedException
 	 */
 	public void joinNode(final String[] iServerAddresses, final int iServerPort) {
 		Throwable lastException = null;
@@ -168,32 +168,36 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 			try {
 
 				if (nodes.containsKey(key)) {
-					// ALREADY REGISTERED, MAYBE IT WAS DISCONNECTED. INVOKE THE RECONNECTION
+					// ALREADY REGISTERED, MAYBE IT WAS DISCONNECTED
 					node = nodes.get(key);
-					// if (node.getStatus() == ODistributedServerNodeRemote.STATUS.CONNECTED && node.checkConnection())
-					// return;
-				} else {
+					if (node.getStatus() != ODistributedServerNodeRemote.STATUS.UNREACHABLE
+							&& node.getStatus() != ODistributedServerNodeRemote.STATUS.DISCONNECTED && node.checkConnection())
+						// CONNECTION OK
+						return;
+				} else
 					node = new ODistributedServerNodeRemote(this, serverAddress, iServerPort);
+
+				try {
+					if (!node.connect(networkTimeoutNode, name, securityKey))
+						// LEADERSHIP NOT ACCEPTED
+						return;
+
+					// CONNECTION OK: ADD IT IN THE NODE LIST
 					nodes.put(key, node);
+					node.startSynchronization();
+					return;
+
+				} catch (Exception e) {
+					lastException = e;
 				}
 
 			} finally {
 				lock.releaseExclusiveLock();
 			}
-
-			try {
-				node.connect(networkTimeoutNode, name, securityKey);
-				node.startSynchronization();
-				return;
-
-			} catch (Exception e) {
-				lastException = e;
-			}
 		}
 
 		OLogManager.instance().error(this, "Can't connect to distributed server node using addresses %s:%d and %s:%d", lastException,
 				iServerAddresses[0], iServerPort, iServerAddresses[1], iServerPort);
-
 	}
 
 	/**
@@ -208,9 +212,10 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 		// RETRY TO CONNECT
 		try {
-			node.connect(networkTimeoutNode, name, securityKey);
+			if (!node.connect(networkTimeoutNode, name, securityKey)) {
+			}
 		} catch (IOException e) {
-			// IO ERROR: THE NODE SEEMD ALWAYS MORE DOWN: START TO COLLECT DATA FOR IT WAITING FOR A FUTURE RE-CONNECTION
+			// IO ERROR: THE NODE SEEMED ALWAYS MORE DOWN: START TO COLLECT DATA FOR IT WAITING FOR A FUTURE RE-CONNECTION
 			OLogManager.instance().debug(this, "Remote server node %s:%d is down, set it as DISCONNECTED and start to buffer changes",
 					node.networkAddress, node.networkPort);
 
@@ -227,17 +232,18 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		lock.acquireExclusiveLock();
 		try {
 
-			if (discoveryListener != null)
+			if (leader)
 				// I'M ALREADY THE LEADER, DO NOTHING
 				return;
 
+			leader = true;
+
+			for (Entry<String, ODistributedServerNodeRemote> node : nodes.entrySet()) {
+				node.getValue().disconnect();
+			}
 			nodes.clear();
 
-			if (iForce)
-				leaderConnection = null;
-			else if (leaderConnection != null)
-				// I'M NOT THE LEADER CAUSE I WAS BEEN CONNECTED BY THE LEADER
-				return;
+			leaderConnection = null;
 
 			OLogManager.instance().warn(this, "Current node is the new cluster Leader of distributed nodes");
 
@@ -250,6 +256,37 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 			// START HEARTBEAT FOR CONNECTIONS
 			Orient.getTimer().schedule(new ODistributedServerNodeChecker(this), networkHeartbeatDelay, networkHeartbeatDelay);
+
+		} finally {
+			lock.releaseExclusiveLock();
+		}
+	}
+
+	/**
+	 * Abandon leadership
+	 * 
+	 * @param iForce
+	 */
+	public void abandonLeadership() {
+		lock.acquireExclusiveLock();
+		try {
+
+			if (!leader)
+				// I'M NOT THE LEADER, DO NOTHING
+				return;
+
+			leader = false;
+
+			for (Entry<String, ODistributedServerNodeRemote> node : nodes.entrySet()) {
+				node.getValue().disconnect();
+			}
+			nodes.clear();
+
+			// NO NODE HAS JOINED: BECAME THE LEADER AND LISTEN FOR OTHER NODES
+			if (discoveryListener != null) {
+				discoveryListener.sendShutdown();
+				discoveryListener = null;
+			}
 
 		} finally {
 			lock.releaseExclusiveLock();
@@ -362,22 +399,9 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		lock.acquireSharedLock();
 		try {
 
-			ODistributedServerNodeRemote node = nodes.get(iNodeName);
+			final ODistributedServerNodeRemote node = nodes.get(resolveNetworkHost(iNodeName));
 			if (node != null)
 				return node;
-
-			// TRY TO RESOLVE NETWORK HOST NAME
-			final String[] parts = iNodeName.split(":");
-			if (parts.length == 2)
-				try {
-					final InetAddress address = InetAddress.getByName(parts[0]);
-					if (address != null) {
-						node = nodes.get(address.getHostAddress() + ":" + parts[1]);
-						if (node != null)
-							return node;
-					}
-				} catch (UnknownHostException e) {
-				}
 
 			throw new IllegalArgumentException("Node '" + iNodeName + "' is not configured on server: " + getId());
 
@@ -422,7 +446,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	 * Tells if current node is the leader.
 	 */
 	public boolean isLeader() {
-		return !nodes.isEmpty();
+		return leader;
 	}
 
 	@Override
@@ -515,11 +539,6 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 	public void updateHeartBeatTime() {
 		this.lastHeartBeat = System.currentTimeMillis();
-		if (discoverySignaler != null) {
-			// SIGNALER ON: SHUT DOWN IT
-			discoverySignaler.sendShutdown();
-			discoverySignaler = null;
-		}
 	}
 
 	public ODocument getClusterConfiguration(final String iDatabaseName) {
@@ -542,8 +561,11 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	// return addServerInConfiguration(iDatabaseName, getId(), getId(), "{\"*\":{\"owner\":{\"" + getId() + "\":{}}}}");
 	// }
 
-	public ODocument addServerInConfiguration(final String iDatabaseName, final String iAddress, final boolean iSynchronous) {
+	public ODocument addServerInConfiguration(final String iDatabaseName, String iAddress, final boolean iSynchronous)
+			throws UnknownHostException {
 		final StringBuilder cfg = new StringBuilder();
+
+		iAddress = resolveNetworkHost(iAddress);
 
 		cfg.append("{ \"*\" : { ");
 		cfg.append("\"owner\" : \"");
@@ -559,7 +581,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 	@SuppressWarnings("unchecked")
 	public ODocument addServerInConfiguration(final String iDatabaseName, final String iAddress,
-			final String iServerClusterConfiguration) {
+			final String iServerClusterConfiguration) throws UnknownHostException {
 
 		ODocument dbConfiguration = clusterDbConfigurations.get(iDatabaseName);
 		if (dbConfiguration == null) {
@@ -568,14 +590,6 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		}
 
 		// ADD IT IN THE SERVER LIST
-		Collection<String> servers = dbConfiguration.field("servers");
-		if (servers == null) {
-			servers = new LinkedHashSet<String>();
-			dbConfiguration.field("servers", servers);
-		}
-
-		servers.add(iAddress);
-
 		ODocument clusters = dbConfiguration.field("clusters");
 		if (clusters == null) {
 			clusters = new ODocument().addOwner(dbConfiguration);
@@ -673,15 +687,21 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		status = iOnline;
 	}
 
-	protected void broadcastPresence(final boolean iForceLeadership) {
-		if (discoverySignaler != null) {
-			// SHUT DOWN PREVIOUS THREAD
-			discoverySignaler.sendShutdown();
-			discoverySignaler = null;
-		}
+	public static String resolveNetworkHost(final String iAddress) {
+		final String[] parts = iAddress.split(":");
+		if (parts.length == 2)
+			try {
+				final InetAddress address = InetAddress.getByName(parts[0]);
+				if (address != null)
+					return address.getHostAddress() + ":" + parts[1];
+			} catch (UnknownHostException e) {
+			}
 
-		// LAUNCH THE SIGNAL AND WAIT FOR A CONNECTION
-		discoverySignaler = new ODistributedServerDiscoverySignaler(this, distributedNetworkListener, iForceLeadership);
+		return iAddress;
+
 	}
 
+	public long getRunningSince() {
+		return System.currentTimeMillis() - startupDate;
+	}
 }

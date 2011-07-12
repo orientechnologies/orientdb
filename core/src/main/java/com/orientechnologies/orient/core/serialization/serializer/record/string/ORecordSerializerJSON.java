@@ -88,7 +88,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 		iSource = iSource.substring(1, iSource.length() - 1).trim();
 
-		String[] fields = OStringParser.getWords(iSource, ":,", true);
+		final String[] fields = OStringParser.getWords(iSource, ":,", true);
 
 		String fieldName;
 		String fieldValue;
