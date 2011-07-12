@@ -32,7 +32,6 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.client.distributed.OClientClusterManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -978,16 +977,28 @@ public class OStorageRemote extends OStorageAbstract {
 
 		final long lostConnectionTime = System.currentTimeMillis();
 
-		for (retry = 0; retry < connectionRetry; ++retry) {
+		final int currentMaxRetry;
+		final int currentRetryDelay;
+		if (clusterConfiguration != null) {
+			// IN CLUSTER: NO RETRY AND 0 SLEEP TIME BETWEEN NODES
+			currentMaxRetry = 1;
+			currentRetryDelay = 0;
+		} else {
+			currentMaxRetry = connectionRetry;
+			currentRetryDelay = connectionRetryDelay;
+		}
+
+		for (retry = 0; retry < currentMaxRetry; ++retry) {
 			// WAIT THE DELAY BEFORE TO RETRY
-			try {
-				Thread.sleep(connectionRetryDelay);
-			} catch (InterruptedException e) {
-			}
+			if (currentRetryDelay > 0)
+				try {
+					Thread.sleep(currentRetryDelay);
+				} catch (InterruptedException e) {
+				}
 
 			try {
 				if (OLogManager.instance().isDebugEnabled())
-					OLogManager.instance().debug(this, "Retrying to connect to remote server #" + retry + "/" + connectionRetry + "...");
+					OLogManager.instance().debug(this, "Retrying to connect to remote server #" + retry + "/" + currentMaxRetry + "...");
 
 				openRemoteDatabase();
 
@@ -1000,6 +1011,10 @@ public class OStorageRemote extends OStorageAbstract {
 
 			} catch (Throwable t) {
 				// DO NOTHING BUT CONTINUE IN THE LOOP
+			}
+
+			if (clusterConfiguration != null) {
+
 			}
 		}
 
@@ -1051,7 +1066,7 @@ public class OStorageRemote extends OStorageAbstract {
 			}
 
 			// READ CLUSTER CONFIGURATION
-			updateClusterConfiguration(network.readBytes());
+			clusterConfiguration = new ODocument(network.readBytes());
 
 		} finally {
 			endResponse(network);
@@ -1312,16 +1327,6 @@ public class OStorageRemote extends OStorageAbstract {
 	public void updateClusterConfiguration(final byte[] iContent) {
 		if (iContent == null)
 			return;
-
-		synchronized (OClientClusterManager.INSTANCE) {
-
-			// GET DATABASE'S CLUSTER CONFIGURATION
-			clusterConfiguration = OClientClusterManager.INSTANCE.get(name);
-			if (clusterConfiguration == null) {
-				clusterConfiguration = new ODocument();
-				OClientClusterManager.INSTANCE.register(name, clusterConfiguration);
-			}
-		}
 
 		synchronized (clusterConfiguration) {
 			clusterConfiguration.reset();
