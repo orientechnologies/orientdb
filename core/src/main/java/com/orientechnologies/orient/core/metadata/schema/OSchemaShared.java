@@ -204,7 +204,12 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema {
 				}
 
 			getDatabase().command(new OCommandSQL(cmd.toString())).execute();
-			reload();
+
+			if (classes.containsKey(key))
+				return classes.get(key);
+			else
+				// ADD IT LOCALLY AVOIDING TO RELOAD THE ENTIRE SCHEMA
+				createClassInternal(iClassName, iSuperClass, iClusterIds);
 
 			return classes.get(key);
 
@@ -243,8 +248,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema {
 
 			if (iSuperClass != null)
 				cls.setSuperClassInternal(iSuperClass);
-
-			saveInternal();
 
 			return cls;
 
@@ -322,7 +325,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema {
 			}
 
 			classes.remove(key);
-			saveInternal();
 
 		} finally {
 			lock.releaseExclusiveLock();

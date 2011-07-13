@@ -20,6 +20,7 @@ import java.util.Map;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -120,8 +121,9 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLPermissio
 		if (database.getMetadata().getSchema().existsClass(className))
 			throw new OCommandExecutionException("Class " + className + " already exists");
 
-		final OClass sourceClass = ((OSchemaProxy) database.getMetadata().getSchema()).createClassInternal(className, superClass,
-				clusterIds);
+		final OClassImpl sourceClass = (OClassImpl) ((OSchemaProxy) database.getMetadata().getSchema()).createClassInternal(className,
+				superClass, clusterIds);
+		sourceClass.saveInternal();
 		return sourceClass.getId();
 	}
 }

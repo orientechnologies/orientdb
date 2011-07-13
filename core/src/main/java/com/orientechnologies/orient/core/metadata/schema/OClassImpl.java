@@ -140,7 +140,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		owner.changeClassName(name, iName);
 		name = iName;
-		owner.saveInternal();
 	}
 
 	public String getShortName() {
@@ -308,7 +307,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		prop.dropIndex();
 
 		fixedSize -= prop.getType().size;
-		owner.saveInternal();
 	}
 
 	public OProperty addProperty(final String iPropertyName, final OType iType, final OType iLinkedType, final OClass iLinkedClass) {
@@ -344,20 +342,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
 		if (existsProperty(iPropertyName))
 			return properties.get(lowerName);
-		else {
+		else
 			// ADD IT LOCALLY AVOIDING TO RELOAD THE ENTIRE SCHEMA
-			return addNewProperty(iPropertyName, iType, iLinkedType, iLinkedClass);
-		}
-	}
-
-	public OPropertyImpl addPropertyInternal(final String iName, final OType iType, final OType iLinkedType, final OClass iLinkedClass) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
-
-		final OPropertyImpl prop = addNewProperty(iName, iType, iLinkedType, iLinkedClass);
-
-		owner.saveInternal();
-
-		return prop;
+			return addPropertyInternal(iPropertyName, iType, iLinkedType, iLinkedClass);
 	}
 
 	@Override
@@ -642,7 +629,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		throw new IllegalArgumentException("Can't find attribute '" + iAttribute + "'");
 	}
 
-	public void setInternal(final ATTRIBUTES attribute, final Object iValue) {
+	public void setInternalAndSave(final ATTRIBUTES attribute, final Object iValue) {
 		if (attribute == null)
 			throw new IllegalArgumentException("attribute is null");
 
@@ -662,8 +649,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 			setOverSizeInternal(Float.parseFloat(stringValue.replace(',', '.')));
 			break;
 		}
-		
-		owner.saveInternal();
+
+		saveInternal();
 	}
 
 	public OClass set(final ATTRIBUTES attribute, final Object iValue) {
@@ -711,7 +698,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		}
 	}
 
-	private OPropertyImpl addNewProperty(final String iName, final OType iType, final OType iLinkedType, final OClass iLinkedClass) {
+	public OPropertyImpl addPropertyInternal(final String iName, final OType iType, final OType iLinkedType, final OClass iLinkedClass) {
 		if (iName == null || iName.length() == 0)
 			throw new OSchemaException("Found property name null");
 
@@ -734,5 +721,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		else if (iLinkedClass != null)
 			prop.setLinkedClassInternal(iLinkedClass);
 		return prop;
+	}
+
+	public void saveInternal() {
+		owner.saveInternal();
 	}
 }

@@ -76,12 +76,13 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLPermissi
 		if (fieldName == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 
-		OClassImpl sourceClass = (OClassImpl) database.getMetadata().getSchema().getClass(className);
+		final OClassImpl sourceClass = (OClassImpl) database.getMetadata().getSchema().getClass(className);
 		if (sourceClass == null)
 			throw new OCommandExecutionException("Source class '" + className + "' not found");
 
 		// REMOVE THE PROPERTY
 		sourceClass.dropPropertyInternal(fieldName);
+		sourceClass.saveInternal();
 
 		return null;
 	}

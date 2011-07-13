@@ -120,6 +120,7 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLPermis
 
 		// CREATE IT LOCALLY
 		prop = sourceClass.addPropertyInternal(fieldName, type, linkedType, linkedClass);
+		sourceClass.saveInternal();
 
 		return prop.getId();
 	}

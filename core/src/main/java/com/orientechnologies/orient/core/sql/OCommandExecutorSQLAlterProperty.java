@@ -111,7 +111,7 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLPermiss
 		if (prop == null)
 			throw new OCommandExecutionException("Property '" + className + "." + fieldName + "' not exists");
 
-		prop.setInternal(attribute, value);
+		prop.setInternalAndSave(attribute, value);
 		return null;
 	}
 }

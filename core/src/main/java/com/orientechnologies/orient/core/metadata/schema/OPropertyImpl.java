@@ -396,7 +396,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		throw new IllegalArgumentException("Can't find attribute '" + iAttribute + "'");
 	}
 
-	public void setInternal(final ATTRIBUTES attribute, final Object iValue) {
+	public void setInternalAndSave(final ATTRIBUTES attribute, final Object iValue) {
 		if (attribute == null)
 			throw new IllegalArgumentException("attribute is null");
 
@@ -549,7 +549,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		return document;
 	}
 
-	private void saveInternal() {
+	public void saveInternal() {
 		if (getDatabase().getStorage() instanceof OStorageEmbedded)
 			((OSchemaProxy) getDatabase().getMetadata().getSchema()).saveInternal();
 	}

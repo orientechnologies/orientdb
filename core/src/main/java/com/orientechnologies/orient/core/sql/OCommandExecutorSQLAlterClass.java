@@ -98,7 +98,7 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLPermission
 		if (cls == null)
 			throw new OCommandExecutionException("Source class '" + className + "' not found");
 
-		cls.setInternal(attribute, value);
+		cls.setInternalAndSave(attribute, value);
 		renameCluster();
 		return null;
 	}

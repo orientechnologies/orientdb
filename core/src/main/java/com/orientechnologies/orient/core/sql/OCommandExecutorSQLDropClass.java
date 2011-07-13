@@ -71,6 +71,7 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLPermissionA
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 
 		((OSchemaProxy) database.getMetadata().getSchema()).dropClassInternal(className);
+		((OSchemaProxy) database.getMetadata().getSchema()).saveInternal();
 
 		return null;
 	}
