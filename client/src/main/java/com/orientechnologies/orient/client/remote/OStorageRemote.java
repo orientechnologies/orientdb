@@ -1033,6 +1033,7 @@ public class OStorageRemote extends OStorageAbstract {
 				maxPool = Integer.parseInt(connectionOptions.get(PARAM_MAX_POOL).toString());
 		}
 
+		setSessionId(-1);
 		createConnectionPool();
 
 		OChannelBinaryClient network = null;

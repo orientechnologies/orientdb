@@ -81,7 +81,7 @@ public class OServerAdmin {
 
 		} catch (Exception e) {
 			OLogManager.instance().error(this, "Can't connect to the remote server: " + storage.getName(), e, OStorageException.class);
-			storage.close();
+			storage.close(true);
 		}
 		return this;
 	}
@@ -114,7 +114,7 @@ public class OServerAdmin {
 
 		} catch (Exception e) {
 			OLogManager.instance().error(this, "Can't create the remote storage: " + storage.getName(), e, OStorageException.class);
-			storage.close();
+			storage.close(true);
 		}
 		return this;
 	}
@@ -140,7 +140,7 @@ public class OServerAdmin {
 		} catch (Exception e) {
 			OLogManager.instance().exception("Error on checking existance of the remote storage: " + storage.getName(), e,
 					OStorageException.class);
-			storage.close();
+			storage.close(true);
 		}
 		return false;
 	}
@@ -161,7 +161,7 @@ public class OServerAdmin {
 
 		} catch (Exception e) {
 			OLogManager.instance().exception("Can't delete the remote storage: " + storage.getName(), e, OStorageException.class);
-			storage.close();
+			storage.close(true);
 		}
 		return this;
 	}
@@ -215,7 +215,7 @@ public class OServerAdmin {
 
 		} catch (Exception e) {
 			OLogManager.instance().exception("Can't retrieve the configuration list", e, OStorageException.class);
-			storage.close();
+			storage.close(true);
 		}
 		return config;
 	}
@@ -236,7 +236,7 @@ public class OServerAdmin {
 
 		} catch (Exception e) {
 			OLogManager.instance().exception("Can't retrieve the configuration value: " + iConfig.getKey(), e, OStorageException.class);
-			storage.close();
+			storage.close(true);
 		}
 		return null;
 	}
@@ -252,13 +252,17 @@ public class OServerAdmin {
 
 		} catch (Exception e) {
 			OLogManager.instance().exception("Can't set the configuration value: " + iConfig.getKey(), e, OStorageException.class);
-			storage.close();
+			storage.close(true);
 		}
 		return this;
 	}
 
 	public void close() {
 		storage.close();
+	}
+
+	public void close(boolean iForce) {
+		storage.close(iForce);
 	}
 
 	public String getURL() {

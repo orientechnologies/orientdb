@@ -167,7 +167,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	public void disconnect() {
 		if (serverAdmin != null) {
 			out.print("\nDisconnecting from remote server [" + serverAdmin.getURL() + "]...");
-			serverAdmin.close();
+			serverAdmin.close(true);
 			serverAdmin = null;
 			out.println("OK");
 		}

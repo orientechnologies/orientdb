@@ -37,6 +37,7 @@ public class OChannelBinaryClient extends OChannelBinaryAsynch {
 
 		socket.setPerformancePreferences(0, 2, 1);
 
+		socket.setKeepAlive(true);
 		socket.setSendBufferSize(socketBufferSize);
 		socket.setReceiveBufferSize(socketBufferSize);
 		socket.connect(new InetSocketAddress(remoteHost, remotePort), timeout);
@@ -61,11 +62,11 @@ public class OChannelBinaryClient extends OChannelBinaryAsynch {
 	 */
 	public boolean isConnected() {
 		if (socket != null && socket.isConnected() && !socket.isInputShutdown() && !socket.isOutputShutdown()) {
-			try {
-				out.flush();
-				return true;
-			} catch (IOException e) {
-			}
+			// try {
+			// out.flush();
+			return true;
+			// } catch (IOException e) {
+			// }
 		}
 
 		return false;

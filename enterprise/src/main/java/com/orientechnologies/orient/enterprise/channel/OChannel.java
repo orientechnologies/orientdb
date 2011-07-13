@@ -32,7 +32,7 @@ public abstract class OChannel extends OSharedResourceExternalTimeout {
 
 	public int					socketBufferSize;
 
-	public OChannel(Socket iSocket, final OContextConfiguration iConfig) throws IOException {
+	public OChannel(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
 		super(OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.getValueAsInteger());
 		socket = iSocket;
 		socketBufferSize = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE);
