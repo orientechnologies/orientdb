@@ -1194,7 +1194,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		lock.acquireExclusiveLock();
 		try {
 
-			dataSegments[0].saveVersion(version);
+			dataSegments[0].saveVersion(version.get());
 
 		} finally {
 			lock.releaseExclusiveLock();
@@ -1211,7 +1211,9 @@ public class OStorageLocal extends OStorageEmbedded {
 		lock.acquireExclusiveLock();
 		try {
 
-			return version = dataSegments[0].loadVersion();
+			final long v = dataSegments[0].loadVersion();
+			version.set(v);
+			return v;
 
 		} finally {
 			lock.releaseExclusiveLock();

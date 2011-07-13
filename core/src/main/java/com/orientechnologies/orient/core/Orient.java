@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Timer;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
@@ -53,7 +54,7 @@ public class Orient extends OSharedResourceAbstract {
 	protected static Orient										instance							= new Orient();
 
 	private final OMemoryWatchDog							memoryWatchDog;
-	private static volatile int								serialId							= 0;
+	private static AtomicInteger							serialId							= new AtomicInteger();
 
 	protected Orient() {
 		// REGISTER THE EMBEDDED ENGINE
@@ -129,7 +130,7 @@ public class Orient extends OSharedResourceAbstract {
 			} else {
 				// REGISTER IT WITH A SERIAL NAME TO AVOID BEING REUSED
 				storage = engine.createStorage(dbName, parameters);
-				storages.put(dbName + "__" + serialId++, storage);
+				storages.put(dbName + "__" + serialId.incrementAndGet(), storage);
 			}
 
 			return storage;

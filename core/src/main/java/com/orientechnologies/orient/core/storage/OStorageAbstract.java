@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.storage;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
@@ -28,7 +30,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 	protected final String										mode;
 	protected OStorageConfiguration						configuration;
 	protected String													name;
-	protected volatile long										version	= 0;
+	protected AtomicLong											version	= new AtomicLong();
 	protected OLevel2RecordCache							level2Cache;
 
 	protected volatile boolean								open		= false;
@@ -88,14 +90,14 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 	 * Returns current storage's version as serial.
 	 */
 	public long getVersion() {
-		return version;
+		return version.get();
 	}
 
 	/**
 	 * Update the storage's version
 	 */
 	protected void incrementVersion() {
-		++version;
+		version.incrementAndGet();
 	}
 
 	public boolean dropCluster(final String iClusterName) {

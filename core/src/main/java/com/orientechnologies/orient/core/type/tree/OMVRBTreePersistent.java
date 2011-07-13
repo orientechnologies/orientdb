@@ -54,26 +54,26 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 @SuppressWarnings("serial")
 public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implements OMVRBTreeEventListener<K, V>,
 		OSerializableStream {
-	protected OStreamSerializer															keySerializer;
-	protected OStreamSerializer															valueSerializer;
+	protected OStreamSerializer													keySerializer;
+	protected OStreamSerializer													valueSerializer;
 
-	protected final Set<OMVRBTreeEntryPersistent<K, V>>			recordsToCommit						= new HashSet<OMVRBTreeEntryPersistent<K, V>>();
+	protected final Set<OMVRBTreeEntryPersistent<K, V>>	recordsToCommit						= new HashSet<OMVRBTreeEntryPersistent<K, V>>();
 
-	protected final String																	clusterName;
-	protected ORecordBytesLazy															record;
-	protected String																				fetchPlan;
+	protected final String															clusterName;
+	protected ORecordBytesLazy													record;
+	protected String																		fetchPlan;
 
 	// STORES IN MEMORY DIRECT REFERENCES TO PORTION OF THE TREE
-	protected int																						optimizeThreshold;
-	private int																							insertionCounter					= 0;
-	protected int																						entryPointsSize;
-	protected float																					optimizeEntryPointsFactor;
-	protected volatile List<OMVRBTreeEntryPersistent<K, V>>	entryPoints								= new ArrayList<OMVRBTreeEntryPersistent<K, V>>(
-																																												entryPointsSize);
+	protected int																				optimizeThreshold;
+	private int																					insertionCounter					= 0;
+	protected int																				entryPointsSize;
+	protected float																			optimizeEntryPointsFactor;
+	protected List<OMVRBTreeEntryPersistent<K, V>>			entryPoints								= new ArrayList<OMVRBTreeEntryPersistent<K, V>>(
+																																										entryPointsSize);
 
-	protected Map<ORID, OMVRBTreeEntryPersistent<K, V>>			cache											= new HashMap<ORID, OMVRBTreeEntryPersistent<K, V>>();
-	private final OMemoryOutputStream												entryRecordBuffer;
-	public final static byte																CURRENT_PROTOCOL_VERSION	= 0;
+	protected Map<ORID, OMVRBTreeEntryPersistent<K, V>>	cache											= new HashMap<ORID, OMVRBTreeEntryPersistent<K, V>>();
+	private final OMemoryOutputStream										entryRecordBuffer;
+	public final static byte														CURRENT_PROTOCOL_VERSION	= 0;
 
 	public OMVRBTreePersistent(final String iClusterName, final ORID iRID) {
 		this(iClusterName, null, null);

@@ -3,7 +3,7 @@ package com.orientechnologies.common.test;
 public class SpeedTestData {
 	protected static final int	TIME_WAIT						= 200;
 	protected long							cycles							= 1;
-	protected volatile long			cyclesDone					= 0;
+	protected long							cyclesDone					= 0;
 	protected final static int	DUMP_PERCENT				= 10;
 
 	protected String						currentTestName;

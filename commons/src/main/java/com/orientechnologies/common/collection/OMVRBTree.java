@@ -48,7 +48,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	protected OMVRBTreeEventListener<K, V>		listener;
 	boolean																		pageItemFound				= false;
 	protected int															pageItemComparator	= 0;
-	protected volatile int										pageIndex						= -1;
+	protected int															pageIndex						= -1;
 	protected int															lastPageSize				= 63;		// PERSISTENT FIELDS
 
 	/**
@@ -1633,11 +1633,11 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			}
 
 			final OMVRBTreeEntryPosition<K, V> nextEntry() {
-                final OMVRBTreeEntryPosition<K, V> e;
-                if(next != null)
-				    e = new OMVRBTreeEntryPosition<K, V>(next);
-                else
-                    e = null;
+				final OMVRBTreeEntryPosition<K, V> e;
+				if (next != null)
+					e = new OMVRBTreeEntryPosition<K, V>(next);
+				else
+					e = null;
 				if (e == null || e.entry == null || e.getKey() == fenceKey)
 					throw new NoSuchElementException();
 				if (m.modCount != expectedModCount)
@@ -1649,10 +1649,10 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
 			final OMVRBTreeEntryPosition<K, V> prevEntry() {
 				final OMVRBTreeEntryPosition<K, V> e;
-                if(next != null)
-                    e =  new OMVRBTreeEntryPosition<K, V>(next);
-                else
-                    e = null;
+				if (next != null)
+					e = new OMVRBTreeEntryPosition<K, V>(next);
+				else
+					e = null;
 				if (e == null || e.entry == null || e.getKey() == fenceKey)
 					throw new NoSuchElementException();
 				if (m.modCount != expectedModCount)
@@ -1693,8 +1693,8 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			}
 
 			public Map.Entry<K, V> next() {
-                final Map.Entry<K, V> e = OMVRBTree.exportEntry(next);
-                nextEntry();
+				final Map.Entry<K, V> e = OMVRBTree.exportEntry(next);
+				nextEntry();
 				return e;
 			}
 
@@ -1723,8 +1723,8 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			}
 
 			public Map.Entry<K, V> next() {
-                final Map.Entry<K, V> e = OMVRBTree.exportEntry(next);
-                prevEntry();
+				final Map.Entry<K, V> e = OMVRBTree.exportEntry(next);
+				prevEntry();
 				return e;
 			}
 

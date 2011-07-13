@@ -34,7 +34,7 @@ import java.util.Map.Entry;
  * @copyrights Orient Technologies.com
  */
 public class OProfiler implements OProfilerMBean {
-	private volatile long										recording	= -1;
+	private long														recording	= -1;
 	private Map<String, Long>								counters;
 	private Map<String, OProfilerEntry>			chronos;
 	private Map<String, OProfilerEntry>			stats;
