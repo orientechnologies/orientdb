@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 

@@ -64,6 +64,7 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNotEquals;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
@@ -97,6 +98,18 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	private ORecordId																rangeTo;
 	private Object																	flattenTarget;
 	private boolean																	anyFunctionAggregates	= false;
+
+	private static final class OSearchInIndexTriple {
+		private OQueryOperator	indexOperator;
+		private Object					key;
+		private OIndex					index;
+
+		private OSearchInIndexTriple(final OQueryOperator indexOperator, final Object key, final OIndex index) {
+			this.indexOperator = indexOperator;
+			this.key = key;
+			this.index = index;
+		}
+	}
 
 	/**
 	 * Compile the filter conditions only the first time.
@@ -138,6 +151,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		}
 
 		compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(iRequest.getDatabase(), text.substring(pos, endPosition));
+
+		optimize();
 
 		currentPos = compiledFilter.currentPos < 0 ? endPosition : compiledFilter.currentPos + pos;
 
@@ -427,6 +442,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	private boolean searchIndexedProperty(OClass iSchemaClass, final OSQLFilterCondition iCondition, final Object iItem,
 			final List<OSearchInIndexTriple> iSearchInIndexTriples) {
 		if (iItem == null || !(iItem instanceof OSQLFilterItemField))
+			return false;
+
+		if (iCondition.getLeft() instanceof OSQLFilterItemField && iCondition.getRight() instanceof OSQLFilterItemField)
 			return false;
 
 		final OSQLFilterItemField item = (OSQLFilterItemField) iItem;
@@ -888,15 +906,58 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		return null;
 	}
 
-	private static final class OSearchInIndexTriple {
-		private OSearchInIndexTriple(OQueryOperator indexOperator, Object key, OIndex index) {
-			this.indexOperator = indexOperator;
-			this.key = key;
-			this.index = index;
+	/**
+	 * Optimizes the contidion tree.
+	 */
+	private void optimize() {
+		if (compiledFilter == null)
+			return;
+
+		optimizeBranch(null, compiledFilter.getRootCondition());
+	}
+
+	private void optimizeBranch(final OSQLFilterCondition iParentCondition, OSQLFilterCondition iCondition) {
+		if (iCondition == null)
+			return;
+
+		final Object left = iCondition.getLeft();
+
+		if (left instanceof OSQLFilterCondition)
+			// ANALYSE LEFT RECURSIVELY
+			optimizeBranch(iCondition, (OSQLFilterCondition) left);
+
+		final Object right = iCondition.getRight();
+
+		if (right instanceof OSQLFilterCondition)
+			// ANALYSE RIGHT RECURSIVELY
+			optimizeBranch(iCondition, (OSQLFilterCondition) right);
+
+		final OQueryOperator oper = iCondition.getOperator();
+
+		Object result = null;
+
+		if (left instanceof OSQLFilterItemField & right instanceof OSQLFilterItemField) {
+			if (((OSQLFilterItemField) left).getName().equals(((OSQLFilterItemField) right).getName())) {
+				if (oper instanceof OQueryOperatorEquals)
+					result = Boolean.TRUE;
+				else if (oper instanceof OQueryOperatorNotEquals)
+					result = Boolean.FALSE;
+			}
 		}
 
-		private OQueryOperator	indexOperator;
-		private Object					key;
-		private OIndex					index;
+		if (result != null) {
+			if (iParentCondition != null)
+				if (iCondition == iParentCondition.getLeft())
+					// REPLACE LEFT
+					iCondition.setLeft(result);
+				else
+					// REPLACE RIGHT
+					iCondition.setRight(result);
+			else {
+				// REPLACE ROOT CONDITION
+				if (result instanceof Boolean && ((Boolean) result))
+					compiledFilter.setRootCondition(null);
+			}
+		}
 	}
 }

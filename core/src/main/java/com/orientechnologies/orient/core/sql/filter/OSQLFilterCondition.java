@@ -243,4 +243,12 @@ public class OSQLFilterCondition {
 	public OQueryOperator getOperator() {
 		return operator;
 	}
+
+	public void setLeft(final Object iValue) {
+		left = iValue;
+	}
+
+	public void setRight(final Object iValue) {
+		right = iValue;
+	}
 }

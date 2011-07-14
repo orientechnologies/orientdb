@@ -466,4 +466,8 @@ public class OSQLFilter extends OCommandToParse {
 		parameterItems.add(param);
 		return param;
 	}
+
+	public void setRootCondition(final OSQLFilterCondition iCondition) {
+		rootCondition = iCondition;
+	}
 }
