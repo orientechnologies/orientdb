@@ -229,6 +229,9 @@
   <target name="release" depends="install">
 		<delete file="../releases/orientdb-${version}.zip" />
 		<zip destfile="../releases/orientdb-${version}.zip" basedir="${db.release}" level="9" update="false" excludes="**/*.log.*" />
+		
+		<delete file="../releases/orientdb-graphed-${version}.zip" />
+		<zip destfile="../releases/orientdb-graphed-${version}.zip" basedir="${graph.release}" level="9" update="false" excludes="**/*.log.*" />
 	</target>
     
 </project>
