@@ -114,6 +114,25 @@ public interface ODatabaseRecord extends ODatabaseComplex<ORecordInternal<?>> {
 	 *          Resource where to execute the operation, i.e.: database.clusters
 	 * @param iOperation
 	 *          Operation to execute against the resource
+	 * @param iResourceTarget
+	 *          Target resource, i.e.: "employee" to specify the cluster name.
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
+	public <DB extends ODatabaseRecord> DB checkSecurity(String iResourceGeneric, int iOperation, Object iResourceSpecific);
+
+	/**
+	 * Checks if the operation against multiple resources is allowed for the current user. The check is made in two steps:
+	 * <ol>
+	 * <li>
+	 * Access to all the resource as *</li>
+	 * <li>
+	 * Access to the specific target resources</li>
+	 * </ol>
+	 * 
+	 * @param iResourceGeneric
+	 *          Resource where to execute the operation, i.e.: database.clusters
+	 * @param iOperation
+	 *          Operation to execute against the resource
 	 * @param iResourcesTarget
 	 *          Target resources as an array of Objects, i.e.: ["employee", 2] to specify cluster name and id.
 	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.

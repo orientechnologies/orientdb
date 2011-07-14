@@ -389,6 +389,10 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 		return (DBTYPE) underlying.checkSecurity(iResource, iOperation);
 	}
 
+	public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final String iResource, final int iOperation, Object iResourceSpecific) {
+		return (DBTYPE) underlying.checkSecurity(iResource, iOperation, iResourceSpecific);
+	}
+
 	public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final String iResource, final int iOperation, Object... iResourcesSpecific) {
 		return (DBTYPE) underlying.checkSecurity(iResource, iOperation, iResourcesSpecific);
 	}

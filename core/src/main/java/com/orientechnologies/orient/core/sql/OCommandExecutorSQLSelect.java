@@ -684,8 +684,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 		// CHECK PERMISSION TO ACCESS TO ALL THE CONFIGURED CLUSTERS
 		for (int clusterId : clusterIds)
-			database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, database.getClusterNameById(clusterId),
-					clusterId);
+			database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, database.getClusterNameById(clusterId));
 
 		final List<ORecord<?>> resultSet = new ArrayList<ORecord<?>>();
 		if (searchForIndexes(resultSet, cls)) {
@@ -715,7 +714,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			// GET THE CLUSTER NUMBER BY THE CLASS NAME
 			clusterIds = new int[] { database.getClusterIdByName(firstCluster.toLowerCase()) };
 
-		database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, firstCluster.toLowerCase(), clusterIds[0]);
+		database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, firstCluster.toLowerCase());
 
 		scanEntireClusters(clusterIds);
 	}

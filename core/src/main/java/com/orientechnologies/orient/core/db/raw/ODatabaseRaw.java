@@ -272,7 +272,7 @@ public class ODatabaseRaw implements ODatabase {
 		return storage.getPhysicalClusterNameById(iClusterId);
 	}
 
-	public long getClusterRecordSizeById(int iClusterId) {
+	public long getClusterRecordSizeById(final int iClusterId) {
 		try {
 			return storage.getClusterById(iClusterId).getRecordsSize();
 		} catch (Exception e) {
@@ -282,7 +282,7 @@ public class ODatabaseRaw implements ODatabase {
 		return 0l;
 	}
 
-	public long getClusterRecordSizeByName(String iClusterName) {
+	public long getClusterRecordSizeByName(final String iClusterName) {
 		try {
 			return storage.getClusterById(getClusterIdByName(iClusterName)).getRecordsSize();
 		} catch (Exception e) {

@@ -22,8 +22,6 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -156,7 +154,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 					OLogManager.instance().error(this, "Error after tx rollback", t);
 				}
 		}
-		
+
 		return this;
 	}
 
@@ -195,11 +193,6 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 
 	@Override
 	public ODatabaseRecord save(final ORecordInternal<?> iContent, final String iClusterName) {
-		if (!iContent.getIdentity().isValid())
-			checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
-		else
-			checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
-
 		currentTx.saveRecord(iContent, iClusterName);
 		return this;
 	}

@@ -258,6 +258,11 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 	}
 
 	public <DBTYPE extends ODatabaseRecord> DBTYPE checkSecurity(final String iResourceGeneric, final int iOperation,
+			final Object iResourceSpecific) {
+		return (DBTYPE) underlying.checkSecurity(iResourceGeneric, iOperation, iResourceSpecific);
+	}
+
+	public <DBTYPE extends ODatabaseRecord> DBTYPE checkSecurity(final String iResourceGeneric, final int iOperation,
 			final Object... iResourcesSpecific) {
 		return (DBTYPE) underlying.checkSecurity(iResourceGeneric, iOperation, iResourcesSpecific);
 	}
