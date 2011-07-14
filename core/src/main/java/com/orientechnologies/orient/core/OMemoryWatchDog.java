@@ -5,8 +5,8 @@ import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryNotificationInfo;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.management.Notification;
 import javax.management.NotificationEmitter;
@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  * be one instance of this object created, since the usage threshold can only be set to one number.
  */
 public class OMemoryWatchDog {
-	private final Collection<Listener>		listeners				= new ArrayList<Listener>();
+	private final Collection<Listener>		listeners				= new CopyOnWriteArrayList<Listener>();
 	private static final MemoryPoolMXBean	tenuredGenPool	= findTenuredGenPool();
 	private int														alertTimes			= 0;
 
