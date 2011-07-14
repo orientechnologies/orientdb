@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OMemoryWatchDog;
@@ -148,7 +149,7 @@ public enum OGlobalConfiguration {
 			"Max memory allocable by memory mapping manager. Note that on 32bit OS the limit is to 2Gb but can change to OS by OS",
 			Long.class, 134217728, new OConfigurationChangeCallback() {
 				public void change(final Object iCurrentValue, final Object iNewValue) {
-					OMMapManager.setMaxMemory(((Number) iNewValue).longValue());
+					OMMapManager.setMaxMemory(OFileUtils.getSizeAsNumber(iNewValue));
 				}
 			}),
 

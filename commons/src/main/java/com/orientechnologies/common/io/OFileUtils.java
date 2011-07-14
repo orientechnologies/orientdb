@@ -8,52 +8,57 @@ public class OFileUtils {
 	private static final int	GIGABYTE	= 1073741824;
 	private static final long	TERABYTE	= 1099511627776L;
 
-	public static long getSizeAsNumber(String iSize) {
+	public static long getSizeAsNumber(final Object iSize) {
 		if (iSize == null)
 			throw new IllegalArgumentException("Size is null");
 
+		if (iSize instanceof Number)
+			return ((Number) iSize).longValue();
+
+		String size = iSize.toString();
+
 		boolean number = true;
-		for (int i = iSize.length() - 1; i >= 0; --i) {
-			if (!Character.isDigit(iSize.charAt(i))) {
+		for (int i = size.length() - 1; i >= 0; --i) {
+			if (!Character.isDigit(size.charAt(i))) {
 				number = false;
 				break;
 			}
 		}
 
 		if (number)
-			return Long.parseLong(iSize);
+			return Long.parseLong(size);
 		else {
-			iSize = iSize.toUpperCase();
-			int pos = iSize.indexOf("KB");
+			size = size.toUpperCase();
+			int pos = size.indexOf("KB");
 			if (pos > -1)
-				return Long.parseLong(iSize.substring(0, pos)) * KILOBYTE;
+				return Long.parseLong(size.substring(0, pos)) * KILOBYTE;
 
-			pos = iSize.indexOf("MB");
+			pos = size.indexOf("MB");
 			if (pos > -1)
-				return Long.parseLong(iSize.substring(0, pos)) * MEGABYTE;
+				return Long.parseLong(size.substring(0, pos)) * MEGABYTE;
 
-			pos = iSize.indexOf("GB");
+			pos = size.indexOf("GB");
 			if (pos > -1)
-				return Long.parseLong(iSize.substring(0, pos)) * GIGABYTE;
+				return Long.parseLong(size.substring(0, pos)) * GIGABYTE;
 
-			pos = iSize.indexOf("TB");
+			pos = size.indexOf("TB");
 			if (pos > -1)
-				return Long.parseLong(iSize.substring(0, pos)) * TERABYTE;
+				return Long.parseLong(size.substring(0, pos)) * TERABYTE;
 
-			pos = iSize.indexOf('B');
+			pos = size.indexOf('B');
 			if (pos > -1)
-				return Long.parseLong(iSize.substring(0, pos));
+				return Long.parseLong(size.substring(0, pos));
 
-			pos = iSize.indexOf('%');
+			pos = size.indexOf('%');
 			if (pos > -1)
-				return -1 * Long.parseLong(iSize.substring(0, pos));
+				return -1 * Long.parseLong(size.substring(0, pos));
 
 			// RE-THROW THE EXCEPTION
-			throw new IllegalArgumentException("Size " + iSize + " has a unrecognizable format");
+			throw new IllegalArgumentException("Size " + size + " has a unrecognizable format");
 		}
 	}
 
-	public static String getSizeAsString(long iSize) {
+	public static String getSizeAsString(final long iSize) {
 		if (iSize > TERABYTE)
 			return String.format("%2.2fTb", (float) iSize / TERABYTE);
 		if (iSize > GIGABYTE)
