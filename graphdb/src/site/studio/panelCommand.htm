@@ -1,0 +1,139 @@
+<div id="tab-command">
+	<table style="width: 100%;" cellpadding="0" cellspacing="0">
+		<tr>
+			<td valign="top">
+				<table style="width: 100%;" cellpadding="0" cellspacing="0">
+					<tr>
+						<td style="border: 1px solid gray; width: 90%;"><textarea id="commandText" title="value">g.V[0..10]</textarea>
+						</td>
+						<td valign="top">
+							<table style="width: 100%;">
+								<tr>
+									<td><select id="language">
+											<option label="GREMLIN" value="gremlin">GREMLIN</option>
+											<option label="SQL" value="sql">SQL</option>
+									</select></td>
+								</tr>
+								<tr>
+									<td>
+										<button onclick="javascript:executeCommand()" class="ui-button-text-icon" style="width: 90px; text-align: center">
+											Execute<br /> <img border="0" alt="Execute" src="images/execute.png" align="top" />
+										</button></td>
+								</tr>
+								<tr>
+									<td align="left">Limit: <input id="limit" size="1" value="20" />
+									</td>
+								</tr>
+								<tr>
+									<td style="font-size: 10pt;"><a href="http://code.google.com/p/orient/wiki/SQL" target="help">SQL syntax</a>
+									</td>
+								</tr>
+								<tr>
+									<td style="font-size: 10pt;"><a href="http://code.google.com/p/orient/wiki/SQLWhere" target="help">SQL operators</a>
+									</td>
+								</tr>
+							</table></td>
+					</tr>
+				</table></td>
+		</tr>
+		<tr>
+			<td>
+				<table style="width: 100%;">
+					<tr>
+						<td style="border: 1px solid gray; width: 90%;"><textarea id="commandOutput" cols="132" rows="15" title="value" readonly="readonly">
+                                                            </textarea>
+						</td>
+						<td valign="top">
+							<table>
+								<tr>
+									<td>
+										<button class="ui-button-text-icon" onClick="javascript:commandOutputEditor.setCode('')" style="width: 90px; text-align: center">
+											Clear <img border="0" alt="Graph result" src="images/clear.png" align="top" />
+										</button></td>
+								</tr>
+								<tr>
+									<td>
+										<button id="editCommandResult" class="ui-button-text-icon" style="width: 90px; text-align: center">
+											Edit <img border="0" alt="Edit record" src="images/set.png" align="top" />
+										</button></td>
+								</tr>
+								<tr>
+									<td>
+										<button id="graphCommandResult" class="ui-button-text-icon" style="width: 90px; text-align: center">
+											Graph <img border="0" alt="Graph result" src="images/graph.png" align="top" />
+										</button></td>
+								</tr>
+							</table></td>
+					</tr>
+				</table></td>
+		</tr>
+	</table>
+</div>
+
+<script language="javascript">
+	var previous = controller.parameter('commandRequest');
+	if (previous != null)
+		$('#commandText').val(previous);
+
+	previous = controller.parameter('commandResponse');
+	if (previous != null)
+		$('#commandOutput').val(previous);
+
+	jQuery("#commandText").val((jQuery.trim(jQuery("#commandText").val())));
+	commandEditor = CodeMirror.fromTextArea('commandText', {
+		width : "920px",
+		height : "150px",
+		parserfile : "parsesql.js",
+		stylesheet : "styles/codemirror/sqlcolors.css",
+		path : "js/codemirror/",
+		textWrapping : false
+	});
+
+	commandOutputEditor = CodeMirror.fromTextArea('commandOutput', {
+		width : "920px",
+		height : "250px",
+		parserfile : [ "tokenizejavascript.js", "parsejavascript.js" ],
+		stylesheet : "styles/codemirror/jscolors.css",
+		path : "js/codemirror/",
+		textWrapping : true,
+		json : true
+	});
+
+	$("#editCommandResult").click(function() {
+		var result = orientServer.getCommandResult();
+
+		if (result != null)
+			displayDocument(result.result != null ? result.result[0] : result);
+	});
+
+	$("#graphCommandResult").click(function() {
+		var result = orientServer.getCommandResult();
+
+		if (result != null)
+			displayGraph(result.result != null ? result.result[0] : result);
+	});
+
+	function executeCommand() {
+		startTimer();
+
+		var code = commandEditor.getCode();
+		commandEditor.setCode(jQuery.trim(code));
+		controller.parameter('commandRequest', commandEditor.getCode());
+
+		orientServer.setEvalResponse(false);
+		commandResult = orientServer.executeCommand(code, $('#language').val(),
+				$('#limit').val());
+		orientServer.setEvalResponse(true);
+
+		if (commandResult == null) {
+			commandOutputEditor.setCode('')
+			controller.parameter('commandResponse', '');
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			commandOutputEditor.setCode(commandResult);
+			controller.parameter('commandResponse', commandResult);
+			jQuery("#output").val(
+					"Command executed in " + stopTimer() + " sec.");
+		}
+	}
+</script>
