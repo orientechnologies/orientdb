@@ -86,30 +86,32 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	private String								currentDatabaseUserName;
 	private String								currentDatabaseUserPassword;
 
-	public static void main(String[] args) {
+	public OConsoleDatabaseApp(final String[] args) {
+		super(args);
+	}
+
+	public static void main(final String[] args) {
 		try {
 			boolean tty = false;
 			try {
-				if (setTerminalToCBreak()) {
+				if (setTerminalToCBreak())
 					tty = true;
-				}
+
 			} catch (Exception e) {
 			}
-			OConsoleDatabaseApp console = new OConsoleDatabaseApp(args);
-			if (tty) {
+
+			final OConsoleDatabaseApp console = new OConsoleDatabaseApp(args);
+			if (tty)
 				console.setReader(new TTYConsoleReader());
-			}
+
 			console.run();
+
 		} finally {
 			try {
 				stty("echo");
 			} catch (Exception e) {
 			}
 		}
-	}
-
-	public OConsoleDatabaseApp(String[] args) {
-		super(args);
 	}
 
 	@Override
@@ -1370,7 +1372,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		out.println("Type 'help' to display all the commands supported.");
 	}
 
-	private static boolean setTerminalToCBreak() throws IOException, InterruptedException {
+	protected static boolean setTerminalToCBreak() throws IOException, InterruptedException {
 		// set the console to be character-buffered instead of line-buffered
 		int result = stty("-icanon min 1");
 		if (result != 0) {
@@ -1385,7 +1387,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	/**
 	 * Execute the stty command with the specified arguments against the current active terminal.
 	 */
-	private static int stty(final String args) throws IOException, InterruptedException {
+	protected static int stty(final String args) throws IOException, InterruptedException {
 		String cmd = "stty " + args + " < /dev/tty";
 
 		return exec(new String[] { "sh", "-c", cmd });

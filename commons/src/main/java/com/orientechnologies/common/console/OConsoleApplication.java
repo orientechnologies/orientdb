@@ -263,7 +263,7 @@ public class OConsoleApplication {
 	}
 
 	protected List<Method> getConsoleMethods() {
-		final Method[] methods = getClass().getDeclaredMethods();
+		final Method[] methods = getClass().getMethods();
 
 		final List<Method> consoleMethods = new ArrayList<Method>();
 
