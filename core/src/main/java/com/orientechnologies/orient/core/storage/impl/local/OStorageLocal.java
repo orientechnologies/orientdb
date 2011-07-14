@@ -147,9 +147,8 @@ public class OStorageLocal extends OStorageEmbedded {
 			clusters[defaultClusterId].open();
 
 			// REGISTER DATA SEGMENT
-			OStorageDataConfiguration dataConfig;
 			for (int i = 0; i < configuration.dataSegments.size(); ++i) {
-				dataConfig = configuration.dataSegments.get(i);
+				final OStorageDataConfiguration dataConfig = configuration.dataSegments.get(i);
 
 				pos = registerDataSegment(dataConfig);
 				if (pos == -1) {
@@ -163,9 +162,8 @@ public class OStorageLocal extends OStorageEmbedded {
 			}
 
 			// REGISTER CLUSTER
-			OStorageClusterConfiguration clusterConfig;
 			for (int i = 0; i < configuration.clusters.size(); ++i) {
-				clusterConfig = configuration.clusters.get(i);
+				final OStorageClusterConfiguration clusterConfig = configuration.clusters.get(i);
 
 				if (clusterConfig != null) {
 					pos = createClusterFromConfig(clusterConfig);
@@ -329,8 +327,8 @@ public class OStorageLocal extends OStorageEmbedded {
 			dbDir = dbDir.getParentFile();
 
 		lock.acquireExclusiveLock();
-
 		try {
+
 			// RETRIES
 			for (int i = 0; i < DELETE_MAX_RETRIES; ++i) {
 				if (dbDir.exists() && dbDir.isDirectory()) {
@@ -518,12 +516,11 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			long tot = 0;
 
-			OCluster c;
 			for (int i = 0; i < iClusterIds.length; ++i) {
 				if (iClusterIds[i] >= clusters.length)
 					throw new OConfigurationException("Cluster id " + iClusterIds[i] + "was not found");
 
-				c = clusters[iClusterIds[i]];
+				final OCluster c = clusters[iClusterIds[i]];
 				if (c != null)
 					tot += c.getEntries();
 			}
@@ -622,19 +619,16 @@ public class OStorageLocal extends OStorageEmbedded {
 			return Integer.parseInt(iClusterName);
 
 		// SEARCH IT BETWEEN PHYSICAL CLUSTERS
-		OCluster segment;
-
 		lock.acquireSharedLock();
 		try {
 
-			segment = clusterMap.get(iClusterName.toLowerCase());
+			final OCluster segment = clusterMap.get(iClusterName.toLowerCase());
+			if (segment != null)
+				return segment.getId();
 
 		} finally {
 			lock.releaseSharedLock();
 		}
-
-		if (segment != null)
-			return segment.getId();
 
 		return -1;
 	}
@@ -646,19 +640,16 @@ public class OStorageLocal extends OStorageEmbedded {
 			throw new IllegalArgumentException("Cluster name is null");
 
 		// SEARCH IT BETWEEN PHYSICAL CLUSTERS
-		OCluster segment;
-
 		lock.acquireSharedLock();
 		try {
 
-			segment = clusterMap.get(iClusterName.toLowerCase());
+			final OCluster segment = clusterMap.get(iClusterName.toLowerCase());
+			if (segment != null)
+				return segment.getType();
 
 		} finally {
 			lock.releaseSharedLock();
 		}
-
-		if (segment != null)
-			return segment.getType();
 
 		return null;
 	}
@@ -727,9 +718,9 @@ public class OStorageLocal extends OStorageEmbedded {
 		lock.acquireSharedLock();
 		try {
 
-			for (ODataLocal d : dataSegments) {
+			for (ODataLocal d : dataSegments)
 				holes.addAll(d.getHolesList());
-			}
+
 			return holes;
 
 		} finally {
@@ -767,10 +758,10 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			final List<ODataHoleInfo> holes = getHolesList();
 			long size = 0;
-			for (ODataHoleInfo h : holes) {
+			for (ODataHoleInfo h : holes)
 				if (h.dataOffset > -1 && h.size > 0)
 					size += h.size;
-			}
+
 			return size;
 
 		} finally {
@@ -893,9 +884,8 @@ public class OStorageLocal extends OStorageEmbedded {
 	 * Method that completes the cluster rename operation. <strong>IT WILL NOT RENAME A CLUSTER, IT JUST CHANGES THE NAME IN THE
 	 * INTERNAL MAPPING</strong>
 	 */
-	public void renameCluster(String iOldName, String iNewName) {
-		OCluster cls = clusterMap.remove(iOldName);
-		clusterMap.put(iNewName, cls);
+	public void renameCluster(final String iOldName, final String iNewName) {
+		clusterMap.put(iNewName, clusterMap.remove(iOldName));
 	}
 
 	protected int registerDataSegment(final OStorageDataConfiguration iConfig) throws IOException {
@@ -913,7 +903,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		pos = dataSegments.length;
 
 		// CREATE AND ADD THE NEW REF SEGMENT
-		ODataLocal segment = new ODataLocal(this, iConfig, pos);
+		final ODataLocal segment = new ODataLocal(this, iConfig, pos);
 
 		dataSegments = OArrays.copyOf(dataSegments, dataSegments.length + 1);
 		dataSegments[pos] = segment;

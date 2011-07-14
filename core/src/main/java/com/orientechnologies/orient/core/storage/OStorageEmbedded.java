@@ -135,7 +135,6 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 
 			final ORecordId rid = new ORecordId(cluster.getId());
 			final ODatabaseRecord database = ioRecord.getDatabase();
-			ORecordInternal<?> recordToCheck = null;
 
 			// BROWSE ALL THE RECORDS
 			while (iterator.hasNext()) {
@@ -153,7 +152,9 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 					// WRONG RECORD TYPE: JUMP IT
 					continue;
 
+				ORecordInternal<?> recordToCheck = null;
 				try {
+
 					if (record == null) {
 						// READ THE RAW RECORD. IF iLockEntireCluster THEN THE READ WILL
 						// BE NOT-LOCKING, OTHERWISE YES
@@ -189,7 +190,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 					// PASS THROUGH
 					throw e;
 				} catch (Exception e) {
-					OLogManager.instance().exception( "Error on loading record %s. Cause: %s", e, OStorageException.class,
+					OLogManager.instance().exception("Error on loading record %s. Cause: %s", e, OStorageException.class,
 							recordToCheck != null ? recordToCheck.getIdentity() : null, e);
 				}
 			}

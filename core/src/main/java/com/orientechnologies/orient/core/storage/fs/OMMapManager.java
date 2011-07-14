@@ -165,30 +165,8 @@ public class OMMapManager {
 		entry = null;
 		// FREE LESS-USED BUFFERS UNTIL THE FREE-MEMORY IS DOWN THE CONFIGURED MAX LIMIT
 		do {
-			if (totalMemory + bufferSize > maxMemory) {
-				final long memoryThreshold = (long) (maxMemory * 0.75);
-
-				OLogManager.instance().debug(null, "Free mmmap blocks, at least %d MB...", (totalMemory - memoryThreshold) / 1000000);
-
-				// SORT AS LRU, FIRST = MOST USED
-				Collections.sort(bufferPoolLRU, new Comparator<OMMapBufferEntry>() {
-					public int compare(final OMMapBufferEntry o1, final OMMapBufferEntry o2) {
-						return (int) (o1.counter - o2.counter);
-					}
-				});
-
-				// REMOVE THE LESS USED ENTRY AND UPDATE THE TOTAL MEMORY
-				for (Iterator<OMMapBufferEntry> it = bufferPoolLRU.iterator(); it.hasNext();) {
-					entry = it.next();
-					if (!entry.pin) {
-						// REMOVE FROM COLLECTIONS
-						removeEntry(it, entry);
-
-						if (totalMemory < memoryThreshold)
-							break;
-					}
-				}
-			}
+			if (totalMemory + bufferSize > maxMemory)
+				freeResources();
 
 			// RECOMPUTE THE POSITION AFTER REMOVING
 			fileEntries = bufferPoolPerFile.get(iFile);
@@ -228,19 +206,41 @@ public class OMMapManager {
 
 		fileEntries.add(p, entry);
 
-		// TEST
-		// getOverlappedBlocks(iFile);
-
 		return entry;
+	}
+
+	private static void freeResources() {
+		final long memoryThreshold = (long) (maxMemory * 0.75);
+
+		if (OLogManager.instance().isDebugEnabled())
+			OLogManager.instance().debug(null, "Free mmmap blocks, at least %d MB...", (totalMemory - memoryThreshold) / 1000000);
+
+		// SORT AS LRU, FIRST = MOST USED
+		Collections.sort(bufferPoolLRU, new Comparator<OMMapBufferEntry>() {
+			public int compare(final OMMapBufferEntry o1, final OMMapBufferEntry o2) {
+				return (int) (o1.counter - o2.counter);
+			}
+		});
+
+		// REMOVE THE LESS USED ENTRY AND UPDATE THE TOTAL MEMORY
+		for (Iterator<OMMapBufferEntry> it = bufferPoolLRU.iterator(); it.hasNext();) {
+			final OMMapBufferEntry entry = it.next();
+			if (!entry.pin) {
+				// REMOVE FROM COLLECTIONS
+				removeEntry(it, entry);
+
+				if (totalMemory < memoryThreshold)
+					break;
+			}
+		}
 	}
 
 	private static OMMapBufferEntry searchBetweenLastBlocks(final OFileMMap iFile, final long iBeginOffset, final int iSize) {
 		if (bufferPoolLRU.size() > 0) {
 			// SEARCH IF IT'S BETWEEN THE LAST 5 BLOCK USED: THIS IS THE COMMON CASE ON MASSIVE INSERTION
-			OMMapBufferEntry e;
 			final int min = Math.max(bufferPoolLRU.size() - 5, -1);
 			for (int i = bufferPoolLRU.size() - 1; i > min; --i) {
-				e = bufferPoolLRU.get(i);
+				final OMMapBufferEntry e = bufferPoolLRU.get(i);
 
 				if (e.file == iFile && iBeginOffset >= e.beginOffset && iBeginOffset + iSize <= e.beginOffset + e.size) {
 					// FOUND: USE IT

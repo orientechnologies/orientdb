@@ -99,14 +99,11 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR);
 
 			// EMBEDDED LITERALS
-			List<String> entry;
-			String mapValue;
-
 			for (String item : items) {
 				if (item != null && item.length() > 0) {
-					entry = OStringSerializerHelper.smartSplit(item, OStringSerializerHelper.ENTRY_SEPARATOR);
+					final List<String> entry = OStringSerializerHelper.smartSplit(item, OStringSerializerHelper.ENTRY_SEPARATOR);
 					if (entry.size() > 0) {
-						mapValue = entry.get(1);
+						String mapValue = entry.get(1);
 						if (mapValue != null && mapValue.length() > 0)
 							mapValue = mapValue.substring(1);
 						map.put(fieldTypeFromStream((ODocument) iSourceRecord, OType.STRING, entry.get(0)), new ORecordId(mapValue));
@@ -165,18 +162,15 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR);
 
 		// EMBEDDED LITERALS
-		List<String> entry;
-		String mapValue;
-		Object mapValueObject;
 
 		if (map instanceof ORecordElement)
 			((ORecordElement) map).setStatus(STATUS.UNMARSHALLING);
 
 		for (String item : items) {
 			if (item != null && item.length() > 0) {
-				entry = OStringSerializerHelper.smartSplit(item, OStringSerializerHelper.ENTRY_SEPARATOR);
+				final List<String> entry = OStringSerializerHelper.smartSplit(item, OStringSerializerHelper.ENTRY_SEPARATOR);
 				if (entry.size() > 0) {
-					mapValue = entry.get(1);
+					String mapValue = entry.get(1);
 
 					if (iLinkedType == null) {
 						if (mapValue.length() > 0) {
@@ -199,7 +193,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					if (iLinkedType == OType.EMBEDDED)
 						mapValue = mapValue.substring(1, mapValue.length() - 1);
 
-					mapValueObject = fieldTypeFromStream(iSourceDocument, iLinkedType, mapValue);
+					final Object mapValueObject = fieldTypeFromStream(iSourceDocument, iLinkedType, mapValue);
 
 					if (mapValueObject != null && mapValueObject instanceof ODocument)
 						((ODocument) mapValueObject).addOwner(iSourceDocument);
@@ -311,23 +305,22 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		case LINKMAP: {
 			iOutput.append(OStringSerializerHelper.MAP_BEGIN);
 
-			Object link;
-			int items = 0;
 			Map<String, Object> map = (Map<String, Object>) iValue;
-			boolean invalidMap = false;
 
 			// LINKED MAP
-			if (map instanceof OLazyObjectMap<?>) {
+			if (map instanceof OLazyObjectMap<?>)
 				((OLazyObjectMap<?>) map).setConvertToRecord(false);
-			}
+
+			boolean invalidMap = false;
 			try {
+				int items = 0;
 				for (Map.Entry<String, Object> entry : map.entrySet()) {
 					if (items++ > 0)
 						iOutput.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
 					fieldTypeToString(iOutput, iDatabase, OType.STRING, entry.getKey());
 					iOutput.append(OStringSerializerHelper.ENTRY_SEPARATOR);
-					link = linkToStream(iOutput, iRecord, entry.getValue());
+					final Object link = linkToStream(iOutput, iRecord, entry.getValue());
 
 					if (link != null && !invalidMap)
 						// IDENTITY IS CHANGED, RE-SET INTO THE COLLECTION TO RECOMPUTE THE HASH
@@ -431,7 +424,6 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		if (iValue != null) {
 			int items = 0;
 			// EMBEDDED OBJECTS
-			ODocument record;
 			for (Entry<String, Object> o : ((Map<String, Object>) iValue).entrySet()) {
 				if (items > 0)
 					iOutput.append(OStringSerializerHelper.RECORD_SEPARATOR);
@@ -441,6 +433,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					iOutput.append(OStringSerializerHelper.ENTRY_SEPARATOR);
 
 					if (o.getValue() instanceof ORecord<?>) {
+						final ODocument record;
 						if (o.getValue() instanceof ODocument)
 							record = (ODocument) o.getValue();
 						else
@@ -513,14 +506,12 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		if (value.length() == 0)
 			return coll;
 
-		final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR);
-
 		if (coll instanceof ORecordElement)
 			((ORecordElement) coll).setStatus(STATUS.UNMARSHALLING);
 
-		Object objectToAdd;
+		final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR);
 		for (String item : items) {
-			objectToAdd = null;
+			Object objectToAdd = null;
 
 			if (item.length() > 2 && item.charAt(0) == OStringSerializerHelper.PARENTHESIS_BEGIN) {
 				// REMOVE EMBEDDED BEGIN/END CHARS
@@ -562,11 +553,11 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			final Set<Integer> iMarshalledRecords, final boolean iSaveOnlyDirty) {
 		iOutput.append(OStringSerializerHelper.COLLECTION_BEGIN);
 
-		final int size = iValue instanceof Collection<?> ? ((Collection<Object>) iValue).size() : Array.getLength(iValue);
 		final Iterator<Object> iterator = iValue instanceof Collection<?> ? ((Collection<Object>) iValue).iterator() : null;
-		Object o;
+		final int size = iValue instanceof Collection<?> ? ((Collection<Object>) iValue).size() : Array.getLength(iValue);
 
 		for (int i = 0; i < size; ++i) {
+			final Object o;
 			if (iValue instanceof Collection<?>)
 				o = iterator.next();
 			else
