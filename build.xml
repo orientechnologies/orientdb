@@ -156,7 +156,9 @@
     </subant>
 
     <copy todir="${graph.release}">
-      <fileset dir="${db.release}"/>
+      <fileset dir="${db.release}">
+        <exclude name="**/*.log.*"/>
+      </fileset>
     </copy>
   
     <copy todir="${graph.release}/www/">
@@ -177,6 +179,21 @@
     <copy todir="${graph.release}/lib" flatten="true">
       <fileset dir="graphdb/lib" includes="*.jar"/>
     </copy>
+    
+    <delete includeEmptyDirs="true">
+      <fileset dir="${graph.release}/databases/" includes="**"/>
+    </delete>
+    
+    <java classname="com.orientechnologies.orient.graph.gremlin.TestLoadGraph">
+      <arg value="graphdb/target/classes/graph-example-2.xml"/>
+      <arg value="local:${graph.release}/databases/tinkerpop"/>
+			<classpath>
+				<pathelement path="graphdb/target/classes" />
+				<fileset dir="${graph.release}/lib">
+					<include name="*.jar" />
+				</fileset>
+			</classpath>
+		</java>
 	</target>
 	
 	<target name="md5" depends="init">
