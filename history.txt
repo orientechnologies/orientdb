@@ -29,6 +29,25 @@
 This document enlist the last changes to the OrientDB project.
 
 -------------------------------------------------------------------------------
+VERSION 1.0rc3 - (July, 14th 2011)
+-------------------------------------------------------------------------------
+- Improved Index manager to use index also with multiple query condition
+  (many thanks to the Exigen team!) 
+- Fixed problems with schema refreshing
+- Fixed a lot of bugs with distributed clustered configuration (thanks to the
+  NuvolaBase team!) 
+- New SQL ALTER CUSTER command
+- New SQL operator EXISTS
+- GraphDB: new SQL GREMLIN() operator to execute Gremlin scripts against the
+  SQL query resultset
+- GraphDB: integrated Gremlin as command script implementation
+- Improved disk space allocation
+- Improved performance in general
+- 34 issues fixed in total!
+
+Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.0rc3   
+
+-------------------------------------------------------------------------------
 VERSION 1.0rc2 - (June, 17th 2011)
 -------------------------------------------------------------------------------
 - Fixed multi-threads problems
