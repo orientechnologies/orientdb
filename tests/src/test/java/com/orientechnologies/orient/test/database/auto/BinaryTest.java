@@ -90,7 +90,7 @@ public class BinaryTest {
 		database.open("admin", "admin");
 
 		ODocument doc = new ODocument(database, rid);
-		doc.load();
+		doc.reload();
 
 		Assert.assertEquals("Binary data", new String(((ORecordBytes) doc.field("binary")).toStream()));
 

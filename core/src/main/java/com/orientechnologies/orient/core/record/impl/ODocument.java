@@ -888,7 +888,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		}
 		// THIS IS IMPORTANT TO BE SURE THAT FIELDS ARE LOADED BEFORE IT'S TOO LATE AND THE RECORD _SOURCE IS NULL
 		checkForFields();
-		
+
 		return super.setDirty();
 	}
 
@@ -1061,7 +1061,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 */
 	public ORecord<?> placeholder() {
 		final ODocument cloned = new ODocument();
-		cloned._source = _source;
+		cloned._source = null;
 		cloned._database = _database;
 		cloned._recordId = _recordId.copy();
 		cloned._status = STATUS.NOT_LOADED;

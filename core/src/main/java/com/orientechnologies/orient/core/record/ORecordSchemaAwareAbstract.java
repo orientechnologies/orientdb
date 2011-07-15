@@ -274,6 +274,6 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 
 	protected void checkForLoading() {
 		if (_status == ORecordElement.STATUS.NOT_LOADED && _database != null)
-			reload();
+			reload(null, true);
 	}
 }
