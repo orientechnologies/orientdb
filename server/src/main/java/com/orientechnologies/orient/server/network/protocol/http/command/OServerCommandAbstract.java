@@ -232,6 +232,9 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 	}
 
 	protected String nextChainUrl(final String iCurrentUrl) {
+		if (!iCurrentUrl.contains("/"))
+			return iCurrentUrl;
+
 		return iCurrentUrl.startsWith("/") ? iCurrentUrl.substring(iCurrentUrl.indexOf('/', 1)) : iCurrentUrl.substring(iCurrentUrl
 				.indexOf("/"));
 	}

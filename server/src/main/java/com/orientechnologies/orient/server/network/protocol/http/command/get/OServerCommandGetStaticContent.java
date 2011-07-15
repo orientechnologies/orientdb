@@ -177,14 +177,6 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 		return pattern;
 	}
 
-	/**
-	 * Public access, avoid checks.
-	 */
-	@Override
-	public boolean beforeExecute(OHttpRequest iRequest) throws IOException {
-		return true;
-	}
-
 	@Override
 	protected void onBeforeResponseHeader(OHttpRequest iRequest) throws IOException {
 		String header = cacheHttpDefault;
