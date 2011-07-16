@@ -38,11 +38,11 @@ public class OIndexNotUnique extends OIndexMVRBTreeAbstract {
 		try {
 
 			checkForKeyType(iKey);
-			
+
 			Set<OIdentifiable> values = map.get(iKey);
 			checkForOptimization();
 			if (values == null)
-				values = new ORecordLazySet(configuration.getDatabase());
+				values = new ORecordLazySet(configuration.getDatabase()).setRidOnly(true);
 
 			if (!iSingleValue.getIdentity().isValid())
 				((ORecord<?>) iSingleValue).save();

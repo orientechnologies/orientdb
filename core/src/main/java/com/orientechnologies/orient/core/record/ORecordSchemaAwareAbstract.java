@@ -146,7 +146,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 			deserializeFields();
 	}
 
-	protected void deserializeFields() {
+	public void deserializeFields() {
 		if (_source == null)
 			return;
 

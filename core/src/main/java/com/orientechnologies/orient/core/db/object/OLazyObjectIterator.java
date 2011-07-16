@@ -19,7 +19,10 @@ import java.io.Serializable;
 import java.util.Iterator;
 
 import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -57,7 +60,10 @@ public class OLazyObjectIterator<TYPE> implements Iterator<TYPE>, Serializable {
 		if (value == null)
 			return null;
 
-		if (value instanceof ODocument && convertToRecord)
+		if (value instanceof ORID && convertToRecord)
+			return database.getUserObjectByRecord(
+					(ORecordInternal<?>) ((ODatabaseRecord) database.getUnderlying()).load((ORID) value, iFetchPlan), iFetchPlan);
+		else if (value instanceof ODocument && convertToRecord)
 			return database.getUserObjectByRecord((ODocument) value, iFetchPlan);
 
 		return (TYPE) value;

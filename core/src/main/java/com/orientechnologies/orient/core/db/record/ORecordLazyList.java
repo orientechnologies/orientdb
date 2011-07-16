@@ -46,6 +46,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	protected StringBuilder																		stream;
 	protected boolean																					autoConvertToRecord	= true;
 	protected boolean																					marshalling					= false;
+	protected boolean																					ridOnly							= false;
 
 	public ORecordLazyList(final ODatabaseRecord iDatabase) {
 		super(null);
@@ -127,8 +128,8 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
 	@Override
 	public boolean add(OIdentifiable e) {
-		if ((contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || OGlobalConfiguration.LAZYSET_WORK_ON_STREAM.getValueAsBoolean())
-				&& e instanceof ORecord<?> && !((ORecord<?>) e).getIdentity().isNew())
+		if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || OGlobalConfiguration.LAZYSET_WORK_ON_STREAM
+				.getValueAsBoolean()) && !e.getIdentity().isNew())
 			// IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
 			e = e.getIdentity();
 		else
@@ -140,8 +141,8 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
 	@Override
 	public void add(int index, OIdentifiable e) {
-		if ((contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || OGlobalConfiguration.LAZYSET_WORK_ON_STREAM.getValueAsBoolean())
-				&& e instanceof ORecord<?> && !((ORecord<?>) e).getIdentity().isNew())
+		if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || OGlobalConfiguration.LAZYSET_WORK_ON_STREAM
+				.getValueAsBoolean()) && !e.getIdentity().isNew())
 			// IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
 			e = e.getIdentity();
 		else
@@ -154,7 +155,14 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	@Override
 	public OIdentifiable set(int index, OIdentifiable e) {
 		lazyLoad(true);
-		contentType = ORecordMultiValueHelper.updateContentType(contentType, e);
+
+		if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || OGlobalConfiguration.LAZYSET_WORK_ON_STREAM
+				.getValueAsBoolean()) && !e.getIdentity().isNew())
+			// IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
+			e = e.getIdentity();
+		else
+			contentType = ORecordMultiValueHelper.updateContentType(contentType, e);
+
 		return super.set(index, e);
 	}
 
@@ -293,7 +301,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	 *          Position of the item to convert
 	 */
 	private void convertLink2Record(final int iIndex) {
-		if (contentType == MULTIVALUE_CONTENT_TYPE.ALL_RECORDS || !autoConvertToRecord || database == null)
+		if (ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RECORDS || !autoConvertToRecord || database == null)
 			// PRECONDITIONS
 			return;
 
@@ -305,7 +313,9 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 			marshalling = true;
 			try {
 				final ORecordInternal<?> record = database.load(rid);
-				set(iIndex, (OIdentifiable) record);
+
+				super.set(iIndex, (OIdentifiable) record);
+
 			} catch (ORecordNotFoundException e) {
 				// IGNORE THIS
 			} finally {
@@ -449,5 +459,14 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 			listener.onLazyLoad();
 
 		return true;
+	}
+
+	public boolean isRidOnly() {
+		return ridOnly;
+	}
+
+	public ORecordLazyList setRidOnly(boolean ridOnly) {
+		this.ridOnly = ridOnly;
+		return this;
 	}
 }

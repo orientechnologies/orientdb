@@ -415,4 +415,13 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 	public void setStatus(final STATUS iStatus) {
 		delegate.setStatus(iStatus);
 	}
+
+	public boolean isRidOnly() {
+		return delegate.isRidOnly();
+	}
+
+	public ORecordLazySet setRidOnly(final boolean ridOnly) {
+		delegate.setRidOnly(ridOnly);
+		return this;
+	}
 }

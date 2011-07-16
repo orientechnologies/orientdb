@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -35,7 +36,7 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 @SuppressWarnings("unchecked")
-public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass implements OIndexManager {
+public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass implements OIndexManager, OCloseable {
 	public static final String						CONFIG_INDEXES			= "indexes";
 	public static final String						DICTIONARY_NAME			= "dictionary";
 	protected Map<String, OIndexInternal>	indexes							= new HashMap<String, OIndexInternal>();
@@ -135,5 +136,10 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 	protected ODatabaseRecord getDatabase() {
 		document.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
 		return document.getDatabase();
+	}
+
+	public void close() {
+		flush();
+		indexes.clear();
 	}
 }

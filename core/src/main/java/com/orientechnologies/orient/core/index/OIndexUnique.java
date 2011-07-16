@@ -42,7 +42,7 @@ public class OIndexUnique extends OIndexMVRBTreeAbstract {
 			checkForOptimization();
 
 			if (values == null)
-				values = new ORecordLazySet(configuration.getDatabase());
+				values = new ORecordLazySet(configuration.getDatabase()).setRidOnly(true).setRidOnly(true);
 			else if (values.size() == 1) {
 				// CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
 				if (!values.contains(iSingleValue))

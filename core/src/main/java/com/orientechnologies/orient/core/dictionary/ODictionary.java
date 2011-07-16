@@ -17,7 +17,9 @@ package com.orientechnologies.orient.core.dictionary;
 
 import java.util.Collection;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -33,13 +35,22 @@ public class ODictionary<T extends Object> {
 		final Collection<OIdentifiable> values = index.get(iKey);
 		if (values.isEmpty())
 			return null;
-		return (RET) values.iterator().next();
+
+		final OIdentifiable id = values.iterator().next();
+
+		return (RET) id.getRecord();
 	}
 
 	public <RET extends T> RET get(final String iKey, final String iFetchPlan) {
 		final Collection<OIdentifiable> values = index.get(iKey);
 		if (values.isEmpty())
 			return null;
+
+		final OIdentifiable id = values.iterator().next();
+
+		if (id instanceof ORID)
+			return (RET) ODatabaseRecordThreadLocal.INSTANCE.get().load(((ORID) values.iterator().next()), iFetchPlan);
+
 		return (RET) ((ODocument) values.iterator().next()).load(iFetchPlan);
 	}
 

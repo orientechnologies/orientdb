@@ -24,6 +24,7 @@ import java.util.ListIterator;
 
 import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
 import com.orientechnologies.orient.core.db.graph.ODatabaseGraphTx;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -224,8 +225,15 @@ public class OLazyObjectList<TYPE> implements List<TYPE>, Serializable {
 
 		final Object o = list.get(iIndex);
 
-		if (o != null && o instanceof ODocument)
-			list.set(iIndex, database.getUserObjectByRecord((ORecordInternal<?>) o, fetchPlan));
+		if (o != null) {
+			if (o instanceof ORID)
+				list.set(
+						iIndex,
+						database.getUserObjectByRecord(
+								(ORecordInternal<?>) ((ODatabaseRecord) database.getUnderlying()).load((ORID) o, fetchPlan), fetchPlan));
+			else if (o instanceof ODocument)
+				list.set(iIndex, database.getUserObjectByRecord((ORecordInternal<?>) o, fetchPlan));
+		}
 	}
 
 	@Override

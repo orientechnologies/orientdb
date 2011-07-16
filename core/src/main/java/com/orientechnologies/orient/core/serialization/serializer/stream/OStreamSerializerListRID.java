@@ -36,13 +36,15 @@ public class OStreamSerializerListRID implements OStreamSerializer {
 
 		final String s = OBinaryProtocol.bytes2string(iStream);
 
-		return FORMAT.embeddedCollectionFromStream(iDatabase, null, OType.EMBEDDEDSET, null, OType.LINK, s);
+		ORecordLazySet set = (ORecordLazySet) FORMAT.embeddedCollectionFromStream(iDatabase, null, OType.EMBEDDEDSET, null, OType.LINK, s);
+		set.setRidOnly(true);
+		return set;
 	}
 
 	public byte[] toStream(final ODatabaseRecord iDatabase, final Object iObject) throws IOException {
 		if (iObject == null)
 			return null;
-		
+
 		return OBinaryProtocol.string2bytes(ORecordSerializerSchemaAware2CSV.linkSetToStream(new StringBuilder(), null,
 				(ORecordLazySet) iObject).toString());
 	}
