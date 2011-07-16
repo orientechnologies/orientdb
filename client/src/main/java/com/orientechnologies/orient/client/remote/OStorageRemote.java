@@ -198,6 +198,7 @@ public class OStorageRemote extends OStorageAbstract {
 			}
 
 			level2Cache.shutdown();
+			super.close(iForce);
 
 			Orient.instance().unregisterStorage(this);
 			open = false;

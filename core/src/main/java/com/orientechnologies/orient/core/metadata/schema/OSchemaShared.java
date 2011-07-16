@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -49,7 +50,7 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema {
+public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, OCloseable {
 	protected Map<String, OClass>		classes									= new HashMap<String, OClass>();
 	private static final int				CURRENT_VERSION_NUMBER	= 4;
 	private OSharedResourceExternal	lock										= new OSharedResourceExternal();

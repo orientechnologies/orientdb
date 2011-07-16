@@ -286,6 +286,8 @@ public class OStorageLocal extends OStorageEmbedded {
 			level2Cache.shutdown();
 
 			OMMapManager.flush();
+			
+			super.close(iForce);
 
 			Orient.instance().unregisterStorage(this);
 			open = false;

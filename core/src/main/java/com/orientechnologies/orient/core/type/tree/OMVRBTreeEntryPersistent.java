@@ -202,6 +202,12 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		if (record.isDirty()) {
 			// SAVE IF IT'S DIRTY YET
 			record.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
+
+			if (record.getDatabase() == null) {
+				throw new IllegalStateException(
+						"Current thread has no database setted and the tree can't be saved correctly. Assure to close the database before the application if off.");
+			}
+
 			record.save(pTree.getClusterName());
 		}
 

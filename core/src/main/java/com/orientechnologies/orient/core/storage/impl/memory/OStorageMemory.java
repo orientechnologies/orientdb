@@ -138,6 +138,8 @@ public class OStorageMemory extends OStorageEmbedded {
 			data.close();
 			level2Cache.shutdown();
 
+			super.close(iForce);
+
 			Orient.instance().unregisterStorage(this);
 			open = false;
 

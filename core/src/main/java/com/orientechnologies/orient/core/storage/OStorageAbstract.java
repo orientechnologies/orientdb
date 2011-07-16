@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.storage;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
@@ -84,6 +85,17 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 
 	public void close() {
 		close(false);
+	}
+
+	public void close(final boolean iForce) {
+		if (!checkForClose(iForce))
+			return;
+
+		for (Object resource : sharedResources.values()) {
+			if (resource instanceof OCloseable)
+				((OCloseable) resource).close();
+		}
+		sharedResources.clear();
 	}
 
 	/**

@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import java.util.List;
 
+import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -37,7 +38,7 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OSecurityShared extends OSharedResourceAbstract implements OSecurity {
+public class OSecurityShared extends OSharedResourceAbstract implements OSecurity, OCloseable {
 	public OUser authenticate(final String iUserName, final String iUserPassword) {
 		acquireExclusiveLock();
 		try {
