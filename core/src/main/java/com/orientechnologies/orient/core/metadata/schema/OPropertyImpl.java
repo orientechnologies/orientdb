@@ -196,6 +196,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	}
 
 	public void setNameInternal(final String iName) {
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		this.name = iName;
 	}
 
@@ -422,7 +423,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 			setMaxInternal(stringValue);
 			break;
 		case NAME:
-			setName(stringValue);
+			setNameInternal(stringValue);
 			break;
 		case NOTNULL:
 			setNotNullInternal(Boolean.parseBoolean(stringValue));
