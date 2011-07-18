@@ -298,40 +298,41 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			if (currChar == '\r') {
 				if (request.length() > 0 && !endOfHeaders) {
 					final String line = request.toString();
-					if (line.startsWith(OHttpUtils.HEADER_AUTHORIZATION)) {
+					if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_AUTHORIZATION)) {
 						// STORE AUTHORIZATION INFORMATION INTO THE REQUEST
 						final String auth = line.substring(OHttpUtils.HEADER_AUTHORIZATION.length());
-						if (!auth.startsWith(OHttpUtils.AUTHORIZATION_BASIC))
+						if (!OStringSerializerHelper.startsWithIgnoreCase(auth, OHttpUtils.AUTHORIZATION_BASIC))
 							throw new IllegalArgumentException("Only HTTP Basic authorization is supported");
 
 						iRequest.authorization = auth.substring(OHttpUtils.AUTHORIZATION_BASIC.length() + 1);
 
 						iRequest.authorization = new String(OBase64Utils.decode(iRequest.authorization));
 
-					} else if (line.startsWith(OHttpUtils.HEADER_COOKIE)) {
+					} else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_COOKIE)) {
 						String sessionPair = line.substring(OHttpUtils.HEADER_COOKIE.length());
 						String[] sessionPairItems = sessionPair.split("=");
 						if (sessionPairItems.length == 2 && OHttpUtils.OSESSIONID.equals(sessionPairItems[0]))
 							iRequest.sessionId = sessionPairItems[1];
 
-					} else if (line.startsWith(OHttpUtils.HEADER_CONTENT_LENGTH)) {
+					} else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_CONTENT_LENGTH)) {
 						contentLength = Integer.parseInt(line.substring(OHttpUtils.HEADER_CONTENT_LENGTH.length()));
 						if (contentLength > requestMaxContentLength)
 							OLogManager.instance().warn(
 									this,
 									"->" + channel.socket.getInetAddress().getHostAddress() + ": Error on content size " + contentLength
 											+ ": the maximum allowed is " + requestMaxContentLength);
-					} else if (line.startsWith(OHttpUtils.HEADER_CONTENT_TYPE)) {
+
+					} else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_CONTENT_TYPE)) {
 						final String contentType = line.substring(OHttpUtils.HEADER_CONTENT_TYPE.length());
-						if (contentType.startsWith(OHttpUtils.CONTENT_TYPE_MULTIPART)) {
+						if (OStringSerializerHelper.startsWithIgnoreCase(contentType, OHttpUtils.CONTENT_TYPE_MULTIPART)) {
 							iRequest.isMultipart = true;
 							iRequest.boundary = new String(line.substring(OHttpUtils.HEADER_CONTENT_TYPE.length()
 									+ OHttpUtils.CONTENT_TYPE_MULTIPART.length() + 2 + OHttpUtils.BOUNDARY.length() + 1));
 						}
-					} else if (line.startsWith(OHttpUtils.HEADER_IF_MATCH))
+					} else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_IF_MATCH))
 						iRequest.ifMatch = line.substring(OHttpUtils.HEADER_IF_MATCH.length());
 
-					else if (line.startsWith(OHttpUtils.HEADER_X_FORWARDED_FOR))
+					else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_X_FORWARDED_FOR))
 						getData().caller = line.substring(OHttpUtils.HEADER_X_FORWARDED_FOR.length());
 
 				}

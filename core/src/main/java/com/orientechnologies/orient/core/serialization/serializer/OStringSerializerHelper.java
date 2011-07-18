@@ -593,4 +593,22 @@ public abstract class OStringSerializerHelper {
 
 		return iValue;
 	}
+
+	public static boolean startsWithIgnoreCase(final String iFirst, final String iSecond) {
+		if (iFirst == null)
+			throw new IllegalArgumentException("Origin string to compare is null");
+		if (iSecond == null)
+			throw new IllegalArgumentException("String to match is null");
+
+		final int iSecondLength = iSecond.length();
+
+		if (iSecondLength > iFirst.length())
+			return false;
+
+		for (int i = 0; i < iSecondLength; ++i) {
+			if (Character.toUpperCase(iFirst.charAt(i)) != Character.toUpperCase(iSecond.charAt(i)))
+				return false;
+		}
+		return true;
+	}
 }
