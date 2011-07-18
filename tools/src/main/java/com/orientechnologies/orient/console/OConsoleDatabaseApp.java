@@ -32,6 +32,7 @@ import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
@@ -665,12 +666,22 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			out.println("Current database: " + currentDatabaseName + " (url=" + currentDatabase.getURL() + ")");
 
 			OStorage stg = currentDatabase.getStorage();
+
+			out.println("\nTotal size: " + OFileUtils.getSizeAsString(stg.getSize()));
+
 			if (stg instanceof OStorageRemoteThread) {
 				final ODocument clusterConfig = ((OStorageRemoteThread) stg).getClusterConfiguration();
 				if (clusterConfig != null)
 					out.println("\nCluster configuration: " + clusterConfig.toJSON("indent:2"));
 				else
 					out.println("\nCluster configuration: none");
+			} else if (stg instanceof OStorageLocal) {
+				final OStorageLocal localStorage = (OStorageLocal) stg;
+
+				long holeSize = localStorage.getHoleSize();
+
+				out.print("\nFragmented at " + (float) (holeSize * 100f / localStorage.getSize()) + "%");
+				out.println(" (" + localStorage.getHoles() + " holes, total size of holes: " + OFileUtils.getSizeAsString(holeSize) + ")");
 			}
 
 			clusters();
