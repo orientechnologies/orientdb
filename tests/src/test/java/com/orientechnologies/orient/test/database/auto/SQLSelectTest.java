@@ -410,6 +410,20 @@ public class SQLSelectTest {
 	}
 
 	@Test
+	public void queryInAsParameter() {
+		database.open("admin", "admin");
+
+		List<ODocument> roles = database.query(new OSQLSynchQuery<Object>("select from orole"));
+		roles.remove(0);
+
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select * from OUser where roles in ?")).execute(roles);
+
+		Assert.assertEquals(result.size(), 2);
+
+		database.close();
+	}
+
+	@Test
 	public void queryAnyOperator() {
 		database.open("admin", "admin");
 
