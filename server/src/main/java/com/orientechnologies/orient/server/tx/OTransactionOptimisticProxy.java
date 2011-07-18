@@ -44,9 +44,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 			try {
 				final byte recordStatus = iChannel.readByte();
 
-				final ORecordId rid = new ORecordId();
-				rid.clusterId = iChannel.readShort();
-				rid.clusterPosition = iChannel.readLong();
+				final ORecordId rid = iChannel.readRID();
 
 				final OTransactionEntryProxy entry = new OTransactionEntryProxy(iChannel.readByte());
 				entry.status = recordStatus;
@@ -56,12 +54,20 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 					entry.clusterName = iChannel.readString();
 					entry.getRecord().fill(iDatabase, rid, 0, iChannel.readBytes(), true);
 
+					if (entry.getRecord() instanceof ODocument)
+						// ASSURE FIELDS ARE UNMARSHALLED: THIS PREVENT TO STORE TEMPORARY RID
+						((ODocument) entry.getRecord()).deserializeFields();
+
 					// SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW RID TO SEND BACK TO THE REQUESTER
 					createdRecords.put(rid.copy(), entry.getRecord());
 					break;
 
 				case OTransactionRecordEntry.UPDATED:
 					entry.getRecord().fill(iDatabase, rid, iChannel.readInt(), iChannel.readBytes(), true);
+
+					if (entry.getRecord() instanceof ODocument)
+						// ASSURE FIELDS ARE UNMARSHALLED: THIS PREVENT TO STORE TEMPORARY RID
+						((ODocument) entry.getRecord()).deserializeFields();
 
 					// SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW VERSIONS TO SEND BACK TO THE REQUESTER
 					updatedRecords.put(rid, entry.getRecord());

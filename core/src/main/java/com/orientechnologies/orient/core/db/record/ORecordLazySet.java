@@ -194,11 +194,8 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 	 */
 	public boolean add(final OIdentifiable e) {
 		if (e.getIdentity().isNew()) {
-			if (!(e instanceof ORecord<?>))
-				throw new IllegalArgumentException("Can't add invalid RID");
+			final ORecord<?> record = e.getRecord();
 
-			// NEW RECORD OR YET UNMARSHALLED CONTENT: ADD IN NEW ITEMS
-			final ORecord<?> record = (ORecord<?>) e;
 			// ADD IN TEMP LIST
 			if (newItems == null)
 				newItems = new IdentityHashMap<ORecord<?>, Object>();
