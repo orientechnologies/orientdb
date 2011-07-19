@@ -535,6 +535,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			for (String projection : items) {
 				projection = projection.trim();
 
+				if (projections == null)
+					throw new OCommandSQLParsingException("Projection not allowed with FLATTEN() operator");
+
 				fieldName = null;
 				pos = projection.toUpperCase().indexOf(KEYWORD_AS);
 				if (pos > -1) {

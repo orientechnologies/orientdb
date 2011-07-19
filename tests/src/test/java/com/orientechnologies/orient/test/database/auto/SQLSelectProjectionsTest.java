@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test(groups = "sql-select")
@@ -239,5 +240,20 @@ public class SQLSelectProjectionsTest {
 		}
 
 		database.close();
+	}
+
+	@Test(expectedExceptions = OCommandSQLParsingException.class)
+	public void queryProjectionFlattenError() {
+		database.open("admin", "admin");
+
+		try {
+			database.command(
+					new OSQLSynchQuery<ODocument>(
+							"SELECT FLATTEN( outEdges ), inEdges FROM OGraphVertex WHERE outEdges TRAVERSE(1,1) (@class = 'OGraphEdge')"))
+					.execute();
+
+		} finally {
+			database.close();
+		}
 	}
 }
