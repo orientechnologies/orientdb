@@ -177,7 +177,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 	}
 
 	public static Object convertValue(final String iValue, final OType iExpectedType) {
-		final Object v = getSimpleValue((String) iValue);
+		final Object v = getTypeValue((String) iValue);
 		return OType.convert(v, iExpectedType.getDefaultJavaType());
 	}
 
@@ -288,7 +288,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 	}
 
 	/**
-	 * Parse a string returning the closer type. Numbers by default are INTEGER if haven't decimal separator, otherwise FLOAT. To
+	 * Parses a string returning the closer type. Numbers by default are INTEGER if haven't decimal separator, otherwise FLOAT. To
 	 * treat all the number types numbers are postponed with a character that tells the type: b=byte, s=short, l=long, f=float,
 	 * d=double, t=date.
 	 * 
@@ -299,15 +299,29 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 	 * @return The closest type recognized
 	 */
 	public static OType getType(final String iValue) {
-		boolean integer = true;
-		char c;
+		if (iValue.length() == 0)
+			return null;
 
-		if (iValue.charAt(0) == ORID.PREFIX)
+		final char firstChar = iValue.charAt(0);
+
+		if (firstChar == ORID.PREFIX)
 			// RID
 			return OType.LINK;
+		else if (firstChar == '\'' || firstChar == '"')
+			return OType.STRING;
+		else if (firstChar == OStringSerializerHelper.PARENTHESIS_BEGIN)
+			return OType.EMBEDDED;
+		else if (firstChar == OStringSerializerHelper.LINK)
+			return OType.LINK;
+		else if (firstChar == OStringSerializerHelper.COLLECTION_BEGIN)
+			return OType.EMBEDDEDLIST;
+		else if (firstChar == OStringSerializerHelper.MAP_BEGIN)
+			return OType.EMBEDDEDMAP;
 
+		// NUMBER OR STRING?
+		boolean integer = true;
 		for (int index = 0; index < iValue.length(); ++index) {
-			c = iValue.charAt(index);
+			final char c = iValue.charAt(index);
 			if (c < '0' || c > '9')
 				if ((index == 0 && (c == '+' || c == '-')))
 					continue;
@@ -356,7 +370,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 	 *          Value to parse
 	 * @return The closest type recognized
 	 */
-	public static Object getSimpleValue(final String iValue) {
+	public static Object getTypeValue(final String iValue) {
 		if (iValue == null)
 			return null;
 

@@ -172,25 +172,11 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				if (entry.size() > 0) {
 					String mapValue = entry.get(1);
 
-					if (iLinkedType == null) {
-						if (mapValue.length() > 0) {
-							final char begin = mapValue.charAt(0);
-
-							if (begin == OStringSerializerHelper.PARENTHESIS_BEGIN)
-								iLinkedType = OType.EMBEDDED;
-							else if (begin == OStringSerializerHelper.LINK)
-								iLinkedType = OType.LINK;
-							else if (begin == OStringSerializerHelper.COLLECTION_BEGIN)
-								iLinkedType = OType.EMBEDDEDLIST;
-							else if (Character.isDigit(begin) || begin == '+' || begin == '-')
-								iLinkedType = getType(mapValue);
-							else if (begin == '\'' || begin == '"')
-								iLinkedType = OType.STRING;
-							else if (begin == OStringSerializerHelper.MAP_BEGIN)
-								iLinkedType = OType.EMBEDDEDMAP;
-						} else
+					if (iLinkedType == null)
+						if (mapValue.length() > 0)
+							iLinkedType = getType(mapValue);
+						else
 							iLinkedType = OType.EMBEDDED;
-					}
 
 					if (iLinkedType == OType.EMBEDDED)
 						mapValue = mapValue.substring(1, mapValue.length() - 1);

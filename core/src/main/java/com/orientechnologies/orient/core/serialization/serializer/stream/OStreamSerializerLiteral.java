@@ -32,7 +32,7 @@ public class OStreamSerializerLiteral implements OStreamSerializer {
 	}
 
 	public Object fromStream(final ODatabaseRecord iDatabase, final byte[] iStream) throws IOException {
-		return ORecordSerializerStringAbstract.getSimpleValue(OBinaryProtocol.bytes2string(iStream));
+		return ORecordSerializerStringAbstract.getTypeValue(OBinaryProtocol.bytes2string(iStream));
 	}
 
 	public byte[] toStream(final ODatabaseRecord iDatabase, final Object iObject) throws IOException {

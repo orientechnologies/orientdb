@@ -763,7 +763,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 
 			for (ODocument entry : entries) {
 				final Object key = ORecordSerializerStringAbstract
-						.getSimpleValue(OStringSerializerHelper.decode((String) entry.field("k")));
+						.getTypeValue(OStringSerializerHelper.decode((String) entry.field("k")));
 
 				final List<ODocument> operations = (List<ODocument>) entry.field("ops");
 				if (operations != null) {
