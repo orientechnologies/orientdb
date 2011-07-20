@@ -249,7 +249,7 @@ public abstract class OAbstractRecordCache extends OSharedResourceAbstract {
 
 						entries.removeEldestItems(threshold);
 
-						OLogManager.instance().warn(this, "Low memory: auto reduce the record cache size from %d to %d", oldSize, threshold);
+						OLogManager.instance().debug(this, "Low memory: auto reduce the record cache size from %d to %d", oldSize, threshold);
 					} catch (Exception e) {
 						OLogManager.instance().error(this, "Error while freeing resources", e);
 					} finally {
