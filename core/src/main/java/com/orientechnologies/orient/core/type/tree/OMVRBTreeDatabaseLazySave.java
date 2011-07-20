@@ -19,7 +19,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
-import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
 /**
  * Collects changes all together and save them following the selected strategy. By default the map is saved automatically every
@@ -30,8 +29,9 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
  */
 @SuppressWarnings("serial")
 public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> {
-	protected int	maxUpdatesBeforeSave;
-	protected int	updates	= 0;
+	protected int			maxUpdatesBeforeSave;
+	protected int			updates							= 0;
+	protected boolean	transactionRunning	= false;
 
 	public OMVRBTreeDatabaseLazySave(ODatabaseRecord iDatabase, ORID iRID) {
 		super(iDatabase, iRID);
@@ -47,8 +47,7 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> {
 	 */
 	@Override
 	public synchronized int commitChanges() {
-		if (getDatabase().getTransaction() instanceof OTransactionOptimistic || maxUpdatesBeforeSave == 0
-				|| (maxUpdatesBeforeSave > 0 && ++updates >= maxUpdatesBeforeSave)) {
+		if (transactionRunning || maxUpdatesBeforeSave == 0 || (maxUpdatesBeforeSave > 0 && ++updates >= maxUpdatesBeforeSave)) {
 			updates = 0;
 			return lazySave();
 		}
@@ -98,5 +97,21 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> {
 
 	public int getInMemoryEntries() {
 		return cache.size();
+	}
+
+	/**
+	 * Change the transaction running mode.
+	 * 
+	 * @param iTxRunning
+	 *          true if a transaction is running, otherwise false
+	 */
+	public void setRunningTransaction(final boolean iTxRunning) {
+		transactionRunning = iTxRunning;
+
+		if (iTxRunning) {
+			// ASSURE ALL PENDING CHANGES ARE COMMITTED BEFORE TO START A TX
+			updates = 0;
+			lazySave();
+		}
 	}
 }

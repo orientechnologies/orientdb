@@ -111,7 +111,7 @@ public class FullTextIndexTest {
 		database.close();
 	}
 
-	@Test
+	@Test(dependsOnMethods = "testFullTextInsertion")
 	public void testFullTextSearch() {
 		database.open("admin", "admin");
 

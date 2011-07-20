@@ -756,6 +756,8 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceExternal imp
 		checkForOptimization();
 		acquireExclusiveLock();
 		try {
+			map.setRunningTransaction(true);
+			
 			final Boolean clearAll = (Boolean) iDocument.field("clear");
 			if (clearAll != null && clearAll)
 				clear();
@@ -787,6 +789,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceExternal imp
 
 		} finally {
 			releaseExclusiveLock();
+			map.setRunningTransaction(false);
 		}
 	}
 
