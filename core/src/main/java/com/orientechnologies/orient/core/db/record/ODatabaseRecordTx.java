@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map.Entry;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -22,6 +24,7 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexMVRBTreeAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -207,16 +210,37 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 	}
 
 	public void executeCommit() {
-		getStorage().commit(currentTx);
+		final List<String> involvedIndexes = currentTx.getInvolvedIndexes();
 
-		// COMMIT INDEX CHANGES
-		final ODocument indexEntries = currentTx.getIndexChanges();
+		// LOCK INVOLVED INDEXES
+		List<OIndexMVRBTreeAbstract> lockedIndexes = null;
+		try {
+			if (involvedIndexes != null)
+				for (String indexName : involvedIndexes) {
+					final OIndexMVRBTreeAbstract index = (OIndexMVRBTreeAbstract) getMetadata().getIndexManager().getIndexInternal(indexName);
+					if (lockedIndexes == null)
+						lockedIndexes = new ArrayList<OIndexMVRBTreeAbstract>();
 
-		if (indexEntries != null) {
-			for (Entry<String, Object> indexEntry : indexEntries) {
-				final OIndex index = getMetadata().getIndexManager().getIndexInternal(indexEntry.getKey());
-				index.commit((ODocument) indexEntry.getValue());
+					index.acquireExclusiveLock();
+					lockedIndexes.add(index);
+				}
+
+			getStorage().commit(currentTx);
+
+			// COMMIT INDEX CHANGES
+			final ODocument indexEntries = currentTx.getIndexChanges();
+			if (indexEntries != null) {
+				for (Entry<String, Object> indexEntry : indexEntries) {
+					final OIndex index = getMetadata().getIndexManager().getIndexInternal(indexEntry.getKey());
+					index.commit((ODocument) indexEntry.getValue());
+				}
 			}
+		} finally {
+			// RELEASE INDEX LOCKS IF ANY
+			if (lockedIndexes != null)
+				for (OIndexMVRBTreeAbstract index : lockedIndexes) {
+					index.releaseExclusiveLock();
+				}
 		}
 	}
 

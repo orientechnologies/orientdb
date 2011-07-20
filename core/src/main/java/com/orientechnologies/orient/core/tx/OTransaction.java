@@ -64,6 +64,8 @@ public interface OTransaction {
 
 	public ORecordInternal<?> getRecordEntry(ORecordId rid);
 
+	public List<String> getInvolvedIndexes();
+
 	public ODocument getIndexChanges();
 
 	public void addIndexEntry(OIndex delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iStatus,

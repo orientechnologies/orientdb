@@ -57,7 +57,6 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemory;
 import com.orientechnologies.orient.core.tx.OTransaction;
-import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 
 public class OStorageLocal extends OStorageEmbedded {
 	private final int											DELETE_MAX_RETRIES;
@@ -660,7 +659,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		lock.acquireExclusiveLock();
 		try {
 
-			txManager.commitAllPendingRecords((OTransactionRealAbstract) iTx);
+			txManager.commitAllPendingRecords((OTransaction) iTx);
 
 			incrementVersion();
 			if (OGlobalConfiguration.TX_COMMIT_SYNCH.getValueAsBoolean())

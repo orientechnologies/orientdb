@@ -133,4 +133,8 @@ public class OTransactionNoTx extends OTransactionAbstract {
 	public int getId() {
 		return 0;
 	}
+
+	public List<String> getInvolvedIndexes() {
+		return null;
+	}
 }

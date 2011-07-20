@@ -44,7 +44,6 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
-import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 
 /**
@@ -442,7 +441,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
 				for (OTransactionRecordEntry txEntry : tmpEntries)
 					// COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
-					commitEntry(((OTransactionRealAbstract) iTx).getId(), txEntry);
+					commitEntry(((OTransaction) iTx).getId(), txEntry);
 
 				allEntries.addAll(tmpEntries);
 				tmpEntries.clear();

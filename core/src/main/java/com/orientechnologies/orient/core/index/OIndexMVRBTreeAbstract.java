@@ -26,6 +26,7 @@ import java.util.Set;
 
 import com.orientechnologies.common.collection.ONavigableMap;
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
+import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -59,7 +60,7 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
  * @author Luca Garulli
  * 
  */
-public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract implements OIndexInternal, ODatabaseListener {
+public abstract class OIndexMVRBTreeAbstract extends OSharedResourceExternal implements OIndexInternal, ODatabaseListener {
 	protected static final String																		CONFIG_MAP_RID	= "mapRid";
 	protected static final String																		CONFIG_CLUSTERS	= "clusters";
 	protected String																								name;
@@ -762,8 +763,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 			final Collection<ODocument> entries = iDocument.field("entries");
 
 			for (ODocument entry : entries) {
-				final Object key = ORecordSerializerStringAbstract
-						.getTypeValue(OStringSerializerHelper.decode((String) entry.field("k")));
+				final Object key = ORecordSerializerStringAbstract.getTypeValue(OStringSerializerHelper.decode((String) entry.field("k")));
 
 				final List<ODocument> operations = (List<ODocument>) entry.field("ops");
 				if (operations != null) {
@@ -950,5 +950,9 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 
 	public OType getKeyType() {
 		return keyType;
+	}
+
+	public OSharedResourceAbstract getLock() {
+		return this;
 	}
 }

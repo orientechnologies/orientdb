@@ -116,6 +116,16 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 		indexEntries.clear();
 	}
 
+	public List<String> getInvolvedIndexes() {
+		List<String> list = null;
+		for (String indexName : indexEntries.keySet()) {
+			if (list == null)
+				list = new ArrayList<String>();
+			list.add(indexName);
+		}
+		return list;
+	}
+
 	public ODocument getIndexChanges() {
 		final StringBuilder value = new StringBuilder();
 
@@ -151,7 +161,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 						// SERIALIZE OPERATION
 						changeDoc.field("o", e.operation.ordinal());
 
-						if (e.value.getIdentity().isNew())
+						if (e.value instanceof ORecord<?> && e.value.getIdentity().isNew())
 							((ORecord<?>) e.value).save();
 
 						changeDoc.field("v", e.value.getIdentity());

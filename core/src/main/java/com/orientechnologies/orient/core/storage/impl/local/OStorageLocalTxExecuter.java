@@ -31,8 +31,8 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
-import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.core.tx.OTxListener;
 
@@ -167,7 +167,7 @@ public class OStorageLocalTxExecuter {
 		return txSegment;
 	}
 
-	protected void commitAllPendingRecords(final OTransactionRealAbstract iTx) throws IOException {
+	protected void commitAllPendingRecords(final OTransaction iTx) throws IOException {
 		// COPY ALL THE ENTRIES IN SEPARATE COLLECTION SINCE DURING THE COMMIT PHASE SOME NEW ENTRIES COULD BE CREATED AND
 		// CONCURRENT-EXCEPTION MAY OCCURS
 		final Set<OTransactionRecordEntry> allEntries = new HashSet<OTransactionRecordEntry>();
@@ -199,7 +199,7 @@ public class OStorageLocalTxExecuter {
 		allEntries.clear();
 	}
 
-	private void commitEntry(final OTransactionRealAbstract iTx, final OTransactionRecordEntry txEntry, final boolean iUseLog)
+	private void commitEntry(final OTransaction iTx, final OTransactionRecordEntry txEntry, final boolean iUseLog)
 			throws IOException {
 
 		if (txEntry.status != OTransactionRecordEntry.DELETED && !txEntry.getRecord().isDirty())

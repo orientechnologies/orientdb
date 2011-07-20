@@ -58,7 +58,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
-import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -695,8 +694,8 @@ public class OStorageRemote extends OStorageAbstract {
 				try {
 					network = beginRequest(OChannelBinaryProtocol.REQUEST_TX_COMMIT);
 
-					network.writeInt(((OTransactionRealAbstract) iTx).getId());
-					network.writeByte((byte) (((OTransactionRealAbstract) iTx).isUsingLog() ? 1 : 0));
+					network.writeInt(((OTransaction) iTx).getId());
+					network.writeByte((byte) (((OTransaction) iTx).isUsingLog() ? 1 : 0));
 
 					final List<OTransactionRecordEntry> tmpEntries = new ArrayList<OTransactionRecordEntry>();
 
