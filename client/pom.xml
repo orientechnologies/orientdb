@@ -9,7 +9,7 @@
 	</parent>
 
 	<artifactId>orientdb-client</artifactId>
-	<packaging>jar</packaging>
+	<packaging>bundle</packaging>
 
 	<name>OrientDB Client</name>
 
@@ -19,6 +19,8 @@
 	</organization>
 	<properties>
 		<jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
+        <import.package>*</import.package>
+        <export.package>com.orientechnologies.orient.client.*</export.package>
 	</properties>
 
 	<dependencies>
@@ -43,5 +45,4 @@
 			</plugin>
 		</plugins>
 	</build>
-
 </project>

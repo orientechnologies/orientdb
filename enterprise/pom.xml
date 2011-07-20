@@ -9,7 +9,7 @@
 	</parent>
 
 	<artifactId>orientdb-enterprise</artifactId>
-	<packaging>jar</packaging>
+	<packaging>bundle</packaging>
 
 	<name>OrientDB Enterprise</name>
 
@@ -28,4 +28,8 @@
 		<plugins>
 		</plugins>
 	</build>
+    <properties>
+        <import.package>*</import.package>
+        <export.package>com.orientechnologies.orient.enterprise.*</export.package>
+    </properties>
 </project>

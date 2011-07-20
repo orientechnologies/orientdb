@@ -120,6 +120,21 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+              <groupId>org.apache.felix</groupId>
+              <artifactId>maven-bundle-plugin</artifactId>
+              <extensions>true</extensions>
+              <configuration>
+                <manifestLocation>META-INF</manifestLocation>
+                <instructions>
+                  <Bundle-ClassPath>${bundle.classpath}</Bundle-ClassPath>
+                  <Export-Package>${export.package}</Export-Package>
+                  <Private-Package>${private.package}</Private-Package>
+                  <Import-Package>${import.package}</Import-Package>
+                  <Bundle-RequiredExecutionEnvironment>J2SE-1.5</Bundle-RequiredExecutionEnvironment>
+                </instructions>
+              </configuration>
+            </plugin>        
         </plugins>
         <pluginManagement>
             <plugins>

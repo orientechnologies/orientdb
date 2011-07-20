@@ -9,7 +9,7 @@
 	</parent>
 
 	<artifactId>orient-commons</artifactId>
-	<packaging>jar</packaging>
+	<packaging>bundle</packaging>
 
 	<name>Orient Commons</name>
 
@@ -42,4 +42,7 @@
 			</plugin>
 		</plugins>
 	</build>
+    <properties>
+        <export.package>com.orientechnologies.common.*</export.package>
+    </properties>
 </project>
