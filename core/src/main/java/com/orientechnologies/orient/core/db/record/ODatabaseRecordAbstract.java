@@ -89,12 +89,12 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 		mvcc = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
 
-		ODatabaseRecordThreadLocal.INSTANCE.set(this);
+		setCurrentDatabaseinThreadLocal();
 	}
 
 	@Override
 	public <DB extends ODatabase> DB open(final String iUserName, final String iUserPassword) {
-		ODatabaseRecordThreadLocal.INSTANCE.set(this);
+		setCurrentDatabaseinThreadLocal();
 
 		try {
 			super.open(iUserName, iUserPassword);
@@ -125,7 +125,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 	@Override
 	public <DB extends ODatabase> DB create() {
-		ODatabaseRecordThreadLocal.INSTANCE.set(this);
+		setCurrentDatabaseinThreadLocal();
 
 		try {
 			super.create();
@@ -152,6 +152,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 	@Override
 	public void close() {
+		setCurrentDatabaseinThreadLocal();
+
 		if (metadata != null) {
 			metadata.close();
 			metadata = null;
@@ -238,6 +240,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			final Class<REC> iClass) {
 		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
+		setCurrentDatabaseinThreadLocal();
+
 		final int clusterId = getClusterIdByName(iClusterName);
 
 		return new ORecordIteratorCluster<REC>(this, this, clusterId);
@@ -246,13 +250,17 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	public ORecordIteratorCluster<?> browseCluster(final String iClusterName) {
 		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
+		setCurrentDatabaseinThreadLocal();
+
 		final int clusterId = getClusterIdByName(iClusterName);
 
 		return new ORecordIteratorCluster<ORecordInternal<?>>(this, this, clusterId);
 	}
 
 	public OCommandRequest command(final OCommandRequest iCommand) {
-		OCommandRequestInternal command = (OCommandRequestInternal) iCommand;
+		setCurrentDatabaseinThreadLocal();
+
+		final OCommandRequestInternal command = (OCommandRequestInternal) iCommand;
 
 		try {
 			command.reset();
@@ -266,6 +274,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	}
 
 	public <RET extends List<?>> RET query(final OQuery<? extends Object> iCommand, final Object... iArgs) {
+		setCurrentDatabaseinThreadLocal();
+
 		iCommand.reset();
 
 		if (iCommand instanceof OQueryAbstract)
@@ -304,12 +314,14 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	public long countClusterElements(final int iClusterId) {
 		final String name = getClusterNameById(iClusterId);
 		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, name);
+		setCurrentDatabaseinThreadLocal();
 		return super.countClusterElements(name);
 	}
 
 	@Override
 	public long countClusterElements(final String iClusterName) {
 		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
+		setCurrentDatabaseinThreadLocal();
 		return super.countClusterElements(iClusterName);
 	}
 
@@ -431,6 +443,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			final String iFetchPlan, final boolean iIgnoreCache) {
 		checkOpeness();
 
+		setCurrentDatabaseinThreadLocal();
+
 		try {
 			checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, getClusterNameById(iRid.getClusterId()));
 
@@ -500,6 +514,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		if (rid == null)
 			throw new ODatabaseException(
 					"Can't create record because it has no identity. Probably is not a regular record or contains projections of fields rather than a full record");
+
+		setCurrentDatabaseinThreadLocal();
 
 		if (iRecord.getDatabase() == null)
 			iRecord.setDatabase(this);
@@ -588,6 +604,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			return;
 
 		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.clusterId));
+
+		setCurrentDatabaseinThreadLocal();
 
 		try {
 			callbackHooks(TYPE.BEFORE_DELETE, iRecord);
@@ -721,5 +739,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	protected void checkOpeness() {
 		if (isClosed())
 			throw new ODatabaseException("Database is closed");
+	}
+
+	protected void setCurrentDatabaseinThreadLocal() {
+		ODatabaseRecordThreadLocal.INSTANCE.set(this);
 	}
 }
