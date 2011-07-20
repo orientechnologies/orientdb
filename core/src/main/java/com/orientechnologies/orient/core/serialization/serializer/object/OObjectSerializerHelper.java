@@ -124,7 +124,7 @@ public class OObjectSerializerHelper {
 		getClassFields(c);
 
 		try {
-			Object o = getters.get(className + "." + iProperty);
+			final Object o = getters.get(className + "." + iProperty);
 
 			if (o == null)
 				return null;
@@ -287,16 +287,20 @@ public class OObjectSerializerHelper {
 
 			public Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName, final Object iLinked) {
 				final Class<?> type;
-				if (iLinked != null && iLinked instanceof ODocument) {
+				if (iLinked != null && iLinked instanceof ODocument)
 					// GET TYPE BY DOCUMENT'S CLASS. THIS WORKS VERY WELL FOR SUB-TYPES
 					type = getFieldType((ODocument) iLinked, iEntityManager);
-				} else {
+				else
 					// DETERMINE TYPE BY REFLECTION
 					type = getFieldType(iUserObject, iFieldName);
-				}
 
 				if (type == null)
-					throw new OSerializationException("Linked type of field " + iFieldName + " in class " + iRoot.getClassName() + " is null");
+					throw new OSerializationException(
+							"Linked type of field '"
+									+ iRoot.getClassName()
+									+ "."
+									+ iFieldName
+									+ "' is unknown. Probably needs to be registered with <db>.getEntityManager().registerEntityClasses(<package>) or <db>.getEntityManager().registerEntityClass(<class>) or the package can't be loaded correctly due to a classpath problem. In this case register the single classes one by one.");
 
 				Object fieldValue = null;
 				Class<?> fieldClass;
