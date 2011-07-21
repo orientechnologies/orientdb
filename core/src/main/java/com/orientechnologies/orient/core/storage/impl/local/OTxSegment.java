@@ -28,14 +28,20 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 /**
- * Handle the records that wait to be committed. This class is not synchronized because the caller is responsible of it.<br/>
- * Record structure:<br/>
+ * Handles the records that wait to be committed. This class is not synchronized because the caller is responsible of it.<br/>
  * <br/>
+ * Record structure:<br/>
+ * <code>
  * +--------+--------+---------+---------+----------------+-------------+<br/>
  * | STATUS | OPERAT | TX ID . | CLUSTER | CLUSTER OFFSET | DATA OFFSET |<br/>
  * | 1 byte | 1 byte | 4 bytes | 2 bytes | 8 bytes ...... | 8 bytes ... |<br/>
  * +--------+--------+---------+---------+----------------+-------------+<br/>
- * = 24 bytes<br/>
+ * = 24 bytes
+ * </code><br/>
+ * At commit time all the changes are written in the TX log file with status = STATUS_COMMITTING. Once all records have been
+ * written, then the status of all the records is changed in STATUS_FREE. If a transactions has at least a STATUS_FREE means that
+ * has been successfully committed. This is the reason why on startup all the pending transactions will be recovered, but those with
+ * at least one record with status = STATUS_FREE.
  */
 public class OTxSegment extends OSingleFileSegment {
 	public static final byte	STATUS_FREE				= 0;
@@ -46,7 +52,7 @@ public class OTxSegment extends OSingleFileSegment {
 	public static final byte	OPERATION_UPDATE	= 2;
 
 	private static final int	DEF_START_SIZE		= 262144;
-	private static final int	RECORD_SIZE				= 26;
+	private static final int	RECORD_SIZE				= 24;
 
 	public OTxSegment(final OStorageLocal iStorage, final OStorageTxConfiguration iConfig) throws IOException {
 		super(iStorage, iConfig);
@@ -209,14 +215,14 @@ public class OTxSegment extends OSingleFileSegment {
 	private void recoverTransactions() throws IOException {
 		OLogManager.instance().debug(
 				this,
-				"Started the recovering of pending transactions after a brute shutdown. Found " + getTotalLogCount()
+				"Started the recovering of pending transactions after a hard shutdown. Found " + getTotalLogCount()
 						+ " entry logs. Scanning...");
 
 		int recoveredTxs = 0;
 		int recoveredRecords = 0;
 		int rec;
 
-		Set<Integer> txToRecover = scanForTransactionsToRecover();
+		final Set<Integer> txToRecover = scanForTransactionsToRecover();
 		for (Integer txId : txToRecover) {
 			rec = recoverTransaction(txId);
 
@@ -294,7 +300,7 @@ public class OTxSegment extends OSingleFileSegment {
 		long oldDataOffset;
 
 		int offset;
-		OPhysicalPosition ppos = new OPhysicalPosition();
+		final OPhysicalPosition ppos = new OPhysicalPosition();
 
 		int size = (file.getFilledUpTo() / RECORD_SIZE);
 		int recordsRecovered = 0;
@@ -326,8 +332,8 @@ public class OTxSegment extends OSingleFileSegment {
 
 					oldDataOffset = file.readLong(offset);
 
-					//TODO THIS NEED TO BE FIXED!
-					//recoverTransactionEntry(status, operation, txId, rid, oldDataOffset, ppos);
+					// TODO THIS NEEDS TO BE FIXED!
+					recoverTransactionEntry(status, operation, txId, rid, oldDataOffset, ppos);
 					recordsRecovered++;
 
 					// CLEAR THE ENTRY BY WRITING '0'

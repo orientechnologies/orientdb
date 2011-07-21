@@ -871,7 +871,7 @@ public class SQLSelectTest {
 		result = database.command(new OSQLSynchQuery<ODocument>("select * from account where id = id * 1")).execute();
 		Assert.assertFalse(result.isEmpty());
 
-		List<ODocument> result2 = database.command(new OSQLSynchQuery<ODocument>("select count(*) as tot from account where id > 0"))
+		List<ODocument> result2 = database.command(new OSQLSynchQuery<ODocument>("select count(*) as tot from account where id >= 0"))
 				.execute();
 		Assert.assertEquals(result.size(), ((Number) result2.get(0).field("tot")).intValue());
 

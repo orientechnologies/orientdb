@@ -56,8 +56,6 @@ public abstract class OAbstractRecordCache extends OSharedResourceAbstract {
 		entries = new ORecordCache(maxSize, initialSize, 0.75f);
 	}
 
-	public abstract void pushRecord(ORecordInternal<?> iRecord);
-
 	public boolean isEnabled() {
 		return enabled;
 	}
@@ -79,7 +77,10 @@ public abstract class OAbstractRecordCache extends OSharedResourceAbstract {
 
 		acquireExclusiveLock();
 		try {
-			entries.put(iRecord.getIdentity(), iRecord);
+			if (iRecord.isPinned())
+				entries.put(iRecord.getIdentity(), iRecord);
+			else
+				entries.remove(iRecord.getIdentity());
 		} finally {
 			releaseExclusiveLock();
 		}

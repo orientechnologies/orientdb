@@ -50,17 +50,17 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
 		level2cache = (OLevel2RecordCache) database.getLevel2Cache();
 	}
 
-	public void pushRecord(final ORecordInternal<?> iRecord) {
-		if (!enabled || !iRecord.isPinned())
-			// PRECONDITIONS
-			return;
-
-		acquireExclusiveLock();
-		try {
-			entries.put(iRecord.getIdentity(), iRecord);
-		} finally {
-			releaseExclusiveLock();
+	public void updateRecord(final ORecordInternal<?> iRecord) {
+		if (enabled) {
+			acquireExclusiveLock();
+			try {
+				entries.remove(iRecord.getIdentity());
+			} finally {
+				releaseExclusiveLock();
+			}
 		}
+
+		level2cache.updateRecord(iRecord);
 	}
 
 	/**

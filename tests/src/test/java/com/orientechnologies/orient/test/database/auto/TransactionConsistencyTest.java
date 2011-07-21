@@ -21,77 +21,173 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.client.remote.OEngineRemote;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
-@Test(groups = "dictionary")
+@Test
 public class TransactionConsistencyTest {
-	private String	url;
+	protected ODatabaseDocumentTx	database1;
+	protected ODatabaseDocumentTx	database2;
+
+	protected String							url;
+
+	public static final String		NAME	= "name";
 
 	@Parameters(value = "url")
 	public TransactionConsistencyTest(String iURL) {
-		Orient.instance().registerEngine(new OEngineRemote());
 		url = iURL;
 	}
 
+	//
+	// @Test
+	// public void testRollbackOnConcurrentException() throws IOException {
+	// database1 = new ODatabaseDocumentTx(url).open("admin", "admin");
+	// database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
+	//
+	// // database1.begin(TXTYPE.OPTIMISTIC);
+	//
+	// // Create docA.
+	// ODocument vDocA_db1 = database1.newInstance();
+	// vDocA_db1.field(NAME, "docA");
+	// vDocA_db1.save();
+	//
+	// // Create docB.
+	// ODocument vDocB_db1 = database1.newInstance();
+	// vDocB_db1.field(NAME, "docB");
+	// vDocB_db1.save();
+	//
+	// // database1.commit();
+	//
+	// // Keep the IDs.
+	// ORID vDocA_Rid = vDocA_db1.getIdentity().copy();
+	// ORID vDocB_Rid = vDocB_db1.getIdentity().copy();
+	//
+	// database2.begin(TXTYPE.OPTIMISTIC);
+	// try {
+	// // Get docA and update in db2 transaction context
+	// ODocument vDocA_db2 = database2.load(vDocA_Rid);
+	// vDocA_db2.field(NAME, "docA_v2");
+	// vDocA_db2.save();
+	//
+	// // Concurrent update docA via database1 -> will throw OConcurrentModificationException at database2.commit().
+	// database1.begin(TXTYPE.OPTIMISTIC);
+	// try {
+	// vDocA_db1.field(NAME, "docA_v3");
+	// vDocA_db1.save();
+	// database1.commit();
+	// } catch (OConcurrentModificationException e) {
+	// Assert.fail("Should not failed here...");
+	// }
+	// Assert.assertEquals(vDocA_db1.field(NAME), "docA_v3");
+	//
+	// // Update docB in db2 transaction context -> should be rollbacked.
+	// ODocument vDocB_db2 = database2.load(vDocB_Rid);
+	// vDocB_db2.field(NAME, "docB_UpdatedInTranscationThatWillBeRollbacked");
+	// vDocB_db2.save();
+	//
+	// // Will throw OConcurrentModificationException
+	// database2.commit();
+	// Assert.fail("Should throw OConcurrentModificationException");
+	// } catch (OConcurrentModificationException e) {
+	// database2.rollback();
+	// }
+	//
+	// // Force reload all (to be sure it is not a cache problem)
+	// database1.close();
+	// database2.getStorage().close();
+	// database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
+	//
+	// // docB should be in the first state : "docB"
+	// ODocument vDocB_db2 = database2.load(vDocB_Rid);
+	// Assert.assertEquals(vDocB_db2.field(NAME), "docB");
+	//
+	// database1.close();
+	// database2.close();
+	// }
+
 	@Test
-	public void setup() throws IOException {
-		ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
-		database.open("admin", "admin");
+	public void testRollback() throws IOException {
+		database1 = new ODatabaseDocumentTx(url).open("admin", "admin");
+		database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
 
-		long tot = database.countClass("Account");
+		// Create docA.
+		ODocument vDocA_db1 = database1.newInstance();
+		vDocA_db1.field(NAME, "docA");
+		vDocA_db1.unpin();
+		vDocA_db1.save();
 
-		// DELETE ALL THE Account OBJECTS
-		int i = 0;
-		for (ODocument rec : database.browseClass("Account")) {
-			rec.delete();
-			i++;
+		// Keep the IDs.
+		ORID vDocA_Rid = vDocA_db1.getIdentity().copy();
+
+		database2.begin(TXTYPE.OPTIMISTIC);
+		try {
+			// Get docA and update in db2 transaction context
+			ODocument vDocA_db2 = database2.load(vDocA_Rid);
+			vDocA_db2.field(NAME, "docA_v2");
+			vDocA_db2.save();
+
+			database1.begin(TXTYPE.OPTIMISTIC);
+			try {
+				vDocA_db1.field(NAME, "docA_v3");
+				vDocA_db1.save();
+				database1.commit();
+			} catch (OConcurrentModificationException e) {
+				Assert.fail("Should not failed here...");
+			}
+			Assert.assertEquals(vDocA_db1.field(NAME), "docA_v3");
+
+			// Will throw OConcurrentModificationException
+			database2.commit();
+			Assert.fail("Should throw OConcurrentModificationException");
+		} catch (OConcurrentModificationException e) {
+			database2.rollback();
 		}
 
-		Assert.assertEquals(i, tot);
-		Assert.assertEquals(database.countClass("Account"), 0);
+		// Force reload all (to be sure it is not a cache problem)
+		database1.close();
+		database2.close();
+		database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
 
-		database.close();
+		// docB should be in the last state : "docA_v3"
+		ODocument vDocB_db2 = database2.load(vDocA_Rid);
+		Assert.assertEquals(vDocB_db2.field(NAME), "docA_v3");
+
+		database1.close();
+		database2.close();
 	}
 
-	@Test(dependsOnMethods = "setup")
-	public void createRecords() throws IOException {
-		ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
-		database.open("admin", "admin");
+	@Test
+	public void testCacheUpdatedMultipleDbs() {
+		database1 = new ODatabaseDocumentTx(url).open("admin", "admin");
+		database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
 
-		ODocument record1 = new ODocument(database, "Account");
-		record1.field("name", "Creation test").save();
+		// Create docA in db1
+		database1.begin(TXTYPE.OPTIMISTIC);
+		ODocument vDocA_db1 = database1.newInstance();
+		vDocA_db1.field(NAME, "docA");
+		vDocA_db1.save();
+		database1.commit();
 
-		ODocument record2 = new ODocument(database, "Account");
-		record2.field("name", "Update test").save();
+		// Keep the ID.
+		ORID vDocA_Rid = vDocA_db1.getIdentity().copy();
 
-		ODocument record3 = new ODocument(database, "Account");
-		record3.field("name", "Delete test").save();
+		// Update docA in db2
+		database2.begin(TXTYPE.OPTIMISTIC);
+		ODocument vDocA_db2 = database2.load(vDocA_Rid);
+		vDocA_db2.field(NAME, "docA_v2");
+		vDocA_db2.save();
+		database2.commit();
 
-		database.close();
-	}
+		// Later... read docA with db1.
+		database1.begin(TXTYPE.OPTIMISTIC);
+		ODocument vDocA_db1_later = database1.load(vDocA_Rid);
+		Assert.assertEquals(vDocA_db1_later.field(NAME), "docA_v2");
+		database1.commit();
 
-	@Test(dependsOnMethods = "createRecords")
-	public void testTransactionRecovery() throws IOException {
-		ODatabaseDocumentTx db1 = new ODatabaseDocumentTx(url);
-		db1.open("admin", "admin");
-
-		// long tot = db1.countClass("Account");
-
-		db1.begin();
-
-		ODocument record1 = db1.newInstance("Account");
-		record1.field("location", "This is the first version").save();
-
-		ODocument record2 = db1.newInstance("Account");
-		record2.field("location", "This is the first version").save();
-
-		db1.commit();
-
-		// Assert.assertEquals(db1.getClusterSize(db1.getMetadata().getSchema().getClass("Account").getDefaultClusterId()), rec);
-
-		db1.close();
+		database1.close();
+		database2.close();
 	}
 }
