@@ -30,15 +30,15 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 
 /**
- * Handle the table to resolve logical address to physical address.<br/>
- * Deleted records have version = -1. <br/>
+ * Handles the table to resolve logical address to physical address. Deleted records have version = -1. <br/><br/>
  * Record structure:<br/>
- * <br/>
- * +----------------------+----------------------+-------------+---------------- ------+<br/>
+ * <code>
+ * +----------------------+----------------------+-------------+----------------------+<br/>
  * | DATA SEGMENT........ | DATA OFFSET......... | RECORD TYPE | VERSION............. |<br/>
  * | 2 bytes = max 2^15-1 | 8 bytes = max 2^63-1 | 1 byte..... | 4 bytes = max 2^31-1 |<br/>
- * +----------------------+----------------------+-------------+---------------- ------+<br/>
- * = 15 bytes<br/>
+ * +----------------------+----------------------+-------------+----------------------+<br/>
+ * = 15 bytes
+ * </code><br/>
  */
 public class OClusterLocal extends OMultiFileSegment implements OCluster {
 	private static final String				DEF_EXTENSION		= ".ocl";
