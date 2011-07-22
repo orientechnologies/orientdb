@@ -87,6 +87,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	public static final String											KEYWORD_ORDER_BY			= "ORDER BY";
 	public static final String											KEYWORD_LIMIT					= "LIMIT";
 	public static final String											KEYWORD_RANGE					= "RANGE";
+	private static final String											KEYWORD_FROM_2FIND		= " " + KEYWORD_FROM + " ";
 
 	private OSQLAsynchQuery<ORecordSchemaAware<?>>	request;
 	private OSQLFilter															compiledFilter;
@@ -519,7 +520,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		if (!word.toString().equals(KEYWORD_SELECT))
 			return -1;
 
-		int fromPosition = textUpperCase.indexOf(KEYWORD_FROM, currentPos);
+		int fromPosition = textUpperCase.indexOf(KEYWORD_FROM_2FIND, currentPos);
 		if (fromPosition == -1)
 			throw new OQueryParsingException("Missed " + KEYWORD_FROM, text, currentPos);
 
