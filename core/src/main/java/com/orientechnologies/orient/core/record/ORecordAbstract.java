@@ -384,6 +384,6 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	}
 
 	public <RET extends ORecord<T>> RET flatCopy() {
-		return copy();
+		return (RET) copy();
 	}
 }
