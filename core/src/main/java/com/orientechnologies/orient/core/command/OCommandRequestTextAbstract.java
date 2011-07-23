@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 
 /**
  * Text based Command Request abstract class.
@@ -88,10 +89,16 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
 
 				parameters = new HashMap<Object, Object>();
 				for (Entry<String, Object> p : params.entrySet()) {
-					if (Character.isDigit(p.getKey().charAt(0)))
-						parameters.put(Integer.parseInt(p.getKey()), p.getValue());
+					final Object value;
+					if (p.getValue() instanceof String)
+						value = ORecordSerializerStringAbstract.getTypeValue((String) p.getValue());
 					else
-						parameters.put(p.getKey(), p.getValue());
+						value = p.getValue();
+
+					if (Character.isDigit(p.getKey().charAt(0)))
+						parameters.put(Integer.parseInt(p.getKey()), value);
+					else
+						parameters.put(p.getKey(), value);
 				}
 			}
 		} catch (IOException e) {
