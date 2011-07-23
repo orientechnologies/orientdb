@@ -779,14 +779,16 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			out.println("----------------------------------------------+------+---------------------+-----------+");
 
 			int clusterId;
+			String clusterType = null;
 			long totalElements = 0;
 			long count;
 			for (String clusterName : currentDatabase.getClusterNames()) {
 				try {
 					clusterId = currentDatabase.getClusterIdByName(clusterName);
+					clusterType = currentDatabase.getClusterType(clusterName);
 					count = currentDatabase.countClusterElements(clusterName);
 					totalElements += count;
-					out.printf(" %-45s|%6d| %-20s|%10d |\n", clusterName, clusterId, clusterId < -1 ? "Logical" : "Physical", count);
+					out.printf(" %-45s|%6d| %-20s|%10d |\n", clusterName, clusterId, clusterType, count);
 				} catch (Exception e) {
 				}
 			}
