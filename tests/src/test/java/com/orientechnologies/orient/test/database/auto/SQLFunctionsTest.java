@@ -45,7 +45,7 @@ public class SQLFunctionsTest {
 	@Test
 	public void queryMax() {
 		database.open("admin", "admin");
-		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select max(nr) as max from Account")).execute();
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select max(id) as max from Account")).execute();
 
 		Assert.assertTrue(result.size() == 1);
 		for (ODocument d : result) {
@@ -58,7 +58,7 @@ public class SQLFunctionsTest {
 	@Test
 	public void queryMin() {
 		database.open("admin", "admin");
-		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select min(nr) as min from Account")).execute();
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select min(id) as min from Account")).execute();
 
 		Assert.assertTrue(result.size() == 1);
 		for (ODocument d : result) {
@@ -73,7 +73,7 @@ public class SQLFunctionsTest {
 	@Test
 	public void querySum() {
 		database.open("admin", "admin");
-		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select sum(nr) as sum from Account")).execute();
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select sum(id) as sum from Account")).execute();
 
 		Assert.assertTrue(result.size() == 1);
 		for (ODocument d : result) {
@@ -155,7 +155,13 @@ public class SQLFunctionsTest {
 		List<ODocument> result = database
 				.command(
 						new OSQLSynchQuery<ODocument>(
-								"select MIN(nr) as min, max(nr) as max, AVG(nr) as average, count(nr) as total from Account")).execute();
+								"select from Account")).execute();
+
+		
+		result = database
+				.command(
+						new OSQLSynchQuery<ODocument>(
+								"select MIN(id) as min, max(id) as max, AVG(id) as average, count(id) as total from Account")).execute();
 
 		Assert.assertTrue(result.size() == 1);
 		for (ODocument d : result) {
@@ -165,7 +171,7 @@ public class SQLFunctionsTest {
 			Assert.assertNotNull(d.field("total"));
 
 			Assert.assertTrue(((Number) d.field("max")).longValue() > ((Number) d.field("average")).longValue());
-			Assert.assertTrue(((Number) d.field("average")).longValue() > ((Number) d.field("min")).longValue());
+			Assert.assertTrue(((Number) d.field("average")).longValue() >= ((Number) d.field("min")).longValue());
 			Assert.assertTrue(((Number) d.field("total")).longValue() >= ((Number) d.field("max")).longValue());
 		}
 
@@ -261,12 +267,12 @@ public class SQLFunctionsTest {
 			}
 		});
 
-		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Account where bigger(nr,1000) = 1000"))
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Account where bigger(id,1000) = 1000"))
 				.execute();
 
 		Assert.assertTrue(result.size() != 0);
 		for (ODocument d : result) {
-			Assert.assertTrue((Integer) d.field("nr") <= 1000);
+			Assert.assertTrue((Integer) d.field("id") <= 1000);
 		}
 
 		OSQLEngine.getInstance().unregisterInlineFunction("bigger");

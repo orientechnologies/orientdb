@@ -71,15 +71,41 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 *          The entity to load. If the entity was already loaded it will be reloaded and all the changes will be lost.
 	 * @return
 	 */
-	public <RET extends T> RET load(final T iObject);
+	public <RET extends T> RET load(T iObject);
+
+	/**
+	 * Loads a record using a fetch plan.
+	 * 
+	 * @param iDocument
+	 *          Record to load
+	 * @param iFetchPlan
+	 *          Fetch plan used
+	 * @return The record received
+	 */
+	public <RET extends T> RET load(T iObject, String iFetchPlan);
+
+	/**
+	 * Loads a record using a fetch plan.
+	 * 
+	 * @param iDocument
+	 *          Record to load
+	 * @param iFetchPlan
+	 *          Fetch plan used
+	 * @param iIgnoreCache
+	 *          Ignore cache or use it
+	 * @return The record received
+	 */
+	public <RET extends T> RET load(T iObject, String iFetchPlan, boolean iIgnoreCache);
 
 	/**
 	 * Force the reloading of the entity.
 	 * 
 	 * @param iObject
 	 *          The entity to load. If the entity was already loaded it will be reloaded and all the changes will be lost.
-	 * @param iIgnoreCache
 	 * @param iFetchPlan
+	 *          Fetch plan used
+	 * @param iIgnoreCache
+	 *          Ignore cache or use it
 	 */
 	public void reload(final T iObject, String iFetchPlan, boolean iIgnoreCache);
 
@@ -90,7 +116,7 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 *          The unique record id of the entity to load.
 	 * @return
 	 */
-	public <RET extends T> RET load(final ORID iRecordId);
+	public <RET extends T> RET load(ORID iRecordId);
 
 	/**
 	 * Loads the entity by the Record ID using a fetch plan.
@@ -101,7 +127,20 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 *          Fetch plan used
 	 * @return
 	 */
-	public <RET extends T> RET load(final ORID iRecordId, String iFetchPlan);
+	public <RET extends T> RET load(ORID iRecordId, String iFetchPlan);
+
+	/**
+	 * Loads the entity by the Record ID using a fetch plan and specifying if the cache must be ignored.
+	 * 
+	 * @param iRecordId
+	 *          The unique record id of the entity to load.
+	 * @param iFetchPlan
+	 *          Fetch plan used
+	 * @param iIgnoreCache
+	 *          Ignore cache or use it
+	 * @return
+	 */
+	public <RET extends T> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache);
 
 	/**
 	 * Saves an entity. If the entity is not dirty, then the operation will be ignored. For custom entity implementations assure to

@@ -382,4 +382,8 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		if (_listener != null)
 			_listener.onEvent(this, iEvent);
 	}
+
+	public <RET extends ORecord<T>> RET flatCopy() {
+		return copy();
+	}
 }

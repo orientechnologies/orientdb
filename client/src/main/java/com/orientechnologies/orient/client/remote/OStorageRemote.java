@@ -757,6 +757,10 @@ public class OStorageRemote extends OStorageAbstract {
 					endResponse(network);
 				}
 
+				// SET ALL THE RECORDS AS UNDIRTY
+				for (OTransactionRecordEntry txEntry : allEntries)
+					txEntry.getRecord().unsetDirty();
+
 				// UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT
 				OTransactionAbstract.updateCacheFromEntries(this, iTx, allEntries);
 

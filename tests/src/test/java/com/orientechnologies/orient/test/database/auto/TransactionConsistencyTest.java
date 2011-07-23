@@ -21,6 +21,7 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.cache.OLevel2RecordCache.STRATEGY;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -109,7 +110,7 @@ public class TransactionConsistencyTest {
 	// }
 
 	@Test
-	public void testRollback() throws IOException {
+	public void testRollbackWithPin() throws IOException {
 		database1 = new ODatabaseDocumentTx(url).open("admin", "admin");
 		database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
 
@@ -117,6 +118,58 @@ public class TransactionConsistencyTest {
 		ODocument vDocA_db1 = database1.newInstance();
 		vDocA_db1.field(NAME, "docA");
 		vDocA_db1.unpin();
+		vDocA_db1.save();
+
+		// Keep the IDs.
+		ORID vDocA_Rid = vDocA_db1.getIdentity().copy();
+
+		database2.begin(TXTYPE.OPTIMISTIC);
+		try {
+			// Get docA and update in db2 transaction context
+			ODocument vDocA_db2 = database2.load(vDocA_Rid);
+			vDocA_db2.field(NAME, "docA_v2");
+			vDocA_db2.save();
+
+			database1.begin(TXTYPE.OPTIMISTIC);
+			try {
+				vDocA_db1.field(NAME, "docA_v3");
+				vDocA_db1.save();
+				database1.commit();
+			} catch (OConcurrentModificationException e) {
+				Assert.fail("Should not failed here...");
+			}
+			Assert.assertEquals(vDocA_db1.field(NAME), "docA_v3");
+
+			// Will throw OConcurrentModificationException
+			database2.commit();
+			Assert.fail("Should throw OConcurrentModificationException");
+		} catch (OConcurrentModificationException e) {
+			database2.rollback();
+		}
+
+		// Force reload all (to be sure it is not a cache problem)
+		database1.close();
+		database2.close();
+		database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
+
+		// docB should be in the last state : "docA_v3"
+		ODocument vDocB_db2 = database2.load(vDocA_Rid);
+		Assert.assertEquals(vDocB_db2.field(NAME), "docA_v3");
+
+		database1.close();
+		database2.close();
+	}
+
+	@Test
+	public void testRollbackWithCopyCacheStrategy() throws IOException {
+		database1 = new ODatabaseDocumentTx(url).open("admin", "admin");
+		database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
+
+		database1.getLevel2Cache().setStrategy(STRATEGY.COPY_RECORD);
+
+		// Create docA.
+		ODocument vDocA_db1 = database1.newInstance();
+		vDocA_db1.field(NAME, "docA");
 		vDocA_db1.save();
 
 		// Keep the IDs.
@@ -183,7 +236,7 @@ public class TransactionConsistencyTest {
 
 		// Later... read docA with db1.
 		database1.begin(TXTYPE.OPTIMISTIC);
-		ODocument vDocA_db1_later = database1.load(vDocA_Rid);
+		ODocument vDocA_db1_later = database1.load(vDocA_Rid, null, true);
 		Assert.assertEquals(vDocA_db1_later.field(NAME), "docA_v2");
 		database1.commit();
 

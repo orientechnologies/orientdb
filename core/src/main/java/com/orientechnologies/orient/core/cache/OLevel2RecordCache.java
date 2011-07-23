@@ -15,9 +15,10 @@
  */
 package com.orientechnologies.orient.core.cache;
 
+import java.util.Collection;
+
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -43,18 +44,64 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
 		setStrategy(OGlobalConfiguration.CACHE_LEVEL2_STRATEGY.getValueAsInteger());
 	}
 
-	public void pushRecord(final ORecordInternal<?> iRecord) {
-		if (!enabled || iRecord == null || iRecord.isDirty() || iRecord.getIdentity().isNew() || !iRecord.isPinned())
+	/**
+	 * Moves records to the Level2 cache. Update only the records already present to avoid to put a non-updated record.
+	 * 
+	 * @param iValues
+	 *          Collection of records to update
+	 */
+	public void moveRecords(final Collection<ORecordInternal<?>> iValues) {
+		if (!enabled)
+			return;
+
+		acquireExclusiveLock();
+		try {
+
+			for (ORecordInternal<?> record : iValues) {
+				if (record == null || record.isDirty() || record.getIdentity().isNew())
+					continue;
+
+				if (record.isPinned()) {
+					final ORecordInternal<?> prevEntry = entries.get(record.getIdentity());
+					if (prevEntry == null || prevEntry.getVersion() >= record.getVersion())
+						// UPDATE ONLY RECORDS ALREADY PRESENT AND WITH VERSION HIGHER THAN CURRENT
+						continue;
+
+					record.detach();
+					entries.put(record.getIdentity(), record);
+
+				} else
+					entries.remove(record.getIdentity());
+			}
+
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
+	public void updateRecord(final ORecordInternal<?> iRecord) {
+		if (!enabled || iRecord == null || iRecord.isDirty() || iRecord.getIdentity().isNew())
 			// PRECONDITIONS
 			return;
 
 		acquireExclusiveLock();
 		try {
-			final ORecord<?> record = entries.get(iRecord.getIdentity());
-			if (record == null || iRecord.getVersion() > record.getVersion()) {
-				iRecord.detach();
-				entries.put(iRecord.getIdentity(), iRecord);
-			}
+			if (iRecord.isPinned()) {
+				final ORecordInternal<?> prevEntry = entries.get(iRecord.getIdentity());
+				if (prevEntry != null && prevEntry.getVersion() >= iRecord.getVersion())
+					// TRY TO UPDATE AN OLD RECORD, DISCARD IT
+					return;
+
+				if (iRecord.getDatabase() == null || iRecord.getDatabase().isClosed()) {
+					// DB CLOSED: MAKE THE RECORD INSTANCE AS REUSABLE AFTER A DETACH
+					iRecord.detach();
+					entries.put(iRecord.getIdentity(), iRecord);
+				} else
+					// DB OPEN: SAVES A COPY TO AVOID CHANGES IF THE SAME RECORD INSTANCE IS USED AGAIN
+					entries.put(iRecord.getIdentity(), (ORecordInternal<?>) iRecord.flatCopy());
+
+			} else
+				entries.remove(iRecord.getIdentity());
 
 		} finally {
 			releaseExclusiveLock();
@@ -87,8 +134,15 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
 				if (record == null)
 					return null;
 
-				// PUT IT AGAIN FOR REFRESHING ORDER ENTRIES (LRU CACHE)
-				entries.put(iRID, (ORecordInternal<?>) record.copy());
+				if (record.isDirty()) {
+					// DIRTY RECORD: REMOVE IT
+					entries.remove(iRID);
+					return null;
+				}
+
+				// PUT A CLONE
+				entries.put(iRID, (ORecordInternal<?>) record.flatCopy());
+
 				return record;
 			}
 		} finally {

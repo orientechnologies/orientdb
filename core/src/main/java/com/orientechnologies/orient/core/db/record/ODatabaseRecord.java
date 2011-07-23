@@ -56,17 +56,6 @@ public interface ODatabaseRecord extends ODatabaseComplex<ORecordInternal<?>> {
 	public <RET extends ORecordInternal<?>> RET getRecord(OIdentifiable iIdentifiable);
 
 	/**
-	 * Loads a record using a fetch plan.
-	 * 
-	 * @param iDocument
-	 *          Record to load
-	 * @param iFetchPlan
-	 *          Fetch plan used
-	 * @return The record received
-	 */
-	public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iDocument, String iFetchPlan);
-
-	/**
 	 * Returns the record type class.
 	 */
 	public Class<? extends ORecordInternal<?>> getRecordType();

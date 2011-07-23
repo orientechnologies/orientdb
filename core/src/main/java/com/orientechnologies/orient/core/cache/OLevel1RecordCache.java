@@ -54,7 +54,7 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
 		if (enabled) {
 			acquireExclusiveLock();
 			try {
-				entries.remove(iRecord.getIdentity());
+				entries.put(iRecord.getIdentity(), iRecord);
 			} finally {
 				releaseExclusiveLock();
 			}
@@ -136,11 +136,8 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
 		acquireExclusiveLock();
 		try {
 			// MOVE ALL THE LEVEL-1 CACHE INTO THE LEVEL-2 CACHE
-			for (ORecordInternal<?> record : entries.values()) {
-				if (!record.isDirty() && !record.getIdentity().isNew()) {
-					level2cache.pushRecord(record);
-				}
-			}
+			level2cache.moveRecords(entries.values());
+
 			entries.clear();
 		} finally {
 			releaseExclusiveLock();

@@ -22,6 +22,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
@@ -42,10 +43,9 @@ public class BinaryTest {
 		doc.field("binary", "Binary data".getBytes());
 
 		doc.save();
-		rid = doc.getIdentity();
 
-		doc = database.load(rid);
-		Assert.assertEquals(new String((byte[]) doc.field("binary")), "Binary data");
+		doc.reload();
+		Assert.assertEquals(new String((byte[]) doc.field("binary", OType.BINARY)), "Binary data");
 
 		database.close();
 	}

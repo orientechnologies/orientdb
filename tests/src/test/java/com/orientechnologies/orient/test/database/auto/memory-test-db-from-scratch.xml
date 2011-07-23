@@ -45,13 +45,6 @@
 			<class name="com.orientechnologies.orient.test.database.auto.ObjectDetachingTest" />
 		</classes>
 	</test>
-	<test name="Tx">
-		<classes>
-			<class name="com.orientechnologies.orient.test.database.auto.TransactionAtomicTest" />
-			<class name="com.orientechnologies.orient.test.database.auto.TransactionOptimisticTest" />
-			<class name="com.orientechnologies.orient.test.database.auto.TransactionConsistencyTest" />
-		</classes>
-	</test>
 	<test name="Index">
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.IndexTest" />

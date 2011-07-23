@@ -34,4 +34,6 @@ public interface ORecordInternal<T> extends ORecord<T>, OSerializableStream {
 	public void setVersion(int iVersion);
 
 	public byte getRecordType();
+
+	public <RET extends ORecord<T>> RET flatCopy();
 }

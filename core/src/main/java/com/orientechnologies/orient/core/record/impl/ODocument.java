@@ -210,6 +210,30 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		return cloned;
 	}
 
+	@Override
+	public ODocument flatCopy() {
+		if (isDirty())
+			throw new IllegalStateException("Can't execute a flat copy of a dirty record");
+
+		final ODocument cloned = new ODocument();
+		cloned.fill(_database, _recordId, _version, _source, false);
+		return cloned;
+	}
+
+	/**
+	 * Returns an empty record as place-holder of the current. Used when a record is requested, but only the identity is needed.
+	 * 
+	 * @return
+	 */
+	public ORecord<?> placeholder() {
+		final ODocument cloned = new ODocument();
+		cloned._source = null;
+		cloned._database = _database;
+		cloned._recordId = _recordId.copy();
+		cloned._status = STATUS.NOT_LOADED;
+		return cloned;
+	}
+
 	public boolean detach() {
 		_database = null;
 		boolean fullyDetached = true;
@@ -239,14 +263,30 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 * <p>
 	 * <code>doc.load( "*:3" ); // LOAD THE DOCUMENT BY EARLY FETCHING UP TO 3rd LEVEL OF CONNECTIONS</code>
 	 * </p>
+	 * 
+	 * @param iFetchPlan
+	 *          Fetch plan to use
 	 */
 	public ODocument load(final String iFetchPlan) {
+		return load(iFetchPlan, false);
+	}
+
+	/**
+	 * Loads the record using a fetch plan. Example:
+	 * <p>
+	 * <code>doc.load( "*:3", true ); // LOAD THE DOCUMENT BY EARLY FETCHING UP TO 3rd LEVEL OF CONNECTIONS IGNORING THE CACHE</code>
+	 * </p>
+	 * 
+	 * @param iIgnoreCache
+	 *          Ignore the cache or use it
+	 */
+	public ODocument load(final String iFetchPlan, boolean iIgnoreCache) {
 		if (_database == null)
 			throw new ODatabaseException("No database assigned to current record");
 
 		Object result = null;
 		try {
-			result = _database.load(this, iFetchPlan);
+			result = _database.load(this, iFetchPlan, iIgnoreCache);
 		} catch (Exception e) {
 			throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found", e);
 		}
@@ -603,6 +643,8 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		checkForLoading();
 		checkForFields();
 
+		_source = null;
+
 		final boolean knownProperty = _fieldValues.containsKey(iPropertyName);
 		final Object oldValue = _fieldValues.get(iPropertyName);
 
@@ -687,6 +729,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		}
 
 		_fieldValues.remove(iPropertyName);
+		_source = null;
 
 		setDirty();
 		return oldValue;
@@ -728,6 +771,8 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	public ODocument merge(final Map<String, Object> iOther, final boolean iAddOnlyMode, boolean iMergeSingleItemsOfMultiValueFields) {
 		checkForLoading();
 		checkForFields();
+
+		_source = null;
 
 		for (String f : iOther.keySet()) {
 			if (containsField(f) && iMergeSingleItemsOfMultiValueFields) {
@@ -1052,20 +1097,6 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		if (_fieldTypes == null)
 			_fieldTypes = new HashMap<String, OType>();
 		_fieldTypes.put(iPropertyName, iType);
-	}
-
-	/**
-	 * returns an empty record as place-holder of the current. Used when a record is requested, but only the identity is needed.
-	 * 
-	 * @return
-	 */
-	public ORecord<?> placeholder() {
-		final ODocument cloned = new ODocument();
-		cloned._source = null;
-		cloned._database = _database;
-		cloned._recordId = _recordId.copy();
-		cloned._status = STATUS.NOT_LOADED;
-		return cloned;
 	}
 
 	private void copyFieldValue(final ODocument iCloned, final Entry<String, Object> iEntry) {

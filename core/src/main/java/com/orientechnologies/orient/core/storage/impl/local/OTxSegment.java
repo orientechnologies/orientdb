@@ -32,11 +32,11 @@ import com.orientechnologies.orient.core.tx.OTransaction;
  * <br/>
  * Record structure:<br/>
  * <code>
- * +--------+--------+---------+---------+----------------+-------------+<br/>
- * | STATUS | OPERAT | TX ID . | CLUSTER | CLUSTER OFFSET | DATA OFFSET |<br/>
- * | 1 byte | 1 byte | 4 bytes | 2 bytes | 8 bytes ...... | 8 bytes ... |<br/>
- * +--------+--------+---------+---------+----------------+-------------+<br/>
- * = 24 bytes
+ * +--------+--------+---------+---------+----------------+-------------+---------+<br/>
+ * | STATUS | OPERAT | TX ID . | CLUSTER | CLUSTER OFFSET | DATA OFFSET | VERSION |<br/>
+ * | 1 byte | 1 byte | TX ID . | 2 bytes | 8 bytes ...... | 8 bytes ... | 4 bytes |<br/>
+ * +--------+--------|---------+---------+----------------+-------------|---------+<br/>
+ * = 28 bytes
  * </code><br/>
  * At commit time all the changes are written in the TX log file with status = STATUS_COMMITTING. Once all records have been
  * written, then the status of all the records is changed in STATUS_FREE. If a transactions has at least a STATUS_FREE means that
@@ -52,7 +52,7 @@ public class OTxSegment extends OSingleFileSegment {
 	public static final byte	OPERATION_UPDATE	= 2;
 
 	private static final int	DEF_START_SIZE		= 262144;
-	private static final int	RECORD_SIZE				= 24;
+	private static final int	RECORD_SIZE				= 28;
 
 	public OTxSegment(final OStorageLocal iStorage, final OStorageTxConfiguration iConfig) throws IOException {
 		super(iStorage, iConfig);
@@ -99,8 +99,8 @@ public class OTxSegment extends OSingleFileSegment {
 	 * 
 	 * @throws IOException
 	 */
-	public void addLog(final byte iOperation, final int iTxId, final int iClusterId, final long iPosition, final long iDataOffset)
-			throws IOException {
+	public void addLog(final byte iOperation, final int iTxId, final int iClusterId, final long iPosition, final long iDataOffset,
+			final int iRecordVersion) throws IOException {
 		acquireExclusiveLock();
 		try {
 			int offset = file.allocateSpace(RECORD_SIZE);
@@ -121,6 +121,9 @@ public class OTxSegment extends OSingleFileSegment {
 			offset += OConstants.SIZE_LONG;
 
 			file.writeLong(offset, iDataOffset);
+			offset += OConstants.SIZE_LONG;
+
+			file.writeInt(offset, iRecordVersion);
 
 			synchRecord();
 
@@ -293,32 +296,26 @@ public class OTxSegment extends OSingleFileSegment {
 	 * 
 	 * @throws IOException
 	 */
-	private int recoverTransaction(int iTxId) throws IOException {
-		byte status;
-		byte operation;
-		int txId;
-		long oldDataOffset;
-
-		int offset;
+	private int recoverTransaction(final int iTxId) throws IOException {
 		final OPhysicalPosition ppos = new OPhysicalPosition();
 
-		int size = (file.getFilledUpTo() / RECORD_SIZE);
 		int recordsRecovered = 0;
 		final ORecordId rid = new ORecordId();
 
+		final int size = (file.getFilledUpTo() / RECORD_SIZE);
 		for (int i = 0; i < size; ++i) {
-			offset = i * RECORD_SIZE;
+			int offset = i * RECORD_SIZE;
 
-			status = file.readByte(offset);
+			final byte status = file.readByte(offset);
 			offset += OConstants.SIZE_BYTE;
 
 			if (status != STATUS_FREE) {
 
 				// DIRTY TX LOG ENTRY
-				operation = file.readByte(offset);
+				final byte operation = file.readByte(offset);
 				offset += OConstants.SIZE_BYTE;
 
-				txId = file.readInt(offset);
+				final int txId = file.readInt(offset);
 
 				if (txId == iTxId) {
 					// TX ID FOUND
@@ -330,10 +327,13 @@ public class OTxSegment extends OSingleFileSegment {
 					rid.clusterPosition = file.readLong(offset);
 					offset += OConstants.SIZE_LONG;
 
-					oldDataOffset = file.readLong(offset);
+					final long oldDataOffset = file.readLong(offset);
+					offset += OConstants.SIZE_LONG;
+
+					final int recordVersion = file.readInt(offset);
 
 					// TODO THIS NEEDS TO BE FIXED!
-					recoverTransactionEntry(status, operation, txId, rid, oldDataOffset, ppos);
+					recoverTransactionEntry(status, operation, txId, rid, oldDataOffset, recordVersion, ppos);
 					recordsRecovered++;
 
 					// CLEAR THE ENTRY BY WRITING '0'
@@ -344,8 +344,8 @@ public class OTxSegment extends OSingleFileSegment {
 		return recordsRecovered;
 	}
 
-	private void recoverTransactionEntry(byte status, byte operation, int txId, final ORecordId iRid, long oldDataOffset,
-			OPhysicalPosition ppos) throws IOException {
+	private void recoverTransactionEntry(final byte status, final byte operation, final int txId, final ORecordId iRid,
+			final long oldDataOffset, final int recordVersion, final OPhysicalPosition ppos) throws IOException {
 
 		final OCluster cluster = storage.getClusterById(iRid.clusterId);
 

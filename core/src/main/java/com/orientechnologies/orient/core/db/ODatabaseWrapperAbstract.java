@@ -38,7 +38,7 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 
 	@Override
 	public void finalize() {
-		close();
+		//close();
 	}
 
 	public <THISDB extends ODatabase> THISDB open(final String iUserName, final String iUserPassword) {

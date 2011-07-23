@@ -78,7 +78,7 @@ public class OStorageLocalTxExecuter {
 			iClusterSegment.setPhysicalPosition(iRid.clusterPosition, dataSegment, dataOffset, iRecordType);
 
 			// SAVE INTO THE LOG THE POSITION OF THE RECORD JUST CREATED. IF TX FAILS AT THIS POINT A GHOST RECORD IS CREATED UNTIL DEFRAG
-			txSegment.addLog(OTxSegment.OPERATION_CREATE, iTxId, iClusterSegment.getId(), iRid.clusterPosition, dataOffset);
+			txSegment.addLog(OTxSegment.OPERATION_CREATE, iTxId, iClusterSegment.getId(), iRid.clusterPosition, dataOffset, 0);
 
 		} catch (IOException e) {
 
@@ -116,7 +116,7 @@ public class OStorageLocalTxExecuter {
 				dataOffset = -1;
 
 			// SAVE INTO THE LOG THE POSITION OF THE RECORD JUST DELETED. IF TX FAILS AT THIS POINT AS ABOVE
-			txSegment.addLog(OTxSegment.OPERATION_UPDATE, iTxId, iClusterSegment.getId(), iRid.clusterPosition, dataOffset);
+			txSegment.addLog(OTxSegment.OPERATION_UPDATE, iTxId, iClusterSegment.getId(), iRid.clusterPosition, dataOffset, iVersion);
 
 			// UPDATE THE RECORD FOR REAL. IF TX FAILS AT THIS POINT CAN BE RECOVERED THANKS TO THE TX-LOG
 			return storage.updateRecord(iClusterSegment, iRid, iContent, iVersion, iRecordType);
@@ -141,14 +141,14 @@ public class OStorageLocalTxExecuter {
 			if (iVersion > -1 && ppos.version != iVersion)
 				throw new OConcurrentModificationException(
 						"Can't delete the record #"
-								+ iClusterSegment
+								+ iClusterSegment.getId()
 								+ ":"
 								+ iPosition
 								+ " because the version is not the latest one. Probably you are deleting an old record or it has been modified by another user (db=v"
 								+ ppos.version + " your=v" + iVersion + ")");
 
 			// SAVE INTO THE LOG THE POSITION OF THE RECORD JUST DELETED
-			txSegment.addLog(OTxSegment.OPERATION_DELETE, iTxId, iClusterSegment.getId(), iPosition, ppos.dataPosition);
+			txSegment.addLog(OTxSegment.OPERATION_DELETE, iTxId, iClusterSegment.getId(), iPosition, ppos.dataPosition, iVersion);
 
 			// DELETE THE RECORD BUT LEAVING THE PPOS INTACT BUT THE VERSION = -1 TO RECOGNIZE THAT THE ENTRY HAS BEEN DELETED. IF TX
 			// FAILS AT THIS POINT CAN BE RECOVERED THANKS TO THE TX-LOG
@@ -199,8 +199,7 @@ public class OStorageLocalTxExecuter {
 		allEntries.clear();
 	}
 
-	private void commitEntry(final OTransaction iTx, final OTransactionRecordEntry txEntry, final boolean iUseLog)
-			throws IOException {
+	private void commitEntry(final OTransaction iTx, final OTransactionRecordEntry txEntry, final boolean iUseLog) throws IOException {
 
 		if (txEntry.status != OTransactionRecordEntry.DELETED && !txEntry.getRecord().isDirty())
 			return;

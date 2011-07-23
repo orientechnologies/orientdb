@@ -105,6 +105,20 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 		return iObject;
 	}
 
+	@SuppressWarnings("unchecked")
+	public OGraphElement load(final OGraphElement iObject, final String iFetchPlan) {
+		if (iObject != null)
+			iObject.load(iFetchPlan);
+		return iObject;
+	}
+
+	@SuppressWarnings("unchecked")
+	public OGraphElement load(final OGraphElement iObject, final String iFetchPlan, final boolean iIgnoreCache) {
+		if (iObject != null)
+			iObject.load(iFetchPlan, iIgnoreCache);
+		return iObject;
+	}
+
 	public void reload(final OGraphElement iObject) {
 		if (iObject != null)
 			iObject.reload();
@@ -122,7 +136,12 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 
 	@SuppressWarnings("unchecked")
 	public OGraphElement load(final ORID iRecordId, final String iFetchPlan) {
-		ODocument doc = loadAsDocument(iRecordId, iFetchPlan);
+		return load(iRecordId, iFetchPlan, false);
+	}
+
+	@SuppressWarnings("unchecked")
+	public OGraphElement load(final ORID iRecordId, final String iFetchPlan, final boolean iIgnoreCache) {
+		ODocument doc = loadAsDocument(iRecordId, iFetchPlan, iIgnoreCache);
 
 		if (doc == null)
 			return null;
@@ -130,7 +149,7 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 		return newInstance(doc.getClassName()).setDocument(doc);
 	}
 
-	public ODocument loadAsDocument(final ORID iRecordId, final String iFetchPlan) {
+	public ODocument loadAsDocument(final ORID iRecordId, final String iFetchPlan, final boolean iIgnoreCache) {
 		if (iRecordId == null)
 			return null;
 
@@ -138,7 +157,7 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 		ODocument doc = getRecordById(iRecordId);
 		if (doc == null) {
 			// TRY TO LOAD IT
-			doc = (ODocument) underlying.load(iRecordId, iFetchPlan);
+			doc = (ODocument) underlying.load(iRecordId, iFetchPlan, iIgnoreCache);
 			if (doc == null)
 				// NOT FOUND
 				return null;

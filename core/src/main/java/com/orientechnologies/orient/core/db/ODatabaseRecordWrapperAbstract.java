@@ -185,6 +185,10 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 		return (RET) underlying.load(iRecordId, iFetchPlan);
 	}
 
+	public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId, final String iFetchPlan, final boolean iIgnoreCache) {
+		return (RET) underlying.load(iRecordId, iFetchPlan, iIgnoreCache);
+	}
+
 	public <RET extends ORecordInternal<?>> RET getRecord(final OIdentifiable iIdentifiable) {
 		return (RET) underlying.getRecord(iIdentifiable);
 	}
@@ -195,6 +199,10 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 
 	public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord, final String iFetchPlan) {
 		return (RET) underlying.load(iRecord, iFetchPlan);
+	}
+
+	public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord, final String iFetchPlan, final boolean iIgnoreCache) {
+		return (RET) underlying.load(iRecord, iFetchPlan, iIgnoreCache);
 	}
 
 	public void reload(final ORecordInternal<?> iRecord) {

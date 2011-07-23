@@ -204,12 +204,21 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, false);
 	}
 
+	public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord, final String iFetchPlan,
+			final boolean iIgnoreCache) {
+		return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache);
+	}
+
 	public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId) {
 		return (RET) executeReadRecord((ORecordId) iRecordId, null, null, false);
 	}
 
 	public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId, final String iFetchPlan) {
 		return (RET) executeReadRecord((ORecordId) iRecordId, null, iFetchPlan, false);
+	}
+
+	public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId, final String iFetchPlan, final boolean iIgnoreCache) {
+		return (RET) executeReadRecord((ORecordId) iRecordId, null, iFetchPlan, iIgnoreCache);
 	}
 
 	/**
@@ -497,7 +506,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 		} catch (Exception e) {
 			// WRAP IT AS ODATABASE EXCEPTION
-			OLogManager.instance().exception("Error on retrieving record #" + iRid, e, ODatabaseException.class);
+			OLogManager.instance().exception("Error on retrieving record " + iRid, e, ODatabaseException.class);
 		}
 		return null;
 	}
@@ -568,16 +577,20 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 			if (isNew) {
 				// UPDATE INFORMATION: CLUSTER ID+POSITION
-				iRecord.fill(iRecord.getDatabase(), rid, 0, stream, stream == null || stream.length == 0);
+				((ORecordId) iRecord.getIdentity()).copyFrom(rid);
 				// NOTIFY IDENTITY HAS CHANGED
 				iRecord.onAfterIdentityChanged(iRecord);
-			} else {
-				// UPDATE INFORMATION: VERSION
-				iRecord.fill(iRecord.getDatabase(), rid, (int) result, stream, stream == null || stream.length == 0);
 			}
 
 			if (stream != null && stream.length > 0)
 				callbackHooks(wasNew ? TYPE.AFTER_CREATE : TYPE.AFTER_UPDATE, iRecord);
+
+			if (isNew)
+				// UPDATE INFORMATION: CLUSTER ID+POSITION
+				iRecord.fill(iRecord.getDatabase(), rid, 0, stream, stream == null || stream.length == 0);
+			else
+				// UPDATE INFORMATION: VERSION
+				iRecord.fill(iRecord.getDatabase(), rid, (int) result, stream, stream == null || stream.length == 0);
 
 			// ADD/UPDATE IT IN CACHE IF IT'S ACTIVE
 			getLevel1Cache().updateRecord(iRecord);

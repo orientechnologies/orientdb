@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -131,7 +132,7 @@ public class ComplexTypesTest {
 		Assert.assertTrue(loadedDoc.containsField("embeddedSet"));
 		Assert.assertTrue(loadedDoc.field("embeddedSet", Set.class) instanceof Set<?>);
 
-		final Iterator<ODocument> it = ((Set<ODocument>) loadedDoc.field("embeddedSet")).iterator();
+		final Iterator<ODocument> it = ((Collection<ODocument>) loadedDoc.field("embeddedSet")).iterator();
 
 		int tot = 0;
 		while (it.hasNext()) {
@@ -171,7 +172,7 @@ public class ComplexTypesTest {
 		Assert.assertTrue(loadedDoc.containsField("linkedSet"));
 		Assert.assertTrue(loadedDoc.field("linkedSet", Set.class) instanceof Set<?>);
 
-		final Iterator<ODocument> it = ((Set<ODocument>) loadedDoc.field("linkedSet")).iterator();
+		final Iterator<ODocument> it = ((Collection<ODocument>) loadedDoc.field("linkedSet")).iterator();
 
 		int tot = 0;
 		while (it.hasNext()) {

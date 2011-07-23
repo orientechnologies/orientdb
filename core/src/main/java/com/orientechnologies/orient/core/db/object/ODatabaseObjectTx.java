@@ -139,13 +139,17 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 	}
 
 	public ODatabaseObjectTx load(final Object iPojo, final String iFetchPlan) {
+		return load(iPojo, iFetchPlan, false);
+	}
+
+	public ODatabaseObjectTx load(final Object iPojo, final String iFetchPlan, final boolean iIgnoreCache) {
 		checkOpeness();
 		if (iPojo == null)
 			return this;
 
 		// GET THE ASSOCIATED DOCUMENT
 		ODocument record = getRecordByUserObject(iPojo, true);
-		record = underlying.load(record);
+		record = underlying.load(record, iFetchPlan, iIgnoreCache);
 
 		stream2pojo(record, iPojo, iFetchPlan);
 
@@ -157,6 +161,10 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 	}
 
 	public Object load(final ORID iRecordId, final String iFetchPlan) {
+		return load(iRecordId, iFetchPlan, false);
+	}
+
+	public Object load(final ORID iRecordId, final String iFetchPlan, final boolean iIgnoreCache) {
 		checkOpeness();
 		if (iRecordId == null)
 			return null;
@@ -164,7 +172,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 		ODocument record = rid2Records.get(iRecordId);
 		if (record == null) {
 			// GET THE ASSOCIATED DOCUMENT
-			record = (ODocument) underlying.load(iRecordId);
+			record = (ODocument) underlying.load(iRecordId, iFetchPlan, iIgnoreCache);
 			if (record == null)
 				return null;
 		}

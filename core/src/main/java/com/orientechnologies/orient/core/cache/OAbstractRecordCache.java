@@ -70,21 +70,6 @@ public abstract class OAbstractRecordCache extends OSharedResourceAbstract {
 		return null;
 	}
 
-	public void updateRecord(final ORecordInternal<?> iRecord) {
-		if (!enabled)
-			// PRECONDITIONS
-			return;
-
-		acquireExclusiveLock();
-		try {
-			if (iRecord.isPinned())
-				entries.put(iRecord.getIdentity(), iRecord);
-			else
-				entries.remove(iRecord.getIdentity());
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
 
 	public ORecordInternal<?> freeRecord(final ORID iRID) {
 		if (!enabled)
