@@ -216,6 +216,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			// LOCAL CONNECTION
 			currentDatabase = new ODatabaseDocumentTx(iDatabaseURL);
 			currentDatabase.create();
+			currentDatabaseName = currentDatabase.getName();
 		}
 
 		out.println("Database created successfully.");
