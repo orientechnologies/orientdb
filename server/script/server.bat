@@ -70,6 +70,6 @@ set LOG_FILE_LEVEL=fine
 set WWW_PATH=%ORIENTDB_HOME%/www
 REM set JAVA_OPTS=-Xms1024m -Xmx1024m
 
-call %JAVA% -server %JAVA_OPTS% -XX:+UseParallelGC -XX:+AggressiveOpts -XX:CompileThreshold=200 -Djava.util.logging.config.file="%LOG_FILE%" -Dorientdb.config.file="%CONFIG_FILE%" -Dorientdb.www.path="%WWW_PATH%" -Dlog.console.level=%LOG_CONSOLE_LEVEL% -Dlog.file.level=%LOG_FILE_LEVEL% -Dorientdb.build.number=@BUILD@ -jar "%ORIENTDB_HOME%\lib\orientdb-server-@VERSION@.jar" %CMD_LINE_ARGS%
+call %JAVA% -server %JAVA_OPTS% -XX:+UseParallelGC -XX:+AggressiveOpts -XX:CompileThreshold=200 -Djava.util.logging.config.file="%LOG_FILE%" -Dorientdb.config.file="%CONFIG_FILE%" -Dorientdb.www.path="%WWW_PATH%" -Dlog.console.level=%LOG_CONSOLE_LEVEL% -Dlog.file.level=%LOG_FILE_LEVEL% -Dorientdb.build.number=@BUILD@ -cp "%ORIENTDB_HOME%\lib\*" com.orientechnologies.orient.server.OServerMain %CMD_LINE_ARGS%
 
 :end
