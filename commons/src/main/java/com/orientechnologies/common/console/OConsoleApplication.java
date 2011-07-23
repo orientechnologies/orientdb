@@ -301,11 +301,27 @@ public class OConsoleApplication {
 			if (annotation == null)
 				continue;
 
-			System.out.print(String.format("* %-20s%s\n", getClearName(m.getName()), annotation.description()));
+			System.out.print(String.format("* %-70s%s\n", getCorrectMethodName(m), annotation.description()));
 		}
-		System.out.print(String.format("* %-20s%s\n", getClearName("help"), "Print this help"));
-		System.out.print(String.format("* %-20s%s\n", getClearName("exit"), "Close the console"));
+		System.out.print(String.format("* %-70s%s\n", getClearName("help"), "Print this help"));
+		System.out.print(String.format("* %-70s%s\n", getClearName("exit"), "Close the console"));
 
+	}
+
+	public static String getCorrectMethodName(Method m) {
+		StringBuilder buffer = new StringBuilder();
+		buffer.append(getClearName(m.getName()));
+		for (int i = 0; i < m.getParameterAnnotations().length; i++) {
+			for (int j = 0; j < m.getParameterAnnotations()[i].length; j++) {
+				if (m.getParameterAnnotations()[i][j] instanceof com.orientechnologies.common.console.annotation.ConsoleParameter) {
+					buffer
+							.append(" <"
+									+ ((com.orientechnologies.common.console.annotation.ConsoleParameter) m.getParameterAnnotations()[i][j]).name()
+									+ ">");
+				}
+			}
+		}
+		return buffer.toString();
 	}
 
 	public static String getClearName(String iJavaName) {
