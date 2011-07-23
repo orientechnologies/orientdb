@@ -40,14 +40,14 @@ public class OLazyObjectIterator<TYPE> implements Iterator<TYPE>, Serializable {
 	private final ODatabasePojoAbstract<TYPE>	database;
 	private final Iterator<Object>						underlying;
 	private String														fetchPlan;
-	final private boolean											convertToRecord;
+	final private boolean											autoConvert2Object;
 
 	public OLazyObjectIterator(final ODatabasePojoAbstract<TYPE> database, final ORecord<?> iSourceRecord,
 			final Iterator<Object> iIterator, final boolean iConvertToRecord) {
 		this.database = database;
 		this.sourceRecord = iSourceRecord;
 		this.underlying = iIterator;
-		convertToRecord = iConvertToRecord;
+		autoConvert2Object = iConvertToRecord;
 	}
 
 	public TYPE next() {
@@ -60,10 +60,10 @@ public class OLazyObjectIterator<TYPE> implements Iterator<TYPE>, Serializable {
 		if (value == null)
 			return null;
 
-		if (value instanceof ORID && convertToRecord)
+		if (value instanceof ORID && autoConvert2Object)
 			return database.getUserObjectByRecord(
 					(ORecordInternal<?>) ((ODatabaseRecord) database.getUnderlying()).load((ORID) value, iFetchPlan), iFetchPlan);
-		else if (value instanceof ODocument && convertToRecord)
+		else if (value instanceof ODocument && autoConvert2Object)
 			return database.getUserObjectByRecord((ODocument) value, iFetchPlan);
 
 		return (TYPE) value;

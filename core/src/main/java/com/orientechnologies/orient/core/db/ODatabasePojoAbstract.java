@@ -332,7 +332,6 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 	}
 
 	public T getUserObjectByRecord(final ORecordInternal<?> iRecord, final String iFetchPlan, final boolean iCreate) {
-		checkOpeness();
 		if (!(iRecord instanceof ODocument))
 			return null;
 

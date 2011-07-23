@@ -31,14 +31,14 @@ public class OLazyRecordIterator implements Iterator<OIdentifiable> {
 	final private ODatabaseRecord										sourceDatabase;
 	final private ORecord<?>												sourceRecord;
 	final private Iterator<? extends OIdentifiable>	underlying;
-	final private boolean														convertToRecord;
+	final private boolean														autoConvert2Record;
 
 	public OLazyRecordIterator(final ORecord<?> iSourceRecord, final ODatabaseRecord iSourceDatabase, final byte iRecordType,
 			final Iterator<? extends OIdentifiable> iIterator, final boolean iConvertToRecord) {
 		this.sourceRecord = iSourceRecord;
 		this.sourceDatabase = iSourceDatabase;
 		this.underlying = iIterator;
-		this.convertToRecord = iConvertToRecord;
+		this.autoConvert2Record = iConvertToRecord;
 	}
 
 	public OIdentifiable next() {
@@ -48,7 +48,7 @@ public class OLazyRecordIterator implements Iterator<OIdentifiable> {
 			return null;
 
 		if (sourceDatabase != null)
-			if (value instanceof ORecordId && convertToRecord)
+			if (value instanceof ORecordId && autoConvert2Record)
 				return (OIdentifiable) sourceDatabase.load((ORecordId) value);
 
 		return value;

@@ -76,7 +76,6 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 	 * @see #registerEntityClasses(String)
 	 */
 	public <RET extends Object> RET newInstance(final String iClassName) {
-		checkOpeness();
 		checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, iClassName);
 
 		try {
