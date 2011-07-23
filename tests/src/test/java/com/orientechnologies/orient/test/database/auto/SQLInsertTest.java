@@ -22,6 +22,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
@@ -56,6 +57,11 @@ public class SQLInsertTest {
 				"Smith", 120.0, new ORecordId(13, 3), "hooray");
 
 		Assert.assertTrue(doc != null);
+		Assert.assertEquals(doc.field("name"), "Marc");
+		Assert.assertEquals(doc.field("surname"), "Smith");
+		Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 120.0f);
+		Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(13, 3));
+		Assert.assertEquals(doc.field("dummy"), "hooray");
 
 		database.close();
 	}
