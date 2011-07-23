@@ -114,6 +114,19 @@ public class SQLFunctionsTest {
 		database.close();
 	}
 
+	@Test
+	public void queryFunctionRenamed() {
+		database.open("admin", "admin");
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select distinct(name) from City")).execute();
+
+		Assert.assertTrue(result.size() > 1);
+
+		for (ODocument city : result)
+			Assert.assertTrue(city.containsField("distinct"));
+
+		database.close();
+	}
+
 	@SuppressWarnings("unchecked")
 	@Test
 	public void queryUnionAsAggregation() {
@@ -152,12 +165,8 @@ public class SQLFunctionsTest {
 	@Test
 	public void queryComposedAggregates() {
 		database.open("admin", "admin");
-		List<ODocument> result = database
-				.command(
-						new OSQLSynchQuery<ODocument>(
-								"select from Account")).execute();
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Account")).execute();
 
-		
 		result = database
 				.command(
 						new OSQLSynchQuery<ODocument>(
