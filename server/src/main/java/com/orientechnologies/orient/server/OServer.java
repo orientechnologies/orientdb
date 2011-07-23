@@ -77,6 +77,8 @@ public class OServer {
 	protected static ThreadGroup															threadGroup;
 
 	private OrientServer																			managedServer;
+	private ObjectName																				onProfiler			= new ObjectName("OrientDB:type=Profiler");
+	private ObjectName																				onServer				= new ObjectName("OrientDB:type=Server");
 
 	public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
 			InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
@@ -95,11 +97,11 @@ public class OServer {
 		MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
 
 		// REGISTER PROFILER
-		mBeanServer.registerMBean(OProfiler.getInstance().startRecording(), new ObjectName("OrientDB:type=Profiler"));
+		mBeanServer.registerMBean(OProfiler.getInstance().startRecording(), onProfiler);
 
 		// REGISTER SERVER
 		managedServer = new OrientServer();
-		mBeanServer.registerMBean(managedServer, new ObjectName("OrientDB:type=Server"));
+		mBeanServer.registerMBean(managedServer, onServer);
 
 		shutdownHook = new OServerShutdownHook();
 	}
@@ -180,7 +182,13 @@ public class OServer {
 			// PROTOCOL HANDLERS
 			protocols.clear();
 			memoryDatabases.clear();
-
+			try {
+				MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+				mBeanServer.unregisterMBean(onProfiler);
+				mBeanServer.unregisterMBean(onServer);
+			} catch (Exception e) {
+				OLogManager.instance().error(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " unregisterMBean error.", e);
+			}
 			Orient.instance().shutdown();
 
 		} finally {
@@ -337,8 +345,8 @@ public class OServer {
 			return configurationLoader.load();
 
 		} catch (IOException e) {
-			OLogManager.instance()
-					.error(this, "Error on reading server configuration from file: " + iFile, e, OConfigurationException.class);
+			OLogManager.instance().error(this, "Error on reading server configuration from file: " + iFile, e,
+					OConfigurationException.class);
 		}
 		return null;
 	}
@@ -423,8 +431,8 @@ public class OServer {
 		OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(Boolean.FALSE);
 		OGlobalConfiguration.CACHE_LEVEL1_SIZE.setValue(0);
 		OGlobalConfiguration.FILE_LOCK.setValue(true);
-		//OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.setValue(1);
-		//OGlobalConfiguration.LAZYSET_WORK_ON_STREAM.setValue(false);
+		// OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.setValue(1);
+		// OGlobalConfiguration.LAZYSET_WORK_ON_STREAM.setValue(false);
 		OGlobalConfiguration.TX_USE_LOG.setValue(true);
 		OGlobalConfiguration.TX_COMMIT_SYNCH.setValue(true);
 	}
