@@ -34,9 +34,13 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 	protected AtomicLong											version	= new AtomicLong();
 	protected OLevel2RecordCache							level2Cache;
 
-	protected volatile boolean								open		= false;
+	protected volatile STATUS									status		= STATUS.CLOSED;
 	protected OSharedResourceAdaptiveExternal	lock		= new OSharedResourceAdaptiveExternal(
 																												OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
+
+	protected enum STATUS {
+		CLOSED, OPEN, CLOSING
+	}
 
 	public OStorageAbstract(final String iName, final String iFilePath, final String iMode) {
 		if (OStringSerializerHelper.contains(iName, '/'))
@@ -59,7 +63,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 	}
 
 	public boolean isClosed() {
-		return !open;
+		return status == STATUS.CLOSED;
 	}
 
 	public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
@@ -117,7 +121,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 	}
 
 	protected boolean checkForClose(final boolean iForce) {
-		if (!open)
+		if (status == STATUS.CLOSED)
 			return false;
 
 		final int remainingUsers = getUsers() > 0 ? removeUser() : 0;

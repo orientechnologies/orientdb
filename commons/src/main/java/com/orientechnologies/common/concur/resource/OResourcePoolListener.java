@@ -17,7 +17,7 @@ package com.orientechnologies.common.concur.resource;
 
 public interface OResourcePoolListener<K, V> {
 
-	public V createNewResource(K iKey, String... iAdditionalArgs);
+	public V createNewResource(K iKey, Object... iAdditionalArgs);
 
-	public V reuseResource(K iKey, String[] iAdditionalArgs, V iValue);
+	public V reuseResource(K iKey, Object[] iAdditionalArgs, V iValue);
 }

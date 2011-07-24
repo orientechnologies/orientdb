@@ -30,28 +30,28 @@ public class ODatabaseObjectPool extends ODatabasePoolBase<ODatabaseObjectTx> {
 				if (dbPool == null) {
 					dbPool = new ODatabasePoolAbstract<ODatabaseObjectTx>(this, iMinSize, iMaxSize) {
 
-						public ODatabaseObjectTx createNewResource(final String iDatabaseName, final String... iAdditionalArgs) {
+						public ODatabaseObjectTx createNewResource(final String iDatabaseName, final Object... iAdditionalArgs) {
 							if (iAdditionalArgs.length < 2)
 								throw new OSecurityAccessException("Username and/or password missed");
 
 							final ODatabaseObjectTxPooled db = new ODatabaseObjectTxPooled((ODatabaseObjectPool) owner, iDatabaseName,
-									iAdditionalArgs[0], iAdditionalArgs[1]);
+									(String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
 
 							ODatabaseRecordThreadLocal.INSTANCE.set(db.getUnderlying());
 
 							return db;
 						}
 
-						public ODatabaseObjectTx reuseResource(final String iKey, final String[] iAdditionalArgs, final ODatabaseObjectTx iValue) {
+						public ODatabaseObjectTx reuseResource(final String iKey, final Object[] iAdditionalArgs, final ODatabaseObjectTx iValue) {
 							ODatabaseRecordThreadLocal.INSTANCE.set(iValue.getUnderlying());
 
 							((ODatabaseObjectTxPooled) iValue).reuse(owner);
 
 							if (iValue.getStorage().isClosed())
 								// STORAGE HAS BEEN CLOSED: REOPEN IT
-								iValue.getStorage().open(iAdditionalArgs[0], iAdditionalArgs[1], null);
+								iValue.getStorage().open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1], null);
 							else
-								iValue.getMetadata().getSecurity().authenticate(iAdditionalArgs[0], iAdditionalArgs[1]);
+								iValue.getMetadata().getSecurity().authenticate((String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
 
 							return iValue;
 						}

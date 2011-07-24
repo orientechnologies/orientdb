@@ -39,6 +39,12 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
 		return dbPool.acquire(iName, iUserName, iUserPassword);
 	}
 
+	public DB acquire(final String iName, final String iUserName, final String iUserPassword,
+			final Map<String, Object> iOptionalParams) {
+		setup();
+		return dbPool.acquire(iName, iUserName, iUserPassword, iOptionalParams);
+	}
+
 	public void release(final DB iDatabase) {
 		dbPool.release(iDatabase);
 	}

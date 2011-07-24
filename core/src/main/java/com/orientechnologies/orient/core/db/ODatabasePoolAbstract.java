@@ -43,6 +43,11 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
 	}
 
 	public DB acquire(final String iURL, final String iUserName, final String iUserPassword) throws OLockException {
+		return acquire(iURL, iUserName, iUserPassword, null);
+	}
+
+	public DB acquire(final String iURL, final String iUserName, final String iUserPassword, final Map<String, Object> iOptionalParams)
+			throws OLockException {
 		int separatorPos = iURL.lastIndexOf('/');
 
 		final String name;
@@ -69,7 +74,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
 			}
 		}
 
-		return pool.getResource(iURL, timeout, iUserName, iUserPassword);
+		return pool.getResource(iURL, timeout, iUserName, iUserPassword, iOptionalParams);
 	}
 
 	public void release(final DB iDatabase) {

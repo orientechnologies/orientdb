@@ -56,7 +56,7 @@ public class ONetworkConnectionPool<CH extends OChannel> implements OResourcePoo
 		timeout = iTimeout;
 	}
 
-	public CH createNewResource(String iKey, String... iAdditionalArgs) {
+	public CH createNewResource(String iKey, Object... iAdditionalArgs) {
 		return null;
 	}
 
@@ -85,7 +85,7 @@ public class ONetworkConnectionPool<CH extends OChannel> implements OResourcePoo
 		pool.returnResource(iChannel);
 	}
 
-	public CH reuseResource(final String iKey, final String[] iAdditionalArgs, final CH iValue) {
+	public CH reuseResource(final String iKey, final Object[] iAdditionalArgs, final CH iValue) {
 		return iValue;
 	}
 

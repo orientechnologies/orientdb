@@ -34,7 +34,7 @@ public class OResourcePool<K, V> {
 		sem = new Semaphore(iMaxResources + 1, true);
 	}
 
-	public V getResource(K iKey, final long iMaxWaitMillis, String... iAdditionalArgs) throws OLockException {
+	public V getResource(K iKey, final long iMaxWaitMillis, Object... iAdditionalArgs) throws OLockException {
 
 		// First, get permission to take or create a resource
 		try {

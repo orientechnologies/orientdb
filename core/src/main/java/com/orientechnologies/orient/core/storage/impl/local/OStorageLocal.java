@@ -114,7 +114,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		lock.acquireExclusiveLock();
 		try {
 
-			if (open)
+			if (status != STATUS.CLOSED)
 				// ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
 				// REUSED
 				return;
@@ -124,7 +124,7 @@ public class OStorageLocal extends OStorageEmbedded {
 			if (!exists())
 				throw new OStorageException("Can't open the storage '" + name + "' because it not exists in path: " + url);
 
-			open = true;
+			status = STATUS.OPEN;
 
 			// OPEN BASIC SEGMENTS
 			int pos;
@@ -206,7 +206,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		lock.acquireExclusiveLock();
 		try {
 
-			if (open)
+			if (status != STATUS.CLOSED)
 				throw new OStorageException("Can't create new storage " + name + " because it isn't closed");
 
 			addUser();
@@ -218,7 +218,7 @@ public class OStorageLocal extends OStorageEmbedded {
 			if (exists())
 				throw new OStorageException("Can't create new storage " + name + " because it already exists");
 
-			open = true;
+			status = STATUS.OPEN;
 
 			addDataSegment(OStorage.DATA_DEFAULT_NAME);
 
@@ -266,6 +266,8 @@ public class OStorageLocal extends OStorageEmbedded {
 			if (!checkForClose(iForce))
 				return;
 
+			status = STATUS.CLOSING;
+
 			saveVersion();
 
 			for (OCluster cluster : clusters)
@@ -285,11 +287,11 @@ public class OStorageLocal extends OStorageEmbedded {
 			level2Cache.shutdown();
 
 			OMMapManager.flush();
-			
+
 			super.close(iForce);
 
 			Orient.instance().unregisterStorage(this);
-			open = false;
+			status = STATUS.CLOSED;
 		} catch (IOException e) {
 			OLogManager.instance().error(this, "Error on closing of the storage '" + name, e, OStorageException.class);
 
@@ -306,7 +308,7 @@ public class OStorageLocal extends OStorageEmbedded {
 	 */
 	public void delete() {
 		// CLOSE THE DATABASE BY REMOVING THE CURRENT USER
-		if (open) {
+		if (status != STATUS.CLOSED) {
 			if (getUsers() > 0) {
 				while (removeUser() > 0)
 					;

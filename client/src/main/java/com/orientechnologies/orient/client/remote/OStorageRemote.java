@@ -131,7 +131,8 @@ public class OStorageRemote extends OStorageAbstract {
 
 		connectionUserName = iUserName;
 		connectionUserPassword = iUserPassword;
-		connectionOptions = new HashMap<String, Object>(iOptions); // CREATE A COPY TO AVOID USER MANIPULATION POST OPEN
+		connectionOptions = iOptions != null ? new HashMap<String, Object>(iOptions) : null; // CREATE A COPY TO AVOID USER MANIPULATION
+																																													// POST OPEN
 
 		try {
 			openRemoteDatabase();
@@ -169,8 +170,6 @@ public class OStorageRemote extends OStorageAbstract {
 
 		OChannelBinaryClient network = null;
 		try {
-			open = false;
-
 			try {
 				network = beginRequest(OChannelBinaryProtocol.REQUEST_DB_CLOSE);
 			} finally {
@@ -198,6 +197,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 			level2Cache.shutdown();
 			super.close(iForce);
+			status = STATUS.CLOSED;
 
 			Orient.instance().unregisterStorage(this);
 
@@ -978,7 +978,7 @@ public class OStorageRemote extends OStorageAbstract {
 		if (!(iException instanceof IOException))
 			throw new OStorageException(iMessage, iException);
 
-		if (!open)
+		if (status != STATUS.OPEN)
 			// STORAGE CLOSED: DON'T HANDLE RECONNECTION
 			return;
 
@@ -1084,7 +1084,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 		defaultClusterId = clustersIds.get(OStorage.CLUSTER_DEFAULT_NAME);
 
-		open = true;
+		status = STATUS.OPEN;
 	}
 
 	/**

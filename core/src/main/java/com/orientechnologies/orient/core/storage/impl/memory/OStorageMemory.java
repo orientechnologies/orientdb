@@ -85,7 +85,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
 			configuration.create();
 
-			open = true;
+			status = STATUS.OPEN;
 
 		} catch (OStorageException e) {
 			close();
@@ -103,7 +103,7 @@ public class OStorageMemory extends OStorageEmbedded {
 	public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iOptions) {
 		addUser();
 
-		if (open)
+		if (status == STATUS.OPEN)
 			// ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
 			// REUSED
 			return;
@@ -114,7 +114,7 @@ public class OStorageMemory extends OStorageEmbedded {
 			if (!exists())
 				throw new OStorageException("Can't open the storage '" + name + "' because it not exists in path: " + url);
 
-			open = true;
+			status = STATUS.OPEN;
 
 		} finally {
 			lock.releaseExclusiveLock();
@@ -128,6 +128,8 @@ public class OStorageMemory extends OStorageEmbedded {
 			if (!checkForClose(iForce))
 				return;
 
+			status = STATUS.CLOSING;
+
 			// CLOSE ALL THE CLUSTERS
 			for (OClusterMemory c : clusters)
 				c.close();
@@ -140,7 +142,7 @@ public class OStorageMemory extends OStorageEmbedded {
 			super.close(iForce);
 
 			Orient.instance().unregisterStorage(this);
-			open = false;
+			status = STATUS.CLOSED;
 
 		} finally {
 			lock.releaseExclusiveLock();
