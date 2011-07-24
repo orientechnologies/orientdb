@@ -80,7 +80,6 @@ public class OStorageRemote extends OStorageAbstract {
 
 	private static List<OChannelBinaryClient>				networkPool									= new ArrayList<OChannelBinaryClient>();
 	protected List<OPair<String, String[]>>					serverURLs									= new ArrayList<OPair<String, String[]>>();
-	protected int																		retry												= 0;
 	protected final Map<String, Integer>						clustersIds									= new HashMap<String, Integer>();
 	protected final Map<String, String>							clustersTypes								= new HashMap<String, String>();
 	protected int																		defaultClusterId;
@@ -170,6 +169,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 		OChannelBinaryClient network = null;
 		try {
+			open = false;
 
 			try {
 				network = beginRequest(OChannelBinaryProtocol.REQUEST_DB_CLOSE);
@@ -200,7 +200,6 @@ public class OStorageRemote extends OStorageAbstract {
 			super.close(iForce);
 
 			Orient.instance().unregisterStorage(this);
-			open = false;
 
 		} catch (OException e) {
 			// PASS THROUGH
@@ -979,6 +978,10 @@ public class OStorageRemote extends OStorageAbstract {
 		if (!(iException instanceof IOException))
 			throw new OStorageException(iMessage, iException);
 
+		if (!open)
+			// STORAGE CLOSED: DON'T HANDLE RECONNECTION
+			return;
+
 		final long lostConnectionTime = System.currentTimeMillis();
 
 		final int currentMaxRetry;
@@ -992,7 +995,7 @@ public class OStorageRemote extends OStorageAbstract {
 			currentRetryDelay = connectionRetryDelay;
 		}
 
-		for (retry = 0; retry < currentMaxRetry; ++retry) {
+		for (int retry = 0; retry < currentMaxRetry; ++retry) {
 			// WAIT THE DELAY BEFORE TO RETRY
 			if (currentRetryDelay > 0)
 				try {
