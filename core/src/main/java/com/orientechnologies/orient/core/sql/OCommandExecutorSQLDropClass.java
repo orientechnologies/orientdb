@@ -19,9 +19,11 @@ import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.storage.OCluster;
 
 /**
  * SQL CREATE PROPERTY command: Creates a new property in the target class.
@@ -70,9 +72,32 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLPermissionA
 		if (className == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 
+		int clusterId = database.getMetadata().getSchema().getClass(className).getDefaultClusterId();
+
 		((OSchemaProxy) database.getMetadata().getSchema()).dropClassInternal(className);
 		((OSchemaProxy) database.getMetadata().getSchema()).saveInternal();
 
+		deleteDefaultCluster(clusterId);
+
 		return null;
+	}
+
+	protected void deleteDefaultCluster(int clusterId) {
+		OCluster cluster = database.getStorage().getClusterById(clusterId);
+		if (cluster.getName().equalsIgnoreCase(className)) {
+			if (isClusterDeletable(clusterId)) {
+				database.getStorage().dropCluster(clusterId);
+			}
+		}
+	}
+
+	protected boolean isClusterDeletable(int clusterId) {
+		for (OClass iClass : database.getMetadata().getSchema().getClasses()) {
+			for (int i : iClass.getClusterIds()) {
+				if (i == clusterId)
+					return false;
+			}
+		}
+		return true;
 	}
 }
