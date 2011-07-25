@@ -37,14 +37,17 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
 	}
 
 	public void create() {
+		setCurrentDatabaseInThreadLocal();
 		delegate.create();
 	}
 
 	public int countClasses() {
+		setCurrentDatabaseInThreadLocal();
 		return delegate.countClasses();
 	}
 
 	public OClass createClass(final Class<?> iClass) {
+		setCurrentDatabaseInThreadLocal();
 		return delegate.createClass(iClass);
 	}
 
@@ -53,90 +56,112 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
 	}
 
 	public OClass createClass(final Class<?> iClass, final int iDefaultClusterId) {
+		setCurrentDatabaseInThreadLocal();
 		return delegate.createClass(iClass, iDefaultClusterId);
 	}
 
 	public OClass createClass(final String iClassName) {
+		setCurrentDatabaseInThreadLocal();
 		return delegate.createClass(iClassName);
 	}
 
 	public OClass getOrCreateClass(final String iClassName) {
+		setCurrentDatabaseInThreadLocal();
 		return delegate.getOrCreateClass(iClassName);
 	}
 
 	public OClass createClass(final String iClassName, final OClass iSuperClass) {
+		setCurrentDatabaseInThreadLocal();
 		return delegate.createClass(iClassName, iSuperClass);
 	}
 
 	public OClass createClass(final String iClassName, final OClass iSuperClass, final CLUSTER_TYPE iType) {
+		setCurrentDatabaseInThreadLocal();
 		return delegate.createClass(iClassName, iSuperClass, iType);
 	}
 
 	public OClass createClass(final String iClassName, final int iDefaultClusterId) {
+		setCurrentDatabaseInThreadLocal();
 		return delegate.createClass(iClassName, iDefaultClusterId);
 	}
 
 	public OClass createClass(final String iClassName, final OClass iSuperClass, final int iDefaultClusterId) {
+		setCurrentDatabaseInThreadLocal();
 		return delegate.createClass(iClassName, iSuperClass, iDefaultClusterId);
 	}
 
 	public OClass createClass(final String iClassName, final OClass iSuperClass, final int[] iClusterIds) {
+		setCurrentDatabaseInThreadLocal();
 		return delegate.createClass(iClassName, iSuperClass, iClusterIds);
 	}
 
 	public OClass createClassInternal(final String iClassName, final OClass iSuperClass, final int[] iClusterIds) {
+		setCurrentDatabaseInThreadLocal();
 		return delegate.createClassInternal(iClassName, iSuperClass, iClusterIds);
 	}
 
 	public void dropClass(final String iClassName) {
+		setCurrentDatabaseInThreadLocal();
 		delegate.dropClass(iClassName);
 	}
 
 	public void dropClassInternal(final String iClassName) {
+		setCurrentDatabaseInThreadLocal();
 		delegate.dropClassInternal(iClassName);
 	}
 
 	public boolean existsClass(final String iClassName) {
+		setCurrentDatabaseInThreadLocal();
 		return delegate.existsClass(iClassName);
 	}
 
 	public OClass getClassById(final int iClassId) {
+		setCurrentDatabaseInThreadLocal();
 		return delegate.getClassById(iClassId);
 	}
 
 	public OClass getClass(final Class<?> iClass) {
+		setCurrentDatabaseInThreadLocal();
 		return delegate.getClass(iClass);
 	}
 
 	public OClass getClass(final String iClassName) {
+		setCurrentDatabaseInThreadLocal();
 		return delegate.getClass(iClassName);
 	}
 
 	public Collection<OClass> getClasses() {
+		setCurrentDatabaseInThreadLocal();
 		return delegate.getClasses();
 	}
 
 	public void load() {
+		setCurrentDatabaseInThreadLocal();
 		delegate.load();
 	}
 
 	public <RET extends ODocumentWrapper> RET reload() {
+		setCurrentDatabaseInThreadLocal();
 		return (RET) delegate.reload();
 	}
 
 	public <RET extends ODocumentWrapper> RET save() {
+		setCurrentDatabaseInThreadLocal();
 		return (RET) delegate.save();
 	}
 
 	public int getVersion() {
+		setCurrentDatabaseInThreadLocal();
 		return delegate.getVersion();
 	}
 
 	public void saveInternal() {
+		setCurrentDatabaseInThreadLocal();
 		delegate.saveInternal();
 	}
 
 	public ORID getIdentity() {
+		setCurrentDatabaseInThreadLocal();
 		return delegate.getIdentity();
 	}
 
