@@ -727,7 +727,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceExternal imp
 		acquireExclusiveLock();
 		try {
 
-			configuration.setStatus(ORecordElement.STATUS.UNMARSHALLING);
+			configuration.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
 			try {
 				configuration.field(OIndexInternal.CONFIG_TYPE, type);
@@ -739,7 +739,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceExternal imp
 				configuration.field(CONFIG_MAP_RID, map.getRecord().getIdentity());
 
 			} finally {
-				configuration.setStatus(ORecordElement.STATUS.LOADED);
+				configuration.setInternalStatus(ORecordElement.STATUS.LOADED);
 			}
 
 		} finally {

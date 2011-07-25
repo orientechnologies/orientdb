@@ -113,7 +113,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement {
 		return status;
 	}
 
-	public void setStatus(final STATUS iStatus) {
+	public void setInternalStatus(final STATUS iStatus) {
 		status = iStatus;
 	}
 }

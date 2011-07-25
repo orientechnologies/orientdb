@@ -57,8 +57,8 @@ public class OTransactionNoTx extends OTransactionAbstract {
 	/**
 	 * Update the record.
 	 */
-	public void saveRecord(final ORecordInternal<?> iContent, final String iClusterName) {
-		database.executeSaveRecord(iContent, iClusterName, iContent.getVersion(), iContent.getRecordType());
+	public void saveRecord(final ORecordInternal<?> iRecord, final String iClusterName) {
+		database.executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iRecord.getRecordType());
 	}
 
 	/**

@@ -60,7 +60,7 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 	public <RET extends ODocumentWrapper> RET save() {
 		super.save();
 		if (database != null)
-			database.registerPojo(this, document);
+			database.registerUserObject(this, document);
 		return (RET) this;
 	}
 

@@ -72,7 +72,7 @@ public interface ODatabase {
 	public <DB extends ODatabase> DB create();
 
 	/**
-	 * Delete a database.
+	 * Deletes a database.
 	 * 
 	 */
 	public void delete();
@@ -275,10 +275,10 @@ public interface ODatabase {
 	public boolean dropCluster(String iClusterName);
 
 	/**
-	 * Drops a cluster by its id. Physical clusters will be completely deleted
+	 * Drops a cluster by its id. Physical clusters will be completely deleted.
 	 * 
 	 * @param iClusterId
-	 * @return
+	 * @return true if has been removed, otherwise false
 	 */
 	public boolean dropCluster(int iClusterId);
 
@@ -312,9 +312,25 @@ public interface ODatabase {
 	 */
 	public Iterator<Map.Entry<String, Object>> getProperties();
 
+	/**
+	 * Returns a database attribute value
+	 * 
+	 * @param iAttribute
+	 *          Attributes between #ATTRIBUTES enum
+	 * @return The attribute value
+	 */
 	public Object get(ATTRIBUTES iAttribute);
 
-	public <DB extends ODatabase> DB set(ATTRIBUTES attribute, Object iValue);
+	/**
+	 * Sets a database attribute value
+	 * 
+	 * @param iAttribute
+	 *          Attributes between #ATTRIBUTES enum
+	 * @param iValue
+	 *          Value to set
+	 * @return
+	 */
+	public <DB extends ODatabase> DB set(ATTRIBUTES iAttribute, Object iValue);
 
 	/**
 	 * Registers a listener to the database events.

@@ -383,7 +383,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	@Override
 	@OBeforeSerialization
 	public ODocument toStream() {
-		document.setStatus(ORecordElement.STATUS.UNMARSHALLING);
+		document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
 		try {
 			document.field("name", name);
@@ -403,7 +403,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 				document.field("superClass", superClass.getName());
 
 		} finally {
-			document.setStatus(ORecordElement.STATUS.LOADED);
+			document.setInternalStatus(ORecordElement.STATUS.LOADED);
 		}
 
 		return document;

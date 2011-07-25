@@ -109,6 +109,12 @@ public interface OStorage extends OSharedContainer {
 
 	public boolean dropCluster(String iClusterName);
 
+	/**
+	 * Drops a cluster.
+	 * 
+	 * @param iId
+	 * @return true if has been removed, otherwise false
+	 */
 	public boolean dropCluster(int iId);
 
 	/**

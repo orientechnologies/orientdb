@@ -261,6 +261,15 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 		return (DBTYPE) this;
 	}
 
+	public boolean isMVCC() {
+		return underlying.isMVCC();
+	}
+
+	public <DBTYPE extends ODatabaseComplex<?>> DBTYPE setMVCC(final boolean iMvcc) {
+		underlying.setMVCC(iMvcc);
+		return (DBTYPE) this;
+	}
+
 	/**
 	 * Specifies if retain handled objects in memory or not. Setting it to false can improve performance on large inserts. Default is
 	 * enabled.
@@ -307,7 +316,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 				return null;
 			}
 
-			registerPojo(iPojo, record);
+			registerUserObject(iPojo, record);
 		}
 
 		return record;
@@ -353,7 +362,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 					record = (ODocument) record.load();
 
 				pojo = newInstance(record.getClassName());
-				registerPojo(pojo, record);
+				registerUserObject(pojo, record);
 
 				stream2pojo(record, pojo, iFetchPlan);
 
@@ -392,7 +401,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 	/**
 	 * Register a new POJO
 	 */
-	public void registerPojo(final Object iObject, final ORecordInternal<?> iRecord) {
+	public void registerUserObject(final Object iObject, final ORecordInternal<?> iRecord) {
 		if (!(iRecord instanceof ODocument))
 			return;
 

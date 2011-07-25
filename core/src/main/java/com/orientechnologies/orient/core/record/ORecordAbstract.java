@@ -339,7 +339,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		return _status;
 	}
 
-	public void setStatus(final ORecordElement.STATUS iStatus) {
+	public void setInternalStatus(final ORecordElement.STATUS iStatus) {
 		this._status = iStatus;
 	}
 

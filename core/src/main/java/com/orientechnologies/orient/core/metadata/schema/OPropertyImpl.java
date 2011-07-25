@@ -531,7 +531,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	@Override
 	@OBeforeSerialization
 	public ODocument toStream() {
-		document.setStatus(ORecordElement.STATUS.UNMARSHALLING);
+		document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
 		try {
 			document.field("name", name);
@@ -545,7 +545,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 			document.field("linkedClass", linkedClass != null ? linkedClass.getName() : linkedClassName);
 			document.field("linkedType", linkedType != null ? linkedType.id : null);
 		} finally {
-			document.setStatus(ORecordElement.STATUS.LOADED);
+			document.setInternalStatus(ORecordElement.STATUS.LOADED);
 		}
 		return document;
 	}

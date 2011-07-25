@@ -127,8 +127,4 @@ public interface ODatabaseRecord extends ODatabaseComplex<ORecordInternal<?>> {
 	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	public <DB extends ODatabaseRecord> DB checkSecurity(String iResourceGeneric, int iOperation, Object... iResourcesSpecific);
-
-	public boolean isMVCC();
-
-	public <DB extends ODatabaseRecord> DB setMVCC(boolean iValue);
 }

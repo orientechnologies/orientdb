@@ -153,7 +153,7 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
 		return status;
 	}
 
-	public void setStatus(final STATUS iStatus) {
+	public void setInternalStatus(final STATUS iStatus) {
 		status = iStatus;
 	}
 }

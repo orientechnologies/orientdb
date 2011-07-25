@@ -24,35 +24,139 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
 /**
- * Generic record representation with a schema definition. The object can be reused across call to the database.
+ * Generic record representation with a schema definition. The record has multiple fields. Fields are also called properties.
  */
 public interface ORecordSchemaAware<T> extends ORecordInternal<T> {
 
-	public <RET> RET field(String iPropertyName);
+	/**
+	 * Returns the value of a field.
+	 * 
+	 * @param iFieldName
+	 *          Field name
+	 * @return Field value if exists, otherwise null
+	 */
+	public <RET> RET field(String iFieldName);
 
-	public ORecordSchemaAware<T> field(String iPropertyName, Object iValue);
+	/**
+	 * Returns the value of a field forcing the return type. This is useful when you want avoid automatic conversions (for example
+	 * record id -> record) or need expressly a conversion between types.
+	 * 
+	 * @param iFieldName
+	 *          Field name
+	 * @param iType
+	 *          Type between the values defined in the {@link OType} enum
+	 * @return Field value if exists, otherwise null
+	 */
+	public <RET> RET field(String iFieldName, OType iType);
 
-	public <RET> RET field(String iPropertyName, OType iType);
+	/**
+	 * Sets the value for a field.
+	 * 
+	 * @param iFieldName
+	 *          Field name
+	 * @param iFieldValue
+	 *          Field value to set
+	 * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
+	public ORecordSchemaAware<T> field(String iFieldName, Object iFieldValue);
 
-	public ORecordSchemaAware<T> field(String iPropertyName, Object iPropertyValue, OType iType);
+	/**
+	 * Sets the value for a field forcing the type.This is useful when you want avoid automatic conversions (for example record id ->
+	 * record) or need expressly a conversion between types.
+	 * 
+	 * @param iFieldName
+	 *          Field name
+	 * @param iFieldValue
+	 *          Field value to set
+	 * @param iType
+	 *          Type between the values defined in the {@link OType} enum
+	 * @return
+	 */
+	public ORecordSchemaAware<T> field(String iFieldName, Object iFieldValue, OType iType);
 
-	public Object removeField(String iPropertyName);
+	/**
+	 * Removes a field. This operation doesn't set the field value to null but remove the field itself.
+	 * 
+	 * @param iFieldName
+	 *          Field name
+	 * @return The old value contained in the remove field
+	 */
+	public Object removeField(String iFieldName);
 
+	/**
+	 * Tells if a field is contained in current record.
+	 * 
+	 * @param iFieldName
+	 *          Field name
+	 * @return true if exists, otherwise false
+	 */
+	public boolean containsField(String iFieldName);
+
+	/**
+	 * Returns the number of fields present in memory.
+	 * 
+	 * @return Fields number
+	 */
+	public int fields();
+
+	/**
+	 * Returns the record's field names. The returned Set object is disconnected by internal representation, so changes don't apply to
+	 * the record. If the fields are ordered the order is maintained also in the returning collection.
+	 * 
+	 * @return Set of string containing the field names
+	 */
 	public Set<String> fieldNames();
 
+	/**
+	 * Returns the record's field values. The returned object array is disconnected by internal representation, so changes don't apply
+	 * to the record. If the fields are ordered the order is maintained also in the returning collection.
+	 * 
+	 * @return Object array of the field values
+	 */
 	public Object[] fieldValues();
 
-	public int size();
-
+	/**
+	 * Returns the class name associated to the current record. Can be null. Call this method after a {@link #reset()} to re-associate
+	 * the class.
+	 * 
+	 * @return Class name if any
+	 */
 	public String getClassName();
 
+	/**
+	 * Sets the class for the current record. If the class not exists, it will be created in transparent way as empty (no fields).
+	 * 
+	 * @param iClassName
+	 *          Class name to set
+	 */
 	public void setClassName(String iClassName);
 
+	/**
+	 * Sets the class for the current record only if already exists in the schema.
+	 * 
+	 * @param iClassName
+	 *          Class name to set
+	 */
 	public void setClassNameIfExists(String iClassName);
 
+	/**
+	 * Returns the schema class object for the record.
+	 * 
+	 * @return {@link OClass} instance or null if the record has no class associated
+	 */
 	public OClass getSchemaClass();
 
+	/**
+	 * Validates the record against the schema constraints if defined. If the record breaks the validation rules, then a
+	 * {@link OValidationException} exception is thrown.
+	 * 
+	 * @throws OValidationException
+	 */
 	public void validate() throws OValidationException;
 
-	public ORecordSchemaAware<T> fill(ODatabaseRecord iDatabase, int iClassId, ORecordId iRid, int iVersion, byte[] iBuffer, boolean iDirty);
+	/**
+	 * Internal only. Fills the record in one shot.
+	 */
+	public ORecordSchemaAware<T> fill(ODatabaseRecord iDatabase, int iClassId, ORecordId iRid, int iVersion, byte[] iBuffer,
+			boolean iDirty);
 }

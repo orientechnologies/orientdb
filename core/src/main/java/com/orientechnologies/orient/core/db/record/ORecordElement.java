@@ -35,10 +35,17 @@ public interface ORecordElement {
 	/**
 	 * Returns the current status of the record.
 	 * 
+	 * @return Current status as value between the defined values in the enum {@link STATUS}
 	 */
 	public STATUS getInternalStatus();
 
-	public void setStatus(STATUS iStatus);
+	/**
+	 * Changes the current internal status.
+	 * 
+	 * @param iStatus
+	 *          status between the values defined in the enum {@link STATUS}
+	 */
+	public void setInternalStatus(STATUS iStatus);
 
 	/**
 	 * Marks the instance as dirty. The dirty status could be propagated up if the implementation supports ownership concept.
@@ -47,10 +54,21 @@ public interface ORecordElement {
 	 */
 	public <RET> RET setDirty();
 
+	/**
+	 * Internal only.
+	 */
 	public void onBeforeIdentityChanged(ORID iRID);
 
+	/**
+	 * Internal only.
+	 */
 	public void onAfterIdentityChanged(ORecord<?> iRecord);
 
+	/**
+	 * Sets the current database.
+	 * 
+	 * @return true if the database is changed, otherwise false
+	 */
 	public boolean setDatabase(ODatabaseRecord iDatabase);
 
 }

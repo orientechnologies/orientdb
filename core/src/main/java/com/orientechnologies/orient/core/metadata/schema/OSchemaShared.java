@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityReso
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
@@ -478,7 +479,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 	@Override
 	@OBeforeSerialization
 	public ODocument toStream() {
-		document.setStatus(ORecordElement.STATUS.UNMARSHALLING);
+		document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
 		try {
 			document.field("schemaVersion", CURRENT_VERSION_NUMBER);
@@ -490,7 +491,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 			document.field("classes", cc, OType.EMBEDDEDSET);
 
 		} finally {
-			document.setStatus(ORecordElement.STATUS.LOADED);
+			document.setInternalStatus(ORecordElement.STATUS.LOADED);
 		}
 
 		return document;

@@ -409,8 +409,8 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 		return delegate.getInternalStatus();
 	}
 
-	public void setStatus(final STATUS iStatus) {
-		delegate.setStatus(iStatus);
+	public void setInternalStatus(final STATUS iStatus) {
+		delegate.setInternalStatus(iStatus);
 	}
 
 	public boolean isRidOnly() {

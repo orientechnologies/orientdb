@@ -164,7 +164,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		// EMBEDDED LITERALS
 
 		if (map instanceof ORecordElement)
-			((ORecordElement) map).setStatus(STATUS.UNMARSHALLING);
+			((ORecordElement) map).setInternalStatus(STATUS.UNMARSHALLING);
 
 		for (String item : items) {
 			if (item != null && item.length() > 0) {
@@ -193,7 +193,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		}
 
 		if (map instanceof ORecordElement)
-			((ORecordElement) map).setStatus(STATUS.LOADED);
+			((ORecordElement) map).setInternalStatus(STATUS.LOADED);
 
 		return map;
 	}
@@ -435,7 +435,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 													return iRecord;
 												}
 
-												public ORecordInternal<?> getRecordByUserObject(Object iPojo, boolean iIsMandatory) {
+												public ORecordInternal<?> getRecordByUserObject(Object iPojo, boolean iCreateIfNotAvailable) {
 													return new ODocument(iLinkedClass);
 												}
 
@@ -443,7 +443,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 													return false;
 												}
 
-												public void registerPojo(Object iObject, ORecordInternal<?> iRecord) {
+												public void registerUserObject(Object iObject, ORecordInternal<?> iRecord) {
 												}
 											}, null, iSaveOnlyDirty);
 
@@ -509,7 +509,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		}
 
 		if (coll instanceof ORecordElement)
-			((ORecordElement) coll).setStatus(STATUS.UNMARSHALLING);
+			((ORecordElement) coll).setInternalStatus(STATUS.UNMARSHALLING);
 
 		final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR);
 		for (String item : items) {
@@ -545,7 +545,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		}
 
 		if (coll instanceof ORecordElement)
-			((ORecordElement) coll).setStatus(STATUS.LOADED);
+			((ORecordElement) coll).setInternalStatus(STATUS.LOADED);
 
 		return coll;
 	}
@@ -619,7 +619,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 											return iRecord;
 										}
 
-										public ORecordInternal<?> getRecordByUserObject(Object iPojo, boolean iIsMandatory) {
+										public ORecordInternal<?> getRecordByUserObject(Object iPojo, boolean iCreateIfNotAvailable) {
 											return new ODocument(linkedClass);
 										}
 
@@ -627,7 +627,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 											return false;
 										}
 
-										public void registerPojo(Object iObject, ORecordInternal<?> iRecord) {
+										public void registerUserObject(Object iObject, ORecordInternal<?> iRecord) {
 										}
 									}, null, iSaveOnlyDirty);
 
@@ -696,7 +696,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					// STORE THE TRAVERSED OBJECT TO KNOW THE RECORD ID. CALL THIS VERSION TO AVOID CLEAR OF STACK IN THREAD-LOCAL
 					iLinkedRecord.getDatabase().save(iLinkedRecord);
 
-				iLinkedRecord.getDatabase().registerPojo(iLinkedRecord.getDatabase().getUserObjectByRecord(iLinkedRecord, null),
+				iLinkedRecord.getDatabase().registerUserObject(iLinkedRecord.getDatabase().getUserObjectByRecord(iLinkedRecord, null),
 						iLinkedRecord);
 
 				resultRid = iLinkedRecord;

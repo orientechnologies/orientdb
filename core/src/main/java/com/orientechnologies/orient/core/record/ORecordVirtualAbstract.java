@@ -21,6 +21,7 @@ import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.index.OPropertyIndexManager;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
 /**
@@ -121,6 +122,14 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 		return _trackingChanges;
 	}
 
+	/**
+	 * Enabled or disabled the tracking of changes in the document. This is needed by some triggers like {@link OPropertyIndexManager}
+	 * to determine what fields are changed to update indexes.
+	 * 
+	 * @param iTrackingChanges
+	 *          True to enable it, otherwise false
+	 * @return
+	 */
 	public <RET extends ORecordVirtualAbstract<?>> RET setTrackingChanges(final boolean iTrackingChanges) {
 		this._trackingChanges = iTrackingChanges;
 		if (!iTrackingChanges)
@@ -146,12 +155,19 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 		return this == obj || _recordId.isValid();
 	}
 
+	/**
+	 * Returns the number of fields in memory.
+	 */
+	public int fields() {
+		return _fieldValues == null ? 0 : _fieldValues.size();
+	}
+
 	@Override
 	protected void checkForFields() {
 		if (_fieldValues == null)
 			_fieldValues = _ordered ? new LinkedHashMap<String, T>() : new HashMap<String, T>();
 
-		if (_status == ORecordElement.STATUS.LOADED && size() == 0)
+		if (_status == ORecordElement.STATUS.LOADED && fields() == 0)
 			// POPULATE FIELDS LAZY
 			deserializeFields();
 	}

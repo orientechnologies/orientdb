@@ -83,7 +83,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement {
 		return status;
 	}
 
-	public void setStatus(final STATUS iStatus) {
+	public void setInternalStatus(final STATUS iStatus) {
 		status = iStatus;
 	}
 }

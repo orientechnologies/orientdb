@@ -130,7 +130,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 		return underlying.isMVCC();
 	}
 
-	public <RET extends ODatabaseRecord> RET setMVCC(final boolean iValue) {
+	public <RET extends ODatabaseComplex<?>> RET setMVCC(final boolean iValue) {
 		checkOpeness();
 		return (RET) underlying.setMVCC(iValue);
 	}
@@ -201,7 +201,8 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 		return (RET) underlying.load(iRecord, iFetchPlan);
 	}
 
-	public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord, final String iFetchPlan, final boolean iIgnoreCache) {
+	public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord, final String iFetchPlan,
+			final boolean iIgnoreCache) {
 		return (RET) underlying.load(iRecord, iFetchPlan, iIgnoreCache);
 	}
 
@@ -236,16 +237,16 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 		return (ODatabaseRecord) this;
 	}
 
-	public ORecordInternal<?> getRecordByUserObject(final Object iUserObject, final boolean iMandatory) {
+	public ORecordInternal<?> getRecordByUserObject(final Object iUserObject, final boolean iCreateIfNotAvailable) {
 		if (databaseOwner != this)
 			return getDatabaseOwner().getRecordByUserObject(iUserObject, false);
 
 		return (ORecordInternal<?>) iUserObject;
 	}
 
-	public void registerPojo(final Object iObject, final ORecordInternal<?> iRecord) {
+	public void registerUserObject(final Object iObject, final ORecordInternal<?> iRecord) {
 		if (databaseOwner != this)
-			getDatabaseOwner().registerPojo(iObject, iRecord);
+			getDatabaseOwner().registerUserObject(iObject, iRecord);
 	}
 
 	public Object getUserObjectByRecord(final ORecordInternal<?> iRecord, final String iFetchPlan) {

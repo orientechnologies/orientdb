@@ -55,6 +55,11 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 */
 	public <RET extends Object> RET newInstance();
 
+	/**
+	 * Returns the Dictionary manual index.
+	 * 
+	 * @return ODictionary instance
+	 */
 	public ODictionary<T> getDictionary();
 
 	/**
@@ -270,6 +275,9 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 */
 	public <DB extends ODatabase> DB getUnderlying();
 
+	/**
+	 * Internal method. Don't call it directly unless you're building an internal component.
+	 */
 	public void setInternal(ATTRIBUTES attribute, Object iValue);
 
 	/**
@@ -306,4 +314,23 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 * @return True if the input record is changed, otherwise false
 	 */
 	public boolean callbackHooks(TYPE iType, OIdentifiable iObject);
+
+	/**
+	 * Returns if the Multi Version Concurrency Control is enabled or not. If enabled the version of the record is checked before each
+	 * update and delete against the records.
+	 * 
+	 * @return true if enabled, otherwise false
+	 * @see ODatabaseRecord#setMVCC(boolean)
+	 */
+	public boolean isMVCC();
+
+	/**
+	 * Enables or disables the Multi-Version Concurrency Control. If enabled the version of the record is checked before each update
+	 * and delete against the records.
+	 * 
+	 * @param iValue
+	 * @see ODatabaseRecord#isMVCC()
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
+	public <DB extends ODatabaseComplex<?>> DB setMVCC(boolean iValue);
 }

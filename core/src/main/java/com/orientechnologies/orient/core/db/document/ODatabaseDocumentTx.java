@@ -19,14 +19,15 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordWrapperAbstract;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("unchecked")
@@ -66,14 +67,32 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 	}
 
 	/**
-	 * If the record is new and a class was specified, the configured cluster id will be used to store the class.
+	 * Saves a document to the database. Behavior depends by the current running transaction if any. If no transaction is running then
+	 * changes apply immediately. If an Optimistic transaction is running then the record will be changed at commit time. The current
+	 * transaction will continue to see the record as modified, while others not. If a Pessimistic transaction is running, then an
+	 * exclusive lock is acquired against the record. Current transaction will continue to see the record as modified, while others
+	 * can't access to it since it's locked.
+	 * 
+	 * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
+	 * {@link OConcurrentModificationException} exception is thrown.Before to save the document it must be valid following the
+	 * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
+	 * {@link ODocument#validate()} is called.
+	 * 
+	 * @param iRecord
+	 *          Record to save.
+	 * @see #setMVCC(boolean), {@link #isMVCC()}
+	 * @throws OConcurrentModificationException
+	 *           if the version of the document is different by the version contained in the database.
+	 * @throws OValidationException
+	 *           if the document breaks some validation constraints defined in the schema
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	@Override
-	public ODatabaseDocumentTx save(final ORecordInternal<?> iContent) {
-		if (!(iContent instanceof ODocument))
-			return (ODatabaseDocumentTx) super.save(iContent);
+	public ODatabaseDocumentTx save(final ORecordInternal<?> iRecord) {
+		if (!(iRecord instanceof ODocument))
+			return (ODatabaseDocumentTx) super.save(iRecord);
 
-		final ODocument doc = (ODocument) iContent;
+		final ODocument doc = (ODocument) iRecord;
 		doc.validate();
 
 		try {
@@ -102,16 +121,33 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 			throw e;
 		} catch (Exception e) {
 			OLogManager.instance().exception("Error on saving record %s of class '%s'", e, ODatabaseException.class,
-					iContent.getIdentity(), (doc.getClassName() != null ? doc.getClassName() : "?"));
+					iRecord.getIdentity(), (doc.getClassName() != null ? doc.getClassName() : "?"));
 		}
 		return this;
 	}
 
 	/**
-	 * Store the record on the specified cluster only after having checked the cluster is allowed and figures in the configured and
-	 * the record is valid following the constraints declared in the schema.
+	 * Saves a document specifying a cluster where to store the record. Behavior depends by the current running transaction if any. If
+	 * no transaction is running then changes apply immediately. If an Optimistic transaction is running then the record will be
+	 * changed at commit time. The current transaction will continue to see the record as modified, while others not. If a Pessimistic
+	 * transaction is running, then an exclusive lock is acquired against the record. Current transaction will continue to see the
+	 * record as modified, while others can't access to it since it's locked.
 	 * 
-	 * @see ORecordSchemaAware#validate()
+	 * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
+	 * {@link OConcurrentModificationException} exception is thrown. Before to save the document it must be valid following the
+	 * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
+	 * {@link ODocument#validate()} is called.
+	 * 
+	 * @param iRecord
+	 *          Record to save
+	 * @param iClusterName
+	 *          Cluster name where to save the record
+	 * @see #setMVCC(boolean), {@link #isMVCC()}, ORecordSchemaAware#validate()
+	 * @throws OConcurrentModificationException
+	 *           if the version of the document is different by the version contained in the database.
+	 * @throws OValidationException
+	 *           if the document breaks some validation constraints defined in the schema
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	@Override
 	public ODatabaseDocumentTx save(final ORecordInternal<?> iContent, String iClusterName) {
@@ -160,6 +196,20 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 		return this;
 	}
 
+	/**
+	 * Deletes a document. Behavior depends by the current running transaction if any. If no transaction is running then the record is
+	 * deleted immediately. If an Optimistic transaction is running then the record will be deleted at commit time. The current
+	 * transaction will continue to see the record as deleted, while others not. If a Pessimistic transaction is running, then an
+	 * exclusive lock is acquired against the record. Current transaction will continue to see the record as deleted, while others
+	 * can't access to it since it's locked.
+	 * 
+	 * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
+	 * {@link OConcurrentModificationException} exception is thrown.
+	 * 
+	 * @param iContent
+	 * @see #setMVCC(boolean), {@link #isMVCC()}
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
 	public ODatabaseDocumentTx delete(final ODocument iContent) {
 		// CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
 		if (iContent.getClassName() != null)

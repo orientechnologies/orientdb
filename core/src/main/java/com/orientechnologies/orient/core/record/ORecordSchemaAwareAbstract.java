@@ -41,8 +41,6 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 		super(iDatabase);
 	}
 
-	public abstract boolean containsField(String name);
-
 	public ORecordSchemaAwareAbstract<T> fill(final ODatabaseRecord iDatabase, final int iClassId, final ORecordId iRid,
 			final int iVersion, final byte[] iBuffer, boolean iDirty) {
 		fill(iDatabase, iRid, iVersion, iBuffer, iDirty);
@@ -70,9 +68,12 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	}
 
 	/**
-	 * Validate the record following the declared constraints such as mandatory, notNull, min and max.
+	 * Validates the record following the declared constraints defined in schema such as mandatory, notNull, min, max, regexp, etc. If
+	 * the schema is not defined for the current class or there are not constraints then the validation is ignored.
 	 * 
 	 * @see OProperty
+	 * @throws OValidationException
+	 *           if the document breaks some validation constraints defined in the schema
 	 */
 	public void validate() throws OValidationException {
 		checkForLoading();
@@ -141,7 +142,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	}
 
 	protected void checkForFields() {
-		if (_status == ORecordElement.STATUS.LOADED && size() == 0)
+		if (_status == ORecordElement.STATUS.LOADED && fields() == 0)
 			// POPULATE FIELDS LAZY
 			deserializeFields();
 	}
@@ -160,8 +161,8 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	}
 
 	protected void checkFieldAccess(final int iIndex) {
-		if (iIndex < 0 || iIndex >= size())
-			throw new IndexOutOfBoundsException("Index " + iIndex + " is out of range allowed: 0-" + size());
+		if (iIndex < 0 || iIndex >= fields())
+			throw new IndexOutOfBoundsException("Index " + iIndex + " is out of range allowed: 0-" + fields());
 	}
 
 	public static void validateField(ORecordSchemaAwareAbstract<?> iRecord, OProperty p) throws OValidationException {

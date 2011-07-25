@@ -574,7 +574,7 @@ public class OObjectSerializerHelper {
 			iRecord.field(fieldName, fieldValue);
 		}
 
-		iObj2RecHandler.registerPojo(iPojo, iRecord);
+		iObj2RecHandler.registerUserObject(iPojo, iRecord);
 
 		// CALL AFTER MARSHALLING
 		invokeCallback(iPojo, iRecord, OAfterSerialization.class);

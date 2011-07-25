@@ -173,14 +173,14 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 	@Override
 	public ODocument updateConfiguration() {
 		super.updateConfiguration();
-		configuration.setStatus(ORecordElement.STATUS.UNMARSHALLING);
+		configuration.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
 		try {
 			configuration.field(CONFIG_IGNORE_CHARS, ignoreChars);
 			configuration.field(CONFIG_STOP_WORDS, stopWords);
 
 		} finally {
-			configuration.setStatus(ORecordElement.STATUS.LOADED);
+			configuration.setInternalStatus(ORecordElement.STATUS.LOADED);
 		}
 		return configuration;
 	}

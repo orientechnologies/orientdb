@@ -253,11 +253,11 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 		currentTx = new OTransactionNoTx(this);
 	}
 
-	public ORecordInternal<?> getRecordByUserObject(final Object iUserObject, final boolean iIsMandatory) {
+	public ORecordInternal<?> getRecordByUserObject(final Object iUserObject, final boolean iCreateIfNotAvailable) {
 		return (ORecordInternal<?>) iUserObject;
 	}
 
-	public void registerPojo(final Object iObject, final ORecordInternal<?> iRecord) {
+	public void registerUserObject(final Object iObject, final ORecordInternal<?> iRecord) {
 	}
 
 	public Object getUserObjectByRecord(final ORecordInternal<?> record, final String iFetchPlan) {

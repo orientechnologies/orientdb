@@ -21,13 +21,23 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 
 /**
- * Base interface for identifiable objects.
+ * Base interface for identifiable objects. This abstraction is required to use ORID and ORecord in many points.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
 public interface OIdentifiable extends Comparable<OIdentifiable>, Comparator<OIdentifiable> {
+	/**
+	 * Returns the record identity.
+	 * 
+	 * @return ORID instance
+	 */
 	public ORID getIdentity();
 
+	/**
+	 * Returns the record instance.
+	 * 
+	 * @return ORecord instance
+	 */
 	public ORecord<?> getRecord();
 }

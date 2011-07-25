@@ -103,7 +103,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 	 */
 	@Override
 	public ODocument toStream() {
-		document.setStatus(ORecordElement.STATUS.UNMARSHALLING);
+		document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
 		try {
 			ORecordTrackedSet idxs = new ORecordTrackedSet(document);
@@ -114,7 +114,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 			document.field(CONFIG_INDEXES, idxs, OType.EMBEDDEDSET);
 
 		} finally {
-			document.setStatus(ORecordElement.STATUS.LOADED);
+			document.setInternalStatus(ORecordElement.STATUS.LOADED);
 		}
 		document.setDirty();
 

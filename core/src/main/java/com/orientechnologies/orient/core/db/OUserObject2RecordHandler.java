@@ -18,12 +18,49 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
+/**
+ * Basic interface to handle the mapping between user objects and records. In some database implementation the user objects can be
+ * the records themselves.
+ * 
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * 
+ */
 public interface OUserObject2RecordHandler {
-	public ORecordInternal<?> getRecordByUserObject(Object iPojo, boolean iIsMandatory);
+	/**
+	 * Returns the record associated to a user object. If iCreateIfNotAvailable is true, then a new record instance will be created
+	 * transparently.
+	 * 
+	 * @param iUserObject
+	 *          User object
+	 * @param iCreateIfNotAvailable
+	 *          Create the record if not available
+	 * @return The record associated
+	 */
+	public ORecordInternal<?> getRecordByUserObject(Object iUserObject, boolean iCreateIfNotAvailable);
 
+	/**
+	 * Returns the user object associated to a record. If the record is not loaded yet, iFetchPlan will be used as fetch plan.
+	 * 
+	 * @param iRecord
+	 *          Record
+	 * @param iFetchPlan
+	 *          If the record is not loaded yet, use this as fetch plan
+	 * @return The user object associated
+	 */
 	public Object getUserObjectByRecord(ORecordInternal<?> iRecord, String iFetchPlan);
 
+	/**
+	 * Tells if e user object exists for a certain RecordId.
+	 */
 	public boolean existsUserObjectByRID(ORID iRID);
 
-	public void registerPojo(final Object iObject, final ORecordInternal<?> iRecord);
+	/**
+	 * Registers the association between a user object and a record.
+	 * 
+	 * @param iUserObject
+	 *          User object
+	 * @param iRecord
+	 *          record
+	 */
+	public void registerUserObject(final Object iUserObject, final ORecordInternal<?> iRecord);
 }

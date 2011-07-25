@@ -491,7 +491,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			callbackHooks(TYPE.BEFORE_READ, iRecord);
 
 			iRecord.fromStream(recordBuffer.buffer);
-			iRecord.setStatus(ORecordElement.STATUS.LOADED);
+			iRecord.setInternalStatus(ORecordElement.STATUS.LOADED);
 
 			callbackHooks(TYPE.AFTER_READ, iRecord);
 
@@ -592,8 +592,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				// UPDATE INFORMATION: VERSION
 				iRecord.fill(iRecord.getDatabase(), rid, (int) result, stream, stream == null || stream.length == 0);
 
-			// ADD/UPDATE IT IN CACHE IF IT'S ACTIVE
-			getLevel1Cache().updateRecord(iRecord);
+			if (stream != null && stream.length > 0)
+				// ADD/UPDATE IT IN CACHE IF IT'S ACTIVE
+				getLevel1Cache().updateRecord(iRecord);
 
 		} catch (OException e) {
 			// RE-THROW THE EXCEPTION

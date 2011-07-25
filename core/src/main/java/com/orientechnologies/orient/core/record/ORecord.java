@@ -23,11 +23,12 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
 /**
- * Generic record representation. The object can be reused across call to the database.
+ * Generic record representation. The object can be reused across multiple calls to the database by using the {@link #reset()}
+ * method.
  */
 public interface ORecord<T> extends ORecordElement, OIdentifiable {
 	/**
-	 * Remove all the dependencies by other records. All the relationships remain in form of RecordID. If some links contain dirty
+	 * Removes all the dependencies with other records. All the relationships remain in form of RecordID. If some links contain dirty
 	 * records, the detach can't be complete and this method returns false.
 	 * 
 	 * @return True if the document has been successfully detached, otherwise false.
@@ -37,28 +38,28 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable {
 	/**
 	 * Resets the record to be reused.
 	 * 
-	 * @return The object it self. Useful to call methods in chain.
+	 * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	public <RET extends ORecord<T>> RET reset();
 
 	/**
 	 * Unloads current record. All information are lost but the record identity.
 	 * 
-	 * @return The object it self. Useful to call methods in chain.
+	 * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	public <RET extends ORecord<T>> RET unload();
 
 	/**
 	 * All the fields are deleted but the record identity is maintained.
 	 * 
-	 * @return The object it self. Useful to call methods in chain.
+	 * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	public <RET extends ORecord<T>> RET clear();
 
 	/**
 	 * Creates a copy of the record. All the record contents are copied.
 	 * 
-	 * @return A new record instance copied by the current.
+	 * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	public <RET extends ORecord<T>> RET copy();
 
@@ -102,7 +103,7 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable {
 	 * Suggests to the engine to keep the record in cache. Use it for the most read records.
 	 * 
 	 * @see ORecord#unpin()
-	 * @return The object it self. Useful to call methods in chain.
+	 * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	public <RET extends ORecord<T>> RET pin();
 
@@ -110,7 +111,7 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable {
 	 * Suggests to the engine to not keep the record in cache.
 	 * 
 	 * @see ORecord#pin()
-	 * @return The object it self. Useful to call methods in chain.
+	 * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	public <RET extends ORecord<T>> RET unpin();
 
@@ -127,31 +128,40 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable {
 	 * Loads the record content in memory. No cache is used. If the record is dirty, then it returns to the original content. If the
 	 * record doesn't exist a ORecordNotFoundException exception is thrown.
 	 * 
-	 * @return Always the object it self. Useful to call methods in chain.
+	 * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	public <RET extends ORecord<T>> RET reload() throws ORecordNotFoundException;
 
 	/**
-	 * Saves in-memory changes to the storage. Behavior depends by the current running transaction if any. If no transaction is
-	 * running then changes apply immediately. If an Optimistic transaction is running then the record will be changed on commit time.
+	 * Saves in-memory changes to the database. Behavior depends by the current running transaction if any. If no transaction is
+	 * running then changes apply immediately. If an Optimistic transaction is running then the record will be changed at commit time.
 	 * The current transaction will continue to see the record as modified, while others not. If a Pessimistic transaction is running,
-	 * then an exclusive lock is acquired onto the record. Current transaction will continue to see the record as modified, while
+	 * then an exclusive lock is acquired against the record. Current transaction will continue to see the record as modified, while
 	 * others can't access to it since it's locked.
 	 * 
-	 * @return The object it self. Useful to call methods in chain.
+	 * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	public <RET extends ORecord<T>> RET save();
 
+	/**
+	 * Saves in-memory changes to the database defining a specific cluster where to save it. Behavior depends by the current running
+	 * transaction if any. If no transaction is running then changes apply immediately. If an Optimistic transaction is running then
+	 * the record will be changed at commit time. The current transaction will continue to see the record as modified, while others
+	 * not. If a Pessimistic transaction is running, then an exclusive lock is acquired against the record. Current transaction will
+	 * continue to see the record as modified, while others can't access to it since it's locked.
+	 * 
+	 * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
 	public <RET extends ORecord<T>> RET save(String iCluster);
 
 	/**
-	 * Deletes the record from the storage. Behavior depends by the current running transaction if any. If no transaction is running
-	 * then the record is deleted immediately. If an Optimistic transaction is running then the record will be deleted on commit time.
+	 * Deletes the record from the database. Behavior depends by the current running transaction if any. If no transaction is running
+	 * then the record is deleted immediately. If an Optimistic transaction is running then the record will be deleted at commit time.
 	 * The current transaction will continue to see the record as deleted, while others not. If a Pessimistic transaction is running,
-	 * then an exclusive lock is acquired onto the record. Current transaction will continue to see the record as deleted, while
+	 * then an exclusive lock is acquired against the record. Current transaction will continue to see the record as deleted, while
 	 * others can't access to it since it's locked.
 	 * 
-	 * @return The object it self. Useful to call methods in chain.
+	 * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	public <RET extends ORecord<T>> RET delete();
 
@@ -160,7 +170,7 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable {
 	 * 
 	 * @param iJson
 	 *          Object content in JSON format
-	 * @return The object it self. Useful to call methods in chain.
+	 * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	public <RET extends ORecord<T>> RET fromJSON(String iJson);
 
@@ -190,9 +200,9 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable {
 	public String toJSON(String iFormat);
 
 	/**
-	 * Returns the size in bytes of the record.
+	 * Returns the size in bytes of the record. The size can be computed only for not new records.
 	 * 
-	 * @return
+	 * @return the size in bytes
 	 */
 	public int getSize();
 }

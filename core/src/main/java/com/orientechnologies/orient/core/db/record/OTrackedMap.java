@@ -100,7 +100,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
 		return status;
 	}
 
-	public void setStatus(final STATUS iStatus) {
+	public void setInternalStatus(final STATUS iStatus) {
 		status = iStatus;
 	}
 }

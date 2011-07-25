@@ -477,13 +477,6 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	}
 
 	/**
-	 * Returns the field number.
-	 */
-	public int size() {
-		return _fieldValues == null ? 0 : _fieldValues.size();
-	}
-
-	/**
 	 * Returns the set of field names.
 	 */
 	public Set<String> fieldNames() {
@@ -866,7 +859,6 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 * 
 	 * @return True if exists, otherwise false.
 	 */
-	@Override
 	public boolean containsField(final String iFieldName) {
 		if (iFieldName == null)
 			return false;

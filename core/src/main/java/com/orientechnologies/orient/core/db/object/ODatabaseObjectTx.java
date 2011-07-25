@@ -182,7 +182,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 			return result;
 
 		result = stream2pojo(record, newInstance(record.getClassName()), iFetchPlan);
-		registerPojo(result, record);
+		registerUserObject(result, record);
 		return result;
 	}
 
@@ -212,14 +212,14 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 
 		if (!saveOnlyDirty || record.isDirty()) {
 			// REGISTER BEFORE TO SERIALIZE TO AVOID PROBLEMS WITH CIRCULAR DEPENDENCY
-			registerPojo(iPojo, record);
+			registerUserObject(iPojo, record);
 
 			pojo2Stream(iPojo, record);
 
 			underlying.save(record, iClusterName);
 
 			// RE-REGISTER FOR NEW RECORDS SINCE THE ID HAS CHANGED
-			registerPojo(iPojo, record);
+			registerUserObject(iPojo, record);
 		}
 
 		return this;

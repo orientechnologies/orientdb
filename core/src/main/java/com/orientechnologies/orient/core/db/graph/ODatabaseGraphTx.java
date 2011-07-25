@@ -230,7 +230,7 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 	}
 
 	private OGraphVertex registerPojo(final OGraphVertex iVertex) {
-		registerPojo(iVertex, iVertex.getDocument());
+		registerUserObject(iVertex, iVertex.getDocument());
 		return iVertex;
 	}
 
