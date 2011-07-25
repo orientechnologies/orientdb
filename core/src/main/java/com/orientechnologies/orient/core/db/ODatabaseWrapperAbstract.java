@@ -38,7 +38,7 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 
 	@Override
 	public void finalize() {
-		//close();
+		// close();
 	}
 
 	public <THISDB extends ODatabase> THISDB open(final String iUserName, final String iUserPassword) {
@@ -113,6 +113,11 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 		return underlying.countClusterElements(iClusterName);
 	}
 
+	public int getClusters() {
+		checkOpeness();
+		return underlying.getClusters();
+	}
+
 	public Collection<String> getClusterNames() {
 		checkOpeness();
 		return underlying.getClusterNames();
@@ -146,6 +151,7 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 		return underlying.addCluster(iClusterName, iType);
 	}
 
+	@Deprecated
 	public int addLogicalCluster(final String iClusterName, final int iPhyClusterContainerId) {
 		checkOpeness();
 		return underlying.addLogicalCluster(iClusterName, iPhyClusterContainerId);

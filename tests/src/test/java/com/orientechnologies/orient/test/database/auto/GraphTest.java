@@ -42,17 +42,17 @@ public class GraphTest {
 		database.open("admin", "admin");
 
 		OClass vehicleClass = database.getMetadata().getSchema().getClass("GraphVehicle");
-		if (vehicleClass != null) {
-			database.getMetadata().getSchema().dropClass("GraphCar");
-			database.getMetadata().getSchema().dropClass("GraphMotocycle");
-			database.getMetadata().getSchema().dropClass("GraphVehicle");
-
-			vehicleClass = database.getMetadata().getSchema()
-					.createClass("GraphVehicle", database.getMetadata().getSchema().getClass(OGraphVertex.class));
-
-			database.getMetadata().getSchema().createClass("GraphCar", vehicleClass);
-			database.getMetadata().getSchema().createClass("GraphMotocycle", vehicleClass);
-		}
+//		if (vehicleClass != null) {
+//			database.getMetadata().getSchema().dropClass("GraphCar");
+//			database.getMetadata().getSchema().dropClass("GraphMotocycle");
+//			database.getMetadata().getSchema().dropClass("GraphVehicle");
+//
+//			vehicleClass = database.getMetadata().getSchema()
+//					.createClass("GraphVehicle", database.getMetadata().getSchema().getClass(OGraphVertex.class));
+//
+//			database.getMetadata().getSchema().createClass("GraphCar", vehicleClass);
+//			database.getMetadata().getSchema().createClass("GraphMotocycle", vehicleClass);
+//		}
 
 		int existants = database.query(new OSQLSynchQuery<OGraphVertex>("select from GraphVehicle")).size();
 
@@ -69,7 +69,7 @@ public class GraphTest {
 		database.close();
 	}
 
-	@Test
+	@Test(dependsOnMethods = "populate")
 	public void testMultiEdgeWithSameVertex() {
 		database.open("admin", "admin");
 

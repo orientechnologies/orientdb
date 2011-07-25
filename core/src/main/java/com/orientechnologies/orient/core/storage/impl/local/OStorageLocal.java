@@ -435,7 +435,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		checkOpeness();
 
 		try {
-			iClusterName = iClusterName.toLowerCase();
+			iClusterName = iClusterName != null ? iClusterName.toLowerCase() : null;
 
 			switch (iClusterType) {
 			case PHYSICAL: {
@@ -698,7 +698,8 @@ public class OStorageLocal extends OStorageEmbedded {
 					cluster.synch();
 
 			for (ODataLocal data : dataSegments)
-				data.synch();
+				if (data != null)
+					data.synch();
 
 		} catch (IOException e) {
 			throw new OStorageException("Error on synch", e);
@@ -837,7 +838,8 @@ public class OStorageLocal extends OStorageEmbedded {
 			long size = 0;
 
 			for (ODataLocal d : dataSegments)
-				size += d.getFilledUpTo();
+				if (d != null)
+					size += d.getFilledUpTo();
 
 			for (OCluster c : clusters)
 				if (c != null)
@@ -950,16 +952,19 @@ public class OStorageLocal extends OStorageEmbedded {
 	 * @throws IOException
 	 */
 	private int registerCluster(final OCluster iCluster) throws IOException {
-		// CHECK FOR DUPLICATION OF NAMES
-		if (clusterMap.containsKey(iCluster.getName()))
-			throw new OConfigurationException("Can't add segment '" + iCluster.getName() + "' because it was already registered");
+		final int id;
 
-		// CREATE AND ADD THE NEW REF SEGMENT
-		clusterMap.put(iCluster.getName(), iCluster);
+		if (iCluster != null) {
+			// CHECK FOR DUPLICATION OF NAMES
+			if (clusterMap.containsKey(iCluster.getName()))
+				throw new OConfigurationException("Can't add segment '" + iCluster.getName() + "' because it was already registered");
+			// CREATE AND ADD THE NEW REF SEGMENT
+			clusterMap.put(iCluster.getName(), iCluster);
+			id = iCluster.getId();
+		} else
+			id = clusters.length;
 
-		final int id = iCluster.getId();
-
-		clusters = OArrays.copyOf(clusters, id + 1);
+		clusters = OArrays.copyOf(clusters, clusters.length + 1);
 		clusters[id] = iCluster;
 
 		return id;
@@ -1222,15 +1227,24 @@ public class OStorageLocal extends OStorageEmbedded {
 		lock.acquireExclusiveLock();
 		try {
 
-			final OStoragePhysicalClusterConfiguration config = new OStoragePhysicalClusterConfiguration(configuration, iClusterName,
-					clusters.length);
-			configuration.clusters.add(config);
+			final OClusterLocal cluster;
 
-			final OClusterLocal cluster = new OClusterLocal(this, config);
+			if (iClusterName != null) {
+				final OStoragePhysicalClusterConfiguration config = new OStoragePhysicalClusterConfiguration(configuration, iClusterName,
+						clusters.length);
+				configuration.clusters.add(config);
+
+				cluster = new OClusterLocal(this, config);
+			} else
+				cluster = null;
+
 			final int id = registerCluster(cluster);
 
-			clusters[id].create(iStartSize);
-			configuration.update();
+			if (iClusterName != null) {
+				clusters[id].create(iStartSize);
+				configuration.update();
+			}
+
 			return id;
 
 		} finally {
@@ -1238,20 +1252,29 @@ public class OStorageLocal extends OStorageEmbedded {
 		}
 	}
 
+	@Deprecated
 	private int addLogicalCluster(final String iClusterName, final int iPhysicalCluster) throws IOException {
 		lock.acquireExclusiveLock();
 		try {
 
-			final OStorageLogicalClusterConfiguration config = new OStorageLogicalClusterConfiguration(iClusterName, clusters.length,
-					iPhysicalCluster, null);
+			final OClusterLogical cluster;
 
-			configuration.clusters.add(config);
+			if (iClusterName != null) {
+				final OStorageLogicalClusterConfiguration config = new OStorageLogicalClusterConfiguration(iClusterName, clusters.length,
+						iPhysicalCluster, null);
 
-			final OClusterLogical cluster = new OClusterLogical(this, clusters.length, iClusterName, iPhysicalCluster);
-			config.map = cluster.getRID();
+				configuration.clusters.add(config);
+
+				cluster = new OClusterLogical(this, clusters.length, iClusterName, iPhysicalCluster);
+				config.map = cluster.getRID();
+			} else
+				cluster = null;
+
 			final int id = registerCluster(cluster);
 
-			configuration.update();
+			if (iClusterName != null)
+				configuration.update();
+
 			return id;
 
 		} finally {
@@ -1262,14 +1285,21 @@ public class OStorageLocal extends OStorageEmbedded {
 	private int addMemoryCluster(final String iClusterName) throws IOException {
 		lock.acquireExclusiveLock();
 		try {
+			final OClusterMemory cluster;
 
-			final OStorageMemoryClusterConfiguration config = new OStorageMemoryClusterConfiguration(iClusterName, clusters.length);
+			if (iClusterName != null) {
+				final OStorageMemoryClusterConfiguration config = new OStorageMemoryClusterConfiguration(iClusterName, clusters.length);
 
-			configuration.clusters.add(config);
+				configuration.clusters.add(config);
 
-			final OClusterMemory cluster = new OClusterMemory(clusters.length, iClusterName);
+				cluster = new OClusterMemory(clusters.length, iClusterName);
+			} else
+				cluster = null;
+
 			final int id = registerCluster(cluster);
-			configuration.update();
+
+			if (iClusterName != null)
+				configuration.update();
 
 			return id;
 

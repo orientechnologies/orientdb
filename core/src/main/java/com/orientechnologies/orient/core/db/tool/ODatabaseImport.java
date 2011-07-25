@@ -456,18 +456,22 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			String name = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"name\"")
 					.readString(OJSONReader.COMMA_SEPARATOR);
 
-			// CHECK IF THE CLUSTER IS INCLUDED
-			if (includeClusters != null) {
-				if (!includeClusters.contains(name)) {
-					jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
-					continue;
+			if (name.length() == 0)
+				name = null;
+
+			if (name != null)
+				// CHECK IF THE CLUSTER IS INCLUDED
+				if (includeClusters != null) {
+					if (!includeClusters.contains(name)) {
+						jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+						continue;
+					}
+				} else if (excludeClusters != null) {
+					if (excludeClusters.contains(name)) {
+						jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+						continue;
+					}
 				}
-			} else if (excludeClusters != null) {
-				if (excludeClusters.contains(name)) {
-					jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
-					continue;
-				}
-			}
 
 			int id = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"id\"").readInteger(OJSONReader.COMMA_SEPARATOR);
 			String type = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"type\"")
@@ -479,15 +483,15 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			} else
 				rid = null;
 
-			listener.onMessage("\n- Creating cluster " + name + "...");
+			listener.onMessage("\n- Creating cluster " + (name != null ? "'" + name + "'" : "NULL") + "...");
 
-			int clusterId = database.getClusterIdByName(name);
+			int clusterId = name != null ? database.getClusterIdByName(name) : -1;
 			if (clusterId == -1) {
 				// CREATE IT
-				if (type.equals("PHYSICAL"))
-					clusterId = database.addPhysicalCluster(name, name, -1);
-				else if (type.equals("LOGICAL"))
+				if (type.equals("LOGICAL"))
 					clusterId = database.addLogicalCluster(name, database.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME));
+				else
+					clusterId = database.addPhysicalCluster(name, name, -1);
 			}
 
 			if (clusterId != id)
@@ -517,7 +521,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		System.out.print("\nImporting records...");
 
 		ORID rid;
-		int lastClusterId = -1;
+		int lastClusterId = 0;
 		long clusterRecords = 0;
 		while (jsonReader.lastChar() != ']') {
 			rid = importRecord();
@@ -527,8 +531,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
 				if (rid.getClusterId() != lastClusterId || jsonReader.lastChar() == ']') {
 					// CHANGED CLUSTERID: DUMP STATISTICS
-					System.out.print("\n- Imported records into the cluster '" + database.getClusterNameById(lastClusterId) + "': "
-							+ clusterRecords + " records");
+					System.out.print("\n- Imported records into cluster '" + database.getClusterNameById(lastClusterId) + "' (id="
+							+ lastClusterId + "): " + clusterRecords + " records");
 					clusterRecords = 0;
 					lastClusterId = rid.getClusterId();
 				}

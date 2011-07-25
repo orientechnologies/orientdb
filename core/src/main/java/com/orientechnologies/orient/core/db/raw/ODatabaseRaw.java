@@ -256,6 +256,10 @@ public class ODatabaseRaw implements ODatabase {
 		close();
 	}
 
+	public int getClusters() {
+		return storage.getClusters().size();
+	}
+
 	public String getClusterType(final String iClusterName) {
 		return storage.getClusterTypeByName(iClusterName);
 	}

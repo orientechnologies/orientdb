@@ -151,6 +151,13 @@ public interface ODatabase {
 	public int getDefaultClusterId();
 
 	/**
+	 * Returns the number of clusters
+	 * 
+	 * @return Number of the clusters
+	 */
+	public int getClusters();
+
+	/**
 	 * Returns all the names of the clusters.
 	 * 
 	 * @return Collection of cluster names.
@@ -250,6 +257,7 @@ public interface ODatabase {
 	 *          Physical cluster where to store all the entities of this logical cluster
 	 * @return Cluster id
 	 */
+	@Deprecated
 	public int addLogicalCluster(String iClusterName, int iPhyClusterContainerId);
 
 	/**

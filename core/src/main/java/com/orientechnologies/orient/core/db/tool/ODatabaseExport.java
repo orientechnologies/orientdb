@@ -118,46 +118,51 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
 		writer.beginCollection(level, true, "records");
 		int exportedClusters = 0;
-		int totalClusters = database.getClusterNames().size();
+		int totalClusters = database.getClusters();
 		for (int i = 0; exportedClusters < totalClusters; ++i) {
 			String clusterName = database.getClusterNameById(i);
-			if (clusterName == null)
-				continue;
 
 			exportedClusters++;
 
-			// CHECK IF THE CLUSTER IS INCLUDED
-			if (includeClusters != null) {
-				if (!includeClusters.contains(clusterName))
-					continue;
-			} else if (excludeClusters != null) {
-				if (excludeClusters.contains(clusterName))
-					continue;
-			}
+			final long recordTot;
 
-			if (excludeClusters.contains(clusterName))
-				continue;
-
-			long recordTot = database.countClusterElements(clusterName);
-			listener.onMessage("\n- Cluster '" + clusterName + "'...");
-
-			long recordNum = 0;
-			for (ORecordInternal<?> rec : database.browseCluster(clusterName)) {
-
-				if (rec instanceof ODocument) {
-					// CHECK IF THE CLASS OF THE DOCUMENT IS INCLUDED
-					ODocument doc = (ODocument) rec;
-					if (includeClasses != null) {
-						if (!includeClasses.contains(doc.getClassName()))
-							continue;
-					} else if (excludeClasses != null) {
-						if (excludeClasses.contains(doc.getClassName()))
-							continue;
-					}
+			if (clusterName != null) {
+				// CHECK IF THE CLUSTER IS INCLUDED
+				if (includeClusters != null) {
+					if (!includeClusters.contains(clusterName))
+						continue;
+				} else if (excludeClusters != null) {
+					if (excludeClusters.contains(clusterName))
+						continue;
 				}
 
-				exportRecord(recordTot, recordNum++, rec);
-			}
+				if (excludeClusters.contains(clusterName))
+					continue;
+
+				recordTot = database.countClusterElements(clusterName);
+			} else
+				recordTot = 0;
+
+			listener.onMessage("\n- Cluster " + (clusterName != null ? "'" + clusterName + "'" : "NULL") + " (id=" + i + ")...");
+
+			long recordNum = 0;
+			if (clusterName != null)
+				for (ORecordInternal<?> rec : database.browseCluster(clusterName)) {
+
+					if (rec instanceof ODocument) {
+						// CHECK IF THE CLASS OF THE DOCUMENT IS INCLUDED
+						ODocument doc = (ODocument) rec;
+						if (includeClasses != null) {
+							if (!includeClasses.contains(doc.getClassName()))
+								continue;
+						} else if (excludeClasses != null) {
+							if (excludeClasses.contains(doc.getClassName()))
+								continue;
+						}
+					}
+
+					exportRecord(recordTot, recordNum++, rec);
+				}
 
 			listener.onMessage("OK (records=" + recordTot + ")");
 
@@ -189,27 +194,29 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
 		writer.beginCollection(1, true, "clusters");
 		int exportedClusters = 0;
-		int totalCluster = database.getClusterNames().size();
-		String clusterName;
 
+		int totalCluster = database.getClusters();
 		for (int clusterId = 0; clusterId < totalCluster; ++clusterId) {
-			clusterName = database.getClusterNameById(clusterId);
 
-			// CHECK IF THE CLUSTER IS INCLUDED
-			if (includeClusters != null) {
-				if (!includeClusters.contains(clusterName))
-					continue;
-			} else if (excludeClusters != null) {
-				if (excludeClusters.contains(clusterName))
-					continue;
-			}
+			final String clusterName = database.getClusterNameById(clusterId);
+
+			if (clusterName != null)
+				// CHECK IF THE CLUSTER IS INCLUDED
+				if (includeClusters != null) {
+					if (!includeClusters.contains(clusterName))
+						continue;
+				} else if (excludeClusters != null) {
+					if (excludeClusters.contains(clusterName))
+						continue;
+				}
 
 			writer.beginObject(2, true, null);
-			writer.writeAttribute(0, false, "name", clusterName);
-			writer.writeAttribute(0, false, "id", clusterId);
-			writer.writeAttribute(0, false, "type", database.getClusterType(clusterName));
 
-			if (database.getStorage() instanceof OStorageLocal)
+			writer.writeAttribute(0, false, "name", clusterName != null ? clusterName : "");
+			writer.writeAttribute(0, false, "id", clusterId);
+			writer.writeAttribute(0, false, "type", clusterName != null ? database.getClusterType(clusterName) : "");
+
+			if (clusterName != null && database.getStorage() instanceof OStorageLocal)
 				if (database.getClusterType(clusterName).equals("LOGICAL")) {
 					OClusterLogical cluster = (OClusterLogical) database.getStorage().getClusterById(clusterId);
 					writer.writeAttribute(0, false, "rid", cluster.getRID());

@@ -132,7 +132,8 @@ public class OStorageMemory extends OStorageEmbedded {
 
 			// CLOSE ALL THE CLUSTERS
 			for (OClusterMemory c : clusters)
-				c.close();
+				if (c != null)
+					c.close();
 			clusters.clear();
 
 			// CLOSE THE DATA SEGMENT
@@ -156,9 +157,24 @@ public class OStorageMemory extends OStorageEmbedded {
 	public int addCluster(final String iClusterName, final OStorage.CLUSTER_TYPE iClusterType, final Object... iParameters) {
 		lock.acquireExclusiveLock();
 		try {
+			int clusterId = clusters.size();
+			for (int i = 0; i < clusters.size(); ++i) {
+				if (clusters.get(i) == null) {
+					clusterId = i;
+					break;
+				}
+			}
 
-			clusters.add(new OClusterMemory(clusters.size(), iClusterName.toLowerCase()));
-			return clusters.size() - 1;
+			final OClusterMemory cluster = new OClusterMemory(clusterId, iClusterName.toLowerCase());
+
+			if (clusterId == clusters.size())
+				// APPEND IT
+				clusters.add(cluster);
+			else
+				// RECYCLE THE FREE POSITION
+				clusters.set(clusterId, cluster);
+
+			return clusterId;
 
 		} finally {
 			lock.releaseExclusiveLock();
@@ -169,10 +185,12 @@ public class OStorageMemory extends OStorageEmbedded {
 		lock.acquireExclusiveLock();
 		try {
 
-			OCluster c = clusters.get(iClusterId);
-			c.delete();
-			clusters.set(iClusterId, null);
-			getLevel2Cache().freeCluster(iClusterId);
+			final OCluster c = clusters.get(iClusterId);
+			if (c != null) {
+				c.delete();
+				clusters.set(iClusterId, null);
+				getLevel2Cache().freeCluster(iClusterId);
+			}
 
 		} catch (IOException e) {
 		} finally {
@@ -357,8 +375,12 @@ public class OStorageMemory extends OStorageEmbedded {
 		try {
 
 			long tot = 0;
-			for (int i = 0; i < iClusterIds.length; ++i)
-				tot += clusters.get(iClusterIds[i]).getEntries();
+			for (int i = 0; i < iClusterIds.length; ++i) {
+				final OCluster cluster = clusters.get(iClusterIds[i]);
+
+				if (cluster != null)
+					tot += cluster.getEntries();
+			}
 			return tot;
 
 		} finally {
@@ -370,9 +392,12 @@ public class OStorageMemory extends OStorageEmbedded {
 		lock.acquireSharedLock();
 		try {
 
-			for (int i = 0; i < clusters.size(); ++i)
-				if (getClusterById(i).getName().equals(iClusterName))
-					return getClusterById(i);
+			for (int i = 0; i < clusters.size(); ++i) {
+				final OCluster cluster = clusters.get(i);
+
+				if (cluster != null && cluster.getName().equalsIgnoreCase(iClusterName))
+					return cluster;
+			}
 			return null;
 
 		} finally {
@@ -386,9 +411,12 @@ public class OStorageMemory extends OStorageEmbedded {
 		lock.acquireSharedLock();
 		try {
 
-			for (int i = 0; i < clusters.size(); ++i)
-				if (getClusterById(i).getName().equals(iClusterName))
-					return getClusterById(i).getId();
+			for (int i = 0; i < clusters.size(); ++i) {
+				final OCluster cluster = clusters.get(i);
+
+				if (cluster != null && cluster.getName().equalsIgnoreCase(iClusterName))
+					return cluster.getId();
+			}
 			return -1;
 
 		} finally {
@@ -404,9 +432,12 @@ public class OStorageMemory extends OStorageEmbedded {
 		lock.acquireSharedLock();
 		try {
 
-			for (int i = 0; i < clusters.size(); ++i)
-				if (getClusterById(i).getId() == iClusterId)
-					return getClusterById(i).getName();
+			for (int i = 0; i < clusters.size(); ++i) {
+				final OCluster cluster = clusters.get(i);
+
+				if (cluster != null && cluster.getId() == iClusterId)
+					return cluster.getName();
+			}
 			return null;
 
 		} finally {
@@ -419,8 +450,12 @@ public class OStorageMemory extends OStorageEmbedded {
 		try {
 
 			Set<String> result = new HashSet<String>();
-			for (int i = 0; i < clusters.size(); ++i)
-				result.add(getClusterById(i).getName());
+			for (int i = 0; i < clusters.size(); ++i) {
+				final OCluster cluster = clusters.get(i);
+
+				if (cluster != null)
+					result.add(cluster.getName());
+			}
 			return result;
 
 		} finally {
@@ -519,7 +554,9 @@ public class OStorageMemory extends OStorageEmbedded {
 			size += data.getSize();
 
 			for (OClusterMemory c : clusters)
-				size += c.getSize();
+				if (c != null)
+					size += c.getSize();
+
 		} finally {
 			lock.releaseSharedLock();
 		}
@@ -580,10 +617,15 @@ public class OStorageMemory extends OStorageEmbedded {
 	}
 
 	public OStorageConfigurationSegment getConfigurationSegment() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
-	public void renameCluster(String iOldName, String iNewName) {
+	public void renameCluster(final String iOldName, final String iNewName) {
+		final OClusterMemory cluster = (OClusterMemory) getClusterByName(iOldName);
+		if (cluster != null)
+			try {
+				cluster.set(com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES.NAME, iNewName);
+			} catch (IOException e) {
+			}
 	}
 }

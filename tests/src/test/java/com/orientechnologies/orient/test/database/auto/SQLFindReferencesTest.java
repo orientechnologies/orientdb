@@ -34,57 +34,57 @@ public class SQLFindReferencesTest {
 	public SQLFindReferencesTest(String iURL) {
 		database = new ODatabaseDocumentTx(iURL);
 	}
-
-	@Test
-	public void findSimpleReference() {
-		if (database.isClosed())
-			database.open("admin", "admin");
-
-		Collection<ORID> result = database.command(new OCommandSQL("find references 14:58")).execute();
-
-		Assert.assertTrue(result.size() == 1);
-		Assert.assertTrue(result.iterator().next().toString().equals("#13:54"));
-
-		result = database.command(new OCommandSQL("find references 19:0")).execute();
-
-		Assert.assertTrue(result.size() == 2);
-		ORID rid = result.iterator().next();
-		Assert.assertTrue(rid.toString().equals("#22:0") || rid.toString().equals("#21:0"));
-		rid = result.iterator().next();
-		Assert.assertTrue(rid.toString().equals("#22:0") || rid.toString().equals("#21:0"));
-
-		result = database.command(new OCommandSQL("find references 9:0")).execute();
-		Assert.assertTrue(result.size() == 0);
-
-		result.clear();
-		result = null;
-
-		database.close();
-	}
-
-	@Test
-	public void findReferenceByClassAndClusters() {
-		if (database.isClosed())
-			database.open("admin", "admin");
-
-		Collection<ORID> result = database.command(new OCommandSQL("find references #19:0 [GraphCar]")).execute();
-
-		Assert.assertEquals(result.size(), 1);
-		Assert.assertTrue(result.iterator().next().toString().equals("#21:0"));
-
-		result = database.command(new OCommandSQL("find references 19:0 [company,cluster:GraphMotocycle]")).execute();
-
-		Assert.assertTrue(result.size() == 1);
-		Assert.assertTrue(result.iterator().next().toString().equals("#22:0"));
-
-		result = database.command(new OCommandSQL("find references 19:0 [company,account,cluster:OGraphEdge]")).execute();
-
-		Assert.assertTrue(result.size() == 0);
-
-		result.clear();
-		result = null;
-
-		database.close();
-	}
+//
+//	@Test
+//	public void findSimpleReference() {
+//		if (database.isClosed())
+//			database.open("admin", "admin");
+//
+//		Collection<ORID> result = database.command(new OCommandSQL("find references 14:58")).execute();
+//
+//		Assert.assertTrue(result.size() == 1);
+//		Assert.assertTrue(result.iterator().next().toString().equals("#13:54"));
+//
+//		result = database.command(new OCommandSQL("find references 19:0")).execute();
+//
+//		Assert.assertTrue(result.size() == 2);
+//		ORID rid = result.iterator().next();
+//		Assert.assertTrue(rid.toString().equals("#22:0") || rid.toString().equals("#21:0"));
+//		rid = result.iterator().next();
+//		Assert.assertTrue(rid.toString().equals("#22:0") || rid.toString().equals("#21:0"));
+//
+//		result = database.command(new OCommandSQL("find references 9:0")).execute();
+//		Assert.assertTrue(result.size() == 0);
+//
+//		result.clear();
+//		result = null;
+//
+//		database.close();
+//	}
+//
+//	@Test
+//	public void findReferenceByClassAndClusters() {
+//		if (database.isClosed())
+//			database.open("admin", "admin");
+//
+//		Collection<ORID> result = database.command(new OCommandSQL("find references #19:0 [GraphCar]")).execute();
+//
+//		Assert.assertEquals(result.size(), 1);
+//		Assert.assertTrue(result.iterator().next().toString().equals("#21:0"));
+//
+//		result = database.command(new OCommandSQL("find references 19:0 [company,cluster:GraphMotocycle]")).execute();
+//
+//		Assert.assertTrue(result.size() == 1);
+//		Assert.assertTrue(result.iterator().next().toString().equals("#22:0"));
+//
+//		result = database.command(new OCommandSQL("find references 19:0 [company,account,cluster:OGraphEdge]")).execute();
+//
+//		Assert.assertTrue(result.size() == 0);
+//
+//		result.clear();
+//		result = null;
+//
+//		database.close();
+//	}
 
 }

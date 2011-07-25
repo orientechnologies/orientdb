@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 @Test(groups = "schema")
@@ -165,5 +166,27 @@ public class SchemaTest {
 		database.getMetadata().getSecurity().createUser("error", null, null);
 
 		database.close();
+	}
+
+	@Test
+	public void testMultiThreadSchemaCreation() throws InterruptedException {
+		database = new ODatabaseFlat(url);
+		database.open("admin", "admin");
+
+		Thread thread = new Thread(new Runnable() {
+
+			public void run() {
+				ODocument doc = new ODocument(database, "NewClass");
+				database.save(doc);
+
+				doc.delete();
+				database.getMetadata().getSchema().dropClass("NewClass");
+
+				database.close();
+			}
+		});
+		
+		thread.start();
+		thread.join();
 	}
 }
