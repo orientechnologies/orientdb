@@ -55,6 +55,10 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 		return underlying.exists();
 	}
 
+	public void reload() {
+		underlying.reload();
+	}
+
 	public void close() {
 		underlying.close();
 	}

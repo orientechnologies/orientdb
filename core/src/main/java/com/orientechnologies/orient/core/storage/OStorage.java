@@ -55,6 +55,8 @@ public interface OStorage extends OSharedContainer {
 
 	public boolean exists();
 
+	public void reload();
+
 	public void delete();
 
 	public void close();
@@ -88,11 +90,13 @@ public interface OStorage extends OSharedContainer {
 	// MISC
 	public OStorageConfiguration getConfiguration();
 
+	public int getClusters();
+
 	public Set<String> getClusterNames();
 
 	public OCluster getClusterById(int iId);
 
-	public Collection<? extends OCluster> getClusters();
+	public Collection<? extends OCluster> getClusterInstances();
 
 	/**
 	 * Add a new cluster into the storage.

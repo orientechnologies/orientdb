@@ -148,7 +148,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 	public long countRecords() {
 		long tot = 0;
 
-		for (OCluster c : getClusters())
+		for (OCluster c : getClusterInstances())
 			if (c != null)
 				tot += c.getEntries();
 

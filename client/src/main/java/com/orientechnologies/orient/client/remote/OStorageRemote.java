@@ -155,6 +155,39 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 	}
 
+	public void reload() {
+		checkConnection();
+
+		do {
+			try {
+
+				OChannelBinaryClient network = null;
+				try {
+					network = beginRequest(OChannelBinaryProtocol.REQUEST_DB_RELOAD);
+				} finally {
+					endRequest(network);
+				}
+
+				try {
+					beginResponse(network);
+
+					readDatabaseInformation(network);
+					break;
+
+				} finally {
+					endResponse(network);
+				}
+
+			} catch (OException e) {
+				// PASS THROUGH
+				throw e;
+			} catch (Exception e) {
+				handleException("Error on reloading database information", e);
+
+			}
+		} while (true);
+	}
+
 	public void create(final Map<String, Object> iOptions) {
 		throw new UnsupportedOperationException(
 				"Can't create a database in a remote server. Please use the console or the OServerAdmin class.");
@@ -947,7 +980,11 @@ public class OStorageRemote extends OStorageAbstract {
 		return null;
 	}
 
-	public Collection<OCluster> getClusters() {
+	public int getClusters() {
+		return clustersIds.size();
+	}
+
+	public Collection<OCluster> getClusterInstances() {
 		throw new UnsupportedOperationException("getClusters()");
 	}
 
@@ -1060,18 +1097,9 @@ public class OStorageRemote extends OStorageAbstract {
 
 			sessionId = network.readInt();
 
-			if (debug)
-				System.out.println("new sess: " + sessionId);
-
 			OLogManager.instance().debug(null, "Client connected with session id: " + sessionId);
 
-			int tot = network.readInt();
-			String clusterName;
-			for (int i = 0; i < tot; ++i) {
-				clusterName = network.readString().toLowerCase();
-				clustersIds.put(clusterName, network.readInt());
-				clustersTypes.put(clusterName, network.readString());
-			}
+			readDatabaseInformation(network);
 
 			// READ CLUSTER CONFIGURATION
 			clusterConfiguration = new ODocument(network.readBytes());
@@ -1400,5 +1428,19 @@ public class OStorageRemote extends OStorageAbstract {
 			}
 
 		}
+	}
+
+	private void readDatabaseInformation(final OChannelBinaryClient network) throws IOException {
+		int tot = network.readInt();
+		String clusterName;
+		clustersIds.clear();
+		clustersTypes.clear();
+		for (int i = 0; i < tot; ++i) {
+			clusterName = network.readString().toLowerCase();
+			clustersIds.put(clusterName, network.readInt());
+			clustersTypes.put(clusterName, network.readString());
+		}
+
+		defaultClusterId = clustersIds.get(OStorage.CLUSTER_DEFAULT_NAME);
 	}
 }

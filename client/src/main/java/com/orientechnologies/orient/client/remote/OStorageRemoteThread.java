@@ -99,6 +99,11 @@ public class OStorageRemoteThread implements OStorage {
 		delegate.setSessionId(iSessionId);
 	}
 
+	public void reload() {
+		delegate.setSessionId(sessionId);
+		delegate.reload();
+	}
+
 	public boolean exists() {
 		delegate.setSessionId(sessionId);
 		return delegate.exists();
@@ -239,9 +244,14 @@ public class OStorageRemoteThread implements OStorage {
 		return delegate.getPhysicalClusterNameById(iClusterId);
 	}
 
-	public Collection<OCluster> getClusters() {
+	public int getClusters() {
 		delegate.setSessionId(sessionId);
 		return delegate.getClusters();
+	}
+
+	public Collection<OCluster> getClusterInstances() {
+		delegate.setSessionId(sessionId);
+		return delegate.getClusterInstances();
 	}
 
 	public OCluster getClusterById(final int iId) {

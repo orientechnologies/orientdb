@@ -155,6 +155,10 @@ public class ODatabaseRaw implements ODatabase {
 		}
 	}
 
+	public void reload() {
+		storage.reload();
+	}
+
 	public STATUS getStatus() {
 		return status;
 	}
@@ -257,7 +261,7 @@ public class ODatabaseRaw implements ODatabase {
 	}
 
 	public int getClusters() {
-		return storage.getClusters().size();
+		return storage.getClusters();
 	}
 
 	public String getClusterType(final String iClusterName) {

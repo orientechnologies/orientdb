@@ -249,6 +249,9 @@ public class OStorageLocal extends OStorageEmbedded {
 		}
 	}
 
+	public void reload() {
+	}
+
 	public boolean exists() {
 		return exists(storagePath);
 	}
@@ -868,7 +871,18 @@ public class OStorageLocal extends OStorageEmbedded {
 		return variableParser;
 	}
 
-	public Set<OCluster> getClusters() {
+	public int getClusters() {
+		lock.acquireSharedLock();
+		try {
+
+			return clusters.length;
+
+		} finally {
+			lock.releaseSharedLock();
+		}
+	}
+
+	public Set<OCluster> getClusterInstances() {
 		final Set<OCluster> result = new HashSet<OCluster>();
 
 		lock.acquireSharedLock();

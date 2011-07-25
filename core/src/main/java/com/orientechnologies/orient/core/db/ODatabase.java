@@ -72,6 +72,11 @@ public interface ODatabase {
 	public <DB extends ODatabase> DB create();
 
 	/**
+	 * Reloads the database information like the cluster list.
+	 */
+	public void reload();
+
+	/**
 	 * Deletes a database.
 	 * 
 	 */

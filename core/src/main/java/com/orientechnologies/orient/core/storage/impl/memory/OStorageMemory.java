@@ -154,6 +154,9 @@ public class OStorageMemory extends OStorageEmbedded {
 		close(true);
 	}
 
+	public void reload() {
+	}
+
 	public int addCluster(final String iClusterName, final OStorage.CLUSTER_TYPE iClusterType, final Object... iParameters) {
 		lock.acquireExclusiveLock();
 		try {
@@ -531,7 +534,18 @@ public class OStorageMemory extends OStorageEmbedded {
 		}
 	}
 
-	public Collection<? extends OCluster> getClusters() {
+	public int getClusters() {
+		lock.acquireSharedLock();
+		try {
+
+			return clusters.size();
+
+		} finally {
+			lock.releaseSharedLock();
+		}
+	}
+
+	public Collection<? extends OCluster> getClusterInstances() {
 		lock.acquireSharedLock();
 		try {
 

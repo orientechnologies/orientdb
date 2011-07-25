@@ -253,18 +253,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				try {
 					sendOk(lastClientTxId);
 					channel.writeInt(connection.id);
-					channel.writeInt(connection.database.getClusterNames().size());
-					for (OCluster c : (connection.database.getStorage()).getClusters()) {
-						if (c != null) {
-							channel.writeString(c.getName());
-							channel.writeInt(c.getId());
-							channel.writeString(c.getType());
-						}
-					}
+
+					sendDatabaseInformation();
 
 					if (getClass().equals(ONetworkProtocolBinary.class))
 						// NO EXTENSIONS (CLUSTER): SEND NULL DOCUMENT
 						channel.writeBytes(null);
+
 				} finally {
 					channel.releaseExclusiveLock();
 				}
@@ -272,7 +267,21 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			break;
 		}
+		case OChannelBinaryProtocol.REQUEST_DB_RELOAD: {
+			data.commandInfo = "Reload database information";
 
+			channel.acquireExclusiveLock();
+			try {
+				sendOk(lastClientTxId);
+
+				sendDatabaseInformation();
+
+			} finally {
+				channel.releaseExclusiveLock();
+			}
+
+			break;
+		}
 		case OChannelBinaryProtocol.REQUEST_DB_CREATE: {
 			data.commandInfo = "Create database";
 
@@ -860,6 +869,17 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			OLogManager.instance().error(this, "Request not supported. Code: " + lastRequestType);
 			channel.clearInput();
 			sendError(lastClientTxId, new ONetworkProtocolException("Request not supported. Code: " + lastRequestType));
+		}
+	}
+
+	private void sendDatabaseInformation() throws IOException {
+		channel.writeInt(connection.database.getClusterNames().size());
+		for (OCluster c : (connection.database.getStorage()).getClusterInstances()) {
+			if (c != null) {
+				channel.writeString(c.getName());
+				channel.writeInt(c.getId());
+				channel.writeString(c.getType());
+			}
 		}
 	}
 
