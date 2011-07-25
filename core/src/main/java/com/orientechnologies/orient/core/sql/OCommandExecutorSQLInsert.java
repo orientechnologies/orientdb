@@ -131,7 +131,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 		// TRANSFORM FIELD VALUES
 		final Object[] fieldValues = new Object[values.size()];
 		for (int i = 0; i < values.size(); ++i)
-			fieldValues[i] = OSQLHelper.parseValue(database, this, values.get(i).trim());
+			fieldValues[i] = OSQLHelper.parseValue(database, this, OStringSerializerHelper.decode(values.get(i).trim()));
 
 		fields = new LinkedHashMap<String, Object>();
 		for (int i = 0; i < fieldNames.size(); ++i)

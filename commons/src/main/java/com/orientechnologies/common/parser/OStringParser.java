@@ -197,6 +197,7 @@ public class OStringParser {
 					i = readUnicode(iText, i + 2, buffer);
 				} else {
 					escape = true;
+					buffer.append(c);
 				}
 				continue;
 			}
@@ -274,9 +275,9 @@ public class OStringParser {
 	 * @return The new offset inside the string analyzed
 	 */
 	public static int jump(final CharSequence iText, int iCurrentPosition, final String iJumpChars) {
-		if( iCurrentPosition < 0 )
+		if (iCurrentPosition < 0)
 			return -1;
-		
+
 		final int size = iText.length();
 		final int jumpCharSize = iJumpChars.length();
 		boolean found = true;
