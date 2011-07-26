@@ -63,8 +63,8 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
 
 				if (record.isPinned()) {
 					final ORecordInternal<?> prevEntry = entries.get(record.getIdentity());
-					if (prevEntry == null || prevEntry.getVersion() >= record.getVersion())
-						// UPDATE ONLY RECORDS ALREADY PRESENT AND WITH VERSION HIGHER THAN CURRENT
+					if (prevEntry != null && prevEntry.getVersion() >= record.getVersion())
+						// UPDATE ONLY RECORDS NOT PRESENT OR WITH VERSION HIGHER THAN CURRENT
 						continue;
 
 					record.detach();
@@ -92,14 +92,13 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
 					// TRY TO UPDATE AN OLD RECORD, DISCARD IT
 					return;
 
-				if (iRecord.getDatabase() == null || iRecord.getDatabase().isClosed()) {
+				if ((iRecord.getDatabase() == null || iRecord.getDatabase().isClosed())) {
 					// DB CLOSED: MAKE THE RECORD INSTANCE AS REUSABLE AFTER A DETACH
 					iRecord.detach();
 					entries.put(iRecord.getIdentity(), iRecord);
 				} else
 					// DB OPEN: SAVES A COPY TO AVOID CHANGES IF THE SAME RECORD INSTANCE IS USED AGAIN
 					entries.put(iRecord.getIdentity(), (ORecordInternal<?>) iRecord.flatCopy());
-
 			} else
 				entries.remove(iRecord.getIdentity());
 
@@ -125,26 +124,17 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
 
 		acquireExclusiveLock();
 		try {
-			if (strategy == STRATEGY.POP_RECORD)
-				// POP THE RECORD
-				return entries.remove(iRID);
-			else {
-				// COPY THE RECORD
-				final ORecordInternal<?> record = entries.get(iRID);
-				if (record == null)
-					return null;
+			final ORecordInternal<?> record = entries.remove(iRID);
+			if (record == null || record.isDirty())
+				// NULL OR DIRTY RECORD: IGNORE IT
+				return null;
 
-				if (record.isDirty()) {
-					// DIRTY RECORD: REMOVE IT
-					entries.remove(iRID);
-					return null;
-				}
-
-				// PUT A CLONE
+			if (strategy == STRATEGY.COPY_RECORD)
+				// PUT BACK A CLONE (THIS UPDATE ALSO THE LRU)
 				entries.put(iRID, (ORecordInternal<?>) record.flatCopy());
 
-				return record;
-			}
+			return record;
+
 		} finally {
 			releaseExclusiveLock();
 		}

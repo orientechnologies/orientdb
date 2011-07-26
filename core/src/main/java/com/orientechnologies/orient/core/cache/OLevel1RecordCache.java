@@ -54,7 +54,8 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
 		if (enabled) {
 			acquireExclusiveLock();
 			try {
-				entries.put(iRecord.getIdentity(), iRecord);
+				if (entries.get(iRecord.getIdentity()) != iRecord)
+					entries.put(iRecord.getIdentity(), iRecord);
 			} finally {
 				releaseExclusiveLock();
 			}

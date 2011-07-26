@@ -25,7 +25,6 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OMemoryWatchDog;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 
 /**
@@ -71,9 +70,9 @@ public enum OGlobalConfiguration {
 			new OConfigurationChangeCallback() {
 				public void change(final Object iCurrentValue, final Object iNewValue) {
 					// UPDATE ALL THE OPENED STORAGES SETTING THE NEW STRATEGY
-					for (OStorage s : com.orientechnologies.orient.core.Orient.instance().getStorages()) {
-						// s.getCache().setStrategy((Integer) iNewValue);
-					}
+					// for (OStorage s : com.orientechnologies.orient.core.Orient.instance().getStorages()) {
+					// s.getCache().setStrategy((Integer) iNewValue);
+					// }
 				}
 			}),
 
