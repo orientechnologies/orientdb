@@ -107,9 +107,9 @@ public class OSQLFilterCondition {
 				result = new Object[] { l, getFloat(r) };
 
 			// DATES
-			else if (r instanceof Date && !(l instanceof Date)) {
+			else if (r instanceof Date && !(l.getClass().isArray() || l instanceof Date)) {
 				result = new Object[] { getDate(iRecord, l), r };
-			} else if (l instanceof Date && !(r instanceof Date)) {
+			} else if (l instanceof Date && !(r.getClass().isArray() || r instanceof Date)) {
 				result = new Object[] { l, getDate(iRecord, r) };
 			}
 
