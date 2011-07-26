@@ -44,8 +44,8 @@ public class SecurityTest {
 		try {
 			database.open("reader", "swdsds");
 		} catch (OException e) {
-			Assert.assertTrue(e instanceof OSecurityAccessException
-					|| e.getCause().toString().indexOf("com.orientechnologies.orient.core.exception.OSecurityAccessException") > -1);
+			Assert.assertTrue(e instanceof OSecurityAccessException || e.getCause() != null
+					&& e.getCause().toString().indexOf("com.orientechnologies.orient.core.exception.OSecurityAccessException") > -1);
 		}
 	}
 
