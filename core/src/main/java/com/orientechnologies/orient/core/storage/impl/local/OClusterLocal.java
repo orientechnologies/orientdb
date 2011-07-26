@@ -30,7 +30,8 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 
 /**
- * Handles the table to resolve logical address to physical address. Deleted records have version = -1. <br/><br/>
+ * Handles the table to resolve logical address to physical address. Deleted records have version = -1. <br/>
+ * <br/>
  * Record structure:<br/>
  * <code>
  * +----------------------+----------------------+-------------+----------------------+<br/>
@@ -134,9 +135,10 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 		try {
 
 			// REMOVE ALL DATA BLOCKS
-			final long tot = getEntries();
+			final long begin = getFirstEntryPosition();
+			final long end = getLastEntryPosition();
 			final OPhysicalPosition ppos = new OPhysicalPosition();
-			for (long i = 0; i < tot; ++i) {
+			for (long i = begin; i <= end; ++i) {
 				getPhysicalPosition(i, ppos);
 
 				if (storage.checkForRecordValidity(ppos))

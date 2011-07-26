@@ -383,7 +383,12 @@ public class ODataLocal extends OMultiFileSegment {
 							// END OF FILE
 							break;
 
-						recordSize = file.readInt(pos[1]) + RECORD_FIX_SIZE;
+						int recordContentSize = file.readInt(pos[1]);
+						if (recordContentSize < 0)
+							// FOUND HOLE
+							break;
+
+						recordSize = recordContentSize + RECORD_FIX_SIZE;
 
 						// SAVE DATA IN ARRAY
 						segmentPositions.add(0, new long[] { moveFrom, recordSize });
@@ -396,7 +401,9 @@ public class ODataLocal extends OMultiFileSegment {
 					for (long[] item : segmentPositions) {
 						final int sizeMoved = moveRecord(item[0], gap - item[1]);
 
-						if (sizeMoved != item[1])
+						if (sizeMoved < 0)
+							throw new IllegalStateException("Can't move record at position " + moveFrom + ": found hole");
+						else if (sizeMoved != item[1])
 							throw new IllegalStateException("Corrupted hole at position " + item[0] + ": found size " + sizeMoved
 									+ " instead of " + item[1]);
 
@@ -413,6 +420,9 @@ public class ODataLocal extends OMultiFileSegment {
 
 					while (moveFrom < moveUpTo) {
 						final int sizeMoved = moveRecord(moveFrom, moveTo);
+
+						if (sizeMoved < 0)
+							throw new IllegalStateException("Can't move record at position " + moveFrom + ": found hole");
 
 						moveFrom += sizeMoved;
 						moveTo += sizeMoved;
