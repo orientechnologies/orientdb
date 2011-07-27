@@ -160,8 +160,6 @@ public class CRUDDocumentPhysicalTest {
 	public void update() {
 		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
-		record.reset();
-
 		int i = 0;
 		for (ODocument rec : database.browseCluster("Account")) {
 
