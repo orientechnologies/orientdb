@@ -212,7 +212,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 
 		if (!saveOnlyDirty || record.isDirty()) {
 			// REGISTER BEFORE TO SERIALIZE TO AVOID PROBLEMS WITH CIRCULAR DEPENDENCY
-			registerUserObject(iPojo, record);
+			//registerUserObject(iPojo, record);
 
 			pojo2Stream(iPojo, record);
 
