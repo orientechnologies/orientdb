@@ -158,7 +158,18 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 			// .getDefaultClusterId();
 
 			try {
-				final OClass cls = db.getMetadata().getSchema().createClass(fields.get("name"));
+				final String superClassName = fields.get("superClass");
+				final OClass superClass;
+				if (superClassName != null)
+					superClass = db.getMetadata().getSchema().getClass(superClassName);
+				else
+					superClass = null;
+
+				final OClass cls = db.getMetadata().getSchema().createClass(fields.get("name"), superClass);
+
+				final String alias = fields.get("alias");
+				if (alias != null)
+					cls.setShortName(alias);
 
 				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Class '" + rid
 						+ "' created successfully with id=" + cls.getId());
