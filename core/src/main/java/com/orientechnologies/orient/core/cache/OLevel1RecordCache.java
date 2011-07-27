@@ -130,14 +130,16 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
 	public void shutdown() {
 		clear();
 		super.shutdown();
+		level2cache = null;
 	}
 
 	@Override
 	public void clear() {
 		acquireExclusiveLock();
 		try {
-			// MOVE ALL THE LEVEL-1 CACHE INTO THE LEVEL-2 CACHE
-			level2cache.moveRecords(entries.values());
+			if (level2cache != null)
+				// MOVE ALL THE LEVEL-1 CACHE INTO THE LEVEL-2 CACHE
+				level2cache.moveRecords(entries.values());
 
 			entries.clear();
 		} finally {
