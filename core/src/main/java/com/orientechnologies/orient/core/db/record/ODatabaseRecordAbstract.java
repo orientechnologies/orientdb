@@ -68,6 +68,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	private byte														recordType;
 	private String													recordFormat;
 	private Set<ORecordHook>								hooks							= new HashSet<ORecordHook>();
+	private final Set<ORecordHook>					unmodifiableHooks;
 	private boolean													retainRecords			= true;
 	private OLevel1RecordCache							level1Cache;
 	private boolean													mvcc;
@@ -76,6 +77,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	public ODatabaseRecordAbstract(final String iURL, final byte iRecordType) {
 		super(new ODatabaseRaw(iURL));
 		underlying.setOwner(this);
+
+		unmodifiableHooks = Collections.unmodifiableSet(hooks);
 
 		databaseOwner = this;
 
@@ -706,7 +709,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	}
 
 	public Set<ORecordHook> getHooks() {
-		return Collections.unmodifiableSet(hooks);
+		return unmodifiableHooks;
 	}
 
 	/**

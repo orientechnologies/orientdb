@@ -27,11 +27,13 @@ import com.orientechnologies.common.concur.lock.OLockException;
 public class OResourcePool<K, V> {
 	private final Semaphore							sem;
 	private final Queue<V>							resources	= new ConcurrentLinkedQueue<V>();
+	private final Collection<V>					unmodifiableresources;
 	private OResourcePoolListener<K, V>	listener;
 
 	public OResourcePool(final int iMaxResources, final OResourcePoolListener<K, V> iListener) {
 		listener = iListener;
 		sem = new Semaphore(iMaxResources + 1, true);
+		unmodifiableresources = Collections.unmodifiableCollection(resources);
 	}
 
 	public V getResource(K iKey, final long iMaxWaitMillis, Object... iAdditionalArgs) throws OLockException {
@@ -68,7 +70,7 @@ public class OResourcePool<K, V> {
 	}
 
 	public Collection<V> getResources() {
-		return Collections.unmodifiableCollection(resources);
+		return unmodifiableresources;
 	}
 
 	public void close() {
