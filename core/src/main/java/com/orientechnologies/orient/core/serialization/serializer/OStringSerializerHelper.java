@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.serialization.serializer;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -273,17 +274,17 @@ public abstract class OStringSerializerHelper {
 		return split(iSource, 0, iSource.length(), iRecordSeparator, iJumpCharacters);
 	}
 
-	public static List<String> split(final List<String> iParts, final String iSource, final char iRecordSeparator,
+	public static Collection<String> split(final Collection<String> iParts, final String iSource, final char iRecordSeparator,
 			final char... iJumpCharacters) {
 		return split(iParts, iSource, 0, iSource.length(), iRecordSeparator, iJumpCharacters);
 	}
 
 	public static List<String> split(final String iSource, final int iStartPosition, final int iEndPosition,
 			final char iRecordSeparator, final char... iJumpCharacters) {
-		return split(new ArrayList<String>(), iSource, 0, iSource.length(), iRecordSeparator, iJumpCharacters);
+		return (List<String>) split(new ArrayList<String>(), iSource, 0, iSource.length(), iRecordSeparator, iJumpCharacters);
 	}
 
-	public static List<String> split(final List<String> iParts, final String iSource, final int iStartPosition,
+	public static Collection<String> split(final Collection<String> iParts, final String iSource, final int iStartPosition,
 			final int iEndPosition, final char iRecordSeparator, final char... iJumpCharacters) {
 		final StringBuilder buffer = new StringBuilder();
 
@@ -363,7 +364,7 @@ public abstract class OStringSerializerHelper {
 		return false;
 	}
 
-	public static int getCollection(final String iText, final int iStartPosition, final List<String> iCollection) {
+	public static int getCollection(final String iText, final int iStartPosition, final Collection<String> iCollection) {
 		int openPos = iText.indexOf(COLLECTION_BEGIN, iStartPosition);
 		if (openPos == -1)
 			return -1;

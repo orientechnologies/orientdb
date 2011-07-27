@@ -163,6 +163,18 @@ public class ODataLocal extends OMultiFileSegment {
 				// RECORD DELETED
 				return null;
 
+			if (pos[1] + RECORD_FIX_SIZE + recordSize > file.getFilledUpTo())
+				throw new OStorageException(
+						"Error on reading record from file '"
+								+ file.getOsFile().getName()
+								+ "', position "
+								+ iPosition
+								+ ", size "
+								+ OFileUtils.getSizeAsString(recordSize)
+								+ ": the record size is bigger then the file itself ("
+								+ OFileUtils.getSizeAsString(getFilledUpTo())
+								+ "). Probably the record is dirty due to a previous crash. It strongly suggested to restore the database or export and reimport this one.");
+
 			final byte[] content = new byte[recordSize];
 			file.read(pos[1] + RECORD_FIX_SIZE, content, recordSize);
 			return content;

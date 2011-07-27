@@ -15,29 +15,31 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.io.IOException;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 /**
- * SQL TRUNCATE CLUSTER command: Truncates an entire record cluster.
+ * SQL TRUNCATE RECORD command: Truncates a record without loading it. Useful when the record is dirty in any way and can't be
+ * loaded correctly.
  * 
  * @author Luca Garulli
  * 
  */
-public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLPermissionAbstract {
+public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLPermissionAbstract {
 	public static final String	KEYWORD_TRUNCATE	= "TRUNCATE";
-	public static final String	KEYWORD_CLUSTER		= "CLUSTER";
-	private String							clusterName;
+	public static final String	KEYWORD_RECORD		= "RECORD";
+	private Set<String>					records						= new HashSet<String>();
 
 	@SuppressWarnings("unchecked")
-	public OCommandExecutorSQLTruncateCluster parse(final OCommandRequestText iRequest) {
+	public OCommandExecutorSQLTruncateRecord parse(final OCommandRequestText iRequest) {
 		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_DELETE);
 		init(iRequest.getDatabase(), iRequest.getText());
 
@@ -50,18 +52,23 @@ public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLPermi
 
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_CLUSTER))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found", text, oldPos);
+		if (pos == -1 || !word.toString().equals(KEYWORD_RECORD))
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_RECORD + " not found", text, oldPos);
 
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, text, oldPos, word, true);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected cluster name", text, oldPos);
+			throw new OCommandSQLParsingException("Expected one or more records", text, oldPos);
 
-		clusterName = word.toString();
+		if (word.charAt(0) == '[')
+			// COLLECTION
+			OStringSerializerHelper.getCollection(text, oldPos, records);
+		else {
+			records.add(word.toString());
+		}
 
-		if (database.getClusterIdByName(clusterName) == -1)
-			throw new OCommandSQLParsingException("Cluster '" + clusterName + "' not found", text, oldPos);
+		if (records.isEmpty())
+			throw new OCommandSQLParsingException("Missed record(s)", text, oldPos);
 		return this;
 	}
 
@@ -69,19 +76,18 @@ public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLPermi
 	 * Execute the command.
 	 */
 	public Object execute(final Map<Object, Object> iArgs) {
-		if (clusterName == null)
+		if (records.isEmpty())
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 
-		OCluster cluster = ((OStorageEmbedded) database.getStorage()).getClusterByName(clusterName);
-
-		final long recs = cluster.getEntries();
-
-		try {
-			cluster.truncate();
-		} catch (IOException e) {
-			throw new OCommandExecutionException("Error on executing command", e);
+		for (String rec : records) {
+			try {
+				final ORecordId rid = new ORecordId(rec);
+				database.getStorage().deleteRecord(rid, -1);
+			} catch (Throwable e) {
+				throw new OCommandExecutionException("Error on executing command", e);
+			}
 		}
 
-		return recs;
+		return records.size();
 	}
 }

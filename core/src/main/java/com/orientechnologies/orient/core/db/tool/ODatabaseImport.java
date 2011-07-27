@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -241,7 +242,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 								// REMOVE []
 								value = value.substring(1, value.length() - 1);
 
-							List<String> rids = OStringSerializerHelper.split(value, ',', new char[] { '#', '"' });
+							final Collection<String> rids = OStringSerializerHelper.split(value, ',', new char[] { '#', '"' });
 
 							for (String rid : rids) {
 								doc.setIdentity(new ORecordId(rid));

@@ -112,6 +112,8 @@ public class OSQLEngine {
 				OCommandExecutorSQLTruncateClass.class);
 		commands.put(OCommandExecutorSQLTruncateCluster.KEYWORD_TRUNCATE + " " + OCommandExecutorSQLTruncateCluster.KEYWORD_CLUSTER,
 				OCommandExecutorSQLTruncateCluster.class);
+		commands.put(OCommandExecutorSQLTruncateRecord.KEYWORD_TRUNCATE + " " + OCommandExecutorSQLTruncateRecord.KEYWORD_RECORD,
+				OCommandExecutorSQLTruncateRecord.class);
 		commands.put(OCommandExecutorSQLAlterCluster.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterCluster.KEYWORD_CLUSTER,
 				OCommandExecutorSQLAlterCluster.class);
 

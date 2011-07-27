@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityReso
 import com.orientechnologies.orient.core.metadata.security.ORole;
 
 /**
- * SQL REVOKE command: Revoke a privilege to a database role.
+ * SQL TRUNCATE CLASS command: Truncates an entire class deleting all configured clusters where the class relies on.
  * 
  * @author Luca Garulli
  * 
