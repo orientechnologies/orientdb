@@ -150,7 +150,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		String value = iValue.substring(1, iValue.length() - 1);
 
 		@SuppressWarnings("rawtypes")
-		final Map map;
+		Map map;
 		if (iLinkedType == OType.LINK || iLinkedType == OType.EMBEDDED)
 			map = new ORecordLazyMap(iSourceDocument, ODocument.RECORD_TYPE);
 		else
@@ -173,9 +173,14 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					String mapValue = entry.get(1);
 
 					if (iLinkedType == null)
-						if (mapValue.length() > 0)
+						if (mapValue.length() > 0) {
 							iLinkedType = getType(mapValue);
-						else
+							if (iLinkedType == OType.LINK && !(map instanceof ORecordLazyMap)) {
+								// CONVERT IT TO A LAZY MAP
+								map = new ORecordLazyMap(iSourceDocument, ODocument.RECORD_TYPE);
+								((ORecordElement) map).setInternalStatus(STATUS.UNMARSHALLING);
+							}
+						} else
 							iLinkedType = OType.EMBEDDED;
 
 					if (iLinkedType == OType.EMBEDDED)
