@@ -21,6 +21,7 @@ import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -30,7 +31,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -166,12 +166,10 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 							// WRONG RECORD TYPE: JUMP IT
 							continue;
 
-						if (ioRecord.getRecordType() != recordBuffer.recordType) {
+						if (ioRecord.getRecordType() != recordBuffer.recordType)
 							// RECORD NULL OR DIFFERENT IN TYPE: CREATE A NEW ONE
-							final ORecordInternal<?> newRecord = ORecordFactory.newInstance(recordBuffer.recordType);
-							newRecord.setDatabase(ioRecord.getDatabase());
-							ioRecord = newRecord;
-						} else
+							ioRecord = Orient.instance().getRecordFactoryManager().newInstance(ioRecord.getDatabase(), recordBuffer.recordType);
+						else
 							// RESET CURRENT RECORD
 							ioRecord.reset();
 

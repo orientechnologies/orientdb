@@ -25,6 +25,7 @@ import java.util.Map;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -35,7 +36,6 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
@@ -296,7 +296,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 					result = ((ODocument) record).getClassName();
 
 			} else if (iFieldName.equals("@TYPE"))
-				result = ORecordFactory.getRecordTypeName(iDatabase.getRecord(iIdentifiable).getRecordType());
+				result = Orient.instance().getRecordFactoryManager().getRecordTypeName(iDatabase.getRecord(iIdentifiable).getRecordType());
 
 			else if (iFieldName.equals("@FIELDS")) {
 				final ORecord<?> record = iDatabase.getRecord(iIdentifiable);

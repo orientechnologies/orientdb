@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.record.ORecordFactoryManager;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 
@@ -46,6 +47,7 @@ public class Orient extends OSharedResourceAbstract {
 	protected Map<String, OEngine>						engines								= new HashMap<String, OEngine>();
 	protected Map<String, OStorage>						storages							= new HashMap<String, OStorage>();
 	protected Set<ODatabaseLifecycleListener>	dbLifecycleListeners	= new HashSet<ODatabaseLifecycleListener>();
+	protected ORecordFactoryManager						recordFactoryManager	= new ORecordFactoryManager();
 	protected volatile boolean								active								= false;
 
 	protected static final OrientShutdownHook	shutdownHook					= new OrientShutdownHook();
@@ -282,5 +284,9 @@ public class Orient extends OSharedResourceAbstract {
 
 	public OMemoryWatchDog getMemoryWatchDog() {
 		return memoryWatchDog;
+	}
+
+	public ORecordFactoryManager getRecordFactoryManager() {
+		return recordFactoryManager;
 	}
 }

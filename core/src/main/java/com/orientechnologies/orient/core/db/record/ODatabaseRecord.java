@@ -56,9 +56,9 @@ public interface ODatabaseRecord extends ODatabaseComplex<ORecordInternal<?>> {
 	public <RET extends ORecordInternal<?>> RET getRecord(OIdentifiable iIdentifiable);
 
 	/**
-	 * Returns the record type class.
+	 * Returns the default record type for this kind of database.
 	 */
-	public Class<? extends ORecordInternal<?>> getRecordType();
+	public byte getRecordType();
 
 	/**
 	 * Returns true if current configuration retains objects, otherwise false

@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabaseRecordTx> implements ODatabaseDocument {
 	public ODatabaseDocumentTx(final String iURL) {
-		super(new ODatabaseRecordTx(iURL, ODocument.class));
+		super(new ODatabaseRecordTx(iURL, ODocument.RECORD_TYPE));
 	}
 
 	@Override

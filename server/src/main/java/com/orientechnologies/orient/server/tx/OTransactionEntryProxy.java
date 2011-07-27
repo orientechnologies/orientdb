@@ -17,12 +17,12 @@ package com.orientechnologies.orient.server.tx;
 
 import java.io.IOException;
 
-import com.orientechnologies.orient.core.record.ORecordFactory;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 
 public class OTransactionEntryProxy extends OTransactionRecordEntry {
 
 	public OTransactionEntryProxy(final byte iRecordType) throws IOException {
-		super(ORecordFactory.newInstance(iRecordType), (byte) 0, null);
+		super(Orient.instance().getRecordFactoryManager().newInstance(null, iRecordType), (byte) 0, null);
 	}
 }

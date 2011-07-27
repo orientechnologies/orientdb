@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 public class ODatabaseFlat extends ODatabaseRecordTx {
 
 	public ODatabaseFlat(String iURL) {
-		super(iURL, ORecordFlat.class);
+		super(iURL, ORecordFlat.RECORD_TYPE);
 	}
 
 	@SuppressWarnings("unchecked")

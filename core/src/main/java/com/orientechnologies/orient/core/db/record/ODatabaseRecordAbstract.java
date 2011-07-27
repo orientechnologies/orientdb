@@ -23,6 +23,7 @@ import java.util.Set;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
@@ -33,7 +34,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
@@ -52,7 +52,6 @@ import com.orientechnologies.orient.core.metadata.security.OUserTrigger;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.query.OQueryAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
@@ -63,28 +62,24 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecord {
 
-	private OMetadata														metadata;
-	private OUser																user;
-	private static final String									DEF_RECORD_FORMAT	= "csv";
-	private Class<? extends ORecordInternal<?>>	recordClass;
-	private String															recordFormat;
-	private Set<ORecordHook>										hooks							= new HashSet<ORecordHook>();
-	private boolean															retainRecords			= true;
-	private OLevel1RecordCache									level1Cache;
-	private boolean															mvcc;
-	private ODictionary<ORecordInternal<?>>			dictionary;
+	private OMetadata												metadata;
+	private OUser														user;
+	private static final String							DEF_RECORD_FORMAT	= "csv";
+	private byte														recordType;
+	private String													recordFormat;
+	private Set<ORecordHook>								hooks							= new HashSet<ORecordHook>();
+	private boolean													retainRecords			= true;
+	private OLevel1RecordCache							level1Cache;
+	private boolean													mvcc;
+	private ODictionary<ORecordInternal<?>>	dictionary;
 
-	public ODatabaseRecordAbstract(final String iURL, final Class<? extends ORecordInternal<?>> iRecordClass) {
+	public ODatabaseRecordAbstract(final String iURL, final byte iRecordType) {
 		super(new ODatabaseRaw(iURL));
 		underlying.setOwner(this);
 
 		databaseOwner = this;
 
-		try {
-			recordClass = iRecordClass;
-		} catch (Throwable t) {
-			throw new ODatabaseException("Error on opening database '" + getName() + "'", t);
-		}
+		recordType = iRecordType;
 		level1Cache = new OLevel1RecordCache(this);
 
 		mvcc = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
@@ -293,19 +288,12 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		return (RET) iCommand.execute(iArgs);
 	}
 
-	public Class<? extends ORecordInternal<?>> getRecordType() {
-		return recordClass;
+	public byte getRecordType() {
+		return recordType;
 	}
 
 	public <RET extends Object> RET newInstance() {
-		if (recordClass == null)
-			throw new OConfigurationException("Can't create record since no record class was specified");
-
-		return (RET) ORecordFactory.instance().newInstance(this, recordClass);
-	}
-
-	public ORecordInternal<?> newInstance(final Class<ORecordInternal<?>> iType) {
-		return (ORecordInternal<?>) ORecordFactory.instance().newInstance(this, iType);
+		return (RET) Orient.instance().getRecordFactoryManager().newInstance(this, recordType);
 	}
 
 	@Override
@@ -480,7 +468,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 			if (iRecord == null || iRecord.getRecordType() != recordBuffer.recordType)
 				// NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
-				iRecord = ORecordFactory.newInstance(recordBuffer.recordType);
+				iRecord = Orient.instance().getRecordFactoryManager().newInstance(this, recordBuffer.recordType);
 
 			ODatabaseRecord currDb = iRecord.getDatabase();
 			if (currDb == null)

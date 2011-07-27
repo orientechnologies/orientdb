@@ -37,7 +37,6 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntent;
-import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -207,7 +206,7 @@ public class ODatabaseRaw implements ODatabase {
 
 	public long save(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType) {
 		// CHECK IF RECORD TYPE IS SUPPORTED
-		ORecordFactory.getRecordTypeName(iRecordType);
+		Orient.instance().getRecordFactoryManager().getRecordTypeClass(iRecordType);
 
 		try {
 			if (iRid.clusterPosition < 0) {

@@ -16,9 +16,8 @@
 package com.orientechnologies.orient.core.serialization.serializer.stream;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 
-import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -26,7 +25,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
-@SuppressWarnings("unchecked")
 public class OStreamSerializerRecord implements OStreamSerializer {
 	public static final String									NAME			= "l";
 	public static final OStreamSerializerRecord	INSTANCE	= new OStreamSerializerRecord();
@@ -43,32 +41,12 @@ public class OStreamSerializerRecord implements OStreamSerializer {
 			// NULL VALUE
 			return null;
 
-		Constructor<? extends ORecordInternal<?>> constructor = null;
+		final ORecordInternal<?> obj = Orient.instance().getRecordFactoryManager().newInstance(iDatabase);
 
-		try {
-			Constructor<?>[] constructors = iDatabase.getRecordType().getConstructors();
-			for (Constructor<?> c : constructors) {
-				if (c.getParameterTypes().length > 0 && ODatabaseRecord.class.isAssignableFrom(c.getParameterTypes()[0])) {
-					constructor = (Constructor<? extends ORecordInternal<?>>) c;
-					break;
-				}
-			}
+		final ORID rid = new ORecordId().fromStream(iStream);
 
-			final ORecordInternal<?> obj = constructor.newInstance(iDatabase);
-
-			final ORID rid = new ORecordId().fromStream(iStream);
-
-			obj.setIdentity(rid.getClusterId(), rid.getClusterPosition());
-			return obj;
-		} catch (Exception e) {
-			if (constructor == null)
-				OLogManager.instance().error(this, "Constructor not found for record class '%s'", e, OSerializationException.class,
-						iDatabase.getRecordType());
-			else
-				OLogManager.instance().error(this, "Error on unmarshalling record class: " + constructor.getDeclaringClass(), e,
-						OSerializationException.class);
-		}
-		return null;
+		obj.setIdentity(rid.getClusterId(), rid.getClusterPosition());
+		return obj;
 	}
 
 	public byte[] toStream(final ODatabaseRecord iDatabase, final Object iObject) throws IOException {

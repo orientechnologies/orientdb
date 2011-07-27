@@ -24,6 +24,6 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 public class ODatabaseBinary extends ODatabaseRecordTx {
 
 	public ODatabaseBinary(String iURL) {
-		super(iURL, ORecordBytes.class);
+		super(iURL, ORecordBytes.RECORD_TYPE);
 	}
 }

@@ -40,8 +40,8 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 	private OTransaction	currentTx;
 
-	public ODatabaseRecordTx(final String iURL, final Class<? extends ORecordInternal<?>> iRecordClass) {
-		super(iURL, iRecordClass);
+	public ODatabaseRecordTx(final String iURL, final byte iRecordType) {
+		super(iURL, iRecordType);
 		init();
 	}
 

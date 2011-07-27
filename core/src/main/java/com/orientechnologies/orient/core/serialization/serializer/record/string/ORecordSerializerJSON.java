@@ -30,6 +30,7 @@ import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OStringParser;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -45,7 +46,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.ORecordStringable;
@@ -118,8 +118,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				} else if (fieldName.equals(ATTRIBUTE_TYPE)) {
 					if (iRecord == null || iRecord.getRecordType() != fieldValueAsString.charAt(0)) {
 						// CREATE THE RIGHT RECORD INSTANCE
-						iRecord = ORecordFactory.newInstance((byte) fieldValueAsString.charAt(0));
-						iRecord.setDatabase(iDatabase);
+						iRecord = Orient.instance().getRecordFactoryManager().newInstance(iDatabase, (byte) fieldValueAsString.charAt(0));
 					}
 				}
 			}

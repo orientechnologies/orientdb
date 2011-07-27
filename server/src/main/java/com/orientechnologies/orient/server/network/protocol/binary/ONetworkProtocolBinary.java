@@ -56,7 +56,6 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -561,7 +560,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			final byte[] buffer = channel.readBytes();
 			final byte recordType = channel.readByte();
 
-			final ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
+			final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(connection.database, recordType);
 			record.fill(connection.database, rid, 0, buffer, true);
 			connection.database.save(record);
 
@@ -583,7 +582,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			final byte[] buffer = channel.readBytes();
 			final int version = channel.readInt();
 			final byte recordType = channel.readByte();
-			final ORecordInternal<?> newRecord = ORecordFactory.newInstance(recordType);
+			final ORecordInternal<?> newRecord = Orient.instance().getRecordFactoryManager().newInstance(connection.database, recordType);
 			newRecord.fill(connection.database, rid, version, buffer, true);
 
 			if (((OSchemaProxy) connection.database.getMetadata().getSchema()).getIdentity().equals(rid))

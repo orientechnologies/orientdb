@@ -45,7 +45,6 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -1212,7 +1211,7 @@ public class OStorageRemote extends OStorageAbstract {
 		if (classId == OChannelBinaryProtocol.RECORD_RID) {
 			return network.readRID();
 		} else {
-			final ORecordInternal<?> record = ORecordFactory.newInstance(network.readByte());
+			final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(iDatabase, network.readByte());
 
 			if (record instanceof ORecordSchemaAware<?>)
 				((ORecordSchemaAware<?>) record).fill(iDatabase, classId, network.readRID(), network.readInt(), network.readBytes(), false);

@@ -147,7 +147,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 		return underlying.getDictionary();
 	}
 
-	public Class<? extends ORecordInternal<?>> getRecordType() {
+	public byte getRecordType() {
 		return underlying.getRecordType();
 	}
 
