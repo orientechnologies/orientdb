@@ -51,8 +51,9 @@ public class ODatabaseDocumentPool extends ODatabasePoolBase<ODatabaseDocumentTx
 							if (iValue.getStorage().isClosed())
 								// STORAGE HAS BEEN CLOSED: REOPEN IT
 								iValue.getStorage().open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1], null);
-							else
-								iValue.getMetadata().getSecurity().authenticate((String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
+							else if (!iValue.getUser().checkPassword((String) iAdditionalArgs[1]))
+								throw new OSecurityAccessException(iValue.getName(), "User or password not valid for database: '"
+										+ iValue.getName() + "'");
 
 							return iValue;
 						}
