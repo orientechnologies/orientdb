@@ -50,6 +50,7 @@ import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OPropertyIndexManager;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
@@ -57,7 +58,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
-import com.orientechnologies.orient.core.record.ORecordVirtualAbstract;
+import com.orientechnologies.orient.core.record.ORecordSchemaAwareAbstract;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
@@ -68,10 +69,16 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
  * be added at run-time. Instances can be reused across calls by using the reset() before to re-use.
  */
 @SuppressWarnings({ "unchecked", "serial" })
-public class ODocument extends ORecordVirtualAbstract<Object> implements Iterable<Entry<String, Object>> {
-	public static final byte											RECORD_TYPE	= 'd';
+public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Iterable<Entry<String, Object>> {
+	public static final byte											RECORD_TYPE				= 'd';
+	protected Map<String, Object>									_fieldValues;
+	protected Map<String, Object>									_fieldOriginalValues;
+	protected Map<String, OType>									_fieldTypes;
+	protected boolean															_trackingChanges	= true;
+	protected boolean															_ordered					= true;
+	protected boolean															_lazyLoad					= true;
 
-	protected List<WeakReference<ORecordElement>>	_owners			= null;
+	protected List<WeakReference<ORecordElement>>	_owners						= null;
 
 	/**
 	 * Internal constructor used on unmarshalling.
@@ -88,7 +95,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 *          Raw stream
 	 */
 	public ODocument(final byte[] iSource) {
-		super(iSource);
+		_source = iSource;
 		setup();
 	}
 
@@ -146,7 +153,8 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 *          Class name
 	 */
 	public ODocument(final ODatabaseRecord iDatabase, final String iClassName) {
-		super(iDatabase, iClassName);
+		super(iDatabase);
+		setClassName(iClassName);
 		setup();
 	}
 
@@ -497,48 +505,48 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		return _fieldValues.values().toArray(result);
 	}
 
-	public <RET> RET rawField(final String iPropertyName) {
+	public <RET> RET rawField(final String iFieldName) {
 		checkForLoading();
 		checkForFields();
 
-		int separatorPos = iPropertyName.indexOf('.');
+		int separatorPos = iFieldName.indexOf('.');
 		if (separatorPos > -1) {
 			// GET THE LINKED OBJECT IF ANY
-			String fieldName = iPropertyName.substring(0, separatorPos);
-			Object linkedObject = _fieldValues.get(fieldName);
+			final String fieldName = iFieldName.substring(0, separatorPos);
+			final Object linkedObject = _fieldValues.get(fieldName);
 
 			if (linkedObject == null || !(linkedObject instanceof ODocument))
 				// IGNORE IT BY RETURNING NULL
 				return null;
 
-			ODocument linkedRecord = (ODocument) linkedObject;
+			final ODocument linkedRecord = (ODocument) linkedObject;
 			if (linkedRecord.getInternalStatus() == STATUS.NOT_LOADED)
 				// LAZY LOAD IT
 				linkedRecord.reload();
 
 			// CALL MYSELF RECURSIVELY BY CROSSING ALL THE OBJECTS
-			return (RET) linkedRecord.field(iPropertyName.substring(separatorPos + 1));
+			return (RET) linkedRecord.field(iFieldName.substring(separatorPos + 1));
 		}
 
-		return (RET) _fieldValues.get(iPropertyName);
+		return (RET) _fieldValues.get(iFieldName);
 	}
 
 	/**
 	 * Reads the field value.
 	 * 
-	 * @param iPropertyName
+	 * @param iFieldName
 	 *          field name
 	 * @return field value if defined, otherwise null
 	 */
-	public <RET> RET field(final String iPropertyName) {
-		RET value = this.<RET> rawField(iPropertyName);
+	public <RET> RET field(final String iFieldName) {
+		RET value = this.<RET> rawField(iFieldName);
 
-		final OType t = fieldType(iPropertyName);
+		final OType t = fieldType(iFieldName);
 
 		if (_lazyLoad && value instanceof ORID && t != OType.LINK && _database != null) {
 			// CREATE THE DOCUMENT OBJECT IN LAZY WAY
 			value = (RET) _database.load((ORID) value);
-			_fieldValues.put(iPropertyName, value);
+			_fieldValues.put(iFieldName, value);
 		}
 
 		// CHECK FOR CONVERSION
@@ -552,7 +560,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 			if (newValue != null) {
 				// VALUE CHANGED: SET THE NEW ONE
-				_fieldValues.put(iPropertyName, newValue);
+				_fieldValues.put(iFieldName, newValue);
 				value = (RET) newValue;
 			}
 		}
@@ -562,19 +570,19 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 	/**
 	 * Reads the field value forcing the return type. Use this method to force return of ORID instead of the entire document by
-	 * passing ORID.class as iType.
+	 * passing ORID.class as iFieldType.
 	 * 
-	 * @param iPropertyName
+	 * @param iFieldName
 	 *          field name
-	 * @param iType
+	 * @param iFieldType
 	 *          Forced type.
 	 * @return field value if defined, otherwise null
 	 */
-	public <RET> RET field(final String iPropertyName, final Class<?> iType) {
-		RET value = this.<RET> rawField(iPropertyName);
+	public <RET> RET field(final String iFieldName, final Class<?> iFieldType) {
+		RET value = this.<RET> rawField(iFieldName);
 
 		if (value != null)
-			value = (RET) convertField(iPropertyName, iType, value);
+			value = (RET) convertField(iFieldName, iFieldType, value);
 
 		return value;
 	}
@@ -582,28 +590,28 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	/**
 	 * Reads the field value forcing the return type. Use this method to force return of binary data.
 	 * 
-	 * @param iPropertyName
+	 * @param iFieldName
 	 *          field name
-	 * @param iType
+	 * @param iFieldType
 	 *          Forced type.
 	 * @return field value if defined, otherwise null
 	 */
-	public <RET> RET field(final String iPropertyName, final OType iType) {
-		setFieldType(iPropertyName, iType);
-		return (RET) field(iPropertyName);
+	public <RET> RET field(final String iFieldName, final OType iFieldType) {
+		setFieldType(iFieldName, iFieldType);
+		return (RET) field(iFieldName);
 	}
 
 	/**
 	 * Writes the field value.
 	 * 
-	 * @param iPropertyName
+	 * @param iFieldName
 	 *          field name
 	 * @param iPropertyValue
 	 *          field value
 	 * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
-	public ODocument field(final String iPropertyName, Object iPropertyValue) {
-		return field(iPropertyName, iPropertyValue, null);
+	public ODocument field(final String iFieldName, Object iPropertyValue) {
+		return field(iFieldName, iPropertyValue, null);
 	}
 
 	/**
@@ -622,24 +630,24 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	/**
 	 * Writes the field value forcing the type.
 	 * 
-	 * @param iPropertyName
+	 * @param iFieldName
 	 *          field name
 	 * @param iPropertyValue
 	 *          field value
-	 * @param iType
+	 * @param iFieldType
 	 *          Forced type (not auto-determined)
 	 * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
-	public ODocument field(String iPropertyName, Object iPropertyValue, OType iType) {
-		iPropertyName = checkFieldName(iPropertyName);
+	public ODocument field(String iFieldName, Object iPropertyValue, OType iFieldType) {
+		iFieldName = checkFieldName(iFieldName);
 
 		checkForLoading();
 		checkForFields();
 
 		_source = null;
 
-		final boolean knownProperty = _fieldValues.containsKey(iPropertyName);
-		final Object oldValue = _fieldValues.get(iPropertyName);
+		final boolean knownProperty = _fieldValues.containsKey(iFieldName);
+		final Object oldValue = _fieldValues.get(iFieldName);
 
 		if (knownProperty)
 			// CHECK IF IS REALLY CHANGED
@@ -658,25 +666,25 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 						return this;
 					}
 				} catch (Exception e) {
-					OLogManager.instance().warn(this, "Error on checking the value of property %s against the record %s", e, iPropertyName,
+					OLogManager.instance().warn(this, "Error on checking the value of property %s against the record %s", e, iFieldName,
 							getIdentity());
 				}
 			}
 
-		if (iType != null)
-			setFieldType(iPropertyName, iType);
+		if (iFieldType != null)
+			setFieldType(iFieldName, iFieldType);
 		else if (_clazz != null) {
 			// SCHEMAFULL?
-			final OProperty prop = _clazz.getProperty(iPropertyName);
+			final OProperty prop = _clazz.getProperty(iFieldName);
 			if (prop != null)
-				iType = prop.getType();
+				iFieldType = prop.getType();
 		}
 
 		if (iPropertyValue == null) {
-			_fieldValues.put(iPropertyName, iPropertyValue);
+			_fieldValues.put(iFieldName, iPropertyValue);
 		} else {
-			if (iType != null) {
-				iPropertyValue = convertField(iPropertyName, iType.getDefaultJavaType(), iPropertyValue);
+			if (iFieldType != null) {
+				iPropertyValue = convertField(iFieldName, iFieldType.getDefaultJavaType(), iPropertyValue);
 			} else if (iPropertyValue instanceof Enum) {
 				iPropertyValue = iPropertyValue.toString();
 			}
@@ -690,12 +698,12 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 						_fieldOriginalValues = new HashMap<String, Object>();
 
 					// INSERT IT ONLY IF NOT EXISTS TO AVOID LOOSE OF THE ORIGINAL VALUE (FUNDAMENTAL FOR INDEX HOOK)
-					if (!_fieldOriginalValues.containsKey(iPropertyName))
-						_fieldOriginalValues.put(iPropertyName, oldValue);
+					if (!_fieldOriginalValues.containsKey(iFieldName))
+						_fieldOriginalValues.put(iFieldName, oldValue);
 				}
 			}
 
-			_fieldValues.put(iPropertyName, iPropertyValue);
+			_fieldValues.put(iFieldName, iPropertyValue);
 		}
 
 		return this;
@@ -704,12 +712,12 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	/**
 	 * Removes a field.
 	 */
-	public Object removeField(final String iPropertyName) {
+	public Object removeField(final String iFieldName) {
 		checkForLoading();
 		checkForFields();
 
-		final boolean knownProperty = _fieldValues.containsKey(iPropertyName);
-		final Object oldValue = _fieldValues.get(iPropertyName);
+		final boolean knownProperty = _fieldValues.containsKey(iFieldName);
+		final Object oldValue = _fieldValues.get(iFieldName);
 
 		if (knownProperty && _trackingChanges) {
 			// SAVE THE OLD VALUE IN A SEPARATE MAP
@@ -717,11 +725,11 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 				_fieldOriginalValues = new HashMap<String, Object>();
 
 			// INSERT IT ONLY IF NOT EXISTS TO AVOID LOOSE OF THE ORIGINAL VALUE (FUNDAMENTAL FOR INDEX HOOK)
-			if (!_fieldOriginalValues.containsKey(iPropertyName))
-				_fieldOriginalValues.put(iPropertyName, oldValue);
+			if (!_fieldOriginalValues.containsKey(iFieldName))
+				_fieldOriginalValues.put(iFieldName, oldValue);
 		}
 
-		_fieldValues.remove(iPropertyName);
+		_fieldValues.remove(iFieldName);
 		_source = null;
 
 		setDirty();
@@ -810,7 +818,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	/**
 	 * Returns the original value of a field before it has been changed.
 	 * 
-	 * @param iPropertyName
+	 * @param iFieldName
 	 *          Property name to retrieve the original value
 	 */
 	public Set<String> getDirtyFields() {
@@ -821,11 +829,11 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	/**
 	 * Returns the original value of a field before it has been changed.
 	 * 
-	 * @param iPropertyName
+	 * @param iFieldName
 	 *          Property name to retrieve the original value
 	 */
-	public Object getOriginalValue(final String iPropertyName) {
-		return _fieldOriginalValues != null ? _fieldOriginalValues.get(iPropertyName) : null;
+	public Object getOriginalValue(final String iFieldName) {
+		return _fieldOriginalValues != null ? _fieldOriginalValues.get(iFieldName) : null;
 	}
 
 	/**
@@ -957,6 +965,125 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		}
 	}
 
+	@Override
+	public ODocument fromStream(byte[] iRecordBuffer) {
+		_fieldValues = null;
+		_fieldTypes = null;
+		_fieldOriginalValues = null;
+		return (ODocument) super.fromStream(iRecordBuffer);
+	}
+
+	@Override
+	public void unsetDirty() {
+		_fieldOriginalValues = null;
+		super.unsetDirty();
+	}
+
+	/**
+	 * Returns the forced field type if any.
+	 * 
+	 * @param iFieldName
+	 */
+	public OType fieldType(final String iFieldName) {
+		return _fieldTypes != null ? _fieldTypes.get(iFieldName) : null;
+	}
+
+	@Override
+	public ODocument unload() {
+		super.unload();
+		if (_fieldValues != null)
+			_fieldValues.clear();
+		return this;
+	}
+
+	/**
+	 * Clear all the field values and types.
+	 */
+	@Override
+	public ODocument clear() {
+		super.clear();
+		if (_fieldValues != null)
+			_fieldValues.clear();
+		return this;
+	}
+
+	/**
+	 * Reset the record values and class type to being reused.
+	 */
+	@Override
+	public ODocument reset() {
+		super.reset();
+		if (_fieldValues != null)
+			_fieldValues.clear();
+		return this;
+	}
+
+	public boolean isLazyLoad() {
+		return _lazyLoad;
+	}
+
+	public void setLazyLoad(final boolean iLazyLoad) {
+		this._lazyLoad = iLazyLoad;
+	}
+
+	public boolean isTrackingChanges() {
+		return _trackingChanges;
+	}
+
+	/**
+	 * Enabled or disabled the tracking of changes in the document. This is needed by some triggers like {@link OPropertyIndexManager}
+	 * to determine what fields are changed to update indexes.
+	 * 
+	 * @param iTrackingChanges
+	 *          True to enable it, otherwise false
+	 * @return
+	 */
+	public ODocument setTrackingChanges(final boolean iTrackingChanges) {
+		this._trackingChanges = iTrackingChanges;
+		if (!iTrackingChanges)
+			// FREE RESOURCES
+			this._fieldOriginalValues = null;
+		return this;
+	}
+
+	public boolean isOrdered() {
+		return _ordered;
+	}
+
+	public ODocument setOrdered(final boolean iOrdered) {
+		this._ordered = iOrdered;
+		return this;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (!super.equals(obj))
+			return false;
+
+		return this == obj || _recordId.isValid();
+	}
+
+	/**
+	 * Returns the number of fields in memory.
+	 */
+	public int fields() {
+		return _fieldValues == null ? 0 : _fieldValues.size();
+	}
+
+	public boolean isEmpty() {
+		return _fieldValues == null || _fieldValues.isEmpty();
+	}
+
+	@Override
+	protected void checkForFields() {
+		if (_fieldValues == null)
+			_fieldValues = _ordered ? new LinkedHashMap<String, Object>() : new HashMap<String, Object>();
+
+		if (_status == ORecordElement.STATUS.LOADED && fields() == 0)
+			// POPULATE FIELDS LAZY
+			deserializeFields();
+	}
+
 	/**
 	 * Internal.
 	 */
@@ -966,11 +1093,11 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		_recordFormat = ORecordSerializerFactory.instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME);
 	}
 
-	private <RET> RET convertField(final String iPropertyName, final Class<?> iType, Object iValue) {
-		if (iType == null)
+	private <RET> RET convertField(final String iFieldName, final Class<?> iFieldType, Object iValue) {
+		if (iFieldType == null)
 			return (RET) iValue;
 
-		if (ORID.class.isAssignableFrom(iType)) {
+		if (ORID.class.isAssignableFrom(iFieldType)) {
 			if (iValue instanceof ORID) {
 				return (RET) iValue;
 			} else if (iValue instanceof String) {
@@ -978,13 +1105,13 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			} else if (iValue instanceof ORecord<?>) {
 				return (RET) ((ORecord<?>) iValue).getIdentity();
 			}
-		} else if (ORecord.class.isAssignableFrom(iType)) {
+		} else if (ORecord.class.isAssignableFrom(iFieldType)) {
 			if (iValue instanceof ORID || iValue instanceof ORecord<?>) {
 				return (RET) iValue;
 			} else if (iValue instanceof String) {
 				return (RET) new ORecordId((String) iValue);
 			}
-		} else if (Set.class.isAssignableFrom(iType)) {
+		} else if (Set.class.isAssignableFrom(iFieldType)) {
 			if (!(iValue instanceof Set)) {
 				// CONVERT IT TO SET
 				final Collection<?> newValue;
@@ -1014,7 +1141,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			} else {
 				return (RET) iValue;
 			}
-		} else if (List.class.isAssignableFrom(iType)) {
+		} else if (List.class.isAssignableFrom(iFieldType)) {
 			if (!(iValue instanceof List)) {
 				// CONVERT IT TO LIST
 				final Collection<?> newValue;
@@ -1046,14 +1173,14 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			}
 		} else if (iValue instanceof Enum) {
 			// ENUM
-			if (Number.class.isAssignableFrom(iType))
+			if (Number.class.isAssignableFrom(iFieldType))
 				iValue = ((Enum<?>) iValue).ordinal();
 			else
 				iValue = iValue.toString();
-			if (!(iValue instanceof String) && !iType.isAssignableFrom(iValue.getClass()))
-				throw new IllegalArgumentException("Property '" + iPropertyName + "' of type '" + iType + "' can't accept value of type: "
-						+ iValue.getClass());
-		} else if (Date.class.isAssignableFrom(iType)) {
+			if (!(iValue instanceof String) && !iFieldType.isAssignableFrom(iValue.getClass()))
+				throw new IllegalArgumentException("Property '" + iFieldName + "' of type '" + iFieldType
+						+ "' can't accept value of type: " + iValue.getClass());
+		} else if (Date.class.isAssignableFrom(iFieldType)) {
 			if (iValue instanceof String && _database != null) {
 				final OStorageConfiguration config = _database.getStorage().getConfiguration();
 
@@ -1066,7 +1193,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 				try {
 					Date newValue = formatter.parse((String) iValue);
-					// _fieldValues.put(iPropertyName, newValue);
+					// _fieldValues.put(iFieldName, newValue);
 					return (RET) newValue;
 				} catch (ParseException pe) {
 					final String dateFormat = ((String) iValue).length() > config.dateFormat.length() ? config.dateTimeFormat
@@ -1076,19 +1203,19 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			}
 		}
 
-		iValue = OType.convert(iValue, iType);
+		iValue = OType.convert(iValue, iFieldType);
 
 		return (RET) iValue;
 	}
 
-	protected void setFieldType(final String iPropertyName, final OType iType) {
-		if (iType == null)
+	protected void setFieldType(final String iFieldName, final OType iFieldType) {
+		if (iFieldType == null)
 			return;
 
 		// SAVE FORCED TYPE
 		if (_fieldTypes == null)
 			_fieldTypes = new HashMap<String, OType>();
-		_fieldTypes.put(iPropertyName, iType);
+		_fieldTypes.put(iFieldName, iFieldType);
 	}
 
 	private void copyFieldValue(final ODocument iCloned, final Entry<String, Object> iEntry) {
@@ -1146,28 +1273,28 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 				iCloned._fieldValues.put(iEntry.getKey(), fieldValue);
 	}
 
-	protected String checkFieldName(String iPropertyName) {
-		if (iPropertyName == null)
+	protected String checkFieldName(String iFieldName) {
+		if (iFieldName == null)
 			throw new IllegalArgumentException("Field name is null");
 
-		iPropertyName = iPropertyName.trim();
+		iFieldName = iFieldName.trim();
 
-		if (iPropertyName.length() == 0)
+		if (iFieldName.length() == 0)
 			throw new IllegalArgumentException("Field name is empty");
 
-		for (int i = 0; i < iPropertyName.length(); ++i) {
-			final char c = iPropertyName.charAt(i);
+		for (int i = 0; i < iFieldName.length(); ++i) {
+			final char c = iFieldName.charAt(i);
 			if (c == ':' || c == ',')
-				throw new IllegalArgumentException("Invalid field name '" + iPropertyName + "'");
+				throw new IllegalArgumentException("Invalid field name '" + iFieldName + "'");
 		}
 
-		// if (!Character.isJavaIdentifierStart(iPropertyName.charAt(0)))
+		// if (!Character.isJavaIdentifierStart(iFieldName.charAt(0)))
 		// throw new IllegalArgumentException("Invalid property name");
 		//
-		// for (int i = 1; i < iPropertyName.length(); ++i)
-		// if (!Character.isJavaIdentifierPart(iPropertyName.charAt(i)))
+		// for (int i = 1; i < iFieldName.length(); ++i)
+		// if (!Character.isJavaIdentifierPart(iFieldName.charAt(i)))
 		// throw new IllegalArgumentException("Invalid property name");
 
-		return iPropertyName;
+		return iFieldName;
 	}
 }

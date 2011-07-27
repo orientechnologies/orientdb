@@ -670,7 +670,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 					result.field(projection.getKey(), value);
 			}
 
-			if (canExcludeResult && result.fieldValues().length == 0)
+			if (canExcludeResult && result.isEmpty())
 				// RESULT EXCLUDED FOR EMPTY RECORD
 				return;
 
