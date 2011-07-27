@@ -60,6 +60,7 @@ import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 
 /**
  * This object is bound to each remote ODatabase instances.
@@ -202,13 +203,15 @@ public class OStorageRemote extends OStorageAbstract {
 
 		OChannelBinaryClient network = null;
 		try {
-			try {
-				network = beginRequest(OChannelBinaryProtocol.REQUEST_DB_CLOSE);
-			} finally {
-				endRequest(network);
-			}
+			if (networkPool.size() > 0) {
+				try {
+					network = beginRequest(OChannelBinaryProtocol.REQUEST_DB_CLOSE);
+				} finally {
+					endRequest(network);
+				}
 
-			getResponse(network);
+				getResponse(network);
+			}
 
 			OStorageRemoteThreadLocal.INSTANCE.get().sessionId = -1;
 
@@ -1241,6 +1244,9 @@ public class OStorageRemote extends OStorageAbstract {
 			final int beginCursor = networkPoolCursor;
 
 			while (network == null) {
+				if (networkPool.size() == 0)
+					throw new ONetworkProtocolException("Connection pool closed");
+
 				network = networkPool.get(networkPoolCursor);
 				if (network.getLockWrite().tryLock())
 					break;
