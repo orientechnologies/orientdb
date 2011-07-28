@@ -87,7 +87,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	public static final String											KEYWORD_ORDER_BY			= "ORDER BY";
 	public static final String											KEYWORD_LIMIT					= "LIMIT";
 	public static final String											KEYWORD_RANGE					= "RANGE";
+	public static final String											KEYWORD_RANGE_FIRST		= "FIRST";
+	public static final String											KEYWORD_RANGE_LAST		= "LAST";
 	private static final String											KEYWORD_FROM_2FIND		= " " + KEYWORD_FROM + " ";
+
+	private static ORecordId												FIRST									= new ORecordId();
+	private static ORecordId												LAST									= new ORecordId();
 
 	private OSQLAsynchQuery<ORecordSchemaAware<?>>	request;
 	private OSQLFilter															compiledFilter;
@@ -302,43 +307,40 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 	protected void extractRange(final StringBuilder word) {
 		int newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
-		if (!word.toString().contains(":"))
-			throw new OCommandSQLParsingException(
-					"Range must contains record id in the form of <cluster-id>:<cluster-pos>. Example: RANGE 10:50, 10:100", text, currentPos);
 
-		try {
-			rangeFrom = new ORecordId(word.toString());
-		} catch (Exception e) {
-			throw new OCommandSQLParsingException("Invalid record id setted as RANGE from. Value setted is '" + word
-					+ "' but it should be a valid record id in the form of <cluster-id>:<cluster-pos>. Example: RANGE 10:50", text,
-					currentPos);
-		}
+		rangeFrom = extractRangeBound(word.toString());
 
 		if (newPos == -1)
 			return;
 
 		currentPos = newPos;
-
 		newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
 
 		if (newPos == -1)
 			return;
 
 		if (!word.toString().equalsIgnoreCase("LIMIT")) {
-			if (!word.toString().contains(":"))
-				throw new OCommandSQLParsingException(
-						"Range must contains record id in the form of <cluster-id>:<cluster-pos>. Example: RANGE 10:50, 10:100", text,
-						currentPos);
-
-			try {
-				rangeTo = new ORecordId(word.toString());
-			} catch (Exception e) {
-				throw new OCommandSQLParsingException("Invalid record id setted as RANGE to. Value setted is '" + word
-						+ "' but it should be a valid record id in the form of <cluster-id>:<cluster-pos>. Example: RANGE 10:50, 10:100", text,
-						currentPos);
-			}
-
+			rangeTo = extractRangeBound(word.toString());
 			currentPos = newPos;
+		}
+	}
+
+	protected ORecordId extractRangeBound(final String iRangeBound) {
+		final String w = iRangeBound.toString();
+		if (w.equalsIgnoreCase(KEYWORD_RANGE_FIRST))
+			return FIRST;
+		else if (w.equalsIgnoreCase(KEYWORD_RANGE_LAST))
+			return LAST;
+		else if (!w.contains(":"))
+			throw new OCommandSQLParsingException(
+					"Range must contains the keyword 'first', 'last' or a valid record id in the form of <cluster-id>:<cluster-pos>. Example: RANGE 10:50, last",
+					text, currentPos);
+
+		try {
+			return new ORecordId(iRangeBound.toString());
+		} catch (Exception e) {
+			throw new OCommandSQLParsingException("Invalid record id setted as RANGE to. Value setted is '" + iRangeBound
+					+ "' but it should be a valid record id in the form of <cluster-id>:<cluster-pos>. Example: 10:50", text, currentPos);
 		}
 	}
 
