@@ -316,7 +316,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 			for (OClass cls : classes) {
 				writer.beginObject(3, true, null);
 				writer.writeAttribute(0, false, "name", cls.getName());
-				writer.writeAttribute(0, false, "id", cls.getId());
 				writer.writeAttribute(0, false, "default-cluster-id", cls.getDefaultClusterId());
 				writer.writeAttribute(0, false, "cluster-ids", cls.getClusterIds());
 				if (cls.getSuperClass() != null)
@@ -333,7 +332,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 					for (OProperty p : properties) {
 						writer.beginObject(5, true, null);
 						writer.writeAttribute(0, false, "name", p.getName());
-						writer.writeAttribute(0, false, "id", p.getId());
 						writer.writeAttribute(0, false, "type", p.getType().toString());
 						writer.writeAttribute(0, false, "mandatory", p.isMandatory());
 						writer.writeAttribute(0, false, "not-null", p.isNotNull());

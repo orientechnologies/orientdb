@@ -276,40 +276,34 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 				.readNext(OJSONReader.BEGIN_COLLECTION);
 
 		long classImported = 0;
-		String className;
-		int classId;
-		int classDefClusterId;
-		String classClusterIds;
-		String classSuper = null;
-
-		OClassImpl cls;
 
 		try {
 			do {
 				jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
 
-				className = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"name\"")
+				final String className = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"name\"")
 						.readString(OJSONReader.COMMA_SEPARATOR);
 
-				classId = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"id\"").readInteger(OJSONReader.COMMA_SEPARATOR);
+				String next = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).getValue();
 
-				classDefClusterId = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"default-cluster-id\"")
-						.readInteger(OJSONReader.COMMA_SEPARATOR);
+				if (next.equals("\"id\""))
+					// @COMPATIBILITY 1.0rc4 IGNORE THE ID
+					next = jsonReader.readString(OJSONReader.COMMA_SEPARATOR);
 
-				classClusterIds = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"cluster-ids\"")
+				next = jsonReader.checkContent("\"default-cluster-id\"").readString(OJSONReader.NEXT_IN_OBJECT);
+
+				final int classDefClusterId = Integer.parseInt(next);
+
+				String classClusterIds = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"cluster-ids\"")
 						.readString(OJSONReader.NEXT_IN_OBJECT).trim();
 
-				cls = (OClassImpl) database.getMetadata().getSchema().getClass(className);
+				OClassImpl cls = (OClassImpl) database.getMetadata().getSchema().getClass(className);
 
 				if (cls != null) {
 					if (cls.getDefaultClusterId() != classDefClusterId)
 						cls.setDefaultClusterId(classDefClusterId);
 				} else
 					cls = (OClassImpl) database.getMetadata().getSchema().createClass(className, classDefClusterId);
-
-				if (classId != cls.getId())
-					throw new OSchemaException("Imported class '" + className + "' has id=" + cls.getId() + " different from the original: "
-							+ classId);
 
 				if (classClusterIds != null) {
 					// REMOVE BRACES
@@ -330,7 +324,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 						final String shortName = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
 						cls.setShortName(shortName);
 					} else if (value.equals("\"super-class\"")) {
-						classSuper = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+						final String classSuper = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
 						superClasses.put(cls, classSuper);
 					} else if (value.equals("\"properties\"")) {
 						// GET PROPERTIES
@@ -379,11 +373,15 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		String propName = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"name\"")
 				.readString(OJSONReader.COMMA_SEPARATOR);
 
-		final int id = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"id\"")
-				.readInteger(OJSONReader.COMMA_SEPARATOR);
+		String next = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).getValue();
 
-		final OType type = OType.valueOf(jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"type\"")
-				.readString(OJSONReader.NEXT_IN_OBJECT));
+		if (next.equals("\"id\""))
+			// @COMPATIBILITY 1.0rc4 IGNORE THE ID
+			next = jsonReader.readString(OJSONReader.COMMA_SEPARATOR);
+
+		next = jsonReader.checkContent("\"type\"").readString(OJSONReader.NEXT_IN_OBJECT);
+
+		final OType type = OType.valueOf(next);
 
 		String attrib;
 		String value;
