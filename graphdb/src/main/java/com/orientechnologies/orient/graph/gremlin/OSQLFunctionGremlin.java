@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+import com.tinkerpop.blueprints.pgm.impls.orientdb.OrientEdge;
 import com.tinkerpop.blueprints.pgm.impls.orientdb.OrientElement;
 import com.tinkerpop.blueprints.pgm.impls.orientdb.OrientGraph;
 import com.tinkerpop.blueprints.pgm.impls.orientdb.OrientVertex;
@@ -62,6 +63,7 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 
 		if (engine == null) {
 			engine = new GremlinScriptEngine();
+			// TODO THIS COULD BE IMPROVED BY CREATING A ORIENT-GRAPH POOL (LIKE WITH OTHER DB TYPES) INSTEAD TO CREATE IT PER QUERY
 			graph = new OrientGraph(iCurrentRecord.getDatabase().getURL());
 			engine.getBindings(ScriptContext.ENGINE_SCOPE).put("g", graph);
 		}
@@ -69,9 +71,11 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 		final OrientElement graphElement;
 
 		if (document.getSchemaClass().isSubClassOf(OGraphDatabase.VERTEX_CLASS_NAME))
+			// VERTEX TYPE
 			graphElement = new OrientVertex(graph, document);
-		else if (document.getSchemaClass().isSubClassOf(OGraphDatabase.VERTEX_CLASS_NAME))
-			graphElement = new OrientVertex(graph, document);
+		else if (document.getSchemaClass().isSubClassOf(OGraphDatabase.EDGE_CLASS_NAME))
+			// EDGE TYPE
+			graphElement = new OrientEdge(graph, document);
 		else
 			// UNKNOWN CLASS: IGNORE IT
 			return null;
