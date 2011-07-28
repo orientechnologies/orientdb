@@ -100,8 +100,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	private List<OPair<String, String>>							orderedFields;
 	private List<OIdentifiable>											tempResult;
 	private int																			resultCount;
-	private ORecordId																rangeFrom;
-	private ORecordId																rangeTo;
+	private ORecordId																rangeFrom							= FIRST;
+	private ORecordId																rangeTo								= LAST;
 	private Object																	flattenTarget;
 	private boolean																	anyFunctionAggregates	= false;
 
@@ -128,8 +128,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 		if (iRequest instanceof OSQLSynchQuery) {
 			request = (OSQLSynchQuery<ORecordSchemaAware<?>>) iRequest;
-			rangeFrom = request.getBeginRange().isValid() ? request.getBeginRange() : null;
-			rangeTo = request.getEndRange().isValid() ? request.getEndRange() : null;
+			if (request.getBeginRange().isValid())
+				rangeFrom = request.getBeginRange();
+			if (request.getEndRange().isValid())
+				rangeTo = request.getEndRange();
 		} else if (iRequest instanceof OSQLAsynchQuery)
 			request = (OSQLAsynchQuery<ORecordSchemaAware<?>>) iRequest;
 		else {
@@ -140,7 +142,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				request.setResultListener(iRequest.getResultListener());
 		}
 
-		final int pos = extractProjections();
+		final int pos = parseProjections();
 		if (pos == -1)
 			return this;
 
@@ -174,11 +176,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				if (currentPos > -1) {
 					w = word.toString();
 					if (w.equals(KEYWORD_ORDER))
-						extractOrderBy(word);
+						parseOrderBy(word);
 					else if (w.equals(KEYWORD_RANGE))
-						extractRange(word);
+						parseRange(word);
 					else if (w.equals(KEYWORD_LIMIT))
-						extractLimit(word);
+						parseLimit(word);
 				}
 			}
 		}
@@ -245,7 +247,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		return orderedFields;
 	}
 
-	protected void extractOrderBy(final StringBuilder word) {
+	protected void parseOrderBy(final StringBuilder word) {
 		int newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
 
 		if (!KEYWORD_BY.equals(word.toString()))
@@ -305,7 +307,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			currentPos -= KEYWORD_RANGE.length();
 	}
 
-	protected void extractRange(final StringBuilder word) {
+	protected void parseRange(final StringBuilder word) {
 		int newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
 
 		rangeFrom = extractRangeBound(word.toString());
@@ -325,28 +327,46 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		}
 	}
 
-	protected ORecordId extractRangeBound(final String iRangeBound) {
-		final String w = iRangeBound.toString();
-		if (w.equalsIgnoreCase(KEYWORD_RANGE_FIRST))
+	/**
+	 * Extract a range bound. Allowed values are: first, last and a valid record id
+	 * 
+	 * @param iRangeBound
+	 *          String to parse
+	 * @return {@link ORecordId} instance
+	 * @throws OCommandSQLParsingException
+	 *           if no valid range has been found
+	 */
+	protected ORecordId extractRangeBound(final String iRangeBound) throws OCommandSQLParsingException {
+		if (iRangeBound.equalsIgnoreCase(KEYWORD_RANGE_FIRST))
 			return FIRST;
-		else if (w.equalsIgnoreCase(KEYWORD_RANGE_LAST))
+		else if (iRangeBound.equalsIgnoreCase(KEYWORD_RANGE_LAST))
 			return LAST;
-		else if (!w.contains(":"))
+		else if (!iRangeBound.contains(":"))
 			throw new OCommandSQLParsingException(
 					"Range must contains the keyword 'first', 'last' or a valid record id in the form of <cluster-id>:<cluster-pos>. Example: RANGE 10:50, last",
 					text, currentPos);
 
 		try {
-			return new ORecordId(iRangeBound.toString());
+			return new ORecordId(iRangeBound);
 		} catch (Exception e) {
 			throw new OCommandSQLParsingException("Invalid record id setted as RANGE to. Value setted is '" + iRangeBound
 					+ "' but it should be a valid record id in the form of <cluster-id>:<cluster-pos>. Example: 10:50", text, currentPos);
 		}
 	}
 
-	protected void extractLimit(final StringBuilder word) {
+	/**
+	 * Parses the limit keyword if found.
+	 * 
+	 * @param word
+	 *          StringBuilder to parse
+	 * @return
+	 * @return the limit found as integer, or -1 if no limit is found. -1 means no limits.
+	 * @throws OCommandSQLParsingException
+	 *           if no valid limit has been found
+	 */
+	protected int parseLimit(final StringBuilder word) throws OCommandSQLParsingException {
 		if (!word.toString().equals(KEYWORD_LIMIT))
-			return;
+			return -1;
 
 		currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
 		try {
@@ -355,6 +375,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			throw new OCommandSQLParsingException("Invalid LIMIT value setted to '" + word
 					+ "' but it should be a valid integer. Example: LIMIT 10", text, currentPos);
 		}
+		return limit;
 	}
 
 	private boolean searchForIndexes(final List<ORecord<?>> iResultSet, final OClass iSchemaClass) {
@@ -494,13 +515,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	 * @param indexResultSet
 	 *          Result of index search.
 	 */
-	private void fillSearchIndexResultSet(List<ORecord<?>> resultSet, Collection<OIdentifiable> indexResultSet) {
+	private void fillSearchIndexResultSet(final List<ORecord<?>> resultSet, final Collection<OIdentifiable> indexResultSet) {
 		if (indexResultSet != null && indexResultSet.size() > 0)
 			for (OIdentifiable o : indexResultSet) {
-				if (rangeFrom != null && o.getIdentity().compareTo(rangeFrom) <= 0)
+				if (rangeFrom != FIRST && o.getIdentity().compareTo(rangeFrom) <= 0)
 					continue;
 
-				if (rangeTo != null && o.getIdentity().compareTo(rangeTo) > 0)
+				if (rangeTo != LAST && o.getIdentity().compareTo(rangeTo) > 0)
 					continue;
 
 				if (o instanceof ORID)
@@ -514,7 +535,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		return compiledFilter.evaluate(database, (ORecordSchemaAware<?>) iRecord);
 	}
 
-	protected int extractProjections() {
+	protected int parseProjections() {
 		int currentPos = 0;
 		final StringBuilder word = new StringBuilder();
 
@@ -600,8 +621,21 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	}
 
 	private void scanEntireClusters(final int[] clusterIds) {
-		((OStorageEmbedded) database.getStorage()).browse(clusterIds, rangeFrom, rangeTo, this,
+		final ORecordId realRangeFrom = getRealRange(clusterIds, rangeFrom);
+		final ORecordId realRangeTo = getRealRange(clusterIds, rangeTo);
+
+		((OStorageEmbedded) database.getStorage()).browse(clusterIds, realRangeFrom, realRangeTo, this,
 				(ORecordInternal<?>) database.newInstance(), false);
+	}
+
+	private ORecordId getRealRange(final int[] clusterIds, final ORecordId iRange) {
+		if (iRange == FIRST)
+			// COMPUTE THE REAL RANGE BASED ON CLUSTERS: GET THE FIRST POSITION
+			return new ORecordId(clusterIds[0], 0);
+		else if (iRange == LAST)
+			// COMPUTE THE REAL RANGE BASED ON CLUSTERS: GET LATEST POSITION
+			return new ORecordId(clusterIds[clusterIds.length - 1], -1);
+		return iRange;
 	}
 
 	private void applyOrderBy() {

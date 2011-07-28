@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -87,9 +88,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		this(iOwner);
 		id = iId;
 		name = iName;
-		clusterIds = iClusterIds;
-		polymorphicClusterIds = iClusterIds;
-		clusterIds = iClusterIds;
+		setClusterIds(iClusterIds);
+		setPolymorphicClusterIds(iClusterIds);
 		defaultClusterId = iClusterIds[0];
 	}
 
@@ -366,8 +366,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 				clusterIds[i++] = item.intValue();
 		} else
 			clusterIds = (int[]) cc;
+		Arrays.sort(clusterIds);
 
-		polymorphicClusterIds = clusterIds;
+		setPolymorphicClusterIds(clusterIds);
 
 		// READ PROPERTIES
 		OPropertyImpl prop;
@@ -441,6 +442,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
 		clusterIds = OArrays.copyOf(clusterIds, clusterIds.length + 1);
 		clusterIds[clusterIds.length - 1] = iId;
+		Arrays.sort(clusterIds);
 		setDirty();
 		return this;
 	}
@@ -694,6 +696,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 				// ADD IT
 				polymorphicClusterIds = OArrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length + 1);
 				polymorphicClusterIds[polymorphicClusterIds.length - 1] = i;
+				Arrays.sort(polymorphicClusterIds);
 			}
 		}
 	}
@@ -725,5 +728,15 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
 	public void saveInternal() {
 		owner.saveInternal();
+	}
+
+	private void setPolymorphicClusterIds(final int[] iClusterIds) {
+		polymorphicClusterIds = iClusterIds;
+		Arrays.sort(polymorphicClusterIds);
+	}
+
+	private void setClusterIds(final int[] iClusterIds) {
+		clusterIds = iClusterIds;
+		Arrays.sort(clusterIds);
 	}
 }
