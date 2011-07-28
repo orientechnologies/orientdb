@@ -38,7 +38,6 @@ import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityReso
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
@@ -52,8 +51,8 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  */
 @SuppressWarnings("unchecked")
 public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, OCloseable {
+	public static final int					CURRENT_VERSION_NUMBER	= 4;
 	protected Map<String, OClass>		classes									= new HashMap<String, OClass>();
-	private static final int				CURRENT_VERSION_NUMBER	= 4;
 	private OSharedResourceExternal	lock										= new OSharedResourceExternal();
 
 	public OSchemaShared(final int schemaClusterId) {

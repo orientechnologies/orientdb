@@ -29,18 +29,23 @@ import java.util.Set;
 import java.util.zip.GZIPOutputStream;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLogical;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreePersistent;
 
 /**
  * Export data from a database to a file.
@@ -49,8 +54,9 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
  * 
  */
 public class ODatabaseExport extends ODatabaseImpExpAbstract {
-	private OJSONWriter	writer;
-	private long				recordExported;
+	private OJSONWriter			writer;
+	private long						recordExported;
+	public static final int	VERSION	= 1;
 
 	public ODatabaseExport(final ODatabaseRecord iDatabase, final String iFileName, final OCommandOutputListener iListener)
 			throws IOException {
@@ -147,21 +153,37 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
 			long recordNum = 0;
 			if (clusterName != null)
-				for (ORecordInternal<?> rec : database.browseCluster(clusterName)) {
+				for (ORecordIteratorCluster<ORecordInternal<?>> it = database.browseCluster(clusterName); it.hasNext();) {
 
-					if (rec instanceof ODocument) {
-						// CHECK IF THE CLASS OF THE DOCUMENT IS INCLUDED
-						ODocument doc = (ODocument) rec;
-						if (includeClasses != null) {
-							if (!includeClasses.contains(doc.getClassName()))
-								continue;
-						} else if (excludeClasses != null) {
-							if (excludeClasses.contains(doc.getClassName()))
-								continue;
+					ORecordInternal<?> rec = null;
+
+					try {
+						rec = it.next();
+						if (rec instanceof ODocument) {
+							// CHECK IF THE CLASS OF THE DOCUMENT IS INCLUDED
+							ODocument doc = (ODocument) rec;
+							if (includeClasses != null) {
+								if (!includeClasses.contains(doc.getClassName()))
+									continue;
+							} else if (excludeClasses != null) {
+								if (excludeClasses.contains(doc.getClassName()))
+									continue;
+							}
+						}
+
+						exportRecord(recordTot, recordNum++, rec);
+					} catch (Throwable t) {
+						if (rec != null) {
+							final byte[] buffer = rec.toStream();
+
+							OLogManager
+									.instance()
+									.error(
+											this,
+											"Error on exporting record #%s. It seems corrupted; size: %d bytes, raw content (as string):\n==========\n%s\n==========",
+											t, rec.getIdentity(), buffer.length, new String(buffer));
 						}
 					}
-
-					exportRecord(recordTot, recordNum++, rec);
 				}
 
 			listener.onMessage("OK (records=" + recordTot + ")");
@@ -237,6 +259,11 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 		writer.beginObject(1, true, "info");
 		writer.writeAttribute(2, true, "name", database.getName().replace('\\', '/'));
 		writer.writeAttribute(2, true, "default-cluster-id", database.getDefaultClusterId());
+		writer.writeAttribute(2, true, "exporter-version", VERSION);
+		writer.writeAttribute(2, true, "engine-version", OConstants.ORIENT_VERSION);
+		writer.writeAttribute(2, true, "storage-config-version", OStorageConfiguration.CURRENT_VERSION);
+		writer.writeAttribute(2, true, "schema-version", OSchemaShared.CURRENT_VERSION_NUMBER);
+		writer.writeAttribute(2, true, "mvrbtree-version", OMVRBTreePersistent.CURRENT_PROTOCOL_VERSION);
 		writer.endObject(1, true);
 
 		listener.onMessage("OK");
@@ -337,21 +364,13 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 		if (rec == null)
 			return;
 
-		try {
-			if (rec.getIdentity().isValid())
-				rec.reload();
+		if (rec.getIdentity().isValid())
+			rec.reload();
 
-			if (recordExported > 0)
-				writer.append(",");
+		if (recordExported > 0)
+			writer.append(",");
 
-			writer.append(rec.toJSON("rid,type,version,class,attribSameRow,indent:4,keepTypes"));
-		} catch (Throwable t) {
-			byte[] buffer = rec.toStream();
-
-			OLogManager.instance().error(this,
-					"Error on exporting record #%s. It seems corrupted; size: %d bytes, raw content (as string): %s", t, rec.getIdentity(),
-					buffer.length, new String(buffer));
-		}
+		writer.append(rec.toJSON("rid,type,version,class,attribSameRow,indent:4,keepTypes"));
 
 		recordExported++;
 		recordNum++;
