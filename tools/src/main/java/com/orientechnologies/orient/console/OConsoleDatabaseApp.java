@@ -349,14 +349,18 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Truncate the class content in the current database")
-	public void truncateClass(
-			@ConsoleParameter(name = "class-name", description = "The name of the class to truncate") String iCommandText) {
+	public void truncateClass(@ConsoleParameter(name = "text", description = "The name of the class to truncate") String iCommandText) {
 		sqlCommand("truncate", iCommandText, "\nTruncated %d record(s) in %f sec(s).\n");
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Truncate the cluster content in the current database")
 	public void truncateCluster(
-			@ConsoleParameter(name = "class-name", description = "The name of the class to truncate") String iCommandText) {
+			@ConsoleParameter(name = "text", description = "The name of the class to truncate") String iCommandText) {
+		sqlCommand("truncate", iCommandText, "\nTruncated %d record(s) in %f sec(s).\n");
+	}
+
+	@ConsoleCommand(splitInWords = false, description = "Truncate a record deleting it at low level")
+	public void truncateRecord(@ConsoleParameter(name = "text", description = "The record(s) to truncate") String iCommandText) {
 		sqlCommand("truncate", iCommandText, "\nTruncated %d record(s) in %f sec(s).\n");
 	}
 
