@@ -261,6 +261,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 		writer.writeAttribute(2, true, "default-cluster-id", database.getDefaultClusterId());
 		writer.writeAttribute(2, true, "exporter-version", VERSION);
 		writer.writeAttribute(2, true, "engine-version", OConstants.ORIENT_VERSION);
+		final String engineBuild = OConstants.getBuildNumber();
+		if (engineBuild != null)
+			writer.writeAttribute(2, true, "engine-build", engineBuild);
 		writer.writeAttribute(2, true, "storage-config-version", OStorageConfiguration.CURRENT_VERSION);
 		writer.writeAttribute(2, true, "schema-version", OSchemaShared.CURRENT_VERSION_NUMBER);
 		writer.writeAttribute(2, true, "mvrbtree-version", OMVRBTreePersistent.CURRENT_PROTOCOL_VERSION);

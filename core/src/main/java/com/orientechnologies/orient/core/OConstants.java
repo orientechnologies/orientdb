@@ -39,4 +39,12 @@ public class OConstants {
 
 		return buffer.toString();
 	}
+
+	public static String getBuildNumber() {
+		final String buildNumber = System.getProperty("orientdb.build.number");
+		if (buildNumber == null)
+			return null;
+
+		return buildNumber;
+	}
 }
