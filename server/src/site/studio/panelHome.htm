@@ -1,91 +1,104 @@
 <table width="100%" cellspacing="10">
 	<tr>
 		<td valign="top" width="60%">
-		<form id="signin" action="#">
-		<table width="100%" cellpadding="4" cellspacing="3">
-			<tr>
-				<td colspan="3" align="left" valign="bottom"><a href="http://www.orientechnologies.com/orient-db.htm"><img border="0"
-					src="images/orient_db.png" /></a><b class="help">Studio</b></td>
-			</tr>
-			<tr>
-				<td colspan="2" align="left" class="help"><br>
-				<p>Welcome to the OrientDB Studio application. If this is your first time play with the 'demo' database provided in bundle with any
-				OrientDB distribution.</p>
-				<p>To Login use "reader/reader" to read records from the database, and "writer/writer" to read, create, update and delete records.
-				To access to the Server information use, in the "Server" tab, "root" as user and the automatic generated password created in the file
-				"config/orient-server-config.xml".</p>
-				</td>
-			</tr>
-			<tr>
-				<td align="right" class="ui-widget help">Server:</td>
-				<td><input id="server" size="50" value="" class="ui-widget help" /></td>
-			</tr>
-			<tr>
-				<td align="right" class="ui-widget help">Database:</td>
-				<td><input id="database" size="50" value="demo" class="ui-widget help" /></td>
-			</tr>
-			<tr>
-				<td align="right" class="ui-widget help">User:</td>
-				<td><input id="user" size="25" value="" class="ui-widget help" /></td>
-			</tr>
-			<tr>
-				<td align="right" class="ui-widget help">Password:</td>
-				<td><input id="password" type="password" size="25" value="" class="ui-widget help" /></td>
-			</tr>
-			<tr>
-				<td align="center" colspan="2" class="ui-widget help">
-				<button type="submit" id="buttonConnect" onclick="javascript:connect()" class="ui-button-text-icon">Connect <img border="0"
-					alt="Refresh" src="images/connect.png" align="top" /></button>
-				</td>
-			</tr>
-			<tr>
-				<td colspan="2">To report problems use the <a href="http://code.google.com/p/orient/issues/list">Issue Tracker</a>, to receive help
-				jump to the <a href="http://groups.google.com/group/orient-database">Forum</a>. Need a <a
-					href="http://www.orientechnologies.com/training.htm">course</a>?</td>
-			</tr>
-		</table>
-		</form>
-		</td>
+			<form id="signin" action="#">
+				<table width="100%" cellpadding="4" cellspacing="3">
+					<tr>
+						<td colspan="3" align="left" valign="bottom"><a href="http://www.orientechnologies.com/orient-db.htm"><img border="0"
+								src="images/orient_db.png" /> </a><b class="help">Studio</b>
+						</td>
+					</tr>
+					<tr>
+						<td colspan="2" align="left" class="help"><br>
+							<p>Welcome to the OrientDB Studio application. If this is your first time play with the 'demo' database provided in bundle with the
+								official OrientDB distribution.</p>
+							<p>To Login use "reader/reader" to read records from the database, and "writer/writer" to read, create, update and delete records. To access
+								Server information log into a database and then click on the "Server" tab (top right). At the prompt of credentials use "root" as user and the
+								automatic generated password created under the OrientDB installation directory, in the file "config/orient-server-config.xml".</p>
+						</td>
+					</tr>
+					<tr>
+						<td align="right" class="ui-widget help">Server:</td>
+						<td><input id="server" size="50" value="" class="ui-widget help" />
+						</td>
+					</tr>
+					<tr>
+						<td align="right" class="ui-widget help">Database:</td>
+						<td><input id="database" size="50" value="demo" class="ui-widget help" />
+						</td>
+					</tr>
+					<tr>
+						<td align="right" class="ui-widget help">User:</td>
+						<td><input id="user" size="25" value="" class="ui-widget help" />
+						</td>
+					</tr>
+					<tr>
+						<td align="right" class="ui-widget help">Password:</td>
+						<td><input id="password" type="password" size="25" value="" class="ui-widget help" />
+						</td>
+					</tr>
+					<tr>
+						<td align="center" colspan="2" class="ui-widget help">
+							<button type="submit" id="buttonConnect" onclick="javascript:connect()" class="ui-button-text-icon">
+								Connect <img border="0" alt="Refresh" src="images/connect.png" align="top" />
+							</button></td>
+					</tr>
+					<tr>
+						<td colspan="2">To report problems use the <a href="http://code.google.com/p/orient/issues/list">Issue Tracker</a>, to receive help jump to
+							the <a href="http://groups.google.com/group/orient-database">Forum</a>. Need a <a href="http://www.orientechnologies.com/training.htm">course</a>?</td>
+					</tr>
+				</table>
+			</form></td>
 		<td class="drop-shadow" width="40%">
-		<table width="100%">
-			<tr>
-				<td class="help"><b>Quick reference</b>
-				<ul>
-					<li>General
-					<ul>
-						<li><a href="http://code.google.com/p/orient/wiki/SQL">SQL overview</a></li>
-						<li><a href="http://code.google.com/p/orient/wiki/SQLWhere">SQL where syntax</a></li>
-						<li><a href="http://code.google.com/p/orient/wiki/SQLWhere#Operators">Operators</a></li>
-						<li><a href="http://code.google.com/p/orient/wiki/SQLWhere#Functions">Functions</a></li>
-					</ul>
-					</li>
-					<li>CRUD operations
-					<ul>
-						<li><a href="http://code.google.com/p/orient/wiki/SQLQuery">SQL Select used as command and for queries</a></li>
-						<li><a href="http://code.google.com/p/orient/wiki/SQLInsert">SQL Insert to insert new records</a></li>
-						<li><a href="http://code.google.com/p/orient/wiki/SQLUpdate">SQL Update to update one or more records</a></li>
-						<li><a href="http://code.google.com/p/orient/wiki/SQLDelete">SQL Delete to delete one or more records</a></li>
-					</ul>
-					<li>Security
-					<ul>
-						<li><a href="http://code.google.com/p/orient/wiki/SQLGrant">SQL Grant</a></li>
-						<li><a href="http://code.google.com/p/orient/wiki/SQLRevoke">SQL Revoke</a></li>
-					</ul>
-					</li>
-					<li>Schema
-					<ul>
-						<li><a href="http://code.google.com/p/orient/wiki/SQLCreateProperty">Create Property</a></li>
-						<li><a href="http://code.google.com/p/orient/wiki/SQLRemoveProperty">Remove Property</a></li>
-						<li><a href="http://code.google.com/p/orient/wiki/SQLGrant">Create Index</a></li>
-						<li><a href="http://code.google.com/p/orient/wiki/SQLGrant">Remove Index</a></li>
-						<li><a href="http://code.google.com/p/orient/wiki/SQLGrant">Create Link</a></li>
-					</ul>
-					</li>
-				</ul>
-				For more information look at the <a href="http://code.google.com/p/orient/wiki/Main">Documentation</a>.</td>
-			</tr>
-		</table>
-		</td>
+			<table width="100%">
+				<tr>
+					<td class="help"><b>Quick reference</b>
+						<ul>
+							<li>General
+								<ul>
+									<li><a href="http://code.google.com/p/orient/wiki/SQL">SQL overview</a>
+									</li>
+									<li><a href="http://code.google.com/p/orient/wiki/SQLWhere">SQL where syntax</a>
+									</li>
+									<li><a href="http://code.google.com/p/orient/wiki/SQLWhere#Operators">Operators</a>
+									</li>
+									<li><a href="http://code.google.com/p/orient/wiki/SQLWhere#Functions">Functions</a>
+									</li>
+								</ul></li>
+							<li>CRUD operations
+								<ul>
+									<li><a href="http://code.google.com/p/orient/wiki/SQLQuery">SQL Select used as command and for queries</a>
+									</li>
+									<li><a href="http://code.google.com/p/orient/wiki/SQLInsert">SQL Insert to insert new records</a>
+									</li>
+									<li><a href="http://code.google.com/p/orient/wiki/SQLUpdate">SQL Update to update one or more records</a>
+									</li>
+									<li><a href="http://code.google.com/p/orient/wiki/SQLDelete">SQL Delete to delete one or more records</a>
+									</li>
+								</ul>
+							<li>Security
+								<ul>
+									<li><a href="http://code.google.com/p/orient/wiki/SQLGrant">SQL Grant</a>
+									</li>
+									<li><a href="http://code.google.com/p/orient/wiki/SQLRevoke">SQL Revoke</a>
+									</li>
+								</ul></li>
+							<li>Schema
+								<ul>
+									<li><a href="http://code.google.com/p/orient/wiki/SQLCreateProperty">Create Property</a>
+									</li>
+									<li><a href="http://code.google.com/p/orient/wiki/SQLRemoveProperty">Remove Property</a>
+									</li>
+									<li><a href="http://code.google.com/p/orient/wiki/SQLGrant">Create Index</a>
+									</li>
+									<li><a href="http://code.google.com/p/orient/wiki/SQLGrant">Remove Index</a>
+									</li>
+									<li><a href="http://code.google.com/p/orient/wiki/SQLGrant">Create Link</a>
+									</li>
+								</ul></li>
+						</ul> For more information look at the <a href="http://code.google.com/p/orient/wiki/Main">Documentation</a>.</td>
+				</tr>
+			</table></td>
 	</tr>
 </table>
 
