@@ -167,7 +167,7 @@ public class OStorageLocalTxExecuter {
 		return txSegment;
 	}
 
-	protected void commitAllPendingRecords(final OTransaction iTx) throws IOException {
+	public void commitAllPendingRecords(final OTransaction iTx) throws IOException {
 		// COPY ALL THE ENTRIES IN SEPARATE COLLECTION SINCE DURING THE COMMIT PHASE SOME NEW ENTRIES COULD BE CREATED AND
 		// CONCURRENT-EXCEPTION MAY OCCURS
 		final Set<OTransactionRecordEntry> allEntries = new HashSet<OTransactionRecordEntry>();
@@ -190,13 +190,15 @@ public class OStorageLocalTxExecuter {
 			}
 		}
 
-		// CLEAR ALL TEMPORARY RECORDS
-		txSegment.clearLogEntries(iTx.getId());
-
 		// UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT
 		OTransactionAbstract.updateCacheFromEntries(storage, iTx, allEntries);
 
 		allEntries.clear();
+	}
+
+	public void clearLogEntries(final OTransaction iTx) throws IOException {
+		// CLEAR ALL TEMPORARY RECORDS
+		txSegment.clearLogEntries(iTx.getId());
 	}
 
 	private void commitEntry(final OTransaction iTx, final OTransactionRecordEntry txEntry, final boolean iUseLog) throws IOException {

@@ -129,7 +129,7 @@ public class ORecordId implements ORID {
 			return true;
 		if (obj == null)
 			return false;
-		if (getClass() != obj.getClass())
+		if (!(obj instanceof ORecordId))
 			return false;
 		final ORecordId other = (ORecordId) obj;
 		if (clusterId != other.clusterId)

@@ -52,7 +52,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
 		status = TXSTATUS.ROLLBACKING;
 
-		database.getStorage().rollback(this);
+		// ROLLBACK AT STORAGE LEVEL DONE IN THE COMMIT PHASE ONLY
+		// database.getStorage().rollback(this);
 
 		// INVALIDATE THE CACHE
 		database.getLevel1Cache().invalidate();

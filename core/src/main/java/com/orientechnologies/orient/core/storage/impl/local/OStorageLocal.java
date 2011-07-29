@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -260,6 +261,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		return new File(path + "/" + OStorage.DATA_DEFAULT_NAME + ".0" + ODataLocal.DEF_EXTENSION).exists();
 	}
 
+	@Override
 	public void close(final boolean iForce) {
 		final long timer = OProfiler.getInstance().startChrono();
 
@@ -664,15 +666,30 @@ public class OStorageLocal extends OStorageEmbedded {
 		lock.acquireExclusiveLock();
 		try {
 
-			txManager.commitAllPendingRecords((OTransaction) iTx);
+			try {
+				txManager.commitAllPendingRecords(iTx);
 
-			incrementVersion();
-			if (OGlobalConfiguration.TX_COMMIT_SYNCH.getValueAsBoolean())
-				synch();
+				incrementVersion();
+				if (OGlobalConfiguration.TX_COMMIT_SYNCH.getValueAsBoolean())
+					synch();
 
-		} catch (IOException e) {
-			rollback(iTx);
+			} catch (RuntimeException e) {
+				// WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
+				rollback(iTx);
+				throw e;
+			} catch (IOException e) {
+				// WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
+				rollback(iTx);
+				throw new OException(e);
+			}
 
+			try {
+				txManager.clearLogEntries(iTx);
+			} catch (Exception e) {
+				// XXX WHAT CAN WE DO HERE ? ROLLBACK IS NOT POSSIBLE
+				// IF WE THROW EXCEPTION, A ROLLBACK WILL BE DONE AT DB LEVEL BUT NOT AT STORAGE LEVEL
+				OLogManager.instance().error(this, "Clear tx log entries failed", e);
+			}
 		} finally {
 			lock.releaseExclusiveLock();
 		}
@@ -681,6 +698,8 @@ public class OStorageLocal extends OStorageEmbedded {
 	public void rollback(final OTransaction iTx) {
 		try {
 			txManager.getTxSegment().rollback(iTx);
+			if (OGlobalConfiguration.TX_COMMIT_SYNCH.getValueAsBoolean())
+				synch();
 		} catch (IOException ioe) {
 			OLogManager.instance().error(this,
 					"Error executing rollback for transaction with id '" + iTx.getId() + "' cause: " + ioe.getMessage(), ioe);

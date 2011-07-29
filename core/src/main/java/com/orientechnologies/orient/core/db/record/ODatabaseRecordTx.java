@@ -28,10 +28,10 @@ import com.orientechnologies.orient.core.index.OIndexMVRBTreeAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction;
-import com.orientechnologies.orient.core.tx.OTransaction.TXSTATUS;
-import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import com.orientechnologies.orient.core.tx.OTransaction.TXSTATUS;
+import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
 /**
  * Delegates all the CRUD operations to the current transaction.
@@ -111,7 +111,22 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 		try {
 			currentTx.commit();
 		} catch (RuntimeException e) {
+			// WAKE UP ROLLBACK LISTENERS
+			for (ODatabaseListener listener : underlying.getListeners())
+				try {
+					listener.onBeforeTxRollback(underlying);
+				} catch (Throwable t) {
+					OLogManager.instance().error(this, "Error before tx rollback", t);
+				}
+			// ROLLBACK TX AT DB LEVEL
 			currentTx.rollback();
+			// WAKE UP ROLLBACK LISTENERS
+			for (ODatabaseListener listener : underlying.getListeners())
+				try {
+					listener.onAfterTxRollback(underlying);
+				} catch (Throwable t) {
+					OLogManager.instance().error(this, "Error after tx rollback", t);
+				}
 			throw e;
 		} finally {
 			setDefaultTransactionMode();
