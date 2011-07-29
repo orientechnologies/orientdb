@@ -124,8 +124,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
 		writer.beginCollection(level, true, "records");
 		int exportedClusters = 0;
-		int totalClusters = database.getClusters();
-		for (int i = 0; exportedClusters < totalClusters; ++i) {
+		int maxClusterId = getMaxClusterId();
+		for (int i = 0; exportedClusters <= maxClusterId; ++i) {
 			String clusterName = database.getClusterNameById(i);
 
 			exportedClusters++;
@@ -217,8 +217,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 		writer.beginCollection(1, true, "clusters");
 		int exportedClusters = 0;
 
-		int totalCluster = database.getClusters();
-		for (int clusterId = 0; clusterId < totalCluster; ++clusterId) {
+		int maxClusterId = getMaxClusterId();
+
+		for (int clusterId = 0; clusterId <= maxClusterId; ++clusterId) {
 
 			final String clusterName = database.getClusterNameById(clusterId);
 
@@ -251,6 +252,15 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 		listener.onMessage("OK (" + exportedClusters + " clusters)");
 
 		writer.endCollection(1, true);
+	}
+
+	protected int getMaxClusterId() {
+		int totalCluster = -1;
+		for (String clusterName : database.getClusterNames()) {
+			if (database.getClusterIdByName(clusterName) > totalCluster)
+				totalCluster = database.getClusterIdByName(clusterName);
+		}
+		return totalCluster;
 	}
 
 	private void exportInfo() throws IOException {
