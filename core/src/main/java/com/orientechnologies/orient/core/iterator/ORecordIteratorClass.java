@@ -192,6 +192,10 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 			current.clusterPosition = firstClusterPosition - 1;
 		}
 
+		record = getTransactionEntry();
+		if (record != null)
+			return (REC) record;
+		
 		throw new NoSuchElementException();
 	}
 
