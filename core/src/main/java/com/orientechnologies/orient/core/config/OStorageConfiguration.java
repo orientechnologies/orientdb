@@ -150,12 +150,6 @@ public class OStorageConfiguration implements OSerializableStream {
 
 		// PREPARE THE LIST OF CLUSTERS
 		clusters = new ArrayList<OStorageClusterConfiguration>(size);
-		for (int i = 0; i < size; ++i)
-			clusters.add(null);
-
-		OStoragePhysicalClusterConfiguration phyCluster;
-		OStorageLogicalClusterConfiguration logCluster;
-		OStorageMemoryClusterConfiguration memCluster;
 
 		for (int i = 0; i < size; ++i) {
 			clusterId = Integer.parseInt(read(values[index++]));
@@ -167,24 +161,29 @@ public class OStorageConfiguration implements OSerializableStream {
 
 			clusterType = read(values[index++]);
 
-			// PHYSICAL CLUSTER
+			final OStorageClusterConfiguration currentCluster;
+
 			if (clusterType.equals("p")) {
-				phyCluster = new OStoragePhysicalClusterConfiguration(this, clusterId);
+				// PHYSICAL CLUSTER
+				final OStoragePhysicalClusterConfiguration phyCluster = new OStoragePhysicalClusterConfiguration(this, clusterId);
 				phyCluster.name = clusterName;
 				index = phySegmentFromStream(values, index, phyCluster);
 				phyCluster.holeFile = new OStorageClusterHoleConfiguration(phyCluster, read(values[index++]), read(values[index++]),
 						read(values[index++]));
-				clusters.set(clusterId, phyCluster);
-			} else if (clusterType.equals("l")) {
+				currentCluster = phyCluster;
+			} else if (clusterType.equals("l"))
 				// LOGICAL CLUSTER
-				logCluster = new OStorageLogicalClusterConfiguration(clusterName, clusterId, Integer.parseInt(read(values[index++])),
+				currentCluster = new OStorageLogicalClusterConfiguration(clusterName, clusterId, Integer.parseInt(read(values[index++])),
 						new ORecordId(values[index++]));
-				clusters.set(clusterId, logCluster);
-			} else {
+			else
 				// MEMORY CLUSTER
-				memCluster = new OStorageMemoryClusterConfiguration(clusterName, clusterId);
-				clusters.set(clusterId, memCluster);
-			}
+				currentCluster = new OStorageMemoryClusterConfiguration(clusterName, clusterId);
+
+			// MAKE ROOMS, EVENTUALLY FILLING EMPTIES ENTRIES
+			for (int c = clusters.size(); c <= clusterId; ++c)
+				clusters.add(null);
+
+			clusters.set(clusterId, currentCluster);
 		}
 
 		// PREPARE THE LIST OF DATA SEGS
