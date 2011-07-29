@@ -133,8 +133,6 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 		if (iPojo == null)
 			return;
 
-		checkOpeness();
-
 		final ODocument record = getRecordByUserObject(iPojo, false);
 		if (record == null)
 			throw new OObjectNotManagedException("The object " + iPojo + " is not managed by the current database");
@@ -152,8 +150,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 	public void unsetDirty(final Object iPojo) {
 		if (iPojo == null)
 			return;
-		checkOpeness();
-
+		
 		final ODocument record = getRecordByUserObject(iPojo, false);
 		if (record == null)
 			return;
@@ -172,8 +169,6 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 	 *          User object
 	 */
 	public int getVersion(final Object iPojo) {
-		checkOpeness();
-
 		final ODocument record = getRecordByUserObject(iPojo, false);
 
 		if (record == null)
@@ -189,8 +184,6 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 	 *          User object
 	 */
 	public ORID getIdentity(final Object iPojo) {
-		checkOpeness();
-
 		final ODocument record = getRecordByUserObject(iPojo, false);
 		if (record == null)
 			throw new OObjectNotManagedException("The object " + iPojo + " is not managed by the current database");
@@ -296,8 +289,6 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 	}
 
 	public ODocument getRecordByUserObject(final Object iPojo, final boolean iCreateIfNotAvailable) {
-		checkOpeness();
-
 		if (iPojo instanceof ODocument)
 			return (ODocument) iPojo;
 
@@ -323,12 +314,10 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 	}
 
 	public boolean existsUserObjectByRID(ORID iRID) {
-		checkOpeness();
 		return rid2Records.containsKey(iRID);
 	}
 
 	public ODocument getRecordById(final ORID iRecordId) {
-		checkOpeness();
 		return iRecordId.isValid() ? rid2Records.get(iRecordId) : null;
 	}
 
