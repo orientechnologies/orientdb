@@ -39,10 +39,15 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
+/**
+ * Schema Class implementation.
+ * 
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * 
+ */
 @SuppressWarnings("unchecked")
 public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
-	protected int											id;
 	protected OSchemaShared						owner;
 	protected String									name;
 	protected Class<?>								javaClass;
@@ -78,15 +83,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		owner = iOwner;
 	}
 
-	protected OClassImpl(final OSchemaShared iOwner, final int iId, final String iName, final String iJavaClassName,
-			final int[] iClusterIds) throws ClassNotFoundException {
-		this(iOwner, iId, iName, iClusterIds);
+	protected OClassImpl(final OSchemaShared iOwner, final String iName, final String iJavaClassName, final int[] iClusterIds)
+			throws ClassNotFoundException {
+		this(iOwner, iName, iClusterIds);
 		javaClass = Class.forName(iJavaClassName);
 	}
 
-	protected OClassImpl(final OSchemaShared iOwner, final int iId, final String iName, final int[] iClusterIds) {
+	protected OClassImpl(final OSchemaShared iOwner, final String iName, final int[] iClusterIds) {
 		this(iOwner);
-		id = iId;
 		name = iName;
 		setClusterIds(iClusterIds);
 		setPolymorphicClusterIds(iClusterIds);
@@ -237,22 +241,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		return p;
 	}
 
-	public OProperty getProperty(final int iIndex) {
-		OClassImpl currentClass = this;
-
-		do {
-			if (currentClass.properties != null)
-				for (OProperty prop : currentClass.properties.values())
-					if (prop.getId() == iIndex)
-						return prop;
-
-			currentClass = (OClassImpl) currentClass.getSuperClass();
-
-		} while (currentClass != null);
-
-		return null;
-	}
-
 	public OProperty createProperty(final String iPropertyName, final OType iType) {
 		return addProperty(iPropertyName, iType, null, null);
 	}
@@ -351,7 +339,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	public void fromStream() {
 		name = document.field("name");
 		shortName = document.field("shortName");
-		id = (Integer) document.field("id");
 		defaultClusterId = (Integer) document.field("defaultClusterId");
 
 		if (document.field("overSize") != null)
@@ -389,7 +376,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		try {
 			document.field("name", name);
 			document.field("shortName", shortName);
-			document.field("id", id);
 			document.field("defaultClusterId", defaultClusterId);
 			document.field("clusterIds", clusterIds);
 			document.field("overSize", overSize);
@@ -412,10 +398,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
 	public Class<?> getJavaClass() {
 		return javaClass;
-	}
-
-	public int getId() {
-		return id;
 	}
 
 	public int getDefaultClusterId() {
@@ -523,7 +505,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj)
 			return true;
 		if (!super.equals(obj))
@@ -539,8 +521,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		return true;
 	}
 
-	public int compareTo(OClass o) {
-		return id - o.getId();
+	public int compareTo(final OClass o) {
+		return name.compareTo(o.getName());
 	}
 
 	/**

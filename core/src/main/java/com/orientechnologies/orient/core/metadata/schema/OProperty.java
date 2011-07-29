@@ -38,8 +38,6 @@ public interface OProperty extends Comparable<OProperty> {
 
 	public OType getType();
 
-	public int getId();
-
 	/**
 	 * Returns the linked class in lazy mode because while unmarshalling the class could be not loaded yet.
 	 * 

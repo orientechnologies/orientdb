@@ -47,8 +47,6 @@ public interface OSchema {
 
 	public boolean existsClass(final String iClassName);
 
-	public OClass getClassById(final int iClassId);
-
 	public OClass getClass(final Class<?> iClass);
 
 	/**

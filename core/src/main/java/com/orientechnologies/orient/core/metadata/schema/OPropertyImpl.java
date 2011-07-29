@@ -41,7 +41,6 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty {
 	private OClassImpl				owner;
 
-	private int								id;
 	private String						name;
 	private OType							type;
 
@@ -72,7 +71,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	public OPropertyImpl(final OClassImpl iOwner) {
 		document = new ODocument(iOwner.getDocument().getDatabase());
 		owner = iOwner;
-		id = iOwner.properties.size();
 	}
 
 	public OPropertyImpl(final OClassImpl iOwner, final ODocument iDocument) {
@@ -92,12 +90,8 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		return type;
 	}
 
-	public int getId() {
-		return id;
-	}
-
 	public int compareTo(final OProperty o) {
-		return id - o.getId();
+		return name.compareTo(o.getName());
 	}
 
 	/**

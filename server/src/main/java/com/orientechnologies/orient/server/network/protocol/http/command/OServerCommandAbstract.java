@@ -206,14 +206,12 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 
 		json.write(" \"schema\": ");
 		json.beginObject(1, false, null);
-		json.writeAttribute(2, true, "id", cls.getId());
 		json.writeAttribute(2, true, "name", cls.getName());
 
 		if (cls.properties() != null && cls.properties().size() > 0) {
 			json.beginObject(2, true, "properties");
 			for (OProperty prop : cls.properties()) {
 				json.beginObject(3, true, prop.getName());
-				json.writeAttribute(4, true, "id", prop.getId());
 				json.writeAttribute(4, true, "name", prop.getName());
 				if (prop.getLinkedClass() != null)
 					json.writeAttribute(4, true, "linkedClass", prop.getLinkedClass().getName());

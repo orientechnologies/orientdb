@@ -240,7 +240,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 			if (classes.containsKey(key))
 				throw new OSchemaException("Class " + iClassName + " already exists in current database");
 
-			final OClassImpl cls = new OClassImpl(this, classes.size(), iClassName, iClusterIds);
+			final OClassImpl cls = new OClassImpl(this, iClassName, iClusterIds);
 			classes.put(key, cls);
 
 			if (cls.getShortName() != null)
@@ -356,24 +356,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 		} finally {
 			lock.releaseSharedLock();
 		}
-	}
-
-	public OClass getClassById(final int iClassId) {
-		if (iClassId == -1)
-			return null;
-
-		lock.acquireSharedLock();
-		try {
-
-			for (OClass c : classes.values())
-				if (c.getId() == iClassId)
-					return c;
-
-		} finally {
-			lock.releaseSharedLock();
-		}
-
-		throw new OSchemaException("Class #" + iClassId + " was not found in current database");
 	}
 
 	/*

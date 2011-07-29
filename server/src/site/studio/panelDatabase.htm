@@ -475,14 +475,9 @@
 		fillDynaTable(
 				$('#classProperties'),
 				"Properties",
-				[ 'id', 'name', 'type', 'linkedType', 'linkedClass',
-						'mandatory', 'notNull', 'min', 'max', 'indexed' ],
+				[ 'name', 'type', 'linkedType', 'linkedClass', 'mandatory',
+						'notNull', 'min', 'max', 'indexed' ],
 				[
-						{
-							name : 'id',
-							index : 'id',
-							width : 30
-						},
 						{
 							name : 'name',
 							index : 'name',
@@ -607,13 +602,9 @@
 		fillDynaTable(
 				$('#databaseClasses'),
 				"Classes",
-				[ 'id', 'name', 'superClass', 'alias', 'clusters', 'defaultCluster',
+				[ 'name', 'superClass', 'alias', 'clusters', 'defaultCluster',
 						'records' ],
 				[ {
-					name : 'id',
-					index : 'id',
-					width : 30
-				}, {
 					name : 'name',
 					index : 'name',
 					width : 280,
@@ -829,7 +820,7 @@
 			.tabs(
 					{
 						select : function(event, ui) {
-							if (ui.tab.textContent == 'Allocation') {
+							if (ui.tab.textContent.indexOf('Allocation') > -1) {
 								$
 										.ajax({
 											type : "GET",

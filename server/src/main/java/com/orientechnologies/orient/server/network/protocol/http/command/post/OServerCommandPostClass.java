@@ -43,7 +43,7 @@ public class OServerCommandPostClass extends OServerCommandAuthenticatedDbAbstra
 			final OClass cls = db.getMetadata().getSchema().createClass(urlParts[2]);
 
 			sendTextContent(iRequest, OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, null,
-					OHttpUtils.CONTENT_TEXT_PLAIN, cls.getId());
+					OHttpUtils.CONTENT_TEXT_PLAIN, db.getMetadata().getSchema().getClasses().size());
 
 		} finally {
 			if (db != null)

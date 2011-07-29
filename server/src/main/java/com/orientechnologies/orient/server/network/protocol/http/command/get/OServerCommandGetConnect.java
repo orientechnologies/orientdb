@@ -227,7 +227,6 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 
 	public void exportClass(final ODatabaseDocumentTx db, final OJSONWriter json, final OClass cls) throws IOException {
 		json.beginObject(2, true, null);
-		json.writeAttribute(3, true, "id", cls.getId());
 		json.writeAttribute(3, true, "name", cls.getName());
 		json.writeAttribute(3, true, "superClass", cls.getSuperClass() != null ? cls.getSuperClass().getName() : "");
 		json.writeAttribute(3, true, "alias", cls.getShortName());
@@ -243,7 +242,6 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 			json.beginCollection(3, true, "properties");
 			for (OProperty prop : cls.properties()) {
 				json.beginObject(4, true, null);
-				json.writeAttribute(4, true, "id", prop.getId());
 				json.writeAttribute(4, true, "name", prop.getName());
 				if (prop.getLinkedClass() != null)
 					json.writeAttribute(4, true, "linkedClass", prop.getLinkedClass().getName());

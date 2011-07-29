@@ -370,7 +370,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		if (jsonReader.lastChar() == ']')
 			return;
 
-		String propName = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"name\"")
+		final String propName = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"name\"")
 				.readString(OJSONReader.COMMA_SEPARATOR);
 
 		String next = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).getValue();

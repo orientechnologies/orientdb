@@ -124,6 +124,6 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLPermissio
 		final OClassImpl sourceClass = (OClassImpl) ((OSchemaProxy) database.getMetadata().getSchema()).createClassInternal(className,
 				superClass, clusterIds);
 		sourceClass.saveInternal();
-		return sourceClass.getId();
+		return database.getMetadata().getSchema().getClasses().size();
 	}
 }

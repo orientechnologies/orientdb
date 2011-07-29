@@ -133,7 +133,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 					prop.createIndex(fields.get("indexed").equals("Unique") ? OProperty.INDEX_TYPE.UNIQUE : OProperty.INDEX_TYPE.NOTUNIQUE);
 
 				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN,
-						"Property " + fields.get("name") + " created successfully with id=" + prop.getId());
+						"Property " + fields.get("name") + " created successfully");
 
 			} catch (Exception e) {
 				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error on creating a new property in class " + rid + ": " + e,
@@ -172,7 +172,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 					cls.setShortName(alias);
 
 				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Class '" + rid
-						+ "' created successfully with id=" + cls.getId());
+						+ "' created successfully with id=" + db.getMetadata().getSchema().getClasses().size());
 
 			} catch (Exception e) {
 				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error on creating the new class '" + rid + "': " + e, null,
@@ -193,23 +193,8 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 		if ("add".equals(operation)) {
 			iRequest.data.commandInfo = "Studio add cluster";
 
-			try {
-				final OClass cls = db.getMetadata().getSchema().createClass(fields.get("name"));
-
-				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Class '" + rid
-						+ "' created successfully with id=" + cls.getId());
-
-			} catch (Exception e) {
-				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error on creating the new class '" + rid + "': " + e, null,
-						OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating the new class '" + rid + "': " + e);
-			}
 		} else if ("del".equals(operation)) {
 			iRequest.data.commandInfo = "Studio delete cluster";
-
-			db.getMetadata().getSchema().dropClass(rid);
-
-			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Class '" + rid
-					+ "' deleted successfully.");
 		}
 	}
 

@@ -115,11 +115,6 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
 		return delegate.existsClass(iClassName);
 	}
 
-	public OClass getClassById(final int iClassId) {
-		setCurrentDatabaseInThreadLocal();
-		return delegate.getClassById(iClassId);
-	}
-
 	public OClass getClass(final Class<?> iClass) {
 		setCurrentDatabaseInThreadLocal();
 		return delegate.getClass(iClass);

@@ -1,95 +1,91 @@
 <div id="tab-raw">
-<table style="width: 100%;">
-	<tr>
-		<td>
-		<table style="width: 100%;">
-			<tr>
-				<th align="left"></th>
-				<th align="left"><b>HTTP Method</b></th>
-				<th align="left"><b>Operation</b></th>
-				<th align="left"><b>Database</b></th>
-				<th align="left"><b>Argument(s)</b></th>
-				<th align="left"></th>
-			</tr>
-			<tr>
-				<td><select id="rawMethod">
-					<option value='GET'>GET</option>
-					<option value='PUT'>PUT</option>
-					<option value='POST'>POST</option>
-					<option value='DELETE'>DELETE</option>
-				</select>/</td>
-				<td id="rawServer">http://localhost:2480/</td>
-				<td><select id="rawOperation">
-					<option value='cluster'>cluster</option>
-					<option value='class'>class</option>
-					<option value='command'>command</option>
-					<option value='connect'>connect</option>
-					<option value='database'>database</option>
-					<option value='dictionary'>dictionary</option>
-					<option value='disconnect'>disconnect</option>
-					<option value='document'>document</option>
-					<option value='query'>query</option>
-					<option value='allocation'>allocation</option>
-					<option value='server'>server</option>
-				</select>/</td>
-				<td><input id="rawDatabase" size="15" value="demo" />/</td>
-				<td><input id="rawArgs" size="45" value="Address" /></td>
-			</tr>
-			<tr>
-				<td style="border: 1px solid gray; width: 100%;" colspan="6"
-					valign="top"><textarea id="rawOutput" cols="130" rows="22"
-					title="value">
+	<table style="width: 100%;">
+		<tr>
+			<td>
+				<table style="width: 100%;">
+					<tr>
+						<th align="left"></th>
+						<th align="left"><b>HTTP Method</b></th>
+						<th align="left"><b>Operation</b></th>
+						<th align="left"><b>Database</b></th>
+						<th align="left"><b>Argument(s)</b></th>
+						<th align="left"></th>
+					</tr>
+					<tr>
+						<td><select id="rawMethod">
+								<option value='GET'>GET</option>
+								<option value='PUT'>PUT</option>
+								<option value='POST'>POST</option>
+								<option value='DELETE'>DELETE</option>
+						</select>/</td>
+						<td id="rawServer">http://localhost:2480/</td>
+						<td><select id="rawOperation">
+								<option value='cluster'>cluster</option>
+								<option value='class'>class</option>
+								<option value='command'>command</option>
+								<option value='connect'>connect</option>
+								<option value='database'>database</option>
+								<option value='dictionary'>dictionary</option>
+								<option value='disconnect'>disconnect</option>
+								<option value='document'>document</option>
+								<option value='index'>index</option>
+								<option value='query'>query</option>
+								<option value='allocation'>allocation</option>
+								<option value='server'>server</option>
+						</select>/</td>
+						<td><input id="rawDatabase" size="15" value="demo" />/</td>
+						<td><input id="rawArgs" size="45" value="Address" /></td>
+					</tr>
+					<tr>
+						<td style="border: 1px solid gray; width: 100%;" colspan="6" valign="top"><textarea id="rawOutput" cols="130" rows="22" title="value">
                                     </textarea></td>
-			</tr>
-		</table>
-		</td>
-		<td valign="top">
-		<table>
-			<tr>
-				<td>
-				<button onclick="javascript:executeRawCommand()"
-					style="width: 90px; text-align: center"
-					style="background-color: #F0F0F0;">Execute <img border="0"
-					alt="Execute" src="images/execute.png" /></button>
-				</td>
-			</tr>
-			<tr>
-				<td>&nbsp;</td>
-			</tr>
-			<tr>
-				<td>
-				<button class="ui-button-text-icon"
-					onClick="javascript:rawEditor.setCode('')"
-					style="width: 90px; text-align: center">Clear <img
-					border="0" alt="Graph result" src="images/clear.png" align="top" /></button>
-				</td>
-			</tr>
-			<tr>
-				<td>
-				<button class="ui-button-text-icon"
-					onClick="javascript:rawEditor.reindent();"
-					style="width: 90px; text-align: center">Indent <img
-					border="0" alt="Graph result" src="images/indent.png" align="top" /></button>
-				</td>
-			</tr>
-			<tr>
-				<td>
-				<button id="editRaw" class="ui-button-text-icon"
-					style="width: 90px; text-align: center">Edit <img
-					border="0" alt="Edit record" src="images/set.png" align="top" /></button>
-				</td>
-			</tr>
-			<tr>
-				<td>
-				<button id="graphRaw" class="ui-button-text-icon"
-					style="width: 90px; text-align: center">Graph <img
-					border="0" alt="Graph result" src="images/graph.png" align="top" /></button>
-				</td>
-			</tr>
-		</table>
-		</td>
-	</tr>
-</table>
+					</tr>
+				</table>
+			</td>
+			<td valign="top">
+				<table>
+					<tr>
+						<td>
+							<button onclick="javascript:executeRawCommand()" style="width: 90px; text-align: center" style="background-color: #F0F0F0;">
+								Execute <img border="0" alt="Execute" src="images/execute.png" />
+							</button>
+						</td>
+					</tr>
+					<tr>
+						<td>&nbsp;</td>
+					</tr>
+					<tr>
+						<td>
+							<button class="ui-button-text-icon" onClick="javascript:rawEditor.setCode('')" style="width: 90px; text-align: center">
+								Clear <img border="0" alt="Graph result" src="images/clear.png" align="top" />
+							</button>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<button class="ui-button-text-icon" onClick="javascript:rawEditor.reindent();" style="width: 90px; text-align: center">
+								Indent <img border="0" alt="Graph result" src="images/indent.png" align="top" />
+							</button>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<button id="editRaw" class="ui-button-text-icon" style="width: 90px; text-align: center">
+								Edit <img border="0" alt="Edit record" src="images/set.png" align="top" />
+							</button>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<button id="graphRaw" class="ui-button-text-icon" style="width: 90px; text-align: center">
+								Graph <img border="0" alt="Graph result" src="images/graph.png" align="top" />
+							</button>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
 </div>
 
 <script language="javascript">
@@ -140,7 +136,7 @@
 		startTimer();
 
 		var code = rawEditor.getCode();
-		
+
 		var req = $('#header-server').val() + '/' + $('#rawOperation').val();
 		if ($('#rawDatabase').val() != null
 				&& $('#rawDatabase').val().length > 0)
@@ -158,8 +154,8 @@
 						"Raw command executed in " + stopTimer() + " sec.");
 			},
 			data : code,
-			cache: false,
-			dataType: 'text',
+			cache : false,
+			dataType : 'text',
 			error : function(msg) {
 				rawEditor.setCode("");
 				jQuery("#output").val("Command response: " + msg);

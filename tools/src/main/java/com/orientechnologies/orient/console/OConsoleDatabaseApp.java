@@ -710,7 +710,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		}
 
 		out.println();
-		out.println("Class................: " + cls + " (id=" + cls.getId() + ")");
+		out.println("Class................: " + cls);
 		if (cls.getSuperClass() != null)
 			out.println("Super class..........: " + cls.getSuperClass());
 		out.println("Default cluster......: " + currentDatabase.getClusterNameById(cls.getDefaultClusterId()) + " (id="
@@ -731,20 +731,20 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 		if (cls.properties().size() > 0) {
 			out.println("Properties:");
-			out.println("-------------------------------+----+-------------+-------------------------------+-----------+-----------+----------+------+------+");
-			out.println(" NAME                          | ID | TYPE        | LINKED TYPE/CLASS             | INDEX     | MANDATORY | NOT NULL | MIN  | MAX  |");
-			out.println("-------------------------------+----+-------------+-------------------------------+-----------+-----------+----------+------+------+");
+			out.println("-------------------------------+-------------+-------------------------------+-----------+-----------+----------+------+------+");
+			out.println(" NAME                          | TYPE        | LINKED TYPE/CLASS             | INDEX     | MANDATORY | NOT NULL | MIN  | MAX  |");
+			out.println("-------------------------------+-------------+-------------------------------+-----------+-----------+----------+------+------+");
 
 			for (OProperty p : cls.properties()) {
 				try {
-					out.printf(" %-30s|%3d | %-12s| %-30s| %-10s| %-10s| %-9s| %-5s| %-5s|\n", p.getName(), p.getId(), p.getType(),
+					out.printf(" %-30s| %-12s| %-30s| %-10s| %-10s| %-9s| %-5s| %-5s|\n", p.getName(), p.getType(),
 							p.getLinkedClass() != null ? p.getLinkedClass() : p.getLinkedType(), p.getIndex() != null ? p.getIndex()
 									.getUnderlying().getType() : "", p.isMandatory(), p.isNotNull(), p.getMin() != null ? p.getMin() : "",
 							p.getMax() != null ? p.getMax() : "");
 				} catch (Exception e) {
 				}
 			}
-			out.println("-------------------------------+----+-------------+-------------------------------+-----------+-----------+----------+------+------+");
+			out.println("-------------------------------+-------------+-------------------------------+-----------+-----------+----------+------+------+");
 		}
 	}
 
@@ -808,9 +808,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	public void classes() {
 		if (currentDatabaseName != null) {
 			out.println("\nCLASSES:");
-			out.println("----------------------------------------------+------+---------------------+-----------+");
-			out.println(" NAME                                         |  ID  | CLUSTERS            | RECORDS   |");
-			out.println("----------------------------------------------+------+---------------------+-----------+");
+			out.println("----------------------------------------------+---------------------+-----------+");
+			out.println(" NAME                                         | CLUSTERS            | RECORDS   |");
+			out.println("----------------------------------------------+---------------------+-----------+");
 
 			long totalElements = 0;
 			long count;
@@ -826,7 +826,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 					count = currentDatabase.countClass(cls.getName());
 					totalElements += count;
 
-					out.printf(" %-45s| %4d | %-20s|%10d |\n", cls.getName(), cls.getId(), clusters, count);
+					out.printf(" %-45s| %-20s|%10d |\n", cls.getName(), clusters, count);
 				} catch (Exception e) {
 				}
 			}

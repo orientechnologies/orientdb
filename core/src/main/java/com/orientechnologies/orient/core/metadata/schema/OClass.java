@@ -48,8 +48,6 @@ public interface OClass extends Comparable<OClass> {
 
 	public OProperty getProperty(final String iPropertyName);
 
-	public OProperty getProperty(final int iIndex);
-
 	public OProperty createProperty(final String iPropertyName, final OType iType);
 
 	public OProperty createProperty(final String iPropertyName, final OType iType, final OClass iLinkedClass);
@@ -61,8 +59,6 @@ public interface OClass extends Comparable<OClass> {
 	public boolean existsProperty(final String iPropertyName);
 
 	public Class<?> getJavaClass();
-
-	public int getId();
 
 	public int getDefaultClusterId();
 
