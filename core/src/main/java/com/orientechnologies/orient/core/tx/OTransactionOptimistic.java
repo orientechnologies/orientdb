@@ -38,15 +38,13 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 		status = TXSTATUS.BEGUN;
 	}
 
+	@Override
 	public void commit() {
 		checkTransaction();
 		status = TXSTATUS.COMMITTING;
 		database.executeCommit();
 
-		recordEntries.clear();
-		indexEntries.clear();
-
-		status = TXSTATUS.INVALID;
+		super.commit();
 	}
 
 	public void rollback() {
@@ -64,12 +62,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 		for (OTransactionRecordEntry v : recordEntries.values()) {
 			v.getRecord().unload();
 		}
-		recordEntries.clear();
-		indexEntries.clear();
-
-		newObjectCounter = -2;
-
-		status = TXSTATUS.INVALID;
+		super.rollback();
 	}
 
 	public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan) {

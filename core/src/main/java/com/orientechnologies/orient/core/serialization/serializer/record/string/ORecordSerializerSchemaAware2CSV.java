@@ -151,7 +151,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 					int size = OMultiValue.getSize(fieldValue);
 
 					if (size > 0) {
-						Object firstValue = OMultiValue.getFirstValue(fieldValue);
+						final Object firstValue = OMultiValue.getFirstValue(fieldValue);
 
 						if (firstValue != null) {
 							if (firstValue instanceof ORID) {
@@ -410,7 +410,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 						record.field(fieldName, fieldFromStream(iRecord, type, linkedClass, linkedType, fieldName, fieldValue));
 				}
 			} catch (Exception e) {
-				OLogManager.instance().exception("Error on unmarshalling field '%s'", e, OSerializationException.class, fieldName);
+				OLogManager.instance().exception("Error on unmarshalling field '%s' with value: ", e, OSerializationException.class,
+						fieldName, field);
 			}
 		}
 

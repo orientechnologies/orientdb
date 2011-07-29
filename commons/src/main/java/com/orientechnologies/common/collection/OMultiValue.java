@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 
+import com.orientechnologies.common.log.OLogManager;
+
 /**
  * Handles multi value types such as Collections, Maps and Arrays
  * 
@@ -71,6 +73,7 @@ public class OMultiValue {
 				return Array.get(iObject, 0);
 		} catch (Exception e) {
 			// IGNORE IT
+			OLogManager.instance().debug(iObject, "Error on reading the first item of the multi value field '%s'", iObject);
 		}
 
 		return null;

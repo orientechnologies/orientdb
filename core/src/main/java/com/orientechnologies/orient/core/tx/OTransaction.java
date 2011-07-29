@@ -60,8 +60,6 @@ public interface OTransaction {
 
 	public List<OTransactionRecordEntry> getRecordEntriesByClusterIds(int[] iIds);
 
-	public int getRecordEntriesSize();
-
 	public ORecordInternal<?> getRecordEntry(ORecordId rid);
 
 	public List<String> getInvolvedIndexes();

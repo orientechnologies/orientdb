@@ -301,11 +301,15 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	 *          Position of the item to convert
 	 */
 	private void convertLink2Record(final int iIndex) {
-		if (ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RECORDS || !autoConvertToRecord || database == null)
+		if (ridOnly || !autoConvertToRecord || database == null)
 			// PRECONDITIONS
 			return;
 
 		final OIdentifiable o = super.get(iIndex);
+
+		if (contentType == MULTIVALUE_CONTENT_TYPE.ALL_RECORDS && !o.getIdentity().isNew())
+			// ALL RECORDS AND THE OBJECT IS NOT NEW, DO NOTHING
+			return;
 
 		if (o != null && o instanceof ORecordId) {
 			final ORecordId rid = (ORecordId) o;

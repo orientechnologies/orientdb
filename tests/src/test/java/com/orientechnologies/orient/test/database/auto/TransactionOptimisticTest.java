@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
+import java.util.HashSet;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -189,6 +190,28 @@ public class TransactionOptimisticTest {
 		db.commit();
 
 		Assert.assertEquals(db.countClusterElements("Account"), totalAccounts + 1000);
+
+		db.close();
+	}
+
+	@Test
+	public void createGraphInTx() {
+		ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+		db.open("admin", "admin");
+
+		db.begin();
+
+		ODocument kim = new ODocument(db, "Profile").field("name", "Kim").field("surname", "Bauer");
+		ODocument jack = new ODocument(db, "Profile").field("name", "Jack").field("surname", "Bauer");
+		ODocument teri = new ODocument(db, "Profile").field("name", "Teri").field("surname", "Bauer");
+
+		((HashSet<ODocument>) jack.field("following", new HashSet<ODocument>()).field("following")).add(kim);
+		((HashSet<ODocument>) kim.field("following", new HashSet<ODocument>()).field("following")).add(teri);
+		((HashSet<ODocument>) teri.field("following", new HashSet<ODocument>()).field("following")).add(jack);
+
+		jack.save();
+
+		db.commit();
 
 		db.close();
 	}

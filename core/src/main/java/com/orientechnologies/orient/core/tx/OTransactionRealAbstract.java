@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 
 public abstract class OTransactionRealAbstract extends OTransactionAbstract {
+	protected Map<ORID, OTransactionRecordEntry>		allEntries				= new HashMap<ORID, OTransactionRecordEntry>();
 	protected Map<ORID, OTransactionRecordEntry>		recordEntries			= new HashMap<ORID, OTransactionRecordEntry>();
 	protected Map<String, OTransactionIndexChanges>	indexEntries			= new HashMap<String, OTransactionIndexChanges>();
 	protected int																		id;
@@ -48,11 +49,30 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 		id = iId;
 	}
 
+	public void commit() {
+		allEntries.clear();
+		recordEntries.clear();
+		indexEntries.clear();
+
+		status = TXSTATUS.INVALID;
+	}
+
+	public void rollback() {
+		allEntries.clear();
+		recordEntries.clear();
+		indexEntries.clear();
+
+		newObjectCounter = -2;
+
+		status = TXSTATUS.INVALID;
+	}
+
 	public int getId() {
 		return id;
 	}
 
 	public void clearRecordEntries() {
+		allEntries.putAll(recordEntries);
 		recordEntries.clear();
 	}
 
@@ -64,9 +84,17 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 		OTransactionRecordEntry e = recordEntries.get(rid);
 		if (e != null)
 			return e.getRecord();
+
+		e = allEntries.get(rid);
+		if (e != null)
+			return e.getRecord();
+
 		return null;
 	}
 
+	/**
+	 * Called by class iterator.
+	 */
 	public List<OTransactionRecordEntry> getRecordEntriesByClass(final String iClassName) {
 		final List<OTransactionRecordEntry> result = new ArrayList<OTransactionRecordEntry>();
 
@@ -86,6 +114,9 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 		return result;
 	}
 
+	/**
+	 * Called by cluster iterator.
+	 */
 	public List<OTransactionRecordEntry> getRecordEntriesByClusterIds(final int[] iIds) {
 		final List<OTransactionRecordEntry> result = new ArrayList<OTransactionRecordEntry>();
 
@@ -106,10 +137,6 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 			}
 
 		return result;
-	}
-
-	public int getRecordEntriesSize() {
-		return recordEntries.size();
 	}
 
 	public void clearIndexEntries() {

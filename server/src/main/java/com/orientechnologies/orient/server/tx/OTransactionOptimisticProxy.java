@@ -32,27 +32,35 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 	private final Map<ORecordId, ORecord<?>>	createdRecords			= new HashMap<ORecordId, ORecord<?>>();
 	private final Map<ORecordId, ORecord<?>>	updatedRecords			= new HashMap<ORecordId, ORecord<?>>();
-	private int																clientTxId;
+	private final int													clientTxId;
 	private ODocument													remoteIndexEntries	= null;
+	private final OChannelBinary							channel;
 
 	public OTransactionOptimisticProxy(final ODatabaseRecordTx iDatabase, final OChannelBinary iChannel) throws IOException {
 		super(iDatabase);
+		channel = iChannel;
 		clientTxId = iChannel.readInt();
-		setUsingLog(iChannel.readByte() == 1);
+	}
 
-		while (iChannel.readByte() == 1) {
-			try {
-				final byte recordStatus = iChannel.readByte();
+	@Override
+	public void begin() {
+		super.begin();
 
-				final ORecordId rid = iChannel.readRID();
+		try {
+			setUsingLog(channel.readByte() == 1);
 
-				final OTransactionEntryProxy entry = new OTransactionEntryProxy(iChannel.readByte());
+			while (channel.readByte() == 1) {
+				final byte recordStatus = channel.readByte();
+
+				final ORecordId rid = channel.readRID();
+
+				final OTransactionEntryProxy entry = new OTransactionEntryProxy(channel.readByte());
 				entry.status = recordStatus;
 
 				switch (entry.status) {
 				case OTransactionRecordEntry.CREATED:
-					entry.clusterName = iChannel.readString();
-					entry.getRecord().fill(iDatabase, rid, 0, iChannel.readBytes(), true);
+					entry.clusterName = channel.readString();
+					entry.getRecord().fill(database, rid, 0, channel.readBytes(), true);
 
 					if (entry.getRecord() instanceof ODocument)
 						// ASSURE FIELDS ARE UNMARSHALLED: THIS PREVENT TO STORE TEMPORARY RID
@@ -63,7 +71,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 					break;
 
 				case OTransactionRecordEntry.UPDATED:
-					entry.getRecord().fill(iDatabase, rid, iChannel.readInt(), iChannel.readBytes(), true);
+					entry.getRecord().fill(database, rid, channel.readInt(), channel.readBytes(), true);
 
 					if (entry.getRecord() instanceof ODocument)
 						// ASSURE FIELDS ARE UNMARSHALLED: THIS PREVENT TO STORE TEMPORARY RID
@@ -74,7 +82,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 					break;
 
 				case OTransactionRecordEntry.DELETED:
-					entry.getRecord().fill(iDatabase, rid, iChannel.readInt(), null, false);
+					entry.getRecord().fill(database, rid, channel.readInt(), null, false);
 					break;
 
 				default:
@@ -84,12 +92,13 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 				// PUT IN TEMPORARY LIST TO GET FETCHED AFTER ALL FOR CACHE
 				recordEntries.put((ORecordId) entry.getRecord().getIdentity(), entry);
 
-			} catch (IOException e) {
-				throw new OSerializationException("Can't read transaction record from the network", e);
 			}
-		}
+			remoteIndexEntries = new ODocument(channel.readBytes());
 
-		remoteIndexEntries = new ODocument(iChannel.readBytes());
+		} catch (IOException e) {
+			rollback();
+			throw new OSerializationException("Can't read transaction record from the network. Transaction aborted", e);
+		}
 	}
 
 	@Override
