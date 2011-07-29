@@ -127,6 +127,19 @@ function ODocumentView(name, component, doc, options) {
 				+ "</td>";
 
 		component += "<td align='left'>"
+				+ this.generateButton('doc_reload', 'Reload ', 'refresh.png',
+						null, "ODocumentView.reload('" + this.name + "')")
+				+ "</td>";
+
+		component += "<td align='left'>"
+				+ this.generateButton('doc_copy', 'Copy ', 'copy.png', null,
+						"ODocumentView.copy('" + this.name + "')") + "</td>";
+
+		component += "<td align='left'>"
+				+ this.generateButton('doc_undo', 'Undo ', 'undo.png', null,
+						"ODocumentView.undo('" + this.name + "')") + "</td>";
+
+		component += "<td align='left'>"
 				+ this.generateButton('doc_clear', 'Clear ', 'clear.png', null,
 						"ODocumentView.clear('" + this.name + "')") + "</td>";
 
@@ -143,7 +156,7 @@ function ODocumentView(name, component, doc, options) {
 					+ "'>@rid</td><td class='"
 					+ this.settings.ridValueStyleClass
 					+ "'><input id='doc__rid' class='"
-					+ this.settings.ridValueStyleClass + "' disabled value='"
+					+ this.settings.ridValueStyleClass + "' value='"
 					+ fieldValue + "'/></td>";
 		}
 
@@ -313,7 +326,10 @@ function ODocumentView(name, component, doc, options) {
 			}
 		}
 
-		this.database.save(object);
+		var result = this.database.save(object);
+
+		if (result.charAt(0) == '#')
+			$('#doc__rid').val(result.substring(0));
 
 		if (this.settings.log != null) {
 			var msg = this.database.getErrorMessage();
@@ -339,7 +355,7 @@ function ODocumentView(name, component, doc, options) {
 		for (cls in databaseInfo['classes']) {
 			if (databaseInfo['classes'][cls].name == className) {
 				selectedClass = databaseInfo['classes'][cls];
-				$('#doc__class').val( className );
+				$('#doc__class').val(className);
 				break;
 			}
 		}
@@ -367,6 +383,19 @@ function ODocumentView(name, component, doc, options) {
 				component.append(this.renderRow(
 						selectedClass.properties[p].name, ""));
 		}
+	}
+
+	ODocumentView.prototype.undo = function() {
+		this.render();
+	}
+
+	ODocumentView.prototype.reload = function() {
+		this.doc = this.database.load($('#doc__rid').val());
+		this.render();
+	}
+
+	ODocumentView.prototype.copy = function() {
+		$('#doc__rid').val("-1:-1");
 	}
 
 	ODocumentView.prototype.remove = function() {
@@ -427,6 +456,17 @@ function ODocumentView(name, component, doc, options) {
 	ODocumentView.clear = function(instanceName) {
 		return ODocumentViewInstances[instanceName].clear();
 	}
+
+	ODocumentView.undo = function(instanceName) {
+		return ODocumentViewInstances[instanceName].undo();
+	}
+	ODocumentView.reload = function(instanceName) {
+		return ODocumentViewInstances[instanceName].reload();
+	}
+	ODocumentView.copy = function(instanceName) {
+		return ODocumentViewInstances[instanceName].copy();
+	}
+
 	if (doc != null)
 		this.render(doc);
 }
