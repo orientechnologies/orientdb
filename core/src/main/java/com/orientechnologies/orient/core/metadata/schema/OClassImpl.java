@@ -58,7 +58,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	protected OClassImpl							superClass;
 	protected int[]										polymorphicClusterIds;
 	protected List<OClass>						baseClasses;
-	protected float										overSize		= 0;
+	protected float										overSize		= 0f;
 	protected String									shortName;
 
 	/**
@@ -525,10 +525,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		return name.compareTo(o.getName());
 	}
 
-	/**
-	 * Returns the number of the records of this class.
-	 */
 	public long count() {
+		return count(true);
+	}
+
+	public long count(final boolean iPolymorphic) {
+		if (iPolymorphic)
+			return getDatabase().countClusterElements(polymorphicClusterIds);
+
 		return getDatabase().countClusterElements(clusterIds);
 	}
 

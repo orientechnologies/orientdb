@@ -48,7 +48,7 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 	protected long													firstClusterPosition;
 	protected long													lastClusterPosition;
 	protected long													totalAvailableRecords;
-	protected List<OTransactionRecordEntry>				txEntries;
+	protected List<OTransactionRecordEntry>	txEntries;
 	protected int														currentTxEntryPosition	= -1;
 
 	public ORecordIterator(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase) {
@@ -80,15 +80,6 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 				return (REC) txEntries.get(currentTxEntryPosition).getRecord();
 		}
 		return null;
-	}
-
-	protected long getRecordsToBrowse() {
-		long recordsToBrowse = current.clusterPosition > -2 && lastClusterPosition > -1 ? lastClusterPosition - current.clusterPosition
-				: 0;
-
-		if (txEntries != null)
-			recordsToBrowse += txEntries.size() - (currentTxEntryPosition + 1);
-		return recordsToBrowse;
 	}
 
 	public String getFetchPlan() {

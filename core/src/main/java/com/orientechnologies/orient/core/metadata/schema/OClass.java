@@ -68,14 +68,33 @@ public interface OClass extends Comparable<OClass> {
 
 	public Iterator<OClass> getBaseClasses();
 
+	/**
+	 * Returns the oversize factor. Oversize is used to extend the record size by a factor to avoid defragmentation upon updates. 0 or
+	 * 1.0 means no oversize.
+	 * 
+	 * @return Oversize factor
+	 * @see #setOverSize(float)
+	 */
 	public float getOverSize();
 
+	/**
+	 * Sets the oversize factor. Oversize is used to extend the record size by a factor to avoid defragmentation upon updates. 0 or
+	 * 1.0 means no oversize. Default is 0.
+	 * 
+	 * @return Oversize factor
+	 * @see #getOverSize()
+	 */
 	public OClass setOverSize(final float overSize);
 
 	/**
-	 * Returns the number of the records of this class.
+	 * Returns the number of the records of this class considering also subclasses (polymorphic).
 	 */
 	public long count();
+
+	/**
+	 * Returns the number of the records of this class and based on polymorphic parameter it consider or not the subclasses.
+	 */
+	public long count(final boolean iPolymorphic);
 
 	/**
 	 * Truncates all the clusters the class uses.
@@ -85,10 +104,10 @@ public interface OClass extends Comparable<OClass> {
 	public void truncate() throws IOException;
 
 	/**
-	 * Returns true if the current instance extends the passed schema class (iClass).
+	 * Tells if the current instance extends the passed schema class (iClass).
 	 * 
 	 * @param iClass
-	 * @return
+	 * @return true if the current instance extends the passed schema class (iClass).
 	 * @see #isSuperClassOf(OClass)
 	 */
 	public boolean isSubClassOf(final String iClassName);

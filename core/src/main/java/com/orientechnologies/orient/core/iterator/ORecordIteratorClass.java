@@ -79,7 +79,19 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 		if (liveUpdated)
 			return current.clusterPosition > database.getStorage().getClusterDataRange(current.clusterId)[0];
 
-		return current.clusterPosition > firstClusterPosition;
+		// ITERATE UNTIL THE PREVIOUS GOOD RECORD
+		while (currentClusterIdx > -1) {
+			if (current.clusterPosition > firstClusterPosition)
+				return true;
+
+			// CLUSTER EXHAUSTED, TRY WITH THE PREVIOUS ONE
+			currentClusterIdx--;
+			updateClusterRange();
+			current.clusterPosition = lastClusterPosition + 1;
+		}
+
+		// CHECK IN TX IF ANY
+		return txEntries != null && txEntries.size() - (currentTxEntryPosition + 1) > 0;
 	}
 
 	public boolean hasNext() {
@@ -96,7 +108,24 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 		if (liveUpdated)
 			lastClusterPosition = database.getStorage().getClusterDataRange(current.clusterId)[1];
 
-		return getRecordsToBrowse() > 0;
+		// ITERATE UNTIL THE NEXT GOOD RECORD
+		while (currentClusterIdx < clusterIds.length) {
+			final long recordsToBrowse = current.clusterPosition > -2 && lastClusterPosition > -1 ? lastClusterPosition
+					- current.clusterPosition : 0;
+
+			if (recordsToBrowse > 0)
+				return true;
+
+			// CLUSTER EXHAUSTED, TRY WITH THE NEXT ONE
+			currentClusterIdx++;
+			if (currentClusterIdx >= clusterIds.length)
+				break;
+			updateClusterRange();
+			current.clusterPosition = firstClusterPosition - 1;
+		}
+
+		// CHECK IN TX IF ANY
+		return txEntries != null && txEntries.size() - (currentTxEntryPosition + 1) > 0;
 	}
 
 	/**
