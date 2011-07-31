@@ -229,8 +229,8 @@ public class SQLSelectProjectionsTest {
 		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>(
-						"SELECT FLATTEN( outEdges ) FROM OGraphVertex WHERE outEdges TRAVERSE(1,1) (@class = 'OGraphEdge')")).execute();
+				new OSQLSynchQuery<ODocument>("SELECT FLATTEN( out ) FROM OGraphVertex WHERE out TRAVERSE(1,1) (@class = 'OGraphEdge')"))
+				.execute();
 
 		Assert.assertTrue(result.size() != 0);
 
@@ -249,8 +249,7 @@ public class SQLSelectProjectionsTest {
 		try {
 			database.command(
 					new OSQLSynchQuery<ODocument>(
-							"SELECT FLATTEN( outEdges ), inEdges FROM OGraphVertex WHERE outEdges TRAVERSE(1,1) (@class = 'OGraphEdge')"))
-					.execute();
+							"SELECT FLATTEN( out ), in FROM OGraphVertex WHERE out TRAVERSE(1,1) (@class = 'OGraphEdge')")).execute();
 
 		} finally {
 			database.close();

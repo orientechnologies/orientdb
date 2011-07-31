@@ -24,7 +24,7 @@ public class SQLGremlinTest {
 		// ODocument edge = (ODocument) db.createEdge(vertex1, vertex2).field("label", "drives").save();
 
 		List<?> result = db.query(new OSQLSynchQuery<Object>(
-				"select gremlin('current.out.in') as value from V where outEdges.size() > 0 limit 3"));
+				"select gremlin('current.out.in') as value from V where out.size() > 0 limit 3"));
 		System.out.println("Result: " + result);
 
 		result = db.query(new OSQLSynchQuery<Object>("select gremlin('current.out.in') as value from 5:1"));

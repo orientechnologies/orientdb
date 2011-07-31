@@ -36,8 +36,8 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
  * @see OGraphEdge
  */
 public class OGraphVertex extends OGraphElement implements Cloneable {
-	private SoftReference<Set<OGraphEdge>>	inEdges;
-	private SoftReference<Set<OGraphEdge>>	outEdges;
+	private SoftReference<Set<OGraphEdge>>	in;
+	private SoftReference<Set<OGraphEdge>>	out;
 
 	public OGraphVertex(final ODatabaseGraphTx iDatabase) {
 		super(iDatabase, OGraphDatabase.VERTEX_CLASS_NAME);
@@ -74,7 +74,7 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 	public void fromStream(final ODocument iDocument) {
 		super.fromStream(iDocument);
 		document.setTrackingChanges(false);
-		inEdges = outEdges = null;
+		in = out = null;
 	}
 
 	/**
@@ -172,12 +172,12 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 	 * Returns the incoming edges of current node having the requested label. If there are no edged, then an empty set is returned.
 	 */
 	public Set<OGraphEdge> getInEdges(final String iEdgeLabel) {
-		Set<OGraphEdge> temp = inEdges != null ? inEdges.get() : null;
+		Set<OGraphEdge> temp = in != null ? in.get() : null;
 
 		if (temp == null) {
 			if (iEdgeLabel == null)
 				temp = new HashSet<OGraphEdge>();
-			inEdges = new SoftReference<Set<OGraphEdge>>(temp);
+			in = new SoftReference<Set<OGraphEdge>>(temp);
 
 			final Set<Object> docs = document.field(OGraphDatabase.VERTEX_FIELD_IN);
 
@@ -220,12 +220,12 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 	 * Returns the outgoing edge of current node having the requested label. If there are no edged, then an empty set is returned.
 	 */
 	public Set<OGraphEdge> getOutEdges(final String iEdgeLabel) {
-		Set<OGraphEdge> temp = outEdges != null ? outEdges.get() : null;
+		Set<OGraphEdge> temp = out != null ? out.get() : null;
 
 		if (temp == null) {
 			temp = new HashSet<OGraphEdge>();
 			if (iEdgeLabel == null)
-				outEdges = new SoftReference<Set<OGraphEdge>>(temp);
+				out = new SoftReference<Set<OGraphEdge>>(temp);
 
 			final Set<Object> docs = document.field(OGraphDatabase.VERTEX_FIELD_OUT);
 
@@ -264,7 +264,7 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 	public Set<OGraphVertex> browseOutEdgesVertexes() {
 		final Set<OGraphVertex> resultset = new HashSet<OGraphVertex>();
 
-		Set<OGraphEdge> temp = outEdges != null ? outEdges.get() : null;
+		Set<OGraphEdge> temp = out != null ? out.get() : null;
 
 		if (temp == null) {
 			final Set<ODocument> docEdges = (Set<ODocument>) document.field(OGraphDatabase.VERTEX_FIELD_OUT);
@@ -290,7 +290,7 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 	public Set<OGraphVertex> browseInEdgesVertexes() {
 		final Set<OGraphVertex> resultset = new HashSet<OGraphVertex>();
 
-		Set<OGraphEdge> temp = inEdges != null ? inEdges.get() : null;
+		Set<OGraphEdge> temp = in != null ? in.get() : null;
 
 		if (temp == null) {
 			final Set<ODocument> docEdges = (Set<ODocument>) document.field(OGraphDatabase.VERTEX_FIELD_IN);
@@ -348,21 +348,21 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 	@Override
 	public void reset() {
 		document = null;
-		inEdges = null;
-		outEdges = null;
+		in = null;
+		out = null;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public void delete() {
 		// DELETE ALL THE IN-OUT EDGES FROM RAM
-		if (inEdges != null && inEdges.get() != null)
-			inEdges.get().clear();
-		inEdges = null;
+		if (in != null && in.get() != null)
+			in.get().clear();
+		in = null;
 
-		if (outEdges != null && outEdges.get() != null)
-			outEdges.get().clear();
-		outEdges = null;
+		if (out != null && out.get() != null)
+			out.get().clear();
+		out = null;
 
 		Set<ODocument> docs = (Set<ODocument>) document.field(OGraphDatabase.VERTEX_FIELD_IN);
 		if (docs != null)
@@ -382,8 +382,8 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 
 	public void onEvent(final ORecord<?> iDocument, final EVENT iEvent) {
 		if (iEvent == EVENT.UNLOAD) {
-			outEdges = null;
-			inEdges = null;
+			out = null;
+			in = null;
 		}
 	}
 
@@ -403,10 +403,10 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 
 			final OGraphVertex vertex = (OGraphVertex) iDatabase.getUserObjectByRecord(iSourceVertex, null);
 			// REMOVE THE EDGE OBJECT
-			if (vertex.outEdges != null && vertex.outEdges.get() != null) {
-				for (OGraphEdge e : vertex.outEdges.get())
+			if (vertex.out != null && vertex.out.get() != null) {
+				for (OGraphEdge e : vertex.out.get())
 					if (e.getIn().getDocument().equals(iTargetVertex))
-						vertex.outEdges.get().remove(e);
+						vertex.out.get().remove(e);
 			}
 		}
 
@@ -415,10 +415,10 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 
 			final OGraphVertex vertex = (OGraphVertex) iDatabase.getUserObjectByRecord(iTargetVertex, null);
 			// REMOVE THE EDGE OBJECT FROM THE TARGET VERTEX
-			if (vertex.inEdges != null && vertex.inEdges.get() != null) {
-				for (OGraphEdge e : vertex.inEdges.get())
+			if (vertex.in != null && vertex.in.get() != null) {
+				for (OGraphEdge e : vertex.in.get())
 					if (e.getOut().getDocument().equals(iSourceVertex))
-						vertex.inEdges.get().remove(e);
+						vertex.in.get().remove(e);
 			}
 		}
 

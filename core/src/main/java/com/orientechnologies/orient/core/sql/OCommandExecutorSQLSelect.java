@@ -592,8 +592,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				if (projection.toUpperCase().startsWith("FLATTEN(")) {
 					List<String> pars = OStringSerializerHelper.getParameters(projection);
 					if (pars.size() != 1)
-						throw new OCommandSQLParsingException(
-								"FLATTEN operator expects the field name as parameter. Example FLATTEN( outEdges )");
+						throw new OCommandSQLParsingException("FLATTEN operator expects the field name as parameter. Example FLATTEN( out )");
 					flattenTarget = OSQLHelper.parseValue(database, this, pars.get(0).trim());
 
 					// BY PASS THIS AS PROJECTION BUT TREAT IT AS SPECIAL

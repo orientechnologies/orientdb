@@ -203,16 +203,16 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		try {
 			final ODocument outVertex = iEdge.field(EDGE_FIELD_OUT);
 			if (outVertex != null) {
-				Set<ODocument> outEdges = ((Set<ODocument>) outVertex.field(VERTEX_FIELD_OUT));
-				if (outEdges != null)
-					outEdges.remove(iEdge);
+				final Set<ODocument> out = ((Set<ODocument>) outVertex.field(VERTEX_FIELD_OUT));
+				if (out != null)
+					out.remove(iEdge);
 			}
 
 			final ODocument inVertex = iEdge.field(EDGE_FIELD_IN);
 			if (inVertex != null) {
-				Set<ODocument> inEdges = ((Set<ODocument>) inVertex.field(VERTEX_FIELD_IN));
-				if (inEdges != null)
-					inEdges.remove(iEdge);
+				final Set<ODocument> in = ((Set<ODocument>) inVertex.field(VERTEX_FIELD_IN));
+				if (in != null)
+					in.remove(iEdge);
 			}
 
 			delete(iEdge);
@@ -253,19 +253,19 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 			edge.field(EDGE_FIELD_OUT, iOutVertex);
 			edge.field(EDGE_FIELD_IN, iInVertex);
 
-			ORecordLazySet outEdges = ((ORecordLazySet) iOutVertex.field(VERTEX_FIELD_OUT));
-			if (outEdges == null) {
-				outEdges = new ORecordLazySet(iOutVertex);
-				iOutVertex.field(VERTEX_FIELD_OUT, outEdges);
+			ORecordLazySet out = ((ORecordLazySet) iOutVertex.field(VERTEX_FIELD_OUT));
+			if (out == null) {
+				out = new ORecordLazySet(iOutVertex);
+				iOutVertex.field(VERTEX_FIELD_OUT, out);
 			}
-			outEdges.add(edge);
+			out.add(edge);
 
-			ORecordLazySet inEdges = ((ORecordLazySet) iInVertex.field(VERTEX_FIELD_IN));
-			if (inEdges == null) {
-				inEdges = new ORecordLazySet(iInVertex);
-				iInVertex.field(VERTEX_FIELD_IN, inEdges);
+			ORecordLazySet in = ((ORecordLazySet) iInVertex.field(VERTEX_FIELD_IN));
+			if (in == null) {
+				in = new ORecordLazySet(iInVertex);
+				iInVertex.field(VERTEX_FIELD_IN, in);
 			}
-			inEdges.add(edge);
+			in.add(edge);
 
 			if (safeMode) {
 				save(edge);

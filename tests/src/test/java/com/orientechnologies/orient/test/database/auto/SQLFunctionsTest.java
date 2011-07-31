@@ -150,8 +150,8 @@ public class SQLFunctionsTest {
 	@Test
 	public void queryUnionAsInline() {
 		database.open("admin", "admin");
-		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>("select union(outEdges, inEdges) as edges from OGraphVertex")).execute();
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select union(out, in) as edges from OGraphVertex"))
+				.execute();
 
 		Assert.assertTrue(result.size() > 1);
 		for (ODocument d : result) {
