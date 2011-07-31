@@ -248,14 +248,13 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 			edge.createProperty(OGraphDatabase.EDGE_FIELD_IN, OType.LINK, vertex);
 			edge.createProperty(OGraphDatabase.EDGE_FIELD_OUT, OType.LINK, vertex);
 
-			vertex.createProperty(OGraphDatabase.VERTEX_FIELD_IN_EDGES, OType.LINKSET, edge);
-			vertex.createProperty(OGraphDatabase.VERTEX_FIELD_OUT_EDGES, OType.LINKSET, edge);
+			vertex.createProperty(OGraphDatabase.VERTEX_FIELD_IN, OType.LINKSET, edge);
+			vertex.createProperty(OGraphDatabase.VERTEX_FIELD_OUT, OType.LINKSET, edge);
 		} else {
-			// @COMPATIBILITY 0.9.25
-			if (vertex.getProperty(OGraphDatabase.VERTEX_FIELD_OUT_EDGES).getType() == OType.LINKLIST)
-				vertex.getProperty(OGraphDatabase.VERTEX_FIELD_OUT_EDGES).setType(OType.LINKSET);
-			if (vertex.getProperty(OGraphDatabase.VERTEX_FIELD_IN_EDGES).getType() == OType.LINKLIST)
-				vertex.getProperty(OGraphDatabase.VERTEX_FIELD_IN_EDGES).setType(OType.LINKSET);
+			// @COMPATIBILITY <= 1.0rc4: CHANGE FROM outEdges -> out and inEdges -> in
+			if (vertex.existsProperty(OGraphDatabase.VERTEX_FIELD_OUT_EDGES)) {
+				OGraphDatabaseMigration.migrate((OGraphDatabase) new OGraphDatabase(getURL()).open("admin", "admin"));
+			}
 		}
 	}
 

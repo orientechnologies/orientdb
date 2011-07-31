@@ -145,7 +145,7 @@ public class OGraphEdge extends OGraphElement {
 		}
 
 		// REMOVE THE EDGE DOCUMENT
-		Set<ODocument> docs = sourceVertex.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES);
+		Set<ODocument> docs = sourceVertex.field(OGraphDatabase.VERTEX_FIELD_OUT);
 		if (docs != null)
 			docs.remove(iEdge);
 
@@ -153,7 +153,7 @@ public class OGraphEdge extends OGraphElement {
 		sourceVertex.save();
 
 		// REMOVE THE EDGE DOCUMENT FROM THE TARGET VERTEX
-		docs = targetVertex.field(OGraphDatabase.VERTEX_FIELD_IN_EDGES);
+		docs = targetVertex.field(OGraphDatabase.VERTEX_FIELD_IN);
 		if (docs != null)
 			docs.remove(iEdge);
 

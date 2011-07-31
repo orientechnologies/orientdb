@@ -44,7 +44,9 @@ import com.orientechnologies.orient.core.tx.OTransactionNoTx;
  */
 public class OGraphDatabase extends ODatabaseDocumentTx {
 	public static final String	VERTEX_CLASS_NAME				= "OGraphVertex";
+	public static final String	VERTEX_FIELD_IN					= "in";
 	public static final String	VERTEX_FIELD_IN_EDGES		= "inEdges";
+	public static final String	VERTEX_FIELD_OUT				= "out";
 	public static final String	VERTEX_FIELD_OUT_EDGES	= "outEdges";
 
 	public static final String	EDGE_CLASS_NAME					= "OGraphEdge";
@@ -148,13 +150,13 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 			Set<ODocument> otherEdges;
 
 			// REMOVE OUT EDGES
-			Set<ODocument> edges = iVertex.field(VERTEX_FIELD_OUT_EDGES);
+			Set<ODocument> edges = iVertex.field(VERTEX_FIELD_OUT);
 			if (edges != null) {
 				for (ODocument edge : edges) {
 					if (edge != null) {
 						otherVertex = edge.field(EDGE_FIELD_IN);
 						if (otherVertex != null) {
-							otherEdges = otherVertex.field(VERTEX_FIELD_IN_EDGES);
+							otherEdges = otherVertex.field(VERTEX_FIELD_IN);
 							if (otherEdges != null && otherEdges.remove(edge))
 								save(otherVertex);
 						}
@@ -162,17 +164,17 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 					}
 				}
 				edges.clear();
-				iVertex.field(VERTEX_FIELD_OUT_EDGES, edges);
+				iVertex.field(VERTEX_FIELD_OUT, edges);
 			}
 
 			// REMOVE IN EDGES
-			edges = iVertex.field(VERTEX_FIELD_IN_EDGES);
+			edges = iVertex.field(VERTEX_FIELD_IN);
 			if (edges != null) {
 				for (ODocument edge : edges) {
 					if (edge != null) {
 						otherVertex = edge.field(EDGE_FIELD_OUT);
 						if (otherVertex != null) {
-							otherEdges = otherVertex.field(VERTEX_FIELD_OUT_EDGES);
+							otherEdges = otherVertex.field(VERTEX_FIELD_OUT);
 							if (otherEdges != null && otherEdges.remove(edge))
 								save(otherVertex);
 						}
@@ -180,7 +182,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 					}
 				}
 				edges.clear();
-				iVertex.field(VERTEX_FIELD_IN_EDGES, edges);
+				iVertex.field(VERTEX_FIELD_IN, edges);
 			}
 
 			// DELETE VERTEX AS DOCUMENT
@@ -201,14 +203,14 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		try {
 			final ODocument outVertex = iEdge.field(EDGE_FIELD_OUT);
 			if (outVertex != null) {
-				Set<ODocument> outEdges = ((Set<ODocument>) outVertex.field(VERTEX_FIELD_OUT_EDGES));
+				Set<ODocument> outEdges = ((Set<ODocument>) outVertex.field(VERTEX_FIELD_OUT));
 				if (outEdges != null)
 					outEdges.remove(iEdge);
 			}
 
 			final ODocument inVertex = iEdge.field(EDGE_FIELD_IN);
 			if (inVertex != null) {
-				Set<ODocument> inEdges = ((Set<ODocument>) inVertex.field(VERTEX_FIELD_IN_EDGES));
+				Set<ODocument> inEdges = ((Set<ODocument>) inVertex.field(VERTEX_FIELD_IN));
 				if (inEdges != null)
 					inEdges.remove(iEdge);
 			}
@@ -251,17 +253,17 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 			edge.field(EDGE_FIELD_OUT, iOutVertex);
 			edge.field(EDGE_FIELD_IN, iInVertex);
 
-			ORecordLazySet outEdges = ((ORecordLazySet) iOutVertex.field(VERTEX_FIELD_OUT_EDGES));
+			ORecordLazySet outEdges = ((ORecordLazySet) iOutVertex.field(VERTEX_FIELD_OUT));
 			if (outEdges == null) {
 				outEdges = new ORecordLazySet(iOutVertex);
-				iOutVertex.field(VERTEX_FIELD_OUT_EDGES, outEdges);
+				iOutVertex.field(VERTEX_FIELD_OUT, outEdges);
 			}
 			outEdges.add(edge);
 
-			ORecordLazySet inEdges = ((ORecordLazySet) iInVertex.field(VERTEX_FIELD_IN_EDGES));
+			ORecordLazySet inEdges = ((ORecordLazySet) iInVertex.field(VERTEX_FIELD_IN));
 			if (inEdges == null) {
 				inEdges = new ORecordLazySet(iInVertex);
-				iInVertex.field(VERTEX_FIELD_IN_EDGES, inEdges);
+				iInVertex.field(VERTEX_FIELD_IN, inEdges);
 			}
 			inEdges.add(edge);
 
@@ -366,7 +368,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	public Set<OIdentifiable> getOutEdges(final ODocument iVertex, final String iLabel) {
 		checkVertexClass(iVertex);
 
-		final ORecordLazySet set = iVertex.field(VERTEX_FIELD_OUT_EDGES);
+		final ORecordLazySet set = iVertex.field(VERTEX_FIELD_OUT);
 
 		if (iLabel == null)
 			// RETURN THE ENTIRE COLLECTION
@@ -398,7 +400,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	public Set<OIdentifiable> getOutEdgesHavingProperties(final ODocument iVertex, final Map<String, Object> iProperties) {
 		checkVertexClass(iVertex);
 
-		return filterEdgesByProperties((ORecordLazySet) iVertex.field(VERTEX_FIELD_OUT_EDGES), iProperties);
+		return filterEdgesByProperties((ORecordLazySet) iVertex.field(VERTEX_FIELD_OUT), iProperties);
 	}
 
 	/**
@@ -413,7 +415,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	public Set<OIdentifiable> getOutEdgesHavingProperties(final ODocument iVertex, Iterable<String> iProperties) {
 		checkVertexClass(iVertex);
 
-		return filterEdgesByProperties((ORecordLazySet) iVertex.field(VERTEX_FIELD_OUT_EDGES), iProperties);
+		return filterEdgesByProperties((ORecordLazySet) iVertex.field(VERTEX_FIELD_OUT), iProperties);
 	}
 
 	public Set<OIdentifiable> getInEdges(final ODocument iVertex) {
@@ -423,7 +425,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	public Set<OIdentifiable> getInEdges(final ODocument iVertex, final String iLabel) {
 		checkVertexClass(iVertex);
 
-		final ORecordLazySet set = iVertex.field(VERTEX_FIELD_IN_EDGES);
+		final ORecordLazySet set = iVertex.field(VERTEX_FIELD_IN);
 
 		if (iLabel == null)
 			// RETURN THE ENTIRE COLLECTION
@@ -455,7 +457,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	public Set<OIdentifiable> getInEdgesHavingProperties(final ODocument iVertex, Iterable<String> iProperties) {
 		checkVertexClass(iVertex);
 
-		return filterEdgesByProperties((ORecordLazySet) iVertex.field(VERTEX_FIELD_IN_EDGES), iProperties);
+		return filterEdgesByProperties((ORecordLazySet) iVertex.field(VERTEX_FIELD_IN), iProperties);
 	}
 
 	/**
@@ -469,7 +471,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	 */
 	public Set<OIdentifiable> getInEdgesHavingProperties(final ODocument iVertex, final Map<String, Object> iProperties) {
 		checkVertexClass(iVertex);
-		return filterEdgesByProperties((ORecordLazySet) iVertex.field(VERTEX_FIELD_IN_EDGES), iProperties);
+		return filterEdgesByProperties((ORecordLazySet) iVertex.field(VERTEX_FIELD_IN), iProperties);
 	}
 
 	public ODocument getInVertex(final ODocument iEdge) {
@@ -705,16 +707,15 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 				edgeBaseClass.setShortName("E");
 			}
 
-			vertexBaseClass.createProperty(VERTEX_FIELD_IN_EDGES, OType.LINKSET, edgeBaseClass);
-			vertexBaseClass.createProperty(VERTEX_FIELD_OUT_EDGES, OType.LINKSET, edgeBaseClass);
+			vertexBaseClass.createProperty(VERTEX_FIELD_IN, OType.LINKSET, edgeBaseClass);
+			vertexBaseClass.createProperty(VERTEX_FIELD_OUT, OType.LINKSET, edgeBaseClass);
 			edgeBaseClass.createProperty(EDGE_FIELD_IN, OType.LINK, vertexBaseClass);
 			edgeBaseClass.createProperty(EDGE_FIELD_OUT, OType.LINK, vertexBaseClass);
 		} else {
-			// @COMPATIBILITY 0.9.25
-			if (vertexBaseClass.getProperty(VERTEX_FIELD_OUT_EDGES).getType() == OType.LINKLIST)
-				vertexBaseClass.getProperty(VERTEX_FIELD_OUT_EDGES).setType(OType.LINKSET);
-			if (vertexBaseClass.getProperty(VERTEX_FIELD_IN_EDGES).getType() == OType.LINKLIST)
-				vertexBaseClass.getProperty(VERTEX_FIELD_IN_EDGES).setType(OType.LINKSET);
+			// @COMPATIBILITY <= 1.0rc4: CHANGE FROM outEdges -> out and inEdges -> in
+			if (vertexBaseClass.existsProperty(OGraphDatabase.VERTEX_FIELD_OUT_EDGES)) {
+				OGraphDatabaseMigration.migrate(this);
+			}
 		}
 	}
 }
