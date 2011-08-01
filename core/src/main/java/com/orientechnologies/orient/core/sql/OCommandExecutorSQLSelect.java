@@ -575,9 +575,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				} else {
 					// EXTRACT THE FIELD NAME WITHOUT FUNCTIONS AND/OR LINKS
 					pos = projection.indexOf('.');
-					if (pos == -1)
-						// GENERATE A NAME FOR FUNCTIONS
-						pos = projection.indexOf('(');
+
+					fieldName = pos > -1 ? projection.substring(0, pos) : projection;
+
+					// GENERATE A NAME FOR FUNCTIONS
+					pos = projection.indexOf('(');
 
 					fieldName = pos > -1 ? projection.substring(0, pos) : projection;
 
