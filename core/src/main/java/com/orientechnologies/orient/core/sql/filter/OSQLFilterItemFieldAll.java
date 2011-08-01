@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
+import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 /**
@@ -29,5 +30,14 @@ public class OSQLFilterItemFieldAll extends OSQLFilterItemFieldMultiAbstract {
 
 	public OSQLFilterItemFieldAll(final OSQLFilter iQueryCompiled, final String iName) {
 		super(iQueryCompiled, iName, OStringSerializerHelper.getParameters(iName));
+	}
+
+	@Override
+	public String getRoot() {
+		return FULL_NAME;
+	}
+
+	@Override
+	protected void setRoot(final OCommandToParse iQueryToParse, final String iRoot) {
 	}
 }

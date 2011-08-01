@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 
 /**
@@ -194,35 +193,14 @@ public class OSQLHelper {
 	}
 
 	public static Object getFunction(final ODatabaseRecord database, final OCommandToParse iCommand, final String iWord) {
-		int sepPos = iWord.indexOf('.');
-		int parPos = iWord.indexOf(OStringSerializerHelper.PARENTHESIS_BEGIN);
+		final int separator = iWord.indexOf('.');
+		final int beginParenthesis = iWord.indexOf(OStringSerializerHelper.PARENTHESIS_BEGIN);
+		if ( beginParenthesis > -1 && ( separator == -1 || separator > beginParenthesis )) {
+			final int endParenthesis = iWord.indexOf(OStringSerializerHelper.PARENTHESIS_END, beginParenthesis);
 
-		if (Character.isLetter(iWord.charAt(0)) && parPos > -1 && (sepPos == -1 || sepPos > parPos)) {
-			// SEARCH FOR THE FUNCTION
-			final String funcName = iWord.substring(0, parPos);
-
-			final List<String> funcParamsText = OStringSerializerHelper.getParameters(iWord);
-
-			OSQLFunction function = OSQLEngine.getInstance().getInlineFunction(funcName);
-			if (function == null)
-				// AGGREGATION ?
-				function = OSQLEngine.getInstance().getAggregationFunction(funcName);
-
-			if (function == null)
-				throw new OCommandSQLParsingException("Unknow function " + funcName + "()");
-
-			if (function.getMinParams() > -1 && funcParamsText.size() < function.getMinParams() || function.getMaxParams() > -1
-					&& funcParamsText.size() > function.getMaxParams())
-				throw new IllegalArgumentException("Syntax error. Expected: " + function.getSyntax());
-
-			// PARSE PARAMETERS
-			final Object[] funcParams = new Object[funcParamsText.size()];
-			for (int i = 0; i < funcParamsText.size(); ++i) {
-				funcParams[i] = OSQLHelper.parseValue(database, iCommand, funcParamsText.get(i));
-			}
-
-			// FUNCTION: CRETAE A RUN-TIME CONTAINER FOR IT TO SAVE THE PARAMETERS
-			return new OSQLFunctionRuntime(function, funcParams);
+			if (endParenthesis > -1 && Character.isLetter(iWord.charAt(0)))
+				// FUNCTION: CREATE A RUN-TIME CONTAINER FOR IT TO SAVE THE PARAMETERS
+				return new OSQLFunctionRuntime(iCommand, iWord);
 		}
 
 		return null;
@@ -255,12 +233,12 @@ public class OSQLHelper {
 		for (Entry<String, Object> field : iFields.entrySet()) {
 			if (field.getValue() instanceof OSQLFilterItemField) {
 				final OSQLFilterItemField f = (OSQLFilterItemField) field.getValue();
-				if (f.getName().equals("?"))
+				if (f.getRoot().equals("?"))
 					// POSITIONAL PARAMETER
 					iDocument.field(field.getKey(), iArgs.get(paramCounter++));
-				else if (f.getName().startsWith(":"))
+				else if (f.getRoot().startsWith(":"))
 					// NAMED PARAMETER
-					iDocument.field(field.getKey(), iArgs.get(f.getName().substring(1)));
+					iDocument.field(field.getKey(), iArgs.get(f.getRoot().substring(1)));
 			} else
 				iDocument.field(field.getKey(), OSQLHelper.getValue(field.getValue(), iDocument));
 		}

@@ -46,16 +46,27 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  * 
  */
 public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
-	protected String															name;
 	protected List<OPair<Integer, List<String>>>	operationsChain	= null;
 
-	public OSQLFilterItemAbstract(final OCommandToParse iQueryToParse, final String iName) {
-		int separatorPos = iName.indexOf(OSQLFilterFieldOperator.CHAIN_SEPARATOR);
+	public OSQLFilterItemAbstract(final OCommandToParse iQueryToParse, final String iText) {
+		final int beginParenthesis = iText.indexOf('(');
+		int separatorPos = iText.indexOf(OSQLFilterFieldOperator.CHAIN_SEPARATOR);
+
+		if (beginParenthesis > -1 && separatorPos > -1 && separatorPos > beginParenthesis) {
+			// FUNCTION: IGNORE PARAMETERS
+			final List<String> functionParams = new ArrayList<String>();
+			final int endParenthesis = OStringSerializerHelper.getParameters(iText, beginParenthesis, functionParams) - 1;
+
+			if (endParenthesis > separatorPos)
+				// RECOMPITE THE SEPARATOR POSITION
+				separatorPos = iText.indexOf(OSQLFilterFieldOperator.CHAIN_SEPARATOR, endParenthesis);
+		}
+
 		if (separatorPos > -1) {
 			// GET ALL SPECIAL OPERATIONS
-			name = iName.substring(0, separatorPos);
+			setRoot(iQueryToParse, iText.substring(0, separatorPos));
 
-			String part = iName;
+			String part = iText;
 			String partUpperCase = part.toUpperCase();
 			boolean operatorFound;
 
@@ -121,8 +132,12 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 				separatorPos = partUpperCase.indexOf(OSQLFilterFieldOperator.CHAIN_SEPARATOR, separatorPos);
 			}
 		} else
-			name = iName;
+			setRoot(iQueryToParse, iText);
 	}
+
+	public abstract String getRoot();
+
+	protected abstract void setRoot(OCommandToParse iQueryToParse, final String iRoot);
 
 	public Object transformValue(final ODatabaseRecord iDatabase, Object ioResult) {
 		if (ioResult != null && operationsChain != null) {
@@ -168,7 +183,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 							else if (ioResult instanceof ORecord<?>)
 								record = (ODocument) ioResult;
 							else
-								throw new IllegalArgumentException("Field " + name + " is not a ODocument object");
+								throw new IllegalArgumentException("SQL Item " + getRoot() + " is not a ODocument object");
 
 							if (record == null)
 								ioResult = null;
@@ -275,41 +290,44 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 		return ioResult;
 	}
 
-	protected Object getRecordAttribute(final ODatabaseRecord iDatabase, final OIdentifiable iIdentifiable, String iFieldName) {
-		iFieldName = iFieldName.toUpperCase();
-
+	protected Object getRecordAttribute(final ODatabaseRecord iDatabase, final OIdentifiable iIdentifiable, final String iFieldName) {
 		Object result = null;
 
 		if (iFieldName.charAt(0) == '@') {
-			if (iFieldName.equals("@THIS"))
+			if (iFieldName.equalsIgnoreCase("@THIS"))
 				result = iIdentifiable;
 
-			else if (iFieldName.equals("@RID"))
+			else if (iFieldName.equalsIgnoreCase("@RID"))
 				result = iIdentifiable.getIdentity();
 
-			else if (iFieldName.equals("@VERSION")) {
+			else if (iFieldName.equalsIgnoreCase("@VERSION")) {
 				result = iDatabase.getRecord(iIdentifiable).getVersion();
 
-			} else if (iFieldName.equals("@CLASS")) {
+			} else if (iFieldName.equalsIgnoreCase("@CLASS")) {
 				final ORecord<?> record = iDatabase.getRecord(iIdentifiable);
 				if (record instanceof ODocument)
 					result = ((ODocument) record).getClassName();
 
-			} else if (iFieldName.equals("@TYPE"))
+			} else if (iFieldName.equalsIgnoreCase("@TYPE"))
 				result = Orient.instance().getRecordFactoryManager().getRecordTypeName(iDatabase.getRecord(iIdentifiable).getRecordType());
 
-			else if (iFieldName.equals("@FIELDS")) {
+			else if (iFieldName.equalsIgnoreCase("@FIELDS")) {
 				final ORecord<?> record = iDatabase.getRecord(iIdentifiable);
 				if (record instanceof ODocument)
 					result = ((ODocument) record).fieldNames();
 			}
 
-			else if (iFieldName.equals("@SIZE")) {
+			else if (iFieldName.equalsIgnoreCase("@SIZE")) {
 				final byte[] stream = iDatabase.getRecord(iIdentifiable).toStream();
 				if (stream != null)
 					result = stream.length;
 			}
+		} else {
+			final ORecord<?> record = iIdentifiable.getRecord();
+			if (record instanceof ODocument)
+				result = ((ODocument) record).rawField(iFieldName);
 		}
+
 		return result;
 	}
 
@@ -320,8 +338,9 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 	@Override
 	public String toString() {
 		final StringBuilder buffer = new StringBuilder();
-		if (name != null)
-			buffer.append(name);
+		final String root = getRoot();
+		if (root != null)
+			buffer.append(root);
 		if (operationsChain != null) {
 			for (OPair<Integer, List<String>> op : operationsChain) {
 				buffer.append('.');
@@ -330,9 +349,5 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 			}
 		}
 		return buffer.toString();
-	}
-
-	public String getName() {
-		return name;
 	}
 }

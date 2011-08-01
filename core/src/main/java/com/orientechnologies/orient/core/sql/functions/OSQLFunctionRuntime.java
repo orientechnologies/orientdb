@@ -15,7 +15,16 @@
  */
 package com.orientechnologies.orient.core.sql.functions;
 
+import java.util.List;
+
+import com.orientechnologies.orient.core.command.OCommandToParse;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.OSQLHelper;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemAbstract;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 
 /**
@@ -24,22 +33,14 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OSQLFunctionRuntime {
+public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
 
 	public OSQLFunction	function;
 	public Object[]			configuredParameters;
 	public Object[]			runtimeParameters;
 
-	public OSQLFunctionRuntime(final OSQLFunction function, final Object[] configuredParameters) {
-		this.function = function;
-		this.configuredParameters = configuredParameters;
-
-		// COPY STATIC VALUES
-		this.runtimeParameters = new Object[configuredParameters.length];
-		for (int i = 0; i < configuredParameters.length; ++i) {
-			if (!(configuredParameters[i] instanceof OSQLFilterItemField) && !(configuredParameters[i] instanceof OSQLFunctionRuntime))
-				runtimeParameters[i] = configuredParameters[i];
-		}
+	public OSQLFunctionRuntime(final OCommandToParse iQueryToParse, final String iText) {
+		super(iQueryToParse, iText);
 	}
 
 	public boolean aggregateResults() {
@@ -66,14 +67,60 @@ public class OSQLFunctionRuntime {
 				runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i]).execute(iRecord);
 		}
 
-		return function.execute(iRecord, runtimeParameters);
+		final Object functionResult = function.execute(iRecord, runtimeParameters);
+
+		return transformValue(iRecord.getDatabase(), functionResult);
 	}
 
 	public Object getResult() {
-		return function.getResult();
+		return transformValue(null, function.getResult());
 	}
 
 	public void setResult(final Object iValue) {
 		function.setResult(iValue);
+	}
+
+	public Object getValue(final ORecordInternal<?> iRecord) {
+		return execute((ORecordSchemaAware<?>) iRecord);
+	}
+
+	@Override
+	public String getRoot() {
+		return function.getName();
+	}
+
+	@Override
+	protected void setRoot(final OCommandToParse iQueryToParse, final String iText) {
+		final int beginParenthesis = iText.indexOf('(');
+
+		// SEARCH FOR THE FUNCTION
+		final String funcName = iText.substring(0, beginParenthesis);
+
+		final List<String> funcParamsText = OStringSerializerHelper.getParameters(iText);
+
+		function = OSQLEngine.getInstance().getInlineFunction(funcName);
+		if (function == null)
+			// AGGREGATION ?
+			function = OSQLEngine.getInstance().getAggregationFunction(funcName);
+
+		if (function == null)
+			throw new OCommandSQLParsingException("Unknow function " + funcName + "()");
+
+		if (function.getMinParams() > -1 && funcParamsText.size() < function.getMinParams() || function.getMaxParams() > -1
+				&& funcParamsText.size() > function.getMaxParams())
+			throw new IllegalArgumentException("Syntax error. Expected: " + function.getSyntax());
+
+		// PARSE PARAMETERS
+		this.configuredParameters = new Object[funcParamsText.size()];
+		for (int i = 0; i < funcParamsText.size(); ++i) {
+			this.configuredParameters[i] = OSQLHelper.parseValue(null, iQueryToParse, funcParamsText.get(i));
+		}
+
+		// COPY STATIC VALUES
+		this.runtimeParameters = new Object[configuredParameters.length];
+		for (int i = 0; i < configuredParameters.length; ++i) {
+			if (!(configuredParameters[i] instanceof OSQLFilterItemField) && !(configuredParameters[i] instanceof OSQLFunctionRuntime))
+				runtimeParameters[i] = configuredParameters[i];
+		}
 	}
 }

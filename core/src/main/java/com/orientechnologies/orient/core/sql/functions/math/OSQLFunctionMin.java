@@ -27,43 +27,27 @@ import com.orientechnologies.orient.core.record.ORecord;
 public class OSQLFunctionMin extends OSQLFunctionMathAbstract {
 	public static final String	NAME	= "min";
 
-	private Number							context;
+	private Comparable<Object>	context;
 
 	public OSQLFunctionMin() {
 		super(NAME, 1, 1);
 	}
 
+	@SuppressWarnings("unchecked")
 	public Object execute(ORecord<?> iCurrentRecord, final Object[] iParameters) {
-		Number value = (Number) iParameters[0];
+		if (iParameters[0] == null || !(iParameters[0] instanceof Comparable<?>))
+			// PRECONDITIONS
+			return null;
 
-		if (value != null && value instanceof Number) {
-			if (context == null)
-				// FIRST TIME
-				context = value;
-			else {
-				Number contextValue = getContextValue(context, value.getClass());
-				if (contextValue instanceof Integer) {
-					if (((Integer) contextValue).compareTo((Integer) value) > 0)
-						context = value;
+		final Comparable<Object> value = (Comparable<Object>) iParameters[0];
 
-				} else if (contextValue instanceof Long) {
-					if (((Long) contextValue).compareTo((Long) value) > 0)
-						context = value;
+		if (context == null)
+			// FIRST TIME
+			context = value;
+		else if (context.compareTo(value) > 0)
+			// BIGGER
+			context = value;
 
-				} else if (contextValue instanceof Short) {
-					if (((Short) contextValue).compareTo((Short) value) > 0)
-						context = value;
-
-				} else if (contextValue instanceof Float) {
-					if (((Float) contextValue).compareTo((Float) value) > 0)
-						context = value;
-
-				} else if (contextValue instanceof Double) {
-					if (((Double) contextValue).compareTo((Double) value) > 0)
-						context = value;
-				}
-			}
-		}
 		return value;
 	}
 

@@ -473,11 +473,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 		final OSQLFilterItemField item = (OSQLFilterItemField) iItem;
 
-		OProperty prop = iSchemaClass.getProperty(item.getName());
+		OProperty prop = iSchemaClass.getProperty(item.getRoot());
 
 		while ((prop == null || !prop.isIndexed()) && iSchemaClass.getSuperClass() != null) {
 			iSchemaClass = iSchemaClass.getSuperClass();
-			prop = iSchemaClass.getProperty(item.getName());
+			prop = iSchemaClass.getProperty(item.getRoot());
 		}
 
 		if (prop != null && prop.isIndexed()) {
@@ -979,7 +979,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		Object result = null;
 
 		if (left instanceof OSQLFilterItemField & right instanceof OSQLFilterItemField) {
-			if (((OSQLFilterItemField) left).getName().equals(((OSQLFilterItemField) right).getName())) {
+			if (((OSQLFilterItemField) left).getRoot().equals(((OSQLFilterItemField) right).getRoot())) {
 				if (oper instanceof OQueryOperatorEquals)
 					result = Boolean.TRUE;
 				else if (oper instanceof OQueryOperatorNotEquals)

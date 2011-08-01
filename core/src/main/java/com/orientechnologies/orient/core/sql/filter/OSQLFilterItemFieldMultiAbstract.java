@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
- * Represent one or more object fields as value in the query condition.
+ * Represents one or more object fields as value in the query condition.
  * 
  * @author Luca Garulli
  * 
@@ -37,7 +37,7 @@ public abstract class OSQLFilterItemFieldMultiAbstract extends OSQLFilterItemAbs
 
 	public Object getValue(final ORecordInternal<?> iRecord) {
 		if (names.size() == 1)
-			return transformValue(iRecord.getDatabase(), ((ODocument) iRecord).rawField(names.get(0)));
+			return transformValue(iRecord.getDatabase(), getRecordAttribute(iRecord.getDatabase(), iRecord, names.get(0)));
 
 		Object[] values = ((ODocument) iRecord).fieldValues();
 

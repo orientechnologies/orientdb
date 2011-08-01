@@ -79,7 +79,7 @@ public class OSQLFilterCondition {
 
 		// DEFINED OPERATOR
 		if ((r instanceof String && r.equals(OSQLHelper.DEFINED)) || (l instanceof String && l.equals(OSQLHelper.DEFINED))) {
-			result = new Object[] { ((OSQLFilterItemAbstract) this.left).getName(), r };
+			result = new Object[] { ((OSQLFilterItemAbstract) this.left).getRoot(), r };
 		}
 
 		else if (l != null && r != null && !l.getClass().isAssignableFrom(r.getClass()) && !r.getClass().isAssignableFrom(l.getClass()))

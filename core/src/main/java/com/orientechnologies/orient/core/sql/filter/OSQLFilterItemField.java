@@ -16,10 +16,8 @@
 package com.orientechnologies.orient.core.sql.filter;
 
 import com.orientechnologies.orient.core.command.OCommandToParse;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Represent an object field as value in the query condition.
@@ -28,6 +26,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class OSQLFilterItemField extends OSQLFilterItemAbstract {
+	protected String	name;
+
 	public OSQLFilterItemField(final OCommandToParse iQueryToParse, final String iName) {
 		super(iQueryToParse, iName);
 	}
@@ -36,11 +36,14 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 		if (iRecord == null)
 			throw new OCommandExecutionException("expression item '" + name + "' can't be resolved");
 
-		final ODatabaseRecord db = iRecord.getDatabase();
+		return transformValue(iRecord.getDatabase(), getRecordAttribute(iRecord.getDatabase(), iRecord, name));
+	}
 
-		if (name.charAt(0) == '@')
-			return transformValue(db, getRecordAttribute(db, iRecord, name));
-		else
-			return transformValue(db, ((ODocument) iRecord).rawField(name));
+	public String getRoot() {
+		return name;
+	}
+
+	public void setRoot(final OCommandToParse iQueryToParse, final String iRoot) {
+		this.name = iRoot;
 	}
 }

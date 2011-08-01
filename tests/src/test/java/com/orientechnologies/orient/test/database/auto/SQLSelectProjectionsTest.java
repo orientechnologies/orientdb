@@ -167,6 +167,27 @@ public class SQLSelectProjectionsTest {
 	}
 
 	@Test
+	public void queryProjectionFunctionsAndFieldOperators() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>("select max(name.append('.')).prefix('Mr. ') as name from Profile where name is not null"))
+				.execute();
+
+		Assert.assertTrue(result.size() != 0);
+
+		for (ODocument d : result) {
+			Assert.assertTrue(d.field("name").toString().startsWith("Mr. "));
+			Assert.assertTrue(d.field("name").toString().endsWith("."));
+
+			Assert.assertNull(d.getClassName());
+			Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+		}
+
+		database.close();
+	}
+
+	@Test
 	public void queryProjectionAliases() {
 		database.open("admin", "admin");
 
