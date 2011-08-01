@@ -45,13 +45,18 @@ public abstract class OTransactionAbstract implements OTransaction {
 	}
 
 	public static void updateCacheFromEntries(final OStorage iStorage, final OTransaction iTx,
-			final Iterable<? extends OTransactionRecordEntry> iEntries) throws IOException {
+			final Iterable<? extends OTransactionRecordEntry> iEntries, final boolean iUpdateStrategy) throws IOException {
 		final OLevel1RecordCache dbCache = (OLevel1RecordCache) iTx.getDatabase().getLevel1Cache();
 
 		for (OTransactionRecordEntry txEntry : iEntries) {
-			if (txEntry.status == OTransactionRecordEntry.DELETED)
+			if (!iUpdateStrategy)
+				// ALWAYS REMOVE THE RECORD FROM CACHE
+				dbCache.deleteRecord(txEntry.getRecord().getIdentity());
+			else if (txEntry.status == OTransactionRecordEntry.DELETED)
+				// DELETION
 				dbCache.deleteRecord(txEntry.getRecord().getIdentity());
 			else if (txEntry.status == OTransactionRecordEntry.UPDATED || txEntry.status == OTransactionRecordEntry.CREATED)
+				// UDPATE OR CREATE
 				dbCache.updateRecord(txEntry.getRecord());
 		}
 	}

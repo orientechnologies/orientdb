@@ -495,7 +495,7 @@ public class OStorageMemory extends OStorageEmbedded {
 			}
 
 			// UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT
-			OTransactionAbstract.updateCacheFromEntries(this, iTx, allEntries);
+			OTransactionAbstract.updateCacheFromEntries(this, iTx, allEntries, true);
 
 			allEntries.clear();
 		} catch (IOException e) {

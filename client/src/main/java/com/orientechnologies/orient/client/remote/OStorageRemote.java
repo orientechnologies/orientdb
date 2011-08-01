@@ -795,8 +795,9 @@ public class OStorageRemote extends OStorageAbstract {
 				for (OTransactionRecordEntry txEntry : allEntries)
 					txEntry.getRecord().unsetDirty();
 
-				// UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT
-				OTransactionAbstract.updateCacheFromEntries(this, iTx, allEntries);
+				// UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT. USE THE STRATEGY TO ALWAYS REMOVE ALL THE RECORDS SINCE THEY COULD BE
+				// CHANGED AS CONTENT IN CASE OF TREE AND GRAPH DUE TO CROSS REFERENCES
+				OTransactionAbstract.updateCacheFromEntries(this, iTx, allEntries, false);
 
 				break;
 			} catch (OException e) {
