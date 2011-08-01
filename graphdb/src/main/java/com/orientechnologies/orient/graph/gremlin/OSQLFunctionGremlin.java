@@ -25,6 +25,7 @@ import javax.script.ScriptException;
 
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
@@ -62,7 +63,12 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 		final ODocument document = (ODocument) iCurrentRecord;
 
 		if (engine == null) {
-			engine = new GremlinScriptEngine();
+			try {
+				engine = new GremlinScriptEngine();
+			} catch (Throwable e) {
+				throw new OConfigurationException("Error on loading Gremlin engine", e);
+			}
+
 			// TODO THIS COULD BE IMPROVED BY CREATING A ORIENT-GRAPH POOL (LIKE WITH OTHER DB TYPES) INSTEAD TO CREATE IT PER QUERY
 			graph = new OrientGraph(iCurrentRecord.getDatabase().getURL());
 			engine.getBindings(ScriptContext.ENGINE_SCOPE).put("g", graph);
