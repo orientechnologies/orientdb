@@ -29,6 +29,21 @@
 This document enlist the last changes to the OrientDB project.
 
 -------------------------------------------------------------------------------
+VERSION 1.0rc4 - (August, 1st 2011)
+-------------------------------------------------------------------------------
+- SQL engine: improved mixing functions and operators all together in complex
+  combinations
+- SQL engine: supported array, collection and maps as query parameters
+- New SQL TRUNCATE RECORD command
+- JARs are OSGi compliant
+- GraphDB: Renamed Vertex "outEdges" and "inEdges" in respectively "out" and 
+  "in"
+- Fixed problems with drop clusters
+- 21 issues fixed in total
+
+Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.0rc4   
+
+-------------------------------------------------------------------------------
 VERSION 1.0rc3 - (July, 14th 2011)
 -------------------------------------------------------------------------------
 - Improved Index manager to use index also with multiple query condition
