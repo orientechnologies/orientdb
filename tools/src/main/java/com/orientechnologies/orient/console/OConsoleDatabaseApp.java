@@ -830,9 +830,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 				} catch (Exception e) {
 				}
 			}
-			out.println("----------------------------------------------+------+---------------------+-----------+");
-			out.printf(" TOTAL                                                                 %15d |\n", totalElements);
-			out.println("---------------------------------------------------------------------------------------+");
+			out.println("----------------------------------------------+---------------------+-----------+");
+			out.printf(" TOTAL                                                          %15d |\n", totalElements);
+			out.println("--------------------------------------------------------------------------------+");
 
 		} else
 			out.println("No database selected yet.");
