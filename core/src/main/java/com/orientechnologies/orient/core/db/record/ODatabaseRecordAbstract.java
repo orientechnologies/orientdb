@@ -573,15 +573,15 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				iRecord.onAfterIdentityChanged(iRecord);
 			}
 
-			if (stream != null && stream.length > 0)
-				callbackHooks(wasNew ? TYPE.AFTER_CREATE : TYPE.AFTER_UPDATE, iRecord);
-
 			if (isNew)
 				// UPDATE INFORMATION: CLUSTER ID+POSITION
 				iRecord.fill(iRecord.getDatabase(), rid, 0, stream, stream == null || stream.length == 0);
 			else
 				// UPDATE INFORMATION: VERSION
 				iRecord.fill(iRecord.getDatabase(), rid, (int) result, stream, stream == null || stream.length == 0);
+
+			if (stream != null && stream.length > 0)
+				callbackHooks(wasNew ? TYPE.AFTER_CREATE : TYPE.AFTER_UPDATE, iRecord);
 
 			if (stream != null && stream.length > 0)
 				// ADD/UPDATE IT IN CACHE IF IT'S ACTIVE

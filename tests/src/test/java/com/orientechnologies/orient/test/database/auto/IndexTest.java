@@ -18,12 +18,12 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.index.OIndexNotUnique;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -111,17 +111,28 @@ public class IndexTest {
 	public void testIndexEntries() {
 		List<Profile> result = database.command(new OSQLSynchQuery<Profile>("select * from Profile where nick is not null")).execute();
 
-		for (Profile p : result)
-			database.getRecordByUserObject(p, false);
+		for (Profile p : result) {
+			System.out.println(database.getRecordByUserObject(p, false));
+		}
 
 		OIndex idx = database.getMetadata().getIndexManager().getIndex("Profile.nick");
 
-		Assert.assertEquals(idx.getSize(), result.size());
+		// Assert.assertEquals(idx.getSize(), result.size());
 
+		System.out.println("IDX");
+
+		Set<Profile> indexResult = new HashSet<Profile>();
 		Iterator<Entry<Object, Set<OIdentifiable>>> it = idx.iterator();
 		while (it.hasNext()) {
-			it.next();
+			Collection<? extends Profile> c = (Collection<? extends Profile>) it.next().getValue();
+			System.out.println(c);
+			indexResult.addAll(c);
 		}
+
+//		for (Profile p : result)
+//			Assert.assertTrue(indexResult.contains(new ORecordId(p.getId())));
+
+		Assert.assertEquals(indexResult.size(), result.size());
 	}
 
 	@Test(dependsOnMethods = "testDuplicatedIndexOnUnique")
@@ -596,7 +607,7 @@ public class IndexTest {
 		Assert.assertEquals(newIndexQueries, indexQueries + 1);
 	}
 
-    @Test(dependsOnMethods = "populateIndexDocuments")
+	@Test(dependsOnMethods = "populateIndexDocuments")
 	public void testIndexInComplexSelectOne() {
 		if (database.getStorage() instanceof OStorageRemote || database.getStorage() instanceof OStorageRemoteThread) {
 			return;
@@ -613,15 +624,15 @@ public class IndexTest {
 			indexQueries = 0;
 		}
 
-		final List<Profile> result = database.command(new OSQLSynchQuery<Profile>(
-                "select * from Profile where (name = 'Giuseppe' OR name <> 'Napoleone')" +
-                        " AND (nick is not null AND (name = 'Giuseppe' OR name <> 'Napoleone') AND (nick >= 'ZZZJayLongNickIndex3'))"))
+		final List<Profile> result = database.command(
+				new OSQLSynchQuery<Profile>("select * from Profile where (name = 'Giuseppe' OR name <> 'Napoleone')"
+						+ " AND (nick is not null AND (name = 'Giuseppe' OR name <> 'Napoleone') AND (nick >= 'ZZZJayLongNickIndex3'))"))
 				.execute();
 		if (!oldRecording) {
 			OProfiler.getInstance().stopRecording();
 		}
 
-        final List<String> expectedNicks = new ArrayList<String>(Arrays.asList("ZZZJayLongNickIndex3", "ZZZJayLongNickIndex4",
+		final List<String> expectedNicks = new ArrayList<String>(Arrays.asList("ZZZJayLongNickIndex3", "ZZZJayLongNickIndex4",
 				"ZZZJayLongNickIndex5"));
 		Assert.assertEquals(result.size(), 3);
 		for (Profile profile : result) {
@@ -633,7 +644,7 @@ public class IndexTest {
 		Assert.assertEquals(newIndexQueries, indexQueries + 1);
 	}
 
-    @Test(dependsOnMethods = "populateIndexDocuments")
+	@Test(dependsOnMethods = "populateIndexDocuments")
 	public void testIndexInComplexSelectTwo() {
 		if (database.getStorage() instanceof OStorageRemote || database.getStorage() instanceof OStorageRemoteThread) {
 			return;
@@ -650,16 +661,18 @@ public class IndexTest {
 			indexQueries = 0;
 		}
 
-		final List<Profile> result = database.command(new OSQLSynchQuery<Profile>(
-                "select * from Profile where " +
-                        "((name = 'Giuseppe' OR name <> 'Napoleone')" +
-                        " AND (nick is not null AND (name = 'Giuseppe' OR name <> 'Napoleone') AND (nick >= 'ZZZJayLongNickIndex3' OR nick >= 'ZZZJayLongNickIndex4')))"))
+		final List<Profile> result = database
+				.command(
+						new OSQLSynchQuery<Profile>(
+								"select * from Profile where "
+										+ "((name = 'Giuseppe' OR name <> 'Napoleone')"
+										+ " AND (nick is not null AND (name = 'Giuseppe' OR name <> 'Napoleone') AND (nick >= 'ZZZJayLongNickIndex3' OR nick >= 'ZZZJayLongNickIndex4')))"))
 				.execute();
 		if (!oldRecording) {
 			OProfiler.getInstance().stopRecording();
 		}
 
-        final List<String> expectedNicks = new ArrayList<String>(Arrays.asList("ZZZJayLongNickIndex3", "ZZZJayLongNickIndex4",
+		final List<String> expectedNicks = new ArrayList<String>(Arrays.asList("ZZZJayLongNickIndex3", "ZZZJayLongNickIndex4",
 				"ZZZJayLongNickIndex5"));
 		Assert.assertEquals(result.size(), 3);
 		for (Profile profile : result) {
@@ -671,8 +684,7 @@ public class IndexTest {
 		Assert.assertEquals(newIndexQueries, indexQueries);
 	}
 
-
-    public void populateIndexDocuments() {
+	public void populateIndexDocuments() {
 		for (int i = 0; i <= 5; i++) {
 			final Profile profile = new Profile("ZZZJayLongNickIndex" + i, "NickIndex" + i, "NolteIndex" + i, null);
 			database.save(profile);
@@ -684,33 +696,32 @@ public class IndexTest {
 		}
 	}
 
-    @Test(dependsOnMethods = "testChangeOfIndexToUnique")
-    public void removeNotUniqueIndexOnNick() {
-        database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndex();
-        database.getMetadata().getSchema().save();
-    }
+	@Test(dependsOnMethods = "testChangeOfIndexToUnique")
+	public void removeNotUniqueIndexOnNick() {
+		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndex();
+		database.getMetadata().getSchema().save();
+	}
 
-    @Test(dependsOnMethods = "removeNotUniqueIndexOnNick")
-    public void testQueryingWithoutNickIndex() {
-        Assert.assertTrue(database.getMetadata().getSchema().getClass("Profile").getProperty("name").isIndexed());
-        Assert.assertTrue(!database.getMetadata().getSchema().getClass("Profile").getProperty("nick").isIndexed());
+	@Test(dependsOnMethods = "removeNotUniqueIndexOnNick")
+	public void testQueryingWithoutNickIndex() {
+		Assert.assertTrue(database.getMetadata().getSchema().getClass("Profile").getProperty("name").isIndexed());
+		Assert.assertTrue(!database.getMetadata().getSchema().getClass("Profile").getProperty("nick").isIndexed());
 
-        List<Profile> result = database.command(new OSQLSynchQuery<ODocument>("SELECT FROM Profile WHERE nick = 'Jay'")).execute();
-        Assert.assertEquals(result.size(), 2);
+		List<Profile> result = database.command(new OSQLSynchQuery<ODocument>("SELECT FROM Profile WHERE nick = 'Jay'")).execute();
+		Assert.assertEquals(result.size(), 2);
 
-        result = database.command(new OSQLSynchQuery<ODocument>("SELECT FROM Profile WHERE nick = 'Jay' AND name = 'Jay'")).execute();
-        Assert.assertEquals(result.size(), 1);
+		result = database.command(new OSQLSynchQuery<ODocument>("SELECT FROM Profile WHERE nick = 'Jay' AND name = 'Jay'")).execute();
+		Assert.assertEquals(result.size(), 1);
 
-        result = database.command(new OSQLSynchQuery<ODocument>("SELECT FROM Profile WHERE nick = 'Jay' AND name = 'Nick'")).execute();
-        Assert.assertEquals(result.size(), 1);
-    }
+		result = database.command(new OSQLSynchQuery<ODocument>("SELECT FROM Profile WHERE nick = 'Jay' AND name = 'Nick'")).execute();
+		Assert.assertEquals(result.size(), 1);
+	}
 
-
-    @Test(dependsOnMethods = "testQueryingWithoutNickIndex")
-    public void createNotUniqueIndexOnNick() {
-        database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(INDEX_TYPE.NOTUNIQUE);
-        database.getMetadata().getSchema().save();
-    }
+	@Test(dependsOnMethods = "testQueryingWithoutNickIndex")
+	public void createNotUniqueIndexOnNick() {
+		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(INDEX_TYPE.NOTUNIQUE);
+		database.getMetadata().getSchema().save();
+	}
 
 	public void LongTypes() {
 		database.getMetadata().getSchema().getClass("Profile").createProperty("hash", OType.LONG).createIndex(INDEX_TYPE.UNIQUE);
@@ -763,7 +774,7 @@ public class IndexTest {
 		whiz.save();
 
 		Assert.assertTrue(((ODocument) whiz.field("account")).getIdentity().isValid());
-		
+
 		((ODocument) whiz.field("account")).delete();
 		whiz.delete();
 	}

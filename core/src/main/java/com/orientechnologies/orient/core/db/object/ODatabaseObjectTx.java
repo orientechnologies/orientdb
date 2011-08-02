@@ -148,9 +148,15 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 
 		// GET THE ASSOCIATED DOCUMENT
 		ODocument record = getRecordByUserObject(iPojo, true);
-		record = underlying.load(record, iFetchPlan, iIgnoreCache);
+		try {
+			record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.UNMARSHALLING);
 
-		stream2pojo(record, iPojo, iFetchPlan);
+			record = underlying.load(record, iFetchPlan, iIgnoreCache);
+
+			stream2pojo(record, iPojo, iFetchPlan);
+		} finally {
+			record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.LOADED);
+		}
 
 		return this;
 	}
@@ -209,17 +215,22 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 
 		// GET THE ASSOCIATED DOCUMENT
 		final ODocument record = getRecordByUserObject(iPojo, true);
+		try {
+			record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.MARSHALLING);
 
-		if (!saveOnlyDirty || record.isDirty()) {
-			// REGISTER BEFORE TO SERIALIZE TO AVOID PROBLEMS WITH CIRCULAR DEPENDENCY
-			//registerUserObject(iPojo, record);
+			if (!saveOnlyDirty || record.isDirty()) {
+				// REGISTER BEFORE TO SERIALIZE TO AVOID PROBLEMS WITH CIRCULAR DEPENDENCY
+				// registerUserObject(iPojo, record);
 
-			pojo2Stream(iPojo, record);
+				pojo2Stream(iPojo, record);
 
-			underlying.save(record, iClusterName);
+				underlying.save(record, iClusterName);
 
-			// RE-REGISTER FOR NEW RECORDS SINCE THE ID HAS CHANGED
-			registerUserObject(iPojo, record);
+				// RE-REGISTER FOR NEW RECORDS SINCE THE ID HAS CHANGED
+				registerUserObject(iPojo, record);
+			}
+		} finally {
+			record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.LOADED);
 		}
 
 		return this;

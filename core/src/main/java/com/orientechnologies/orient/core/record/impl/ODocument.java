@@ -693,7 +693,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 				setDirty();
 
 				if (_trackingChanges && _recordId.isValid()) {
-					// SAVE THE OLD VALUE IN A SEPARATE MAP
+					// SAVE THE OLD VALUE IN A SEPARATE MAP ONLY IF TRACKING IS ACTIVE AND THE RECORD IS NOT NEW
 					if (_fieldOriginalValues == null)
 						_fieldOriginalValues = new HashMap<String, Object>();
 
