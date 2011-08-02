@@ -421,48 +421,6 @@ public class CRUDDocumentPhysicalTest {
 		} catch (IllegalArgumentException e) {
 			Assert.assertTrue(true);
 		}
-		//
-		// try {
-		// doc.field("a.b", 10);
-		// Assert.assertFalse(true);
-		// } catch (IllegalArgumentException e) {
-		// Assert.assertTrue(true);
-		// }
-		//
-		// try {
-		// doc.field("a;b", 10);
-		// Assert.assertFalse(true);
-		// } catch (IllegalArgumentException e) {
-		// Assert.assertTrue(true);
-		// }
-		//
-		// try {
-		// doc.field("a-b", 10);
-		// Assert.assertFalse(true);
-		// } catch (IllegalArgumentException e) {
-		// Assert.assertTrue(true);
-		// }
-		//
-		// try {
-		// doc.field("a/b", 10);
-		// Assert.assertFalse(true);
-		// } catch (IllegalArgumentException e) {
-		// Assert.assertTrue(true);
-		// }
-		//
-		// try {
-		// doc.field("a#b", 10);
-		// Assert.assertFalse(true);
-		// } catch (IllegalArgumentException e) {
-		// Assert.assertTrue(true);
-		// }
-		//
-		// try {
-		// doc.field("a@b", 10);
-		// Assert.assertFalse(true);
-		// } catch (IllegalArgumentException e) {
-		// Assert.assertTrue(true);
-		// }
 
 		database.close();
 	}
@@ -639,4 +597,15 @@ public class CRUDDocumentPhysicalTest {
 		return doc;
 	}
 
+	public void testEncoding() {
+		String s = " \r\n\t:;,.|+*/\\=!?[]()'\"";
+
+		ODocument doc = new ODocument(database);
+		doc.field("test", s);
+		doc.unpin();
+		doc.save();
+
+		doc.reload(null, true);
+		Assert.assertEquals(doc.field("test"), s);
+	}
 }

@@ -29,7 +29,6 @@ import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test(groups = { "index" }, sequential = true)
@@ -118,8 +117,8 @@ public class FullTextIndexTest {
 		Set<ODocument> allDocs = new HashSet<ODocument>();
 
 		for (int i = 0; i < words.length - 1; ++i) {
-			List<ODocument> docs = database.query(new OSQLSynchQuery<Object>("SELECT FROM Whiz WHERE text containstext '"
-					+ OStringSerializerHelper.encode(words[i]) + "'"));
+			List<ODocument> docs = database.query(new OSQLSynchQuery<Object>("SELECT FROM Whiz WHERE text containstext \"" + words[i]
+					+ "\""));
 			allDocs.addAll(docs);
 		}
 

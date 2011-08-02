@@ -144,15 +144,15 @@ public abstract class OStringSerializerHelper {
 	}
 
 	public static List<String> smartSplit(final String iSource, final char iRecordSeparator, final char... iJumpChars) {
-		return smartSplit(iSource, new char[] { iRecordSeparator }, 0, iSource.length(), iJumpChars);
+		return smartSplit(iSource, new char[] { iRecordSeparator }, 0, iSource.length(), false, iJumpChars);
 	}
 
 	public static List<String> smartSplit(final String iSource, final char[] iRecordSeparator, int beginIndex, final int endIndex,
-			final char... iJumpChars) {
+			final boolean iStringSeparatorExtended, final char... iJumpChars) {
 		final StringBuilder buffer = new StringBuilder();
 		final ArrayList<String> parts = new ArrayList<String>();
 
-		while ((beginIndex = parse(iSource, buffer, beginIndex, endIndex, iRecordSeparator, iJumpChars)) > -1) {
+		while ((beginIndex = parse(iSource, buffer, beginIndex, endIndex, iRecordSeparator, iStringSeparatorExtended, iJumpChars)) > -1) {
 			parts.add(buffer.toString());
 			buffer.setLength(0);
 		}
@@ -164,7 +164,7 @@ public abstract class OStringSerializerHelper {
 	}
 
 	public static int parse(final String iSource, final StringBuilder iBuffer, final int beginIndex, final int endIndex,
-			final char[] iRecordSeparator, final char... iJumpChars) {
+			final char[] iRecordSeparator, final boolean iStringSeparatorExtended, final char... iJumpChars) {
 		char stringBeginChar = ' ';
 		boolean encodeMode = false;
 		int insideParenthesis = 0;
@@ -220,7 +220,7 @@ public abstract class OStringSerializerHelper {
 				if (insideLinkPart > 0 && c != '-' && !Character.isDigit(c) && c != ORID.SEPARATOR && c != LINK)
 					insideLinkPart = 0;
 
-				if ((c == '\'' || c == '"') && !encodeMode) {
+				if ((c == '"' || iStringSeparatorExtended && c == '\'') && !encodeMode) {
 					// START STRING
 					stringBeginChar = c;
 				}
@@ -235,7 +235,7 @@ public abstract class OStringSerializerHelper {
 
 			} else {
 				// INSIDE A STRING
-				if ((c == '\'' || c == '"') && !encodeMode) {
+				if ((c == '"' || iStringSeparatorExtended && c == '\'') && !encodeMode) {
 					// CLOSE THE STRING ?
 					if (stringBeginChar == c) {
 						// SAME CHAR AS THE BEGIN OF THE STRING: CLOSE IT AND PUSH
@@ -386,7 +386,7 @@ public abstract class OStringSerializerHelper {
 			return iBeginPosition;
 
 		final StringBuilder buffer = new StringBuilder();
-		parse(iText, buffer, openPos, -1, PARAMETER_EXT_SEPARATOR);
+		parse(iText, buffer, openPos, -1, PARAMETER_EXT_SEPARATOR, true);
 		if (buffer.length() == 0)
 			return iBeginPosition;
 
@@ -398,7 +398,7 @@ public abstract class OStringSerializerHelper {
 		}
 
 		final String t = buffer.substring(1, buffer.length() - 1);
-		final List<String> pars = smartSplit(t, PARAMETER_SEPARATOR, 0, t.length());
+		final List<String> pars = smartSplit(t, PARAMETER_SEPARATOR, 0, t.length(), true);
 
 		for (int i = 0; i < pars.size(); ++i)
 			iParameters.add(pars.get(i).trim());
@@ -454,7 +454,7 @@ public abstract class OStringSerializerHelper {
 		for (int i = 0; i < newSize; ++i) {
 			final char c = iText.charAt(i);
 
-			if (c == '"' || c == '\\' || c == '\'') {
+			if (c == '"' || c == '\\') {
 				pos = i;
 				break;
 			}
@@ -468,7 +468,7 @@ public abstract class OStringSerializerHelper {
 			for (int i = 0; i < iText.length(); ++i) {
 				c = iText.charAt(i);
 
-				if (c == '"' || c == '\\' || c == '\'')
+				if (c == '"' || c == '\\')
 					iOutput.append('\\');
 
 				iOutput.append(c);
