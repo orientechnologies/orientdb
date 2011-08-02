@@ -19,7 +19,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
-import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -69,20 +68,10 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 	public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan) {
 		checkTransaction();
 
-		OTransactionRecordEntry txEntry = recordEntries.get(iRid);
+		final ORecordInternal<?> txRecord = getRecord((ORecordId) iRid);
 
-		if (txEntry != null) {
-			OFetchHelper.checkFetchPlanValid(iFetchPlan);
-			switch (txEntry.status) {
-			case OTransactionRecordEntry.LOADED:
-			case OTransactionRecordEntry.UPDATED:
-			case OTransactionRecordEntry.CREATED:
-				return txEntry.getRecord();
-
-			case OTransactionRecordEntry.DELETED:
-				return null;
-			}
-		}
+		if (txRecord != null)
+			return txRecord;
 
 		// DELEGATE TO THE STORAGE
 		return database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, false);
@@ -132,7 +121,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 				// REMOVE FROM THE DB'S CACHE
 				database.getLevel1Cache().freeRecord(rid);
 
-			OTransactionRecordEntry txEntry = recordEntries.get(rid);
+			OTransactionRecordEntry txEntry = getRecordEntry(rid);
 
 			if (txEntry == null) {
 				// NEW ENTRY: JUST REGISTER IT

@@ -673,7 +673,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			// JUST THE REFERENCE
 			rid = (ORID) iLinked;
 
-			if (rid.isNew())
+			if (!rid.isValid())
 				rid.getRecord().save();
 		} else {
 			if (!(iLinked instanceof ORecordInternal<?>)) {

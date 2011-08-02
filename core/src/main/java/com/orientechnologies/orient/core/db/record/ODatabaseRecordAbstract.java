@@ -449,7 +449,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, getClusterNameById(iRid.getClusterId()));
 
 			// SEARCH IN LOCAL TX
-			ORecordInternal<?> record = getTransaction().getRecordEntry(iRid);
+			ORecordInternal<?> record = getTransaction().getRecord(iRid);
 			if (record == null && !iIgnoreCache)
 				// SEARCH INTO THE CACHE
 				record = getLevel1Cache().findRecord(iRid);

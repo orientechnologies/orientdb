@@ -80,15 +80,22 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 		return recordEntries.values();
 	}
 
-	public ORecordInternal<?> getRecordEntry(final ORecordId rid) {
+	public OTransactionRecordEntry getRecordEntry(final ORecordId rid) {
 		OTransactionRecordEntry e = recordEntries.get(rid);
 		if (e != null)
-			return e.getRecord();
+			return e;
 
 		e = allEntries.get(rid);
 		if (e != null)
-			return e.getRecord();
+			return e;
 
+		return null;
+	}
+
+	public ORecordInternal<?> getRecord(final ORecordId rid) {
+		final OTransactionRecordEntry e = getRecordEntry(rid);
+		if (e != null && e.status != OTransactionRecordEntry.DELETED)
+			return e.record;
 		return null;
 	}
 
