@@ -574,12 +574,17 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 								+ "' is duplicated in current SELECT, choose a different name");
 				} else {
 					// EXTRACT THE FIELD NAME WITHOUT FUNCTIONS AND/OR LINKS
-					pos = projection.indexOf('.');
+					final int pos1 = projection.indexOf('.');
+					final int pos2 = projection.indexOf('(');
 
-					fieldName = pos > -1 ? projection.substring(0, pos) : projection;
+					pos = -1;
 
-					// GENERATE A NAME FOR FUNCTIONS
-					pos = projection.indexOf('(');
+					if (pos1 > -1 && pos2 == -1)
+						pos = pos1;
+					else if (pos2 > -1 && pos1 == -1)
+						pos = pos2;
+					else if (pos1 > -1 && pos2 > -1)
+						pos = Math.min(pos1, pos2);
 
 					fieldName = pos > -1 ? projection.substring(0, pos) : projection;
 
