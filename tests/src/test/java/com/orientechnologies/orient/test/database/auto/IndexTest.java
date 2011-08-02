@@ -111,26 +111,16 @@ public class IndexTest {
 	public void testIndexEntries() {
 		List<Profile> result = database.command(new OSQLSynchQuery<Profile>("select * from Profile where nick is not null")).execute();
 
-		for (Profile p : result) {
-			System.out.println(database.getRecordByUserObject(p, false));
-		}
-
 		OIndex idx = database.getMetadata().getIndexManager().getIndex("Profile.nick");
 
-		// Assert.assertEquals(idx.getSize(), result.size());
-
-		System.out.println("IDX");
+		Assert.assertEquals(idx.getSize(), result.size());
 
 		Set<Profile> indexResult = new HashSet<Profile>();
 		Iterator<Entry<Object, Set<OIdentifiable>>> it = idx.iterator();
 		while (it.hasNext()) {
 			Collection<? extends Profile> c = (Collection<? extends Profile>) it.next().getValue();
-			System.out.println(c);
 			indexResult.addAll(c);
 		}
-
-//		for (Profile p : result)
-//			Assert.assertTrue(indexResult.contains(new ORecordId(p.getId())));
 
 		Assert.assertEquals(indexResult.size(), result.size());
 	}
