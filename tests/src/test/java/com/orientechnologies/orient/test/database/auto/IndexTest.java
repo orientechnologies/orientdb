@@ -18,7 +18,6 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -114,15 +113,6 @@ public class IndexTest {
 		OIndex idx = database.getMetadata().getIndexManager().getIndex("Profile.nick");
 
 		Assert.assertEquals(idx.getSize(), result.size());
-
-		Set<Profile> indexResult = new HashSet<Profile>();
-		Iterator<Entry<Object, Set<OIdentifiable>>> it = idx.iterator();
-		while (it.hasNext()) {
-			Collection<? extends Profile> c = (Collection<? extends Profile>) it.next().getValue();
-			indexResult.addAll(c);
-		}
-
-		Assert.assertEquals(indexResult.size(), result.size());
 	}
 
 	@Test(dependsOnMethods = "testDuplicatedIndexOnUnique")
