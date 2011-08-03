@@ -49,22 +49,14 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 		id = iId;
 	}
 
-	public void commit() {
+	public void close() {
 		allEntries.clear();
 		recordEntries.clear();
 		indexEntries.clear();
-
-		status = TXSTATUS.INVALID;
-	}
-
-	public void rollback() {
-		allEntries.clear();
-		recordEntries.clear();
-		indexEntries.clear();
-
 		newObjectCounter = -2;
-
 		status = TXSTATUS.INVALID;
+		
+		database.setDefaultTransactionMode();
 	}
 
 	public int getId() {
@@ -76,8 +68,12 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 		recordEntries.clear();
 	}
 
-	public Collection<OTransactionRecordEntry> getRecordEntries() {
+	public Collection<OTransactionRecordEntry> getCurrentRecordEntries() {
 		return recordEntries.values();
+	}
+
+	public Collection<OTransactionRecordEntry> getAllRecordEntries() {
+		return allEntries.values();
 	}
 
 	public OTransactionRecordEntry getRecordEntry(final ORecordId rid) {

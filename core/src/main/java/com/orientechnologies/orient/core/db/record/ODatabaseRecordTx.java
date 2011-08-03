@@ -28,10 +28,10 @@ import com.orientechnologies.orient.core.index.OIndexMVRBTreeAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction;
-import com.orientechnologies.orient.core.tx.OTransactionNoTx;
-import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTransaction.TXSTATUS;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
+import com.orientechnologies.orient.core.tx.OTransactionNoTx;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
 /**
  * Delegates all the CRUD operations to the current transaction.
@@ -50,7 +50,8 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 	}
 
 	public ODatabaseRecord begin(final TXTYPE iType) {
-		currentTx.rollback();
+		if (currentTx.isActive())
+			currentTx.rollback();
 
 		// WAKE UP LISTENERS
 		for (ODatabaseListener listener : underlying.getListeners())
@@ -128,8 +129,6 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 					OLogManager.instance().error(this, "Error after tx rollback", t);
 				}
 			throw e;
-		} finally {
-			setDefaultTransactionMode();
 		}
 
 		// WAKE UP LISTENERS
@@ -158,11 +157,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 					OLogManager.instance().error(this, "Error before tx rollback", t);
 				}
 
-			try {
-				currentTx.rollback();
-			} finally {
-				setDefaultTransactionMode();
-			}
+			currentTx.rollback();
 
 			// WAKE UP LISTENERS
 			for (ODatabaseListener listener : underlying.getListeners())
@@ -283,7 +278,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 		return true;
 	}
 
-	private void setDefaultTransactionMode() {
+	public void setDefaultTransactionMode() {
 		if (!(currentTx instanceof OTransactionNoTx))
 			currentTx = new OTransactionNoTx(this);
 	}

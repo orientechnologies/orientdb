@@ -47,6 +47,9 @@ public class OTransactionNoTx extends OTransactionAbstract {
 	public void rollback() {
 	}
 
+	public void close() {
+	}
+
 	public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan) {
 		if (iRid.isNew())
 			return null;
@@ -68,7 +71,11 @@ public class OTransactionNoTx extends OTransactionAbstract {
 		database.executeDeleteRecord(iRecord, iRecord.getVersion());
 	}
 
-	public Collection<OTransactionRecordEntry> getRecordEntries() {
+	public Collection<OTransactionRecordEntry> getCurrentRecordEntries() {
+		return null;
+	}
+
+	public Collection<OTransactionRecordEntry> getAllRecordEntries() {
 		return null;
 	}
 

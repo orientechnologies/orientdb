@@ -117,14 +117,6 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 		return underlying.begin(iTx);
 	}
 
-	public ODatabaseComplex<ORecordInternal<?>> commit() {
-		return underlying.commit();
-	}
-
-	public ODatabaseComplex<ORecordInternal<?>> rollback() {
-		return underlying.rollback();
-	}
-
 	public boolean isMVCC() {
 		checkOpeness();
 		return underlying.isMVCC();

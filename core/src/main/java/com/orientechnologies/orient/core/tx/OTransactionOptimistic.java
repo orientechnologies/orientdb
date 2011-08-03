@@ -37,13 +37,10 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 		status = TXSTATUS.BEGUN;
 	}
 
-	@Override
 	public void commit() {
 		checkTransaction();
 		status = TXSTATUS.COMMITTING;
 		database.executeCommit();
-
-		super.commit();
 	}
 
 	public void rollback() {
@@ -59,10 +56,12 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
 		// REMOVE ALL THE ENTRIES AND INVALIDATE THE DOCUMENTS TO AVOID TO BE RE-USED DIRTY AT USER-LEVEL. IN THIS WAY RE-LOADING MUST
 		// EXECUTED
-		for (OTransactionRecordEntry v : recordEntries.values()) {
+		for (OTransactionRecordEntry v : recordEntries.values())
 			v.getRecord().unload();
-		}
-		super.rollback();
+
+		for (OTransactionRecordEntry v : allEntries.values())
+			v.getRecord().unload();
+
 	}
 
 	public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan) {

@@ -132,7 +132,7 @@ public class TransactionOptimisticTest {
 			record.value("This is the second version").save();
 			db.commit();
 
-			record.load();
+			record.reload();
 			Assert.assertEquals(record.getVersion(), v1 + 1);
 			Assert.assertTrue(record.value().contains("second"));
 		} finally {

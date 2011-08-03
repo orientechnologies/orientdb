@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.dictionary.ODictionaryWrapper;
@@ -279,41 +280,37 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 
 	@Override
 	public ODatabasePojoAbstract<Object> commit() {
-		// COPY ALL TX ENTRIES
-		final List<OTransactionRecordEntry> entries;
-		if (getTransaction().getRecordEntries() != null) {
-			entries = new ArrayList<OTransactionRecordEntry>();
-			for (OTransactionRecordEntry entry : getTransaction().getRecordEntries())
-				entries.add(entry);
-		} else
-			entries = null;
+		try {
+			// BY PASS DOCUMENT DB
+			((ODatabaseRecordTx) underlying.getUnderlying()).commit();
 
-		underlying.commit();
+			if (getTransaction().getAllRecordEntries() != null) {
+				// UPDATE ID & VERSION FOR ALL THE RECORDS
+				Object pojo = null;
+				for (OTransactionRecordEntry entry : getTransaction().getAllRecordEntries()) {
+					pojo = records2Objects.get(entry.getRecord());
 
-		if (entries != null) {
-			// UPDATE ID & VERSION FOR ALL THE RECORDS
-			Object pojo = null;
-			for (OTransactionRecordEntry entry : entries) {
-				pojo = records2Objects.get(entry.getRecord());
+					if (pojo != null)
+						switch (entry.status) {
+						case OTransactionRecordEntry.CREATED:
+							rid2Records.put(entry.getRecord().getIdentity(), (ODocument) entry.getRecord());
+							OObjectSerializerHelper.setObjectID(entry.getRecord().getIdentity(), pojo);
 
-				if (pojo != null)
-					switch (entry.status) {
-					case OTransactionRecordEntry.CREATED:
-						rid2Records.put(entry.getRecord().getIdentity(), (ODocument) entry.getRecord());
-						OObjectSerializerHelper.setObjectID(entry.getRecord().getIdentity(), pojo);
+						case OTransactionRecordEntry.UPDATED:
+							OObjectSerializerHelper.setObjectVersion(entry.getRecord().getVersion(), pojo);
+							break;
 
-					case OTransactionRecordEntry.UPDATED:
-						OObjectSerializerHelper.setObjectVersion(entry.getRecord().getVersion(), pojo);
-						break;
+						case OTransactionRecordEntry.DELETED:
+							OObjectSerializerHelper.setObjectID(null, pojo);
+							OObjectSerializerHelper.setObjectVersion(null, pojo);
 
-					case OTransactionRecordEntry.DELETED:
-						OObjectSerializerHelper.setObjectID(null, pojo);
-						OObjectSerializerHelper.setObjectVersion(null, pojo);
-
-						unregisterPojo(pojo, (ODocument) entry.getRecord());
-						break;
-					}
+							unregisterPojo(pojo, (ODocument) entry.getRecord());
+							break;
+						}
+				}
 			}
+		} finally {
+			getTransaction().close();
 		}
 
 		return this;
@@ -321,31 +318,49 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 
 	@Override
 	public ODatabasePojoAbstract<Object> rollback() {
-		// COPY ALL TX ENTRIES
-		final List<OTransactionRecordEntry> newEntries;
-		if (getTransaction().getRecordEntries() != null) {
-			newEntries = new ArrayList<OTransactionRecordEntry>();
-			for (OTransactionRecordEntry entry : getTransaction().getRecordEntries())
-				if (entry.status == OTransactionRecordEntry.CREATED)
-					newEntries.add(entry);
-		} else
-			newEntries = null;
+		try {
+			// COPY ALL TX ENTRIES
+			final List<OTransactionRecordEntry> newEntries;
+			if (getTransaction().getCurrentRecordEntries() != null) {
+				newEntries = new ArrayList<OTransactionRecordEntry>();
+				for (OTransactionRecordEntry entry : getTransaction().getCurrentRecordEntries())
+					if (entry.status == OTransactionRecordEntry.CREATED)
+						newEntries.add(entry);
+			} else
+				newEntries = null;
 
-		underlying.rollback();
+						// BY PASS DOCUMENT DB
+			((ODatabaseRecordTx) underlying.getUnderlying()).rollback();
 
-		if (newEntries != null) {
-			Object pojo = null;
-			for (OTransactionRecordEntry entry : newEntries) {
-				pojo = records2Objects.get(entry.getRecord());
+			if (newEntries != null) {
+				Object pojo = null;
+				for (OTransactionRecordEntry entry : newEntries) {
+					pojo = records2Objects.get(entry.getRecord());
 
-				OObjectSerializerHelper.setObjectID(null, pojo);
-				OObjectSerializerHelper.setObjectVersion(null, pojo);
+					OObjectSerializerHelper.setObjectID(null, pojo);
+					OObjectSerializerHelper.setObjectVersion(null, pojo);
+				}
 			}
-		}
 
-		objects2Records.clear();
-		records2Objects.clear();
-		rid2Records.clear();
+			if (getTransaction().getCurrentRecordEntries() != null)
+				for (OTransactionRecordEntry recordEntry : getTransaction().getCurrentRecordEntries()) {
+					rid2Records.remove(recordEntry.getRecord().getIdentity());
+					final Object pojo = records2Objects.remove(recordEntry.getRecord());
+					if (pojo != null)
+						objects2Records.remove(pojo);
+				}
+
+			if (getTransaction().getAllRecordEntries() != null)
+				for (OTransactionRecordEntry recordEntry : getTransaction().getAllRecordEntries()) {
+					rid2Records.remove(recordEntry.getRecord().getIdentity());
+					final Object pojo = records2Objects.remove(recordEntry.getRecord());
+					if (pojo != null)
+						objects2Records.remove(pojo);
+				}
+
+		} finally {
+			getTransaction().close();
+		}
 
 		return this;
 	}

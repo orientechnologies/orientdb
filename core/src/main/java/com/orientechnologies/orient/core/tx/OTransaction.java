@@ -54,7 +54,9 @@ public interface OTransaction {
 
 	public TXSTATUS getStatus();
 
-	public Iterable<? extends OTransactionRecordEntry> getRecordEntries();
+	public Iterable<? extends OTransactionRecordEntry> getCurrentRecordEntries();
+
+	public Iterable<? extends OTransactionRecordEntry> getAllRecordEntries();
 
 	public List<OTransactionRecordEntry> getRecordEntriesByClass(String iClassName);
 
@@ -85,4 +87,6 @@ public interface OTransaction {
 	public boolean isUsingLog();
 
 	public void setUsingLog(boolean useLog);
+
+	public void close();
 }

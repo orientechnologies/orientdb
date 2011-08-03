@@ -173,8 +173,8 @@ public class OStorageLocalTxExecuter {
 		final Set<OTransactionRecordEntry> allEntries = new HashSet<OTransactionRecordEntry>();
 		final List<OTransactionRecordEntry> tmpEntries = new ArrayList<OTransactionRecordEntry>();
 
-		while (iTx.getRecordEntries().iterator().hasNext()) {
-			for (OTransactionRecordEntry txEntry : iTx.getRecordEntries())
+		while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
+			for (OTransactionRecordEntry txEntry : iTx.getCurrentRecordEntries())
 				if (!allEntries.contains(txEntry))
 					tmpEntries.add(txEntry);
 

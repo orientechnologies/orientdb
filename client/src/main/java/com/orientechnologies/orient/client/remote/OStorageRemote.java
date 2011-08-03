@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -722,8 +721,6 @@ public class OStorageRemote extends OStorageAbstract {
 
 		do {
 			try {
-				final Set<OTransactionRecordEntry> allEntries = new HashSet<OTransactionRecordEntry>();
-
 				OChannelBinaryClient network = null;
 				try {
 					network = beginRequest(OChannelBinaryProtocol.REQUEST_TX_COMMIT);
@@ -733,20 +730,15 @@ public class OStorageRemote extends OStorageAbstract {
 
 					final List<OTransactionRecordEntry> tmpEntries = new ArrayList<OTransactionRecordEntry>();
 
-					while (iTx.getRecordEntries().iterator().hasNext()) {
-						for (OTransactionRecordEntry txEntry : iTx.getRecordEntries())
-							if (!allEntries.contains(txEntry))
-								tmpEntries.add(txEntry);
+					while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
+						for (OTransactionRecordEntry txEntry : iTx.getCurrentRecordEntries())
+							tmpEntries.add(txEntry);
 
 						iTx.clearRecordEntries();
 
-						if (tmpEntries.size() > 0) {
+						if (tmpEntries.size() > 0)
 							for (OTransactionRecordEntry txEntry : tmpEntries)
 								commitEntry(network, txEntry);
-
-							allEntries.addAll(tmpEntries);
-							tmpEntries.clear();
-						}
 
 					}
 
@@ -767,7 +759,7 @@ public class OStorageRemote extends OStorageAbstract {
 					for (int i = 0; i < createdRecords; i++) {
 						currentRid = network.readRID();
 						createdRid = network.readRID();
-						for (OTransactionRecordEntry txEntry : allEntries) {
+						for (OTransactionRecordEntry txEntry : iTx.getAllRecordEntries()) {
 							if (txEntry.getRecord().getIdentity().equals(currentRid)) {
 								txEntry.getRecord().setIdentity(createdRid);
 								break;
@@ -780,7 +772,7 @@ public class OStorageRemote extends OStorageAbstract {
 						rid = network.readRID();
 
 						// SEARCH THE RECORD WITH THAT ID TO UPDATE THE VERSION
-						for (OTransactionRecordEntry txEntry : allEntries) {
+						for (OTransactionRecordEntry txEntry : iTx.getAllRecordEntries()) {
 							if (txEntry.getRecord().getIdentity().equals(rid)) {
 								txEntry.getRecord().setVersion(network.readInt());
 								break;
@@ -792,12 +784,12 @@ public class OStorageRemote extends OStorageAbstract {
 				}
 
 				// SET ALL THE RECORDS AS UNDIRTY
-				for (OTransactionRecordEntry txEntry : allEntries)
+				for (OTransactionRecordEntry txEntry : iTx.getAllRecordEntries())
 					txEntry.getRecord().unsetDirty();
 
 				// UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT. USE THE STRATEGY TO ALWAYS REMOVE ALL THE RECORDS SINCE THEY COULD BE
 				// CHANGED AS CONTENT IN CASE OF TREE AND GRAPH DUE TO CROSS REFERENCES
-				OTransactionAbstract.updateCacheFromEntries(this, iTx, allEntries, false);
+				OTransactionAbstract.updateCacheFromEntries(this, iTx, iTx.getAllRecordEntries(), false);
 
 				break;
 			} catch (OException e) {

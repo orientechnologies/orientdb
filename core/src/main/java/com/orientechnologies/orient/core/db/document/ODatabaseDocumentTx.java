@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordWrapperAbstract;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -235,5 +236,21 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 			throw new IllegalArgumentException("Class '" + iClassName + "' not found in database");
 
 		return cls.count();
+	}
+
+	public ODatabaseComplex<ORecordInternal<?>> commit() {
+		try {
+			return underlying.commit();
+		} finally {
+			getTransaction().close();
+		}
+	}
+
+	public ODatabaseComplex<ORecordInternal<?>> rollback() {
+		try {
+			return underlying.rollback();
+		} finally {
+			getTransaction().close();
+		}
 	}
 }

@@ -477,11 +477,10 @@ public class OStorageMemory extends OStorageEmbedded {
 		lock.acquireExclusiveLock();
 		try {
 
-			final List<OTransactionRecordEntry> allEntries = new ArrayList<OTransactionRecordEntry>();
 			final List<OTransactionRecordEntry> tmpEntries = new ArrayList<OTransactionRecordEntry>();
 
-			while (iTx.getRecordEntries().iterator().hasNext()) {
-				for (OTransactionRecordEntry txEntry : iTx.getRecordEntries())
+			while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
+				for (OTransactionRecordEntry txEntry : iTx.getCurrentRecordEntries())
 					tmpEntries.add(txEntry);
 
 				iTx.clearRecordEntries();
@@ -490,14 +489,11 @@ public class OStorageMemory extends OStorageEmbedded {
 					// COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
 					commitEntry(((OTransaction) iTx).getId(), txEntry);
 
-				allEntries.addAll(tmpEntries);
 				tmpEntries.clear();
 			}
 
 			// UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT
-			OTransactionAbstract.updateCacheFromEntries(this, iTx, allEntries, true);
-
-			allEntries.clear();
+			OTransactionAbstract.updateCacheFromEntries(this, iTx, iTx.getAllRecordEntries(), true);
 		} catch (IOException e) {
 			rollback(iTx);
 

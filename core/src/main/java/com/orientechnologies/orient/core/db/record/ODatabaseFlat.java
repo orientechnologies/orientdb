@@ -39,4 +39,23 @@ public class ODatabaseFlat extends ODatabaseRecordTx {
 	public ORecordFlat newInstance() {
 		return new ORecordFlat(this);
 	}
+
+	@Override
+	public ODatabaseRecord commit() {
+		try {
+			return super.commit();
+		} finally {
+			getTransaction().close();
+		}
+	}
+
+	@Override
+	public ODatabaseRecord rollback() {
+		try {
+			return super.rollback();
+		} finally {
+			getTransaction().close();
+		}
+	}
+
 }

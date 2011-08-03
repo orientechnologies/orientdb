@@ -365,6 +365,9 @@ public class OObjectSerializerHelper {
 	}
 
 	public static String setObjectID(final ORID iIdentity, final Object iPojo) {
+		if (iPojo == null)
+			return null;
+
 		final Class<?> pojoClass = iPojo.getClass();
 
 		final String idFieldName = fieldIds.get(pojoClass);
@@ -423,6 +426,9 @@ public class OObjectSerializerHelper {
 	}
 
 	public static String setObjectVersion(final Integer iVersion, final Object iPojo) {
+		if (iPojo == null)
+			return null;
+
 		final Class<?> pojoClass = iPojo.getClass();
 
 		final String vFieldName = fieldVersions.get(pojoClass);
@@ -667,7 +673,7 @@ public class OObjectSerializerHelper {
 					if (linkedDocument.isDirty()) {
 						// SAVE THE DOCUMENT AND GET UDPATE THE VERSION. CALL THE UNDERLYING SAVE() TO AVOID THE SERIALIZATION THREAD IS CLEANED
 						// AND GOES RECURSIVELY UP THE STACK IS EXHAUSTED
-						//db.getUnderlying().save(linkedDocument);
+						// db.getUnderlying().save(linkedDocument);
 						iObj2RecHandler.registerUserObject(pojo, linkedDocument);
 					}
 
