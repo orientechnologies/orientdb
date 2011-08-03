@@ -17,9 +17,7 @@ package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
@@ -170,13 +168,11 @@ public class OStorageLocalTxExecuter {
 	public void commitAllPendingRecords(final OTransaction iTx) throws IOException {
 		// COPY ALL THE ENTRIES IN SEPARATE COLLECTION SINCE DURING THE COMMIT PHASE SOME NEW ENTRIES COULD BE CREATED AND
 		// CONCURRENT-EXCEPTION MAY OCCURS
-		final Set<OTransactionRecordEntry> allEntries = new HashSet<OTransactionRecordEntry>();
 		final List<OTransactionRecordEntry> tmpEntries = new ArrayList<OTransactionRecordEntry>();
 
 		while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
 			for (OTransactionRecordEntry txEntry : iTx.getCurrentRecordEntries())
-				if (!allEntries.contains(txEntry))
-					tmpEntries.add(txEntry);
+				tmpEntries.add(txEntry);
 
 			iTx.clearRecordEntries();
 
@@ -184,16 +180,11 @@ public class OStorageLocalTxExecuter {
 				for (OTransactionRecordEntry txEntry : tmpEntries)
 					// COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
 					commitEntry(iTx, txEntry, iTx.isUsingLog());
-
-				allEntries.addAll(tmpEntries);
-				tmpEntries.clear();
 			}
 		}
 
 		// UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT
-		OTransactionAbstract.updateCacheFromEntries(storage, iTx, allEntries, true);
-
-		allEntries.clear();
+		OTransactionAbstract.updateCacheFromEntries(storage, iTx, iTx.getAllRecordEntries(), true);
 	}
 
 	public void clearLogEntries(final OTransaction iTx) throws IOException {

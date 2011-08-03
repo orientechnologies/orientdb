@@ -18,12 +18,16 @@ package com.orientechnologies.orient.server.tx;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
@@ -62,20 +66,12 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 					entry.clusterName = channel.readString();
 					entry.getRecord().fill(database, rid, 0, channel.readBytes(), true);
 
-					if (entry.getRecord() instanceof ODocument)
-						// ASSURE FIELDS ARE UNMARSHALLED: THIS PREVENT TO STORE TEMPORARY RID
-						((ODocument) entry.getRecord()).deserializeFields();
-
 					// SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW RID TO SEND BACK TO THE REQUESTER
 					createdRecords.put(rid.copy(), entry.getRecord());
 					break;
 
 				case OTransactionRecordEntry.UPDATED:
 					entry.getRecord().fill(database, rid, channel.readInt(), channel.readBytes(), true);
-
-					if (entry.getRecord() instanceof ODocument)
-						// ASSURE FIELDS ARE UNMARSHALLED: THIS PREVENT TO STORE TEMPORARY RID
-						((ODocument) entry.getRecord()).deserializeFields();
 
 					// SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW VERSIONS TO SEND BACK TO THE REQUESTER
 					updatedRecords.put(rid, entry.getRecord());
@@ -95,10 +91,26 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 			}
 			remoteIndexEntries = new ODocument(channel.readBytes());
 
+			// UNMARSHALL ALL THE RECORD AT THE END TO BE SURE ALL THE RECORD ARE LOADED IN LOCAL TX
+			for (ORecord<?> record : createdRecords.values())
+				unmarshallRecord(record);
+			for (ORecord<?> record : updatedRecords.values())
+				unmarshallRecord(record);
+
 		} catch (IOException e) {
 			rollback();
 			throw new OSerializationException("Can't read transaction record from the network. Transaction aborted", e);
 		}
+	}
+
+	@Override
+	public ORecordInternal<?> getRecord(final ORecordId rid) {
+		ORecordInternal<?> record = super.getRecord(rid);
+		if (record == null && rid.isNew())
+			// SEARCH BETWEEN CREATED RECORDS
+			record = (ORecordInternal<?>) createdRecords.get(rid);
+
+		return record;
 	}
 
 	@Override
@@ -112,5 +124,21 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
 	public Map<ORecordId, ORecord<?>> getUpdatedRecords() {
 		return updatedRecords;
+	}
+
+	/**
+	 * Unmarshalls collections. This prevent temporary RIDs remains stored as are.
+	 */
+	private void unmarshallRecord(final ORecord<?> iRecord) {
+		if (iRecord instanceof ODocument) {
+			((ODocument) iRecord).deserializeFields();
+
+			for (Entry<String, Object> field : ((ODocument) iRecord)) {
+				if (field.getValue() instanceof ORecordLazyList)
+					((ORecordLazyList) field.getValue()).lazyLoad(true);
+				else if (field.getValue() instanceof ORecordLazySet)
+					((ORecordLazySet) field.getValue()).lazyLoad(true);
+			}
+		}
 	}
 }

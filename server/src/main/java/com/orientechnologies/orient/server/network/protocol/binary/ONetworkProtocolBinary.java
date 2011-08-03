@@ -343,6 +343,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			checkServerAccess("database.delete");
 
 			connection.database = getDatabaseInstance(dbName, "local");
+
+			OLogManager.instance().info(this, "Dropped database '%s", connection.database.getURL());
+
 			connection.database.delete();
 
 			channel.acquireExclusiveLock();

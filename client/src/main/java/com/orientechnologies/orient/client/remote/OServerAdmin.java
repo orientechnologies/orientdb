@@ -169,10 +169,13 @@ public class OServerAdmin {
 			storage.close(true);
 		}
 
-		OStorage s = Orient.instance().getStorage(getURL());
-		storage.removeResource(OSchema.class.getSimpleName());
-		storage.removeResource(OIndexManager.class.getSimpleName());
-		storage.removeResource(OSecurity.class.getSimpleName());
+		for (OStorage s : Orient.instance().getStorages()) {
+			if (s.getURL().startsWith(getURL())) {
+				s.removeResource(OSchema.class.getSimpleName());
+				s.removeResource(OIndexManager.class.getSimpleName());
+				s.removeResource(OSecurity.class.getSimpleName());
+			}
+		}
 
 		return this;
 	}

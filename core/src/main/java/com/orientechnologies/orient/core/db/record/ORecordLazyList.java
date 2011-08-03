@@ -437,7 +437,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 		return this;
 	}
 
-	protected boolean lazyLoad(final boolean iInvalidateStream) {
+	public boolean lazyLoad(final boolean iInvalidateStream) {
 		if (stream == null)
 			return false;
 

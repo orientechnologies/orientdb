@@ -785,7 +785,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 				// SET ALL THE RECORDS AS UNDIRTY
 				for (OTransactionRecordEntry txEntry : iTx.getAllRecordEntries())
-					txEntry.getRecord().unsetDirty();
+					txEntry.getRecord().unload();
 
 				// UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT. USE THE STRATEGY TO ALWAYS REMOVE ALL THE RECORDS SINCE THEY COULD BE
 				// CHANGED AS CONTENT IN CASE OF TREE AND GRAPH DUE TO CROSS REFERENCES

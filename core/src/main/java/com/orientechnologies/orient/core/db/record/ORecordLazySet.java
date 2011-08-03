@@ -366,7 +366,7 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 		return delegate.getStreamedContent();
 	}
 
-	protected boolean lazyLoad(final boolean iNotIdempotent) {
+	public boolean lazyLoad(final boolean iNotIdempotent) {
 		if (delegate.lazyLoad(iNotIdempotent)) {
 			sort();
 			return true;

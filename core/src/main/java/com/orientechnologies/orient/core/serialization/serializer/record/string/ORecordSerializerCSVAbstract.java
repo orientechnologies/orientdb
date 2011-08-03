@@ -673,8 +673,12 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			// JUST THE REFERENCE
 			rid = (ORID) iLinked;
 
-			if (!rid.isValid())
-				rid.getRecord().save();
+			if (rid.isNew()) {
+				// SAVE AT THE FLY AND STORE THE NEW RID
+				final ORecord<?> record = rid.getRecord();
+				record.getDatabase().save((ORecordInternal<?>) record);
+				rid = record.getIdentity();
+			}
 		} else {
 			if (!(iLinked instanceof ORecordInternal<?>)) {
 				// NOT RECORD: TRY TO EXTRACT THE DOCUMENT IF ANY
