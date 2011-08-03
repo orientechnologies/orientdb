@@ -205,6 +205,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 				}
 
 			getDatabase().command(new OCommandSQL(cmd.toString())).execute();
+			getDatabase().reload();
 
 			if (classes.containsKey(key))
 				return classes.get(key);

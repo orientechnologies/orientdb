@@ -79,7 +79,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1) {
+		if (pos == -1 || word.toString().equalsIgnoreCase("NULL")) {
 			if (name.indexOf('.') > 0) {
 				final String[] parts = name.split("\\.");
 

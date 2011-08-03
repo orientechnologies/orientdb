@@ -24,6 +24,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -72,6 +73,7 @@ public class OStorageRemoteThread implements OStorage {
 	public void close(boolean iForce) {
 		delegate.setSessionId(sessionId);
 		delegate.close(iForce);
+		Orient.instance().unregisterStorage(this);
 	}
 
 	public boolean dropCluster(final String iClusterName) {
@@ -117,11 +119,13 @@ public class OStorageRemoteThread implements OStorage {
 	public void close() {
 		delegate.setSessionId(sessionId);
 		delegate.close();
+		Orient.instance().unregisterStorage(this);
 	}
 
 	public void delete() {
 		delegate.setSessionId(sessionId);
 		delegate.delete();
+		Orient.instance().unregisterStorage(this);
 	}
 
 	public Set<String> getClusterNames() {

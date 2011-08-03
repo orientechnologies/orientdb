@@ -606,6 +606,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			connection.database.save(currentRecord);
 
+			if (currentRecord.getIdentity().toString().equals(connection.database.getStorage().getConfiguration().indexMgrRecordId)) {
+				// FORCE INDEX MANAGER UPDATE. THIS HAPPENS FOR DIRECT CHANGES FROM REMOTE LIKE IN GRAPH
+				connection.database.getMetadata().getIndexManager().reload();
+			}
+
 			channel.acquireExclusiveLock();
 			try {
 				sendOk(lastClientTxId);

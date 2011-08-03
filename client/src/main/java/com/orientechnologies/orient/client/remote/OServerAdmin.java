@@ -20,8 +20,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.security.OSecurity;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
@@ -163,6 +168,12 @@ public class OServerAdmin {
 			OLogManager.instance().exception("Can't delete the remote storage: " + storage.getName(), e, OStorageException.class);
 			storage.close(true);
 		}
+
+		OStorage s = Orient.instance().getStorage(getURL());
+		storage.removeResource(OSchema.class.getSimpleName());
+		storage.removeResource(OIndexManager.class.getSimpleName());
+		storage.removeResource(OSecurity.class.getSimpleName());
+
 		return this;
 	}
 
