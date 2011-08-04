@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -55,7 +54,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 		indexEntries.clear();
 		newObjectCounter = -2;
 		status = TXSTATUS.INVALID;
-		
+
 		database.setDefaultTransactionMode();
 	}
 
@@ -76,7 +75,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 		return allEntries.values();
 	}
 
-	public OTransactionRecordEntry getRecordEntry(final ORecordId rid) {
+	public OTransactionRecordEntry getRecordEntry(final ORID rid) {
 		OTransactionRecordEntry e = recordEntries.get(rid);
 		if (e != null)
 			return e;
@@ -88,7 +87,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 		return null;
 	}
 
-	public ORecordInternal<?> getRecord(final ORecordId rid) {
+	public ORecordInternal<?> getRecord(final ORID rid) {
 		final OTransactionRecordEntry e = getRecordEntry(rid);
 		if (e != null && e.status != OTransactionRecordEntry.DELETED)
 			return e.record;

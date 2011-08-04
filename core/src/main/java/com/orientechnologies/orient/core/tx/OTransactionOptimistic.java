@@ -67,7 +67,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 	public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan) {
 		checkTransaction();
 
-		final ORecordInternal<?> txRecord = getRecord((ORecordId) iRid);
+		final ORecordInternal<?> txRecord = getRecord(iRid);
 
 		if (txRecord != null)
 			return txRecord;

@@ -51,6 +51,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelper;
+import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 
 @SuppressWarnings("unchecked")
 public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStringAbstract {
@@ -676,7 +677,19 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			if (rid.isNew()) {
 				// SAVE AT THE FLY AND STORE THE NEW RID
 				final ORecord<?> record = rid.getRecord();
-				record.getDatabase().save((ORecordInternal<?>) record);
+
+				if (record.getDatabase().getTransaction().isActive()) {
+					final OTransactionRecordEntry recordEntry = record.getDatabase().getTransaction().getRecordEntry(rid);
+					if (recordEntry != null)
+						// GET THE CLUSTER SPECIFIED
+						record.getDatabase().save((ORecordInternal<?>) record, recordEntry.clusterName);
+					else
+						// USE THE DEFAULT CLUSTER
+						record.getDatabase().save((ORecordInternal<?>) record);
+
+				} else
+					record.getDatabase().save((ORecordInternal<?>) record);
+
 				rid = record.getIdentity();
 			}
 		} else {

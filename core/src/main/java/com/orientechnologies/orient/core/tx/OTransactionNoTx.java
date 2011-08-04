@@ -94,11 +94,11 @@ public class OTransactionNoTx extends OTransactionAbstract {
 		return 0;
 	}
 
-	public ORecordInternal<?> getRecord(final ORecordId rid) {
+	public ORecordInternal<?> getRecord(final ORID rid) {
 		return null;
 	}
 
-	public OTransactionRecordEntry getRecordEntry(final ORecordId rid) {
+	public OTransactionRecordEntry getRecordEntry(final ORID rid) {
 		return null;
 	}
 

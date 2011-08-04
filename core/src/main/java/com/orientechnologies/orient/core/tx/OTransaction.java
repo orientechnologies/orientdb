@@ -20,7 +20,6 @@ import java.util.List;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -62,9 +61,9 @@ public interface OTransaction {
 
 	public List<OTransactionRecordEntry> getRecordEntriesByClusterIds(int[] iIds);
 
-	public ORecordInternal<?> getRecord(ORecordId iRid);
+	public ORecordInternal<?> getRecord(ORID iRid);
 
-	public OTransactionRecordEntry getRecordEntry(ORecordId rid);
+	public OTransactionRecordEntry getRecordEntry(ORID rid);
 
 	public List<String> getInvolvedIndexes();
 
