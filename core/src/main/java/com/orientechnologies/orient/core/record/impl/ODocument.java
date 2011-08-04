@@ -1208,14 +1208,28 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 		return (RET) iValue;
 	}
 
-	protected void setFieldType(final String iFieldName, final OType iFieldType) {
-		if (iFieldType == null)
-			return;
-
-		// SAVE FORCED TYPE
-		if (_fieldTypes == null)
-			_fieldTypes = new HashMap<String, OType>();
-		_fieldTypes.put(iFieldName, iFieldType);
+	/**
+	 * Sets the field type. This overrides the schema property settings if any.
+	 * 
+	 * @param iFieldName
+	 *          Field name
+	 * @param iFieldType
+	 *          Type to set between OType enumaration values
+	 */
+	public ODocument setFieldType(final String iFieldName, final OType iFieldType) {
+		if (iFieldType != null) {
+			// SET THE FORCED TYPE
+			if (_fieldTypes == null)
+				_fieldTypes = new HashMap<String, OType>();
+			_fieldTypes.put(iFieldName, iFieldType);
+		} else if (_fieldTypes != null) {
+			// REMOVE THE FIELD TYPE
+			_fieldTypes.remove(iFieldName);
+			if (_fieldTypes.size() == 0)
+				// EMPTY: OPTIMIZE IT BY REMOVING THE ENTIRE MAP
+				_fieldTypes = null;
+		}
+		return this;
 	}
 
 	private void copyFieldValue(final ODocument iCloned, final Entry<String, Object> iEntry) {

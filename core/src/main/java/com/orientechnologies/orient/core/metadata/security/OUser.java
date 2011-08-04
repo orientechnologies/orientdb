@@ -21,7 +21,6 @@ import java.util.Set;
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
@@ -190,7 +189,7 @@ public class OUser extends ODocumentWrapper {
 		for (ORole r : roles) {
 			persistentRoles.add(r.toStream());
 		}
-		document.field("roles", persistentRoles, OType.LINKSET);
+		document.field("roles", persistentRoles);
 		return this;
 	}
 

@@ -670,11 +670,11 @@ public class OObjectSerializerHelper {
 					iFieldValue = toStream(pojo, linkedDocument, iEntityManager, linkedDocument.getSchemaClass(), iObj2RecHandler, db,
 							iSaveOnlyDirty);
 
-					if (linkedDocument.isDirty()) {
-						// SAVE THE DOCUMENT AND GET UDPATE THE VERSION. CALL THE UNDERLYING SAVE() TO AVOID THE SERIALIZATION THREAD IS CLEANED
-						// AND GOES RECURSIVELY UP THE STACK IS EXHAUSTED
-						db.getUnderlying().save(linkedDocument);
-					}
+//					if (linkedDocument.isDirty()) {
+//						// SAVE THE DOCUMENT AND GET UDPATE THE VERSION. CALL THE UNDERLYING SAVE() TO AVOID THE SERIALIZATION THREAD IS CLEANED
+//						// AND GOES RECURSIVELY UP THE STACK IS EXHAUSTED
+//						db.getUnderlying().save(linkedDocument);
+//					}
 					iObj2RecHandler.registerUserObject(pojo, linkedDocument);
 
 				} else

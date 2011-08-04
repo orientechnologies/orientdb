@@ -312,7 +312,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 			return iRecord;
 
 		// UNMARSHALL THE CLASS NAME
-		final ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) iRecord;
+		final ODocument record = (ODocument) iRecord;
 
 		final int posFirstValue = iContent.indexOf(OStringSerializerHelper.ENTRY_SEPARATOR);
 		int pos = iContent.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
@@ -336,6 +336,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 		for (int i = 0; i < fields.size(); ++i) {
 			field = fields.get(i).trim();
 
+			boolean uncertainType = false;
+
 			try {
 				pos = field.indexOf(FIELD_VALUE_SEPARATOR);
 				if (pos > -1) {
@@ -354,7 +356,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 						linkedType = prop.getLinkedType();
 
 					} else {
-						type = iRecord instanceof ODocument ? ((ODocument) iRecord).fieldType(fieldName) : null;
+						// SCHEMA PROPERTY NOT FOUND FOR THIS FIELD: TRY TO AUTODETERMINE THE BEST TYPE
+						type = record.fieldType(fieldName);
 						linkedClass = null;
 						linkedType = null;
 
@@ -366,7 +369,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 									&& fieldValue.charAt(fieldValue.length() - 1) == OStringSerializerHelper.COLLECTION_END) {
 								type = OType.EMBEDDEDLIST;
 
-								String value = fieldValue.substring(1, fieldValue.length() - 1);
+								final String value = fieldValue.substring(1, fieldValue.length() - 1);
 
 								if (value.length() > 0) {
 									if (value.charAt(0) == OStringSerializerHelper.LINK) {
@@ -387,7 +390,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 										linkedType = getType(items[0]);
 									} else if (value.charAt(0) == '\'' || value.charAt(0) == '"')
 										linkedType = OType.STRING;
-								}
+								} else
+									uncertainType = true;
 
 							} else if (fieldValue.charAt(0) == OStringSerializerHelper.MAP_BEGIN
 									&& fieldValue.charAt(fieldValue.length() - 1) == OStringSerializerHelper.MAP_END) {
@@ -408,6 +412,9 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 						record.field(fieldName, fieldFromStream(iRecord, type, linkedClass, linkedType, fieldName, fieldValue), type);
 					else
 						record.field(fieldName, fieldFromStream(iRecord, type, linkedClass, linkedType, fieldName, fieldValue));
+
+					if (uncertainType)
+						record.setFieldType(fieldName, null);
 				}
 			} catch (Exception e) {
 				OLogManager.instance().exception("Error on unmarshalling field '%s' with value: ", e, OSerializationException.class,
