@@ -129,7 +129,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	@Override
 	public boolean add(OIdentifiable e) {
 		if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || OGlobalConfiguration.LAZYSET_WORK_ON_STREAM
-				.getValueAsBoolean()) && !e.getIdentity().isNew())
+				.getValueAsBoolean()) && !e.getIdentity().isNew()&& (e instanceof ODocument && !((ODocument) e).isDirty()))
 			// IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
 			e = e.getIdentity();
 		else
@@ -157,7 +157,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 		lazyLoad(true);
 
 		if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || OGlobalConfiguration.LAZYSET_WORK_ON_STREAM
-				.getValueAsBoolean()) && !e.getIdentity().isNew())
+				.getValueAsBoolean()) && !e.getIdentity().isNew()&& (e instanceof ODocument && !((ODocument) e).isDirty()))
 			// IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
 			e = e.getIdentity();
 		else
