@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -104,7 +105,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 	}
 
 	@Override
-	public ORecordInternal<?> getRecord(final ORecordId rid) {
+	public ORecordInternal<?> getRecord(final ORID rid) {
 		ORecordInternal<?> record = super.getRecord(rid);
 		if (record == null && rid.isNew())
 			// SEARCH BETWEEN CREATED RECORDS
