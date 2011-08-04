@@ -793,7 +793,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 					for (Entry<ORecordId, ORecord<?>> entry : tx.getCreatedRecords().entrySet()) {
 						channel.writeRID(entry.getKey());
 						channel.writeRID(entry.getValue().getIdentity());
+
+						// IF THE NEW OBJECT HAS VERSION > 0 MEANS THAT HAS BEEN UPDATED IN THE SAME TX. THIS HAPPENS FOR GRAPHS
+						if (entry.getValue().getVersion() > 0)
+							tx.getUpdatedRecords().put((ORecordId) entry.getValue().getIdentity(), entry.getValue());
 					}
+					
 					// SEND BACK ALL THE NEW VERSIONS FOR THE UPDATED RECORDS
 					channel.writeInt(tx.getUpdatedRecords().size());
 					for (Entry<ORecordId, ORecord<?>> entry : tx.getUpdatedRecords().entrySet()) {
