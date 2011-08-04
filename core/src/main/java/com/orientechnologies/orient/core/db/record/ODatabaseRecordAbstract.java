@@ -580,7 +580,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				// UPDATE INFORMATION: VERSION
 				iRecord.fill(iRecord.getDatabase(), rid, (int) result, stream, stream == null || stream.length == 0);
 
-			if (stream != null && stream.length > 0)
+//			if (stream != null && stream.length > 0)
 				callbackHooks(wasNew ? TYPE.AFTER_CREATE : TYPE.AFTER_UPDATE, iRecord);
 
 			if (stream != null && stream.length > 0)

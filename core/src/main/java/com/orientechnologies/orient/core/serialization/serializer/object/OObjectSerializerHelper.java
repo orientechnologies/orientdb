@@ -674,8 +674,8 @@ public class OObjectSerializerHelper {
 						// SAVE THE DOCUMENT AND GET UDPATE THE VERSION. CALL THE UNDERLYING SAVE() TO AVOID THE SERIALIZATION THREAD IS CLEANED
 						// AND GOES RECURSIVELY UP THE STACK IS EXHAUSTED
 						db.getUnderlying().save(linkedDocument);
-						iObj2RecHandler.registerUserObject(pojo, linkedDocument);
 					}
+					iObj2RecHandler.registerUserObject(pojo, linkedDocument);
 
 				} else
 					throw new OSerializationException("Linked type [" + iFieldValue.getClass() + ":" + iFieldValue
