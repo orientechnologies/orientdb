@@ -90,6 +90,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 		final String[] fields = OStringParser.getWords(iSource, ":,", true);
 
+		if (fields.length % 2 != 0)
+			throw new OSerializationException("Error on unmarshalling JSON content: wrong format. Use <field> : <value>");
+
 		String fieldName;
 		String fieldValue;
 		String fieldValueAsString;
