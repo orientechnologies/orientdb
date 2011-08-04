@@ -711,6 +711,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 		out.println();
 		out.println("Class................: " + cls);
+		if (cls.getShortName() != null)
+			out.println("Alias................: " + cls.getShortName());
 		if (cls.getSuperClass() != null)
 			out.println("Super class..........: " + cls.getSuperClass());
 		out.println("Default cluster......: " + currentDatabase.getClusterNameById(cls.getDefaultClusterId()) + " (id="
