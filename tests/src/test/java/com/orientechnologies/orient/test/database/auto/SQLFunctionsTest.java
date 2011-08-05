@@ -155,7 +155,7 @@ public class SQLFunctionsTest {
 
 		Assert.assertTrue(result.size() > 1);
 		for (ODocument d : result) {
-			Assert.assertEquals(d.fieldNames().size(), 1);
+			Assert.assertEquals(d.fieldNames().length, 1);
 			Assert.assertTrue(d.containsField("edges"));
 		}
 

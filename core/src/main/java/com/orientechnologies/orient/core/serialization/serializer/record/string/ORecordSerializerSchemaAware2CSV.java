@@ -84,10 +84,10 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 		String fieldClassName;
 		int i = 0;
 
-		final Set<String> fieldNamesIterator = iOnlyDelta && record.isTrackingChanges() ? record.getDirtyFields() : record.fieldNames();
+		final String[] fieldNames = iOnlyDelta && record.isTrackingChanges() ? record.getDirtyFields() : record.fieldNames();
 
 		// MARSHALL ALL THE FIELDS OR DELTA IF TRACKING IS ENABLED
-		for (String fieldName : fieldNamesIterator) {
+		for (String fieldName : fieldNames) {
 			Object fieldValue = record.rawField(fieldName);
 			if (i > 0)
 				iOutput.append(OStringSerializerHelper.RECORD_SEPARATOR);

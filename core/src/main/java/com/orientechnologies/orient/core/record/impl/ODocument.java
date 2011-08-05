@@ -20,13 +20,11 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -79,6 +77,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	protected boolean															_lazyLoad					= true;
 
 	protected List<WeakReference<ORecordElement>>	_owners						= null;
+
+	private static final String[]									EMPTY_STRINGS			= new String[] {};
 
 	/**
 	 * Internal constructor used on unmarshalling.
@@ -487,11 +487,14 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	/**
 	 * Returns the set of field names.
 	 */
-	public Set<String> fieldNames() {
+	public String[] fieldNames() {
 		checkForLoading();
 		checkForFields();
 
-		return new LinkedHashSet<String>(_fieldValues.keySet());
+		if (_fieldValues == null || _fieldValues.size() == 0)
+			return EMPTY_STRINGS;
+
+		return _fieldValues.keySet().toArray(new String[_fieldValues.keySet().size()]);
 	}
 
 	/**
@@ -501,15 +504,14 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 		checkForLoading();
 		checkForFields();
 
-		Object[] result = new Object[_fieldValues.values().size()];
-		return _fieldValues.values().toArray(result);
+		return _fieldValues.values().toArray(new Object[_fieldValues.values().size()]);
 	}
 
 	public <RET> RET rawField(final String iFieldName) {
 		checkForLoading();
 		checkForFields();
 
-		int separatorPos = iFieldName.indexOf('.');
+		final int separatorPos = iFieldName.indexOf('.');
 		if (separatorPos > -1) {
 			// GET THE LINKED OBJECT IF ANY
 			final String fieldName = iFieldName.substring(0, separatorPos);
@@ -806,8 +808,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
 		if (!iAddOnlyMode) {
 			// REMOVE PROPERTIES NOT FOUND IN OTHER DOC
-			final Set<String> fieldNames = fieldNames();
-			for (String f : fieldNames)
+			for (String f : fieldNames())
 				if (!iOther.containsKey(f))
 					removeField(f);
 		}
@@ -821,9 +822,11 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	 * @param iFieldName
 	 *          Property name to retrieve the original value
 	 */
-	public Set<String> getDirtyFields() {
-		return (Set<String>) (_fieldOriginalValues != null ? Collections.unmodifiableSet(_fieldOriginalValues.keySet()) : Collections
-				.emptySet());
+	public String[] getDirtyFields() {
+		if (_fieldOriginalValues == null || _fieldOriginalValues.size() == 0)
+			return EMPTY_STRINGS;
+
+		return _fieldOriginalValues.keySet().toArray(new String[_fieldOriginalValues.keySet().size()]);
 	}
 
 	/**

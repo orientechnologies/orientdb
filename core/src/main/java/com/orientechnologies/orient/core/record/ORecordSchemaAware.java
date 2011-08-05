@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.record;
 
-import java.util.Set;
-
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -105,7 +103,7 @@ public interface ORecordSchemaAware<T> extends ORecordInternal<T> {
 	 * 
 	 * @return Set of string containing the field names
 	 */
-	public Set<String> fieldNames();
+	public String[] fieldNames();
 
 	/**
 	 * Returns the record's field values. The returned object array is disconnected by internal representation, so changes don't apply

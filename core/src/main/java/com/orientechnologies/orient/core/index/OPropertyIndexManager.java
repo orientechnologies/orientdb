@@ -18,7 +18,6 @@ package com.orientechnologies.orient.core.index;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -64,34 +63,38 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 		final Map<OProperty, Object> indexedProperties = getIndexedProperties(iRecord);
 
 		if (indexedProperties != null) {
-			final Set<String> dirtyFields = iRecord.getDirtyFields();
+			final String[] dirtyFields = iRecord.getDirtyFields();
 
-			if (dirtyFields.size() > 0) {
+			if (dirtyFields.length > 0) {
 				// REMOVE INDEX OF ENTRIES FOR THE OLD VALUES
 				Object originalValue = null;
 				OIndex index;
 
 				for (Entry<OProperty, Object> propEntry : indexedProperties.entrySet()) {
-					if (dirtyFields.contains(propEntry.getKey().getName())) {
-						// REMOVE IT
-						originalValue = iRecord.getOriginalValue(propEntry.getKey().getName());
+					for (String f : dirtyFields)
+						if (f.equals(propEntry.getKey().getName())) {
+							// REMOVE IT
+							originalValue = iRecord.getOriginalValue(propEntry.getKey().getName());
 
-						index = propEntry.getKey().getIndex().getUnderlying();
+							index = propEntry.getKey().getIndex().getUnderlying();
 
-						index.remove(originalValue, iRecord);
-						index.lazySave();
-					}
+							index.remove(originalValue, iRecord);
+							index.lazySave();
+							break;
+						}
 				}
 
 				// ADD INDEX OF ENTRIES FOR THE CHANGED ONLY VALUES
 				for (Entry<OProperty, Object> propEntry : indexedProperties.entrySet()) {
-					if (dirtyFields.contains(propEntry.getKey().getName())) {
-						index = propEntry.getKey().getIndex().getUnderlying();
+					for (String f : dirtyFields)
+						if (f.equals(propEntry.getKey().getName())) {
+							index = propEntry.getKey().getIndex().getUnderlying();
 
-						// SAVE A COPY TO AVOID PROBLEM ON RECYCLING OF THE RECORD
-						index.put(propEntry.getValue(), iRecord.placeholder());
-						index.lazySave();
-					}
+							// SAVE A COPY TO AVOID PROBLEM ON RECYCLING OF THE RECORD
+							index.put(propEntry.getValue(), iRecord.placeholder());
+							index.lazySave();
+							break;
+						}
 				}
 			}
 		}
@@ -109,29 +112,39 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 		final Map<OProperty, Object> indexedProperties = getIndexedProperties(iRecord);
 
 		if (indexedProperties != null) {
-			final Set<String> dirtyFields = iRecord.getDirtyFields();
+			final String[] dirtyFields = iRecord.getDirtyFields();
 
 			OIndex index;
 
-			if (dirtyFields.size() > 0) {
+			if (dirtyFields.length > 0) {
 				// REMOVE INDEX OF ENTRIES FOR THE OLD VALUES
 				for (Entry<OProperty, Object> propEntry : indexedProperties.entrySet()) {
-					if (dirtyFields.contains(propEntry.getKey().getName())) {
-						// REMOVE IT
-						index = propEntry.getKey().getIndex().getUnderlying();
-						index.remove(propEntry.getValue(), iRecord);
-						index.lazySave();
-					}
+					for (String f : dirtyFields)
+						if (f.equals(propEntry.getKey().getName())) {
+							// REMOVE IT
+							index = propEntry.getKey().getIndex().getUnderlying();
+							index.remove(propEntry.getValue(), iRecord);
+							index.lazySave();
+							break;
+						}
 				}
 			}
 
 			// REMOVE INDEX OF ENTRIES FOR THE CHANGED ONLY VALUES
 			for (Entry<OProperty, Object> propEntry : indexedProperties.entrySet()) {
-				if (iRecord.containsField(propEntry.getKey().getName())
-						&& (dirtyFields == null || !dirtyFields.contains(propEntry.getKey().getName()))) {
-					index = propEntry.getKey().getIndex().getUnderlying();
-					index.remove(propEntry.getValue(), iRecord);
-					index.lazySave();
+				if (iRecord.containsField(propEntry.getKey().getName())) {
+					boolean found = false;
+					for (String f : dirtyFields)
+						if (f.equals(propEntry.getKey().getName())) {
+							found = true;
+							break;
+						}
+
+					if (!found) {
+						index = propEntry.getKey().getIndex().getUnderlying();
+						index.remove(propEntry.getValue(), iRecord);
+						index.lazySave();
+					}
 				}
 			}
 		}

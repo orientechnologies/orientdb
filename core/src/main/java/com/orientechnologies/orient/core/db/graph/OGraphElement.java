@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.db.graph;
 
-import java.util.Set;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
@@ -85,7 +83,7 @@ public abstract class OGraphElement extends ODocumentWrapper implements ORecordL
 		return document.removeField(iPropertyName);
 	}
 
-	public Set<String> propertyNames() {
+	public String[] propertyNames() {
 		return document.fieldNames();
 	}
 

@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.Iterator;
 import java.util.List;
 
 import org.testng.Assert;
@@ -53,10 +52,10 @@ public class SQLSelectProjectionsTest {
 		Assert.assertTrue(result.size() != 0);
 
 		for (ODocument d : result) {
-			Iterator<String> colNames = d.fieldNames().iterator();
-			Assert.assertEquals(colNames.next(), "nick");
-			Assert.assertEquals(colNames.next(), "followings");
-			Assert.assertEquals(colNames.next(), "followers");
+			String[] colNames = d.fieldNames();
+			Assert.assertEquals(colNames[0], "nick");
+			Assert.assertEquals(colNames[1], "followings");
+			Assert.assertEquals(colNames[2], "followers");
 
 			Assert.assertNull(d.getClassName());
 			Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
