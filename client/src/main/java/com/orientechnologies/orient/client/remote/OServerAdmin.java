@@ -64,6 +64,16 @@ public class OServerAdmin {
 		storage = iStorage;
 	}
 
+	/**
+	 * Connects to a remote server.
+	 * 
+	 * @param iUserName
+	 *          Server's user name
+	 * @param iUserPassword
+	 *          Server's password for the user name used
+	 * @return The instance itself. Useful to execute method in chain
+	 * @throws IOException
+	 */
 	public OServerAdmin connect(final String iUserName, final String iUserPassword) throws IOException {
 		storage.createConnectionPool();
 
@@ -95,6 +105,14 @@ public class OServerAdmin {
 		return sessionId;
 	}
 
+	/**
+	 * Creates a database in a remote server.
+	 * 
+	 * @param iStorageMode
+	 *          Storage mode. Null to use the default ("CSV")
+	 * @return The instance itself. Useful to execute method in chain
+	 * @throws IOException
+	 */
 	public OServerAdmin createDatabase(String iStorageMode) throws IOException {
 		storage.checkConnection();
 
@@ -124,6 +142,12 @@ public class OServerAdmin {
 		return this;
 	}
 
+	/**
+	 * Checks if a database exists in the remote server.
+	 * 
+	 * @return true if exists, otherwise false
+	 * @throws IOException
+	 */
 	public boolean existsDatabase() throws IOException {
 		storage.checkConnection();
 
@@ -150,7 +174,25 @@ public class OServerAdmin {
 		return false;
 	}
 
+	/**
+	 * Deprecated. Use dropDatabase() instead.
+	 * 
+	 * @return The instance itself. Useful to execute method in chain
+	 * @see #dropDatabase()
+	 * @throws IOException
+	 */
+	@Deprecated
 	public OServerAdmin deleteDatabase() throws IOException {
+		return dropDatabase();
+	}
+
+	/**
+	 * Drops a database from a remote server instance.
+	 * 
+	 * @return The instance itself. Useful to execute method in chain
+	 * @throws IOException
+	 */
+	public OServerAdmin dropDatabase() throws IOException {
 		storage.checkConnection();
 
 		try {
@@ -180,6 +222,16 @@ public class OServerAdmin {
 		return this;
 	}
 
+	/**
+	 * 
+	 * @param iDatabaseName
+	 * @param iDatabaseUserName
+	 * @param iDatabaseUserPassword
+	 * @param iRemoteName
+	 * @param iSynchronousMode
+	 * @return The instance itself. Useful to execute method in chain
+	 * @throws IOException
+	 */
 	public OServerAdmin shareDatabase(final String iDatabaseName, final String iDatabaseUserName, final String iDatabaseUserPassword,
 			final String iRemoteName, final boolean iSynchronousMode) throws IOException {
 		storage.checkConnection();
@@ -271,6 +323,9 @@ public class OServerAdmin {
 		return this;
 	}
 
+	/**
+	 * Close the connection if open.
+	 */
 	public void close() {
 		storage.close();
 	}

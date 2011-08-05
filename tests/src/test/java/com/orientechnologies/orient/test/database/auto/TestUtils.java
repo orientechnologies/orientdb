@@ -38,7 +38,7 @@ public class TestUtils {
 
 	public static void deleteDatabase(final ODatabase database) throws IOException {
 		if (database.getURL().startsWith("remote:")) {
-			new OServerAdmin(database.getURL()).connect("root", getServerRootPassword()).deleteDatabase();
+			new OServerAdmin(database.getURL()).connect("root", getServerRootPassword()).dropDatabase();
 		} else {
 			database.delete();
 		}
