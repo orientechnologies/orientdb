@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test(groups = "sql-update", sequential = true)
 public class SQLUpdateTest {
@@ -109,4 +110,49 @@ public class SQLUpdateTest {
 
 		database.close();
 	}
+
+	@Test
+	public void updateWithWildcardsOnSetAndWhere() {
+
+		database.open("admin", "admin");
+		ODocument doc = new ODocument(database, "Person");
+		doc.field("name", "Raf");
+		doc.field("city", "Torino");
+		doc.field("gender", "fmale");
+		doc.save();
+		checkUpdatedDoc(database, "Raf", "Torino", "fmale");
+
+		/* THESE COMMANDS ARE OK */
+		OCommandSQL updatecommand = new OCommandSQL("update Person set gender = 'female' where name = 'Raf'");
+		database.command(updatecommand).execute("Raf");
+		checkUpdatedDoc(database, "Raf", "Torino", "female");
+
+		updatecommand = new OCommandSQL("update Person set city = 'Turin' where name = ?");
+		database.command(updatecommand).execute("Raf");
+		checkUpdatedDoc(database, "Raf", "Turin", "female");
+
+		updatecommand = new OCommandSQL("update Person set gender = ? where name = 'Raf'");
+		database.command(updatecommand).execute("F");
+		checkUpdatedDoc(database, "Raf", "Turin", "F");
+
+		updatecommand = new OCommandSQL("update Person set gender = ?, city = ? where name = 'Raf'");
+		database.command(updatecommand).execute("FEMALE", "TORINO");
+		checkUpdatedDoc(database, "Raf", "TORINO", "FEMALE");
+
+		/* THIS COMMAND RETURN AN IndexOutOfBoundsException */
+		updatecommand = new OCommandSQL("update Person set gender = ? where name = ?");
+		database.command(updatecommand).execute("f", "Raf");
+		checkUpdatedDoc(database, "Raf", "TORINO", "f");
+
+		database.close();
+	}
+
+	private void checkUpdatedDoc(ODatabaseDocument database, String expectedName, String expectedCity, String expectedGender) {
+		List<ODocument> result = database.query(new OSQLSynchQuery<Object>("select * from person"));
+		ODocument oDoc = result.get(0);
+		Assert.assertEquals(expectedName, oDoc.field("name"));
+		Assert.assertEquals(expectedCity, oDoc.field("city"));
+		Assert.assertEquals(expectedGender, oDoc.field("gender"));
+	}
+
 }

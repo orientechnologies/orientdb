@@ -46,20 +46,20 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
  * 
  */
 public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract implements OCommandResultListener {
-	public static final String									KEYWORD_UPDATE	= "UPDATE";
-	private static final String									KEYWORD_SET			= "SET";
-	private static final String									KEYWORD_ADD			= "ADD";
-	private static final String									KEYWORD_PUT			= "PUT";
-	private static final String									KEYWORD_REMOVE	= "REMOVE";
-	private Map<String, Object>									setEntries			= new LinkedHashMap<String, Object>();
-	private Map<String, Object>									addEntries			= new LinkedHashMap<String, Object>();
-	private Map<String, OPair<String, Object>>	putEntries			= new LinkedHashMap<String, OPair<String, Object>>();
-	private Map<String, Object>									removeEntries		= new LinkedHashMap<String, Object>();
+	public static final String									KEYWORD_UPDATE		= "UPDATE";
+	private static final String									KEYWORD_SET				= "SET";
+	private static final String									KEYWORD_ADD				= "ADD";
+	private static final String									KEYWORD_PUT				= "PUT";
+	private static final String									KEYWORD_REMOVE		= "REMOVE";
+	private Map<String, Object>									setEntries				= new LinkedHashMap<String, Object>();
+	private Map<String, Object>									addEntries				= new LinkedHashMap<String, Object>();
+	private Map<String, OPair<String, Object>>	putEntries				= new LinkedHashMap<String, OPair<String, Object>>();
+	private Map<String, Object>									removeEntries			= new LinkedHashMap<String, Object>();
 	private OQuery<?>														query;
-	private int																	recordCount			= 0;
+	private int																	recordCount				= 0;
 	private String															subjectName;
-	private static final Object									EMPTY_VALUE			= new Object();
-	private int																	fieldCounter		= 0;
+	private static final Object									EMPTY_VALUE				= new Object();
+	private int																	parameterCounter	= 0;
 	private Map<Object, Object>									parameters;
 
 	@SuppressWarnings("unchecked")
@@ -124,7 +124,13 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 
 		parameters = iArgs;
 
-		database.query(query, iArgs);
+		Map<Object, Object> queryArgs = new HashMap<Object, Object>();
+		for (int i = parameterCounter; parameters != null && i < parameters.size(); i++) {
+			if (parameters.get(i) != null)
+				queryArgs.put(i - parameterCounter, parameters.get(i));
+		}
+
+		database.query(query, queryArgs);
 		return recordCount;
 	}
 
@@ -280,7 +286,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 				pos = newPos;
 
 			// INSERT TRANSFORMED FIELD VALUE
-			setEntries.put(fieldName, OSQLHelper.parseValue(database, this, fieldValue));
+			setEntries.put(fieldName, getFieldValueCountingParameters(fieldValue));
 
 			pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		}
@@ -324,7 +330,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 				pos = newPos;
 
 			// INSERT TRANSFORMED FIELD VALUE
-			addEntries.put(fieldName, OSQLHelper.parseValue(database, this, fieldValue));
+			addEntries.put(fieldName, getFieldValueCountingParameters(fieldValue));
 
 			pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		}
@@ -388,10 +394,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 				pos = newPos;
 
 			// INSERT TRANSFORMED FIELD VALUE
-			putEntries.put(
-					fieldName,
-					new OPair<String, Object>((String) OSQLHelper.parseValue(database, this, fieldKey), OSQLHelper.parseValue(database, this,
-							fieldValue)));
+			putEntries.put(fieldName, new OPair<String, Object>((String) getFieldValueCountingParameters(fieldKey),
+					getFieldValueCountingParameters(fieldValue)));
 
 			pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		}
@@ -448,5 +452,11 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 		if (removeEntries.size() == 0)
 			throw new OCommandSQLParsingException("Field(s) to remove are missed. Example: name, salary", text, pos);
 		return pos;
+	}
+
+	private Object getFieldValueCountingParameters(String fieldValue) {
+		if (fieldValue.trim().equals("?"))
+			parameterCounter++;
+		return OSQLHelper.parseValue(database, this, fieldValue);
 	}
 }
