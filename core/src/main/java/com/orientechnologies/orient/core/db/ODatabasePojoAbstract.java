@@ -150,7 +150,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 	public void unsetDirty(final Object iPojo) {
 		if (iPojo == null)
 			return;
-		
+
 		final ODocument record = getRecordByUserObject(iPojo, false);
 		if (record == null)
 			return;
@@ -342,6 +342,8 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 		Object pojo = records2Objects.get(record);
 
 		if (pojo == null && iCreate) {
+			checkOpeness();
+
 			try {
 				// MAKING SURE THAT DATABASE USER IS CURRENT (IN CASE OF DETACHING)
 				if (iRecord.getDatabase() != underlying)
