@@ -93,20 +93,14 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
 			record = level2cache.retrieveRecord(iRID);
 
 			if (record != null) {
-				// FOUND
-				if (record.isDirty())
-					// DIRTY RECORD, WAS IT CONNECTED WITH OTHER RECORDS?
-					record = null;
-				else {
-					// MOVE IT INTO THE DB'S CACHE
-					record.setDatabase(database);
+				// FOUND: MOVE IT INTO THE DB'S CACHE
+				record.setDatabase(database);
 
-					acquireExclusiveLock();
-					try {
-						entries.put(record.getIdentity(), record);
-					} finally {
-						releaseExclusiveLock();
-					}
+				acquireExclusiveLock();
+				try {
+					entries.put(record.getIdentity(), record);
+				} finally {
+					releaseExclusiveLock();
 				}
 			}
 		}
