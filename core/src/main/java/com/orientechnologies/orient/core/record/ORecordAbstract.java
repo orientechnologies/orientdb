@@ -105,6 +105,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 
 	public ORecordAbstract<T> reset() {
 		_status = ORecordElement.STATUS.LOADED;
+		_version = 0;
 
 		setDirty();
 		if (_recordId != null)

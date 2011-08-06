@@ -2264,7 +2264,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			// DELETE INSIDE THE NODE
 			p.remove();
 
-			if (p.getSize() > 0 || p == root)
+			if (p.getSize() > 0 )
 				return;
 		}
 

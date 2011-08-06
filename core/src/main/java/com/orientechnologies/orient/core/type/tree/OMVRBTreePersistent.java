@@ -410,6 +410,11 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 		int totalCommitted = 0;
 		try {
+			if (record.isDirty()) {
+				// TREE IS CHANGED AS WELL
+				save();
+			}
+
 			if (recordsToCommit.size() > 0) {
 				final List<OMVRBTreeEntryPersistent<K, V>> tmp = new ArrayList<OMVRBTreeEntryPersistent<K, V>>();
 
@@ -453,11 +458,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 					totalCommitted += tmp.size();
 					tmp.clear();
 				}
-			}
-
-			if (record.isDirty()) {
-				// TREE IS CHANGED AS WELL
-				save();
 			}
 
 		} catch (IOException e) {

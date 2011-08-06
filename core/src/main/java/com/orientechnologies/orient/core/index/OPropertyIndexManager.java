@@ -79,7 +79,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 							index = propEntry.getKey().getIndex().getUnderlying();
 
 							index.remove(originalValue, iRecord);
-							index.lazySave();
+//							index.lazySave();
 							break;
 						}
 				}
@@ -92,7 +92,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 
 							// SAVE A COPY TO AVOID PROBLEM ON RECYCLING OF THE RECORD
 							index.put(propEntry.getValue(), iRecord.placeholder());
-							index.lazySave();
+//							index.lazySave();
 							break;
 						}
 				}
@@ -124,7 +124,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 							// REMOVE IT
 							index = propEntry.getKey().getIndex().getUnderlying();
 							index.remove(propEntry.getValue(), iRecord);
-							index.lazySave();
+//							index.lazySave();
 							break;
 						}
 				}
@@ -143,7 +143,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 					if (!found) {
 						index = propEntry.getKey().getIndex().getUnderlying();
 						index.remove(propEntry.getValue(), iRecord);
-						index.lazySave();
+//						index.lazySave();
 					}
 				}
 			}
