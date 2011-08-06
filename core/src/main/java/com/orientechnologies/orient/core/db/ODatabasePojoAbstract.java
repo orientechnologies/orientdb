@@ -375,7 +375,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 
 		if (OObjectSerializerHelper.hasObjectID(iPojo)) {
 			for (Field field : iPojo.getClass().getDeclaredFields()) {
-				Object value = OObjectSerializerHelper.getFieldValue(iPojo, field.getName());
+				final Object value = OObjectSerializerHelper.getFieldValue(iPojo, field.getName());
 				if (value instanceof OLazyObjectMap<?>) {
 					((OLazyObjectMap) value).assignDatabase(this);
 				} else if (value instanceof OLazyObjectList<?>) {
@@ -387,6 +387,23 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 		} else {
 			throw new OObjectNotDetachedException("Cannot attach a non detached object");
 		}
+	}
+
+	@SuppressWarnings("rawtypes")
+	public Object detach(final Object iPojo) {
+		checkOpeness();
+
+		for (Field field : iPojo.getClass().getDeclaredFields()) {
+			final Object value = OObjectSerializerHelper.getFieldValue(iPojo, field.getName());
+			if (value instanceof OLazyObjectList<?>)
+				((OLazyObjectList) value).detach();
+			else if (value instanceof OLazyObjectSet<?>)
+				((OLazyObjectSet) value).detach();
+			else if (value instanceof OLazyObjectMap<?>)
+				((OLazyObjectMap) value).detach();
+		}
+
+		return iPojo;
 	}
 
 	/**

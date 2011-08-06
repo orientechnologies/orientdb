@@ -75,7 +75,7 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> implements Ser
 			underlying.put(iKey, e);
 		} else {
 			if (database.getRecordByUserObject(e, false) == null) {
-				underlying.put(iKey, database.pojo2Stream((TYPE) e, new ODocument((ODatabaseRecord)database.getUnderlying())));
+				underlying.put(iKey, database.pojo2Stream((TYPE) e, new ODocument((ODatabaseRecord) database.getUnderlying())));
 			} else {
 				underlying.put(iKey, database.getRecordByUserObject(e, false));
 			}
@@ -177,10 +177,14 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> implements Ser
 		super.put(iKey, database.getUserObjectByRecord((ORecordInternal<?>) underlying.get(iKey), null));
 	}
 
+	public void detach() {
+		convertAll();
+	}
+
 	/**
-	 * Convert all the items
+	 * Converts all the items
 	 */
-	private void convertAll() {
+	protected void convertAll() {
 		if (converted || !convertToRecord)
 			return;
 

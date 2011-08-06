@@ -17,12 +17,16 @@ package com.orientechnologies.orient.core.db.object;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Lazy implementation of Set. It's bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by
@@ -39,6 +43,7 @@ public class OLazyObjectSet<TYPE> implements Set<Object>, Serializable {
 	private transient ODatabasePojoAbstract<TYPE>	database;
 	private final Collection<Object>							underlying;
 	private String																fetchPlan;
+	private boolean																converted					= false;
 	private boolean																convertToRecord		= true;
 
 	public OLazyObjectSet(final ODatabasePojoAbstract<TYPE> database, final ORecord<?> iSourceRecord, final Collection<Object> iSource) {
@@ -75,6 +80,8 @@ public class OLazyObjectSet<TYPE> implements Set<Object>, Serializable {
 	}
 
 	public boolean add(final Object e) {
+		if (converted && e instanceof ORID)
+			converted = false;
 		setDirty();
 		return underlying.add(database.getRecordByUserObject(e, false));
 	}
@@ -151,5 +158,28 @@ public class OLazyObjectSet<TYPE> implements Set<Object>, Serializable {
 		if (database == null || database.isClosed()) {
 			database = iDatabase;
 		}
+	}
+
+	public void detach() {
+		convertAll();
+	}
+
+	protected void convertAll() {
+		if (converted || !convertToRecord)
+			return;
+
+		final Set<Object> copy = new HashSet<Object>(this);
+		underlying.clear();
+		for (Object e : copy) {
+			if (e != null) {
+				if (e instanceof ORID)
+					add(database.getUserObjectByRecord(
+							(ORecordInternal<?>) ((ODatabaseRecord) database.getUnderlying()).load((ORID) e, fetchPlan), fetchPlan));
+				else if (e instanceof ODocument)
+					add(database.getUserObjectByRecord((ORecordInternal<?>) e, fetchPlan));
+			}
+		}
+
+		converted = true;
 	}
 }

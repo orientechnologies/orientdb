@@ -179,7 +179,7 @@ public class OLazyObjectList<TYPE> implements List<TYPE>, Serializable {
 		return fetchPlan;
 	}
 
-	public OLazyObjectList<TYPE> setFetchPlan(String fetchPlan) {
+	public OLazyObjectList<TYPE> setFetchPlan(final String fetchPlan) {
 		this.fetchPlan = fetchPlan;
 		return this;
 	}
@@ -192,7 +192,11 @@ public class OLazyObjectList<TYPE> implements List<TYPE>, Serializable {
 		this.convertToRecord = convertToRecord;
 	}
 
-	public void convertAll() {
+	public void detach() {
+		convertAll();
+	}
+
+	protected void convertAll() {
 		if (converted || !convertToRecord)
 			return;
 
