@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -688,6 +689,14 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			// TREE EMPTY: RETURN ROOT
 			return root;
 
+		// CLAN EMPTY NODES
+		for (Iterator<OMVRBTreeEntryPersistent<K, V>> iter = entryPoints.iterator(); iter.hasNext();) {
+			if (iter.next().getSize() == 0) {
+				iter.remove();
+				--entryPointSize;
+			}
+		}
+
 		// 2^ CHANCE - TRY TO SEE IF LAST ENTRYPOINT IS GOOD: THIS IS VERY COMMON CASE ON INSERTION WITH AN INCREMENTING KEY
 		OMVRBTreeEntryPersistent<K, V> e = entryPoints.get(entryPointSize - 1);
 		int cmp = key.compareTo(e.getFirstKey());
@@ -770,11 +779,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	 * Remove an entry point from the list
 	 */
 	void removeEntryPoint(final OMVRBTreeEntryPersistent<K, V> iEntry) {
-		for (int i = 0; i < entryPoints.size(); ++i)
-			if (entryPoints.get(i) == iEntry) {
-				entryPoints.remove(i);
-				break;
-			}
+		entryPoints.remove(iEntry);
 	}
 
 	synchronized void removeEntry(final ORID iEntryId) {
@@ -858,4 +863,10 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		}
 		return false;
 	}
+
+	protected void removeNode(final OMVRBTreeEntry<K, V> p) {
+		entryPoints.remove(p);
+		super.removeNode(p);
+	}
+
 }

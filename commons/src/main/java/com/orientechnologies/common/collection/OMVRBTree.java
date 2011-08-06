@@ -2264,12 +2264,21 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			// DELETE INSIDE THE NODE
 			p.remove();
 
-			if (p.getSize() > 0 )
+			if (p.getSize() > 0)
 				return;
 		}
 
 		// DELETE THE ENTIRE NODE, RE-BUILDING THE STRUCTURE
+		removeNode(p);
+	}
 
+	/**
+	 * Remove a node from the tree.
+	 * 
+	 * @param p
+	 *          Node to remove
+	 */
+	protected void removeNode(OMVRBTreeEntry<K, V> p) {
 		modCount++;
 		// If strictly internal, copy successor's element to p and then make p
 		// point to successor.
