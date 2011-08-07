@@ -68,7 +68,7 @@ If you want help start from here:
 Follow the instruction below:
 
 a) Open a shell and go in the path where you have installed the OrientDB sources.
-b) Type: ant -f build-db.xml test
+b) Type: ant test
 c) Wait for the completition.
 d) Once finished you can close the OrientDB Server instance started for the tests 
 
