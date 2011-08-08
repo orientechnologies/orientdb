@@ -139,7 +139,6 @@ public class SQLUpdateTest {
 		database.command(updatecommand).execute("FEMALE", "TORINO");
 		checkUpdatedDoc(database, "Raf", "TORINO", "FEMALE");
 
-		/* THIS COMMAND RETURN AN IndexOutOfBoundsException */
 		updatecommand = new OCommandSQL("update Person set gender = ? where name = ?");
 		database.command(updatecommand).execute("f", "Raf");
 		checkUpdatedDoc(database, "Raf", "TORINO", "f");
