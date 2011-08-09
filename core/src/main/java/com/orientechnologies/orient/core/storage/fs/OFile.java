@@ -271,7 +271,7 @@ public abstract class OFile {
 
 			// FIND THE BEST SIZE TO ALLOCATE (BASED ON INCREMENT-SIZE)
 			while (newFileSize - filledUpTo <= iSize) {
-				if (maxSize == 0 || newFileSize + stepSizeInBytes < maxSize)
+				if (stepSizeInBytes > 0 && (maxSize == 0 || newFileSize + stepSizeInBytes < maxSize))
 					newFileSize += stepSizeInBytes;
 				else
 					newFileSize = maxSize;
