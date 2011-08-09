@@ -205,7 +205,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 		cloned._trackingChanges = _trackingChanges;
 
 		if (_fieldValues != null) {
-			cloned._fieldValues = new LinkedHashMap<String, Object>();
+			cloned._fieldValues = _fieldValues instanceof LinkedHashMap ? new LinkedHashMap<String, Object>()
+					: new HashMap<String, Object>();
 			for (Entry<String, Object> entry : _fieldValues.entrySet())
 				copyFieldValue(cloned, entry);
 		}

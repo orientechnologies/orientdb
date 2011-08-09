@@ -123,7 +123,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		else
 			checkVertexClass(iClassName);
 
-		return new ODocument(this, iClassName);
+		return new ODocument(this, iClassName).setOrdered(true);
 	}
 
 	public ODocument createEdge(final ORID iSourceVertexRid, final ORID iDestVertexRid) {
@@ -249,7 +249,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 			iInVertex.setDatabase(this);
 			iOutVertex.setDatabase(this);
 
-			final ODocument edge = new ODocument(this, iClassName != null ? iClassName : EDGE_CLASS_NAME);
+			final ODocument edge = new ODocument(this, iClassName != null ? iClassName : EDGE_CLASS_NAME).setOrdered(true);
 			edge.field(EDGE_FIELD_OUT, iOutVertex);
 			edge.field(EDGE_FIELD_IN, iInVertex);
 
