@@ -635,7 +635,7 @@ public class SQLSelectTest {
 	public void queryRecordAttribRid() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where @rid = 10:0")).execute();
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where @rid = #10:0")).execute();
 
 		Assert.assertTrue(result.size() == 1);
 

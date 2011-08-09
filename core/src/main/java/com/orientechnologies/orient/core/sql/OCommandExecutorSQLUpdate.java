@@ -28,7 +28,6 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -435,10 +434,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 				} else
 					pos = newPos;
 
-				if (fieldValue.length() > 2 && Character.isDigit(fieldValue.charAt(0)) && fieldValue.contains(":"))
-					value = new ORecordId(fieldValue);
-				else
-					value = fieldValue;
+				value = getFieldValueCountingParameters(fieldValue);
 
 			} else
 				value = EMPTY_VALUE;

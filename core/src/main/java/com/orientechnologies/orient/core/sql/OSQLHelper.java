@@ -24,6 +24,7 @@ import java.util.Map.Entry;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -104,7 +105,7 @@ public class OSQLHelper {
 			}
 			fieldValue = coll;
 
-		} else if (iValue.indexOf(':') > 0)
+		} else if (iValue.charAt(0) == ORID.PREFIX)
 			// RID
 			fieldValue = new ORecordId(iValue.trim());
 		else {
@@ -195,7 +196,7 @@ public class OSQLHelper {
 	public static Object getFunction(final ODatabaseRecord database, final OCommandToParse iCommand, final String iWord) {
 		final int separator = iWord.indexOf('.');
 		final int beginParenthesis = iWord.indexOf(OStringSerializerHelper.PARENTHESIS_BEGIN);
-		if ( beginParenthesis > -1 && ( separator == -1 || separator > beginParenthesis )) {
+		if (beginParenthesis > -1 && (separator == -1 || separator > beginParenthesis)) {
 			final int endParenthesis = iWord.indexOf(OStringSerializerHelper.PARENTHESIS_END, beginParenthesis);
 
 			if (endParenthesis > -1 && Character.isLetter(iWord.charAt(0)))

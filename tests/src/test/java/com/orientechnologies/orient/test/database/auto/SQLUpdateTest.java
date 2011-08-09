@@ -70,7 +70,7 @@ public class SQLUpdateTest {
 	public void updateCollectionsAddWithWhereOperator() {
 		database.open("admin", "admin");
 
-		updatedRecords = (Integer) database.command(new OCommandSQL("update Account add addresses = 12:0")).execute();
+		updatedRecords = (Integer) database.command(new OCommandSQL("update Account add addresses = #12:0")).execute();
 
 		database.close();
 	}
@@ -79,7 +79,7 @@ public class SQLUpdateTest {
 	public void updateCollectionsRemoveWithWhereOperator() {
 		database.open("admin", "admin");
 
-		final int records = (Integer) database.command(new OCommandSQL("update Account remove addresses = 12:0")).execute();
+		final int records = (Integer) database.command(new OCommandSQL("update Account remove addresses = #12:0")).execute();
 
 		Assert.assertEquals(records, updatedRecords);
 
