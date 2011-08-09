@@ -92,6 +92,22 @@ public class OStringParser {
 			if (openBraket == 0 && openGraph == 0 && !escape && c == '\\') {
 				if (iText.charAt(i + 1) == 'u') {
 					i = readUnicode(iText, i + 2, buffer);
+				} else if (iText.charAt(i + 1) == 'n') {
+					buffer.append("\n");
+					i++;
+					continue;
+				} else if (iText.charAt(i + 1) == 'r') {
+					buffer.append("\r");
+					i++;
+					continue;
+				} else if (iText.charAt(i + 1) == 't') {
+					buffer.append("\t");
+					i++;
+					continue;
+				} else if (iText.charAt(i + 1) == 'f') {
+					buffer.append("\f");
+					i++;
+					continue;
 				} else {
 					escape = true;
 				}
