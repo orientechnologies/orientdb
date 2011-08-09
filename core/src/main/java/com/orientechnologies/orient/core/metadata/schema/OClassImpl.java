@@ -30,6 +30,7 @@ import java.util.Set;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -102,6 +103,13 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 			throw new IllegalArgumentException("Can't create an instance of class '" + name + "' since no Java class was specified");
 
 		return (T) javaClass.newInstance();
+	}
+
+	public void validateInstances() {
+		final ODatabaseDocumentTx db = (ODatabaseDocumentTx) getDatabase();
+		for (ODocument d : db.browseClass(name, true)) {
+			d.validate();
+		}
 	}
 
 	public OClass getSuperClass() {
