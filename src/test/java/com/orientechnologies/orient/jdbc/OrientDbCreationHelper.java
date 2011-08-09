@@ -49,7 +49,7 @@ public class OrientDbCreationHelper {
 		item.createProperty("date", OType.DATE).createIndex(INDEX_TYPE.NOTUNIQUE);
 		item.createProperty("time", OType.DATETIME).createIndex(INDEX_TYPE.NOTUNIQUE);
 		item.createProperty("text", OType.STRING);
-		item.createProperty("length", OType.DOUBLE).createIndex(INDEX_TYPE.NOTUNIQUE);
+		item.createProperty("length", OType.LONG).createIndex(INDEX_TYPE.NOTUNIQUE);
 		item.createProperty("published", OType.BOOLEAN).createIndex(INDEX_TYPE.NOTUNIQUE);
 		item.createProperty("title", OType.STRING).createIndex(INDEX_TYPE.NOTUNIQUE);
 		item.createProperty("author", OType.STRING).createIndex(INDEX_TYPE.NOTUNIQUE);

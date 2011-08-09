@@ -57,7 +57,7 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
 		assertEquals(1, rs.getInt(2));
 		assertEquals(1, rs.getInt("intKey"));
 
-		assertEquals(rs.getString("text").length(), rs.getDouble("length"));
+		assertEquals(rs.getString("text").length(), rs.getLong("length"));
 
 		Date date = new Date(System.currentTimeMillis());
 		assertEquals(date.toString(), rs.getDate("date").toString());
