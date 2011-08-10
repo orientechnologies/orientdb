@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.index;
 
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -27,7 +26,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public interface OIndexInternal extends OIndex, Iterable<Entry<Object, Set<OIdentifiable>>> {
+public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>> {
 
 	public static final String	CONFIG_TYPE				= "type";
 	public static final String	CONFIG_KEYTYPE		= "keyType";
@@ -47,7 +46,7 @@ public interface OIndexInternal extends OIndex, Iterable<Entry<Object, Set<OIden
 	 */
 	public int count(final OIdentifiable iRecord);
 
-	public OIndexInternal loadFromConfiguration(ODocument iConfig);
+	public OIndexInternal<T> loadFromConfiguration(ODocument iConfig);
 
 	public ODocument updateConfiguration();
 }

@@ -18,7 +18,6 @@ package com.orientechnologies.orient.core.index;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -33,27 +32,28 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli
  * 
  */
-public class OIndexAbstractDelegate implements OIndex {
-	protected OIndex	delegate;
+public class OIndexAbstractDelegate<T> implements OIndex<T> {
+	protected OIndex<T>	delegate;
 
-	public OIndexAbstractDelegate(final OIndex iDelegate) {
+	public OIndexAbstractDelegate(final OIndex<T> iDelegate) {
 		this.delegate = iDelegate;
 	}
 
-	public OIndexInternal getInternal() {
-		return (OIndexInternal) delegate;
+	public OIndexInternal<T> getInternal() {
+		return (OIndexInternal<T>) delegate;
 	}
 
-	public OIndex create(final String iName, final OType iKeyType, final ODatabaseRecord iDatabase, final String iClusterIndexName,
-			final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, final boolean iAutomatic) {
+	public OIndex<T> create(final String iName, final OType iKeyType, final ODatabaseRecord iDatabase,
+			final String iClusterIndexName, final int[] iClusterIdsToIndex, final OProgressListener iProgressListener,
+			final boolean iAutomatic) {
 		return delegate.create(iName, iKeyType, iDatabase, iClusterIndexName, iClusterIdsToIndex, iProgressListener, iAutomatic);
 	}
 
-	public Iterator<Entry<Object, Set<OIdentifiable>>> iterator() {
+	public Iterator<Entry<Object, T>> iterator() {
 		return delegate.iterator();
 	}
 
-	public Collection<OIdentifiable> get(final Object iKey) {
+	public T get(final Object iKey) {
 		return delegate.get(iKey);
 	}
 
@@ -61,7 +61,7 @@ public class OIndexAbstractDelegate implements OIndex {
 		return delegate.contains(iKey);
 	}
 
-	public OIndex put(final Object iKey, final OIdentifiable iValue) {
+	public OIndex<T> put(final Object iKey, final OIdentifiable iValue) {
 		return delegate.put(iKey, iValue);
 	}
 
@@ -77,7 +77,7 @@ public class OIndexAbstractDelegate implements OIndex {
 		return delegate.remove(iRID);
 	}
 
-	public OIndex clear() {
+	public OIndex<T> clear() {
 		return delegate.clear();
 	}
 
@@ -87,6 +87,14 @@ public class OIndexAbstractDelegate implements OIndex {
 
 	public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo) {
 		return delegate.getValuesBetween(iRangeFrom, iRangeTo);
+	}
+
+	public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive) {
+		return delegate.getValuesBetween(iRangeFrom, iRangeTo, iInclusive);
+	}
+
+	public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive) {
+		return delegate.getEntriesBetween(iRangeFrom, iRangeTo, iInclusive);
 	}
 
 	public Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo) {
@@ -113,11 +121,11 @@ public class OIndexAbstractDelegate implements OIndex {
 		return delegate.getSize();
 	}
 
-	public OIndex lazySave() {
+	public OIndex<T> lazySave() {
 		return delegate.lazySave();
 	}
 
-	public OIndex delete() {
+	public OIndex<T> delete() {
 		return delegate.delete();
 	}
 

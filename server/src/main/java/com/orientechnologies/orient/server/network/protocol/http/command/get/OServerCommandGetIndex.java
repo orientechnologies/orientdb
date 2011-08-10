@@ -28,6 +28,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
 	private static final String[]	NAMES	= { "GET|index/*" };
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: index/<database>/<index-name>/<key>");
@@ -43,18 +44,23 @@ public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
 			if (index == null)
 				throw new IllegalArgumentException("Index name '" + urlParts[2] + "' not found");
 
-			final Collection<OIdentifiable> content = index.get(urlParts[3]);
+			final Object content = index.get(urlParts[3]);
 
-			if (content == null || content.size() == 0)
+			if (content == null)
 				sendTextContent(iRequest, OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, null,
 						OHttpUtils.CONTENT_TEXT_PLAIN, null);
 			else {
 				final StringBuilder buffer = new StringBuilder();
-
 				buffer.append('[');
-				for (OIdentifiable item : content) {
-					buffer.append(item.getRecord().toJSON());
-				}
+
+				if (content instanceof Collection<?>) {
+					Collection<OIdentifiable> collection = (Collection<OIdentifiable>) content;
+					for (OIdentifiable item : collection) {
+						buffer.append(item.getRecord().toJSON());
+					}
+				} else
+					buffer.append(((OIdentifiable) content).getRecord().toJSON());
+
 				buffer.append(']');
 
 				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, buffer.toString());

@@ -15,64 +15,14 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Set;
-
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.record.ORecord;
-
 /**
- * Abstract not unique index class.
+ * Index implementation that allows multiple values for the same key.
  * 
  * @author Luca Garulli
  * 
  */
-public class OIndexNotUnique extends OIndexMVRBTreeAbstract {
+public class OIndexNotUnique extends OIndexMultiValues {
 	public OIndexNotUnique() {
 		super("NOTUNIQUE");
-	}
-
-	public OIndex put(final Object iKey, final OIdentifiable iSingleValue) {
-		checkForOptimization();
-		acquireExclusiveLock();
-		try {
-
-			checkForKeyType(iKey);
-
-			Set<OIdentifiable> values = map.get(iKey);
-			checkForOptimization();
-			if (values == null)
-				values = new ORecordLazySet(configuration.getDatabase()).setRidOnly(true);
-
-			if (!iSingleValue.getIdentity().isValid())
-				((ORecord<?>) iSingleValue).save();
-
-			values.add(iSingleValue);
-
-			map.put(iKey, values);
-			return this;
-
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
-
-	public boolean remove(final Object iKey, final OIdentifiable iValue) {
-		checkForOptimization();
-		acquireExclusiveLock();
-		try {
-
-			final Set<OIdentifiable> recs = get(iKey);
-			if (recs != null && !recs.isEmpty()) {
-				if (recs.remove(iValue)) {
-					map.put(iKey, recs);
-					return true;
-				}
-			}
-			return false;
-
-		} finally {
-			releaseExclusiveLock();
-		}
 	}
 }

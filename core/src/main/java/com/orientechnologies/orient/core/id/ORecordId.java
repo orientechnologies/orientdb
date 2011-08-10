@@ -190,8 +190,10 @@ public class ORecordId implements ORID {
 	}
 
 	public ORecordId fromStream(final byte[] iBuffer) {
-		clusterId = OBinaryProtocol.bytes2short(iBuffer, 0);
-		clusterPosition = OBinaryProtocol.bytes2long(iBuffer, OConstants.SIZE_SHORT);
+		if (iBuffer != null) {
+			clusterId = OBinaryProtocol.bytes2short(iBuffer, 0);
+			clusterPosition = OBinaryProtocol.bytes2long(iBuffer, OConstants.SIZE_SHORT);
+		}
 		return this;
 	}
 

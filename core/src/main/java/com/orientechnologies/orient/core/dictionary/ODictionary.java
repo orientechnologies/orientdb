@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.dictionary;
 
-import java.util.Collection;
-
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -25,33 +23,29 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("unchecked")
 public class ODictionary<T extends Object> {
-	private OIndex	index;
+	private OIndex<OIdentifiable>	index;
 
-	public ODictionary(final OIndex iIndex) {
+	public ODictionary(final OIndex<OIdentifiable> iIndex) {
 		index = iIndex;
 	}
 
 	public <RET extends T> RET get(final String iKey) {
-		final Collection<OIdentifiable> values = index.get(iKey);
-		if (values.isEmpty())
+		final OIdentifiable value = index.get(iKey);
+		if (value == null)
 			return null;
 
-		final OIdentifiable id = values.iterator().next();
-
-		return (RET) id.getRecord();
+		return (RET) value.getRecord();
 	}
 
 	public <RET extends T> RET get(final String iKey, final String iFetchPlan) {
-		final Collection<OIdentifiable> values = index.get(iKey);
-		if (values.isEmpty())
+		final OIdentifiable value = index.get(iKey);
+		if (value == null)
 			return null;
 
-		final OIdentifiable id = values.iterator().next();
+		if (value instanceof ORID)
+			return (RET) ODatabaseRecordThreadLocal.INSTANCE.get().load(((ORID) value), iFetchPlan);
 
-		if (id instanceof ORID)
-			return (RET) ODatabaseRecordThreadLocal.INSTANCE.get().load(((ORID) values.iterator().next()), iFetchPlan);
-
-		return (RET) ((ODocument) values.iterator().next()).load(iFetchPlan);
+		return (RET) ((ODocument) value).load(iFetchPlan);
 	}
 
 	public void put(final String iKey, final Object iValue) {
@@ -74,7 +68,7 @@ public class ODictionary<T extends Object> {
 		return index.keys();
 	}
 
-	public OIndex getIndex() {
+	public OIndex<OIdentifiable> getIndex() {
 		return index;
 	}
 }

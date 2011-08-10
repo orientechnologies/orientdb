@@ -16,12 +16,7 @@
 package com.orientechnologies.orient.core.index;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
@@ -38,39 +33,40 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 /**
- * Proxied index.
+ * Proxied abstract index.
  * 
  * @author Luca Garulli
  * 
  */
 @SuppressWarnings("unchecked")
-public class OIndexRemote implements OIndex {
-	private final String				wrappedType;
-	private final ORID					rid;
+public abstract class OIndexRemote<T> implements OIndex<T> {
+	private final String					wrappedType;
+	private final ORID						rid;
 
-	private String							name;
+	protected String							name;
 
-	private final static String	QUERY_GET											= "select from index:%s where key = ?";
-	private final static String	QUERY_GET_MAJOR								= "select from index:%s where key > ?";
-	private final static String	QUERY_GET_MAJOR_EQUALS				= "select from index:%s where key >= ?";
-	private final static String	QUERY_GET_VALUE_MAJOR					= "select @rid from index:%s where key > ?";
-	private final static String	QUERY_GET_VALUE_MAJOR_EQUALS	= "select @rid from index:%s where key >= ?";
-	private final static String	QUERY_GET_MINOR								= "select from index:%s where key < ?";
-	private final static String	QUERY_GET_MINOR_EQUALS				= "select from index:%s where key <= ?";
-	private final static String	QUERY_GET_VALUE_MINOR					= "select @rid from index:%s where key < ?";
-	private final static String	QUERY_GET_VALUE_MINOR_EQUALS	= "select @rid from index:%s where key <= ?";
-	private final static String	QUERY_GET_RANGE								= "select from index:%s where key between ? and ?";
-	private final static String	QUERY_GET_VALUE_RANGE					= "select @rid from index:%s where key between ? and ?";
-	private final static String	QUERY_PUT											= "insert into index:%s (key,rid) values (%s,%s)";
-	private final static String	QUERY_REMOVE									= "delete from index:%s where key = %s";
-	private final static String	QUERY_REMOVE2									= "delete from index:%s where key = %s and rid = %s";
-	private final static String	QUERY_REMOVE3									= "delete from index:%s where rid = ?";
-	private final static String	QUERY_CONTAINS								= "select count(*) as size from	index:%s where key = ?";
-	private final static String	QUERY_SIZE										= "select count(*) as size from index:%s";
-	private final static String	QUERY_KEYS										= "select key from index:%s";
-	private final static String	QUERY_ENTRIES									= "select key, rid from index:%s";
-	private final static String	QUERY_REBUILD									= "rebuild index %s";
-	private final static String	QUERY_CLEAR										= "delete from index:%s";
+	protected final static String	QUERY_GET											= "select from index:%s where key = ?";
+	protected final static String	QUERY_ENTRIES									= "select key, rid from index:%s";
+
+	private final static String		QUERY_GET_MAJOR								= "select from index:%s where key > ?";
+	private final static String		QUERY_GET_MAJOR_EQUALS				= "select from index:%s where key >= ?";
+	private final static String		QUERY_GET_VALUE_MAJOR					= "select @rid from index:%s where key > ?";
+	private final static String		QUERY_GET_VALUE_MAJOR_EQUALS	= "select @rid from index:%s where key >= ?";
+	private final static String		QUERY_GET_MINOR								= "select from index:%s where key < ?";
+	private final static String		QUERY_GET_MINOR_EQUALS				= "select from index:%s where key <= ?";
+	private final static String		QUERY_GET_VALUE_MINOR					= "select @rid from index:%s where key < ?";
+	private final static String		QUERY_GET_VALUE_MINOR_EQUALS	= "select @rid from index:%s where key <= ?";
+	private final static String		QUERY_GET_RANGE								= "select from index:%s where key between ? and ?";
+	private final static String		QUERY_GET_VALUE_RANGE					= "select @rid from index:%s where key between ? and ?";
+	private final static String		QUERY_PUT											= "insert into index:%s (key,rid) values (%s,%s)";
+	private final static String		QUERY_REMOVE									= "delete from index:%s where key = %s";
+	private final static String		QUERY_REMOVE2									= "delete from index:%s where key = %s and rid = %s";
+	private final static String		QUERY_REMOVE3									= "delete from index:%s where rid = ?";
+	private final static String		QUERY_CONTAINS								= "select count(*) as size from	index:%s where key = ?";
+	private final static String		QUERY_SIZE										= "select count(*) as size from index:%s";
+	private final static String		QUERY_KEYS										= "select key from index:%s";
+	private final static String		QUERY_REBUILD									= "rebuild index %s";
+	private final static String		QUERY_CLEAR										= "delete from index:%s";
 
 	public OIndexRemote(final String iName, final String iWrappedType, final ORID iRid) {
 		this.name = iName;
@@ -78,28 +74,34 @@ public class OIndexRemote implements OIndex {
 		this.rid = iRid;
 	}
 
-	public OIndex create(final String iName, final OType iKeyType, final ODatabaseRecord iDatabase, final String iClusterIndexName,
-			final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, final boolean iAutomatic) {
+	public OIndexRemote<T> create(final String iName, final OType iKeyType, final ODatabaseRecord iDatabase,
+			final String iClusterIndexName, final int[] iClusterIdsToIndex, final OProgressListener iProgressListener,
+			final boolean iAutomatic) {
 		name = iName;
 		// final OCommandRequest cmd = formatCommand(QUERY_CREATE, name, wrappedType);
 		// database.command(cmd).execute();
 		return this;
 	}
 
-	public OIndex delete() {
+	public OIndexRemote<T> delete() {
 		// final OCommandRequest cmd = formatCommand(QUERY_DROP, name);
 		// database.command(cmd).execute();
 		return this;
 	}
 
-	public Collection<OIdentifiable> get(final Object iKey) {
-		final OCommandRequest cmd = formatCommand(QUERY_GET, name);
-		return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(iKey);
-	}
-
 	public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo) {
 		final OCommandRequest cmd = formatCommand(QUERY_GET_VALUE_RANGE, name);
 		return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
+	}
+
+	public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive) {
+		final OCommandRequest cmd = formatCommand(QUERY_GET_VALUE_RANGE, name);
+		return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
+	}
+
+	public Set<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive) {
+		final OCommandRequest cmd = formatCommand(QUERY_GET_RANGE, name);
+		return (Set<ODocument>) getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
 	}
 
 	public Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo) {
@@ -149,7 +151,7 @@ public class OIndexRemote implements OIndex {
 		return (Long) result.get(0).field("size") > 0;
 	}
 
-	public OIndex put(Object iKey, final OIdentifiable iValue) {
+	public OIndexRemote<T> put(Object iKey, final OIdentifiable iValue) {
 		if (iKey instanceof String)
 			iKey = "'" + iKey + "'";
 
@@ -188,7 +190,7 @@ public class OIndexRemote implements OIndex {
 		return (Long) getDatabase().command(cmd).execute();
 	}
 
-	public OIndex clear() {
+	public OIndexRemote<T> clear() {
 		final OCommandRequest cmd = formatCommand(QUERY_CLEAR, name);
 		getDatabase().command(cmd).execute();
 		return this;
@@ -197,24 +199,6 @@ public class OIndexRemote implements OIndex {
 	public Iterable<Object> keys() {
 		final OCommandRequest cmd = formatCommand(QUERY_KEYS, name);
 		return (Iterable<Object>) getDatabase().command(cmd).execute();
-	}
-
-	public Iterator<Entry<Object, Set<OIdentifiable>>> iterator() {
-		final OCommandRequest cmd = formatCommand(QUERY_ENTRIES, name);
-		final Collection<ODocument> result = getDatabase().command(cmd).execute();
-
-		Map<Object, Set<OIdentifiable>> map = new HashMap<Object, Set<OIdentifiable>>();
-		for (ODocument d : result) {
-			Set<OIdentifiable> rids = map.get(d.field("key"));
-			if (rids == null) {
-				rids = new HashSet<OIdentifiable>();
-				map.put(d.field("key"), rids);
-			}
-
-			rids.add((OIdentifiable) d.field("rid"));
-		}
-
-		return map.entrySet().iterator();
 	}
 
 	public long getSize() {
@@ -237,7 +221,7 @@ public class OIndexRemote implements OIndex {
 	/**
 	 * Do nothing.
 	 */
-	public OIndex lazySave() {
+	public OIndexRemote<T> lazySave() {
 		return this;
 	}
 
@@ -256,7 +240,7 @@ public class OIndexRemote implements OIndex {
 		return rid;
 	}
 
-	private OCommandRequest formatCommand(final String iTemplate, final Object... iArgs) {
+	protected OCommandRequest formatCommand(final String iTemplate, final Object... iArgs) {
 		final String text = String.format(iTemplate, iArgs);
 		return new OCommandSQL(text);
 	}
@@ -264,7 +248,7 @@ public class OIndexRemote implements OIndex {
 	public void commit(final ODocument iDocument) {
 	}
 
-	public OIndexInternal getInternal() {
+	public OIndexInternal<T> getInternal() {
 		return null;
 	}
 

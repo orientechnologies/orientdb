@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.test.database.speed;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -10,6 +9,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OPropertyIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -96,21 +96,18 @@ public class LocalDocumentAndBinarySpeedTest {
 				else
 					System.out.println("already loaded");
 
-				Collection<?> result = index.getUnderlying().get("key" + Integer.toString(rand));
-				Assert.assertTrue(result.size() > 0);
+				OIdentifiable result = (OIdentifiable) index.getUnderlying().get("key" + Integer.toString(rand));
+				Assert.assertNotNull(result);
 
-				if (result != null && result.size() > 0) {
-					ODocument doc = (ODocument) result.iterator().next();
-					System.out.println("loaded " + i + "(" + rand + "), binary record: " + doc.field("binary", ORID.class));
-					ORecordBytes record = doc.field("binary");
-					Assert.assertNotNull(record);
-					if (record != null) {
-						byte[] data = record.toStream();
-						Assert.assertTrue(data.length == size);
-					}
-				} else {
-					System.out.println("key not found " + rand);
+				ODocument doc = (ODocument) result.getRecord();
+				System.out.println("loaded " + i + "(" + rand + "), binary record: " + doc.field("binary", ORID.class));
+				ORecordBytes record = doc.field("binary");
+				Assert.assertNotNull(record);
+				if (record != null) {
+					byte[] data = record.toStream();
+					Assert.assertTrue(data.length == size);
 				}
+
 				if (i % 100 == 0)
 					System.out.println("loaded " + i);
 			}

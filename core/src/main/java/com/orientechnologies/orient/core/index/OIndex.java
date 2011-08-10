@@ -18,7 +18,6 @@ package com.orientechnologies.orient.core.index;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -33,7 +32,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public interface OIndex {
+public interface OIndex<T> {
 
 	/**
 	 * Creates the index.
@@ -51,14 +50,14 @@ public interface OIndex {
 	 *          Listener to get called on progress
 	 * @param iAutomatic
 	 */
-	public OIndex create(String iName, final OType iKeyType, final ODatabaseRecord iDatabase, final String iClusterIndexName,
+	public OIndex<T> create(String iName, final OType iKeyType, final ODatabaseRecord iDatabase, final String iClusterIndexName,
 			final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, final boolean iAutomatic);
 
 	public void unload();
 
 	public OType getKeyType();
 
-	public Iterator<Entry<Object, Set<OIdentifiable>>> iterator();
+	public Iterator<Entry<Object, T>> iterator();
 
 	/**
 	 * Gets the set of records associated with the passed key.
@@ -67,11 +66,11 @@ public interface OIndex {
 	 *          Key to search
 	 * @return The Record set if found, otherwise an empty Set
 	 */
-	public Collection<OIdentifiable> get(Object iKey);
+	public T get(Object iKey);
 
 	public boolean contains(Object iKey);
 
-	public OIndex put(final Object iKey, final OIdentifiable iValue);
+	public OIndex<T> put(final Object iKey, final OIdentifiable iValue);
 
 	public boolean remove(final Object iKey);
 
@@ -86,13 +85,9 @@ public interface OIndex {
 	 */
 	public int remove(OIdentifiable iRID);
 
-	public OIndex clear();
+	public OIndex<T> clear();
 
 	public Iterable<Object> keys();
-
-	public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, Object iRangeTo);
-
-	public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo);
 
 	/**
 	 * Returns a set of records with keys greater than passed parameter.
@@ -104,7 +99,19 @@ public interface OIndex {
 	 * 
 	 * @return set of records with keys greater than passed parameter.
 	 */
-	public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive);
+	public abstract Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive);
+
+	/**
+	 * Returns a set of records with keys less than passed parameter.
+	 * 
+	 * @param toKey
+	 *          Ending key.
+	 * @param isInclusive
+	 *          Indicates whether record with passed key will be included.
+	 * 
+	 * @return set of records with keys less than passed parameter.
+	 */
+	public abstract Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive);
 
 	/**
 	 * Returns a set of documents that contains fields ("key", "rid") where "key" - index key, "rid" - record id of records with keys
@@ -117,19 +124,7 @@ public interface OIndex {
 	 * 
 	 * @return set of records with key greater than passed parameter.
 	 */
-	public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive);
-
-	/**
-	 * Returns a set of records with keys less than passed parameter.
-	 * 
-	 * @param toKey
-	 *          Ending key.
-	 * @param isInclusive
-	 *          Indicates whether record with passed key will be included.
-	 * 
-	 * @return set of records with keys less than passed parameter.
-	 */
-	public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive);
+	public abstract Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive);
 
 	/**
 	 * Returns a set of documents that contains fields ("key", "rid") where "key" - index key, "rid" - record id of records with keys
@@ -142,13 +137,46 @@ public interface OIndex {
 	 * 
 	 * @return set of records with key greater than passed parameter.
 	 */
-	public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive);
+	public abstract Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive);
+
+	/**
+	 * Returns a set of records with key between the range passed as parameter.
+	 * 
+	 * @param iRangeFrom
+	 *          Starting range
+	 * @param iRangeTo
+	 *          Ending range
+	 * @param iInclusive
+	 *          Include from/to bounds
+	 * @see #getValuesBetween(Object, Object)
+	 * @return
+	 */
+	public abstract Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo,
+			final boolean iInclusive);
+
+	/**
+	 * Returns a set of documents with key between the range passed as parameter.
+	 * 
+	 * @param iRangeFrom
+	 *          Starting range
+	 * @param iRangeTo
+	 *          Ending range
+	 * @param iInclusive
+	 *          Include from/to bounds
+	 * @see #getEntriesBetween(Object, Object)
+	 * @return
+	 */
+	public abstract Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive);
+
+	public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, Object iRangeTo);
+
+	public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo);
 
 	public long getSize();
 
-	public OIndex lazySave();
+	public OIndex<T> lazySave();
 
-	public OIndex delete();
+	public OIndex<T> delete();
 
 	public String getName();
 
@@ -177,5 +205,5 @@ public interface OIndex {
 	 */
 	public void commit(ODocument iDocument);
 
-	public OIndexInternal getInternal();
+	public OIndexInternal<T> getInternal();
 }

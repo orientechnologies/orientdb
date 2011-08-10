@@ -15,40 +15,32 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Set;
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 
 /**
- * Abstract unique index class.
+ * Dictionary index similar to unique index but doesn't check for updates, just executes changes. Last put always wins and override
+ * the previous value.
  * 
  * @author Luca Garulli
  * 
  */
-public class OIndexDictionary extends OIndexMVRBTreeAbstract {
+public class OIndexDictionary extends OIndexOneValue {
 	public OIndexDictionary() {
 		super("DICTIONARY");
 	}
 
-	public OIndex put(final Object iKey, final OIdentifiable iSingleValue) {
+	public OIndexOneValue put(final Object iKey, final OIdentifiable iSingleValue) {
 		checkForOptimization();
 		acquireExclusiveLock();
 		try {
-
 			checkForKeyType(iKey);
 
-			Set<OIdentifiable> values = map.get(iKey);
+			OIdentifiable value = map.get(iKey);
 			checkForOptimization();
 
-			if (values == null)
-				values = new ORecordLazySet(configuration.getDatabase());
-			else
-				values.clear();
+			if (value == null || !value.equals(iSingleValue))
+				map.put(iKey, iSingleValue);
 
-			values.add(iSingleValue);
-
-			map.put(iKey, values);
 			return this;
 
 		} finally {

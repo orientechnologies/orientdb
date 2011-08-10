@@ -24,6 +24,7 @@ import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -37,16 +38,16 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 @SuppressWarnings("unchecked")
 public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass implements OIndexManager, OCloseable {
-	public static final String						CONFIG_INDEXES			= "indexes";
-	public static final String						DICTIONARY_NAME			= "dictionary";
-	protected Map<String, OIndexInternal>	indexes							= new HashMap<String, OIndexInternal>();
-	protected String											defaultClusterName	= OStorage.CLUSTER_INDEX_NAME;
+	public static final String								CONFIG_INDEXES			= "indexes";
+	public static final String								DICTIONARY_NAME			= "dictionary";
+	protected Map<String, OIndexInternal<?>>	indexes							= new HashMap<String, OIndexInternal<?>>();
+	protected String													defaultClusterName	= OStorage.CLUSTER_INDEX_NAME;
 
 	public OIndexManagerAbstract(final ODatabaseRecord iDatabase) {
 		super(new ODocument(iDatabase));
 	}
 
-	protected abstract OIndex getIndexInstance(final OIndex iIndex);
+	protected abstract OIndex<?> getIndexInstance(final OIndex<?> iIndex);
 
 	public synchronized OIndexManagerAbstract load() {
 		if (getDatabase().getStorage().getConfiguration().indexMgrRecordId == null)
@@ -83,35 +84,32 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 	}
 
 	public synchronized void flush() {
-		for (OIndexInternal idx : indexes.values())
+		for (OIndexInternal<?> idx : indexes.values())
 			idx.flush();
 	}
 
-	public synchronized OIndex createIndex(final String iName, final String iType, final OType iKeyType,
+	public synchronized OIndex<?> createIndex(final String iName, final String iType, final OType iKeyType,
 			final int[] iClusterIdsToIndex, OIndexCallback iCallback, final OProgressListener iProgressListener) {
 		return createIndex(iName, iType, iKeyType, iClusterIdsToIndex, iCallback, iProgressListener, false);
 	}
 
-	public synchronized Collection<? extends OIndex> getIndexes() {
+	public synchronized Collection<? extends OIndex<?>> getIndexes() {
 		return Collections.unmodifiableCollection(indexes.values());
 	}
 
-	public synchronized OIndex getIndex(final String iName) {
-		final OIndex index = indexes.get(iName.toLowerCase());
-		return new OIndexUser(getDatabase(), getIndexInstance(index));
+	public synchronized OIndex<?> getIndex(final String iName) {
+		final OIndex<?> index = indexes.get(iName.toLowerCase());
+		if (index == null)
+			return null;
+
+		if (index instanceof OIndexMultiValues)
+			return new OIndexTxAwareMultiValue(getDatabase(), (OIndex<Collection<OIdentifiable>>) getIndexInstance(index));
+		else
+			return new OIndexTxAwareOneValue(getDatabase(), (OIndex<OIdentifiable>) getIndexInstance(index));
 	}
 
 	public synchronized boolean existsIndex(final String iName) {
 		return indexes.containsKey(iName.toLowerCase());
-	}
-
-	public synchronized OIndex getIndex(final ORID iRID) {
-		for (OIndex idx : indexes.values()) {
-			if (idx.getIdentity().equals(iRID)) {
-				return getIndexInstance(idx);
-			}
-		}
-		return null;
 	}
 
 	public synchronized String getDefaultClusterName() {
@@ -123,10 +121,10 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 	}
 
 	public synchronized ODictionary<ORecordInternal<?>> getDictionary() {
-		OIndex idx = getIndex(DICTIONARY_NAME);
+		OIndex<?> idx = getIndex(DICTIONARY_NAME);
 		if (idx == null)
 			idx = createIndex(DICTIONARY_NAME, OProperty.INDEX_TYPE.DICTIONARY.toString(), OType.STRING, null, null, null, false);
-		return new ODictionary<ORecordInternal<?>>(idx);
+		return new ODictionary<ORecordInternal<?>>((OIndex<OIdentifiable>) idx);
 	}
 
 	public ODocument getConfiguration() {
@@ -141,5 +139,19 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 	public void close() {
 		flush();
 		indexes.clear();
+	}
+
+	public synchronized OIndexManager setDirty() {
+		document.setDirty();
+		return this;
+	}
+
+	public synchronized OIndex<?> getIndex(final ORID iRID) {
+		for (OIndex<?> idx : indexes.values()) {
+			if (idx.getIdentity().equals(iRID)) {
+				return getIndexInstance(idx);
+			}
+		}
+		return null;
 	}
 }

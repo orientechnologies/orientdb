@@ -127,7 +127,7 @@ public class IndexTest {
 			Profile profile = new Profile("Yay-" + i, "Jay", "Miner", null);
 			database.save(profile);
 			profileSize++;
-			Assert.assertEquals(database.getMetadata().getIndexManager().getIndex("Profile.nick").get("Yay-" + i).size(), 1);
+			Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("Profile.nick").get("Yay-" + i));
 		}
 	}
 

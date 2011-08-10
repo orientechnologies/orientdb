@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  * @author Luca Garulli
  * 
  */
-public class OIndexFullText extends OIndexMVRBTreeAbstract {
+public class OIndexFullText extends OIndexMultiValues {
 	private static final String	CONFIG_STOP_WORDS		= "stopWords";
 	private static final String	CONFIG_IGNORE_CHARS	= "ignoreChars";
 
@@ -93,7 +93,7 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 	 * @param iDocument
 	 *          The document to index
 	 */
-	public OIndex put(final Object iKey, final OIdentifiable iSingleValue) {
+	public OIndexFullText put(final Object iKey, final OIdentifiable iSingleValue) {
 		if (iKey == null)
 			return this;
 

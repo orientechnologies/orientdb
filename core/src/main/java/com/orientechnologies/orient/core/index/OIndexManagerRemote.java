@@ -21,7 +21,6 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -35,25 +34,14 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 		super(iDatabase);
 	}
 
-	protected synchronized OIndex getIndexInstance(final OIndex iIndex) {
-		return new OIndexRemote(iIndex.getName(), iIndex.getType(), iIndex.getIdentity());
+	protected synchronized OIndex<?> getIndexInstance(final OIndex<?> iIndex) {
+		if (iIndex instanceof OIndexMultiValues)
+			return new OIndexRemoteMultiValue(iIndex.getName(), iIndex.getType(), iIndex.getIdentity());
+
+		return new OIndexRemoteOneValue(iIndex.getName(), iIndex.getType(), iIndex.getIdentity());
 	}
 
-	public synchronized OIndex getIndex(final String iName) {
-		final OIndex index = indexes.get(iName.toLowerCase());
-		return index != null ? new OIndexUser(getDatabase(), getIndexInstance(index)) : null;
-	}
-
-	public synchronized OIndex getIndex(final ORID iRID) {
-		for (OIndex idx : indexes.values()) {
-			if (idx.getIdentity().equals(iRID)) {
-				return getIndexInstance(idx);
-			}
-		}
-		return null;
-	}
-
-	public synchronized OIndex createIndex(final String iName, final String iType, final OType iKeyType,
+	public synchronized OIndex<?> createIndex(final String iName, final String iType, final OType iKeyType,
 			final int[] iClusterIdsToIndex, OIndexCallback iCallback, final OProgressListener iProgressListener, final boolean iAutomatic) {
 		final String text = String.format(QUERY_CREATE, iName, iType, iKeyType);
 		getDatabase().command(new OCommandSQL(text)).execute();
@@ -78,21 +66,16 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 		return null;
 	}
 
-	public synchronized OIndexManager setDirty() {
-		document.setDirty();
-		return this;
-	}
-
 	@Override
 	protected synchronized void fromStream() {
 		final Collection<ODocument> idxs = document.field(CONFIG_INDEXES);
 
 		if (idxs != null) {
-			OIndexInternal index;
+			OIndexInternal<?> index;
 			for (ODocument d : idxs) {
 				index = OIndexFactory.instance().newInstance(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE));
 				d.setDatabase(getDatabase());
-				((OIndexInternal) index).loadFromConfiguration(d);
+				((OIndexInternal<?>) index).loadFromConfiguration(d);
 				indexes.put(index.getName().toLowerCase(), index);
 			}
 		}
@@ -108,7 +91,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 		try {
 			ORecordTrackedSet idxs = new ORecordTrackedSet(document);
 
-			for (OIndexInternal i : indexes.values()) {
+			for (OIndexInternal<?> i : indexes.values()) {
 				idxs.add(i.updateConfiguration());
 			}
 			document.field(CONFIG_INDEXES, idxs, OType.EMBEDDEDSET);

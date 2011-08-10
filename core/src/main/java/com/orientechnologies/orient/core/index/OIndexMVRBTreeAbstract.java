@@ -17,14 +17,12 @@ package com.orientechnologies.orient.core.index;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.orientechnologies.common.collection.ONavigableMap;
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
 import com.orientechnologies.common.listener.OProgressListener;
@@ -40,7 +38,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -49,7 +46,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerLiteral;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
@@ -60,21 +57,21 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
  * @author Luca Garulli
  * 
  */
-public abstract class OIndexMVRBTreeAbstract extends OSharedResourceExternal implements OIndexInternal, ODatabaseListener {
-	protected static final String																		CONFIG_MAP_RID	= "mapRid";
-	protected static final String																		CONFIG_CLUSTERS	= "clusters";
-	protected String																								name;
-	protected String																								type;
-	protected OMVRBTreeDatabaseLazySave<Object, Set<OIdentifiable>>	map;
-	protected Set<String>																						clustersToIndex	= new LinkedHashSet<String>();
-	protected OIndexCallback																				callback;
-	protected boolean																								automatic;
-	protected OType																									keyType;
+public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal implements OIndexInternal<T>, ODatabaseListener {
+	protected static final String										CONFIG_MAP_RID	= "mapRid";
+	protected static final String										CONFIG_CLUSTERS	= "clusters";
+	protected String																name;
+	protected String																type;
+	protected OMVRBTreeDatabaseLazySave<Object, T>	map;
+	protected Set<String>														clustersToIndex	= new LinkedHashSet<String>();
+	protected OIndexCallback												callback;
+	protected boolean																automatic;
+	protected OType																	keyType;
 
 	@ODocumentInstance
-	protected ODocument																							configuration;
-	private Listener																								watchDog;
-	private volatile int																						optimization		= 0;
+	protected ODocument															configuration;
+	private Listener																watchDog;
+	private volatile int														optimization		= 0;
 
 	public OIndexMVRBTreeAbstract(final String iType) {
 		type = iType;
@@ -108,9 +105,9 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceExternal imp
 	 * @param iProgressListener
 	 *          Listener to get called on progress
 	 */
-	public OIndexInternal create(final String iName, final OType iKeyType, final ODatabaseRecord iDatabase,
+	public OIndexInternal<T> create(final String iName, final OType iKeyType, final ODatabaseRecord iDatabase,
 			final String iClusterIndexName, final int[] iClusterIdsToIndex, final OProgressListener iProgressListener,
-			final boolean iAutomatic) {
+			final boolean iAutomatic, final OStreamSerializer iValueSerializer) {
 		acquireExclusiveLock();
 		try {
 
@@ -123,8 +120,8 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceExternal imp
 				for (int id : iClusterIdsToIndex)
 					clustersToIndex.add(iDatabase.getClusterNameById(id));
 
-			map = new OMVRBTreeDatabaseLazySave<Object, Set<OIdentifiable>>(iDatabase, iClusterIndexName,
-					OStreamSerializerLiteral.INSTANCE, OStreamSerializerListRID.INSTANCE);
+			map = new OMVRBTreeDatabaseLazySave<Object, T>(iDatabase, iClusterIndexName, OStreamSerializerLiteral.INSTANCE,
+					iValueSerializer);
 
 			installHooks(iDatabase);
 
@@ -137,7 +134,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceExternal imp
 		}
 	}
 
-	public OIndexInternal loadFromConfiguration(final ODocument iConfig) {
+	public OIndexInternal<T> loadFromConfiguration(final ODocument iConfig) {
 		acquireExclusiveLock();
 		try {
 
@@ -160,31 +157,12 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceExternal imp
 			if (clusters != null)
 				clustersToIndex.addAll(clusters);
 
-			map = new OMVRBTreeDatabaseLazySave<Object, Set<OIdentifiable>>(getDatabase(), rid);
+			map = new OMVRBTreeDatabaseLazySave<Object, T>(getDatabase(), rid);
 			map.load();
 
 			installHooks(iConfig.getDatabase());
 
 			return this;
-
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
-
-	public Set<OIdentifiable> get(final Object iKey) {
-		checkForOptimization();
-		acquireExclusiveLock();
-		try {
-
-			final ORecordLazySet values = (ORecordLazySet) map.get(iKey);
-			if (values != null)
-				values.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
-
-			if (values == null)
-				return ORecordLazySet.EMPTY_SET;
-
-			return values;
 
 		} finally {
 			releaseExclusiveLock();
@@ -213,178 +191,8 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceExternal imp
 	 * @see #getValuesBetween(Object, Object, boolean)
 	 * @return
 	 */
-	public Set<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo) {
+	public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo) {
 		return getValuesBetween(iRangeFrom, iRangeTo, true);
-	}
-
-	/**
-	 * Returns a set of records with keys greater than passed parameter.
-	 * 
-	 * @param fromKey
-	 *          Starting key.
-	 * @param isInclusive
-	 *          Indicates whether record with passed key will be included.
-	 * 
-	 * @return set of records with keys greater than passed parameter.
-	 */
-	public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive) {
-		checkForOptimization();
-		acquireExclusiveLock();
-
-		try {
-			final ONavigableMap<Object, Set<OIdentifiable>> subSet = map.tailMap(fromKey, isInclusive);
-			if (subSet == null)
-				return ORecordLazySet.EMPTY_SET;
-
-			final Set<OIdentifiable> result = new ORecordLazySet(configuration.getDatabase());
-			for (Set<OIdentifiable> v : subSet.values()) {
-				result.addAll(v);
-			}
-
-			return result;
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
-
-	/**
-	 * Returns a set of documents that contains fields ("key", "rid") where "key" - index key, "rid" - record id of records with keys
-	 * greater than passed parameter.
-	 * 
-	 * @param fromKey
-	 *          Starting key.
-	 * @param isInclusive
-	 *          Indicates whether record with passed key will be included.
-	 * 
-	 * @return set of records with key greater than passed parameter.
-	 */
-	public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive) {
-		checkForOptimization();
-		acquireExclusiveLock();
-
-		try {
-			final Set<ODocument> result = new HashSet<ODocument>();
-
-			final ONavigableMap<Object, Set<OIdentifiable>> subSet = map.tailMap(fromKey, isInclusive);
-			if (subSet != null) {
-				for (Entry<Object, Set<OIdentifiable>> v : subSet.entrySet()) {
-					for (OIdentifiable id : v.getValue()) {
-						final ODocument document = new ODocument();
-						document.field("key", v.getKey());
-						document.field("rid", id.getIdentity());
-						document.unsetDirty();
-						result.add(document);
-					}
-				}
-			}
-
-			return result;
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
-
-	/**
-	 * Returns a set of records with keys less than passed parameter.
-	 * 
-	 * @param toKey
-	 *          Ending key.
-	 * @param isInclusive
-	 *          Indicates whether record with passed key will be included.
-	 * 
-	 * @return set of records with keys less than passed parameter.
-	 */
-	public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive) {
-		checkForOptimization();
-		acquireExclusiveLock();
-
-		try {
-			final ONavigableMap<Object, Set<OIdentifiable>> subSet = map.headMap(toKey, isInclusive);
-			if (subSet == null)
-				return ORecordLazySet.EMPTY_SET;
-
-			final Set<OIdentifiable> result = new ORecordLazySet(configuration.getDatabase());
-			for (Set<OIdentifiable> v : subSet.values()) {
-				result.addAll(v);
-			}
-
-			return result;
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
-
-	/**
-	 * Returns a set of documents that contains fields ("key", "rid") where "key" - index key, "rid" - record id of records with keys
-	 * less than passed parameter.
-	 * 
-	 * @param toKey
-	 *          Ending key.
-	 * @param isInclusive
-	 *          Indicates whether record with passed key will be included.
-	 * 
-	 * @return set of records with key greater than passed parameter.
-	 */
-	public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive) {
-		checkForOptimization();
-		acquireExclusiveLock();
-
-		try {
-			final Set<ODocument> result = new HashSet<ODocument>();
-
-			final ONavigableMap<Object, Set<OIdentifiable>> subSet = map.headMap(toKey, isInclusive);
-			if (subSet != null) {
-				for (Entry<Object, Set<OIdentifiable>> v : subSet.entrySet()) {
-					for (OIdentifiable id : v.getValue()) {
-						final ODocument document = new ODocument();
-						document.field("key", v.getKey());
-						document.field("rid", id.getIdentity());
-						document.unsetDirty();
-						result.add(document);
-					}
-				}
-			}
-
-			return result;
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
-
-	/**
-	 * Returns a set of records with key between the range passed as parameter.
-	 * 
-	 * @param iRangeFrom
-	 *          Starting range
-	 * @param iRangeTo
-	 *          Ending range
-	 * @param iInclusive
-	 *          Include from/to bounds
-	 * @see #getValuesBetween(Object, Object)
-	 * @return
-	 */
-	public Set<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
-		if (iRangeFrom.getClass() != iRangeTo.getClass())
-			throw new IllegalArgumentException("Range from-to parameters are of different types");
-
-		checkForOptimization();
-		acquireExclusiveLock();
-
-		try {
-			final ONavigableMap<Object, Set<OIdentifiable>> subSet = map.subMap(iRangeFrom, iInclusive, iRangeTo, iInclusive);
-			if (subSet == null)
-				return ORecordLazySet.EMPTY_SET;
-
-			final Set<OIdentifiable> result = new ORecordLazySet(configuration.getDatabase());
-			for (Set<OIdentifiable> v : subSet.values()) {
-				result.addAll(v);
-			}
-
-			return result;
-
-		} finally {
-			releaseExclusiveLock();
-		}
 	}
 
 	/**
@@ -397,50 +205,8 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceExternal imp
 	 * @see #getEntriesBetween(Object, Object, boolean)
 	 * @return
 	 */
-	public Set<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo) {
+	public Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo) {
 		return getEntriesBetween(iRangeFrom, iRangeTo, true);
-	}
-
-	/**
-	 * Returns a set of documents with key between the range passed as parameter.
-	 * 
-	 * @param iRangeFrom
-	 *          Starting range
-	 * @param iRangeTo
-	 *          Ending range
-	 * @param iInclusive
-	 *          Include from/to bounds
-	 * @see #getEntriesBetween(Object, Object)
-	 * @return
-	 */
-	public Set<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
-		if (iRangeFrom.getClass() != iRangeTo.getClass())
-			throw new IllegalArgumentException("Range from-to parameters are of different types");
-
-		checkForOptimization();
-		acquireExclusiveLock();
-
-		try {
-			final Set<ODocument> result = new HashSet<ODocument>();
-
-			final ONavigableMap<Object, Set<OIdentifiable>> subSet = map.subMap(iRangeFrom, iInclusive, iRangeTo, iInclusive);
-			if (subSet != null) {
-				for (Entry<Object, Set<OIdentifiable>> v : subSet.entrySet()) {
-					for (OIdentifiable id : v.getValue()) {
-						final ODocument document = new ODocument();
-						document.field("key", v.getKey());
-						document.field("rid", id.getIdentity());
-						document.unsetDirty();
-						result.add(document);
-					}
-				}
-			}
-
-			return result;
-
-		} finally {
-			releaseExclusiveLock();
-		}
 	}
 
 	public ORID getIdentity() {
@@ -530,55 +296,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceExternal imp
 		}
 	}
 
-	public int remove(final OIdentifiable iRecord) {
-		checkForOptimization();
-		acquireExclusiveLock();
-		try {
-
-			int tot = 0;
-			Set<OIdentifiable> rids;
-			for (Entry<Object, Set<OIdentifiable>> entries : map.entrySet()) {
-				rids = entries.getValue();
-				if (rids != null) {
-					if (rids.contains(iRecord)) {
-						remove(entries.getKey(), iRecord);
-						++tot;
-					}
-				}
-			}
-
-			return tot;
-
-		} finally {
-			releaseExclusiveLock();
-		}
-
-	}
-
-	public int count(final OIdentifiable iRecord) {
-		checkForOptimization();
-		acquireExclusiveLock();
-		try {
-
-			Set<OIdentifiable> rids;
-			int tot = 0;
-			for (Entry<Object, Set<OIdentifiable>> entries : map.entrySet()) {
-				rids = entries.getValue();
-				if (rids != null) {
-					if (rids.contains(iRecord)) {
-						++tot;
-					}
-				}
-			}
-
-			return tot;
-
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
-
-	public OIndex clear() {
+	public OIndex<T> clear() {
 		checkForOptimization();
 		acquireExclusiveLock();
 		try {
@@ -591,7 +309,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceExternal imp
 		}
 	}
 
-	public OIndexInternal delete() {
+	public OIndexInternal<T> delete() {
 		checkForOptimization();
 		acquireExclusiveLock();
 
@@ -604,7 +322,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceExternal imp
 		}
 	}
 
-	public OIndexInternal lazySave() {
+	public OIndexInternal<T> lazySave() {
 		checkForOptimization();
 		acquireExclusiveLock();
 		try {
@@ -621,7 +339,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceExternal imp
 		return map.getRecord();
 	}
 
-	public Iterator<Entry<Object, Set<OIdentifiable>>> iterator() {
+	public Iterator<Entry<Object, T>> iterator() {
 		checkForOptimization();
 		acquireExclusiveLock();
 		try {
@@ -670,7 +388,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceExternal imp
 		return name + " (" + (type != null ? type : "?") + ")" + (map != null ? " " + map : "");
 	}
 
-	public OIndexInternal getInternal() {
+	public OIndexInternal<T> getInternal() {
 		return this;
 	}
 
@@ -694,7 +412,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceExternal imp
 		}
 	}
 
-	public OIndexMVRBTreeAbstract addCluster(final String iClusterName) {
+	public OIndexMVRBTreeAbstract<T> addCluster(final String iClusterName) {
 		checkForOptimization();
 		acquireExclusiveLock();
 		try {
@@ -757,7 +475,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceExternal imp
 		acquireExclusiveLock();
 		try {
 			map.setRunningTransaction(true);
-			
+
 			final Boolean clearAll = (Boolean) iDocument.field("clear");
 			if (clearAll != null && clearAll)
 				clear();

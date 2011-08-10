@@ -21,7 +21,6 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -30,29 +29,15 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 		super(iDatabase);
 	}
 
-	public synchronized OIndex getIndex(final String iName) {
-		final OIndex index = indexes.get(iName.toLowerCase());
-		return index != null ? new OIndexUser(getDatabase(), getIndexInstance(index)) : null;
-	}
-
-	public synchronized OIndex getIndexInternal(final String iName) {
-		final OIndex index = indexes.get(iName.toLowerCase());
+	public synchronized OIndex<?> getIndexInternal(final String iName) {
+		final OIndex<?> index = indexes.get(iName.toLowerCase());
 		return getIndexInstance(index);
 	}
 
-	public synchronized OIndex getIndex(final ORID iRID) {
-		for (OIndex idx : indexes.values()) {
-			if (idx.getIdentity().equals(iRID)) {
-				return getIndexInstance(idx);
-			}
-		}
-		return null;
-	}
-
-	public synchronized OIndex createIndex(final String iName, final String iType, final OType iKeyType,
+	public synchronized OIndex<?> createIndex(final String iName, final String iType, final OType iKeyType,
 			final int[] iClusterIdsToIndex, OIndexCallback iCallback, final OProgressListener iProgressListener, final boolean iAutomatic) {
 
-		final OIndexInternal index = OIndexFactory.instance().newInstance(getDatabase(), iType);
+		final OIndexInternal<?> index = OIndexFactory.instance().newInstance(getDatabase(), iType);
 		index.setCallback(iCallback);
 
 		index.create(iName, iKeyType, getDatabase(), defaultClusterName, iClusterIdsToIndex, iProgressListener, iAutomatic);
@@ -65,7 +50,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 	}
 
 	public synchronized OIndexManager dropIndex(final String iIndexName) {
-		final OIndex idx = indexes.remove(iIndexName.toLowerCase());
+		final OIndex<?> idx = indexes.remove(iIndexName.toLowerCase());
 		if (idx != null) {
 			idx.delete();
 			setDirty();
@@ -74,21 +59,16 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 		return this;
 	}
 
-	public synchronized OIndexManager setDirty() {
-		document.setDirty();
-		return this;
-	}
-
 	@Override
 	protected synchronized void fromStream() {
 		final Collection<ODocument> idxs = document.field(CONFIG_INDEXES);
 
 		if (idxs != null) {
-			OIndexInternal index;
+			OIndexInternal<?> index;
 			for (ODocument d : idxs) {
 				index = OIndexFactory.instance().newInstance(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE));
 				d.setDatabase(getDatabase());
-				((OIndexInternal) index).loadFromConfiguration(d);
+				((OIndexInternal<?>) index).loadFromConfiguration(d);
 				indexes.put(index.getName().toLowerCase(), index);
 			}
 		}
@@ -105,7 +85,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 		try {
 			ORecordTrackedSet idxs = new ORecordTrackedSet(document);
 
-			for (OIndexInternal i : indexes.values()) {
+			for (OIndexInternal<?> i : indexes.values()) {
 				idxs.add(i.updateConfiguration());
 			}
 			document.field(CONFIG_INDEXES, idxs, OType.EMBEDDEDSET);
@@ -118,7 +98,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 		return document;
 	}
 
-	protected synchronized OIndex getIndexInstance(final OIndex iIndex) {
+	protected synchronized OIndex<?> getIndexInstance(final OIndex<?> iIndex) {
 		return iIndex;
 	}
 }

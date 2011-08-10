@@ -23,7 +23,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -77,6 +76,7 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
  * 
  * @author Luca Garulli
  */
+@SuppressWarnings("unchecked")
 public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract implements ORecordBrowsingListener {
 	private static final String											KEYWORD_AS						= " AS ";
 	public static final String											KEYWORD_SELECT				= "SELECT";
@@ -515,20 +515,28 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	 * @param indexResultSet
 	 *          Result of index search.
 	 */
-	private void fillSearchIndexResultSet(final List<ORecord<?>> resultSet, final Collection<OIdentifiable> indexResultSet) {
-		if (indexResultSet != null && indexResultSet.size() > 0)
-			for (OIdentifiable o : indexResultSet) {
-				if (rangeFrom != FIRST && o.getIdentity().compareTo(rangeFrom) <= 0)
-					continue;
+	private void fillSearchIndexResultSet(final List<ORecord<?>> resultSet, final Object indexResult) {
+		if (indexResult != null) {
+			if (indexResult instanceof Collection<?>) {
+				Collection<OIdentifiable> indexResultSet = (Collection<OIdentifiable>) indexResult;
+				if (indexResultSet.size() > 0)
+					for (OIdentifiable o : indexResultSet)
+						fillResultSet(resultSet, o);
 
-				if (rangeTo != LAST && o.getIdentity().compareTo(rangeTo) > 0)
-					continue;
+			} else
+				fillResultSet(resultSet, (OIdentifiable) indexResult);
 
-				if (o instanceof ORID)
-					resultSet.add(database.load((ORID) o));
-				else
-					resultSet.add((ORecord<?>) o);
-			}
+		}
+	}
+
+	private void fillResultSet(final List<ORecord<?>> resultSet, OIdentifiable o) {
+		if (rangeFrom != FIRST && o.getIdentity().compareTo(rangeFrom) <= 0)
+			return;
+
+		if (rangeTo != LAST && o.getIdentity().compareTo(rangeTo) > 0)
+			return;
+
+		resultSet.add(o.getRecord());
 	}
 
 	protected boolean filter(final ORecordInternal<?> iRecord) {
@@ -780,7 +788,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	}
 
 	private void searchInIndex() {
-		final OIndex index = database.getMetadata().getIndexManager().getIndex(compiledFilter.getTargetIndex());
+		final OIndex<Object> index = database.getMetadata().getIndexManager().getIndex(compiledFilter.getTargetIndex());
 		if (index == null)
 			throw new OCommandExecutionException("Target index '" + compiledFilter.getTargetIndex() + "' not found");
 
@@ -872,20 +880,29 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 						addResult(document);
 				}
 			} else {
-				result = index.get(keyValue);
+				Object res = index.get(keyValue);
 
-				for (OIdentifiable r : result)
-					addResult(createIndexEntryAsDocument(keyValue, r.getIdentity()));
+				if (res != null)
+					if (res instanceof Collection<?>)
+						// MULTI VALUES INDEX
+						for (OIdentifiable r : (Collection<OIdentifiable>) res)
+							addResult(createIndexEntryAsDocument(keyValue, r.getIdentity()));
+					else
+						// SINGLE VALUE INDEX
+						addResult(createIndexEntryAsDocument(keyValue, ((OIdentifiable) res).getIdentity()));
 			}
 
 		} else {
 
 			// ADD ALL THE ITEMS AS RESULT
-			for (Iterator<Entry<Object, Set<OIdentifiable>>> it = index.iterator(); it.hasNext();) {
-				final Entry<Object, Set<OIdentifiable>> current = it.next();
+			for (Iterator<Entry<Object, Object>> it = index.iterator(); it.hasNext();) {
+				final Entry<Object, Object> current = it.next();
 
-				for (Iterator<OIdentifiable> collIt = ((ORecordLazySet) current.getValue()).rawIterator(); collIt.hasNext();)
-					addResult(createIndexEntryAsDocument(current.getKey(), collIt.next().getIdentity()));
+				if (current.getValue() instanceof Collection<?>)
+					for (Iterator<OIdentifiable> collIt = ((ORecordLazySet) current.getValue()).rawIterator(); collIt.hasNext();)
+						addResult(createIndexEntryAsDocument(current.getKey(), collIt.next().getIdentity()));
+				else
+					addResult(createIndexEntryAsDocument(current.getKey(), (OIdentifiable) current.getValue()));
 			}
 
 		}

@@ -30,10 +30,16 @@ public class OStreamSerializerRID implements OStreamSerializer {
 	}
 
 	public Object fromStream(final ODatabaseRecord iDatabase, final byte[] iStream) throws IOException {
+		if (iStream == null)
+			return null;
+
 		return new ORecordId().fromStream(iStream);
 	}
 
 	public byte[] toStream(final ODatabaseRecord iDatabase, final Object iObject) throws IOException {
+		if (iObject == null)
+			return null;
+
 		return ((ORecordId) iObject).toStream();
 	}
 }

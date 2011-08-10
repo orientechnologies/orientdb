@@ -49,6 +49,7 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
 		return "<left> CONTAINSTEXT[( noignorecase ] )] <right>";
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public Collection<OIdentifiable> filterRecords(final ODatabaseComplex<?> iDatabase, final List<String> iTargetClasses,
 			final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
@@ -77,7 +78,7 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
 			// NO FULL TEXT INDEX
 			return null;
 
-		return index.getUnderlying().get(fieldValue);
+		return (Collection<OIdentifiable>) index.getUnderlying().get(fieldValue);
 	}
 
 	public boolean isIgnoreCase() {

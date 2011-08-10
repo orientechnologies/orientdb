@@ -15,64 +15,42 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Set;
-
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 
 /**
- * Abstract unique index class.
+ * Index implementation that allows only one value for a key.
  * 
  * @author Luca Garulli
  * 
  */
-public class OIndexUnique extends OIndexMVRBTreeAbstract {
+public class OIndexUnique extends OIndexOneValue {
 	public OIndexUnique() {
 		super("UNIQUE");
 	}
 
-	public OIndex put(final Object iKey, final OIdentifiable iSingleValue) {
+	public OIndexOneValue put(final Object iKey, final OIdentifiable iSingleValue) {
 		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 			checkForKeyType(iKey);
 
-			Set<OIdentifiable> values = map.get(iKey);
+			OIdentifiable value = map.get(iKey);
 			checkForOptimization();
 
-			if (values == null)
-				values = new ORecordLazySet(configuration.getDatabase()).setRidOnly(true).setRidOnly(true);
-			else if (values.size() == 1) {
+			if (value != null) {
 				// CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
-				if (!values.contains(iSingleValue))
+				if (!value.equals(iSingleValue))
 					throw new OIndexException("Found duplicated key '" + iKey + "' on unique index '" + name + "' for record "
-							+ iSingleValue.getIdentity() + ". The record already present in the index is "
-							+ values.iterator().next().getIdentity());
+							+ iSingleValue.getIdentity() + ". The record already present in the index is " + value.getIdentity());
 				else
 					return this;
-			} else if (values.size() > 1)
-				throw new OIndexException("Found duplicated key '" + iKey + "' on unique index '" + name + "' for record "
-						+ iSingleValue.getIdentity() + ". The record already present in the index are " + values);
+			}
 
-			values.add(iSingleValue);
-
-			map.put(iKey, values);
+			map.put(iKey, iSingleValue);
 			return this;
 
 		} finally {
 			releaseExclusiveLock();
-		}
-	}
-
-	@Override
-	public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
-		// CHECK IF ALREADY EXIST
-		Set<OIdentifiable> indexedRIDs = get(iKey);
-		if (indexedRIDs != null && !indexedRIDs.isEmpty()) {
-			if (!indexedRIDs.contains(iRecord))
-				OLogManager.instance().exception("Found duplicated key '%s' previously assigned to the record %s", null,
-						OIndexException.class, iKey, indexedRIDs.iterator().next());
 		}
 	}
 }

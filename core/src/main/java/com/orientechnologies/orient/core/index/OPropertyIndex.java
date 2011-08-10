@@ -56,7 +56,7 @@ public class OPropertyIndex implements OIndexCallback {
 	public OPropertyIndex(final ODatabaseRecord iDatabase, final OClass iClass, final String[] iFields) {
 		fields = iFields;
 		indexName = getIndexName(iClass, iFields);
-		OIndex idx = iDatabase.getMetadata().getIndexManager().getIndex(indexName);
+		OIndex<?> idx = iDatabase.getMetadata().getIndexManager().getIndex(indexName);
 		if (idx != null)
 			idx.setCallback(this);
 	}
@@ -65,7 +65,7 @@ public class OPropertyIndex implements OIndexCallback {
 		// GENERATE THE KEY
 		final Object key = generateKey(iRecord);
 
-		final OIndexInternal idx = getUnderlying().getInternal();
+		final OIndexInternal<?> idx = getUnderlying().getInternal();
 
 		try {
 			idx.checkEntry(iRecord, key);
@@ -78,7 +78,7 @@ public class OPropertyIndex implements OIndexCallback {
 	public void setCallback(OIndexCallback iCallback) {
 	}
 
-	public OIndex getUnderlying() {
+	public OIndex<?> getUnderlying() {
 		return ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getIndexManager().getIndex(indexName);
 	}
 
