@@ -454,7 +454,7 @@ public class SQLSelectTest {
 		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>("select from Profile where any() traverse(0,3,any())( any().indexOf('Navona') > -1 )"))
+				new OSQLSynchQuery<ODocument>("select from Profile where any() traverse(0,3,any()) ( any().indexOf('Navona') > -1 )"))
 				.execute();
 
 		Assert.assertTrue(result.size() > 0);

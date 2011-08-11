@@ -390,13 +390,6 @@ public abstract class OStringSerializerHelper {
 		if (buffer.length() == 0)
 			return iBeginPosition;
 
-		final int firstClose = buffer.indexOf(")", 1);
-		if (firstClose > -1 && firstClose < buffer.length() - 1) {
-			final int otherParenthesis = buffer.indexOf("(", firstClose);
-			if (otherParenthesis > -1)
-				buffer.delete(otherParenthesis, buffer.length());
-		}
-
 		final String t = buffer.substring(1, buffer.length() - 1);
 		final List<String> pars = smartSplit(t, PARAMETER_SEPARATOR, 0, t.length(), true);
 
