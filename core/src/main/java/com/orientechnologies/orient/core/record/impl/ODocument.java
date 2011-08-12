@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Array;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -59,6 +60,7 @@ import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordSchemaAwareAbstract;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 
@@ -512,26 +514,65 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 		checkForLoading();
 		checkForFields();
 
-		final int separatorPos = iFieldName.indexOf('.');
-		if (separatorPos > -1) {
-			// GET THE LINKED OBJECT IF ANY
-			final String fieldName = iFieldName.substring(0, separatorPos);
-			final Object linkedObject = _fieldValues.get(fieldName);
+		int separatorPos = 0;
 
-			if (linkedObject == null || !(linkedObject instanceof ODocument))
-				// IGNORE IT BY RETURNING NULL
-				return null;
+		final int fieldNameLength = iFieldName.length();
+		Object value = null;
+		ODocument current = this;
 
-			final ODocument linkedRecord = (ODocument) linkedObject;
-			if (linkedRecord.getInternalStatus() == STATUS.NOT_LOADED)
-				// LAZY LOAD IT
-				linkedRecord.reload();
+		do {
+			char separator = ' ';
+			for (; separatorPos < fieldNameLength; ++separatorPos) {
+				separator = iFieldName.charAt(separatorPos);
+				if (separator == '.' || separator == '[')
+					break;
+			}
 
-			// CALL MYSELF RECURSIVELY BY CROSSING ALL THE OBJECTS
-			return (RET) linkedRecord.field(iFieldName.substring(separatorPos + 1));
-		}
+			final String fieldName;
+			if (separatorPos < fieldNameLength)
+				fieldName = iFieldName.substring(0, separatorPos);
+			else
+				fieldName = iFieldName;
 
-		return (RET) _fieldValues.get(iFieldName);
+			if (separator == '.') {
+				// GET THE LINKED OBJECT IF ANY
+				value = current._fieldValues.get(fieldName);
+
+				if (value == null || !(value instanceof ODocument))
+					// IGNORE IT BY RETURNING NULL
+					return null;
+
+				current = (ODocument) value;
+				if (current.getInternalStatus() == STATUS.NOT_LOADED)
+					// LAZY LOAD IT
+					current.reload();
+			} else if (separator == '[') {
+				if (value == null)
+					value = current._fieldValues.get(fieldName);
+
+				final int end = iFieldName.indexOf(']', separatorPos);
+				if (end == -1)
+					throw new IllegalArgumentException("Missed closed ']'");
+
+				final String index = OStringSerializerHelper.getStringContent(iFieldName.substring(separatorPos + 1, end));
+				separatorPos = end + 1;
+
+				if (value == null)
+					return null;
+				else if (value instanceof ODocument)
+					value = ((ODocument) value).field(index);
+				else if (value instanceof Map<?, ?>)
+					value = ((Map<?, ?>) value).get(index);
+				else if (value instanceof List<?>)
+					value = ((List<?>) value).get(Integer.parseInt(index));
+				else if (value.getClass().isArray())
+					value = Array.get(value, Integer.parseInt(index));
+			} else
+				value = current._fieldValues.get(fieldName);
+
+		} while (separatorPos < fieldNameLength);
+
+		return (RET) value;
 	}
 
 	/**

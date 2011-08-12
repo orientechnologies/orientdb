@@ -379,8 +379,8 @@ public class OSQLFilter extends OCommandToParse {
 			} else if (c == OStringSerializerHelper.COLLECTION_END) {
 				openBraket--;
 				if (openBraket == 0 && openBraces == 0) {
-					currentPos++;
-					break;
+					//					currentPos++;
+//					break;
 				}
 			} else if (c == ' ' && openBraces == 0) {
 				break;

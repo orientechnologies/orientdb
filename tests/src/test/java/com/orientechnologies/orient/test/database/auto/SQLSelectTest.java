@@ -191,6 +191,10 @@ public class SQLSelectTest {
 		Assert.assertEquals(resultset.size(), 1);
 		Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
 
+		resultset = database.query(new OSQLSynchQuery<ODocument>("select from Profile where customReferences[second]['name'] like 'Ja%'"));
+		Assert.assertEquals(resultset.size(), 1);
+		Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
+
 		doc.delete();
 
 		database.close();
