@@ -230,6 +230,10 @@ public class SQLSelectTest {
 		Assert.assertEquals(resultset.size(), 1);
 		Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
 
+		resultset = database.query(new OSQLSynchQuery<ODocument>(
+				"select customReferences[second]['name'] as value from Profile where customReferences[second]['name'] is not null"));
+		Assert.assertEquals(resultset.size(), 1);
+
 		doc.delete();
 
 		database.close();
