@@ -71,6 +71,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 @SuppressWarnings({ "unchecked", "serial" })
 public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Iterable<Entry<String, Object>> {
 	public static final byte											RECORD_TYPE				= 'd';
+	public static final char[]										INDEX_SEPARATOR		= { ',', '-' };
 	protected Map<String, Object>									_fieldValues;
 	protected Map<String, Object>									_fieldOriginalValues;
 	protected Map<String, OType>									_fieldTypes;
@@ -559,14 +560,85 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
 				if (value == null)
 					return null;
-				else if (value instanceof ODocument)
-					value = ((ODocument) value).field(index);
-				else if (value instanceof Map<?, ?>)
-					value = ((Map<?, ?>) value).get(index);
-				else if (value instanceof List<?>)
-					value = ((List<?>) value).get(Integer.parseInt(index));
-				else if (value.getClass().isArray())
-					value = Array.get(value, Integer.parseInt(index));
+				else if (value instanceof ODocument) {
+					final List<String> indexParts = OStringSerializerHelper.smartSplit(index, ',');
+					if (indexParts.size() == 1)
+						// SINGLE VALUE
+						value = ((ODocument) value).field(index);
+					else {
+						// MULTI VALUE
+						final Object[] values = new Object[indexParts.size()];
+						for (int i = 0; i < indexParts.size(); ++i) {
+							values[i] = ((ODocument) value).field(indexParts.get(i));
+						}
+						value = values;
+					}
+				} else if (value instanceof Map<?, ?>) {
+					final List<String> indexParts = OStringSerializerHelper.smartSplit(index, ',');
+					if (indexParts.size() == 1)
+						// SINGLE VALUE
+						value = ((Map<?, ?>) value).get(index);
+					else {
+						// MULTI VALUE
+						final Object[] values = new Object[indexParts.size()];
+						for (int i = 0; i < indexParts.size(); ++i) {
+							values[i] = ((Map<?, ?>) value).get(indexParts.get(i));
+						}
+						value = values;
+					}
+				} else if (value instanceof List<?>) {
+					final List<String> indexParts = OStringSerializerHelper.smartSplit(index, ',');
+					final List<String> indexRanges = OStringSerializerHelper.smartSplit(index, '-');
+					if (indexParts.size() == 1 && indexRanges.size() == 1)
+						// SINGLE VALUE
+						value = ((List<?>) value).get(Integer.parseInt(index));
+					else {
+						final Object[] values;
+						if (indexParts.size() > 1) {
+							// MULTI VALUES
+							values = new Object[indexParts.size()];
+							for (int i = 0; i < indexParts.size(); ++i) {
+								values[i] = ((List<?>) value).get(Integer.parseInt(indexParts.get(i)));
+							}
+						} else {
+							// MULTI VALUES RANGE
+							final int rangeFrom = Integer.parseInt(indexRanges.get(0));
+							final int rangeTo = Integer.parseInt(indexRanges.get(1));
+
+							values = new Object[rangeTo - rangeFrom + 1];
+							for (int i = rangeFrom; i <= rangeTo; ++i) {
+								values[i - rangeFrom] = ((List<?>) value).get(i);
+							}
+						}
+						value = values;
+					}
+				} else if (value.getClass().isArray()) {
+					final List<String> indexParts = OStringSerializerHelper.smartSplit(index, ',');
+					final List<String> indexRanges = OStringSerializerHelper.smartSplit(index, '-');
+					if (indexParts.size() == 1 && indexRanges.size() == 1)
+						// SINGLE VALUE
+						value = Array.get(value, Integer.parseInt(index));
+					else {
+						final Object[] values;
+						if (indexParts.size() > 1) {
+							// MULTI VALUES
+							values = new Object[indexParts.size()];
+							for (int i = 0; i < indexParts.size(); ++i) {
+								values[i] = Array.get(value, Integer.parseInt(indexParts.get(i)));
+							}
+						} else {
+							// MULTI VALUES RANGE
+							final int rangeFrom = Integer.parseInt(indexRanges.get(0));
+							final int rangeTo = Integer.parseInt(indexRanges.get(1));
+
+							values = new Object[rangeTo - rangeFrom + 1];
+							for (int i = rangeFrom; i <= rangeTo; ++i) {
+								values[i - rangeFrom] = Array.get(value, i);
+							}
+						}
+						value = values;
+					}
+				}
 			} else
 				value = current._fieldValues.get(fieldName);
 

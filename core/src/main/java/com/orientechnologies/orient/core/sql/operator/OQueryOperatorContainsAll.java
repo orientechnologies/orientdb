@@ -46,7 +46,34 @@ public class OQueryOperatorContainsAll extends OQueryOperatorEqualityNotNulls {
 		else
 			condition = null;
 
-		if (iLeft instanceof Collection<?>) {
+		if (iLeft.getClass().isArray()) {
+			if (iRight.getClass().isArray()) {
+				// ARRAY VS ARRAY
+				int matches = 0;
+				for (final Object l : (Object[]) iLeft) {
+					for (final Object r : (Object[]) iRight) {
+						if (OQueryOperatorEquals.equals(l, r)) {
+							++matches;
+							break;
+						}
+					}
+				}
+				return matches == ((Object[]) iRight).length;
+			} else if (iRight instanceof Collection<?>) {
+				// ARRAY VS ARRAY
+				int matches = 0;
+				for (final Object l : (Object[]) iLeft) {
+					for (final Object r : (Collection<?>) iRight) {
+						if (OQueryOperatorEquals.equals(l, r)) {
+							++matches;
+							break;
+						}
+					}
+				}
+				return matches == ((Collection<?>) iRight).size();
+			}
+
+		} else if (iLeft instanceof Collection<?>) {
 
 			final Collection<ORecordSchemaAware<?>> collection = (Collection<ORecordSchemaAware<?>>) iLeft;
 

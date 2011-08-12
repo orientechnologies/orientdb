@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -146,7 +147,7 @@ public class SQLSelectTest {
 	}
 
 	@Test
-	public void queryContainsInEmbeddedCollection() {
+	public void queryContainsInEmbeddedSet() {
 		database.open("admin", "admin");
 
 		Set<String> tags = new HashSet<String>();
@@ -162,6 +163,39 @@ public class SQLSelectTest {
 
 		Assert.assertEquals(resultset.size(), 1);
 		Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
+
+		database.close();
+	}
+
+	@Test
+	public void queryContainsInEmbeddedList() {
+		database.open("admin", "admin");
+
+		List<String> tags = new ArrayList<String>();
+		tags.add("smart");
+		tags.add("nice");
+
+		ODocument doc = new ODocument(database, "Profile");
+		doc.field("tags", tags);
+
+		doc.save();
+
+		List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>("select from Profile where tags[0] = 'smart'"));
+
+		Assert.assertEquals(resultset.size(), 1);
+		Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
+
+		resultset = database.query(new OSQLSynchQuery<ODocument>("select from Profile where tags[0,1] CONTAINSALL ['smart','nice']"));
+
+		Assert.assertEquals(resultset.size(), 1);
+		Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
+
+		resultset = database.query(new OSQLSynchQuery<ODocument>("select from Profile where tags[0-1] CONTAINSALL ['smart','nice']"));
+
+		Assert.assertEquals(resultset.size(), 1);
+		Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
+
+		doc.delete();
 
 		database.close();
 	}
@@ -191,7 +225,8 @@ public class SQLSelectTest {
 		Assert.assertEquals(resultset.size(), 1);
 		Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
 
-		resultset = database.query(new OSQLSynchQuery<ODocument>("select from Profile where customReferences[second]['name'] like 'Ja%'"));
+		resultset = database.query(new OSQLSynchQuery<ODocument>(
+				"select from Profile where customReferences[second]['name'] like 'Ja%'"));
 		Assert.assertEquals(resultset.size(), 1);
 		Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
 
