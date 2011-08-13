@@ -10,15 +10,10 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import static org.junit.Assert.assertTrue;
-
 public class OrientDbCreationHelper {
 
-	public static void loadDB(String dbUrl, int documents) {
-		createDB(dbUrl);
+	public static void loadDB(ODatabaseDocumentTx db, int documents) {
 
-		ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
-		db.open("admin", "admin");
 		db.declareIntent(new OIntentMassiveInsert());
 
 		for (int i = 1; i <= documents; i++) {
@@ -29,13 +24,10 @@ public class OrientDbCreationHelper {
 		}
 
 		db.declareIntent(null);
-		db.close();
 
 	}
 
-	public static void createDB(String dbUrl) {
-		ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
-
+	public static void createDB(ODatabaseDocumentTx db) {
 		if (db.exists()) db.delete();
 
 		db.create();
@@ -59,14 +51,6 @@ public class OrientDbCreationHelper {
 
 		schema.reload();
 
-		db.close();
-
-		// verify schema
-		db.open("admin", "admin");
-
-		assertTrue(db.getMetadata().getSchema().existsClass("Item"));
-
-		db.close();
 	}
 
 	public static ODocument create(int id, ODocument doc) {

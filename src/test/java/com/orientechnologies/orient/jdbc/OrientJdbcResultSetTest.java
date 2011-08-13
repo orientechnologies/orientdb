@@ -1,42 +1,16 @@
 package com.orientechnologies.orient.jdbc;
 
 import java.sql.Date;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.Properties;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.createDB;
-import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.loadDB;
-
 public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
-
-	@Before
-	public void setUp() throws Exception {
-		String dbUrl = "local:./working/db/test";
-		createDB(dbUrl);
-		loadDB(dbUrl, 20);
-
-		Properties info = new Properties();
-		info.put("user", "admin");
-		info.put("password", "admin");
-
-		conn = (OrientJdbcConnection) DriverManager.getConnection("jdbc:orient:local:./working/db/test", info);
-
-	}
-
-	@After
-	public void tearDown() throws Exception {
-		conn.close();
-	}
 
 	@Test
 	public void shouldMapReturnTypes() throws Exception {
@@ -46,6 +20,8 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
 		Statement stmt = conn.createStatement();
 		ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item");
 		assertEquals(20, rs.getFetchSize());
+
+		assertTrue(rs.isBeforeFirst());
 
 		assertTrue(rs.next());
 
@@ -61,6 +37,75 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
 
 		Date date = new Date(System.currentTimeMillis());
 		assertEquals(date.toString(), rs.getDate("date").toString());
+
+		rs.last();
+
+		assertEquals(19, rs.getRow());
+		rs.close();
+
+		assertTrue(rs.isClosed());
+	}
+
+	@Test
+	public void shouldNavigateResultSet() throws Exception {
+		assertFalse(conn.isClosed());
+
+		Statement stmt = conn.createStatement();
+		ResultSet rs = stmt.executeQuery("SELECT * FROM Item");
+		assertEquals(20, rs.getFetchSize());
+
+		assertTrue(rs.isBeforeFirst());
+
+		assertTrue(rs.next());
+
+		assertEquals(0, rs.getRow());
+
+		rs.last();
+
+		assertEquals(19, rs.getRow());
+
+		assertFalse(rs.next());
+
+		rs.afterLast();
+
+		assertFalse(rs.next());
+
+		rs.close();
+
+		assertTrue(rs.isClosed());
+
+		stmt.close();
+
+		assertTrue(stmt.isClosed());
+	}
+
+	@Test
+	public void shouldReturnResultSetAfterExecute() throws Exception {
+
+		assertFalse(conn.isClosed());
+
+		Statement stmt = conn.createStatement();
+
+		assertTrue(stmt.execute("SELECT stringKey, intKey, text, length, date FROM Item"));
+		ResultSet rs = stmt.getResultSet();
+		assertEquals(20, rs.getFetchSize());
+
+	}
+
+	@Test
+	public void shouldCreateANewRow() throws Exception {
+
+		assertFalse(conn.isClosed());
+
+		Statement stmt = conn.createStatement();
+		int updated = stmt.executeUpdate("INSERT into Item (stringKey, intKey, text, length, date) values ('100','100','dummy text','10','2011-08-21')");
+
+		assertEquals(1, updated);
+
+		stmt = conn.createStatement();
+		ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item where intKey = '100' ");
+		rs.next();
+		assertEquals(100, rs.getInt("intKey"));
 
 	}
 }

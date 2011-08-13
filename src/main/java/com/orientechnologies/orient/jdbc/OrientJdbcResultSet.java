@@ -103,7 +103,6 @@ public class OrientJdbcResultSet implements ResultSet {
 		}
 
 		cursor = iRowNumber;
-		System.out.println("cursor:: " + cursor);
 		document = records.get(cursor);
 		fieldValues = document.fieldValues();
 		return true;
@@ -142,6 +141,7 @@ public class OrientJdbcResultSet implements ResultSet {
 	}
 
 	public int findColumn(String columnLabel) throws SQLException {
+
 		return 0;
 	}
 

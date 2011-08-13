@@ -2,24 +2,17 @@ package com.orientechnologies.orient.jdbc;
 
 import java.sql.Statement;
 
-import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.createDB;
-import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.loadDB;
+import static java.sql.ResultSet.CONCUR_READ_ONLY;
+import static java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT;
+import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
 
 public class OrientJdbcConnectionTest extends OrientJdbcBaseTest {
-
-	@Before
-	public void setUp() throws Exception {
-		String dbUrl = "local:./working/db/test";
-		createDB(dbUrl);
-		loadDB(dbUrl, 20);
-	}
 
 	@Test
 	public void shouldCreateStatement() throws Exception {
@@ -42,4 +35,16 @@ public class OrientJdbcConnectionTest extends OrientJdbcBaseTest {
 		// conn.getTransactionIsolation());
 	}
 
+	@Test
+	public void shouldCreateDifferentTypeOfStatement() throws Exception {
+		Statement stmt = conn.createStatement();
+		assertNotNull(stmt);
+
+		stmt = conn.createStatement(TYPE_FORWARD_ONLY, CONCUR_READ_ONLY);
+		assertNotNull(stmt);
+
+		stmt = conn.createStatement(TYPE_FORWARD_ONLY, CONCUR_READ_ONLY, HOLD_CURSORS_OVER_COMMIT);
+		assertNotNull(stmt);
+
+	}
 }

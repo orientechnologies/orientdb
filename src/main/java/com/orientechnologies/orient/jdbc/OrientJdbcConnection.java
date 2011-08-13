@@ -118,11 +118,11 @@ public class OrientJdbcConnection implements Connection {
 	}
 
 	public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
-		return null;
+		return new OrientJdbcStatement(this);
 	}
 
 	public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
-		return null;
+		return new OrientJdbcStatement(this);
 	}
 
 	public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
