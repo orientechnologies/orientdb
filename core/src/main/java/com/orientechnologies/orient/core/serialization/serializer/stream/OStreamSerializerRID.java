@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.serialization.serializer.stream;
 import java.io.IOException;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 
 public class OStreamSerializerRID implements OStreamSerializer {
@@ -40,6 +41,6 @@ public class OStreamSerializerRID implements OStreamSerializer {
 		if (iObject == null)
 			return null;
 
-		return ((ORecordId) iObject).toStream();
+		return ((OIdentifiable) iObject).getIdentity().toStream();
 	}
 }
