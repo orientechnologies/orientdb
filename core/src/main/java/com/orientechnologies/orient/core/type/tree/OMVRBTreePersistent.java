@@ -228,7 +228,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 				for (final Iterator<OMVRBTreeEntryPersistent<K, V>> it = entryPoints.values().iterator(); it.hasNext();) {
 					final OMVRBTreeEntryPersistent<K, V> currentNode = it.next();
 
-					if (currentNode != root && currentNode != lastSearchNode)
+					// JUMP THE FIRST (1 can't never be the % of distance) THE LAST, ROOT AND LAST USED
+					if (currentNode != root && currentNode != lastSearchNode && it.hasNext())
 						if (++currNode % distance != 0) {
 							// REMOVE THE NODE
 							entryPointsToRemove.add(currentNode);
