@@ -687,10 +687,18 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	@Override
 	protected OMVRBTreeEntry<K, V> getBestEntryPoint(final K iKey) {
 		if (!entryPoints.isEmpty()) {
-			final Entry<K, OMVRBTreeEntryPersistent<K, V>> closerNode = entryPoints.floorEntry(iKey);
+			// SEARCHES EXACT OR BIGGER ENTRY
+			Entry<K, OMVRBTreeEntryPersistent<K, V>> closerNode = entryPoints.floorEntry(iKey);
+			if (closerNode != null)
+				return closerNode.getValue();
+
+			// NO WAY: TRY WITH ANY NODE BEFORE THE KEY
+			closerNode = entryPoints.ceilingEntry(iKey);
 			if (closerNode != null)
 				return closerNode.getValue();
 		}
+
+		// USE ROOT
 		return super.getBestEntryPoint(iKey);
 	}
 

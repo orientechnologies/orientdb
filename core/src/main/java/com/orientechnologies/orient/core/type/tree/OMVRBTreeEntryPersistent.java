@@ -137,6 +137,8 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		Arrays.fill(p.serializedValues, iPosition, p.pageSize, 0);
 
 		markDirty();
+		
+		pTree.addNodeAsEntrypoint(this);
 	}
 
 	/**
@@ -158,6 +160,9 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 		parent = iParent;
 		parentRid = iParent == null ? ORecordId.EMPTY_RECORD_ID : parent.record.getIdentity();
+		
+		load();
+		pTree.addNodeAsEntrypoint(this);
 	}
 
 	public OMVRBTreeEntryPersistent(final OMVRBTreePersistent<K, V> iTree, final K key, final V value,
@@ -177,6 +182,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		serializedValues = new int[pageSize];
 
 		tree.getListener().signalNodeChanged(this);
+		pTree.addNodeAsEntrypoint(this);
 	}
 
 	protected abstract Object keyFromStream(final int iIndex) throws IOException;

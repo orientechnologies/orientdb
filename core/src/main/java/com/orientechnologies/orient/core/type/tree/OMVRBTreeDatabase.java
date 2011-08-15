@@ -49,17 +49,13 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
 	@Override
 	protected OMVRBTreeEntryDatabase<K, V> createEntry(final K key, final V value) {
 		adjustPageSize();
-		final OMVRBTreeEntryDatabase<K, V> node = new OMVRBTreeEntryDatabase<K, V>(this, key, value, null);
-		addNodeAsEntrypoint(node);
-		return node;
+		return new OMVRBTreeEntryDatabase<K, V>(this, key, value, null);
 	}
 
 	@Override
 	protected OMVRBTreeEntryDatabase<K, V> createEntry(final OMVRBTreeEntry<K, V> parent) {
 		adjustPageSize();
-		final OMVRBTreeEntryDatabase<K, V> node = new OMVRBTreeEntryDatabase<K, V>(parent, parent.getPageSplitItems());
-		addNodeAsEntrypoint(node);
-		return node;
+		return new OMVRBTreeEntryDatabase<K, V>(parent, parent.getPageSplitItems());
 	}
 
 	@Override
@@ -73,7 +69,6 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
 			// NOT FOUND: CREATE IT AND PUT IT INTO THE CACHE
 			entry = new OMVRBTreeEntryDatabase<K, V>(this, (OMVRBTreeEntryDatabase<K, V>) iParent, iRecordId);
 			addNodeInCache(entry);
-			addNodeAsEntrypoint(entry);
 
 			// RECONNECT THE LOADED NODE WITH IN-MEMORY PARENT, LEFT AND RIGHT
 			if (entry.parent == null && entry.parentRid.isValid()) {

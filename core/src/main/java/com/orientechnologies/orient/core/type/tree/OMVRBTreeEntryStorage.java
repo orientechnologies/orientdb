@@ -49,7 +49,6 @@ public class OMVRBTreeEntryStorage<K, V> extends OMVRBTreeEntryPersistent<K, V> 
 	public OMVRBTreeEntryStorage(OMVRBTreePersistent<K, V> iTree, OMVRBTreeEntryPersistent<K, V> iParent, ORID iRecordId)
 			throws IOException {
 		super(iTree, iParent, iRecordId);
-		load();
 	}
 
 	@Override

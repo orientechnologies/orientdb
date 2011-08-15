@@ -62,7 +62,6 @@ public class OMVRBTreeEntryDatabase<K, V> extends OMVRBTreeEntryPersistent<K, V>
 	public OMVRBTreeEntryDatabase(OMVRBTreeDatabase<K, V> iTree, OMVRBTreeEntryDatabase<K, V> iParent, ORID iRecordId)
 			throws IOException {
 		super(iTree, iParent, iRecordId);
-		load();
 	}
 
 	public OMVRBTreeEntryDatabase(OMVRBTreeDatabase<K, V> iTree, K key, V value, OMVRBTreeEntryDatabase<K, V> iParent) {
