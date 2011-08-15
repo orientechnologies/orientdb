@@ -1,4 +1,19 @@
-package com.orientechnologies.orient.core;
+/*
+ * Copyright 1999-2011 Luca Garulli (l.garulli--at--orientechnologies.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.orientechnologies.orient.core.memory;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
@@ -16,8 +31,8 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
-import com.orientechnologies.orient.core.OMemoryWatchDog.Listener.TYPE;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.memory.OMemoryWatchDog.Listener.TYPE;
 
 /**
  * This memory warning system will call the listener when we exceed the percentage of available memory specified. There should only
@@ -77,11 +92,10 @@ public class OMemoryWatchDog {
 					long usedMemory = tenuredGenPool.getUsage().getUsed();
 					long freeMemory = maxMemory - usedMemory;
 
-					if (OLogManager.instance().isDebugEnabled())
-						OLogManager.instance().debug(this,
-								"Free memory is low %s %s%% (used %s of %s), calling listeners to free memory in SOFT way...",
-								OFileUtils.getSizeAsString(freeMemory), freeMemory * 100 / maxMemory, OFileUtils.getSizeAsString(usedMemory),
-								OFileUtils.getSizeAsString(maxMemory));
+					OLogManager.instance().warn(this,
+							"Free memory is low %s %s%% (used %s of %s), calling listeners to free memory in SOFT way...",
+							OFileUtils.getSizeAsString(freeMemory), freeMemory * 100 / maxMemory, OFileUtils.getSizeAsString(usedMemory),
+							OFileUtils.getSizeAsString(maxMemory));
 
 					final long timer = OProfiler.getInstance().startChrono();
 
@@ -96,7 +110,7 @@ public class OMemoryWatchDog {
 					long threshold;
 					do {
 						// INVOKE GC AND WAIT A BIT
-						freeMemory(100);
+						freeMemory(300);
 
 						// RECHECK IF MEMORY IS OK NOW
 						maxMemory = tenuredGenPool.getUsage().getMax();
@@ -105,21 +119,18 @@ public class OMemoryWatchDog {
 
 						threshold = (long) (maxMemory * (1 - OGlobalConfiguration.MEMORY_OPTIMIZE_THRESHOLD.getValueAsFloat()));
 
-						if (OLogManager.instance().isDebugEnabled())
-							OLogManager.instance().debug(this, "Free memory now is %s %s%% (used %s of %s) with threshold for HARD clean is %s",
-									OFileUtils.getSizeAsString(freeMemory), freeMemory * 100 / maxMemory, OFileUtils.getSizeAsString(usedMemory),
-									OFileUtils.getSizeAsString(maxMemory), OFileUtils.getSizeAsString(threshold));
+						OLogManager.instance().warn(this, "Free memory now is %s %s%% (used %s of %s) with threshold for HARD clean is %s",
+								OFileUtils.getSizeAsString(freeMemory), freeMemory * 100 / maxMemory, OFileUtils.getSizeAsString(usedMemory),
+								OFileUtils.getSizeAsString(maxMemory), OFileUtils.getSizeAsString(threshold));
 
 						if (freeMemory < threshold) {
-							if (OLogManager.instance().isDebugEnabled())
-								OLogManager
-										.instance()
-										.debug(
-												this,
-												"Free memory is low %s %s%% (used %s of %s) while the threshold is %s, calling listeners to free memory in HARD way...",
-												OFileUtils.getSizeAsString(freeMemory), freeMemory * 100 / maxMemory,
-												OFileUtils.getSizeAsString(usedMemory), OFileUtils.getSizeAsString(maxMemory),
-												OFileUtils.getSizeAsString(threshold));
+							OLogManager
+									.instance()
+									.warn(
+											this,
+											"Free memory is low %s %s%% (used %s of %s) while the threshold is %s, calling listeners to free memory in HARD way...",
+											OFileUtils.getSizeAsString(freeMemory), freeMemory * 100 / maxMemory, OFileUtils.getSizeAsString(usedMemory),
+											OFileUtils.getSizeAsString(maxMemory), OFileUtils.getSizeAsString(threshold));
 
 							for (Listener listener : listeners) {
 								try {

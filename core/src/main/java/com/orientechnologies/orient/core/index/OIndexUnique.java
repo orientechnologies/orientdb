@@ -29,13 +29,11 @@ public class OIndexUnique extends OIndexOneValue {
 	}
 
 	public OIndexOneValue put(final Object iKey, final OIdentifiable iSingleValue) {
-		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 			checkForKeyType(iKey);
 
 			OIdentifiable value = map.get(iKey);
-			checkForOptimization();
 
 			if (value != null) {
 				// CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE

@@ -24,7 +24,7 @@ import java.util.logging.FileHandler;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.core.OMemoryWatchDog;
+import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 
 /**
@@ -41,7 +41,7 @@ public enum OGlobalConfiguration {
 
 	// MEMORY
 	MEMORY_OPTIMIZE_THRESHOLD("memory.optimizeThreshold",
-			"Threshold of heap memory where to start the optimization of memory usage. ", Float.class, 0.85,
+			"Threshold of heap memory where to start the optimization of memory usage. ", Float.class, 0.70,
 			new OConfigurationChangeCallback() {
 				public void change(final Object iCurrentValue, final Object iNewValue) {
 					OMemoryWatchDog.setPercentageUsageThreshold(((Number) iNewValue).floatValue());
@@ -97,14 +97,14 @@ public enum OGlobalConfiguration {
 			Integer.class, 20000),
 
 	MVRBTREE_NODE_PAGE_SIZE("mvrbtree.nodePageSize",
-			"Page size of each single node. 256 means that 256 entries can be stored inside a node", Integer.class, 128),
+			"Page size of each single node. 512 means that 512 entries can be stored inside a node", Integer.class, 512),
 
 	MVRBTREE_LOAD_FACTOR("mvrbtree.loadFactor", "HashMap load factor", Float.class, 0.7f),
 
 	MVRBTREE_OPTIMIZE_THRESHOLD(
 			"mvrbtree.optimizeThreshold",
 			"Auto optimize the TreeMap every X tree rotations. This force the optimization of the tree after many changes to recompute entrypoints. -1 means never",
-			Integer.class, 200000),
+			Integer.class, 100000),
 
 	MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Number of entry points to start searching entries", Integer.class, 64),
 

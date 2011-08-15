@@ -19,7 +19,7 @@ import java.util.Arrays;
 import java.util.Map;
 
 @SuppressWarnings("unchecked")
-public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V> {
+public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparable<OMVRBTreeEntry<K, V>> {
 	protected OMVRBTree<K, V>	tree;
 
 	protected int							size										= 1;
@@ -203,8 +203,6 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V> {
 		this.values[tree.pageIndex] = value;
 		return oldValue;
 	}
-	
-	
 
 	public int getFreeSpace() {
 		return pageSize - size;
@@ -430,5 +428,20 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V> {
 
 	public int getPageSize() {
 		return pageSize;
+	}
+
+	/**
+	 * Compares two nodes by their first keys.
+	 */
+	public int compareTo(final OMVRBTreeEntry<K, V> o) {
+		if (o == null)
+			return 1;
+		if (o == this)
+			return 0;
+		if (size == 0)
+			return -1;
+		if (o.size == 0)
+			return 1;
+		return ((Comparable<K>) getFirstKey()).compareTo(o.getFirstKey());
 	}
 }

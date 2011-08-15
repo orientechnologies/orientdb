@@ -21,7 +21,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -110,7 +109,7 @@ public class IndexTest {
 	public void testIndexEntries() {
 		List<Profile> result = database.command(new OSQLSynchQuery<Profile>("select * from Profile where nick is not null")).execute();
 
-		OIndex idx = database.getMetadata().getIndexManager().getIndex("Profile.nick");
+		OIndex<?> idx = database.getMetadata().getIndexManager().getIndex("Profile.nick");
 
 		Assert.assertEquals(idx.getSize(), result.size());
 	}
@@ -235,7 +234,7 @@ public class IndexTest {
 			database.command(new OCommandSQL("insert into index:equalityIdx (key,rid) values (" + key + ",#10:" + key + ")")).execute();
 		}
 
-		final OIndex index = database.getMetadata().getIndexManager().getIndex("equalityIdx");
+		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("equalityIdx");
 
 		final Collection<Long> valuesMajorResults = new ArrayList<Long>(Arrays.asList(4L, 5L));
 		Collection<OIdentifiable> indexCollection = index.getValuesMajor(3, false);
@@ -274,7 +273,7 @@ public class IndexTest {
 			database.command(new OCommandSQL("insert into index:equalityIdx (key,rid) values (" + key + ",#10:" + key + ")")).execute();
 		}
 
-		final OIndex index = database.getMetadata().getIndexManager().getIndex("equalityIdx");
+		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("equalityIdx");
 
 		final Collection<Integer> valuesMajorResults = new ArrayList<Integer>(Arrays.asList(4, 5));
 		Collection<ODocument> indexCollection = index.getEntriesMajor(3, false);
@@ -316,7 +315,7 @@ public class IndexTest {
 			database.command(new OCommandSQL("insert into index:equalityIdx (key,rid) values (" + key + ",#10:" + key + ")")).execute();
 		}
 
-		final OIndex index = database.getMetadata().getIndexManager().getIndex("equalityIdx");
+		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("equalityIdx");
 
 		final Collection<Long> valuesMinorResults = new ArrayList<Long>(Arrays.asList(0L, 1L, 2L));
 		Collection<OIdentifiable> indexCollection = index.getValuesMinor(3, false);
@@ -355,7 +354,7 @@ public class IndexTest {
 			database.command(new OCommandSQL("insert into index:equalityIdx (key,rid) values (" + key + ",#10:" + key + ")")).execute();
 		}
 
-		final OIndex index = database.getMetadata().getIndexManager().getIndex("equalityIdx");
+		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("equalityIdx");
 
 		final Collection<Integer> valuesMinorResults = new ArrayList<Integer>(Arrays.asList(0, 1, 2));
 		Collection<ODocument> indexCollection = index.getEntriesMinor(3, false);
@@ -397,7 +396,7 @@ public class IndexTest {
 			database.command(new OCommandSQL("insert into index:equalityIdx (key,rid) values (" + key + ",#10:" + key + ")")).execute();
 		}
 
-		final OIndex index = database.getMetadata().getIndexManager().getIndex("equalityIdx");
+		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("equalityIdx");
 
 		final Collection<Integer> betweenResults = new ArrayList<Integer>(Arrays.asList(1, 2, 3));
 		Collection<ODocument> indexCollection = index.getEntriesBetween(1, 3);
@@ -703,17 +702,18 @@ public class IndexTest {
 		database.getMetadata().getSchema().save();
 	}
 
+	@SuppressWarnings("unchecked")
 	public void LongTypes() {
 		database.getMetadata().getSchema().getClass("Profile").createProperty("hash", OType.LONG).createIndex(INDEX_TYPE.UNIQUE);
 
-		OIndex idx = database.getMetadata().getIndexManager().getIndex("Profile.hash");
+		OIndex<OIdentifiable> idx = database.getMetadata().getIndexManager().getIndex("Profile.hash");
 
 		for (int i = 0; i < 5; i++) {
 			Profile profile = new Profile("HashTest1").setHash(100l + i);
 			database.save(profile);
 		}
 
-		Iterator<Entry<Object, Set<OIdentifiable>>> it = idx.iterator();
+		Iterator<Entry<Object, OIdentifiable>> it = idx.iterator();
 		while (it.hasNext()) {
 			it.next();
 		}
@@ -728,7 +728,7 @@ public class IndexTest {
 
 		// Assert.assertEquals(result.size(), 1);
 
-		OIndex idx = database.getMetadata().getIndexManager().getIndex("Whiz.account");
+		OIndex<?> idx = database.getMetadata().getIndexManager().getIndex("Whiz.account");
 
 		for (int i = 0; i < 5; i++) {
 			ODocument whiz = new ODocument(database.getUnderlying(), "Whiz");

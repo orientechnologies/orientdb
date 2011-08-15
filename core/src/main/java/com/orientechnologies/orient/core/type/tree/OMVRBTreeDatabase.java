@@ -49,61 +49,60 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
 	@Override
 	protected OMVRBTreeEntryDatabase<K, V> createEntry(final K key, final V value) {
 		adjustPageSize();
-		return new OMVRBTreeEntryDatabase<K, V>(this, key, value, null);
+		final OMVRBTreeEntryDatabase<K, V> node = new OMVRBTreeEntryDatabase<K, V>(this, key, value, null);
+		addNodeAsEntrypoint(node);
+		return node;
 	}
 
 	@Override
 	protected OMVRBTreeEntryDatabase<K, V> createEntry(final OMVRBTreeEntry<K, V> parent) {
 		adjustPageSize();
-		return new OMVRBTreeEntryDatabase<K, V>(parent, parent.getPageSplitItems());
+		final OMVRBTreeEntryDatabase<K, V> node = new OMVRBTreeEntryDatabase<K, V>(parent, parent.getPageSplitItems());
+		addNodeAsEntrypoint(node);
+		return node;
 	}
 
 	@Override
 	protected OMVRBTreeEntryDatabase<K, V> loadEntry(final OMVRBTreeEntryPersistent<K, V> iParent, final ORID iRecordId)
 			throws IOException {
+		checkForOptimization();
 
 		// SEARCH INTO THE CACHE
-		OMVRBTreeEntryDatabase<K, V> entry = (OMVRBTreeEntryDatabase<K, V>) cache.get(iRecordId);
+		OMVRBTreeEntryDatabase<K, V> entry = (OMVRBTreeEntryDatabase<K, V>) searchNodeInCache(iRecordId);
 		if (entry == null) {
 			// NOT FOUND: CREATE IT AND PUT IT INTO THE CACHE
 			entry = new OMVRBTreeEntryDatabase<K, V>(this, (OMVRBTreeEntryDatabase<K, V>) iParent, iRecordId);
-			cache.put(iRecordId, entry);
+			addNodeInCache(entry);
+			addNodeAsEntrypoint(entry);
 
 			// RECONNECT THE LOADED NODE WITH IN-MEMORY PARENT, LEFT AND RIGHT
 			if (entry.parent == null && entry.parentRid.isValid()) {
 				// TRY TO ASSIGN THE PARENT IN CACHE IF ANY
-				final OMVRBTreeEntryPersistent<K, V> parentNode = cache.get(entry.parentRid);
+				final OMVRBTreeEntryPersistent<K, V> parentNode = searchNodeInCache(entry.parentRid);
 				if (parentNode != null)
 					entry.setParent(parentNode);
 			}
 
 			if (entry.left == null && entry.leftRid.isValid()) {
 				// TRY TO ASSIGN THE PARENT IN CACHE IF ANY
-				final OMVRBTreeEntryPersistent<K, V> leftNode = cache.get(entry.leftRid);
+				final OMVRBTreeEntryPersistent<K, V> leftNode = searchNodeInCache(entry.leftRid);
 				if (leftNode != null)
 					entry.setLeft(leftNode);
 			}
 
 			if (entry.right == null && entry.rightRid.isValid()) {
 				// TRY TO ASSIGN THE PARENT IN CACHE IF ANY
-				final OMVRBTreeEntryPersistent<K, V> rightNode = cache.get(entry.rightRid);
+				final OMVRBTreeEntryPersistent<K, V> rightNode = searchNodeInCache(entry.rightRid);
 				if (rightNode != null)
 					entry.setRight(rightNode);
 			}
 
-			if (debug)
-				System.out.printf("\nLoaded entry node %s: parent %s, left %s, right %s", iRecordId, entry.parentRid, entry.leftRid,
-						entry.rightRid);
-
 		} else {
 			// COULD BE A PROBLEM BECAUSE IF A NODE IS DISCONNECTED CAN IT STAY IN CACHE?
 			// entry.load();
-			if (debug)
-				System.out.printf("\nReused entry node %s from cache: parent %s, left %s, right %s. New parent: %s", iRecordId,
-						entry.parentRid, entry.leftRid, entry.rightRid, iParent);
-
-			// FOUND: ASSIGN IT
-			entry.setParent(iParent);
+			if (iParent != null)
+				// FOUND: ASSIGN IT ONLY IF NOT NULL
+				entry.setParent(iParent);
 		}
 
 		entry.checkEntryStructure();
@@ -133,20 +132,22 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
 	}
 
 	public void onAfterTxCommit() {
-		if (cache.keySet().size() == 0)
+		final Set<ORID> nodesInMemory = getAllNodesInCache();
+
+		if (nodesInMemory.isEmpty())
 			return;
 
 		// FIX THE CACHE CONTENT WITH FINAL RECORD-IDS
-		final Set<ORID> keys = new HashSet<ORID>(cache.keySet());
+		final Set<ORID> keys = new HashSet<ORID>(nodesInMemory);
 		OMVRBTreeEntryDatabase<K, V> entry;
 		for (ORID rid : keys) {
 			if (rid.getClusterPosition() < -1) {
 				// FIX IT IN CACHE
-				entry = (OMVRBTreeEntryDatabase<K, V>) cache.get(rid);
+				entry = (OMVRBTreeEntryDatabase<K, V>) searchNodeInCache(rid);
 
 				// OVERWRITE IT WITH THE NEW RID
-				cache.put(entry.record.getIdentity(), entry);
-				cache.remove(rid);
+				removeNodeFromCache(rid);
+				addNodeInCache(entry);
 			}
 		}
 	}

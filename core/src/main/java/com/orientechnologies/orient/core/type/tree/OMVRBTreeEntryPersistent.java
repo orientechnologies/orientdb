@@ -238,10 +238,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 	}
 
 	public OMVRBTreeEntryPersistent<K, V> delete() throws IOException {
-		pTree.removeEntryPoint(this);
-
-		if (record.getIdentity().isValid())
-			pTree.cache.remove(record.getIdentity());
+		pTree.removeNodeFromMemory(this);
 
 		pTree.removeEntry(record.getIdentity());
 		return this;
@@ -256,22 +253,17 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 	 */
 	protected int disconnect(final boolean iForceDirty, final int iLevel) {
 		if (record == null)
-			// DIRTY NODE, JUST REMOVE IT, THIS IS SUPPOSED TO NEVER HAPPEN
+			// DIRTY NODE, JUST REMOVE IT
 			return 1;
 
 		int totalDisconnected = 0;
 
-		if ((!record.isDirty() || iForceDirty)) {
+		final ORID rid = record.getIdentity();
 
-			if (!pTree.isEntryPoint(this)) {
-				// REMOVE ME FROM THE CACHE
-				if (pTree.cache.remove(record.getIdentity()) == null)
-					OLogManager.instance().debug(this, "Can't find current node into the cache. Is the cache invalid?");
-
-				totalDisconnected = 1;
-
-				clear();
-			}
+		if ((!record.isDirty() || iForceDirty) && !pTree.isNodeEntryPoint(this)) {
+			totalDisconnected = 1;
+			pTree.removeNodeFromMemory(this);
+			clear();
 		}
 
 		if (parent != null) {
@@ -281,7 +273,8 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 			} else if (parent.right == this) {
 				parent.right = null;
 			} else
-				OLogManager.instance().warn(this, "Current node's parent doesn't link it correctly");
+				OLogManager.instance().warn(this,
+						"Node " + rid + " has the parent (" + parent + ") unlinked to itself. It links to " + parent);
 
 			totalDisconnected += parent.disconnect(iForceDirty, iLevel + 1);
 
@@ -293,7 +286,8 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 			if (left.parent == this)
 				left.parent = null;
 			else
-				OLogManager.instance().warn(this, "Current node's right doesn't link it correctly");
+				OLogManager.instance().warn(this,
+						"Node " + rid + " has the left (" + left + ") unlinked to itself. It links to " + left.parent);
 
 			totalDisconnected += left.disconnect(iForceDirty, iLevel + 1);
 			left = null;
@@ -304,7 +298,8 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 			if (right.parent == this)
 				right.parent = null;
 			else
-				OLogManager.instance().warn(this, "Current node's left doesn't link it correctly");
+				OLogManager.instance().warn(this,
+						"Node " + rid + " has the right (" + right + ")unlinked to itself. It links to " + right.parent);
 
 			totalDisconnected += right.disconnect(iForceDirty, iLevel + 1);
 			right = null;
@@ -560,6 +555,9 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		serializedValues[iPosition] = 0;
 
 		super.insert(iPosition, key, value);
+
+		if (iPosition == 0)
+			pTree.updateEntryPoint(keys[1], this);
 	}
 
 	@Override
@@ -567,6 +565,8 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		markDirty();
 
 		final int index = tree.getPageIndex();
+
+		final K oldKey = index == 0 ? getKeyAt(0) : null;
 
 		if (index == size - 1) {
 			// LAST ONE: JUST REMOVE IT
@@ -581,6 +581,9 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		serializedValues[size - 1] = 0;
 
 		super.remove();
+
+		if (index == 0)
+			pTree.updateEntryPoint(oldKey, this);
 	}
 
 	/**

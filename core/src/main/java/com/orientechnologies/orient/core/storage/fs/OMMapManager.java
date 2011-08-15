@@ -28,8 +28,8 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
-import com.orientechnologies.orient.core.OMemoryWatchDog;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 
 public class OMMapManager {
 	public enum OPERATION_TYPE {

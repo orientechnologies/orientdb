@@ -19,10 +19,10 @@ import java.io.File;
 import java.io.IOException;
 
 import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.OMemoryWatchDog;
 import com.orientechnologies.orient.core.config.OStorageClusterHoleConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfiguration;
+import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;

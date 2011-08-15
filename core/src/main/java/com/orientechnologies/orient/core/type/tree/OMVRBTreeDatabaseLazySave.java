@@ -66,6 +66,16 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> {
 
 	@Override
 	public int optimize(final boolean iForce) {
+		if (optimization == -1)
+			// IS ALREADY RUNNING
+			return 0;
+
+		if (!iForce && optimization == 0)
+			// NO OPTIMIZATION IS NEEDED
+			return 0;
+
+		optimization = iForce ? 2 : 1;
+
 		lazySave();
 		return super.optimize(iForce);
 	}
@@ -93,10 +103,6 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> {
 	protected void config() {
 		super.config();
 		maxUpdatesBeforeSave = OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.getValueAsInteger();
-	}
-
-	public int getInMemoryEntries() {
-		return cache.size();
 	}
 
 	/**

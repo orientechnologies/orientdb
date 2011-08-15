@@ -43,7 +43,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 	}
 
 	public Set<OIdentifiable> get(final Object iKey) {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 		try {
 
@@ -62,14 +62,14 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 	}
 
 	public OIndexMultiValues put(final Object iKey, final OIdentifiable iSingleValue) {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 		try {
 
 			checkForKeyType(iKey);
 
 			Set<OIdentifiable> values = map.get(iKey);
-			checkForOptimization();
+
 			if (values == null)
 				values = new ORecordLazySet(configuration.getDatabase()).setRidOnly(true);
 
@@ -87,7 +87,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 	}
 
 	public boolean remove(final Object iKey, final OIdentifiable iValue) {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 		try {
 
@@ -106,7 +106,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 	}
 
 	public int remove(final OIdentifiable iRecord) {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 		try {
 
@@ -129,7 +129,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 	}
 
 	public int count(final OIdentifiable iRecord) {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 		try {
 
@@ -152,7 +152,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 	}
 
 	public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive) {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 
 		try {
@@ -172,7 +172,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 	}
 
 	public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive) {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 
 		try {
@@ -192,7 +192,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 	}
 
 	public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive) {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 
 		try {
@@ -218,7 +218,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 	}
 
 	public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive) {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 
 		try {
@@ -247,7 +247,6 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 		if (iRangeFrom.getClass() != iRangeTo.getClass())
 			throw new IllegalArgumentException("Range from-to parameters are of different types");
 
-		checkForOptimization();
 		acquireExclusiveLock();
 
 		try {
@@ -271,7 +270,6 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 		if (iRangeFrom.getClass() != iRangeTo.getClass())
 			throw new IllegalArgumentException("Range from-to parameters are of different types");
 
-		checkForOptimization();
 		acquireExclusiveLock();
 
 		try {

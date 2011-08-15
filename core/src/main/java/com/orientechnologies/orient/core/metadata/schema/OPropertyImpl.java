@@ -430,7 +430,12 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 			break;
 		}
 
-		saveInternal();
+		try {
+			//owner.validateInstances();
+			saveInternal();
+		} catch (Exception e) {
+			owner.reload();
+		}
 	}
 
 	public void set(final ATTRIBUTES attribute, final Object iValue) {

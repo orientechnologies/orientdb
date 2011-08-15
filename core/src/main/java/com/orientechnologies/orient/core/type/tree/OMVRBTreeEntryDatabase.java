@@ -71,6 +71,8 @@ public class OMVRBTreeEntryDatabase<K, V> extends OMVRBTreeEntryPersistent<K, V>
 
 	@Override
 	public OMVRBTreeEntryDatabase<K, V> load() throws IOException {
+		pTree.checkForOptimization();
+
 		try {
 			record.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
 			record.reload();
@@ -80,6 +82,10 @@ public class OMVRBTreeEntryDatabase<K, V> extends OMVRBTreeEntryPersistent<K, V>
 		}
 		record.recycle(this);
 		fromStream(record.toStream());
+
+		if (OLogManager.instance().isDebugEnabled())
+			OLogManager.instance().debug(this, "Loaded tree node %s (%s-%s)", record.getIdentity(), getFirstKey(), getLastKey());
+
 		return this;
 	}
 
@@ -98,9 +104,9 @@ public class OMVRBTreeEntryDatabase<K, V> extends OMVRBTreeEntryPersistent<K, V>
 
 		checkEntryStructure();
 
-		if (pTree.cache.get(record.getIdentity()) != this)
+		if (pTree.searchNodeInCache(record.getIdentity()) != this)
 			// UPDATE THE CACHE
-			pTree.cache.put(record.getIdentity(), this);
+			pTree.addNodeInCache(this);
 
 		return this;
 	}
@@ -112,6 +118,8 @@ public class OMVRBTreeEntryDatabase<K, V> extends OMVRBTreeEntryPersistent<K, V>
 	 */
 	@Override
 	public OMVRBTreeEntryDatabase<K, V> delete() throws IOException {
+		super.delete();
+
 		// EARLY LOAD LEFT AND DELETE IT RECURSIVELY
 		if (getLeft() != null)
 			((OMVRBTreeEntryPersistent<K, V>) getLeft()).delete();
@@ -132,7 +140,6 @@ public class OMVRBTreeEntryDatabase<K, V> extends OMVRBTreeEntryPersistent<K, V>
 		serializedKeys = null;
 		serializedValues = null;
 
-		super.delete();
 		return this;
 	}
 

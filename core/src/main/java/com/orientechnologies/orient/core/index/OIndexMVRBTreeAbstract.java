@@ -29,7 +29,6 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
-import com.orientechnologies.orient.core.OMemoryWatchDog.Listener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -40,6 +39,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
+import com.orientechnologies.orient.core.memory.OMemoryWatchDog.Listener;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -71,7 +71,6 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 	@ODocumentInstance
 	protected ODocument															configuration;
 	private Listener																watchDog;
-	private volatile int														optimization		= 0;
 
 	public OIndexMVRBTreeAbstract(final String iType) {
 		type = iType;
@@ -79,12 +78,12 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 		watchDog = new Listener() {
 			public void memoryUsageLow(final TYPE iType, final long usedMemory, final long maxMemory) {
 				if (iType == TYPE.JVM)
-					optimization = 1;
+					map.setOptimization(1);
 			}
 
 			public void memoryUsageCritical(final TYPE iType, final long usedMemory, final long maxMemory) {
 				if (iType == TYPE.JVM)
-					optimization = 2;
+					map.setOptimization(2);
 			}
 		};
 	}
@@ -170,7 +169,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 	}
 
 	public boolean contains(final Object iKey) {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 		try {
 
@@ -227,7 +226,6 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 
 		final boolean intentInstalled = getDatabase().declareIntent(new OIntentMassiveInsert());
 
-		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 
@@ -285,7 +283,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 	}
 
 	public boolean remove(final Object key) {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 		try {
 
@@ -297,7 +295,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 	}
 
 	public OIndex<T> clear() {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 		try {
 
@@ -310,7 +308,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 	}
 
 	public OIndexInternal<T> delete() {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 
 		try {
@@ -323,7 +321,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 	}
 
 	public OIndexInternal<T> lazySave() {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 		try {
 
@@ -340,7 +338,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 	}
 
 	public Iterator<Entry<Object, T>> iterator() {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 		try {
 
@@ -352,7 +350,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 	}
 
 	public Iterable<Object> keys() {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 		try {
 
@@ -364,7 +362,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 	}
 
 	public long getSize() {
-		checkForOptimization();
+
 		acquireSharedLock();
 		try {
 
@@ -401,7 +399,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 	}
 
 	public Set<String> getClusters() {
-		checkForOptimization();
+
 		acquireSharedLock();
 		try {
 
@@ -413,7 +411,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 	}
 
 	public OIndexMVRBTreeAbstract<T> addCluster(final String iClusterName) {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 		try {
 
@@ -429,7 +427,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 	}
 
 	public void unload() {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 		try {
 
@@ -441,7 +439,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 	}
 
 	public ODocument updateConfiguration() {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 		try {
 
@@ -471,7 +469,6 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 		if (iDocument == null)
 			return;
 
-		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 			map.setRunningTransaction(true);
@@ -578,7 +575,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 	}
 
 	public void onAfterTxRollback(final ODatabase iDatabase) {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 		try {
 
@@ -590,7 +587,6 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 	}
 
 	public void onBeforeTxCommit(final ODatabase iDatabase) {
-		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 
@@ -602,7 +598,6 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 	}
 
 	public void onAfterTxCommit(final ODatabase iDatabase) {
-		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 
@@ -614,7 +609,6 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 	}
 
 	public void onClose(final ODatabase iDatabase) {
-		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 
@@ -635,12 +629,13 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 
 			OLogManager.instance().debug(this,
 					"Forcing " + (iHardMode ? "hard" : "soft") + " optimization of Index %s (%d items). Found %d entries in memory...", name,
-					map.size(), map.getInMemoryEntries());
+					map.size(), map.getNumberOfNodesInCache());
 
-			final int freed = map.optimize(true);
+			map.setOptimization(iHardMode ? 2 : 1);
+			final int freed = map.optimize(iHardMode);
 
 			OLogManager.instance().debug(this, "Completed! Freed %d entries and now %d entries reside in memory", freed,
-					map.getInMemoryEntries());
+					map.getNumberOfNodesInCache());
 
 		} finally {
 			releaseExclusiveLock();
@@ -654,14 +649,6 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 
 			if (keyType != null)
 				updateConfiguration();
-		}
-	}
-
-	protected void checkForOptimization() {
-		if (optimization > 0) {
-			final boolean hardMode = optimization == 2;
-			optimize(hardMode);
-			optimization = 0;
 		}
 	}
 

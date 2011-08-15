@@ -42,7 +42,7 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 	}
 
 	public OIdentifiable get(final Object iKey) {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 		try {
 
@@ -54,7 +54,7 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 	}
 
 	public int remove(final OIdentifiable iRecord) {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 		try {
 
@@ -73,7 +73,7 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 	}
 
 	public int count(final OIdentifiable iRecord) {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 		try {
 
@@ -91,7 +91,7 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 	}
 
 	public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive) {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 
 		try {
@@ -102,7 +102,7 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 	}
 
 	public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive) {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 
 		try {
@@ -113,7 +113,7 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 	}
 
 	public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive) {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 
 		try {
@@ -137,7 +137,7 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 	}
 
 	public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive) {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 
 		try {
@@ -164,7 +164,6 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 		if (iRangeFrom.getClass() != iRangeTo.getClass())
 			throw new IllegalArgumentException("Range from-to parameters are of different types");
 
-		checkForOptimization();
 		acquireExclusiveLock();
 
 		try {
@@ -182,7 +181,6 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 		if (iRangeFrom.getClass() != iRangeTo.getClass())
 			throw new IllegalArgumentException("Range from-to parameters are of different types");
 
-		checkForOptimization();
 		acquireExclusiveLock();
 
 		try {

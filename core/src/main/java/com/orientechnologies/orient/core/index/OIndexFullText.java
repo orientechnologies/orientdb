@@ -128,13 +128,12 @@ public class OIndexFullText extends OIndexMultiValues {
 			if (stopWords.contains(word))
 				continue;
 
-			checkForOptimization();
 			acquireExclusiveLock();
 
 			try {
 				// SEARCH FOR THE WORD
 				refs = map.get(word);
-				checkForOptimization();
+
 				if (refs == null)
 					// WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
 					refs = new ORecordLazySet(configuration.getDatabase()).setRidOnly(true);
@@ -153,7 +152,7 @@ public class OIndexFullText extends OIndexMultiValues {
 	}
 
 	public boolean remove(final Object iKey, final OIdentifiable value) {
-		checkForOptimization();
+
 		acquireExclusiveLock();
 		try {
 

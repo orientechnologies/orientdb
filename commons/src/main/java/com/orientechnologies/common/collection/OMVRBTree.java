@@ -335,16 +335,6 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		if (key == null)
 			return setLastSearchNode(null, null);
 
-		// 1^ CHANCE - TRY TO SEE IF LAST USED NODE IS GOOD: THIS IS VERY COMMON CASE ON INSERTION WITH AN INCREMENTING KEY
-		// OMVRBTreeEntry<K, V> entry = OMVRBTreeThreadLocal.INSTANCE.getLatest();
-		// if (entry != null && entry.getSize() > 0) {
-		// final Comparable k = (Comparable) key;
-		// if (k.compareTo(entry.getFirstKey()) >= 0)
-		// if (k.compareTo(entry.getLastKey()) <= 0 || successor(entry) == null) {
-		// return entry;
-		// }
-		// }
-
 		pageItemFound = false;
 
 		if (size == 0) {
@@ -352,7 +342,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			return iGetContainer ? root : null;
 		}
 
-		OMVRBTreeEntry<K, V> p = getBestEntryPoint(key);
+		OMVRBTreeEntry<K, V> p = getBestEntryPoint((K) key);
 
 		checkTreeStructure(p);
 
@@ -443,9 +433,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	}
 
 	/**
-	 * Basic implementation that returns the root node.
+	 * Basic implementation that always returns the root node.
 	 */
-	protected OMVRBTreeEntry<K, V> getBestEntryPoint(final Object key) {
+	protected OMVRBTreeEntry<K, V> getBestEntryPoint(final K key) {
 		return root;
 	}
 
@@ -1969,7 +1959,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 * Returns the last Entry in the OMVRBTree (according to the OMVRBTree's key-sort function). Returns null if the OMVRBTree is
 	 * empty.
 	 */
-	protected final OMVRBTreeEntry<K, V> getLastEntry() {
+	protected OMVRBTreeEntry<K, V> getLastEntry() {
 		OMVRBTreeEntry<K, V> p = root;
 		if (p != null)
 			while (p.getRight() != null)

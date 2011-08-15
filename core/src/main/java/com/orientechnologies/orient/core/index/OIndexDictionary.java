@@ -30,13 +30,11 @@ public class OIndexDictionary extends OIndexOneValue {
 	}
 
 	public OIndexOneValue put(final Object iKey, final OIdentifiable iSingleValue) {
-		checkForOptimization();
 		acquireExclusiveLock();
 		try {
 			checkForKeyType(iKey);
 
 			OIdentifiable value = map.get(iKey);
-			checkForOptimization();
 
 			if (value == null || !value.equals(iSingleValue))
 				map.put(iKey, iSingleValue);

@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMultiThreadTest;
 import com.orientechnologies.orient.test.database.base.OrientThreadTest;
@@ -40,13 +39,20 @@ public class LocalCreateDocumentMultiThreadIndexedSpeedTest extends OrientMultiT
 	private long							foundObjects;
 
 	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-		System.setProperty("url", "remote:localhost/demo");
-		LocalCreateDocumentMultiThreadIndexedSpeedTest test = new LocalCreateDocumentMultiThreadIndexedSpeedTest();
+		// System.setProperty("url", "remote:localhost/demo");
+
+		if (iArgs.length > 0)
+			System.setProperty("url", iArgs[0]);
+
+		int tot = iArgs.length > 1 ? Integer.parseInt(iArgs[1]) : 1000000;
+		int threads = iArgs.length > 2 ? Integer.parseInt(iArgs[2]) : 5;
+
+		LocalCreateDocumentMultiThreadIndexedSpeedTest test = new LocalCreateDocumentMultiThreadIndexedSpeedTest(tot, threads);
 		test.data.go(test);
 	}
 
-	public LocalCreateDocumentMultiThreadIndexedSpeedTest() {
-		super(1000000, 5, CreateObjectsThread.class);
+	public LocalCreateDocumentMultiThreadIndexedSpeedTest(int tot, int threads) {
+		super(tot, threads, CreateObjectsThread.class);
 
 		OProfiler.getInstance().startRecording();
 	}
@@ -68,6 +74,21 @@ public class LocalCreateDocumentMultiThreadIndexedSpeedTest extends OrientMultiT
 
 		foundObjects = 0;// database.countClusterElements("Account");
 
+		synchronized (LocalCreateDocumentMultiThreadIndexedSpeedTest.class) {
+			// database.command(new OCommandSQL("truncate class account")).execute();
+
+			OClass c = database.getMetadata().getSchema().getClass("Account");
+			if (c == null)
+				c = database.getMetadata().getSchema().createClass("Account");
+
+			OProperty p = database.getMetadata().getSchema().getClass("Account").getProperty("id");
+			if (p == null)
+				p = database.getMetadata().getSchema().getClass("Account").createProperty("id", OType.INTEGER);
+
+			if (!p.isIndexed())
+				p.createIndex(INDEX_TYPE.NOTUNIQUE);
+		}
+
 		System.out.println("\nTotal objects in Animal cluster before the test: " + foundObjects);
 	}
 
@@ -83,21 +104,6 @@ public class LocalCreateDocumentMultiThreadIndexedSpeedTest extends OrientMultiT
 			record = database.newInstance();
 			database.declareIntent(new OIntentMassiveInsert());
 			database.begin(TXTYPE.NOTX);
-
-			synchronized (LocalCreateDocumentMultiThreadIndexedSpeedTest.class) {
-				database.command(new OCommandSQL("truncate class account")).execute();
-
-				OClass c = database.getMetadata().getSchema().getClass("Account");
-				if (c == null)
-					c = database.getMetadata().getSchema().createClass("Account");
-
-				OProperty p = database.getMetadata().getSchema().getClass("Account").getProperty("id");
-				if (p == null)
-					p = database.getMetadata().getSchema().getClass("Account").createProperty("id", OType.INTEGER);
-
-				if (!p.isIndexed())
-					p.createIndex(INDEX_TYPE.NOTUNIQUE);
-			}
 		}
 
 		public void cycle() {

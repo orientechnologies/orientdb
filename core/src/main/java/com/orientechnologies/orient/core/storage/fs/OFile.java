@@ -28,9 +28,9 @@ import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.OMemoryWatchDog;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 
 /**
  * 

@@ -29,6 +29,7 @@ import java.util.Set;
 
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -106,8 +107,12 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	}
 
 	public void validateInstances() {
-		final ODatabaseDocumentTx db = (ODatabaseDocumentTx) getDatabase();
-		for (ODocument d : db.browseClass(name, true)) {
+		ODatabaseComplex<?> current = getDatabase().getDatabaseOwner();
+
+		while (current != null && current.getUnderlying() instanceof ODatabaseComplex<?> && !(current instanceof ODatabaseDocumentTx))
+			current = current.getUnderlying();
+
+		for (ODocument d : ((ODatabaseDocumentTx) current).browseClass(name, true)) {
 			d.validate();
 		}
 	}

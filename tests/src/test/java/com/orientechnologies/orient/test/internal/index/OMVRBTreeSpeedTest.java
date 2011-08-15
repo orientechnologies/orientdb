@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.internal.index;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.collection.OMVRBTree;
 import com.orientechnologies.common.collection.OMVRBTreeMemory;
 import com.orientechnologies.common.collection.ONavigableMap;
 import com.orientechnologies.common.test.SpeedTestMonoThread;
@@ -29,7 +30,7 @@ public class OMVRBTreeSpeedTest extends SpeedTestMonoThread {
 	@Override
 	@Test(enabled = false)
 	public void cycle() {
-		final int NUMS = 100;
+		final int NUMS = 100000;
 
 		tree.put(1, 1);
 		tree.put(55, 1);
@@ -57,20 +58,47 @@ public class OMVRBTreeSpeedTest extends SpeedTestMonoThread {
 		for (int i = 0; i < NUMS; i++) {
 			// System.out.println("Checking " + i + "...");
 			if (tree.get(getKey(i)) != i)
-				System.out.println("Find error at " + i + "!!!");
+				System.err.println("Find error at " + i + "!!!");
 		}
 		data.printSnapshot();
 
-		// if (tree instanceof OMVRBTree<?, ?>) {
-		// System.out.println("Total nodes: " + ((OMVRBTree<?, ?>) tree).getNodes());
-		// }
+		System.out.println("Check each value in inverse order...");
+		for (int i = NUMS - 1; i >= 0; i--) {
+			if (tree.get(getKey(i)) != i)
+				System.err.println("Find error at " + i + "!!!");
+		}
+		data.printSnapshot();
+
+		if (tree instanceof OMVRBTree<?, ?>) {
+			System.out.println("Total nodes: " + ((OMVRBTree<?, ?>) tree).getNodes());
+		}
 
 		System.out.println("Delete all the elements one by one...");
+		for (int i = NUMS - 1; i >= 0; i--)
+			tree.remove(getKey(i));
+		data.printSnapshot();
+
+		// System.out.println("Delete all the elements one by one...");
+		// for (int i = 0; i < NUMS; i++)
+		// tree.remove(getKey(i));
+		// data.printSnapshot();
+
+		Assert.assertTrue(tree.size() == 0);
+
+		System.out.println("Delete all the elements one by one...");
+		for (int i = NUMS - 1; i >= 0; i--)
+			tree.put(getKey(i), i);
+		// printTree();
+
+		Assert.assertTrue(tree.size() == NUMS);
+
+		System.out.println("Inserting " + NUMS + " values in OrientDB-TreeMap...");
 		for (int i = 0; i < NUMS; i++)
 			tree.remove(getKey(i));
 		data.printSnapshot();
 
 		Assert.assertTrue(tree.size() == 0);
+
 	}
 
 	private Integer getKey(int i) {

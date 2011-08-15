@@ -23,9 +23,9 @@ import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
-import com.orientechnologies.orient.core.OMemoryWatchDog.Listener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.memory.OMemoryWatchDog.Listener;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
 /**
@@ -69,7 +69,6 @@ public abstract class OAbstractRecordCache extends OSharedResourceAbstract {
 	public ORecordInternal<?> findRecord(final ORID iRid) {
 		return null;
 	}
-
 
 	public ORecordInternal<?> freeRecord(final ORID iRID) {
 		if (!enabled)

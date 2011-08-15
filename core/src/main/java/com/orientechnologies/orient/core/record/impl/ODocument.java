@@ -796,30 +796,27 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 				iFieldType = prop.getType();
 		}
 
-		if (iPropertyValue == null) {
-			_fieldValues.put(iFieldName, iPropertyValue);
-		} else {
-			if (iFieldType != null) {
+		if (iPropertyValue != null)
+			// CHECK FOR CONVERSION
+			if (iFieldType != null)
 				iPropertyValue = convertField(iFieldName, iFieldType.getDefaultJavaType(), iPropertyValue);
-			} else if (iPropertyValue instanceof Enum) {
+			else if (iPropertyValue instanceof Enum)
 				iPropertyValue = iPropertyValue.toString();
+
+		_fieldValues.put(iFieldName, iPropertyValue);
+
+		if (_status != STATUS.UNMARSHALLING) {
+			setDirty();
+
+			if (_trackingChanges && _recordId.isValid()) {
+				// SAVE THE OLD VALUE IN A SEPARATE MAP ONLY IF TRACKING IS ACTIVE AND THE RECORD IS NOT NEW
+				if (_fieldOriginalValues == null)
+					_fieldOriginalValues = new HashMap<String, Object>();
+
+				// INSERT IT ONLY IF NOT EXISTS TO AVOID LOOSE OF THE ORIGINAL VALUE (FUNDAMENTAL FOR INDEX HOOK)
+				if (!_fieldOriginalValues.containsKey(iFieldName))
+					_fieldOriginalValues.put(iFieldName, oldValue);
 			}
-
-			if (_status != STATUS.UNMARSHALLING) {
-				setDirty();
-
-				if (_trackingChanges && _recordId.isValid()) {
-					// SAVE THE OLD VALUE IN A SEPARATE MAP ONLY IF TRACKING IS ACTIVE AND THE RECORD IS NOT NEW
-					if (_fieldOriginalValues == null)
-						_fieldOriginalValues = new HashMap<String, Object>();
-
-					// INSERT IT ONLY IF NOT EXISTS TO AVOID LOOSE OF THE ORIGINAL VALUE (FUNDAMENTAL FOR INDEX HOOK)
-					if (!_fieldOriginalValues.containsKey(iFieldName))
-						_fieldOriginalValues.put(iFieldName, oldValue);
-				}
-			}
-
-			_fieldValues.put(iFieldName, iPropertyValue);
 		}
 
 		return this;
@@ -1083,7 +1080,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	}
 
 	@Override
-	public ODocument fromStream(byte[] iRecordBuffer) {
+	public ODocument fromStream(final byte[] iRecordBuffer) {
 		_fieldValues = null;
 		_fieldTypes = null;
 		_fieldOriginalValues = null;

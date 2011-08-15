@@ -19,8 +19,8 @@ import java.io.File;
 import java.io.IOException;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.OMemoryWatchDog;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
+import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 
 /**
  * Handle the holes inside cluster segments. The synchronization is in charge to the OClusterLocal instance.<br/>
