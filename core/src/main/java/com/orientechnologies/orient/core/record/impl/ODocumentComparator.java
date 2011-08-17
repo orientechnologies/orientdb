@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sort;
+package com.orientechnologies.orient.core.record.impl;
 
 import java.util.Comparator;
 import java.util.List;
 
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 
 /**

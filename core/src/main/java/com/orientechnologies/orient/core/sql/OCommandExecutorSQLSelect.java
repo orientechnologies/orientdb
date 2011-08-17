@@ -47,8 +47,8 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.sort.ODocumentSorter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
@@ -655,7 +655,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		if (orderedFields == null || tempResult == null)
 			return;
 
-		ODocumentSorter.sort(tempResult, orderedFields);
+		ODocumentHelper.sort(tempResult, orderedFields);
 		orderedFields.clear();
 	}
 
