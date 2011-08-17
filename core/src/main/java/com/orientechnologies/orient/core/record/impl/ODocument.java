@@ -329,7 +329,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 				} else if (f.getValue() instanceof ORecord<?>) {
 					record = (ORecord<?>) f.getValue();
 
-					if (record.getIdentity() != null)
+					if (record.getIdentity().isValid())
 						record.getIdentity().toString(buffer);
 					else
 						buffer.append(record.toString());
@@ -342,8 +342,10 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 			if (!first)
 				buffer.append('}');
 
-			buffer.append(" v");
-			buffer.append(_version);
+			if (_recordId.isValid()) {
+				buffer.append(" v");
+				buffer.append(_version);
+			}
 
 		} finally {
 			_dirty = saveDirtyStatus;

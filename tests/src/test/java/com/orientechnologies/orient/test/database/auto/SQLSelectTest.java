@@ -201,6 +201,54 @@ public class SQLSelectTest {
 	}
 
 	@Test
+	public void queryContainsInDocumentSet() {
+		database.open("admin", "admin");
+
+		HashSet<ODocument> coll = new HashSet<ODocument>();
+		coll.add(new ODocument("name", "Luca", "surname", "Garulli"));
+		coll.add(new ODocument("name", "Jay", "surname", "Miner"));
+
+		ODocument doc = new ODocument(database, "Profile");
+		doc.field("coll", coll, OType.EMBEDDEDSET);
+
+		doc.save();
+
+		List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>(
+				"select coll[name='Jay'] as value from Profile where coll is not null"));
+		Assert.assertEquals(resultset.size(), 1);
+		Assert.assertEquals(resultset.get(0).field("value").getClass(), ODocument.class);
+		Assert.assertEquals(((ODocument) resultset.get(0).field("value")).field("name"), "Jay");
+
+		doc.delete();
+
+		database.close();
+	}
+
+	@Test
+	public void queryContainsInDocumentList() {
+		database.open("admin", "admin");
+
+		List<ODocument> coll = new ArrayList<ODocument>();
+		coll.add(new ODocument("name", "Luca", "surname", "Garulli"));
+		coll.add(new ODocument("name", "Jay", "surname", "Miner"));
+
+		ODocument doc = new ODocument(database, "Profile");
+		doc.field("coll", coll, OType.EMBEDDEDLIST);
+
+		doc.save();
+
+		List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>(
+				"select coll[name='Jay'] as value from Profile where coll is not null"));
+		Assert.assertEquals(resultset.size(), 1);
+		Assert.assertEquals(resultset.get(0).field("value").getClass(), ODocument.class);
+		Assert.assertEquals(((ODocument) resultset.get(0).field("value")).field("name"), "Jay");
+
+		doc.delete();
+
+		database.close();
+	}
+
+	@Test
 	public void queryContainsInEmbeddedMapClassic() {
 		database.open("admin", "admin");
 
@@ -229,6 +277,10 @@ public class SQLSelectTest {
 				"select from Profile where customReferences[second]['name'] like 'Ja%'"));
 		Assert.assertEquals(resultset.size(), 1);
 		Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
+
+		resultset = database.query(new OSQLSynchQuery<ODocument>(
+				"select customReferences[second]['name'] from Profile where customReferences[second]['name'] is not null"));
+		Assert.assertEquals(resultset.size(), 1);
 
 		resultset = database.query(new OSQLSynchQuery<ODocument>(
 				"select customReferences[second]['name'] as value from Profile where customReferences[second]['name'] is not null"));

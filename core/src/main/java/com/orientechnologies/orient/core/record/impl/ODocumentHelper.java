@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 
 /**
  * Helper class to manage documents.
@@ -213,6 +214,9 @@ public class ODocumentHelper {
 				if (value == null)
 					value = current._fieldValues.get(fieldName);
 
+				if (value == null)
+					return null;
+
 				final int end = iFieldName.indexOf(']', separatorPos);
 				if (end == -1)
 					throw new IllegalArgumentException("Missed closed ']'");
@@ -220,9 +224,7 @@ public class ODocumentHelper {
 				final String index = OStringSerializerHelper.getStringContent(iFieldName.substring(separatorPos + 1, end));
 				separatorPos = end + 1;
 
-				if (value == null)
-					return null;
-				else if (value instanceof ODocument) {
+				if (value instanceof ODocument) {
 					final List<String> indexParts = OStringSerializerHelper.smartSplit(index, ',');
 					if (indexParts.size() == 1)
 						// SINGLE VALUE
@@ -248,57 +250,77 @@ public class ODocumentHelper {
 						}
 						value = values;
 					}
-				} else if (value instanceof List<?>) {
-					final List<String> indexParts = OStringSerializerHelper.smartSplit(index, ',');
-					final List<String> indexRanges = OStringSerializerHelper.smartSplit(index, '-');
-					if (indexParts.size() == 1 && indexRanges.size() == 1)
-						// SINGLE VALUE
-						value = ((List<?>) value).get(Integer.parseInt(index));
-					else {
-						final Object[] values;
-						if (indexParts.size() > 1) {
-							// MULTI VALUES
-							values = new Object[indexParts.size()];
-							for (int i = 0; i < indexParts.size(); ++i) {
-								values[i] = ((List<?>) value).get(Integer.parseInt(indexParts.get(i)));
-							}
-						} else {
-							// MULTI VALUES RANGE
-							final int rangeFrom = Integer.parseInt(indexRanges.get(0));
-							final int rangeTo = Integer.parseInt(indexRanges.get(1));
+				} else if (value instanceof Collection<?> || value.getClass().isArray()) {
+					// MULTI VALUE
+					final boolean isArray = value.getClass().isArray();
 
-							values = new Object[rangeTo - rangeFrom + 1];
-							for (int i = rangeFrom; i <= rangeTo; ++i) {
-								values[i - rangeFrom] = ((List<?>) value).get(i);
-							}
-						}
-						value = values;
-					}
-				} else if (value.getClass().isArray()) {
 					final List<String> indexParts = OStringSerializerHelper.smartSplit(index, ',');
 					final List<String> indexRanges = OStringSerializerHelper.smartSplit(index, '-');
-					if (indexParts.size() == 1 && indexRanges.size() == 1)
+					final List<String> indexCondition = OStringSerializerHelper.smartSplit(index, '=');
+
+					if (indexParts.size() == 1 && indexRanges.size() == 1 && indexCondition.size() == 1) {
 						// SINGLE VALUE
-						value = Array.get(value, Integer.parseInt(index));
-					else {
+						if (isArray)
+							value = Array.get(value, Integer.parseInt(index));
+						else
+							value = ((List<?>) value).get(Integer.parseInt(index));
+					} else if (indexParts.size() > 1) {
+						// MULTI VALUES
 						final Object[] values;
-						if (indexParts.size() > 1) {
-							// MULTI VALUES
-							values = new Object[indexParts.size()];
-							for (int i = 0; i < indexParts.size(); ++i) {
+						values = new Object[indexParts.size()];
+						for (int i = 0; i < indexParts.size(); ++i) {
+							if (isArray)
 								values[i] = Array.get(value, Integer.parseInt(indexParts.get(i)));
-							}
-						} else {
-							// MULTI VALUES RANGE
-							final int rangeFrom = Integer.parseInt(indexRanges.get(0));
-							final int rangeTo = Integer.parseInt(indexRanges.get(1));
-
-							values = new Object[rangeTo - rangeFrom + 1];
-							for (int i = rangeFrom; i <= rangeTo; ++i) {
-								values[i - rangeFrom] = Array.get(value, i);
-							}
+							else
+								values[i] = ((List<?>) value).get(Integer.parseInt(indexParts.get(i)));
 						}
 						value = values;
+					} else if (indexRanges.size() > 1) {
+						// MULTI VALUES RANGE
+						final Object[] values;
+						final int rangeFrom = Integer.parseInt(indexRanges.get(0));
+						final int rangeTo = Integer.parseInt(indexRanges.get(1));
+
+						values = new Object[rangeTo - rangeFrom + 1];
+						for (int i = rangeFrom; i <= rangeTo; ++i) {
+							if (isArray)
+								values[i - rangeFrom] = Array.get(value, i);
+							else
+								values[i - rangeFrom] = ((List<?>) value).get(i);
+						}
+						value = values;
+					} else if (indexCondition.size() > 0) {
+						// CONDITION
+						final String conditionFieldName = indexCondition.get(0);
+						Object conditionFieldValue = ORecordSerializerStringAbstract.getTypeValue(indexCondition.get(1));
+
+						if (conditionFieldValue instanceof String)
+							conditionFieldValue = OStringSerializerHelper.getStringContent(conditionFieldValue);
+
+						final ArrayList<ODocument> values = new ArrayList<ODocument>();
+						for (Object v : (Collection<Object>) value) {
+							if (v instanceof ODocument) {
+								final ODocument doc = (ODocument) v;
+								if (doc.containsField(conditionFieldName)) {
+									Object fieldValue = doc.field(conditionFieldName);
+
+									fieldValue = OType.convert(fieldValue, conditionFieldValue.getClass());
+									if (fieldValue != null && fieldValue.equals(conditionFieldValue)) {
+										values.add(doc);
+									}
+								}
+							}
+						}
+
+						if (values.isEmpty())
+							// RETURNS NULL
+							value = null;
+						else if (values.size() == 1)
+							// RETURNS THE SINGLE ODOCUMENT
+							value = values.iterator().next();
+						else
+							// RETURNS THE FILTERED COLLECTION
+							value = values;
 					}
 				}
 			} else
