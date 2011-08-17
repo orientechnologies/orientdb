@@ -324,7 +324,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 					return v;
 
 				} catch (OLowMemoryException e) {
-					OLogManager.instance().warn(this, "Optimization required during remove %d/10", i);
+					OLogManager.instance().debug(this, "Optimization required during remove %d/10", i);
 
 					// LOW MEMORY DURING REMOVAL: THIS MEANS DEEP LOADING OF NODES. EXECUTE THE OPTIMIZATION AND RETRY IT
 					optimize(true);
@@ -533,7 +533,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			try {
 				return super.get(iKey);
 			} catch (OLowMemoryException e) {
-				OLogManager.instance().warn(this, "Optimization required during load %d/10", i);
+				OLogManager.instance().debug(this, "Optimization required during load %d/10", i);
 
 				// LOW MEMORY DURING LOAD: THIS MEANS DEEP LOADING OF NODES. EXECUTE THE OPTIMIZATION AND RETRY IT
 				optimize(true);
@@ -654,7 +654,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 				return previous;
 			} catch (OLowMemoryException e) {
-				OLogManager.instance().warn(this, "Optimization required during put %d/10", i);
+				OLogManager.instance().debug(this, "Optimization required during put %d/10", i);
 
 				// LOW MEMORY DURING PUT: THIS MEANS DEEP LOADING OF NODES. EXECUTE THE OPTIMIZATION AND RETRY IT
 				optimize(true);
