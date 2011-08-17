@@ -92,20 +92,4 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
 
 	}
 
-	@Test
-	public void shouldCreateANewRow() throws Exception {
-
-		assertFalse(conn.isClosed());
-
-		Statement stmt = conn.createStatement();
-		int updated = stmt.executeUpdate("INSERT into Item (stringKey, intKey, text, length, date) values ('100','100','dummy text','10','2011-08-21')");
-
-		assertEquals(1, updated);
-
-		stmt = conn.createStatement();
-		ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item where intKey = '100' ");
-		rs.next();
-		assertEquals(100, rs.getInt("intKey"));
-
-	}
 }

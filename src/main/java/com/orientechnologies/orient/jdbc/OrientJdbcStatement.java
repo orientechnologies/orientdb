@@ -28,14 +28,12 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLQuery;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class OrientJdbcStatement implements Statement {
 	private final OrientJdbcConnection connection;
 	private final ODatabaseDocumentTx database;
 
-	private OSQLQuery<ODocument> query;
+	private OCommandSQL query;
 	private List<ODocument> documents;
 
 	public OrientJdbcStatement(final OrientJdbcConnection iConnection) {
@@ -45,7 +43,7 @@ public class OrientJdbcStatement implements Statement {
 	}
 
 	public boolean execute(final String sql) throws SQLException {
-		if (query == null) query = new OSQLSynchQuery<ODocument>(sql);
+		query = new OCommandSQL(sql);
 
 		return true;
 	}
@@ -58,7 +56,8 @@ public class OrientJdbcStatement implements Statement {
 	private OrientJdbcResultSet executeCommand() throws SQLSyntaxErrorException {
 		try {
 
-			documents = database.command(query).execute();
+			documents = query.setDatabase(database).execute();
+			// documents = database.command(query).execute();
 			return new OrientJdbcResultSet(this, documents);
 
 		} catch (OQueryParsingException e) {
@@ -153,6 +152,7 @@ public class OrientJdbcStatement implements Statement {
 		return 0;
 	}
 
+	@Override
 	public boolean getMoreResults() throws SQLException {
 
 		return false;
