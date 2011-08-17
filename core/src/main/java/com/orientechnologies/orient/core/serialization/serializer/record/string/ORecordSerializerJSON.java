@@ -50,6 +50,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.ORecordStringable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
@@ -59,11 +60,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 	public static final String								NAME									= "json";
 	public static final ORecordSerializerJSON	INSTANCE							= new ORecordSerializerJSON();
-	public static final String								ATTRIBUTE_ID					= "@rid";
-	public static final String								ATTRIBUTE_VERSION			= "@version";
-	public static final String								ATTRIBUTE_TYPE				= "@type";
 	public static final String								ATTRIBUTE_FIELD_TYPES	= "@fieldTypes";
-	public static final String								ATTRIBUTE_CLASS				= "@class";
 	public static final String								DEF_DATE_FORMAT				= "yyyy-MM-dd HH:mm:ss:SSS";
 
 	private SimpleDateFormat									dateFormat						= new SimpleDateFormat(DEF_DATE_FORMAT);
@@ -118,7 +115,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 								fieldTypes.put(part[0], part[1].charAt(0));
 						}
 					}
-				} else if (fieldName.equals(ATTRIBUTE_TYPE)) {
+				} else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_TYPE)) {
 					if (iRecord == null || iRecord.getRecordType() != fieldValueAsString.charAt(0)) {
 						// CREATE THE RIGHT RECORD INSTANCE
 						iRecord = Orient.instance().getRecordFactoryManager().newInstance(iDatabase, (byte) fieldValueAsString.charAt(0));
@@ -134,15 +131,15 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 					fieldValueAsString = fieldValue.length() >= 2 ? fieldValue.substring(1, fieldValue.length() - 1) : fieldValue;
 
 					// RECORD ATTRIBUTES
-					if (fieldName.equals(ATTRIBUTE_ID))
+					if (fieldName.equals(ODocumentHelper.ATTRIBUTE_RID))
 						iRecord.setIdentity(new ORecordId(fieldValueAsString));
 
-					else if (fieldName.equals(ATTRIBUTE_VERSION))
+					else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_VERSION))
 						iRecord.setVersion(Integer.parseInt(fieldValue));
 
-					else if (fieldName.equals(ATTRIBUTE_TYPE)) {
+					else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_TYPE)) {
 						continue;
-					} else if (fieldName.equals(ATTRIBUTE_CLASS) && iRecord instanceof ODocument)
+					} else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_CLASS) && iRecord instanceof ODocument)
 						((ODocument) iRecord).setClassNameIfExists("null".equals(fieldValueAsString) ? null : fieldValueAsString);
 					else if (fieldName.equals(ATTRIBUTE_FIELD_TYPES) && iRecord instanceof ODocument)
 						// JUMP IT
@@ -528,22 +525,25 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			boolean includeClazz, boolean attribSameRow, final ORecordInternal<?> record) throws IOException {
 		boolean firstAttribute = true;
 		if (includeType) {
-			json.writeAttribute(firstAttribute ? indentLevel + 1 : 0, firstAttribute, ATTRIBUTE_TYPE, "" + (char) record.getRecordType());
+			json.writeAttribute(firstAttribute ? indentLevel + 1 : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_TYPE,
+					"" + (char) record.getRecordType());
 			if (attribSameRow)
 				firstAttribute = false;
 		}
 		if (includeId && record.getIdentity() != null && record.getIdentity().isValid()) {
-			json.writeAttribute(!firstAttribute ? indentLevel + 1 : 0, firstAttribute, ATTRIBUTE_ID, record.getIdentity().toString());
+			json.writeAttribute(!firstAttribute ? indentLevel + 1 : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_RID, record.getIdentity()
+					.toString());
 			if (attribSameRow)
 				firstAttribute = false;
 		}
 		if (includeVer) {
-			json.writeAttribute(firstAttribute ? indentLevel + 1 : 0, firstAttribute, ATTRIBUTE_VERSION, record.getVersion());
+			json.writeAttribute(firstAttribute ? indentLevel + 1 : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_VERSION,
+					record.getVersion());
 			if (attribSameRow)
 				firstAttribute = false;
 		}
 		if (includeClazz && record instanceof ORecordSchemaAware<?> && ((ORecordSchemaAware<?>) record).getClassName() != null) {
-			json.writeAttribute(firstAttribute ? indentLevel + 1 : 0, firstAttribute, ATTRIBUTE_CLASS,
+			json.writeAttribute(firstAttribute ? indentLevel + 1 : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_CLASS,
 					((ORecordSchemaAware<?>) record).getClassName());
 			if (attribSameRow)
 				firstAttribute = false;

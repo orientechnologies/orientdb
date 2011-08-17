@@ -42,18 +42,6 @@ public class GraphTest {
 		database.open("admin", "admin");
 
 		OClass vehicleClass = database.getMetadata().getSchema().getClass("GraphVehicle");
-//		if (vehicleClass != null) {
-//			database.getMetadata().getSchema().dropClass("GraphCar");
-//			database.getMetadata().getSchema().dropClass("GraphMotocycle");
-//			database.getMetadata().getSchema().dropClass("GraphVehicle");
-//
-//			vehicleClass = database.getMetadata().getSchema()
-//					.createClass("GraphVehicle", database.getMetadata().getSchema().getClass(OGraphVertex.class));
-//
-//			database.getMetadata().getSchema().createClass("GraphCar", vehicleClass);
-//			database.getMetadata().getSchema().createClass("GraphMotocycle", vehicleClass);
-//		}
-
 		int existants = database.query(new OSQLSynchQuery<OGraphVertex>("select from GraphVehicle")).size();
 
 		OGraphVertex carNode = database.createVertex("GraphCar").set("brand", "Hyundai").set("model", "Coupe").set("year", 2003).save();

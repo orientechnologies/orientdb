@@ -24,6 +24,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabasePool;
+import com.orientechnologies.orient.core.db.graph.OGraphElement;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -56,7 +57,6 @@ public class GraphDatabaseTest {
 		database.open("admin", "admin");
 
 		OClass vehicleClass = database.createVertexType("GraphVehicle");
-
 		database.createVertexType("GraphCar", vehicleClass);
 		database.createVertexType("GraphMotocycle", "GraphVehicle");
 
@@ -100,6 +100,26 @@ public class GraphDatabaseTest {
 		}
 
 		Assert.assertEquals(edge1, edge2);
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "populate")
+	public void testSQLAgainstGraph() {
+		database.open("admin", "admin");
+
+		ODocument tom = (ODocument) database.createVertex().field("name", "Tom").save();
+		ODocument ferrari = (ODocument) database.createVertex("GraphCar").field("brand", "Ferrari").save();
+		ODocument porsche = (ODocument) database.createVertex("GraphCar").field("brand", "Porsche").save();
+		database.createEdge(tom, ferrari).save();
+		database.createEdge(tom, porsche).save();
+
+		List<OGraphElement> result = database.query(new OSQLSynchQuery<OGraphElement>(
+				"select out[in.@class = 'GraphCar'].in from V where name = 'Tom'"));
+		Assert.assertEquals(result.size(), 1);
+
+		result = database.query(new OSQLSynchQuery<OGraphElement>("select out[in.brand = 'Ferrari'].in from V where name = 'Tom'"));
+		Assert.assertEquals(result.size(), 1);
 
 		database.close();
 	}

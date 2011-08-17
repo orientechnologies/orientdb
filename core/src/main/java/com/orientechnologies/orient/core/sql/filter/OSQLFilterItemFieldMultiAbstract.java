@@ -20,6 +20,7 @@ import java.util.List;
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 
 /**
  * Represents one or more object fields as value in the query condition.
@@ -37,7 +38,7 @@ public abstract class OSQLFilterItemFieldMultiAbstract extends OSQLFilterItemAbs
 
 	public Object getValue(final ORecordInternal<?> iRecord) {
 		if (names.size() == 1)
-			return transformValue(iRecord.getDatabase(), getRecordAttribute(iRecord.getDatabase(), iRecord, names.get(0)));
+			return transformValue(iRecord.getDatabase(), ODocumentHelper.getIdentifiableValue(iRecord, names.get(0)));
 
 		Object[] values = ((ODocument) iRecord).fieldValues();
 

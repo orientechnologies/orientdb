@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -70,7 +71,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 					rid = value;
 				else if ("1".equals(pairs[0]))
 					className = value;
-				else if (pairs[0].startsWith("@class"))
+				else if (pairs[0].startsWith(ODocumentHelper.ATTRIBUTE_CLASS))
 					className = value;
 				else if (pairs[0].startsWith("@") || pairs[0].equals("id"))
 					continue;

@@ -25,11 +25,9 @@ import java.util.Map;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -49,90 +47,52 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 	protected List<OPair<Integer, List<String>>>	operationsChain	= null;
 
 	public OSQLFilterItemAbstract(final OCommandToParse iQueryToParse, final String iText) {
-		final int beginParenthesis = iText.indexOf('(');
-		int separatorPos = iText.indexOf(OSQLFilterFieldOperator.CHAIN_SEPARATOR);
+		final List<String> parts = OStringSerializerHelper.smartSplit(iText, '.');
 
-		if (beginParenthesis > -1 && separatorPos > -1 && separatorPos > beginParenthesis) {
-			// FUNCTION: IGNORE PARAMETERS
-			final List<String> functionParams = new ArrayList<String>();
-			final int endParenthesis = OStringSerializerHelper.getParameters(iText, beginParenthesis, functionParams) - 1;
+		setRoot(iQueryToParse, parts.get(0));
 
-			if (endParenthesis > separatorPos)
-				// RECOMPITE THE SEPARATOR POSITION
-				separatorPos = iText.indexOf(OSQLFilterFieldOperator.CHAIN_SEPARATOR, endParenthesis);
-		}
+		if (parts.size() > 1) {
+			operationsChain = new ArrayList<OPair<Integer, List<String>>>();
 
-		if (separatorPos > -1) {
 			// GET ALL SPECIAL OPERATIONS
-			setRoot(iQueryToParse, iText.substring(0, separatorPos));
+			for (int i = 1; i < parts.size(); ++i) {
+				String part = parts.get(i);
+				String partUpperCase = part.toUpperCase();
 
-			String part = iText;
-			String partUpperCase = part.toUpperCase();
-			boolean operatorFound;
+				if (part.indexOf('(') > -1) {
+					boolean operatorFound = false;
+					for (OSQLFilterFieldOperator op : OSQLFilterFieldOperator.OPERATORS)
+						if (partUpperCase.startsWith(op.keyword + "(")) {
+							// OPERATOR MATCH
+							final List<String> arguments;
 
-			while (separatorPos > -1) {
-				part = part.substring(separatorPos + OSQLFilterFieldOperator.CHAIN_SEPARATOR.length());
-				partUpperCase = partUpperCase.substring(separatorPos + OSQLFilterFieldOperator.CHAIN_SEPARATOR.length());
+							if (op.minArguments > 0) {
+								arguments = OStringSerializerHelper.getParameters(part);
+								if (arguments.size() < op.minArguments || arguments.size() > op.maxArguments)
+									throw new OQueryParsingException(iQueryToParse.text, "Syntax error: field operator '" + op.keyword + "' needs "
+											+ (op.minArguments == op.maxArguments ? op.minArguments : op.minArguments + "-" + op.maxArguments)
+											+ " argument(s) while has been received " + arguments.size(), 0);
+							} else
+								arguments = null;
 
-				operatorFound = false;
-				for (OSQLFilterFieldOperator op : OSQLFilterFieldOperator.OPERATORS)
-					if (partUpperCase.startsWith(op.keyword + "(")) {
-						// OPERATOR MATCH
-						final List<String> arguments;
+							// SPECIAL OPERATION FOUND: ADD IT IN TO THE CHAIN
+							operationsChain.add(new OPair<Integer, List<String>>(op.id, arguments));
+							operatorFound = true;
+							break;
+						}
 
-						if (op.minArguments > 0) {
-							arguments = OStringSerializerHelper.getParameters(part);
-							if (arguments.size() < op.minArguments || arguments.size() > op.maxArguments)
-								throw new OQueryParsingException(iQueryToParse.text, "Syntax error: field operator '" + op.keyword + "' needs "
-										+ (op.minArguments == op.maxArguments ? op.minArguments : op.minArguments + "-" + op.maxArguments)
-										+ " argument(s) while has been received " + arguments.size(), iQueryToParse.currentPos + separatorPos);
-						} else
-							arguments = null;
-
-						// SPECIAL OPERATION FOUND: ADD IT IN TO THE CHAIN
-						if (operationsChain == null)
-							operationsChain = new ArrayList<OPair<Integer, List<String>>>();
-
-						operationsChain.add(new OPair<Integer, List<String>>(op.id, arguments));
-
-						separatorPos = partUpperCase.indexOf(OStringSerializerHelper.PARENTHESIS_END)
-								+ OSQLFilterFieldOperator.CHAIN_SEPARATOR.length();
-						operatorFound = true;
-						break;
-					}
-
-				if (!operatorFound) {
-					separatorPos = partUpperCase.indexOf(OSQLFilterFieldOperator.CHAIN_SEPARATOR, 0);
-
-					// CHECK IF IT'S A FIELD
-					int posOpenBrace = part.indexOf('(');
-					if (posOpenBrace == -1 || posOpenBrace > separatorPos && separatorPos > -1) {
-						// YES, SEEMS A FIELD
-						String chainedFieldName = separatorPos > -1 ? part.substring(0, separatorPos) : part;
-
-						if (operationsChain == null)
-							operationsChain = new ArrayList<OPair<Integer, List<String>>>();
-
-						final List<String> list = new ArrayList<String>();
-						list.add(chainedFieldName);
-						if (chainedFieldName.charAt(0) == '@')
-							operationsChain.add(new OPair<Integer, List<String>>(OSQLFilterFieldOperator.ATTRIB.id, list));
-						else
-							operationsChain.add(new OPair<Integer, List<String>>(OSQLFilterFieldOperator.FIELD.id, list));
-					} else
+					if (!operatorFound)
 						// ERROR: OPERATOR NOT FOUND OR MISPELLED
 						throw new OQueryParsingException(iQueryToParse.text,
 								"Syntax error: field operator not recognized between the supported ones: "
-										+ Arrays.toString(OSQLFilterFieldOperator.OPERATORS), iQueryToParse.currentPos + separatorPos);
+										+ Arrays.toString(OSQLFilterFieldOperator.OPERATORS), 0);
+				} else {
+					final List<String> list = new ArrayList<String>();
+					list.add(part);
+					operationsChain.add(new OPair<Integer, List<String>>(OSQLFilterFieldOperator.FIELD.id, list));
 				}
-
-				if (separatorPos >= partUpperCase.length())
-					return;
-
-				separatorPos = partUpperCase.indexOf(OSQLFilterFieldOperator.CHAIN_SEPARATOR, separatorPos);
 			}
-		} else
-			setRoot(iQueryToParse, iText);
+		}
 	}
 
 	public abstract String getRoot();
@@ -164,10 +124,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 					else if (operator == OSQLFilterFieldOperator.TRIM.id)
 						ioResult = ioResult != null ? ioResult.toString().trim() : null;
 
-					else if (operator == OSQLFilterFieldOperator.ATTRIB.id) {
-						ioResult = getRecordAttribute(iDatabase, (OIdentifiable) ioResult, op.value.get(0));
-
-					} else if (operator == OSQLFilterFieldOperator.FIELD.id) {
+					else if (operator == OSQLFilterFieldOperator.FIELD.id) {
 						if (ioResult != null) {
 
 							if (ioResult instanceof String) {
@@ -189,9 +146,6 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 										if (o instanceof ODocument)
 											try {
 												ODocument doc = (ODocument) o;
-												if (doc.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
-													doc.load();
-
 												Object v = doc.rawField(op.value.get(0));
 
 												if (v != null)
@@ -204,9 +158,6 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 								} else if (ioResult instanceof ODocument)
 									try {
 										ODocument doc = (ODocument) ioResult;
-										if (doc.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
-											doc.load();
-
 										ioResult = ioResult != null ? doc.rawField(op.value.get(0)) : null;
 									} catch (ORecordNotFoundException e) {
 										ioResult = null;
@@ -306,47 +257,6 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 		}
 
 		return ioResult;
-	}
-
-	protected Object getRecordAttribute(final ODatabaseRecord iDatabase, final OIdentifiable iIdentifiable, final String iFieldName) {
-		Object result = null;
-
-		if (iFieldName.charAt(0) == '@') {
-			if (iFieldName.equalsIgnoreCase("@THIS"))
-				result = iIdentifiable;
-
-			else if (iFieldName.equalsIgnoreCase("@RID"))
-				result = iIdentifiable.getIdentity();
-
-			else if (iFieldName.equalsIgnoreCase("@VERSION")) {
-				result = iDatabase.getRecord(iIdentifiable).getVersion();
-
-			} else if (iFieldName.equalsIgnoreCase("@CLASS")) {
-				final ORecord<?> record = iDatabase.getRecord(iIdentifiable);
-				if (record instanceof ODocument)
-					result = ((ODocument) record).getClassName();
-
-			} else if (iFieldName.equalsIgnoreCase("@TYPE"))
-				result = Orient.instance().getRecordFactoryManager().getRecordTypeName(iDatabase.getRecord(iIdentifiable).getRecordType());
-
-			else if (iFieldName.equalsIgnoreCase("@FIELDS")) {
-				final ORecord<?> record = iDatabase.getRecord(iIdentifiable);
-				if (record instanceof ODocument)
-					result = ((ODocument) record).fieldNames();
-			}
-
-			else if (iFieldName.equalsIgnoreCase("@SIZE")) {
-				final byte[] stream = iDatabase.getRecord(iIdentifiable).toStream();
-				if (stream != null)
-					result = stream.length;
-			}
-		} else {
-			final ORecord<?> record = iIdentifiable.getRecord();
-			if (record instanceof ODocument)
-				result = ((ODocument) record).rawField(iFieldName);
-		}
-
-		return result;
 	}
 
 	public boolean hasChainOperators() {

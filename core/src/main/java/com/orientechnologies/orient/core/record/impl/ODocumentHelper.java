@@ -31,6 +31,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
@@ -47,6 +48,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 
@@ -57,6 +59,14 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
  * 
  */
 public class ODocumentHelper {
+	public static final String	ATTRIBUTE_THIS		= "@this";
+	public static final String	ATTRIBUTE_RID			= "@rid";
+	public static final String	ATTRIBUTE_VERSION	= "@version";
+	public static final String	ATTRIBUTE_CLASS		= "@class";
+	public static final String	ATTRIBUTE_TYPE		= "@type";
+	public static final String	ATTRIBUTE_SIZE		= "@size";
+	public static final String	ATTRIBUTE_FIELDS	= "@fields";
+
 	public static void sort(List<OIdentifiable> ioResultSet, List<OPair<String, String>> iOrderCriteria) {
 		Collections.sort(ioResultSet, new ODocumentComparator(iOrderCriteria));
 	}
@@ -179,11 +189,12 @@ public class ODocumentHelper {
 
 	@SuppressWarnings("unchecked")
 	public static <RET> RET getFieldValue(ODocument current, final String iFieldName) {
-		int separatorPos = 0;
 
 		final int fieldNameLength = iFieldName.length();
 		Object value = null;
 
+		int beginPos = 0;
+		int separatorPos = 0;
 		do {
 			char separator = ' ';
 			for (; separatorPos < fieldNameLength; ++separatorPos) {
@@ -194,13 +205,13 @@ public class ODocumentHelper {
 
 			final String fieldName;
 			if (separatorPos < fieldNameLength)
-				fieldName = iFieldName.substring(0, separatorPos);
+				fieldName = iFieldName.substring(beginPos, separatorPos);
 			else
-				fieldName = iFieldName;
+				fieldName = iFieldName.substring(beginPos);
 
 			if (separator == '.') {
 				// GET THE LINKED OBJECT IF ANY
-				value = current._fieldValues.get(fieldName);
+				value = getIdentifiableValue(current, fieldName);
 
 				if (value == null || !(value instanceof ODocument))
 					// IGNORE IT BY RETURNING NULL
@@ -212,7 +223,7 @@ public class ODocumentHelper {
 					current.reload();
 			} else if (separator == '[') {
 				if (value == null)
-					value = current._fieldValues.get(fieldName);
+					value = getIdentifiableValue(current, fieldName);
 
 				if (value == null)
 					return null;
@@ -222,7 +233,7 @@ public class ODocumentHelper {
 					throw new IllegalArgumentException("Missed closed ']'");
 
 				final String index = OStringSerializerHelper.getStringContent(iFieldName.substring(separatorPos + 1, end));
-				separatorPos = end + 1;
+				separatorPos = end;
 
 				if (value instanceof ODocument) {
 					final List<String> indexParts = OStringSerializerHelper.smartSplit(index, ',');
@@ -256,7 +267,7 @@ public class ODocumentHelper {
 
 					final List<String> indexParts = OStringSerializerHelper.smartSplit(index, ',');
 					final List<String> indexRanges = OStringSerializerHelper.smartSplit(index, '-');
-					final List<String> indexCondition = OStringSerializerHelper.smartSplit(index, '=');
+					final List<String> indexCondition = OStringSerializerHelper.smartSplit(index, '=', ' ');
 
 					if (indexParts.size() == 1 && indexRanges.size() == 1 && indexCondition.size() == 1) {
 						// SINGLE VALUE
@@ -301,13 +312,11 @@ public class ODocumentHelper {
 						for (Object v : (Collection<Object>) value) {
 							if (v instanceof ODocument) {
 								final ODocument doc = (ODocument) v;
-								if (doc.containsField(conditionFieldName)) {
-									Object fieldValue = doc.field(conditionFieldName);
+								Object fieldValue = doc.field(conditionFieldName);
 
-									fieldValue = OType.convert(fieldValue, conditionFieldValue.getClass());
-									if (fieldValue != null && fieldValue.equals(conditionFieldValue)) {
-										values.add(doc);
-									}
+								fieldValue = OType.convert(fieldValue, conditionFieldValue.getClass());
+								if (fieldValue != null && fieldValue.equals(conditionFieldValue)) {
+									values.add(doc);
 								}
 							}
 						}
@@ -324,11 +333,46 @@ public class ODocumentHelper {
 					}
 				}
 			} else
-				value = current._fieldValues.get(fieldName);
+				value = getIdentifiableValue(current, fieldName);
 
+			beginPos = ++separatorPos;
 		} while (separatorPos < fieldNameLength);
 
 		return (RET) value;
+	}
+
+	public static Object getIdentifiableValue(final OIdentifiable iCurrent, final String iFieldName) {
+		if (iFieldName == null || iFieldName.length() == 0)
+			return null;
+
+		final char begin = iFieldName.charAt(0);
+		if (begin == '@') {
+			// RETURN AN ATTRIBUTE
+			if (iFieldName.equalsIgnoreCase(ATTRIBUTE_THIS))
+				return iCurrent;
+			else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RID))
+				return iCurrent.getIdentity();
+			else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_VERSION))
+				return ((ODocument) iCurrent.getRecord()).getVersion();
+			else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_CLASS))
+				return ((ODocument) iCurrent.getRecord()).getClassName();
+			else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_TYPE))
+				return Orient.instance().getRecordFactoryManager()
+						.getRecordTypeName(((ORecordInternal<?>) iCurrent.getRecord()).getRecordType());
+			else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_TYPE))
+				return Orient.instance().getRecordFactoryManager()
+						.getRecordTypeName(((ORecordInternal<?>) iCurrent.getRecord()).getRecordType());
+			else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_SIZE)) {
+				final byte[] stream = ((ORecordInternal<?>) iCurrent.getRecord()).toStream();
+				if (stream != null)
+					return stream.length;
+			} else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_FIELDS))
+				return ((ODocument) iCurrent.getRecord()).fieldNames();
+
+			throw new IllegalArgumentException("Document attribute '" + iFieldName + "' not supported");
+		} else
+			// RETURN A FIELD
+			return ((ODocument) iCurrent.getRecord())._fieldValues.get(iFieldName);
 	}
 
 	@SuppressWarnings("unchecked")
