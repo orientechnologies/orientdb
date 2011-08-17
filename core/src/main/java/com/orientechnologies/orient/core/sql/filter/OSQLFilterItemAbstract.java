@@ -170,32 +170,50 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 					} else if (operator == OSQLFilterFieldOperator.FIELD.id) {
 						if (ioResult != null) {
 
-							ODocument record;
 							if (ioResult instanceof String) {
 								try {
-									record = new ODocument(iDatabase, new ORecordId((String) ioResult));
+									ioResult = new ODocument(iDatabase, new ORecordId((String) ioResult));
 								} catch (Exception e) {
 									OLogManager.instance().error(this, "Error on reading rid with value '%s'", null, ioResult);
-									record = null;
-								}
-							} else if (ioResult instanceof ORID)
-								record = new ODocument(iDatabase, (ORID) ioResult);
-							else if (ioResult instanceof ORecord<?>)
-								record = (ODocument) ioResult;
-							else
-								throw new IllegalArgumentException("SQL Item " + getRoot() + " is not a ODocument object");
-
-							if (record == null)
-								ioResult = null;
-							else
-								try {
-									if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
-										record.load();
-
-									ioResult = ioResult != null ? record.rawField(op.value.get(0)) : null;
-								} catch (ORecordNotFoundException e) {
 									ioResult = null;
 								}
+							} else if (ioResult instanceof ORID)
+								ioResult = new ODocument(iDatabase, (ORID) ioResult);
+							else if (ioResult instanceof ORecord<?>)
+								ioResult = (ODocument) ioResult;
+
+							if (ioResult != null) {
+								if (OMultiValue.isMultiValue(ioResult)) {
+									final List<Object> newColl = new ArrayList<Object>();
+									for (Object o : OMultiValue.getMultiValueIterable(ioResult)) {
+										if (o instanceof ODocument)
+											try {
+												ODocument doc = (ODocument) o;
+												if (doc.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
+													doc.load();
+
+												Object v = doc.rawField(op.value.get(0));
+
+												if (v != null)
+													newColl.add(v);
+											} catch (ORecordNotFoundException e) {
+												ioResult = null;
+											}
+									}
+									ioResult = newColl;
+								} else if (ioResult instanceof ODocument)
+									try {
+										ODocument doc = (ODocument) ioResult;
+										if (doc.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
+											doc.load();
+
+										ioResult = ioResult != null ? doc.rawField(op.value.get(0)) : null;
+									} catch (ORecordNotFoundException e) {
+										ioResult = null;
+									}
+								else
+									ioResult = null;
+							}
 						}
 
 						// OTHER OPERATORS
