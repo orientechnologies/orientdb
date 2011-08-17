@@ -92,7 +92,7 @@ public class OSQLHelper {
 
 		if (iValue.startsWith("'") && iValue.endsWith("'") || iValue.startsWith("\"") && iValue.endsWith("\""))
 			// STRING
-			fieldValue = stringContent(iValue);
+			fieldValue = OStringSerializerHelper.getStringContent(iValue);
 		else if (iValue.charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN
 				&& iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.COLLECTION_END) {
 			// COLLECTION/ARRAY
@@ -185,12 +185,6 @@ public class OSQLHelper {
 
 		// PARSE AS FIELD
 		return new OSQLFilterItemField(iCommand, iWord);
-	}
-
-	public static String stringContent(final String iContent) {
-		if (iContent.length() > 1 && iContent.startsWith("'") || iContent.startsWith("\""))
-			return iContent.substring(1, iContent.length() - 1);
-		return iContent;
 	}
 
 	public static Object getFunction(final ODatabaseRecord database, final OCommandToParse iCommand, final String iWord) {

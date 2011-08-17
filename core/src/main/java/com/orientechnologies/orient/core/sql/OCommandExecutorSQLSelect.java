@@ -595,7 +595,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 					fieldName = pos > -1 ? projection.substring(0, pos) : projection;
 
-					fieldName = OSQLHelper.stringContent(fieldName);
+					fieldName = OStringSerializerHelper.getStringContent(fieldName);
 
 					// FIND A UNIQUE NAME BY ADDING A COUNTER
 					for (int fieldIndex = 2; projections.containsKey(fieldName); ++fieldIndex) {
