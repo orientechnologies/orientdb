@@ -110,12 +110,18 @@ public class GraphDatabaseTest {
 
 		ODocument tom = (ODocument) database.createVertex().field("name", "Tom").save();
 		ODocument ferrari = (ODocument) database.createVertex("GraphCar").field("brand", "Ferrari").save();
+		ODocument maserati = (ODocument) database.createVertex("GraphCar").field("brand", "Maserati").save();
 		ODocument porsche = (ODocument) database.createVertex("GraphCar").field("brand", "Porsche").save();
-		database.createEdge(tom, ferrari).save();
-		database.createEdge(tom, porsche).save();
+		database.createEdge(tom, ferrari).field("label", "drives").save();
+		database.createEdge(tom, maserati).field("label", "drives").save();
+		database.createEdge(tom, porsche).field("label", "owns").save();
 
 		List<OGraphElement> result = database.query(new OSQLSynchQuery<OGraphElement>(
 				"select out[in.@class = 'GraphCar'].in from V where name = 'Tom'"));
+		Assert.assertEquals(result.size(), 1);
+
+		result = database.query(new OSQLSynchQuery<OGraphElement>(
+				"select out[label='drives'][in.brand = 'Ferrari'].in from V where name = 'Tom'"));
 		Assert.assertEquals(result.size(), 1);
 
 		result = database.query(new OSQLSynchQuery<OGraphElement>("select out[in.brand = 'Ferrari'].in from V where name = 'Tom'"));
