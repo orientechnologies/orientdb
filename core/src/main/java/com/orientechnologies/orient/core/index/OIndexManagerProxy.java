@@ -47,24 +47,24 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
 		delegate.create();
 	}
 
-	public Collection<? extends OIndex> getIndexes() {
+	public Collection<? extends OIndex<?>> getIndexes() {
 		return delegate.getIndexes();
 	}
 
-	public OIndex getIndex(String iName) {
+	public OIndex<?> getIndex(String iName) {
 		return delegate.getIndex(iName);
 	}
 
-	public OIndex getIndex(ORID iRID) {
+	public OIndex<?> getIndex(ORID iRID) {
 		return delegate.getIndex(iRID);
 	}
 
-	public OIndex createIndex(String iName, String iType, final OType iKeyType, int[] iClusterIdsToIndex, OIndexCallback iCallback,
+	public OIndex<?> createIndex(String iName, String iType, final OType iKeyType, int[] iClusterIdsToIndex, OIndexCallback iCallback,
 			OProgressListener iProgressListener, boolean iAutomatic) {
 		return delegate.createIndex(iName, iType, iKeyType, iClusterIdsToIndex, iCallback, iProgressListener, iAutomatic);
 	}
 
-	public OIndex getIndexInternal(final String iName) {
+	public OIndex<?> getIndexInternal(final String iName) {
 		return ((OIndexManagerShared) delegate).getIndexInternal(iName);
 	}
 

@@ -706,7 +706,7 @@ public class IndexTest {
 	public void LongTypes() {
 		database.getMetadata().getSchema().getClass("Profile").createProperty("hash", OType.LONG).createIndex(INDEX_TYPE.UNIQUE);
 
-		OIndex<OIdentifiable> idx = database.getMetadata().getIndexManager().getIndex("Profile.hash");
+		OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) database.getMetadata().getIndexManager().getIndex("Profile.hash");
 
 		for (int i = 0; i < 5; i++) {
 			Profile profile = new Profile("HashTest1").setHash(100l + i);

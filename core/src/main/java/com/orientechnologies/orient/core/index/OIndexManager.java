@@ -32,13 +32,13 @@ public interface OIndexManager {
 
 	public void create();
 
-	public Collection<? extends OIndex> getIndexes();
+	public Collection<? extends OIndex<?>> getIndexes();
 
-	public OIndex getIndex(final String iName);
+	public OIndex<?> getIndex(final String iName);
 
-	public OIndex getIndex(final ORID iRID);
+	public OIndex<?> getIndex(final ORID iRID);
 
-	public OIndex createIndex(final String iName, final String iType, final OType iKeyType, final int[] iClusterIdsToIndex,
+	public OIndex<?> createIndex(final String iName, final String iType, final OType iKeyType, final int[] iClusterIdsToIndex,
 			OIndexCallback iCallback, final OProgressListener iProgressListener, final boolean iAutomatic);
 
 	public OIndexManager dropIndex(final String iIndexName);

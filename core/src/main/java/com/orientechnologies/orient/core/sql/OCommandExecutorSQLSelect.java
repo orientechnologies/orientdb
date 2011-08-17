@@ -108,9 +108,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	private static final class OSearchInIndexTriple {
 		private OQueryOperator	indexOperator;
 		private Object					key;
-		private OIndex					index;
+		private OIndex<?>				index;
 
-		private OSearchInIndexTriple(final OQueryOperator indexOperator, final Object key, final OIndex index) {
+		private OSearchInIndexTriple(final OQueryOperator indexOperator, final Object key, final OIndex<?> index) {
 			this.indexOperator = indexOperator;
 			this.key = key;
 			this.index = index;
@@ -120,7 +120,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	/**
 	 * Compile the filter conditions only the first time.
 	 */
-	@SuppressWarnings("unchecked")
 	public OCommandExecutorSQLSelect parse(final OCommandRequestText iRequest) {
 		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
@@ -386,7 +385,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			return false;
 
 		for (OSearchInIndexTriple indexTriple : searchInIndexTriples) {
-			final OIndex idx = indexTriple.index.getInternal();
+			final OIndex<?> idx = indexTriple.index.getInternal();
 			final OQueryOperator operator = indexTriple.indexOperator;
 			final Object key = indexTriple.key;
 
@@ -482,7 +481,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 		if (prop != null && prop.isIndexed()) {
 			final Object origValue = iCondition.getLeft() == iItem ? iCondition.getRight() : iCondition.getLeft();
-			final OIndex underlyingIndex = prop.getIndex().getUnderlying();
+			final OIndex<?> underlyingIndex = prop.getIndex().getUnderlying();
 
 			if (iCondition.getOperator() instanceof OQueryOperatorBetween) {
 				iSearchInIndexTriples.add(new OSearchInIndexTriple(iCondition.getOperator(), origValue, underlyingIndex));
@@ -788,7 +787,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	}
 
 	private void searchInIndex() {
-		final OIndex<Object> index = database.getMetadata().getIndexManager().getIndex(compiledFilter.getTargetIndex());
+		final OIndex<Object> index = (OIndex<Object>) database.getMetadata().getIndexManager()
+				.getIndex(compiledFilter.getTargetIndex());
 		if (index == null)
 			throw new OCommandExecutionException("Target index '" + compiledFilter.getTargetIndex() + "' not found");
 
