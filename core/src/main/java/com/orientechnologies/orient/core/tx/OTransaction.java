@@ -69,7 +69,7 @@ public interface OTransaction {
 
 	public ODocument getIndexChanges();
 
-	public void addIndexEntry(OIndex delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iStatus,
+	public void addIndexEntry(OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iStatus,
 			final Object iKey, final OIdentifiable iValue);
 
 	public void clearIndexEntries();

@@ -28,7 +28,7 @@ public abstract class OTransactionAbstract implements OTransaction {
 	protected final ODatabaseRecordTx	database;
 	protected TXSTATUS								status	= TXSTATUS.INVALID;
 
-	protected OTransactionAbstract(ODatabaseRecordTx iDatabase) {
+	protected OTransactionAbstract(final ODatabaseRecordTx iDatabase) {
 		database = iDatabase;
 	}
 

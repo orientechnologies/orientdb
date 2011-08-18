@@ -23,8 +23,6 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.client.remote.OEngineRemote;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectPool;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -43,8 +41,6 @@ public class ObjectTreeTest {
 
 	@Parameters(value = "url")
 	public ObjectTreeTest(String iURL) {
-		Orient.instance().registerEngine(new OEngineRemote());
-
 		url = iURL;
 
 		database = new ODatabaseObjectTx(iURL);

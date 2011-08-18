@@ -21,8 +21,6 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.client.remote.OEngineRemote;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -38,7 +36,6 @@ public class TransactionAtomicTest {
 
 	@Parameters(value = "url")
 	public TransactionAtomicTest(String iURL) {
-		Orient.instance().registerEngine(new OEngineRemote());
 		url = iURL;
 	}
 

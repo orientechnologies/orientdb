@@ -220,7 +220,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 	/**
 	 * Bufferizes index changes to be flushed at commit time.
 	 */
-	public void addIndexEntry(final OIndex delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iOperation,
+	public void addIndexEntry(final OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iOperation,
 			final Object iKey, final OIdentifiable iValue) {
 		OTransactionIndexChanges indexEntry = indexEntries.get(iIndexName);
 		if (indexEntry == null) {

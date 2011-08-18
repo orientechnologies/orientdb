@@ -760,7 +760,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 			int totalIndexes = 0;
 			long totalRecords = 0;
-			for (OIndex index : currentDatabase.getMetadata().getIndexManager().getIndexes()) {
+			for (OIndex<?> index : currentDatabase.getMetadata().getIndexManager().getIndexes()) {
 				try {
 					out.printf(" %-45s| %-10s | %1s  |%10d |\n", index.getName(), index.getType(), index.isAutomatic() ? "Y" : "N",
 							index.getSize());

@@ -98,7 +98,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 			return recordCount;
 		} else {
 			// AGAINST INDEXES
-			final OIndex index = database.getMetadata().getIndexManager().getIndex(indexName);
+			final OIndex<?> index = database.getMetadata().getIndexManager().getIndex(indexName);
 			if (index == null)
 				throw new OCommandExecutionException("Target index '" + indexName + "' not found");
 

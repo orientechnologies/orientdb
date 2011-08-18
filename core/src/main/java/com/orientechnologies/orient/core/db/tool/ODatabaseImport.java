@@ -144,7 +144,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		database.getMetadata().getIndexManager().reload();
 
 		for (Entry<OProperty, String> e : propertyIndexes.entrySet()) {
-			final OIndex idx = database.getMetadata().getIndexManager().getIndex(e.getValue());
+			final OIndex<?> idx = database.getMetadata().getIndexManager().getIndex(e.getValue());
 			if (idx != null) {
 				idx.setCallback(e.getKey().getIndex());
 
@@ -221,7 +221,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
 			listener.onMessage("\n- Index '" + indexName + "'...");
 
-			final OIndex index = database.getMetadata().getIndexManager().getIndex(indexName);
+			final OIndex<?> index = database.getMetadata().getIndexManager().getIndex(indexName);
 
 			long tot = 0;
 

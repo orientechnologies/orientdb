@@ -72,7 +72,7 @@ public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLPermissi
 
 		if (name.equals("*")) {
 			long totalIndexed = 0;
-			for (OIndex idx : database.getMetadata().getIndexManager().getIndexes()) {
+			for (OIndex<?> idx : database.getMetadata().getIndexManager().getIndexes()) {
 				if (idx.isAutomatic())
 					totalIndexed += idx.rebuild();
 			}
@@ -81,7 +81,7 @@ public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLPermissi
 
 		} else {
 
-			final OIndex idx = database.getMetadata().getIndexManager().getIndex(name);
+			final OIndex<?> idx = database.getMetadata().getIndexManager().getIndex(name);
 			if (idx == null)
 				throw new OCommandExecutionException("Index '" + name + "' not found");
 

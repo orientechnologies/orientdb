@@ -21,8 +21,6 @@ import java.util.List;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
-import com.orientechnologies.orient.client.remote.OEngineRemote;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -41,7 +39,6 @@ public class SQLSynchQuerySpeedTest extends SpeedTestMonoThread implements OComm
 
 	public SQLSynchQuerySpeedTest() {
 		super(1);
-		Orient.instance().registerEngine(new OEngineRemote());
 		database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
 
 		System.out.println("Finding Accounts between " + database.countClass("Profile") + " records");

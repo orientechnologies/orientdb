@@ -223,13 +223,13 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 		final List<String> involvedIndexes = currentTx.getInvolvedIndexes();
 
 		// LOCK INVOLVED INDEXES
-		List<OIndexMVRBTreeAbstract> lockedIndexes = null;
+		List<OIndexMVRBTreeAbstract<?>> lockedIndexes = null;
 		try {
 			if (involvedIndexes != null)
 				for (String indexName : involvedIndexes) {
-					final OIndexMVRBTreeAbstract index = (OIndexMVRBTreeAbstract) getMetadata().getIndexManager().getIndexInternal(indexName);
+					final OIndexMVRBTreeAbstract<?> index = (OIndexMVRBTreeAbstract<?>) getMetadata().getIndexManager().getIndexInternal(indexName);
 					if (lockedIndexes == null)
-						lockedIndexes = new ArrayList<OIndexMVRBTreeAbstract>();
+						lockedIndexes = new ArrayList<OIndexMVRBTreeAbstract<?>>();
 
 					index.acquireExclusiveLock();
 					lockedIndexes.add(index);
@@ -241,14 +241,14 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 			final ODocument indexEntries = currentTx.getIndexChanges();
 			if (indexEntries != null) {
 				for (Entry<String, Object> indexEntry : indexEntries) {
-					final OIndex index = getMetadata().getIndexManager().getIndexInternal(indexEntry.getKey());
+					final OIndex<?> index = getMetadata().getIndexManager().getIndexInternal(indexEntry.getKey());
 					index.commit((ODocument) indexEntry.getValue());
 				}
 			}
 		} finally {
 			// RELEASE INDEX LOCKS IF ANY
 			if (lockedIndexes != null)
-				for (OIndexMVRBTreeAbstract index : lockedIndexes) {
+				for (OIndexMVRBTreeAbstract<?> index : lockedIndexes) {
 					index.releaseExclusiveLock();
 				}
 		}

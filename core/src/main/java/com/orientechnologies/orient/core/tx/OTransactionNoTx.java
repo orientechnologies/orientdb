@@ -117,7 +117,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
 		return null;
 	}
 
-	public void addIndexEntry(final OIndex delegate, final String iIndexName, final OPERATION iStatus, final Object iKey,
+	public void addIndexEntry(final OIndex<?> delegate, final String iIndexName, final OPERATION iStatus, final Object iKey,
 			final OIdentifiable iValue) {
 		switch (iStatus) {
 		case CLEAR:

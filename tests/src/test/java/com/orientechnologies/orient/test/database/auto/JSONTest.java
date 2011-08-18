@@ -24,8 +24,6 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.client.remote.OEngineRemote;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -200,8 +198,6 @@ public class JSONTest {
 
 	@Test
 	public void testFetchedJson() {
-		Orient.instance().registerEngine(new OEngineRemote());
-
 		ODatabaseObjectTx database = new ODatabaseObjectTx(url);
 		database.open("admin", "admin");
 		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain");

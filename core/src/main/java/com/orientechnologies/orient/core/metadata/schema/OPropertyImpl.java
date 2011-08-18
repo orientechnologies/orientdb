@@ -132,7 +132,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		return index;
 	}
 
-	public OPropertyIndex setIndex(final OIndex iIndex) {
+	public OPropertyIndex setIndex(final OIndex<?> iIndex) {
 		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		final String cmd = String.format("alter property %s index %s", getFullName(), iIndex.getIdentity());
 		getDatabase().command(new OCommandSQL(cmd)).execute();
@@ -431,7 +431,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		}
 
 		try {
-			//owner.validateInstances();
+			// owner.validateInstances();
 			saveInternal();
 		} catch (Exception e) {
 			owner.reload();
@@ -521,7 +521,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		if (document.field("linkedType") != null)
 			linkedType = OType.getById(((Integer) document.field("linkedType")).byteValue());
 
-		final OIndex underlyingIndex = getDatabase().getMetadata().getIndexManager().getIndex(getFullName());
+		final OIndex<?> underlyingIndex = getDatabase().getMetadata().getIndexManager().getIndex(getFullName());
 
 		if (underlyingIndex != null)
 			index = new OPropertyIndex(getDatabase(), owner, new String[] { name });

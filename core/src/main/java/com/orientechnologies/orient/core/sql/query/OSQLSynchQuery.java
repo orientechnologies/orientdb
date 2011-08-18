@@ -19,8 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 
 /**
  * SQL synchronous query. When executed the caller wait for the result.
@@ -30,7 +28,7 @@ import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
  * @param <T>
  * @see OSQLAsynchQuery
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "serial" })
 public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> implements OCommandResultListener {
 	protected final List<T>	result	= new ArrayList<T>();
 
@@ -54,9 +52,9 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
 	}
 
 	public boolean result(final Object iRecord) {
-		//database.callbackHooks(TYPE.BEFORE_READ, (OIdentifiable) iRecord);
+		// database.callbackHooks(TYPE.BEFORE_READ, (OIdentifiable) iRecord);
 		result.add((T) iRecord);
-		//database.callbackHooks(TYPE.AFTER_READ, (OIdentifiable) iRecord);
+		// database.callbackHooks(TYPE.AFTER_READ, (OIdentifiable) iRecord);
 
 		return true;
 	}

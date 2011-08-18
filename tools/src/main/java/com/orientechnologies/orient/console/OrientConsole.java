@@ -16,8 +16,6 @@
 package com.orientechnologies.orient.console;
 
 import com.orientechnologies.common.console.OConsoleApplication;
-import com.orientechnologies.orient.client.remote.OEngineRemote;
-import com.orientechnologies.orient.core.Orient;
 
 public abstract class OrientConsole extends OConsoleApplication {
 
@@ -36,7 +34,6 @@ public abstract class OrientConsole extends OConsoleApplication {
 
 	@Override
 	protected void onBefore() {
-		Orient.instance().registerEngine(new OEngineRemote());
 		printApplicationInfo();
 	}
 

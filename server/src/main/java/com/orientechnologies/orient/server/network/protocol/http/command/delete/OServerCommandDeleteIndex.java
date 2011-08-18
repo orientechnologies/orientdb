@@ -37,7 +37,7 @@ public class OServerCommandDeleteIndex extends OServerCommandDocumentAbstract {
 		try {
 			db = getProfiledDatabaseInstance(iRequest);
 
-			final OIndex index = db.getMetadata().getIndexManager().getIndex(urlParts[2]);
+			final OIndex<?> index = db.getMetadata().getIndexManager().getIndex(urlParts[2]);
 			if (index == null)
 				throw new IllegalArgumentException("Index name '" + urlParts[2] + "' not found");
 

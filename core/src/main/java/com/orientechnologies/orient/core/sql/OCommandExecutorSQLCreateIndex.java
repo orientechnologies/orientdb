@@ -101,7 +101,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 		if (name == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 
-		final OIndex idx;
+		final OIndex<?> idx;
 		if (name.indexOf('.') > -1) {
 			// PROPERTY INDEX
 			final String[] parts = name.split("\\.");

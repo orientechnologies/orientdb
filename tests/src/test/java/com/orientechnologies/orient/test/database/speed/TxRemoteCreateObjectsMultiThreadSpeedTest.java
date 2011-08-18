@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
-import com.orientechnologies.orient.client.remote.OEngineRemote;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -35,7 +33,6 @@ public class TxRemoteCreateObjectsMultiThreadSpeedTest extends OrientMultiThread
 
   public TxRemoteCreateObjectsMultiThreadSpeedTest() {
     super(1000000, 10, CreateObjectsThread.class);
-    Orient.instance().registerEngine(new OEngineRemote());
   }
 
   @Override

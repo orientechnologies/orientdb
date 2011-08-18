@@ -19,8 +19,6 @@ import java.util.List;
 
 import org.testng.annotations.Parameters;
 
-import com.orientechnologies.orient.client.remote.OEngineRemote;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.ORecord;
 
 public class OrientTest {
@@ -29,7 +27,6 @@ public class OrientTest {
 	@Parameters(value = "url")
 	public OrientTest(String iURL) {
 		url = iURL;
-		Orient.instance().registerEngine(new OEngineRemote());
 	}
 
 	public static void printRecords(List<? extends ORecord<?>> iRecords) {

@@ -29,10 +29,8 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -64,8 +62,6 @@ public class IndexTest {
 
 	@Parameters(value = "url")
 	public IndexTest(String iURL) {
-		Orient.instance().registerEngine(new OEngineRemote());
-
 		database = new ODatabaseObjectTx(iURL);
 		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain");
 	}

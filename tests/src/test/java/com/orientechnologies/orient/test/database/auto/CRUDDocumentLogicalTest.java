@@ -24,8 +24,6 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.client.remote.OEngineRemote;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -41,7 +39,6 @@ public class CRUDDocumentLogicalTest {
 
 	@Parameters(value = "url")
 	public CRUDDocumentLogicalTest(String iURL) {
-		Orient.instance().registerEngine(new OEngineRemote());
 		database = new ODatabaseDocumentTx(iURL);
 		record = (ODocument) database.newInstance();
 	}

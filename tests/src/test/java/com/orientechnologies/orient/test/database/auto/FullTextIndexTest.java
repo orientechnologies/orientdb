@@ -25,8 +25,6 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.client.remote.OEngineRemote;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -74,8 +72,6 @@ public class FullTextIndexTest {
 
 	@Parameters(value = "url")
 	public FullTextIndexTest(String iURL) {
-		Orient.instance().registerEngine(new OEngineRemote());
-
 		database = new ODatabaseDocumentTx(iURL);
 		words = TEXT.split(" ");
 	}
