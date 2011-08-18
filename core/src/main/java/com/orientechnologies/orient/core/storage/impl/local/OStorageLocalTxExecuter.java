@@ -76,7 +76,7 @@ public class OStorageLocalTxExecuter {
 			iClusterSegment.setPhysicalPosition(iRid.clusterPosition, dataSegment, dataOffset, iRecordType, 0);
 
 			// SAVE INTO THE LOG THE POSITION OF THE RECORD JUST CREATED. IF TX FAILS AT THIS POINT A GHOST RECORD IS CREATED UNTIL DEFRAG
-			txSegment.addLog(OTxSegment.OPERATION_CREATE, iTxId, iClusterSegment.getId(), iRid.clusterPosition, dataOffset, 0);
+			txSegment.addLog(OTxSegment.OPERATION_CREATE, iTxId, iRid.clusterId, iRid.clusterPosition, dataSegment, dataOffset, 0);
 
 		} catch (IOException e) {
 
@@ -122,8 +122,8 @@ public class OStorageLocalTxExecuter {
 			dataSegment.updateRid(ppos.dataPosition, iRid);
 
 			// SAVE INTO THE LOG THE POSITION OF THE OLD RECORD JUST DELETED. IF TX FAILS AT THIS POINT AS ABOVE
-			txSegment.addLog(OTxSegment.OPERATION_UPDATE, iTxId, iRid.clusterId, iRid.clusterPosition, ppos.dataPosition,
-					ppos.version - 1);
+			txSegment.addLog(OTxSegment.OPERATION_UPDATE, iTxId, iRid.clusterId, iRid.clusterPosition, ppos.dataSegment,
+					ppos.dataPosition, ppos.version - 1);
 
 			return ppos.version;
 
@@ -155,13 +155,13 @@ public class OStorageLocalTxExecuter {
 								+ ppos.version + " your=v" + iVersion + ")");
 
 			// SAVE INTO THE LOG THE POSITION OF THE RECORD JUST DELETED
-			txSegment.addLog(OTxSegment.OPERATION_DELETE, iTxId, iClusterSegment.getId(), iPosition, ppos.dataPosition, iVersion);
+			txSegment.addLog(OTxSegment.OPERATION_DELETE, iTxId, iClusterSegment.getId(), iPosition, ppos.dataSegment, ppos.dataPosition,
+					iVersion);
 
 			// DELETE THE RECORD BUT LEAVING THE PPOS INTACT BUT THE VERSION = -1 TO RECOGNIZE THAT THE ENTRY HAS BEEN DELETED. IF TX
-			// FAILS AT THIS POINT CAN BE RECOVERED THANKS TO THE TX-LOG
+			// FAILS AT THIS POINT CAN BE RECOVERED THANKS TO THE TX-LOG. NO CONCURRENT THREAD CAN REUSE THE HOLE CREATED BECAUSE THE
+			// EXCLUSIVE LOCK
 			iClusterSegment.removePhysicalPosition(iPosition, ppos);
-
-			storage.getDataSegment(ppos.dataSegment).deleteRecord(ppos.dataPosition);
 
 		} catch (IOException e) {
 
