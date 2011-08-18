@@ -404,7 +404,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 		checkForLoading();
 		checkForFields();
 
-		return ODocumentHelper.getFieldValue(this, iFieldName);
+		return (RET) ODocumentHelper.getFieldValue(this, iFieldName);
 	}
 
 	/**
