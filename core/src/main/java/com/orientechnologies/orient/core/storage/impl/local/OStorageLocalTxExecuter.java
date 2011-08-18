@@ -65,7 +65,7 @@ public class OStorageLocalTxExecuter {
 		try {
 			// CREATE DATA SEGMENT. IF TX FAILS AT THIS POINT UN-REFERENCED DATA WILL REMAIN UNTIL NEXT DEFRAG
 			final int dataSegment = storage.getDataSegmentForRecord(iClusterSegment, iContent);
-			ODataLocal data = storage.getDataSegment(dataSegment);
+			final ODataLocal data = storage.getDataSegment(dataSegment);
 
 			// REFERENCE IN THE CLUSTER THE DATA JUST CREATED. IF TX FAILS AT THIS POINT AN EMPTY ENTRY IS KEPT UNTIL DEFRAG
 			iRid.clusterPosition = iClusterSegment.addPhysicalPosition(-1, -1, iRecordType);
@@ -158,7 +158,7 @@ public class OStorageLocalTxExecuter {
 			txSegment.addLog(OTxSegment.OPERATION_DELETE, iTxId, iClusterSegment.getId(), iPosition, ppos.dataSegment, ppos.dataPosition,
 					iVersion);
 
-			// DELETE THE RECORD BUT LEAVING THE PPOS INTACT BUT THE VERSION = -1 TO RECOGNIZE THAT THE ENTRY HAS BEEN DELETED. IF TX
+			// DELETE THE RECORD BUT LEAVING THE PPOS INTACT, BUT THE VERSION = -1 TO RECOGNIZE THAT THE ENTRY HAS BEEN DELETED. IF TX
 			// FAILS AT THIS POINT CAN BE RECOVERED THANKS TO THE TX-LOG. NO CONCURRENT THREAD CAN REUSE THE HOLE CREATED BECAUSE THE
 			// EXCLUSIVE LOCK
 			iClusterSegment.removePhysicalPosition(iPosition, ppos);

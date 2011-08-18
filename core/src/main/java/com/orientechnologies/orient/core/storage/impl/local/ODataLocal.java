@@ -517,7 +517,7 @@ public class ODataLocal extends OMultiFileSegment {
 		file.read(pos[1] + RECORD_FIX_SIZE, content, recordSize);
 
 		if (clusterId > -1) {
-			// CHANGE THE POINTMENT OF CLUSTER TO THE NEW POSITION
+			// CHANGE THE POINTMENT OF CLUSTER TO THE NEW POSITION. -1 MEANS TEMP RECORD
 			final OCluster cluster = storage.getClusterById(clusterId);
 			final OPhysicalPosition ppos = cluster.getPhysicalPosition(clusterPosition, new OPhysicalPosition());
 

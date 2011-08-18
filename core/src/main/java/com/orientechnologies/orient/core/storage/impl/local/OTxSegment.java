@@ -23,7 +23,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
@@ -354,7 +353,6 @@ public class OTxSegment extends OSingleFileSegment {
 
 					final int recordVersion = file.readInt(offset);
 
-					// TODO THIS NEEDS TO BE FIXED!
 					recoverTransactionEntry(status, operation, txId, rid, oldDataId, oldDataOffset, recordVersion, ppos);
 					recordsRecovered++;
 
@@ -385,7 +383,7 @@ public class OTxSegment extends OSingleFileSegment {
 	private void recoverTransactionEntry(final byte iStatus, final byte iOperation, final int iTxId, final ORecordId iRid,
 			final int iOldDataId, final long iOldDataOffset, final int iRecordVersion, final OPhysicalPosition ppos) throws IOException {
 
-		final OCluster cluster = storage.getClusterById(iRid.clusterId);
+		final OClusterLocal cluster = (OClusterLocal) storage.getClusterById(iRid.clusterId);
 
 		if (!(cluster instanceof OClusterLocal))
 			return;
@@ -404,23 +402,23 @@ public class OTxSegment extends OSingleFileSegment {
 			cluster.getPhysicalPosition(iRid.clusterPosition, ppos);
 
 			long oldPosition = ppos.dataPosition;
-			int oldSize = storage.getDataSegment(ppos.dataSegment).getRecordSize(ppos.dataPosition);
 
 			// REPLACE THE POSITION AND SIZE OF THE OLD RECORD
 			ppos.dataPosition = iOldDataOffset;
 			ppos.recordSize = storage.getDataSegment(iOldDataId).getRecordSize(iOldDataOffset);
 
 			// UPDATE THE PPOS WITH THE COORDS OF THE OLD RECORD
-			cluster.setPhysicalPosition(iRid.clusterPosition, ppos.dataSegment, iOldDataOffset, ppos.type, --ppos.version);
+			cluster.setPhysicalPosition(iRid.clusterPosition, iOldDataId, iOldDataOffset, ppos.type, --ppos.version);
 			storage.getDataSegment(iOldDataId).updateRid(iOldDataOffset, iRid);
 
 			// CREATE A HOLE ON THE NEW CREATED RECORD
-			storage.getDataSegment(ppos.dataSegment).handleHole(oldPosition, oldSize);
+			storage.getDataSegment(ppos.dataSegment).deleteRecord(oldPosition);
 			break;
 
 		case OPERATION_DELETE:
 			// SAVE VERSION
 			cluster.updateVersion(iRid.clusterPosition, iRecordVersion);
+			cluster.removeHole(iRid.clusterPosition);
 			break;
 		}
 	}

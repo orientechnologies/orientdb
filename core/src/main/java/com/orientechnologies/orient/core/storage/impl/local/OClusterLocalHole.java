@@ -123,7 +123,7 @@ public class OClusterLocalHole extends OSingleFileSegment {
 	 * @return
 	 * @throws IOException
 	 */
-	public boolean removeEntryWithPosition(long iPosition) throws IOException {
+	public boolean removeEntryWithPosition(final long iPosition) throws IOException {
 		// BROWSE IN ASCENDING ORDER UNTIL THE REQUESTED POSITION IS FOUND
 		boolean canShrink = true;
 		for (int pos = getHoles() - 1; pos >= 0; --pos) {

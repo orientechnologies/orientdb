@@ -352,7 +352,7 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 		acquireExclusiveLock();
 		try {
 
-			return holeSegment.removeEntryWithPosition(iPosition);
+			return holeSegment.removeEntryWithPosition(iPosition * RECORD_SIZE);
 
 		} finally {
 			releaseExclusiveLock();
