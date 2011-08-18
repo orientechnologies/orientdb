@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.tx.OTransaction;
  * <code>
  * +--------+--------+---------+---------+----------------+-------------+---------+<br/>
  * | STATUS | OPERAT | TX ID . | CLUSTER | CLUSTER OFFSET | DATA OFFSET | VERSION |<br/>
- * | 1 byte | 1 byte | TX ID . | 2 bytes | 8 bytes ...... | 8 bytes ... | 4 bytes |<br/>
+ * | 1 byte | 1 byte | 4 bytes | 2 bytes | 8 bytes ...... | 8 bytes ... | 4 bytes |<br/>
  * +--------+--------|---------+---------+----------------+-------------|---------+<br/>
  * = 28 bytes
  * </code><br/>
@@ -159,13 +159,12 @@ public class OTxSegment extends OSingleFileSegment {
 				status = file.readByte(offset);
 
 				if (status == STATUS_COMMITTING) {
-					// READ THE REQ-ID
-					offset += OConstants.SIZE_BYTE + OConstants.SIZE_BYTE;
-					txId = file.readInt(offset);
+					// READ THE TX-ID
+					txId = file.readInt(offset + OConstants.SIZE_BYTE + OConstants.SIZE_BYTE);
 
 					if (txId == iTxId) {
 						// CURRENT REQUESTER & TX: CLEAR THE ENTRY BY WRITING THE "FREE" STATUS
-						file.writeByte(i * RECORD_SIZE, STATUS_FREE);
+						file.writeByte(offset, STATUS_FREE);
 						recordFreed++;
 					}
 				}
@@ -211,7 +210,7 @@ public class OTxSegment extends OSingleFileSegment {
 		}
 	}
 
-	public void rollback(OTransaction iTx) throws IOException {
+	public void rollback(final OTransaction iTx) throws IOException {
 		recoverTransaction(iTx.getId());
 	}
 
@@ -248,24 +247,19 @@ public class OTxSegment extends OSingleFileSegment {
 	}
 
 	private Set<Integer> scanForTransactionsToRecover() throws IOException {
-		byte status;
-		int txId;
-
-		int offset;
-
 		// SCAN ALL THE FILE SEARCHING FOR THE TRANSACTIONS TO RECOVER
-		Set<Integer> txToRecover = new HashSet<Integer>();
-		Set<Integer> txToNotRecover = new HashSet<Integer>();
+		final Set<Integer> txToRecover = new HashSet<Integer>();
+		final Set<Integer> txToNotRecover = new HashSet<Integer>();
 
-		int size = (file.getFilledUpTo() / RECORD_SIZE);
+		int size = file.getFilledUpTo() / RECORD_SIZE;
 		for (int i = 0; i < size; ++i) {
-			offset = i * RECORD_SIZE;
+			int offset = i * RECORD_SIZE;
 
-			status = file.readByte(offset);
+			final byte status = file.readByte(offset);
 			offset += OConstants.SIZE_BYTE;
 			offset += OConstants.SIZE_BYTE;
 
-			txId = file.readInt(offset);
+			final int txId = file.readInt(offset);
 
 			switch (status) {
 			case STATUS_FREE:
@@ -310,7 +304,6 @@ public class OTxSegment extends OSingleFileSegment {
 			offset += OConstants.SIZE_BYTE;
 
 			if (status != STATUS_FREE) {
-
 				// DIRTY TX LOG ENTRY
 				final byte operation = file.readByte(offset);
 				offset += OConstants.SIZE_BYTE;
@@ -337,7 +330,7 @@ public class OTxSegment extends OSingleFileSegment {
 					recordsRecovered++;
 
 					// CLEAR THE ENTRY BY WRITING '0'
-					file.writeByte(i * RECORD_SIZE + OConstants.SIZE_SHORT + OConstants.SIZE_INT, STATUS_FREE);
+					file.writeByte(i * RECORD_SIZE, STATUS_FREE);
 				}
 			}
 		}
