@@ -246,7 +246,7 @@ public class OClusterMemory extends OSharedResourceAbstract implements OCluster 
 		}
 	}
 
-	public void setPhysicalPosition(final long iPosition, final int iDataId, final long iDataPosition, final byte iRecordType) {
+	public void setPhysicalPosition(final long iPosition, final int iDataId, final long iDataPosition, final byte iRecordType, int iVersion) {
 		acquireExclusiveLock();
 		try {
 

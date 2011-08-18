@@ -198,7 +198,7 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 	 * 
 	 * @throws IOException
 	 */
-	public void setPhysicalPosition(long iPosition, final int iDataId, final long iDataPosition, final byte iRecordType)
+	public void setPhysicalPosition(long iPosition, final int iDataId, final long iDataPosition, final byte iRecordType, int iVersion)
 			throws IOException {
 		iPosition = iPosition * RECORD_SIZE;
 
@@ -213,6 +213,7 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 			file.writeShort(p, (short) iDataId);
 			file.writeLong(p += OConstants.SIZE_SHORT, iDataPosition);
 			file.writeByte(p += OConstants.SIZE_LONG, iRecordType);
+			file.writeInt(p += OConstants.SIZE_BYTE, iVersion);
 
 		} finally {
 			releaseExclusiveLock();
@@ -385,7 +386,6 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 			file.writeShort(p, (short) iDataSegmentId);
 			file.writeLong(p += OConstants.SIZE_SHORT, iPosition);
 			file.writeByte(p += OConstants.SIZE_LONG, iRecordType);
-			file.writeInt(p += OConstants.SIZE_BYTE, 0);
 
 			final long returnedPosition = offset / RECORD_SIZE;
 

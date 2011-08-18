@@ -273,6 +273,13 @@ public class ODataLocal extends OMultiFileSegment {
 		}
 	}
 
+	public void updateRid(final long iPosition, final ORecordId iRid) throws IOException {
+		long[] pos = getRelativePosition(iPosition);
+		final OFile file = files[(int) pos[0]];
+		file.writeShort(pos[1] + OConstants.SIZE_INT, (short) iRid.clusterId);
+		file.writeLong(pos[1] + OConstants.SIZE_INT + OConstants.SIZE_SHORT, iRid.clusterPosition);
+	}
+
 	/**
 	 * Returns the total number of holes.
 	 * 

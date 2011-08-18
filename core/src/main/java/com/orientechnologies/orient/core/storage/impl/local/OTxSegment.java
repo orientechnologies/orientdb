@@ -151,20 +151,50 @@ public class OTxSegment extends OSingleFileSegment {
 			int offset;
 
 			int recordFreed = 0;
+			ORecordId rid = new ORecordId();
 
 			for (int i = 0; i < size; ++i) {
 				// READ THE STATUS
 				offset = i * RECORD_SIZE;
 
 				status = file.readByte(offset);
+				offset += OConstants.SIZE_BYTE;
 
 				if (status == STATUS_COMMITTING) {
+					final byte operation = file.readByte(offset);
+					offset += OConstants.SIZE_BYTE;
+
 					// READ THE TX-ID
-					txId = file.readInt(offset + OConstants.SIZE_BYTE + OConstants.SIZE_BYTE);
+					txId = file.readInt(offset);
 
 					if (txId == iTxId) {
+						// TX ID FOUND
+						offset += OConstants.SIZE_INT;
+
+						rid.clusterId = file.readShort(offset);
+						offset += OConstants.SIZE_SHORT;
+
+						rid.clusterPosition = file.readLong(offset);
+						offset += OConstants.SIZE_LONG;
+
+						final long oldDataOffset = file.readLong(offset);
+						offset += OConstants.SIZE_LONG;
+
+						switch (operation) {
+						case OPERATION_DELETE:
+						case OPERATION_CREATE:
+							break;
+
+						case OPERATION_UPDATE:
+							// CREATE A NEW HOLE FOR THE TEMPORARY OLD RECORD KEPT UNTIL COMMIT
+							// TODO: SUPPORT REAL DATA SEG
+							storage.getDataSegment(0).handleHole(oldDataOffset, storage.getDataSegment(0).getRecordSize(oldDataOffset));
+							break;
+						}
+
 						// CURRENT REQUESTER & TX: CLEAR THE ENTRY BY WRITING THE "FREE" STATUS
 						file.writeByte(offset, STATUS_FREE);
+
 						recordFreed++;
 					}
 				}
@@ -337,8 +367,8 @@ public class OTxSegment extends OSingleFileSegment {
 		return recordsRecovered;
 	}
 
-	private void recoverTransactionEntry(final byte status, final byte operation, final int txId, final ORecordId iRid,
-			final long oldDataOffset, final int recordVersion, final OPhysicalPosition ppos) throws IOException {
+	private void recoverTransactionEntry(final byte iStatus, final byte iOperation, final int iTxId, final ORecordId iRid,
+			final long iOldDataOffset, final int iRecordVersion, final OPhysicalPosition ppos) throws IOException {
 
 		final OCluster cluster = storage.getClusterById(iRid.clusterId);
 
@@ -347,33 +377,32 @@ public class OTxSegment extends OSingleFileSegment {
 
 		final OClusterLocal logCluster = (OClusterLocal) cluster;
 
-		OLogManager.instance().info(this, "Recovering tx <%d>. Operation <%d> was in status <%d> on record %s in data space %d...",
-				txId, operation, status, iRid, oldDataOffset);
+		OLogManager.instance().debug(this, "Recovering tx <%d>. Operation <%d> was in status <%d> on record %s in data space %d...",
+				iTxId, iOperation, iStatus, iRid, iOldDataOffset);
 
-		switch (operation) {
+		switch (iOperation) {
 		case OPERATION_CREATE:
 			// JUST DELETE THE RECORD
 			storage.deleteRecord(iRid, -1);
 			break;
 
 		case OPERATION_UPDATE:
-			// RETRIEVE THE OLD RECORD
-			// final int recSize = storage.getDataSegment(ppos.dataSegment).getRecordSize(oldDataOffset);
-
 			// RETRIEVE THE CURRENT PPOS
 			cluster.getPhysicalPosition(iRid.clusterPosition, ppos);
 
-			long newPosition = ppos.dataPosition;
-			int newSize = ppos.recordSize;
+			long oldPosition = ppos.dataPosition;
+			int oldSize = storage.getDataSegment(ppos.dataSegment).getRecordSize(ppos.dataPosition);
 
-			// REPLACE THE POSITION OF THE OLD RECORD
-			ppos.dataPosition = oldDataOffset;
+			// REPLACE THE POSITION AND SIZE OF THE OLD RECORD
+			ppos.dataPosition = iOldDataOffset;
+			ppos.recordSize = storage.getDataSegment(ppos.dataSegment).getRecordSize(iOldDataOffset);
 
 			// UPDATE THE PPOS WITH THE COORDS OF THE OLD RECORD
-			storage.getClusterById(iRid.clusterId).setPhysicalPosition(iRid.clusterPosition, ppos.dataSegment, oldDataOffset, ppos.type);
+			cluster.setPhysicalPosition(iRid.clusterPosition, ppos.dataSegment, iOldDataOffset, ppos.type, --ppos.version);
+			storage.getDataSegment(ppos.dataSegment).updateRid(iOldDataOffset, iRid);
 
-			// CREATE A HOLE
-			storage.getDataSegment(ppos.dataSegment).handleHole(newPosition, newSize);
+			// CREATE A HOLE ON THE NEW CREATED RECORD
+			storage.getDataSegment(ppos.dataSegment).handleHole(oldPosition, oldSize);
 			break;
 
 		case OPERATION_DELETE:

@@ -1038,7 +1038,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
 				// UPDATE THE POSITION IN CLUSTER WITH THE POSITION OF RECORD IN
 				// DATA
-				iClusterSegment.setPhysicalPosition(rid.clusterPosition, dataSegment, dataOffset, iRecordType);
+				iClusterSegment.setPhysicalPosition(rid.clusterPosition, dataSegment, dataOffset, iRecordType, 0);
 
 				incrementVersion();
 
@@ -1146,7 +1146,8 @@ public class OStorageLocal extends OStorageEmbedded {
 
 				if (newDataSegmentOffset != ppos.dataPosition)
 					// UPDATE DATA SEGMENT OFFSET WITH THE NEW PHYSICAL POSITION
-					iClusterSegment.setPhysicalPosition(iRid.clusterPosition, ppos.dataSegment, newDataSegmentOffset, iRecordType);
+					iClusterSegment.setPhysicalPosition(iRid.clusterPosition, ppos.dataSegment, newDataSegmentOffset, iRecordType,
+							ppos.version);
 
 				incrementVersion();
 

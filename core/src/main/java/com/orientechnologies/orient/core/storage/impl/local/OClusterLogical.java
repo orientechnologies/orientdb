@@ -165,7 +165,7 @@ public class OClusterLogical implements OCluster {
 	/**
 	 * Change the PhysicalPosition of the logical record iPosition.
 	 */
-	public void setPhysicalPosition(final long iPosition, final int iDataId, final long iDataPosition, final byte iRecordType) {
+	public void setPhysicalPosition(final long iPosition, final int iDataId, final long iDataPosition, final byte iRecordType, int iVersion) {
 		Long key = new Long(iPosition);
 		final OPhysicalPosition ppos = map.get(key);
 		ppos.dataSegment = iDataId;

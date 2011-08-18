@@ -73,8 +73,9 @@ public interface OCluster {
 
 	/**
 	 * Changes the PhysicalPosition of the logical record iPosition.
+	 * @param iVersion TODO
 	 */
-	public void setPhysicalPosition(long iPosition, int iDataSegment, long iDataPosition, final byte iRecordType) throws IOException;
+	public void setPhysicalPosition(long iPosition, int iDataSegment, long iDataPosition, final byte iRecordType, int iVersion) throws IOException;
 
 	/**
 	 * Removes the Logical Position entry.

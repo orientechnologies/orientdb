@@ -41,72 +41,72 @@ public class TransactionConsistencyTest {
 	public TransactionConsistencyTest(String iURL) {
 		url = iURL;
 	}
-//
-//	@Test
-//	public void testRollbackOnConcurrentException() throws IOException {
-//		database1 = new ODatabaseDocumentTx(url).open("admin", "admin");
-//		database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
-//
-//		// database1.begin(TXTYPE.OPTIMISTIC);
-//
-//		// Create docA.
-//		ODocument vDocA_db1 = database1.newInstance();
-//		vDocA_db1.field(NAME, "docA");
-//		vDocA_db1.save();
-//
-//		// Create docB.
-//		ODocument vDocB_db1 = database1.newInstance();
-//		vDocB_db1.field(NAME, "docB");
-//		vDocB_db1.save();
-//
-//		// database1.commit();
-//
-//		// Keep the IDs.
-//		ORID vDocA_Rid = vDocA_db1.getIdentity().copy();
-//		ORID vDocB_Rid = vDocB_db1.getIdentity().copy();
-//
-//		database2.begin(TXTYPE.OPTIMISTIC);
-//		try {
-//			// Get docA and update in db2 transaction context
-//			ODocument vDocA_db2 = database2.load(vDocA_Rid);
-//			vDocA_db2.field(NAME, "docA_v2");
-//			vDocA_db2.save();
-//
-//			// Concurrent update docA via database1 -> will throw OConcurrentModificationException at database2.commit().
-//			database1.begin(TXTYPE.OPTIMISTIC);
-//			try {
-//				vDocA_db1.field(NAME, "docA_v3");
-//				vDocA_db1.save();
-//				database1.commit();
-//			} catch (OConcurrentModificationException e) {
-//				Assert.fail("Should not failed here...");
-//			}
-//			Assert.assertEquals(vDocA_db1.field(NAME), "docA_v3");
-//
-//			// Update docB in db2 transaction context -> should be rollbacked.
-//			ODocument vDocB_db2 = database2.load(vDocB_Rid);
-//			vDocB_db2.field(NAME, "docB_UpdatedInTranscationThatWillBeRollbacked");
-//			vDocB_db2.save();
-//
-//			// Will throw OConcurrentModificationException
-//			database2.commit();
-//			Assert.fail("Should throw OConcurrentModificationException");
-//		} catch (OConcurrentModificationException e) {
-//			database2.rollback();
-//		}
-//
-//		// Force reload all (to be sure it is not a cache problem)
-//		database1.close();
-//		database2.getStorage().close();
-//		database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
-//
-//		// docB should be in the first state : "docB"
-//		ODocument vDocB_db2 = database2.load(vDocB_Rid);
-//		Assert.assertEquals(vDocB_db2.field(NAME), "docB");
-//
-//		database1.close();
-//		database2.close();
-//	}
+
+	@Test
+	public void testRollbackOnConcurrentException() throws IOException {
+		database1 = new ODatabaseDocumentTx(url).open("admin", "admin");
+		database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
+
+		database1.begin(TXTYPE.OPTIMISTIC);
+
+		// Create docA.
+		ODocument vDocA_db1 = database1.newInstance();
+		vDocA_db1.field(NAME, "docA");
+		vDocA_db1.save();
+
+		// Create docB.
+		ODocument vDocB_db1 = database1.newInstance();
+		vDocB_db1.field(NAME, "docB");
+		vDocB_db1.save();
+
+		database1.commit();
+
+		// Keep the IDs.
+		ORID vDocA_Rid = vDocA_db1.getIdentity().copy();
+		ORID vDocB_Rid = vDocB_db1.getIdentity().copy();
+
+		database2.begin(TXTYPE.OPTIMISTIC);
+		try {
+			// Get docA and update in db2 transaction context
+			ODocument vDocA_db2 = database2.load(vDocA_Rid);
+			vDocA_db2.field(NAME, "docA_v2");
+			vDocA_db2.save();
+
+			// Concurrent update docA via database1 -> will throw OConcurrentModificationException at database2.commit().
+			database1.begin(TXTYPE.OPTIMISTIC);
+			try {
+				vDocA_db1.field(NAME, "docA_v3");
+				vDocA_db1.save();
+				database1.commit();
+			} catch (OConcurrentModificationException e) {
+				Assert.fail("Should not failed here...");
+			}
+			Assert.assertEquals(vDocA_db1.field(NAME), "docA_v3");
+
+			// Update docB in db2 transaction context -> should be rollbacked.
+			ODocument vDocB_db2 = database2.load(vDocB_Rid);
+			vDocB_db2.field(NAME, "docB_UpdatedInTranscationThatWillBeRollbacked");
+			vDocB_db2.save();
+
+			// Will throw OConcurrentModificationException
+			database2.commit();
+			Assert.fail("Should throw OConcurrentModificationException");
+		} catch (OConcurrentModificationException e) {
+			database2.rollback();
+		}
+
+		// Force reload all (to be sure it is not a cache problem)
+		database1.close();
+		database2.getStorage().close();
+		database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
+
+		// docB should be in the first state : "docB"
+		ODocument vDocB_db2 = database2.load(vDocB_Rid);
+		Assert.assertEquals(vDocB_db2.field(NAME), "docB");
+
+		database1.close();
+		database2.close();
+	}
 
 	@Test
 	public void testRollbackWithPin() throws IOException {

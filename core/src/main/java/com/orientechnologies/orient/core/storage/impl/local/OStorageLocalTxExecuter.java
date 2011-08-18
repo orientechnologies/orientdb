@@ -73,7 +73,7 @@ public class OStorageLocalTxExecuter {
 			final long dataOffset = data.addRecord(iRid, iContent);
 
 			// UPDATE THE POSITION IN CLUSTER WITH THE POSITION OF RECORD IN DATA
-			iClusterSegment.setPhysicalPosition(iRid.clusterPosition, dataSegment, dataOffset, iRecordType);
+			iClusterSegment.setPhysicalPosition(iRid.clusterPosition, dataSegment, dataOffset, iRecordType, 0);
 
 			// SAVE INTO THE LOG THE POSITION OF THE RECORD JUST CREATED. IF TX FAILS AT THIS POINT A GHOST RECORD IS CREATED UNTIL DEFRAG
 			txSegment.addLog(OTxSegment.OPERATION_CREATE, iTxId, iClusterSegment.getId(), iRid.clusterPosition, dataOffset, 0);
@@ -91,10 +91,13 @@ public class OStorageLocalTxExecuter {
 			final int iVersion, final byte iRecordType) {
 		try {
 			// READ CURRENT RECORD CONTENT
-			final ORawBuffer buffer = storage.readRecord(iClusterSegment, iRid, true);
-
-			if (buffer == null)
+			final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
+			if (ppos == null)
+				// DELETED
 				throw new OTransactionException("Can't retrieve the updated record #" + iRid);
+
+			final ORawBuffer buffer = new ORawBuffer(storage.getDataSegment(ppos.dataSegment).getRecord(ppos.dataPosition), ppos.version,
+					ppos.type);
 
 			// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
 			if (iVersion > -1 && buffer.version != iVersion)
@@ -104,20 +107,26 @@ public class OStorageLocalTxExecuter {
 								+ " because the version is not the latest one. Probably you are updating an old record or it has been modified by another user (db=v"
 								+ buffer.version + " your=v" + iVersion + ")");
 
+			final ODataLocal dataSegment = storage.getDataSegment(storage.getDataSegmentForRecord(iClusterSegment, iContent));
+
+			// STORE THE NEW CONTENT
 			final long dataOffset;
-			if (buffer.buffer != null) {
-				// CREATE A COPY OF IT IN DATASEGMENT. IF TX FAILS AT THIS POINT UN-REFERENCED DATA WILL REMAIN UNTIL NEXT DEFRAG
-				dataOffset = storage.getDataSegment(storage.getDataSegmentForRecord(iClusterSegment, buffer.buffer)).addRecord(
-						ORecordId.EMPTY_RECORD_ID, buffer.buffer);
+			if (iContent != null) {
+				// IF TX FAILS AT THIS POINT UN-REFERENCED DATA WILL REMAIN UNTIL NEXT DEFRAG
+				dataOffset = dataSegment.addRecord(iRid, iContent);
+				iClusterSegment.setPhysicalPosition(iRid.clusterPosition, dataSegment.getId(), dataOffset, iRecordType, ++ppos.version);
 			} else
 				// NO DATA
 				dataOffset = -1;
 
-			// SAVE INTO THE LOG THE POSITION OF THE RECORD JUST DELETED. IF TX FAILS AT THIS POINT AS ABOVE
-			txSegment.addLog(OTxSegment.OPERATION_UPDATE, iTxId, iClusterSegment.getId(), iRid.clusterPosition, dataOffset, iVersion);
+			dataSegment.updateRid(ppos.dataPosition, iRid);
 
-			// UPDATE THE RECORD FOR REAL. IF TX FAILS AT THIS POINT CAN BE RECOVERED THANKS TO THE TX-LOG
-			return storage.updateRecord(iClusterSegment, iRid, iContent, iVersion, iRecordType);
+			// SAVE INTO THE LOG THE POSITION OF THE OLD RECORD JUST DELETED. IF TX FAILS AT THIS POINT AS ABOVE
+			txSegment.addLog(OTxSegment.OPERATION_UPDATE, iTxId, iRid.clusterId, iRid.clusterPosition, ppos.dataPosition,
+					ppos.version - 1);
+
+			return ppos.version;
+
 		} catch (IOException e) {
 
 			OLogManager.instance().error(this, "Error on updating entry #" + iRid + " in log segment: " + iClusterSegment, e,
