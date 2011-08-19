@@ -48,6 +48,21 @@ public class SQLSelectTest {
 	}
 
 	@Test
+	public void queryNoDirtyResultset() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>(" select from Profile ")).execute();
+
+		Assert.assertTrue(result.size() != 0);
+
+		for (ODocument d : result) {
+			Assert.assertFalse(d.isDirty());
+		}
+
+		database.close();
+	}
+
+	@Test
 	public void queryNoWhere() {
 		database.open("admin", "admin");
 
