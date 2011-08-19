@@ -219,6 +219,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 	public void executeRollback(final OTransaction iTransaction) {
 	}
 
+	@SuppressWarnings("rawtypes")
 	public void executeCommit() {
 		final List<String> involvedIndexes = currentTx.getInvolvedIndexes();
 
@@ -227,7 +228,8 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 		try {
 			if (involvedIndexes != null)
 				for (String indexName : involvedIndexes) {
-					final OIndexMVRBTreeAbstract<?> index = (OIndexMVRBTreeAbstract<?>) getMetadata().getIndexManager().getIndexInternal(indexName);
+					final OIndexMVRBTreeAbstract<?> index = (OIndexMVRBTreeAbstract<?>) getMetadata().getIndexManager().getIndexInternal(
+							indexName);
 					if (lockedIndexes == null)
 						lockedIndexes = new ArrayList<OIndexMVRBTreeAbstract<?>>();
 
@@ -248,7 +250,8 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 		} finally {
 			// RELEASE INDEX LOCKS IF ANY
 			if (lockedIndexes != null)
-				for (OIndexMVRBTreeAbstract<?> index : lockedIndexes) {
+				// DON'T USE GENERICS TO AVOID OpenJDK CRASH :-(
+				for (OIndexMVRBTreeAbstract index : lockedIndexes) {
 					index.releaseExclusiveLock();
 				}
 		}
