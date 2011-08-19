@@ -364,7 +364,7 @@ public class OTxSegment extends OSingleFileSegment {
 		return recordsRecovered;
 	}
 
-	public void finalizeTransactionEntry(final byte operation, final ORecordId rid, final int oldDataId, final long oldDataOffset)
+	public void finalizeTransactionEntry(final byte operation, final ORecordId iRid, final int oldDataId, final long oldDataOffset)
 			throws IOException {
 		final ODataLocal dataSegment = storage.getDataSegment(oldDataId);
 
@@ -373,6 +373,10 @@ public class OTxSegment extends OSingleFileSegment {
 			break;
 
 		case OPERATION_UPDATE:
+			// CREATE A NEW HOLE FOR THE TEMPORARY OLD RECORD KEPT UNTIL COMMIT
+			//dataSegment.deleteRecord(oldDataOffset);
+			break;
+
 		case OPERATION_DELETE:
 			// CREATE A NEW HOLE FOR THE TEMPORARY OLD RECORD KEPT UNTIL COMMIT
 			dataSegment.deleteRecord(oldDataOffset);
@@ -411,7 +415,7 @@ public class OTxSegment extends OSingleFileSegment {
 			cluster.setPhysicalPosition(iRid.clusterPosition, iOldDataId, iOldDataOffset, ppos.type, --ppos.version);
 			storage.getDataSegment(iOldDataId).updateRid(iOldDataOffset, iRid);
 
-			// CREATE A HOLE ON THE NEW CREATED RECORD
+			// CREATE A NEW HOLE ON THE NEW CREATED RECORD
 			storage.getDataSegment(ppos.dataSegment).deleteRecord(oldPosition);
 			break;
 

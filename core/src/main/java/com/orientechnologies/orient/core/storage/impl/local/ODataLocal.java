@@ -263,6 +263,8 @@ public class ODataLocal extends OMultiFileSegment {
 
 			final long[] pos = getRelativePosition(iPosition);
 			final OFile file = files[(int) pos[0]];
+			file.writeShort(pos[1] + OConstants.SIZE_INT, (short) -1);
+			file.writeLong(pos[1] + OConstants.SIZE_INT + OConstants.SIZE_SHORT, -1);
 
 			final int recordSize = file.readInt(pos[1]);
 			handleHole(iPosition, recordSize);
@@ -497,7 +499,7 @@ public class ODataLocal extends OMultiFileSegment {
 				Math.min(iRecordOffset + iRecordSize + defragHoleDistance, fileRanges[1]));
 	}
 
-	private int moveRecord(long iSourcePosition, long iDestinationPosition) throws IOException {
+	private int moveRecord(final long iSourcePosition, final long iDestinationPosition) throws IOException {
 		// GET RECORD TO MOVE
 		final long[] pos = getRelativePosition(iSourcePosition);
 		final OFile file = files[(int) pos[0]];

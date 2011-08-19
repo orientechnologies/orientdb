@@ -87,6 +87,18 @@ public class OStorageLocalTxExecuter {
 		return iRid.clusterPosition;
 	}
 
+	/**
+	 * Stores the new content in a new position, then saves in the log the coords of the new position. At free time the
+	 * 
+	 * @param iTxId
+	 * @param iClusterSegment
+	 * @param iRid
+	 * @param iContent
+	 * @param iVersion
+	 * @param iRecordType
+	 * @return
+	 */
+
 	protected int updateRecord(final int iTxId, final OCluster iClusterSegment, final ORecordId iRid, final byte[] iContent,
 			final int iVersion, final byte iRecordType) {
 		try {
@@ -119,7 +131,7 @@ public class OStorageLocalTxExecuter {
 				// NO DATA
 				dataOffset = -1;
 
-			dataSegment.updateRid(ppos.dataPosition, iRid);
+			dataSegment.updateRid(ppos.dataPosition, ORecordId.EMPTY_RECORD_ID);
 
 			// SAVE INTO THE LOG THE POSITION OF THE OLD RECORD JUST DELETED. IF TX FAILS AT THIS POINT AS ABOVE
 			txSegment.addLog(OTxSegment.OPERATION_UPDATE, iTxId, iRid.clusterId, iRid.clusterPosition, ppos.dataSegment,
