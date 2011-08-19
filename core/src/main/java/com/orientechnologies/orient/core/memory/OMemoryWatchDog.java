@@ -92,7 +92,7 @@ public class OMemoryWatchDog {
 					long usedMemory = tenuredGenPool.getUsage().getUsed();
 					long freeMemory = maxMemory - usedMemory;
 
-					OLogManager.instance().debug(this,
+					OLogManager.instance().warn(this,
 							"Free memory is low %s %s%% (used %s of %s), calling listeners to free memory in SOFT way...",
 							OFileUtils.getSizeAsString(freeMemory), freeMemory * 100 / maxMemory, OFileUtils.getSizeAsString(usedMemory),
 							OFileUtils.getSizeAsString(maxMemory));
@@ -119,14 +119,14 @@ public class OMemoryWatchDog {
 
 						threshold = (long) (maxMemory * (1 - OGlobalConfiguration.MEMORY_OPTIMIZE_THRESHOLD.getValueAsFloat()));
 
-						OLogManager.instance().debug(this, "Free memory now is %s %s%% (used %s of %s) with threshold for HARD clean is %s",
+						OLogManager.instance().warn(this, "Free memory now is %s %s%% (used %s of %s) with threshold for HARD clean is %s",
 								OFileUtils.getSizeAsString(freeMemory), freeMemory * 100 / maxMemory, OFileUtils.getSizeAsString(usedMemory),
 								OFileUtils.getSizeAsString(maxMemory), OFileUtils.getSizeAsString(threshold));
 
 						if (freeMemory < threshold) {
 							OLogManager
 									.instance()
-									.debug(
+									.warn(
 											this,
 											"Free memory is low %s %s%% (used %s of %s) while the threshold is %s, calling listeners to free memory in HARD way...",
 											OFileUtils.getSizeAsString(freeMemory), freeMemory * 100 / maxMemory, OFileUtils.getSizeAsString(usedMemory),

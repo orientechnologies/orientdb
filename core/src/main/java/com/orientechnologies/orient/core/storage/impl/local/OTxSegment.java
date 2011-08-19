@@ -307,6 +307,47 @@ public class OTxSegment extends OSingleFileSegment {
 	}
 
 	/**
+	 * Scans the tx log file to find if any entry refers to the moved record. If yes move the reference too.
+	 * 
+	 * @param iDataSegmentId
+	 *          Data segment id
+	 * @param iSourcePosition
+	 *          Moved record's source position
+	 * @param iDestinationPosition
+	 *          Moved record's destination position
+	 * @throws IOException
+	 */
+	public void movedRecord(final int iDataSegmentId, final long iSourcePosition, final long iDestinationPosition) throws IOException {
+		final int size = (file.getFilledUpTo() / RECORD_SIZE);
+		for (int i = 0; i < size; ++i) {
+			int offset = i * RECORD_SIZE;
+
+			final byte status = file.readByte(offset);
+			offset += OConstants.SIZE_BYTE;
+
+			if (status != STATUS_FREE) {
+				offset += OConstants.SIZE_BYTE;
+				offset += OConstants.SIZE_INT;
+				offset += OConstants.SIZE_SHORT;
+				offset += OConstants.SIZE_LONG;
+
+				final int oldDataId = file.readInt(offset);
+
+				if (iDataSegmentId == oldDataId) {
+					offset += OConstants.SIZE_INT;
+
+					final long oldDataOffset = file.readLong(offset);
+
+					if (oldDataOffset == iSourcePosition) {
+						// UPDATE REFERENCE
+						file.writeLong(offset, iDestinationPosition);
+					}
+				}
+			}
+		}
+	}
+
+	/**
 	 * Recover a transaction.
 	 * 
 	 * @param iReqId
@@ -374,12 +415,12 @@ public class OTxSegment extends OSingleFileSegment {
 
 		case OPERATION_UPDATE:
 			// CREATE A NEW HOLE FOR THE TEMPORARY OLD RECORD KEPT UNTIL COMMIT
-			//dataSegment.deleteRecord(oldDataOffset);
+			dataSegment.deleteRecord(oldDataOffset);
 			break;
 
 		case OPERATION_DELETE:
 			// CREATE A NEW HOLE FOR THE TEMPORARY OLD RECORD KEPT UNTIL COMMIT
-			//dataSegment.deleteRecord(oldDataOffset);
+			dataSegment.deleteRecord(oldDataOffset);
 			break;
 		}
 	}
