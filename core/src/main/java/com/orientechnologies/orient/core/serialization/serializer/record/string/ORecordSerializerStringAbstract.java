@@ -376,7 +376,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 
 		if (iValue.length() > 1 && iValue.charAt(0) == '"' && iValue.charAt(iValue.length() - 1) == '"')
 			// STRING
-			return iValue.substring(1, iValue.length() - 1);
+			return OStringSerializerHelper.decode(iValue.substring(1, iValue.length() - 1));
 
 		if (iValue.charAt(0) == ORID.PREFIX)
 			// RID
