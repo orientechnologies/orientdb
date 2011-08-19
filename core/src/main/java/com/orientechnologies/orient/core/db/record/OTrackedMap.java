@@ -40,8 +40,13 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
 			iSourceRecord.setDirty();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public T put(final Object iKey, final T iValue) {
+		Object oldValue = super.get(iKey);
+		if (oldValue != null && oldValue == iValue)
+			return (T) oldValue;
+
 		setDirty();
 		return super.put(iKey, iValue);
 	}
@@ -60,7 +65,6 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
 
 	@Override
 	public void putAll(Map<? extends Object, ? extends T> m) {
-		setDirty();
 		super.putAll(m);
 	}
 

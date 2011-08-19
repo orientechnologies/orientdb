@@ -216,7 +216,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 			cloned._fieldTypes = new HashMap<String, OType>(_fieldTypes);
 
 		cloned._fieldOriginalValues = null;
-		cloned._dirty = _dirty;
+		cloned._dirty = _dirty; // LEAVE IT AS LAST TO AVOID SOMETHING SET THE FLAG TO TRUE
 
 		return cloned;
 	}

@@ -199,6 +199,8 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 			// ADD IN TEMP LIST
 			if (newItems == null)
 				newItems = new IdentityHashMap<ORecord<?>, Object>();
+			else if (newItems.containsKey(record))
+				return false;
 			newItems.put(record, NEWMAP_VALUE);
 			setDirty();
 			return true;

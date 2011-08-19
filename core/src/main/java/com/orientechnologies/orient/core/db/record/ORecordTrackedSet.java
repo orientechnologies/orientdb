@@ -50,6 +50,9 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
 	}
 
 	public boolean add(final OIdentifiable e) {
+		if (map.containsKey(e))
+			return false;
+
 		map.put(e, ENTRY_REMOVAL);
 		setDirty();
 
@@ -66,7 +69,6 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
 	public boolean remove(Object o) {
 		final Object old = map.remove(o);
 		if (old != null) {
-
 			if (o instanceof ODocument)
 				((ODocument) o).removeOwner(this);
 
