@@ -173,6 +173,20 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	}
 
 	/**
+	 * Fills a document passing a map of key/values where the key is the field name and the value the field's value.
+	 * 
+	 * @param iFieldMap
+	 *          Map of Object/Object
+	 */
+	public ODocument(final Map<Object, Object> iFieldMap) {
+		_recordId = new ORecordId();
+		if (iFieldMap != null && iFieldMap.size() > 0)
+			for (Entry<Object, Object> entry : iFieldMap.entrySet()) {
+				field(entry.getKey().toString(), entry.getValue());
+			}
+	}
+
+	/**
 	 * Fills a document passing the field names/values pair, where the first pair is mandatory.
 	 * 
 	 */
