@@ -379,7 +379,7 @@ public class OTxSegment extends OSingleFileSegment {
 
 		case OPERATION_DELETE:
 			// CREATE A NEW HOLE FOR THE TEMPORARY OLD RECORD KEPT UNTIL COMMIT
-			dataSegment.deleteRecord(oldDataOffset);
+			//dataSegment.deleteRecord(oldDataOffset);
 			break;
 		}
 	}
