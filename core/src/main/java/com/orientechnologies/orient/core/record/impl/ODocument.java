@@ -165,7 +165,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	 *          Array of field pairs
 	 */
 	public ODocument(final Object[] iFields) {
-		_recordId = new ORecordId();
+		setup();
 		if (iFields != null && iFields.length > 0)
 			for (int i = 0; i < iFields.length; i += 2) {
 				field(iFields[i].toString(), iFields[i + 1]);
@@ -179,7 +179,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	 *          Map of Object/Object
 	 */
 	public ODocument(final Map<? extends Object, Object> iFieldMap) {
-		_recordId = new ORecordId();
+		setup();
 		if (iFieldMap != null && iFieldMap.size() > 0)
 			for (Entry<? extends Object, Object> entry : iFieldMap.entrySet()) {
 				field(entry.getKey().toString(), entry.getValue());
