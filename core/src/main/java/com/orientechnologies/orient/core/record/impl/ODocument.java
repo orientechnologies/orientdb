@@ -178,10 +178,10 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	 * @param iFieldMap
 	 *          Map of Object/Object
 	 */
-	public ODocument(final Map<Object, Object> iFieldMap) {
+	public ODocument(final Map<? extends Object, Object> iFieldMap) {
 		_recordId = new ORecordId();
 		if (iFieldMap != null && iFieldMap.size() > 0)
-			for (Entry<Object, Object> entry : iFieldMap.entrySet()) {
+			for (Entry<? extends Object, Object> entry : iFieldMap.entrySet()) {
 				field(entry.getKey().toString(), entry.getValue());
 			}
 	}
