@@ -206,8 +206,10 @@ public class ODocumentHelper {
 			final String fieldName;
 			if (separatorPos < fieldNameLength)
 				fieldName = iFieldName.substring(beginPos, separatorPos);
-			else
+			else if (beginPos > 0)
 				fieldName = iFieldName.substring(beginPos);
+			else
+				fieldName = iFieldName;
 
 			if (separator == '.') {
 				// GET THE LINKED OBJECT IF ANY

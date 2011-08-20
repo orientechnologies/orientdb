@@ -419,6 +419,12 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 		checkForLoading();
 		checkForFields();
 
+		// OPTIMIZATION: GET THE ITEM IF ANY
+		final Object value = _fieldValues.get(iFieldName);
+		if (value != null)
+			return (RET) value;
+
+		// NOT FOUND, PARSE THE FIELD NAME
 		return (RET) ODocumentHelper.getFieldValue(this, iFieldName);
 	}
 
@@ -968,7 +974,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 		if (_fieldValues == null)
 			_fieldValues = _ordered ? new LinkedHashMap<String, Object>() : new HashMap<String, Object>();
 
-		if (_status == ORecordElement.STATUS.LOADED && fields() == 0)
+		if (_status == ORecordElement.STATUS.LOADED && _fieldValues.size() == 0)
 			// POPULATE FIELDS LAZY
 			deserializeFields();
 	}
