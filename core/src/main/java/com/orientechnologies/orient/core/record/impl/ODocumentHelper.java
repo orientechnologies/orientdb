@@ -189,8 +189,10 @@ public class ODocumentHelper {
 
 	@SuppressWarnings("unchecked")
 	public static <RET> RET getFieldValue(ODocument current, final String iFieldName) {
-
 		final int fieldNameLength = iFieldName.length();
+		if (fieldNameLength == 0)
+			return null;
+
 		Object value = null;
 
 		int beginPos = 0;

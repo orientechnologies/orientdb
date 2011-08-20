@@ -416,13 +416,19 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	}
 
 	public <RET> RET rawField(final String iFieldName) {
+		if (iFieldName == null || iFieldName.length() == 0)
+			return null;
+
 		checkForLoading();
 		checkForFields();
 
-		// OPTIMIZATION: GET THE ITEM IF ANY
-		final Object value = _fieldValues.get(iFieldName);
-		if (value != null)
-			return (RET) value;
+		if (_fieldValues.size() == 0)
+			// NO FIELDS
+			return null;
+
+		// OPTIMIZATION
+		if (iFieldName.charAt(0) != '@' && iFieldName.indexOf('.') == -1 && iFieldName.indexOf('[') == -1)
+			return (RET) _fieldValues.get(iFieldName);
 
 		// NOT FOUND, PARSE THE FIELD NAME
 		return (RET) ODocumentHelper.getFieldValue(this, iFieldName);
