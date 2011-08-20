@@ -225,7 +225,7 @@ public class ODataLocal extends OMultiFileSegment {
 			// OLogManager.instance().error(this, "Error while writing to data file. The record size was invalid", OIOException.class);
 
 			if (iContent.length == recordSize) {
-				// USE THE OLD SPACE SINCE SIZE IT ISN'T CHANGED
+				// USE THE OLD SPACE SINCE SIZE ISN'T CHANGED
 				file.write(pos[1] + RECORD_FIX_SIZE, iContent);
 
 				OProfiler.getInstance().updateCounter(PROFILER_UPDATE_REUSED_ALL, +1);

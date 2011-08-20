@@ -30,7 +30,7 @@ public class OMVRBTreeMemory<K, V> extends OMVRBTree<K, V> {
 	 * <tt>ClassCastException</tt>.
 	 */
 	public OMVRBTreeMemory() {
-		runtimeCheckEnabled = true;
+		runtimeCheckEnabled = false;
 	}
 
 	public OMVRBTreeMemory(final int iSize, final float iLoadFactor) {
