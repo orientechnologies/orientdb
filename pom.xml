@@ -4,7 +4,7 @@
 
     <groupId>com.orientechnologies</groupId>
     <artifactId>orientdb-parent</artifactId>
-    <version>1.0rc5-SNAPSHOT</version>
+    <version>1.0rc5</version>
     <packaging>pom</packaging>
 
     <name>OrientDB Parent</name>
@@ -23,6 +23,7 @@
         <module>server</module>
         <module>tools</module>
         <module>tests</module>
+        <module>graphdb</module>
     </modules>
 
     <developers>
