@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
-import com.sun.org.apache.bcel.internal.generic.NEW;
 
 /**
  * Abstract Index implementation that allows only one value for a key.
@@ -270,6 +269,6 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
         } finally {
             releaseExclusiveLock();
         }
-        return result;
-    }
+		return result;
+	}
 }
