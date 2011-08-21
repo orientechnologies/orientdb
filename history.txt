@@ -29,6 +29,22 @@
 This document enlist the last changes to the OrientDB project.
 
 -------------------------------------------------------------------------------
+VERSION 1.0rc5 - (August, 22nd 2011)
+-------------------------------------------------------------------------------
+- SQL engine: new [] operator to extract items from lists, sets, maps and
+  arrays
+- SQL engine: ORDER BY works with projection alias
+- SQL engine: Cross trees and graphs in projections
+- SQL engine: IN operator uses Index when available
+- Fixed all known bugs on transaction recovery
+- Rewritten the memory management of MVRB-Tree: now it's faster and uses much
+  less RAM
+- Java 5 cmopatibility of common and core subprojects
+- 16 issues fixed in total
+
+Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.0rc5
+
+-------------------------------------------------------------------------------
 VERSION 1.0rc4 - (August, 1st 2011)
 -------------------------------------------------------------------------------
 - SQL engine: improved mixing functions and operators all together in complex
@@ -41,7 +57,7 @@ VERSION 1.0rc4 - (August, 1st 2011)
 - Fixed problems with drop clusters
 - 21 issues fixed in total
 
-Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.0rc4   
+Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.0rc4
 
 -------------------------------------------------------------------------------
 VERSION 1.0rc3 - (July, 14th 2011)
@@ -60,7 +76,7 @@ VERSION 1.0rc3 - (July, 14th 2011)
 - Improved performance in general
 - 34 issues fixed in total!
 
-Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.0rc3   
+Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.0rc3
 
 -------------------------------------------------------------------------------
 VERSION 1.0rc2 - (June, 17th 2011)
