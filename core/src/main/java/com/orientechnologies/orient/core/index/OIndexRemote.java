@@ -57,6 +57,8 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 	private final static String		QUERY_GET_VALUE_MINOR					= "select @rid from index:%s where key < ?";
 	private final static String		QUERY_GET_VALUE_MINOR_EQUALS	= "select @rid from index:%s where key <= ?";
 	private final static String		QUERY_GET_RANGE								= "select from index:%s where key between ? and ?";
+	private final static String     QUERY_GET_VALUES                = "select @rid from index:%s where key in [%s]";
+    private final static String     QUERY_GET_ENTRIES               = "select from index:%s where key in [%s]";
 	private final static String		QUERY_GET_VALUE_RANGE					= "select @rid from index:%s where key between ? and ?";
 	private final static String		QUERY_PUT											= "insert into index:%s (key,rid) values (%s,%s)";
 	private final static String		QUERY_REMOVE									= "delete from index:%s where key = %s";
@@ -263,4 +265,30 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 	public OType getKeyType() {
 		return null;
 	}
+
+    public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
+        final StringBuilder params = new StringBuilder();
+        if (!iKeys.isEmpty()) {
+            params.append("?");
+            for (int i = 1; i < iKeys.size(); i++) {
+                params.append(", ?");
+            }
+        }
+
+        final OCommandRequest cmd = formatCommand(QUERY_GET_VALUES, name, params.toString());
+        return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(iKeys.toArray());
+    }
+
+    public Collection<ODocument> getEntries(final Collection<?> iKeys) {
+        final StringBuilder params = new StringBuilder();
+        if (!iKeys.isEmpty()) {
+            params.append("?");
+            for (int i = 1; i < iKeys.size(); i++) {
+                params.append(", ?");
+            }
+        }
+
+        final OCommandRequest cmd = formatCommand(QUERY_GET_ENTRIES, name, params.toString());
+        return (Collection<ODocument>) getDatabase().command(cmd).execute(iKeys.toArray());
+    }
 }

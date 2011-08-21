@@ -172,4 +172,12 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
 	public OType getKeyType() {
 		return delegate.getKeyType();
 	}
+
+    public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
+        return delegate.getValues(iKeys);
+    }
+
+    public Collection<ODocument> getEntries(final Collection<?> iKeys) {
+        return delegate.getEntries(iKeys);
+    }
 }

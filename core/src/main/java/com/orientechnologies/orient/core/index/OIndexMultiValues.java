@@ -15,8 +15,11 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -33,9 +36,9 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 
 /**
  * Abstract index implementation that supports multi-values for the same key.
- * 
+ *
  * @author Luca Garulli
- * 
+ *
  */
 public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIdentifiable>> {
 	public OIndexMultiValues(String iType) {
@@ -207,6 +210,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 						document.field("rid", id.getIdentity());
 						document.unsetDirty();
 						result.add(document);
+
 					}
 				}
 			}
@@ -300,4 +304,55 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 		return (OIndexMultiValues) super.create(iName, iKeyType, iDatabase, iClusterIndexName, iClusterIdsToIndex, iProgressListener,
 				iAutomatic, OStreamSerializerListRID.INSTANCE);
 	}
+
+    public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
+        final List<Comparable> sortedKeys = new ArrayList<Comparable>((Collection<? extends Comparable>) iKeys);
+        Collections.sort(sortedKeys);
+
+        final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+        acquireExclusiveLock();
+        try {
+            for (final Object key : sortedKeys) {
+                final ORecordLazySet values = (ORecordLazySet) map.get(key);
+                if (values != null)
+                    values.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
+
+                if (values == null)
+                    continue;
+
+                result.addAll(values);
+            }
+        } finally {
+            releaseExclusiveLock();
+        }
+        return result;
+    }
+
+    public Collection<ODocument> getEntries(final Collection<?> iKeys) {
+        final List<Comparable> sortedKeys = new ArrayList<Comparable>((Collection<? extends Comparable>) iKeys);
+        Collections.sort(sortedKeys);
+
+        final Set<ODocument> result = new HashSet<ODocument>();
+        acquireExclusiveLock();
+        try {
+            for (final Object key : sortedKeys) {
+                final ORecordLazySet values = (ORecordLazySet) map.get(key);
+                if (values != null)
+                    values.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
+
+                if (values == null)
+                    continue;
+                for (final OIdentifiable value : values) {
+                    final ODocument document = new ODocument();
+                    document.field("key", key);
+                    document.field("rid", value.getIdentity());
+                    document.unsetDirty();
+                    result.add(document);
+                }
+            }
+        } finally {
+            releaseExclusiveLock();
+        }
+        return result;
+    }
 }

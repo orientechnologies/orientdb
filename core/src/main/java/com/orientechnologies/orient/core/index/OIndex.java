@@ -206,4 +206,22 @@ public interface OIndex<T> {
 	public void commit(ODocument iDocument);
 
 	public OIndexInternal<T> getInternal();
+
+    /**
+     * Returns set of records with keys in specific set
+     *
+     * @param iKeys Set of keys
+     * @return
+     */
+    public Collection<OIdentifiable> getValues(Collection<?> iKeys);
+
+    /**
+     * Returns a set of documents with keys in specific set
+     *
+     *
+     * @param iKeys Set of keys
+     * @return
+     */
+    public Collection<ODocument> getEntries(Collection<?> iKeys);
+
 }

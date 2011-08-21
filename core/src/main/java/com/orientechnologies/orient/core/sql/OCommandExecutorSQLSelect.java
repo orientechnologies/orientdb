@@ -59,6 +59,7 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsText;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
@@ -384,7 +385,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		if (searchInIndexTriples.isEmpty())
 			return false;
 
-		for (OSearchInIndexTriple indexTriple : searchInIndexTriples) {
+		for (final OSearchInIndexTriple indexTriple : searchInIndexTriples) {
 			final OIndex<?> idx = indexTriple.index.getInternal();
 			final OQueryOperator operator = indexTriple.indexOperator;
 			final Object key = indexTriple.key;
@@ -423,6 +424,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				fillSearchIndexResultSet(iResultSet, idx.getValuesMinor(key, true));
 				return true;
 			}
+
+            if (indexCanBeUsedInEqualityOperators && operator instanceof OQueryOperatorIn) {
+                fillSearchIndexResultSet(iResultSet, idx.getValues((List) key));
+                return true;
+            }
 		}
 		return false;
 	}
@@ -484,9 +490,25 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			final OIndex<?> underlyingIndex = prop.getIndex().getUnderlying();
 
 			if (iCondition.getOperator() instanceof OQueryOperatorBetween) {
+                final Object[] betweenKeys = (Object[]) origValue;
+                betweenKeys[0] = OType.convert(betweenKeys[0], underlyingIndex.getKeyType().getDefaultJavaType());
+                betweenKeys[2] = OType.convert(betweenKeys[2], underlyingIndex.getKeyType().getDefaultJavaType());
 				iSearchInIndexTriples.add(new OSearchInIndexTriple(iCondition.getOperator(), origValue, underlyingIndex));
 				return true;
 			}
+
+            if (iCondition.getOperator() instanceof OQueryOperatorIn) {
+                final List origValues = (List) origValue;
+                final List values = new ArrayList(origValues.size());
+
+                for (Object val : origValues) {
+                    val = OSQLHelper.getValue(val);
+                    val = OType.convert(val, underlyingIndex.getKeyType().getDefaultJavaType());
+                    values.add(val);
+                }
+                iSearchInIndexTriples.add(new OSearchInIndexTriple(iCondition.getOperator(), values, underlyingIndex));
+                return true;
+            }
 
 			Object value = OSQLHelper.getValue(origValue);
 
@@ -796,9 +818,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			if (!"KEY".equalsIgnoreCase(compiledFilter.getRootCondition().getLeft().toString()))
 				throw new OCommandExecutionException("'Key' field is required for queries against indexes");
 
-			final Object right = compiledFilter.getRootCondition().getRight();
-			final Object keyValue = OSQLHelper.getValue(right);
-
 			Collection<OIdentifiable> result = null;
 			final OQueryOperator indexOperator = compiledFilter.getRootCondition().getOperator();
 			if (indexOperator instanceof OQueryOperatorBetween) {
@@ -808,14 +827,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 					// SPECIAL CASE
 					result = index.getValuesBetween(OSQLHelper.getValue(values[0]), OSQLHelper.getValue(values[2]));
 
-					for (OIdentifiable e : result)
+					for (final OIdentifiable e : result)
 						addResult(e.getIdentity());
 
 				} else {
 					final Collection<ODocument> entries = index.getEntriesBetween(OSQLHelper.getValue(values[0]),
 							OSQLHelper.getValue(values[2]));
 
-					for (OIdentifiable r : entries)
+					for (final OIdentifiable r : entries)
 						addResult(r);
 				}
 
@@ -825,13 +844,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 					// SPECIAL CASE
 					result = index.getValuesMajor(OSQLHelper.getValue(value), false);
 
-					for (OIdentifiable e : result)
+					for (final OIdentifiable e : result)
 						addResult(e.getIdentity());
 
 				} else {
 					final Collection<ODocument> entries = index.getEntriesMajor(OSQLHelper.getValue(value), false);
 
-					for (ODocument document : entries)
+					for (final ODocument document : entries)
 						addResult(document);
 				}
 			} else if (indexOperator instanceof OQueryOperatorMajorEquals) {
@@ -840,13 +859,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 					// SPECIAL CASE
 					result = index.getValuesMajor(OSQLHelper.getValue(value), true);
 
-					for (OIdentifiable e : result)
+					for (final OIdentifiable e : result)
 						addResult(e.getIdentity());
 
 				} else {
 					final Collection<ODocument> entries = index.getEntriesMajor(OSQLHelper.getValue(value), true);
 
-					for (ODocument document : entries)
+					for (final ODocument document : entries)
 						addResult(document);
 				}
 			} else if (indexOperator instanceof OQueryOperatorMinor) {
@@ -855,13 +874,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 					// SPECIAL CASE
 					result = index.getValuesMinor(OSQLHelper.getValue(value), false);
 
-					for (OIdentifiable e : result)
+					for (final OIdentifiable e : result)
 						addResult(e.getIdentity());
 
 				} else {
 					final Collection<ODocument> entries = index.getEntriesMinor(OSQLHelper.getValue(value), false);
 
-					for (ODocument document : entries)
+					for (final ODocument document : entries)
 						addResult(document);
 				}
 			} else if (indexOperator instanceof OQueryOperatorMinorEquals) {
@@ -870,22 +889,47 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 					// SPECIAL CASE
 					result = index.getValuesMinor(OSQLHelper.getValue(value), true);
 
-					for (OIdentifiable e : result)
+					for (final OIdentifiable e : result)
 						addResult(e.getIdentity());
 
 				} else {
 					final Collection<ODocument> entries = index.getEntriesMinor(OSQLHelper.getValue(value), true);
 
-					for (ODocument document : entries)
+					for (final ODocument document : entries)
 						addResult(document);
 				}
-			} else {
-				Object res = index.get(keyValue);
+			} else if (indexOperator instanceof OQueryOperatorIn) {
+                final List origValues = (List) compiledFilter.getRootCondition().getRight();
+                final List values = new ArrayList(origValues.size());
+                for (Object val : origValues) {
+                    val = OSQLHelper.getValue(val);
+                    val = OType.convert(val, index.getKeyType().getDefaultJavaType());
+                    values.add(val);
+                }
+
+                if (projections != null && projections.size() == 1 && projections.keySet().iterator().next().equalsIgnoreCase("@rid")) {
+					// SPECIAL CASE
+					result = index.getValues(values);
+
+					for (final OIdentifiable e : result)
+						addResult(e.getIdentity());
+
+				} else {
+                    final Collection<ODocument> entries = index.getEntries(values);
+
+					for (final ODocument document : entries)
+						addResult(document);
+                }
+            } else {
+                final Object right = compiledFilter.getRootCondition().getRight();
+                final Object keyValue = OSQLHelper.getValue(right);
+
+				final Object res = index.get(keyValue);
 
 				if (res != null)
 					if (res instanceof Collection<?>)
 						// MULTI VALUES INDEX
-						for (OIdentifiable r : (Collection<OIdentifiable>) res)
+						for (final OIdentifiable r : (Collection<OIdentifiable>) res)
 							addResult(createIndexEntryAsDocument(keyValue, r.getIdentity()));
 					else
 						// SINGLE VALUE INDEX
@@ -908,7 +952,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		}
 
 		if (anyFunctionAggregates) {
-			for (Entry<String, Object> projection : projections.entrySet()) {
+			for (final Entry<String, Object> projection : projections.entrySet()) {
 				if (projection.getValue() instanceof OSQLFunctionRuntime) {
 					final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection.getValue();
 					f.setResult(index.getSize());

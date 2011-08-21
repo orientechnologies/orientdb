@@ -15,8 +15,11 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -29,6 +32,7 @@ import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
+import com.sun.org.apache.bcel.internal.generic.NEW;
 
 /**
  * Abstract Index implementation that allows only one value for a key.
@@ -227,4 +231,45 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 		result.addAll(iSubSet.values());
 		return result;
 	}
+
+    public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
+        final List<Comparable> sortedKeys = new ArrayList<Comparable>((Collection<? extends Comparable>) iKeys);
+        Collections.sort(sortedKeys);
+
+        final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+        acquireExclusiveLock();
+        try {
+            for (final Object key : sortedKeys) {
+                final OIdentifiable val = map.get(key);
+                if (val != null)
+                    result.add(val);
+            }
+        } finally {
+            releaseExclusiveLock();
+        }
+        return result;
+    }
+
+    public Collection<ODocument> getEntries(final Collection<?> iKeys) {
+        final List<Comparable> sortedKeys = new ArrayList<Comparable>((Collection<? extends Comparable>) iKeys);
+        Collections.sort(sortedKeys);
+
+        final Set<ODocument> result = new HashSet<ODocument>();
+        acquireExclusiveLock();
+        try {
+            for (final Object key : sortedKeys) {
+                final OIdentifiable val = map.get(key);
+                if (val != null) {
+                    final ODocument document = new ODocument();
+					document.field("key", key);
+					document.field("rid", val.getIdentity());
+					document.unsetDirty();
+					result.add(document);
+                }
+            }
+        } finally {
+            releaseExclusiveLock();
+        }
+        return result;
+    }
 }
