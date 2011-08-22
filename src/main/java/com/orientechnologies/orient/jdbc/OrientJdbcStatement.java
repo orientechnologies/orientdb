@@ -152,7 +152,6 @@ public class OrientJdbcStatement implements Statement {
 		return 0;
 	}
 
-	@Override
 	public boolean getMoreResults() throws SQLException {
 
 		return false;

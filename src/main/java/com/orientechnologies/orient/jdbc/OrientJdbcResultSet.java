@@ -305,12 +305,12 @@ public class OrientJdbcResultSet implements ResultSet {
 
 	public float getFloat(int columnIndex) throws SQLException {
 
-		return 0;
+		return Float.parseFloat(fieldValues[columnIndex - 1].toString());
 	}
 
 	public float getFloat(String columnLabel) throws SQLException {
 
-		return 0;
+		return (Float) (document.field(columnLabel, OType.FLOAT));
 	}
 
 	public int getHoldability() throws SQLException {
@@ -325,7 +325,7 @@ public class OrientJdbcResultSet implements ResultSet {
 
 	public int getInt(String columnLabel) throws SQLException {
 
-		return document.field(columnLabel, OType.INTEGER);
+		return (Integer) document.field(columnLabel, OType.INTEGER);
 	}
 
 	public long getLong(int columnIndex) throws SQLException {
@@ -334,7 +334,7 @@ public class OrientJdbcResultSet implements ResultSet {
 
 	public long getLong(String columnLabel) throws SQLException {
 
-		return document.field(columnLabel, OType.LONG);
+		return (Long) document.field(columnLabel, OType.LONG);
 	}
 
 	public Reader getNCharacterStream(int columnIndex) throws SQLException {

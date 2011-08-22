@@ -1,0 +1,27 @@
+h2. OrientDB  JDBC Driver
+
+OrientDB (http://code.google.com/p/orient/) is a NoSql DBMS that support a subset of SQL ad query languge.
+This project is an effort to develop a JDBC driver for OrientDB
+
+h2. How to build
+
+Orient-jdbc uses maven, so do a 
+
+pre. mvn install pre.
+
+then you can include in your own projects 
+
+pre.
+
+		<dependency>
+			<groupId>com.orientechnologies</groupId>
+			<artifactId>orientdb-jdbc</artifactId>
+			<version>1.0-SNAPSHOT</version>
+		</dependency>
+
+
+
+pre.
+
+
+
