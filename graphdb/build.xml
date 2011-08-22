@@ -3,6 +3,8 @@
 <project basedir="." default="compile" name="orientdb-graphdb">
 	<property name="project.jar-classpath" value="orientdb-server-${version}.jar" />
 	<property name="project.jar-mainclass" value="com.orientechnologies.orient.server.OServerMain" />
+	<property name="project.src2" value="src/test/java" />
+	<property name="project.lib2" value="../tests/lib" />
 
   <import file="../_base/base-build.xml" />
 </project>

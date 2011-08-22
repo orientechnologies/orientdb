@@ -7,7 +7,7 @@ import com.tinkerpop.blueprints.pgm.impls.orientdb.OrientGraph;
 import com.tinkerpop.blueprints.pgm.util.graphml.GraphMLReader;
 
 public class TestLoadGraph {
-	private static final String	INPUT_FILE	= "target/classes/graph-example-2.xml";
+	private static final String	INPUT_FILE	= "target/test-classes/graph-example-2.xml";
 	private static final String	DBURL				= "local:target/databases/tinkerpop";
 
 	// private static final String DBURL = "remote:localhost/tinkerpop";

@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- Copyright (c) 1999-2010 Luca Garulli - LICENSE: Apache 2.0 -->
 <project basedir="." >
-	<property name="project.src" value="src/main/java" />
+	<property name="project.src"  value="src/main/java" />
+	<property name="project.src2" value="${project.src}" />
 	<property name="project.lib" value="lib" />
+	<property name="project.lib2" value="${project.lib}" />
 	<property name="project.doc" value="doc" />
 	<property name="project.build" value="target/classes" />
 	<property name="project.dist" value="target" />
@@ -15,6 +17,7 @@
 	<path id="project.classpath">
 		<filelist dir=".."             files="${project.jar-deps}" />
 		<fileset  dir="${project.lib}" includes="**/*.jar" />
+		<fileset  dir="${project.lib2}" includes="**/*.jar" />
 		<fileset  dir=".."             includes="**/target/*.jar" />
 	</path>
 
@@ -35,6 +38,7 @@
 		<javac destdir="${project.build}" debug="${project.is-debug}" debuglevel="${project.debug-level}" target="${project.target-comp}" source="${project.source-comp}" 
            verbose="false" includeAntRuntime="false">
 			<src path="${project.src}" />
+			<src path="${project.src2}" />
 			<classpath refid="project.classpath" />
 		</javac>
 	</target>
