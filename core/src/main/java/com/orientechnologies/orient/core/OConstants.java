@@ -22,7 +22,7 @@ public class OConstants {
 	public static final int			SIZE_INT				= 4;
 	public static final int			SIZE_LONG				= 8;
 
-	public static final String	ORIENT_VERSION	= "1.0rc5";
+	public static final String	ORIENT_VERSION	= "1.0rc6-SNAPSHOT";
 	public static final String	ORIENT_URL			= "www.orientechnologies.com";
 
 	public static String getVersion() {
