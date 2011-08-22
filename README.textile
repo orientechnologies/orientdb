@@ -7,21 +7,15 @@ h2. How to build
 
 Orient-jdbc uses maven, so do a 
 
-pre. mvn install pre.
+mvn install
 
 then you can include in your own projects 
 
-pre.
 
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-jdbc</artifactId>
-			<version>1.0-SNAPSHOT</version>
-		</dependency>
-
-
-
-pre.
-
+	<dependency>
+		<groupId>com.orientechnologies</groupId>
+		<artifactId>orientdb-jdbc</artifactId>
+		<version>1.0-SNAPSHOT</version>
+	</dependency>
 
 
