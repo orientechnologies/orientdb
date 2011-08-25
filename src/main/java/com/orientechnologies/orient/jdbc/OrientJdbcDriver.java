@@ -31,21 +31,20 @@ public class OrientJdbcDriver implements java.sql.Driver {
 		try {
 			java.sql.DriverManager.registerDriver(new OrientJdbcDriver());
 		} catch (SQLException e) {
-			OLogManager.instance().error(null,
-					"Error while registering the JDBC Driver");
+			OLogManager.instance().error(null, "Error while registering the JDBC Driver");
 		}
 	}
 
 	public boolean acceptsURL(String url) throws SQLException {
-		return url.startsWith("orient:");
+
+		return url.startsWith("jdbc:orient:");
 	}
 
 	public Connection connect(String url, Properties info) throws SQLException {
 		return new OrientJdbcConnection(url, info);
 	}
 
-	public DriverPropertyInfo[] getPropertyInfo(String url, Properties info)
-			throws SQLException {
+	public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException {
 		return null;
 	}
 

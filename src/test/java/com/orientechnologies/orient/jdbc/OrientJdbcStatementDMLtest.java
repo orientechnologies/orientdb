@@ -49,4 +49,21 @@ public class OrientJdbcStatementDMLtest extends OrientJdbcBaseTest {
 
 	}
 
+	@Test
+	public void shouldDeleteArow() throws Exception {
+
+		assertFalse(conn.isClosed());
+
+		Statement stmt = conn.createStatement();
+		int updated = stmt.executeUpdate("DELETE FROM Item WHERE intKey = '10'");
+
+		assertFalse(stmt.getMoreResults());
+		assertEquals(1, updated);
+
+		stmt = conn.createStatement();
+		ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item where intKey = '10' ");
+		assertFalse(rs.next());
+
+	}
+
 }

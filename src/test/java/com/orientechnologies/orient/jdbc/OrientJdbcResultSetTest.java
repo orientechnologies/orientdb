@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
@@ -88,6 +89,7 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
 
 		assertTrue(stmt.execute("SELECT stringKey, intKey, text, length, date FROM Item"));
 		ResultSet rs = stmt.getResultSet();
+		assertNotNull(rs);
 		assertEquals(20, rs.getFetchSize());
 
 	}

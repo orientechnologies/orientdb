@@ -21,7 +21,7 @@ public class OrientJdbcStatementTest extends OrientJdbcBaseTest {
 	}
 
 	@Test
-	public void testEmptyQuery() throws SQLException {
+	public void shouldReturnEmptyResultSetOnEmptyQuery() throws SQLException {
 		Statement stmt = conn.createStatement();
 		stmt.execute("");
 		assertNull(stmt.getResultSet());
