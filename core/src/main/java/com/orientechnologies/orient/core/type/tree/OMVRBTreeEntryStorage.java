@@ -91,6 +91,8 @@ public class OMVRBTreeEntryStorage<K, V> extends OMVRBTreeEntryPersistent<K, V> 
 	 */
 	@Override
 	public OMVRBTreeEntryStorage<K, V> delete() throws IOException {
+		super.delete();
+
 		// EARLY LOAD LEFT AND DELETE IT RECURSIVELY
 		if (getLeft() != null)
 			((OMVRBTreeEntryPersistent<K, V>) getLeft()).delete();
@@ -106,7 +108,6 @@ public class OMVRBTreeEntryStorage<K, V> extends OMVRBTreeEntryPersistent<K, V> 
 		keys = null;
 		values = null;
 
-		super.delete();
 		return this;
 	}
 
