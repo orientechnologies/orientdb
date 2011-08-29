@@ -155,7 +155,7 @@ public class OStorageLocal extends OStorageEmbedded {
 					// CLOSE AND REOPEN TO BE SURE ALL THE FILE SEGMENTS ARE
 					// OPENED
 					dataSegments[i].close();
-					dataSegments[i] = new ODataLocal(this, dataConfig, pos);
+					dataSegments[i] = new ODataLocal(this, dataConfig, i);
 					dataSegments[i].open();
 				} else
 					dataSegments[pos].open();
