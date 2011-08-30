@@ -129,9 +129,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	 * @return the object itself.
 	 */
 	public OClass setSuperClass(final OClass iSuperClass) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		final String cmd = String.format("alter class %s superclass %s", name, iSuperClass.getName());
-		document.getDatabase().command(new OCommandSQL(cmd)).execute();
+		getDatabase().command(new OCommandSQL(cmd)).execute();
 		setSuperClassInternal(iSuperClass);
 		return this;
 	}
@@ -146,15 +146,15 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	}
 
 	public OClass setName(final String iName) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		final String cmd = String.format("alter class %s name %s", name, iName);
-		document.getDatabase().command(new OCommandSQL(cmd)).execute();
+		getDatabase().command(new OCommandSQL(cmd)).execute();
 		name = iName;
 		return this;
 	}
 
 	public void setNameInternal(final String iName) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		owner.changeClassName(name, iName);
 		name = iName;
 	}
@@ -164,15 +164,15 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	}
 
 	public OClass setShortName(final String iShortName) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		final String cmd = String.format("alter class %s shortname %s", name, iShortName);
-		document.getDatabase().command(new OCommandSQL(cmd)).execute();
+		getDatabase().command(new OCommandSQL(cmd)).execute();
 		setShortNameInternal(iShortName);
 		return this;
 	}
 
 	public void setShortNameInternal(final String shortName) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		if (this.shortName != null)
 			// UNREGISTER ANY PREVIOUS SHORT NAME
 			owner.classes.remove(shortName);
@@ -192,7 +192,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	}
 
 	public Collection<OProperty> properties() {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
 
 		Collection<OProperty> props = null;
 
@@ -213,7 +213,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	}
 
 	public Collection<OProperty> getIndexedProperties() {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
 
 		Collection<OProperty> indexedProps = null;
 
@@ -278,7 +278,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	}
 
 	public void dropProperty(final String iPropertyName) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_DELETE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_DELETE);
 
 		final String lowerName = iPropertyName.toLowerCase();
 
@@ -291,14 +291,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		cmd.append('.');
 		cmd.append(iPropertyName);
 
-		document.getDatabase().command(new OCommandSQL(cmd.toString())).execute();
+		getDatabase().command(new OCommandSQL(cmd.toString())).execute();
 
 		if (existsProperty(iPropertyName))
 			properties.remove(lowerName);
 	}
 
 	public void dropPropertyInternal(final String iPropertyName) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_DELETE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_DELETE);
 
 		final OProperty prop = properties.remove(iPropertyName.toLowerCase());
 
@@ -311,7 +311,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	}
 
 	public OProperty addProperty(final String iPropertyName, final OType iType, final OType iLinkedType, final OClass iLinkedClass) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 
 		final String lowerName = iPropertyName.toLowerCase();
 
@@ -339,7 +339,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 			cmd.append(iLinkedClass.getName());
 		}
 
-		document.getDatabase().command(new OCommandSQL(cmd.toString())).execute();
+		getDatabase().command(new OCommandSQL(cmd.toString())).execute();
 
 		if (existsProperty(iPropertyName))
 			return properties.get(lowerName);
@@ -374,7 +374,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		OPropertyImpl prop;
 		Collection<ODocument> storedProperties = document.field("properties");
 		for (ODocument p : storedProperties) {
-			p.setDatabase(document.getDatabase());
+			p.setDatabase(getDatabase());
 			prop = new OPropertyImpl(this, p);
 			prop.fromStream();
 			properties.put(prop.getName().toLowerCase(), prop);
@@ -492,15 +492,15 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	}
 
 	public OClass setOverSize(final float overSize) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		final String cmd = String.format("alter class %s oversize %f", name, overSize);
-		document.getDatabase().command(new OCommandSQL(cmd)).execute();
+		getDatabase().command(new OCommandSQL(cmd)).execute();
 		setOverSizeInternal(overSize);
 		return this;
 	}
 
 	public void setOverSizeInternal(final float overSize) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		this.overSize = overSize;
 	}
 
@@ -644,7 +644,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 			setShortNameInternal(stringValue);
 			break;
 		case SUPERCLASS:
-			setSuperClassInternal(document.getDatabase().getMetadata().getSchema().getClass(stringValue));
+			setSuperClassInternal(getDatabase().getMetadata().getSchema().getClass(stringValue));
 			break;
 		case OVERSIZE:
 			setOverSizeInternal(Float.parseFloat(stringValue.replace(',', '.')));
@@ -668,7 +668,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 			setShortName(stringValue);
 			break;
 		case SUPERCLASS:
-			setSuperClass(document.getDatabase().getMetadata().getSchema().getClass(stringValue));
+			setSuperClass(getDatabase().getMetadata().getSchema().getClass(stringValue));
 			break;
 		case OVERSIZE:
 			setOverSize(Float.parseFloat(stringValue));
