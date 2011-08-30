@@ -17,10 +17,12 @@ package com.orientechnologies.orient.core.sql.filter;
 
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.regex.Pattern;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
@@ -189,26 +191,38 @@ public class OSQLFilterCondition {
 	}
 
 	protected Object evaluate(ORecordSchemaAware<?> iRecord, final Object iValue) {
-		if (iValue instanceof OSQLFilterItem) {
-			if (iRecord.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
-				try {
-					iRecord = (ORecordSchemaAware<?>) iRecord.load();
-				} catch (ORecordNotFoundException e) {
-					return null;
-				}
+		if (iRecord.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+			try {
+				iRecord = (ORecordSchemaAware<?>) iRecord.load();
+			} catch (ORecordNotFoundException e) {
+				return null;
 			}
-
-			return ((OSQLFilterItem) iValue).getValue(iRecord);
 		}
 
-		if (iValue instanceof OSQLFilterCondition)
+		if (iValue instanceof OSQLFilterItem)
+			return ((OSQLFilterItem) iValue).getValue(iRecord);
+		else if (iValue instanceof OSQLFilterCondition)
 			// NESTED CONDITION: EVALUATE IT RECURSIVELY
 			return ((OSQLFilterCondition) iValue).evaluate(iRecord);
-
-		if (iValue instanceof OSQLFunctionRuntime) {
+		else if (iValue instanceof OSQLFunctionRuntime) {
 			// STATELESS FUNCTION: EXECUTE IT
 			final OSQLFunctionRuntime f = (OSQLFunctionRuntime) iValue;
 			return f.execute(iRecord);
+		}
+
+		final Object firstValue = OMultiValue.getFirstValue(iValue);
+
+		if (firstValue != null && firstValue instanceof OSQLFilterItem) {
+			// MULTI VALUE: RETURN A COPY
+			final ArrayList<Object> result = new ArrayList<Object>(OMultiValue.getSize(iValue));
+
+			for (Object value : OMultiValue.getMultiValueIterable(iValue)) {
+				if (value instanceof OSQLFilterItem)
+					result.add(((OSQLFilterItem) value).getValue(iRecord));
+				else
+					result.add(value);
+			}
+			return result;
 		}
 
 		// SIMPLE VALUE: JUST RETURN IT
