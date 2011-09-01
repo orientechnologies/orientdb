@@ -121,11 +121,22 @@ public class OEntityManager {
 	 * @return The classes
 	 */
 	public void registerEntityClasses(final String iPackageName) {
+		registerEntityClasses(iPackageName, Thread.currentThread().getContextClassLoader());
+	}
+
+	/**
+	 * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
+	 * 
+	 * @param iPackageName
+	 *          The base package
+	 * @return The classes
+	 */
+	public void registerEntityClasses(final String iPackageName, final ClassLoader iClassLoader) {
 		OLogManager.instance().debug(this, "Discovering entity classes inside package: %s", iPackageName);
 
 		List<Class<?>> classes = null;
 		try {
-			classes = OReflectionHelper.getClassesForPackage(iPackageName);
+			classes = OReflectionHelper.getClassesForPackage(iPackageName, iClassLoader);
 		} catch (ClassNotFoundException e) {
 			throw new OException(e);
 		}

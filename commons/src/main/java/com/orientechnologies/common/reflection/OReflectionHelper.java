@@ -24,18 +24,15 @@ import com.orientechnologies.common.log.OLogManager;
 public class OReflectionHelper {
 	private static final String	CLASS_EXTENSION	= ".class";
 
-	public static List<Class<?>> getClassesForPackage(final String iPackageName) throws ClassNotFoundException {
+	public static List<Class<?>> getClassesForPackage(final String iPackageName, final ClassLoader iClassLoader)
+			throws ClassNotFoundException {
 		// This will hold a list of directories matching the pckgname.
 		// There may be more than one if a package is split over multiple jars/paths
 		List<Class<?>> classes = new ArrayList<Class<?>>();
 		ArrayList<File> directories = new ArrayList<File>();
 		try {
-			ClassLoader cld = Thread.currentThread().getContextClassLoader();
-			if (cld == null) {
-				throw new ClassNotFoundException("Can't get class loader.");
-			}
 			// Ask for all resources for the path
-			Enumeration<URL> resources = cld.getResources(iPackageName.replace('.', '/'));
+			Enumeration<URL> resources = iClassLoader.getResources(iPackageName.replace('.', '/'));
 			while (resources.hasMoreElements()) {
 				URL res = resources.nextElement();
 				if (res.getProtocol().equalsIgnoreCase("jar")) {
@@ -116,16 +113,17 @@ public class OReflectionHelper {
 	}
 
 	/**
-	 * Filter discovered classes to see if they implement a given interface.
+	 * Filters discovered classes to see if they implement a given interface.
 	 * 
 	 * @param thePackage
 	 * @param theInterface
+	 * @param iClassLoader
 	 * @return The list of classes that implements the requested interface
 	 */
-	public static List<Class<?>> getClassessOfInterface(String thePackage, Class<?> theInterface) {
+	public static List<Class<?>> getClassessOfInterface(String thePackage, Class<?> theInterface, final ClassLoader iClassLoader) {
 		List<Class<?>> classList = new ArrayList<Class<?>>();
 		try {
-			for (Class<?> discovered : getClassesForPackage(thePackage)) {
+			for (Class<?> discovered : getClassesForPackage(thePackage, iClassLoader)) {
 				if (Arrays.asList(discovered.getInterfaces()).contains(theInterface)) {
 					classList.add(discovered);
 				}
