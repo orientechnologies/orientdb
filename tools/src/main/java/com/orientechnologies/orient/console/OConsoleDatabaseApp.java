@@ -46,6 +46,8 @@ import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.object.ODatabaseObject;
+import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
@@ -71,6 +73,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.ODataHoleInfo;
@@ -1217,9 +1220,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 				if (value instanceof Collection<?>)
 					value = "[" + ((Collection<?>) value).size() + "]";
-				else if (value instanceof ORecord<?>)
-					value = ((ORecord<?>) value).getIdentity().toString();
-				else if (value instanceof Date)
+				else if (value instanceof ORecord<?>) {
+					if (((ORecord<?>) value).getIdentity().equals(ORecordId.EMPTY_RECORD_ID)) {
+						value = ((ORecord<?>) value).toString();
+					} else {
+						value = ((ORecord<?>) value).getIdentity().toString();
+					}
+				} else if (value instanceof Date)
 					value = currentDatabase.getStorage().getConfiguration().getDateTimeFormatInstance().format((Date) value);
 				else if (value instanceof byte[])
 					value = "byte[" + ((byte[]) value).length + "]";

@@ -84,12 +84,15 @@ public class OObjectSerializerHelper {
 	private static HashMap<Class<?>, String>										boundDocumentFields				= new HashMap<Class<?>, String>();
 	private static HashMap<Class<?>, String>										fieldIds									= new HashMap<Class<?>, String>();
 	private static HashMap<Class<?>, String>										fieldVersions							= new HashMap<Class<?>, String>();
+	private static HashMap<Class<?>, List<String>>							embeddedFields						= new HashMap<Class<?>, List<String>>();
 	@SuppressWarnings("rawtypes")
 	private static Class																				jpaIdClass;
 	@SuppressWarnings("rawtypes")
 	private static Class																				jpaVersionClass;
 	@SuppressWarnings("rawtypes")
 	private static Class																				jpaAccessClass;
+	@SuppressWarnings("rawtypes")
+	private static Class																				jpaEmbeddedClass;
 
 	static {
 		// DETERMINE IF THERE IS AVAILABLE JPA 2
@@ -98,7 +101,11 @@ public class OObjectSerializerHelper {
 			jpaVersionClass = Class.forName("javax.persistence.Version");
 
 			// DETERMINE IF THERE IS AVAILABLE JPA 2
+			jpaEmbeddedClass = Class.forName("javax.persistence.Embedded");
+
+			// DETERMINE IF THERE IS AVAILABLE JPA 2
 			jpaAccessClass = Class.forName("javax.persistence.Access");
+
 		} catch (Exception e) {
 		}
 	}
@@ -574,6 +581,19 @@ public class OObjectSerializerHelper {
 
 			schemaProperty = schemaClass != null ? schemaClass.getProperty(fieldName) : null;
 
+			if (fieldValue != null
+					&& getEmbeddetTypesByJPAAnnotation(iPojo.getClass(), fieldValue.getClass(), fieldName, iEntityManager) != null
+					&& getEmbeddetTypesByJPAAnnotation(iPojo.getClass(), fieldValue.getClass(), fieldName, iEntityManager).equals(
+							OType.EMBEDDED)) {
+				if (schemaClass == null) {
+					db.getMetadata().getSchema().createClass(iPojo.getClass());
+					iRecord.setClassNameIfExists(iPojo.getClass().getSimpleName());
+				}
+				if (schemaProperty == null) {
+					schemaProperty = iRecord.getSchemaClass().createProperty(fieldName, OType.EMBEDDED);
+				}
+			}
+
 			fieldValue = typeToStream(fieldValue, schemaProperty != null ? schemaProperty.getType() : null, iEntityManager,
 					iObj2RecHandler, db, iSaveOnlyDirty);
 
@@ -670,11 +690,12 @@ public class OObjectSerializerHelper {
 					iFieldValue = toStream(pojo, linkedDocument, iEntityManager, linkedDocument.getSchemaClass(), iObj2RecHandler, db,
 							iSaveOnlyDirty);
 
-//					if (linkedDocument.isDirty()) {
-//						// SAVE THE DOCUMENT AND GET UDPATE THE VERSION. CALL THE UNDERLYING SAVE() TO AVOID THE SERIALIZATION THREAD IS CLEANED
-//						// AND GOES RECURSIVELY UP THE STACK IS EXHAUSTED
-//						db.getUnderlying().save(linkedDocument);
-//					}
+					// if (linkedDocument.isDirty()) {
+					// // SAVE THE DOCUMENT AND GET UDPATE THE VERSION. CALL THE UNDERLYING SAVE() TO AVOID THE SERIALIZATION THREAD IS
+					// CLEANED
+					// // AND GOES RECURSIVELY UP THE STACK IS EXHAUSTED
+					// db.getUnderlying().save(linkedDocument);
+					// }
 					iObj2RecHandler.registerUserObject(pojo, linkedDocument);
 
 				} else
@@ -863,6 +884,13 @@ public class OObjectSerializerHelper {
 									fieldType);
 					}
 
+					// JPA 1+ AVAILABLE?
+					if (jpaEmbeddedClass != null && f.getAnnotation(jpaEmbeddedClass) != null) {
+						if (embeddedFields.get(iClass) == null)
+							embeddedFields.put(iClass, new ArrayList<String>());
+						embeddedFields.get(iClass).add(fieldName);
+					}
+
 					if (autoBinding)
 						// TRY TO GET THE VALUE BY THE GETTER (IF ANY)
 						try {
@@ -950,5 +978,14 @@ public class OObjectSerializerHelper {
 			f.setAccessible(true);
 
 		getters.put(iClass.getName() + "." + fieldName, f);
+	}
+
+	private static OType getEmbeddetTypesByJPAAnnotation(final Class<?> iPojoClass, final Class<?> iFieldClass,
+			final String iFieldName, final OEntityManager iEntityManager) {
+		if (embeddedFields.get(iPojoClass) != null && embeddedFields.get(iPojoClass).contains(iFieldName))
+			return OType.EMBEDDED;
+		else if (iEntityManager.getEntityClass(iFieldClass.getSimpleName()) != null)
+			return OType.LINK;
+		return null;
 	}
 }
