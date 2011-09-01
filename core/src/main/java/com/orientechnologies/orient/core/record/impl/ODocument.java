@@ -898,7 +898,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	}
 
 	/**
-	 * Clear all the field values and types.
+	 * Clears all the field values and types.
 	 */
 	@Override
 	public ODocument clear() {
@@ -909,7 +909,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	}
 
 	/**
-	 * Reset the record values and class type to being reused.
+	 * Resets the record values and class type to being reused.
 	 */
 	@Override
 	public ODocument reset() {

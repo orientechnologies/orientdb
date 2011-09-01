@@ -92,7 +92,7 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 		_recordFormat = ORecordSerializerFactory.instance().getFormat(ORecordSerializerRaw.NAME);
 	}
 
-	public void fromInputStream(InputStream in) throws IOException {
+	public void fromInputStream(final InputStream in) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		try {
 			while (in.available() > 0) {
@@ -106,7 +106,7 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 		_size = _source.length;
 	}
 
-	public void toOutputStream(OutputStream out) throws IOException {
+	public void toOutputStream(final OutputStream out) throws IOException {
 		if (_source.length > 0) {
 			ByteArrayInputStream in = new ByteArrayInputStream(_source);
 			while (in.available() > 0) {
