@@ -317,6 +317,10 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 			return OType.EMBEDDEDLIST;
 		else if (firstChar == OStringSerializerHelper.MAP_BEGIN)
 			return OType.EMBEDDEDMAP;
+		
+		//BOOLEAN?
+		if (iValue.equalsIgnoreCase("true") || iValue.equalsIgnoreCase("false"))
+			return OType.BOOLEAN;
 
 		// NUMBER OR STRING?
 		boolean integer = true;
