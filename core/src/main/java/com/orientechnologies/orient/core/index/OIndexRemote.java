@@ -45,21 +45,20 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
 	protected String							name;
 
-	protected final static String	QUERY_GET											= "select from index:%s where key = ?";
 	protected final static String	QUERY_ENTRIES									= "select key, rid from index:%s";
 
 	private final static String		QUERY_GET_MAJOR								= "select from index:%s where key > ?";
 	private final static String		QUERY_GET_MAJOR_EQUALS				= "select from index:%s where key >= ?";
-	private final static String		QUERY_GET_VALUE_MAJOR					= "select @rid from index:%s where key > ?";
-	private final static String		QUERY_GET_VALUE_MAJOR_EQUALS	= "select @rid from index:%s where key >= ?";
+	private final static String		QUERY_GET_VALUE_MAJOR					= "select FLATTEN( rid ) from index:%s where key > ?";
+	private final static String		QUERY_GET_VALUE_MAJOR_EQUALS	= "select FLATTEN( rid ) from index:%s where key >= ?";
 	private final static String		QUERY_GET_MINOR								= "select from index:%s where key < ?";
 	private final static String		QUERY_GET_MINOR_EQUALS				= "select from index:%s where key <= ?";
-	private final static String		QUERY_GET_VALUE_MINOR					= "select @rid from index:%s where key < ?";
-	private final static String		QUERY_GET_VALUE_MINOR_EQUALS	= "select @rid from index:%s where key <= ?";
+	private final static String		QUERY_GET_VALUE_MINOR					= "select FLATTEN( rid ) from index:%s where key < ?";
+	private final static String		QUERY_GET_VALUE_MINOR_EQUALS	= "select FLATTEN( rid ) from index:%s where key <= ?";
 	private final static String		QUERY_GET_RANGE								= "select from index:%s where key between ? and ?";
-	private final static String     QUERY_GET_VALUES                = "select @rid from index:%s where key in [%s]";
-    private final static String     QUERY_GET_ENTRIES               = "select from index:%s where key in [%s]";
-	private final static String		QUERY_GET_VALUE_RANGE					= "select @rid from index:%s where key between ? and ?";
+	private final static String		QUERY_GET_VALUES							= "select FLATTEN( rid ) from index:%s where key in [%s]";
+	private final static String		QUERY_GET_ENTRIES							= "select from index:%s where key in [%s]";
+	private final static String		QUERY_GET_VALUE_RANGE					= "select FLATTEN( rid ) from index:%s where key between ? and ?";
 	private final static String		QUERY_PUT											= "insert into index:%s (key,rid) values (%s,%s)";
 	private final static String		QUERY_REMOVE									= "delete from index:%s where key = %s";
 	private final static String		QUERY_REMOVE2									= "delete from index:%s where key = %s and rid = %s";
@@ -266,29 +265,29 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 		return null;
 	}
 
-    public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
-        final StringBuilder params = new StringBuilder();
-        if (!iKeys.isEmpty()) {
-            params.append("?");
-            for (int i = 1; i < iKeys.size(); i++) {
-                params.append(", ?");
-            }
-        }
+	public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
+		final StringBuilder params = new StringBuilder();
+		if (!iKeys.isEmpty()) {
+			params.append("?");
+			for (int i = 1; i < iKeys.size(); i++) {
+				params.append(", ?");
+			}
+		}
 
-        final OCommandRequest cmd = formatCommand(QUERY_GET_VALUES, name, params.toString());
-        return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(iKeys.toArray());
-    }
+		final OCommandRequest cmd = formatCommand(QUERY_GET_VALUES, name, params.toString());
+		return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(iKeys.toArray());
+	}
 
-    public Collection<ODocument> getEntries(final Collection<?> iKeys) {
-        final StringBuilder params = new StringBuilder();
-        if (!iKeys.isEmpty()) {
-            params.append("?");
-            for (int i = 1; i < iKeys.size(); i++) {
-                params.append(", ?");
-            }
-        }
+	public Collection<ODocument> getEntries(final Collection<?> iKeys) {
+		final StringBuilder params = new StringBuilder();
+		if (!iKeys.isEmpty()) {
+			params.append("?");
+			for (int i = 1; i < iKeys.size(); i++) {
+				params.append(", ?");
+			}
+		}
 
-        final OCommandRequest cmd = formatCommand(QUERY_GET_ENTRIES, name, params.toString());
-        return (Collection<ODocument>) getDatabase().command(cmd).execute(iKeys.toArray());
-    }
+		final OCommandRequest cmd = formatCommand(QUERY_GET_ENTRIES, name, params.toString());
+		return (Collection<ODocument>) getDatabase().command(cmd).execute(iKeys.toArray());
+	}
 }

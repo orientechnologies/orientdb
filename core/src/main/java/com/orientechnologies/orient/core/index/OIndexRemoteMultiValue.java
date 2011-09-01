@@ -35,6 +35,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 @SuppressWarnings("unchecked")
 public class OIndexRemoteMultiValue extends OIndexRemote<Collection<OIdentifiable>> {
+	protected final static String	QUERY_GET	= "select FLATTEN( rid ) from index:%s where key = ?";
+
 	public OIndexRemoteMultiValue(String iName, String iWrappedType, ORID iRid) {
 		super(iName, iWrappedType, iRid);
 	}

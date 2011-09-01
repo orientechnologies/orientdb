@@ -34,7 +34,7 @@ public class OServerCommandGetQuery extends OServerCommandAuthenticatedDbAbstrac
 		String[] urlParts = checkSyntax(
 				iRequest.url,
 				4,
-				"Syntax error: query/<database>/sql/query[/<limit>][/<fetchPlan>].<br/>Limit is optional and is setted to 20 by default. Set expressely to 0 to have no limits.");
+				"Syntax error: query/<database>/sql/<query-text>[/<limit>][/<fetchPlan>].<br/>Limit is optional and is setted to 20 by default. Set expressely to 0 to have no limits.");
 
 		final int limit = urlParts.length > 4 ? Integer.parseInt(urlParts[4]) : 20;
 

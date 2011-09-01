@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -114,7 +115,8 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	@Override
 	public Iterator<OIdentifiable> iterator() {
 		lazyLoad(false);
-		return new OLazyRecordIterator(sourceRecord, database, recordType, super.iterator(), autoConvertToRecord);
+		return new OLazyRecordIterator(sourceRecord, ODatabaseRecordThreadLocal.INSTANCE.get(), recordType, super.iterator(),
+				autoConvertToRecord);
 	}
 
 	@Override
@@ -129,7 +131,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	@Override
 	public boolean add(OIdentifiable e) {
 		if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || OGlobalConfiguration.LAZYSET_WORK_ON_STREAM
-				.getValueAsBoolean()) && !e.getIdentity().isNew()&& (e instanceof ODocument && !((ODocument) e).isDirty()))
+				.getValueAsBoolean()) && !e.getIdentity().isNew() && (e instanceof ODocument && !((ODocument) e).isDirty()))
 			// IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
 			e = e.getIdentity();
 		else
@@ -157,7 +159,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 		lazyLoad(true);
 
 		if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || OGlobalConfiguration.LAZYSET_WORK_ON_STREAM
-				.getValueAsBoolean()) && !e.getIdentity().isNew()&& (e instanceof ODocument && !((ODocument) e).isDirty()))
+				.getValueAsBoolean()) && !e.getIdentity().isNew() && (e instanceof ODocument && !((ODocument) e).isDirty()))
 			// IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
 			e = e.getIdentity();
 		else

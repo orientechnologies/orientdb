@@ -376,6 +376,7 @@ public class ODocumentHelper {
 			throw new IllegalArgumentException("Document attribute '" + iFieldName + "' not supported");
 		} else
 			// RETURN A FIELD
+			((ODocument) iCurrent.getRecord()).checkForFields();
 			return ((ODocument) iCurrent.getRecord())._fieldValues.get(iFieldName);
 	}
 

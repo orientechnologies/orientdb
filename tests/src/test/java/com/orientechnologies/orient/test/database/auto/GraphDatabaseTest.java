@@ -56,77 +56,108 @@ public class GraphDatabaseTest {
 	public void populate() {
 		database.open("admin", "admin");
 
-		OClass vehicleClass = database.createVertexType("GraphVehicle");
-		database.createVertexType("GraphCar", vehicleClass);
-		database.createVertexType("GraphMotocycle", "GraphVehicle");
+		try {
 
-		ODocument carNode = (ODocument) database.createVertex("GraphCar").field("brand", "Hyundai").field("model", "Coupe")
-				.field("year", 2003).save();
-		ODocument motoNode = (ODocument) database.createVertex("GraphMotocycle").field("brand", "Yamaha").field("model", "X-City 250")
-				.field("year", 2009).save();
+			OClass vehicleClass = database.createVertexType("GraphVehicle");
+			database.createVertexType("GraphCar", vehicleClass);
+			database.createVertexType("GraphMotocycle", "GraphVehicle");
 
-		database.createEdge(carNode, motoNode).save();
+			ODocument carNode = (ODocument) database.createVertex("GraphCar").field("brand", "Hyundai").field("model", "Coupe")
+					.field("year", 2003).save();
+			ODocument motoNode = (ODocument) database.createVertex("GraphMotocycle").field("brand", "Yamaha")
+					.field("model", "X-City 250").field("year", 2009).save();
 
-		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from GraphVehicle"));
-		Assert.assertEquals(result.size(), 2);
-		for (ODocument v : result) {
-			Assert.assertTrue(v.getSchemaClass().isSubClassOf(vehicleClass));
+			database.createEdge(carNode, motoNode).save();
+
+			List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from GraphVehicle"));
+			Assert.assertEquals(result.size(), 2);
+			for (ODocument v : result) {
+				Assert.assertTrue(v.getSchemaClass().isSubClassOf(vehicleClass));
+			}
+
+		} finally {
+			database.close();
 		}
-
-		database.close();
 	}
 
 	@Test(dependsOnMethods = "populate")
 	public void checkAfterClose() {
 		database.open("admin", "admin");
-		database.getMetadata().getSchema().reload();
 
-		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from GraphVehicle"));
-		Assert.assertEquals(result.size(), 2);
+		try {
 
-		ODocument edge1 = null;
-		ODocument edge2 = null;
+			database.getMetadata().getSchema().reload();
 
-		for (ODocument v : result) {
-			Assert.assertTrue(v.getSchemaClass().isSubClassOf("GraphVehicle"));
+			List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from GraphVehicle"));
+			Assert.assertEquals(result.size(), 2);
 
-			if (v.getClassName().equals("GraphCar")) {
-				Assert.assertEquals(database.getOutEdges(v).size(), 1);
-				edge1 = (ODocument) database.getOutEdges(v).iterator().next();
-			} else {
-				Assert.assertEquals(database.getInEdges(v).size(), 1);
-				edge2 = (ODocument) database.getInEdges(v).iterator().next();
+			ODocument edge1 = null;
+			ODocument edge2 = null;
+
+			for (ODocument v : result) {
+				Assert.assertTrue(v.getSchemaClass().isSubClassOf("GraphVehicle"));
+
+				if (v.getClassName().equals("GraphCar")) {
+					Assert.assertEquals(database.getOutEdges(v).size(), 1);
+					edge1 = (ODocument) database.getOutEdges(v).iterator().next();
+				} else {
+					Assert.assertEquals(database.getInEdges(v).size(), 1);
+					edge2 = (ODocument) database.getInEdges(v).iterator().next();
+				}
 			}
+
+			Assert.assertEquals(edge1, edge2);
+
+		} finally {
+			database.close();
 		}
-
-		Assert.assertEquals(edge1, edge2);
-
-		database.close();
 	}
 
 	@Test(dependsOnMethods = "populate")
 	public void testSQLAgainstGraph() {
 		database.open("admin", "admin");
 
-		ODocument tom = (ODocument) database.createVertex().field("name", "Tom").save();
-		ODocument ferrari = (ODocument) database.createVertex("GraphCar").field("brand", "Ferrari").save();
-		ODocument maserati = (ODocument) database.createVertex("GraphCar").field("brand", "Maserati").save();
-		ODocument porsche = (ODocument) database.createVertex("GraphCar").field("brand", "Porsche").save();
-		database.createEdge(tom, ferrari).field("label", "drives").save();
-		database.createEdge(tom, maserati).field("label", "drives").save();
-		database.createEdge(tom, porsche).field("label", "owns").save();
+		try {
+			ODocument tom = (ODocument) database.createVertex().field("name", "Tom").save();
+			ODocument ferrari = (ODocument) database.createVertex("GraphCar").field("brand", "Ferrari").save();
+			ODocument maserati = (ODocument) database.createVertex("GraphCar").field("brand", "Maserati").save();
+			ODocument porsche = (ODocument) database.createVertex("GraphCar").field("brand", "Porsche").save();
+			database.createEdge(tom, ferrari).field("label", "drives").save();
+			database.createEdge(tom, maserati).field("label", "drives").save();
+			database.createEdge(tom, porsche).field("label", "owns").save();
 
-		List<OGraphElement> result = database.query(new OSQLSynchQuery<OGraphElement>(
-				"select out[in.@class = 'GraphCar'].in from V where name = 'Tom'"));
-		Assert.assertEquals(result.size(), 1);
+			List<OGraphElement> result = database.query(new OSQLSynchQuery<OGraphElement>(
+					"select out[in.@class = 'GraphCar'].in from V where name = 'Tom'"));
+			Assert.assertEquals(result.size(), 1);
 
-		result = database.query(new OSQLSynchQuery<OGraphElement>(
-				"select out[label='drives'][in.brand = 'Ferrari'].in from V where name = 'Tom'"));
-		Assert.assertEquals(result.size(), 1);
+			result = database.query(new OSQLSynchQuery<OGraphElement>(
+					"select out[label='drives'][in.brand = 'Ferrari'].in from V where name = 'Tom'"));
+			Assert.assertEquals(result.size(), 1);
 
-		result = database.query(new OSQLSynchQuery<OGraphElement>("select out[in.brand = 'Ferrari'].in from V where name = 'Tom'"));
-		Assert.assertEquals(result.size(), 1);
+			result = database.query(new OSQLSynchQuery<OGraphElement>("select out[in.brand = 'Ferrari'].in from V where name = 'Tom'"));
+			Assert.assertEquals(result.size(), 1);
 
-		database.close();
+		} finally {
+			database.close();
+		}
+	}
+
+	@Test
+	public void testDictionary() {
+		database.open("admin", "admin");
+
+		try {
+			ODocument rootNode = database.createVertex().field("id", 54254454);
+			database.setRoot("test123", rootNode);
+			rootNode.save();
+			
+			database.close();
+			database.open("admin", "admin");
+			
+			ODocument secroot = database.getRoot("test123");
+			Assert.assertEquals(secroot.getIdentity(), rootNode.getIdentity());
+		} finally {
+			database.close();
+		}
 	}
 }

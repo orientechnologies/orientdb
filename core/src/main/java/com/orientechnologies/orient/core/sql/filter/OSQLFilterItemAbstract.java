@@ -26,7 +26,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandToParse;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -98,7 +98,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
 	protected abstract void setRoot(OCommandToParse iQueryToParse, final String iRoot);
 
-	public Object transformValue(final ODatabaseRecord iDatabase, Object ioResult) {
+	public Object transformValue(Object ioResult) {
 		if (ioResult != null && operationsChain != null) {
 			// APPLY OPERATIONS FOLLOWING THE STACK ORDER
 			int operator = -2;
@@ -128,13 +128,13 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
 							if (ioResult instanceof String) {
 								try {
-									ioResult = new ODocument(iDatabase, new ORecordId((String) ioResult));
+									ioResult = new ODocument(ODatabaseRecordThreadLocal.INSTANCE.get(), new ORecordId((String) ioResult));
 								} catch (Exception e) {
 									OLogManager.instance().error(this, "Error on reading rid with value '%s'", null, ioResult);
 									ioResult = null;
 								}
 							} else if (ioResult instanceof ORID)
-								ioResult = new ODocument(iDatabase, (ORID) ioResult);
+								ioResult = new ODocument(ODatabaseRecordThreadLocal.INSTANCE.get(), (ORID) ioResult);
 							else if (ioResult instanceof ORecord<?>)
 								ioResult = (ODocument) ioResult;
 
@@ -231,14 +231,16 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 							if (ioResult instanceof Long)
 								ioResult = new Date((Long) ioResult);
 							else
-								ioResult = iDatabase.getStorage().getConfiguration().getDateFormatInstance().parse(ioResult.toString());
+								ioResult = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateFormatInstance()
+										.parse(ioResult.toString());
 						}
 					} else if (operator == OSQLFilterFieldOperator.ASDATETIME.id) {
 						if (ioResult != null) {
 							if (ioResult instanceof Long)
 								ioResult = new Date((Long) ioResult);
 							else
-								ioResult = iDatabase.getStorage().getConfiguration().getDateTimeFormatInstance().parse(ioResult.toString());
+								ioResult = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance()
+										.parse(ioResult.toString());
 						}
 					} else if (operator == OSQLFilterFieldOperator.TOJSON.id)
 						ioResult = ioResult != null && ioResult instanceof ODocument ? ((ODocument) ioResult).toJSON() : null;

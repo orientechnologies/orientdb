@@ -16,9 +16,10 @@
 package com.orientechnologies.orient.core.sql.filter;
 
 import com.orientechnologies.orient.core.command.OCommandToParse;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 
 /**
  * Represent an object field as value in the query condition.
@@ -33,11 +34,11 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 		super(iQueryToParse, iName);
 	}
 
-	public Object getValue(final ORecordInternal<?> iRecord) {
+	public Object getValue(final OIdentifiable iRecord) {
 		if (iRecord == null)
 			throw new OCommandExecutionException("expression item '" + name + "' can't be resolved");
 
-		return transformValue(iRecord.getDatabase(), ((ODocument) iRecord).rawField(name));
+		return transformValue(ODocumentHelper.getFieldValue((ODocument) iRecord, name));
 	}
 
 	public String getRoot() {

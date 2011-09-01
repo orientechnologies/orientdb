@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.sql.functions;
 import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandToParse;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
@@ -69,19 +69,19 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
 
 		final Object functionResult = function.execute(iRecord, runtimeParameters);
 
-		return transformValue(iRecord.getDatabase(), functionResult);
+		return transformValue(functionResult);
 	}
 
 	public Object getResult() {
-		return transformValue(null, function.getResult());
+		return transformValue(function.getResult());
 	}
 
 	public void setResult(final Object iValue) {
 		function.setResult(iValue);
 	}
 
-	public Object getValue(final ORecordInternal<?> iRecord) {
-		return execute((ORecordSchemaAware<?>) iRecord);
+	public Object getValue(final OIdentifiable iRecord) {
+		return execute((ORecordSchemaAware<?>) iRecord.getRecord());
 	}
 
 	@Override

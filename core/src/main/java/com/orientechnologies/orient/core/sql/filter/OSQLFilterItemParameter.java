@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
  * Represents a constant value, used to bind parameters.
@@ -33,7 +33,7 @@ public class OSQLFilterItemParameter implements OSQLFilterItem {
 		this.name = iName;
 	}
 
-	public Object getValue(final ORecordInternal<?> iRecord) {
+	public Object getValue(final OIdentifiable iRecord) {
 		return value;
 	}
 

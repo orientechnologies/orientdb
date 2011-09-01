@@ -34,6 +34,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
+	protected final static String	QUERY_GET	= "select rid from index:%s where key = ?";
+
 	public OIndexRemoteOneValue(String iName, String iWrappedType, ORID iRid) {
 		super(iName, iWrappedType, iRid);
 	}
@@ -42,7 +44,7 @@ public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
 		final OCommandRequest cmd = formatCommand(QUERY_GET, name);
 		final List<OIdentifiable> result = getDatabase().command(cmd).execute(iKey);
 		if (result != null && result.size() > 0)
-			return result.get(0);
+			return ((OIdentifiable) ((ODocument) ((OIdentifiable) result.get(0)).getRecord()).field("rid")).getIdentity();
 		return null;
 	}
 
