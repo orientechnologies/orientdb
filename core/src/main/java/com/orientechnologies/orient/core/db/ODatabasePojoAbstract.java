@@ -51,8 +51,7 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
 @SuppressWarnings("unchecked")
-public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseWrapperAbstract<ODatabaseDocumentTx> implements
-		ODatabaseSchemaAware<T> {
+public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseWrapperAbstract<ODatabaseDocumentTx> implements ODatabaseSchemaAware<T> {
 	protected HashMap<Integer, ODocument>		objects2Records	= new HashMap<Integer, ODocument>();
 	protected IdentityHashMap<ODocument, T>	records2Objects	= new IdentityHashMap<ODocument, T>();
 	protected HashMap<ORID, ODocument>			rid2Records			= new HashMap<ORID, ODocument>();
@@ -218,14 +217,19 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 
 		final List<Object> resultPojo = new ArrayList<Object>();
 		Object obj;
-		for (ODocument doc : result) {
-			// GET THE ASSOCIATED DOCUMENT
-			if (doc.getClassName() == null)
-				obj = doc;
-			else
-				obj = getUserObjectByRecord(doc, iCommand.getFetchPlan(), true);
+		for (OIdentifiable doc : result) {
+			if (doc instanceof ODocument) {
+				// GET THE ASSOCIATED DOCUMENT
+				if (((ODocument) doc).getClassName() == null)
+					obj = doc;
+				else
+					obj = getUserObjectByRecord(((ODocument) doc), iCommand.getFetchPlan(), true);
 
-			resultPojo.add(obj);
+				resultPojo.add(obj);
+			} else {
+				resultPojo.add(doc);
+			}
+
 		}
 
 		return (RET) resultPojo;
