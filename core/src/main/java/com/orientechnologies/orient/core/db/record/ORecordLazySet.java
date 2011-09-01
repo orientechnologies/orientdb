@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -87,7 +88,7 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 	public Iterator<OIdentifiable> iterator() {
 		if (hasNewItems()) {
 			lazyLoad(false);
-			return new OLazyRecordMultiIterator(delegate.sourceRecord, delegate.database, delegate.recordType, new Object[] {
+			return new OLazyRecordMultiIterator(delegate.sourceRecord, ODatabaseRecordThreadLocal.INSTANCE.get(), delegate.recordType, new Object[] {
 					delegate.iterator(), newItems.keySet().iterator() }, delegate.autoConvertToRecord);
 		}
 		return delegate.iterator();
