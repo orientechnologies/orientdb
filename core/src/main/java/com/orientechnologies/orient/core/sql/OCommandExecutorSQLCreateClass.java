@@ -36,6 +36,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLPermissio
 	public static final String	KEYWORD_CREATE	= "CREATE";
 	public static final String	KEYWORD_CLASS		= "CLASS";
 	public static final String	KEYWORD_EXTENDS	= "EXTENDS";
+	public static final String	KEYWORD_CLUSTER	= "CLUSTER";
 
 	private String							className;
 	private OClass							superClass;
@@ -68,46 +69,54 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLPermissio
 			throw new OCommandSQLParsingException("Class " + className + " already exists", text, oldPos);
 
 		oldPos = pos;
-		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos > -1) {
-			if (word.toString().equals(KEYWORD_EXTENDS)) {
+
+		while ((pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true)) > -1) {
+			final String k = word.toString();
+			if (k.equals(KEYWORD_EXTENDS)) {
 				oldPos = pos;
 				pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
 				if (pos == -1)
 					throw new OCommandSQLParsingException("Syntax error after EXTENDS for class " + className
-							+ ". Expected the super-class name ", text, oldPos);
+							+ ". Expected the super-class name", text, oldPos);
 
 				if (!database.getMetadata().getSchema().existsClass(word.toString()))
 					throw new OCommandSQLParsingException("Super-class " + word + " not exists", text, oldPos);
 
 				superClass = database.getMetadata().getSchema().getClass(word.toString());
-
+			} else if (k.equals(KEYWORD_CLUSTER)) {
 				oldPos = pos;
 				pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
-			}
+				if (pos == -1)
+					throw new OCommandSQLParsingException("Syntax error after CLUSTER for class " + className
+							+ ". Expected the cluster id or name", text, oldPos);
 
-			if (pos > -1) {
 				final String[] clusterIdsAsStrings = word.toString().split(",");
 				if (clusterIdsAsStrings.length > 0) {
 					clusterIds = new int[clusterIdsAsStrings.length];
 					for (int i = 0; i < clusterIdsAsStrings.length; ++i) {
-						clusterIds[i] = Integer.parseInt(clusterIdsAsStrings[i]);
+						if (Character.isDigit(clusterIdsAsStrings[i].charAt(0)))
+							// GET CLUSTER ID FROM NAME
+							clusterIds[i] = Integer.parseInt(clusterIdsAsStrings[i]);
+						else
+							// GET CLUSTER ID
+							clusterIds[i] = database.getStorage().getClusterIdByName(clusterIdsAsStrings[i]);
+
 						if (database.getStorage().getClusterById(clusterIds[i]) == null)
 							throw new OCommandSQLParsingException("Cluster with id " + clusterIds[i] + " doesn't exists", text, oldPos);
 					}
 				}
-			} else {
-				final int clusterId = database.getStorage().getClusterIdByName(className);
-				if (clusterId > -1) {
-					clusterIds = new int[] { clusterId };
-				}
 			}
-		} else {
+
+			oldPos = pos;
+		}
+
+		if (clusterIds == null) {
 			final int clusterId = database.getStorage().getClusterIdByName(className);
 			if (clusterId > -1) {
 				clusterIds = new int[] { clusterId };
 			}
 		}
+
 		return this;
 	}
 

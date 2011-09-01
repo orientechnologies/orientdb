@@ -194,7 +194,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 				cmd.append(iSuperClass.getName());
 			}
 
-			if (iClusterIds != null)
+			if (iClusterIds != null) {
+				cmd.append(" cluster ");
 				for (int i = 0; i < iClusterIds.length; ++i) {
 					if (i > 0)
 						cmd.append(',');
@@ -203,6 +204,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
 					cmd.append(iClusterIds[i]);
 				}
+			}
 
 			getDatabase().command(new OCommandSQL(cmd.toString())).execute();
 			getDatabase().reload();
