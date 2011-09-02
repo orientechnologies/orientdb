@@ -160,4 +160,28 @@ public class GraphDatabaseTest {
 			database.close();
 		}
 	}
+	
+//
+//	@Test
+//	public void testTxDictionary() {
+//		database.open("admin", "admin");
+//
+//		database.begin();
+//		
+//		try {
+//			ODocument rootNode = database.createVertex().field("id", 54254454);
+//			database.setRoot("test123", rootNode);
+//			rootNode.save();
+//			
+//			database.commit();
+//			
+//			database.close();
+//			database.open("admin", "admin");
+//			
+//			ODocument secroot = database.getRoot("test123");
+//			Assert.assertEquals(secroot.getIdentity(), rootNode.getIdentity());
+//		} finally {
+//			database.close();
+//		}
+//	}
 }

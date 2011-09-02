@@ -161,14 +161,14 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 		final ODocument result = new ODocument();
 
 		for (Entry<String, OTransactionIndexChanges> indexEntry : indexEntries.entrySet()) {
-			final ODocument indexDoc = new ODocument();
-			result.field(indexEntry.getKey(), indexDoc);
+			final ODocument indexDoc = new ODocument().addOwner(result);
+			result.field(indexEntry.getKey(), indexDoc, OType.EMBEDDED);
 
 			if (indexEntry.getValue().cleared)
 				indexDoc.field("clear", Boolean.TRUE);
 
 			final List<ODocument> entries = new ArrayList<ODocument>();
-			indexDoc.field("entries", entries);
+			indexDoc.field("entries", entries, OType.EMBEDDEDLIST);
 
 			// STORE INDEX ENTRIES
 			for (OTransactionIndexChangesPerKey entry : indexEntry.getValue().changesPerKey.values()) {
@@ -185,7 +185,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 				// SERIALIZE VALUES
 				if (entry.entries != null && !entry.entries.isEmpty()) {
 					for (OTransactionIndexEntry e : entry.entries) {
-						final ODocument changeDoc = new ODocument();
+						final ODocument changeDoc = new ODocument().addOwner(indexDoc);
 
 						// SERIALIZE OPERATION
 						changeDoc.field("o", e.operation.ordinal());
@@ -199,7 +199,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 					}
 				}
 
-				entries.add(new ODocument().field("k", OStringSerializerHelper.encode(key)).field("ops", operations));
+				entries.add(new ODocument().addOwner(indexDoc).field("k", OStringSerializerHelper.encode(key))
+						.field("ops", operations, OType.EMBEDDEDLIST));
 			}
 		}
 
