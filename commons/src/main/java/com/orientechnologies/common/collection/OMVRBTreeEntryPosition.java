@@ -24,16 +24,25 @@ public class OMVRBTreeEntryPosition<K, V> {
 	public OMVRBTreeEntry<K, V>	entry;
 	public int									position;
 
-    public OMVRBTreeEntryPosition(OMVRBTreeEntryPosition<K, V> entryPosition) {
-        this.entry = entryPosition.entry;
-        this.position = entryPosition.position;
-    }
+	public OMVRBTreeEntryPosition(final OMVRBTreeEntryPosition<K, V> entryPosition) {
+		this.entry = entryPosition.entry;
+		this.position = entryPosition.position;
+	}
 
-    public OMVRBTreeEntryPosition(OMVRBTreeEntry<K, V> entry) {
+	public OMVRBTreeEntryPosition(final OMVRBTreeEntry<K, V> entry) {
 		assign(entry);
 	}
 
-	public void assign(OMVRBTreeEntry<K, V> entry) {
+	public OMVRBTreeEntryPosition(final OMVRBTreeEntry<K, V> entry, final int iPosition) {
+		assign(entry, iPosition);
+	}
+
+	public void assign(final OMVRBTreeEntry<K, V> entry, final int iPosition) {
+		this.entry = entry;
+		this.position = iPosition;
+	}
+
+	public void assign(final OMVRBTreeEntry<K, V> entry) {
 		this.entry = entry;
 		this.position = entry != null ? entry.getTree().getPageIndex() : -1;
 	}

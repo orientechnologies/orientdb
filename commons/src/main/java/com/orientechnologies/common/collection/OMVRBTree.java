@@ -458,7 +458,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		if (p == null)
 			return null;
 
-		if (pageItemFound)
+		if (pageItemFound || pageItemComparator < 0)
 			return p;
 
 		return next(p);
@@ -474,7 +474,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		if (p == null)
 			return null;
 
-		if (pageItemFound)
+		if (pageItemFound || pageItemComparator > 0)
 			return p;
 
 		return previous(p);
