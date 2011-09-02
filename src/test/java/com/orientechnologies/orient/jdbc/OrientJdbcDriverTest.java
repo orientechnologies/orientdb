@@ -3,6 +3,7 @@ package com.orientechnologies.orient.jdbc;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Properties;
 
 import org.junit.Test;
 
@@ -29,9 +30,14 @@ public class OrientJdbcDriverTest {
 		String dbUrl = "memory:test";
 
 		ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
+		if (db.exists()) db.delete();
 		db.create();
 
-		OrientJdbcConnection conn = (OrientJdbcConnection) DriverManager.getConnection("jdbc:orient:" + dbUrl);
+		Properties info = new Properties();
+		info.put("user", "admin");
+		info.put("password", "admin");
+
+		OrientJdbcConnection conn = (OrientJdbcConnection) DriverManager.getConnection("jdbc:orient:" + dbUrl, info);
 
 		assertNotNull(conn);
 		conn.close();
