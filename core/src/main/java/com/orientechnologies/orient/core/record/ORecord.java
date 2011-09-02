@@ -36,21 +36,23 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable {
 	public boolean detach();
 
 	/**
-	 * Resets the record to be reused.
+	 * Resets the record to be reused. The record is fresh like just created. Use this method to recycle records avoiding the creation
+	 * of them stressing the JVM Garbage Collector.
 	 * 
 	 * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	public <RET extends ORecord<T>> RET reset();
 
 	/**
-	 * Unloads current record. All information are lost but the record identity.
+	 * Unloads current record. All information are lost but the record identity. At the next access the record will be auto-reloaded.
+	 * Useful to free memory or to avoid to keep an old version of it.
 	 * 
 	 * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	public <RET extends ORecord<T>> RET unload();
 
 	/**
-	 * All the fields are deleted but the record identity is maintained.
+	 * All the fields are deleted but the record identity is maintained. Use this to remove all the document's fields.
 	 * 
 	 * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
