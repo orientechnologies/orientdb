@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
@@ -108,16 +107,13 @@ public class OStorageLocalTxExecuter {
 				// DELETED
 				throw new OTransactionException("Can't retrieve the updated record #" + iRid);
 
-			final ORawBuffer buffer = new ORawBuffer(storage.getDataSegment(ppos.dataSegment).getRecord(ppos.dataPosition), ppos.version,
-					ppos.type);
-
 			// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-			if (iVersion > -1 && buffer.version != iVersion)
+			if (iVersion > -1 && ppos.version != iVersion)
 				throw new OConcurrentModificationException(
 						"Can't update the record "
 								+ iRid
 								+ " because the version is not the latest one. Probably you are updating an old record or it has been modified by another user (db=v"
-								+ buffer.version + " your=v" + iVersion + ")");
+								+ ppos.version + " your=v" + iVersion + ")");
 
 			final ODataLocal dataSegment = storage.getDataSegment(storage.getDataSegmentForRecord(iClusterSegment, iContent));
 
