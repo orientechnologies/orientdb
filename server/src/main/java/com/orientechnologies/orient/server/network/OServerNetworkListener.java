@@ -79,6 +79,11 @@ public class OServerNetworkListener extends Thread {
 
 	public void shutdown() {
 		this.active = false;
+		if (serverSocket != null)
+			try {
+				serverSocket.close();
+			} catch (IOException e) {
+			}
 	}
 
 	/**
@@ -152,7 +157,8 @@ public class OServerNetworkListener extends Thread {
 						}
 
 				} catch (Throwable e) {
-					OLogManager.instance().error(this, "Error on client connection", e);
+					if (active)
+						OLogManager.instance().error(this, "Error on client connection", e);
 				} finally {
 				}
 			}
