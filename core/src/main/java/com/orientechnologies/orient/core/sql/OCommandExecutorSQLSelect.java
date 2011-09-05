@@ -767,8 +767,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 			// FOUND USING INDEXES
 			for (ORecord<?> record : resultSet) {
-				if (filter((ORecordInternal<?>) record))
-					addResult(record);
+				if (filter((ORecordInternal<?>) record)) {
+					final boolean continueResultParsing = addResult(record);
+					if (!continueResultParsing)
+						break;
+				}
 			}
 		} else
 			// NO INDEXES: SCAN THE ENTIRE CLUSTER
@@ -800,7 +803,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		for (String rec : compiledFilter.getTargetRecords()) {
 			rid.fromString(rec);
 			record = database.load(rid);
-			foreach(record);
+			final boolean continueResultParsing = foreach(record);
+			if (!continueResultParsing)
+				break;
 		}
 	}
 
@@ -820,33 +825,32 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				final Collection<ODocument> entries = index.getEntriesBetween(OSQLHelper.getValue(values[0]),
 						OSQLHelper.getValue(values[2]));
 
-				for (final OIdentifiable r : entries)
-					addResult(r);
+				for (final OIdentifiable r : entries) {
+					final boolean continueResultParsing = addResult(r);
+					if (!continueResultParsing)
+						break;
+				}
 
 			} else if (indexOperator instanceof OQueryOperatorMajor) {
 				final Object value = compiledFilter.getRootCondition().getRight();
 				final Collection<ODocument> entries = index.getEntriesMajor(OSQLHelper.getValue(value), false);
 
-				for (final ODocument document : entries)
-					addResult(document);
+				parseIndexSearchResult(entries);
 			} else if (indexOperator instanceof OQueryOperatorMajorEquals) {
 				final Object value = compiledFilter.getRootCondition().getRight();
 				final Collection<ODocument> entries = index.getEntriesMajor(OSQLHelper.getValue(value), true);
 
-				for (final ODocument document : entries)
-					addResult(document);
+				parseIndexSearchResult(entries);
 			} else if (indexOperator instanceof OQueryOperatorMinor) {
 				final Object value = compiledFilter.getRootCondition().getRight();
 				final Collection<ODocument> entries = index.getEntriesMinor(OSQLHelper.getValue(value), false);
 
-				for (final ODocument document : entries)
-					addResult(document);
+				parseIndexSearchResult(entries);
 			} else if (indexOperator instanceof OQueryOperatorMinorEquals) {
 				final Object value = compiledFilter.getRootCondition().getRight();
 				final Collection<ODocument> entries = index.getEntriesMinor(OSQLHelper.getValue(value), true);
 
-				for (final ODocument document : entries)
-					addResult(document);
+				parseIndexSearchResult(entries);
 			} else if (indexOperator instanceof OQueryOperatorIn) {
 				final List<Object> origValues = (List<Object>) compiledFilter.getRootCondition().getRight();
 				final List<Object> values = new ArrayList<Object>(origValues.size());
@@ -858,8 +862,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 				final Collection<ODocument> entries = index.getEntries(values);
 
-				for (final ODocument document : entries)
-					addResult(document);
+				parseIndexSearchResult(entries);
 			} else {
 				final Object right = compiledFilter.getRootCondition().getRight();
 				final Object keyValue = OSQLHelper.getValue(right);
@@ -898,6 +901,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 					f.setResult(index.getSize());
 				}
 			}
+		}
+	}
+
+	protected void parseIndexSearchResult(final Collection<ODocument> entries) {
+		for (final ODocument document : entries) {
+			final boolean continueResultParsing = addResult(document);
+			if (!continueResultParsing)
+				break;
 		}
 	}
 
