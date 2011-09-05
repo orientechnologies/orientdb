@@ -64,7 +64,7 @@ public class OCommandGremlinExecutor extends OCommandExecutorAbstract {
 				while (it.hasNext())
 					coll.add(it.next());
 
-				return coll.toString();
+				return coll;
 			}
 
 			return result;

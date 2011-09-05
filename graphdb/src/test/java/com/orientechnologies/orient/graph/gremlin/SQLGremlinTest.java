@@ -4,10 +4,12 @@ import java.util.List;
 
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.tinkerpop.blueprints.pgm.impls.orientdb.OrientElement;
 
 public class SQLGremlinTest {
 	@Test
@@ -36,6 +38,25 @@ public class SQLGremlinTest {
 
 		result = db.query(new OSQLSynchQuery<Object>("select gremlin('current.out(\"drives\").count()') as value from V"));
 		System.out.println("Result: " + result);
+
+		db.close();
+	}
+
+	@Test
+	public void command() {
+		OCommandManager.instance().registerExecutor(OCommandGremlin.class, OCommandGremlinExecutor.class);
+		OGraphDatabase db = new OGraphDatabase("local:target/databases/gremlin");
+		if (db.exists())
+			db.open("admin", "admin");
+		else
+			db.create();
+
+		List<OrientElement> result = db.command(new OCommandGremlin("g.V[0..10]")).execute();
+		if (result != null) {
+			for (OrientElement doc : result) {
+				System.out.println(doc.getRawElement().toJSON());
+			}
+		}
 
 		db.close();
 	}
