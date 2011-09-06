@@ -606,16 +606,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 					// EXTRACT THE FIELD NAME WITHOUT FUNCTIONS AND/OR LINKS
 					beginPos = projection.charAt(0) == '@' ? 1 : 0;
 
-					final int pos1 = projection.indexOf('.');
-					final int pos2 = projection.indexOf('(');
-					if (pos1 > -1 && pos2 == -1)
-						endPos = pos1;
-					else if (pos2 > -1 && pos1 == -1)
-						endPos = pos2;
-					else if (pos1 > -1 && pos2 > -1)
-						endPos = Math.min(pos1, pos2);
-					else
-						endPos = -1;
+					endPos = extractProjectionNameSubstringEndPosition(projection);
 
 					fieldName = endPos > -1 ? projection.substring(beginPos, endPos) : projection.substring(beginPos);
 
@@ -655,6 +646,31 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		currentPos = fromPosition + KEYWORD_FROM.length() + 1;
 
 		return currentPos;
+	}
+
+	protected int extractProjectionNameSubstringEndPosition(String projection) {
+		int endPos;
+		final int pos1 = projection.indexOf('.');
+		final int pos2 = projection.indexOf('(');
+		final int pos3 = projection.indexOf('[');
+		if (pos1 > -1 && pos2 == -1 && pos3 == -1)
+			endPos = pos1;
+		else if (pos2 > -1 && pos1 == -1 && pos3 == -1)
+			endPos = pos2;
+		else if (pos3 > -1 && pos1 == -1 && pos2 == -1)
+			endPos = pos3;
+		else if (pos1 > -1 && pos2 > -1 && pos3 == -1)
+			endPos = Math.min(pos1, pos2);
+		else if (pos2 > -1 && pos3 > -1 && pos1 == -1)
+			endPos = Math.min(pos2, pos3);
+		else if (pos1 > -1 && pos3 > -1 && pos2 == -1)
+			endPos = Math.min(pos1, pos3);
+		else if (pos1 > -1 && pos2 > -1 && pos3 > -1) {
+			endPos = Math.min(pos1, pos2);
+			endPos = Math.min(endPos, pos3);
+		} else
+			endPos = -1;
+		return endPos;
 	}
 
 	private void scanEntireClusters(final int[] clusterIds) {
