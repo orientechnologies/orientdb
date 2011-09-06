@@ -25,7 +25,10 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabasePool;
 import com.orientechnologies.orient.core.db.graph.OGraphElement;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
@@ -150,38 +153,71 @@ public class GraphDatabaseTest {
 			ODocument rootNode = database.createVertex().field("id", 54254454);
 			database.setRoot("test123", rootNode);
 			rootNode.save();
-			
+
 			database.close();
 			database.open("admin", "admin");
-			
+
 			ODocument secroot = database.getRoot("test123");
 			Assert.assertEquals(secroot.getIdentity(), rootNode.getIdentity());
 		} finally {
 			database.close();
 		}
 	}
-	
-//
-//	@Test
-//	public void testTxDictionary() {
-//		database.open("admin", "admin");
-//
-//		database.begin();
-//		
-//		try {
-//			ODocument rootNode = database.createVertex().field("id", 54254454);
-//			database.setRoot("test123", rootNode);
-//			rootNode.save();
-//			
-//			database.commit();
-//			
-//			database.close();
-//			database.open("admin", "admin");
-//			
-//			ODocument secroot = database.getRoot("test123");
-//			Assert.assertEquals(secroot.getIdentity(), rootNode.getIdentity());
-//		} finally {
-//			database.close();
-//		}
-//	}
+
+	@Test
+	public void testSubVertexQuery() {
+		database.open("admin", "admin");
+
+		try {
+
+			database.createVertexType("newV").createProperty("f_int", OType.INTEGER).createIndex(INDEX_TYPE.UNIQUE);
+			database.getMetadata().getSchema().save();
+
+			database.createVertex("newV").field("f_int", 2).save();
+			database.createVertex("newV").field("f_int", 1).save();
+			database.createVertex("newV").field("f_int", 3).save();
+
+			// query 1
+			String q = "select * from V where f_int between 0 and 10";
+			List<ODocument> resB = database.query(new OSQLSynchQuery<ODocument>(q));
+			System.out.println(q + ": ");
+			for (OIdentifiable v : resB) {
+				System.out.println(v);
+			}
+
+			// query 2
+			q = "select * from newV where f_int between 0 and 10";
+			List<ODocument> resB2 = database.query(new OSQLSynchQuery<ODocument>(q));
+			System.out.println(q + ": ");
+			for (OIdentifiable v : resB2) {
+				System.out.println(v);
+			}
+		} finally {
+			database.close();
+		}
+	}
+
+	//
+	// @Test
+	// public void testTxDictionary() {
+	// database.open("admin", "admin");
+	//
+	// database.begin();
+	//
+	// try {
+	// ODocument rootNode = database.createVertex().field("id", 54254454);
+	// database.setRoot("test123", rootNode);
+	// rootNode.save();
+	//
+	// database.commit();
+	//
+	// database.close();
+	// database.open("admin", "admin");
+	//
+	// ODocument secroot = database.getRoot("test123");
+	// Assert.assertEquals(secroot.getIdentity(), rootNode.getIdentity());
+	// } finally {
+	// database.close();
+	// }
+	// }
 }
