@@ -19,6 +19,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Set;
 
+import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
@@ -92,8 +93,8 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 		switch (iType) {
 		case STRING:
 			if (iValue instanceof String) {
-				final String s = (String) iValue;
-				return OStringSerializerHelper.decode(s.substring(1, s.length() - 1));
+				final String s = OStringSerializerHelper.getStringContent(iValue);
+				return OStringSerializerHelper.decode(s);
 			}
 			return iValue.toString();
 
