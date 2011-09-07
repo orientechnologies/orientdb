@@ -84,7 +84,12 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 				final String[] parts = name.split("\\.");
 
 				final OClass cls = database.getMetadata().getSchema().getClass(parts[0]);
+				if (cls == null)
+					throw new OCommandExecutionException("Class " + parts[0] + " not found");
+
 				final OProperty prop = cls.getProperty(parts[1]);
+				if (prop == null)
+					throw new IllegalArgumentException("Property '" + parts[1] + "' was not found in class '" + parts[0] + "'");
 				keyType = prop.getType();
 			}
 		} else
