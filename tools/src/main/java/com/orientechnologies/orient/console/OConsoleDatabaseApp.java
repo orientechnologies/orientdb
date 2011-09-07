@@ -41,13 +41,13 @@ import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
@@ -73,12 +73,11 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.ODataHoleInfo;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
-import com.orientechnologies.orient.enterprise.command.script.OCommandScript;
+import com.orientechnologies.orient.enterprise.command.OCommandExecutorScript;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
 	protected ODatabaseDocument		currentDatabase;
@@ -128,6 +127,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 		properties.put("limit", "20");
 		properties.put("debug", "false");
+
+		OCommandManager.instance().registerExecutor(OCommandScript.class, OCommandExecutorScript.class);
 	}
 
 	@Override
@@ -505,7 +506,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 		currentResultSet.clear();
 
-		Object result = new OCommandScript("Javascript", iScriptText).execute();
+		Object result = currentDatabase.command(new OCommandScript("Javascript", iScriptText)).execute();
 
 		out.printf("Script executed in %f sec(s). Value returned is: %s", (float) (System.currentTimeMillis() - start) / 1000, result);
 	}

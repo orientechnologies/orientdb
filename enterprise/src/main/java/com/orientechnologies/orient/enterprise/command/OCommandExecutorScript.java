@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.command.script;
+package com.orientechnologies.orient.enterprise.command;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,8 +26,8 @@ import javax.script.ScriptException;
 
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.enterprise.command.script.OCommandScript;
-import com.orientechnologies.orient.enterprise.command.script.OCommandScriptException;
+import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 
 /**
  * Executes Script Commands.
