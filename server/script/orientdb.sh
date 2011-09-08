@@ -8,7 +8,7 @@ ORIENTDB_USER="USER_YOU_WANT_ORIENTDB_RUN_WITH"
 
 usage() {
 	echo "Usage: `basename $0`: <start|stop|status>"
-	return 1
+	exit 1
 }
 
 start() {
@@ -49,13 +49,13 @@ status() {
 if [ "x$1" = "xstart" ]
 then
 	start
-	return 0
+	exit 0
 fi
 
 if [ "x$1" = "xstop" ]
 then
 	stop
-	return 0
+	exit 0
 fi
 
 if [ "x$1" = "xstatus" ]
@@ -67,7 +67,7 @@ then
 	else
 		echo "OrientDB server daemon is NOT running"
 	fi
-	return $PID
+	exit $PID
 fi
 
 usage
