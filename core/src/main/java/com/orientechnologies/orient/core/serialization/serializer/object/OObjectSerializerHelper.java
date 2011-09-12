@@ -558,7 +558,7 @@ public class OObjectSerializerHelper {
 			}
 		}
 
-		if (!versionConfigured && iRecord.getDatabase().getTransaction() instanceof OTransactionOptimistic)
+		if (db.isMVCC() && !versionConfigured && db.getTransaction() instanceof OTransactionOptimistic)
 			throw new OTransactionException("Can't involve an object of class '" + pojoClass
 					+ "' in an Optimistic Transaction commit because it doesn't define @Version or @OVersion and therefore can't handle MVCC");
 
