@@ -55,7 +55,7 @@ public class SQLCreateLinkTest {
 		Assert.assertTrue(database.command(new OCommandSQL("INSERT INTO COMMENT (id, postId, text) VALUES ( 82, 20, 'Second Again' )"))
 				.execute() instanceof ODocument);
 
-		Assert.assertEquals(((Number) database.command(new OCommandSQL("CREATE LINK comments FROM comment.postId To post.id INVERSE"))
+		Assert.assertEquals(((Number) database.command(new OCommandSQL("CREATE LINK comments TYPE LINKSET FROM comment.postId TO post.id INVERSE"))
 				.execute()).intValue(), 5);
 
 		Assert.assertEquals(((Number) database.command(new OCommandSQL("UPDATE comment REMOVE postId")).execute()).intValue(), 5);

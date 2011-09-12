@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Lazy implementation of LinkedHashMap. It's bound to a source ORecord object to keep track of changes. This avoid to call the
@@ -33,10 +34,16 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  */
 @SuppressWarnings({ "serial", "unchecked" })
 public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecordLazyMultiValue {
-	private ODatabaseRecord														database;
-	final private byte																recordType;
+	private ODatabaseRecord																	database;
+	final private byte																			recordType;
 	private ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE	status							= MULTIVALUE_CONTENT_TYPE.EMPTY;
-	private boolean																		autoConvertToRecord	= true;
+	private boolean																					autoConvertToRecord	= true;
+
+	public ORecordLazyMap(final ORecord<?> iSourceRecord) {
+		super(iSourceRecord);
+		this.database = iSourceRecord.getDatabase();
+		this.recordType = ODocument.RECORD_TYPE;
+	}
 
 	public ORecordLazyMap(final ORecord<?> iSourceRecord, final byte iRecordType) {
 		super(iSourceRecord);

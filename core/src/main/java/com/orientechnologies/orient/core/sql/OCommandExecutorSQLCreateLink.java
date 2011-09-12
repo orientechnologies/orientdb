@@ -23,6 +23,8 @@ import java.util.Map;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -46,13 +48,15 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 	public static final String	KEYWORD_LINK		= "LINK";
 	private static final String	KEYWORD_FROM		= "FROM";
 	private static final String	KEYWORD_TO			= "TO";
+	private static final String	KEYWORD_TYPE		= "TYPE";
 
 	private String							destClassName;
 	private String							destField;
 	private String							sourceClassName;
 	private String							sourceField;
 	private String							linkName;
-	private String							linkType;
+	private OType								linkType;
+	private boolean							inverse					= false;
 
 	public OCommandExecutorSQLCreateLink parse(final OCommandRequestText iRequest) {
 		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
@@ -66,11 +70,13 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 		if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
 			throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found", text, oldPos);
 
-		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+		oldPos = pos;
+		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_LINK))
 			throw new OCommandSQLParsingException("Keyword " + KEYWORD_LINK + " not found", text, oldPos);
 
-		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
+		oldPos = pos;
+		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
 		if (pos == -1)
 			throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found", text, oldPos);
 
@@ -81,10 +87,25 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 			if (OStringSerializerHelper.contains(linkName, ' '))
 				throw new OCommandSQLParsingException("Link name '" + linkName + "' contains not valid characters", text, oldPos);
 
-			pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
-			if (pos == -1 || !word.toString().equals(KEYWORD_FROM))
-				throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found", text, oldPos);
+			oldPos = pos;
+			pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		}
+
+		if (word.toString().equalsIgnoreCase(KEYWORD_TYPE)) {
+			oldPos = pos;
+			pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+
+			if (pos == -1)
+				throw new OCommandSQLParsingException("Link type missed", text, oldPos);
+
+			linkType = OType.valueOf(word.toString().toUpperCase());
+
+			oldPos = pos;
+			pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+		}
+
+		if (pos == -1 || !word.toString().equals(KEYWORD_FROM))
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found", text, oldPos);
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
 		if (pos == -1)
@@ -120,8 +141,10 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 		if (pos == -1)
 			return this;
 
-		// GET THE LINK TYPE
-		linkType = word.toString();
+		if (!word.toString().equalsIgnoreCase("INVERSE"))
+			throw new OCommandSQLParsingException("Missed 'INVERSE'", text, pos);
+
+		inverse = true;
 
 		return this;
 	}
@@ -139,11 +162,11 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 
 		final ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getDatabaseOwner();
 
-		OClass sourceClass = database.getMetadata().getSchema().getClass(sourceClassName);
+		final OClass sourceClass = database.getMetadata().getSchema().getClass(sourceClassName);
 		if (sourceClass == null)
 			throw new OCommandExecutionException("Source class '" + sourceClassName + "' not found");
 
-		OClass destClass = database.getMetadata().getSchema().getClass(destClassName);
+		final OClass destClass = database.getMetadata().getSchema().getClass(destClassName);
 		if (destClass == null)
 			throw new OCommandExecutionException("Destination class '" + destClassName + "' not found");
 
@@ -158,8 +181,12 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 			// NO LINK NAME EXPRESSED: OVERWRITE THE SOURCE FIELD
 			linkName = sourceField;
 
-		boolean inverse = linkType != null && linkType.equalsIgnoreCase("inverse");
-		boolean multipleRelationship = false;
+		boolean multipleRelationship;
+		if (linkType != null)
+			// DETERMINE BASED ON FORCED TYPE
+			multipleRelationship = linkType == OType.LINKSET || linkType == OType.LINKLIST;
+		else
+			multipleRelationship = false;
 
 		long totRecords = db.countClass(sourceClass.getName());
 		long currRecord = 0;
@@ -190,9 +217,6 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 						result = database.<OCommandRequest> command(new OSQLSynchQuery<ODocument>(cmd + value)).execute();
 
 						if (result == null || result.size() == 0)
-							// throw new
-							// OCommandExecutionException("Can't create link because the destination record was not found in class '"
-							// + destClass.getName() + "' and with the field '" + destField + "' equals to " + value);
 							value = null;
 						else if (result.size() > 1)
 							throw new OCommandExecutionException("Can't create link because multiple records was found in class '"
@@ -223,7 +247,20 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 								}
 								coll.add(doc);
 							} else {
-								target.field(linkName, doc);
+								if (linkType != null)
+									if (linkType == OType.LINKSET) {
+										value = new ORecordLazySet(target);
+										((ORecordLazySet) value).add(doc);
+									} else if (linkType == OType.LINKLIST) {
+										value = new ORecordLazyList(target);
+										((ORecordLazyList) value).add(doc);
+									} else
+										// IGNORE THE TYPE, SET IT AS LINK
+										value = doc;
+								else
+									value = doc;
+
+								target.field(linkName, value);
 							}
 							target.save();
 
@@ -248,8 +285,11 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 					if (prop != null)
 						destClass.dropProperty(linkName);
 
+					if (linkType == null)
+						linkType = multipleRelationship ? OType.LINKSET : OType.LINK;
+
 					// CREATE THE PROPERTY
-					destClass.createProperty(linkName, multipleRelationship ? OType.LINKLIST : OType.LINK, sourceClass);
+					destClass.createProperty(linkName, linkType, sourceClass);
 
 				} else {
 
