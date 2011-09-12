@@ -242,6 +242,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 		cloned._database = _database;
 		cloned._recordId = _recordId.copy();
 		cloned._status = STATUS.NOT_LOADED;
+		cloned._dirty = false;
 		return cloned;
 	}
 
