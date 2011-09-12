@@ -85,6 +85,7 @@ public class OrientJdbcStatementDMLtest extends OrientJdbcBaseTest {
 		stmt.executeUpdate("CREATE PROPERTY Account.id INTEGER ");
 		stmt.executeUpdate("CREATE PROPERTY Account.birthDate DATE ");
 		stmt.executeUpdate("CREATE PROPERTY Account.binary BINARY ");
+		stmt.close();
 
 		// double value test pattern?
 		ODatabaseDocumentTx database = conn.getDatabase();
@@ -95,31 +96,5 @@ public class OrientJdbcStatementDMLtest extends OrientJdbcBaseTest {
 		assertThat(account.getProperty("birthDate").getType(), equalTo(OType.DATE));
 		assertThat(account.getProperty("binary").getType(), equalTo(OType.BINARY));
 
-		// database.getMetadata().getSchema().createClass("Company", account);
-		//
-		// OClass profile =
-		// database.getMetadata().getSchema().createClass("Profile",
-		// database.addCluster("profile", OStorage.CLUSTER_TYPE.PHYSICAL));
-		// profile.createProperty("nick",
-		// OType.STRING).setMin("3").setMax("30").createIndex(INDEX_TYPE.UNIQUE);
-		// profile.createProperty("name",
-		// OType.STRING).setMin("3").setMax("30").createIndex(INDEX_TYPE.NOTUNIQUE);
-		// profile.createProperty("surname",
-		// OType.STRING).setMin("3").setMax("30");
-		// profile.createProperty("registeredOn",
-		// OType.DATETIME).setMin("2010-01-01 00:00:00");
-		// profile.createProperty("lastAccessOn",
-		// OType.DATETIME).setMin("2010-01-01 00:00:00");
-		// profile.createProperty("photo", OType.TRANSIENT);
-		//
-		// OClass whiz = database.getMetadata().getSchema().createClass("Whiz");
-		// whiz.createProperty("id", OType.INTEGER);
-		// whiz.createProperty("account", OType.LINK, profile);
-		// whiz.createProperty("date", OType.DATE).setMin("2010-01-01");
-		// whiz.createProperty("text",
-		// OType.STRING).setMandatory(true).setMin("1").setMax("140").createIndex(INDEX_TYPE.FULLTEXT);
-		// whiz.createProperty("replyTo", OType.LINK, profile);
-		//
-		// database.close();
 	}
 }
