@@ -473,8 +473,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		currentResultSet.clear();
 
 		final List<String> columns = new ArrayList<String>();
-
-		final int limit = Integer.parseInt((String) properties.get("limit"));
+		final int limit;
+		if (iQueryText.contains("limit")) {
+			limit = -1;
+		} else {
+			limit = Integer.parseInt((String) properties.get("limit"));
+		}
 
 		long start = System.currentTimeMillis();
 		currentDatabase.query(new OSQLAsynchQuery<ODocument>(iQueryText, limit, new OCommandResultListener() {
