@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.sql;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -82,7 +83,7 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLPermissi
 		final String attributeAsString = word.toString();
 
 		try {
-			attribute = OCluster.ATTRIBUTES.valueOf(attributeAsString.toUpperCase());
+			attribute = OCluster.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
 		} catch (IllegalArgumentException e) {
 			throw new OCommandSQLParsingException("Unknown class's attribute '" + attributeAsString + "'. Supported attributes are: "
 					+ Arrays.toString(OCluster.ATTRIBUTES.values()), text, oldPos);

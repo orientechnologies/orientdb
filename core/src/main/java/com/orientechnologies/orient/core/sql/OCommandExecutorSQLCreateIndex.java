@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.Locale;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -123,9 +124,9 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 			if (prop == null)
 				throw new IllegalArgumentException("Property '" + fieldName + "' was not found in class '" + cls + "'");
 
-			idx = prop.createIndexInternal(indexType.toUpperCase(), progressListener).getUnderlying();
+			idx = prop.createIndexInternal(indexType.toUpperCase(Locale.ENGLISH), progressListener).getUnderlying();
 		} else {
-			idx = database.getMetadata().getIndexManager().createIndex(name, indexType.toUpperCase(), keyType, null, null, null, false);
+			idx = database.getMetadata().getIndexManager().createIndex(name, indexType.toUpperCase(Locale.ENGLISH), keyType, null, null, null, false);
 		}
 
 		if (idx != null)

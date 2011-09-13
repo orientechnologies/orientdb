@@ -5,6 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
@@ -241,7 +242,7 @@ public class OLogManager {
 	}
 
 	public Level setLevel(final String iLevel, final Class<? extends Handler> iHandler) {
-		final Level level = iLevel != null ? Level.parse(iLevel.toUpperCase()) : Level.INFO;
+		final Level level = iLevel != null ? Level.parse(iLevel.toUpperCase(Locale.ENGLISH)) : Level.INFO;
 
 		if (level.intValue() < minimumLevel.intValue()) {
 			// UPDATE MINIMUM LEVEL

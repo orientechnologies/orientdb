@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.sql;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -98,7 +99,7 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 			if (pos == -1)
 				throw new OCommandSQLParsingException("Link type missed", text, oldPos);
 
-			linkType = OType.valueOf(word.toString().toUpperCase());
+			linkType = OType.valueOf(word.toString().toUpperCase(Locale.ENGLISH));
 
 			oldPos = pos;
 			pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);

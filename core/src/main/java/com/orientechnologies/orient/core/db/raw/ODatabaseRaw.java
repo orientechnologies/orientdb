@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -441,7 +442,7 @@ public class ODatabaseRaw implements ODatabase {
 
 		switch (iAttribute) {
 		case STATUS:
-			setStatus(STATUS.valueOf(stringValue.toUpperCase()));
+			setStatus(STATUS.valueOf(stringValue.toUpperCase(Locale.ENGLISH)));
 			break;
 		}
 

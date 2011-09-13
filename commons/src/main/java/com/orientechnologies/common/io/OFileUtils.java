@@ -1,6 +1,7 @@
 package com.orientechnologies.common.io;
 
 import java.io.File;
+import java.util.Locale;
 
 public class OFileUtils {
 	private static final int	KILOBYTE	= 1024;
@@ -28,7 +29,7 @@ public class OFileUtils {
 		if (number)
 			return Long.parseLong(size);
 		else {
-			size = size.toUpperCase();
+			size = size.toUpperCase(Locale.ENGLISH);
 			int pos = size.indexOf("KB");
 			if (pos > -1)
 				return Long.parseLong(size.substring(0, pos)) * KILOBYTE;

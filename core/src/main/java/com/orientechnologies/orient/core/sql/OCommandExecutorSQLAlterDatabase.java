@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -65,7 +66,7 @@ public class OCommandExecutorSQLAlterDatabase extends OCommandExecutorSQLPermiss
 		final String attributeAsString = word.toString();
 
 		try {
-			attribute = ODatabase.ATTRIBUTES.valueOf(attributeAsString.toUpperCase());
+			attribute = ODatabase.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
 		} catch (IllegalArgumentException e) {
 			throw new OCommandSQLParsingException("Unknown database's attribute '" + attributeAsString + "'. Supported attributes are: "
 					+ Arrays.toString(OClass.ATTRIBUTES.values()), text, oldPos);

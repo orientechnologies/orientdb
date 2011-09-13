@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -593,7 +594,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 					throw new OCommandSQLParsingException("Projection not allowed with FLATTEN() operator");
 
 				fieldName = null;
-				endPos = projection.toUpperCase().indexOf(KEYWORD_AS);
+				endPos = projection.toUpperCase(Locale.ENGLISH).indexOf(KEYWORD_AS);
 				if (endPos > -1) {
 					// EXTRACT ALIAS
 					fieldName = projection.substring(endPos + KEYWORD_AS.length()).trim();
@@ -618,7 +619,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 					}
 				}
 
-				if (projection.toUpperCase().startsWith("FLATTEN(")) {
+				if (projection.toUpperCase(Locale.ENGLISH).startsWith("FLATTEN(")) {
 					List<String> pars = OStringSerializerHelper.getParameters(projection);
 					if (pars.size() != 1)
 						throw new OCommandSQLParsingException("FLATTEN operator expects the field name as parameter. Example FLATTEN( out )");

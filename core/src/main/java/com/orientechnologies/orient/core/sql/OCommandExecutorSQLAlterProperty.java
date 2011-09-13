@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -82,7 +83,7 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLPermiss
 		final String attributeAsString = word.toString();
 
 		try {
-			attribute = OProperty.ATTRIBUTES.valueOf(attributeAsString.toUpperCase());
+			attribute = OProperty.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
 		} catch (IllegalArgumentException e) {
 			throw new OCommandSQLParsingException("Unknown property's attribute '" + attributeAsString + "'. Supported attributes are: "
 					+ Arrays.toString(OProperty.ATTRIBUTES.values()), text, oldPos);

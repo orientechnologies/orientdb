@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -147,23 +148,23 @@ public class OSQLEngine {
 	}
 
 	public void registerFunction(final String iName, final OSQLFunction iFunction) {
-		inlineFunctions.put(iName.toUpperCase(), iFunction);
+		inlineFunctions.put(iName.toUpperCase(Locale.ENGLISH), iFunction);
 	}
 
 	public void registerFunction(final String iName, final Class<? extends OSQLFunction> iFunctionClass) {
-		aggregationFunctions.put(iName.toUpperCase(), iFunctionClass);
+		aggregationFunctions.put(iName.toUpperCase(Locale.ENGLISH), iFunctionClass);
 	}
 
 	public void unregisterInlineFunction(final String iName) {
-		inlineFunctions.remove(iName.toUpperCase());
+		inlineFunctions.remove(iName.toUpperCase(Locale.ENGLISH));
 	}
 
 	public OSQLFunction getInlineFunction(final String iFunctionName) {
-		return inlineFunctions.get(iFunctionName.toUpperCase());
+		return inlineFunctions.get(iFunctionName.toUpperCase(Locale.ENGLISH));
 	}
 
 	public OSQLFunction getAggregationFunction(final String iFunctionName) {
-		final Class<? extends OSQLFunction> f = aggregationFunctions.get(iFunctionName.toUpperCase());
+		final Class<? extends OSQLFunction> f = aggregationFunctions.get(iFunctionName.toUpperCase(Locale.ENGLISH));
 		if (f != null)
 			try {
 				return f.newInstance();
@@ -175,8 +176,9 @@ public class OSQLEngine {
 	}
 
 	public void unregisterFunction(final String iName) {
-		if (inlineFunctions.remove(iName.toUpperCase()) == null)
-			aggregationFunctions.remove(iName.toUpperCase());
+		final String name = iName.toUpperCase(Locale.ENGLISH);
+		if (inlineFunctions.remove(name) == null)
+			aggregationFunctions.remove(name);
 	}
 
 	public OCommandExecutorSQLAbstract getCommand(final String iText) {

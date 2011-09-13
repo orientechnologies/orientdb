@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import com.orientechnologies.common.collection.OMultiValue;
@@ -56,7 +57,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 			// GET ALL SPECIAL OPERATIONS
 			for (int i = 1; i < parts.size(); ++i) {
 				String part = parts.get(i);
-				String partUpperCase = part.toUpperCase();
+				String partUpperCase = part.toUpperCase(Locale.ENGLISH);
 
 				if (part.indexOf('(') > -1) {
 					boolean operatorFound = false;

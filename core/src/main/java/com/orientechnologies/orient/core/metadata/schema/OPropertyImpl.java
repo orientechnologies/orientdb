@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import java.text.ParseException;
+import java.util.Locale;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
@@ -426,7 +427,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 			setRegexpInternal(stringValue);
 			break;
 		case TYPE:
-			setTypeInternal(OType.valueOf(stringValue.toUpperCase()));
+			setTypeInternal(OType.valueOf(stringValue.toUpperCase(Locale.ENGLISH)));
 			break;
 		}
 
@@ -470,7 +471,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 			setRegexp(stringValue);
 			break;
 		case TYPE:
-			setType(OType.valueOf(stringValue.toUpperCase()));
+			setType(OType.valueOf(stringValue.toUpperCase(Locale.ENGLISH)));
 			break;
 		}
 	}

@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -148,7 +149,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 
 			final String configuredKeyType = configuration.field(OIndexInternal.CONFIG_KEYTYPE);
 			if (configuredKeyType != null)
-				keyType = OType.valueOf(configuredKeyType.toUpperCase());
+				keyType = OType.valueOf(configuredKeyType.toUpperCase(Locale.ENGLISH));
 
 			clustersToIndex.clear();
 

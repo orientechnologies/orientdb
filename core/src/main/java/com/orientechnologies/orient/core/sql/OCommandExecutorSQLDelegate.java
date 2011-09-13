@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.Locale;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -33,7 +34,7 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract {
 		if (iCommand instanceof OCommandRequestText) {
 			OCommandRequestText textRequest = iCommand;
 			final String text = textRequest.getText();
-			final String textUpperCase = text.toUpperCase();
+			final String textUpperCase = text.toUpperCase(Locale.ENGLISH);
 
 			delegate = (OCommandExecutorSQLAbstract) OSQLEngine.getInstance().getCommand(textUpperCase);
 			if (delegate == null)

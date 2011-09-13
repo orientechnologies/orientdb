@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.Locale;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -115,7 +116,7 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLPermis
 
 			if (linkedClass == null)
 				// NOT FOUND: SEARCH BETWEEN TYPES
-				linkedType = OType.valueOf(linked.toUpperCase());
+				linkedType = OType.valueOf(linked.toUpperCase(Locale.ENGLISH));
 		}
 
 		// CREATE IT LOCALLY
