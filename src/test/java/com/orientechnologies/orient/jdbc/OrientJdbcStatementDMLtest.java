@@ -22,7 +22,7 @@ import static org.junit.Assert.assertThat;
 public class OrientJdbcStatementDMLtest extends OrientJdbcBaseTest {
 
 	@Test
-	public void shouldCreateANewRow() throws Exception {
+	public void shouldInsertANewItem() throws Exception {
 
 		assertFalse(conn.isClosed());
 		Date date = new Date(System.currentTimeMillis());
@@ -42,7 +42,7 @@ public class OrientJdbcStatementDMLtest extends OrientJdbcBaseTest {
 	}
 
 	@Test
-	public void shouldUpdateARow() throws Exception {
+	public void shouldUpdateAnItem() throws Exception {
 
 		assertFalse(conn.isClosed());
 
@@ -60,7 +60,7 @@ public class OrientJdbcStatementDMLtest extends OrientJdbcBaseTest {
 	}
 
 	@Test
-	public void shouldDeleteArow() throws Exception {
+	public void shouldDeleteAnItem() throws Exception {
 
 		assertFalse(conn.isClosed());
 
@@ -97,4 +97,29 @@ public class OrientJdbcStatementDMLtest extends OrientJdbcBaseTest {
 		assertThat(account.getProperty("binary").getType(), equalTo(OType.BINARY));
 
 	}
+
+	@Test
+	public void shoulCreateClassWithBatchCommand() throws IOException, SQLException {
+
+		Statement stmt = conn.createStatement();
+
+		stmt.addBatch("CREATE CLASS Account ");
+		stmt.addBatch("CREATE PROPERTY Account.id INTEGER ");
+		stmt.addBatch("CREATE PROPERTY Account.birthDate DATE ");
+		stmt.addBatch("CREATE PROPERTY Account.binary BINARY ");
+		int[] results = stmt.executeBatch();
+		assertThat(results.length, equalTo(4));
+		stmt.close();
+
+		// double value test pattern?
+		ODatabaseDocumentTx database = conn.getDatabase();
+		assertThat(database.getClusterIdByName("account"), notNullValue());
+		OClass account = database.getMetadata().getSchema().getClass("Account");
+		assertThat(account, notNullValue());
+		assertThat(account.getProperty("id").getType(), equalTo(OType.INTEGER));
+		assertThat(account.getProperty("birthDate").getType(), equalTo(OType.DATE));
+		assertThat(account.getProperty("binary").getType(), equalTo(OType.BINARY));
+
+	}
+
 }

@@ -21,13 +21,15 @@ import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+
+import static java.util.Collections.emptyList;
 
 public class OrientJdbcStatement implements Statement {
 	protected final OrientJdbcConnection connection;
@@ -38,11 +40,13 @@ public class OrientJdbcStatement implements Statement {
 	private boolean closed;
 	private Object rawResult;
 	private OrientJdbcResultSet resultSet;
+	private List<String> batches;
 
 	public OrientJdbcStatement(final OrientJdbcConnection iConnection) {
 		this.connection = iConnection;
 		this.database = iConnection.getDatabase();
-		documents = Collections.emptyList();
+		documents = emptyList();
+		batches = new ArrayList<String>();
 	}
 
 	public boolean execute(final String sql) throws SQLException {
@@ -146,20 +150,26 @@ public class OrientJdbcStatement implements Statement {
 	}
 
 	public void addBatch(final String sql) throws SQLException {
-
+		batches.add(sql);
 	}
 
 	public void cancel() throws SQLException {
 	}
 
 	public void clearBatch() throws SQLException {
+		batches.clear();
 	}
 
 	public void clearWarnings() throws SQLException {
 	}
 
 	public int[] executeBatch() throws SQLException {
-		return null;
+		int[] results = new int[batches.size()];
+		int i = 0;
+		for (String sql : batches) {
+			results[i++] = executeUpdate(sql);
+		}
+		return results;
 	}
 
 	public int getFetchDirection() throws SQLException {
