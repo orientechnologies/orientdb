@@ -36,9 +36,9 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 
 /**
  * Abstract index implementation that supports multi-values for the same key.
- *
+ * 
  * @author Luca Garulli
- *
+ * 
  */
 public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIdentifiable>> {
 	public OIndexMultiValues(String iType) {
@@ -95,11 +95,12 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 		try {
 
 			final Set<OIdentifiable> recs = get(iKey);
-			if (recs != null && !recs.isEmpty()) {
-				if (recs.remove(iValue)) {
+			if (recs.remove(iValue)) {
+				if (recs.isEmpty())
+					map.remove(iKey);
+				else
 					map.put(iKey, recs);
-					return true;
-				}
+				return true;
 			}
 			return false;
 
@@ -305,54 +306,54 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 				iAutomatic, OStreamSerializerListRID.INSTANCE);
 	}
 
-    public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
-        final List<Comparable> sortedKeys = new ArrayList<Comparable>((Collection<? extends Comparable>) iKeys);
-        Collections.sort(sortedKeys);
+	public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
+		final List<Comparable> sortedKeys = new ArrayList<Comparable>((Collection<? extends Comparable>) iKeys);
+		Collections.sort(sortedKeys);
 
-        final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
-        acquireExclusiveLock();
-        try {
-            for (final Object key : sortedKeys) {
-                final ORecordLazySet values = (ORecordLazySet) map.get(key);
-                if (values != null)
-                    values.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
+		final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+		acquireExclusiveLock();
+		try {
+			for (final Object key : sortedKeys) {
+				final ORecordLazySet values = (ORecordLazySet) map.get(key);
+				if (values != null)
+					values.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
 
-                if (values == null)
-                    continue;
+				if (values == null)
+					continue;
 
-                result.addAll(values);
-            }
-        } finally {
-            releaseExclusiveLock();
-        }
-        return result;
-    }
+				result.addAll(values);
+			}
+		} finally {
+			releaseExclusiveLock();
+		}
+		return result;
+	}
 
-    public Collection<ODocument> getEntries(final Collection<?> iKeys) {
-        final List<Comparable> sortedKeys = new ArrayList<Comparable>((Collection<? extends Comparable>) iKeys);
-        Collections.sort(sortedKeys);
+	public Collection<ODocument> getEntries(final Collection<?> iKeys) {
+		final List<Comparable> sortedKeys = new ArrayList<Comparable>((Collection<? extends Comparable>) iKeys);
+		Collections.sort(sortedKeys);
 
-        final Set<ODocument> result = new HashSet<ODocument>();
-        acquireExclusiveLock();
-        try {
-            for (final Object key : sortedKeys) {
-                final ORecordLazySet values = (ORecordLazySet) map.get(key);
-                if (values != null)
-                    values.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
+		final Set<ODocument> result = new HashSet<ODocument>();
+		acquireExclusiveLock();
+		try {
+			for (final Object key : sortedKeys) {
+				final ORecordLazySet values = (ORecordLazySet) map.get(key);
+				if (values != null)
+					values.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
 
-                if (values == null)
-                    continue;
-                for (final OIdentifiable value : values) {
-                    final ODocument document = new ODocument();
-                    document.field("key", key);
-                    document.field("rid", value.getIdentity());
-                    document.unsetDirty();
-                    result.add(document);
-                }
-            }
-        } finally {
-            releaseExclusiveLock();
-        }
-        return result;
-    }
+				if (values == null)
+					continue;
+				for (final OIdentifiable value : values) {
+					final ODocument document = new ODocument();
+					document.field("key", key);
+					document.field("rid", value.getIdentity());
+					document.unsetDirty();
+					result.add(document);
+				}
+			}
+		} finally {
+			releaseExclusiveLock();
+		}
+		return result;
+	}
 }
