@@ -51,6 +51,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelper;
+import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 
 @SuppressWarnings("unchecked")
@@ -134,7 +135,12 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			if (iValue.length() > 2) {
 				// REMOVE BEGIN & END EMBEDDED CHARACTERS
 				final String value = iValue.substring(1, iValue.length() - 1);
-				return fieldTypeFromStream((ODocument) iSourceRecord, iType, value);
+
+				// RECORD
+				final Object result = OStringSerializerAnyStreamable.INSTANCE.fromStream(iSourceRecord.getDatabase(), value);
+				if (result instanceof ODocument)
+					((ODocument) result).addOwner(iSourceRecord);
+				return result;
 			} else
 				return null;
 
@@ -174,7 +180,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					String mapValue = entry.get(1);
 
 					final OType linkedType;
-					
+
 					if (iLinkedType == null)
 						if (mapValue.length() > 0) {
 							linkedType = getType(mapValue);
