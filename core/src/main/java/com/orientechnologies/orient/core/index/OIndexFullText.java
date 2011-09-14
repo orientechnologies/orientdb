@@ -15,11 +15,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -27,6 +22,9 @@ import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Fast index for full-text searches.
@@ -48,17 +46,6 @@ public class OIndexFullText extends OIndexMultiValues {
 	public OIndexFullText() {
 		super("FULLTEXT");
 		stopWords = new HashSet<String>(OStringSerializerHelper.split(DEF_STOP_WORDS, ' '));
-	}
-
-	public OIndexFullText(final String iName, final ODatabaseRecord iDatabase, final int[] iClusterIdsToIndex,
-			final boolean iAutomatic) {
-		this(iName, OType.STRING, iDatabase, DEF_CLUSTER_NAME, iClusterIdsToIndex, iAutomatic);
-	}
-
-	public OIndexFullText(final String iName, final OType iKeyType, final ODatabaseRecord iDatabase, final String iClusterIndexName,
-			final int[] iClusterIdsToIndex, final boolean iAutomatic) {
-		this();
-		create(iName, OType.STRING, iDatabase, iClusterIndexName, iClusterIdsToIndex, null, iAutomatic);
 	}
 
 	/**
@@ -89,48 +76,21 @@ public class OIndexFullText extends OIndexMultiValues {
 	/**
 	 * Indexes a value and save the index. Splits the value in single words and index each one. Save of the index is responsibility of
 	 * the caller.
-	 * 
-	 * @param iDocument
-	 *          The document to index
 	 */
 	public OIndexFullText put(final Object iKey, final OIdentifiable iSingleValue) {
 		if (iKey == null)
 			return this;
 
-		Set<OIdentifiable> refs;
-		final StringBuilder buffer = new StringBuilder();
-		char c;
-		boolean ignore;
 
-		// GET ALL THE WORDS OF THE STRING
-		final List<String> words = OStringSerializerHelper.split(iKey.toString(), ' ');
+		final List<String> words = splitIntoWords(iKey.toString());
 
 		// FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
-		for (String word : words) {
-			buffer.setLength(0);
-
-			for (int i = 0; i < word.length(); ++i) {
-				c = word.charAt(i);
-				ignore = false;
-				for (int k = 0; k < ignoreChars.length(); ++k)
-					if (c == ignoreChars.charAt(k)) {
-						ignore = true;
-						break;
-					}
-
-				if (!ignore)
-					buffer.append(c);
-			}
-
-			word = buffer.toString();
-
-			// CHECK IF IT'S A STOP WORD
-			if (stopWords.contains(word))
-				continue;
-
+		for (final String word : words) {
 			acquireExclusiveLock();
 
 			try {
+                Set<OIdentifiable> refs;
+
 				// SEARCH FOR THE WORD
 				refs = map.get(word);
 
@@ -151,25 +111,40 @@ public class OIndexFullText extends OIndexMultiValues {
 		return this;
 	}
 
-	public boolean remove(final Object iKey, final OIdentifiable value) {
+    /**
+     * Splits passed in key on several words and remove records with keys equals to any item of split result and
+     * values equals to passed in value.
+     * @param iKey     Key to remove.
+     * @param value    Value to remove.
+     * @return   <code>true</code> if at least one record is removed.
+     */
+    public boolean remove(final Object iKey, final OIdentifiable value) {
+        final List<String> words = splitIntoWords(iKey.toString());
+        boolean removed = false;
 
-		acquireExclusiveLock();
-		try {
+        for (final String word : words) {
+            acquireExclusiveLock();
+            try {
 
-			final Set<OIdentifiable> recs = get(iKey);
-			if (recs != null && !recs.isEmpty()) {
-				if (recs.remove(value)) {
-					map.put(iKey, recs);
-					return true;
-				}
-			}
-		} finally {
-			releaseExclusiveLock();
-		}
-		return false;
-	}
+                final Set<OIdentifiable> recs = get(word);
+                if (recs != null && !recs.isEmpty()) {
+                    if (recs.remove(value)) {
+                        if(recs.isEmpty())
+                            map.remove(iKey);
+                        else
+                            map.put(iKey, recs);
+                        removed = true;
+                    }
+                }
+            } finally {
+                releaseExclusiveLock();
+            }
+        }
 
-	@Override
+        return removed;
+    }
+
+    @Override
 	public ODocument updateConfiguration() {
 		super.updateConfiguration();
 		configuration.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
@@ -183,4 +158,42 @@ public class OIndexFullText extends OIndexMultiValues {
 		}
 		return configuration;
 	}
+
+    private List<String> splitIntoWords(final String iKey) {
+        final List<String> result = new ArrayList<String>();
+
+        final List<String> words = OStringSerializerHelper.split(iKey, ' ');
+
+        final StringBuilder buffer = new StringBuilder();
+        // FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
+
+        char c;
+        boolean ignore;
+        for (String word : words) {
+            buffer.setLength(0);
+
+            for (int i = 0; i < word.length(); ++i) {
+                c = word.charAt(i);
+                ignore = false;
+                for (int k = 0; k < ignoreChars.length(); ++k)
+                    if (c == ignoreChars.charAt(k)) {
+                        ignore = true;
+                        break;
+                    }
+
+                if (!ignore)
+                    buffer.append(c);
+            }
+
+            word = buffer.toString();
+
+            // CHECK IF IT'S A STOP WORD
+            if (stopWords.contains(word))
+                continue;
+
+            result.add(word);
+        }
+
+        return result;
+    }
 }
