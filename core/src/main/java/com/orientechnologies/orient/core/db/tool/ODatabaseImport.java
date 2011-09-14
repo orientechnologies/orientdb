@@ -553,63 +553,69 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
 		record = ORecordSerializerJSON.INSTANCE.fromString(database, value, record);
 
-		if (schemaImported && record.getIdentity().toString().equals(database.getStorage().getConfiguration().schemaRecordId)) {
-			// JUMP THE SCHEMA
-			jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
-			return null;
-		}
-
-		// CHECK IF THE CLUSTER IS INCLUDED
-		if (includeClusters != null) {
-			if (!includeClusters.contains(database.getClusterNameById(record.getIdentity().getClusterId()))) {
+		try {
+			if (schemaImported && record.getIdentity().toString().equals(database.getStorage().getConfiguration().schemaRecordId)) {
+				// JUMP THE SCHEMA
 				jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
 				return null;
 			}
-		} else if (excludeClusters != null) {
-			if (excludeClusters.contains(database.getClusterNameById(record.getIdentity().getClusterId()))) {
-				jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
-				return null;
-			}
-		}
 
-		String rid = record.getIdentity().toString();
-
-		long nextAvailablePos = database.getStorage().getClusterDataRange(record.getIdentity().getClusterId())[1] + 1;
-
-		// SAVE THE RECORD
-		if (record.getIdentity().getClusterPosition() < nextAvailablePos) {
-			// REWRITE PREVIOUS RECORD
-			if (record instanceof ODocument)
-				record.save();
-			else
-				((ODatabaseRecord) database.getUnderlying()).save(record);
-		} else {
-			String clusterName = database.getClusterNameById(record.getIdentity().getClusterId());
-
-			if (record.getIdentity().getClusterPosition() > nextAvailablePos) {
-				// CREATE HOLES
-				int holes = (int) (record.getIdentity().getClusterPosition() - nextAvailablePos);
-
-				ODocument tempRecord = new ODocument(database);
-				for (int i = 0; i < holes; ++i) {
-					tempRecord.reset();
-					((ODatabaseRecord) database.getUnderlying()).save(tempRecord, clusterName);
-					recordToDelete.add(tempRecord.getIdentity().toString());
+			// CHECK IF THE CLUSTER IS INCLUDED
+			if (includeClusters != null) {
+				if (!includeClusters.contains(database.getClusterNameById(record.getIdentity().getClusterId()))) {
+					jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+					return null;
+				}
+			} else if (excludeClusters != null) {
+				if (excludeClusters.contains(database.getClusterNameById(record.getIdentity().getClusterId()))) {
+					jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+					return null;
 				}
 			}
 
-			// APPEND THE RECORD
-			record.setIdentity(-1, -1);
-			if (record instanceof ODocument)
-				record.save(clusterName);
-			else
-				((ODatabaseRecord) database.getUnderlying()).save(record, clusterName);
+			if (record.getIdentity().getClusterId() == 0 && record.getIdentity().getClusterPosition() == 1)
+				// JUMP INTERNAL RECORDS
+				return null;
+
+			final String rid = record.getIdentity().toString();
+
+			long nextAvailablePos = database.getStorage().getClusterDataRange(record.getIdentity().getClusterId())[1] + 1;
+
+			// SAVE THE RECORD
+			if (record.getIdentity().getClusterPosition() < nextAvailablePos) {
+				// REWRITE PREVIOUS RECORD
+				if (record instanceof ODocument)
+					record.save();
+				else
+					((ODatabaseRecord) database.getUnderlying()).save(record);
+			} else {
+				String clusterName = database.getClusterNameById(record.getIdentity().getClusterId());
+
+				if (record.getIdentity().getClusterPosition() > nextAvailablePos) {
+					// CREATE HOLES
+					int holes = (int) (record.getIdentity().getClusterPosition() - nextAvailablePos);
+
+					ODocument tempRecord = new ODocument(database);
+					for (int i = 0; i < holes; ++i) {
+						tempRecord.reset();
+						((ODatabaseRecord) database.getUnderlying()).save(tempRecord, clusterName);
+						recordToDelete.add(tempRecord.getIdentity().toString());
+					}
+				}
+
+				// APPEND THE RECORD
+				record.setIdentity(-1, -1);
+				if (record instanceof ODocument)
+					record.save(clusterName);
+				else
+					((ODatabaseRecord) database.getUnderlying()).save(record, clusterName);
+			}
+
+			if (!record.getIdentity().toString().equals(rid))
+				throw new OSchemaException("Imported record '" + record.getIdentity() + "' has rid different from the original: " + rid);
+		} finally {
+			jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
 		}
-
-		if (!record.getIdentity().toString().equals(rid))
-			throw new OSchemaException("Imported record '" + record.getIdentity() + "' has rid different from the original: " + rid);
-
-		jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
 
 		return record.getIdentity();
 	}
