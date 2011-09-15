@@ -16,19 +16,46 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.RowId;
 import java.sql.SQLException;
+import java.sql.SQLSyntaxErrorException;
 import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements PreparedStatement {
 
+	private final String sql;
+	private final Map<Integer, String> params;
+
 	public OrientJdbcPreparedStatement(OrientJdbcConnection iConnection, String sql) {
 		super(iConnection);
+		this.sql = sql;
+		params = new HashMap<Integer, String>();
 	}
 
 	public ResultSet executeQuery() throws SQLException {
-		return null;
+
+		query = new OCommandSQL(sql);
+		try {
+
+			rawResult = database.command(query).execute(params.values().toArray(new String[] {}));
+
+			if (rawResult instanceof List<?>) documents = (List<ODocument>) rawResult;
+			else throw new SQLException("unable to create a valid resultSet: is query a SELECT?");
+
+			resultSet = new OrientJdbcResultSet(this, documents);
+			return resultSet;
+
+		} catch (OQueryParsingException e) {
+			throw new SQLSyntaxErrorException("Error on parsing the query", e);
+		}
 	}
 
 	public int executeUpdate() throws SQLException {
@@ -40,39 +67,41 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
 	}
 
 	public void setBoolean(int parameterIndex, boolean x) throws SQLException {
+		params.put(parameterIndex, Boolean.toString(x));
 
 	}
 
 	public void setByte(int parameterIndex, byte x) throws SQLException {
+		params.put(parameterIndex, Byte.toString(x));
 
 	}
 
 	public void setShort(int parameterIndex, short x) throws SQLException {
-
+		params.put(parameterIndex, Short.toString(x));
 	}
 
 	public void setInt(int parameterIndex, int x) throws SQLException {
-
+		params.put(parameterIndex, Integer.toString(x));
 	}
 
 	public void setLong(int parameterIndex, long x) throws SQLException {
-
+		params.put(parameterIndex, Long.toString(x));
 	}
 
 	public void setFloat(int parameterIndex, float x) throws SQLException {
-
+		params.put(parameterIndex, Float.toString(x));
 	}
 
 	public void setDouble(int parameterIndex, double x) throws SQLException {
-
+		params.put(parameterIndex, Double.toString(x));
 	}
 
 	public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
-
+		params.put(parameterIndex, x.toPlainString());
 	}
 
 	public void setString(int parameterIndex, String x) throws SQLException {
-
+		params.put(parameterIndex, x);
 	}
 
 	public void setBytes(int parameterIndex, byte[] x) throws SQLException {

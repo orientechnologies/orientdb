@@ -32,21 +32,23 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import static java.util.Collections.emptyList;
 
 public class OrientJdbcStatement implements Statement {
+
 	protected final OrientJdbcConnection connection;
 	protected final ODatabaseDocumentTx database;
 
-	private OCommandSQL query;
-	private List<ODocument> documents;
-	private boolean closed;
-	private Object rawResult;
-	private OrientJdbcResultSet resultSet;
-	private List<String> batches;
+	protected OCommandSQL query;
+	protected List<ODocument> documents;
+	protected boolean closed;
+	protected Object rawResult;
+	protected OrientJdbcResultSet resultSet;
+	protected List<String> batches;
 
 	public OrientJdbcStatement(final OrientJdbcConnection iConnection) {
 		this.connection = iConnection;
 		this.database = iConnection.getDatabase();
 		documents = emptyList();
 		batches = new ArrayList<String>();
+
 	}
 
 	public boolean execute(final String sql) throws SQLException {
