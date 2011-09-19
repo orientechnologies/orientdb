@@ -430,7 +430,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		return polymorphicClusterIds;
 	}
 
-	public OClassImpl addClusterIds(final int iId) {
+	public OClass addClusterIds(final int iId) {
 		for (int currId : clusterIds)
 			if (currId == iId)
 				return this;
@@ -442,7 +442,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		return this;
 	}
 
-	public OClassImpl setDirty() {
+	public OClass setDirty() {
 		document.setDirty();
 		if (owner != null)
 			owner.setDirty();
@@ -462,7 +462,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	 * @param iBaseClass
 	 *          The base class to add.
 	 */
-	private OClassImpl addBaseClasses(final OClass iBaseClass) {
+	private OClass addBaseClasses(final OClass iBaseClass) {
 		if (baseClasses == null)
 			baseClasses = new ArrayList<OClass>();
 

@@ -137,4 +137,6 @@ public interface OClass extends Comparable<OClass> {
 	public Object get(ATTRIBUTES iAttribute);
 
 	public OClass set(ATTRIBUTES attribute, Object iValue);
+
+	public abstract void setDefaultClusterId(final int iDefaultClusterId);
 }
