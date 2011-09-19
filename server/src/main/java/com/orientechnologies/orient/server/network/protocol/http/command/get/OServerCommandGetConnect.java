@@ -156,6 +156,8 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 				json.endCollection(1, true);
 			}
 
+			json.writeAttribute(1, false, "currentUser", db.getUser().getName());
+
 			json.beginCollection(1, false, "users");
 			OUser user;
 			for (ODocument doc : db.getMetadata().getSecurity().getUsers()) {
