@@ -22,24 +22,22 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OLazyObjectMap<TYPE> extends HashMap<String, Object> implements Serializable {
-	private static final long											serialVersionUID	= 4146521893082733694L;
+	private static final long					serialVersionUID	= 4146521893082733694L;
 
-	private final ORecord<?>											sourceRecord;
-	private transient ODatabasePojoAbstract<TYPE>	database;
-	private final Map<String, Object>							underlying;
-	private String																fetchPlan;
-	private boolean																converted					= false;
-	private boolean																convertToRecord		= true;
+	private final ORecord<?>					sourceRecord;
+	private final Map<String, Object>	underlying;
+	private String										fetchPlan;
+	private boolean										converted					= false;
+	private boolean										convertToRecord		= true;
 
-	public OLazyObjectMap(final ODatabasePojoAbstract<TYPE> database, final ORecord<?> iSourceRecord,
-			final Map<String, Object> iSource) {
-		this.database = database;
+	public OLazyObjectMap(final ORecord<?> iSourceRecord, final Map<String, Object> iSource) {
 		this.sourceRecord = iSourceRecord;
 		this.underlying = iSource;
 
@@ -74,10 +72,10 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> implements Ser
 			converted = false;
 			underlying.put(iKey, e);
 		} else {
-			if (database.getRecordByUserObject(e, false) == null) {
-				underlying.put(iKey, database.pojo2Stream((TYPE) e, new ODocument((ODatabaseRecord) database.getUnderlying())));
+			if (getDatabase().getRecordByUserObject(e, false) == null) {
+				underlying.put(iKey, getDatabase().pojo2Stream((TYPE) e, new ODocument((ODatabaseRecord) getDatabase().getUnderlying())));
 			} else {
-				underlying.put(iKey, database.getRecordByUserObject(e, false));
+				underlying.put(iKey, getDatabase().getRecordByUserObject(e, false));
 			}
 		}
 		setDirty();
@@ -161,12 +159,6 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> implements Ser
 			sourceRecord.setDirty();
 	}
 
-	public void assignDatabase(final ODatabasePojoAbstract<TYPE> iDatabase) {
-		if (database == null || database.isClosed()) {
-			database = iDatabase;
-		}
-	}
-
 	/**
 	 * Assure that the requested key is converted.
 	 */
@@ -174,7 +166,7 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> implements Ser
 		if (converted || !convertToRecord)
 			return;
 
-		super.put(iKey, database.getUserObjectByRecord((ORecordInternal<?>) underlying.get(iKey), null));
+		super.put(iKey, getDatabase().getUserObjectByRecord((ORecordInternal<?>) underlying.get(iKey), null));
 	}
 
 	public void detach() {
@@ -189,8 +181,13 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> implements Ser
 			return;
 
 		for (java.util.Map.Entry<String, Object> e : underlying.entrySet())
-			super.put(e.getKey(), database.getUserObjectByRecord((ORecordInternal<?>) e.getValue(), null));
+			super.put(e.getKey(), getDatabase().getUserObjectByRecord((ORecordInternal<?>) e.getValue(), null));
 
 		converted = true;
+	}
+
+	@SuppressWarnings("unchecked")
+	protected ODatabasePojoAbstract<TYPE> getDatabase() {
+		return (ODatabasePojoAbstract<TYPE>) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner();
 	}
 }

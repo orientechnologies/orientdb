@@ -51,7 +51,8 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
 @SuppressWarnings("unchecked")
-public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseWrapperAbstract<ODatabaseDocumentTx> implements ODatabaseSchemaAware<T> {
+public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseWrapperAbstract<ODatabaseDocumentTx> implements
+		ODatabaseSchemaAware<T> {
 	protected HashMap<Integer, ODocument>		objects2Records	= new HashMap<Integer, ODocument>();
 	protected IdentityHashMap<ODocument, T>	records2Objects	= new IdentityHashMap<ODocument, T>();
 	protected HashMap<ORID, ODocument>			rid2Records			= new HashMap<ORID, ODocument>();
@@ -369,7 +370,6 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 		return (T) pojo;
 	}
 
-	@SuppressWarnings("rawtypes")
 	public void attach(final Object iPojo) {
 		checkOpeness();
 
@@ -378,16 +378,6 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 			return;
 
 		if (OObjectSerializerHelper.hasObjectID(iPojo)) {
-			for (Field field : iPojo.getClass().getDeclaredFields()) {
-				final Object value = OObjectSerializerHelper.getFieldValue(iPojo, field.getName());
-				if (value instanceof OLazyObjectMap<?>) {
-					((OLazyObjectMap) value).assignDatabase(this);
-				} else if (value instanceof OLazyObjectList<?>) {
-					((OLazyObjectList) value).assignDatabase(this);
-				} else if (value instanceof OLazyObjectSet<?>) {
-					((OLazyObjectSet) value).assignDatabase(this);
-				}
-			}
 		} else {
 			throw new OObjectNotDetachedException("Cannot attach a non detached object");
 		}

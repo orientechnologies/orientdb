@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -37,23 +38,21 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 @SuppressWarnings("unchecked")
 public class OLazyObjectSet<TYPE> implements Set<Object>, Serializable {
-	private static final long											serialVersionUID	= -2497274705163041241L;
+	private static final long					serialVersionUID	= -2497274705163041241L;
 
-	private final ORecord<?>											sourceRecord;
-	private transient ODatabasePojoAbstract<TYPE>	database;
-	private final Collection<Object>							underlying;
-	private String																fetchPlan;
-	private boolean																converted					= false;
-	private boolean																convertToRecord		= true;
+	private final ORecord<?>					sourceRecord;
+	private final Collection<Object>	underlying;
+	private String										fetchPlan;
+	private boolean										converted					= false;
+	private boolean										convertToRecord		= true;
 
-	public OLazyObjectSet(final ODatabasePojoAbstract<TYPE> database, final ORecord<?> iSourceRecord, final Collection<Object> iSource) {
-		this.database = database;
+	public OLazyObjectSet(final ORecord<?> iSourceRecord, final Collection<Object> iSource) {
 		this.sourceRecord = iSourceRecord;
 		this.underlying = iSource;
 	}
 
 	public Iterator<Object> iterator() {
-		return (Iterator<Object>) new OLazyObjectIterator<TYPE>(database, sourceRecord, underlying.iterator(), convertToRecord);
+		return (Iterator<Object>) new OLazyObjectIterator<TYPE>(getDatabase(), sourceRecord, underlying.iterator(), convertToRecord);
 	}
 
 	public int size() {
@@ -65,7 +64,7 @@ public class OLazyObjectSet<TYPE> implements Set<Object>, Serializable {
 	}
 
 	public boolean contains(final Object o) {
-		return underlying.contains(database.getRecordByUserObject(o, false));
+		return underlying.contains(getDatabase().getRecordByUserObject(o, false));
 	}
 
 	public Object[] toArray() {
@@ -74,6 +73,7 @@ public class OLazyObjectSet<TYPE> implements Set<Object>, Serializable {
 
 	public <T> T[] toArray(final T[] a) {
 		underlying.toArray(a);
+		final ODatabasePojoAbstract<TYPE> database = getDatabase();
 		for (int i = 0; i < a.length; ++i)
 			a[i] = (T) database.getUserObjectByRecord((ORecordInternal<?>) a[i], fetchPlan);
 		return a;
@@ -83,15 +83,16 @@ public class OLazyObjectSet<TYPE> implements Set<Object>, Serializable {
 		if (converted && e instanceof ORID)
 			converted = false;
 		setDirty();
-		return underlying.add(database.getRecordByUserObject(e, false));
+		return underlying.add(getDatabase().getRecordByUserObject(e, false));
 	}
 
 	public boolean remove(final Object o) {
 		setDirty();
-		return underlying.remove(database.getRecordByUserObject(o, false));
+		return underlying.remove(getDatabase().getRecordByUserObject(o, false));
 	}
 
 	public boolean containsAll(final Collection<?> c) {
+		final ODatabasePojoAbstract<TYPE> database = getDatabase();
 		for (Object o : c)
 			if (!underlying.contains(database.getRecordByUserObject(o, false)))
 				return false;
@@ -102,6 +103,7 @@ public class OLazyObjectSet<TYPE> implements Set<Object>, Serializable {
 	public boolean addAll(final Collection<? extends Object> c) {
 		boolean modified = false;
 		setDirty();
+		final ODatabasePojoAbstract<TYPE> database = getDatabase();
 		for (Object o : c)
 			if (!underlying.add(database.getRecordByUserObject(o, false)))
 				modified = true;
@@ -121,6 +123,7 @@ public class OLazyObjectSet<TYPE> implements Set<Object>, Serializable {
 	public boolean removeAll(final Collection<?> c) {
 		setDirty();
 		boolean modified = false;
+		final ODatabasePojoAbstract<TYPE> database = getDatabase();
 		for (Object o : c)
 			if (!underlying.remove(database.getRecordByUserObject(o, false)))
 				modified = true;
@@ -154,12 +157,6 @@ public class OLazyObjectSet<TYPE> implements Set<Object>, Serializable {
 			sourceRecord.setDirty();
 	}
 
-	public void assignDatabase(final ODatabasePojoAbstract<TYPE> iDatabase) {
-		if (database == null || database.isClosed()) {
-			database = iDatabase;
-		}
-	}
-
 	public void detach() {
 		convertAll();
 	}
@@ -170,16 +167,21 @@ public class OLazyObjectSet<TYPE> implements Set<Object>, Serializable {
 
 		final Set<Object> copy = new HashSet<Object>(this);
 		underlying.clear();
+		final ODatabasePojoAbstract<TYPE> database = getDatabase();
 		for (Object e : copy) {
 			if (e != null) {
 				if (e instanceof ORID)
 					add(database.getUserObjectByRecord(
-							(ORecordInternal<?>) ((ODatabaseRecord) database.getUnderlying()).load((ORID) e, fetchPlan), fetchPlan));
+							(ORecordInternal<?>) ((ODatabaseRecord) getDatabase().getUnderlying()).load((ORID) e, fetchPlan), fetchPlan));
 				else if (e instanceof ODocument)
 					add(database.getUserObjectByRecord((ORecordInternal<?>) e, fetchPlan));
 			}
 		}
 
 		converted = true;
+	}
+
+	protected ODatabasePojoAbstract<TYPE> getDatabase() {
+		return (ODatabasePojoAbstract<TYPE>) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner();
 	}
 }

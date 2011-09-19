@@ -316,16 +316,14 @@ public class OObjectSerializerHelper {
 				if (Set.class.isAssignableFrom(type)) {
 
 					final Collection<Object> set = (Collection<Object>) iLinked;
-					final Set<Object> target = new OLazyObjectSet<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner(),
-							iRoot, set).setFetchPlan(iFetchPlan);
+					final Set<Object> target = new OLazyObjectSet<Object>(iRoot, set).setFetchPlan(iFetchPlan);
 
 					fieldValue = target;
 
 				} else if (Collection.class.isAssignableFrom(type)) {
 
 					final Collection<ODocument> list = (Collection<ODocument>) iLinked;
-					final List<Object> targetList = new OLazyObjectList<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner())
-							.setFetchPlan(iFetchPlan);
+					final List<Object> targetList = new OLazyObjectList<Object>().setFetchPlan(iFetchPlan);
 					fieldValue = targetList;
 
 					if (list != null && list.size() > 0) {
@@ -335,8 +333,7 @@ public class OObjectSerializerHelper {
 				} else if (Map.class.isAssignableFrom(type)) {
 
 					final Map<String, Object> map = (Map<String, Object>) iLinked;
-					final Map<String, Object> target = new OLazyObjectMap<Object>((ODatabaseObjectTx) iRecord.getDatabase()
-							.getDatabaseOwner(), iRoot, map).setFetchPlan(iFetchPlan);
+					final Map<String, Object> target = new OLazyObjectMap<Object>(iRoot, map).setFetchPlan(iFetchPlan);
 
 					fieldValue = target;
 
@@ -715,9 +712,6 @@ public class OObjectSerializerHelper {
 		if (iMultiValue instanceof Collection<?>) {
 			sourceValues = (Collection<Object>) iMultiValue;
 		} else {
-			if (iMultiValue instanceof OLazyObjectMap<?>) {
-				((OLazyObjectMap<Object>) iMultiValue).assignDatabase(db);
-			}
 			sourceValues = (Collection<Object>) ((Map<?, ?>) iMultiValue).values();
 		}
 
@@ -777,9 +771,6 @@ public class OObjectSerializerHelper {
 				((Collection<Object>) result).add(typeToStream(o, linkedType, iEntityManager, iObj2RecHandler, db, iSaveOnlyDirty));
 			}
 		} else if (iMultiValue instanceof List<?>) {
-			if (sourceValues instanceof OLazyObjectList<?>) {
-				((OLazyObjectList<Object>) sourceValues).assignDatabase(db);
-			}
 			for (int i = 0; i < sourceValues.size(); i++) {
 				((List<Object>) result).add(typeToStream(((List<?>) sourceValues).get(i), linkedType, iEntityManager, iObj2RecHandler, db,
 						iSaveOnlyDirty));

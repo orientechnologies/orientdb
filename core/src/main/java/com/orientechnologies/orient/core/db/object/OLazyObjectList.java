@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.ListIterator;
 
 import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
-import com.orientechnologies.orient.core.db.graph.ODatabaseGraphTx;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -32,33 +32,26 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings({ "unchecked" })
 public class OLazyObjectList<TYPE> implements List<TYPE>, Serializable {
-	private static final long											serialVersionUID	= 289711963195698937L;
-	private ORecord<?>														sourceRecord;
-	private final ArrayList<Object>								list							= new ArrayList<Object>();
-	private transient ODatabasePojoAbstract<TYPE>	database;
-	private String																fetchPlan;
-	private boolean																converted					= false;
-	private boolean																convertToRecord		= true;
+	private static final long				serialVersionUID	= 289711963195698937L;
+	private ORecord<?>							sourceRecord;
+	private final ArrayList<Object>	list							= new ArrayList<Object>();
+	private String									fetchPlan;
+	private boolean									converted					= false;
+	private boolean									convertToRecord		= true;
 
-	public OLazyObjectList(final ODatabaseGraphTx iDatabase, final ORecord<?> iSourceRecord, final Collection<?> iSourceList) {
-		this((ODatabasePojoAbstract<TYPE>) iDatabase, iSourceRecord, iSourceList);
-		this.sourceRecord = iSourceRecord;
+	public OLazyObjectList() {
 	}
 
-	public OLazyObjectList(final ODatabasePojoAbstract<TYPE> iDatabase, final ORecord<?> iSourceRecord,
-			final Collection<?> iSourceList) {
-		this(iDatabase);
+	public OLazyObjectList(final ORecord<?> iSourceRecord, final Collection<?> iSourceList) {
 		this.sourceRecord = iSourceRecord;
 		if (iSourceList != null)
 			list.addAll(iSourceList);
 	}
 
-	public OLazyObjectList(final ODatabasePojoAbstract<TYPE> iDatabase) {
-		this.database = iDatabase;
-	}
-
 	public Iterator<TYPE> iterator() {
-		return new OLazyObjectIterator<TYPE>(database, sourceRecord, list.iterator(), convertToRecord);
+		return new OLazyObjectIterator<TYPE>(
+				(ODatabasePojoAbstract<TYPE>) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner(), sourceRecord, list.iterator(),
+				convertToRecord);
 	}
 
 	public boolean contains(final Object o) {
@@ -211,12 +204,6 @@ public class OLazyObjectList<TYPE> implements List<TYPE>, Serializable {
 			sourceRecord.setDirty();
 	}
 
-	public void assignDatabase(final ODatabasePojoAbstract<TYPE> iDatabase) {
-		if (database == null || database.isClosed()) {
-			database = iDatabase;
-		}
-	}
-
 	/**
 	 * Convert the item requested.
 	 * 
@@ -229,14 +216,13 @@ public class OLazyObjectList<TYPE> implements List<TYPE>, Serializable {
 
 		final Object o = list.get(iIndex);
 
+		final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
+
 		if (o != null) {
 			if (o instanceof ORID)
-				list.set(
-						iIndex,
-						database.getUserObjectByRecord(
-								(ORecordInternal<?>) ((ODatabaseRecord) database.getUnderlying()).load((ORID) o, fetchPlan), fetchPlan));
+				list.set(iIndex, database.getDatabaseOwner().getUserObjectByRecord((ORecordInternal<?>) database.load((ORID) o, fetchPlan), fetchPlan));
 			else if (o instanceof ODocument)
-				list.set(iIndex, database.getUserObjectByRecord((ORecordInternal<?>) o, fetchPlan));
+				list.set(iIndex, database.getDatabaseOwner().getUserObjectByRecord((ORecordInternal<?>) o, fetchPlan));
 		}
 	}
 
