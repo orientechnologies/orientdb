@@ -218,6 +218,8 @@ public class OTxSegment extends OSingleFileSegment {
 
 			if (lastRecord > -1)
 				file.shrink(lastRecord * RECORD_SIZE);
+			
+//			truncate();
 
 			synchTx();
 

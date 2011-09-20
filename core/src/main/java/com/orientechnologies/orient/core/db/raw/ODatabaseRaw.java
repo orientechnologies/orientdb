@@ -179,7 +179,10 @@ public class ODatabaseRaw implements ODatabase {
 	}
 
 	public long countClusterElements(final String iClusterName) {
-		return storage.count(getClusterIdByName(iClusterName));
+		final int clusterId = getClusterIdByName(iClusterName);
+		if (clusterId < 0)
+			throw new IllegalArgumentException("Cluster '" + iClusterName + "' was not found");
+		return storage.count(clusterId);
 	}
 
 	public long countClusterElements(final int iClusterId) {
