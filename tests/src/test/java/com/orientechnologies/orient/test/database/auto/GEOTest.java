@@ -109,7 +109,29 @@ public class GEOTest {
 		database.close();
 	}
 
-	@Test(dependsOnMethods = "queryDistance")
+	@Test(dependsOnMethods = "queryCreatePoints")
+	public void queryDistanceOrdered() {
+		database.open("admin", "admin");
+
+		Assert.assertEquals(database.countClass("MapPoint"), 10000);
+
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>("select distance(x, y,52.20472, 0.14056 ) as distance from MapPoint order by distance"))
+				.execute();
+
+		Assert.assertTrue(result.size() != 0);
+
+		Double lastDistance = null;
+		for (ODocument d : result) {
+			if (lastDistance != null && d.field("distance") != null)
+				Assert.assertTrue(((Double) d.field("distance")).compareTo(lastDistance) >= 0);
+			lastDistance = d.field("distance");
+		}
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "queryCreatePoints")
 	public void spatialRange() {
 		database.open("admin", "admin");
 
