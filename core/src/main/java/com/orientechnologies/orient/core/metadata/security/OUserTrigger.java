@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
@@ -38,7 +39,14 @@ public class OUserTrigger extends ODocumentHookAbstract {
 
 	private boolean encodePassword(final ODocument iDocument) {
 		if ("OUser".equals(iDocument.getClassName())) {
+			if (iDocument.field("name") == null)
+				throw new OSecurityException("User name not found");
+
 			final String password = (String) iDocument.field("password");
+
+			if (password == null)
+				throw new OSecurityException("User '" + iDocument.field("name") + "' has no password");
+
 			if (!password.startsWith(OSecurityManager.ALGORITHM_PREFIX)) {
 				iDocument.field("password", OUser.encryptPassword(password));
 				return true;
