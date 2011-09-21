@@ -35,25 +35,29 @@ public class OSQLFunctionDistance extends OSQLFunctionAbstract {
 	}
 
 	public Object execute(ORecord<?> iCurrentRecord, final Object[] iParameters) {
-		double distance;
+		try {
+			double distance;
 
-		final double[] values = new double[4];
+			final double[] values = new double[4];
 
-		for (int i = 0; i < iParameters.length; ++i) {
-			if (iParameters[i] == null)
-				return null;
+			for (int i = 0; i < iParameters.length; ++i) {
+				if (iParameters[i] == null)
+					return null;
 
-			values[i] = ((Double) OType.convert(iParameters[i], Double.class)).doubleValue();
+				values[i] = ((Double) OType.convert(iParameters[i], Double.class)).doubleValue();
+			}
+
+			final double deltaLat = Math.toRadians(values[2] - values[0]);
+			final double deltaLon = Math.toRadians(values[3] - values[1]);
+
+			final double a = Math.pow(Math.sin(deltaLat / 2), 2) + Math.cos(Math.toRadians(values[0]))
+					* Math.cos(Math.toRadians(values[2])) * Math.pow(Math.sin(deltaLon / 2), 2);
+			distance = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * EARTH_RADIUS;
+
+			return distance;
+		} catch (Exception e) {
+			return null;
 		}
-
-		final double deltaLat = Math.toRadians(values[2] - values[0]);
-		final double deltaLon = Math.toRadians(values[3] - values[1]);
-
-		final double a = Math.pow(Math.sin(deltaLat / 2), 2) + Math.cos(Math.toRadians(values[0]))
-				* Math.cos(Math.toRadians(values[2])) * Math.pow(Math.sin(deltaLon / 2), 2);
-		distance = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * EARTH_RADIUS;
-
-		return distance;
 	}
 
 	public String getSyntax() {
