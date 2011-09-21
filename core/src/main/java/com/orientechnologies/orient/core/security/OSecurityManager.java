@@ -56,7 +56,9 @@ public class OSecurityManager {
 	}
 
 	public boolean check(final String iInput1, final String iInput2) {
-		return digest2String(iInput1, true).equals(iInput2);
+		final String s = iInput2.startsWith(ALGORITHM_PREFIX) ? iInput2.substring(ALGORITHM_PREFIX.length()) : iInput2;
+
+		return digest2String(iInput1, false).equals(s);
 	}
 
 	public String digest2String(final String iInput) {
