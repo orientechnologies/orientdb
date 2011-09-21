@@ -19,7 +19,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Set;
 
-import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
@@ -318,8 +317,8 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 			return OType.EMBEDDEDLIST;
 		else if (firstChar == OStringSerializerHelper.MAP_BEGIN)
 			return OType.EMBEDDEDMAP;
-		
-		//BOOLEAN?
+
+		// BOOLEAN?
 		if (iValue.equalsIgnoreCase("true") || iValue.equalsIgnoreCase("false"))
 			return OType.BOOLEAN;
 
@@ -334,7 +333,13 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 					integer = false;
 				else {
 					if (index > 0)
-						if (c == 'f')
+						if (!integer && c == 'E') {
+							// CHECK FOR SCIENTIFIC NOTATION
+							if (index < iValue.length())
+								index++;
+							if (iValue.charAt(index) == '-')
+								continue;
+						} else if (c == 'f')
 							return OType.FLOAT;
 						else if (c == 'l')
 							return OType.LONG;
@@ -399,6 +404,14 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 					integer = false;
 				else {
 					if (index > 0) {
+						if (!integer && c == 'E') {
+							// CHECK FOR SCIENTIFIC NOTATION
+							if (index < iValue.length())
+								index++;
+							if (iValue.charAt(index) == '-')
+								continue;
+						}
+
 						final String v = iValue.substring(0, index);
 
 						if (c == 'f')
