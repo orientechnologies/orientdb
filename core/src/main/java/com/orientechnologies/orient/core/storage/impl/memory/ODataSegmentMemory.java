@@ -54,7 +54,8 @@ public class ODataSegmentMemory extends OSharedResourceAbstract {
 
 			long size = 0;
 			for (byte[] e : entries)
-				size += e.length;
+				if (e != null)
+					size += e.length;
 
 			return size;
 
