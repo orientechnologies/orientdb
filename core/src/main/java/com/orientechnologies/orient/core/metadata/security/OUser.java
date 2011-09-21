@@ -160,7 +160,7 @@ public class OUser extends ODocumentWrapper {
 	}
 
 	public static final String encryptPassword(final String iPassword) {
-		return OSecurityManager.instance().digest2String(iPassword);
+		return OSecurityManager.instance().digest2String(iPassword, true);
 	}
 
 	public STATUSES getAccountStatus() {

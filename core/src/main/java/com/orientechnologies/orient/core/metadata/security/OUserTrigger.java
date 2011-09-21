@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.security.OSecurityManager;
 
 /**
  * Encrypt the password using the SHA-256 algorithm.
@@ -38,12 +39,10 @@ public class OUserTrigger extends ODocumentHookAbstract {
 	private boolean encodePassword(final ODocument iDocument) {
 		if ("OUser".equals(iDocument.getClassName())) {
 			final String password = (String) iDocument.field("password");
-
-//			if (iDocument.getOriginalValue("password") != null) {
-				// PASSWORD HAS BEEN CHANGED: ENCRYPT IT
+			if (!password.startsWith(OSecurityManager.ALGORITHM_PREFIX)) {
 				iDocument.field("password", OUser.encryptPassword(password));
 				return true;
-//			}
+			}
 		}
 		return false;
 	}

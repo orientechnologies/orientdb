@@ -32,32 +32,54 @@ import com.orientechnologies.orient.core.exception.OSecurityException;
 
 public class OSecurityManager {
 
-	private static final OSecurityManager	instance	= new OSecurityManager();
+	public static final String						ALGORITHM					= "SHA-256";
+	public static final String						ALGORITHM_PREFIX	= "{" + ALGORITHM + "}";
+
+	private static final OSecurityManager	instance					= new OSecurityManager();
 
 	private MessageDigest									md;
 
 	public OSecurityManager() {
 		try {
-			md = MessageDigest.getInstance("SHA-256");
+			md = MessageDigest.getInstance(ALGORITHM);
 		} catch (NoSuchAlgorithmException e) {
-			OLogManager.instance().error(this, "Can't use IntegrityFileManager", e);
+			OLogManager.instance().error(this, "Can't use OSecurityManager", e);
 		}
 	}
 
-	public boolean check(byte[] iInput1, byte[] iInput2) {
+	public boolean check(final byte[] iInput1, final byte[] iInput2) {
 		return MessageDigest.isEqual(iInput1, iInput2);
 	}
 
-	public boolean check(String iInput1, byte[] iInput2) {
+	public boolean check(final String iInput1, final byte[] iInput2) {
 		return MessageDigest.isEqual(digest(iInput1), iInput2);
 	}
 
-	public boolean check(String iInput1, String iInput2) {
-		return digest2String(iInput1).equals(iInput2);
+	public boolean check(final String iInput1, final String iInput2) {
+		return digest2String(iInput1, true).equals(iInput2);
 	}
 
-	public String digest2String(String iInput) {
+	public String digest2String(final String iInput) {
 		return byteArrayToHexStr(digest(iInput));
+	}
+
+	/**
+	 * Hashes the input string.
+	 * 
+	 * @param iInput
+	 *          String to hash
+	 * @param iIncludeAlgorithm
+	 *          Include the algorithm used or not
+	 * @return
+	 */
+	public String digest2String(final String iInput, final boolean iIncludeAlgorithm) {
+		final StringBuilder buffer = new StringBuilder();
+		if (iIncludeAlgorithm)
+			buffer.append(ALGORITHM_PREFIX);
+
+		buffer.append(OSecurityManager.instance().digest2String(iInput));
+
+		return buffer.toString();
 	}
 
 	public synchronized byte[] digest(final String iInput) {
