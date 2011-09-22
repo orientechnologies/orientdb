@@ -423,6 +423,9 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 	@Override
 	public OMVRBTreeEntry<K, V> getLeft() {
+		if( leftRid == null )
+			return null;
+		
 		if (left == null && leftRid.isValid()) {
 			try {
 				// System.out.println("Node " + record.getIdentity() + " is loading LEFT node " + leftRid + "...");
@@ -458,6 +461,9 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 	@Override
 	public OMVRBTreeEntry<K, V> getRight() {
+		if( rightRid == null )
+			return null;
+		
 		if (rightRid.isValid() && right == null) {
 			// LAZY LOADING OF THE RIGHT LEAF
 			try {
