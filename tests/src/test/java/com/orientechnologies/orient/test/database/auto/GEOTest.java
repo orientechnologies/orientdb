@@ -115,8 +115,13 @@ public class GEOTest {
 
 		Assert.assertEquals(database.countClass("MapPoint"), 10000);
 
-		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>("select distance(x, y,52.20472, 0.14056 ) as distance from MapPoint order by distance"))
+		// MAKE THE FIRST RECORD DIRTY TO TEST IF DISTANCE JUMP IT
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from MapPoint limit 1")).execute();
+		result.get(0).field("x", "--wrong--");
+		result.get(0).save();
+
+		result = database.command(
+				new OSQLSynchQuery<ODocument>("select distance(x, y,52.20472, 0.14056 ) as distance from MapPoint order by distance desc"))
 				.execute();
 
 		Assert.assertTrue(result.size() != 0);
@@ -124,7 +129,7 @@ public class GEOTest {
 		Double lastDistance = null;
 		for (ODocument d : result) {
 			if (lastDistance != null && d.field("distance") != null)
-				Assert.assertTrue(((Double) d.field("distance")).compareTo(lastDistance) >= 0);
+				Assert.assertTrue(((Double) d.field("distance")).compareTo(lastDistance) <= 0);
 			lastDistance = d.field("distance");
 		}
 
