@@ -976,6 +976,10 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 		return _fieldValues == null || _fieldValues.isEmpty();
 	}
 
+	public boolean isEmbedded() {
+		return _owners != null && _owners.size() > 0;
+	}
+
 	@Override
 	protected void checkForFields() {
 		if (_fieldValues == null)

@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -377,7 +378,7 @@ public class ODocumentHelper {
 		} else
 			// RETURN A FIELD
 			((ODocument) iCurrent.getRecord()).checkForFields();
-			return ((ODocument) iCurrent.getRecord())._fieldValues.get(iFieldName);
+		return ((ODocument) iCurrent.getRecord())._fieldValues.get(iFieldName);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -535,5 +536,34 @@ public class ODocumentHelper {
 		}
 
 		return true;
+	}
+
+	public static void deleteCrossRefs(final ORID iRid, final ODocument iContent) {
+		for (String fieldName : iContent.fieldNames()) {
+			final Object fieldValue = iContent.field(fieldName);
+			if (fieldValue != null) {
+				if (fieldValue.equals(iRid)) {
+					// REMOVE THE LINK
+					iContent.field(fieldName, (ORID) null);
+					iContent.save();
+				} else if (fieldValue instanceof ODocument && ((ODocument) fieldValue).isEmbedded()) {
+					// EMBEDDED DOCUMENT: GO RECURSIVELY
+					deleteCrossRefs(iRid, (ODocument) fieldValue);
+				} else if (OMultiValue.isMultiValue(fieldValue)) {
+					// MULTI-VALUE (COLLECTION, ARRAY OR MAP), CHECK THE CONTENT
+					for (final Iterator<?> it = OMultiValue.getMultiValueIterator(fieldValue); it.hasNext();) {
+						final Object item = it.next();
+
+						if (fieldValue.equals(iRid)) {
+							// DELETE ITEM
+							it.remove();
+						} else if (item instanceof ODocument && ((ODocument) item).isEmbedded()) {
+							// EMBEDDED DOCUMENT: GO RECURSIVELY
+							deleteCrossRefs(iRid, (ODocument) item);
+						}
+					}
+				}
+			}
+		}
 	}
 }

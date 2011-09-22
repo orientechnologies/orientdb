@@ -687,9 +687,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		return mvcc;
 	}
 
-	public ODatabaseRecord setMVCC(boolean mvcc) {
+	public <DB extends ODatabaseComplex<?>> DB setMVCC(boolean mvcc) {
 		this.mvcc = mvcc;
-		return this;
+		return (DB) this;
 	}
 
 	public <DB extends ODatabaseComplex<?>> DB registerHook(final ORecordHook iHookImpl) {

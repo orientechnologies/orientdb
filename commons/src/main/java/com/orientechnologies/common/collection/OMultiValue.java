@@ -26,21 +26,42 @@ import java.util.NoSuchElementException;
 import com.orientechnologies.common.log.OLogManager;
 
 /**
- * Handles multi value types such as Collections, Maps and Arrays
+ * Handles Multi-value types such as Arrays, Collections and Maps
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 @SuppressWarnings("unchecked")
 public class OMultiValue {
 
+	/**
+	 * Checks if a class is a multi-value type.
+	 * 
+	 * @param iType
+	 *          Class to check
+	 * @return true if it's an array, a collection or a map, otherwise false
+	 */
 	public static boolean isMultiValue(final Class<?> iType) {
 		return (iType.isArray() || Collection.class.isAssignableFrom(iType) || Map.class.isAssignableFrom(iType));
 	}
 
+	/**
+	 * Checks if the object is a multi-value type.
+	 * 
+	 * @param iObject
+	 *          Object to check
+	 * @return true if it's an array, a collection or a map, otherwise false
+	 */
 	public static boolean isMultiValue(final Object iObject) {
 		return iObject == null ? false : isMultiValue(iObject.getClass());
 	}
 
+	/**
+	 * Returns the size of the multi-value object
+	 * 
+	 * @param iObject
+	 *          Multi-value object (array, collection or map)
+	 * @return
+	 */
 	public static int getSize(final Object iObject) {
 		if (iObject == null)
 			return 0;
@@ -57,6 +78,13 @@ public class OMultiValue {
 		return 0;
 	}
 
+	/**
+	 * Returns the first item of the Multi-value object (array, collection or map)
+	 * 
+	 * @param iObject
+	 *          Multi-value object (array, collection or map)
+	 * @return The first item if any
+	 */
 	public static Object getFirstValue(final Object iObject) {
 		if (iObject == null)
 			return null;
@@ -73,12 +101,18 @@ public class OMultiValue {
 				return Array.get(iObject, 0);
 		} catch (Exception e) {
 			// IGNORE IT
-			OLogManager.instance().debug(iObject, "Error on reading the first item of the multi value field '%s'", iObject);
+			OLogManager.instance().debug(iObject, "Error on reading the first item of the Multi-value field '%s'", iObject);
 		}
 
 		return null;
 	}
 
+	/**
+	 * Returns an Iterable<Object> object to browse the multi-value instance (array, collection or map)
+	 * 
+	 * @param iObject
+	 *          Multi-value object (array, collection or map)
+	 */
 	public static Iterable<Object> getMultiValueIterable(final Object iObject) {
 		if (iObject == null)
 			return null;
@@ -95,6 +129,36 @@ public class OMultiValue {
 		return null;
 	}
 
+	/**
+	 * Returns an Iterator<Object> object to browse the multi-value instance (array, collection or map)
+	 * 
+	 * @param iObject
+	 *          Multi-value object (array, collection or map)
+	 */
+
+	public static Iterator<?> getMultiValueIterator(final Object iObject) {
+		if (iObject == null)
+			return null;
+
+		if (!isMultiValue(iObject))
+			return null;
+
+		if (iObject instanceof Collection<?>)
+			return ((Collection<Object>) iObject).iterator();
+		if (iObject instanceof Map<?, ?>)
+			return ((Map<?, Object>) iObject).values().iterator();
+		if (iObject.getClass().isArray())
+			return Arrays.asList(iObject).iterator();
+		return null;
+	}
+
+	/**
+	 * Returns a stringified version of the multi-value object.
+	 * 
+	 * @param iObject
+	 *          Multi-value object (array, collection or map)
+	 * @return
+	 */
 	public static String toString(final Object iObject) {
 		final StringBuilder sb = new StringBuilder();
 
