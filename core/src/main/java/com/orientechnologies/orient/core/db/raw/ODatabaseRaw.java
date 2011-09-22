@@ -203,8 +203,11 @@ public class ODatabaseRaw implements ODatabase {
 			return storage.readRecord(databaseOwner, iRid, iFetchPlan);
 
 		} catch (Throwable t) {
-			throw new ODatabaseException("Error on retrieving record " + iRid + " (cluster: "
-					+ storage.getPhysicalClusterNameById(iRid.clusterId) + ")", t);
+			if (iRid.isTemporary())
+				throw new ODatabaseException("Error on retrieving record using temporary RecordId: " + iRid, t);
+			else
+				throw new ODatabaseException("Error on retrieving record " + iRid + " (cluster: "
+						+ storage.getPhysicalClusterNameById(iRid.clusterId) + ")", t);
 		}
 	}
 
