@@ -242,7 +242,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			tempResult.add(recordCopy);
 		} else {
 			// CALL THE LISTENER NOW
-			final ODocument res = processRecordAsResult(recordCopy);
+			final OIdentifiable res = applyProjections(recordCopy);
 			if (res != null)
 				request.getResultListener().result(res);
 		}
@@ -745,7 +745,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		tempResult = finalResult;
 	}
 
-	private ODocument processRecordAsResult(final OIdentifiable iRecord) {
+	private OIdentifiable applyProjections(final OIdentifiable iRecord) {
 		if (projections != null) {
 			// APPLY PROJECTIONS
 			final ODocument doc = (ODocument) iRecord.getRecord();
@@ -777,7 +777,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				return result;
 		} else
 			// INVOKE THE LISTENER
-			return (ODocument) iRecord;
+			return iRecord;
 
 		return null;
 	}
@@ -982,13 +982,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				if (orderedFields != null && limit > 0) {
 					if (limitIndex < limit) {
 						limitIndex++;
-						newResult.add(doc);
+						newResult.add(applyProjections(doc));
 					} else
 						// LIMIT REACHED
 						break;
 
 				} else {
-					newResult.add(doc);
+					newResult.add(applyProjections(doc));
 				}
 			}
 

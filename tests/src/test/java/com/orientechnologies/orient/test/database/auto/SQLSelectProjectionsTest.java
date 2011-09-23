@@ -53,6 +53,7 @@ public class SQLSelectProjectionsTest {
 
 		for (ODocument d : result) {
 			String[] colNames = d.fieldNames();
+			Assert.assertEquals(colNames.length, 3);
 			Assert.assertEquals(colNames[0], "nick");
 			Assert.assertEquals(colNames[1], "followings");
 			Assert.assertEquals(colNames[2], "followers");
@@ -74,6 +75,7 @@ public class SQLSelectProjectionsTest {
 		Assert.assertTrue(result.size() != 0);
 
 		for (ODocument d : result) {
+			Assert.assertTrue(d.fieldNames().length <= 3);
 			Assert.assertNull(d.getClassName());
 			Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
 		}
@@ -91,6 +93,7 @@ public class SQLSelectProjectionsTest {
 		Assert.assertTrue(result.size() != 0);
 
 		for (ODocument d : result) {
+			Assert.assertTrue(d.fieldNames().length <= 2);
 			if (d.field("name") != null)
 				Assert.assertTrue(d.field("name").equals(((String) d.field("name")).toUpperCase()));
 
@@ -111,6 +114,7 @@ public class SQLSelectProjectionsTest {
 		Assert.assertTrue(result.size() != 0);
 
 		for (ODocument d : result) {
+			Assert.assertTrue(d.fieldNames().length <= 2);
 			Assert.assertNotNull(d.field("name"));
 			Assert.assertNotNull(d.field("name2"));
 
@@ -155,6 +159,7 @@ public class SQLSelectProjectionsTest {
 		Assert.assertTrue(result.size() != 0);
 
 		for (ODocument d : result) {
+			Assert.assertTrue(d.fieldNames().length <= 1);
 			Assert.assertTrue(d.field("name").toString().startsWith("Mr. "));
 			Assert.assertTrue(d.field("name").toString().endsWith("!"));
 
@@ -176,6 +181,7 @@ public class SQLSelectProjectionsTest {
 		Assert.assertTrue(result.size() != 0);
 
 		for (ODocument d : result) {
+			Assert.assertTrue(d.fieldNames().length <= 1);
 			Assert.assertTrue(d.field("name").toString().startsWith("Mr. "));
 			Assert.assertTrue(d.field("name").toString().endsWith("."));
 
@@ -197,6 +203,7 @@ public class SQLSelectProjectionsTest {
 		Assert.assertTrue(result.size() != 0);
 
 		for (ODocument d : result) {
+			Assert.assertTrue(d.fieldNames().length <= 2);
 			Assert.assertTrue(d.field("1").toString().endsWith("!"));
 			Assert.assertNotNull(d.field("2"));
 
@@ -216,6 +223,7 @@ public class SQLSelectProjectionsTest {
 		Assert.assertTrue(result.size() != 0);
 
 		for (ODocument d : result) {
+			Assert.assertTrue(d.fieldNames().length <= 2);
 			Assert.assertEquals(((Integer) d.field("10")).intValue(), 10l);
 			Assert.assertEquals(d.field("ciao"), "ciao");
 
@@ -236,6 +244,7 @@ public class SQLSelectProjectionsTest {
 		Assert.assertTrue(result.size() != 0);
 
 		for (ODocument d : result) {
+			Assert.assertTrue(d.fieldNames().length <= 1);
 			Assert.assertNotNull(d.field("json"));
 
 			new ODocument().fromJSON((String) d.field("json"));
