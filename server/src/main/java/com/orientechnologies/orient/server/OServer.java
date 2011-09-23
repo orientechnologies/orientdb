@@ -405,7 +405,7 @@ public class OServer {
 		configuration.users = new OServerUserConfiguration[1];
 
 		final long generatedPassword = new Random(System.currentTimeMillis()).nextLong();
-		String encodedPassword = OSecurityManager.instance().digest2String(String.valueOf(generatedPassword), true);
+		String encodedPassword = OSecurityManager.instance().digest2String(String.valueOf(generatedPassword), false);
 
 		configuration.users[0] = new OServerUserConfiguration(OServerConfiguration.SRV_ROOT_ADMIN, encodedPassword, "*");
 		saveConfiguration();
