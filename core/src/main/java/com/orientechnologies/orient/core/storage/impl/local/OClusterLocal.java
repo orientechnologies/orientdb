@@ -136,13 +136,15 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 
 			// REMOVE ALL DATA BLOCKS
 			final long begin = getFirstEntryPosition();
-			final long end = getLastEntryPosition();
-			final OPhysicalPosition ppos = new OPhysicalPosition();
-			for (long i = begin; i <= end; ++i) {
-				getPhysicalPosition(i, ppos);
+			if (begin > -1) {
+				final long end = getLastEntryPosition();
+				final OPhysicalPosition ppos = new OPhysicalPosition();
+				for (long i = begin; i <= end; ++i) {
+					getPhysicalPosition(i, ppos);
 
-				if (storage.checkForRecordValidity(ppos))
-					storage.getDataSegment(ppos.dataSegment).deleteRecord(ppos.dataPosition);
+					if (storage.checkForRecordValidity(ppos))
+						storage.getDataSegment(ppos.dataSegment).deleteRecord(ppos.dataPosition);
+				}
 			}
 
 			super.truncate();
