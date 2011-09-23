@@ -136,7 +136,7 @@ public class ODataLocalHole extends OSingleFileSegment {
 		cursor.dataOffset = iHolePosition + iHoleSize;
 		ODataHoleInfo higherHole = availableHolesByPosition.higherKey(cursor);
 
-		if (lowerHole != null && higherHole != null && lowerHole.dataOffset >= higherHole.dataOffset)
+		if (lowerHole != null && higherHole != null && lowerHole != higherHole && lowerHole.dataOffset >= higherHole.dataOffset)
 			// CHECK ERROR
 			throw new OStorageException("Found bad order in hole list: " + lowerHole + " is higher than " + higherHole);
 

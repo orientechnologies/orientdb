@@ -155,11 +155,9 @@ public class Orient extends OSharedResourceAbstract {
 	}
 
 	public OStorage getStorage(final String iDbName) {
+		acquireSharedLock();
 		try {
-			acquireSharedLock();
-
 			return storages.get(iDbName);
-
 		} finally {
 			releaseSharedLock();
 		}
@@ -208,11 +206,16 @@ public class Orient extends OSharedResourceAbstract {
 	}
 
 	public void unregisterStorage(final OStorage iStorage) {
-		for (Entry<String, OStorage> s : storages.entrySet()) {
-			if (s.getValue() == iStorage) {
-				storages.remove(s.getKey());
-				break;
+		acquireExclusiveLock();
+		try {
+			for (Entry<String, OStorage> s : storages.entrySet()) {
+				if (s.getValue() == iStorage) {
+					storages.remove(s.getKey());
+					break;
+				}
 			}
+		} finally {
+			releaseExclusiveLock();
 		}
 	}
 

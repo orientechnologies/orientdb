@@ -53,10 +53,10 @@ import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 @SuppressWarnings("unchecked")
 public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseWrapperAbstract<ODatabaseDocumentTx> implements
 		ODatabaseSchemaAware<T> {
-	protected HashMap<Integer, ODocument>		objects2Records	= new HashMap<Integer, ODocument>();
-	protected IdentityHashMap<ODocument, T>	records2Objects	= new IdentityHashMap<ODocument, T>();
-	protected HashMap<ORID, ODocument>			rid2Records			= new HashMap<ORID, ODocument>();
-	private boolean													retainObjects		= true;
+	protected IdentityHashMap<Object, ODocument>	objects2Records	= new IdentityHashMap<Object, ODocument>();
+	protected IdentityHashMap<ODocument, T>				records2Objects	= new IdentityHashMap<ODocument, T>();
+	protected HashMap<ORID, ODocument>						rid2Records			= new HashMap<ORID, ODocument>();
+	private boolean																retainObjects		= true;
 
 	public ODatabasePojoAbstract(final ODatabaseDocumentTx iDatabase) {
 		super(iDatabase);
@@ -297,7 +297,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 		if (iPojo instanceof ODocument)
 			return (ODocument) iPojo;
 
-		ODocument record = objects2Records.get(System.identityHashCode(iPojo));
+		ODocument record = objects2Records.get(iPojo);
 		if (record == null) {
 			// SEARCH BY RID
 			final ORID rid = OObjectSerializerHelper.getObjectID(this, iPojo);
@@ -313,7 +313,8 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 			}
 
 			registerUserObject(iPojo, record);
-		}
+		} else
+			record = record;
 
 		return record;
 	}
@@ -327,7 +328,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 	}
 
 	public boolean isManaged(final Object iEntity) {
-		return objects2Records.containsKey(System.identityHashCode(iEntity));
+		return objects2Records.containsKey(iEntity);
 	}
 
 	public T getUserObjectByRecord(final ORecordInternal<?> iRecord, final String iFetchPlan) {
@@ -373,7 +374,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 	public void attach(final Object iPojo) {
 		checkOpeness();
 
-		final ODocument record = objects2Records.get(System.identityHashCode(iPojo));
+		final ODocument record = objects2Records.get(iPojo);
 		if (record != null)
 			return;
 
@@ -411,7 +412,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 
 		if (retainObjects) {
 			if (iObject != null) {
-				objects2Records.put(System.identityHashCode(iObject), doc);
+				objects2Records.put(iObject, doc);
 				records2Objects.put(doc, (T) iObject);
 
 				OObjectSerializerHelper.setObjectID(iRecord.getIdentity(), iObject);
@@ -426,7 +427,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 
 	public void unregisterPojo(final T iObject, final ODocument iRecord) {
 		if (iObject != null)
-			objects2Records.remove(System.identityHashCode(iObject));
+			objects2Records.remove(iObject);
 
 		if (iRecord != null) {
 			records2Objects.remove(iRecord);
@@ -445,8 +446,8 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 			}
 		}
 
-		for (Iterator<Entry<Integer, ODocument>> it = objects2Records.entrySet().iterator(); it.hasNext();) {
-			Entry<Integer, ODocument> entry = it.next();
+		for (Iterator<Entry<Object, ODocument>> it = objects2Records.entrySet().iterator(); it.hasNext();) {
+			Entry<Object, ODocument> entry = it.next();
 			if (entry.getValue().getIdentity().isNew()) {
 				it.remove();
 			}
