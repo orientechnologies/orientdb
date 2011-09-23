@@ -313,8 +313,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 			}
 
 			registerUserObject(iPojo, record);
-		} else
-			record = record;
+		}
 
 		return record;
 	}

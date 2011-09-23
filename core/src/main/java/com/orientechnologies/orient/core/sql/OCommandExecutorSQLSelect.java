@@ -206,9 +206,20 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		else
 			throw new OQueryParsingException("No source found in query: specify class, clusters or single records");
 
-		applyOrderBy();
 		applyFlatten();
-		return processResult();
+		processResult();
+		applyOrderBy();
+
+		if (tempResult != null) {
+			for (OIdentifiable d : tempResult)
+				if (d != null)
+					request.getResultListener().result(d);
+		}
+
+		if (request instanceof OSQLSynchQuery)
+			return ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getResult();
+
+		return null;
 	}
 
 	public boolean foreach(final ORecordInternal<?> iRecord) {
@@ -229,9 +240,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				tempResult = new ArrayList<OIdentifiable>();
 
 			tempResult.add(recordCopy);
-		} else
+		} else {
 			// CALL THE LISTENER NOW
-			processRecordAsResult(recordCopy);
+			final ODocument res = processRecordAsResult(recordCopy);
+			if (res != null)
+				request.getResultListener().result(res);
+		}
 
 		if (orderedFields == null && limit > -1 && resultCount >= limit || request.getLimit() > -1 && resultCount >= request.getLimit())
 			// BREAK THE EXECUTION
@@ -693,10 +707,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	}
 
 	private void applyOrderBy() {
-		if (orderedFields == null || tempResult == null)
+		if (orderedFields == null)
 			return;
 
-		ODocumentHelper.sort(tempResult, orderedFields);
+		ODocumentHelper.sort(getResult(), orderedFields);
 		orderedFields.clear();
 	}
 
@@ -731,7 +745,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		tempResult = finalResult;
 	}
 
-	private void processRecordAsResult(final OIdentifiable iRecord) {
+	private ODocument processRecordAsResult(final OIdentifiable iRecord) {
 		if (projections != null) {
 			// APPLY PROJECTIONS
 			final ODocument doc = (ODocument) iRecord.getRecord();
@@ -756,14 +770,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 			if (canExcludeResult && result.isEmpty())
 				// RESULT EXCLUDED FOR EMPTY RECORD
-				return;
+				return null;
 
 			if (!anyFunctionAggregates)
 				// INVOKE THE LISTENER
-				request.getResultListener().result(result);
+				return result;
 		} else
 			// INVOKE THE LISTENER
-			request.getResultListener().result(iRecord);
+			return (ODocument) iRecord;
+
+		return null;
 	}
 
 	private void searchInClasses() {
@@ -937,7 +953,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		return doc;
 	}
 
-	private Object processResult() {
+	private void processResult() {
 		if (anyFunctionAggregates) {
 			// EXECUTE AGGREGATIONS
 			Object value;
@@ -957,6 +973,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			request.getResultListener().result(result);
 
 		} else if (tempResult != null) {
+			final List<OIdentifiable> newResult = new ArrayList<OIdentifiable>();
+
 			int limitIndex = 0;
 			// TEMP RESULT: RETURN ALL THE RECORDS AT THE END
 			for (OIdentifiable doc : tempResult) {
@@ -964,22 +982,27 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				if (orderedFields != null && limit > 0) {
 					if (limitIndex < limit) {
 						limitIndex++;
-						processRecordAsResult(doc);
+						newResult.add(doc);
 					} else
 						// LIMIT REACHED
 						break;
 
 				} else {
-					processRecordAsResult(doc);
+					newResult.add(doc);
 				}
 			}
-			tempResult.clear();
-			tempResult = null;
 
+			tempResult.clear();
+			tempResult = newResult;
 		}
+	}
+
+	public List<OIdentifiable> getResult() {
+		if (tempResult != null)
+			return tempResult;
 
 		if (request instanceof OSQLSynchQuery)
-			return ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getResult();
+			return (List<OIdentifiable>) ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getResult();
 
 		return null;
 	}
