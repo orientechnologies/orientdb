@@ -244,7 +244,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		} else {
 			// CALL THE LISTENER NOW
 			final OIdentifiable res = applyProjections(recordCopy);
-			if (res != null)
+			if (res != null && request.getResultListener() != null)
 				request.getResultListener().result(res);
 		}
 

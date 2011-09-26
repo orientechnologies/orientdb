@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 
 /**
  * EQUALS operator.
@@ -61,6 +62,9 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
 		if (iLeft instanceof OIdentifiable && iRight instanceof OIdentifiable)
 			return OIndexReuseType.NO_INDEX;
 		if (iRight == null || iLeft == null)
+			return OIndexReuseType.NO_INDEX;
+		if (iLeft instanceof OSQLFilterItemField && ((OSQLFilterItemField) iLeft).hasChainOperators()
+				|| iRight instanceof OSQLFilterItemField && ((OSQLFilterItemField) iRight).hasChainOperators())
 			return OIndexReuseType.NO_INDEX;
 
 		return OIndexReuseType.INDEX_METHOD;
