@@ -110,8 +110,11 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 					current = ((OrientElement) current).getRawElement();
 
 				if (finalResult != null) {
-					if (resultCollection == null)
+					if (resultCollection == null) {
+						// CONVERT IT INTO A COLLECTION
 						resultCollection = new ArrayList<Object>();
+						resultCollection.add(finalResult);
+					}
 
 					resultCollection.add(current);
 				} else
