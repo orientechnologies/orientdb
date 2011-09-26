@@ -204,7 +204,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 						throw new OCommandExecutionException("field " + entry.getKey() + " is not defined as a map");
 					}
 				}
-				fieldValue = new HashMap();
+				fieldValue = new HashMap<String, Object>();
 				record.field(entry.getKey(), fieldValue);
 			}
 

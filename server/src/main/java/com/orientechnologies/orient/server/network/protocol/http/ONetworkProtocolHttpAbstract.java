@@ -414,7 +414,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 				c = (char) channel.inStream.read();
 
 				if (c == '\r') {
-					String[] words = requestContent.toString().split(" ");
+					final String[] words = requestContent.toString().split(" ");
 					if (words.length < 3) {
 						OLogManager.instance().warn(this,
 								"->" + channel.socket.getInetAddress().getHostAddress() + ": Error on invalid content:\n" + requestContent);
