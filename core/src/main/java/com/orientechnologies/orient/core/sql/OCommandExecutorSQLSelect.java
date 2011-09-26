@@ -147,17 +147,18 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		if (pos == -1)
 			return this;
 
-		int endPosition = textUpperCase.indexOf(" " + OCommandExecutorSQLSelect.KEYWORD_ORDER_BY, currentPos);
-		if (endPosition == -1) {
-			endPosition = textUpperCase.indexOf(" " + OCommandExecutorSQLSelect.KEYWORD_RANGE, currentPos);
-			if (endPosition == -1) {
-				endPosition = textUpperCase.indexOf(" " + OCommandExecutorSQLSelect.KEYWORD_LIMIT, currentPos);
-				if (endPosition == -1) {
-					// NO OTHER STUFF: GET UNTIL THE END AND ASSURE TO RETURN FALSE IN ORDER TO AVOID PARSING OF CONDITIONS
-					endPosition = text.length();
-				}
-			}
-		}
+		int endPosition = text.length();
+		int endP = textUpperCase.indexOf(" " + OCommandExecutorSQLSelect.KEYWORD_ORDER_BY, currentPos);
+		if (endP > -1 && endP < endPosition)
+			endPosition = endP;
+
+		endP = textUpperCase.indexOf(" " + OCommandExecutorSQLSelect.KEYWORD_RANGE, currentPos);
+		if (endP > -1 && endP < endPosition)
+			endPosition = endP;
+
+		endP = textUpperCase.indexOf(" " + OCommandExecutorSQLSelect.KEYWORD_LIMIT, currentPos);
+		if (endP > -1 && endP < endPosition)
+			endPosition = endP;
 
 		compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(iRequest.getDatabase(), text.substring(pos, endPosition));
 

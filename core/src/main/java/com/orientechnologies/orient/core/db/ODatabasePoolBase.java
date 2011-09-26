@@ -54,6 +54,7 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
 	}
 
 	public int getMaxSize() {
+		setup();
 		return dbPool.getMaxSize();
 	}
 

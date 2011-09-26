@@ -67,9 +67,12 @@ public class OSQLFilter extends OCommandToParse {
 
 				final StringBuilder word = new StringBuilder();
 				int newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
-				if (newPos > -1 && word.toString().equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)) {
-					currentPos = newPos;
-					rootCondition = extractConditions(null);
+				if (newPos > -1) {
+					if (word.toString().equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)) {
+						currentPos = newPos;
+						rootCondition = extractConditions(null);
+					} else
+						throw new OQueryParsingException("Found invalid keyword '" + word + "'", text, newPos);
 				}
 			}
 		} catch (OQueryParsingException e) {
@@ -116,6 +119,8 @@ public class OSQLFilter extends OCommandToParse {
 		} else if (text.charAt(currentPos) == OStringSerializerHelper.COLLECTION_BEGIN) {
 			// COLLECTION OF RIDS
 			currentPos = OStringSerializerHelper.getCollection(text, currentPos, targetRecords);
+			if (currentPos > -1)
+				currentPos++;
 		} else {
 			String subjectName;
 			String alias;
@@ -380,8 +385,8 @@ public class OSQLFilter extends OCommandToParse {
 			} else if (c == OStringSerializerHelper.COLLECTION_END) {
 				openBraket--;
 				if (openBraket == 0 && openBraces == 0) {
-					//					currentPos++;
-//					break;
+					// currentPos++;
+					// break;
 				}
 			} else if (c == ' ' && openBraces == 0) {
 				break;
