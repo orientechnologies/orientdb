@@ -216,10 +216,13 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				// EMPTY, RETURN an EMPTY HASHMAP
 				return new HashMap<String, Object>();
 
-			if (hasTypeField(fields))
+			if (hasTypeField(fields)) {
 				// OBJECT
-				return fromString(iRecord.getDatabase(), iFieldValue, null);
-			else {
+				final ORecordInternal<?> recordInternal = fromString(iRecord.getDatabase(), iFieldValue, null);
+				if (recordInternal instanceof ODocument)
+					((ODocument) recordInternal).addOwner(iRecord);
+				return recordInternal;
+			} else {
 				if (fields.length % 2 == 1)
 					throw new OSerializationException("Bad JSON format on map. Expected pairs of field:value but received '"
 							+ iFieldValueAsString + "'");
@@ -531,8 +534,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				firstAttribute = false;
 		}
 		if (includeId && record.getIdentity() != null && record.getIdentity().isValid()) {
-			json.writeAttribute(!firstAttribute ? indentLevel + 1 : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_RID, record.getIdentity()
-					.toString());
+			json.writeAttribute(!firstAttribute ? indentLevel + 1 : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_RID, record
+					.getIdentity().toString());
 			if (attribSameRow)
 				firstAttribute = false;
 		}
