@@ -83,69 +83,75 @@ public class OMemoryWatchDog {
 
 		final MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
 
-		final NotificationEmitter memEmitter = (NotificationEmitter) memBean;
-		memEmitter.addNotificationListener(new NotificationListener() {
-			public synchronized void handleNotification(Notification n, Object hb) {
-				if (n.getType().equals(MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED)) {
-					alertTimes++;
-					long maxMemory = tenuredGenPool.getUsage().getMax();
-					long usedMemory = tenuredGenPool.getUsage().getUsed();
-					long freeMemory = maxMemory - usedMemory;
+		if (memBean instanceof NotificationEmitter) {
+			final NotificationEmitter memEmitter = (NotificationEmitter) memBean;
+			memEmitter.addNotificationListener(new NotificationListener() {
+				public synchronized void handleNotification(Notification n, Object hb) {
+					if (n.getType().equals(MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED)) {
+						alertTimes++;
+						long maxMemory = tenuredGenPool.getUsage().getMax();
+						long usedMemory = tenuredGenPool.getUsage().getUsed();
+						long freeMemory = maxMemory - usedMemory;
 
-					OLogManager.instance().debug(this,
-							"Free memory is low %s %s%% (used %s of %s), calling listeners to free memory in SOFT way...",
-							OFileUtils.getSizeAsString(freeMemory), freeMemory * 100 / maxMemory, OFileUtils.getSizeAsString(usedMemory),
-							OFileUtils.getSizeAsString(maxMemory));
-
-					final long timer = OProfiler.getInstance().startChrono();
-
-					for (Listener listener : listeners) {
-						try {
-							listener.memoryUsageLow(TYPE.JVM, usedMemory, maxMemory);
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-					}
-
-					long threshold;
-					do {
-						// INVOKE GC AND WAIT A BIT
-						freeMemory(300);
-
-						// RECHECK IF MEMORY IS OK NOW
-						maxMemory = tenuredGenPool.getUsage().getMax();
-						usedMemory = tenuredGenPool.getUsage().getUsed();
-						freeMemory = maxMemory - usedMemory;
-
-						threshold = (long) (maxMemory * (1 - OGlobalConfiguration.MEMORY_OPTIMIZE_THRESHOLD.getValueAsFloat()));
-
-						OLogManager.instance().debug(this, "Free memory now is %s %s%% (used %s of %s) with threshold for HARD clean is %s",
+						OLogManager.instance().debug(this,
+								"Free memory is low %s %s%% (used %s of %s), calling listeners to free memory in SOFT way...",
 								OFileUtils.getSizeAsString(freeMemory), freeMemory * 100 / maxMemory, OFileUtils.getSizeAsString(usedMemory),
-								OFileUtils.getSizeAsString(maxMemory), OFileUtils.getSizeAsString(threshold));
+								OFileUtils.getSizeAsString(maxMemory));
 
-						if (freeMemory < threshold) {
-							OLogManager
-									.instance()
-									.debug(
-											this,
-											"Free memory is low %s %s%% (used %s of %s) while the threshold is %s, calling listeners to free memory in HARD way...",
-											OFileUtils.getSizeAsString(freeMemory), freeMemory * 100 / maxMemory, OFileUtils.getSizeAsString(usedMemory),
-											OFileUtils.getSizeAsString(maxMemory), OFileUtils.getSizeAsString(threshold));
+						final long timer = OProfiler.getInstance().startChrono();
 
-							for (Listener listener : listeners) {
-								try {
-									listener.memoryUsageCritical(TYPE.JVM, usedMemory, maxMemory);
-								} catch (Exception e) {
-									e.printStackTrace();
-								}
+						for (Listener listener : listeners) {
+							try {
+								listener.memoryUsageLow(TYPE.JVM, usedMemory, maxMemory);
+							} catch (Exception e) {
+								e.printStackTrace();
 							}
 						}
-					} while (freeMemory < threshold);
 
-					OProfiler.getInstance().stopChrono("OMemoryWatchDog.freeResources", timer);
+						long threshold;
+						do {
+							// INVOKE GC AND WAIT A BIT
+							freeMemory(300);
+
+							// RECHECK IF MEMORY IS OK NOW
+							maxMemory = tenuredGenPool.getUsage().getMax();
+							usedMemory = tenuredGenPool.getUsage().getUsed();
+							freeMemory = maxMemory - usedMemory;
+
+							threshold = (long) (maxMemory * (1 - OGlobalConfiguration.MEMORY_OPTIMIZE_THRESHOLD.getValueAsFloat()));
+
+							OLogManager.instance().debug(this, "Free memory now is %s %s%% (used %s of %s) with threshold for HARD clean is %s",
+									OFileUtils.getSizeAsString(freeMemory), freeMemory * 100 / maxMemory, OFileUtils.getSizeAsString(usedMemory),
+									OFileUtils.getSizeAsString(maxMemory), OFileUtils.getSizeAsString(threshold));
+
+							if (freeMemory < threshold) {
+								OLogManager
+										.instance()
+										.debug(
+												this,
+												"Free memory is low %s %s%% (used %s of %s) while the threshold is %s, calling listeners to free memory in HARD way...",
+												OFileUtils.getSizeAsString(freeMemory), freeMemory * 100 / maxMemory,
+												OFileUtils.getSizeAsString(usedMemory), OFileUtils.getSizeAsString(maxMemory),
+												OFileUtils.getSizeAsString(threshold));
+
+								for (Listener listener : listeners) {
+									try {
+										listener.memoryUsageCritical(TYPE.JVM, usedMemory, maxMemory);
+									} catch (Exception e) {
+										e.printStackTrace();
+									}
+								}
+							}
+						} while (freeMemory < threshold);
+
+						OProfiler.getInstance().stopChrono("OMemoryWatchDog.freeResources", timer);
+					}
 				}
-			}
-		}, null, null);
+			}, null, null);
+		} else
+			OLogManager.instance().warn(this,
+					"Installed JVM's MemoryMXBean '%s' doesn't support notifications. This could cause problems on run-time memory usage",
+					memBean);
 
 		OProfiler.getInstance().registerHookValue("memory.alerts", new OProfilerHookValue() {
 			public Object getValue() {
