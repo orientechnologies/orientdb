@@ -74,10 +74,10 @@ public class SchemaTest {
 
 		OClass whiz = database.getMetadata().getSchema().createClass("Whiz");
 		whiz.createProperty("id", OType.INTEGER);
-		whiz.createProperty("account", OType.LINK, profile);
+		whiz.createProperty("account", OType.LINK, account);
 		whiz.createProperty("date", OType.DATE).setMin("2010-01-01");
 		whiz.createProperty("text", OType.STRING).setMandatory(true).setMin("1").setMax("140").createIndex(INDEX_TYPE.FULLTEXT);
-		whiz.createProperty("replyTo", OType.LINK, profile);
+		whiz.createProperty("replyTo", OType.LINK, account);
 
 		database.close();
 	}
@@ -99,14 +99,14 @@ public class SchemaTest {
 
 		assert schema.getClass("Whiz") != null;
 		assert schema.getClass("whiz").getProperty("account").getType() == OType.LINK;
-		assert schema.getClass("whiz").getProperty("account").getLinkedClass().getName().equalsIgnoreCase("Profile");
+		assert schema.getClass("whiz").getProperty("account").getLinkedClass().getName().equalsIgnoreCase("Account");
 		assert schema.getClass("WHIZ").getProperty("date").getType() == OType.DATE;
 		assert schema.getClass("WHIZ").getProperty("text").getType() == OType.STRING;
 		assert schema.getClass("WHIZ").getProperty("text").isMandatory();
 		assert schema.getClass("WHIZ").getProperty("text").getMin().equals("1");
 		assert schema.getClass("WHIZ").getProperty("text").getMax().equals("140");
 		assert schema.getClass("whiz").getProperty("replyTo").getType() == OType.LINK;
-		assert schema.getClass("Whiz").getProperty("replyTo").getLinkedClass().getName().equalsIgnoreCase("Profile");
+		assert schema.getClass("Whiz").getProperty("replyTo").getLinkedClass().getName().equalsIgnoreCase("Account");
 
 		database.close();
 	}
@@ -185,7 +185,7 @@ public class SchemaTest {
 				database.close();
 			}
 		});
-		
+
 		thread.start();
 		thread.join();
 	}

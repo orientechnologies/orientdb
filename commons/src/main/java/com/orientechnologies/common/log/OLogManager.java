@@ -274,18 +274,22 @@ public class OLogManager {
 	}
 
 	public static void installCustomFormatter() {
-		// ASSURE TO HAVE THE ORIENT LOG FORMATTER TO THE CONSOLE EVEN IF NO CONFIGURATION FILE IS TAKEN
-		final Logger log = Logger.getLogger("");
-		if (log.getHandlers().length == 0) {
-			// SET DEFAULT LOG FORMATTER
-			Handler h = new ConsoleHandler();
-			h.setFormatter(new OLogFormatter());
-			log.addHandler(h);
-		} else {
-			for (Handler h : log.getHandlers()) {
-				if (h instanceof ConsoleHandler && !h.getFormatter().getClass().equals(OLogFormatter.class))
-					h.setFormatter(new OLogFormatter());
+		try {
+			// ASSURE TO HAVE THE ORIENT LOG FORMATTER TO THE CONSOLE EVEN IF NO CONFIGURATION FILE IS TAKEN
+			final Logger log = Logger.getLogger("");
+			if (log.getHandlers().length == 0) {
+				// SET DEFAULT LOG FORMATTER
+				Handler h = new ConsoleHandler();
+				h.setFormatter(new OLogFormatter());
+				log.addHandler(h);
+			} else {
+				for (Handler h : log.getHandlers()) {
+					if (h instanceof ConsoleHandler && !h.getFormatter().getClass().equals(OLogFormatter.class))
+						h.setFormatter(new OLogFormatter());
+				}
 			}
+		} catch (Exception e) {
+			System.err.println("Error while installing custom formatter. Logging could be disabled. Cause: " + e.toString());
 		}
 	}
 }

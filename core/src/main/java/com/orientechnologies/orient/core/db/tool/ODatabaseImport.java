@@ -100,6 +100,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			database.getLevel1Cache().setEnable(false);
 			database.getLevel2Cache().setEnable(false);
 			database.setMVCC(false);
+			database.setValidationEnabled(false);
 
 			database.setStatus(STATUS.IMPORTING);
 

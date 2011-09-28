@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.id.ORID;
 
 @Test
 public class GraphTestFixedDensity {
-	private static final int	MAX_DEEP						= 100;
+	private static final int	MAX_DEEP						= 3;
 	private static final int	DENSITY							= 1;
 
 	private ODatabaseGraphTx	database;

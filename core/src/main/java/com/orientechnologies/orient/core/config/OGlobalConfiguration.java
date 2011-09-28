@@ -79,7 +79,10 @@ public enum OGlobalConfiguration {
 	// DATABASE
 	OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database saves only object bound to dirty records", Boolean.class, false),
 
-	DB_MVCC("db.mvcc", "Enable the MVCC (Multi-Version Concurrency Control) even outside transactions", Boolean.class, true),
+	DB_MVCC("db.mvcc", "Enables or disables the MVCC (Multi-Version Concurrency Control) even outside transactions", Boolean.class,
+			true),
+
+	DB_VALIDATION("db.validation", "Enables or disables the validation against records", Boolean.class, true),
 
 	// TRANSACTIONS
 	TX_USE_LOG("tx.useLog", "Transactions use log file to store temporary data to being rollbacked in case of crash", Boolean.class,

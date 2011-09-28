@@ -81,12 +81,8 @@ public class GraphDatabaseTest {
 		} finally {
 			database.close();
 		}
-	}
 
-	@Test(dependsOnMethods = "populate")
-	public void checkAfterClose() {
 		database.open("admin", "admin");
-
 		try {
 
 			database.getMetadata().getSchema().reload();

@@ -145,8 +145,8 @@ public class SQLFindReferencesTest {
 		worker.createProperty("car", OType.LINK, car);
 
 		workplace.createProperty("name", OType.STRING);
-		workplace.createProperty("boss", OType.LINK, workplace);
-		workplace.createProperty("workers", OType.LINKLIST, workplace);
+		workplace.createProperty("boss", OType.LINK, worker);
+		workplace.createProperty("workers", OType.LINKLIST, worker);
 
 		car.createProperty("plate", OType.STRING);
 		car.createProperty("owner", OType.LINK, worker);

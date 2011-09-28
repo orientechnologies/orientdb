@@ -127,6 +127,14 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 		return (RET) underlying.setMVCC(iValue);
 	}
 
+	public boolean isValidationEnabled() {
+		return underlying.isValidationEnabled();
+	}
+
+	public <RET extends ODatabaseRecord> RET setValidationEnabled(final boolean iValue) {
+		return (RET) underlying.setValidationEnabled(iValue);
+	}
+
 	public OUser getUser() {
 		return underlying.getUser();
 	}

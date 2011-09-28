@@ -375,6 +375,8 @@ public class OObjectSerializerHelper {
 
 		final Class<?> pojoClass = iPojo.getClass();
 
+		getClassFields(pojoClass);
+
 		final Field idField = fieldIds.get(pojoClass);
 		if (idField != null) {
 			Class<?> fieldType = idField.getType();
@@ -398,6 +400,8 @@ public class OObjectSerializerHelper {
 	}
 
 	public static ORecordId getObjectID(final ODatabasePojoAbstract<?> iDb, final Object iPojo) {
+		getClassFields(iPojo.getClass());
+
 		final Field idField = fieldIds.get(iPojo.getClass());
 		if (idField != null) {
 			final Object id = getFieldValue(iPojo, idField.getName());
@@ -421,6 +425,7 @@ public class OObjectSerializerHelper {
 	}
 
 	public static boolean hasObjectID(final Object iPojo) {
+		getClassFields(iPojo.getClass());
 		return fieldIds.get(iPojo.getClass()) != null;
 	}
 
@@ -429,6 +434,7 @@ public class OObjectSerializerHelper {
 			return null;
 
 		final Class<?> pojoClass = iPojo.getClass();
+		getClassFields(pojoClass);
 
 		final Field vField = fieldVersions.get(pojoClass);
 		if (vField != null) {
@@ -451,6 +457,7 @@ public class OObjectSerializerHelper {
 	}
 
 	public static int getObjectVersion(final Object iPojo) {
+		getClassFields(iPojo.getClass());
 		final Field idField = fieldVersions.get(iPojo.getClass());
 		if (idField != null) {
 			final Object ver = getFieldValue(iPojo, idField.getName());
@@ -468,6 +475,7 @@ public class OObjectSerializerHelper {
 	}
 
 	public static boolean hasObjectVersion(final Object iPojo) {
+		getClassFields(iPojo.getClass());
 		return fieldVersions.get(iPojo.getClass()) != null;
 	}
 
@@ -783,6 +791,9 @@ public class OObjectSerializerHelper {
 	}
 
 	private static List<Field> getClassFields(final Class<?> iClass) {
+		if (iClass.getPackage().getName().startsWith("java.lang"))
+			return null;
+
 		synchronized (classes) {
 			if (classes.containsKey(iClass.getName()))
 				return classes.get(iClass.getName());

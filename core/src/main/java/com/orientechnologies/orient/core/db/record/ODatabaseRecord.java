@@ -127,4 +127,20 @@ public interface ODatabaseRecord extends ODatabaseComplex<ORecordInternal<?>> {
 	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	public <DB extends ODatabaseRecord> DB checkSecurity(String iResourceGeneric, int iOperation, Object... iResourcesSpecific);
+
+	/**
+	 * Tells if validation of record is active. Default is true.
+	 * 
+	 * @return true if it's active, otherwise false.
+	 */
+	public boolean isValidationEnabled();
+
+	/**
+	 * Enables or disables the record validation.
+	 * 
+	 * @param iEnabled
+	 *          True to enable, false to disable
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
+	public <DB extends ODatabaseRecord> DB setValidationEnabled(boolean iEnabled);
 }

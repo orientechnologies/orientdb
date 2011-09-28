@@ -605,7 +605,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	public boolean isSuperClassOf(final OClass iClass) {
 		OClass cls = iClass;
 		while (cls != null) {
-			if (cls.equals(this))
+			if (cls.getName().equals(name))
 				return true;
 			cls = cls.getSuperClass();
 		}

@@ -1080,8 +1080,12 @@ public class OStorageLocal extends OStorageEmbedded {
 
 				final long lastPos = iClusterSegment.getLastEntryPosition();
 
+				if (lastPos < 0)
+					throw new ORecordNotFoundException("Record " + iRid + " is out cluster range. The cluster '" + iClusterSegment.getName()
+							+ "' is empty");
+
 				if (iRid.clusterPosition > lastPos)
-					throw new ORecordNotFoundException("Record " + iRid + " is out cluster size. Valid range for cluster '"
+					throw new ORecordNotFoundException("Record " + iRid + " is out cluster range. Valid range for cluster '"
 							+ iClusterSegment.getName() + "' is 0-" + lastPos);
 
 				final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());

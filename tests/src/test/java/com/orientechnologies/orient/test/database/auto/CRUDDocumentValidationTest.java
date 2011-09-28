@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-@Test(groups = { "crud", "record-document" }, sequential = true)
+@Test(groups = { "crud", "record-document" })
 public class CRUDDocumentValidationTest {
 	protected static final int	TOT_RECORDS	= 100;
 	protected long							startRecordNumber;
@@ -43,7 +43,8 @@ public class CRUDDocumentValidationTest {
 		database.open("admin", "admin");
 		record = database.newInstance("Whiz");
 
-		account = database.browseClass("Profile").begin().next();
+		account = new ODocument(database, "Account");
+		account.field("id", "1234567890");
 	}
 
 	@Test(dependsOnMethods = "openDb", expectedExceptions = OValidationException.class)
@@ -82,7 +83,14 @@ public class CRUDDocumentValidationTest {
 		record.save();
 	}
 
-	@Test(dependsOnMethods = "validationMinDate")
+	@Test(dependsOnMethods = "validationMinDate", expectedExceptions = OValidationException.class)
+	public void validationEmbeddedType() throws ParseException {
+		record.clear();
+		record.field("account", database.getUser());
+		record.save();
+	}
+
+	@Test(dependsOnMethods = "validationEmbeddedType")
 	public void closeDb() {
 		database.close();
 	}

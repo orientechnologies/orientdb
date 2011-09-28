@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Date;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -51,7 +52,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	@Override
 	public ORecordAbstract<T> save() {
 		if (_clazz != null)
-			return save(_database.getClusterNameById(_clazz.getDefaultClusterId()));
+			return save(getDatabase().getClusterNameById(_clazz.getDefaultClusterId()));
 
 		return super.save();
 	}
@@ -76,6 +77,9 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	 *           if the document breaks some validation constraints defined in the schema
 	 */
 	public void validate() throws OValidationException {
+		if (_database != null && !_database.isValidationEnabled())
+			return;
+
 		checkForLoading();
 		checkForFields();
 
@@ -178,9 +182,11 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 			fieldValue = iRecord.field(p.getName());
 
 		if (!p.isNotNull() && fieldValue == null)
+			// NULLITY
 			throw new OValidationException("The field '" + p.getName() + "' is null");
 
 		if (fieldValue != null && p.getRegexp() != null) {
+			// REGEXP
 			if (!fieldValue.toString().matches(p.getRegexp()))
 				throw new OValidationException("The field '" + p.getName() + "' doesn't match the regular expression '" + p.getRegexp()
 						+ "'. Field value is: " + fieldValue);
@@ -188,7 +194,34 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 
 		final OType type = p.getType();
 
+		if (fieldValue != null && type != null) {
+			// CHECK TYPE
+			switch (type) {
+			case LINK:
+				if (!(fieldValue instanceof OIdentifiable))
+					throw new OValidationException("The field '" + p.getName()
+							+ "' has been declared as LINK but the value is not a record or a record-id");
+
+				final ORecord<?> record = ((OIdentifiable) fieldValue).getRecord();
+
+				if (p.getLinkedClass() != null) {
+					if (!(record instanceof ODocument))
+						throw new OValidationException("The field '" + p.getName() + "' has been declared as LINK of type '"
+								+ p.getLinkedClass() + "' but the value is the record " + record.getIdentity() + " that is not a document");
+
+					// AT THIS POINT CHECK THE CLASS ONLY IF != NULL BECAUSE IN CASE OF GRAPHS THE RECORD COULD BE PARTIAL
+					if (((ODocument) record).getSchemaClass() != null
+							&& !p.getLinkedClass().isSuperClassOf(((ODocument) record).getSchemaClass()))
+						throw new OValidationException("The field '" + p.getName() + "' has been declared as LINK of type '"
+								+ p.getLinkedClass().getName() + "' but the value is the document " + record.getIdentity() + " of class '"
+								+ ((ODocument) record).getSchemaClass() + "'");
+
+				}
+			}
+		}
+
 		if (p.getMin() != null) {
+			// MIN
 			String min = p.getMin();
 
 			if (p.getType().equals(OType.STRING) && (fieldValue != null && ((String) fieldValue).length() < Integer.parseInt(min)))
@@ -231,6 +264,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 		}
 
 		if (p.getMax() != null) {
+			// MAX
 			String max = p.getMax();
 
 			if (p.getType().equals(OType.STRING) && (fieldValue != null && ((String) fieldValue).length() > Integer.parseInt(max)))

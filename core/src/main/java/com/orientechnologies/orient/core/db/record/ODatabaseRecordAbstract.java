@@ -73,6 +73,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	private boolean													retainRecords			= true;
 	private OLevel1RecordCache							level1Cache;
 	private boolean													mvcc;
+	private boolean													validation;
 	private ODictionary<ORecordInternal<?>>	dictionary;
 
 	public ODatabaseRecordAbstract(final String iURL, final byte iRecordType) {
@@ -87,6 +88,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		level1Cache = new OLevel1RecordCache(this);
 
 		mvcc = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
+		validation = OGlobalConfiguration.DB_VALIDATION.getValueAsBoolean();
 
 		setCurrentDatabaseinThreadLocal();
 	}
@@ -747,5 +749,14 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 	protected void setCurrentDatabaseinThreadLocal() {
 		ODatabaseRecordThreadLocal.INSTANCE.set(this);
+	}
+
+	public boolean isValidationEnabled() {
+		return validation;
+	}
+
+	public <DB extends ODatabaseRecord> DB setValidationEnabled(final boolean iEnabled) {
+		validation = iEnabled;
+		return (DB) this;
 	}
 }

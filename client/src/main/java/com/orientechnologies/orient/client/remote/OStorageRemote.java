@@ -363,7 +363,7 @@ public class OStorageRemote extends OStorageAbstract {
 				// PASS THROUGH
 				throw e;
 			} catch (Exception e) {
-				handleException("Error on read record #" + iRid, e);
+				handleException("Error on read record " + iRid, e);
 
 			}
 		} while (true);
@@ -398,7 +398,7 @@ public class OStorageRemote extends OStorageAbstract {
 				// PASS THROUGH
 				throw e;
 			} catch (Exception e) {
-				handleException("Error on update record #" + iRid, e);
+				handleException("Error on update record " + iRid, e);
 
 			}
 		} while (true);
@@ -431,7 +431,7 @@ public class OStorageRemote extends OStorageAbstract {
 				// PASS THROUGH
 				throw e;
 			} catch (Exception e) {
-				handleException("Error on delete record #" + iRid, e);
+				handleException("Error on delete record " + iRid, e);
 
 			}
 		} while (true);

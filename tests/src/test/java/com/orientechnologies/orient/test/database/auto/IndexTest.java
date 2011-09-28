@@ -912,7 +912,7 @@ public class IndexTest {
 	public void indexLinks() {
 		database.getMetadata().getSchema().getClass("Whiz").getProperty("account").createIndex(INDEX_TYPE.NOTUNIQUE);
 
-		final List<Account> result = database.command(new OSQLSynchQuery<Profile>("select * from Account limit 1")).execute();
+		final List<Account> result = database.command(new OSQLSynchQuery<Account>("select * from Account limit 1")).execute();
 
 		// Assert.assertEquals(result.size(), 1);
 
