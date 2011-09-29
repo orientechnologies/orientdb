@@ -54,6 +54,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	public static final String	EDGE_FIELD_OUT					= "out";
 	public static final String	LABEL										= "label";
 
+	private boolean							useCustomTypes					= true;
 	private boolean							safeMode								= false;
 	protected OClass						vertexBaseClass;
 	protected OClass						edgeBaseClass;
@@ -602,12 +603,12 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	}
 
 	public void checkVertexClass(final ODocument iVertex) {
-		if (!iVertex.getSchemaClass().isSubClassOf(vertexBaseClass))
+		if (useCustomTypes && !iVertex.getSchemaClass().isSubClassOf(vertexBaseClass))
 			throw new IllegalArgumentException("The document received is not a vertex. Found class '" + iVertex.getSchemaClass() + "'");
 	}
 
 	public void checkVertexClass(final String iVertexTypeName) {
-		if (iVertexTypeName != null) {
+		if (useCustomTypes && iVertexTypeName != null) {
 			final OClass cls = getMetadata().getSchema().getClass(iVertexTypeName);
 			if (cls == null)
 				throw new IllegalArgumentException("The class '" + iVertexTypeName + "' was not found");
@@ -618,19 +619,19 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	}
 
 	public void checkVertexClass(final OClass iVertexType) {
-		if (iVertexType != null) {
+		if (useCustomTypes && iVertexType != null) {
 			if (!iVertexType.isSubClassOf(vertexBaseClass))
 				throw new IllegalArgumentException("The class '" + iVertexType + "' doesn't extend the vertex type");
 		}
 	}
 
 	public void checkEdgeClass(final ODocument iEdge) {
-		if (!iEdge.getSchemaClass().isSubClassOf(edgeBaseClass))
+		if (useCustomTypes && !iEdge.getSchemaClass().isSubClassOf(edgeBaseClass))
 			throw new IllegalArgumentException("The document received is not an edge. Found class '" + iEdge.getSchemaClass() + "'");
 	}
 
 	public void checkEdgeClass(final String iEdgeTypeName) {
-		if (iEdgeTypeName != null) {
+		if (useCustomTypes && iEdgeTypeName != null) {
 			final OClass cls = getMetadata().getSchema().getClass(iEdgeTypeName);
 			if (cls == null)
 				throw new IllegalArgumentException("The class '" + iEdgeTypeName + "' was not found");
@@ -641,7 +642,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	}
 
 	public void checkEdgeClass(final OClass iEdgeType) {
-		if (iEdgeType != null) {
+		if (useCustomTypes && iEdgeType != null) {
 			if (!iEdgeType.isSubClassOf(edgeBaseClass))
 				throw new IllegalArgumentException("The class '" + iEdgeType + "' doesn't extend the edge type");
 		}
@@ -717,5 +718,13 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 				OGraphDatabaseMigration.migrate(this);
 			}
 		}
+	}
+
+	public boolean isUseCustomTypes() {
+		return useCustomTypes;
+	}
+
+	public void setUseCustomTypes(boolean useCustomTypes) {
+		this.useCustomTypes = useCustomTypes;
 	}
 }
