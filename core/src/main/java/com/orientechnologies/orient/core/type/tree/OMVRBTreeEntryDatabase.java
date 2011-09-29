@@ -20,7 +20,6 @@ import java.io.IOException;
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 
 /**
@@ -88,69 +87,31 @@ public class OMVRBTreeEntryDatabase<K, V> extends OMVRBTreeEntryPersistent<K, V>
 		return this;
 	}
 
-	@Override
-	public OMVRBTreeEntryDatabase<K, V> save() throws OSerializationException {
-		if (!record.isDirty())
-			return this;
+	protected void saveRecord() {
+		record.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
 
-		super.save();
+		if (record.getDatabase() == null) {
+			throw new IllegalStateException(
+					"Current thread has no database setted and the tree can't be saved correctly. Assure to close the database before the application if off.");
+		}
 
-		if (parent != null)
-			if (!parent.record.getIdentity().equals(parentRid))
-				OLogManager.instance().error(this,
-						"[save]: Tree node %s has parentRid '%s' different by the rid of the assigned parent node: %s", record.getIdentity(),
-						parentRid, parent.record.getIdentity());
-
-		checkEntryStructure();
-
-		if (pTree.searchNodeInCache(record.getIdentity()) != this)
-			// UPDATE THE CACHE
-			pTree.addNodeInCache(this);
-
-		return this;
+		record.save(pTree.getClusterName());
 	}
 
-	/**
-	 * Delete all the nodes recursively. IF they are not loaded in memory, load all the tree.
-	 * 
-	 * @throws IOException
-	 */
-	@Override
-	public OMVRBTreeEntryDatabase<K, V> delete() throws IOException {
-		super.delete();
-
-		// EARLY LOAD LEFT AND DELETE IT RECURSIVELY
-		if (getLeft() != null)
-			((OMVRBTreeEntryPersistent<K, V>) getLeft()).delete();
-		leftRid = null;
-
-		// EARLY LOAD RIGHT AND DELETE IT RECURSIVELY
-		if (getRight() != null)
-			((OMVRBTreeEntryPersistent<K, V>) getRight()).delete();
-		rightRid = null;
-
-		// DELETE MYSELF
+	protected void deleteRecord() {
 		record.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
 		record.delete();
-
-		// FORCE REMOVING OF K/V AND SEIALIZED K/V AS WELL
-		keys = null;
-		values = null;
-		serializedKeys = null;
-		serializedValues = null;
-
-		return this;
 	}
 
 	@Override
 	protected Object keyFromStream(final int iIndex) throws IOException {
-		return pTree.keySerializer.fromStream(((OMVRBTreeDatabase<K, V>) pTree).getDatabase(),
-				inStream.getAsByteArray(serializedKeys[iIndex]));
+		return pTree.keySerializer.fromStream(((OMVRBTreeDatabase<K, V>) pTree).getDatabase(), inStream
+				.getAsByteArray(serializedKeys[iIndex]));
 	}
 
 	@Override
 	protected Object valueFromStream(final int iIndex) throws IOException {
-		return pTree.valueSerializer.fromStream(((OMVRBTreeDatabase<K, V>) pTree).getDatabase(),
-				inStream.getAsByteArray(serializedValues[iIndex]));
+		return pTree.valueSerializer.fromStream(((OMVRBTreeDatabase<K, V>) pTree).getDatabase(), inStream
+				.getAsByteArray(serializedValues[iIndex]));
 	}
 }

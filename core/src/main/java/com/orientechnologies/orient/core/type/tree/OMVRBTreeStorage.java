@@ -37,7 +37,8 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 @SuppressWarnings("serial")
 public class OMVRBTreeStorage<K, V> extends OMVRBTreePersistent<K, V> {
 	protected OStorageLocal	storage;
-	int											clusterId;
+
+	protected int						clusterId;
 
 	public OMVRBTreeStorage(final OStorageLocal iStorage, final String iClusterName, final ORID iRID) {
 		super(iClusterName, iRID);
@@ -54,6 +55,7 @@ public class OMVRBTreeStorage<K, V> extends OMVRBTreePersistent<K, V> {
 
 	@Override
 	protected OMVRBTreeEntryPersistent<K, V> createEntry(OMVRBTreeEntry<K, V> iParent) {
+		adjustPageSize();
 		return new OMVRBTreeEntryStorage<K, V>(iParent, iParent.getPageSplitItems());
 	}
 
@@ -64,27 +66,20 @@ public class OMVRBTreeStorage<K, V> extends OMVRBTreePersistent<K, V> {
 	}
 
 	@Override
-	protected OMVRBTreeEntryStorage<K, V> loadEntry(OMVRBTreeEntryPersistent<K, V> iParent, ORID iRecordId) throws IOException {
-		OMVRBTreeEntryStorage<K, V> entry = null;// (OMVRBTreeEntryStorage<K, V>) cache.get(iRecordId);
-		if (entry == null) {
-			// NOT FOUND: CREATE IT AND PUT IT INTO THE CACHE
-			entry = new OMVRBTreeEntryStorage<K, V>(this, iParent, iRecordId);
-		}
-
-		return entry;
+	protected OMVRBTreeEntryPersistent<K, V> createEntry(OMVRBTreeEntryPersistent<K, V> iParent, ORID iRecordId) throws IOException {
+		return new OMVRBTreeEntryStorage<K, V>(this, iParent, iRecordId);
 	}
 
 	@Override
 	public OMVRBTreePersistent<K, V> load() throws IOException {
 		((ORecordId) record.getIdentity()).clusterId = clusterId;
 		ORawBuffer raw = storage.readRecord(null, (ORecordId) record.getIdentity(), null);
-
 		if (raw == null)
 			throw new OConfigurationException("Can't load map with id " + clusterId + ":" + record.getIdentity().getClusterPosition());
-
 		record.setVersion(raw.version);
-
+		record.recycle(this);
 		fromStream(raw.buffer);
+		setLastSearchNode(null, null);
 		return this;
 	}
 
@@ -102,7 +97,6 @@ public class OMVRBTreeStorage<K, V> extends OMVRBTreePersistent<K, V> {
 			storage.createRecord((ORecordId) record.getIdentity(), record.toStream(), record.getRecordType());
 		}
 		record.unsetDirty();
-
 		return this;
 	}
 

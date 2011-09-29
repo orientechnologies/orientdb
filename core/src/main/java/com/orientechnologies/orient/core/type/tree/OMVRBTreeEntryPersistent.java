@@ -81,21 +81,26 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
  * @param <K>
  * @param <V>
  */
-@SuppressWarnings({ "unchecked", "serial" })
+@SuppressWarnings( { "unchecked", "serial" })
 public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> implements OSerializableStream {
 	protected OMVRBTreePersistent<K, V>				pTree;
 
-	int[]																			serializedKeys;
-	int[]																			serializedValues;
+	protected int[]														serializedKeys;
+
+	protected int[]														serializedValues;
 
 	protected ORID														parentRid;
+
 	protected ORID														leftRid;
+
 	protected ORID														rightRid;
 
 	public ORecordBytesLazy										record;
 
 	protected OMVRBTreeEntryPersistent<K, V>	parent;
+
 	protected OMVRBTreeEntryPersistent<K, V>	left;
+
 	protected OMVRBTreeEntryPersistent<K, V>	right;
 
 	protected OMemoryInputStream							inStream	= new OMemoryInputStream();
@@ -137,7 +142,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		Arrays.fill(p.serializedValues, iPosition, p.pageSize, 0);
 
 		markDirty();
-		
+
 		pTree.addNodeAsEntrypoint(this);
 	}
 
@@ -160,7 +165,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 		parent = iParent;
 		parentRid = iParent == null ? ORecordId.EMPTY_RECORD_ID : parent.record.getIdentity();
-		
+
 		load();
 		pTree.addNodeAsEntrypoint(this);
 	}
@@ -203,19 +208,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 		final boolean isNew = record.getIdentity().isNew();
 
-		// toStream();
-
-		if (record.isDirty()) {
-			// SAVE IF IT'S DIRTY YET
-			record.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
-
-			if (record.getDatabase() == null) {
-				throw new IllegalStateException(
-						"Current thread has no database setted and the tree can't be saved correctly. Assure to close the database before the application if off.");
-			}
-
-			record.save(pTree.getClusterName());
-		}
+		saveRecord();
 
 		// RE-ASSIGN RID
 		if (isNew) {
@@ -240,15 +233,57 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 				parent.markDirty();
 			}
 		}
+
+		if (parent != null)
+			if (!parent.record.getIdentity().equals(parentRid))
+				OLogManager.instance().error(this,
+						"[save]: Tree node %s has parentRid '%s' different by the rid of the assigned parent node: %s", record.getIdentity(),
+						parentRid, parent.record.getIdentity());
+
+		checkEntryStructure();
+
+		if (pTree.searchNodeInCache(record.getIdentity()) != this) {
+			// UPDATE THE CACHE
+			pTree.addNodeInCache(this);
+		}
+
 		return this;
 	}
 
+	protected abstract void saveRecord();
+
+	/**
+	 * Delete all the nodes recursively. IF they are not loaded in memory, load all the tree.
+	 * 
+	 * @throws IOException
+	 */
 	public OMVRBTreeEntryPersistent<K, V> delete() throws IOException {
 		pTree.removeNodeFromMemory(this);
-
 		pTree.removeEntry(record.getIdentity());
+
+		// EARLY LOAD LEFT AND DELETE IT RECURSIVELY
+		if (getLeft() != null)
+			((OMVRBTreeEntryPersistent<K, V>) getLeft()).delete();
+		leftRid = null;
+
+		// EARLY LOAD RIGHT AND DELETE IT RECURSIVELY
+		if (getRight() != null)
+			((OMVRBTreeEntryPersistent<K, V>) getRight()).delete();
+		rightRid = null;
+
+		// DELETE MYSELF
+		deleteRecord();
+
+		// FORCE REMOVING OF K/V AND SEIALIZED K/V AS WELL
+		keys = null;
+		values = null;
+		serializedKeys = null;
+		serializedValues = null;
+
 		return this;
 	}
+
+	protected abstract void deleteRecord();
 
 	/**
 	 * Disconnect the current node from others.
@@ -423,9 +458,6 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 	@Override
 	public OMVRBTreeEntry<K, V> getLeft() {
-		if( leftRid == null )
-			return null;
-		
 		if (left == null && leftRid.isValid()) {
 			try {
 				// System.out.println("Node " + record.getIdentity() + " is loading LEFT node " + leftRid + "...");
@@ -461,9 +493,6 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 	@Override
 	public OMVRBTreeEntry<K, V> getRight() {
-		if( rightRid == null )
-			return null;
-		
 		if (rightRid.isValid() && right == null) {
 			// LAZY LOADING OF THE RIGHT LEAF
 			try {

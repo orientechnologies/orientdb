@@ -59,50 +59,8 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
 	}
 
 	@Override
-	protected OMVRBTreeEntryDatabase<K, V> loadEntry(final OMVRBTreeEntryPersistent<K, V> iParent, final ORID iRecordId)
-			throws IOException {
-		checkForOptimization();
-
-		// SEARCH INTO THE CACHE
-		OMVRBTreeEntryDatabase<K, V> entry = (OMVRBTreeEntryDatabase<K, V>) searchNodeInCache(iRecordId);
-		if (entry == null) {
-			// NOT FOUND: CREATE IT AND PUT IT INTO THE CACHE
-			entry = new OMVRBTreeEntryDatabase<K, V>(this, (OMVRBTreeEntryDatabase<K, V>) iParent, iRecordId);
-			addNodeInCache(entry);
-
-			// RECONNECT THE LOADED NODE WITH IN-MEMORY PARENT, LEFT AND RIGHT
-			if (entry.parent == null && entry.parentRid.isValid()) {
-				// TRY TO ASSIGN THE PARENT IN CACHE IF ANY
-				final OMVRBTreeEntryPersistent<K, V> parentNode = searchNodeInCache(entry.parentRid);
-				if (parentNode != null)
-					entry.setParent(parentNode);
-			}
-
-			if (entry.left == null && entry.leftRid.isValid()) {
-				// TRY TO ASSIGN THE PARENT IN CACHE IF ANY
-				final OMVRBTreeEntryPersistent<K, V> leftNode = searchNodeInCache(entry.leftRid);
-				if (leftNode != null)
-					entry.setLeft(leftNode);
-			}
-
-			if (entry.right == null && entry.rightRid.isValid()) {
-				// TRY TO ASSIGN THE PARENT IN CACHE IF ANY
-				final OMVRBTreeEntryPersistent<K, V> rightNode = searchNodeInCache(entry.rightRid);
-				if (rightNode != null)
-					entry.setRight(rightNode);
-			}
-
-		} else {
-			// COULD BE A PROBLEM BECAUSE IF A NODE IS DISCONNECTED CAN IT STAY IN CACHE?
-			// entry.load();
-			if (iParent != null)
-				// FOUND: ASSIGN IT ONLY IF NOT NULL
-				entry.setParent(iParent);
-		}
-
-		entry.checkEntryStructure();
-
-		return entry;
+	protected OMVRBTreeEntryPersistent<K, V> createEntry(OMVRBTreeEntryPersistent<K, V> iParent, ORID iRecordId) throws IOException {
+		return new OMVRBTreeEntryDatabase<K, V>(this, (OMVRBTreeEntryDatabase<K, V>) iParent, iRecordId);
 	}
 
 	@Override

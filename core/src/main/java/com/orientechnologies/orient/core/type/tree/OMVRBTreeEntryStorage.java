@@ -53,62 +53,32 @@ public class OMVRBTreeEntryStorage<K, V> extends OMVRBTreeEntryPersistent<K, V> 
 
 	@Override
 	public OMVRBTreeEntryStorage<K, V> load() throws IOException {
+		pTree.checkForOptimization();
 		ORawBuffer raw = ((OMVRBTreeStorage<K, V>) tree).storage.readRecord(null, (ORecordId) record.getIdentity(), null);
-
 		record.setVersion(raw.version);
-
 		fromStream(raw.buffer);
-		super.load();
 		return this;
 	}
 
 	@Override
-	public OMVRBTreeEntryStorage<K, V> save() {
+	protected void saveRecord() {
 		record.fromStream(toStream());
-
 		if (record.getIdentity().isValid())
 			// UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
 			record.setVersion(((OMVRBTreeStorage<K, V>) tree).storage.updateRecord((ORecordId) record.getIdentity(), record.toStream(),
 					-1, record.getRecordType()));
 		else {
 			// CREATE IT
-			record.setIdentity(
-					record.getIdentity().getClusterId(),
-					((OMVRBTreeStorage<K, V>) tree).storage.createRecord((ORecordId) record.getIdentity(), record.toStream(),
-							record.getRecordType()));
+			record.setIdentity(record.getIdentity().getClusterId(), ((OMVRBTreeStorage<K, V>) tree).storage.createRecord(
+					(ORecordId) record.getIdentity(), record.toStream(), record.getRecordType()));
 		}
 		record.unsetDirty();
-
-		super.save();
-
-		return this;
 	}
 
-	/**
-	 * Delete all the nodes recursively. IF they are not loaded in memory, load all the tree.
-	 * 
-	 * @throws IOException
-	 */
 	@Override
-	public OMVRBTreeEntryStorage<K, V> delete() throws IOException {
-		super.delete();
-
-		// EARLY LOAD LEFT AND DELETE IT RECURSIVELY
-		if (getLeft() != null)
-			((OMVRBTreeEntryPersistent<K, V>) getLeft()).delete();
-
-		// EARLY LOAD RIGHT AND DELETE IT RECURSIVELY
-		if (getRight() != null)
-			((OMVRBTreeEntryPersistent<K, V>) getRight()).delete();
-
+	protected void deleteRecord() {
 		// DELETE MYSELF
 		((OMVRBTreeStorage<K, V>) tree).storage.deleteRecord((ORecordId) record.getIdentity(), record.getVersion());
-
-		// FORCE REMOVING OF K/V AND SEIALIZED K/V AS WELL
-		keys = null;
-		values = null;
-
-		return this;
 	}
 
 	@Override

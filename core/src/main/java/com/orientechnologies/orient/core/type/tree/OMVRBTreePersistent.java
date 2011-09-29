@@ -57,26 +57,36 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 @SuppressWarnings("serial")
 public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implements OMVRBTreeEventListener<K, V>,
 		OSerializableStream {
-	protected OStreamSerializer													keySerializer;
-	protected OStreamSerializer													valueSerializer;
+	protected OStreamSerializer																keySerializer;
 
-	protected final Set<OMVRBTreeEntryPersistent<K, V>>	recordsToCommit						= new HashSet<OMVRBTreeEntryPersistent<K, V>>();
+	protected OStreamSerializer																valueSerializer;
 
-	protected final String															clusterName;
-	protected ORecordBytesLazy													record;
-	protected String																		fetchPlan;
+	protected final Set<OMVRBTreeEntryPersistent<K, V>>				recordsToCommit						= new HashSet<OMVRBTreeEntryPersistent<K, V>>();
+
+	protected final String																		clusterName;
+
+	protected ORecordBytesLazy																record;
+
+	protected String																					fetchPlan;
 
 	// STORES IN MEMORY DIRECT REFERENCES TO PORTION OF THE TREE
-	protected int																				optimizeThreshold;
-	protected volatile int															optimization							= 0;
-	private int																					insertionCounter					= 0;
-	protected int																				entryPointsSize;
-	protected float																			optimizeEntryPointsFactor;
-	private TreeMap<K, OMVRBTreeEntryPersistent<K, V>>	entryPoints								= new TreeMap<K, OMVRBTreeEntryPersistent<K, V>>();
-	private Map<ORID, OMVRBTreeEntryPersistent<K, V>>		cache											= new HashMap<ORID, OMVRBTreeEntryPersistent<K, V>>();
+	protected int																							optimizeThreshold;
 
-	private final OMemoryOutputStream										entryRecordBuffer;
-	public final static byte														CURRENT_PROTOCOL_VERSION	= 0;
+	protected volatile int																		optimization							= 0;
+
+	private int																								insertionCounter					= 0;
+
+	protected int																							entryPointsSize;
+
+	protected float																						optimizeEntryPointsFactor;
+
+	private final TreeMap<K, OMVRBTreeEntryPersistent<K, V>>	entryPoints								= new TreeMap<K, OMVRBTreeEntryPersistent<K, V>>();
+
+	private final Map<ORID, OMVRBTreeEntryPersistent<K, V>>		cache											= new HashMap<ORID, OMVRBTreeEntryPersistent<K, V>>();
+
+	private final OMemoryOutputStream													entryRecordBuffer;
+
+	public final static byte																	CURRENT_PROTOCOL_VERSION	= 0;
 
 	public OMVRBTreePersistent(final String iClusterName, final ORID iRID) {
 		this(iClusterName, null, null);
@@ -107,7 +117,56 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	/**
 	 * Lazy loads a node.
 	 */
-	protected abstract OMVRBTreeEntryPersistent<K, V> loadEntry(OMVRBTreeEntryPersistent<K, V> iParent, ORID iRecordId)
+	protected OMVRBTreeEntryPersistent<K, V> loadEntry(final OMVRBTreeEntryPersistent<K, V> iParent, final ORID iRecordId)
+			throws IOException {
+		checkForOptimization();
+
+		// SEARCH INTO THE CACHE
+		OMVRBTreeEntryPersistent<K, V> entry = searchNodeInCache(iRecordId);
+		if (entry == null) {
+			// NOT FOUND: CREATE IT AND PUT IT INTO THE CACHE
+			entry = createEntry(iParent, iRecordId);
+			addNodeInCache(entry);
+
+			// RECONNECT THE LOADED NODE WITH IN-MEMORY PARENT, LEFT AND RIGHT
+			if (entry.parent == null && entry.parentRid.isValid()) {
+				// TRY TO ASSIGN THE PARENT IN CACHE IF ANY
+				final OMVRBTreeEntryPersistent<K, V> parentNode = searchNodeInCache(entry.parentRid);
+				if (parentNode != null)
+					entry.setParent(parentNode);
+			}
+
+			if (entry.left == null && entry.leftRid.isValid()) {
+				// TRY TO ASSIGN THE PARENT IN CACHE IF ANY
+				final OMVRBTreeEntryPersistent<K, V> leftNode = searchNodeInCache(entry.leftRid);
+				if (leftNode != null)
+					entry.setLeft(leftNode);
+			}
+
+			if (entry.right == null && entry.rightRid.isValid()) {
+				// TRY TO ASSIGN THE PARENT IN CACHE IF ANY
+				final OMVRBTreeEntryPersistent<K, V> rightNode = searchNodeInCache(entry.rightRid);
+				if (rightNode != null)
+					entry.setRight(rightNode);
+			}
+
+		} else {
+			// COULD BE A PROBLEM BECAUSE IF A NODE IS DISCONNECTED CAN IT STAY IN CACHE?
+			// entry.load();
+			if (iParent != null)
+				// FOUND: ASSIGN IT ONLY IF NOT NULL
+				entry.setParent(iParent);
+		}
+
+		entry.checkEntryStructure();
+
+		return entry;
+	}
+
+	/**
+	 * Create a new entry for {@link #loadEntry(OMVRBTreeEntryPersistent, ORID)}.
+	 */
+	protected abstract OMVRBTreeEntryPersistent<K, V> createEntry(OMVRBTreeEntryPersistent<K, V> iParent, ORID iRecordId)
 			throws IOException;
 
 	@Override
@@ -377,8 +436,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 							node.save();
 
 							if (debug)
-								System.out.printf("\nSaved %s tree node %s: parent %s, left %s, right %s", wasNew ? "new" : "",
-										node.record.getIdentity(), node.parentRid, node.leftRid, node.rightRid);
+								System.out.printf("\nSaved %s tree node %s: parent %s, left %s, right %s", wasNew ? "new" : "", node.record
+										.getIdentity(), node.parentRid, node.leftRid, node.rightRid);
 
 							if (wasNew) {
 								if (node.record.getIdentity().getClusterPosition() < -1) {
@@ -529,6 +588,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	protected void adjustPageSize() {
 	}
 
+	@Override
 	public V get(final Object iKey) {
 		for (int i = 0; i < 10; ++i) {
 			try {
@@ -829,6 +889,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	/**
 	 * Removes the node also from the memory.
 	 */
+	@Override
 	protected void removeNode(final OMVRBTreeEntry<K, V> p) {
 		removeNodeFromMemory((OMVRBTreeEntryPersistent<K, V>) p);
 		super.removeNode(p);
