@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.text.ParseException;
-import java.util.Locale;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -32,6 +29,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
+
+import java.text.ParseException;
+import java.util.Locale;
 
 /**
  * Contains the description of a persistent class property.
@@ -109,7 +109,11 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	 * @return
 	 */
 	public OPropertyIndex createIndex(final INDEX_TYPE iType) {
-		index = new OPropertyIndex(getDatabase(), owner, new String[] { name }, iType.toString(), type);
+		OType indexType = type;
+		if (type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDSET || type == OType.LINKLIST || type == OType.LINKSET) {
+			indexType = linkedType;
+		}
+		index = new OPropertyIndex(getDatabase(), owner, new String[]{name}, iType.toString(), indexType);
 		return index;
 	}
 

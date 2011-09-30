@@ -15,11 +15,12 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.Collection;
-
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+
+import java.util.Collection;
 
 /**
  * CONTAINS operator.
@@ -85,7 +86,15 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 
 	@Override
 	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
-		return OIndexReuseType.NO_INDEX;
+		if (!(iLeft instanceof OSQLFilterItemField)) {
+			return OIndexReuseType.NO_INDEX;
+		}
+		if (((OSQLFilterItemField) iLeft).hasChainOperators()
+				|| iRight instanceof OSQLFilterItemField && ((OSQLFilterItemField) iRight).hasChainOperators()) {
+			return OIndexReuseType.NO_INDEX;
+		}
+
+		return OIndexReuseType.INDEX_METHOD;
 	}
 
 }

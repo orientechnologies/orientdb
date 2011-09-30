@@ -49,6 +49,7 @@
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.IndexTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.FullTextIndexTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.CollectionIndexTest"/>
 		</classes>
 	</test>
 	<test name="Dictionary">

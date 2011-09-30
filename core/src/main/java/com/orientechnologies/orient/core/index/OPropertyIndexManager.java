@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -26,11 +22,13 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import java.util.*;
+import java.util.Map.Entry;
+
 /**
  * Handles indexing when records change.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OPropertyIndexManager extends ODocumentHookAbstract {
 
@@ -44,11 +42,20 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 	public boolean onRecordAfterCreate(final ODocument iRecord) {
 		final Map<OProperty, Object> indexedProperties = getIndexedProperties(iRecord);
 
-		if (indexedProperties != null)
+		if (indexedProperties != null) {
 			for (Entry<OProperty, Object> propEntry : indexedProperties.entrySet()) {
 				// SAVE A COPY TO AVOID PROBLEM ON RECYCLING OF THE RECORD
-				propEntry.getKey().getIndex().getUnderlying().put(propEntry.getValue(), iRecord.placeholder());
+				Object value = propEntry.getValue();
+				OIndex index = propEntry.getKey().getIndex().getUnderlying();
+				if (isCollection(value)) {
+					for (Object item : toCollection(value)) {
+						index.put(item, iRecord.placeholder());
+					}
+				} else {
+					index.put(value, iRecord.placeholder());
+				}
 			}
+		}
 		return false;
 	}
 
@@ -67,34 +74,27 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 
 			if (dirtyFields.length > 0) {
 				// REMOVE INDEX OF ENTRIES FOR THE OLD VALUES
-				Object originalValue = null;
+				Object originalValue;
 				OIndex<?> index;
 
 				for (Entry<OProperty, Object> propEntry : indexedProperties.entrySet()) {
-					for (String f : dirtyFields)
+					for (String f : dirtyFields) {
 						if (f.equals(propEntry.getKey().getName())) {
-							// REMOVE IT
 							originalValue = iRecord.getOriginalValue(propEntry.getKey().getName());
-
+							Object newValue = propEntry.getValue();
 							index = propEntry.getKey().getIndex().getUnderlying();
 
-							index.remove(originalValue, iRecord);
-
+							if (isCollection(originalValue) || isCollection(newValue)) {
+								updateCollectionIndex(index, originalValue, newValue, iRecord);
+							} else {
+								// REMOVE IT
+								index.remove(originalValue, iRecord);
+								// SAVE A COPY TO AVOID PROBLEM ON RECYCLING OF THE RECORD
+								index.put(propEntry.getValue(), iRecord.placeholder());
+							}
 							break;
 						}
-				}
-
-				// ADD INDEX OF ENTRIES FOR THE CHANGED ONLY VALUES
-				for (Entry<OProperty, Object> propEntry : indexedProperties.entrySet()) {
-					for (String f : dirtyFields)
-						if (f.equals(propEntry.getKey().getName())) {
-							index = propEntry.getKey().getIndex().getUnderlying();
-
-							// SAVE A COPY TO AVOID PROBLEM ON RECYCLING OF THE RECORD
-							index.put(propEntry.getValue(), iRecord.placeholder());
-
-							break;
-						}
+					}
 				}
 			}
 		}
@@ -119,13 +119,21 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 			if (dirtyFields.length > 0) {
 				// REMOVE INDEX OF ENTRIES FOR THE OLD VALUES
 				for (Entry<OProperty, Object> propEntry : indexedProperties.entrySet()) {
-					for (String f : dirtyFields)
+					for (String f : dirtyFields) {
 						if (f.equals(propEntry.getKey().getName())) {
 							// REMOVE IT
+							Object originalValue = iRecord.getOriginalValue(propEntry.getKey().getName());
 							index = propEntry.getKey().getIndex().getUnderlying();
-							index.remove(iRecord.getOriginalValue(propEntry.getKey().getName()), iRecord);
+							if (isCollection(originalValue)) {
+								for (Object item : toCollection(originalValue)) {
+									index.remove(item, iRecord);
+								}
+							} else {
+								index.remove(originalValue, iRecord);
+							}
 							break;
 						}
+					}
 				}
 			}
 
@@ -133,15 +141,23 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 			for (Entry<OProperty, Object> propEntry : indexedProperties.entrySet()) {
 				if (iRecord.containsField(propEntry.getKey().getName())) {
 					boolean found = false;
-					for (String f : dirtyFields)
+					for (String f : dirtyFields) {
 						if (f.equals(propEntry.getKey().getName())) {
 							found = true;
 							break;
 						}
+					}
 
 					if (!found) {
+						Object value = propEntry.getValue();
 						index = propEntry.getKey().getIndex().getUnderlying();
-						index.remove(propEntry.getValue(), iRecord);
+						if (isCollection(value)) {
+							for (Object item : toCollection(value)) {
+								index.remove(item, iRecord);
+							}
+						} else {
+							index.remove(value, iRecord);
+						}
 					}
 				}
 			}
@@ -198,5 +214,37 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 		}
 
 		return indexedProperties;
+	}
+
+	private void updateCollectionIndex(OIndex index, Object old, Object with, ODocument iRecord) {
+		Collection<?> oldCollection = toCollection(old);
+		// Convert the new collection to a new hashset, so we can efficiently check if keys from the old collection are
+		// are found in it, and if so remove them so we're left with only the new keys to add
+		Collection<?> newCollection = new HashSet(toCollection(with));
+		for (Object oldItem : oldCollection) {
+			if (!newCollection.contains(oldItem)) {
+				index.remove(oldItem, iRecord);
+			} else {
+				newCollection.remove(oldItem);
+			}
+		}
+		// Index the remaining
+		for (Object newItem : newCollection) {
+			index.put(newItem, iRecord.placeholder());
+		}
+	}
+
+	private Collection<?> toCollection(Object o) {
+		if (o instanceof Collection) {
+			return (Collection) o;
+		} else if (o == null) {
+			return Collections.emptySet();
+		} else {
+			return Collections.singleton(o);
+		}
+	}
+
+	private boolean isCollection(Object o) {
+		return o instanceof Collection;
 	}
 }
