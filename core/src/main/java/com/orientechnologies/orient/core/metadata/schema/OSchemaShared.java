@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -486,7 +485,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
 		lock.acquireSharedLock();
 		try {
-			return Collections.unmodifiableCollection(classes.values());
+			return new HashSet<OClass>(classes.values());
 		} finally {
 			lock.releaseSharedLock();
 		}
