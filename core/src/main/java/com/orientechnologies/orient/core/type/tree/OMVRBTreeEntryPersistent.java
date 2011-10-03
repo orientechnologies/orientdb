@@ -81,7 +81,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
  * @param <K>
  * @param <V>
  */
-@SuppressWarnings( { "unchecked", "serial" })
+@SuppressWarnings({ "unchecked", "serial" })
 public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> implements OSerializableStream {
 	protected OMVRBTreePersistent<K, V>				pTree;
 
@@ -458,7 +458,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 	@Override
 	public OMVRBTreeEntry<K, V> getLeft() {
-		if (left == null && leftRid.isValid()) {
+		if (left == null && leftRid != null && leftRid.isValid()) {
 			try {
 				// System.out.println("Node " + record.getIdentity() + " is loading LEFT node " + leftRid + "...");
 
@@ -493,7 +493,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 	@Override
 	public OMVRBTreeEntry<K, V> getRight() {
-		if (rightRid.isValid() && right == null) {
+		if (right == null && rightRid != null && rightRid.isValid()) {
 			// LAZY LOADING OF THE RIGHT LEAF
 			try {
 				right = pTree.loadEntry(this, rightRid);
