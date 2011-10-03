@@ -109,14 +109,16 @@ public class OSQLFilter extends OCommandToParse {
 
 		targetRecords = new ArrayList<String>();
 
-		if (Character.isDigit(text.charAt(currentPos))) {
+		final char c = text.charAt(currentPos);
+
+		if (c == '#' || Character.isDigit(c)) {
 			// UNIQUE RID
 			final StringBuilder word = new StringBuilder();
 			currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
 
 			targetRecords.add(word.toString());
 
-		} else if (text.charAt(currentPos) == OStringSerializerHelper.COLLECTION_BEGIN) {
+		} else if (c == OStringSerializerHelper.COLLECTION_BEGIN) {
 			// COLLECTION OF RIDS
 			currentPos = OStringSerializerHelper.getCollection(text, currentPos, targetRecords);
 			if (currentPos > -1)
