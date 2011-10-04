@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.query.OQueryHelper;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -34,6 +35,9 @@ public class OQueryOperatorLike extends OQueryOperatorEqualityNotNulls {
 	@Override
 	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
+		if (OMultiValue.isMultiValue(iLeft) || OMultiValue.isMultiValue(iRight))
+			return false;
+
 		return OQueryHelper.like(iLeft.toString(), iRight.toString());
 	}
 
