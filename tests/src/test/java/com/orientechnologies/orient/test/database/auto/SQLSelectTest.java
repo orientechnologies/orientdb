@@ -904,9 +904,10 @@ public class SQLSelectTest {
 		for (List<ODocument> resultset = database.query(query); !resultset.isEmpty(); resultset = query.execute()) {
 			Assert.assertTrue(resultset.size() <= 3);
 
-			for (ODocument d : resultset)
-				Assert.assertTrue(d.getIdentity().getClusterId() >= last.getClusterId()
+			for (ODocument d : resultset) {
+				Assert.assertTrue(d.getIdentity().getClusterId() < 0 || (d.getIdentity().getClusterId() >= last.getClusterId())
 						&& d.getIdentity().getClusterPosition() > last.getClusterPosition());
+			}
 
 			last = resultset.get(resultset.size() - 1).getIdentity();
 		}

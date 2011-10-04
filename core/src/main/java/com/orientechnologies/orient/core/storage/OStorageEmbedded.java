@@ -21,16 +21,18 @@ import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -123,30 +125,19 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 	public ORecordInternal<?> browseCluster(final ORecordBrowsingListener iListener, ORecordInternal<?> ioRecord,
 			final OCluster cluster, final long iBeginRange, final long iEndRange, final boolean iLockEntireCluster) throws IOException {
 		ORecordInternal<?> record;
-		ORawBuffer recordBuffer;
-		long positionInPhyCluster;
 
 		if (iLockEntireCluster)
 			// LOCK THE ENTIRE CLUSTER AVOIDING TO LOCK EVERY SINGLE RECORD
 			cluster.lock();
 
 		try {
-			final OClusterPositionIterator iterator = cluster.absoluteIterator(iBeginRange, iEndRange);
-
-			final ORecordId rid = new ORecordId(cluster.getId());
-			final ODatabaseRecord database = ioRecord.getDatabase();
+			final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+			ORecordIteratorCluster<ORecordInternal<?>> iterator = new ORecordIteratorCluster<ORecordInternal<?>>(db,
+					(ODatabaseRecordAbstract) db, cluster.getId(), iBeginRange, iEndRange);
 
 			// BROWSE ALL THE RECORDS
 			while (iterator.hasNext()) {
-				positionInPhyCluster = iterator.next();
-
-				if (positionInPhyCluster == -1)
-					// NOT VALID POSITION (IT HAS BEEN DELETED)
-					continue;
-
-				rid.clusterPosition = positionInPhyCluster;
-
-				record = database.load(rid);
+				record = iterator.next();
 
 				if (record != null && record.getRecordType() != ODocument.RECORD_TYPE)
 					// WRONG RECORD TYPE: JUMP IT
@@ -155,31 +146,8 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 				ORecordInternal<?> recordToCheck = null;
 				try {
 
-					if (record == null) {
-						// READ THE RAW RECORD. IF iLockEntireCluster THEN THE READ WILL
-						// BE NOT-LOCKING, OTHERWISE YES
-						recordBuffer = readRecord(cluster, rid, !iLockEntireCluster);
-						if (recordBuffer == null)
-							continue;
-
-						if (recordBuffer.recordType != ODocument.RECORD_TYPE)
-							// WRONG RECORD TYPE: JUMP IT
-							continue;
-
-						if (ioRecord.getRecordType() != recordBuffer.recordType)
-							// RECORD NULL OR DIFFERENT IN TYPE: CREATE A NEW ONE
-							ioRecord = Orient.instance().getRecordFactoryManager().newInstance(ioRecord.getDatabase(), recordBuffer.recordType);
-						else
-							// RESET CURRENT RECORD
-							ioRecord.reset();
-
-						ioRecord.setVersion(recordBuffer.version);
-						ioRecord.setIdentity(cluster.getId(), positionInPhyCluster);
-						ioRecord.fromStream(recordBuffer.buffer);
-						recordToCheck = ioRecord;
-					} else
-						// GET THE CACHED RECORD
-						recordToCheck = record;
+					// GET THE CACHED RECORD
+					recordToCheck = record;
 
 					if (!iListener.foreach(recordToCheck))
 						// LISTENER HAS INTERRUPTED THE EXECUTION

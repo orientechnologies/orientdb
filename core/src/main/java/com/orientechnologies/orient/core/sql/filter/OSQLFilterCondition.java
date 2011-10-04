@@ -69,9 +69,14 @@ public class OSQLFilterCondition {
 			r = convertedValues[1];
 		}
 
-		if (operator == null)
+		if (operator == null) {
+			if (l == null)
+				// THE LEFT RETURNED NULL
+				return Boolean.FALSE;
+
 			// UNITARY OPERATOR: JUST RETURN LEFT RESULT
 			return l;
+		}
 
 		return operator.evaluateRecord(iRecord, this, l, r);
 	}

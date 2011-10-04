@@ -456,7 +456,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 		final OQueryOperator operator = iCondition.getOperator();
 		if (operator == null)
-			if (iCondition.getLeft() != null && iCondition.getRight() == null) {
+			if (iCondition.getLeft() != null && iCondition.getRight() == null && iCondition.getLeft() instanceof OSQLFilterCondition) {
 				analyzeQueryBranch(iSchemaClass, (OSQLFilterCondition) iCondition.getLeft(), iSearchInIndexTriples);
 				return;
 			} else {

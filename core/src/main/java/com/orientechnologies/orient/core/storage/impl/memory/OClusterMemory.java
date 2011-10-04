@@ -41,7 +41,7 @@ public class OClusterMemory extends OSharedResourceAbstract implements OCluster 
 		return new OClusterPositionIterator(this);
 	}
 
-	public OClusterPositionIterator absoluteIterator(long iBeginRange, long iEndRange) throws IOException {
+	public OClusterPositionIterator absoluteIterator(final long iBeginRange, final long iEndRange) throws IOException {
 		return new OClusterPositionIterator(this, iBeginRange, iEndRange);
 	}
 
@@ -246,7 +246,8 @@ public class OClusterMemory extends OSharedResourceAbstract implements OCluster 
 		}
 	}
 
-	public void setPhysicalPosition(final long iPosition, final int iDataId, final long iDataPosition, final byte iRecordType, int iVersion) {
+	public void setPhysicalPosition(final long iPosition, final int iDataId, final long iDataPosition, final byte iRecordType,
+			int iVersion) {
 		acquireExclusiveLock();
 		try {
 

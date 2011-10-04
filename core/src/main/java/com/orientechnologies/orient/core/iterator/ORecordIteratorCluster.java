@@ -38,13 +38,18 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 
 	public ORecordIteratorCluster(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
 			final int iClusterId) {
+		this(iDatabase, iLowLevelDatabase, iClusterId, -1, -1);
+	}
+
+	public ORecordIteratorCluster(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
+			final int iClusterId, final long iRangeFrom, final long iRangeTo) {
 		super(iDatabase, iLowLevelDatabase);
 		if (iClusterId == ORID.CLUSTER_ID_INVALID)
 			throw new IllegalArgumentException("The clusterId is invalid");
 
 		current.clusterId = iClusterId;
-		rangeFrom = -1;
-		rangeTo = -1;
+		rangeFrom = iRangeFrom > -1 ? iRangeFrom - 1 : iRangeFrom;
+		rangeTo = iRangeTo;
 
 		long[] range = database.getStorage().getClusterDataRange(current.clusterId);
 		firstClusterPosition = range[0];
@@ -67,6 +72,8 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 					break;
 				}
 			}
+
+		begin();
 	}
 
 	@Override
@@ -203,10 +210,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	 * @return
 	 */
 	public long getRangeFrom() {
-		if (!liveUpdated)
-			return firstClusterPosition - 1;
-
-		final long limit = database.getStorage().getClusterDataRange(current.clusterId)[0] - 1;
+		final long limit = (liveUpdated ? database.getStorage().getClusterDataRange(current.clusterId)[1] : firstClusterPosition) - 1;
 		if (rangeFrom > -1)
 			return Math.max(rangeFrom, limit);
 		return limit;
@@ -218,10 +222,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	 * @return
 	 */
 	public long getRangeTo() {
-		if (!liveUpdated)
-			return lastClusterPosition + 1;
-
-		final long limit = database.getStorage().getClusterDataRange(current.clusterId)[1] + 1;
+		final long limit = (liveUpdated ? database.getStorage().getClusterDataRange(current.clusterId)[1] : lastClusterPosition) + 1;
 		if (rangeTo > -1)
 			return Math.min(rangeTo, limit);
 		return limit;

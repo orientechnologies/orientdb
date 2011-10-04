@@ -243,7 +243,7 @@ public class OClusterLogical implements OCluster {
 		return new OClusterPositionIterator(this);
 	}
 
-	public OClusterPositionIterator absoluteIterator(long iBeginRange, long iEndRange) throws IOException {
+	public OClusterPositionIterator absoluteIterator(final long iBeginRange, final long iEndRange) throws IOException {
 		return new OClusterPositionIterator(this, iBeginRange, iEndRange);
 	}
 
