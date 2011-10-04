@@ -134,15 +134,23 @@ public class SQLSelectTest {
 	public void querySchemaAndLike() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>("select * from cluster:Animal where ID = 10 and name like 'G%'")).execute();
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:profile where name like 'G%'"))
+				.execute();
 
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
 
-			Assert.assertTrue(record.getClassName().equalsIgnoreCase("Animal"));
-			Assert.assertEquals(record.field("id"), 10);
+			Assert.assertTrue(record.getClassName().equalsIgnoreCase("profile"));
 			Assert.assertTrue(record.field("name").toString().startsWith("G"));
+		}
+
+		result = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:profile where name like '%G%'")).execute();
+
+		for (int i = 0; i < result.size(); ++i) {
+			record = result.get(i);
+
+			Assert.assertTrue(record.getClassName().equalsIgnoreCase("profile"));
+			Assert.assertTrue(record.field("name").toString().contains("G"));
 		}
 
 		database.close();

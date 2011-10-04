@@ -86,7 +86,7 @@ public class ORecordId implements ORID {
 	}
 
 	public boolean isTemporary() {
-		return clusterId == -1 && clusterPosition < -1;
+		return clusterId != -1 && clusterPosition < -1;
 	}
 
 	@Override
