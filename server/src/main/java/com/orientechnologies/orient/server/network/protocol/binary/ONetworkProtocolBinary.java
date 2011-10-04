@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -45,6 +46,7 @@ import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
@@ -221,7 +223,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		case OChannelBinaryProtocol.REQUEST_CONNECT: {
 			data.commandInfo = "Connect";
 
-			serverLogin(channel.readString(), channel.readString());
+			serverLogin(channel.readString(), channel.readString(), "connect");
 
 			channel.acquireExclusiveLock();
 			try {
@@ -798,7 +800,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 						if (entry.getValue().getVersion() > 0)
 							tx.getUpdatedRecords().put((ORecordId) entry.getValue().getIdentity(), entry.getValue());
 					}
-					
+
 					// SEND BACK ALL THE NEW VERSIONS FOR THE UPDATED RECORDS
 					channel.writeInt(tx.getUpdatedRecords().size());
 					for (Entry<ORecordId, ORecord<?>> entry : tx.getUpdatedRecords().entrySet()) {
@@ -958,8 +960,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		}
 	}
 
-	private void serverLogin(final String iUser, final String iPassword) {
-		if (!OServerMain.server().authenticate(iUser, iPassword, "connect"))
+	private void serverLogin(final String iUser, final String iPassword, final String iResource) {
+		if (!OServerMain.server().authenticate(iUser, iPassword, iResource))
 			throw new OSecurityAccessException(
 					"Wrong user/password to [connect] to the remote OrientDB Server instance. Get the user/password from the config/orientdb-server-config.xml file");
 
@@ -1037,8 +1039,22 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		if (connection.database.isClosed())
 			if (connection.database.getStorage() instanceof OStorageMemory)
 				connection.database.create();
-			else
-				connection.database.open(iUser, iPassword);
+			else {
+				try {
+					connection.database.open(iUser, iPassword);
+				} catch (OSecurityException e) {
+					// TRY WITH SERVER'S USER
+					try {
+						serverLogin(iUser, iPassword, "database.passthrough");
+					} catch (OSecurityException ex) {
+						throw e;
+					}
+
+					// SERVER AUTHENTICATED, BYPASS SECURITY
+					connection.database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
+					connection.database.open(iUser, iPassword);
+				}
+			}
 
 		connection.rawDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
 

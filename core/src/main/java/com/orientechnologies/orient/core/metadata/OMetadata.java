@@ -120,7 +120,7 @@ public class OMetadata {
 			}
 		}), database);
 
-		Boolean enableSecurity = (Boolean) database.getProperty(ODatabase.OPTIONS.SECURITY.toString());
+		final Boolean enableSecurity = (Boolean) database.getProperty(ODatabase.OPTIONS.SECURITY.toString());
 		if (enableSecurity != null && !enableSecurity)
 			// INSTALL NO SECURITY IMPL
 			security = new OSecurityNull();

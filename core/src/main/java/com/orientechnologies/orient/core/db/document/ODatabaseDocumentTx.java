@@ -102,7 +102,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 				if (doc.getClassName() != null)
 					checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, doc.getClassName());
 
-				if (doc.getSchemaClass() != null) {
+				if (doc.getSchemaClass() != null && doc.getIdentity().getClusterId() < 0) {
 					// CLASS FOUND: FORCE THE STORING IN THE CLUSTER CONFIGURED
 					String clusterName = getClusterNameById(doc.getSchemaClass().getDefaultClusterId());
 

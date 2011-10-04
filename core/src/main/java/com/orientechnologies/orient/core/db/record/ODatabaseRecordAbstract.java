@@ -106,12 +106,14 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 			recordFormat = DEF_RECORD_FORMAT;
 
-			user = getMetadata().getSecurity().authenticate(iUserName, iUserPassword);
-
 			if (getStorage() instanceof OStorageEmbedded) {
+				user = getMetadata().getSecurity().authenticate(iUserName, iUserPassword);
 				registerHook(new OUserTrigger());
 				registerHook(new OPropertyIndexManager());
-			}
+			} else
+				// CREATE DUMMY USER
+				user = new OUser(this, iUserName, OUser.encryptPassword(iUserPassword)).addRole(new ORole(this, "passthrough", null,
+						ORole.ALLOW_MODES.ALLOW_ALL_BUT));
 
 			checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
 		} catch (OException e) {
@@ -504,8 +506,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		return null;
 	}
 
-	public void executeSaveRecord(final ORecordInternal<?> iRecord, final String iClusterName, final int iVersion,
-			final byte iRecordType) {
+	public void executeSaveRecord(final ORecordInternal<?> iRecord, String iClusterName, final int iVersion, final byte iRecordType) {
 		checkOpeness();
 
 		if (!iRecord.isDirty())
@@ -538,6 +539,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 			if (isNew && rid.clusterId < 0)
 				rid.clusterId = iClusterName != null ? getClusterIdByName(iClusterName) : getDefaultClusterId();
+
+			if (rid.clusterId > -1 && iClusterName == null)
+				iClusterName = getClusterNameById(rid.clusterId);
 
 			if (stream != null && stream.length > 0) {
 				if (wasNew) {

@@ -15,9 +15,8 @@
  */
 package com.orientechnologies.orient.core.exception;
 
-import com.orientechnologies.common.exception.OException;
 
-public class OSecurityAccessException extends OException {
+public class OSecurityAccessException extends OSecurityException {
 
 	private static final long	serialVersionUID	= -8486291378415776372L;
 	private String						databaseName;
