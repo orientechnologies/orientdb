@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.functions;
 
+import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.record.ORecord;
 
 /**
@@ -28,7 +29,7 @@ import com.orientechnologies.orient.core.record.ORecord;
  */
 public interface OSQLFunction {
 
-	public Object execute(ORecord<?> iCurrentRecord, Object[] iFuncParams);
+	public Object execute(ORecord<?> iCurrentRecord, Object[] iFuncParams, OCommandExecutor iRequester);
 
 	public boolean aggregateResults(Object[] configuredParameters);
 

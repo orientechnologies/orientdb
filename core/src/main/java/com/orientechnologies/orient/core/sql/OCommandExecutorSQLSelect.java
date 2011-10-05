@@ -193,6 +193,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	}
 
 	public Object execute(final Map<Object, Object> iArgs) {
+		parameters = iArgs;
+
 		// TODO: SUPPORT MULTIPLE CLASSES LIKE A SQL JOIN
 		compiledFilter.bindParameters(iArgs);
 
@@ -761,7 +763,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				else if (projection.getValue() instanceof OSQLFunctionRuntime) {
 					final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection.getValue();
 					canExcludeResult = f.filterResult();
-					value = f.execute(doc);
+					value = f.execute(doc, this);
 				} else
 					value = projection.getValue();
 

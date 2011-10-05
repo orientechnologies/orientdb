@@ -45,16 +45,16 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
  * 
  */
 public class OSQLFilter extends OCommandToParse {
-	protected ODatabaseRecord							database;
-	protected List<String>								targetRecords;
-	protected Map<String, String>					targetClusters;
-	protected Map<OClass, String>					targetClasses;
-	protected String											targetIndex;
-	protected Set<OProperty>							properties	= new HashSet<OProperty>();
-	protected OSQLFilterCondition					rootCondition;
-	protected List<String>								recordTransformed;
-	private List<OSQLFilterItemParameter>	parameterItems;
-	private int														braces;
+	protected ODatabaseRecord								database;
+	protected List<String>									targetRecords;
+	protected Map<String, String>						targetClusters;
+	protected Map<OClass, String>						targetClasses;
+	protected String												targetIndex;
+	protected Set<OProperty>								properties	= new HashSet<OProperty>();
+	protected OSQLFilterCondition						rootCondition;
+	protected List<String>									recordTransformed;
+	protected List<OSQLFilterItemParameter>	parameterItems;
+	protected int														braces;
 
 	public OSQLFilter(final ODatabaseRecord iDatabase, final String iText) {
 		try {

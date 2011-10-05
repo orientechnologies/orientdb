@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.sql.functions.coll;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
@@ -36,7 +37,7 @@ public class OSQLFunctionDistinct extends OSQLFunctionAbstract {
 		super(NAME, 1, 1);
 	}
 
-	public Object execute(ORecord<?> iCurrentRecord, final Object[] iParameters) {
+	public Object execute(ORecord<?> iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
 		final Object value = iParameters[0];
 
 		if (value != null && !context.contains(value)) {

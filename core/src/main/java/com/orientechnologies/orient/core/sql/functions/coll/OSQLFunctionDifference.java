@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.sql.functions.coll;
 import java.util.Collection;
 import java.util.HashSet;
 
+import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.record.ORecord;
 
 /**
@@ -34,7 +35,7 @@ public class OSQLFunctionDifference extends OSQLFunctionCollAbstract {
 		super(NAME, 1, -1);
 	}
 
-	public Object execute(ORecord<?> iCurrentRecord, final Object[] iParameters) {
+	public Object execute(ORecord<?> iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
 		if (iParameters[0] == null)
 			return null;
 

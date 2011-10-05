@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.functions.math;
 
+import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.record.ORecord;
 
 /**
@@ -34,7 +35,7 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
 		super(NAME, 1, 1);
 	}
 
-	public Object execute(ORecord<?> iCurrentRecord, final Object[] iParameters) {
+	public Object execute(ORecord<?> iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
 		Number value = (Number) iParameters[0];
 
 		total++;

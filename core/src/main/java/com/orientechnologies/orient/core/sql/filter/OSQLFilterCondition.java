@@ -212,7 +212,7 @@ public class OSQLFilterCondition {
 		else if (iValue instanceof OSQLFunctionRuntime) {
 			// STATELESS FUNCTION: EXECUTE IT
 			final OSQLFunctionRuntime f = (OSQLFunctionRuntime) iValue;
-			return f.execute(iRecord);
+			return f.execute(iRecord, null);
 		}
 
 		final Object firstValue = OMultiValue.getFirstValue(iValue);

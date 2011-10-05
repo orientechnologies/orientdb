@@ -18,11 +18,14 @@ package com.orientechnologies.orient.graph.gremlin;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
+import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -44,18 +47,15 @@ import com.tinkerpop.gremlin.pipes.GremlinPipeline;
  */
 public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 	public static final String	NAME	= "gremlin";
-
 	private List<Object>				result;
-
 	private OrientGraph					graph	= null;
-
 	private ScriptEngine				engine;
 
 	public OSQLFunctionGremlin() {
 		super(NAME, 1, 1);
 	}
 
-	public Object execute(final ORecord<?> iCurrentRecord, final Object[] iParameters) {
+	public Object execute(final ORecord<?> iCurrentRecord, final Object[] iParameters, final OCommandExecutor iRequester) {
 		if (!(iCurrentRecord instanceof ODocument))
 			// NOT DOCUMENT: IGNORE IT
 			return null;
@@ -87,6 +87,15 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 			return null;
 
 		engine.getBindings(ScriptContext.ENGINE_SCOPE).put("current", graphElement);
+
+		// BIND EXECUTOR'S PARAMETERS
+		if (iRequester != null) {
+			final Map<Object, Object> params = iRequester.getParameters();
+			if (params != null) {
+				for (Entry<Object, Object> param : params.entrySet())
+					engine.getBindings(ScriptContext.ENGINE_SCOPE).put(param.getKey().toString(), param.getValue());
+			}
+		}
 
 		final Object scriptResult;
 		try {

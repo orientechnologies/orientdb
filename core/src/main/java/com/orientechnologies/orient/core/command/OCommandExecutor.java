@@ -75,4 +75,6 @@ public interface OCommandExecutor {
 	public <RET extends OCommandExecutor> RET setProgressListener(OProgressListener progressListener);
 
 	public <RET extends OCommandExecutor> RET setLimit(int iLimit);
+
+	public Map<Object, Object> getParameters();
 }

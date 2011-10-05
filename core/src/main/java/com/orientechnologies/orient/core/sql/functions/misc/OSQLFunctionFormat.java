@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.functions.misc;
 
+import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
@@ -31,7 +32,7 @@ public class OSQLFunctionFormat extends OSQLFunctionAbstract {
 		super(NAME, 2, -1);
 	}
 
-	public Object execute(ORecord<?> iCurrentRecord, final Object[] iParameters) {
+	public Object execute(ORecord<?> iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
 		final Object[] args = new Object[iParameters.length - 1];
 
 		for (int i = 0; i < args.length; ++i)
