@@ -24,6 +24,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -279,6 +280,26 @@ public class SQLSelectProjectionsTest {
 			database.command(
 					new OSQLSynchQuery<ODocument>(
 							"SELECT FLATTEN( out ), in FROM OGraphVertex WHERE out TRAVERSE(1,1) (@class = 'OGraphEdge')")).execute();
+
+		} finally {
+			database.close();
+		}
+	}
+
+	public void queryProjectionRid() {
+		database.open("admin", "admin");
+
+		try {
+			List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select @rid FROM V")).execute();
+			Assert.assertTrue(result.size() != 0);
+
+			for (ODocument d : result) {
+				Assert.assertTrue(d.fieldNames().length <= 1);
+				Assert.assertNotNull(d.field("rid"));
+
+				final ORID rid = d.field("rid", ORID.class);
+				Assert.assertTrue(rid.isValid());
+			}
 
 		} finally {
 			database.close();

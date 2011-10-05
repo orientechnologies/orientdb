@@ -153,6 +153,15 @@ public class SQLSelectTest {
 			Assert.assertTrue(record.field("name").toString().contains("G"));
 		}
 
+		result = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:profile where name like ?")).execute("%G%");
+
+		for (int i = 0; i < result.size(); ++i) {
+			record = result.get(i);
+
+			Assert.assertTrue(record.getClassName().equalsIgnoreCase("profile"));
+			Assert.assertTrue(record.field("name").toString().contains("G"));
+		}
+
 		database.close();
 	}
 

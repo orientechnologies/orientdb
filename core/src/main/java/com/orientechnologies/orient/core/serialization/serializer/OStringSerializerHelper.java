@@ -39,7 +39,6 @@ public abstract class OStringSerializerHelper {
 	public static final char								RECORD_SEPARATOR				= ',';
 
 	public static final String							CLASS_SEPARATOR					= "@";
-	public static final char								DOCUMENT_ATTRIB					= '@';
 	public static final char								LINK										= ORID.PREFIX;
 	public static final char								PARENTHESIS_BEGIN				= '(';
 	public static final char								PARENTHESIS_END					= ')';
