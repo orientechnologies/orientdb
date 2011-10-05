@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
@@ -1024,26 +1025,9 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	}
 
 	protected String checkFieldName(String iFieldName) {
-		if (iFieldName == null)
-			throw new IllegalArgumentException("Field name is null");
-
-		iFieldName = iFieldName.trim();
-
-		if (iFieldName.length() == 0)
-			throw new IllegalArgumentException("Field name is empty");
-
-		for (int i = 0; i < iFieldName.length(); ++i) {
-			final char c = iFieldName.charAt(i);
-			if (c == ':' || c == ',')
-				throw new IllegalArgumentException("Invalid field name '" + iFieldName + "'");
-		}
-
-		// if (!Character.isJavaIdentifierStart(iFieldName.charAt(0)))
-		// throw new IllegalArgumentException("Invalid property name");
-		//
-		// for (int i = 1; i < iFieldName.length(); ++i)
-		// if (!Character.isJavaIdentifierPart(iFieldName.charAt(i)))
-		// throw new IllegalArgumentException("Invalid property name");
+		final Character c = OSchemaShared.checkNameIfValid(iFieldName);
+		if (c != null)
+			throw new IllegalArgumentException("Invalid field name '" + iFieldName + "'. Character '" + c + "' is invalid");
 
 		return iFieldName;
 	}

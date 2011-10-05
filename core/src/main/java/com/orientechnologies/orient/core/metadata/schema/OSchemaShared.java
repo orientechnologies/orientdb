@@ -259,10 +259,25 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 		}
 	}
 
-	public static Character checkNameIfValid(final String iClassName) {
-		for (char c : iClassName.toCharArray())
-			if (!Character.isJavaIdentifierPart(c))
+	public static Character checkNameIfValid(String iName) {
+		if (iName == null)
+			throw new IllegalArgumentException("Name is null");
+
+		iName = iName.trim();
+
+		if (iName.length() == 0)
+			throw new IllegalArgumentException("Name is empty");
+
+		for (int i = 0; i < iName.length(); ++i) {
+			final char c = iName.charAt(i);
+			if (c == ':' || c == ',')
+				// INVALID CHARACTER
 				return c;
+		}
+
+		// for (char c : iName.toCharArray())
+		// if (!Character.isJavaIdentifierPart(c))
+		// return c;
 		return null;
 	}
 
