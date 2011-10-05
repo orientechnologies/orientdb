@@ -12,6 +12,17 @@
 				<parameter name="server.electedForLeadership" value="true" />
 			</parameters>
 		</handler>
+		<!-- AUTOMATIC BACKUP, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
+		<handler class="com.orientechnologies.orient.server.handler.OAutomaticBackup">
+			<parameters>
+				<parameter name="enabled" value="false" />
+				<parameter name="delay" value="4h" />
+				<parameter name="target.directory" value="backup" />
+				<parameter name="target.fileName" value="${DBNAME}-${DATE:yyyyMMddHHmmss}.json" /><!-- ${DBNAME} AND ${DATE:} VARIABLES ARE SUPPORTED -->
+				<parameter name="db.include" value="" /><!-- DEFAULT: NO ONE, THAT MEANS ALL DATABASES. USE COMMA TO SEPARATE MULTIPLE DATABASE NAMES -->
+				<parameter name="db.exclude" value="" /><!-- USE COMMA TO SEPARATE MULTIPLE DATABASE NAMES -->
+			</parameters>
+		</handler>
 	</handlers>
 	<network>
 		<protocols>

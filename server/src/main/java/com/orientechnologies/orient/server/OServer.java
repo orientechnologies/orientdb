@@ -47,7 +47,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 import com.orientechnologies.orient.enterprise.command.OCommandExecutorScript;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerConfigurationLoaderXml;
@@ -63,22 +62,21 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
 public class OServer {
-	protected ReentrantReadWriteLock													lock						= new ReentrantReadWriteLock();
+	protected ReentrantReadWriteLock													lock				= new ReentrantReadWriteLock();
 
-	protected volatile boolean																running					= true;
+	protected volatile boolean																running			= true;
 	protected OServerConfigurationLoaderXml										configurationLoader;
 	protected OServerConfiguration														configuration;
 	protected OContextConfiguration														contextConfiguration;
 	protected OServerShutdownHook															shutdownHook;
-	protected List<OServerHandler>														handlers				= new ArrayList<OServerHandler>();
-	protected Map<String, Class<? extends ONetworkProtocol>>	protocols				= new HashMap<String, Class<? extends ONetworkProtocol>>();
-	protected List<OServerNetworkListener>										listeners				= new ArrayList<OServerNetworkListener>();
-	protected Map<String, OStorageMemory>											memoryDatabases	= new HashMap<String, OStorageMemory>();
+	protected List<OServerHandler>														handlers		= new ArrayList<OServerHandler>();
+	protected Map<String, Class<? extends ONetworkProtocol>>	protocols		= new HashMap<String, Class<? extends ONetworkProtocol>>();
+	protected List<OServerNetworkListener>										listeners		= new ArrayList<OServerNetworkListener>();
 	protected static ThreadGroup															threadGroup;
 
 	private OrientServer																			managedServer;
-	private ObjectName																				onProfiler			= new ObjectName("OrientDB:type=Profiler");
-	private ObjectName																				onServer				= new ObjectName("OrientDB:type=Server");
+	private ObjectName																				onProfiler	= new ObjectName("OrientDB:type=Profiler");
+	private ObjectName																				onServer		= new ObjectName("OrientDB:type=Server");
 
 	public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
 			InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
@@ -181,7 +179,6 @@ public class OServer {
 
 			// PROTOCOL HANDLERS
 			protocols.clear();
-			memoryDatabases.clear();
 			try {
 				MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
 				mBeanServer.unregisterMBean(onProfiler);
@@ -221,6 +218,30 @@ public class OServer {
 		}
 
 		return dbPath;
+	}
+
+	public Map<String, String> getAvailableStorageNames() {
+		// SEARCH IN CONFIGURED PATHS
+		final Map<String, String> storages = new HashMap<String, String>();
+		if (configuration.storages != null && configuration.storages.length > 0)
+			for (OServerStorageConfiguration s : configuration.storages)
+				storages.put(s.name, s.path);
+
+		// SEARCH IN DEFAULT DATABASE DIRECTORY
+		final String dbPath = getDatabaseDirectory();
+		final File dbDirectory = new File(dbPath);
+		if (dbDirectory.exists() && dbDirectory.isDirectory()) {
+			for (File db : dbDirectory.listFiles()) {
+				final File f = new File(db.getAbsolutePath() + "/default.odh");
+				if (f.exists())
+					storages.put(db.getName(), "local:" + db.getPath());
+			}
+		}
+		return storages;
+	}
+
+	public String getDatabaseDirectory() {
+		return OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/databases/");
 	}
 
 	public ThreadGroup getServerThreadGroup() {
@@ -268,10 +289,6 @@ public class OServer {
 
 	public void saveConfiguration() throws IOException {
 		configurationLoader.save(configuration);
-	}
-
-	public Map<String, OStorageMemory> getMemoryDatabases() {
-		return memoryDatabases;
 	}
 
 	public Map<String, Class<? extends ONetworkProtocol>> getProtocols() {

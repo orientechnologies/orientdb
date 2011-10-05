@@ -24,7 +24,8 @@ import com.orientechnologies.common.log.OLogManager;
  * @author Luca Garulli (luca.garulli--at--assetdata.it)
  */
 public class OVariableParser {
-	public static String resolveVariables(String iText, String iBegin, String iEnd, OVariableParserListener iListener) {
+	public static String resolveVariables(final String iText, final String iBegin, final String iEnd,
+			final OVariableParserListener iListener) {
 		if (iListener == null)
 			throw new IllegalArgumentException("Missed VariableParserListener listener");
 
