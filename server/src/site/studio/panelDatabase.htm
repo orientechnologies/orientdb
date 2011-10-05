@@ -55,7 +55,8 @@
 								</td>
 								<td valign="top" class="help">Select the class to display the properties associated. Each class can store its records into one or
 									multiple <b>Clusters</b> (see "Structure" tab). A class can be <b>schema-less</b> (has no properties), <b>schema-full</b> (all properties as
-									mandatories) or with a <b>partial schema</b>.</td>
+									mandatories) or with a <b>partial schema</b>.
+								</td>
 							</tr>
 							<tr>
 								<td valign="top" align="left">
@@ -562,19 +563,31 @@
 					sortname : 'id'
 				});
 
-		$("#addProperty").click(function() {
-			jQuery("#classProperties").jqGrid('editGridRow', "new", {
-				height : 320,
-				reloadAfterSubmit : false,
-				closeOnEscape : true,
-				closeAfterAdd : true,
-				editData : [ selectedClassName ],
-				afterSubmit : function(response, postdata) {
-					jQuery("#output").val(response.responseText);
-					return true;
-				}
-			});
-		});
+		$("#addProperty")
+				.click(
+						function() {
+							if (selectedClassName == null) {
+								alert("Please select class for which property is going to be added !");
+								return;
+							}
+
+							jQuery("#classProperties").jqGrid(
+									'editGridRow',
+									"new",
+									{
+										height : 320,
+										reloadAfterSubmit : false,
+										closeOnEscape : true,
+										closeAfterAdd : true,
+										editData : [ selectedClassName ],
+										afterSubmit : function(response,
+												postdata) {
+											jQuery("#output").val(
+													response.responseText);
+											return true;
+										}
+									});
+						});
 		$("#deleteProperty").click(
 				function() {
 					var selectedRow = jQuery("#classProperties").jqGrid(
