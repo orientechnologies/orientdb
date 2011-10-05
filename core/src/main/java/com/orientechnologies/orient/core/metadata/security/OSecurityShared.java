@@ -190,7 +190,6 @@ public class OSecurityShared extends OSharedResourceAbstract implements OSecurit
 			readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_READ);
 			readerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_READ);
 			readerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_READ);
-			readerRole.addRule(ODatabaseSecurityResources.QUERY, ORole.PERMISSION_READ);
 			readerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 			readerRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_READ);
 			readerRole.save();
@@ -205,7 +204,6 @@ public class OSecurityShared extends OSharedResourceAbstract implements OSecurit
 			writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_READ);
 			writerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_ALL);
 			writerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_ALL);
-			writerRole.addRule(ODatabaseSecurityResources.QUERY, ORole.PERMISSION_READ);
 			writerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_ALL);
 			writerRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_ALL);
 			writerRole.save();
