@@ -97,19 +97,15 @@ public class OObjectSerializerHelper {
 	private static Class																				jpaTransientClass;
 
 	static {
-		// DETERMINE IF THERE IS AVAILABLE JPA 2
 		try {
+			// DETERMINE IF THERE IS AVAILABLE JPA 1
 			jpaIdClass = Class.forName("javax.persistence.Id");
 			jpaVersionClass = Class.forName("javax.persistence.Version");
-
-			// DETERMINE IF THERE IS AVAILABLE JPA 2
 			jpaEmbeddedClass = Class.forName("javax.persistence.Embedded");
+			jpaTransientClass = Class.forName("javax.persistence.Transient");
 
 			// DETERMINE IF THERE IS AVAILABLE JPA 2
 			jpaAccessClass = Class.forName("javax.persistence.Access");
-
-			// DETERMINE IF THERE IS AVAILABLE JPA 2
-			jpaTransientClass = Class.forName("javax.persistence.Transient");
 
 		} catch (Exception e) {
 		}
