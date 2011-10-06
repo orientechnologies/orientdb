@@ -21,16 +21,22 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -66,7 +72,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolEx
  */
 public class OStorageRemote extends OStorageAbstract {
 	private static final String											DEFAULT_HOST								= "localhost";
-	private static final String[]										DEFAULT_PORTS								= new String[] { "2424" };
+	private static final int												DEFAULT_PORT								= 2424;
 	private static final String											ADDRESS_SEPARATOR						= ";";
 
 	public static final String											PARAM_MIN_POOL							= "minpool";
@@ -78,7 +84,7 @@ public class OStorageRemote extends OStorageAbstract {
 	private int																			connectionRetryDelay;
 
 	private static List<OChannelBinaryClient>				networkPool									= new ArrayList<OChannelBinaryClient>();
-	protected List<OPair<String, String[]>>					serverURLs									= new ArrayList<OPair<String, String[]>>();
+	protected List<String>													serverURLs									= new ArrayList<String>();
 	protected final Map<String, Integer>						clustersIds									= new HashMap<String, Integer>();
 	protected final Map<String, String>							clustersTypes								= new HashMap<String, String>();
 	protected int																		defaultClusterId;
@@ -1114,60 +1120,80 @@ public class OStorageRemote extends OStorageAbstract {
 	 * Parse the URL in the following formats:<br/>
 	 */
 	protected void parseServerURLs() {
-		String remoteHost;
-		String[] remotePorts;
-
 		int dbPos = url.indexOf('/');
 		if (dbPos == -1) {
 			// SHORT FORM
+			addHost(getDefaultHost());
 			name = url;
-			remoteHost = getDefaultHost();
-			remotePorts = getDefaultPort();
 		} else {
 			name = url.substring(dbPos + 1);
+			for (String host : url.substring(0, dbPos).split(ADDRESS_SEPARATOR))
+				host = addHost(host);
+		}
 
-			int startPos = 0;
-			int endPos = 0;
+		if (serverURLs.size() == 1 && OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_ENABLED.getValueAsBoolean()) {
+			// LOOK FOR LOAD BALANCING DNS TXT RECORD
+			final String primaryServer = serverURLs.get(0);
 
-			while (endPos < dbPos) {
-				if (url.indexOf(ADDRESS_SEPARATOR, startPos) > -1)
-					endPos = url.indexOf(ADDRESS_SEPARATOR, startPos);
-				else
-					endPos = dbPos;
-
-				int posRemotePort = url.indexOf(':', startPos);
-
-				if (posRemotePort != -1 && posRemotePort < endPos) {
-					remoteHost = url.substring(startPos, posRemotePort);
-					remotePorts = url.substring(posRemotePort + 1, endPos).split("_");
-					startPos = endPos + 1;
-				} else {
-					remoteHost = url.substring(startPos, endPos);
-					remotePorts = getDefaultPort();
-					startPos = endPos + 1;
+			try {
+				final Hashtable<String, String> env = new Hashtable<String, String>();
+				env.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
+				env.put("com.sun.jndi.ldap.connect.timeout",
+						OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT.getValueAsString());
+				final DirContext ictx = new InitialDirContext(env);
+				final String hostName = primaryServer.indexOf(":") == -1 ? primaryServer : primaryServer.substring(0,
+						primaryServer.indexOf(":"));
+				final Attributes attrs = ictx.getAttributes(hostName, new String[] { "TXT" });
+				final Attribute attr = attrs.get("TXT");
+				if (attr != null) {
+					String configuration = (String) attr.get();
+					if (configuration.startsWith(""))
+						configuration = configuration.substring(1, configuration.length() - 1);
+					if (configuration != null) {
+						final String[] parts = configuration.split(" ");
+						for (String part : parts) {
+							if (part.startsWith("s=")) {
+								addHost(part.substring("s=".length()));
+							}
+						}
+					}
 				}
-
-				// REGISTER THE REMOTE SERVER+PORT
-				serverURLs.add(new OPair<String, String[]>(remoteHost, remotePorts));
+			} catch (NamingException e) {
 			}
 		}
+	}
+
+	/**
+	 * Registers the remote server with port.
+	 */
+	protected String addHost(String host) {
+		// REGISTER THE REMOTE SERVER+PORT
+		if (host.indexOf(":") == -1)
+			host += ":" + getDefaultPort();
+
+		if (!serverURLs.contains(host))
+			serverURLs.add(host);
+
+		return host;
 	}
 
 	protected String getDefaultHost() {
 		return DEFAULT_HOST;
 	}
 
-	protected String[] getDefaultPort() {
-		return DEFAULT_PORTS;
+	protected int getDefaultPort() {
+		return DEFAULT_PORT;
 	}
 
 	protected OChannelBinaryClient createNetworkConnection() throws IOException, UnknownHostException {
-		int port;
-		for (OPair<String, String[]> server : serverURLs) {
-			port = Integer.parseInt(server.getValue()[server.getValue().length - 1]);
+		for (String server : serverURLs) {
+			OLogManager.instance().debug(this, "Trying to connect to the remote host %s...", server);
 
-			OLogManager.instance().debug(this, "Trying to connect to the remote host %s:%d...", server.getKey(), port);
-			final OChannelBinaryClient network = new OChannelBinaryClient(server.getKey(), port, clientConfiguration);
+			final int sepPos = server.indexOf(":");
+			final String remoteHost = server.substring(0, sepPos);
+			final int remotePort = Integer.parseInt(server.substring(sepPos + 1));
+
+			final OChannelBinaryClient network = new OChannelBinaryClient(remoteHost, remotePort, clientConfiguration);
 
 			OChannelBinaryProtocol.checkProtocolVersion(network);
 
@@ -1175,10 +1201,10 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 
 		final StringBuilder buffer = new StringBuilder();
-		for (OPair<String, String[]> server : serverURLs) {
+		for (String server : serverURLs) {
 			if (buffer.length() > 0)
 				buffer.append(',');
-			buffer.append(server.getKey());
+			buffer.append(server);
 		}
 
 		throw new OIOException("Can't connect to any configured remote nodes: " + buffer);

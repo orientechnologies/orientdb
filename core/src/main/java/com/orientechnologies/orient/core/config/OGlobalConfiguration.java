@@ -183,6 +183,12 @@ public enum OGlobalConfiguration {
 	NETWORK_SOCKET_RETRY_DELAY("network.retryDelay", "Number of ms the client wait to reconnect to the server in case of failure",
 			Integer.class, 500),
 
+	NETWORK_BINARY_DNS_LOADBALANCING_ENABLED("network.binary.loadBalancing.enabled",
+			"Asks for DNS TXT record to know if load balancing is supported", Boolean.class, Boolean.TRUE),
+
+	NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT("network.binary.loadBalancing.timeout",
+			"Maximum time (in ms) to wait for the answer from DNS about the TXT record for load balancing", Integer.class, 2000),
+
 	NETWORK_BINARY_MAX_CONTENT_LENGTH("network.binary.maxLength", "TCP/IP max content length in bytes of BINARY requests",
 			Integer.class, 100000),
 
