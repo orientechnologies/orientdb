@@ -55,6 +55,7 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 		super(NAME, 1, 1);
 	}
 
+	@SuppressWarnings("unchecked")
 	public Object execute(final ORecord<?> iCurrentRecord, final Object[] iParameters, final OCommandExecutor iRequester) {
 		if (!(iCurrentRecord instanceof ODocument))
 			// NOT DOCUMENT: IGNORE IT
@@ -88,12 +89,18 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 
 		engine.getBindings(ScriptContext.ENGINE_SCOPE).put("current", graphElement);
 
-		// BIND EXECUTOR'S PARAMETERS
+		// BIND EXECUTOR'S PARAMETERS AND IDENTIFY OUTPUT
+		String output = null;
 		if (iRequester != null) {
 			final Map<Object, Object> params = iRequester.getParameters();
 			if (params != null) {
-				for (Entry<Object, Object> param : params.entrySet())
+				for (Entry<Object, Object> param : params.entrySet()) {
+					if (param.getKey().toString().trim().equals("output")) {
+						output = param.getValue().toString();
+						continue;
+					}
 					engine.getBindings(ScriptContext.ENGINE_SCOPE).put(param.getKey().toString(), param.getValue());
+				}
 			}
 		}
 
@@ -107,6 +114,26 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 		if (result == null)
 			result = new ArrayList<Object>();
 
+		// Case of 1 output bound variable. Return as:
+		// - Map -> ODocument
+		if (output != null) {
+			if (scriptResult instanceof GremlinPipeline) {
+				Iterator<?> it = ((GremlinPipeline<?, ?>) scriptResult).iterator();
+				while (it.hasNext())
+					// ignore iCurrentRecord but traverse still required
+					it.next();
+			}
+			Map<String, Object> map = (Map<String, Object>) engine.get(output);
+			ODocument oDocument = new ODocument(map);
+			result.add(oDocument);
+			return oDocument;
+		}
+
+		// Case of no bound variables. Return as:
+		// - List<ODocument>
+		// - ODocument
+		// - Integer
+		// returned for this call in the last pipe
 		if (scriptResult instanceof GremlinPipeline) {
 			final Iterator<?> it = ((GremlinPipeline<?, ?>) scriptResult).iterator();
 			Object finalResult = null;
