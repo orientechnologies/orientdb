@@ -15,12 +15,14 @@
  */
 package com.orientechnologies.orient.core.storage;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -34,7 +36,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 	protected AtomicLong											version	= new AtomicLong();
 	protected OLevel2RecordCache							level2Cache;
 
-	protected volatile STATUS									status		= STATUS.CLOSED;
+	protected volatile STATUS									status	= STATUS.CLOSED;
 	protected OSharedResourceAdaptiveExternal	lock		= new OSharedResourceAdaptiveExternal(
 																												OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
 
@@ -153,6 +155,23 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 				tot += c.getEntries();
 
 		return tot;
+	}
+
+	public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
+		if (iExclusiveLock)
+			lock.acquireExclusiveLock();
+		else
+			lock.acquireSharedLock();
+		try {
+			return iCallable.call();
+		} catch (Exception e) {
+			throw new OException("Error on nested call in lock", e);
+		} finally {
+			if (iExclusiveLock)
+				lock.releaseExclusiveLock();
+			else
+				lock.releaseSharedLock();
+		}
 	}
 
 	@Override

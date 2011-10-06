@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.db;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 
 import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
@@ -250,6 +251,10 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 
 	public void unregisterListener(final ODatabaseListener iListener) {
 		underlying.unregisterListener(iListener);
+	}
+
+	public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock) {
+		return getStorage().callInLock(iCallable, iExclusiveLock);
 	}
 
 	protected void checkOpeness() {

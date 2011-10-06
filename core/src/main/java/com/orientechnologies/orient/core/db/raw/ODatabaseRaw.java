@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -453,6 +454,10 @@ public class ODatabaseRaw implements ODatabase {
 		}
 
 		return (DB) this;
+	}
+
+	public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock) {
+		return storage.callInLock(iCallable, iExclusiveLock);
 	}
 
 	public void callOnCloseListeners() {

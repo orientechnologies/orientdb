@@ -356,4 +356,8 @@ public class OStorageRemoteThread implements OStorage {
 	protected void handleException(final String iMessage, final Exception iException) {
 		delegate.handleException(iMessage, iException);
 	}
+
+	public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
+		return delegate.callInLock(iCallable, iExclusiveLock);
+	}
 }

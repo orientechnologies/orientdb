@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.resource.OSharedContainer;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
@@ -181,4 +182,6 @@ public interface OStorage extends OSharedContainer {
 	public long[] getClusterDataRange(int currentClusterId);
 
 	public void renameCluster(String iOldName, String iNewName);
+
+	public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock);
 }

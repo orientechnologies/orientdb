@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.db;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
@@ -358,4 +359,6 @@ public interface ODatabase {
 	 * @param iListener
 	 */
 	public void unregisterListener(ODatabaseListener iListener);
+
+	public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock);
 }

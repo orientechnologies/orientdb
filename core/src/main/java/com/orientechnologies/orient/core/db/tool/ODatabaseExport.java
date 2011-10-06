@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 import java.util.zip.GZIPOutputStream;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -85,32 +86,38 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 	}
 
 	public ODatabaseExport exportDatabase() {
-		try {
-			listener.onMessage("\nStarted export of database '" + database.getName() + "' to " + fileName + "...");
+		database.callInLock(new Callable<Object>() {
 
-			database.getLevel1Cache().setEnable(false);
-			database.getLevel2Cache().setEnable(false);
+			public Object call() {
+				try {
+					listener.onMessage("\nStarted export of database '" + database.getName() + "' to " + fileName + "...");
 
-			long time = System.currentTimeMillis();
+					database.getLevel1Cache().setEnable(false);
+					database.getLevel2Cache().setEnable(false);
 
-			if (includeInfo)
-				exportInfo();
-			exportClusters();
-			if (includeSchema)
-				exportSchema();
-			exportRecords();
-			if (includeIndexes)
-				exportIndexes();
+					long time = System.currentTimeMillis();
 
-			listener.onMessage("\n\nDatabase export completed in " + (System.currentTimeMillis() - time) + "ms");
+					if (includeInfo)
+						exportInfo();
+					exportClusters();
+					if (includeSchema)
+						exportSchema();
+					exportRecords();
+					if (includeIndexes)
+						exportIndexes();
 
-			writer.flush();
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new ODatabaseExportException("Error on exporting database '" + database.getName() + "' to: " + fileName, e);
-		} finally {
-			close();
-		}
+					listener.onMessage("\n\nDatabase export completed in " + (System.currentTimeMillis() - time) + "ms");
+
+					writer.flush();
+				} catch (Exception e) {
+					e.printStackTrace();
+					throw new ODatabaseExportException("Error on exporting database '" + database.getName() + "' to: " + fileName, e);
+				} finally {
+					close();
+				}
+				return null;
+			}
+		}, false);
 
 		return this;
 	}
