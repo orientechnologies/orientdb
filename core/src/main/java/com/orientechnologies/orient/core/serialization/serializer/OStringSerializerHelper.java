@@ -143,7 +143,7 @@ public abstract class OStringSerializerHelper {
 	}
 
 	public static List<String> smartSplit(final String iSource, final char iRecordSeparator, final char... iJumpChars) {
-		return smartSplit(iSource, new char[] { iRecordSeparator }, 0, iSource.length(), false, iJumpChars);
+		return smartSplit(iSource, new char[] { iRecordSeparator }, 0, -1, false, iJumpChars);
 	}
 
 	public static List<String> smartSplit(final String iSource, final char[] iRecordSeparator, int beginIndex, final int endIndex,
@@ -173,8 +173,11 @@ public abstract class OStringSerializerHelper {
 
 		final int max = endIndex > -1 ? endIndex : iSource.length();
 
-		for (int i = beginIndex; i < max; ++i) {
-			char c = iSource.charAt(i);
+		final char[] buffer = new char[max - beginIndex];
+		iSource.getChars(beginIndex, max, buffer, 0);
+
+		for (int i = 0; i < buffer.length; ++i) {
+			final char c = buffer[i];
 
 			if (stringBeginChar == ' ') {
 				// OUTSIDE A STRING
@@ -228,7 +231,7 @@ public abstract class OStringSerializerHelper {
 					// OUTSIDE A PARAMS/COLLECTION/MAP
 					if (isCharPresent(c, iRecordSeparator)) {
 						// SEPARATOR (OUTSIDE A STRING): PUSH
-						return i + 1;
+						return beginIndex + i + 1;
 					}
 				}
 
@@ -390,7 +393,7 @@ public abstract class OStringSerializerHelper {
 			return iBeginPosition;
 
 		final String t = buffer.substring(1, buffer.length() - 1);
-		final List<String> pars = smartSplit(t, PARAMETER_SEPARATOR, 0, t.length(), true);
+		final List<String> pars = smartSplit(t, PARAMETER_SEPARATOR, 0, -1, true);
 
 		for (int i = 0; i < pars.size(); ++i)
 			iParameters.add(pars.get(i).trim());

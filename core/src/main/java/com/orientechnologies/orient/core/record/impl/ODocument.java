@@ -1024,7 +1024,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 		return this;
 	}
 
-	protected String checkFieldName(String iFieldName) {
+	protected String checkFieldName(final String iFieldName) {
 		final Character c = OSchemaShared.checkNameIfValid(iFieldName);
 		if (c != null)
 			throw new IllegalArgumentException("Invalid field name '" + iFieldName + "'. Character '" + c + "' is invalid");
