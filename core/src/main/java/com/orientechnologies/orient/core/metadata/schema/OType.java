@@ -156,6 +156,8 @@ public enum OType {
 			for (int i = 0; i < type.javaTypes.length; ++i) {
 				if (type.javaTypes[i] == iClass)
 					return type;
+				if (type.javaTypes[i] == Array.class && iClass.isArray())
+					return type;
 			}
 
 		if (ORecord.class.isAssignableFrom(iClass))
