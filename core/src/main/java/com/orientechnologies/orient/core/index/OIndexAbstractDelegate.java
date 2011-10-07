@@ -39,8 +39,13 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
 		this.delegate = iDelegate;
 	}
 
+	@SuppressWarnings("unchecked")
 	public OIndexInternal<T> getInternal() {
-		return (OIndexInternal<T>) delegate;
+		OIndex<?> internal = delegate;
+		while (!(internal instanceof OIndexInternal) && internal != null)
+			internal = internal.getInternal();
+
+		return (OIndexInternal<T>) internal;
 	}
 
 	public OIndex<T> create(final String iName, final OType iKeyType, final ODatabaseRecord iDatabase,
@@ -173,11 +178,11 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
 		return delegate.getKeyType();
 	}
 
-    public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
-        return delegate.getValues(iKeys);
-    }
+	public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
+		return delegate.getValues(iKeys);
+	}
 
-    public Collection<ODocument> getEntries(final Collection<?> iKeys) {
-        return delegate.getEntries(iKeys);
-    }
+	public Collection<ODocument> getEntries(final Collection<?> iKeys) {
+		return delegate.getEntries(iKeys);
+	}
 }
