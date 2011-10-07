@@ -360,20 +360,19 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 						type = record.fieldType(fieldName);
 						linkedClass = null;
 						linkedType = null;
-						
+
 						// NOT FOUND: TRY TO DETERMINE THE TYPE FROM ITS CONTENT
 						if (fieldValue != null && type == null) {
-							final char firstChar = fieldValue.charAt(0); 
-							if (fieldValue.length() > 1 && firstChar == '"' && fieldValue.charAt(fieldValue.length() - 1) == '"') {
+							if (fieldValue.length() > 1 && fieldValue.charAt(0) == '"' && fieldValue.charAt(fieldValue.length() - 1) == '"') {
 								type = OType.STRING;
-							} else if (firstChar == OStringSerializerHelper.COLLECTION_BEGIN
+							} else if (fieldValue.charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN
 									&& fieldValue.charAt(fieldValue.length() - 1) == OStringSerializerHelper.COLLECTION_END) {
 								type = OType.EMBEDDEDLIST;
 
 								final String value = fieldValue.substring(1, fieldValue.length() - 1);
 
 								if (value.length() > 0) {
-									if (firstChar == OStringSerializerHelper.LINK) {
+									if (value.charAt(0) == OStringSerializerHelper.LINK) {
 										type = OType.LINKLIST;
 										linkedType = OType.LINK;
 
@@ -384,22 +383,22 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 											if (className != null)
 												linkedClass = iDatabase.getMetadata().getSchema().getClass(className);
 										}
-									} else if (firstChar == OStringSerializerHelper.PARENTHESIS_BEGIN) {
+									} else if (value.charAt(0) == OStringSerializerHelper.PARENTHESIS_BEGIN) {
 										linkedType = OType.EMBEDDED;
-									} else if (Character.isDigit(firstChar) || firstChar == '+' || firstChar == '-') {
+									} else if (Character.isDigit(value.charAt(0)) || value.charAt(0) == '+' || value.charAt(0) == '-') {
 										String[] items = value.split(",");
 										linkedType = getType(items[0]);
-									} else if (firstChar == '\'' || firstChar == '"')
+									} else if (value.charAt(0) == '\'' || value.charAt(0) == '"')
 										linkedType = OType.STRING;
 								} else
 									uncertainType = true;
 
-							} else if (firstChar == OStringSerializerHelper.MAP_BEGIN
+							} else if (fieldValue.charAt(0) == OStringSerializerHelper.MAP_BEGIN
 									&& fieldValue.charAt(fieldValue.length() - 1) == OStringSerializerHelper.MAP_END) {
 								type = OType.EMBEDDEDMAP;
-							} else if (firstChar == OStringSerializerHelper.LINK)
+							} else if (fieldValue.charAt(0) == OStringSerializerHelper.LINK)
 								type = OType.LINK;
-							else if (firstChar == OStringSerializerHelper.PARENTHESIS_BEGIN)
+							else if (fieldValue.charAt(0) == OStringSerializerHelper.PARENTHESIS_BEGIN)
 								type = OType.EMBEDDED;
 							else if (fieldValue.equals("true") || fieldValue.equals("false"))
 								type = OType.BOOLEAN;
