@@ -52,7 +52,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 
 			final ORecordLazySet values = (ORecordLazySet) map.get(iKey);
 			if (values != null)
-				values.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
+				values.setDatabase(getDatabase());
 
 			if (values == null)
 				return ORecordLazySet.EMPTY_SET;
@@ -74,7 +74,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 			Set<OIdentifiable> values = map.get(iKey);
 
 			if (values == null)
-				values = new ORecordLazySet(configuration.getDatabase()).setRidOnly(true);
+				values = new ORecordLazySet(getDatabase()).setRidOnly(true);
 
 			if (!iSingleValue.getIdentity().isValid())
 				((ORecord<?>) iSingleValue).save();
@@ -164,7 +164,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 			if (subSet == null)
 				return ORecordLazySet.EMPTY_SET;
 
-			final Set<OIdentifiable> result = new ORecordLazySet(configuration.getDatabase());
+			final Set<OIdentifiable> result = new ORecordLazySet(getDatabase());
 			for (Set<OIdentifiable> v : subSet.values()) {
 				result.addAll(v);
 			}
@@ -184,7 +184,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 			if (subSet == null)
 				return ORecordLazySet.EMPTY_SET;
 
-			final Set<OIdentifiable> result = new ORecordLazySet(configuration.getDatabase());
+			final Set<OIdentifiable> result = new ORecordLazySet(getDatabase());
 			for (Set<OIdentifiable> v : subSet.values()) {
 				result.addAll(v);
 			}
@@ -259,7 +259,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 			if (subSet == null)
 				return ORecordLazySet.EMPTY_SET;
 
-			final Set<OIdentifiable> result = new ORecordLazySet(configuration.getDatabase());
+			final Set<OIdentifiable> result = new ORecordLazySet(getDatabase());
 			for (Set<OIdentifiable> v : subSet.values()) {
 				result.addAll(v);
 			}

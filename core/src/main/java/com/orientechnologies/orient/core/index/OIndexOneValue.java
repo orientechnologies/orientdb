@@ -226,7 +226,7 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 		if (iSubSet == null)
 			return ORecordLazySet.EMPTY_SET;
 
-		final Set<OIdentifiable> result = new ORecordLazySet(configuration.getDatabase());
+		final Set<OIdentifiable> result = new ORecordLazySet(getDatabase());
 		result.addAll(iSubSet.values());
 		return result;
 	}
