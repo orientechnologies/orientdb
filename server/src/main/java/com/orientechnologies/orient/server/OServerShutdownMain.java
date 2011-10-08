@@ -124,6 +124,7 @@ public class OServerShutdownMain {
 			channel.readString();
 			throw new ONetworkProtocolException(channel.readString());
 		}
+		channel.readInt();
 	}
 
 	public static void main(final String[] iArgs) {
