@@ -65,20 +65,19 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLPermissi
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected <class>", text, oldPos);
+			throw new OCommandSQLParsingException("Expected <cluster-name>", text, oldPos);
 
 		clusterName = word.toString();
 
-		Pattern p = Pattern.compile("([0-9]*)");
-
-		Matcher m = p.matcher(clusterName);
+		final Pattern p = Pattern.compile("([0-9]*)");
+		final Matcher m = p.matcher(clusterName);
 		if (m.matches())
 			clusterId = Integer.parseInt(clusterName);
 
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Missed the class's attribute to change", text, oldPos);
+			throw new OCommandSQLParsingException("Missed the cluster's attribute to change", text, oldPos);
 
 		final String attributeAsString = word.toString();
 
