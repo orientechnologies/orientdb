@@ -36,8 +36,8 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
 	public void shouldExecutePreparedStatement() throws Exception {
 		PreparedStatement stmt = conn.prepareStatement("SELECT stringKey, intKey FROM Item WHERE stringKey = ? OR intKey = ?");
 		assertNotNull(stmt);
-		stmt.setString(1, "1");
 
+		stmt.setString(1, "1");
 		stmt.setInt(2, 1);
 
 		ResultSet rs = stmt.executeQuery();

@@ -138,11 +138,11 @@ public class OrientJdbcResultSet implements ResultSet {
 	}
 
 	public void deleteRow() throws SQLException {
-
+		document.delete();
 	}
 
 	public int findColumn(String columnLabel) throws SQLException {
-
+		
 		return 0;
 	}
 
@@ -205,33 +205,28 @@ public class OrientJdbcResultSet implements ResultSet {
 	}
 
 	public boolean getBoolean(int columnIndex) throws SQLException {
-
-		return false;
+		return getBoolean(fieldNames[columnIndex - 1]);
 	}
 
 	public boolean getBoolean(String columnLabel) throws SQLException {
+		return document.field(columnLabel, OType.BOOLEAN);
 
-		return false;
 	}
 
 	public byte getByte(int columnIndex) throws SQLException {
-
-		return 0;
+		return getByte(fieldNames[columnIndex - 1]);
 	}
 
 	public byte getByte(String columnLabel) throws SQLException {
-
-		return 0;
+		return document.field(columnLabel, OType.BYTE);
 	}
 
 	public byte[] getBytes(int columnIndex) throws SQLException {
-
-		return null;
+		return getBytes(fieldNames[columnIndex - 1]);
 	}
 
 	public byte[] getBytes(String columnLabel) throws SQLException {
-
-		return null;
+		return document.field(columnLabel, OType.BINARY);
 	}
 
 	public Reader getCharacterStream(int columnIndex) throws SQLException {
@@ -429,7 +424,7 @@ public class OrientJdbcResultSet implements ResultSet {
 
 	public short getShort(String columnLabel) throws SQLException {
 
-		return (Short) document.field(columnLabel, OType.STRING);
+		return document.field(columnLabel, OType.SHORT);
 	}
 
 	public String getString(int columnIndex) throws SQLException {

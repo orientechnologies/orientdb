@@ -235,8 +235,10 @@ public class OrientJdbcStatement implements Statement {
 	}
 
 	public int getUpdateCount() throws SQLException {
-
-		return 0;
+		if (isClosed()) throw new SQLException("Statement already closed");
+		
+		return -1;
+	
 	}
 
 	public SQLWarning getWarnings() throws SQLException {

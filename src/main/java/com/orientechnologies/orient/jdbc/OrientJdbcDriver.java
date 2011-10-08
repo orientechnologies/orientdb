@@ -45,7 +45,7 @@ public class OrientJdbcDriver implements java.sql.Driver {
 	}
 
 	public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException {
-		return null;
+		return new DriverPropertyInfo[] {};
 	}
 
 	public boolean jdbcCompliant() {

@@ -26,7 +26,7 @@ public class OrientJdbcDriverTest {
 	}
 
 	@Test
-	public void shouldConnect() throws ClassNotFoundException, SQLException {
+	public void shouldConnect() throws SQLException {
 		String dbUrl = "memory:test";
 
 		ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);

@@ -17,14 +17,33 @@ package com.orientechnologies.orient.jdbc;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Types;
+import java.util.HashMap;
+import java.util.Map;
+
+import com.orientechnologies.orient.core.metadata.schema.OType;
 
 public class OrientJdbcMetaData implements ResultSetMetaData {
+	
+	private final  static Map<OType, Integer> oTypesSqlTypes = new HashMap<OType, Integer>();
+	
+	static {
+		oTypesSqlTypes.put(OType.STRING, Types.VARCHAR);
+		oTypesSqlTypes.put(OType.INTEGER, Types.INTEGER);
+		oTypesSqlTypes.put(OType.FLOAT, Types.FLOAT);
+		oTypesSqlTypes.put(OType.SHORT, Types.SMALLINT);
+		oTypesSqlTypes.put(OType.BOOLEAN, Types.BOOLEAN);
+		oTypesSqlTypes.put(OType.LONG, Types.BIGINT);
+		oTypesSqlTypes.put(OType.DOUBLE, Types.DECIMAL);
+	}
+	
 	private OrientJdbcResultSet resultSet;
 
 	public OrientJdbcMetaData(OrientJdbcResultSet iResultSet) {
 		resultSet = iResultSet;
 	}
 
+	
 	public int getColumnCount() throws SQLException {
 		return 0;
 	}
