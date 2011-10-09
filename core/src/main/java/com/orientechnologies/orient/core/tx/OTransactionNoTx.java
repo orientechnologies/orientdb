@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.tx;
 import java.util.Collection;
 import java.util.List;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -61,14 +62,36 @@ public class OTransactionNoTx extends OTransactionAbstract {
 	 * Update the record.
 	 */
 	public void saveRecord(final ORecordInternal<?> iRecord, final String iClusterName) {
-		database.executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iRecord.getRecordType());
+		try {
+			database.executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iRecord.getRecordType());
+		} catch (Exception e) {
+			// REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
+			final ORecordId rid = (ORecordId) iRecord.getIdentity();
+			if (rid.isValid())
+				database.getLevel1Cache().freeRecord(rid);
+
+			if (e instanceof RuntimeException)
+				throw (RuntimeException) e;
+			new OException(e);
+		}
 	}
 
 	/**
 	 * Delete the record.
 	 */
 	public void deleteRecord(final ORecordInternal<?> iRecord) {
-		database.executeDeleteRecord(iRecord, iRecord.getVersion());
+		try {
+			database.executeDeleteRecord(iRecord, iRecord.getVersion());
+		} catch (Exception e) {
+			// REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
+			final ORecordId rid = (ORecordId) iRecord.getIdentity();
+			if (rid.isValid())
+				database.getLevel1Cache().freeRecord(rid);
+
+			if (e instanceof RuntimeException)
+				throw (RuntimeException) e;
+			new OException(e);
+		}
 	}
 
 	public Collection<OTransactionRecordEntry> getCurrentRecordEntries() {
