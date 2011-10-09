@@ -2,7 +2,6 @@ package com.orientechnologies.orient.graph.gremlin;
 
 import java.io.FileInputStream;
 
-import com.tinkerpop.blueprints.pgm.TransactionalGraph.Mode;
 import com.tinkerpop.blueprints.pgm.impls.orientdb.OrientGraph;
 import com.tinkerpop.blueprints.pgm.util.graphml.GraphMLReader;
 
@@ -22,7 +21,7 @@ public class TestLoadGraph {
 
 		final long startTime = System.currentTimeMillis();
 
-		g.setTransactionMode(Mode.MANUAL);
+		g.setMaxBufferSize(0);
 
 		GraphMLReader.inputGraph(g, new FileInputStream(inputFile), 100000, null, null, null);
 
