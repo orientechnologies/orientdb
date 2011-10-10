@@ -81,7 +81,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
  * @param <K>
  * @param <V>
  */
-@SuppressWarnings({ "unchecked", "serial" })
+@SuppressWarnings( { "unchecked", "serial" })
 public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> implements OSerializableStream {
 	protected OMVRBTreePersistent<K, V>				pTree;
 
@@ -141,7 +141,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		Arrays.fill(p.serializedKeys, iPosition, p.pageSize, 0);
 		Arrays.fill(p.serializedValues, iPosition, p.pageSize, 0);
 
-		markDirty();
+		tree.getListener().signalNodeChanged(this);
 
 		pTree.addNodeAsEntrypoint(this);
 	}
@@ -781,32 +781,14 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		} else
 			marshalledRecords.add(identityRecord);
 
-		if (parent != null && parentRid.isNew()) {
-			// FORCE DIRTY
-			parent.record.setDirty();
-
+		if (parent != null && parentRid.isNew())
 			parent.save();
-			parentRid = parent.record.getIdentity();
-			record.setDirty();
-		}
 
-		if (left != null && leftRid.isNew()) {
-			// FORCE DIRTY
-			left.record.setDirty();
-
+		if (left != null && leftRid.isNew())
 			left.save();
-			leftRid = left.record.getIdentity();
-			record.setDirty();
-		}
 
-		if (right != null && rightRid.isNew()) {
-			// FORCE DIRTY
-			right.record.setDirty();
-
+		if (right != null && rightRid.isNew())
 			right.save();
-			rightRid = right.record.getIdentity();
-			record.setDirty();
-		}
 
 		final long timer = OProfiler.getInstance().startChrono();
 

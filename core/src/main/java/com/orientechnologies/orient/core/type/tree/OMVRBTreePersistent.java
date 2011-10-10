@@ -436,8 +436,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 							node.save();
 
 							if (debug)
-								System.out.printf("\nSaved %s tree node %s: parent %s, left %s, right %s", wasNew ? "new" : "", node.record
-										.getIdentity(), node.parentRid, node.leftRid, node.rightRid);
+								System.out.printf("\nSaved %s tree node %s: parent %s, left %s, right %s", wasNew ? "new" : "",
+										node.record.getIdentity(), node.parentRid, node.leftRid, node.rightRid);
 
 							if (wasNew) {
 								if (node.record.getIdentity().getClusterPosition() < -1) {
@@ -445,14 +445,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 									if (cache.get(node.record.getIdentity()) != node)
 										// INSERT A COPY TO PREVENT CHANGES
 										cache.put(node.record.getIdentity().copy(), node);
-								} else {
-									// NEW RID: MAKE DIRTY THE LINKED NODES
-									if (node.parent != null)
-										(node.parent).markDirty();
-									if (node.left != null)
-										(node.left).markDirty();
-									if (node.right != null)
-										(node.right).markDirty();
 								}
 
 								cache.put(node.record.getIdentity(), node);
