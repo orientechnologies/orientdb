@@ -25,6 +25,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
@@ -104,5 +105,48 @@ public class DbCreationTest {
 		database.open("admin", "admin");
 		database.query(new OSQLSynchQuery<ORole>("select from ORole where name = 'admin'"));
 		database.close();
+	}
+
+	@Test(dependsOnMethods = { "testChangeLocale" })
+	public void testSubFolderDbCreate() throws IOException {
+		int pos = url.lastIndexOf("/");
+		String u = url;
+
+		if (pos > -1)
+			u = url.substring(0, pos) + "/sub/subTest";
+		else {
+			pos = url.lastIndexOf(":");
+			u = url.substring(0, pos + 1) + "sub/subTest";
+		}
+
+		ODatabaseDocumentTx db = new ODatabaseDocumentTx(u);
+
+		TestUtils.createDatabase(db, u);
+		db.open("admin", "admin");
+		db.close();
+
+		TestUtils.deleteDatabase(db);
+	}
+
+	@Test(dependsOnMethods = { "testChangeLocale" })
+	public void testSubFolderDbCreateConnPool() throws IOException {
+		int pos = url.lastIndexOf("/");
+		String u = url;
+
+		if (pos > -1)
+			u = url.substring(0, pos) + "/sub/subTest";
+		else {
+			pos = url.lastIndexOf(":");
+			u = url.substring(0, pos + 1) + "sub/subTest";
+		}
+
+		ODatabaseDocumentTx db = new ODatabaseDocumentTx(u);
+
+		TestUtils.createDatabase(db, u);
+
+		db = ODatabaseDocumentPool.global().acquire(u, "admin", "admin");
+		db.close();
+
+		TestUtils.deleteDatabase(db);
 	}
 }
