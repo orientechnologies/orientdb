@@ -185,7 +185,7 @@
     </delete>
     
     <java classname="com.orientechnologies.orient.graph.gremlin.TestLoadGraph">
-      <arg value="graphdb/target/classes/graph-example-2.xml"/>
+      <arg value="graphdb/target/test-classes/graph-example-2.xml"/>
       <arg value="local:${graph.release}/databases/tinkerpop"/>
 			<classpath>
 				<pathelement path="graphdb/target/classes" />
