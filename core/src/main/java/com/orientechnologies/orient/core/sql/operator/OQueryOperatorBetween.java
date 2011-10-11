@@ -15,13 +15,12 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import com.orientechnologies.common.collection.OIterableObject;
+import java.util.Iterator;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
-
-import java.util.Iterator;
 
 /**
  * BETWEEN operator.
@@ -39,11 +38,11 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
 	@SuppressWarnings("unchecked")
 	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
-        if(!OMultiValue.isMultiValue(iRight.getClass())){
-            throw new IllegalArgumentException("Found '" + iRight + "' while was expected: " + getSyntax());
-        }
+		if (!OMultiValue.isMultiValue(iRight.getClass())) {
+			throw new IllegalArgumentException("Found '" + iRight + "' while was expected: " + getSyntax());
+		}
 
-        final Iterator valueIterator = OMultiValue.getMultiValueIterator(iRight);
+		final Iterator<?> valueIterator = OMultiValue.getMultiValueIterator(iRight);
 
 		if (OMultiValue.getSize(iRight) != 3)
 			throw new IllegalArgumentException("Found '" + OMultiValue.toString(iRight) + "' while was expected: " + getSyntax());
@@ -51,7 +50,7 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
 		final Object right1 = OType.convert(valueIterator.next(), iLeft.getClass());
 		if (right1 == null)
 			return false;
-        valueIterator.next();
+		valueIterator.next();
 		final Object right2 = OType.convert(valueIterator.next(), iLeft.getClass());
 		if (right2 == null)
 			return false;
