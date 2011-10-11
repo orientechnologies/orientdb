@@ -15,16 +15,15 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
+import org.testng.annotations.Test;
 
 @Test(enabled = false)
 public class LocalCreateIndexedDocumentSpeedTest extends OrientMonoThreadTest {
@@ -49,7 +48,7 @@ public class LocalCreateIndexedDocumentSpeedTest extends OrientMonoThreadTest {
 
 		// REMOVE THE INDEX
 		System.out.println("Remove index...");
-		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndex();
+		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndexes();
 		System.out.println("Ok");
 
 		database.declareIntent(new OIntentMassiveInsert());
@@ -71,7 +70,7 @@ public class LocalCreateIndexedDocumentSpeedTest extends OrientMonoThreadTest {
 			database.commit();
 
 			System.out.println("\nIndexing...");
-			database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(OProperty.INDEX_TYPE.UNIQUE);
+			database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(OClass.INDEX_TYPE.UNIQUE);
 			System.out.println("Done");
 		}
 	}

@@ -15,16 +15,17 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Fast index for full-text searches.
@@ -57,7 +58,7 @@ public class OIndexFullText extends OIndexMultiValues {
 	public void indexDocument(final ODocument iDocument) {
 		Object fieldValue;
 
-		for (String fieldName : iDocument.fieldNames()) {
+		for (final String fieldName : iDocument.fieldNames()) {
 			fieldValue = iDocument.field(fieldName);
 			put(fieldValue, iDocument);
 		}

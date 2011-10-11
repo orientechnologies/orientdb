@@ -3,6 +3,8 @@ package com.orientechnologies.orient.core.storage.impl.local;
 import java.io.File;
 
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -10,10 +12,20 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 @Test
 public class OStorageLocalTest {
+    private boolean oldStorageOpen;
+
+    @BeforeMethod
+    public void beforeMethod() {
+        oldStorageOpen = OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean();
+        OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
+    }
+
+    @AfterMethod
+    public void afterMethod() {
+       OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(oldStorageOpen);
+    }
 
 	public void withLegacyPath() {
-		OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
-
 		String dbPath = getDatabasePath();
 
 		System.out.println("Using db = local:" + dbPath);

@@ -15,10 +15,8 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -32,25 +30,23 @@ import java.util.List;
 
 @Test(groups = {"index"})
 public class CollectionIndexTest {
-	private ODatabaseObjectTx database;
+	private final ODatabaseObjectTx database;
+
+    @Parameters(value = "url")
+    public CollectionIndexTest(final String iURL) {
+        database = new ODatabaseObjectTx(iURL);
+        database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain");
+    }
 
 	@BeforeClass
 	public void setupSchema() {
-		// By attempting to create the database here, we are able to run this test independently (using
-		// IDEAs parametised TestNG config) of the main test suite and debug in our IDE
-		try {
-			if (!database.exists()) {
-				database.create();
-			} else {
-				database.open("admin", "admin");
-			}
-		} catch (UnsupportedOperationException e) {
-			database.open("admin", "admin");
-		}
-
-		OClass collector = database.getMetadata().getSchema().createClass("Collector");
+        database.open("admin", "admin");
+		final OClass collector = database.getMetadata().getSchema().createClass("Collector");
 		collector.createProperty("id", OType.STRING);
-		collector.createProperty("stringCollection", OType.EMBEDDEDLIST, OType.STRING).createIndex(OProperty.INDEX_TYPE.NOTUNIQUE);
+		collector.createProperty("stringCollection",
+                OType.EMBEDDEDLIST, OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+        database.getMetadata().getSchema().save();
 		database.close();
 	}
 
@@ -70,12 +66,6 @@ public class CollectionIndexTest {
 	public void afterMethod() throws Exception {
 		database.command(new OCommandSQL("delete from Collector")).execute();
 		database.close();
-	}
-
-	@Parameters(value = "url")
-	public CollectionIndexTest(String iURL) {
-		database = new ODatabaseObjectTx(iURL);
-		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain");
 	}
 
 	@Test

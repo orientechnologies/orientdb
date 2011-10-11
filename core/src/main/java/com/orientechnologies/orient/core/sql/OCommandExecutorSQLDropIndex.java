@@ -15,14 +15,14 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+
+import java.util.Map;
 
 /**
  * SQL REMOVE INDEX command: Remove an index
@@ -71,27 +71,7 @@ public class OCommandExecutorSQLDropIndex extends OCommandExecutorSQLPermissionA
 		if (name == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 
-		if (name.indexOf('.') > -1) {
-			// PROPERTY INDEX
-			final String[] parts = name.split("\\.");
-			final String className = parts[0];
-			if (className == null)
-				throw new OCommandExecutionException("Class " + className + " not found");
-			String fieldName = parts[1];
-
-			final OClass cls = database.getMetadata().getSchema().getClass(className);
-			if (cls == null)
-				throw new OCommandExecutionException("Class '" + className + "' not found");
-
-			final OPropertyImpl prop = (OPropertyImpl) cls.getProperty(fieldName);
-			if (prop == null)
-				throw new IllegalArgumentException("Property '" + fieldName + "' was not found in class '" + cls + "'");
-
-			prop.dropIndexInternal();
-		} else {
-			database.getMetadata().getIndexManager().dropIndex(name);
-		}
-
-		return null;
+        database.getMetadata().getIndexManager().dropIndex(name);
+        return null;
 	}
 }

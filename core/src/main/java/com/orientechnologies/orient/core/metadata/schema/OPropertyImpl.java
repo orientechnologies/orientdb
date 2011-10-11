@@ -15,23 +15,31 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import com.orientechnologies.common.listener.OProgressListener;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+
+import com.orientechnologies.common.util.OCaseIncentiveComparator;
+import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OPropertyIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
-
-import java.text.ParseException;
-import java.util.Locale;
 
 /**
  * Contains the description of a persistent class property.
@@ -40,22 +48,20 @@ import java.util.Locale;
  * 
  */
 public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty {
-	private OClassImpl				owner;
+	private OClassImpl			owner;
 
-	private String						name;
-	private OType							type;
+	private String					name;
+	private OType					type;
 
-	private OType							linkedType;
-	private OClass						linkedClass;
+	private OType					linkedType;
+	private OClass					linkedClass;
 	transient private String	linkedClassName;
 
-	private OPropertyIndex		index;
-
-	private boolean						mandatory;
-	private boolean						notNull	= true;
-	private String						min;
-	private String						max;
-	private String						regexp;
+	private boolean				mandatory;
+	private boolean				notNull	= true;
+	private String					min;
+	private String					max;
+	private String					regexp;
 
 	/**
 	 * Constructor used in unmarshalling.
@@ -99,87 +105,93 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	 * Creates an index on this property. Indexes speed up queries but slow down insert and update operations. For massive inserts we
 	 * suggest to remove the index, make the massive insert and recreate it.
 	 * 
-	 * @param iType
-	 *          One of types supported.
-	 *          <ul>
-	 *          <li>UNIQUE: Doesn't allow duplicates</li>
-	 *          <li>NOTUNIQUE: Allow duplicates</li>
-	 *          <li>FULLTEXT: Indexes single word for full text search</li>
-	 *          </ul>
-	 * @return
-	 */
-	public OPropertyIndex createIndex(final INDEX_TYPE iType) {
-		OType indexType = type;
-		if (type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDSET || type == OType.LINKLIST || type == OType.LINKSET) {
-			indexType = linkedType;
-		}
-		index = new OPropertyIndex(getDatabase(), owner, new String[]{name}, iType.toString(), indexType);
-		return index;
-	}
-
-	/**
-	 * Creates an index on this property. Indexes speed up queries but slow down insert and update operations. For massive inserts we
-	 * suggest to remove the index, make the massive insert and recreate it. This version accepts a progress listener interface to
-	 * handle the progress status from the external.
 	 * 
 	 * @param iType
-	 *          Index type name registered in OIndexFactory. Defaults are:
-	 *          <ul>
-	 *          <li>UNIQUE: Doesn't allow duplicates</li>
-	 *          <li>NOTUNIQUE: Allow duplicates</li>
-	 *          <li>FULLTEXT: Indexes single word for full text search</li>
-	 *          </ul>
+	 *           One of types supported.
+	 *           <ul>
+	 *           <li>UNIQUE: Doesn't allow duplicates</li>
+	 *           <li>NOTUNIQUE: Allow duplicates</li>
+	 *           <li>FULLTEXT: Indexes single word for full text search</li>
+	 *           </ul>
 	 * @return
+	 * @deprecated Use {@link OClass#createIndex(String, OClass.INDEX_TYPE, String...)} instead.
 	 */
-	public OPropertyIndex createIndexInternal(final String iType, final OProgressListener iProgressListener) {
-		index = new OPropertyIndex(getDatabase(), owner, new String[] { name }, iType, type, iProgressListener);
-		saveInternal();
-		return index;
-	}
-
-	public OPropertyIndex setIndex(final OIndex<?> iIndex) {
-		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
-		final String cmd = String.format("alter property %s index %s", getFullName(), iIndex.getIdentity());
-		getDatabase().command(new OCommandSQL(cmd)).execute();
-
-		index = new OPropertyIndex(getDatabase(), owner, new String[] { name });
-
-		return index;
-	}
-
-	public OPropertyIndex setIndexInternal(final String iIndexName) {
-		index = new OPropertyIndex(getDatabase(), owner, new String[] { name });
-		return index;
+	@Deprecated
+	public OIndex<?> createIndex(final OClass.INDEX_TYPE iType) {
+		return owner.createIndex(getFullName(), iType, name);
 	}
 
 	/**
 	 * Remove the index on property
+	 * 
+	 * @deprecated Use {@link OIndexManager#dropIndex(String)} instead.
 	 */
-	public OPropertyImpl dropIndex() {
-		if (index != null) {
-			getDatabase().getMetadata().getIndexManager().dropIndex(index.getUnderlying().getName());
-			index = null;
+	@Deprecated
+	public OPropertyImpl dropIndexes() {
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_DELETE);
+
+		final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
+
+		final ArrayList<OIndex<?>> relatedIndexes = new ArrayList<OIndex<?>>();
+		for (final OIndex<?> index : indexManager.getClassIndexes(owner.getName())) {
+			final OIndexDefinition definition = index.getDefinition();
+
+			if (OCollections.indexOf(definition.getFields(), name, new OCaseIncentiveComparator()) > -1) {
+				if (definition instanceof OPropertyIndexDefinition) {
+					relatedIndexes.add(index);
+				} else {
+					throw new IllegalArgumentException("This operation applicable only for property indexes. " + index.getName()
+							+ " is " + index.getDefinition());
+				}
+			}
 		}
+
+		for (final OIndex<?> index : relatedIndexes) {
+			getDatabase().getMetadata().getIndexManager().dropIndex(index.getName());
+		}
+
 		return this;
 	}
 
 	/**
 	 * Remove the index on property
+	 * 
+	 * @deprecated by {@link #dropIndexes()}
 	 */
-	public void dropIndexInternal() {
-		if (index != null) {
-			getDatabase().getMetadata().getIndexManager().dropIndex(index.getUnderlying().getName());
-			saveInternal();
-			index = null;
-		}
+	@Deprecated
+	public void dropIndexesInternal() {
+		dropIndexes();
 	}
 
-	public OPropertyIndex getIndex() {
-		return index;
+	/**
+	 * Returns the first index defined for the property.
+	 * 
+	 * @deprecated Use {@link OClass#getInvolvedIndexes(String...)} instead.
+	 */
+	@Deprecated
+	public Set<OIndex<?>> getIndex() {
+		Set<OIndex<?>> indexes = owner.getInvolvedIndexes(name);
+		if (indexes != null)
+			indexes.iterator().next();
+		return null;
 	}
 
+	/**
+	 * 
+	 * @deprecated Use {@link OClass#getInvolvedIndexes(String...)} instead.
+	 */
+	@Deprecated
+	public Set<OIndex<?>> getIndexes() {
+		return owner.getInvolvedIndexes(name);
+	}
+
+	/**
+	 * 
+	 * @deprecated Use {@link OClass#areIndexed(String...)} instead.
+	 */
+	@Deprecated
 	public boolean isIndexed() {
-		return index != null;
+		return owner.areIndexed(name);
 	}
 
 	public OClass getOwnerClass() {
@@ -288,7 +300,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		return this;
 	}
 
-	public void setMinInternal(String iMin) {
+	public void setMinInternal(final String iMin) {
 		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 		this.min = iMin;
 		checkForDateFormat(iMin);
@@ -371,8 +383,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 			throw new IllegalArgumentException("attribute is null");
 
 		switch (iAttribute) {
-		case INDEX:
-			return getIndex();
 		case LINKEDCLASS:
 			return getLinkedClass();
 		case LINKEDTYPE:
@@ -403,9 +413,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		final String stringValue = iValue != null ? iValue.toString() : null;
 
 		switch (attribute) {
-		case INDEX:
-			setIndexInternal(stringValue);
-			break;
 		case LINKEDCLASS:
 			setLinkedClassInternal(getDatabase().getMetadata().getSchema().getClass(stringValue));
 			break;
@@ -494,7 +501,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj)
 			return true;
 		if (!super.equals(obj))
@@ -525,11 +532,18 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		linkedClassName = (String) document.field("linkedClass");
 		if (document.field("linkedType") != null)
 			linkedType = OType.getById(((Integer) document.field("linkedType")).byteValue());
+	}
 
-		final OIndex<?> underlyingIndex = getDatabase().getMetadata().getIndexManager().getIndex(getFullName());
+	public Collection<OIndex<?>> getAllIndexes() {
+		final Set<OIndex<?>> indexes = owner.getIndexes();
+		final List<OIndex<?>> indexList = new LinkedList<OIndex<?>>();
+		for (final OIndex<?> index : indexes) {
+			final OIndexDefinition indexDefinition = index.getDefinition();
+			if (indexDefinition.getFields().contains(name))
+				indexList.add(index);
+		}
 
-		if (underlyingIndex != null)
-			index = new OPropertyIndex(getDatabase(), owner, new String[] { name });
+		return indexList;
 	}
 
 	@Override
@@ -564,13 +578,14 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 			try {
 				owner.owner.getDocument().getDatabase().getStorage().getConfiguration().getDateFormatInstance().parse(iDateAsString);
 			} catch (ParseException e) {
-				throw new OSchemaException("Invalid date format setted", e);
+				throw new OSchemaException("Invalid date format was set", e);
 			}
 		} else if (type == OType.DATETIME) {
 			try {
-				owner.owner.getDocument().getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance().parse(iDateAsString);
+				owner.owner.getDocument().getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance()
+						.parse(iDateAsString);
 			} catch (ParseException e) {
-				throw new OSchemaException("Invalid datetime format setted", e);
+				throw new OSchemaException("Invalid datetime format was set", e);
 			}
 		}
 	}

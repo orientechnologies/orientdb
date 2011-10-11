@@ -27,8 +27,10 @@ import java.util.Set;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
@@ -87,7 +89,7 @@ public class OSQLFilter extends OCommandToParse {
 	}
 
 	public boolean evaluate(final ODatabaseRecord iDatabase, final ORecordSchemaAware<?> iRecord) {
-		if (targetClasses != null) {
+        if (targetClasses != null) {
 			final OClass cls = targetClasses.keySet().iterator().next();
 			// CHECK IF IT'S PART OF THE REQUESTED CLASS
 			if (iRecord.getSchemaClass() == null || !iRecord.getSchemaClass().isSubClassOf(cls))
@@ -282,14 +284,23 @@ public class OSQLFilter extends OCommandToParse {
 				final List<String> stringItems = new ArrayList<String>();
 				currentPos = OStringSerializerHelper.getCollection(text, currentPos, stringItems);
 
-				final List<Object> coll = new ArrayList<Object>();
-				for (String s : stringItems) {
-					coll.add(OSQLHelper.parseValue(this, database, this, s));
-				}
+                if (stringItems.get(0).charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN) {
+
+                    List<List<Object>> coll = new ArrayList<List<Object>>();
+                    for (String stringItem : stringItems) {
+                        final List<String> stringSubItems = new ArrayList<String>();
+                        OStringSerializerHelper.getCollection(stringItem, 0, stringSubItems);
+
+                        coll.add(convertCollectionItems(stringSubItems));
+                    }
+
+                    result[i] = coll;
+
+                } else {
+                    result[i] = convertCollectionItems(stringItems);
+                }
 
 				currentPos++;
-
-				result[i] = coll;
 
 			} else if (words[0].startsWith(OSQLFilterItemFieldAll.NAME + OStringSerializerHelper.PARENTHESIS_BEGIN)) {
 
@@ -319,7 +330,15 @@ public class OSQLFilter extends OCommandToParse {
 		return iExpectedWords == 1 ? result[0] : result;
 	}
 
-	public Map<String, String> getTargetClusters() {
+    private List<Object> convertCollectionItems(List<String> stringItems) {
+        List<Object> coll = new ArrayList<Object>();
+        for (String s : stringItems) {
+            coll.add(OSQLHelper.parseValue(this, database, this, s));
+        }
+        return coll;
+    }
+
+    public Map<String, String> getTargetClusters() {
 		return targetClusters;
 	}
 

@@ -15,15 +15,17 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.storage.OCluster;
+
+import java.util.Map;
 
 /**
  * SQL CREATE PROPERTY command: Creates a new property in the target class.
@@ -72,7 +74,15 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLPermissionA
 		if (className == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 
-		int clusterId = database.getMetadata().getSchema().getClass(className).getDefaultClusterId();
+        final OClass oClass = database.getMetadata().getSchema().getClass(className);
+        if(oClass == null)
+            return null;
+
+        for (final OIndex oIndex : oClass.getClassIndexes()) {
+            database.getMetadata().getIndexManager().dropIndex(oIndex.getName());
+        }
+
+        final int clusterId = oClass.getDefaultClusterId();
 
 		((OSchemaProxy) database.getMetadata().getSchema()).dropClassInternal(className);
 		((OSchemaProxy) database.getMetadata().getSchema()).saveInternal();

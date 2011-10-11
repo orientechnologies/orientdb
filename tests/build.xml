@@ -52,10 +52,12 @@
 		<echo>STARTING REMOTE ORIENTDB SERVER INSTANCE...</echo>
 
 		<exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
+            <env key="JAVA_OPTS" value="-Dcom.sun.management.jmxremote.port=4321 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"/>
 			<arg value="/c start server.bat" />
 		</exec>
 
 		<exec dir="../${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
+            <env key="JAVA_OPTS" value="-Dcom.sun.management.jmxremote.port=4321 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"/>
 			<arg value="./server.sh" />
 		</exec>
 

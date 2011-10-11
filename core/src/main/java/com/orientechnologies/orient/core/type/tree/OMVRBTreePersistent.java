@@ -93,7 +93,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		record.setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
 	}
 
-	public OMVRBTreePersistent(String iClusterName, final OStreamSerializer iKeySerializer, final OStreamSerializer iValueSerializer) {
+	public OMVRBTreePersistent(String iClusterName, final OStreamSerializer iKeySerializer,
+                               final OStreamSerializer iValueSerializer) {
 		// MINIMIZE I/O USING A LARGER PAGE THAN THE DEFAULT USED IN MEMORY
 		super(OGlobalConfiguration.MVRBTREE_NODE_PAGE_SIZE.getValueAsInteger(), (Float) OGlobalConfiguration.MVRBTREE_LOAD_FACTOR
 				.getValue());

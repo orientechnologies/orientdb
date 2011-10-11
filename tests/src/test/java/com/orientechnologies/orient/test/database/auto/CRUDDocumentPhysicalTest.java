@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.index.OIndex;
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -32,7 +33,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OPropertyIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.iterator.ORecordIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -210,15 +211,18 @@ public class CRUDDocumentPhysicalTest {
 		vDoc.field("nick", "JayM3");
 		vDoc.save();
 
-		OPropertyIndex index = database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getIndex();
+		Set<OIndex<?>> indexes = database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getIndexes();
 
-		OIdentifiable vOldName = (OIdentifiable) index.getUnderlying().get("JayM1");
+        Assert.assertEquals( indexes.size(), 1 );
+
+        OIndex indexDefinition = indexes.iterator().next();
+		OIdentifiable vOldName = (OIdentifiable) indexDefinition.get("JayM1");
 		Assert.assertNull(vOldName);
 
-		OIdentifiable vIntermediateName = (OIdentifiable) index.getUnderlying().get("JayM2");
+		OIdentifiable vIntermediateName = (OIdentifiable) indexDefinition.get("JayM2");
 		Assert.assertNull(vIntermediateName);
 
-		OIdentifiable vNewName = (OIdentifiable) index.getUnderlying().get("JayM3");
+		OIdentifiable vNewName = (OIdentifiable) indexDefinition.get("JayM3");
 		Assert.assertNotNull(vNewName);
 
 		database.close();
@@ -239,17 +243,19 @@ public class CRUDDocumentPhysicalTest {
 		vDoc.field("nick", "Jack").field("name", "Jack").field("surname", "Bauer");
 		vDoc.save();
 
-		OPropertyIndex indexName = database.getMetadata().getSchema().getClass("Profile").getProperty("name").getIndex();
+		Collection<OIndex<?>> indexes = database.getMetadata().getSchema().getClass("Profile").getProperty("name").getIndexes();
+        Assert.assertEquals( indexes.size(), 1 );
 
+        OIndex<?> indexName = indexes.iterator().next();
 		// We must get 2 records for "nameA".
-		Collection<OIdentifiable> vName1 = (Collection<OIdentifiable>) indexName.getUnderlying().get("Jack");
+		Collection<OIdentifiable> vName1 = (Collection<OIdentifiable>) indexName.get("Jack");
 		Assert.assertEquals(vName1.size(), 2);
 
 		// Remove this last record.
 		database.delete(vDoc);
 
 		// We must get 1 record for "nameA".
-		vName1 = (Collection<OIdentifiable>) indexName.getUnderlying().get("Jack");
+		vName1 = (Collection<OIdentifiable>) indexName.get("Jack");
 		Assert.assertEquals(vName1.size(), 1);
 
 		database.close();

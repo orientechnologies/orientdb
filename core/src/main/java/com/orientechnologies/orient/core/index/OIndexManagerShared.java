@@ -15,90 +15,157 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Collection;
-
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.util.OMultiKey;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public class OIndexManagerShared extends OIndexManagerAbstract {
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+public class OIndexManagerShared extends OIndexManagerAbstract implements OIndexManager {
+
 	public OIndexManagerShared(final ODatabaseRecord iDatabase) {
 		super(iDatabase);
 	}
 
-	public synchronized OIndex<?> getIndexInternal(final String iName) {
-		final OIndex<?> index = indexes.get(iName.toLowerCase());
-		return getIndexInstance(index);
+	public OIndex<?> getIndexInternal(final String iName) {
+        acquireSharedLock();
+        try {
+            final OIndex<?> index = indexes.get(iName.toLowerCase());
+            return getIndexInstance(index);
+        } finally {
+            releaseSharedLock();
+        }
 	}
 
-	public synchronized OIndex<?> createIndex(final String iName, final String iType, final OType iKeyType,
-			final int[] iClusterIdsToIndex, OIndexCallback iCallback, final OProgressListener iProgressListener, final boolean iAutomatic) {
+    /**
+     *
+     *
+     * @param iName - name of index
+     * @param iType
+     * @param iClusterIdsToIndex
+     * @param iProgressListener        */
+	public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition indexDefinition,
+                                              final int[] iClusterIdsToIndex, final OProgressListener iProgressListener) {
+        acquireExclusiveLock();
+        try {
+            final OIndexInternal<?> index = OIndexFactory.instance().newInstance(getDatabase(), iType);
 
-		final OIndexInternal<?> index = OIndexFactory.instance().newInstance(getDatabase(), iType);
-		index.setCallback(iCallback);
+            index.create(iName, indexDefinition, getDatabase(), defaultClusterName, iClusterIdsToIndex, iProgressListener);
+            addIndexInternal(index);
 
-		index.create(iName, iKeyType, getDatabase(), defaultClusterName, iClusterIdsToIndex, iProgressListener, iAutomatic);
-		indexes.put(iName.toLowerCase(), index);
+            setDirty();
+            save();
 
-		setDirty();
-		save();
-
-		return getIndexInstance(index);
+            return getIndexInstance(index);
+        } finally {
+            releaseExclusiveLock();
+        }
 	}
 
-	public synchronized OIndexManager dropIndex(final String iIndexName) {
-		final OIndex<?> idx = indexes.remove(iIndexName.toLowerCase());
-		if (idx != null) {
-			idx.delete();
-			setDirty();
-			save();
-		}
-		return this;
+	public OIndexManager dropIndex(final String iIndexName) {
+        acquireExclusiveLock();
+        try {
+            final OIndex<?> idx = indexes.remove(iIndexName.toLowerCase());
+            if (idx != null) {
+                removeClassPropertyIndex(idx);
+
+                idx.delete();
+                setDirty();
+                save();
+            }
+            return this;
+        } finally {
+            releaseExclusiveLock();
+        }
+    }
+
+    private void removeClassPropertyIndex(final OIndex<?> idx) {
+        final OIndexDefinition indexDefinition = idx.getDefinition();
+        if(indexDefinition == null || indexDefinition.getClassName() == null)
+            return;
+
+        final Map<OMultiKey, Set<OIndex<?>>> map = classPropertyIndex.get(indexDefinition.getClassName().toLowerCase());
+
+        if (map == null) {
+            return;
+        }
+
+        final int paramCount = indexDefinition.getParamCount();
+
+        for (int i = 1; i <= paramCount; i++) {
+            final List<String> fields = normalizeFieldNames(indexDefinition.getFields().subList(0, i));
+            final OMultiKey multiKey = new OMultiKey(fields);
+            final Set<OIndex<?>> indexSet = map.get(multiKey);
+            if (indexSet == null)
+                continue;
+            indexSet.remove(idx);
+            if (indexSet.isEmpty()) {
+                map.remove(multiKey);
+            }
+        }
+
+        if(map.isEmpty())
+            classPropertyIndex.remove(indexDefinition.getClassName().toLowerCase());
+    }
+
+    @Override
+	protected void fromStream() {
+        acquireExclusiveLock();
+        try {
+            document.setDatabase(getDatabase());
+            final Collection<ODocument> idxs = document.field(CONFIG_INDEXES);
+
+            if (idxs != null) {
+                OIndexInternal<?> index;
+                for (final ODocument d : idxs) {
+                    index = OIndexFactory.instance().newInstance(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE));
+                    d.setDatabase(getDatabase());
+                    ((OIndexInternal<?>) index).loadFromConfiguration(d);
+                    addIndexInternal(index);
+                }
+            }
+        } finally {
+            releaseExclusiveLock();
+        }
 	}
 
-	@Override
-	protected synchronized void fromStream() {
-		final Collection<ODocument> idxs = document.field(CONFIG_INDEXES);
+    /**
+     * Binds POJO to ODocument.
+     */
+    @Override
+    public ODocument toStream() {
+        acquireExclusiveLock();
+        try {
+            document.setDatabase(getDatabase());
+            document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
-		if (idxs != null) {
-			OIndexInternal<?> index;
-			for (ODocument d : idxs) {
-				index = OIndexFactory.instance().newInstance(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE));
-				d.setDatabase(getDatabase());
-				((OIndexInternal<?>) index).loadFromConfiguration(d);
-				indexes.put(index.getName().toLowerCase(), index);
-			}
-		}
+            try {
+                final ORecordTrackedSet idxs = new ORecordTrackedSet(document);
 
-	}
+                for (OIndexInternal<?> i : indexes.values()) {
+                    idxs.add(i.updateConfiguration());
+                }
+                document.field(CONFIG_INDEXES, idxs, OType.EMBEDDEDSET);
 
-	/**
-	 * Binds POJO to ODocument.
-	 */
-	@Override
-	public ODocument toStream() {
-		document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+            } finally {
+                document.setInternalStatus(ORecordElement.STATUS.LOADED);
+            }
+            document.setDirty();
 
-		try {
-			ORecordTrackedSet idxs = new ORecordTrackedSet(document);
+            return document;
+        } finally {
+            releaseExclusiveLock();
+        }
+    }
 
-			for (OIndexInternal<?> i : indexes.values()) {
-				idxs.add(i.updateConfiguration());
-			}
-			document.field(CONFIG_INDEXES, idxs, OType.EMBEDDEDSET);
-
-		} finally {
-			document.setInternalStatus(ORecordElement.STATUS.LOADED);
-		}
-		document.setDirty();
-
-		return document;
-	}
-
-	protected synchronized OIndex<?> getIndexInstance(final OIndex<?> iIndex) {
-		return iIndex;
-	}
+    protected OIndex<?> getIndexInstance(final OIndex<?> iIndex) {
+        return iIndex;
+    }
 }

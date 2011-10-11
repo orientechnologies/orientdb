@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -55,7 +56,8 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreePersistent;
 public class ODatabaseExport extends ODatabaseImpExpAbstract {
 	private OJSONWriter			writer;
 	private long						recordExported;
-	public static final int	VERSION	= 1;
+	public static final int	VERSION	= 2;
+
 
 	public ODatabaseExport(final ODatabaseRecord iDatabase, final String iFileName, final OCommandOutputListener iListener)
 			throws IOException {
@@ -85,44 +87,40 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 		iDatabase.getLevel2Cache().setEnable(false);
 	}
 
-	public ODatabaseExport exportDatabase() {
-		database.callInLock(new Callable<Object>() {
+    public ODatabaseExport exportDatabase() {
+        database.callInLock(new Callable<Object>() {
+            public Object call() {
+                try {
+                    listener.onMessage("\nStarted export of database '" + database.getName() + "' to " + fileName + "...");
 
-			public Object call() {
-				try {
-					listener.onMessage("\nStarted export of database '" + database.getName() + "' to " + fileName + "...");
+                    database.getLevel1Cache().setEnable(false);
+                    database.getLevel2Cache().setEnable(false);
 
-					database.getLevel1Cache().setEnable(false);
-					database.getLevel2Cache().setEnable(false);
+                    long time = System.currentTimeMillis();
 
-					long time = System.currentTimeMillis();
+                    if (includeInfo)
+                        exportInfo();
+                    exportClusters();
+                    if (includeSchema)
+                        exportSchema();
+                    exportRecords();
 
-					if (includeInfo)
-						exportInfo();
-					exportClusters();
-					if (includeSchema)
-						exportSchema();
-					exportRecords();
-					if (includeIndexes)
-						exportIndexes();
+                    listener.onMessage("\n\nDatabase export completed in " + (System.currentTimeMillis() - time) + "ms");
 
-					listener.onMessage("\n\nDatabase export completed in " + (System.currentTimeMillis() - time) + "ms");
+                    writer.flush();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw new ODatabaseExportException("Error on exporting database '" + database.getName() + "' to: " + fileName, e);
+                } finally {
+                    close();
+                }
+                return null;
+            }
+        }, false);
+        return this;
+    }
 
-					writer.flush();
-				} catch (Exception e) {
-					e.printStackTrace();
-					throw new ODatabaseExportException("Error on exporting database '" + database.getName() + "' to: " + fileName, e);
-				} finally {
-					close();
-				}
-				return null;
-			}
-		}, false);
-
-		return this;
-	}
-
-	public long exportRecords() throws IOException {
+    public long exportRecords() throws IOException {
 		long totalRecords = 0;
 		int level = 1;
 		listener.onMessage("\nExporting records...");
@@ -287,35 +285,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 		listener.onMessage("OK");
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private void exportIndexes() throws IOException {
-		listener.onMessage("\nExporting indexes...");
-
-		writer.beginObject(1, true, "indexes");
-		for (OIndex i : database.getMetadata().getIndexManager().getIndexes()) {
-			if (i != null && !i.isAutomatic()) {
-				long tot = 0;
-				listener.onMessage("\n- Index '" + i.getName() + "' [" + i.getType() + "]...");
-
-				writer.beginObject(2, true, i.getName());
-
-				Entry<Object, Object> entry;
-				for (Iterator<Entry<Object, Object>> iterator = i.iterator(); iterator.hasNext();) {
-					entry = iterator.next();
-					writer.writeAttribute(3, true, "key", entry.getKey());
-					writer.writeAttribute(0, false, "value", OJSONWriter.writeValue(entry.getValue()));
-					++tot;
-				}
-
-				listener.onMessage("OK (entries=" + tot + ")");
-
-				writer.endObject(2, true);
-			}
-		}
-
-		writer.endObject(1, true);
-	}
-
 	private void exportSchema() throws IOException {
 		listener.onMessage("\nExporting schema...");
 
@@ -359,9 +328,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 							writer.writeAttribute(0, false, "min", p.getMin());
 						if (p.getMax() != null)
 							writer.writeAttribute(0, false, "max", p.getMax());
-						if (p.getIndex() != null)
-							writer.writeAttribute(0, false, "index", p.getIndex().getUnderlying().getName());
-
 						writer.endObject(0, false);
 					}
 					writer.endCollection(4, true);

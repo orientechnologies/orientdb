@@ -15,14 +15,9 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
@@ -47,6 +42,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerLiteral;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
@@ -54,9 +50,9 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
 
 /**
  * Handles indexing when records change.
- * 
+ *
  * @author Luca Garulli
- * 
+ *
  */
 public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal implements OIndexInternal<T>, ODatabaseListener {
 	protected static final String										CONFIG_MAP_RID	= "mapRid";
@@ -64,10 +60,8 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 	protected String																name;
 	protected String																type;
 	protected OMVRBTreeDatabaseLazySave<Object, T>	map;
-	protected Set<String>														clustersToIndex	= new LinkedHashSet<String>();
-	protected OIndexCallback												callback;
-	protected boolean																automatic;
-	protected OType																	keyType;
+	protected Set<String> clustersToIndex	= new LinkedHashSet<String>();
+	protected OIndexDefinition																indexDefinition;
 
 	@ODocumentInstance
 	protected ODocument															configuration;
@@ -93,34 +87,37 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 		lazySave();
 	}
 
-	/**
+    /**
 	 * Creates the index.
-	 * 
-	 * @param iDatabase
-	 *          Current Database instance
-	 * @param iProperty
-	 *          Owner property
-	 * @param iClusterIndexName
-	 *          Cluster name where to place the TreeMap
-	 * @param iProgressListener
-	 *          Listener to get called on progress
-	 */
-	public OIndexInternal<T> create(final String iName, final OType iKeyType, final ODatabaseRecord iDatabase,
-			final String iClusterIndexName, final int[] iClusterIdsToIndex, final OProgressListener iProgressListener,
-			final boolean iAutomatic, final OStreamSerializer iValueSerializer) {
+	 *
+     * @param iDatabase
+*          Current Database instance
+     * @param iClusterIndexName
+*          Cluster name where to place the TreeMap
+     * @param iProgressListener
+     */
+	public OIndexInternal create(final String iName, final OIndexDefinition iIndexDefinition, final ODatabaseRecord iDatabase,
+                                 final String iClusterIndexName, final int[] iClusterIdsToIndex, final OProgressListener iProgressListener,
+                                 final OStreamSerializer iValueSerializer) {
 		acquireExclusiveLock();
 		try {
 
 			name = iName;
 			configuration = new ODocument(iDatabase);
-			automatic = iAutomatic;
-			keyType = iKeyType;
+
+			indexDefinition = iIndexDefinition;
 
 			if (iClusterIdsToIndex != null)
 				for (int id : iClusterIdsToIndex)
 					clustersToIndex.add(iDatabase.getClusterNameById(id));
 
-			map = new OMVRBTreeDatabaseLazySave<Object, T>(iDatabase, iClusterIndexName, OStreamSerializerLiteral.INSTANCE,
+            final OStreamSerializer keySerializer;
+            if(indexDefinition instanceof OCompositeIndexDefinition)
+                keySerializer = OCompositeKeySerializer.INSTANCE;
+            else
+                keySerializer = OStreamSerializerLiteral.INSTANCE;
+
+			map = new OMVRBTreeDatabaseLazySave<Object, T>(iDatabase, iClusterIndexName, keySerializer,
 					iValueSerializer);
 
 			installHooks(iDatabase);
@@ -142,14 +139,57 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 			if (rid == null)
 				return null;
 
-			configuration = iConfig;
-			name = configuration.field(OIndexInternal.CONFIG_NAME);
-			automatic = (Boolean) (configuration.field(OIndexInternal.CONFIG_AUTOMATIC) != null ? configuration
-					.field(OIndexInternal.CONFIG_AUTOMATIC) : true);
+            configuration = iConfig;
+            name = configuration.field(OIndexInternal.CONFIG_NAME);
 
-			final String configuredKeyType = configuration.field(OIndexInternal.CONFIG_KEYTYPE);
-			if (configuredKeyType != null)
-				keyType = OType.valueOf(configuredKeyType.toUpperCase(Locale.ENGLISH));
+            final ODocument indexDefinitionDoc = configuration.field(OIndexInternal.INDEX_DEFINITION);
+            if (indexDefinitionDoc != null) {
+                try {
+                    final String indexDefClassName = configuration.field(OIndexInternal.INDEX_DEFINITION_CLASS);
+                    final Class  indexDefClass = Class.forName(indexDefClassName);
+                    indexDefinition = (OIndexDefinition)indexDefClass.getDeclaredConstructor().newInstance();
+                    indexDefinition.fromStream(indexDefinitionDoc);
+
+                } catch (ClassNotFoundException e) {
+                    throw new OIndexException("Error during deserialization of index definition", e);
+                } catch (NoSuchMethodException e) {
+                    throw new OIndexException("Error during deserialization of index definition", e);
+                } catch (InvocationTargetException e) {
+                    throw new OIndexException("Error during deserialization of index definition", e);
+                } catch (InstantiationException e) {
+                    throw new OIndexException("Error during deserialization of index definition", e);
+                } catch (IllegalAccessException e) {
+                    throw new OIndexException("Error during deserialization of index definition", e);
+                }
+            } else {
+               //@COMPATIBILITY 1.0rc6 new index model was implemented
+               final Boolean isAutomatic = configuration.field(OIndexInternal.CONFIG_AUTOMATIC);
+               if(Boolean.TRUE.equals(isAutomatic)) {
+                   final int pos = name.lastIndexOf('.');
+                   if(pos < 0)
+                       throw new OIndexException("Can not convert from old index model to new one. " +
+                               "Invalid index name. Dot (.) separator should be present.");
+                   final String className = name.substring(0, pos);
+                   final String propertyName = name.substring(pos + 1);
+
+                   final String keyTypeStr = configuration.field(OIndexInternal.CONFIG_KEYTYPE);
+                   if(keyTypeStr == null)
+                       throw new OIndexException("Can not convert from old index model to new one. " +
+                               "Index key type is absent.");
+                   final OType keyType = OType.valueOf(keyTypeStr.toUpperCase(Locale.ENGLISH));
+                   indexDefinition = new OPropertyIndexDefinition(className, propertyName,keyType);
+
+                   configuration.removeField(OIndexInternal.CONFIG_AUTOMATIC);
+                   configuration.removeField(OIndexInternal.CONFIG_KEYTYPE);
+               } else if(configuration.field(OIndexInternal.CONFIG_KEYTYPE) != null) {
+                   final String keyTypeStr = configuration.field(OIndexInternal.CONFIG_KEYTYPE);
+                   final OType keyType = OType.valueOf(keyTypeStr.toUpperCase(Locale.ENGLISH));
+
+                   indexDefinition = new OSimpleKeyIndexDefinition(keyType);
+
+                   configuration.removeField(OIndexInternal.CONFIG_KEYTYPE);
+               }
+            }
 
 			clustersToIndex.clear();
 
@@ -181,23 +221,26 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 		}
 	}
 
-	/**
-	 * Returns a set of records with key between the range passed as parameter. Range bounds are included.
-	 * 
-	 * @param iRangeFrom
-	 *          Starting range
-	 * @param iRangeTo
-	 *          Ending range
-	 * @see #getValuesBetween(Object, Object, boolean)
-	 * @return
-	 */
-	public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo) {
-		return getValuesBetween(iRangeFrom, iRangeTo, true);
-	}
+    /**
+     * Returns a set of records with key between the range passed as parameter. Range bounds are included.
+     * <p/>
+     * In case of {@link com.orientechnologies.common.collection.OCompositeKey}s partial keys can be used
+     * as values boundaries.
+     *
+     * @param iRangeFrom Starting range
+     * @param iRangeTo   Ending range
+     * @return a set of records with key between the range passed as parameter. Range bounds are included.
+     * @see com.orientechnologies.common.collection.OCompositeKey#compareTo(com.orientechnologies.common.collection.OCompositeKey)
+     * @see #getValuesBetween(Object, boolean, Object, boolean)
+     */
+    public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo) {
+        return getValuesBetween(iRangeFrom, true, iRangeTo, true);
+    }
 
-	/**
+
+    /**
 	 * Returns a set of documents with key between the range passed as parameter. Range bounds are included.
-	 * 
+	 *
 	 * @param iRangeFrom
 	 *          Starting range
 	 * @param iRangeTo
@@ -243,10 +286,16 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 				for (ORecord<?> record : getDatabase().browseCluster(clusterName)) {
 					if (record instanceof ODocument) {
 						final ODocument doc = (ODocument) record;
-						final Object fieldValue = callback.getDocumentValueToIndex(doc);
+						final Object fieldValue = indexDefinition.getDocumentValueToIndex(doc);
 
 						if (fieldValue != null) {
-							put(fieldValue, doc);
+                            if(fieldValue instanceof Collection) {
+                                for(final Object fieldValueItem : (Collection)fieldValue) {
+                                    put(fieldValueItem, doc);
+                                }
+                            } else
+                                put(fieldValue, doc);
+
 							++documentIndexed;
 						}
 					}
@@ -391,13 +440,6 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 		return this;
 	}
 
-	public OIndexCallback getCallback() {
-		return callback;
-	}
-
-	public void setCallback(final OIndexCallback callback) {
-		this.callback = callback;
-	}
 
 	public Set<String> getClusters() {
 
@@ -449,9 +491,20 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 			try {
 				configuration.field(OIndexInternal.CONFIG_TYPE, type);
 				configuration.field(OIndexInternal.CONFIG_NAME, name);
-				configuration.field(OIndexInternal.CONFIG_AUTOMATIC, automatic);
-				if (keyType != null)
-					configuration.field(OIndexInternal.CONFIG_KEYTYPE, keyType.toString());
+
+                if(indexDefinition != null) {
+                    final ODocument indexDefDocument = indexDefinition.toStream();
+                    if(!indexDefDocument.hasOwners())
+                        indexDefDocument.addOwner(configuration);
+
+                    configuration.field(OIndexInternal.INDEX_DEFINITION, indexDefDocument, OType.EMBEDDED);
+                    configuration.field(OIndexInternal.INDEX_DEFINITION_CLASS, indexDefinition.getClass().getName());
+                }
+                else {
+                    configuration.removeField(OIndexInternal.INDEX_DEFINITION);
+                    configuration.removeField(OIndexInternal.INDEX_DEFINITION_CLASS);
+                }
+
 				configuration.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);
 				configuration.field(CONFIG_MAP_RID, map.getRecord().getIdentity());
 
@@ -514,26 +567,26 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 	}
 
 	public boolean isAutomatic() {
-		return automatic;
+		return indexDefinition != null && indexDefinition.getClassName() != null;
 	}
 
-	protected void installHooks(final ODatabaseRecord iDatabase) {
+    protected void installHooks(final ODatabaseRecord iDatabase) {
 		OProfiler.getInstance().registerHookValue("index." + name + ".items", new OProfilerHookValue() {
-			public Object getValue() {
-				acquireSharedLock();
-				try {
-					return map != null ? map.size() : "-";
-				} finally {
-					releaseSharedLock();
-				}
-			}
-		});
+            public Object getValue() {
+                acquireSharedLock();
+                try {
+                    return map != null ? map.size() : "-";
+                } finally {
+                    releaseSharedLock();
+                }
+            }
+        });
 
 		OProfiler.getInstance().registerHookValue("index." + name + ".entryPointSize", new OProfilerHookValue() {
-			public Object getValue() {
-				return map != null ? map.getEntryPointSize() : "-";
-			}
-		});
+            public Object getValue() {
+                return map != null ? map.getEntryPointSize() : "-";
+            }
+        });
 
 		OProfiler.getInstance().registerHookValue("index." + name + ".maxUpdateBeforeSave", new OProfilerHookValue() {
 			public Object getValue() {
@@ -636,7 +689,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 			final int freed = map.optimize(iHardMode);
 
 			OLogManager.instance().debug(this, "Completed! Freed %d entries and now %d entries reside in memory", freed,
-					map.getNumberOfNodesInCache());
+                    map.getNumberOfNodesInCache());
 
 		} finally {
 			releaseExclusiveLock();
@@ -644,12 +697,16 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 	}
 
 	protected void checkForKeyType(final Object iKey) {
-		if (keyType == null) {
+		if (indexDefinition == null) {
 			// RECOGNIZE THE KEY TYPE AT RUN-TIME
-			keyType = OType.getTypeByClass(iKey.getClass());
 
-			if (keyType != null)
-				updateConfiguration();
+            final OType type = OType.getTypeByClass(iKey.getClass());
+            if(type == null)
+                return;
+
+			indexDefinition = new OSimpleKeyIndexDefinition(type);
+
+		updateConfiguration();
 		}
 	}
 
@@ -657,11 +714,36 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 		return ODatabaseRecordThreadLocal.INSTANCE.get();
 	}
 
-	public OType getKeyType() {
-		return keyType;
+	public OType[] getKeyTypes() {
+        if(indexDefinition == null)
+            return null;
+
+		return indexDefinition.getTypes();
 	}
 
-	public OSharedResourceAbstract getLock() {
+    public OIndexDefinition getDefinition() {
+        return indexDefinition;
+    }
+
+    public OSharedResourceAbstract getLock() {
 		return this;
 	}
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        final OIndexMVRBTreeAbstract that = (OIndexMVRBTreeAbstract) o;
+
+        if (!name.equals(that.name))
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return name.hashCode();
+    }
 }

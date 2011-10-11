@@ -15,17 +15,13 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Proxied single value index.
@@ -36,8 +32,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
 	protected final static String	QUERY_GET	= "select rid from index:%s where key = ?";
 
-	public OIndexRemoteOneValue(String iName, String iWrappedType, ORID iRid) {
-		super(iName, iWrappedType, iRid);
+	public OIndexRemoteOneValue(String iName, String iWrappedType, ORID iRid, final OIndexDefinition iIndexDefinition) {
+		super(iName, iWrappedType, iRid, iIndexDefinition);
 	}
 
 	public OIdentifiable get(final Object iKey) {

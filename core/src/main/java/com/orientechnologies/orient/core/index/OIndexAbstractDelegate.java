@@ -48,10 +48,9 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
 		return (OIndexInternal<T>) internal;
 	}
 
-	public OIndex<T> create(final String iName, final OType iKeyType, final ODatabaseRecord iDatabase,
-			final String iClusterIndexName, final int[] iClusterIdsToIndex, final OProgressListener iProgressListener,
-			final boolean iAutomatic) {
-		return delegate.create(iName, iKeyType, iDatabase, iClusterIndexName, iClusterIdsToIndex, iProgressListener, iAutomatic);
+	public OIndex create(final String iName, final OIndexDefinition indexDefinition, final ODatabaseRecord iDatabase, final String iClusterIndexName,
+                         final int[] iClusterIdsToIndex, final OProgressListener iProgressListener) {
+		return delegate.create(iName, indexDefinition, iDatabase, iClusterIndexName, iClusterIdsToIndex, iProgressListener);
 	}
 
 	public Iterator<Entry<Object, T>> iterator() {
@@ -94,8 +93,9 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
 		return delegate.getValuesBetween(iRangeFrom, iRangeTo);
 	}
 
-	public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive) {
-		return delegate.getValuesBetween(iRangeFrom, iRangeTo, iInclusive);
+	public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo,
+                                                      boolean iToInclusive) {
+		return delegate.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive);
 	}
 
 	public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive) {
@@ -146,10 +146,6 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
 		return delegate.isAutomatic();
 	}
 
-	public void setCallback(final OIndexCallback iCallback) {
-		delegate.setCallback(iCallback);
-	}
-
 	public ODocument getConfiguration() {
 		return delegate.getConfiguration();
 	}
@@ -174,15 +170,37 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
 		return delegate.rebuild(iProgressListener);
 	}
 
-	public OType getKeyType() {
-		return delegate.getKeyType();
+	public OType[] getKeyTypes() {
+		return delegate.getKeyTypes();
 	}
 
 	public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
 		return delegate.getValues(iKeys);
 	}
 
-	public Collection<ODocument> getEntries(final Collection<?> iKeys) {
-		return delegate.getEntries(iKeys);
-	}
+    public Collection<ODocument> getEntries(final Collection<?> iKeys) {
+        return delegate.getEntries(iKeys);
+    }
+
+    public OIndexDefinition getDefinition() {
+        return delegate.getDefinition();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        final OIndexAbstractDelegate that = (OIndexAbstractDelegate) o;
+
+        if (!delegate.equals(that.delegate))
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return delegate.hashCode();
+    }
 }

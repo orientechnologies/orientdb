@@ -248,30 +248,47 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 		}
 	}
 
-	public Set<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
-		if (iRangeFrom.getClass() != iRangeTo.getClass())
-			throw new IllegalArgumentException("Range from-to parameters are of different types");
+    /**
+     * Returns a set of records with key between the range passed as parameter.
+     * <p/>
+     * In case of {@link com.orientechnologies.common.collection.OCompositeKey}s partial keys can be used
+     * as values boundaries.
+     *
+     * @param iRangeFrom     Starting range
+     * @param iFromInclusive Indicates whether start range boundary is included in result.
+     * @param iRangeTo       Ending range
+     * @param iToInclusive   Indicates whether end range boundary is included in result.
+     * @return Returns a set of records with key between the range passed as parameter.
+     * @see com.orientechnologies.common.collection.OCompositeKey#compareTo(com.orientechnologies.common.collection.OCompositeKey)
+     */
+    public Set<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive,
+                                               Object iRangeTo, boolean iToInclusive) {
+        if (iRangeFrom.getClass() != iRangeTo.getClass())
+            throw new IllegalArgumentException("Range from-to parameters are of different types");
 
 		acquireExclusiveLock();
 
-		try {
-			final ONavigableMap<Object, Set<OIdentifiable>> subSet = map.subMap(iRangeFrom, iInclusive, iRangeTo, iInclusive);
-			if (subSet == null)
-				return ORecordLazySet.EMPTY_SET;
+        try {
+            final ONavigableMap<Object, Set<OIdentifiable>> subSet = map.subMap(iRangeFrom, iFromInclusive,
+                    iRangeTo, iToInclusive);
 
-			final Set<OIdentifiable> result = new ORecordLazySet(getDatabase());
-			for (Set<OIdentifiable> v : subSet.values()) {
-				result.addAll(v);
-			}
+            if (subSet == null)
+                return ORecordLazySet.EMPTY_SET;
 
-			return result;
+            final Set<OIdentifiable> result = new ORecordLazySet(getDatabase());
+            for (Set<OIdentifiable> v : subSet.values()) {
+                result.addAll(v);
+            }
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+            return result;
 
-	public Set<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
+        } finally {
+            releaseExclusiveLock();
+        }
+    }
+
+
+    public Set<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
 		if (iRangeFrom.getClass() != iRangeTo.getClass())
 			throw new IllegalArgumentException("Range from-to parameters are of different types");
 
@@ -300,10 +317,10 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 		}
 	}
 
-	public OIndexMultiValues create(String iName, OType iKeyType, ODatabaseRecord iDatabase, String iClusterIndexName,
-			int[] iClusterIdsToIndex, OProgressListener iProgressListener, boolean iAutomatic) {
-		return (OIndexMultiValues) super.create(iName, iKeyType, iDatabase, iClusterIndexName, iClusterIdsToIndex, iProgressListener,
-				iAutomatic, OStreamSerializerListRID.INSTANCE);
+	public OIndexMultiValues create(String iName, OIndexDefinition indexDefinition, ODatabaseRecord iDatabase, String iClusterIndexName,
+                                    int[] iClusterIdsToIndex, OProgressListener iProgressListener) {
+		return (OIndexMultiValues) super.create(iName, indexDefinition, iDatabase, iClusterIndexName, iClusterIdsToIndex, iProgressListener,
+				OStreamSerializerListRID.INSTANCE);
 	}
 
 	public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
@@ -316,7 +333,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 			for (final Object key : sortedKeys) {
 				final ORecordLazySet values = (ORecordLazySet) map.get(key);
 				if (values != null)
-					values.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
+					values.setDatabase(getDatabase());
 
 				if (values == null)
 					continue;
@@ -339,7 +356,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 			for (final Object key : sortedKeys) {
 				final ORecordLazySet values = (ORecordLazySet) map.get(key);
 				if (values != null)
-					values.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
+					values.setDatabase(getDatabase());
 
 				if (values == null)
 					continue;

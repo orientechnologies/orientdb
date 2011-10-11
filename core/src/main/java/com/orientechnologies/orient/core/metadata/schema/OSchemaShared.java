@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -41,6 +42,8 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
+
+import java.util.*;
 
 /**
  * Shared schema class. It's shared by all the database instances that point to the same storage.
@@ -51,8 +54,9 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 @SuppressWarnings("unchecked")
 public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, OCloseable {
 	public static final int					CURRENT_VERSION_NUMBER	= 4;
-	protected Map<String, OClass>		classes									= new HashMap<String, OClass>();
-	private OSharedResourceExternal	lock										= new OSharedResourceExternal();
+    private static final String DROP_INDEX_QUERY = "drop index ";
+    protected Map<String, OClass>		classes									= new HashMap<String, OClass>();
+	private final OSharedResourceExternal	lock								= new OSharedResourceExternal();
 
 	public OSchemaShared(final int schemaClusterId) {
 		super(new ODocument());
@@ -338,19 +342,21 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 				((OClassImpl) cls.getSuperClass()).baseClasses.remove(cls);
 			}
 
-			for (OProperty property : cls.properties()) {
-				if (property.isIndexed())
-					property.dropIndex();
-			}
+			dropClassIndexes(cls);
 
 			classes.remove(key);
-
 		} finally {
 			lock.releaseExclusiveLock();
 		}
 	}
 
-	@Override
+    private void dropClassIndexes(final  OClass cls) {
+        for (final OIndex<?> index : getDatabase().getMetadata().getIndexManager().getClassIndexes(cls.getName())) {
+            getDatabase().command(new OCommandSQL(DROP_INDEX_QUERY + index.getName()));
+        }
+    }
+
+    @Override
 	public <RET extends ODocumentWrapper> RET reload() {
 		lock.acquireExclusiveLock();
 		try {

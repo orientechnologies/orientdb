@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
@@ -86,7 +85,7 @@ public class LocalCreateDocumentMultiThreadIndexedSpeedTest extends OrientMultiT
 				p = database.getMetadata().getSchema().getClass("Account").createProperty("id", OType.INTEGER);
 
 			if (!p.isIndexed())
-				p.createIndex(INDEX_TYPE.NOTUNIQUE);
+				p.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 		}
 
 		System.out.println("\nTotal objects in Animal cluster before the test: " + foundObjects);

@@ -7,7 +7,6 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -65,7 +64,7 @@ public class SecMaskTest {
 		block = System.nanoTime();
 
 		// CREATE THE INDEX AT THE END
-		database.getMetadata().getSchema().getClass("Account").getProperty("id").createIndex(INDEX_TYPE.UNIQUE);
+		database.getMetadata().getSchema().getClass("Account").getProperty("id").createIndex(OClass.INDEX_TYPE.UNIQUE);
 
 		System.out.println("Indexing done in: " + (System.nanoTime() - block) / 1000000 + "ms");
 	}

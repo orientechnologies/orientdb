@@ -36,7 +36,6 @@ public abstract class ODatabaseImpExpAbstract {
 	protected Set<String>							excludeClusters;
 	protected Set<String>							includeClasses;
 	protected Set<String>							excludeClasses;
-	protected boolean									includeIndexes	= true;
 	protected boolean									includeSchema		= true;
 	protected boolean									includeSecurity	= false;
 	protected OCommandOutputListener	listener;

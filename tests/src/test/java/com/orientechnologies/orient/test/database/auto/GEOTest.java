@@ -17,7 +17,9 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
+import com.orientechnologies.orient.core.index.OIndex;
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -25,9 +27,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.OPropertyIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -46,14 +46,14 @@ public class GEOTest {
 		database.open("admin", "admin");
 
 		final OClass mapPointClass = database.getMetadata().getSchema().createClass("MapPoint");
-		mapPointClass.createProperty("x", OType.DOUBLE).createIndex(INDEX_TYPE.NOTUNIQUE);
-		mapPointClass.createProperty("y", OType.DOUBLE).createIndex(INDEX_TYPE.NOTUNIQUE);
+		mapPointClass.createProperty("x", OType.DOUBLE).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+		mapPointClass.createProperty("y", OType.DOUBLE).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
-		final OPropertyIndex xIndex = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndex();
-		Assert.assertNotNull(xIndex);
+		final Set<OIndex<?>> xIndexes = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndexes();
+		Assert.assertEquals(xIndexes.size(), 1);
 
-		final OPropertyIndex yIndex = database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndex();
-		Assert.assertNotNull(yIndex);
+		final Set<OIndex<?>> yIndexes = database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndexes();
+		Assert.assertEquals(yIndexes.size(), 1);
 
 		database.close();
 	}
@@ -62,11 +62,11 @@ public class GEOTest {
 	public void checkGeoIndexes() {
 		database.open("admin", "admin");
 
-		final OPropertyIndex xIndex = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndex();
-		Assert.assertNotNull(xIndex);
+		final Set<OIndex<?>> xIndexes = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndexes();
+		Assert.assertEquals(xIndexes.size(), 1);
 
-		final OPropertyIndex yIndex = database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndex();
-		Assert.assertNotNull(yIndex);
+		final Set<OIndex<?>> yIndexDefinitions = database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndexes();
+		Assert.assertEquals(yIndexDefinitions.size(), 1);
 
 		database.close();
 	}
@@ -140,14 +140,14 @@ public class GEOTest {
 	public void spatialRange() {
 		database.open("admin", "admin");
 
-		final OPropertyIndex xIndex = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndex();
-		Assert.assertNotNull(xIndex);
+		final Set<OIndex<?>> xIndexes = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndexes();
+		Assert.assertEquals(xIndexes.size(), 1);
 
-		final OPropertyIndex yIndex = database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndex();
-		Assert.assertNotNull(yIndex);
+		final Set<OIndex<?>> yIndexes = database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndexes();
+		Assert.assertEquals(yIndexes.size(), 1);
 
-		final Collection<OIdentifiable> xResult = xIndex.getUnderlying().getValuesBetween(52.20472, 82.20472);
-		final Collection<OIdentifiable> yResult = yIndex.getUnderlying().getValuesBetween(0.14056, 30.14056);
+		final Collection<OIdentifiable> xResult = xIndexes.iterator().next().getValuesBetween(52.20472, 82.20472);
+		final Collection<OIdentifiable> yResult = yIndexes.iterator().next().getValuesBetween(0.14056, 30.14056);
 
 		xResult.retainAll(yResult);
 

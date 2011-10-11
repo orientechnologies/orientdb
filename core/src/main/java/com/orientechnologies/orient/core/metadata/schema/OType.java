@@ -152,7 +152,7 @@ public enum OType {
 		if (iClass == null)
 			return null;
 
-		for (OType type : TYPES)
+		for (final OType type : TYPES)
 			for (int i = 0; i < type.javaTypes.length; ++i) {
 				if (type.javaTypes[i] == iClass)
 					return type;

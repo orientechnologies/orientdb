@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -91,7 +90,7 @@ public class IndexTest {
 	@Test(dependsOnMethods = "populateIndexDocuments")
 	public void testIndexInUniqueIndex() {
 		final OProperty nickProperty = database.getMetadata().getSchema().getClass("Profile").getProperty("nick");
-		Assert.assertEquals(nickProperty.getIndex().getUnderlying().getType(), INDEX_TYPE.UNIQUE.toString());
+		Assert.assertEquals(nickProperty.getIndexes().iterator().next().getType(), OClass.INDEX_TYPE.UNIQUE.toString());
 
 		final boolean localStorage = !(database.getStorage() instanceof OStorageRemote || database.getStorage() instanceof OStorageRemoteThread);
 
@@ -178,8 +177,8 @@ public class IndexTest {
 
 	@Test(dependsOnMethods = "testUseOfIndex")
 	public void testChangeOfIndexToNotUnique() {
-		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndex();
-		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(INDEX_TYPE.NOTUNIQUE);
+		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndexes();
+		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 	}
 
 	@Test(dependsOnMethods = "testChangeOfIndexToNotUnique")
@@ -261,8 +260,8 @@ public class IndexTest {
 	@Test(dependsOnMethods = "testQueryIndex")
 	public void testChangeOfIndexToUnique() {
 		try {
-			database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndex();
-			database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(INDEX_TYPE.UNIQUE);
+			database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndexes();
+			database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(OClass.INDEX_TYPE.UNIQUE);
 			Assert.assertTrue(false);
 		} catch (OIndexException e) {
 			Assert.assertTrue(true);
@@ -723,7 +722,7 @@ public class IndexTest {
 
 	@Test(dependsOnMethods = "testChangeOfIndexToUnique")
 	public void removeNotUniqueIndexOnNick() {
-		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndex();
+		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndexes();
 		database.getMetadata().getSchema().save();
 	}
 
@@ -744,14 +743,14 @@ public class IndexTest {
 
 	@Test(dependsOnMethods = "testQueryingWithoutNickIndex")
 	public void createNotUniqueIndexOnNick() {
-		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(INDEX_TYPE.NOTUNIQUE);
+		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 		database.getMetadata().getSchema().save();
 	}
 
 	@Test(dependsOnMethods = { "createNotUniqueIndexOnNick", "populateIndexDocuments" })
 	public void testIndexInNotUniqueIndex() {
 		final OProperty nickProperty = database.getMetadata().getSchema().getClass("Profile").getProperty("nick");
-		Assert.assertEquals(nickProperty.getIndex().getUnderlying().getType(), INDEX_TYPE.NOTUNIQUE.toString());
+		Assert.assertEquals(nickProperty.getIndexes().iterator().next().getType(), OClass.INDEX_TYPE.NOTUNIQUE.toString());
 
 		final boolean localStorage = !(database.getStorage() instanceof OStorageRemote || database.getStorage() instanceof OStorageRemoteThread);
 
@@ -892,7 +891,7 @@ public class IndexTest {
 
 	@SuppressWarnings("unchecked")
 	public void LongTypes() {
-		database.getMetadata().getSchema().getClass("Profile").createProperty("hash", OType.LONG).createIndex(INDEX_TYPE.UNIQUE);
+		database.getMetadata().getSchema().getClass("Profile").createProperty("hash", OType.LONG).createIndex(OClass.INDEX_TYPE.UNIQUE);
 
 		OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) database.getMetadata().getIndexManager().getIndex("Profile.hash");
 
@@ -910,16 +909,14 @@ public class IndexTest {
 	}
 
 	public void indexLinks() {
-		database.getMetadata().getSchema().getClass("Whiz").getProperty("account").createIndex(INDEX_TYPE.NOTUNIQUE);
+		database.getMetadata().getSchema().getClass("Whiz").getProperty("account").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
 		final List<Account> result = database.command(new OSQLSynchQuery<Account>("select * from Account limit 1")).execute();
 
-		// Assert.assertEquals(result.size(), 1);
-
-		OIndex<?> idx = database.getMetadata().getIndexManager().getIndex("Whiz.account");
+		final OIndex<?> idx = database.getMetadata().getIndexManager().getIndex("Whiz.account");
 
 		for (int i = 0; i < 5; i++) {
-			ODocument whiz = new ODocument(database.getUnderlying(), "Whiz");
+			final ODocument whiz = new ODocument(database.getUnderlying(), "Whiz");
 
 			whiz.field("id", i);
 			whiz.field("text", "This is a test");
@@ -930,12 +927,16 @@ public class IndexTest {
 
 		Assert.assertEquals(idx.getSize(), 1);
 
-		List<ODocument> indexedResult = database.getUnderlying()
+		final List<ODocument> indexedResult = database.getUnderlying()
 				.command(new OSQLSynchQuery<Profile>("select * from Whiz where account = ?")).execute(result.get(0).getRid());
 
 		Assert.assertEquals(indexedResult.size(), 5);
 
-		ODocument whiz = new ODocument(database.getUnderlying(), "Whiz");
+		for (final ODocument resDoc : indexedResult) {
+			resDoc.delete();
+		}
+
+		final ODocument whiz = new ODocument(database.getUnderlying(), "Whiz");
 		whiz.field("id", 100);
 		whiz.field("text", "This is a test!");
 		whiz.field("account", new ODocument(database.getUnderlying(), "Company").field("id", 9999));
@@ -954,8 +955,8 @@ public class IndexTest {
 		if (!db.getMetadata().getSchema().existsClass("TestClass")) {
 			OClass testClass = db.getMetadata().getSchema().createClass("TestClass");
 			OClass testLinkClass = db.getMetadata().getSchema().createClass("TestLinkClass");
-			testClass.createProperty("testLink", OType.LINK, testLinkClass).createIndex(INDEX_TYPE.NOTUNIQUE);
-			testClass.createProperty("name", OType.STRING).createIndex(INDEX_TYPE.UNIQUE);
+			testClass.createProperty("testLink", OType.LINK, testLinkClass).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+			testClass.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE);
 			testLinkClass.createProperty("testBoolean", OType.BOOLEAN);
 			testLinkClass.createProperty("testString", OType.STRING);
 			db.getMetadata().getSchema().save();
@@ -978,5 +979,47 @@ public class IndexTest {
 
 		db.close();
 	}
-
+	/*
+	 * @Test(dependsOnMethods = "linkedIndexedProperty") public void testIndexRemovalLink() { List<ODocument> result =
+	 * database.command(new OCommandSQL("select rid from index:Profile.nick")).execute(); Assert.assertNotNull(result);
+	 * 
+	 * ODocument firstProfile = null;
+	 * 
+	 * for (ODocument d : result) { if (firstProfile == null) firstProfile = d.field("rid");
+	 * 
+	 * Assert.assertFalse(d.containsField("key")); Assert.assertTrue(d.containsField("rid")); }
+	 * 
+	 * result = database.command(new OCommandSQL("select rid from index:Profile.nick where key = ?")).execute(
+	 * firstProfile.field("nick"));
+	 * 
+	 * Assert.assertNotNull(result); Assert.assertEquals(result.get(0).field("rid", ORID.class), firstProfile.getIdentity());
+	 * 
+	 * firstProfile.delete();
+	 * 
+	 * result = database.command(new OCommandSQL("select rid from index:Profile.nick where key = ?")).execute(
+	 * firstProfile.field("nick")); Assert.assertTrue(result.isEmpty());
+	 * 
+	 * }
+	 * 
+	 * public void testIndexRemoval() { List<ODocument> result = database.command(new
+	 * OCommandSQL("select rid from index:Profile.nick")).execute(); Assert.assertNotNull(result);
+	 * 
+	 * ODocument firstProfile = null;
+	 * 
+	 * for (ODocument d : result) { if (firstProfile == null) firstProfile = d.field("rid");
+	 * 
+	 * Assert.assertFalse(d.containsField("key")); Assert.assertTrue(d.containsField("rid")); }
+	 * 
+	 * result = database.command(new OCommandSQL("select rid from index:Profile.nick where key = ?")).execute(
+	 * firstProfile.field("nick"));
+	 * 
+	 * Assert.assertNotNull(result); Assert.assertEquals(result.get(0).field("rid", ORID.class), firstProfile.getIdentity());
+	 * 
+	 * firstProfile.delete();
+	 * 
+	 * result = database.command(new OCommandSQL("select rid from index:Profile.nick where key = ?")).execute(
+	 * firstProfile.field("nick")); Assert.assertTrue(result.isEmpty());
+	 * 
+	 * }
+	 */
 }

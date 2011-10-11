@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.db.graph.OGraphDatabasePool;
 import com.orientechnologies.orient.core.db.graph.OGraphElement;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -166,7 +165,7 @@ public class GraphDatabaseTest {
 
 		try {
 
-			database.createVertexType("newV").createProperty("f_int", OType.INTEGER).createIndex(INDEX_TYPE.UNIQUE);
+			database.createVertexType("newV").createProperty("f_int", OType.INTEGER).createIndex(OClass.INDEX_TYPE.UNIQUE);
 			database.getMetadata().getSchema().save();
 
 			database.createVertex("newV").field("f_int", 2).save();

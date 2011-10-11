@@ -26,6 +26,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -242,7 +244,7 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 
 		if (cls.properties() != null && cls.properties().size() > 0) {
 			json.beginCollection(3, true, "properties");
-			for (OProperty prop : cls.properties()) {
+			for (final OProperty prop : cls.properties()) {
 				json.beginObject(4, true, null);
 				json.writeAttribute(4, true, "name", prop.getName());
 				if (prop.getLinkedClass() != null)
@@ -254,11 +256,27 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 				json.writeAttribute(4, true, "notNull", prop.isNotNull());
 				json.writeAttribute(4, true, "min", prop.getMin());
 				json.writeAttribute(4, true, "max", prop.getMax());
-				json.writeAttribute(4, true, "indexed", prop.isIndexed());
 				json.endObject(3, true);
 			}
 			json.endCollection(1, true);
 		}
+
+        final Set<OIndex<?>> indexes = cls.getIndexes();
+        if(!indexes.isEmpty()) {
+            json.beginCollection(3, true, "indexes");
+            for(final OIndex<?> index : indexes) {
+                json.beginObject(4, true, null);
+                json.writeAttribute(4, true, "name", index.getName());
+                json.writeAttribute(4, true, "type", index.getType());
+
+                final OIndexDefinition indexDefinition = index.getDefinition();
+                if(indexDefinition != null && !indexDefinition.getFields().isEmpty())
+                    json.writeAttribute(4, true, "fields", indexDefinition.getFields());
+                json.endObject(3, true);
+            }
+            json.endCollection(1, true);
+        }
+
 		json.endObject(1, false);
 	}
 

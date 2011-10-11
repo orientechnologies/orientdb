@@ -43,6 +43,6 @@ public class OQueryOperatorOr extends OQueryOperator {
 	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
 		if (iLeft == null || iRight == null)
 			return OIndexReuseType.NO_INDEX;
-		return OIndexReuseType.BOTH_INDEXES;
+		return OIndexReuseType.INDEX_UNION;
 	}
 }

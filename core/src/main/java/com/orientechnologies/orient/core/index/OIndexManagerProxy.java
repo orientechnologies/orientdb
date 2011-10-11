@@ -16,13 +16,13 @@
 package com.orientechnologies.orient.core.index;
 
 import java.util.Collection;
+import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -59,9 +59,9 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
 		return delegate.getIndex(iRID);
 	}
 
-	public OIndex<?> createIndex(String iName, String iType, final OType iKeyType, int[] iClusterIdsToIndex, OIndexCallback iCallback,
-			OProgressListener iProgressListener, boolean iAutomatic) {
-		return delegate.createIndex(iName, iType, iKeyType, iClusterIdsToIndex, iCallback, iProgressListener, iAutomatic);
+	public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
+			final int[] iClusterIdsToIndex, final OProgressListener iProgressListener) {
+		return delegate.createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, iProgressListener);
 	}
 
 	public OIndex<?> getIndexInternal(final String iName) {
@@ -90,5 +90,29 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
 
 	public void flush() {
 		delegate.flush();
+	}
+
+	public Set<OIndex<?>> getClassInvolvedIndexes(final String className, final Collection<String> fields) {
+		return delegate.getClassInvolvedIndexes(className, fields);
+	}
+
+	public Set<OIndex<?>> getClassInvolvedIndexes(final String className, final String... fields) {
+		return delegate.getClassInvolvedIndexes(className, fields);
+	}
+
+	public boolean areIndexed(final String className, final Collection<String> fields) {
+		return delegate.areIndexed(className, fields);
+	}
+
+	public boolean areIndexed(final String className, final String... fields) {
+		return delegate.areIndexed(className, fields);
+	}
+
+	public Set<OIndex<?>> getClassIndexes(final String className) {
+		return delegate.getClassIndexes(className);
+	}
+
+	public OIndex<?> getClassIndex(final String className, final String indexName) {
+		return delegate.getClassIndex(className, indexName);
 	}
 }

@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.common.factory.ODynamicFactory;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 
 public class OIndexFactory extends ODynamicFactory<String, Class<? extends OIndexInternal<?>>> {
 	private static final OIndexFactory	instance	= new OIndexFactory();
@@ -27,10 +27,10 @@ public class OIndexFactory extends ODynamicFactory<String, Class<? extends OInde
 	 * Register default index implementation.
 	 */
 	protected OIndexFactory() {
-		register(INDEX_TYPE.UNIQUE.toString(), OIndexUnique.class);
-		register(INDEX_TYPE.NOTUNIQUE.toString(), OIndexNotUnique.class);
-		register(INDEX_TYPE.FULLTEXT.toString(), OIndexFullText.class);
-		register(INDEX_TYPE.DICTIONARY.toString(), OIndexDictionary.class);
+		register(OClass.INDEX_TYPE.UNIQUE.toString(), OIndexUnique.class);
+		register(OClass.INDEX_TYPE.NOTUNIQUE.toString(), OIndexNotUnique.class);
+		register(OClass.INDEX_TYPE.FULLTEXT.toString(), OIndexFullText.class);
+		register(OClass.INDEX_TYPE.DICTIONARY.toString(), OIndexDictionary.class);
 	}
 
 	@SuppressWarnings("unchecked")

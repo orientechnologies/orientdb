@@ -19,6 +19,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -56,7 +57,17 @@ public class OServerCommandPutIndex extends OServerCommandDocumentAbstract {
 				record = new ODocument(db).fromJSON(iRequest.content);
 			}
 
-			index.put(urlParts[3], record);
+            final OIndexDefinition indexDefinition = index.getDefinition();
+            final Object key;
+            if(indexDefinition != null)
+                key = indexDefinition.createValue(urlParts[3]);
+            else
+                key = urlParts[3];
+
+            if(key == null)
+                throw new IllegalArgumentException("Invalid key value : " + urlParts[3]);
+
+			index.put(key, record);
 
 			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Key '" + urlParts[3]
 					+ "' correctly inserted into the index " + urlParts[2] + ".");

@@ -100,7 +100,7 @@
 									<table>
 										<tr>
 											<td>
-												<button id="addProperty" " class="ui-button-text-icon" style="text-align: left">
+												<button id="addProperty" class="ui-button-text-icon" style="text-align: left">
 													Add property <img border="0" alt="New record" src="images/add.png" align="top" />
 												</button>
 											</td>
@@ -111,6 +111,42 @@
 						</table>
 					</td>
 				</tr>
+                <tr>
+                    <td valign="top">
+                        <table width="100%">
+                            <tr>
+                                <td valign="top" width="850">
+                                    <table id="classIndexes" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+                                    </table>
+                                </td>
+                                <td valign="top" align="left">
+                                    <table>
+                                        <tr>
+                                            <td>
+                                                <button id="deleteIndex" class="ui-button-text-icon" style="text-align: left">
+                                                    Delete index <img border="0" alt="Delete index" src="images/delete.png" align="top" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td valign="top" align="left">
+                                    <table>
+                                        <tr>
+                                            <td>
+                                                <button id="addIndex" class="ui-button-text-icon" style="text-align: left">
+                                                    Add index <img border="0" alt="Add index" src="images/add.png" align="top" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
 			</table>
 		</div>
 		<div id="tab-db-structure">
@@ -477,7 +513,7 @@
 				$('#classProperties'),
 				"Properties",
 				[ 'name', 'type', 'linkedType', 'linkedClass', 'mandatory',
-						'notNull', 'min', 'max', 'indexed' ],
+						'notNull', 'min', 'max' ],
 				[
 						{
 							name : 'name',
@@ -549,18 +585,9 @@
 							index : 'max',
 							width : 120,
 							editable : true
-						}, {
-							name : 'indexed',
-							index : 'indexed',
-							width : 80,
-							edittype : "select",
-							editoptions : {
-								value : ":;Unique:Unique;Not unique:Not Unique"
-							},
-							editable : true
 						} ], null, {
 					editurl : getStudioURL('classProperties'),
-					sortname : 'id'
+					sortname : 'name'
 				});
 
 		$("#addProperty")
@@ -611,6 +638,131 @@
 					} else
 						alert("Please select the property to delete!");
 				});
+
+        jQuery($('#classIndexes')).jqGrid('GridUnload');
+        fillDynaTable(
+                $('#classIndexes'),
+                "Indexes",
+                [ 'name', 'type', 'properties' ],
+                [
+                        {
+                            name : 'name',
+                            index : 'name',
+                            width : 180,
+                            editable : true,
+                            editrules : {
+                                required : true
+                            },
+                            formoptions : {
+                                elmprefix : '(*)'
+                            }
+                        },
+                        {
+                            name : 'type',
+                            index : 'type',
+                            width : 100,
+                            edittype : "select",
+                            editoptions : {
+						    value : ":;Unique:Unique;Not unique:Not Unique"
+                            },
+							editable : true,
+                            editrules : {
+                                required : true
+                            },
+                            formoptions : {
+                                elmprefix : '(*)'
+                            }
+                        },
+                        {
+                            name :'fields',
+                            width : 200,
+                            editable : true,
+                            editrules : {
+                                required : true
+                            },
+                            editoptions : {
+                                dataInit : function(elem) {
+                                   $(elem).attr("title", "Add properties using comma as separator");
+                                   $(elem).tooltip({
+                                        // place tooltip on the right edge
+                                        position: "center right",
+                                        // a little tweaking of the position
+                                        offset: [-2, 10],
+                                        // use the built-in fadeIn/fadeOut effect
+                                        effect: "fade"
+                                    });
+                                }
+                            },
+                            formoptions : {
+                                elmprefix : '(*)'
+                            }
+                        }
+                ], null, {
+                    editurl : getStudioURL('classIndexes'),
+                    sortname : 'name'
+                });
+
+        var addIndexDialogId;
+        $("#addIndex").click(function() {
+            if(selectedClassName == null) {
+                alert("Please select class for which index is going to be added !");
+                return;
+            }
+
+            jQuery("#classIndexes").jqGrid('editGridRow', "new", {
+                height : 200,
+                reloadAfterSubmit : false,
+                closeOnEscape : true,
+                closeAfterAdd : true,
+                editData : [ selectedClassName ],
+                afterSubmit : function(response, postdata) {
+                    jQuery("#output").val(response.responseText);
+
+                    var textlist = $(addIndexDialogId).find('[type="text"]').each(function (index, element) {
+                        var tooltip = $(element).data("tooltip");
+                        if (tooltip)
+                            tooltip.hide();
+                    });
+
+                    return true;
+                },
+
+                onClose : function() {
+                    var textlist = $(addIndexDialogId).find('[type="text"]').each(function (index, element) {
+                        var tooltip  = $(element).data("tooltip");
+                        if(tooltip)
+                            tooltip.hide();
+                    });
+                },
+                onInitializeForm : function(formId) {
+                    addIndexDialogId = formId;
+                }
+            });
+        });
+        $("#deleteIndex").click(
+                function() {
+                    var selectedRow = jQuery("#classIndexes").jqGrid(
+                            'getGridParam', 'selrow');
+                    if (selectedRow != null) {
+                        var indexName = jQuery('#classIndexes').jqGrid(
+                                'getRowData', selectedRow)["name"];
+                        jQuery("#classIndexes").jqGrid(
+                                'delGridRow',
+                                selectedRow,
+                                {
+                                    reloadAfterSubmit : false,
+                                    closeOnEscape : true,
+                                    delData : [ selectedClassName, indexName ],
+                                    afterSubmit : function(response, postdata) {
+                                        jQuery("#output").val(
+                                                response.responseText);
+                                        return [ true, response.responseText ];
+                                    }
+                                });
+                    } else
+                        alert("Please select the index to delete!");
+                });
+
 
 		fillDynaTable(
 				$('#databaseClasses'),
@@ -669,6 +821,9 @@
 						fillDynaTableRows(
 								$('#classProperties'),
 								databaseInfo['classes'][classRowNum - 1]['properties']);
+                        fillDynaTableRows(
+								$('#classIndexes'),
+								databaseInfo['classes'][classRowNum - 1]['indexes']);
 					}
 				});
 

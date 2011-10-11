@@ -38,8 +38,8 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
 	public boolean detach();
 
 	/**
-	 * Resets the record to be reused. The record is fresh like just created. Use this method to recycle records avoiding the creation
-	 * of them stressing the JVM Garbage Collector.
+	 * Resets the record to be reused. The record is fresh like just created. Use this method to recycle records avoiding the
+	 * creation of them stressing the JVM Garbage Collector.
 	 * 
 	 * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
@@ -138,10 +138,10 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
 
 	/**
 	 * Saves in-memory changes to the database. Behavior depends by the current running transaction if any. If no transaction is
-	 * running then changes apply immediately. If an Optimistic transaction is running then the record will be changed at commit time.
-	 * The current transaction will continue to see the record as modified, while others not. If a Pessimistic transaction is running,
-	 * then an exclusive lock is acquired against the record. Current transaction will continue to see the record as modified, while
-	 * others can't access to it since it's locked.
+	 * running then changes apply immediately. If an Optimistic transaction is running then the record will be changed at commit
+	 * time. The current transaction will continue to see the record as modified, while others not. If a Pessimistic transaction is
+	 * running, then an exclusive lock is acquired against the record. Current transaction will continue to see the record as
+	 * modified, while others can't access to it since it's locked.
 	 * 
 	 * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
@@ -160,10 +160,10 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
 
 	/**
 	 * Deletes the record from the database. Behavior depends by the current running transaction if any. If no transaction is running
-	 * then the record is deleted immediately. If an Optimistic transaction is running then the record will be deleted at commit time.
-	 * The current transaction will continue to see the record as deleted, while others not. If a Pessimistic transaction is running,
-	 * then an exclusive lock is acquired against the record. Current transaction will continue to see the record as deleted, while
-	 * others can't access to it since it's locked.
+	 * then the record is deleted immediately. If an Optimistic transaction is running then the record will be deleted at commit
+	 * time. The current transaction will continue to see the record as deleted, while others not. If a Pessimistic transaction is
+	 * running, then an exclusive lock is acquired against the record. Current transaction will continue to see the record as
+	 * deleted, while others can't access to it since it's locked.
 	 * 
 	 * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
@@ -173,7 +173,7 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
 	 * Fills the record parsing the content in JSON format.
 	 * 
 	 * @param iJson
-	 *          Object content in JSON format
+	 *           Object content in JSON format
 	 * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	public <RET extends ORecord<T>> RET fromJSON(String iJson);
@@ -189,16 +189,16 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
 	 * Exports the record in JSON format specifying additional formatting settings.
 	 * 
 	 * @param iFormat
-	 *          Format settings separated by comma. Available settings are:
-	 *          <ul>
-	 *          <li><b>rid</b>: exports the record's id as property "@rid"</li>
-	 *          <li><b>version</b>: exports the record's version as property "@version"</li>
-	 *          <li><b>class</b>: exports the record's class as property "@class"</li>
-	 *          <li><b>attribSameRow</b>: exports all the record attributes in the same row</li>
-	 *          <li><b>indent:&lt;level&gt;</b>: Indents the output if the &lt;level&gt; specified. Default is 0</li>
-	 *          </ul>
-	 *          Example: "rid,version,class,indent:6" exports record id, version and class properties along with record properties
-	 *          using an indenting level equals of 6.
+	 *           Format settings separated by comma. Available settings are:
+	 *           <ul>
+	 *           <li><b>rid</b>: exports the record's id as property "@rid"</li>
+	 *           <li><b>version</b>: exports the record's version as property "@version"</li>
+	 *           <li><b>class</b>: exports the record's class as property "@class"</li>
+	 *           <li><b>attribSameRow</b>: exports all the record attributes in the same row</li>
+	 *           <li><b>indent:&lt;level&gt;</b>: Indents the output if the &lt;level&gt; specified. Default is 0</li>
+	 *           </ul>
+	 *           Example: "rid,version,class,indent:6" exports record id, version and class properties along with record properties
+	 *           using an indenting level equals of 6.
 	 * @return Object content in JSON format
 	 */
 	public String toJSON(String iFormat);

@@ -164,3 +164,18 @@ ul#navigation .menu-raw a {
 ul#navigation .menu-server a {
 	background-image: url(../images/menu-server.png);
 }
+
+.tooltip {
+	background-color:#5C9CCC;
+	border:1px solid #fff;
+	padding:10px 15px;
+	width:200px;
+	display:none;
+	color:#fff;
+	text-align:left;
+	font-size:12px;
+    z-index: 950;
+	/* outline radius for mozilla/firefox only */
+	-moz-box-shadow:0 0 10px #000;
+	-webkit-box-shadow:0 0 10px #000;
+}

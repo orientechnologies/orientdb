@@ -3,6 +3,7 @@ package com.orientechnologies.orient.test.database.speed;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.index.OIndex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -11,9 +12,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OPropertyIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -26,7 +25,7 @@ public class LocalDocumentAndBinarySpeedTest {
 	private static final int		size								= 64000;
 	private static final int		count								= 10000;
 	private static final int		load								= 10000;
-	private OPropertyIndex			index;
+	private OIndex<?> index;
 	private ODatabaseDocumentTx	database;
 
 	@BeforeClass
@@ -50,7 +49,7 @@ public class LocalDocumentAndBinarySpeedTest {
 	public void saveLotOfMixedData() {
 		database.open(DEFAULT_DB_USER, DEFAULT_DB_PASSWORD);
 		OClass chunk = database.getMetadata().getSchema().createClass("Chunk");
-		index = chunk.createProperty("hash", OType.STRING).createIndex(INDEX_TYPE.UNIQUE);
+		index = chunk.createProperty("hash", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE);
 		chunk.createProperty("binary", OType.LINK);
 
 		try {
@@ -82,7 +81,7 @@ public class LocalDocumentAndBinarySpeedTest {
 	public void loadRandomMixed() {
 		database.open(DEFAULT_DB_USER, DEFAULT_DB_PASSWORD);
 
-		index = database.getMetadata().getSchema().getClass("Chunk").getProperty("hash").getIndex();
+		index = database.getMetadata().getSchema().getClass("Chunk").getProperty("hash").getIndexes().iterator().next();
 		Assert.assertNotNull(index);
 
 		Set<Integer> alreadyLoaded = new HashSet<Integer>();
@@ -96,7 +95,7 @@ public class LocalDocumentAndBinarySpeedTest {
 				else
 					System.out.println("already loaded");
 
-				OIdentifiable result = (OIdentifiable) index.getUnderlying().get("key" + Integer.toString(rand));
+				OIdentifiable result = (OIdentifiable) index.get("key" + Integer.toString(rand));
 				Assert.assertNotNull(result);
 
 				ODocument doc = (ODocument) result.getRecord();

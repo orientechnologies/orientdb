@@ -43,7 +43,7 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OPropertyIndexManager;
+import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -109,7 +109,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			if (getStorage() instanceof OStorageEmbedded) {
 				user = getMetadata().getSecurity().authenticate(iUserName, iUserPassword);
 				registerHook(new OUserTrigger());
-				registerHook(new OPropertyIndexManager());
+				registerHook(new OClassIndexManager());
 			} else
 				// CREATE DUMMY USER
 				user = new OUser(this, iUserName, OUser.encryptPassword(iUserPassword)).addRole(new ORole(this, "passthrough", null,
@@ -139,7 +139,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 			if (getStorage() instanceof OStorageEmbedded) {
 				registerHook(new OUserTrigger());
-				registerHook(new OPropertyIndexManager());
+				registerHook(new OClassIndexManager());
 			}
 
 			// CREATE THE DEFAULT SCHEMA WITH DEFAULT USER

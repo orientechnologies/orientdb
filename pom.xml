@@ -200,7 +200,7 @@
         <repository>
             <id>local</id>
             <url>file://${build.directory}/staging</url>
-            <uniqueVersion>true</uniqueVersion>
+            <uniqueVersion>false</uniqueVersion>
         </repository>
         <snapshotRepository>
             <id>orientechnologies.com</id>

@@ -65,14 +65,12 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 	public OCommandExecutorScript() {
 	}
 
-	@Override
 	@SuppressWarnings("unchecked")
 	public OCommandExecutorScript parse(final OCommandRequestText iRequest) {
 		request = (OCommandScript) iRequest;
 		return this;
 	}
 
-	@Override
 	public Object execute(final Map<Object, Object> iArgs) {
 		final String language = request.getLanguage();
 		final String script = request.getText();

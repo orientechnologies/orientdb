@@ -25,8 +25,8 @@ import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -89,6 +89,8 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 				executeClusters(iRequest, db, operation, rid, className, fields);
 			else if ("classProperties".equals(context))
 				executeClassProperties(iRequest, db, operation, rid, className, fields);
+            else if("classIndexes".equals(context))
+                executeClassIndexes(iRequest, db, operation, rid, className, fields);
 
 		} finally {
 			if (db != null)
@@ -130,8 +132,6 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 					prop.setMin(fields.get("min"));
 				if (fields.get("max") != null)
 					prop.setMax(fields.get("max"));
-				if (fields.get("indexed") != null)
-					prop.createIndex(fields.get("indexed").equals("Unique") ? OProperty.INDEX_TYPE.UNIQUE : OProperty.INDEX_TYPE.NOTUNIQUE);
 
 				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN,
 						"Property " + fields.get("name") + " created successfully");
@@ -279,6 +279,63 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 		} else
 			sendTextContent(iRequest, 500, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Operation not supported");
 	}
+
+    private void executeClassIndexes(final OHttpRequest iRequest, final ODatabaseDocumentTx db, final String operation,
+                                     final String rid, final String className, final Map<String, String> fields) throws IOException {
+		// GET THE TARGET CLASS
+		final OClass cls = db.getMetadata().getSchema().getClass(rid);
+		if (cls == null) {
+			sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Class '"
+					+ rid + "' not found.");
+			return;
+		}
+
+		if ("add".equals(operation)) {
+			iRequest.data.commandInfo = "Studio add index";
+
+			try {
+                final String[] fieldNames = fields.get("fields").trim().split("\\s*,\\s*");
+                final OClass.INDEX_TYPE indexType;
+                if(fields.get("type").equals("Unique"))
+                    indexType = OClass.INDEX_TYPE.UNIQUE;
+                else
+                    indexType = OClass.INDEX_TYPE.NOTUNIQUE;
+
+
+                cls.createIndex(fields.get("name"), indexType, fieldNames);
+
+				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN,
+						"Index " + fields.get("name") + " created successfully");
+
+			} catch (Exception e) {
+				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error on creating a new index for class " + rid + ": " + e,
+						null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating a new index for class " + rid + ": " + e);
+			}
+        } else if ("del".equals(operation)) {
+            iRequest.data.commandInfo = "Studio delete index";
+
+            try {
+                final OIndex index = cls.getClassIndex(className);
+                if (index == null) {
+                    sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Index '"
+                            + className + "' not found in class '" + rid + "'.");
+                    return;
+                }
+
+                db.getMetadata().getIndexManager().dropIndex(index.getName());
+
+                sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN,
+                        "Index " + className + " deleted successfully.");
+            } catch (Exception e) {
+                sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error on deletion index '" + className +
+                        "' for class " + rid + ": " + e,
+                        null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error on deletion index '" + className +
+                        "' for class " + rid + ": " + e);
+            }
+        } else
+            sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN,
+                    "Operation not supported");
+    }
 
 	public String[] getNames() {
 		return NAMES;

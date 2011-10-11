@@ -15,20 +15,15 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.orientechnologies.common.concur.resource.OCloseable;
-import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.util.OMultiKey;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -36,12 +31,20 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
+import java.util.*;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 @SuppressWarnings("unchecked")
 public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass implements OIndexManager, OCloseable {
 	public static final String								CONFIG_INDEXES			= "indexes";
 	public static final String								DICTIONARY_NAME			= "dictionary";
 	protected Map<String, OIndexInternal<?>>	indexes							= new HashMap<String, OIndexInternal<?>>();
+    protected final Map<String, Map<OMultiKey, Set<OIndex<?>>>> classPropertyIndex =
+            new HashMap<String, Map<OMultiKey, Set<OIndex<?>>>>();
 	protected String													defaultClusterName	= OStorage.CLUSTER_INDEX_NAME;
+
+    protected ReadWriteLock lock = new ReentrantReadWriteLock();
 
 	public OIndexManagerAbstract(final ODatabaseRecord iDatabase) {
 		super(new ODocument(iDatabase));
@@ -49,109 +52,342 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
 	protected abstract OIndex<?> getIndexInstance(final OIndex<?> iIndex);
 
-	public synchronized OIndexManagerAbstract load() {
-		if (getDatabase().getStorage().getConfiguration().indexMgrRecordId == null)
-			// @COMPATIBILITY: CREATE THE INDEX MGR
-			create();
-
-		// CLEAR PREVIOUS STUFF
-		indexes.clear();
-
-		// RELOAD IT
-		((ORecordId) document.getIdentity()).fromString(getDatabase().getStorage().getConfiguration().indexMgrRecordId);
-		super.reload("*:-1 index:0");
-		return this;
+	protected void acquireSharedLock() {
+		lock.readLock().lock();
 	}
 
-	@Override
-	public synchronized <RET extends ODocumentWrapper> RET reload() {
-		document.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
-		return (RET) super.reload();
+	protected void releaseSharedLock() {
+		lock.readLock().unlock();
 	}
 
-	@Override
-	public synchronized <RET extends ODocumentWrapper> RET save() {
-		document.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
-		return (RET) super.save();
+	protected void acquireExclusiveLock() {
+		lock.writeLock().lock();
 	}
 
-	public synchronized void create() {
-		save(OStorage.CLUSTER_INTERNAL_NAME);
-		getDatabase().getStorage().getConfiguration().indexMgrRecordId = document.getIdentity().toString();
-		getDatabase().getStorage().getConfiguration().update();
-
-		createIndex(DICTIONARY_NAME, OProperty.INDEX_TYPE.DICTIONARY.toString(), OType.STRING, null, null, null, false);
+	protected void releaseExclusiveLock() {
+		lock.writeLock().unlock();
 	}
 
-	public synchronized void flush() {
-		for (OIndexInternal<?> idx : indexes.values())
-			idx.flush();
+    public OIndexManagerAbstract load() {
+        acquireExclusiveLock();
+        try {
+            document.setDatabase(getDatabase());
+            if (getDatabase().getStorage().getConfiguration().indexMgrRecordId == null)
+                // @COMPATIBILITY: CREATE THE INDEX MGR
+                create();
+
+            // CLEAR PREVIOUS STUFF
+            indexes.clear();
+            classPropertyIndex.clear();
+
+            // RELOAD IT
+            ((ORecordId) document.getIdentity()).fromString(getDatabase().getStorage().getConfiguration().indexMgrRecordId);
+            super.reload("*:-1 index:0");
+            return this;
+        } finally {
+            releaseExclusiveLock();
+        }
+    }
+
+    @Override
+    public <RET extends ODocumentWrapper> RET reload() {
+        acquireExclusiveLock();
+        try {
+            document.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
+            return (RET) super.reload();
+        } finally {
+            releaseExclusiveLock();
+        }
+    }
+
+    @Override
+    public <RET extends ODocumentWrapper> RET save() {
+        acquireExclusiveLock();
+        try {
+            document.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
+            return (RET) super.save();
+        } finally {
+            releaseExclusiveLock();
+        }
+    }
+
+    public void create() {
+        acquireExclusiveLock();
+        try {
+            save(OStorage.CLUSTER_INTERNAL_NAME);
+            getDatabase().getStorage().getConfiguration().indexMgrRecordId = document.getIdentity().toString();
+            getDatabase().getStorage().getConfiguration().update();
+
+            createIndex(DICTIONARY_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(),
+                    new OSimpleKeyIndexDefinition(OType.STRING), null, null);
+        } finally {
+            releaseExclusiveLock();
+        }
+    }
+
+    public void flush() {
+        acquireExclusiveLock();
+        try {
+
+            for (OIndexInternal<?> idx : indexes.values())
+                idx.flush();
+        } finally {
+            releaseExclusiveLock();
+        }
+    }
+
+    public Collection<? extends OIndex<?>> getIndexes() {
+        acquireSharedLock();
+        try {
+            final Collection<OIndexInternal<?>> rawResult = indexes.values();
+            final List<OIndex<?>> result = new ArrayList<OIndex<?>>(rawResult.size());
+            for(final OIndex<?> index : rawResult)
+                result.add( wrapInTransactional(index) );
+            return result;
+        } finally {
+            releaseSharedLock();
+        }
+
 	}
 
-	public synchronized OIndex<?> createIndex(final String iName, final String iType, final OType iKeyType,
-			final int[] iClusterIdsToIndex, OIndexCallback iCallback, final OProgressListener iProgressListener) {
-		return createIndex(iName, iType, iKeyType, iClusterIdsToIndex, iCallback, iProgressListener, false);
-	}
+	public OIndex<?> getIndex(final String iName) {
+        acquireSharedLock();
 
-	public synchronized Collection<? extends OIndex<?>> getIndexes() {
-		return Collections.unmodifiableCollection(indexes.values());
-	}
-
-	public synchronized OIndex<?> getIndex(final String iName) {
-		final OIndex<?> index = indexes.get(iName.toLowerCase());
+        try {
+            final OIndex<?> index = indexes.get(iName.toLowerCase());
 		if (index == null)
 			return null;
 
-		if (index instanceof OIndexMultiValues)
-			return new OIndexTxAwareMultiValue(getDatabase(), (OIndex<Collection<OIdentifiable>>) getIndexInstance(index));
-		else
-			return new OIndexTxAwareOneValue(getDatabase(), (OIndex<OIdentifiable>) getIndexInstance(index));
+		    return wrapInTransactional(index);
+        }  finally {
+            releaseSharedLock();
+        }
+
 	}
 
-	public synchronized boolean existsIndex(final String iName) {
-		return indexes.containsKey(iName.toLowerCase());
+    public boolean existsIndex(final String iName) {
+        acquireSharedLock();
+        try {
+            return indexes.containsKey(iName.toLowerCase());
+        } finally {
+            releaseSharedLock();
+        }
+    }
+
+    public String getDefaultClusterName() {
+        acquireSharedLock();
+        try {
+            return defaultClusterName;
+        } finally {
+            releaseSharedLock();
+        }
 	}
 
-	public synchronized String getDefaultClusterName() {
-		return defaultClusterName;
+	public void setDefaultClusterName(final String defaultClusterName) {
+        acquireExclusiveLock();
+        try {
+            this.defaultClusterName = defaultClusterName;
+        } finally {
+            releaseExclusiveLock();
+        }
 	}
 
-	public synchronized void setDefaultClusterName(String defaultClusterName) {
-		this.defaultClusterName = defaultClusterName;
-	}
+	public ODictionary<ORecordInternal<?>> getDictionary() {
+        acquireExclusiveLock();
 
-	public synchronized ODictionary<ORecordInternal<?>> getDictionary() {
-		OIndex<?> idx = getIndex(DICTIONARY_NAME);
-		if (idx == null)
-			idx = createIndex(DICTIONARY_NAME, OProperty.INDEX_TYPE.DICTIONARY.toString(), OType.STRING, null, null, null, false);
+        OIndex<?> idx;
+        try {
+            idx = getIndex(DICTIONARY_NAME);
+            if (idx == null)
+                idx = createIndex(DICTIONARY_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(), new OSimpleKeyIndexDefinition(OType.STRING )
+                        , null, null);
+        } finally {
+            releaseExclusiveLock();
+        }
+
 		return new ODictionary<ORecordInternal<?>>((OIndex<OIdentifiable>) idx);
 	}
 
 	public ODocument getConfiguration() {
-		return getDocument();
+        acquireSharedLock();
+
+        try {
+            return getDocument();
+        } finally {
+            releaseSharedLock();
+        }
+
 	}
 
-	protected ODatabaseRecord getDatabase() {
-		document.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
-		return document.getDatabase();
-	}
+    protected ODatabaseRecord getDatabase() {
+        return ODatabaseRecordThreadLocal.INSTANCE.get();
+    }
 
-	public void close() {
-		flush();
-		indexes.clear();
-	}
+    public void close() {
+        acquireExclusiveLock();
+        try {
+            flush();
+            indexes.clear();
+            classPropertyIndex.clear();
+        } finally {
+            releaseExclusiveLock();
+        }
+    }
 
-	public synchronized OIndexManager setDirty() {
-		document.setDirty();
-		return this;
-	}
+    public OIndexManager setDirty() {
+        acquireExclusiveLock();
+        try {
+            document.setDirty();
+            return this;
+        } finally {
+            releaseExclusiveLock();
+        }
+    }
 
-	public synchronized OIndex<?> getIndex(final ORID iRID) {
-		for (OIndex<?> idx : indexes.values()) {
-			if (idx.getIdentity().equals(iRID)) {
-				return getIndexInstance(idx);
-			}
-		}
-		return null;
-	}
+    public OIndex<?> getIndex(final ORID iRID) {
+        acquireSharedLock();
+        try {
+            for (final OIndex<?> idx : indexes.values()) {
+                if (idx.getIdentity().equals(iRID)) {
+                    return getIndexInstance(idx);
+                }
+            }
+            return null;
+        } finally {
+            releaseSharedLock();
+        }
+    }
+
+    protected void addIndexInternal(final OIndexInternal index) {
+        acquireExclusiveLock();
+        try {
+            indexes.put(index.getName().toLowerCase(), index);
+
+            final OIndexDefinition indexDefinition = index.getDefinition();
+            if(indexDefinition == null || indexDefinition.getClassName() == null)
+                return;
+
+            Map<OMultiKey, Set<OIndex<?>>> propertyIndex =
+                    classPropertyIndex.get(indexDefinition.getClassName().toLowerCase());
+
+            if(propertyIndex == null) {
+                propertyIndex = new HashMap<OMultiKey, Set<OIndex<?>>>();
+                classPropertyIndex.put(indexDefinition.getClassName().toLowerCase(), propertyIndex);
+            }
+
+            final int paramCount = indexDefinition.getParamCount();
+
+            for(int i = 1; i <= paramCount; i ++) {
+                final List<String> fields = indexDefinition.getFields().subList(0, i);
+                final OMultiKey multiKey = new OMultiKey(normalizeFieldNames(fields));
+                Set<OIndex<?>> indexSet = propertyIndex.get(multiKey);
+                if(indexSet == null)
+                    indexSet = new HashSet<OIndex<?>>();
+                indexSet.add(index);
+                propertyIndex.put(multiKey, indexSet);
+            }
+        } finally {
+            releaseExclusiveLock();
+        }
+    }
+
+    public Set<OIndex<?>> getClassInvolvedIndexes(final String className, Collection<String> fields) {
+        acquireSharedLock();
+        try {
+            fields = normalizeFieldNames(fields);
+
+            final OMultiKey multiKey = new OMultiKey(fields);
+
+            final Map<OMultiKey, Set<OIndex<?>>> propertyIndex = classPropertyIndex.get(className.toLowerCase());
+
+            if (propertyIndex == null || !propertyIndex.containsKey(multiKey))
+                return Collections.emptySet();
+
+            final Set<OIndex<?>> rawResult = propertyIndex.get(multiKey);
+            final Set<OIndex<?>> transactionalResult = new HashSet<OIndex<?>>(rawResult.size());
+            for(final OIndex<?> index : rawResult) {
+                transactionalResult.add(wrapInTransactional(index));
+            }
+
+            return transactionalResult;
+        } finally {
+            releaseSharedLock();
+        }
+    }
+
+    public Set<OIndex<?>> getClassInvolvedIndexes(final String className, final String... fields) {
+        return getClassInvolvedIndexes(className, Arrays.asList(fields));
+    }
+
+    public boolean areIndexed(final String className, Collection<String> fields) {
+        acquireSharedLock();
+        try {
+            fields = normalizeFieldNames(fields);
+
+            final OMultiKey multiKey = new OMultiKey(fields);
+
+            final Map<OMultiKey, Set<OIndex<?>>> propertyIndex = classPropertyIndex.get(className.toLowerCase());
+
+            if (propertyIndex == null)
+                return false;
+
+            return propertyIndex.containsKey(multiKey) &&
+                    !propertyIndex.get(multiKey).isEmpty();
+        } finally {
+            releaseSharedLock();
+        }
+    }
+
+    public boolean areIndexed(final String className,final String... fields) {
+        return areIndexed(className, Arrays.asList(fields));
+    }
+
+    public Set<OIndex<?>> getClassIndexes(final String className) {
+        acquireSharedLock();
+        try {
+            final Set<OIndex<?>> result = new HashSet<OIndex<?>>();
+            final Map<OMultiKey, Set<OIndex<?>>> propertyIndex = classPropertyIndex.get(className.toLowerCase());
+
+            if(propertyIndex == null)
+                return Collections.emptySet();
+
+            for (final Set<OIndex<?>> propertyIndexes : propertyIndex.values())
+                for (final OIndex<?> index : propertyIndexes)
+                    result.add(wrapInTransactional(index));
+            return result;
+        } finally {
+            releaseSharedLock();
+        }
+    }
+
+    public OIndex<?> getClassIndex(String className, String indexName) {
+        acquireSharedLock();
+        try {
+            className = className.toLowerCase();
+            indexName = indexName.toLowerCase();
+            final OIndex<?> index = indexes.get(indexName);
+            if (index != null && index.getDefinition() != null && index.getDefinition().getClassName() != null &&
+                    className.equals(index.getDefinition().getClassName().toLowerCase()))
+                return wrapInTransactional(index);
+            return null;
+        } finally {
+            releaseSharedLock();
+        }
+    }
+
+
+    protected List<String> normalizeFieldNames(final Collection<String> fieldNames) {
+        final ArrayList<String> result = new ArrayList<String>(fieldNames.size());
+        for (final String fieldName : fieldNames)
+            result.add(fieldName.toLowerCase());
+        return result;
+    }
+
+    private OIndex<?> wrapInTransactional(final OIndex<?> index) {
+        if (index instanceof OIndexMultiValues)
+            return new OIndexTxAwareMultiValue(getDatabase(), (OIndex<Collection<OIdentifiable>>) getIndexInstance(index));
+        else if(index instanceof OIndexOneValue)
+            return new OIndexTxAwareOneValue(getDatabase(), (OIndex<OIdentifiable>) getIndexInstance(index));
+        return  index;
+    }
 }

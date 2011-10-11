@@ -163,22 +163,38 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 		}
 	}
 
-	public Set<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
-		if (iRangeFrom.getClass() != iRangeTo.getClass())
-			throw new IllegalArgumentException("Range from-to parameters are of different types");
+    /**
+     * Returns a set of records with key between the range passed as parameter.
+     * <p/>
+     * In case of {@link com.orientechnologies.common.collection.OCompositeKey}s partial keys can be used
+     * as values boundaries.
+     *
+     * @param iRangeFrom     Starting range
+     * @param iFromInclusive Indicates whether start range boundary is included in result.
+     * @param iRangeTo       Ending range
+     * @param iToInclusive   Indicates whether end range boundary is included in result.
+     * @return Returns a set of records with key between the range passed as parameter.
+     * @see com.orientechnologies.common.collection.OCompositeKey#compareTo(com.orientechnologies.common.collection.OCompositeKey)
+     */
+    public Set<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive,
+                                               Object iRangeTo, boolean iToInclusive) {
+        if (iRangeFrom.getClass() != iRangeTo.getClass())
+            throw new IllegalArgumentException("Range from-to parameters are of different types");
 
 		acquireExclusiveLock();
 
-		try {
-			final ONavigableMap<Object, OIdentifiable> subSet = map.subMap(iRangeFrom, iInclusive, iRangeTo, iInclusive);
-			final Set<OIdentifiable> result = getLazySet(subSet);
+        try {
+            final ONavigableMap<Object, OIdentifiable> subSet = map.subMap(iRangeFrom, iFromInclusive,
+                    iRangeTo, iToInclusive);
 
-			return result;
+            final Set<OIdentifiable> result = getLazySet(subSet);
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+            return result;
+
+        } finally {
+            releaseExclusiveLock();
+        }
+    }
 
 	public Set<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
 		if (iRangeFrom.getClass() != iRangeTo.getClass())
@@ -216,10 +232,10 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 					OIndexException.class, iKey, indexedRID);
 	}
 
-	public OIndexOneValue create(String iName, OType iKeyType, ODatabaseRecord iDatabase, String iClusterIndexName,
-			int[] iClusterIdsToIndex, OProgressListener iProgressListener, boolean iAutomatic) {
-		return (OIndexOneValue) super.create(iName, iKeyType, iDatabase, iClusterIndexName, iClusterIdsToIndex, iProgressListener,
-				iAutomatic, OStreamSerializerRID.INSTANCE);
+	public OIndexOneValue create(String iName, OIndexDefinition iIndexDefinition, ODatabaseRecord iDatabase, String iClusterIndexName,
+                                 int[] iClusterIdsToIndex, OProgressListener iProgressListener) {
+		return (OIndexOneValue) super.create(iName, iIndexDefinition, iDatabase, iClusterIndexName, iClusterIdsToIndex, iProgressListener,
+				OStreamSerializerRID.INSTANCE);
 	}
 
 	private Set<OIdentifiable> getLazySet(final ONavigableMap<Object, OIdentifiable> iSubSet) {

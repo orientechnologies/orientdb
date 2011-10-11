@@ -15,11 +15,13 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
+import java.lang.reflect.Array;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import com.orientechnologies.common.collection.OMultiValue;
@@ -196,20 +198,23 @@ public class OSQLFilterCondition {
 	}
 
 	protected Object evaluate(ORecordSchemaAware<?> iRecord, final Object iValue) {
-		if (iRecord.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
-			try {
-				iRecord = (ORecordSchemaAware<?>) iRecord.load();
-			} catch (ORecordNotFoundException e) {
-				return null;
-			}
-		}
+        if (iRecord.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+            try {
+                iRecord = (ORecordSchemaAware<?>) iRecord.load();
+            } catch (ORecordNotFoundException e) {
+                return null;
+            }
+        }
 
-		if (iValue instanceof OSQLFilterItem)
+		if (iValue instanceof OSQLFilterItem) {
 			return ((OSQLFilterItem) iValue).getValue(iRecord);
-		else if (iValue instanceof OSQLFilterCondition)
+        }
+
+		if (iValue instanceof OSQLFilterCondition)
 			// NESTED CONDITION: EVALUATE IT RECURSIVELY
 			return ((OSQLFilterCondition) iValue).evaluate(iRecord);
-		else if (iValue instanceof OSQLFunctionRuntime) {
+
+		if (iValue instanceof OSQLFunctionRuntime) {
 			// STATELESS FUNCTION: EXECUTE IT
 			final OSQLFunctionRuntime f = (OSQLFunctionRuntime) iValue;
 			return f.execute(iRecord, null);

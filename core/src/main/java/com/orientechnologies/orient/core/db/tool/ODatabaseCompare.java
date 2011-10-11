@@ -148,8 +148,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
 			final ORecordId rid = new ORecordId(clusterId);
 
-			long clusterMax = Math.max(db1Max, db2Max);
-			for (int i = 0; i < clusterMax; ++i) {
+			final long clusterMax = Math.max(db1Max, db2Max);
+			for (int i = 0; i <= clusterMax; ++i) {
 				rid.clusterPosition = i;
 				buffer1 = i <= db1Max ? storage1.readRecord(null, rid, null) : null;
 				buffer2 = i <= db2Max ? storage2.readRecord(null, rid, null) : null;

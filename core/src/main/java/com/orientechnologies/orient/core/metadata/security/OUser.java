@@ -15,15 +15,16 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Contains the user settings about security and permissions. Each user has one or more roles associated. Roles contains the
@@ -78,9 +79,9 @@ public class OUser extends ODocumentWrapper {
 		document = iSource;
 
 		roles = new HashSet<ORole>();
-		final Set<ODocument> loadedRoles = iSource.field("roles");
+		final Collection<ODocument> loadedRoles = iSource.field("roles");
 		if (loadedRoles != null)
-			for (ODocument d : loadedRoles) {
+			for (final ODocument d : loadedRoles) {
 				roles.add(document.getDatabase().getMetadata().getSecurity().getRole((String) d.field("name")));
 			}
 	}

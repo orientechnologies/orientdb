@@ -367,17 +367,53 @@ public abstract class OStringSerializerHelper {
 	}
 
 	public static int getCollection(final String iText, final int iStartPosition, final Collection<String> iCollection) {
-		int openPos = iText.indexOf(COLLECTION_BEGIN, iStartPosition);
-		if (openPos == -1)
-			return -1;
+        final StringBuilder buffer = new StringBuilder();
 
-		int closePos = iText.indexOf(COLLECTION_END, openPos + 1);
-		if (closePos == -1)
-			return -1;
+        int openPos = iText.indexOf(COLLECTION_BEGIN, iStartPosition);
+        if (openPos == -1)
+            return -1;
 
-		split(iCollection, iText.substring(openPos + 1, closePos), COLLECTION_SEPARATOR, ' ');
+        int currentPos, deep;
+        for (currentPos = openPos + 1, deep = 1; deep > 0; currentPos++) {
+            if (currentPos >= iText.length()) {
+                return -1;
+            }
 
-		return closePos;
+            char c = iText.charAt(currentPos);
+
+            if (buffer.length() == 0 && c == ' ') {
+                continue;
+            }
+
+            switch (c) {
+                case COLLECTION_BEGIN:
+                    buffer.append(c);
+                    deep++;
+                    break;
+
+                case COLLECTION_END:
+                    if (deep > 1)
+                        buffer.append(c);
+                    deep--;
+                    break;
+
+                case COLLECTION_SEPARATOR:
+                    if (deep > 1) {
+                        buffer.append(c);
+                    } else {
+                        iCollection.add(buffer.toString().trim());
+                        buffer.setLength(0);
+                    }
+                    break;
+
+                default:
+                    buffer.append(c);
+            }
+        }
+
+        iCollection.add(buffer.toString().trim());
+
+        return --currentPos;
 	}
 
 	public static int getParameters(final String iText, final int iBeginPosition, final List<String> iParameters) {

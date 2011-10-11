@@ -20,8 +20,9 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexFullText;
-import com.orientechnologies.orient.core.index.OPropertyIndex;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
@@ -73,12 +74,19 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
 			// NO PROPERTY DEFINED
 			return null;
 
-		final OPropertyIndex index = prop.getIndex();
-		if (index == null || !(index.getUnderlying() instanceof OIndexFullText))
-			// NO FULL TEXT INDEX
-			return null;
+        OIndex fullTextIndex = null;
+        for (final OIndex indexDefinition : prop.getIndexes()) {
+            if (indexDefinition instanceof OIndexFullText) {
+                fullTextIndex = indexDefinition;
+                break;
+            }
+        }
 
-		return (Collection<OIdentifiable>) index.getUnderlying().get(fieldValue);
+        if (fullTextIndex == null) {
+            return null;
+        }
+
+		return (Collection<OIdentifiable>) fullTextIndex.get(fieldValue);
 	}
 
 	public boolean isIgnoreCase() {

@@ -54,7 +54,7 @@ public class OClusterLogical implements OCluster {
 	 * @param iId
 	 * @param iName
 	 * @param iId
-	 * @param iRecordId
+	 * @param iName
 	 * @throws IOException
 	 * @throws IOException
 	 */

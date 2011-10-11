@@ -15,18 +15,7 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -35,11 +24,15 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
+
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Schema Class implementation.
@@ -54,7 +47,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	protected String									name;
 	protected Class<?>								javaClass;
 	protected int											fixedSize		= 0;
-	protected Map<String, OProperty>	properties	= new HashMap<String, OProperty>();
+	protected final Map<String, OProperty>	properties	= new HashMap<String, OProperty>();
+
 	protected int[]										clusterIds;
 	protected int											defaultClusterId;
 	protected OClassImpl							superClass;
@@ -123,7 +117,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
 	/**
 	 * Set the super class.
-	 * 
+	 *
 	 * @param iSuperClass
 	 *          Super class as OClass instance
 	 * @return the object itself.
@@ -222,7 +216,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		do {
 			if (currentClass.properties != null) {
 				for (OProperty p : currentClass.properties.values())
-					if (p.isIndexed()) {
+					if (areIndexed(p.getName())) {
 						if (indexedProps == null)
 							indexedProps = new ArrayList<OProperty>();
 						indexedProps.add(p);
@@ -305,8 +299,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		if (prop == null)
 			throw new OSchemaException("Property '" + iPropertyName + "' not found in class " + name + "'");
 
-		prop.dropIndex();
-
 		fixedSize -= prop.getType().size;
 	}
 
@@ -359,10 +351,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
 		final Object cc = document.field("clusterIds");
 		if (cc instanceof Collection<?>) {
-			Collection<Integer> coll = document.field("clusterIds");
+			final Collection<Integer> coll = document.field("clusterIds");
 			clusterIds = new int[coll.size()];
 			int i = 0;
-			for (Integer item : coll)
+			for (final Integer item : coll)
 				clusterIds[i++] = item.intValue();
 		} else
 			clusterIds = (int[]) cc;
@@ -393,8 +385,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 			document.field("clusterIds", clusterIds);
 			document.field("overSize", overSize);
 
-			Set<ODocument> props = new HashSet<ODocument>();
-			for (OProperty p : properties.values()) {
+			final Set<ODocument> props = new HashSet<ODocument>();
+			for (final OProperty p : properties.values()) {
 				props.add(((OPropertyImpl) p).toStream());
 			}
 			document.field("properties", props, OType.EMBEDDEDSET);
@@ -458,7 +450,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
 	/**
 	 * Adds a base class to the current one. It adds also the base class cluster ids to the polymorphic cluster ids array.
-	 * 
+	 *
 	 * @param iBaseClass
 	 *          The base class to add.
 	 */
@@ -555,7 +547,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
 	/**
 	 * Truncates all the clusters the class uses.
-	 * 
+	 *
 	 * @throws IOException
 	 */
 	public void truncate() throws IOException {
@@ -566,10 +558,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
 	/**
 	 * Returns true if the current instance extends the passed schema class (iClass).
-	 * 
-	 * @param iClass
+	 *
+	 * @param iClassName
 	 * @return
-	 * @see #isSuperClassOf(OClassImpl)
+	 * @see #isSuperClassOf(OClass)
 	 */
 	public boolean isSubClassOf(final String iClassName) {
 		return isSubClassOf(owner.getClass(iClassName));
@@ -577,10 +569,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
 	/**
 	 * Returns true if the current instance extends the passed schema class (iClass).
-	 * 
+	 *
 	 * @param iClass
 	 * @return
-	 * @see #isSuperClassOf(OClassImpl)
+	 * @see #isSuperClassOf(OClass)
 	 */
 	public boolean isSubClassOf(final OClass iClass) {
 		if (iClass == null)
@@ -597,10 +589,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
 	/**
 	 * Returns true if the passed schema class (iClass) extends the current instance.
-	 * 
+	 *
 	 * @param iClass
 	 * @return Returns true if the passed schema class extends the current instance
-	 * @see #isSubClassOf(OClassImpl)
+	 * @see #isSubClassOf(OClass)
 	 */
 	public boolean isSuperClassOf(final OClass iClass) {
 		OClass cls = iClass;
@@ -729,7 +721,124 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		owner.saveInternal();
 	}
 
-	private void setPolymorphicClusterIds(final int[] iClusterIds) {
+    public OIndex<?> createIndex(final String iName, final INDEX_TYPE iType, final String... fields) {
+        return createIndex(iName, iType, null, fields);
+    }
+
+    public OIndex<?> createIndex(final String iName, final INDEX_TYPE iType,
+                                      final OProgressListener iProgressListener, final String... fields) {
+        if(!(INDEX_TYPE.DICTIONARY.equals(iType) ||
+                INDEX_TYPE.FULLTEXT.equals(iType) || INDEX_TYPE.NOTUNIQUE.equals(iType) ||
+                INDEX_TYPE.UNIQUE.equals(iType) ))
+            throw new OIndexException("Index of this type (" + iType + ") can not be used in class indexes.");
+
+        if(fields.length == 0)
+            throw new OIndexException("List of fields to index can not be empty.");
+
+        if(fields.length > 1 && INDEX_TYPE.FULLTEXT.equals(iType))
+            throw new OIndexException(INDEX_TYPE.FULLTEXT + " indexes can not be used as composite ones.");
+
+        final Set<String> existingFieldNames = properties.keySet();
+        final List<String> fieldsToIndex = new LinkedList<String>();
+
+        for (final String fieldName : fields) {
+            final String normalizedFiledName = fieldName.toLowerCase();
+            if (!existingFieldNames.contains(normalizedFiledName))
+                throw new OIndexException("Index with name : '" + iName +
+                        "' can not be created on class : '" + name + "' because field: '" +
+                        fieldName + "' is absent in class definition.");
+
+            fieldsToIndex.add(fieldName);
+        }
+
+        final OIndexDefinition indexDefinition;
+        if(fieldsToIndex.size() == 1)
+            indexDefinition = new OPropertyIndexDefinition(name, fieldsToIndex.get(0),
+                    calculateIndexType(properties.get(fieldsToIndex.get(0).toLowerCase())));
+        else {
+            final OCompositeIndexDefinition compositeIndex = new OCompositeIndexDefinition(name);
+
+            for(final String fieldName : fieldsToIndex) {
+                final OType propertyType = properties.get(fieldName.toLowerCase()).getType();
+                if(propertyType.equals(OType.EMBEDDEDLIST) || propertyType.equals(OType.EMBEDDEDSET) ||
+                                propertyType.equals(OType.LINKSET) || propertyType.equals(OType.LINKSET))
+                    throw new OIndexException("Collections are not supported in composite indexes");
+
+                final OPropertyIndexDefinition propertyIndex = new OPropertyIndexDefinition(name, fieldName,
+                        propertyType );
+                compositeIndex.addIndex(propertyIndex);
+            }
+
+            indexDefinition = compositeIndex;
+        }
+
+        final OIndex<?> index =
+                getDatabase().getMetadata().getIndexManager().createIndex(iName, iType.toString(),
+                        indexDefinition, clusterIds, iProgressListener);
+        return index;
+    }
+
+    public boolean areIndexed(final String... fields) {
+        return areIndexed(Arrays.asList(fields));
+    }
+
+    public boolean areIndexed(final Collection<String> fields) {
+        final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
+
+        final boolean currentClassResult = indexManager.areIndexed(name, fields);
+
+        if(superClass != null)
+            return currentClassResult || superClass.areIndexed(fields);
+        return currentClassResult;
+    }
+
+    public Set<OIndex<?>> getInvolvedIndexes( final String... fields ) {
+        return getInvolvedIndexes(Arrays.asList(fields));
+    }
+
+    public Set<OIndex<?>> getInvolvedIndexes( final Collection<String> fields ) {
+        final Set<OIndex<?>> result = new HashSet<OIndex<?>>(getClassInvolvedIndexes(fields));
+
+        if(superClass != null)
+            result.addAll(superClass.getInvolvedIndexes(fields));
+
+        return result;
+    }
+
+    public Set<OIndex<?>> getClassInvolvedIndexes( final Collection<String> fields ) {
+        final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
+
+        return indexManager.getClassInvolvedIndexes(name,fields);
+    }
+
+    public Set<OIndex<?>> getClassInvolvedIndexes( final String... fields ) {
+        return getClassInvolvedIndexes(Arrays.asList(fields));
+    }
+
+    public OIndex<?> getClassIndex(final String iName) {
+        final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
+
+        return indexManager.getClassIndex(name, iName);
+    }
+
+    public Set<OIndex<?>> getClassIndexes() {
+        final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
+
+        return indexManager.getClassIndexes(name);
+    }
+
+    public Set<OIndex<?>> getIndexes() {
+        final Set<OIndex<?>> indexes = getClassIndexes();
+        if(superClass == null)
+            return indexes;
+
+        final Set<OIndex<?>> result = new HashSet<OIndex<?>>(indexes);
+        result.addAll(superClass.getIndexes());
+
+        return result;
+    }
+
+    private void setPolymorphicClusterIds(final int[] iClusterIds) {
 		polymorphicClusterIds = iClusterIds;
 		Arrays.sort(polymorphicClusterIds);
 	}
@@ -738,4 +847,13 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		clusterIds = iClusterIds;
 		Arrays.sort(clusterIds);
 	}
+
+    private OType calculateIndexType(final OProperty property) {
+        final OType propertyType = property.getType();
+        if(propertyType.equals(OType.EMBEDDEDLIST) || propertyType.equals(OType.EMBEDDEDSET) ||
+                propertyType.equals(OType.LINKLIST) || propertyType.equals(OType.LINKSET))
+            return property.getLinkedType();
+
+        return propertyType;
+    }
 }

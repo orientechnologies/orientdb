@@ -25,7 +25,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.zip.GZIPInputStream;
 
 import com.orientechnologies.common.parser.OStringForwardReader;
@@ -38,6 +37,7 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
@@ -67,7 +67,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 	private Map<OProperty, String>			propertyIndexes	= new HashMap<OProperty, String>();
 	private boolean											schemaImported	= false;
 
-	public ODatabaseImport(final ODatabaseDocument database, final String iFileName, final OCommandOutputListener iListener)
+
+    public ODatabaseImport(final ODatabaseDocument database, final String iFileName, final OCommandOutputListener iListener)
 			throws IOException {
 		super(database, iFileName, iListener);
 
@@ -116,12 +117,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 					importSchema();
 				else if (tag.equals("records"))
 					importRecords();
-				else if (tag.equals("indexes"))
-					importManualIndexes();
 			}
 
 			deleteHoleRecords();
-			rebuildAutomaticIndexes();
 
 			database.setStatus(STATUS.OPEN);
 
@@ -137,37 +135,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		}
 
 		return this;
-	}
-
-	private void rebuildAutomaticIndexes() {
-		listener.onMessage("\nRebuilding " + propertyIndexes.size() + " automatic indexes...");
-
-		database.getMetadata().getIndexManager().reload();
-
-		for (Entry<OProperty, String> e : propertyIndexes.entrySet()) {
-			final OIndex<?> idx = database.getMetadata().getIndexManager().getIndex(e.getValue());
-			if (idx != null) {
-				idx.setCallback(e.getKey().getIndex());
-
-				listener.onMessage("\n- Index '" + idx.getName() + "'...");
-
-				// idx.rebuild(new OProgressListener() {
-				// public boolean onProgress(Object iTask, long iCounter, float iPercent) {
-				// if (iPercent % 10 == 0)
-				// listener.onMessage(".");
-				// return false;
-				// }
-				//
-				// public void onCompletition(Object iTask, boolean iSucceed) {
-				// }
-				//
-				// public void onBegin(Object iTask, long iTotal) {
-				// }
-				// });
-
-				listener.onMessage("OK (" + idx.getSize() + " records)");
-			}
-		}
 	}
 
 	/**
@@ -365,7 +332,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		}
 	}
 
-	private void importProperty(final OClass iClass) throws IOException, ParseException {
+    private void importProperty(final OClass iClass) throws IOException, ParseException {
 		jsonReader.readNext(OJSONReader.NEXT_OBJ_IN_ARRAY);
 
 		if (jsonReader.lastChar() == ']')
@@ -392,7 +359,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		String linkedClass = null;
 		OType linkedType = null;
 		String indexName = null;
-		String indexType = null;
 		boolean mandatory = false;
 		boolean notNull = false;
 
@@ -416,8 +382,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 				linkedType = OType.valueOf(value);
 			else if (attrib.equals("\"index\""))
 				indexName = value;
-			else if (attrib.equals("\"index-type\""))
-				indexType = value;
 		}
 
 		OPropertyImpl prop = (OPropertyImpl) iClass.getProperty(propName);
@@ -437,7 +401,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		if (linkedType != null)
 			prop.setLinkedType(linkedType);
 		if (indexName != null)
-			// PUSH INDEX TO CREATE AFTER ALL
+			//@COMPATIBILITY 1.0rc6 rebuild property indexes using new model
 			propertyIndexes.put(prop, indexName);
 	}
 
@@ -557,7 +521,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		try {
 			if (schemaImported && record.getIdentity().toString().equals(database.getStorage().getConfiguration().schemaRecordId)) {
 				// JUMP THE SCHEMA
-				jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
 				return null;
 			}
 
