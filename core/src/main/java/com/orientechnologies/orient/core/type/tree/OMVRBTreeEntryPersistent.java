@@ -81,7 +81,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
  * @param <K>
  * @param <V>
  */
-@SuppressWarnings( { "unchecked", "serial" })
+@SuppressWarnings({ "unchecked", "serial" })
 public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> implements OSerializableStream {
 	protected OMVRBTreePersistent<K, V>				pTree;
 
@@ -781,14 +781,36 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		} else
 			marshalledRecords.add(identityRecord);
 
-		if (parent != null && parentRid.isNew())
-			parent.save();
+		if (parent != null && parentRid.isNew()) {
+			// FORCE DIRTY
+			parent.record.setDirty();
 
-		if (left != null && leftRid.isNew())
+			parent.save();
+			parentRid = parent.record.getIdentity();
+			record.setDirty();
+		}
+
+		if (left != null && leftRid.isNew()) {
+			// FORCE DIRTY
+			left.record.setDirty();
+
 			left.save();
 
-		if (right != null && rightRid.isNew())
+			// COPY THE NEW LEFT RID INTO THE CURRENT NODE
+			leftRid = left.record.getIdentity();
+			record.setDirty();
+		}
+
+		if (right != null && rightRid.isNew()) {
+			// FORCE DIRTY
+			right.record.setDirty();
+
 			right.save();
+
+			// COPY THE NEW RIGHT RID INTO THE CURRENT NODE
+			rightRid = right.record.getIdentity();
+			record.setDirty();
+		}
 
 		final long timer = OProfiler.getInstance().startChrono();
 
