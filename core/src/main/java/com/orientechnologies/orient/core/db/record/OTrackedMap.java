@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -29,7 +30,7 @@ import com.orientechnologies.orient.core.record.ORecord;
  * 
  */
 @SuppressWarnings("serial")
-public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordElement {
+public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordElement, Serializable {
 	final protected ORecord<?>		sourceRecord;
 	private STATUS								status				= STATUS.NOT_LOADED;
 	protected final static Object	ENTRY_REMOVAL	= new Object();

@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import java.io.Serializable;
 import java.util.HashSet;
 
 import com.orientechnologies.orient.core.id.ORID;
@@ -28,7 +29,7 @@ import com.orientechnologies.orient.core.record.ORecord;
  * 
  */
 @SuppressWarnings("serial")
-public class OTrackedSet<T> extends HashSet<T> implements ORecordElement {
+public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, Serializable {
 	protected final ORecord<?>		sourceRecord;
 	private STATUS								status				= STATUS.NOT_LOADED;
 	protected final static Object	ENTRY_REMOVAL	= new Object();

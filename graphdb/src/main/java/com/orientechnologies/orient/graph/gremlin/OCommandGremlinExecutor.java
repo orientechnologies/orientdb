@@ -16,9 +16,11 @@
 package com.orientechnologies.orient.graph.gremlin;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
@@ -39,8 +41,9 @@ import com.tinkerpop.gremlin.pipes.GremlinPipeline;
  */
 public class OCommandGremlinExecutor extends OCommandExecutorAbstract {
 
-	private ScriptEngine	engine;
-	private OrientGraph		graph;
+	protected ScriptEngine				engine;
+	protected OrientGraph					graph;
+	protected Map<Object, Object>	clonedParameters	= new HashMap<Object, Object>();
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -73,5 +76,22 @@ public class OCommandGremlinExecutor extends OCommandExecutorAbstract {
 		} finally {
 			graph.shutdown();
 		}
+	}
+
+	@Override
+	public Map<Object, Object> getParameters() {
+		if (parameters == null)
+			return null;
+
+		// Every call to the function is a execution itself. Therefore, it requires a fresh set of input parameters.
+		// Therefore, clone the parameters map trying to recycle previous instances
+		for (Entry<Object, Object> param : parameters.entrySet()) {
+			String key = (String) param.getKey();
+			Object objectToClone = param.getValue();
+			Object previousItem = clonedParameters.get(key); // try to recycle it
+			Object newItem = OCloneHelper.cloneObject(objectToClone, previousItem);
+			clonedParameters.put(key, newItem);
+		}
+		return clonedParameters;
 	}
 }

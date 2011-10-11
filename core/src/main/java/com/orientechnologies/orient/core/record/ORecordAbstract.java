@@ -29,16 +29,16 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<T> {
-	protected ODatabaseRecord				_database;
-	protected ORecordId							_recordId;
-	protected int										_version;
-	protected byte[]								_source;
-	protected int										_size;
-	protected ORecordSerializer			_recordFormat;
-	protected boolean								_pinned		= true;
-	protected boolean								_dirty		= true;
-	protected ORecordElement.STATUS	_status		= ORecordElement.STATUS.LOADED;
-	protected ORecordListener				_listener	= null;
+	protected transient ODatabaseRecord		_database;
+	protected ORecordId										_recordId;
+	protected int													_version;
+	protected byte[]											_source;
+	protected int													_size;
+	protected transient ORecordSerializer	_recordFormat;
+	protected boolean											_pinned		= true;
+	protected boolean											_dirty		= true;
+	protected ORecordElement.STATUS				_status		= ORecordElement.STATUS.LOADED;
+	protected transient ORecordListener		_listener	= null;
 
 	public ORecordAbstract() {
 	}

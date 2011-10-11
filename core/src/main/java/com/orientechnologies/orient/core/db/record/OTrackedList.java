@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -30,7 +31,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * 
  */
 @SuppressWarnings({ "serial" })
-public class OTrackedList<T> extends ArrayList<T> implements ORecordElement {
+public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, Serializable {
 	protected final ORecordInternal<?>	sourceRecord;
 	private STATUS											status	= STATUS.NOT_LOADED;
 

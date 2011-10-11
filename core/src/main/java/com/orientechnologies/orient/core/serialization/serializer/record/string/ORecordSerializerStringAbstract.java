@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
+import java.io.Serializable;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Set;
@@ -36,7 +37,8 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 
-public abstract class ORecordSerializerStringAbstract implements ORecordSerializer {
+@SuppressWarnings("serial")
+public abstract class ORecordSerializerStringAbstract implements ORecordSerializer, Serializable {
 	private static final char		DECIMAL_SEPARATOR			= '.';
 	private static final String	MAX_INTEGER_AS_STRING	= String.valueOf(Integer.MAX_VALUE);
 	private static final int		MAX_INTEGER_DIGITS		= MAX_INTEGER_AS_STRING.length();

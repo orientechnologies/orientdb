@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.record;
 
+import java.io.Serializable;
+
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -26,7 +28,7 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
  * Generic record representation. The object can be reused across multiple calls to the database by using the {@link #reset()}
  * method.
  */
-public interface ORecord<T> extends ORecordElement, OIdentifiable {
+public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable {
 	/**
 	 * Removes all the dependencies with other records. All the relationships remain in form of RecordID. If some links contain dirty
 	 * records, the detach can't be complete and this method returns false.
