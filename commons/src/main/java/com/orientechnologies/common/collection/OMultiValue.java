@@ -125,7 +125,7 @@ public class OMultiValue {
 		if (iObject instanceof Map<?, ?>)
 			return ((Map<?, Object>) iObject).values();
 		if (iObject.getClass().isArray())
-			return Arrays.asList(iObject);
+			return new OIterableObject(iObject);
 		return null;
 	}
 
@@ -148,7 +148,7 @@ public class OMultiValue {
 		if (iObject instanceof Map<?, ?>)
 			return ((Map<?, Object>) iObject).values().iterator();
 		if (iObject.getClass().isArray())
-			return Arrays.asList(iObject).iterator();
+			return new OIterableObject(iObject).iterator();
 		return null;
 	}
 

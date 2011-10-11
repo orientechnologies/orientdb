@@ -215,13 +215,13 @@ public class OSQLFilterCondition {
 			return f.execute(iRecord, null);
 		}
 
-		final Object firstValue = OMultiValue.getFirstValue(iValue);
+        final Iterable multiValue = OMultiValue.getMultiValueIterable(iValue);
 
-		if (firstValue != null && firstValue instanceof OSQLFilterItem) {
+		if (multiValue != null) {
 			// MULTI VALUE: RETURN A COPY
 			final ArrayList<Object> result = new ArrayList<Object>(OMultiValue.getSize(iValue));
 
-			for (Object value : OMultiValue.getMultiValueIterable(iValue)) {
+			for (final Object value : multiValue) {
 				if (value instanceof OSQLFilterItem)
 					result.add(((OSQLFilterItem) value).getValue(iRecord));
 				else
