@@ -22,7 +22,7 @@
 					</tr>
 					<tr>
 						<td align="right" class="ui-widget help">Database:</td>
-						<td><input id="database" size="50" value="demo" class="ui-widget help" /></td>
+						<td id="databaseCell"></td>
 					</tr>
 					<tr>
 						<td align="right" class="ui-widget help">User:</td>
@@ -41,7 +41,8 @@
 					</tr>
 					<tr>
 						<td colspan="2">To report problems use the <a href="http://code.google.com/p/orient/issues/list">Issue Tracker</a>, to receive help jump to
-							the <a href="http://groups.google.com/group/orient-database">Forum</a>. Need a <a href="http://www.orientechnologies.com/training.htm">course</a>?</td>
+							the <a href="http://groups.google.com/group/orient-database">Forum</a>. Need a <a href="http://www.orientechnologies.com/training.htm">course</a>?
+						</td>
 					</tr>
 				</table>
 			</form>
@@ -142,4 +143,5 @@
 	$('#server').change(formatServerURL);
 	$('#server').val(document.location.href);
 	formatServerURL();
+	listDatabases($('#server').val());
 </script>

@@ -494,6 +494,24 @@ function ODatabase(databasePath) {
 		return this.getCommandResult();
 	}
 
+	ODatabase.prototype.listDatabases = function() {
+		$.ajax({
+			type : "GET",
+			url : this.databaseUrl + '/' + 'listDatabases',
+			context : this,
+			async : false,
+			success : function(msg) {
+				this.setErrorMessage(null);
+				this.handleResponse(msg);
+			},
+			error : function(msg) {
+				this.handleResponse(null);
+				this.setErrorMessage('Command error: ' + msg.responseText);
+			}
+		});
+		return this.getCommandResult();
+	}
+
 	ODatabase.prototype.schema = function() {
 		if (this.databaseInfo == null) {
 			this.setErrorMessage('Database is closed');

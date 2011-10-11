@@ -34,7 +34,7 @@
 	var orientServer;
 
 	var controller = new OController({
-		component : "panel",	
+		component : "panel",
 		cachePages : false
 	});
 
@@ -74,50 +74,52 @@
 </script>
 </head>
 <body>
-<table align="center" width="1000">
-	<tr>
-		<td>
-		<table id="header" style="width: 100%;" height="60" cellpadding="0" cellspacing="2">
-			<tr>
-				<td align="left"><a href="."><img border="0" src="images/orient_db.png" /></a></td>
-				<td valign="bottom" class="ui-widget">Server: <input id="header-server" size="40" value="" readonly />&nbsp;Database: <input
-					id="header-database" size="20" value="demo" readonly />
-				<button id="buttonDisconnect" onclick="javascript:disconnect()" class="ui-button-text-icon">Disconnect <img border="0"
-					alt="Refresh" src="images/disconnect.png" align="top" /></button>
-				&nbsp;&nbsp;<a href="http://code.google.com/p/orient/wiki/OrientDB_Studio" target="help">Help</a></td>
-			</tr>
-		</table>
-		</td>
-	</tr>
-	<tr>
-		<td>
-		<div>
-		<ul id="navigation">
-			<li class="menu-database"><a href="javascript:controller.loadFragment('panelDatabase.htm')"><span>Database</span></a></li>
-			<li class="menu-query"><a href="javascript:controller.loadFragment('panelQuery.htm')"><span>Query</span></a></li>
-			<li class="menu-command"><a href="javascript:controller.loadFragment('panelCommand.htm')"><span>Command</span></a></li>
-			<li class="menu-document"><a href="javascript:controller.loadFragment('panelDocument.htm')"><span>Document</span></a></li>
-			<li class="menu-graph"><a href="javascript:controller.loadFragment('panelGraph.htm')"><span>Graph</span></a></li>
-			<li class="menu-raw"><a href="javascript:controller.loadFragment('panelRaw.htm')"><span>Raw access</span></a></li>
-			<li class="menu-server"><a href="javascript:controller.loadFragment('panelServer.htm')"><span>Server</span></a></li>
-		</ul>
-		<div id="panel"></div>
-		</div>
-		</td>
-	</tr>
-	<tr>
-		<td>
-		<table style="width: 100%;">
-			<tr>
-				<td valign="top">Output:</td>
-				<td valign="top"><textarea id="output" cols="125" rows="3" title="value" readonly="readonly"></textarea></td>
-			</tr>
-		</table>
-		</td>
-	</tr>
-	<tr>
-		<td align="center">To know more information visit: <a href="http://www.orientechnologies.com">http://www.orientechnologies.com</a></td>
-	</tr>
-</table>
+	<table align="center" width="1000">
+		<tr>
+			<td>
+				<table id="header" style="width: 100%;" height="60" cellpadding="0" cellspacing="2">
+					<tr>
+						<td align="left"><a href="."><img border="0" src="images/orient_db.png" /> </a></td>
+						<td valign="bottom" class="ui-widget">Server: <input id="header-server" size="40" value="" readonly />&nbsp;Database: <input
+							id="header-database" size="20" value="demo" readonly />
+							<button id="buttonDisconnect" onclick="javascript:disconnect()" class="ui-button-text-icon">
+								Disconnect <img border="0" alt="Refresh" src="images/disconnect.png" align="top" />
+							</button> &nbsp;&nbsp;<a href="http://code.google.com/p/orient/wiki/OrientDB_Studio" target="help">Help</a>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<div>
+					<ul id="navigation">
+						<li class="menu-database"><a href="javascript:controller.loadFragment('panelDatabase.htm')"><span>Database</span> </a></li>
+						<li class="menu-query"><a href="javascript:controller.loadFragment('panelQuery.htm')"><span>Query</span> </a></li>
+						<li class="menu-command"><a href="javascript:controller.loadFragment('panelCommand.htm')"><span>Command</span> </a></li>
+						<li class="menu-document"><a href="javascript:controller.loadFragment('panelDocument.htm')"><span>Document</span> </a></li>
+						<li class="menu-graph"><a href="javascript:controller.loadFragment('panelGraph.htm')"><span>Graph</span> </a></li>
+						<li class="menu-raw"><a href="javascript:controller.loadFragment('panelRaw.htm')"><span>Raw access</span> </a></li>
+						<li class="menu-server"><a href="javascript:controller.loadFragment('panelServer.htm')"><span>Server</span> </a></li>
+					</ul>
+					<div id="panel"></div>
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<table style="width: 100%;">
+					<tr>
+						<td valign="top">Output:</td>
+						<td valign="top"><textarea id="output" cols="125" rows="3" title="value" readonly="readonly"></textarea></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		<tr>
+			<td align="center">To know more information visit: <a href="http://www.orientechnologies.com">http://www.orientechnologies.com</a>
+			</td>
+		</tr>
+	</table>
 </body>
 </html>
