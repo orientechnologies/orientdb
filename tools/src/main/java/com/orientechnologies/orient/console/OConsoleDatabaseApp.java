@@ -102,6 +102,16 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 				if (setTerminalToCBreak())
 					tty = true;
 
+				Runtime.getRuntime().addShutdownHook(new Thread() {
+					@Override
+					public void run() {
+						try {
+							stty("echo");
+						} catch (Exception e) {
+						}
+					}
+				});
+
 			} catch (Exception e) {
 			}
 
