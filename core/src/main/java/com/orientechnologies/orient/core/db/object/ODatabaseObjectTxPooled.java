@@ -43,6 +43,7 @@ public class ODatabaseObjectTxPooled extends ODatabaseObjectTx implements ODatab
 
 	public void reuse(final Object iOwner) {
 		ownerPool = (ODatabaseObjectPool) iOwner;
+		init();
 		getMetadata().reload();
 	}
 

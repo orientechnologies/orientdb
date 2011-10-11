@@ -48,6 +48,10 @@ public class OLazyObjectList<TYPE> implements List<TYPE>, Serializable {
 			list.addAll(iSourceList);
 	}
 
+	public OLazyObjectList(final ORecord<?> iSourceRecord) {
+		this.sourceRecord = iSourceRecord;
+	}
+
 	public Iterator<TYPE> iterator() {
 		return new OLazyObjectIterator<TYPE>(
 				(ODatabasePojoAbstract<TYPE>) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner(), sourceRecord, list.iterator(),
@@ -220,7 +224,8 @@ public class OLazyObjectList<TYPE> implements List<TYPE>, Serializable {
 
 		if (o != null) {
 			if (o instanceof ORID)
-				list.set(iIndex, database.getDatabaseOwner().getUserObjectByRecord((ORecordInternal<?>) database.load((ORID) o, fetchPlan), fetchPlan));
+				list.set(iIndex,
+						database.getDatabaseOwner().getUserObjectByRecord((ORecordInternal<?>) database.load((ORID) o, fetchPlan), fetchPlan));
 			else if (o instanceof ODocument)
 				list.set(iIndex, database.getDatabaseOwner().getUserObjectByRecord((ORecordInternal<?>) o, fetchPlan));
 		}

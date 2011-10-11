@@ -49,7 +49,11 @@ import com.orientechnologies.orient.core.db.object.OLazyObjectList;
 import com.orientechnologies.orient.core.db.object.OLazyObjectMap;
 import com.orientechnologies.orient.core.db.object.OLazyObjectSet;
 import com.orientechnologies.orient.core.db.object.OObjectNotDetachedException;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -62,6 +66,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
@@ -318,35 +323,57 @@ public class OObjectSerializerHelper {
 				if (Set.class.isAssignableFrom(type)) {
 
 					final Collection<Object> set = (Collection<Object>) iLinked;
-					final OLazyObjectSet<Object> target = new OLazyObjectSet<Object>(iRoot, set).setFetchPlan(iFetchPlan);
 
-					if (!iLazyLoading)
-						target.detach();
-
+					final Set<Object> target;
+					if (iLazyLoading)
+						target = new OLazyObjectSet<Object>(iRoot, set).setFetchPlan(iFetchPlan);
+					else {
+						target = new OTrackedSet(iRoot);
+						if (set != null && set.size() > 0)
+							for (Object o : set) {
+								if (o instanceof OIdentifiable)
+									target.add(iObj2RecHandler.getUserObjectByRecord((ORecordInternal<?>) ((OIdentifiable) o).getRecord(), iFetchPlan));
+								else
+									target.add(o);
+							}
+					}
 					fieldValue = target;
 
 				} else if (Collection.class.isAssignableFrom(type)) {
 
 					final Collection<ODocument> list = (Collection<ODocument>) iLinked;
-					final OLazyObjectList<Object> target = new OLazyObjectList<Object>().setFetchPlan(iFetchPlan);
-
-					if (!iLazyLoading)
-						target.detach();
-
-					fieldValue = target;
-
-					if (list != null && list.size() > 0) {
-						target.addAll(list);
+					final List<Object> target;
+					if (iLazyLoading)
+						target = new OLazyObjectList<Object>(iRoot, list).setFetchPlan(iFetchPlan);
+					else {
+						target = new OTrackedList(iRoot);
+						if (list != null && list.size() > 0)
+							for (Object o : list) {
+								if (o instanceof OIdentifiable)
+									target.add(iObj2RecHandler.getUserObjectByRecord((ORecordInternal<?>) ((OIdentifiable) o).getRecord(), iFetchPlan));
+								else
+									target.add(o);
+							}
 					}
+					fieldValue = target;
 
 				} else if (Map.class.isAssignableFrom(type)) {
 
-					final Map<String, Object> map = (Map<String, Object>) iLinked;
-					final OLazyObjectMap<Object> target = new OLazyObjectMap<Object>(iRoot, map).setFetchPlan(iFetchPlan);
-
-					if (!iLazyLoading)
-						target.detach();
-
+					final Map<Object, Object> map = (Map<Object, Object>) iLinked;
+					final Map<Object, Object> target;
+					if (iLazyLoading)
+						target = new OLazyObjectMap<Object>(iRoot, map).setFetchPlan(iFetchPlan);
+					else {
+						target = new OTrackedMap(iRoot);
+						if (map != null && map.size() > 0)
+							for (Map.Entry<Object, Object> o : map.entrySet()) {
+								final Object k = o.getKey() instanceof OIdentifiable ? iObj2RecHandler.getUserObjectByRecord(
+										(ORecordInternal<?>) ((OIdentifiable) o.getKey()).getRecord(), iFetchPlan) : o.getKey();
+								final Object v = o.getValue() instanceof OIdentifiable ? iObj2RecHandler.getUserObjectByRecord(
+										(ORecordInternal<?>) ((OIdentifiable) o.getValue()).getRecord(), iFetchPlan) : o.getValue();
+								target.put(k, v);
+							}
+					}
 					fieldValue = target;
 
 				} else if (type.isEnum()) {

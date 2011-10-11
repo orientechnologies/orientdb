@@ -55,16 +55,15 @@ import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 @SuppressWarnings("unchecked")
 public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements ODatabaseObject, OUserObject2RecordHandler {
 
-	private ODictionary<Object>	dictionary;
-	private OEntityManager			entityManager;
-	private boolean							saveOnlyDirty;
-	private boolean							lazyLoading	= true;
+	protected ODictionary<Object>	dictionary;
+	protected OEntityManager			entityManager;
+	protected boolean							saveOnlyDirty;
+	protected boolean							lazyLoading;
 
 	public ODatabaseObjectTx(final String iURL) {
 		super(new ODatabaseDocumentTx(iURL));
 		underlying.setDatabaseOwner(this);
-		entityManager = OEntityManager.getEntityManagerByDatabaseURL(getURL());
-		saveOnlyDirty = OGlobalConfiguration.OBJECT_SAVE_ONLY_DIRTY.getValueAsBoolean();
+		init();
 	}
 
 	public <T> T newInstance(final Class<T> iType) {
@@ -451,5 +450,11 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 
 	public void setLazyLoading(final boolean lazyLoading) {
 		this.lazyLoading = lazyLoading;
+	}
+
+	protected void init() {
+		entityManager = OEntityManager.getEntityManagerByDatabaseURL(getURL());
+		saveOnlyDirty = OGlobalConfiguration.OBJECT_SAVE_ONLY_DIRTY.getValueAsBoolean();
+		lazyLoading = true;
 	}
 }

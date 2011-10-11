@@ -28,16 +28,16 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public class OLazyObjectMap<TYPE> extends HashMap<String, Object> implements Serializable {
+public class OLazyObjectMap<TYPE> extends HashMap<Object, Object> implements Serializable {
 	private static final long					serialVersionUID	= 4146521893082733694L;
 
 	private final ORecord<?>					sourceRecord;
-	private final Map<String, Object>	underlying;
+	private final Map<Object, Object>	underlying;
 	private String										fetchPlan;
 	private boolean										converted					= false;
 	private boolean										convertToRecord		= true;
 
-	public OLazyObjectMap(final ORecord<?> iSourceRecord, final Map<String, Object> iSource) {
+	public OLazyObjectMap(final ORecord<?> iSourceRecord, final Map<Object, Object> iSource) {
 		this.sourceRecord = iSourceRecord;
 		this.underlying = iSource;
 
@@ -67,7 +67,7 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> implements Ser
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Object put(final String iKey, final Object e) {
+	public Object put(final Object iKey, final Object e) {
 		if (e instanceof ODocument) {
 			converted = false;
 			underlying.put(iKey, e);
@@ -120,7 +120,7 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> implements Ser
 	}
 
 	@Override
-	public Set<java.util.Map.Entry<String, Object>> entrySet() {
+	public Set<java.util.Map.Entry<Object, Object>> entrySet() {
 		convertAll();
 		return super.entrySet();
 	}
@@ -132,14 +132,14 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> implements Ser
 	}
 
 	@Override
-	public Set<String> keySet() {
+	public Set<Object> keySet() {
 		convertAll();
 		return underlying.keySet();
 	}
 
 	@Override
-	public void putAll(final Map<? extends String, ? extends Object> iMap) {
-		for (java.util.Map.Entry<? extends String, ? extends Object> e : iMap.entrySet()) {
+	public void putAll(final Map<? extends Object, ? extends Object> iMap) {
+		for (java.util.Map.Entry<? extends Object, ? extends Object> e : iMap.entrySet()) {
 			put(e.getKey(), e.getValue());
 		}
 	}
@@ -150,7 +150,7 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> implements Ser
 		return super.values();
 	}
 
-	public Map<String, Object> getUnderlying() {
+	public Map<Object, Object> getUnderlying() {
 		return underlying;
 	}
 
@@ -180,7 +180,7 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> implements Ser
 		if (converted || !convertToRecord)
 			return;
 
-		for (java.util.Map.Entry<String, Object> e : underlying.entrySet())
+		for (java.util.Map.Entry<Object, Object> e : underlying.entrySet())
 			super.put(e.getKey(), getDatabase().getUserObjectByRecord((ORecordInternal<?>) e.getValue(), null));
 
 		converted = true;

@@ -175,6 +175,8 @@ public class OLazyObjectSet<TYPE> implements Set<Object>, Serializable {
 							(ORecordInternal<?>) ((ODatabaseRecord) getDatabase().getUnderlying()).load((ORID) e, fetchPlan), fetchPlan));
 				else if (e instanceof ODocument)
 					add(database.getUserObjectByRecord((ORecordInternal<?>) e, fetchPlan));
+				else
+					add(e);
 			}
 		}
 

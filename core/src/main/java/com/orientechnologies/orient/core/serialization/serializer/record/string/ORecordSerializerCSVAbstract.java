@@ -309,7 +309,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		case LINKMAP: {
 			iOutput.append(OStringSerializerHelper.MAP_BEGIN);
 
-			Map<String, Object> map = (Map<String, Object>) iValue;
+			Map<Object, Object> map = (Map<Object, Object>) iValue;
 
 			// LINKED MAP
 			if (map instanceof OLazyObjectMap<?>)
@@ -318,7 +318,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			boolean invalidMap = false;
 			try {
 				int items = 0;
-				for (Map.Entry<String, Object> entry : map.entrySet()) {
+				for (Map.Entry<Object, Object> entry : map.entrySet()) {
 					if (items++ > 0)
 						iOutput.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
@@ -340,7 +340,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				final ORecordLazyMap newMap = new ORecordLazyMap(iRecord, ODocument.RECORD_TYPE);
 
 				// REPLACE ALL CHANGED ITEMS
-				for (Map.Entry<String, Object> entry : map.entrySet()) {
+				for (Map.Entry<Object, Object> entry : map.entrySet()) {
 					newMap.put(entry.getKey(), (OIdentifiable) entry.getValue());
 				}
 				map.clear();

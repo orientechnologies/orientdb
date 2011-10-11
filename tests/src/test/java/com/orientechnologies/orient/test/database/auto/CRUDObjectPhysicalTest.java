@@ -25,6 +25,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectPool;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
+import com.orientechnologies.orient.core.db.object.OLazyObjectSet;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -107,7 +108,7 @@ public class CRUDObjectPhysicalTest {
 
 		database.getLevel1Cache().invalidate();
 		database.getLevel2Cache().clear();
-		
+
 		// BROWSE ALL THE OBJECTS
 		int i = 0;
 		for (Account a : database.browseClass(Account.class).setFetchPlan("*:-1")) {
@@ -231,7 +232,27 @@ public class CRUDObjectPhysicalTest {
 		database.close();
 	}
 
-	@Test(dependsOnMethods = "browseLinked")
+	@Test(dependsOnMethods = "createLinked")
+	public void checkLazyLoadingOff() {
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+
+		database.setLazyLoading(false);
+		for (Profile obj : database.browseClass(Profile.class)) {
+			Assert.assertFalse(obj.getFollowings() instanceof OLazyObjectSet);
+			Assert.assertFalse(obj.getFollowers() instanceof OLazyObjectSet);
+			if (obj.getNick().equals("Neo")) {
+				Assert.assertEquals(obj.getFollowers().size(), 0);
+				Assert.assertEquals(obj.getFollowings().size(), 2);
+			} else if (obj.getNick().equals("Morpheus") || obj.getNick().equals("Trinity")) {
+				Assert.assertEquals(obj.getFollowers().size(), 1);
+				Assert.assertEquals(obj.getFollowings().size(), 0);
+			}
+		}
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "checkLazyLoadingOff")
 	public void queryPerFloat() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
 

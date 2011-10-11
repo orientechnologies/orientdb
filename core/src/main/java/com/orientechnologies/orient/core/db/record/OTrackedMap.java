@@ -35,6 +35,12 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
 	private STATUS								status				= STATUS.NOT_LOADED;
 	protected final static Object	ENTRY_REMOVAL	= new Object();
 
+	public OTrackedMap(final ORecord<?> iRecord, final Map<Object, T> iOrigin) {
+		this(iRecord);
+		if (iOrigin != null && iOrigin.size() > 0)
+			putAll(iOrigin);
+	}
+
 	public OTrackedMap(final ORecord<?> iSourceRecord) {
 		this.sourceRecord = iSourceRecord;
 		if (iSourceRecord != null)

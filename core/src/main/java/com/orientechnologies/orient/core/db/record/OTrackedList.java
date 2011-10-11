@@ -21,7 +21,6 @@ import java.util.Collection;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 
 /**
  * Implementation of ArrayList bound to a source ORecord object to keep track of changes for literal types. This avoid to call the
@@ -32,10 +31,16 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  */
 @SuppressWarnings({ "serial" })
 public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, Serializable {
-	protected final ORecordInternal<?>	sourceRecord;
-	private STATUS											status	= STATUS.NOT_LOADED;
+	protected final ORecord<?>	sourceRecord;
+	private STATUS							status	= STATUS.NOT_LOADED;
 
-	public OTrackedList(final ORecordInternal<?> iSourceRecord) {
+	public OTrackedList(final ORecord<?> iRecord, final Collection<? extends T> iOrigin) {
+		this(iRecord);
+		if (iOrigin != null && iOrigin.size() > 0)
+			addAll(iOrigin);
+	}
+
+	public OTrackedList(final ORecord<?> iSourceRecord) {
 		this.sourceRecord = iSourceRecord;
 	}
 

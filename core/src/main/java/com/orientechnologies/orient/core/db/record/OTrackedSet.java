@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.db.record;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.HashSet;
 
 import com.orientechnologies.orient.core.id.ORID;
@@ -33,6 +34,12 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, Serial
 	protected final ORecord<?>		sourceRecord;
 	private STATUS								status				= STATUS.NOT_LOADED;
 	protected final static Object	ENTRY_REMOVAL	= new Object();
+
+	public OTrackedSet(final ORecord<?> iRecord, final Collection<? extends T> iOrigin) {
+		this(iRecord);
+		if (iOrigin != null && iOrigin.size() > 0)
+			addAll(iOrigin);
+	}
 
 	public OTrackedSet(final ORecord<?> iSourceRecord) {
 		this.sourceRecord = iSourceRecord;
