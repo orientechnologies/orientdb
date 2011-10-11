@@ -62,21 +62,21 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
 public class OServer {
-	protected ReentrantReadWriteLock													lock				= new ReentrantReadWriteLock();
+	protected ReentrantReadWriteLock									lock			= new ReentrantReadWriteLock();
 
-	protected volatile boolean																running			= true;
-	protected OServerConfigurationLoaderXml										configurationLoader;
-	protected OServerConfiguration														configuration;
-	protected OContextConfiguration														contextConfiguration;
-	protected OServerShutdownHook															shutdownHook;
-	protected List<OServerHandler>														handlers		= new ArrayList<OServerHandler>();
-	protected Map<String, Class<? extends ONetworkProtocol>>	protocols		= new HashMap<String, Class<? extends ONetworkProtocol>>();
-	protected List<OServerNetworkListener>										listeners		= new ArrayList<OServerNetworkListener>();
-	protected static ThreadGroup															threadGroup;
+	protected volatile boolean											running		= true;
+	protected OServerConfigurationLoaderXml						configurationLoader;
+	protected OServerConfiguration									configuration;
+	protected OContextConfiguration									contextConfiguration;
+	protected OServerShutdownHook										shutdownHook;
+	protected List<OServerHandler>									handlers		= new ArrayList<OServerHandler>();
+	protected Map<String, Class<? extends ONetworkProtocol>>	protocols	= new HashMap<String, Class<? extends ONetworkProtocol>>();
+	protected List<OServerNetworkListener>							listeners	= new ArrayList<OServerNetworkListener>();
+	protected static ThreadGroup										threadGroup;
 
-	private OrientServer																			managedServer;
-	private ObjectName																				onProfiler	= new ObjectName("OrientDB:type=Profiler");
-	private ObjectName																				onServer		= new ObjectName("OrientDB:type=Server");
+	private OrientServer													managedServer;
+	private ObjectName													onProfiler	= new ObjectName("OrientDB:type=Profiler");
+	private ObjectName													onServer		= new ObjectName("OrientDB:type=Server");
 
 	public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
 			InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
@@ -113,8 +113,8 @@ public class OServer {
 		startup(new File(config));
 	}
 
-	public void startup(final File iConfigurationFile) throws InstantiationException, IllegalAccessException, ClassNotFoundException,
-			IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException {
+	public void startup(final File iConfigurationFile) throws InstantiationException, IllegalAccessException,
+			ClassNotFoundException, IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException {
 		startup(loadConfigurationFromFile(iConfigurationFile));
 	}
 
@@ -143,8 +143,8 @@ public class OServer {
 
 		// STARTUP LISTENERS
 		for (OServerNetworkListenerConfiguration l : configuration.network.listeners)
-			listeners.add(new OServerNetworkListener(this, l.ipAddress, l.portRange, l.protocol, protocols.get(l.protocol), l.parameters,
-					l.commands));
+			listeners.add(new OServerNetworkListener(this, l.ipAddress, l.portRange, l.protocol, protocols.get(l.protocol),
+					l.parameters, l.commands));
 
 		registerHandlers();
 
@@ -240,6 +240,26 @@ public class OServer {
 		return storages;
 	}
 
+	public Map<String, String> getAvailableStorageNamesAndTypes() {
+		// SEARCH IN CONFIGURED PATHS
+		final Map<String, String> storages = new HashMap<String, String>();
+		if (configuration.storages != null && configuration.storages.length > 0)
+			for (OServerStorageConfiguration s : configuration.storages)
+				storages.put(s.name, s.path.substring(0, s.path.indexOf(":")));
+
+		// SEARCH IN DEFAULT DATABASE DIRECTORY
+		final String dbPath = getDatabaseDirectory();
+		final File dbDirectory = new File(dbPath);
+		if (dbDirectory.exists() && dbDirectory.isDirectory()) {
+			for (File db : dbDirectory.listFiles()) {
+				final File f = new File(db.getAbsolutePath() + "/default.odh");
+				if (f.exists())
+					storages.put(db.getName(), "local");
+			}
+		}
+		return storages;
+	}
+
 	public String getDatabaseDirectory() {
 		return OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/databases/");
 	}
@@ -252,9 +272,9 @@ public class OServer {
 	 * Authenticate a server user.
 	 * 
 	 * @param iUserName
-	 *          Username to authenticate
+	 *           Username to authenticate
 	 * @param iPassword
-	 *          Password in clear
+	 *           Password in clear
 	 * @return true if authentication is ok, otherwise false
 	 */
 	public boolean authenticate(final String iUserName, final String iPassword, final String iResourceToCheck) {
@@ -377,7 +397,7 @@ public class OServer {
 			}
 		}
 
-		createAdminUser();
+		createAdminAndDbListerUsers();
 	}
 
 	/**
@@ -418,13 +438,15 @@ public class OServer {
 			}
 	}
 
-	protected void createAdminUser() throws IOException {
-		configuration.users = new OServerUserConfiguration[1];
+	protected void createAdminAndDbListerUsers() throws IOException {
+		configuration.users = new OServerUserConfiguration[2];
 
 		final long generatedPassword = new Random(System.currentTimeMillis()).nextLong();
 		String encodedPassword = OSecurityManager.instance().digest2String(String.valueOf(generatedPassword), false);
 
 		configuration.users[0] = new OServerUserConfiguration(OServerConfiguration.SRV_ROOT_ADMIN, encodedPassword, "*");
+		configuration.users[1] = new OServerUserConfiguration(OServerConfiguration.SRV_ROOT_GUEST,
+				OServerConfiguration.SRV_ROOT_GUEST, "connect,server.listDatabases");
 		saveConfiguration();
 	}
 

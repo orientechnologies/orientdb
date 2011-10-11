@@ -235,6 +235,21 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
+		case OChannelBinaryProtocol.REQUEST_DB_LIST: {
+			data.commandInfo = "List databases";
+
+			ODocument doc = listDatabases();
+
+			channel.acquireExclusiveLock();
+			try {
+				sendOk(lastClientTxId);
+				channel.writeBytes(doc.toStream());
+			} finally {
+				channel.releaseExclusiveLock();
+			}
+			break;
+		}
+
 		case OChannelBinaryProtocol.REQUEST_DB_OPEN: {
 			data.commandInfo = "Open database";
 
@@ -966,6 +981,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 					"Wrong user/password to [connect] to the remote OrientDB Server instance. Get the user/password from the config/orientdb-server-config.xml file");
 
 		serverUser = OServerMain.server().getUser(iUser);
+	}
+
+	private ODocument listDatabases() {
+		checkServerAccess("server.dblist");
+		final ODocument result = new ODocument();
+		result.field("databases", OServerMain.server().getAvailableStorageNamesAndTypes());
+		return result;
 	}
 
 	protected void checkServerAccess(final String iResource) {

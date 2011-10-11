@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -99,6 +100,38 @@ public class OServerAdmin {
 			storage.close(true);
 		}
 		return this;
+	}
+
+	/**
+	 * List the databases on a remote server.
+	 * 
+	 * @param iUserName
+	 *          Server's user name
+	 * @param iUserPassword
+	 *          Server's password for the user name used
+	 * @return The instance itself. Useful to execute method in chain
+	 * @throws IOException
+	 */
+	@SuppressWarnings("unchecked")
+	public Map<String, String> listDatabases() throws IOException {
+		storage.createConnectionPool();
+		final ODocument result = new ODocument();
+		try {
+			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_LIST);
+			storage.endRequest(network);
+
+			try {
+				storage.beginResponse(network);
+				result.fromStream(network.readBytes());
+			} finally {
+				storage.endResponse(network);
+			}
+
+		} catch (Exception e) {
+			OLogManager.instance().exception("Can't retrieve the configuration list", e, OStorageException.class);
+			storage.close(true);
+		}
+		return (Map<String, String>) result.field("databases");
 	}
 
 	public int getSessionId() {
