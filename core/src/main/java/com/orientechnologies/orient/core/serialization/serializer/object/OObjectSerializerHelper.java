@@ -51,9 +51,6 @@ import com.orientechnologies.orient.core.db.object.OLazyObjectSet;
 import com.orientechnologies.orient.core.db.object.OObjectNotDetachedException;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedMap;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -328,7 +325,7 @@ public class OObjectSerializerHelper {
 					if (iLazyLoading)
 						target = new OLazyObjectSet<Object>(iRoot, set).setFetchPlan(iFetchPlan);
 					else {
-						target = new OTrackedSet(iRoot);
+						target = new HashSet();
 						if (set != null && set.size() > 0)
 							for (Object o : set) {
 								if (o instanceof OIdentifiable)
@@ -346,7 +343,7 @@ public class OObjectSerializerHelper {
 					if (iLazyLoading)
 						target = new OLazyObjectList<Object>(iRoot, list).setFetchPlan(iFetchPlan);
 					else {
-						target = new OTrackedList(iRoot);
+						target = new ArrayList();
 						if (list != null && list.size() > 0)
 							for (Object o : list) {
 								if (o instanceof OIdentifiable)
@@ -364,7 +361,7 @@ public class OObjectSerializerHelper {
 					if (iLazyLoading)
 						target = new OLazyObjectMap<Object>(iRoot, map).setFetchPlan(iFetchPlan);
 					else {
-						target = new OTrackedMap(iRoot);
+						target = new HashMap();
 						if (map != null && map.size() > 0)
 							for (Map.Entry<Object, Object> o : map.entrySet()) {
 								final Object k = o.getKey() instanceof OIdentifiable ? iObj2RecHandler.getUserObjectByRecord(
