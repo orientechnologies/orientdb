@@ -29,6 +29,19 @@
 This document enlist the last changes to the OrientDB project.
 
 -------------------------------------------------------------------------------
+VERSION 1.0rc6 - (October, 11th 2011)
+-------------------------------------------------------------------------------
+- SQL engine: improved link navigation (issue 230)
+- Console: new "list databases" command (issue 389)
+- Index: supported composite indexes (issue 405), indexing of collections
+        (issue 554)
+- JPA: supported @Embedded (issue 436) and @Transient annotations
+- Object Database: Disable/Enable lazy loading (issue 563)
+- Server: new Automatic backup task (issue 556), now installable as
+          Windows Service (issue 61)
+- Client: Load balancing in clustered configuration (issue 557)
+
+-------------------------------------------------------------------------------
 VERSION 1.0rc5 - (August, 22nd 2011)
 -------------------------------------------------------------------------------
 - SQL engine: new [] operator to extract items from lists, sets, maps and

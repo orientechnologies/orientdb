@@ -4,7 +4,7 @@
 
     <groupId>com.orientechnologies</groupId>
     <artifactId>orientdb-parent</artifactId>
-    <version>1.0rc6-SNAPSHOT</version>
+    <version>1.0rc6</version>
     <packaging>pom</packaging>
 
     <name>OrientDB Parent</name>
@@ -39,17 +39,6 @@
                 <role>founder</role>
             </roles>
             <timezone>+1</timezone>
-        </developer>
-        <developer>
-            <id>astubbs</id>
-            <name>Antony Stubbs</name>
-            <email>antony.stubbs@gmail.com</email>
-            <organization>Sharca.com</organization>
-            <organizationUrl>http://www.sharca.com</organizationUrl>
-            <roles>
-                <role>contributor</role>
-            </roles>
-            <timezone>+12</timezone>
         </developer>
     </developers>
 
