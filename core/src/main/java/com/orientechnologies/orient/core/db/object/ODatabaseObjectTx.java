@@ -58,6 +58,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 	private ODictionary<Object>	dictionary;
 	private OEntityManager			entityManager;
 	private boolean							saveOnlyDirty;
+	private boolean							lazyLoading	= true;
 
 	public ODatabaseObjectTx(final String iURL) {
 		super(new ODatabaseDocumentTx(iURL));
@@ -441,6 +442,14 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 		if (iRecord.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
 			iRecord = (ODocument) iRecord.load();
 
-		return OObjectSerializerHelper.fromStream(iRecord, iPojo, getEntityManager(), this, iFetchPlan);
+		return OObjectSerializerHelper.fromStream(iRecord, iPojo, getEntityManager(), this, iFetchPlan, lazyLoading);
+	}
+
+	public boolean isLazyLoading() {
+		return lazyLoading;
+	}
+
+	public void setLazyLoading(final boolean lazyLoading) {
+		this.lazyLoading = lazyLoading;
 	}
 }

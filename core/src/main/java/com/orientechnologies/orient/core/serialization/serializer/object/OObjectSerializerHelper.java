@@ -200,7 +200,7 @@ public class OObjectSerializerHelper {
 
 	@SuppressWarnings("rawtypes")
 	public static Object fromStream(final ODocument iRecord, final Object iPojo, final OEntityManager iEntityManager,
-			final OUserObject2RecordHandler iObj2RecHandler, final String iFetchPlan) {
+			final OUserObject2RecordHandler iObj2RecHandler, final String iFetchPlan, final boolean iLazyLoading) {
 		OFetchHelper.checkFetchPlanValid(iFetchPlan);
 		final long timer = OProfiler.getInstance().startChrono();
 
@@ -318,24 +318,34 @@ public class OObjectSerializerHelper {
 				if (Set.class.isAssignableFrom(type)) {
 
 					final Collection<Object> set = (Collection<Object>) iLinked;
-					final Set<Object> target = new OLazyObjectSet<Object>(iRoot, set).setFetchPlan(iFetchPlan);
+					final OLazyObjectSet<Object> target = new OLazyObjectSet<Object>(iRoot, set).setFetchPlan(iFetchPlan);
+
+					if (!iLazyLoading)
+						target.detach();
 
 					fieldValue = target;
 
 				} else if (Collection.class.isAssignableFrom(type)) {
 
 					final Collection<ODocument> list = (Collection<ODocument>) iLinked;
-					final List<Object> targetList = new OLazyObjectList<Object>().setFetchPlan(iFetchPlan);
-					fieldValue = targetList;
+					final OLazyObjectList<Object> target = new OLazyObjectList<Object>().setFetchPlan(iFetchPlan);
+
+					if (!iLazyLoading)
+						target.detach();
+
+					fieldValue = target;
 
 					if (list != null && list.size() > 0) {
-						targetList.addAll(list);
+						target.addAll(list);
 					}
 
 				} else if (Map.class.isAssignableFrom(type)) {
 
 					final Map<String, Object> map = (Map<String, Object>) iLinked;
-					final Map<String, Object> target = new OLazyObjectMap<Object>(iRoot, map).setFetchPlan(iFetchPlan);
+					final OLazyObjectMap<Object> target = new OLazyObjectMap<Object>(iRoot, map).setFetchPlan(iFetchPlan);
+
+					if (!iLazyLoading)
+						target.detach();
 
 					fieldValue = target;
 
