@@ -84,25 +84,29 @@
 
 
 	<target name="javadoc" depends="init">
-	  <!-- YOU NEED TO INSTALL GRAPH-VIZ TO GENERATE UML DIAGRAMS, OTHERWISE DISABLE IT TO HAVE PLAIN JAVADOCS -->
-	  <copy todir="${global.release}/javadoc" file="_base/images/orient_db.png" />
-  	<javadoc sourcepath="." packagenames="com.orientechnologies.*" destdir="${global.release}/javadoc" public="true"
-             useexternalfile="yes" linksource="yes" use="yes" verbose="no" windowtitle="OrientDB v. ${version} Javadocs"
+		<!-- YOU NEED TO INSTALL GRAPH-VIZ TO GENERATE UML DIAGRAMS, OTHERWISE DISABLE IT TO HAVE PLAIN JAVADOCS -->
+		<copy todir="${global.release}/javadoc" file="_base/images/orient_db.png" />
+		<javadoc sourcepath="." packagenames="com.orientechnologies.*" destdir="${global.release}/javadoc" public="true"
+             useexternalfile="yes" linksource="yes" author="true" version="true" use="yes" verbose="no"
+			 windowtitle="OrientDB v. ${version} Javadocs"
              header="&lt;a target='_parent' href='http://www.orientechnologies.com/orient-db.htm' &gt;&lt;img src='orient_db.png' border='0' /&gt;&lt;/a&gt;"
              bottom="&lt;center&gt;Copyrights 2010-2011 (c) Luca Garulli. All Rights Reserved. This software is released as Open Source using the &lt;a target='_parent' href='http://www.apache.org/licenses/LICENSE-2.0'&gt;Apache 2.0 license&lt;/a&gt;.&lt;/center&gt;"
              overview="overview.html">
-  		<packageset dir="." defaultexcludes="yes">
-        <include name="commons/src/main/java/**"/>
-        <include name="core/src/main/java/**"/>
-        <include name="client/src/main/java/**"/>
-      </packageset>
-
-  		<fileset dir="." defaultexcludes="yes">
-        <include name="commons/src/main/java/**/*.java"/>
-        <include name="core/src/main/java/**/*.java"/>
-        <include name="client/src/main/java/**/*.java"/>
-      </fileset>
-
+			<classpath>
+				<fileset dir=".">
+					<include name="core/lib/persistence-api-1.0.jar" />
+				</fileset>
+			</classpath>
+			<packageset dir="." defaultexcludes="yes">
+				<include name="commons/src/main/java/**"/>
+				<include name="core/src/main/java/**"/>
+			</packageset>
+			<fileset dir="." defaultexcludes="yes">
+				<include name="commons/src/main/java/**/*.java"/>
+				<include name="core/src/main/java/**/*.java"/>
+				<include name="client/src/main/java/**/*.java"/>
+				<include name="enterprise/src/main/java/**/*.java"/>
+			</fileset>
 			<doclet name="org.umlgraph.doclet.UmlGraphDoc" path="_base/lib/UmlGraph.jar">
 				<param name="-hide" value="java.*" />
 				<param name="-collpackages" value="java.util.*" />
@@ -110,13 +114,13 @@
 				<param name="-postfixpackage" />
 				<param name="-nodefontsize" value="9" />
 				<param name="-nodefontpackagesize" value="7" />
-<!--     -->
+				<param name="-nodefontabstractname" value="Sans Not-Rotated" />
+				<param name="-nodefontclassabstractname" value="Sans Not-Rotated" />
+				<!--     -->
 				<param name="-link" value="http://java.sun.com/j2se/1.5.0/docs/guide/javadoc/doclet/spec" />
 				<param name="-link" value="http://java.sun.com/j2se/1.5/docs/api" />
-
 			</doclet>
 		</javadoc>
-
 	</target>
 
   <target name="install" depends="init">

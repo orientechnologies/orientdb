@@ -74,7 +74,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 	 * Create a new POJO by its class name. Assure to have called the registerEntityClasses() declaring the packages that are part of
 	 * entity classes.
 	 * 
-	 * @see #registerEntityClasses(String)
+	 * @see OEntityManager.registerEntityClasses(String)
 	 */
 	public <RET extends Object> RET newInstance(final String iClassName) {
 		checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, iClassName);
@@ -329,7 +329,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 			} else
 				newEntries = null;
 
-						// BY PASS DOCUMENT DB
+			// BY PASS DOCUMENT DB
 			((ODatabaseRecordTx) underlying.getUnderlying()).rollback();
 
 			if (newEntries != null) {
