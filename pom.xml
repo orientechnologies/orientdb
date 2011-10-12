@@ -187,10 +187,15 @@
 
     <distributionManagement>
         <repository>
+            <id>local</id>
+            <url>file://${build.directory}/staging</url>
+            <uniqueVersion>false</uniqueVersion>
+        </repository>
+        <snapshotRepository>
             <id>orientechnologies.com</id>
             <url>ftp://www.orientechnologies.com/www.orientechnologies.com/listing/m2/</url>
             <uniqueVersion>false</uniqueVersion>
-        </repository>
+        </snapshotRepository>
         <site>
             <id>orientdb-site</id>
             <name>Maven Site</name>
