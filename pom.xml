@@ -4,7 +4,7 @@
 
     <groupId>com.orientechnologies</groupId>
     <artifactId>orientdb-parent</artifactId>
-    <version>1.0rc6</version>
+    <version>1.0rc7-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>OrientDB Parent</name>
@@ -187,15 +187,10 @@
 
     <distributionManagement>
         <repository>
-            <id>local</id>
-            <url>file://${build.directory}/staging</url>
-            <uniqueVersion>false</uniqueVersion>
-        </repository>
-        <snapshotRepository>
             <id>orientechnologies.com</id>
             <url>ftp://www.orientechnologies.com/www.orientechnologies.com/listing/m2/</url>
             <uniqueVersion>false</uniqueVersion>
-        </snapshotRepository>
+        </repository>
         <site>
             <id>orientdb-site</id>
             <name>Maven Site</name>
