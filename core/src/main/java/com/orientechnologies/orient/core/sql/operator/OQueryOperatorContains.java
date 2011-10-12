@@ -15,12 +15,11 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import java.util.Collection;
+
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
-
-import java.util.Collection;
 
 /**
  * CONTAINS operator.
