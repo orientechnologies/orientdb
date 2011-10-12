@@ -147,7 +147,7 @@ public class SQLCreateIndexTest {
             database.command(new OCommandSQL(query)).execute();
             Assert.fail();
         } catch (OCommandSQLParsingException e) {
-            Assert.assertTrue(e.getMessage().contains("Error on parsing command at position #91: Property type list not math with real property types\n" +
+            Assert.assertTrue(e.getMessage().contains("Error on parsing command at position #91: Property type list not match with real property types\n" +
                     "Command: CREATE INDEX sqlCreateIndexCompositeIndex3 ON sqlCreateIndexTestClass (prop1, prop2) UNIQUE DOUBLE, DOUBLE\n" +
                     "---------------------------------------------------------------------------------------------------^"));
         }
