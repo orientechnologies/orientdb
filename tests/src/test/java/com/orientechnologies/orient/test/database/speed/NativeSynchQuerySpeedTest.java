@@ -22,7 +22,7 @@ import java.util.List;
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.query.nativ.ONativeSynchQuery;
-import com.orientechnologies.orient.core.query.nativ.OQueryContextNativeSchema;
+import com.orientechnologies.orient.core.query.nativ.OQueryContextNative;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 
@@ -36,11 +36,10 @@ public class NativeSynchQuerySpeedTest extends SpeedTestMonoThread {
 
 	@Override
 	public void cycle() throws UnsupportedEncodingException {
-		new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>(database, "Animal",
-				new OQueryContextNativeSchema<ODocument>()) {
+		new ONativeSynchQuery<OQueryContextNative>(database, "Animal", new OQueryContextNative()) {
 
 			@Override
-			public boolean filter(OQueryContextNativeSchema<ODocument> iRecord) {
+			public boolean filter(OQueryContextNative iRecord) {
 				return iRecord.column("race").like("Euro%").and().column("race").like("%an").and().column("id").toInt().eq(10).go();
 			}
 

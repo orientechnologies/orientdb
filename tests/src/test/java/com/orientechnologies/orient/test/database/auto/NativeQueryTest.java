@@ -24,14 +24,14 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.query.nativ.ONativeSynchQuery;
-import com.orientechnologies.orient.core.query.nativ.OQueryContextNativeSchema;
+import com.orientechnologies.orient.core.query.nativ.OQueryContextNative;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 
-@Test(groups = "query", sequential = true)
+@Test(groups = "query")
 public class NativeQueryTest {
 	private ODatabaseDocument	database;
-	private ODocument					record;
+	private ODocument				record;
 
 	@Parameters(value = "url")
 	public NativeQueryTest(String iURL) {
@@ -39,14 +39,13 @@ public class NativeQueryTest {
 	}
 
 	@Test
-	public void querySchemaAndLike() {
+	public void queryNativeLike() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>(database, "Profile",
-				new OQueryContextNativeSchema<ODocument>()) {
+		List<ODocument> result = new ONativeSynchQuery<OQueryContextNative>(database, "Profile", new OQueryContextNative()) {
 
 			@Override
-			public boolean filter(OQueryContextNativeSchema<ODocument> iRecord) {
+			public boolean filter(OQueryContextNative iRecord) {
 				return iRecord.field("location").field("city").field("name").eq("Rome").and().field("name").like("G%").go();
 			};
 

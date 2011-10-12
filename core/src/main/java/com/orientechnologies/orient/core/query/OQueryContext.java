@@ -15,17 +15,17 @@
  */
 package com.orientechnologies.orient.core.query;
 
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public class OQueryContext<T extends ORecordInternal<?>> {
-	protected T					record;
-	protected OQuery<T>	sourceQuery;
+public class OQueryContext {
+	protected ODocument				initialRecord;
+	protected OQuery<ODocument>	sourceQuery;
 
-	public void setRecord(T iRecord) {
-		this.record = iRecord;
+	public void setRecord(final ODocument iRecord) {
+		this.initialRecord = iRecord;
 	}
 
-	public void setSourceQuery(OQuery<T> sourceQuery) {
+	public void setSourceQuery(final OQuery<ODocument> sourceQuery) {
 		this.sourceQuery = sourceQuery;
 	}
 }

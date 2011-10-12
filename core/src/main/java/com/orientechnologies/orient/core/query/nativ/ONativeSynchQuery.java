@@ -20,31 +20,31 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public abstract class ONativeSynchQuery<T extends ORecordInternal<?>, CTX extends OQueryContextNative<T>> extends
-		ONativeAsynchQuery<T, CTX> implements OCommandResultListener {
-	protected final List<T>	result	= new ArrayList<T>();
+@SuppressWarnings("serial")
+public abstract class ONativeSynchQuery<CTX extends OQueryContextNative> extends ONativeAsynchQuery<CTX> implements
+		OCommandResultListener {
+	protected final List<ODocument>	result	= new ArrayList<ODocument>();
 
 	public ONativeSynchQuery(final ODatabaseRecord iDatabase, final String iCluster, final CTX iQueryRecordImpl) {
 		super(iDatabase, iCluster, iQueryRecordImpl, null);
 		resultListener = this;
 	}
 
-	@SuppressWarnings("unchecked")
 	public boolean result(final Object iRecord) {
-		result.add((T) iRecord);
+		result.add((ODocument) iRecord);
 		return true;
 	}
 
 	@Override
-	public List<T> run(final Object... iArgs) {
+	public List<ODocument> run(final Object... iArgs) {
 		super.run();
 		return result;
 	}
 
 	@Override
-	public T runFirst(final Object... iArgs) {
+	public ODocument runFirst(final Object... iArgs) {
 		super.run();
 		return result != null && result.size() > 0 ? result.get(0) : null;
 	}

@@ -18,12 +18,13 @@ package com.orientechnologies.orient.core.query.nativ;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.query.OQueryAbstract;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
-public abstract class ONativeQuery<T extends ORecordInternal<?>, CTX extends OQueryContextNative<T>> extends OQueryAbstract<T> {
+@SuppressWarnings("serial")
+public abstract class ONativeQuery<CTX extends OQueryContextNative> extends OQueryAbstract<ODocument> {
 	protected String	cluster;
-	protected CTX			queryRecord;
+	protected CTX		queryRecord;
 
 	public abstract boolean filter(CTX iRecord);
 

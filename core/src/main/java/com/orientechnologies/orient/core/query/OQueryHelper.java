@@ -17,21 +17,21 @@ package com.orientechnologies.orient.core.query;
 
 public class OQueryHelper {
 	protected static final String	WILDCARD_ANYCHAR	= "?";
-	protected static final String	WILDCARD_ANY			= "%";
+	protected static final String	WILDCARD_ANY		= "%";
 
-	public static boolean like(String currentValue, String iValue) {
-		if (currentValue == null || currentValue.length() == 0)
-			// EMPTY FIELD
+	public static boolean like(final String currentValue, String iValue) {
+		if (currentValue == null || currentValue.length() == 0 || iValue == null || iValue.length() == 0)
+			// EMPTY/NULL PARAMETERS
 			return false;
 
-		int anyPos = iValue.indexOf(WILDCARD_ANY);
-		int charAnyPos = iValue.indexOf(WILDCARD_ANYCHAR);
+		final int anyPos = iValue.indexOf(WILDCARD_ANY);
+		final int charAnyPos = iValue.indexOf(WILDCARD_ANYCHAR);
 
 		if (anyPos == -1 && charAnyPos == -1)
 			// NO WILDCARDS: DO EQUALS
 			return currentValue.equals(iValue);
 
-		String value = currentValue.toString();
+		final String value = currentValue.toString();
 		if (value == null || value.length() == 0)
 			// NOTHING TO MATCH
 			return false;

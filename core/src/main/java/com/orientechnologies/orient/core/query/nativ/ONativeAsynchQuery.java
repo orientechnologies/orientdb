@@ -26,12 +26,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
-@SuppressWarnings({ "unchecked", "serial" })
-public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX extends OQueryContextNative<T>> extends
-		ONativeQuery<T, CTX> implements ORecordBrowsingListener {
+@SuppressWarnings("serial")
+public abstract class ONativeAsynchQuery<CTX extends OQueryContextNative> extends ONativeQuery<CTX> implements
+		ORecordBrowsingListener {
 	protected OCommandResultListener	resultListener;
-	protected int											resultCount	= 0;
-	protected ORecordInternal<?>			record;
+	protected int							resultCount	= 0;
+	protected ORecordInternal<?>		record;
 
 	public ONativeAsynchQuery(final ODatabaseRecord iDatabase, final String iCluster, final CTX iQueryRecordImpl) {
 		this(iDatabase, iCluster, iQueryRecordImpl, null);
@@ -50,7 +50,7 @@ public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX exten
 	}
 
 	public boolean foreach(final ORecordInternal<?> iRecord) {
-		T record = (T) iRecord;
+		final ODocument record = (ODocument) iRecord;
 		queryRecord.setRecord(record);
 
 		if (filter(queryRecord)) {
@@ -64,14 +64,14 @@ public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX exten
 		return true;
 	}
 
-	public List<T> run(final Object... iArgs) {
+	public List<ODocument> run(final Object... iArgs) {
 		if (!(database.getStorage() instanceof OStorageEmbedded))
 			throw new OCommandExecutionException("Native queries can run only in embedded-local version. Not in the remote one.");
 
 		queryRecord.setSourceQuery(this);
 
 		// CHECK IF A CLASS WAS CREATED
-		OClass cls = database.getMetadata().getSchema().getClass(cluster);
+		final OClass cls = database.getMetadata().getSchema().getClass(cluster);
 		if (cls == null)
 			throw new OCommandExecutionException("Cluster " + cluster + " was not found");
 
@@ -79,7 +79,7 @@ public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX exten
 		return null;
 	}
 
-	public T runFirst(final Object... iArgs) {
+	public ODocument runFirst(final Object... iArgs) {
 		setLimit(1);
 		execute();
 		return null;
