@@ -986,7 +986,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	private ODocument listDatabases() {
 		checkServerAccess("server.dblist");
 		final ODocument result = new ODocument();
-		result.field("databases", OServerMain.server().getAvailableStorageNamesAndTypes());
+		result.field("databases", OServerMain.server().getAvailableStorageNames());
 		return result;
 	}
 
