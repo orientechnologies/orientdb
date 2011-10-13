@@ -228,7 +228,8 @@ public class OServer {
 				storages.put(s.name, s.path);
 
 		// SEARCH IN DEFAULT DATABASE DIRECTORY
-		scanDatabaseDirectory(new File(getDatabaseDirectory()), storages);
+		final String rootDirectory = getDatabaseDirectory();
+		scanDatabaseDirectory(rootDirectory, new File(rootDirectory), storages);
 
 		return storages;
 	}
@@ -449,17 +450,17 @@ public class OServer {
 		OGlobalConfiguration.TX_COMMIT_SYNCH.setValue(true);
 	}
 
-	protected void scanDatabaseDirectory(final File iDirectory, final Map<String, String> iStorages) {
+	protected void scanDatabaseDirectory(final String iRootDirectory, final File iDirectory, final Map<String, String> iStorages) {
 		if (iDirectory.exists() && iDirectory.isDirectory()) {
 			for (File db : iDirectory.listFiles()) {
 				if (db.isDirectory()) {
 					final File f = new File(db.getAbsolutePath() + "/default.odh");
 					if (f.exists())
 						// FOUND DB FOLDER
-						iStorages.put(db.getName(), "local:" + db.getPath());
+						iStorages.put(db.getPath().substring(iRootDirectory.length()), "local:" + db.getPath());
 					else
 						// TRY TO GO IN DEEP RECURSIVELY
-						scanDatabaseDirectory(db, iStorages);
+						scanDatabaseDirectory(iRootDirectory, db, iStorages);
 				}
 			}
 		}
