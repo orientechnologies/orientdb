@@ -67,6 +67,7 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 			db = (OGraphDatabase) currentDb;
 		else {
 			db = new OGraphDatabase(currentDb.getURL());
+			currentDb.close();
 			ODatabaseRecordThreadLocal.INSTANCE.set(db);
 		}
 
