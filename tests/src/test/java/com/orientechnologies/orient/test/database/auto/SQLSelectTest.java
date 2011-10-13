@@ -15,12 +15,16 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.lang.reflect.Array;
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -661,10 +665,17 @@ public class SQLSelectTest {
 		Assert.assertTrue(result.size() != 0);
 
 		String lastName = null;
+		boolean isNullSegment = false; // NULL VALUES AT THE END!
 		for (ODocument d : result) {
-			if (lastName != null && d.field("name") != null)
-				Assert.assertTrue(((String) d.field("name")).compareTo(lastName) >= 0);
-			lastName = d.field("name");
+			final String fieldValue = d.field("name");
+			if (fieldValue == null)
+				isNullSegment = true;
+			else
+				Assert.assertFalse(isNullSegment);
+
+			if (lastName != null && fieldValue != null)
+				Assert.assertTrue(fieldValue.compareTo(lastName) >= 0);
+			lastName = fieldValue;
 		}
 
 		database.close();
@@ -1003,38 +1014,38 @@ public class SQLSelectTest {
 		database.close();
 	}
 
-    @Test
-    public void testBetweenWithParameters() {
-        database.open("admin", "admin");
+	@Test
+	public void testBetweenWithParameters() {
+		database.open("admin", "admin");
 
-        final List<ODocument> result = database.query(
-                new OSQLSynchQuery<ODocument>("select * from company where id between ? and ?"), 4, 7);
+		final List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select * from company where id between ? and ?"),
+				4, 7);
 
-        Assert.assertEquals(result.size(), 4);
+		Assert.assertEquals(result.size(), 4);
 
-        final List<Integer> resultsList = new ArrayList<Integer>(Arrays.asList(4, 5, 6, 7));
-        for (final ODocument record : result) {
-            resultsList.remove(record.<Integer>field("id"));
-        }
+		final List<Integer> resultsList = new ArrayList<Integer>(Arrays.asList(4, 5, 6, 7));
+		for (final ODocument record : result) {
+			resultsList.remove(record.<Integer> field("id"));
+		}
 
-        database.close();
-    }
+		database.close();
+	}
 
-    @Test
-    public void testInWithParameters() {
-        database.open("admin", "admin");
+	@Test
+	public void testInWithParameters() {
+		database.open("admin", "admin");
 
-        final List<ODocument> result = database.query(
-                new OSQLSynchQuery<ODocument>("select * from company where id in [?, ?, ?, ?]"), 4, 5, 6, 7);
+		final List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select * from company where id in [?, ?, ?, ?]"),
+				4, 5, 6, 7);
 
-        Assert.assertEquals(result.size(), 4);
+		Assert.assertEquals(result.size(), 4);
 
-        final List<Integer> resultsList = new ArrayList<Integer>(Arrays.asList(4, 5, 6, 7));
-        for (final ODocument record : result) {
-            resultsList.remove(record.<Integer>field("id"));
-        }
+		final List<Integer> resultsList = new ArrayList<Integer>(Arrays.asList(4, 5, 6, 7));
+		for (final ODocument record : result) {
+			resultsList.remove(record.<Integer> field("id"));
+		}
 
-        database.close();
-    }
+		database.close();
+	}
 
 }

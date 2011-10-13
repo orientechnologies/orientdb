@@ -45,11 +45,11 @@ public class ODocumentComparator implements Comparator<OIdentifiable> {
 		for (OPair<String, String> field : orderCriteria) {
 			fieldValue1 = ((ODocument) iDoc1.getRecord()).field(field.getKey());
 			if (fieldValue1 == null)
-				return factor(-1, field.getValue());
+				return factor(1, field.getValue());
 
 			fieldValue2 = ((ODocument) iDoc2.getRecord()).field(field.getKey());
 			if (fieldValue2 == null)
-				return factor(1, field.getValue());
+				return factor(-1, field.getValue());
 
 			if (!(fieldValue1 instanceof Comparable<?>))
 				throw new IllegalArgumentException("Can't sort documents because the field '" + field.getKey() + "' is not comparable");
