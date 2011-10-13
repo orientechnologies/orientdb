@@ -26,6 +26,8 @@ import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
@@ -65,11 +67,11 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 		final OGraphDatabase db;
 		if (currentDb instanceof OGraphDatabase)
 			db = (OGraphDatabase) currentDb;
-		else {
-			db = new OGraphDatabase(currentDb.getURL());
-			currentDb.close();
+		else if (currentDb instanceof ODatabaseRecordTx) {
+			db = new OGraphDatabase((ODatabaseRecordTx) currentDb);
 			ODatabaseRecordThreadLocal.INSTANCE.set(db);
-		}
+		} else
+			throw new OCommandExecutionException("Can't find a database of type OGraphDatabase or ODatabaseRecordTx");
 
 		if (result == null)
 			result = new ArrayList<Object>();

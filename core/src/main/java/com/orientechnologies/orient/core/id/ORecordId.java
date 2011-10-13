@@ -29,15 +29,17 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 public class ORecordId implements ORID {
-	private static final long		serialVersionUID			= 247070594054408657L;
+	private static final long			serialVersionUID				= 247070594054408657L;
 
-	public static final int			PERSISTENT_SIZE			= OConstants.SIZE_SHORT + OConstants.SIZE_LONG;
+	public static final int				PERSISTENT_SIZE					= OConstants.SIZE_SHORT + OConstants.SIZE_LONG;
 
-	public static final ORecordId	EMPTY_RECORD_ID			= new ORecordId();
+	public static final ORecordId	EMPTY_RECORD_ID					= new ORecordId();
 	public static final byte[]		EMPTY_RECORD_ID_STREAM	= EMPTY_RECORD_ID.toStream();
 
-	public int							clusterId					= CLUSTER_ID_INVALID;
-	public long							clusterPosition			= CLUSTER_POS_INVALID;
+	public int										clusterId								= CLUSTER_ID_INVALID;													// INT TO AVOID JVM
+																																																				// PENALITY, BUT IT'S STORED
+																																																				// AS SHORT
+	public long										clusterPosition					= CLUSTER_POS_INVALID;
 
 	public ORecordId() {
 	}
@@ -61,7 +63,7 @@ public class ORecordId implements ORID {
 	 * Copy constructor.
 	 * 
 	 * @param parentRid
-	 *           Source object
+	 *          Source object
 	 */
 	public ORecordId(final ORID parentRid) {
 		clusterId = parentRid.getClusterId();

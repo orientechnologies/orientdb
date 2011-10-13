@@ -37,6 +37,10 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 		super(new ODatabaseRecordTx(iURL, ODocument.RECORD_TYPE));
 	}
 
+	public ODatabaseDocumentTx(final ODatabaseRecordTx iSource) {
+		super(iSource);
+	}
+
 	@Override
 	public ODocument newInstance() {
 		return new ODocument(this);
