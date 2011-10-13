@@ -218,7 +218,7 @@ public class OStorageRemote extends OStorageAbstract {
 				getResponse(network);
 			}
 
-			OStorageRemoteThreadLocal.INSTANCE.get().sessionId = -1;
+			setSessionId(-1);
 
 			if (!checkForClose(iForce))
 				return;

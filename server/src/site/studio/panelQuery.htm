@@ -7,74 +7,64 @@
 						<td valign="top">
 							<table style="width: 100%;" cellpadding="0" cellspacing="0">
 								<tr>
-									<td style="border: 1px solid gray; width: 90%;"><textarea
-											id="queryText" title="value">
+									<td style="border: 1px solid gray; width: 90%;"><textarea id="queryText" title="value">
                                                                 select from Address where city.country.name = 'Italy'
-                                                            </textarea>
-									</td>
+                                                            </textarea></td>
 								</tr>
 								<tr>
 									<td valign="top">
 										<table id="queryResultTable" width="100%">
 										</table>
-										<div id="queryResultTableNav"></div></td>
+										<div id="queryResultTableNav"></div>
+									</td>
 								</tr>
-							</table></td>
+							</table>
+						</td>
 						<td valign="top">
 							<table>
 								<tr>
 									<td>
-										<button onclick="javascript:executeQuery()"
-											class="ui-button-text-icon"
-											style="width: 90px; text-align: center">
-											Execute<br /> <img border="0" alt="Execute"
-												src="images/execute.png" align="top" />
-										</button></td>
-								</tr>
-								<tr>
-									<td align="left">Limit: <input id="limit" size="1"
-										value="20" />
+										<button onclick="javascript:executeQuery()" class="ui-button-text-icon" style="width: 90px; text-align: center">
+											Execute<br /> <img border="0" alt="Execute" src="images/execute.png" align="top" />
+										</button>
 									</td>
 								</tr>
 								<tr>
-									<td style="font-size: 10pt;"><a
-										href="http://code.google.com/p/orient/wiki/SQLQuery"
-										target="help">SQL syntax</a>
+									<td align="left">Limit: <input id="limit" size="1" value="20" />
 									</td>
 								</tr>
 								<tr>
-									<td style="font-size: 10pt;"><a
-										href="http://code.google.com/p/orient/wiki/SQLWhere"
-										target="help">SQL operators</a>
+									<td style="font-size: 10pt;"><a href="http://code.google.com/p/orient/wiki/SQLQuery" target="help">SQL syntax</a></td>
+								</tr>
+								<tr>
+									<td style="font-size: 10pt;"><a href="http://code.google.com/p/orient/wiki/SQLWhere" target="help">SQL operators</a></td>
+								</tr>
+								<tr>
+									<td>
+										<button id="deleteRecord" class="ui-button-text-icon" style="width: 90px; text-align: center">
+											Delete <img border="0" alt="Delete record" src="images/delete.png" align="top" />
+										</button>
 									</td>
 								</tr>
 								<tr>
 									<td>
-										<button id="deleteRecord" class="ui-button-text-icon"
-											style="width: 90px; text-align: center">
-											Delete <img border="0" alt="Delete record"
-												src="images/delete.png" align="top" />
-										</button></td>
+										<button id="editRecord" class="ui-button-text-icon" style="width: 90px; text-align: center">
+											Edit <img border="0" alt="Edit record" src="images/set.png" align="top" />
+										</button>
+									</td>
 								</tr>
 								<tr>
 									<td>
-										<button id="editRecord" class="ui-button-text-icon"
-											style="width: 90px; text-align: center">
-											Edit <img border="0" alt="Edit record" src="images/set.png"
-												align="top" />
-										</button></td>
+										<button id="graphRecord" class="ui-button-text-icon" style="width: 90px; text-align: center">
+											Graph <img border="0" alt="Graph record" src="images/graph.png" align="top" />
+										</button>
+									</td>
 								</tr>
-								<tr>
-									<td>
-										<button id="graphRecord" class="ui-button-text-icon"
-											style="width: 90px; text-align: center">
-											Graph <img border="0" alt="Graph record"
-												src="images/graph.png" align="top" />
-										</button></td>
-								</tr>
-							</table></td>
+							</table>
+						</td>
 					</tr>
-				</table></td>
+				</table>
+			</td>
 		</tr>
 	</table>
 </div>

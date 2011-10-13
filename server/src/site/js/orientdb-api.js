@@ -91,7 +91,7 @@ function ODatabase(databasePath) {
 	}
 
 	ODatabase.prototype.getDatabaseName = function() {
-		return this.databaseName;
+		return this.encodedDatabaseName;
 	}
 	ODatabase.prototype.setDatabaseName = function(iDatabaseName) {
 		this.databaseName = iDatabaseName;

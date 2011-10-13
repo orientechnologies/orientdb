@@ -130,8 +130,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			if (lastClientTxId > -1)
 				connection = OClientConnectionManager.instance().getConnection(lastClientTxId);
-			else if (firstConnection)
-				firstConnection = false;
 			else {
 				if (connection == null) {
 					sendShutdown();

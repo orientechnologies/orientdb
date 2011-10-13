@@ -28,8 +28,8 @@ function stopTimer() {
 }
 
 function getStudioURL(context) {
-	return $('#header-server').val() + '/studio/' + $('#header-database').val()
-			+ '/' + context;
+	return $('#header-server').val() + '/studio/'
+			+ $('#header-database').val().replace('/', '$') + '/' + context;
 }
 
 function clear(component) {

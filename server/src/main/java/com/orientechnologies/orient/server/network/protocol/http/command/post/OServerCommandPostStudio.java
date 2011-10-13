@@ -24,12 +24,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
@@ -89,8 +90,8 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 				executeClusters(iRequest, db, operation, rid, className, fields);
 			else if ("classProperties".equals(context))
 				executeClassProperties(iRequest, db, operation, rid, className, fields);
-            else if("classIndexes".equals(context))
-                executeClassIndexes(iRequest, db, operation, rid, className, fields);
+			else if ("classIndexes".equals(context))
+				executeClassIndexes(iRequest, db, operation, rid, className, fields);
 
 		} finally {
 			if (db != null)
@@ -214,35 +215,34 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 			Object oldValue;
 			Object newValue;
 			for (Entry<String, String> f : fields.entrySet()) {
-				oldValue = doc.field(f.getKey());
+				oldValue = doc.rawField(f.getKey());
 				newValue = f.getValue();
 
 				if (oldValue != null) {
-					if (oldValue instanceof ORecord<?>) {
-						ORecord<?> rec = (ORecord<?>) oldValue;
-						String parsedRid = f.getValue();
-						if (parsedRid != null && parsedRid.charAt(0) == '#')
-							parsedRid = parsedRid.substring(1);
+					if (oldValue instanceof ORID) {
+						final ORID oldRid = (ORID) oldValue;
+						final ORID newRid = new ORecordId(f.getValue());
 
-						if (!rec.getIdentity().toString().equals(parsedRid)) {
-							// CHANGED RID
-							rec.reset();
-							((ORecordId) rec.getIdentity()).fromString(parsedRid);
-
-							// RELOAD TO ASSURE IT EXISTS
-							rec.load();
-						}
-						newValue = oldValue;
+						if (!oldRid.equals(newRid)) {
+							// CHANGED RID: RELOAD TO ASSURE IT EXISTS
+							if (newRid.getRecord() == null)
+								throw new ORecordNotFoundException("Linked record " + oldRid + " was not found in database");
+							newValue = newRid;
+						} else
+							// NO CHANGES
+							continue;
 					} else if (oldValue instanceof Collection<?>) {
 						newValue = new ArrayList<ODocument>();
 
 						if (f.getValue() != null) {
 							String[] items = f.getValue().split(",");
 							for (String s : items) {
-								((List<ODocument>) newValue).add(new ODocument(db, new ORecordId(s)));
+								((List<ORID>) newValue).add(new ORecordId(s));
 							}
 						}
-					}
+					} else if (oldValue.equals(newValue))
+						// NO CHANGES
+						continue;
 				}
 
 				doc.field(f.getKey(), newValue);
@@ -280,8 +280,8 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 			sendTextContent(iRequest, 500, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Operation not supported");
 	}
 
-    private void executeClassIndexes(final OHttpRequest iRequest, final ODatabaseDocumentTx db, final String operation,
-                                     final String rid, final String className, final Map<String, String> fields) throws IOException {
+	private void executeClassIndexes(final OHttpRequest iRequest, final ODatabaseDocumentTx db, final String operation,
+			final String rid, final String className, final Map<String, String> fields) throws IOException {
 		// GET THE TARGET CLASS
 		final OClass cls = db.getMetadata().getSchema().getClass(rid);
 		if (cls == null) {
@@ -294,15 +294,14 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 			iRequest.data.commandInfo = "Studio add index";
 
 			try {
-                final String[] fieldNames = fields.get("fields").trim().split("\\s*,\\s*");
-                final OClass.INDEX_TYPE indexType;
-                if(fields.get("type").equals("Unique"))
-                    indexType = OClass.INDEX_TYPE.UNIQUE;
-                else
-                    indexType = OClass.INDEX_TYPE.NOTUNIQUE;
+				final String[] fieldNames = fields.get("fields").trim().split("\\s*,\\s*");
+				final OClass.INDEX_TYPE indexType;
+				if (fields.get("type").equals("Unique"))
+					indexType = OClass.INDEX_TYPE.UNIQUE;
+				else
+					indexType = OClass.INDEX_TYPE.NOTUNIQUE;
 
-
-                cls.createIndex(fields.get("name"), indexType, fieldNames);
+				cls.createIndex(fields.get("name"), indexType, fieldNames);
 
 				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN,
 						"Index " + fields.get("name") + " created successfully");
@@ -311,31 +310,30 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error on creating a new index for class " + rid + ": " + e,
 						null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating a new index for class " + rid + ": " + e);
 			}
-        } else if ("del".equals(operation)) {
-            iRequest.data.commandInfo = "Studio delete index";
+		} else if ("del".equals(operation)) {
+			iRequest.data.commandInfo = "Studio delete index";
 
-            try {
-                final OIndex index = cls.getClassIndex(className);
-                if (index == null) {
-                    sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Index '"
-                            + className + "' not found in class '" + rid + "'.");
-                    return;
-                }
+			try {
+				final OIndex index = cls.getClassIndex(className);
+				if (index == null) {
+					sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Index '"
+							+ className + "' not found in class '" + rid + "'.");
+					return;
+				}
 
-                db.getMetadata().getIndexManager().dropIndex(index.getName());
+				db.getMetadata().getIndexManager().dropIndex(index.getName());
 
-                sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN,
-                        "Index " + className + " deleted successfully.");
-            } catch (Exception e) {
-                sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error on deletion index '" + className +
-                        "' for class " + rid + ": " + e,
-                        null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error on deletion index '" + className +
-                        "' for class " + rid + ": " + e);
-            }
-        } else
-            sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN,
-                    "Operation not supported");
-    }
+				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Index " + className
+						+ " deleted successfully.");
+			} catch (Exception e) {
+				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error on deletion index '" + className + "' for class " + rid
+						+ ": " + e, null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error on deletion index '" + className + "' for class " + rid + ": "
+						+ e);
+			}
+		} else
+			sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN,
+					"Operation not supported");
+	}
 
 	public String[] getNames() {
 		return NAMES;
