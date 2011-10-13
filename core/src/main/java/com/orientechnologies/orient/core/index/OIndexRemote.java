@@ -15,6 +15,10 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -28,10 +32,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-
 /**
  * Proxied abstract index.
  * 
@@ -42,50 +42,51 @@ import java.util.Set;
 public abstract class OIndexRemote<T> implements OIndex<T> {
 	private final String					wrappedType;
 	private final ORID						rid;
-    protected OIndexDefinition                  indexDefinition;
+	protected OIndexDefinition		indexDefinition;
 	protected String							name;
+	protected ODocument						configuration;
 
-	protected final static String	QUERY_ENTRIES									= "select key, rid from index:%s";
+	protected final static String	QUERY_ENTRIES																			= "select key, rid from index:%s";
 
-	private final static String		QUERY_GET_MAJOR								= "select from index:%s where key > ?";
-	private final static String		QUERY_GET_MAJOR_EQUALS				= "select from index:%s where key >= ?";
-	private final static String		QUERY_GET_VALUE_MAJOR					= "select FLATTEN( rid ) from index:%s where key > ?";
-	private final static String		QUERY_GET_VALUE_MAJOR_EQUALS	= "select FLATTEN( rid ) from index:%s where key >= ?";
-	private final static String		QUERY_GET_MINOR								= "select from index:%s where key < ?";
-	private final static String		QUERY_GET_MINOR_EQUALS				= "select from index:%s where key <= ?";
-	private final static String		QUERY_GET_VALUE_MINOR					= "select FLATTEN( rid ) from index:%s where key < ?";
-	private final static String		QUERY_GET_VALUE_MINOR_EQUALS	= "select FLATTEN( rid ) from index:%s where key <= ?";
-	private final static String		QUERY_GET_RANGE								= "select from index:%s where key between ? and ?";
-	private final static String		QUERY_GET_VALUES							= "select FLATTEN( rid ) from index:%s where key in [%s]";
-	private final static String		QUERY_GET_ENTRIES							= "select from index:%s where key in [%s]";
-	private final static String		QUERY_GET_VALUE_RANGE					= "select FLATTEN( rid ) from index:%s where key between ? and ?";
-	private final static String		QUERY_PUT											= "insert into index:%s (key,rid) values (%s,%s)";
-	private final static String		QUERY_REMOVE									= "delete from index:%s where key = %s";
-	private final static String		QUERY_REMOVE2									= "delete from index:%s where key = %s and rid = %s";
-	private final static String		QUERY_REMOVE3									= "delete from index:%s where rid = ?";
-	private final static String		QUERY_CONTAINS								= "select count(*) as size from	index:%s where key = ?";
-	private final static String		QUERY_SIZE										= "select count(*) as size from index:%s";
-	private final static String		QUERY_KEYS										= "select key from index:%s";
-	private final static String		QUERY_REBUILD									= "rebuild index %s";
-	private final static String		QUERY_CLEAR										= "delete from index:%s";
+	private final static String		QUERY_GET_MAJOR																		= "select from index:%s where key > ?";
+	private final static String		QUERY_GET_MAJOR_EQUALS														= "select from index:%s where key >= ?";
+	private final static String		QUERY_GET_VALUE_MAJOR															= "select FLATTEN( rid ) from index:%s where key > ?";
+	private final static String		QUERY_GET_VALUE_MAJOR_EQUALS											= "select FLATTEN( rid ) from index:%s where key >= ?";
+	private final static String		QUERY_GET_MINOR																		= "select from index:%s where key < ?";
+	private final static String		QUERY_GET_MINOR_EQUALS														= "select from index:%s where key <= ?";
+	private final static String		QUERY_GET_VALUE_MINOR															= "select FLATTEN( rid ) from index:%s where key < ?";
+	private final static String		QUERY_GET_VALUE_MINOR_EQUALS											= "select FLATTEN( rid ) from index:%s where key <= ?";
+	private final static String		QUERY_GET_RANGE																		= "select from index:%s where key between ? and ?";
+	private final static String		QUERY_GET_VALUES																	= "select FLATTEN( rid ) from index:%s where key in [%s]";
+	private final static String		QUERY_GET_ENTRIES																	= "select from index:%s where key in [%s]";
+	private final static String		QUERY_GET_VALUE_RANGE															= "select FLATTEN( rid ) from index:%s where key between ? and ?";
+	private final static String		QUERY_PUT																					= "insert into index:%s (key,rid) values (%s,%s)";
+	private final static String		QUERY_REMOVE																			= "delete from index:%s where key = %s";
+	private final static String		QUERY_REMOVE2																			= "delete from index:%s where key = %s and rid = %s";
+	private final static String		QUERY_REMOVE3																			= "delete from index:%s where rid = ?";
+	private final static String		QUERY_CONTAINS																		= "select count(*) as size from	index:%s where key = ?";
+	private final static String		QUERY_SIZE																				= "select count(*) as size from index:%s";
+	private final static String		QUERY_KEYS																				= "select key from index:%s";
+	private final static String		QUERY_REBUILD																			= "rebuild index %s";
+	private final static String		QUERY_CLEAR																				= "delete from index:%s";
 
-    public static final String QUERY_GET_VALUES_BEETWEN_SELECT = "select from index:%s where ";
-    public static final String QUERY_GET_VALUES_BEETWEN_INCLUSIVE_FROM_CONDITION = "key >= ?";
-    public static final String QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_FROM_CONDITION = "key > ?";
-    public static final String QUERY_GET_VALUES_BEETWEN_INCLUSIVE_TO_CONDITION = "key <= ?";
-    public static final String QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_TO_CONDITION = "key < ?";
-    public static final String QUERY_GET_VALUES_AND_OPERATOR = " and ";
+	public static final String		QUERY_GET_VALUES_BEETWEN_SELECT										= "select from index:%s where ";
+	public static final String		QUERY_GET_VALUES_BEETWEN_INCLUSIVE_FROM_CONDITION	= "key >= ?";
+	public static final String		QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_FROM_CONDITION	= "key > ?";
+	public static final String		QUERY_GET_VALUES_BEETWEN_INCLUSIVE_TO_CONDITION		= "key <= ?";
+	public static final String		QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_TO_CONDITION		= "key < ?";
+	public static final String		QUERY_GET_VALUES_AND_OPERATOR											= " and ";
 
-
-	public OIndexRemote(final String iName, final String iWrappedType, final ORID iRid, final OIndexDefinition iIndexDefinition) {
+	public OIndexRemote(final String iName, final String iWrappedType, final ORID iRid, final OIndexDefinition iIndexDefinition, final ODocument iConfiguration) {
 		this.name = iName;
 		this.wrappedType = iWrappedType;
 		this.rid = iRid;
-        this.indexDefinition = iIndexDefinition;
+		this.indexDefinition = iIndexDefinition;
+		this.configuration = iConfiguration;
 	}
 
 	public OIndexRemote<T> create(final String iName, final OIndexDefinition iIndexDefinition, final ODatabaseRecord iDatabase,
-                                  final String iClusterIndexName, final int[] iClusterIdsToIndex, final OProgressListener iProgressListener) {
+			final String iClusterIndexName, final int[] iClusterIdsToIndex, final OProgressListener iProgressListener) {
 		name = iName;
 		// final OCommandRequest cmd = formatCommand(QUERY_CREATE, name, wrappedType);
 		// database.command(cmd).execute();
@@ -98,38 +99,38 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 		return this;
 	}
 
-    public Set<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive) {
-        final OCommandRequest cmd = formatCommand(QUERY_GET_RANGE, name);
-        return (Set<ODocument>) getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
-    }
+	public Set<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive) {
+		final OCommandRequest cmd = formatCommand(QUERY_GET_RANGE, name);
+		return (Set<ODocument>) getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
+	}
 
 	public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo) {
 		final OCommandRequest cmd = formatCommand(QUERY_GET_VALUE_RANGE, name);
 		return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
 	}
 
-    public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive) {
-        StringBuilder query = new StringBuilder(QUERY_GET_VALUES_BEETWEN_SELECT);
+	public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive) {
+		StringBuilder query = new StringBuilder(QUERY_GET_VALUES_BEETWEN_SELECT);
 
-        if (iFromInclusive) {
-            query.append(QUERY_GET_VALUES_BEETWEN_INCLUSIVE_FROM_CONDITION);
-        } else {
-            query.append(QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_FROM_CONDITION);
-        }
+		if (iFromInclusive) {
+			query.append(QUERY_GET_VALUES_BEETWEN_INCLUSIVE_FROM_CONDITION);
+		} else {
+			query.append(QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_FROM_CONDITION);
+		}
 
-        query.append(QUERY_GET_VALUES_AND_OPERATOR);
+		query.append(QUERY_GET_VALUES_AND_OPERATOR);
 
-        if (iToInclusive) {
-            query.append(QUERY_GET_VALUES_BEETWEN_INCLUSIVE_TO_CONDITION);
-        } else {
-            query.append(QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_TO_CONDITION);
-        }
+		if (iToInclusive) {
+			query.append(QUERY_GET_VALUES_BEETWEN_INCLUSIVE_TO_CONDITION);
+		} else {
+			query.append(QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_TO_CONDITION);
+		}
 
-        final OCommandRequest cmd = formatCommand(query.toString());
-        return getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
-    }
+		final OCommandRequest cmd = formatCommand(query.toString());
+		return getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
+	}
 
-    public Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo) {
+	public Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo) {
 		final OCommandRequest cmd = formatCommand(QUERY_GET_RANGE, name);
 		return (Collection<ODocument>) getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
 	}
@@ -239,7 +240,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 		return false;
 	}
 
-    public String getName() {
+	public String getName() {
 		return name;
 	}
 
@@ -254,9 +255,8 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 		return wrappedType;
 	}
 
-
 	public ODocument getConfiguration() {
-		return null;
+		return configuration;
 	}
 
 	public ORID getIdentity() {
@@ -284,8 +284,8 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 	}
 
 	public OType[] getKeyTypes() {
-        if(indexDefinition != null)
-            return indexDefinition.getTypes();
+		if (indexDefinition != null)
+			return indexDefinition.getTypes();
 		return null;
 	}
 
@@ -315,22 +315,24 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 		return (Collection<ODocument>) getDatabase().command(cmd).execute(iKeys.toArray());
 	}
 
-    public OIndexDefinition getDefinition() {
-        return indexDefinition;
-    }
+	public OIndexDefinition getDefinition() {
+		return indexDefinition;
+	}
 
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+	@Override
+	public boolean equals(final Object o) {
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
 
-        final OIndexRemote that = (OIndexRemote) o;
+		final OIndexRemote that = (OIndexRemote) o;
 
-        return name.equals(that.name);
-    }
+		return name.equals(that.name);
+	}
 
-    @Override
-    public int hashCode() {
-        return name.hashCode();
-    }
+	@Override
+	public int hashCode() {
+		return name.hashCode();
+	}
 }
