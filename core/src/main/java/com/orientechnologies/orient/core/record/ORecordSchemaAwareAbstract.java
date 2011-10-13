@@ -202,19 +202,19 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 					throw new OValidationException("The field '" + p.getName()
 							+ "' has been declared as LINK but the value is not a record or a record-id");
 
-				final ORecord<?> record = ((OIdentifiable) fieldValue).getRecord();
+				final ORecord<?> linkedRecord = ((OIdentifiable) fieldValue).getRecord();
 
-				if (p.getLinkedClass() != null) {
-					if (!(record instanceof ODocument))
+				if (linkedRecord != null && p.getLinkedClass() != null) {
+					if (!(linkedRecord instanceof ODocument))
 						throw new OValidationException("The field '" + p.getName() + "' has been declared as LINK of type '"
-								+ p.getLinkedClass() + "' but the value is the record " + record.getIdentity() + " that is not a document");
+								+ p.getLinkedClass() + "' but the value is the record " + linkedRecord.getIdentity() + " that is not a document");
 
 					// AT THIS POINT CHECK THE CLASS ONLY IF != NULL BECAUSE IN CASE OF GRAPHS THE RECORD COULD BE PARTIAL
-					if (((ODocument) record).getSchemaClass() != null
-							&& !p.getLinkedClass().isSuperClassOf(((ODocument) record).getSchemaClass()))
+					if (((ODocument) linkedRecord).getSchemaClass() != null
+							&& !p.getLinkedClass().isSuperClassOf(((ODocument) linkedRecord).getSchemaClass()))
 						throw new OValidationException("The field '" + p.getName() + "' has been declared as LINK of type '"
-								+ p.getLinkedClass().getName() + "' but the value is the document " + record.getIdentity() + " of class '"
-								+ ((ODocument) record).getSchemaClass() + "'");
+								+ p.getLinkedClass().getName() + "' but the value is the document " + linkedRecord.getIdentity() + " of class '"
+								+ ((ODocument) linkedRecord).getSchemaClass() + "'");
 
 				}
 			}
