@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
@@ -32,38 +31,21 @@ import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
  * @author Luca Garulli
  */
 public class OCommandGremlinExecutor extends OCommandExecutorAbstract {
-   protected Map<Object, Object> clonedParameters = new HashMap<Object, Object>();
-   private OGraphDatabase        db;
+	private OGraphDatabase	db;
 
-   @SuppressWarnings("unchecked")
-   @Override
-   public <RET extends OCommandExecutor> RET parse(OCommandRequestText iRequest) {
-      text = iRequest.getText();
-      db = (OGraphDatabase) iRequest.getDatabase().getDatabaseOwner();
-      return (RET) this;
-   }
+	@SuppressWarnings("unchecked")
+	@Override
+	public <RET extends OCommandExecutor> RET parse(OCommandRequestText iRequest) {
+		text = iRequest.getText();
+		db = (OGraphDatabase) iRequest.getDatabase().getDatabaseOwner();
+		return (RET) this;
+	}
 
-   @Override
-   public Object execute(final Map<Object, Object> iArgs) {
-      final List<Object> result = new ArrayList<Object>();
-      final Object scriptResult = OGremlinHelper.execute(db, text, iArgs, result, null, null);
-      return scriptResult != null ? scriptResult : result;
-   }
-
-   @Override
-   public Map<Object, Object> getParameters() {
-      if (parameters == null)
-         return null;
-
-      // Every call to the function is a execution itself. Therefore, it requires a fresh set of input parameters.
-      // Therefore, clone the parameters map trying to recycle previous instances
-      for (Entry<Object, Object> param : parameters.entrySet()) {
-         final String key = (String) param.getKey();
-         final Object objectToClone = param.getValue();
-         final Object previousItem = clonedParameters.get(key); // try to recycle it
-         final Object newItem = OGremlinHelper.cloneObject(objectToClone, previousItem);
-         clonedParameters.put(key, newItem);
-      }
-      return clonedParameters;
-   }
+	@Override
+	public Object execute(final Map<Object, Object> iArgs) {
+		parameters = iArgs;
+		final List<Object> result = new ArrayList<Object>();
+		final Object scriptResult = OGremlinHelper.execute(db, text, parameters, new HashMap<Object, Object>(), result, null, null);
+		return scriptResult != null ? scriptResult : result;
+	}
 }

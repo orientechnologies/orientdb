@@ -19,11 +19,8 @@ import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.orient.console.OConsoleDatabaseApp;
-import com.orientechnologies.orient.core.command.OCommandManager;
-import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
-import com.orientechnologies.orient.graph.gremlin.OCommandGremlinExecutor;
-import com.orientechnologies.orient.graph.gremlin.OSQLFunctionGremlin;
+import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
 import com.tinkerpop.gremlin.jsr223.GremlinScriptEngineFactory;
 
 /**
@@ -68,18 +65,14 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
 
 		out.println("\nInstalling extensions for GREMLIN language v." + new GremlinScriptEngineFactory().getEngineVersion());
 
-		OCommandManager.instance().registerRequester("gremlin", OCommandGremlin.class);
-
-		OCommandManager.instance().registerExecutor(OCommandGremlin.class, OCommandGremlinExecutor.class);
-
-		OSQLEngine.getInstance().registerFunction(OSQLFunctionGremlin.NAME, OSQLFunctionGremlin.class);
+		OGremlinHelper.global().create();
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Execute a GREMLIN script")
 	public void gremlin(@ConsoleParameter(name = "script-text", description = "The script text to execute") final String iScriptText) {
 		checkCurrentDatabase();
 
-		if (iScriptText == null || iScriptText.length() == 0 )
+		if (iScriptText == null || iScriptText.length() == 0)
 			return;
 
 		long start = System.currentTimeMillis();

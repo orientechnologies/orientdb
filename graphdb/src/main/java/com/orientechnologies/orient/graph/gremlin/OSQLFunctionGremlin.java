@@ -16,7 +16,9 @@
 package com.orientechnologies.orient.graph.gremlin;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.script.ScriptContext;
 
@@ -38,61 +40,65 @@ import com.tinkerpop.gremlin.jsr223.GremlinScriptEngine;
  * 
  */
 public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
-   public static final String NAME = "gremlin";
-   private List<Object>       result;
+	public static final String	NAME	= "gremlin";
+	private List<Object>				result;
+	private Map<Object, Object>	currentParameters;
 
-   public OSQLFunctionGremlin() {
-      super(NAME, 1, 1);
-   }
+	public OSQLFunctionGremlin() {
+		super(NAME, 1, 1);
+	}
 
-   public Object execute(final ORecord<?> iCurrentRecord, final Object[] iParameters, final OCommandExecutor iRequester) {
-      if (!(iCurrentRecord instanceof ODocument) || !(iCurrentRecord.getDatabase().getDatabaseOwner() instanceof OGraphDatabase))
-         // NOT DOCUMENT OR GRAPHDB? IGNORE IT
-         return null;
+	public Object execute(final ORecord<?> iCurrentRecord, final Object[] iParameters, final OCommandExecutor iRequester) {
+		if (!(iCurrentRecord instanceof ODocument) || !(iCurrentRecord.getDatabase().getDatabaseOwner() instanceof OGraphDatabase))
+			// NOT DOCUMENT OR GRAPHDB? IGNORE IT
+			return null;
 
-      final OGraphDatabase db = (OGraphDatabase) iCurrentRecord.getDatabase().getDatabaseOwner();
+		final OGraphDatabase db = (OGraphDatabase) iCurrentRecord.getDatabase().getDatabaseOwner();
 
-      if (result == null)
-         result = new ArrayList<Object>();
+		if (result == null)
+			result = new ArrayList<Object>();
 
-      final Object  scriptResult = OGremlinHelper.execute(db, (String) iParameters[0], iRequester != null ? iRequester.getParameters() : null,
-            result, new OGremlinHelper.OGremlinCallback() {
+		if (iRequester.getParameters() != null)
+			currentParameters = new HashMap<Object, Object>();
 
-               @Override
-               public boolean call(GremlinScriptEngine iEngine, OrientGraph iGraph) {
-                  final OrientElement graphElement;
+		final Object scriptResult = OGremlinHelper.execute(db, (String) iParameters[0], iRequester != null ? iRequester.getParameters()
+				: null, currentParameters, result, new OGremlinHelper.OGremlinCallback() {
 
-                  final ODocument document = (ODocument) iCurrentRecord;
-                  if (db.isVertex(document))
-                     // VERTEX TYPE, CREATE THE BLUEPRINTS'S WRAPPER
-                     graphElement = new OrientVertex(iGraph, document);
-                  else if (db.isEdge(document))
-                     // EDGE TYPE, CREATE THE BLUEPRINTS'S WRAPPER
-                     graphElement = new OrientEdge(iGraph, document);
-                  else
-                     // UNKNOWN CLASS: IGNORE IT
-                     return false;
+			@Override
+			public boolean call(GremlinScriptEngine iEngine, OrientGraph iGraph) {
+				final OrientElement graphElement;
 
-                  iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("current", graphElement);
+				final ODocument document = (ODocument) iCurrentRecord;
+				if (db.isVertex(document))
+					// VERTEX TYPE, CREATE THE BLUEPRINTS'S WRAPPER
+					graphElement = new OrientVertex(iGraph, document);
+				else if (db.isEdge(document))
+					// EDGE TYPE, CREATE THE BLUEPRINTS'S WRAPPER
+					graphElement = new OrientEdge(iGraph, document);
+				else
+					// UNKNOWN CLASS: IGNORE IT
+					return false;
 
-                  return true;
-               }
-            }, null);
+				iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("current", graphElement);
 
-      return scriptResult;
-   }
+				return true;
+			}
+		}, null);
 
-   @Override
-   public boolean aggregateResults(final Object[] iConfiguredParameters) {
-      return true;
-   }
+		return scriptResult;
+	}
 
-   public String getSyntax() {
-      return "Syntax error: gremlin(<gremlin-expression>)";
-   }
+	@Override
+	public boolean aggregateResults(final Object[] iConfiguredParameters) {
+		return true;
+	}
 
-   @Override
-   public Object getResult() {
-      return result;
-   }
+	public String getSyntax() {
+		return "Syntax error: gremlin(<gremlin-expression>)";
+	}
+
+	@Override
+	public Object getResult() {
+		return result;
+	}
 }
