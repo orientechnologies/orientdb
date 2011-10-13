@@ -23,7 +23,9 @@ import java.util.Map;
 import javax.script.ScriptContext;
 
 import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
@@ -49,11 +51,24 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 	}
 
 	public Object execute(final ORecord<?> iCurrentRecord, final Object[] iParameters, final OCommandExecutor iRequester) {
-		if (!(iCurrentRecord instanceof ODocument) || !(iCurrentRecord.getDatabase().getDatabaseOwner() instanceof OGraphDatabase))
+		if (!(iCurrentRecord instanceof ODocument))
 			// NOT DOCUMENT OR GRAPHDB? IGNORE IT
 			return null;
 
-		final OGraphDatabase db = (OGraphDatabase) iCurrentRecord.getDatabase().getDatabaseOwner();
+		ODatabaseRecord currentDb = ODatabaseRecordThreadLocal.INSTANCE.get();
+		if (currentDb == null)
+			// GET FROM THE RECORD
+			currentDb = iCurrentRecord.getDatabase();
+
+		currentDb = (ODatabaseRecord) currentDb.getDatabaseOwner();
+
+		final OGraphDatabase db;
+		if (currentDb instanceof OGraphDatabase)
+			db = (OGraphDatabase) currentDb;
+		else {
+			db = new OGraphDatabase(currentDb.getURL());
+			ODatabaseRecordThreadLocal.INSTANCE.set(db);
+		}
 
 		if (result == null)
 			result = new ArrayList<Object>();
