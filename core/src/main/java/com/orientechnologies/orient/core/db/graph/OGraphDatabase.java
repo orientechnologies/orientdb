@@ -66,6 +66,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 
 	public OGraphDatabase(final ODatabaseRecordTx iSource) {
 		super(iSource);
+		checkForGraphSchema();
 	}
 
 	@Override

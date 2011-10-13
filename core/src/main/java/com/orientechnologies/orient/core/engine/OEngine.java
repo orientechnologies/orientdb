@@ -25,6 +25,8 @@ public interface OEngine {
 
 	public OStorage createStorage(String iURL, Map<String, String> parameters);
 
+	public void removeStorage(OStorage iStorage);
+
 	public boolean isShared();
 
 	public void shutdown();

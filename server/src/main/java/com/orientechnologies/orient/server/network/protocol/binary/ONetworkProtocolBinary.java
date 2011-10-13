@@ -1045,7 +1045,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			channel.writeBytes(stream, realLength);
 		} catch (Exception e) {
 			channel.writeBytes(null);
-			OLogManager.instance().error(this, "Error on unmarshalling record #" + iRecord.getIdentity().toString(),
+			OLogManager.instance().error(this, "Error on unmarshalling record " + iRecord.getIdentity().toString(),
 					OSerializationException.class);
 		}
 	}

@@ -34,7 +34,11 @@ import javax.script.ScriptContext;
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.orient.core.command.OCommandManager;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -388,4 +392,27 @@ public class OGremlinHelper {
 			throw new IllegalStateException(
 					"OGremlinHelper instance has been not created. Call OGremlinHelper.global().create() to iniziailze it");
 	}
+
+	public static OGraphDatabase getGraphDatabase(final ODatabaseRecord iCurrentDatabase) {
+		ODatabaseRecord currentDb = ODatabaseRecordThreadLocal.INSTANCE.get();
+		if (currentDb == null && iCurrentDatabase != null)
+			// GET FROM THE RECORD
+			currentDb = iCurrentDatabase;
+
+		currentDb = (ODatabaseRecord) currentDb.getDatabaseOwner();
+
+		final OGraphDatabase db;
+		if (currentDb instanceof OGraphDatabase)
+			db = (OGraphDatabase) currentDb;
+		else if (currentDb instanceof ODatabaseDocumentTx) {
+			db = new OGraphDatabase((ODatabaseRecordTx) currentDb.getUnderlying());
+			ODatabaseRecordThreadLocal.INSTANCE.set(db);
+		} else if (currentDb instanceof ODatabaseRecordTx) {
+			db = new OGraphDatabase((ODatabaseRecordTx) currentDb);
+			ODatabaseRecordThreadLocal.INSTANCE.set(db);
+		} else
+			throw new OCommandExecutionException("Can't find a database of type OGraphDatabase or ODatabaseRecordTx");
+		return db;
+	}
+
 }

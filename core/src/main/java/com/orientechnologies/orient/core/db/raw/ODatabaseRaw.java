@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -148,6 +149,8 @@ public class ODatabaseRaw implements ODatabase {
 				}
 
 			status = STATUS.CLOSED;
+			ODatabaseRecordThreadLocal.INSTANCE.set(null);
+
 		} catch (OException e) {
 			// PASS THROUGH
 			throw e;

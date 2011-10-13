@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.client.remote;
 
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -32,17 +33,37 @@ public class OEngineRemote extends OEngineAbstract {
 
 	public OStorage createStorage(final String iURL, final Map<String, String> iConfiguration) {
 		try {
-			OStorageRemote sharedStorage = sharedStorages.get(iURL);
-			if (sharedStorage == null) {
-				sharedStorage = new OStorageRemote(iURL, "rw");
-				sharedStorages.put(iURL, sharedStorage);
-			}
+			synchronized (sharedStorages) {
+				OStorageRemote sharedStorage = sharedStorages.get(iURL);
+				if (sharedStorage == null) {
+					sharedStorage = new OStorageRemote(iURL, "rw");
+					sharedStorages.put(iURL, sharedStorage);
+				}
 
-			return new OStorageRemoteThread(sharedStorage);
+				return new OStorageRemoteThread(sharedStorage);
+			}
 		} catch (Throwable t) {
 			OLogManager.instance().error(this, "Error on opening database: " + iURL, t, ODatabaseException.class);
 		}
 		return null;
+	}
+
+	public void removeStorage(final String iURL) {
+		synchronized (sharedStorages) {
+			sharedStorages.remove(iURL);
+		}
+	}
+
+	@Override
+	public void removeStorage(final OStorage iStorage) {
+		synchronized (sharedStorages) {
+			for (Entry<String, OStorageRemote> entry : sharedStorages.entrySet()) {
+				if (entry.getValue() == iStorage) {
+					sharedStorages.remove(entry.getKey());
+					break;
+				}
+			}
+		}
 	}
 
 	public String getName() {

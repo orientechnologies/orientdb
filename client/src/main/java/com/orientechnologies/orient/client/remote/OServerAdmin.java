@@ -22,6 +22,7 @@ import java.util.Map;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -251,6 +252,8 @@ public class OServerAdmin {
 				s.removeResource(OSecurity.class.getSimpleName());
 			}
 		}
+
+		ODatabaseRecordThreadLocal.INSTANCE.set(null);
 
 		return this;
 	}

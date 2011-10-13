@@ -37,7 +37,7 @@ public class OCommandGremlinExecutor extends OCommandExecutorAbstract {
 	@Override
 	public <RET extends OCommandExecutor> RET parse(OCommandRequestText iRequest) {
 		text = iRequest.getText();
-		db = (OGraphDatabase) iRequest.getDatabase().getDatabaseOwner();
+		db = OGremlinHelper.getGraphDatabase( iRequest.getDatabase() );
 		return (RET) this;
 	}
 

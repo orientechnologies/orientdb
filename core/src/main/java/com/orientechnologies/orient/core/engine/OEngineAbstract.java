@@ -17,6 +17,8 @@ package com.orientechnologies.orient.core.engine;
 
 import java.util.Map;
 
+import com.orientechnologies.orient.core.storage.OStorage;
+
 public abstract class OEngineAbstract implements OEngine {
 
 	protected String getMode(Map<String, String> iConfiguration) {
@@ -30,5 +32,8 @@ public abstract class OEngineAbstract implements OEngine {
 	}
 
 	public void shutdown() {
+	}
+
+	public void removeStorage(final OStorage iStorage) {
 	}
 }

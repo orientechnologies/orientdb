@@ -13,13 +13,13 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.pgm.impls.orientdb.OrientElement;
 
-public class SQLGremlinTest {
-	public SQLGremlinTest() {
+public class LocalGremlinTest {
+	public LocalGremlinTest() {
 		OGremlinHelper.global().create();
 	}
 
 	@Test
-	public void f() {
+	public void function() {
 		OGraphDatabase db = new OGraphDatabase("local:target/databases/gremlin");
 		if (db.exists())
 			db.open("admin", "admin");

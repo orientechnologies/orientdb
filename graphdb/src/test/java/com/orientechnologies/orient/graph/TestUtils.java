@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.test.database.auto;
+package com.orientechnologies.orient.graph;
 
 import java.io.File;
 import java.io.FileReader;
@@ -28,8 +28,12 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 
 public class TestUtils {
 	public static void createDatabase(ODatabase database, final String iURL) throws IOException {
+		createDatabase(database, iURL, "server");
+	}
+
+	public static void createDatabase(ODatabase database, final String iURL, String iDirectory) throws IOException {
 		if (iURL.startsWith(OEngineRemote.NAME)) {
-			new OServerAdmin(iURL).connect("root", getServerRootPassword()).createDatabase("local").close();
+			new OServerAdmin(iURL).connect("root", getServerRootPassword(iDirectory)).createDatabase("local").close();
 		} else {
 			database.create();
 			database.close();
@@ -37,8 +41,12 @@ public class TestUtils {
 	}
 
 	public static void deleteDatabase(final ODatabase database) throws IOException {
+		deleteDatabase(database, "server");
+	}
+
+	public static void deleteDatabase(final ODatabase database, String iDirectory) throws IOException {
 		if (database.getURL().startsWith("remote:")) {
-			new OServerAdmin(database.getURL()).connect("root", getServerRootPassword()).dropDatabase();
+			new OServerAdmin(database.getURL()).connect("root", getServerRootPassword(iDirectory)).dropDatabase();
 		} else {
 			database.delete();
 		}
@@ -53,12 +61,16 @@ public class TestUtils {
 	}
 
 	protected static String getServerRootPassword() throws IOException {
+		return getServerRootPassword("server");
+	}
+
+	protected static String getServerRootPassword(final String iDirectory) throws IOException {
 		// LOAD SERVER CONFIG FILE TO EXTRACT THE ROOT'S PASSWORD
 		File file = new File("../releases/" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
 		if (!file.exists())
-			file = new File("server/config/orientdb-server-config.xml");
+			file = new File(iDirectory + "/config/orientdb-server-config.xml");
 		if (!file.exists())
-			file = new File("../server/config/orientdb-server-config.xml");
+			file = new File("../" + iDirectory + "/config/orientdb-server-config.xml");
 		if (!file.exists())
 			file = new File(OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/orientdb-server-config.xml"));
 		if (!file.exists())
