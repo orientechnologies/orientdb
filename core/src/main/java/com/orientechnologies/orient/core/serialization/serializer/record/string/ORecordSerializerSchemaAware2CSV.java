@@ -385,6 +385,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 										}
 									} else if (value.charAt(0) == OStringSerializerHelper.PARENTHESIS_BEGIN) {
 										linkedType = OType.EMBEDDED;
+									} else if (value.charAt(0) == OStringSerializerHelper.CUSTOM_TYPE) {
+										linkedType = OType.CUSTOM;
 									} else if (Character.isDigit(value.charAt(0)) || value.charAt(0) == '+' || value.charAt(0) == '-') {
 										String[] items = value.split(",");
 										linkedType = getType(items[0]);

@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
+import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
 /**
  * Generic representation of a type.<br/>
@@ -39,45 +40,47 @@ import com.orientechnologies.orient.core.serialization.OBase64Utils;
  * 
  */
 public enum OType {
-	BOOLEAN("Boolean", 0, false, true, 1, new Class<?>[] { Boolean.class, Boolean.TYPE }, new Class<?>[] { Boolean.class }) {
+	BOOLEAN("Boolean", 0, true, 1, new Class<?>[] { Boolean.class, Boolean.TYPE }, new Class<?>[] { Boolean.class }) {
 	},
-	INTEGER("Integer", 1, false, true, 4, new Class<?>[] { Integer.class, Integer.TYPE }, new Class<?>[] { Number.class }) {
+	INTEGER("Integer", 1, true, 4, new Class<?>[] { Integer.class, Integer.TYPE }, new Class<?>[] { Number.class }) {
 	},
-	SHORT("Short", 2, false, true, 2, new Class<?>[] { Short.class, Short.TYPE }, new Class<?>[] { Number.class }) {
+	SHORT("Short", 2, true, 2, new Class<?>[] { Short.class, Short.TYPE }, new Class<?>[] { Number.class }) {
 	},
-	LONG("Long", 3, false, true, 8, new Class<?>[] { Long.class, Long.TYPE }, new Class<?>[] { Number.class }) {
+	LONG("Long", 3, true, 8, new Class<?>[] { Long.class, Long.TYPE }, new Class<?>[] { Number.class }) {
 	},
-	FLOAT("Float", 4, false, true, 4, new Class<?>[] { Float.class, Float.TYPE }, new Class<?>[] { Number.class }) {
+	FLOAT("Float", 4, true, 4, new Class<?>[] { Float.class, Float.TYPE }, new Class<?>[] { Number.class }) {
 	},
-	DOUBLE("Double", 5, false, true, 8, new Class<?>[] { Double.class, Double.TYPE }, new Class<?>[] { Number.class }) {
+	DOUBLE("Double", 5, true, 8, new Class<?>[] { Double.class, Double.TYPE }, new Class<?>[] { Number.class }) {
 	},
-	DATETIME("Datetime", 6, false, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Long.class }) {
+	DATETIME("Datetime", 6, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Long.class }) {
 	},
-	STRING("String", 7, false, false, 8, new Class<?>[] { String.class }, new Class<?>[] { String.class }) {
+	STRING("String", 7, false, 8, new Class<?>[] { String.class }, new Class<?>[] { String.class }) {
 	},
-	BINARY("Binary", 8, false, false, 8, new Class<?>[] { Array.class }, new Class<?>[] { Array.class }) {
+	BINARY("Binary", 8, false, 8, new Class<?>[] { Array.class }, new Class<?>[] { Array.class }) {
 	},
-	EMBEDDED("Embedded", 9, true, false, 8, new Class<?>[] { Object.class }, new Class<?>[] { Object.class }) {
+	EMBEDDED("Embedded", 9, false, 8, new Class<?>[] { Object.class }, new Class<?>[] { Object.class }) {
 	},
-	EMBEDDEDLIST("EmbeddedList", 10, true, false, 8, new Class<?>[] { List.class }, new Class<?>[] { Collection.class, Array.class }) {
+	EMBEDDEDLIST("EmbeddedList", 10, false, 8, new Class<?>[] { List.class }, new Class<?>[] { Collection.class, Array.class }) {
 	},
-	EMBEDDEDSET("EmbeddedSet", 11, true, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Collection.class, Array.class }) {
+	EMBEDDEDSET("EmbeddedSet", 11, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Collection.class, Array.class }) {
 	},
-	EMBEDDEDMAP("EmbeddedMap", 12, true, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
+	EMBEDDEDMAP("EmbeddedMap", 12, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
 	},
-	LINK("Link", 13, true, true, 8, new Class<?>[] { Object.class, ORecordId.class }, new Class<?>[] { ORecord.class, ORID.class }) {
+	LINK("Link", 13, true, 8, new Class<?>[] { Object.class, ORecordId.class }, new Class<?>[] { ORecord.class, ORID.class }) {
 	},
-	LINKLIST("LinkList", 14, true, false, 8, new Class<?>[] { List.class }, new Class<?>[] { Collection.class, Array.class }) {
+	LINKLIST("LinkList", 14, false, 8, new Class<?>[] { List.class }, new Class<?>[] { Collection.class, Array.class }) {
 	},
-	LINKSET("LinkSet", 15, true, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Collection.class, Array.class }) {
+	LINKSET("LinkSet", 15, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Collection.class, Array.class }) {
 	},
-	LINKMAP("LinkMap", 16, true, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
+	LINKMAP("LinkMap", 16, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
 	},
-	BYTE("Byte", 17, false, true, 1, new Class<?>[] { Byte.class, Byte.TYPE }, new Class<?>[] { Number.class, Character.class }) {
+	BYTE("Byte", 17, true, 1, new Class<?>[] { Byte.class, Byte.TYPE }, new Class<?>[] { Number.class, Character.class }) {
 	},
-	TRANSIENT("Transient", 18, false, true, 0, new Class<?>[] {}, new Class<?>[] {}) {
+	TRANSIENT("Transient", 18, true, 0, new Class<?>[] {}, new Class<?>[] {}) {
 	},
-	DATE("Date", 19, false, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Long.class }) {
+	DATE("Date", 19, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Long.class }) {
+	},
+	CUSTOM("Custom", 20, false, 8, new Class<?>[] { OSerializableStream.class }, new Class<?>[] { OSerializableStream.class }) {
 	};
 
 	protected static final OType[]	TYPES	= new OType[] { BOOLEAN, BYTE, INTEGER, SHORT, LONG, FLOAT, DOUBLE, DATE, DATETIME, STRING,
@@ -85,17 +88,15 @@ public enum OType {
 
 	protected String								name;
 	protected int										id;
-	protected boolean								complex;
 	protected boolean								fixedSize;
 	protected int										size;
 	protected Class<?>[]						javaTypes;
 	protected Class<?>[]						allowAssignmentFrom;
 
-	private OType(final String iName, final int iId, final boolean iComplex, final boolean iFixedSize, final int iSize,
-			final Class<?>[] iJavaTypes, final Class<?>[] iAllowAssignmentBy) {
+	private OType(final String iName, final int iId, final boolean iFixedSize, final int iSize, final Class<?>[] iJavaTypes,
+			final Class<?>[] iAllowAssignmentBy) {
 		name = iName;
 		id = iId;
-		complex = iComplex;
 		fixedSize = iFixedSize;
 		size = iSize;
 		javaTypes = iJavaTypes;
@@ -184,10 +185,6 @@ public enum OType {
 			}
 
 		return null;
-	}
-
-	public boolean isComplex() {
-		return complex;
 	}
 
 	/**

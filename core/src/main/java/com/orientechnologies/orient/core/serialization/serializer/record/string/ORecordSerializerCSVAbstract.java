@@ -550,6 +550,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				if (iLinkedType == null)
 					throw new IllegalArgumentException(
 							"Linked type can't be null. Probably the serialized type has not stored the type along with data");
+				else if (iLinkedType == OType.CUSTOM)
+					item = item.substring(1);
+				
 				objectToAdd = fieldTypeFromStream(iDocument, iLinkedType, item);
 			}
 
@@ -598,7 +601,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					doc = (ODocument) OObjectSerializerHelper.getFieldValue(o, fieldBound);
 					OObjectSerializerHelper.invokeCallback(o, doc, OAfterSerialization.class);
 					id = doc;
-				}
+				} else if (iLinkedType == null || iLinkedType == OType.EMBEDDED)
+					iLinkedType = OType.CUSTOM;
 				linkedClass = iLinkedClass;
 			} else {
 				id = (OIdentifiable) o;
@@ -650,6 +654,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				toString(doc, iOutput, null, iObjHandler, iMarshalledRecords, false);
 			} else {
 				// EMBEDDED LITERALS
+				if (iLinkedType == OType.CUSTOM)
+					iOutput.append(OStringSerializerHelper.CUSTOM_TYPE);
 				fieldTypeToString(iOutput, iDatabase, iLinkedType, o);
 			}
 

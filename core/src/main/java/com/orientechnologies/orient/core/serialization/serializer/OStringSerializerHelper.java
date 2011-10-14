@@ -46,6 +46,7 @@ public abstract class OStringSerializerHelper {
 	public static final char								COLLECTION_END					= ']';
 	public static final char								MAP_BEGIN								= '{';
 	public static final char								MAP_END									= '}';
+	public static final char								CUSTOM_TYPE							= '^';
 	public static final char								ENTRY_SEPARATOR					= ':';
 	public static final char								PARAMETER_NAMED					= ':';
 	public static final char								PARAMETER_POSITIONAL		= '?';
@@ -130,7 +131,7 @@ public abstract class OStringSerializerHelper {
 				return ((ORecord<?>) iValue).getIdentity().toString();
 
 		case EMBEDDED:
-			// RECORD
+			// EMBEDDED
 			return OStringSerializerAnyStreamable.INSTANCE.fromStream(iDocument.getDatabase(), (String) iValue);
 
 		case EMBEDDEDMAP:
@@ -367,53 +368,53 @@ public abstract class OStringSerializerHelper {
 	}
 
 	public static int getCollection(final String iText, final int iStartPosition, final Collection<String> iCollection) {
-        final StringBuilder buffer = new StringBuilder();
+		final StringBuilder buffer = new StringBuilder();
 
-        int openPos = iText.indexOf(COLLECTION_BEGIN, iStartPosition);
-        if (openPos == -1)
-            return -1;
+		int openPos = iText.indexOf(COLLECTION_BEGIN, iStartPosition);
+		if (openPos == -1)
+			return -1;
 
-        int currentPos, deep;
-        for (currentPos = openPos + 1, deep = 1; deep > 0; currentPos++) {
-            if (currentPos >= iText.length()) {
-                return -1;
-            }
+		int currentPos, deep;
+		for (currentPos = openPos + 1, deep = 1; deep > 0; currentPos++) {
+			if (currentPos >= iText.length()) {
+				return -1;
+			}
 
-            char c = iText.charAt(currentPos);
+			char c = iText.charAt(currentPos);
 
-            if (buffer.length() == 0 && c == ' ') {
-                continue;
-            }
+			if (buffer.length() == 0 && c == ' ') {
+				continue;
+			}
 
-            switch (c) {
-                case COLLECTION_BEGIN:
-                    buffer.append(c);
-                    deep++;
-                    break;
+			switch (c) {
+			case COLLECTION_BEGIN:
+				buffer.append(c);
+				deep++;
+				break;
 
-                case COLLECTION_END:
-                    if (deep > 1)
-                        buffer.append(c);
-                    deep--;
-                    break;
+			case COLLECTION_END:
+				if (deep > 1)
+					buffer.append(c);
+				deep--;
+				break;
 
-                case COLLECTION_SEPARATOR:
-                    if (deep > 1) {
-                        buffer.append(c);
-                    } else {
-                        iCollection.add(buffer.toString().trim());
-                        buffer.setLength(0);
-                    }
-                    break;
+			case COLLECTION_SEPARATOR:
+				if (deep > 1) {
+					buffer.append(c);
+				} else {
+					iCollection.add(buffer.toString().trim());
+					buffer.setLength(0);
+				}
+				break;
 
-                default:
-                    buffer.append(c);
-            }
-        }
+			default:
+				buffer.append(c);
+			}
+		}
 
-        iCollection.add(buffer.toString().trim());
+		iCollection.add(buffer.toString().trim());
 
-        return --currentPos;
+		return --currentPos;
 	}
 
 	public static int getParameters(final String iText, final int iBeginPosition, final List<String> iParameters) {

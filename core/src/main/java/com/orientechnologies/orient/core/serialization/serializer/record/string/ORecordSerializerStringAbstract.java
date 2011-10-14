@@ -159,10 +159,11 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 				return ((ORecord<?>) iValue).getIdentity().toString();
 
 		case EMBEDDED:
+		case CUSTOM:
 			// RECORD
-            final Object result = OStringSerializerAnyStreamable.INSTANCE.fromStream(iDocument.getDatabase(), (String) iValue);
-            if(result instanceof ODocument)
-                ((ODocument) result).addOwner(iDocument);
+			final Object result = OStringSerializerAnyStreamable.INSTANCE.fromStream(iDocument.getDatabase(), (String) iValue);
+			if (result instanceof ODocument)
+				((ODocument) result).addOwner(iDocument);
 			return result;
 
 		case EMBEDDEDSET:
@@ -282,7 +283,8 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 			break;
 
 		case EMBEDDED:
-			// RECORD
+		case CUSTOM:
+			// RECORD OR CUSTOM
 			OStringSerializerAnyStreamable.INSTANCE.toStream(iDatabase, iBuffer, iValue);
 			OProfiler.getInstance().stopChrono("serializer.rec.str.embed2string", timer);
 			break;
@@ -322,6 +324,8 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 			return OType.EMBEDDEDLIST;
 		else if (firstChar == OStringSerializerHelper.MAP_BEGIN)
 			return OType.EMBEDDEDMAP;
+		else if (firstChar == OStringSerializerHelper.CUSTOM_TYPE)
+			return OType.CUSTOM;
 
 		// BOOLEAN?
 		if (iValue.equalsIgnoreCase("true") || iValue.equalsIgnoreCase("false"))
