@@ -62,7 +62,7 @@
 			<type>jar</type>
 			<scope>compile</scope>
 		</dependency>
-        <dependency>
+		<dependency>
 			<groupId>com.tinkerpop.blueprints</groupId>
 			<artifactId>blueprints-core</artifactId>
 			<version>1.1-SNAPSHOT</version>
@@ -79,13 +79,6 @@
 			<artifactId>pipes</artifactId>
 			<version>0.7</version>
 			<type>pom</type>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.tinkerpop.blueprints</groupId>
-			<artifactId>blueprints-core</artifactId>
-			<version>1.1-SNAPSHOT</version>
-			<type>jar</type>
 			<scope>compile</scope>
 		</dependency>
 	</dependencies>
