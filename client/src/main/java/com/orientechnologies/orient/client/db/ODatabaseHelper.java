@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.graph;
+package com.orientechnologies.orient.client.db;
 
 import java.io.File;
 import java.io.FileReader;
@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 
-public class TestUtils {
+public class ODatabaseHelper {
 	public static void createDatabase(ODatabase database, final String iURL) throws IOException {
 		createDatabase(database, iURL, "server");
 	}

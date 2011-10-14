@@ -21,6 +21,7 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.ORemoteServerEventListener;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -28,7 +29,6 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
-import com.orientechnologies.orient.graph.TestUtils;
 
 /**
  * Tests the right calls of all the db's listener API.
@@ -104,11 +104,11 @@ public class DbListenerTest {
 			return;
 
 		if (database.exists())
-			TestUtils.deleteDatabase(database);
+			ODatabaseHelper.deleteDatabase(database);
 
 		database.registerListener(new DbListener());
 
-		TestUtils.createDatabase(database, dbUrl);
+		ODatabaseHelper.createDatabase(database, dbUrl);
 
 		Assert.assertEquals(onCreate, 1);
 
@@ -136,7 +136,7 @@ public class DbListenerTest {
 		Assert.assertEquals(onBeforeTxRollback, 1);
 		Assert.assertEquals(onAfterTxRollback, 1);
 
-		TestUtils.deleteDatabase(database);
+		ODatabaseHelper.deleteDatabase(database);
 		Assert.assertEquals(onClose, 2);
 		Assert.assertEquals(onDelete, 1);
 	}

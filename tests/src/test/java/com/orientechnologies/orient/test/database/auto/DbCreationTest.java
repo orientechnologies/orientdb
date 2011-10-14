@@ -23,6 +23,7 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
@@ -31,7 +32,6 @@ import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.graph.TestUtils;
 
 @Test(groups = "db")
 public class DbCreationTest {
@@ -51,8 +51,8 @@ public class DbCreationTest {
 		if (!url.startsWith(OEngineRemote.NAME)) {
 			database = new ODatabaseObjectTx(url);
 			database.setProperty("security", Boolean.FALSE);
-			TestUtils.createDatabase(database, url);
-			TestUtils.deleteDatabase(database);
+			ODatabaseHelper.createDatabase(database, url);
+			ODatabaseHelper.deleteDatabase(database);
 		}
 	}
 
@@ -61,12 +61,12 @@ public class DbCreationTest {
 		if (url.startsWith(OEngineMemory.NAME))
 			OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(true);
 
-		TestUtils.createDatabase(new ODatabaseObjectTx(url), url);
+		ODatabaseHelper.createDatabase(new ODatabaseObjectTx(url), url);
 	}
 
 	@Test(dependsOnMethods = { "testDbCreationDefault" })
 	public void testDbExists() throws IOException {
-		Assert.assertTrue(TestUtils.existsDatabase(new ODatabaseDocumentTx(url)));
+		Assert.assertTrue(ODatabaseHelper.existsDatabase(new ODatabaseDocumentTx(url)));
 	}
 
 	@Test(dependsOnMethods = { "testDbExists" })
@@ -122,11 +122,11 @@ public class DbCreationTest {
 
 		ODatabaseDocumentTx db = new ODatabaseDocumentTx(u);
 
-		TestUtils.createDatabase(db, u);
+		ODatabaseHelper.createDatabase(db, u);
 		db.open("admin", "admin");
 		db.close();
 
-		TestUtils.deleteDatabase(db);
+		ODatabaseHelper.deleteDatabase(db);
 	}
 
 	@Test(dependsOnMethods = { "testChangeLocale" })
@@ -143,11 +143,11 @@ public class DbCreationTest {
 
 		ODatabaseDocumentTx db = new ODatabaseDocumentTx(u);
 
-		TestUtils.createDatabase(db, u);
+		ODatabaseHelper.createDatabase(db, u);
 
 		db = ODatabaseDocumentPool.global().acquire(u, "admin", "admin");
 		db.close();
 
-		TestUtils.deleteDatabase(db);
+		ODatabaseHelper.deleteDatabase(db);
 	}
 }

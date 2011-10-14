@@ -21,6 +21,7 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OValidationException;
@@ -29,7 +30,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.graph.TestUtils;
 
 @Test(groups = "schema")
 public class SchemaTest {
@@ -43,7 +43,7 @@ public class SchemaTest {
 
 	public void createSchema() throws IOException {
 		database = new ODatabaseFlat(url);
-		if (TestUtils.existsDatabase(database))
+		if (ODatabaseHelper.existsDatabase(database))
 			database.open("admin", "admin");
 		else
 			database.create();

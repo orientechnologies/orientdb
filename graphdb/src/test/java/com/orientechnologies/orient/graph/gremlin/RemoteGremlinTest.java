@@ -8,11 +8,11 @@ import java.util.Map;
 
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.graph.TestUtils;
 import com.tinkerpop.blueprints.pgm.impls.orientdb.OrientElement;
 
 public class RemoteGremlinTest {
@@ -23,8 +23,8 @@ public class RemoteGremlinTest {
 	@Test
 	public void function() throws IOException {
 		OGraphDatabase db = new OGraphDatabase("remote:localhost/gremlin");
-		TestUtils.deleteDatabase(db, "graphdb");
-		TestUtils.createDatabase(db, db.getURL(), "graphdb");
+		ODatabaseHelper.deleteDatabase(db, "graphdb");
+		ODatabaseHelper.createDatabase(db, db.getURL(), "graphdb");
 
 		db.open("admin", "admin");
 
@@ -51,8 +51,8 @@ public class RemoteGremlinTest {
 	@Test
 	public void command() throws IOException {
 		OGraphDatabase db = new OGraphDatabase("remote:localhost/gremlin");
-		TestUtils.deleteDatabase(db, "graphdb");
-		TestUtils.createDatabase(db, db.getURL(), "graphdb");
+		ODatabaseHelper.deleteDatabase(db, "graphdb");
+		ODatabaseHelper.createDatabase(db, db.getURL(), "graphdb");
 
 		db.open("admin", "admin");
 
