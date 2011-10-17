@@ -74,7 +74,8 @@ public class OGremlinHelper {
 	 */
 	public void create() {
 		if (enginePool != null)
-			throw new IllegalStateException("OGremlinHelper instance already created");
+			// ALREADY CREATED
+			return;
 
 		enginePool = new OResourcePool<Object, GremlinScriptEngine>(maxEngines,
 				new OResourcePoolListener<Object, GremlinScriptEngine>() {
