@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 
 import org.testng.Assert;
@@ -70,7 +71,8 @@ public class SecurityTest {
 		database.open("reader", "reader");
 
 		try {
-			new ODocument(database, "Profile").save();
+			new ODocument(database, "Profile").fields("nick", "error", "password", "I don't know", "lastAccessOn", new Date(),
+					"registeredOn", new Date()).save();
 		} catch (OSecurityAccessException e) {
 			Assert.assertTrue(true);
 		} catch (ODatabaseException e) {
