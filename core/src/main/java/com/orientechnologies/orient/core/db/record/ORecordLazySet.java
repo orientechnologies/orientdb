@@ -207,12 +207,16 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 			return true;
 		} else if (OGlobalConfiguration.LAZYSET_WORK_ON_STREAM.getValueAsBoolean() && getStreamedContent() != null) {
 			// FAST INSERT
-			final StringBuilder buffer = getStreamedContent();
-			if (buffer.length() > 0)
-				buffer.append(',');
-			e.getIdentity().toString(buffer);
-			setDirty();
-			return true;
+            final String ridString = e.getIdentity().toString();
+            final StringBuilder buffer = getStreamedContent();
+            if (buffer.indexOf(ridString) < 0) {
+                if (buffer.length() > 0)
+                    buffer.append(',');
+                e.getIdentity().toString(buffer);
+                setDirty();
+                return true;
+            }
+            return false;
 		} else {
 			final int pos = indexOf(e);
 

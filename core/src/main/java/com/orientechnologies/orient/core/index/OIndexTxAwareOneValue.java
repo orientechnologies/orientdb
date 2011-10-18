@@ -59,7 +59,6 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
 						if (entry.value == null) {
 							// REMOVE THE ENTIRE KEY, SO RESULT SET IS EMPTY
 							result = null;
-							break;
 						}
 					} else if (entry.operation == OPERATION.PUT) {
 						// ADD ALSO THIS RID
@@ -98,7 +97,6 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
                                 // REMOVE THE ENTIRE KEY, SO RESULT SET IS EMPTY
                                 keysToRemove.add(key);
                                 keyResult = null;
-                                break;
                             }
                         } else if (entry.operation == OPERATION.PUT) {
                             // ADD ALSO THIS RID
@@ -147,7 +145,6 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
                                 // REMOVE THE ENTIRE KEY, SO RESULT SET IS EMPTY
                                 keysToRemove.add(key);
                                 keyResult = null;
-                                break;
                             }
                         } else if (entry.operation == OPERATION.PUT) {
                             // ADD ALSO THIS RID

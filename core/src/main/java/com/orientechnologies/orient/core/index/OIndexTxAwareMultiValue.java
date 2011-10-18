@@ -15,11 +15,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -28,6 +24,8 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
+
+import javax.transaction.TransactionRequiredException;
 
 /**
  * Transactional wrapper for indexes. Stores changes locally to the transaction until tx.commit(). All the other operations are
@@ -46,13 +44,13 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
 
 		final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
 
-		final List<OIdentifiable> result;
+		final Set<OIdentifiable> result;
 		if (indexChanges == null || !indexChanges.cleared)
 			// BEGIN FROM THE UNDERLYING RESULT SET
-			result = new ArrayList<OIdentifiable>(super.get(iKey));
+			result = new TreeSet<OIdentifiable>(super.get(iKey));
 		else
 			// BEGIN FROM EMPTY RESULT SET
-			result = new ArrayList<OIdentifiable>();
+			result = new TreeSet<OIdentifiable>();
 
 		// FILTER RESULT SET WITH TRANSACTIONAL CHANGES
 		if (indexChanges != null && indexChanges.containsChangesPerKey(iKey)) {
@@ -60,11 +58,10 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
 			if (value != null) {
 				for (OTransactionIndexEntry entry : value.entries) {
 					if (entry.operation == OPERATION.REMOVE) {
-						if (entry.value == null) {
+						if (entry.value == null)
 							// REMOVE THE ENTIRE KEY, SO RESULT SET IS EMPTY
 							result.clear();
-							break;
-						} else
+						else
 							// REMOVE ONLY THIS RID
 							result.remove(entry.value);
 					} else if (entry.operation == OPERATION.PUT) {
@@ -82,9 +79,9 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
     public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
         final Collection<?> keys = new ArrayList<Object>(iKeys);
 
-        final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+        final Set<OIdentifiable> result = new TreeSet<OIdentifiable>();
 
-        final Set<Object> keysToRemove = new HashSet<Object>();
+        final Set<Object> keysToRemove = new TreeSet<Object>();
         final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
 
         if (indexChanges == null) {
@@ -93,16 +90,16 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
         }
 
         for (final Object key : keys) {
-            final List<OIdentifiable> keyResult;
+            final Set<OIdentifiable> keyResult;
             if (!indexChanges.cleared)
                 if (indexChanges.containsChangesPerKey(key))
                     // BEGIN FROM THE UNDERLYING RESULT SET
-                    keyResult = new ArrayList<OIdentifiable>(super.get(key));
+                    keyResult = new TreeSet<OIdentifiable>(super.get(key));
                 else
                     continue;
             else
                 // BEGIN FROM EMPTY RESULT SET
-                keyResult = new ArrayList<OIdentifiable>();
+                keyResult = new TreeSet<OIdentifiable>();
 
             keysToRemove.add(key);
 
@@ -114,7 +111,6 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
                             if (entry.value == null) {
                                 // REMOVE THE ENTIRE KEY, SO RESULT SET IS EMPTY
                                 keyResult.clear();
-                                break;
                             } else
                                 // REMOVE ONLY THIS RID
                                 keyResult.remove(entry.value);
@@ -150,16 +146,16 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
         }
 
         for (final Object key : keys) {
-            final List<OIdentifiable> keyResult;
+            final Set<OIdentifiable> keyResult;
             if (!indexChanges.cleared)
                 if (indexChanges.containsChangesPerKey(key))
                     // BEGIN FROM THE UNDERLYING RESULT SET
-                    keyResult = new ArrayList<OIdentifiable>(super.get(key));
+                    keyResult = new TreeSet<OIdentifiable>(super.get(key));
                 else
                     continue;
             else
                 // BEGIN FROM EMPTY RESULT SET
-                keyResult = new ArrayList<OIdentifiable>();
+                keyResult = new TreeSet<OIdentifiable>();
 
             keysToRemove.add(key);
 

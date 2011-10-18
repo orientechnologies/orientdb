@@ -193,7 +193,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 						if (e.value instanceof ORecord<?> && e.value.getIdentity().isNew())
 							((ORecord<?>) e.value).save();
 
-						changeDoc.field("v", e.value.getIdentity());
+						changeDoc.field("v", e.value != null ? e.value.getIdentity() : null);
 
 						operations.add(changeDoc);
 					}
