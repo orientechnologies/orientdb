@@ -48,20 +48,20 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  * 
  */
 public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty {
-	private OClassImpl			owner;
+	private OClassImpl				owner;
 
-	private String					name;
-	private OType					type;
+	private String						name;
+	private OType							type;
 
-	private OType					linkedType;
-	private OClass					linkedClass;
+	private OType							linkedType;
+	private OClass						linkedClass;
 	transient private String	linkedClassName;
 
-	private boolean				mandatory;
-	private boolean				notNull	= true;
-	private String					min;
-	private String					max;
-	private String					regexp;
+	private boolean						mandatory;
+	private boolean						notNull	= false;
+	private String						min;
+	private String						max;
+	private String						regexp;
 
 	/**
 	 * Constructor used in unmarshalling.
@@ -107,12 +107,12 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	 * 
 	 * 
 	 * @param iType
-	 *           One of types supported.
-	 *           <ul>
-	 *           <li>UNIQUE: Doesn't allow duplicates</li>
-	 *           <li>NOTUNIQUE: Allow duplicates</li>
-	 *           <li>FULLTEXT: Indexes single word for full text search</li>
-	 *           </ul>
+	 *          One of types supported.
+	 *          <ul>
+	 *          <li>UNIQUE: Doesn't allow duplicates</li>
+	 *          <li>NOTUNIQUE: Allow duplicates</li>
+	 *          <li>FULLTEXT: Indexes single word for full text search</li>
+	 *          </ul>
 	 * @return
 	 * @deprecated Use {@link OClass#createIndex(String, OClass.INDEX_TYPE, String...)} instead.
 	 */
@@ -140,8 +140,8 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 				if (definition instanceof OPropertyIndexDefinition) {
 					relatedIndexes.add(index);
 				} else {
-					throw new IllegalArgumentException("This operation applicable only for property indexes. " + index.getName()
-							+ " is " + index.getDefinition());
+					throw new IllegalArgumentException("This operation applicable only for property indexes. " + index.getName() + " is "
+							+ index.getDefinition());
 				}
 			}
 		}
@@ -582,8 +582,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 			}
 		} else if (type == OType.DATETIME) {
 			try {
-				owner.owner.getDocument().getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance()
-						.parse(iDateAsString);
+				owner.owner.getDocument().getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance().parse(iDateAsString);
 			} catch (ParseException e) {
 				throw new OSchemaException("Invalid datetime format was set", e);
 			}

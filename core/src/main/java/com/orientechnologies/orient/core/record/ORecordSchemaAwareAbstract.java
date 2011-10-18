@@ -181,7 +181,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 		else
 			fieldValue = iRecord.field(p.getName());
 
-		if (!p.isNotNull() && fieldValue == null)
+		if (p.isNotNull() && fieldValue == null)
 			// NULLITY
 			throw new OValidationException("The field '" + p.getName() + "' is null");
 

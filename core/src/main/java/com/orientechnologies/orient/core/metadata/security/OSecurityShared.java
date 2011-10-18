@@ -78,7 +78,7 @@ public class OSecurityShared extends OSharedResourceAbstract implements OSecurit
 			final List<ODocument> result = getDatabase().<OCommandRequest> command(
 					new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "'").setFetchPlan("*:-1")).execute();
 
-			if (result != null && result.size() > 0)
+			if (result != null && !result.isEmpty())
 				return new OUser(result.get(0));
 
 			return null;
@@ -113,7 +113,7 @@ public class OSecurityShared extends OSharedResourceAbstract implements OSecurit
 			final List<ODocument> result = getDatabase().<OCommandRequest> command(
 					new OSQLSynchQuery<ODocument>("select from ORole where name = '" + iRoleName + "'").setFetchPlan("*:-1")).execute();
 
-			if (result != null && result.size() > 0)
+			if (result != null && !result.isEmpty())
 				return new ORole(result.get(0));
 
 			return null;
@@ -165,17 +165,18 @@ public class OSecurityShared extends OSharedResourceAbstract implements OSecurit
 		acquireExclusiveLock();
 		try {
 
-			if (getDatabase().getMetadata().getSchema().getClasses().size() > 0)
+			if (!getDatabase().getMetadata().getSchema().getClasses().isEmpty())
 				throw new OSecurityException("Default users and roles already installed");
 
 			// CREATE ROLE AND USER SCHEMA CLASSES
 			final OClass roleClass = getDatabase().getMetadata().getSchema().createClass("ORole");
+			roleClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
 			roleClass.createProperty("mode", OType.BYTE);
 			roleClass.createProperty("rules", OType.EMBEDDEDMAP, OType.BYTE);
 
 			final OClass userClass = getDatabase().getMetadata().getSchema().createClass("OUser");
-			userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(false);
-			userClass.createProperty("password", OType.STRING).setMandatory(true).setNotNull(false);
+			userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
+			userClass.createProperty("password", OType.STRING).setMandatory(true).setNotNull(true);
 			userClass.createProperty("roles", OType.LINKSET, roleClass);
 
 			// CREATE ROLES AND USERS
