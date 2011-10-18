@@ -23,6 +23,7 @@ import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -102,6 +103,8 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 				((OCloseable) resource).close();
 		}
 		sharedResources.clear();
+
+		Orient.instance().unregisterStorage(this);
 	}
 
 	/**

@@ -115,12 +115,12 @@ public class OStorageLocal extends OStorageEmbedded {
 		lock.acquireExclusiveLock();
 		try {
 
+			addUser();
+
 			if (status != STATUS.CLOSED)
 				// ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
 				// REUSED
 				return;
-
-			addUser();
 
 			if (!exists())
 				throw new OStorageException("Can't open the storage '" + name + "' because it not exists in path: " + url);
