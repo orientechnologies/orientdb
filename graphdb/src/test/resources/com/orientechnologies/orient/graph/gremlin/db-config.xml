@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<orient-server>
+	<handlers>
+		<handler class="com.orientechnologies.orient.graph.handler.OGraphServerHandler">
+			<parameters />
+		</handler>
+	</handlers>
+	<network>
+		<protocols>
+			<protocol name="binary" implementation="com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary" />
+			<protocol name="http" implementation="com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb" />
+		</protocols>
+		<listeners>
+			<listener ip-address="127.0.0.1" port-range="2424-2430" protocol="binary" />
+			<listener ip-address="127.0.0.1" port-range="2480-2490" protocol="http" />
+		</listeners>
+	</network>
+	<storages>
+		<storage name="temp" path="memory:temp" loaded-at-startup="false" />
+	</storages>
+	<users>
+		<user name="root" password="root" resources="*" />
+		<user name="guest" password="guest" resources="connect,server.listDatabases" />
+	</users>
+	<properties>
+		<entry name="cache.static" value="false" />
+		<entry name="log.level" value="info" />
+	</properties>
+</orient-server>

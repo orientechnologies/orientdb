@@ -1021,7 +1021,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			channel.writeShort(OChannelBinaryProtocol.RECORD_RID);
 			channel.writeRID((ORID) o);
 		} else {
-			writeRecord((ORecordInternal<?>) o);
+			writeRecord((ORecordInternal<?>) o.getRecord());
 		}
 	}
 

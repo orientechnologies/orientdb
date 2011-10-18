@@ -1,30 +1,46 @@
 package com.orientechnologies.orient.graph.gremlin;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.tinkerpop.blueprints.pgm.impls.orientdb.OrientElement;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.OServerMain;
 
 public class RemoteGremlinTest {
-	public RemoteGremlinTest() {
+	private final OServer	server;
+
+	public RemoteGremlinTest() throws Exception {
 		OGremlinHelper.global().create();
+		server = OServerMain.create();
+	}
+
+	@BeforeClass
+	public void setUp() throws Exception {
+		server.startup(new File(getClass().getResource("db-config.xml").getFile()));
+	}
+
+	@AfterClass
+	public void tearDown() throws Exception {
+		if (server != null)
+			server.shutdown();
 	}
 
 	@Test
 	public void function() throws IOException {
-		OGraphDatabase db = new OGraphDatabase("remote:localhost/gremlin");
-		ODatabaseHelper.deleteDatabase(db, "graphdb");
-		ODatabaseHelper.createDatabase(db, db.getURL(), "graphdb");
+		OGraphDatabase db = new OGraphDatabase("remote:localhost/tinkerpop");
 
 		db.open("admin", "admin");
 
@@ -50,16 +66,14 @@ public class RemoteGremlinTest {
 
 	@Test
 	public void command() throws IOException {
-		OGraphDatabase db = new OGraphDatabase("remote:localhost/gremlin");
-		ODatabaseHelper.deleteDatabase(db, "graphdb");
-		ODatabaseHelper.createDatabase(db, db.getURL(), "graphdb");
+		OGraphDatabase db = new OGraphDatabase("remote:localhost/tinkerpop");
 
 		db.open("admin", "admin");
 
-		List<OrientElement> result = db.command(new OCommandGremlin("g.V[0..10]")).execute();
+		List<OIdentifiable> result = db.command(new OCommandGremlin("g.V[0..10]")).execute();
 		if (result != null) {
-			for (OrientElement doc : result) {
-				System.out.println(doc.getRawElement().toJSON());
+			for (OIdentifiable doc : result) {
+				System.out.println(doc.getRecord().toJSON());
 			}
 		}
 

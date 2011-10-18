@@ -729,7 +729,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		return good;
 	}
 
-	protected void checkForGraphSchema() {
+	public void checkForGraphSchema() {
 		vertexBaseClass = getMetadata().getSchema().getClass(VERTEX_CLASS_NAME);
 		edgeBaseClass = getMetadata().getSchema().getClass(EDGE_CLASS_NAME);
 

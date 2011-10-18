@@ -8,10 +8,10 @@ import java.util.Map;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.tinkerpop.blueprints.pgm.impls.orientdb.OrientElement;
 
 public class LocalGremlinTest {
 	public LocalGremlinTest() {
@@ -20,11 +20,8 @@ public class LocalGremlinTest {
 
 	@Test
 	public void function() {
-		OGraphDatabase db = new OGraphDatabase("local:target/databases/gremlin");
-		if (db.exists())
-			db.open("admin", "admin");
-		else
-			db.create();
+		OGraphDatabase db = new OGraphDatabase("local:target/databases/tinkerpop");
+		db.open("admin", "admin");
 
 		ODocument vertex1 = (ODocument) db.createVertex().field("label", "car").save();
 		ODocument vertex2 = (ODocument) db.createVertex().field("label", "pilot").save();
@@ -48,16 +45,13 @@ public class LocalGremlinTest {
 
 	@Test
 	public void command() {
-		OGraphDatabase db = new OGraphDatabase("local:target/databases/gremlin");
-		if (db.exists())
-			db.open("admin", "admin");
-		else
-			db.create();
+		OGraphDatabase db = new OGraphDatabase("local:target/databases/tinkerpop");
+		db.open("admin", "admin");
 
-		List<OrientElement> result = db.command(new OCommandGremlin("g.V[0..10]")).execute();
+		List<OIdentifiable> result = db.command(new OCommandGremlin("g.V[0..10]")).execute();
 		if (result != null) {
-			for (OrientElement doc : result) {
-				System.out.println(doc.getRawElement().toJSON());
+			for (OIdentifiable doc : result) {
+				System.out.println(doc.getRecord().toJSON());
 			}
 		}
 
