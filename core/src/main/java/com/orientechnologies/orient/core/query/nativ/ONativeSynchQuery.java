@@ -46,6 +46,6 @@ public abstract class ONativeSynchQuery<CTX extends OQueryContextNative> extends
 	@Override
 	public ODocument runFirst(final Object... iArgs) {
 		super.run();
-		return result != null && result.size() > 0 ? result.get(0) : null;
+		return result != null && !result.isEmpty() ? result.get(0) : null;
 	}
 }

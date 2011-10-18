@@ -371,7 +371,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
 								final String value = fieldValue.substring(1, fieldValue.length() - 1);
 
-								if (value.length() > 0) {
+								if (!value.isEmpty()) {
 									if (value.charAt(0) == OStringSerializerHelper.LINK) {
 										type = OType.LINKLIST;
 										linkedType = OType.LINK;

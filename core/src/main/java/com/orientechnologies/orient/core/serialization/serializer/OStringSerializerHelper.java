@@ -461,7 +461,7 @@ public abstract class OStringSerializerHelper {
 
 		List<String> entry;
 		for (String item : entries) {
-			if (item != null && item.length() > 0) {
+			if (item != null && !item.isEmpty()) {
 				entry = OStringSerializerHelper.split(item, OStringSerializerHelper.ENTRY_SEPARATOR);
 
 				map.put((String) fieldTypeFromStream(null, OType.STRING, entry.get(0)), entry.get(1));

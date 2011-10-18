@@ -161,7 +161,7 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 		if (iParams == null)
 			return this;
 
-		final int start = iParams.size() > 0 ? Integer.parseInt(iParams.get(0)) : startDeepLevel;
+		final int start = !iParams.isEmpty() ? Integer.parseInt(iParams.get(0)) : startDeepLevel;
 		final int end = iParams.size() > 1 ? Integer.parseInt(iParams.get(1)) : endDeepLevel;
 
 		String[] fields = new String[] { "any()" };

@@ -515,7 +515,7 @@ public class OStorageMemory extends OStorageEmbedded {
 		lock.acquireSharedLock();
 		try {
 
-			return clusters.size() > 0;
+			return !clusters.isEmpty();
 
 		} finally {
 			lock.releaseSharedLock();

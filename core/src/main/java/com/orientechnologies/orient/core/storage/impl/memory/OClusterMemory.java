@@ -174,7 +174,7 @@ public class OClusterMemory extends OSharedResourceAbstract implements OCluster 
 		acquireExclusiveLock();
 		try {
 
-			if (removed.size() > 0) {
+			if (!removed.isEmpty()) {
 				final int recycledPosition = removed.remove(removed.size() - 1);
 				entries.set(recycledPosition, new OPhysicalPosition(iDataSegmentId, iRecordPosition, iRecordType));
 				return recycledPosition;

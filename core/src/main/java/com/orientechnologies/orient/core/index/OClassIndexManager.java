@@ -16,231 +16,234 @@
 
 package com.orientechnologies.orient.core.index;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import java.util.*;
 
 /**
  * Handles indexing when records change.
- *
+ * 
  * @author Andrey Lomakin, Artem Orobets
  */
 public class OClassIndexManager extends ODocumentHookAbstract {
-    @Override
-    public boolean onRecordBeforeCreate(ODocument iRecord) {
-        iRecord = checkForLoading(iRecord);
+	@Override
+	public boolean onRecordBeforeCreate(ODocument iRecord) {
+		iRecord = checkForLoading(iRecord);
 
-        checkIndexedProperties(iRecord);
-        return false;
-    }
+		checkIndexedProperties(iRecord);
+		return false;
+	}
 
-    @Override
-    public boolean onRecordAfterCreate(ODocument iRecord) {
-        iRecord = checkForLoading(iRecord);
+	@Override
+	public boolean onRecordAfterCreate(ODocument iRecord) {
+		iRecord = checkForLoading(iRecord);
 
-        final OClass cls = iRecord.getSchemaClass();
-        if (cls == null)
-            return false;
+		final OClass cls = iRecord.getSchemaClass();
+		if (cls == null)
+			return false;
 
-        final Collection<OIndex<?>> indexes = cls.getIndexes();
-        for (final OIndex index : indexes) {
-            final Object key = index.getDefinition().getDocumentValueToIndex(iRecord);
-            // SAVE A COPY TO AVOID PROBLEM ON RECYCLING OF THE RECORD
-            if (key instanceof Collection) {
-                for (final Object keyItem : (Collection) key)
-                    if (keyItem != null)
-                        index.put(keyItem, iRecord.placeholder());
-            } else if (key != null)
-                index.put(key, iRecord.placeholder());
-        }
-        return false;
-    }
+		final Collection<OIndex<?>> indexes = cls.getIndexes();
+		for (final OIndex index : indexes) {
+			final Object key = index.getDefinition().getDocumentValueToIndex(iRecord);
+			// SAVE A COPY TO AVOID PROBLEM ON RECYCLING OF THE RECORD
+			if (key instanceof Collection) {
+				for (final Object keyItem : (Collection) key)
+					if (keyItem != null)
+						index.put(keyItem, iRecord.placeholder());
+			} else if (key != null)
+				index.put(key, iRecord.placeholder());
+		}
+		return false;
+	}
 
+	@Override
+	public boolean onRecordBeforeUpdate(ODocument iRecord) {
+		iRecord = checkForLoading(iRecord);
 
-    @Override
-    public boolean onRecordBeforeUpdate(ODocument iRecord) {
-        iRecord = checkForLoading(iRecord);
+		checkIndexedProperties(iRecord);
+		return false;
+	}
 
-        checkIndexedProperties(iRecord);
-        return false;
-    }
+	@Override
+	public boolean onRecordAfterUpdate(ODocument iRecord) {
+		iRecord = checkForLoading(iRecord);
 
-    @Override
-    public boolean onRecordAfterUpdate(ODocument iRecord) {
-        iRecord = checkForLoading(iRecord);
+		final OClass cls = iRecord.getSchemaClass();
+		if (cls == null)
+			return false;
 
-        final OClass cls = iRecord.getSchemaClass();
-        if (cls == null)
-            return false;
+		final Collection<OIndex<?>> indexes = cls.getIndexes();
 
-        final Collection<OIndex<?>> indexes = cls.getIndexes();
+		if (!indexes.isEmpty()) {
+			final Set<String> dirtyFields = new HashSet<String>(Arrays.asList(iRecord.getDirtyFields()));
 
-        if (!indexes.isEmpty()) {
-            final Set<String> dirtyFields = new HashSet<String>(Arrays.asList(iRecord.getDirtyFields()));
+			if (!dirtyFields.isEmpty()) {
+				for (final OIndex<?> index : indexes) {
+					final OIndexDefinition indexDefinition = index.getDefinition();
+					final List<String> indexFields = indexDefinition.getFields();
 
-            if (dirtyFields.size() > 0) {
-                for (final OIndex<?> index : indexes) {
-                    final OIndexDefinition indexDefinition = index.getDefinition();
-                    final List<String> indexFields = indexDefinition.getFields();
+					for (final String indexField : indexFields) {
+						if (dirtyFields.contains(indexField)) {
+							final List<Object> origValues = new ArrayList<Object>(indexFields.size());
 
-                    for (final String indexField : indexFields) {
-                        if (dirtyFields.contains(indexField)) {
-                            final List<Object> origValues = new ArrayList<Object>(indexFields.size());
+							for (final String field : indexFields) {
+								if (dirtyFields.contains(field))
+									origValues.add(iRecord.getOriginalValue(field));
+								else
+									origValues.add(iRecord.<Object> field(field));
+							}
 
-                            for (final String field : indexFields) {
-                                if (dirtyFields.contains(field))
-                                    origValues.add(iRecord.getOriginalValue(field));
-                                else
-                                    origValues.add(iRecord.<Object>field(field));
-                            }
+							final Object origValue = indexDefinition.createValue(origValues);
+							final Object newValue = indexDefinition.getDocumentValueToIndex(iRecord);
 
-                            final Object origValue = indexDefinition.createValue(origValues);
-                            final Object newValue = indexDefinition.getDocumentValueToIndex(iRecord);
+							if ((origValue instanceof Collection) && (newValue instanceof Collection)) {
+								final Set<Object> valuesToRemove = new HashSet<Object>((Collection) origValue);
+								final Set<Object> valuesToAdd = new HashSet<Object>((Collection) newValue);
 
-                            if((origValue instanceof Collection) && (newValue instanceof Collection)) {
-                               final Set<Object> valuesToRemove = new HashSet<Object>((Collection)origValue);
-                               final Set<Object> valuesToAdd = new HashSet<Object>((Collection)newValue);
+								valuesToRemove.removeAll((Collection) newValue);
+								valuesToAdd.removeAll((Collection) origValue);
 
-                                valuesToRemove.removeAll((Collection)newValue);
-                                valuesToAdd.removeAll((Collection)origValue);
+								for (final Object valueToRemove : valuesToRemove)
+									if (valueToRemove != null)
+										index.remove(valueToRemove, iRecord);
 
-                                for(final Object valueToRemove : valuesToRemove)
-                                    if(valueToRemove != null)
-                                        index.remove(valueToRemove, iRecord);
+								for (final Object valueToAdd : valuesToAdd)
+									if (valueToAdd != null)
+										index.put(valueToAdd, iRecord);
 
-                                for (final Object valueToAdd : valuesToAdd)
-                                    if(valueToAdd != null)
-                                        index.put(valueToAdd, iRecord);
+							} else {
+								if (origValue instanceof Collection) {
+									for (final Object origValueItem : (Collection) origValue)
+										if (origValueItem != null)
+											index.remove(origValueItem, iRecord);
+								} else if (origValue != null)
+									index.remove(origValue, iRecord);
 
-                            } else {
-                                if(origValue instanceof Collection) {
-                                    for(final Object origValueItem : (Collection)origValue)
-                                        if(origValueItem != null)
-                                            index.remove(origValueItem, iRecord);
-                                } else if(origValue != null)
-                                    index.remove(origValue, iRecord);
+								if (newValue instanceof Collection) {
+									for (final Object newValueItem : (Collection) newValue)
+										index.put(newValueItem, iRecord.placeholder());
+								} else if (newValue != null)
+									index.put(newValue, iRecord.placeholder());
+							}
+							break;
+						}
+					}
+				}
+			}
+		}
 
-                                if(newValue instanceof Collection) {
-                                    for(final Object newValueItem : (Collection)newValue)
-                                        index.put(newValueItem, iRecord.placeholder());
-                                } else if(newValue != null)
-                                    index.put(newValue, iRecord.placeholder());
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
-        }
+		if (iRecord.isTrackingChanges()) {
+			iRecord.setTrackingChanges(false);
+			iRecord.setTrackingChanges(true);
+		}
 
-        if (iRecord.isTrackingChanges()) {
-            iRecord.setTrackingChanges(false);
-            iRecord.setTrackingChanges(true);
-        }
+		return false;
+	}
 
-        return false;
-    }
+	@Override
+	public boolean onRecordAfterDelete(ODocument iRecord) {
+		iRecord = checkForLoading(iRecord);
 
-    @Override
-    public boolean onRecordAfterDelete(ODocument iRecord) {
-        iRecord = checkForLoading(iRecord);
+		final OClass cls = iRecord.getSchemaClass();
+		if (cls == null)
+			return false;
 
-        final OClass cls = iRecord.getSchemaClass();
-        if (cls == null)
-            return false;
+		final Collection<OIndex> indexes = new ArrayList<OIndex>(cls.getIndexes());
 
-        final Collection<OIndex> indexes = new ArrayList<OIndex>(cls.getIndexes());
+		if (!indexes.isEmpty()) {
+			final Set<String> dirtyFields = new HashSet<String>(Arrays.asList(iRecord.getDirtyFields()));
 
-        if (!indexes.isEmpty()) {
-            final Set<String> dirtyFields = new HashSet<String>(Arrays.asList(iRecord.getDirtyFields()));
+			if (!dirtyFields.isEmpty()) {
+				// REMOVE INDEX OF ENTRIES FOR THE OLD VALUES
+				final Iterator<OIndex> indexIterator = indexes.iterator();
 
-            if (dirtyFields.size() > 0) {
-                // REMOVE INDEX OF ENTRIES FOR THE OLD VALUES
-                final Iterator<OIndex> indexIterator = indexes.iterator();
+				while (indexIterator.hasNext()) {
+					final OIndex index = indexIterator.next();
+					final OIndexDefinition indexDefinition = index.getDefinition();
 
-                while (indexIterator.hasNext()) {
-                    final OIndex index = indexIterator.next();
-                    final OIndexDefinition indexDefinition = index.getDefinition();
+					final List<String> indexFields = indexDefinition.getFields();
+					for (final String indexField : indexFields) {
+						// REMOVE IT
+						if (dirtyFields.contains(indexField)) {
+							final List<Object> origValues = new ArrayList<Object>(indexFields.size());
 
-                    final List<String> indexFields = indexDefinition.getFields();
-                    for (final String indexField : indexFields) {
-                        // REMOVE IT
-                        if (dirtyFields.contains(indexField)) {
-                            final List<Object> origValues = new ArrayList<Object>(indexFields.size());
+							for (final String field : indexFields) {
+								if (dirtyFields.contains(field))
+									origValues.add(iRecord.getOriginalValue(field));
+								else
+									origValues.add(iRecord.<Object> field(field));
+							}
 
-                            for (final String field : indexFields) {
-                                if (dirtyFields.contains(field))
-                                    origValues.add(iRecord.getOriginalValue(field));
-                                else
-                                    origValues.add(iRecord.<Object>field(field));
-                            }
+							final Object origValue = indexDefinition.createValue(origValues);
+							if (origValue instanceof Collection) {
+								for (final Object valueItem : (Collection) origValue)
+									if (valueItem != null)
+										index.remove(valueItem, iRecord);
+							} else if (origValue != null)
+								index.remove(origValue, iRecord);
 
-                            final Object origValue = indexDefinition.createValue(origValues);
-                            if (origValue instanceof Collection) {
-                                for (final Object valueItem : (Collection) origValue)
-                                    if (valueItem != null)
-                                        index.remove(valueItem, iRecord);
-                            } else if(origValue != null)
-                                index.remove(origValue, iRecord);
+							indexIterator.remove();
+							break;
+						}
+					}
+				}
+			}
 
-                            indexIterator.remove();
-                            break;
-                        }
-                    }
-                }
-            }
+			// REMOVE INDEX OF ENTRIES FOR THE NON CHANGED ONLY VALUES
+			for (final OIndex<?> index : indexes) {
+				final Object key = index.getDefinition().getDocumentValueToIndex(iRecord);
+				if (key instanceof Collection) {
+					for (final Object keyItem : (Collection) key)
+						if (keyItem != null)
+							index.remove(keyItem, iRecord);
+				} else if (key != null)
+					index.remove(key, iRecord);
+			}
+		}
 
-            // REMOVE INDEX OF ENTRIES FOR THE NON CHANGED ONLY VALUES
-            for (final OIndex<?> index : indexes) {
-                final Object key = index.getDefinition().getDocumentValueToIndex(iRecord);
-                if (key instanceof Collection) {
-                    for (final Object keyItem : (Collection) key)
-                        if (keyItem != null)
-                            index.remove(keyItem, iRecord);
-                } else if(key != null)
-                    index.remove(key, iRecord);
-            }
-        }
+		if (iRecord.isTrackingChanges()) {
+			iRecord.setTrackingChanges(false);
+			iRecord.setTrackingChanges(true);
+		}
 
-        if (iRecord.isTrackingChanges()) {
-            iRecord.setTrackingChanges(false);
-            iRecord.setTrackingChanges(true);
-        }
+		return false;
+	}
 
-        return false;
-    }
+	private void checkIndexedProperties(final ODocument iRecord) {
+		final OClass cls = iRecord.getSchemaClass();
+		if (cls == null)
+			return;
 
+		final Collection<OIndex<?>> indexes = cls.getIndexes();
+		for (final OIndex index : indexes) {
+			final Object key = index.getDefinition().getDocumentValueToIndex(iRecord);
+			if (key instanceof Collection) {
+				for (final Object keyItem : (Collection) key)
+					index.getInternal().checkEntry(iRecord, keyItem);
+			} else
+				index.getInternal().checkEntry(iRecord, key);
+		}
 
-    private void checkIndexedProperties(final ODocument iRecord) {
-        final OClass cls = iRecord.getSchemaClass();
-        if (cls == null)
-            return;
+	}
 
-        final Collection<OIndex<?>> indexes = cls.getIndexes();
-        for (final OIndex index : indexes) {
-            final Object key = index.getDefinition().getDocumentValueToIndex(iRecord);
-            if(key instanceof Collection) {
-                for(final Object keyItem : (Collection)key)
-                    index.getInternal().checkEntry(iRecord, keyItem);
-            } else
-                index.getInternal().checkEntry(iRecord, key);
-        }
-
-    }
-
-    private ODocument checkForLoading(final ODocument iRecord) {
-         if (iRecord.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
-            try {
-                return  (ODocument)iRecord.load();
-            } catch (ORecordNotFoundException e) {
-                throw new OIndexException("Error during loading of record with id : " + iRecord.getIdentity());
-            }
-        }
-        return iRecord;
-    }
+	private ODocument checkForLoading(final ODocument iRecord) {
+		if (iRecord.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+			try {
+				return (ODocument) iRecord.load();
+			} catch (ORecordNotFoundException e) {
+				throw new OIndexException("Error during loading of record with id : " + iRecord.getIdentity());
+			}
+		}
+		return iRecord;
+	}
 }

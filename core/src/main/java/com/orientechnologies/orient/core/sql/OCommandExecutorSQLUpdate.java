@@ -145,7 +145,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 		// BIND VALUES TO UPDATE
 		Object v;
 
-		if (setEntries.size() > 0) {
+		if (!setEntries.isEmpty()) {
 			OSQLHelper.bindParameters(record, setEntries, parameters);
 			recordUpdated = true;
 		}

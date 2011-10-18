@@ -193,7 +193,7 @@ public class OStorageLocalTxExecuter {
 
 			iTx.clearRecordEntries();
 
-			if (tmpEntries.size() > 0) {
+			if (!tmpEntries.isEmpty()) {
 				for (OTransactionRecordEntry txEntry : tmpEntries)
 					// COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
 					commitEntry(iTx, txEntry, iTx.isUsingLog());

@@ -37,7 +37,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, Serial
 
 	public OTrackedSet(final ORecord<?> iRecord, final Collection<? extends T> iOrigin) {
 		this(iRecord);
-		if (iOrigin != null && iOrigin.size() > 0)
+		if (iOrigin != null && !iOrigin.isEmpty())
 			addAll(iOrigin);
 	}
 

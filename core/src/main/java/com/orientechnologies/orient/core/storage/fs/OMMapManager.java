@@ -236,7 +236,7 @@ public class OMMapManager {
 	}
 
 	private static OMMapBufferEntry searchBetweenLastBlocks(final OFileMMap iFile, final long iBeginOffset, final int iSize) {
-		if (bufferPoolLRU.size() > 0) {
+		if (!bufferPoolLRU.isEmpty()) {
 			// SEARCH IF IT'S BETWEEN THE LAST 5 BLOCK USED: THIS IS THE COMMON CASE ON MASSIVE INSERTION
 			final int min = Math.max(bufferPoolLRU.size() - 5, -1);
 			for (int i = bufferPoolLRU.size() - 1; i > min; --i) {

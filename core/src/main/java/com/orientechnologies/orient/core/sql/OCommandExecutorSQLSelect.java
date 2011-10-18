@@ -854,7 +854,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		if (indexResult != null) {
 			if (indexResult instanceof Collection<?>) {
 				Collection<OIdentifiable> indexResultSet = (Collection<OIdentifiable>) indexResult;
-				if (indexResultSet.size() > 0)
+				if (!indexResultSet.isEmpty())
 					for (OIdentifiable o : indexResultSet)
 						fillResultSet(resultSet, o);
 

@@ -101,7 +101,7 @@ public class ODataLocalHole extends OSingleFileSegment {
 		// IN MEMORY
 		final int recycledPosition;
 		final ODataHoleInfo hole;
-		if (freeHoles.size() > 0) {
+		if (!freeHoles.isEmpty()) {
 			// RECYCLE THE FIRST FREE HOLE
 			recycledPosition = freeHoles.remove(0);
 			hole = availableHolesList.get(recycledPosition);
@@ -177,7 +177,7 @@ public class ODataLocalHole extends OSingleFileSegment {
 
 		final long timer = OProfiler.getInstance().startChrono();
 
-		if (availableHolesBySize.size() > 0) {
+		if (!availableHolesBySize.isEmpty()) {
 			cursor.size = iRecordSize;
 
 			// SEARCH THE HOLE WITH THE SAME SIZE

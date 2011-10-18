@@ -37,7 +37,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
 
 	public OTrackedMap(final ORecord<?> iRecord, final Map<Object, T> iOrigin) {
 		this(iRecord);
-		if (iOrigin != null && iOrigin.size() > 0)
+		if (iOrigin != null && !iOrigin.isEmpty())
 			putAll(iOrigin);
 	}
 

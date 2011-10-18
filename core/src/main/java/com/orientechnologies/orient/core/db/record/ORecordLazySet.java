@@ -382,7 +382,7 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 	}
 
 	private boolean hasNewItems() {
-		return newItems != null && newItems.size() > 0;
+		return newItems != null && !newItems.isEmpty();
 	}
 
 	public void savedAllNewItems() {

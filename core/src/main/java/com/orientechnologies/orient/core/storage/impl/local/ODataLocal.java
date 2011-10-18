@@ -258,6 +258,9 @@ public class ODataLocal extends OMultiFileSegment {
 	}
 
 	public int deleteRecord(final long iPosition) throws IOException {
+		if (iPosition == -1)
+			return 0;
+
 		acquireExclusiveLock();
 		try {
 

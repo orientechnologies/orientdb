@@ -180,7 +180,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	 */
 	public ODocument(final Map<? extends Object, Object> iFieldMap) {
 		setup();
-		if (iFieldMap != null && iFieldMap.size() > 0)
+		if (iFieldMap != null && !iFieldMap.isEmpty())
 			for (Entry<? extends Object, Object> entry : iFieldMap.entrySet()) {
 				field(entry.getKey().toString(), entry.getValue());
 			}
@@ -933,8 +933,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	}
 
 	/**
-	 * Enabled or disabled the tracking of changes in the document. This is needed by some triggers like {@link com.orientechnologies.orient.core.index.OClassIndexManager}
-	 * to determine what fields are changed to update indexes.
+	 * Enabled or disabled the tracking of changes in the document. This is needed by some triggers like
+	 * {@link com.orientechnologies.orient.core.index.OClassIndexManager} to determine what fields are changed to update indexes.
 	 * 
 	 * @param iTrackingChanges
 	 *          True to enable it, otherwise false
@@ -977,7 +977,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	}
 
 	public boolean isEmbedded() {
-		return _owners != null && _owners.size() > 0;
+		return _owners != null && !_owners.isEmpty();
 	}
 
 	@Override

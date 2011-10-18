@@ -102,11 +102,11 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 			// EMBEDDED LITERALS
 			for (String item : items) {
-				if (item != null && item.length() > 0) {
+				if (item != null && !item.isEmpty()) {
 					final List<String> entry = OStringSerializerHelper.smartSplit(item, OStringSerializerHelper.ENTRY_SEPARATOR);
-					if (entry.size() > 0) {
+					if (!entry.isEmpty()) {
 						String mapValue = entry.get(1);
-						if (mapValue != null && mapValue.length() > 0)
+						if (mapValue != null && !mapValue.isEmpty())
 							mapValue = mapValue.substring(1);
 						map.put(fieldTypeFromStream((ODocument) iSourceRecord, OType.STRING, entry.get(0)), new ORecordId(mapValue));
 					}
@@ -174,15 +174,15 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			((ORecordElement) map).setInternalStatus(STATUS.UNMARSHALLING);
 
 		for (String item : items) {
-			if (item != null && item.length() > 0) {
+			if (item != null && !item.isEmpty()) {
 				final List<String> entry = OStringSerializerHelper.smartSplit(item, OStringSerializerHelper.ENTRY_SEPARATOR);
-				if (entry.size() > 0) {
+				if (!entry.isEmpty()) {
 					String mapValue = entry.get(1);
 
 					final OType linkedType;
 
 					if (iLinkedType == null)
-						if (mapValue.length() > 0) {
+						if (!mapValue.isEmpty()) {
 							linkedType = getType(mapValue);
 							if (linkedType == OType.LINK && !(map instanceof ORecordLazyMap)) {
 								// CONVERT IT TO A LAZY MAP
@@ -535,7 +535,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				// REMOVE EMBEDDED BEGIN/END CHARS
 				item = item.substring(1, item.length() - 1);
 
-				if (item.length() > 0) {
+				if (!item.isEmpty()) {
 					// EMBEDDED RECORD, EXTRACT THE CLASS NAME IF DIFFERENT BY THE PASSED (SUB-CLASS OR IT WAS PASSED NULL)
 					iLinkedClass = OStringSerializerHelper.getRecordClassName(iDatabase, item, iLinkedClass);
 

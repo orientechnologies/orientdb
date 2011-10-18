@@ -41,7 +41,7 @@ public class OFetchHelper {
 		if (iFetchPlan != null) {
 			// CHECK IF THERE IS SOME FETCH-DEPTH
 			final List<String> planParts = OStringSerializerHelper.split(iFetchPlan, ' ');
-			if (planParts.size() > 0) {
+			if (!planParts.isEmpty()) {
 				fetchPlan = new HashMap<String, Integer>();
 
 				List<String> parts;
@@ -77,9 +77,9 @@ public class OFetchHelper {
 
 				if (fieldValue == null
 						|| !(fieldValue instanceof ODocument)
-						&& (!(fieldValue instanceof Collection<?>) || (((Collection<?>) fieldValue).size() > 0 && !(((Collection<?>) fieldValue)
+						&& (!(fieldValue instanceof Collection<?>) || (!((Collection<?>) fieldValue).isEmpty() && !(((Collection<?>) fieldValue)
 								.iterator().next() instanceof ODocument)))
-						&& (!(fieldValue instanceof Map<?, ?>) || (((Map<?, ?>) fieldValue).size() > 0 && !(((Map<?, ?>) fieldValue).values()
+						&& (!(fieldValue instanceof Map<?, ?>) || (!((Map<?, ?>) fieldValue).isEmpty() && !(((Map<?, ?>) fieldValue).values()
 								.iterator().next() instanceof ODocument))))
 					// NULL NEITHER LINK, NOR COLLECTION OF LINKS OR MAP OF LINKS
 					continue;
@@ -142,10 +142,10 @@ public class OFetchHelper {
 
 	public static void checkFetchPlanValid(final String iFetchPlan) {
 
-		if (iFetchPlan != null && iFetchPlan.length() > 0) {
+		if (iFetchPlan != null && !iFetchPlan.isEmpty()) {
 			// CHECK IF THERE IS SOME FETCH-DEPTH
 			final List<String> planParts = OStringSerializerHelper.split(iFetchPlan, ' ');
-			if (planParts.size() > 0) {
+			if (!planParts.isEmpty()) {
 				for (String planPart : planParts) {
 					final List<String> parts = OStringSerializerHelper.split(planPart, ':');
 					if (parts.size() != 2) {
@@ -161,10 +161,10 @@ public class OFetchHelper {
 
 	public static boolean isFetchPlanValid(final String iFetchPlan) {
 
-		if (iFetchPlan != null && iFetchPlan.length() > 0) {
+		if (iFetchPlan != null && !iFetchPlan.isEmpty()) {
 			// CHECK IF THERE IS SOME FETCH-DEPTH
 			final List<String> planParts = OStringSerializerHelper.split(iFetchPlan, ' ');
-			if (planParts.size() > 0) {
+			if (!planParts.isEmpty()) {
 				for (String planPart : planParts) {
 					final List<String> parts = OStringSerializerHelper.split(planPart, ':');
 					if (parts.size() != 2) {

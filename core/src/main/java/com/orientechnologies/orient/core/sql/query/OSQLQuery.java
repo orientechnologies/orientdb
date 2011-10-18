@@ -73,7 +73,7 @@ public abstract class OSQLQuery<T extends Object> extends OQueryAbstract<T> impl
 	public T runFirst(final Object... iArgs) {
 		setLimit(1);
 		final List<T> result = execute(iArgs);
-		return result != null && result.size() > 0 ? result.get(0) : null;
+		return result != null && !result.isEmpty() ? result.get(0) : null;
 	}
 
 	public String getText() {

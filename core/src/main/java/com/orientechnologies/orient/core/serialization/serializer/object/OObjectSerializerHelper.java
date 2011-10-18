@@ -326,7 +326,7 @@ public class OObjectSerializerHelper {
 						target = new OLazyObjectSet<Object>(iRoot, set).setFetchPlan(iFetchPlan);
 					else {
 						target = new HashSet();
-						if (set != null && set.size() > 0)
+						if (set != null && !set.isEmpty())
 							for (Object o : set) {
 								if (o instanceof OIdentifiable)
 									target.add(iObj2RecHandler.getUserObjectByRecord((ORecordInternal<?>) ((OIdentifiable) o).getRecord(), iFetchPlan));
@@ -344,7 +344,7 @@ public class OObjectSerializerHelper {
 						target = new OLazyObjectList<Object>(iRoot, list).setFetchPlan(iFetchPlan);
 					else {
 						target = new ArrayList();
-						if (list != null && list.size() > 0)
+						if (list != null && !list.isEmpty())
 							for (Object o : list) {
 								if (o instanceof OIdentifiable)
 									target.add(iObj2RecHandler.getUserObjectByRecord((ORecordInternal<?>) ((OIdentifiable) o).getRecord(), iFetchPlan));
@@ -362,7 +362,7 @@ public class OObjectSerializerHelper {
 						target = new OLazyObjectMap<Object>(iRoot, map).setFetchPlan(iFetchPlan);
 					else {
 						target = new HashMap();
-						if (map != null && map.size() > 0)
+						if (map != null && !map.isEmpty())
 							for (Map.Entry<Object, Object> o : map.entrySet()) {
 								final Object k = o.getKey() instanceof OIdentifiable ? iObj2RecHandler.getUserObjectByRecord(
 										(ORecordInternal<?>) ((OIdentifiable) o.getKey()).getRecord(), iFetchPlan) : o.getKey();

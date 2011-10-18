@@ -110,7 +110,7 @@ public class ODocumentHelper {
 				} else if (iValue instanceof String) {
 					final String stringValue = (String) iValue;
 
-					if (stringValue != null && stringValue.length() > 0) {
+					if (stringValue != null && !stringValue.isEmpty()) {
 						final String[] items = stringValue.split(",");
 						for (String s : items) {
 							((Collection<Object>) newValue).add(s);
@@ -140,7 +140,7 @@ public class ODocumentHelper {
 				} else if (iValue instanceof String) {
 					final String stringValue = (String) iValue;
 
-					if (stringValue != null && stringValue.length() > 0) {
+					if (stringValue != null && !stringValue.isEmpty()) {
 						final String[] items = stringValue.split(",");
 						for (String s : items) {
 							((Collection<Object>) newValue).add(s);
@@ -305,7 +305,7 @@ public class ODocumentHelper {
 								values[i - rangeFrom] = ((List<?>) value).get(i);
 						}
 						value = values;
-					} else if (indexCondition.size() > 0) {
+					} else if (!indexCondition.isEmpty()) {
 						// CONDITION
 						final String conditionFieldName = indexCondition.get(0);
 						Object conditionFieldValue = ORecordSerializerStringAbstract.getTypeValue(indexCondition.get(1));

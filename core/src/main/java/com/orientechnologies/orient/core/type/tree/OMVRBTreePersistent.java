@@ -327,7 +327,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		} finally {
 			optimization = 0;
 			if (isRuntimeCheckEnabled()) {
-				if (entryPoints.size() > 0)
+				if (!entryPoints.isEmpty())
 					for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints.values())
 						checkTreeStructure(entryPoint.getFirstInMemory());
 				else
@@ -420,7 +420,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 				save();
 			}
 
-			if (recordsToCommit.size() > 0) {
+			if (!recordsToCommit.isEmpty()) {
 				final List<OMVRBTreeEntryPersistent<K, V>> tmp = new ArrayList<OMVRBTreeEntryPersistent<K, V>>();
 
 				while (recordsToCommit.iterator().hasNext()) {

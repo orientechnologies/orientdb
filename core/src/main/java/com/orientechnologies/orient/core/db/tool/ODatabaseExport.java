@@ -22,9 +22,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.zip.GZIPOutputStream;
 
@@ -33,8 +31,6 @@ import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -57,7 +53,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 	private OJSONWriter			writer;
 	private long						recordExported;
 	public static final int	VERSION	= 2;
-
 
 	public ODatabaseExport(final ODatabaseRecord iDatabase, final String iFileName, final OCommandOutputListener iListener)
 			throws IOException {
@@ -87,40 +82,40 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 		iDatabase.getLevel2Cache().setEnable(false);
 	}
 
-    public ODatabaseExport exportDatabase() {
-        database.callInLock(new Callable<Object>() {
-            public Object call() {
-                try {
-                    listener.onMessage("\nStarted export of database '" + database.getName() + "' to " + fileName + "...");
+	public ODatabaseExport exportDatabase() {
+		database.callInLock(new Callable<Object>() {
+			public Object call() {
+				try {
+					listener.onMessage("\nStarted export of database '" + database.getName() + "' to " + fileName + "...");
 
-                    database.getLevel1Cache().setEnable(false);
-                    database.getLevel2Cache().setEnable(false);
+					database.getLevel1Cache().setEnable(false);
+					database.getLevel2Cache().setEnable(false);
 
-                    long time = System.currentTimeMillis();
+					long time = System.currentTimeMillis();
 
-                    if (includeInfo)
-                        exportInfo();
-                    exportClusters();
-                    if (includeSchema)
-                        exportSchema();
-                    exportRecords();
+					if (includeInfo)
+						exportInfo();
+					exportClusters();
+					if (includeSchema)
+						exportSchema();
+					exportRecords();
 
-                    listener.onMessage("\n\nDatabase export completed in " + (System.currentTimeMillis() - time) + "ms");
+					listener.onMessage("\n\nDatabase export completed in " + (System.currentTimeMillis() - time) + "ms");
 
-                    writer.flush();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    throw new ODatabaseExportException("Error on exporting database '" + database.getName() + "' to: " + fileName, e);
-                } finally {
-                    close();
-                }
-                return null;
-            }
-        }, false);
-        return this;
-    }
+					writer.flush();
+				} catch (Exception e) {
+					e.printStackTrace();
+					throw new ODatabaseExportException("Error on exporting database '" + database.getName() + "' to: " + fileName, e);
+				} finally {
+					close();
+				}
+				return null;
+			}
+		}, false);
+		return this;
+	}
 
-    public long exportRecords() throws IOException {
+	public long exportRecords() throws IOException {
 		long totalRecords = 0;
 		int level = 1;
 		listener.onMessage("\nExporting records...");
@@ -292,7 +287,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 		OSchemaProxy s = (OSchemaProxy) database.getMetadata().getSchema();
 		writer.writeAttribute(2, true, "version", s.getVersion());
 
-		if (s.getClasses().size() > 0) {
+		if (!s.getClasses().isEmpty()) {
 			writer.beginCollection(2, true, "classes");
 
 			final List<OClass> classes = new ArrayList<OClass>(s.getClasses());
@@ -308,7 +303,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 				if (cls.getShortName() != null)
 					writer.writeAttribute(0, false, "short-name", cls.getShortName());
 
-				if (cls.properties().size() > 0) {
+				if (!cls.properties().isEmpty()) {
 					writer.beginCollection(4, true, "properties");
 
 					final List<OProperty> properties = new ArrayList<OProperty>(cls.declaredProperties());
