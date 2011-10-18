@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.graph.gremlin;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +39,9 @@ public class LocalGremlinTest {
 		result = db.query(new OSQLSynchQuery<Object>("select gremlin('current.out(\"drives\").count()') as value from V"));
 		System.out.println("Query result: " + result);
 
+		result = db.query(new OSQLSynchQuery<Object>("select gremlin('current.out') as value from V order by label"));
+		System.out.println("Query result: " + result);
+
 		db.close();
 	}
 
@@ -56,11 +58,13 @@ public class LocalGremlinTest {
 		}
 
 		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("par1", new Date());
+		params.put("par1", 100);
 
-		result = db.command(new OCommandSQL("select gremlin('current.outE('own').inV{ it.id == par1 }') from V")).execute(params);
+		result = db.command(new OCommandSQL("select gremlin('current.out{ it.performances > par1 }') from V")).execute(
+				params);
 		System.out.println("Command result: " + result);
 
 		db.close();
 	}
+
 }

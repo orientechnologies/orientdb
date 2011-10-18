@@ -313,7 +313,8 @@ public class OGremlinHelper {
 			// Clone String
 		} else if (objectToClone instanceof String) {
 			return objectToClone;
-
+		} else if (objectToClone instanceof Number) {
+			return objectToClone;
 			// Clone Date
 		} else if (objectToClone instanceof Date) {
 			Date clonedDate = (Date) ((Date) objectToClone).clone();

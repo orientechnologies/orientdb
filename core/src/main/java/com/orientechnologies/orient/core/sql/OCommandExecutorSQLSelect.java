@@ -301,20 +301,21 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	protected boolean addResult(final OIdentifiable iRecord) {
 		resultCount++;
 
-		final OIdentifiable recordCopy = iRecord instanceof ORecord<?> ? ((ORecord<?>) iRecord).copy() : iRecord.getIdentity().copy();
+		OIdentifiable recordCopy = iRecord instanceof ORecord<?> ? ((ORecord<?>) iRecord).copy() : iRecord.getIdentity().copy();
+		recordCopy = applyProjections(recordCopy);
 
-		if (orderedFields != null || flattenTarget != null) {
-			// ORDER BY CLAUSE: COLLECT ALL THE RECORDS AND ORDER THEM AT THE END
-			if (tempResult == null)
-				tempResult = new ArrayList<OIdentifiable>();
+		if (recordCopy != null)
+			if (orderedFields != null || flattenTarget != null) {
+				// ORDER BY CLAUSE: COLLECT ALL THE RECORDS AND ORDER THEM AT THE END
+				if (tempResult == null)
+					tempResult = new ArrayList<OIdentifiable>();
 
-			tempResult.add(recordCopy);
-		} else {
-			// CALL THE LISTENER NOW
-			final OIdentifiable res = applyProjections(recordCopy);
-			if (res != null && request.getResultListener() != null)
-				request.getResultListener().result(res);
-		}
+				tempResult.add(recordCopy);
+			} else {
+				// CALL THE LISTENER NOW
+				if (recordCopy != null && request.getResultListener() != null)
+					request.getResultListener().result(recordCopy);
+			}
 
 		if (orderedFields == null && limit > -1 && resultCount >= limit || request.getLimit() > -1 && resultCount >= request.getLimit())
 			// BREAK THE EXECUTION
@@ -1071,14 +1072,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				// RESULT EXCLUDED FOR EMPTY RECORD
 				return null;
 
-			if (!anyFunctionAggregates)
-				// INVOKE THE LISTENER
-				return result;
-		} else
-			// INVOKE THE LISTENER
-			return iRecord;
+			return result;
+		}
 
-		return null;
+		// INVOKE THE LISTENER
+		return iRecord;
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -1311,12 +1309,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			}
 
 			request.getResultListener().result(result);
-
-		} else if (tempResult != null) {
-			// APPLY PROJECTIONS
-			final int tot = tempResult.size();
-			for (int i = 0; i < tot; ++i)
-				tempResult.set(i, applyProjections(tempResult.get(i)));
 		}
 	}
 

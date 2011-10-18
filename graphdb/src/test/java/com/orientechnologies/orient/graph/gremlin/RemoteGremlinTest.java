@@ -2,7 +2,6 @@ package com.orientechnologies.orient.graph.gremlin;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,9 +77,9 @@ public class RemoteGremlinTest {
 		}
 
 		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("par1", new Date());
+		params.put("par1", 100);
 
-		result = db.command(new OCommandSQL("select gremlin('current.outE('own').inV{ it.id == par1 }') from V")).execute(params);
+		result = db.command(new OCommandSQL("select gremlin('current.out{ it.performances > par1 }') from V")).execute(params);
 		System.out.println("Command result: " + result);
 
 		db.close();

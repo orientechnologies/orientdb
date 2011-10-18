@@ -90,11 +90,16 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 
 	@Override
 	public boolean aggregateResults(final Object[] iConfiguredParameters) {
-		return true;
+		return false;
 	}
 
 	public String getSyntax() {
 		return "Syntax error: gremlin(<gremlin-expression>)";
+	}
+
+	@Override
+	public boolean filterResult() {
+		return true;
 	}
 
 	@Override
