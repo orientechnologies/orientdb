@@ -305,7 +305,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		recordCopy = applyProjections(recordCopy);
 
 		if (recordCopy != null)
-			if (orderedFields != null || flattenTarget != null) {
+			if (anyFunctionAggregates || orderedFields != null || flattenTarget != null) {
 				// ORDER BY CLAUSE: COLLECT ALL THE RECORDS AND ORDER THEM AT THE END
 				if (tempResult == null)
 					tempResult = new ArrayList<OIdentifiable>();
@@ -313,7 +313,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				tempResult.add(recordCopy);
 			} else {
 				// CALL THE LISTENER NOW
-				if (recordCopy != null && request.getResultListener() != null)
+				if (request.getResultListener() != null)
 					request.getResultListener().result(recordCopy);
 			}
 
@@ -1070,6 +1070,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 			if (canExcludeResult && result.isEmpty())
 				// RESULT EXCLUDED FOR EMPTY RECORD
+				return null;
+
+			if (anyFunctionAggregates)
 				return null;
 
 			return result;
