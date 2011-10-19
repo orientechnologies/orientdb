@@ -120,7 +120,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 		if (endValues == -1)
 			throw new OCommandSQLParsingException("Missed closed brace", text, beginValues);
 
-		final List<String> values = OStringSerializerHelper.smartSplit(text.substring(beginValues + 1, endValues), ',');
+		final List<String> values = OStringSerializerHelper.smartSplit(text, new char[] { ',' }, beginValues + 1, endValues, true);
 
 		if (values.size() == 0)
 			throw new OCommandSQLParsingException("Set of values is empty. Example: ('Bill', 'Stuart', 300)", text, beginValues);
