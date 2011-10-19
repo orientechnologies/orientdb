@@ -101,7 +101,20 @@
 						</manifest>
 					</archive>
 				</configuration>
-			</plugin>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <ORIENTDB_HOME>${project.build.directory}</ORIENTDB_HOME>
+                    </systemPropertyVariables>
+                    <suiteXmlFiles>
+                        <suiteXmlFile>src/test/resources/com/orientechnologies/orient/graph/gremlin/graphdb-test.xml
+                        </suiteXmlFile>
+                    </suiteXmlFiles>
+                </configuration>
+            </plugin>
 		</plugins>
 	</build>
 </project>
