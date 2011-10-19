@@ -37,7 +37,6 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
@@ -67,8 +66,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 	private Map<OProperty, String>			propertyIndexes	= new HashMap<OProperty, String>();
 	private boolean											schemaImported	= false;
 
-
-    public ODatabaseImport(final ODatabaseDocument database, final String iFileName, final OCommandOutputListener iListener)
+	public ODatabaseImport(final ODatabaseDocument database, final String iFileName, final OCommandOutputListener iListener)
 			throws IOException {
 		super(database, iFileName, iListener);
 
@@ -332,7 +330,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		}
 	}
 
-    private void importProperty(final OClass iClass) throws IOException, ParseException {
+	private void importProperty(final OClass iClass) throws IOException, ParseException {
 		jsonReader.readNext(OJSONReader.NEXT_OBJ_IN_ARRAY);
 
 		if (jsonReader.lastChar() == ']')
@@ -401,7 +399,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		if (linkedType != null)
 			prop.setLinkedType(linkedType);
 		if (indexName != null)
-			//@COMPATIBILITY 1.0rc6 rebuild property indexes using new model
+			// @COMPATIBILITY 1.0rc6 rebuild property indexes using new model
 			propertyIndexes.put(prop, indexName);
 	}
 

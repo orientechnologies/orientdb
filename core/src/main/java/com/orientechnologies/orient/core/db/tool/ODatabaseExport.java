@@ -84,6 +84,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
 	public ODatabaseExport exportDatabase() {
 		database.callInLock(new Callable<Object>() {
+
 			public Object call() {
 				try {
 					listener.onMessage("\nStarted export of database '" + database.getName() + "' to " + fileName + "...");
@@ -98,7 +99,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 					exportClusters();
 					if (includeSchema)
 						exportSchema();
-					exportRecords();
+					if (includeRecords)
+						exportRecords();
 
 					listener.onMessage("\n\nDatabase export completed in " + (System.currentTimeMillis() - time) + "ms");
 

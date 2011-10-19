@@ -38,6 +38,7 @@ public abstract class ODatabaseImpExpAbstract {
 	protected Set<String>							excludeClasses;
 	protected boolean									includeSchema		= true;
 	protected boolean									includeSecurity	= false;
+	protected boolean									includeRecords	= true;
 	protected OCommandOutputListener	listener;
 
 	public ODatabaseImpExpAbstract(final ODatabaseRecord iDatabase, final String iFileName, final OCommandOutputListener iListener) {
@@ -101,5 +102,13 @@ public abstract class ODatabaseImpExpAbstract {
 
 	public void setIncludeSchema(boolean includeSchema) {
 		this.includeSchema = includeSchema;
+	}
+
+	public boolean isIncludeRecords() {
+		return includeRecords;
+	}
+
+	public void setIncludeRecords(boolean includeRecords) {
+		this.includeRecords = includeRecords;
 	}
 }
