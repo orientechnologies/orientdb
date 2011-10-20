@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.Map;
+
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -62,6 +64,27 @@ public class SQLInsertTest {
 		Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 120.0f);
 		Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(13, 3));
 		Assert.assertEquals(doc.field("dummy"), "hooray");
+
+		database.close();
+	}
+
+	@Test
+	public void insertMap() {
+		database.open("admin", "admin");
+
+		ODocument doc = (ODocument) database.command(
+				new OCommandSQL("insert into cluster:default (equaledges, name, properties) values ('no', 'circle', {'round':false} )"))
+				.execute();
+
+		Assert.assertTrue(doc != null);
+
+		doc = (ODocument) new ODocument(database, doc.getIdentity()).load();
+
+		Assert.assertEquals(doc.field("equaledges"), "no");
+		Assert.assertEquals(doc.field("name"), "circle");
+		Assert.assertTrue(doc.field("properties") instanceof Map);
+		Assert.assertEquals(((Map) doc.field("properties")).keySet().iterator().next(), "round");
+		Assert.assertEquals(((Map) doc.field("properties")).values().iterator().next(), false);
 
 		database.close();
 	}

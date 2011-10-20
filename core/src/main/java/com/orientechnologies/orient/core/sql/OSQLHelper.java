@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.sql;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -106,6 +107,22 @@ public class OSQLHelper {
 			}
 			fieldValue = coll;
 
+		} else if (iValue.charAt(0) == OStringSerializerHelper.MAP_BEGIN
+				&& iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.MAP_END) {
+			// MAP
+			final List<String> items = OStringSerializerHelper.smartSplit(iValue.substring(1, iValue.length() - 1),
+					OStringSerializerHelper.RECORD_SEPARATOR);
+
+			final Map<Object, Object> map = new HashMap<Object, Object>();
+			for (String item : items) {
+				final List<String> parts = OStringSerializerHelper.smartSplit(item, OStringSerializerHelper.ENTRY_SEPARATOR);
+
+				if (parts == null || parts.size() != 2)
+					throw new OCommandSQLParsingException("Map found but entries are not defined as <key>:<value>");
+
+				map.put(parseValue(iDatabase, parts.get(0)), parseValue(iDatabase, parts.get(1)));
+			}
+			fieldValue = map;
 		} else if (iValue.charAt(0) == ORID.PREFIX)
 			// RID
 			fieldValue = new ORecordId(iValue.trim());
