@@ -25,11 +25,9 @@ import java.util.Set;
 
 import com.orientechnologies.common.collection.ONavigableMap;
 import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
@@ -41,7 +39,7 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
  * 
  */
 public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIdentifiable>> {
-	public OIndexMultiValues(String iType) {
+	public OIndexMultiValues(final String iType) {
 		super(iType);
 	}
 
@@ -89,6 +87,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 		}
 	}
 
+	@Override
 	public boolean remove(final Object iKey, final OIdentifiable iValue) {
 
 		acquireExclusiveLock();
@@ -116,7 +115,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 
 			int tot = 0;
 			Set<OIdentifiable> rids;
-			for (Entry<Object, Set<OIdentifiable>> entries : map.entrySet()) {
+			for (final Entry<Object, Set<OIdentifiable>> entries : map.entrySet()) {
 				rids = entries.getValue();
 				if (rids != null) {
 					if (rids.contains(iRecord)) {
@@ -139,7 +138,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 
 			Set<OIdentifiable> rids;
 			int tot = 0;
-			for (Entry<Object, Set<OIdentifiable>> entries : map.entrySet()) {
+			for (final Entry<Object, Set<OIdentifiable>> entries : map.entrySet()) {
 				rids = entries.getValue();
 				if (rids != null) {
 					if (rids.contains(iRecord)) {
@@ -155,7 +154,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 		}
 	}
 
-	public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive) {
+	public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive) {
 
 		acquireExclusiveLock();
 
@@ -165,7 +164,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 				return ORecordLazySet.EMPTY_SET;
 
 			final Set<OIdentifiable> result = new ORecordLazySet(getDatabase());
-			for (Set<OIdentifiable> v : subSet.values()) {
+			for (final Set<OIdentifiable> v : subSet.values()) {
 				result.addAll(v);
 			}
 
@@ -175,7 +174,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 		}
 	}
 
-	public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive) {
+	public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive) {
 
 		acquireExclusiveLock();
 
@@ -185,7 +184,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 				return ORecordLazySet.EMPTY_SET;
 
 			final Set<OIdentifiable> result = new ORecordLazySet(getDatabase());
-			for (Set<OIdentifiable> v : subSet.values()) {
+			for (final Set<OIdentifiable> v : subSet.values()) {
 				result.addAll(v);
 			}
 
@@ -195,7 +194,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 		}
 	}
 
-	public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive) {
+	public Collection<ODocument> getEntriesMajor(final Object fromKey, final boolean isInclusive) {
 
 		acquireExclusiveLock();
 
@@ -204,8 +203,8 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 
 			final ONavigableMap<Object, Set<OIdentifiable>> subSet = map.tailMap(fromKey, isInclusive);
 			if (subSet != null) {
-				for (Entry<Object, Set<OIdentifiable>> v : subSet.entrySet()) {
-					for (OIdentifiable id : v.getValue()) {
+				for (final Entry<Object, Set<OIdentifiable>> v : subSet.entrySet()) {
+					for (final OIdentifiable id : v.getValue()) {
 						final ODocument document = new ODocument();
 						document.field("key", v.getKey());
 						document.field("rid", id.getIdentity());
@@ -222,7 +221,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 		}
 	}
 
-	public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive) {
+	public Collection<ODocument> getEntriesMinor(final Object toKey, final boolean isInclusive) {
 
 		acquireExclusiveLock();
 
@@ -231,8 +230,8 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 
 			final ONavigableMap<Object, Set<OIdentifiable>> subSet = map.headMap(toKey, isInclusive);
 			if (subSet != null) {
-				for (Entry<Object, Set<OIdentifiable>> v : subSet.entrySet()) {
-					for (OIdentifiable id : v.getValue()) {
+				for (final Entry<Object, Set<OIdentifiable>> v : subSet.entrySet()) {
+					for (final OIdentifiable id : v.getValue()) {
 						final ODocument document = new ODocument();
 						document.field("key", v.getKey());
 						document.field("rid", id.getIdentity());
@@ -248,47 +247,48 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 		}
 	}
 
-    /**
-     * Returns a set of records with key between the range passed as parameter.
-     * <p/>
-     * In case of {@link com.orientechnologies.common.collection.OCompositeKey}s partial keys can be used
-     * as values boundaries.
-     *
-     * @param iRangeFrom     Starting range
-     * @param iFromInclusive Indicates whether start range boundary is included in result.
-     * @param iRangeTo       Ending range
-     * @param iToInclusive   Indicates whether end range boundary is included in result.
-     * @return Returns a set of records with key between the range passed as parameter.
-     * @see com.orientechnologies.common.collection.OCompositeKey#compareTo(com.orientechnologies.common.collection.OCompositeKey)
-     */
-    public Set<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive,
-                                               Object iRangeTo, boolean iToInclusive) {
-        if (iRangeFrom.getClass() != iRangeTo.getClass())
-            throw new IllegalArgumentException("Range from-to parameters are of different types");
+	/**
+	 * Returns a set of records with key between the range passed as parameter.
+	 * <p/>
+	 * In case of {@link com.orientechnologies.common.collection.OCompositeKey}s partial keys can be used as values boundaries.
+	 * 
+	 * @param iRangeFrom
+	 *          Starting range
+	 * @param iFromInclusive
+	 *          Indicates whether start range boundary is included in result.
+	 * @param iRangeTo
+	 *          Ending range
+	 * @param iToInclusive
+	 *          Indicates whether end range boundary is included in result.
+	 * @return Returns a set of records with key between the range passed as parameter.
+	 * @see com.orientechnologies.common.collection.OCompositeKey#compareTo(com.orientechnologies.common.collection.OCompositeKey)
+	 */
+	public Set<OIdentifiable> getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
+			final boolean iToInclusive) {
+		if (iRangeFrom.getClass() != iRangeTo.getClass())
+			throw new IllegalArgumentException("Range from-to parameters are of different types");
 
 		acquireExclusiveLock();
 
-        try {
-            final ONavigableMap<Object, Set<OIdentifiable>> subSet = map.subMap(iRangeFrom, iFromInclusive,
-                    iRangeTo, iToInclusive);
+		try {
+			final ONavigableMap<Object, Set<OIdentifiable>> subSet = map.subMap(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive);
 
-            if (subSet == null)
-                return ORecordLazySet.EMPTY_SET;
+			if (subSet == null)
+				return ORecordLazySet.EMPTY_SET;
 
-            final Set<OIdentifiable> result = new ORecordLazySet(getDatabase());
-            for (Set<OIdentifiable> v : subSet.values()) {
-                result.addAll(v);
-            }
+			final Set<OIdentifiable> result = new ORecordLazySet(getDatabase());
+			for (final Set<OIdentifiable> v : subSet.values()) {
+				result.addAll(v);
+			}
 
-            return result;
+			return result;
 
-        } finally {
-            releaseExclusiveLock();
-        }
-    }
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
 
-
-    public Set<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
+	public Set<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
 		if (iRangeFrom.getClass() != iRangeTo.getClass())
 			throw new IllegalArgumentException("Range from-to parameters are of different types");
 
@@ -299,8 +299,8 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 
 			final ONavigableMap<Object, Set<OIdentifiable>> subSet = map.subMap(iRangeFrom, iInclusive, iRangeTo, iInclusive);
 			if (subSet != null) {
-				for (Entry<Object, Set<OIdentifiable>> v : subSet.entrySet()) {
-					for (OIdentifiable id : v.getValue()) {
+				for (final Entry<Object, Set<OIdentifiable>> v : subSet.entrySet()) {
+					for (final OIdentifiable id : v.getValue()) {
 						final ODocument document = new ODocument();
 						document.field("key", v.getKey());
 						document.field("rid", id.getIdentity());
@@ -317,10 +317,10 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 		}
 	}
 
-	public OIndexMultiValues create(String iName, OIndexDefinition indexDefinition, ODatabaseRecord iDatabase, String iClusterIndexName,
-                                    int[] iClusterIdsToIndex, OProgressListener iProgressListener) {
-		return (OIndexMultiValues) super.create(iName, indexDefinition, iDatabase, iClusterIndexName, iClusterIdsToIndex, iProgressListener,
-				OStreamSerializerListRID.INSTANCE);
+	public OIndexMultiValues create(final String iName, final OIndexDefinition indexDefinition, final ODatabaseRecord iDatabase,
+			final String iClusterIndexName, final int[] iClusterIdsToIndex, final OProgressListener iProgressListener) {
+		return (OIndexMultiValues) super.create(iName, indexDefinition, iDatabase, iClusterIndexName, iClusterIdsToIndex,
+				iProgressListener, OStreamSerializerListRID.INSTANCE);
 	}
 
 	public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {

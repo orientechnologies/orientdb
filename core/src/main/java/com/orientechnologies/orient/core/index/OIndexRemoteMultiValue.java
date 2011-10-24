@@ -37,8 +37,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OIndexRemoteMultiValue extends OIndexRemote<Collection<OIdentifiable>> {
 	protected final static String	QUERY_GET	= "select FLATTEN( rid ) from index:%s where key = ?";
 
-	public OIndexRemoteMultiValue(String iName, String iWrappedType, ORID iRid, final OIndexDefinition iIndexDefinition,
-			final ODocument iConfiguration) {
+	public OIndexRemoteMultiValue(final String iName, final String iWrappedType, final ORID iRid,
+			final OIndexDefinition iIndexDefinition, final ODocument iConfiguration) {
 		super(iName, iWrappedType, iRid, iIndexDefinition, iConfiguration);
 	}
 
@@ -51,8 +51,8 @@ public class OIndexRemoteMultiValue extends OIndexRemote<Collection<OIdentifiabl
 		final OCommandRequest cmd = formatCommand(QUERY_ENTRIES, name);
 		final Collection<ODocument> result = getDatabase().command(cmd).execute();
 
-		Map<Object, Collection<OIdentifiable>> map = new HashMap<Object, Collection<OIdentifiable>>();
-		for (ODocument d : result) {
+		final Map<Object, Collection<OIdentifiable>> map = new HashMap<Object, Collection<OIdentifiable>>();
+		for (final ODocument d : result) {
 			Collection<OIdentifiable> rids = map.get(d.field("key"));
 			if (rids == null) {
 				rids = new HashSet<OIdentifiable>();

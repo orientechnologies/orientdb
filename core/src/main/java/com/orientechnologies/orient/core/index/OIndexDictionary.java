@@ -34,7 +34,7 @@ public class OIndexDictionary extends OIndexOneValue {
 		try {
 			checkForKeyType(iKey);
 
-			OIdentifiable value = map.get(iKey);
+			final OIdentifiable value = map.get(iKey);
 
 			if (value == null || !value.equals(iSingleValue))
 				map.put(iKey, iSingleValue);

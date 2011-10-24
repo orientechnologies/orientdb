@@ -48,8 +48,8 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
 		return (OIndexInternal<T>) internal;
 	}
 
-	public OIndex create(final String iName, final OIndexDefinition indexDefinition, final ODatabaseRecord iDatabase, final String iClusterIndexName,
-                         final int[] iClusterIdsToIndex, final OProgressListener iProgressListener) {
+	public OIndex create(final String iName, final OIndexDefinition indexDefinition, final ODatabaseRecord iDatabase,
+			final String iClusterIndexName, final int[] iClusterIdsToIndex, final OProgressListener iProgressListener) {
 		return delegate.create(iName, indexDefinition, iDatabase, iClusterIndexName, iClusterIdsToIndex, iProgressListener);
 	}
 
@@ -93,12 +93,12 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
 		return delegate.getValuesBetween(iRangeFrom, iRangeTo);
 	}
 
-	public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo,
-                                                      boolean iToInclusive) {
+	public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
+			final boolean iToInclusive) {
 		return delegate.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive);
 	}
 
-	public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive) {
+	public Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
 		return delegate.getEntriesBetween(iRangeFrom, iRangeTo, iInclusive);
 	}
 
@@ -106,19 +106,19 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
 		return delegate.getEntriesBetween(iRangeFrom, iRangeTo);
 	}
 
-	public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive) {
+	public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive) {
 		return delegate.getValuesMajor(fromKey, isInclusive);
 	}
 
-	public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive) {
+	public Collection<ODocument> getEntriesMajor(final Object fromKey, final boolean isInclusive) {
 		return delegate.getEntriesMajor(fromKey, isInclusive);
 	}
 
-	public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive) {
+	public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive) {
 		return delegate.getValuesMinor(toKey, isInclusive);
 	}
 
-	public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive) {
+	public Collection<ODocument> getEntriesMinor(final Object toKey, final boolean isInclusive) {
 		return delegate.getEntriesMinor(toKey, isInclusive);
 	}
 
@@ -178,29 +178,31 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
 		return delegate.getValues(iKeys);
 	}
 
-    public Collection<ODocument> getEntries(final Collection<?> iKeys) {
-        return delegate.getEntries(iKeys);
-    }
+	public Collection<ODocument> getEntries(final Collection<?> iKeys) {
+		return delegate.getEntries(iKeys);
+	}
 
-    public OIndexDefinition getDefinition() {
-        return delegate.getDefinition();
-    }
+	public OIndexDefinition getDefinition() {
+		return delegate.getDefinition();
+	}
 
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+	@Override
+	public boolean equals(final Object o) {
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
 
-        final OIndexAbstractDelegate that = (OIndexAbstractDelegate) o;
+		final OIndexAbstractDelegate that = (OIndexAbstractDelegate) o;
 
-        if (!delegate.equals(that.delegate))
-            return false;
+		if (!delegate.equals(that.delegate))
+			return false;
 
-        return true;
-    }
+		return true;
+	}
 
-    @Override
-    public int hashCode() {
-        return delegate.hashCode();
-    }
+	@Override
+	public int hashCode() {
+		return delegate.hashCode();
+	}
 }

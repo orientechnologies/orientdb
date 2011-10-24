@@ -28,14 +28,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>> {
 
-    public static final String	CONFIG_KEYTYPE		= "keyType";
-    public static final String	CONFIG_AUTOMATIC	= "automatic";
+	public static final String	CONFIG_KEYTYPE					= "keyType";
+	public static final String	CONFIG_AUTOMATIC				= "automatic";
 
-	public static final String	CONFIG_TYPE				= "type";
-	public static final String	CONFIG_NAME				= "name";
-	public static final String	INDEX_DEFINITION	= "indexDefinition";
-    public static final String	INDEX_DEFINITION_CLASS	= "indexDefinitionClass";
-
+	public static final String	CONFIG_TYPE							= "type";
+	public static final String	CONFIG_NAME							= "name";
+	public static final String	INDEX_DEFINITION				= "indexDefinition";
+	public static final String	INDEX_DEFINITION_CLASS	= "indexDefinitionClass";
 
 	public void checkEntry(final OIdentifiable iRecord, final Object iKey);
 

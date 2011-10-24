@@ -16,8 +16,14 @@
 package com.orientechnologies.orient.core.index;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
@@ -65,7 +71,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 
 	@ODocumentInstance
 	protected ODocument															configuration;
-	private Listener																watchDog;
+	private final Listener													watchDog;
 
 	public OIndexMVRBTreeAbstract(final String iType) {
 		type = iType;
@@ -108,7 +114,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 			indexDefinition = iIndexDefinition;
 
 			if (iClusterIdsToIndex != null)
-				for (int id : iClusterIdsToIndex)
+				for (final int id : iClusterIdsToIndex)
 					clustersToIndex.add(iDatabase.getClusterNameById(id));
 
 			final OStreamSerializer keySerializer;
@@ -149,15 +155,15 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 					indexDefinition = (OIndexDefinition) indexDefClass.getDeclaredConstructor().newInstance();
 					indexDefinition.fromStream(indexDefinitionDoc);
 
-				} catch (ClassNotFoundException e) {
+				} catch (final ClassNotFoundException e) {
 					throw new OIndexException("Error during deserialization of index definition", e);
-				} catch (NoSuchMethodException e) {
+				} catch (final NoSuchMethodException e) {
 					throw new OIndexException("Error during deserialization of index definition", e);
-				} catch (InvocationTargetException e) {
+				} catch (final InvocationTargetException e) {
 					throw new OIndexException("Error during deserialization of index definition", e);
-				} catch (InstantiationException e) {
+				} catch (final InstantiationException e) {
 					throw new OIndexException("Error during deserialization of index definition", e);
-				} catch (IllegalAccessException e) {
+				} catch (final IllegalAccessException e) {
 					throw new OIndexException("Error during deserialization of index definition", e);
 				}
 			} else {
@@ -274,14 +280,14 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 			int documentNum = 0;
 			long documentTotal = 0;
 
-			for (String cluster : clustersToIndex)
+			for (final String cluster : clustersToIndex)
 				documentTotal += getDatabase().countClusterElements(cluster);
 
 			if (iProgressListener != null)
 				iProgressListener.onBegin(this, documentTotal);
 
-			for (String clusterName : clustersToIndex)
-				for (ORecord<?> record : getDatabase().browseCluster(clusterName)) {
+			for (final String clusterName : clustersToIndex)
+				for (final ORecord<?> record : getDatabase().browseCluster(clusterName)) {
 					if (record instanceof ODocument) {
 						final ODocument doc = (ODocument) record;
 						final Object fieldValue = indexDefinition.getDocumentValueToIndex(doc);
@@ -308,7 +314,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 			if (iProgressListener != null)
 				iProgressListener.onCompletition(this, true);
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			if (iProgressListener != null)
 				iProgressListener.onCompletition(this, false);
 
@@ -529,12 +535,12 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 
 			final Collection<ODocument> entries = iDocument.field("entries");
 
-			for (ODocument entry : entries) {
+			for (final ODocument entry : entries) {
 				final Object key = ORecordSerializerStringAbstract.getTypeValue(OStringSerializerHelper.decode((String) entry.field("k")));
 
 				final List<ODocument> operations = (List<ODocument>) entry.field("ops");
 				if (operations != null) {
-					for (ODocument op : operations) {
+					for (final ODocument op : operations) {
 						final int operation = (Integer) op.rawField("o");
 						final OIdentifiable value = op.field("v");
 
@@ -609,16 +615,16 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 		iDatabase.unregisterListener(this);
 	}
 
-	public void onCreate(ODatabase iDatabase) {
+	public void onCreate(final ODatabase iDatabase) {
 	}
 
-	public void onDelete(ODatabase iDatabase) {
+	public void onDelete(final ODatabase iDatabase) {
 	}
 
-	public void onOpen(ODatabase iDatabase) {
+	public void onOpen(final ODatabase iDatabase) {
 	}
 
-	public void onBeforeTxBegin(ODatabase iDatabase) {
+	public void onBeforeTxBegin(final ODatabase iDatabase) {
 	}
 
 	public void onBeforeTxRollback(final ODatabase iDatabase) {

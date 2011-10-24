@@ -15,108 +15,105 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.List;
+
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import java.util.List;
 
 /**
  * Presentation of index that is used information and contained in document
  * {@link com.orientechnologies.orient.core.metadata.schema.OClass} .
- *
- * This object can not be created directly, use {@link com.orientechnologies.orient.core.metadata.schema.OClass}
- * manipulation method instead.
- *
+ * 
+ * This object can not be created directly, use {@link com.orientechnologies.orient.core.metadata.schema.OClass} manipulation method
+ * instead.
+ * 
  * @author Andrey Lomakin, Artem Orobets
  */
-public interface OIndexDefinition extends OIndexCallback  {
-    /**
-     * @return Names of fields which given index is used to calculate key value.
-     * Order of fields is important.
-     */
-    public List<String> getFields();
+public interface OIndexDefinition extends OIndexCallback {
+	/**
+	 * @return Names of fields which given index is used to calculate key value. Order of fields is important.
+	 */
+	public List<String> getFields();
 
-    /**
-     * @return Name of the class which this index belongs to.
-     */
-    public String getClassName();
+	/**
+	 * @return Name of the class which this index belongs to.
+	 */
+	public String getClassName();
 
-    /**
-     * {@inheritDoc}
-     */
-    public boolean equals(Object index);
+	/**
+	 * {@inheritDoc}
+	 */
+	public boolean equals(Object index);
 
-    /**
-     * {@inheritDoc}
-     */
-    public int hashCode();
+	/**
+	 * {@inheritDoc}
+	 */
+	public int hashCode();
 
-    /**
-     * {@inheritDoc}
-     */
-    public String toString();
+	/**
+	 * {@inheritDoc}
+	 */
+	public String toString();
 
-    /**
-     * Calculates key value by passed in parameters.
-     * It reflects implementation of {@link #getDocumentValueToIndex(com.orientechnologies.orient.core.record.impl.ODocument)}
-     * method but operates not on document fields, but on passed in parameters.
-     *
-     * If it is impossible to calculate key value by given parameters <code>null</code> will be returned.
-     *
-     * @param params  Parameters from which index key will be calculated.
-     *
-     * @return Key value or null if calculation is impossible.
-     */
-    public Object createValue(List<?> params);
+	/**
+	 * Calculates key value by passed in parameters. It reflects implementation of
+	 * {@link #getDocumentValueToIndex(com.orientechnologies.orient.core.record.impl.ODocument)} method but operates not on document
+	 * fields, but on passed in parameters.
+	 * 
+	 * If it is impossible to calculate key value by given parameters <code>null</code> will be returned.
+	 * 
+	 * @param params
+	 *          Parameters from which index key will be calculated.
+	 * 
+	 * @return Key value or null if calculation is impossible.
+	 */
+	public Object createValue(List<?> params);
 
-    /**
-     * Calculates key value by passed in parameters.
-     * It reflects implementation of {@link #getDocumentValueToIndex(com.orientechnologies.orient.core.record.impl.ODocument)}
-     * method but operates not on document fields, but on passed in parameters.
-     *
-     * If it is impossible to calculate key value by given parameters <code>null</code> will be returned.
-     *
-     *
-     * @param params  Parameters from which index key will be calculated.
-     *
-     * @return Key value or null if calculation is impossible.
-     */
-    public Object createValue(Object... params);
+	/**
+	 * Calculates key value by passed in parameters. It reflects implementation of
+	 * {@link #getDocumentValueToIndex(com.orientechnologies.orient.core.record.impl.ODocument)} method but operates not on document
+	 * fields, but on passed in parameters.
+	 * 
+	 * If it is impossible to calculate key value by given parameters <code>null</code> will be returned.
+	 * 
+	 * 
+	 * @param params
+	 *          Parameters from which index key will be calculated.
+	 * 
+	 * @return Key value or null if calculation is impossible.
+	 */
+	public Object createValue(Object... params);
 
+	/**
+	 * Returns amount of parameters that are used to calculate key value. It does not mean that all parameters should be supplied. It
+	 * only means that if you provide more parameters they will be ignored and will not participate in index key calculation.
+	 * 
+	 * @return Amount of that are used to calculate key value. Call result should be equals to {@code getTypes().length}.
+	 */
+	public int getParamCount();
 
-    /**
-     * Returns amount of parameters that are used to calculate key value.
-     * It does not mean that all parameters should be supplied.
-     * It only means that if you provide more parameters they will be ignored and will not participate in
-     * index key calculation.
-     *
-     * @return Amount of that are used to calculate key value.
-     * Call result should be equals to {@code getTypes().length}.
-     */
-    public int getParamCount();
+	/**
+	 * Return types of values from which index key consist. In case of index that is built on single document property value single
+	 * array that contains property type will be returned. In case of composite indexes result will contain several key types.
+	 * 
+	 * @return Types of values from which index key consist.
+	 */
+	public OType[] getTypes();
 
-    /**
-     * Return types of values from which index key consist. In case of index that is built on single document
-     * property value single array that contains property type will be returned. In case of composite indexes
-     * result will contain several key types.
-     *
-     * @return Types of values from which index key consist.
-     */
-    public OType[] getTypes();
+	/**
+	 * Serializes internal index state to document.
+	 * 
+	 * @return Document that contains internal index state.
+	 */
+	public ODocument toStream();
 
-    /**
-     * Serializes internal index state to document.
-     *
-     * @return Document that contains internal index state.
-     */
-    public ODocument toStream();
+	/**
+	 * Deserialize internal index state from document.
+	 * 
+	 * @param document
+	 *          Serialized index presentation.
+	 */
+	public void fromStream(ODocument document);
 
-    /**
-     * Deserialize internal index state from document.
-     *
-     * @param document Serialized index presentation.
-     */
-    public void fromStream(ODocument document);
-
-    public String toCreateIndexDDL(String indexName, String indexType);
+	public String toCreateIndexDDL(String indexName, String indexType);
 }

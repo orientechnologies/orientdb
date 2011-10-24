@@ -33,7 +33,7 @@ public class OIndexUnique extends OIndexOneValue {
 		try {
 			checkForKeyType(iKey);
 
-			OIdentifiable value = map.get(iKey);
+			final OIdentifiable value = map.get(iKey);
 
 			if (value != null) {
 				// CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE

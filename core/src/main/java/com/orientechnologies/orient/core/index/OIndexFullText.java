@@ -15,17 +15,17 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 /**
  * Fast index for full-text searches.
@@ -41,8 +41,8 @@ public class OIndexFullText extends OIndexMultiValues {
 	private static String				DEF_IGNORE_CHARS		= " \r\n\t:;,.|+*/\\=!?[]()'\"";
 	private static String				DEF_STOP_WORDS			= "the in a at as and or for his her " + "him this that what which while "
 																											+ "up with be was is";
-	private String							ignoreChars					= DEF_IGNORE_CHARS;
-	private Set<String>					stopWords;
+	private final String				ignoreChars					= DEF_IGNORE_CHARS;
+	private final Set<String>		stopWords;
 
 	public OIndexFullText() {
 		super("FULLTEXT");
@@ -67,7 +67,7 @@ public class OIndexFullText extends OIndexMultiValues {
 
 		try {
 			map.save();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new OIndexException("Can't save index entry for document '" + iDocument.getIdentity() + "'");
 		} finally {
 			releaseExclusiveLock();
@@ -78,10 +78,10 @@ public class OIndexFullText extends OIndexMultiValues {
 	 * Indexes a value and save the index. Splits the value in single words and index each one. Save of the index is responsibility of
 	 * the caller.
 	 */
+	@Override
 	public OIndexFullText put(final Object iKey, final OIdentifiable iSingleValue) {
 		if (iKey == null)
 			return this;
-
 
 		final List<String> words = splitIntoWords(iKey.toString());
 
@@ -90,7 +90,7 @@ public class OIndexFullText extends OIndexMultiValues {
 			acquireExclusiveLock();
 
 			try {
-                Set<OIdentifiable> refs;
+				Set<OIdentifiable> refs;
 
 				// SEARCH FOR THE WORD
 				refs = map.get(word);
@@ -112,40 +112,44 @@ public class OIndexFullText extends OIndexMultiValues {
 		return this;
 	}
 
-    /**
-     * Splits passed in key on several words and remove records with keys equals to any item of split result and
-     * values equals to passed in value.
-     * @param iKey     Key to remove.
-     * @param value    Value to remove.
-     * @return   <code>true</code> if at least one record is removed.
-     */
-    public boolean remove(final Object iKey, final OIdentifiable value) {
-        final List<String> words = splitIntoWords(iKey.toString());
-        boolean removed = false;
+	/**
+	 * Splits passed in key on several words and remove records with keys equals to any item of split result and values equals to
+	 * passed in value.
+	 * 
+	 * @param iKey
+	 *          Key to remove.
+	 * @param value
+	 *          Value to remove.
+	 * @return <code>true</code> if at least one record is removed.
+	 */
+	@Override
+	public boolean remove(final Object iKey, final OIdentifiable value) {
+		final List<String> words = splitIntoWords(iKey.toString());
+		boolean removed = false;
 
-        for (final String word : words) {
-            acquireExclusiveLock();
-            try {
+		for (final String word : words) {
+			acquireExclusiveLock();
+			try {
 
-                final Set<OIdentifiable> recs = get(word);
-                if (recs != null && !recs.isEmpty()) {
-                    if (recs.remove(value)) {
-                        if(recs.isEmpty())
-                            map.remove(iKey);
-                        else
-                            map.put(iKey, recs);
-                        removed = true;
-                    }
-                }
-            } finally {
-                releaseExclusiveLock();
-            }
-        }
+				final Set<OIdentifiable> recs = get(word);
+				if (recs != null && !recs.isEmpty()) {
+					if (recs.remove(value)) {
+						if (recs.isEmpty())
+							map.remove(iKey);
+						else
+							map.put(iKey, recs);
+						removed = true;
+					}
+				}
+			} finally {
+				releaseExclusiveLock();
+			}
+		}
 
-        return removed;
-    }
+		return removed;
+	}
 
-    @Override
+	@Override
 	public ODocument updateConfiguration() {
 		super.updateConfiguration();
 		configuration.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
@@ -160,41 +164,41 @@ public class OIndexFullText extends OIndexMultiValues {
 		return configuration;
 	}
 
-    private List<String> splitIntoWords(final String iKey) {
-        final List<String> result = new ArrayList<String>();
+	private List<String> splitIntoWords(final String iKey) {
+		final List<String> result = new ArrayList<String>();
 
-        final List<String> words = OStringSerializerHelper.split(iKey, ' ');
+		final List<String> words = OStringSerializerHelper.split(iKey, ' ');
 
-        final StringBuilder buffer = new StringBuilder();
-        // FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
+		final StringBuilder buffer = new StringBuilder();
+		// FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
 
-        char c;
-        boolean ignore;
-        for (String word : words) {
-            buffer.setLength(0);
+		char c;
+		boolean ignore;
+		for (String word : words) {
+			buffer.setLength(0);
 
-            for (int i = 0; i < word.length(); ++i) {
-                c = word.charAt(i);
-                ignore = false;
-                for (int k = 0; k < ignoreChars.length(); ++k)
-                    if (c == ignoreChars.charAt(k)) {
-                        ignore = true;
-                        break;
-                    }
+			for (int i = 0; i < word.length(); ++i) {
+				c = word.charAt(i);
+				ignore = false;
+				for (int k = 0; k < ignoreChars.length(); ++k)
+					if (c == ignoreChars.charAt(k)) {
+						ignore = true;
+						break;
+					}
 
-                if (!ignore)
-                    buffer.append(c);
-            }
+				if (!ignore)
+					buffer.append(c);
+			}
 
-            word = buffer.toString();
+			word = buffer.toString();
 
-            // CHECK IF IT'S A STOP WORD
-            if (stopWords.contains(word))
-                continue;
+			// CHECK IF IT'S A STOP WORD
+			if (stopWords.contains(word))
+				continue;
 
-            result.add(word);
-        }
+			result.add(word);
+		}
 
-        return result;
-    }
+		return result;
+	}
 }

@@ -21,11 +21,11 @@ public class OIndexException extends OException {
 
 	private static final long	serialVersionUID	= -2655748565531836968L;
 
-	public OIndexException(String string) {
+	public OIndexException(final String string) {
 		super(string);
 	}
 
-	public OIndexException(String message, Throwable cause) {
+	public OIndexException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 }

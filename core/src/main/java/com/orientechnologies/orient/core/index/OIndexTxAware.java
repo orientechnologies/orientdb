@@ -41,6 +41,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
 		database = iDatabase;
 	}
 
+	@Override
 	public long getSize() {
 		long tot = delegate.getSize();
 
@@ -50,8 +51,8 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
 				// BEGIN FROM 0
 				tot = 0;
 
-			for (Entry<Object, OTransactionIndexChangesPerKey> entry : indexChanges.changesPerKey.entrySet()) {
-				for (OTransactionIndexEntry e : entry.getValue().entries) {
+			for (final Entry<Object, OTransactionIndexChangesPerKey> entry : indexChanges.changesPerKey.entrySet()) {
+				for (final OTransactionIndexEntry e : entry.getValue().entries) {
 					if (e.operation == OPERATION.REMOVE) {
 						if (e.value == null)
 							// KEY REMOVED
@@ -66,7 +67,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
 	}
 
 	@Override
-	public OIndexTxAware<T> put(final Object iKey, OIdentifiable iValue) {
+	public OIndexTxAware<T> put(final Object iKey, final OIdentifiable iValue) {
 		final ORID rid = iValue.getIdentity();
 
 		if (!rid.isValid())

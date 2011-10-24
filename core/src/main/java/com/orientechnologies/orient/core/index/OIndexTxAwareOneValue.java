@@ -15,7 +15,10 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -28,12 +31,12 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTran
 /**
  * Transactional wrapper for indexes. Stores changes locally to the transaction until tx.commit(). All the other operations are
  * delegated to the wrapped OIndex instance.
- *
+ * 
  * @author Luca Garulli
- *
+ * 
  */
 public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
-	public OIndexTxAwareOneValue(ODatabaseRecord iDatabase, OIndex<OIdentifiable> iDelegate) {
+	public OIndexTxAwareOneValue(final ODatabaseRecord iDatabase, final OIndex<OIdentifiable> iDelegate) {
 		super(iDatabase, iDelegate);
 	}
 
@@ -54,7 +57,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
 		if (indexChanges != null && indexChanges.containsChangesPerKey(iKey)) {
 			final OTransactionIndexChangesPerKey value = indexChanges.getChangesPerKey(iKey);
 			if (value != null) {
-				for (OTransactionIndexEntry entry : value.entries) {
+				for (final OTransactionIndexEntry entry : value.entries) {
 					if (entry.operation == OPERATION.REMOVE) {
 						if (entry.value == null) {
 							// REMOVE THE ENTIRE KEY, SO RESULT SET IS EMPTY
@@ -71,103 +74,103 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
 		return result;
 	}
 
-    @Override
-    public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
-        final Collection<?> keys = new ArrayList<Object>(iKeys);
-        final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
-        final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
-        if(indexChanges == null) {
-            result.addAll(super.getValues(keys));
-            return result;
-        }
+	@Override
+	public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
+		final Collection<?> keys = new ArrayList<Object>(iKeys);
+		final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+		final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+		if (indexChanges == null) {
+			result.addAll(super.getValues(keys));
+			return result;
+		}
 
-        final Set<Object> keysToRemove = new HashSet<Object>();
-        for (final Object key : keys) {
-            if (indexChanges.cleared)
-                keysToRemove.add(key);
+		final Set<Object> keysToRemove = new HashSet<Object>();
+		for (final Object key : keys) {
+			if (indexChanges.cleared)
+				keysToRemove.add(key);
 
-            OIdentifiable keyResult = null;
+			OIdentifiable keyResult = null;
 
-            if (indexChanges.containsChangesPerKey(key)) {
-                final OTransactionIndexChangesPerKey value = indexChanges.getChangesPerKey(key);
-                if (value != null) {
-                    for (final OTransactionIndexEntry entry : value.entries) {
-                        if (entry.operation == OPERATION.REMOVE) {
-                            if (entry.value == null) {
-                                // REMOVE THE ENTIRE KEY, SO RESULT SET IS EMPTY
-                                keysToRemove.add(key);
-                                keyResult = null;
-                            }
-                        } else if (entry.operation == OPERATION.PUT) {
-                            // ADD ALSO THIS RID
-                            keyResult = entry.value;
-                            keysToRemove.add(key);
-                        }
-                    }
-                }
-            }
+			if (indexChanges.containsChangesPerKey(key)) {
+				final OTransactionIndexChangesPerKey value = indexChanges.getChangesPerKey(key);
+				if (value != null) {
+					for (final OTransactionIndexEntry entry : value.entries) {
+						if (entry.operation == OPERATION.REMOVE) {
+							if (entry.value == null) {
+								// REMOVE THE ENTIRE KEY, SO RESULT SET IS EMPTY
+								keysToRemove.add(key);
+								keyResult = null;
+							}
+						} else if (entry.operation == OPERATION.PUT) {
+							// ADD ALSO THIS RID
+							keyResult = entry.value;
+							keysToRemove.add(key);
+						}
+					}
+				}
+			}
 
-            if (keyResult != null)
-                result.add(keyResult);
+			if (keyResult != null)
+				result.add(keyResult);
 
-        }
+		}
 
-        keys.removeAll(keysToRemove);
+		keys.removeAll(keysToRemove);
 
-        if(!keys.isEmpty())
-            result.addAll(super.getValues(keys));
-        return result;
-    }
+		if (!keys.isEmpty())
+			result.addAll(super.getValues(keys));
+		return result;
+	}
 
-    @Override
-    public Collection<ODocument> getEntries(final Collection<?> iKeys) {
-        final Collection<?> keys = new ArrayList<Object>(iKeys);
-        final Set<ODocument> result = new HashSet<ODocument>();
-        final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
-        if (indexChanges == null) {
-            result.addAll(super.getEntries(keys));
-            return result;
-        }
+	@Override
+	public Collection<ODocument> getEntries(final Collection<?> iKeys) {
+		final Collection<?> keys = new ArrayList<Object>(iKeys);
+		final Set<ODocument> result = new HashSet<ODocument>();
+		final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+		if (indexChanges == null) {
+			result.addAll(super.getEntries(keys));
+			return result;
+		}
 
-        final Set<Object> keysToRemove = new HashSet<Object>();
-        for (final Object key : keys) {
-            if (indexChanges.cleared)
-                keysToRemove.add(key);
+		final Set<Object> keysToRemove = new HashSet<Object>();
+		for (final Object key : keys) {
+			if (indexChanges.cleared)
+				keysToRemove.add(key);
 
-            OIdentifiable keyResult = null;
+			OIdentifiable keyResult = null;
 
-            if (indexChanges.containsChangesPerKey(key)) {
-                final OTransactionIndexChangesPerKey value = indexChanges.getChangesPerKey(key);
-                if (value != null) {
-                    for (final OTransactionIndexEntry entry : value.entries) {
-                        if (entry.operation == OPERATION.REMOVE) {
-                            if (entry.value == null) {
-                                // REMOVE THE ENTIRE KEY, SO RESULT SET IS EMPTY
-                                keysToRemove.add(key);
-                                keyResult = null;
-                            }
-                        } else if (entry.operation == OPERATION.PUT) {
-                            // ADD ALSO THIS RID
-                            keyResult = entry.value;
-                            keysToRemove.add(key);
-                        }
-                    }
-                }
-            }
+			if (indexChanges.containsChangesPerKey(key)) {
+				final OTransactionIndexChangesPerKey value = indexChanges.getChangesPerKey(key);
+				if (value != null) {
+					for (final OTransactionIndexEntry entry : value.entries) {
+						if (entry.operation == OPERATION.REMOVE) {
+							if (entry.value == null) {
+								// REMOVE THE ENTIRE KEY, SO RESULT SET IS EMPTY
+								keysToRemove.add(key);
+								keyResult = null;
+							}
+						} else if (entry.operation == OPERATION.PUT) {
+							// ADD ALSO THIS RID
+							keyResult = entry.value;
+							keysToRemove.add(key);
+						}
+					}
+				}
+			}
 
-            if (keyResult != null) {
-                final ODocument document = new ODocument();
-                document.field("key", key);
-                document.field("rid", keyResult.getIdentity());
-                document.unsetDirty();
-                result.add(document);
-            }
-        }
+			if (keyResult != null) {
+				final ODocument document = new ODocument();
+				document.field("key", key);
+				document.field("rid", keyResult.getIdentity());
+				document.unsetDirty();
+				result.add(document);
+			}
+		}
 
-        keys.removeAll(keysToRemove);
+		keys.removeAll(keysToRemove);
 
-        if (!keys.isEmpty())
-            result.addAll(super.getEntries(keys));
-        return result;
-    }
+		if (!keys.isEmpty())
+			result.addAll(super.getEntries(keys));
+		return result;
+	}
 }

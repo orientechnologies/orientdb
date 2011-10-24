@@ -17,6 +17,13 @@ package com.orientechnologies.orient.core.type;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+/**
+ * Base abstract class to wrap a document without the management of type class.
+ * 
+ * @see ODocumentWrapper
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * 
+ */
 @SuppressWarnings("unchecked")
 public abstract class ODocumentWrapperNoClass extends ODocumentWrapper {
 	public ODocumentWrapperNoClass() {

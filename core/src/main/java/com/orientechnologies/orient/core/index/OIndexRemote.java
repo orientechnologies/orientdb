@@ -77,7 +77,8 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 	public static final String		QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_TO_CONDITION		= "key < ?";
 	public static final String		QUERY_GET_VALUES_AND_OPERATOR											= " and ";
 
-	public OIndexRemote(final String iName, final String iWrappedType, final ORID iRid, final OIndexDefinition iIndexDefinition, final ODocument iConfiguration) {
+	public OIndexRemote(final String iName, final String iWrappedType, final ORID iRid, final OIndexDefinition iIndexDefinition,
+			final ODocument iConfiguration) {
 		this.name = iName;
 		this.wrappedType = iWrappedType;
 		this.rid = iRid;
@@ -99,7 +100,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 		return this;
 	}
 
-	public Set<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive) {
+	public Set<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
 		final OCommandRequest cmd = formatCommand(QUERY_GET_RANGE, name);
 		return (Set<ODocument>) getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
 	}
@@ -109,8 +110,9 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 		return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
 	}
 
-	public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive) {
-		StringBuilder query = new StringBuilder(QUERY_GET_VALUES_BEETWEN_SELECT);
+	public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
+			final boolean iToInclusive) {
+		final StringBuilder query = new StringBuilder(QUERY_GET_VALUES_BEETWEN_SELECT);
 
 		if (iFromInclusive) {
 			query.append(QUERY_GET_VALUES_BEETWEN_INCLUSIVE_FROM_CONDITION);
@@ -135,7 +137,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 		return (Collection<ODocument>) getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
 	}
 
-	public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive) {
+	public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive) {
 		final OCommandRequest cmd;
 		if (isInclusive)
 			cmd = formatCommand(QUERY_GET_VALUE_MAJOR_EQUALS, name);
@@ -144,7 +146,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 		return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(fromKey);
 	}
 
-	public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive) {
+	public Collection<ODocument> getEntriesMajor(final Object fromKey, final boolean isInclusive) {
 		final OCommandRequest cmd;
 		if (isInclusive)
 			cmd = formatCommand(QUERY_GET_MAJOR_EQUALS, name);
@@ -153,7 +155,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 		return (Collection<ODocument>) getDatabase().command(cmd).execute(fromKey);
 	}
 
-	public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive) {
+	public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive) {
 		final OCommandRequest cmd;
 		if (isInclusive)
 			cmd = formatCommand(QUERY_GET_VALUE_MINOR_EQUALS, name);
@@ -162,7 +164,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 		return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(toKey);
 	}
 
-	public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive) {
+	public Collection<ODocument> getEntriesMinor(final Object toKey, final boolean isInclusive) {
 		final OCommandRequest cmd;
 		if (isInclusive)
 			cmd = formatCommand(QUERY_GET_MINOR_EQUALS, name);
@@ -326,7 +328,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 		if (o == null || getClass() != o.getClass())
 			return false;
 
-		final OIndexRemote that = (OIndexRemote) o;
+		final OIndexRemote<?> that = (OIndexRemote<?>) o;
 
 		return name.equals(that.name);
 	}

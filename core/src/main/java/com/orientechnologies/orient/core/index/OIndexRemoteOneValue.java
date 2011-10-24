@@ -36,8 +36,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
 	protected final static String	QUERY_GET	= "select rid from index:%s where key = ?";
 
-	public OIndexRemoteOneValue(String iName, String iWrappedType, ORID iRid, final OIndexDefinition iIndexDefinition,
-			final ODocument iConfiguration) {
+	public OIndexRemoteOneValue(final String iName, final String iWrappedType, final ORID iRid,
+			final OIndexDefinition iIndexDefinition, final ODocument iConfiguration) {
 		super(iName, iWrappedType, iRid, iIndexDefinition, iConfiguration);
 	}
 
@@ -45,7 +45,7 @@ public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
 		final OCommandRequest cmd = formatCommand(QUERY_GET, name);
 		final List<OIdentifiable> result = getDatabase().command(cmd).execute(iKey);
 		if (result != null && !result.isEmpty())
-			return ((OIdentifiable) ((ODocument) ((OIdentifiable) result.get(0)).getRecord()).field("rid")).getIdentity();
+			return ((OIdentifiable) ((ODocument) result.get(0).getRecord()).field("rid")).getIdentity();
 		return null;
 	}
 
@@ -53,8 +53,8 @@ public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
 		final OCommandRequest cmd = formatCommand(QUERY_ENTRIES, name);
 		final Collection<ODocument> result = getDatabase().command(cmd).execute();
 
-		Map<Object, OIdentifiable> map = new HashMap<Object, OIdentifiable>();
-		for (ODocument d : result)
+		final Map<Object, OIdentifiable> map = new HashMap<Object, OIdentifiable>();
+		for (final ODocument d : result)
 			map.put(d.field("key"), (OIdentifiable) d.field("rid"));
 
 		return map.entrySet().iterator();

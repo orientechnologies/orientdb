@@ -34,6 +34,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 		super(iDatabase);
 	}
 
+	@Override
 	protected OIndex<?> getIndexInstance(final OIndex<?> iIndex) {
 		if (iIndex instanceof OIndexMultiValues)
 			return new OIndexRemoteMultiValue(iIndex.getName(), iIndex.getType(), iIndex.getIdentity(), iIndex.getDefinition(),
@@ -102,7 +103,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 
 			if (idxs != null) {
 				OIndexInternal<?> index;
-				for (ODocument d : idxs) {
+				for (final ODocument d : idxs) {
 					index = OIndexFactory.instance().newInstance(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE));
 					d.setDatabase(getDatabase());
 					((OIndexInternal<?>) index).loadFromConfiguration(d);
@@ -126,9 +127,9 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 			document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
 			try {
-				ORecordTrackedSet idxs = new ORecordTrackedSet(document);
+				final ORecordTrackedSet idxs = new ORecordTrackedSet(document);
 
-				for (OIndexInternal<?> i : indexes.values()) {
+				for (final OIndexInternal<?> i : indexes.values()) {
 					idxs.add(i.updateConfiguration());
 				}
 				document.field(CONFIG_INDEXES, idxs, OType.EMBEDDEDSET);

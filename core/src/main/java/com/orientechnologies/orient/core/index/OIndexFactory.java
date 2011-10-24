@@ -38,14 +38,14 @@ public class OIndexFactory extends ODynamicFactory<String, Class<? extends OInde
 		if (iIndexType == null)
 			throw new IllegalArgumentException("Index type is null");
 
-		final Class<? extends OIndexInternal<?>> indexClass = (Class<? extends OIndexInternal<?>>) registry.get(iIndexType);
+		final Class<? extends OIndexInternal<?>> indexClass = registry.get(iIndexType);
 
 		if (indexClass == null)
 			throw new OConfigurationException("Index type '" + iIndexType + "' is not configured");
 
 		try {
 			return (T) indexClass.newInstance();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new OConfigurationException("Can't create index type '" + iIndexType + "'", e);
 		}
 	}

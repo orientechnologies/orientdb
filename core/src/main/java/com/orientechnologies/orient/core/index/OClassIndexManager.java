@@ -53,11 +53,11 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 			return false;
 
 		final Collection<OIndex<?>> indexes = cls.getIndexes();
-		for (final OIndex index : indexes) {
+		for (final OIndex<?> index : indexes) {
 			final Object key = index.getDefinition().getDocumentValueToIndex(iRecord);
 			// SAVE A COPY TO AVOID PROBLEM ON RECYCLING OF THE RECORD
 			if (key instanceof Collection) {
-				for (final Object keyItem : (Collection) key)
+				for (final Object keyItem : (Collection<?>) key)
 					if (keyItem != null)
 						index.put(keyItem, iRecord.placeholder());
 			} else if (key != null)
@@ -107,11 +107,11 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 							final Object newValue = indexDefinition.getDocumentValueToIndex(iRecord);
 
 							if ((origValue instanceof Collection) && (newValue instanceof Collection)) {
-								final Set<Object> valuesToRemove = new HashSet<Object>((Collection) origValue);
-								final Set<Object> valuesToAdd = new HashSet<Object>((Collection) newValue);
+								final Set<Object> valuesToRemove = new HashSet<Object>((Collection<?>) origValue);
+								final Set<Object> valuesToAdd = new HashSet<Object>((Collection<?>) newValue);
 
-								valuesToRemove.removeAll((Collection) newValue);
-								valuesToAdd.removeAll((Collection) origValue);
+								valuesToRemove.removeAll((Collection<?>) newValue);
+								valuesToAdd.removeAll((Collection<?>) origValue);
 
 								for (final Object valueToRemove : valuesToRemove)
 									if (valueToRemove != null)
@@ -123,14 +123,14 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
 							} else {
 								if (origValue instanceof Collection) {
-									for (final Object origValueItem : (Collection) origValue)
+									for (final Object origValueItem : (Collection<?>) origValue)
 										if (origValueItem != null)
 											index.remove(origValueItem, iRecord);
 								} else if (origValue != null)
 									index.remove(origValue, iRecord);
 
 								if (newValue instanceof Collection) {
-									for (final Object newValueItem : (Collection) newValue)
+									for (final Object newValueItem : (Collection<?>) newValue)
 										index.put(newValueItem, iRecord.placeholder());
 								} else if (newValue != null)
 									index.put(newValue, iRecord.placeholder());
@@ -158,17 +158,17 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 		if (cls == null)
 			return false;
 
-		final Collection<OIndex> indexes = new ArrayList<OIndex>(cls.getIndexes());
+		final Collection<OIndex<?>> indexes = new ArrayList<OIndex<?>>(cls.getIndexes());
 
 		if (!indexes.isEmpty()) {
 			final Set<String> dirtyFields = new HashSet<String>(Arrays.asList(iRecord.getDirtyFields()));
 
 			if (!dirtyFields.isEmpty()) {
 				// REMOVE INDEX OF ENTRIES FOR THE OLD VALUES
-				final Iterator<OIndex> indexIterator = indexes.iterator();
+				final Iterator<OIndex<?>> indexIterator = indexes.iterator();
 
 				while (indexIterator.hasNext()) {
-					final OIndex index = indexIterator.next();
+					final OIndex<?> index = indexIterator.next();
 					final OIndexDefinition indexDefinition = index.getDefinition();
 
 					final List<String> indexFields = indexDefinition.getFields();
@@ -186,7 +186,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
 							final Object origValue = indexDefinition.createValue(origValues);
 							if (origValue instanceof Collection) {
-								for (final Object valueItem : (Collection) origValue)
+								for (final Object valueItem : (Collection<?>) origValue)
 									if (valueItem != null)
 										index.remove(valueItem, iRecord);
 							} else if (origValue != null)
@@ -203,7 +203,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 			for (final OIndex<?> index : indexes) {
 				final Object key = index.getDefinition().getDocumentValueToIndex(iRecord);
 				if (key instanceof Collection) {
-					for (final Object keyItem : (Collection) key)
+					for (final Object keyItem : (Collection<?>) key)
 						if (keyItem != null)
 							index.remove(keyItem, iRecord);
 				} else if (key != null)
@@ -225,10 +225,10 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 			return;
 
 		final Collection<OIndex<?>> indexes = cls.getIndexes();
-		for (final OIndex index : indexes) {
+		for (final OIndex<?> index : indexes) {
 			final Object key = index.getDefinition().getDocumentValueToIndex(iRecord);
 			if (key instanceof Collection) {
-				for (final Object keyItem : (Collection) key)
+				for (final Object keyItem : (Collection<?>) key)
 					index.getInternal().checkEntry(iRecord, keyItem);
 			} else
 				index.getInternal().checkEntry(iRecord, key);
@@ -240,7 +240,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 		if (iRecord.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
 			try {
 				return (ODocument) iRecord.load();
-			} catch (ORecordNotFoundException e) {
+			} catch (final ORecordNotFoundException e) {
 				throw new OIndexException("Error during loading of record with id : " + iRecord.getIdentity());
 			}
 		}

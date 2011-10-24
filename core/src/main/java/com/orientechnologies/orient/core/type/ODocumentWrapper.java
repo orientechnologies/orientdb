@@ -21,6 +21,13 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+/**
+ * Base abstract class to wrap a document.
+ * 
+ * @see ODocumentWrapperNoClass
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * 
+ */
 @SuppressWarnings("unchecked")
 public class ODocumentWrapper {
 	@ODocumentInstance

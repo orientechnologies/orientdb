@@ -36,19 +36,19 @@ public interface OIndex<T> {
 
 	/**
 	 * Creates the index.
-	 *
-	 *
-     * @param iName
-     *
-     * @param iDatabase
-     *          Current Database instance
-     * @param iClusterIndexName
-*          Cluster name where to place the TreeMap
-     * @param iClusterIdsToIndex
-     * @param iProgressListener
-     */
-	public OIndex create(String iName,final OIndexDefinition iIndexDefinition, final ODatabaseRecord iDatabase, final String iClusterIndexName,
-                         final int[] iClusterIdsToIndex, final OProgressListener iProgressListener);
+	 * 
+	 * 
+	 * @param iName
+	 * 
+	 * @param iDatabase
+	 *          Current Database instance
+	 * @param iClusterIndexName
+	 *          Cluster name where to place the TreeMap
+	 * @param iClusterIdsToIndex
+	 * @param iProgressListener
+	 */
+	public OIndex<?> create(String iName, final OIndexDefinition iIndexDefinition, final ODatabaseRecord iDatabase,
+			final String iClusterIndexName, final int[] iClusterIdsToIndex, final OProgressListener iProgressListener);
 
 	public void unload();
 
@@ -86,45 +86,42 @@ public interface OIndex<T> {
 
 	public Iterable<Object> keys();
 
-    /**
-     * Returns a set of records with key between the range passed as parameter. Range bounds are included.
-     *
-     * In case of {@link com.orientechnologies.common.collection.OCompositeKey}s partial keys can be used
-     * as values boundaries.
-     *
-     * @param iRangeFrom
-     *          Starting range
-     * @param iRangeTo
-     *          Ending range
-     *
-     * @return a set of records with key between the range passed as parameter. Range bounds are included.
-     * @see com.orientechnologies.common.collection.OCompositeKey#compareTo(com.orientechnologies.common.collection.OCompositeKey)
-     * @see #getValuesBetween(Object, boolean, Object, boolean)
-     */
+	/**
+	 * Returns a set of records with key between the range passed as parameter. Range bounds are included.
+	 * 
+	 * In case of {@link com.orientechnologies.common.collection.OCompositeKey}s partial keys can be used as values boundaries.
+	 * 
+	 * @param iRangeFrom
+	 *          Starting range
+	 * @param iRangeTo
+	 *          Ending range
+	 * 
+	 * @return a set of records with key between the range passed as parameter. Range bounds are included.
+	 * @see com.orientechnologies.common.collection.OCompositeKey#compareTo(com.orientechnologies.common.collection.OCompositeKey)
+	 * @see #getValuesBetween(Object, boolean, Object, boolean)
+	 */
 	public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, Object iRangeTo);
 
-    /**
-     * Returns a set of records with key between the range passed as parameter.
-     *
-     * In case of {@link com.orientechnologies.common.collection.OCompositeKey}s partial keys can be used
-     * as values boundaries.
-     *
-     * @param iRangeFrom
-     *      Starting range
-     * @param iFromInclusive
-     *      Indicates whether start range boundary is included in result.
-     * @param iRangeTo
-     *      Ending range
-     * @param iToInclusive
-     *      Indicates whether end range boundary is included in result.
-     *
-     * @return Returns a set of records with key between the range passed as parameter.
-     *
-     * @see com.orientechnologies.common.collection.OCompositeKey#compareTo(com.orientechnologies.common.collection.OCompositeKey)
-     *
-     */
-    public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive,
-                                                      Object iRangeTo, boolean iToInclusive);
+	/**
+	 * Returns a set of records with key between the range passed as parameter.
+	 * 
+	 * In case of {@link com.orientechnologies.common.collection.OCompositeKey}s partial keys can be used as values boundaries.
+	 * 
+	 * @param iRangeFrom
+	 *          Starting range
+	 * @param iFromInclusive
+	 *          Indicates whether start range boundary is included in result.
+	 * @param iRangeTo
+	 *          Ending range
+	 * @param iToInclusive
+	 *          Indicates whether end range boundary is included in result.
+	 * 
+	 * @return Returns a set of records with key between the range passed as parameter.
+	 * 
+	 * @see com.orientechnologies.common.collection.OCompositeKey#compareTo(com.orientechnologies.common.collection.OCompositeKey)
+	 * 
+	 */
+	public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive);
 
 	/**
 	 * Returns a set of records with keys greater than passed parameter.
@@ -204,14 +201,14 @@ public interface OIndex<T> {
 
 	public boolean isAutomatic();
 
-    public long rebuild();
+	public long rebuild();
 
 	/**
 	 * Populate the index with all the existent records.
 	 */
 	public long rebuild(final OProgressListener iProgressListener);
 
-    public ODocument getConfiguration();
+	public ODocument getConfiguration();
 
 	public ORID getIdentity();
 
@@ -225,23 +222,25 @@ public interface OIndex<T> {
 
 	public OIndexInternal<T> getInternal();
 
-    /**
-     * Returns set of records with keys in specific set
-     *
-     * @param iKeys Set of keys
-     * @return
-     */
-    public Collection<OIdentifiable> getValues(Collection<?> iKeys);
+	/**
+	 * Returns set of records with keys in specific set
+	 * 
+	 * @param iKeys
+	 *          Set of keys
+	 * @return
+	 */
+	public Collection<OIdentifiable> getValues(Collection<?> iKeys);
 
-    /**
-     * Returns a set of documents with keys in specific set
-     *
-     *
-     * @param iKeys Set of keys
-     * @return
-     */
-    public Collection<ODocument> getEntries(Collection<?> iKeys);
+	/**
+	 * Returns a set of documents with keys in specific set
+	 * 
+	 * 
+	 * @param iKeys
+	 *          Set of keys
+	 * @return
+	 */
+	public Collection<ODocument> getEntries(Collection<?> iKeys);
 
-     public OIndexDefinition getDefinition();
+	public OIndexDefinition getDefinition();
 
 }
