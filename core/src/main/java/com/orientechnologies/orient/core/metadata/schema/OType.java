@@ -362,7 +362,7 @@ public enum OType {
 				if (iValue instanceof Boolean)
 					return ((Boolean) iValue).booleanValue();
 				else if (iValue instanceof String)
-					return Boolean.parseBoolean((String) iValue);
+					return ((String) iValue).equalsIgnoreCase("true") ? Boolean.TRUE : Boolean.FALSE;
 				else if (iValue instanceof Number)
 					return ((Number) iValue).intValue() != 0;
 
