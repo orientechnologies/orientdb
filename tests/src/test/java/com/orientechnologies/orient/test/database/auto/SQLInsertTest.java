@@ -75,7 +75,7 @@ public class SQLInsertTest {
 		ODocument doc = (ODocument) database
 				.command(
 						new OCommandSQL(
-								"insert into cluster:default (equaledges, name, properties) values ('no', 'circle', {'round':false, 'blaaa':'zigzag'} )"))
+								"insert into cluster:default (equaledges, name, properties) values ('no', 'circle', {'round':'eeee', 'blaaa':'zigzag'} )"))
 				.execute();
 
 		Assert.assertTrue(doc != null);
@@ -89,7 +89,7 @@ public class SQLInsertTest {
 		Map<Object, Object> entries = ((Map<Object, Object>) doc.field("properties"));
 		Assert.assertEquals(entries.size(), 2);
 
-		Assert.assertFalse((Boolean) entries.get("round"));
+		Assert.assertEquals(entries.get("round"), "eeee");
 		Assert.assertEquals(entries.get("blaaa"), "zigzag");
 
 		database.close();
