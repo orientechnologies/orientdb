@@ -100,7 +100,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 			throw new OCommandSQLParsingException("Missed closed brace", text, beginFields);
 
 		final ArrayList<String> fieldNames = new ArrayList<String>();
-		OStringSerializerHelper.getParameters(text, beginFields, fieldNames);
+		OStringSerializerHelper.getParameters(text, beginFields, endFields, fieldNames);
 		if (fieldNames.size() == 0)
 			throw new OCommandSQLParsingException("Set of fields is empty. Example: (name, surname)", text, endFields);
 
@@ -112,7 +112,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 		if (pos == -1 || !word.toString().equals(KEYWORD_VALUES))
 			throw new OCommandSQLParsingException("Missed VALUES keyword", text, endFields);
 
-		final int beginValues = OStringParser.jumpWhiteSpaces(text, pos + 1);
+		final int beginValues = OStringParser.jumpWhiteSpaces(text, pos);
 		if (pos == -1 || text.charAt(beginValues) != '(')
 			throw new OCommandSQLParsingException("Set of values is missed. Example: ('Bill', 'Stuart', 300)", text, pos);
 
@@ -120,7 +120,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 		if (endValues == -1)
 			throw new OCommandSQLParsingException("Missed closed brace", text, beginValues);
 
-		final List<String> values = OStringSerializerHelper.smartSplit(text, new char[] { ',' }, beginValues + 1, endValues, true);
+		final List<String> values = OStringSerializerHelper.smartSplit(text, new char[] { ',' }, beginValues + 1, endValues - 1, true);
 
 		if (values.size() == 0)
 			throw new OCommandSQLParsingException("Set of values is empty. Example: ('Bill', 'Stuart', 300)", text, beginValues);

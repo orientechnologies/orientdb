@@ -241,7 +241,7 @@ public class OSQLFilter extends OCommandToParse {
 				// CHECK FOR PARAMETERS
 				if (word.length() > op.keyword.length() && word.charAt(op.keyword.length()) == OStringSerializerHelper.PARENTHESIS_BEGIN) {
 					int paramBeginPos = currentPos - (word.length() - op.keyword.length());
-					currentPos = OStringSerializerHelper.getParameters(text, paramBeginPos, params);
+					currentPos = OStringSerializerHelper.getParameters(text, paramBeginPos, -1, params);
 				} else if (!word.equals(op.keyword))
 					throw new OQueryParsingException("Malformed usage of operator '" + op.toString() + "'. Parsed operator is: " + word);
 

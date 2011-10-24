@@ -172,7 +172,7 @@ public abstract class OStringSerializerHelper {
 		int insideMap = 0;
 		int insideLinkPart = 0;
 
-		final int max = endIndex > -1 ? endIndex : iSource.length();
+		final int max = endIndex > -1 ? endIndex + 1 : iSource.length();
 
 		final char[] buffer = new char[max - beginIndex];
 		iSource.getChars(beginIndex, max, buffer, 0);
@@ -417,15 +417,15 @@ public abstract class OStringSerializerHelper {
 		return --currentPos;
 	}
 
-	public static int getParameters(final String iText, final int iBeginPosition, final List<String> iParameters) {
+	public static int getParameters(final String iText, final int iBeginPosition, int iEndPosition, final List<String> iParameters) {
 		iParameters.clear();
 
 		final int openPos = iText.indexOf(PARENTHESIS_BEGIN, iBeginPosition);
-		if (openPos == -1)
+		if (openPos == -1 || (iEndPosition > -1 && openPos > iEndPosition))
 			return iBeginPosition;
 
 		final StringBuilder buffer = new StringBuilder();
-		parse(iText, buffer, openPos, -1, PARAMETER_EXT_SEPARATOR, true);
+		parse(iText, buffer, openPos, iEndPosition, PARAMETER_EXT_SEPARATOR, true);
 		if (buffer.length() == 0)
 			return iBeginPosition;
 
@@ -440,7 +440,7 @@ public abstract class OStringSerializerHelper {
 
 	public static List<String> getParameters(final String iText) {
 		final List<String> params = new ArrayList<String>();
-		getParameters(iText, 0, params);
+		getParameters(iText, 0, -1, params);
 		return params;
 	}
 

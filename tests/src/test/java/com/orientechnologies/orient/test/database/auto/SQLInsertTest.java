@@ -72,8 +72,10 @@ public class SQLInsertTest {
 	public void insertMap() {
 		database.open("admin", "admin");
 
-		ODocument doc = (ODocument) database.command(
-				new OCommandSQL("insert into cluster:default (equaledges, name, properties) values ('no', 'circle', {'round':false} )"))
+		ODocument doc = (ODocument) database
+				.command(
+						new OCommandSQL(
+								"insert into cluster:default (equaledges, name, properties) values ('no', 'circle', {'round':false, 'blaaa':'zigzag'} )"))
 				.execute();
 
 		Assert.assertTrue(doc != null);
@@ -83,8 +85,24 @@ public class SQLInsertTest {
 		Assert.assertEquals(doc.field("equaledges"), "no");
 		Assert.assertEquals(doc.field("name"), "circle");
 		Assert.assertTrue(doc.field("properties") instanceof Map);
-		Assert.assertEquals(((Map) doc.field("properties")).keySet().iterator().next(), "round");
-		Assert.assertEquals(((Map) doc.field("properties")).values().iterator().next(), false);
+
+		Map<Object, Object> entries = ((Map<Object, Object>) doc.field("properties"));
+		Assert.assertEquals(entries.size(), 2);
+
+		Assert.assertFalse((Boolean) entries.get("round"));
+		Assert.assertEquals(entries.get("blaaa"), "zigzag");
+
+		database.close();
+	}
+
+	@Test
+	public void insertWithNoSpaces() {
+		database.open("admin", "admin");
+
+		ODocument doc = (ODocument) database.command(
+				new OCommandSQL("insert into cluster:default(id, title)values(10, 'NoSQL movement')")).execute();
+
+		Assert.assertTrue(doc != null);
 
 		database.close();
 	}
