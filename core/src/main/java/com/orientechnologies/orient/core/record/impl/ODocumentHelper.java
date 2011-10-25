@@ -189,7 +189,7 @@ public class ODocumentHelper {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <RET> RET getFieldValue(ODocument current, final String iFieldName) {
+	public static <RET> RET getFieldValue(final ODocument iRecord, final String iFieldName) {
 		final int fieldNameLength = iFieldName.length();
 		if (fieldNameLength == 0)
 			return null;
@@ -197,48 +197,51 @@ public class ODocumentHelper {
 		Object value = null;
 
 		int beginPos = 0;
-		int separatorPos = 0;
+		int nextSeparatorPos = 0;
 		do {
-			char separator = ' ';
-			for (; separatorPos < fieldNameLength; ++separatorPos) {
-				separator = iFieldName.charAt(separatorPos);
-				if (separator == '.' || separator == '[')
+			char nextSeparator = ' ';
+			for (; nextSeparatorPos < fieldNameLength; ++nextSeparatorPos) {
+				nextSeparator = iFieldName.charAt(nextSeparatorPos);
+				if (nextSeparator == '.' || nextSeparator == '[')
 					break;
 			}
 
 			final String fieldName;
-			if (separatorPos < fieldNameLength)
-				fieldName = iFieldName.substring(beginPos, separatorPos);
-			else if (beginPos > 0)
-				fieldName = iFieldName.substring(beginPos);
-			else
-				fieldName = iFieldName;
+			if (nextSeparatorPos < fieldNameLength)
+				fieldName = iFieldName.substring(beginPos, nextSeparatorPos);
+			else {
+				nextSeparator = ' ';
+				if (beginPos > 0)
+					fieldName = iFieldName.substring(beginPos);
+				else
+					fieldName = iFieldName;
+			}
 
-			if (separator == '.') {
+			if (nextSeparator == '.') {
 				// GET THE LINKED OBJECT IF ANY
-				value = getIdentifiableValue(current, fieldName);
+				value = getIdentifiableValue(iRecord, fieldName);
 
-				if (value == null || !(value instanceof ODocument))
+				if (value == null)
 					// IGNORE IT BY RETURNING NULL
 					return null;
 
-				current = (ODocument) value;
-				if (current.getInternalStatus() == STATUS.NOT_LOADED)
-					// LAZY LOAD IT
-					current.reload();
-			} else if (separator == '[') {
+				if (value != null && value instanceof ORecord<?> && ((ORecord<?>) value).getInternalStatus() == STATUS.NOT_LOADED)
+					// RELOAD IT
+					iRecord.reload();
+
+			} else if (nextSeparator == '[') {
 				if (value == null)
-					value = getIdentifiableValue(current, fieldName);
+					value = getIdentifiableValue(iRecord, fieldName);
 
 				if (value == null)
 					return null;
 
-				final int end = iFieldName.indexOf(']', separatorPos);
+				final int end = iFieldName.indexOf(']', nextSeparatorPos);
 				if (end == -1)
 					throw new IllegalArgumentException("Missed closed ']'");
 
-				final String index = OStringSerializerHelper.getStringContent(iFieldName.substring(separatorPos + 1, end));
-				separatorPos = end;
+				final String index = OStringSerializerHelper.getStringContent(iFieldName.substring(nextSeparatorPos + 1, end));
+				nextSeparatorPos = end;
 
 				if (value instanceof ODocument) {
 					final List<String> indexParts = OStringSerializerHelper.smartSplit(index, ',');
@@ -337,11 +340,15 @@ public class ODocumentHelper {
 							value = values;
 					}
 				}
-			} else
-				value = getIdentifiableValue(current, fieldName);
+			} else {
+				if (fieldName.contains("("))
+					value = evaluateFunction(value, fieldName);
+				else
+					value = getIdentifiableValue(iRecord, fieldName);
+			}
 
-			beginPos = ++separatorPos;
-		} while (separatorPos < fieldNameLength);
+			beginPos = ++nextSeparatorPos;
+		} while (nextSeparatorPos < fieldNameLength);
 
 		return (RET) value;
 	}
@@ -378,7 +385,34 @@ public class ODocumentHelper {
 		} else
 			// RETURN A FIELD
 			((ODocument) iCurrent.getRecord()).checkForFields();
+
 		return ((ODocument) iCurrent.getRecord())._fieldValues.get(iFieldName);
+	}
+
+	public static Object evaluateFunction(final Object currentValue, String iFunction) {
+		if (currentValue == null)
+			return null;
+
+		Object result = null;
+
+		iFunction = iFunction.toUpperCase();
+
+		if (iFunction.startsWith("SIZE("))
+			result = currentValue instanceof ORecord<?> ? 1 : OMultiValue.getSize(currentValue);
+		else if (iFunction.startsWith("LENGTH("))
+			result = currentValue.toString().length();
+		else if (iFunction.startsWith("TOUPPERCASE("))
+			result = currentValue.toString().toUpperCase();
+		else if (iFunction.startsWith("TOLOWERCASE("))
+			result = currentValue.toString().toLowerCase();
+		else if (iFunction.startsWith("TRIM("))
+			result = currentValue.toString().trim();
+		else if (iFunction.startsWith("CHARAT(")) {
+			final String arg = iFunction.substring("CHARAT(".length(), iFunction.length() - 1);
+			result = currentValue.toString().charAt(Integer.parseInt(arg));
+		}
+
+		return result;
 	}
 
 	@SuppressWarnings("unchecked")

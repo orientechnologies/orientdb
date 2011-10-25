@@ -345,7 +345,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 		orderedFields = new ArrayList<OPair<String, String>>();
 		while (currentPos != -1 && (orderedFields.size() == 0 || word.toString().equals(","))) {
-			currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, false);
+			currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, false, " =><");
 			if (currentPos == -1)
 				throw new OCommandSQLParsingException("Field name expected", text, currentPos);
 
