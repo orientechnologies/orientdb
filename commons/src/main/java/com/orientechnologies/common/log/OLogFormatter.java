@@ -1,14 +1,21 @@
 package com.orientechnologies.common.log;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.logging.Formatter;
+import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
 public class OLogFormatter extends Formatter {
 
+	private static final DateFormat	dateFormat	= new SimpleDateFormat("yyyy-MM-dd hh:mm:ss:SSS");
+
 	@Override
 	public String format(final LogRecord record) {
-		if (record.getThrown() == null)
-			return record.getMessage();
+		if (record.getThrown() == null) {
+			return customFormatMessage(record);
+		}
 
 		// FORMAT THE STACK TRACE
 		final StringBuilder buffer = new StringBuilder();
@@ -27,5 +34,39 @@ public class OLogFormatter extends Formatter {
 		}
 
 		return buffer.toString();
+	}
+
+	private String customFormatMessage(final LogRecord iRecord) {
+		Level iLevel = iRecord.getLevel();
+		String iMessage = iRecord.getMessage();
+		Object[] iAdditionalArgs = iRecord.getParameters();
+		String iRequester = getSourceClassSimpleName(iRecord.getSourceClassName());
+
+		final StringBuilder buffer = new StringBuilder();
+		buffer.append('\n');
+		synchronized (dateFormat) {
+			buffer.append(dateFormat.format(new Date()));
+		}
+		buffer.append(' ');
+		buffer.append(iLevel.getName().substring(0, 4));
+		if (iRequester != null) {
+			buffer.append(" [");
+			buffer.append(iRequester);
+			buffer.append(']');
+		}
+		buffer.append(' ');
+
+		// FORMAT THE MESSAGE
+		try {
+			buffer.append(String.format(iMessage, iAdditionalArgs));
+		} catch (Exception e) {
+			buffer.append(iMessage);
+		}
+
+		return buffer.toString();
+	}
+
+	private String getSourceClassSimpleName(final String iSourceClassName) {
+		return iSourceClassName.substring(iSourceClassName.lastIndexOf(".") + 1);
 	}
 }
