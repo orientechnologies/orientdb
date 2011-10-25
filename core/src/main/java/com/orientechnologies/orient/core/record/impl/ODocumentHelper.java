@@ -34,6 +34,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
@@ -217,19 +218,7 @@ public class ODocumentHelper {
 					fieldName = iFieldName;
 			}
 
-			if (nextSeparator == '.') {
-				// GET THE LINKED OBJECT IF ANY
-				value = getIdentifiableValue(iRecord, fieldName);
-
-				if (value == null)
-					// IGNORE IT BY RETURNING NULL
-					return null;
-
-				if (value != null && value instanceof ORecord<?> && ((ORecord<?>) value).getInternalStatus() == STATUS.NOT_LOADED)
-					// RELOAD IT
-					iRecord.reload();
-
-			} else if (nextSeparator == '[') {
+			if (nextSeparator == '[') {
 				if (value == null)
 					value = getIdentifiableValue(iRecord, fieldName);
 
@@ -343,12 +332,17 @@ public class ODocumentHelper {
 			} else {
 				if (fieldName.contains("("))
 					value = evaluateFunction(value, fieldName);
-				else
+				else {
+					// GET THE LINKED OBJECT IF ANY
 					value = getIdentifiableValue(iRecord, fieldName);
+					if (value != null && value instanceof ORecord<?> && ((ORecord<?>) value).getInternalStatus() == STATUS.NOT_LOADED)
+						// RELOAD IT
+						((ORecord<?>) value).reload();
+				}
 			}
 
 			beginPos = ++nextSeparatorPos;
-		} while (nextSeparatorPos < fieldNameLength);
+		} while (nextSeparatorPos < fieldNameLength && value != null);
 
 		return (RET) value;
 	}
@@ -407,9 +401,78 @@ public class ODocumentHelper {
 			result = currentValue.toString().toLowerCase();
 		else if (iFunction.startsWith("TRIM("))
 			result = currentValue.toString().trim();
-		else if (iFunction.startsWith("CHARAT(")) {
-			final String arg = iFunction.substring("CHARAT(".length(), iFunction.length() - 1);
-			result = currentValue.toString().charAt(Integer.parseInt(arg));
+		else if (iFunction.startsWith("TOJSON("))
+			result = currentValue instanceof ODocument ? ((ODocument) currentValue).toJSON() : null;
+		else if (iFunction.startsWith("KEYS("))
+			result = currentValue instanceof Map<?, ?> ? ((Map<?, ?>) currentValue).keySet() : null;
+		else if (iFunction.startsWith("VALUES("))
+			result = currentValue instanceof Map<?, ?> ? ((Map<?, ?>) currentValue).values() : null;
+		else if (iFunction.startsWith("ASSTRING("))
+			result = currentValue.toString();
+		else if (iFunction.startsWith("ASINTEGER("))
+			result = new Integer(currentValue.toString());
+		else if (iFunction.startsWith("ASFLOAT("))
+			result = new Float(currentValue.toString());
+		else if (iFunction.startsWith("ASBOOLEAN(")) {
+			if (currentValue instanceof String)
+				result = new Boolean((String) currentValue);
+			else if (currentValue instanceof Number) {
+				final int bValue = ((Number) currentValue).intValue();
+				if (bValue == 0)
+					result = Boolean.FALSE;
+				else if (bValue == 1)
+					result = Boolean.TRUE;
+			}
+		} else if (iFunction.startsWith("ASDATE("))
+			if (currentValue instanceof Long)
+				result = new Date((Long) currentValue);
+			else
+				try {
+					result = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateFormatInstance()
+							.parse(currentValue.toString());
+				} catch (ParseException e) {
+				}
+		else if (iFunction.startsWith("ASDATETIME("))
+			if (currentValue instanceof Long)
+				result = new Date((Long) currentValue);
+			else
+				try {
+					result = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance()
+							.parse(currentValue.toString());
+				} catch (ParseException e) {
+				}
+		else {
+			// EXTRACT ARGUMENTS
+			final List<String> args = OStringSerializerHelper.getParameters(iFunction.substring(iFunction.indexOf('(')));
+
+			if (iFunction.startsWith("CHARAT("))
+				result = currentValue.toString().charAt(Integer.parseInt(args.get(0)));
+			else if (iFunction.startsWith("INDEXOF("))
+				if (args.size() == 1)
+					result = currentValue.toString().indexOf(OStringSerializerHelper.getStringContent(args.get(0)));
+				else
+					result = currentValue.toString().indexOf(OStringSerializerHelper.getStringContent(args.get(0)),
+							Integer.parseInt(args.get(1)));
+			else if (iFunction.startsWith("SUBSTRING("))
+				if (args.size() == 1)
+					result = currentValue.toString().substring(Integer.parseInt(args.get(0)));
+				else
+					result = currentValue.toString().substring(Integer.parseInt(args.get(0)), Integer.parseInt(args.get(1)));
+			else if (iFunction.startsWith("APPEND("))
+				result = currentValue.toString() + OStringSerializerHelper.getStringContent(args.get(0));
+			else if (iFunction.startsWith("PREFIX("))
+				result = OStringSerializerHelper.getStringContent(args.get(0)) + currentValue.toString();
+			else if (iFunction.startsWith("FORMAT("))
+				result = String.format(OStringSerializerHelper.getStringContent(args.get(0)), currentValue.toString());
+			else if (iFunction.startsWith("LEFT(")) {
+				final int len = Integer.parseInt(args.get(0));
+				final String stringValue = currentValue.toString();
+				result = stringValue.substring(0, len <= stringValue.length() ? len : stringValue.length());
+			} else if (iFunction.startsWith("RIGHT(")) {
+				final int offset = Integer.parseInt(args.get(0));
+				final String stringValue = currentValue.toString();
+				result = stringValue.substring(offset <= stringValue.length() - 1 ? offset : stringValue.length() - 1);
+			}
 		}
 
 		return result;
