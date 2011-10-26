@@ -55,12 +55,25 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 
 	protected void sendTextContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iHeaders,
 			final String iContentType, final Object iContent, final boolean iKeepAlive) throws IOException {
-		final String content = iContent != null ? iContent.toString() : null;
+		final String content;
+		final String contentType;
+		if (iRequest.url.indexOf('?') > 0 && iRequest.url.indexOf(OHttpUtils.CALLBACK_PARAMETER_NAME, iRequest.url.indexOf('?')) > 0) {
+			String callbackFunction = iRequest.url.substring(iRequest.url.indexOf(OHttpUtils.CALLBACK_PARAMETER_NAME,
+					iRequest.url.indexOf('?'))
+					+ OHttpUtils.CALLBACK_PARAMETER_NAME.length());
+			if (callbackFunction.indexOf('&') > -1)
+				callbackFunction = callbackFunction.substring(0, callbackFunction.indexOf('&'));
+			content = callbackFunction + "(" + iContent + ")";
+			contentType = "text/javascript";
+		} else {
+			content = iContent != null ? iContent.toString() : null;
+			contentType = iContentType;
+		}
 
 		final boolean empty = content == null || content.length() == 0;
 
 		sendStatus(iRequest, empty && iCode == 200 ? 204 : iCode, iReason);
-		sendResponseHeaders(iRequest, iContentType, iKeepAlive);
+		sendResponseHeaders(iRequest, contentType, iKeepAlive);
 		if (iHeaders != null)
 			writeLine(iRequest, iHeaders);
 

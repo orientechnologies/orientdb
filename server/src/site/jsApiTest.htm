@@ -162,6 +162,15 @@
 							+ ' items' + '\n' + queryResult);
 		}
 	}
+	
+
+	function queryFetchedAndLimited2Callback() {
+		connectLogged();
+		var script = document.createElement( 'script' );
+		script.type = 'text/javascript';
+		script.src = 'http://localhost:2480/query/demo/sql/select from Address where city.country.name = \'Italy\'/?campo1=0&callback=jsonpTest&campo2=1';
+		$("#jsonPTestDiv").append( script );
+	}
 
 	function load() {
 		connectLogged();
@@ -333,6 +342,9 @@
 			jQuery("#output").text('Disconnect OK.');
 		}
 	}
+	function jsonpTest(data) {
+		alert('PRova'+data);
+	}
 </script>
 </head>
 <body>
@@ -360,6 +372,8 @@
 	<button type="button" onclick="javascript:queryLimited();">Test Query Limited</button>
 	<button type="button" onclick="javascript:queryFetchedAndLimited();">Test Query Fetched and Limited</button>
 	<button type="button" onclick="javascript:queryFetchedAndLimited2();">Test Query Fetched and Limited 2</button>
+	<button type="button" onclick="javascript:queryFetchedAndLimited2Callback();">Test Query Fetched and Limited with Callback</button>
+	<div id="jsonPTestDiv"></div>
 	<br />
 	<button type="button" onclick="javascript:insert();">Test Insert</button>
 	<button type="button" onclick="javascript:remove();">Test Delete</button>
