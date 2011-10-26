@@ -1,0 +1,124 @@
+<table width="100%" cellspacing="10">
+	<tr>
+		<td valign="top" width="60%">
+			<form id="createForm" action="#">
+				<table width="100%" cellpadding="4" cellspacing="3">
+					<tr>
+						<td colspan="3" align="left" valign="bottom"><a href="http://www.orientechnologies.com/orient-db.htm"><img border="0"
+								src="images/orient_db.png" /></a><b class="help"> Studio</b></td>
+					</tr>
+					<tr>
+						<td colspan="2" align="left" class="help"><br>
+							<h2>Create new database</h2>
+							<p>
+								To create a new database assure to have the rights to access to the remote server with the privilege "database.create". if you've not defined
+								any Server's users just use '<b>root</b>'.
+							</p>
+							<p>
+								When prompted, provide the OrientDB Server's credentials: for example '<b>root</b>' as user and the automatic generated password created under
+								the OrientDB installation directory, in the file "config/orient-server-config.xml".
+							</p>
+							<p>By default new databases always have 3 users:
+							<ul>
+								<li><b>"reader"</b>, with password "reader", can read standard records from database</li>
+								<li><b>"writer"</b>, with password "writer", can create, read, update and delete records</li>
+								<li><b>"admin"</b>, with password "admin", is God: can make anything against the database</li>
+							</ul>. Remember to change default password right after tge database is created. For more information look at the <a
+							href="http://code.google.com/p/orient/wiki/Security">Security</a> page.
+							</p></td>
+					</tr>
+					<tr>
+						<td align="right" class="ui-widget help">Server:</td>
+						<td><input id="server" size="50" value="" class="ui-widget help" /></td>
+					</tr>
+					<tr>
+						<td align="right" class="ui-widget help">Database name:</td>
+						<td><table>
+								<tr>
+									<td id="databaseCell"><input id="database" size="50" value="" class="ui-widget help" /></td>
+								</tr>
+							</table></td>
+					</tr>
+					<tr>
+						<td align="right" class="ui-widget help">Type:</td>
+						<td><select id="database" class="ui-widget help">
+								<option value="local">local</option>
+								<option value="memory">memory</option>
+						</select></td>
+					</tr>
+					<tr>
+						<td align="center" colspan="2" class="ui-widget help">
+							<button type="submit" id="buttonConnect" class="ui-button-text-icon">
+								Create <img border="0" alt="Create" src="images/connect.png" align="top" />
+							</button>
+							<button id="buttonCancel" class="ui-button-text-icon">
+								Cancel <img border="0" alt="Back" src="images/back.png" align="top" />
+							</button>
+						</td>
+					</tr>
+				</table>
+			</form>
+		</td>
+	</tr>
+</table>
+
+<script language="javascript">
+	$('#createForm').submit(
+			function() {
+				alert("Not supported yet");
+				return false;
+
+				if (orientServer == null) {
+					orientServer = new ODatabase($('#server').val() + '/'
+							+ $('#database').val());
+				}
+				databaseInfo = orientServer.create();
+				if (databaseInfo == null) {
+					jQuery("#output").text(orientServer.getErrorMessage());
+				} else {
+					controller.loadFragment("panelDatabase.htm", null, null,
+							'panel');
+
+					$("#navigation").show().ready(function() {
+						if (/MSIE (\d+\.\d+);/.test(navigator.userAgent))
+							$('#navigation').addClass('navigation-ie');
+						else
+							$('#navigation').addClass('navigation');
+
+						var d = 1000;
+						$('#navigation a').each(function() {
+							$(this).stop().animate({
+								'marginTop' : '-80px'
+							}, d += 300);
+						});
+
+						$('#navigation > li').hover(function() {
+							$('a', $(this)).stop().animate({
+								'marginTop' : '-2px'
+							}, 100);
+						}, function() {
+							$('a', $(this)).stop().animate({
+								'marginTop' : '-80px'
+							}, 100);
+						});
+					});
+
+					$('#header-server').val($('#server').val());
+					$('#header-database').val($('#database').val());
+
+					$('#header').show();
+					$("#buttonConnect").hide();
+					$("#buttonDisconnect").show();
+				}
+				return false;
+			});
+
+	$('#buttonCancel').click(function() {
+		controller.loadFragment("panelHome.htm", null, null, 'panel');
+		return false;
+	});
+
+	$('#server').change(formatServerURL);
+	$('#server').val(document.location.href);
+	formatServerURL();
+</script>

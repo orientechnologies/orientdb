@@ -52,26 +52,6 @@ function formatServerURL() {
 	$('#rawServer').html($('#server').val() + "/");
 }
 
-function listDatabases(serverUrl) {
-	var input = '<input id="database" size="50" value="demo" class="ui-widget help" />';
-	try {
-		var listDatabaseServer = new ODatabase(serverUrl);
-		var response = listDatabaseServer.listDatabases();
-		var databases = response['databases'];
-
-		if (databases != null && databases != 'undefined') {
-			input = '<select id="database">';
-			for (database in databases) {
-				input = input + '<option value="' + databases[database] + '" >'
-						+ databases[database] + '</option>';
-			}
-			input = input + '<select/>';
-		}
-	} catch (e) {
-	}
-	$('#databaseCell').html(input);
-}
-
 jQuery(document).ready(function() {
 	jQuery(document).ajaxError(function(event, request, settings, err) {
 		jQuery("#output").val("Error: " + request.responseText);
