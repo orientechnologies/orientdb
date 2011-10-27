@@ -485,11 +485,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			} else {
 				final Integer depthLevel = getDepthLevel(record, iFetchPlan, fieldName);
 				if (depthLevel != null) {
-					if (depthLevel == 0) {
-						// NO FETCH THIS FIELD PLEASE
-						continue;
-					}
-					if (depthLevel > -1 && depthLevel >= iCurrentLevel) {
+					if (depthLevel > -1 && iCurrentLevel > depthLevel) {
 						// MAX DEPTH REACHED: STOP TO FETCH THIS FIELD
 						continue;
 					}
@@ -504,8 +500,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 					json.writeAttribute(indentLevel + 1, true, fieldName, OJSONWriter.encode(fieldValue));
 				} else {
 					try {
-						fetch(record, iFetchPlan, fieldValue, fieldName, iCurrentLevel + 1, iMaxFetch, json, indentLevel, includeType,
-								includeId, includeVer, includeClazz, attribSameRow, keepTypes, parsedRecords);
+						fetch(record, iFetchPlan, fieldValue, fieldName, iCurrentLevel, iMaxFetch, json, indentLevel, includeType, includeId,
+								includeVer, includeClazz, attribSameRow, keepTypes, parsedRecords);
 					} catch (Exception e) {
 						e.printStackTrace();
 						OLogManager.instance().error(null, "Fetching error on record %s", e, record.getIdentity());
@@ -560,18 +556,14 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			boolean includeType, final boolean includeId, final boolean includeVer, final boolean includeClazz,
 			final boolean attribSameRow, final boolean keepTypes, final Set<ORID> parsedRecords) throws IOException {
 		Integer depthLevel;
-		final Integer anyFieldDepthLevel = iFetchPlan != null ? iFetchPlan.get("*") : -1;
+		final Integer anyFieldDepthLevel = iFetchPlan != null ? iFetchPlan.get(OFetchHelper.ANY_FIELD) : -1;
 		depthLevel = getDepthLevel(iRootRecord, iFetchPlan, fieldName);
 
 		if (depthLevel == null)
 			// NO SPECIFIED: ASSIGN DEFAULT LEVEL TAKEN FROM * WILDCARD IF ANY
 			depthLevel = anyFieldDepthLevel;
 
-		if (depthLevel == 0)
-			// NO FETCH THIS FIELD PLEASE
-			return;
-
-		if (depthLevel > -1 && iCurrentLevel >= depthLevel)
+		if (depthLevel > -1 && iCurrentLevel > depthLevel)
 			// MAX DEPTH REACHED: STOP TO FETCH THIS FIELD
 			return;
 
@@ -707,6 +699,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 					if (depthLevel == null)
 						cls = cls.getSuperClass();
 				}
+				if (depthLevel == null && iFetchPlan.containsKey(OFetchHelper.ANY_FIELD))
+					depthLevel = iFetchPlan.get(OFetchHelper.ANY_FIELD);
 			}
 		} else
 			// INFINITE

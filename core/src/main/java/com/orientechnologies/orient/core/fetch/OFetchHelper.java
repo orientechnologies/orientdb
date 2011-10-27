@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  * 
  */
 public class OFetchHelper {
-	private static final String	ANY_FIELD	= "*";
+	public static final String	ANY_FIELD	= "*";
 
 	public static Map<String, Integer> buildFetchPlan(final String iFetchPlan) {
 		final Map<String, Integer> fetchPlan;
