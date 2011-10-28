@@ -152,6 +152,40 @@ function ODatabase(databasePath) {
 		});
 		return this.getDatabaseInfo();
 	}
+	
+
+
+	ODatabase.prototype.create = function(userName, userPass, type) {
+		if (userName == null) {
+			userName = '';
+		}
+		if (userPass == null) {
+			userPass = '';
+		}
+		urlPrefix = this.databaseUrl;
+
+		if (type == null || type == '') {
+			type = 'local';
+		}
+		$.ajax({
+			type : "POST",
+			url : urlPrefix + 'createDatabase/' + this.encodedDatabaseName
+			+ '/' + type,
+			context : this,
+			async : false,
+			username : userName,
+			password : userPass,
+			success : function(msg) {
+				this.setErrorMessage(null);
+				this.setDatabaseInfo(this.transformResponse(msg));
+			},
+			error : function(msg) {
+				this.setErrorMessage('Connect error: ' + msg.responseText);
+				this.setDatabaseInfo(null);
+			}
+		});
+		return this.getDatabaseInfo();
+	}
 
 	ODatabase.prototype.query = function(iQuery, iLimit, iFetchPlan) {
 		if (this.databaseInfo == null) {

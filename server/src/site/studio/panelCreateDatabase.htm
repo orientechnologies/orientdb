@@ -41,7 +41,7 @@
 					</tr>
 					<tr>
 						<td align="right" class="ui-widget help">Type:</td>
-						<td><select id="database" class="ui-widget help">
+						<td><select id="databaseType" class="ui-widget help">
 								<option value="local">local</option>
 								<option value="memory">memory</option>
 						</select></td>
@@ -65,14 +65,11 @@
 <script language="javascript">
 	$('#createForm').submit(
 			function() {
-				alert("Not supported yet");
-				return false;
-
 				if (orientServer == null) {
 					orientServer = new ODatabase($('#server').val() + '/'
 							+ $('#database').val());
 				}
-				databaseInfo = orientServer.create();
+				databaseInfo = orientServer.create(null,null,$('#databaseType').val());
 				if (databaseInfo == null) {
 					jQuery("#output").text(orientServer.getErrorMessage());
 				} else {
