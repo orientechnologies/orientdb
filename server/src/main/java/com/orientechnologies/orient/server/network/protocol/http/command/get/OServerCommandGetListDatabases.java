@@ -16,12 +16,8 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
 
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
@@ -39,7 +35,6 @@ public class OServerCommandGetListDatabases extends OServerCommandAuthenticatedS
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		checkSyntax(iRequest.url, 1, "Syntax error: server");
 
@@ -47,14 +42,7 @@ public class OServerCommandGetListDatabases extends OServerCommandAuthenticatedS
 
 		try {
 			final ODocument result = new ODocument();
-			final Set<String> databaseNames = new HashSet<String>();
-			databaseNames.addAll(OServerMain.server().getAvailableStorageNames().keySet());
-			result.field("databases", databaseNames);
-			for (OStorage storage : Orient.instance().getStorages()) {
-				String storageName = storage.getName();
-				if (!((Set<String>) result.field("databases")).contains(storageName))
-					((Set<String>) result.field("databases")).add(storageName);
-			}
+			result.field("databases", OServerMain.server().getAvailableStorageNames().keySet());
 			sendRecordContent(iRequest, result);
 		} finally {
 		}

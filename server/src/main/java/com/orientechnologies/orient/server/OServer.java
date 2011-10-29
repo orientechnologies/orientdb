@@ -231,6 +231,12 @@ public class OServer {
 		final String rootDirectory = getDatabaseDirectory();
 		scanDatabaseDirectory(rootDirectory, new File(rootDirectory), storages);
 
+		for (OStorage storage : Orient.instance().getStorages()) {
+			final String storageName = storage.getName();
+			if (!storages.containsKey(storageName))
+				storages.put(storageName, storage.getURL());
+		}
+
 		return storages;
 	}
 
@@ -455,12 +461,11 @@ public class OServer {
 			for (File db : iDirectory.listFiles()) {
 				if (db.isDirectory()) {
 					final File f = new File(db.getAbsolutePath() + "/default.odh");
-					if (f.exists()){
+					if (f.exists()) {
 						final String dbPath = db.getPath().replace('\\', '/');
 						// FOUND DB FOLDER
 						iStorages.put(dbPath.substring(iRootDirectory.length()), "local:" + dbPath);
-					}
-					else
+					} else
 						// TRY TO GO IN DEEP RECURSIVELY
 						scanDatabaseDirectory(iRootDirectory, db, iStorages);
 				}

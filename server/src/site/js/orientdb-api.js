@@ -169,7 +169,7 @@ function ODatabase(databasePath) {
 		}
 		$.ajax({
 			type : "POST",
-			url : urlPrefix + 'createDatabase/' + this.encodedDatabaseName
+			url : urlPrefix + 'database/' + this.encodedDatabaseName
 			+ '/' + type,
 			context : this,
 			async : false,
