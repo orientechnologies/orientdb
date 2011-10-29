@@ -161,9 +161,9 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 		try {
 			final ONavigableMap<Object, Set<OIdentifiable>> subSet = map.tailMap(fromKey, isInclusive);
 			if (subSet == null)
-				return ORecordLazySet.EMPTY_SET;
+				return Collections.emptySet();
 
-			final Set<OIdentifiable> result = new ORecordLazySet(getDatabase());
+			final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
 			for (final Set<OIdentifiable> v : subSet.values()) {
 				result.addAll(v);
 			}
@@ -181,9 +181,9 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 		try {
 			final ONavigableMap<Object, Set<OIdentifiable>> subSet = map.headMap(toKey, isInclusive);
 			if (subSet == null)
-				return ORecordLazySet.EMPTY_SET;
+				return Collections.emptySet();
 
-			final Set<OIdentifiable> result = new ORecordLazySet(getDatabase());
+			final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
 			for (final Set<OIdentifiable> v : subSet.values()) {
 				result.addAll(v);
 			}
@@ -199,7 +199,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 		acquireExclusiveLock();
 
 		try {
-			final Set<ODocument> result = new HashSet<ODocument>();
+			final Set<ODocument> result = new ODocumentFieldsHashSet();
 
 			final ONavigableMap<Object, Set<OIdentifiable>> subSet = map.tailMap(fromKey, isInclusive);
 			if (subSet != null) {
@@ -226,7 +226,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 		acquireExclusiveLock();
 
 		try {
-			final Set<ODocument> result = new HashSet<ODocument>();
+			final Set<ODocument> result = new ODocumentFieldsHashSet();
 
 			final ONavigableMap<Object, Set<OIdentifiable>> subSet = map.headMap(toKey, isInclusive);
 			if (subSet != null) {
@@ -276,7 +276,8 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 			if (subSet == null)
 				return ORecordLazySet.EMPTY_SET;
 
-			final Set<OIdentifiable> result = new ORecordLazySet(getDatabase());
+
+			final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
 			for (final Set<OIdentifiable> v : subSet.values()) {
 				result.addAll(v);
 			}
@@ -295,7 +296,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 		acquireExclusiveLock();
 
 		try {
-			final Set<ODocument> result = new HashSet<ODocument>();
+			final Set<ODocument> result = new ODocumentFieldsHashSet();
 
 			final ONavigableMap<Object, Set<OIdentifiable>> subSet = map.subMap(iRangeFrom, iInclusive, iRangeTo, iInclusive);
 			if (subSet != null) {
@@ -350,16 +351,19 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 		final List<Comparable> sortedKeys = new ArrayList<Comparable>((Collection<? extends Comparable>) iKeys);
 		Collections.sort(sortedKeys);
 
-		final Set<ODocument> result = new HashSet<ODocument>();
+		final Set<ODocument> result = new ODocumentFieldsHashSet();
 		acquireExclusiveLock();
 		try {
 			for (final Object key : sortedKeys) {
 				final ORecordLazySet values = (ORecordLazySet) map.get(key);
-				if (values != null)
-					values.setDatabase(getDatabase());
+				if (values != null) {
+          values.setDatabase(getDatabase());
+          values.setAutoConvertToRecord(false);
+        }
 
 				if (values == null)
 					continue;
+
 				for (final OIdentifiable value : values) {
 					final ODocument document = new ODocument();
 					document.field("key", key);

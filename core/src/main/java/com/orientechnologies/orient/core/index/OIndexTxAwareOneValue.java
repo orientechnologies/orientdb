@@ -125,7 +125,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
 	@Override
 	public Collection<ODocument> getEntries(final Collection<?> iKeys) {
 		final Collection<?> keys = new ArrayList<Object>(iKeys);
-		final Set<ODocument> result = new HashSet<ODocument>();
+		final Set<ODocument> result = new ODocumentFieldsHashSet();
 		final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
 		if (indexChanges == null) {
 			result.addAll(super.getEntries(keys));

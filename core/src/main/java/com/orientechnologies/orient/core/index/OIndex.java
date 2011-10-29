@@ -241,6 +241,6 @@ public interface OIndex<T> {
 	 */
 	public Collection<ODocument> getEntries(Collection<?> iKeys);
 
-	public OIndexDefinition getDefinition();
+     public OIndexDefinition getDefinition();
 
 }

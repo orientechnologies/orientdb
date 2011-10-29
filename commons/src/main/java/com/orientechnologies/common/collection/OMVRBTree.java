@@ -356,7 +356,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 * @throws NullPointerException
 	 *           if the specified key is null and this map uses natural ordering, or its comparator does not permit null keys
 	 */
-	protected final OMVRBTreeEntry<K, V> getEntry(final Object key,final PartialSearchMode partialSearchMode) {
+	public final OMVRBTreeEntry<K, V> getEntry(final Object key,final PartialSearchMode partialSearchMode) {
 		return getEntry(key, false, partialSearchMode);
 	}
 
@@ -513,7 +513,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
      * @param partialSearchMode In case of {@link OCompositeKey} key is passed in
      * this parameter will be used to find preferred one.
 	 */
-	final OMVRBTreeEntry<K, V> getCeilingEntry(final K key, final PartialSearchMode partialSearchMode) {
+	public final OMVRBTreeEntry<K, V> getCeilingEntry(final K key, final PartialSearchMode partialSearchMode) {
         final OMVRBTreeEntry<K, V> p = getEntry(key, true, partialSearchMode);
 
 		if (p == null)
@@ -574,7 +574,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 * Gets the entry for the least key greater than the specified key; if no such entry exists, returns the entry for the least key
 	 * greater than the specified key; if no such entry exists returns <tt>null</tt>.
 	 */
-    final OMVRBTreeEntry<K, V> getHigherEntry(final K key) {
+    public final OMVRBTreeEntry<K, V> getHigherEntry(final K key) {
         final OMVRBTreeEntry<K, V> p = getEntry(key, true, PartialSearchMode.HIGHEST_BOUNDARY);
 
         if (p == null)

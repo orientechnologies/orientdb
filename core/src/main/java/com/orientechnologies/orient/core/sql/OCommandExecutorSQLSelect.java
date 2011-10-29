@@ -851,18 +851,35 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	 * @param indexResult
 	 *          Result of index search.
 	 */
-	private void fillSearchIndexResultSet(final List<ORecord<?>> resultSet, final Object indexResult) {
-		if (indexResult != null) {
-			if (indexResult instanceof Collection<?>) {
-				Collection<OIdentifiable> indexResultSet = (Collection<OIdentifiable>) indexResult;
-				if (!indexResultSet.isEmpty())
-					for (OIdentifiable o : indexResultSet)
-						fillResultSet(resultSet, o);
+  private void fillSearchIndexResultSet(final List<ORecord<?>> resultSet, final Object indexResult) {
+    if (indexResult != null) {
+      if (indexResult instanceof Collection<?>) {
+        Collection<OIdentifiable> indexResultSet = (Collection<OIdentifiable>) indexResult;
+        if (!indexResultSet.isEmpty()) {
+          // FOUND USING INDEXES
+          for (OIdentifiable identifiable : indexResultSet) {
+           ORecord<?> record = identifiable.getRecord();
+            if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+              try {
+                record = record.<ORecord>load();
+              } catch (ORecordNotFoundException e) {
+                throw new OException("Error during loading record with id : " + record.getIdentity());
+              }
+            }
 
-			} else
-				fillResultSet(resultSet, (OIdentifiable) indexResult);
-
-		}
+            if (filter((ORecordInternal<?>) record)) {
+              final boolean continueResultParsing = addResult(record);
+              if (!continueResultParsing)
+                break;
+            }
+          }
+        }
+      } else {
+        final ORecord<?> record = ((OIdentifiable) indexResult).getRecord();
+        if (filter((ORecordInternal<?>) record))
+          addResult(record);
+      }
+    }
 	}
 
 	private void fillResultSet(final List<ORecord<?>> resultSet, OIdentifiable o) {
@@ -1099,22 +1116,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		if (searchForIndexes(resultSet, cls)) {
 			OProfiler.getInstance().updateCounter("Query.indexUsage", 1);
 
-			// FOUND USING INDEXES
-			for (ORecord<?> record : resultSet) {
-				if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
-					try {
-						record = record.<ORecord> load();
-					} catch (ORecordNotFoundException e) {
-						throw new OException("Error during loading record with id : " + record.getIdentity());
-					}
-				}
 
-				if (filter((ORecordInternal<?>) record)) {
-					final boolean continueResultParsing = addResult(record);
-					if (!continueResultParsing)
-						break;
-				}
-			}
 		} else
 			// NO INDEXES: SCAN THE ENTIRE CLUSTER
 			scanEntireClusters(clusterIds);

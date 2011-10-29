@@ -15,14 +15,11 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
+import com.orientechnologies.common.collection.OMVRBTree;
+import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.common.collection.ONavigableMap;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
@@ -92,23 +89,57 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 		}
 	}
 
-	public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive) {
+  public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive) {
+
+    acquireExclusiveLock();
+
+    try {
+
+      OMVRBTreeEntry<Object, OIdentifiable> firstEntry;
+      if(isInclusive)
+         firstEntry = map.getCeilingEntry(fromKey, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
+      else
+          firstEntry = map.getHigherEntry(fromKey);
+
+      if (firstEntry == null)
+        return Collections.emptySet();
+
+      int firstPageIndex = map.getPageIndex();
+      int size = 0;
+
+      OMVRBTreeEntry<Object, OIdentifiable> entry = firstEntry;
+
+      while (entry != null) {
+        size += entry.getSize();
+        entry = OMVRBTree.successor(entry);
+      }
+
+      final Set<OIdentifiable> result = new HashSet<OIdentifiable>(size);
+
+      entry = firstEntry;
+      map.setPageIndex(firstPageIndex);
+
+      while (entry != null) {
+        result.add(entry.getValue(map.getPageIndex()));
+        entry = OMVRBTree.next(entry);
+      }
+
+      return result;
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive) {
 
 		acquireExclusiveLock();
 
 		try {
-			return getLazySet(map.tailMap(fromKey, isInclusive));
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+      final ONavigableMap<Object, OIdentifiable>  headMap = map.headMap(toKey, isInclusive);
+      if(headMap == null)
+        return Collections.emptySet();
 
-	public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive) {
-
-		acquireExclusiveLock();
-
-		try {
-			return getLazySet(map.headMap(toKey, isInclusive));
+			return new HashSet<OIdentifiable>(headMap.values());
 		} finally {
 			releaseExclusiveLock();
 		}
@@ -119,10 +150,12 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 		acquireExclusiveLock();
 
 		try {
-			final Set<ODocument> result = new HashSet<ODocument>();
+			final Set<ODocument> result;
 
 			final ONavigableMap<Object, OIdentifiable> subSet = map.tailMap(fromKey, isInclusive);
 			if (subSet != null) {
+        result = new ODocumentFieldsHashSet();
+
 				for (final Entry<Object, OIdentifiable> v : subSet.entrySet()) {
 					final ODocument document = new ODocument();
 					document.field("key", v.getKey());
@@ -130,7 +163,8 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 					document.unsetDirty();
 					result.add(document);
 				}
-			}
+			} else
+        result = Collections.emptySet();
 
 			return result;
 		} finally {
@@ -143,7 +177,7 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 		acquireExclusiveLock();
 
 		try {
-			final Set<ODocument> result = new HashSet<ODocument>();
+			final Set<ODocument> result = new ODocumentFieldsHashSet();
 
 			final ONavigableMap<Object, OIdentifiable> subSet = map.headMap(toKey, isInclusive);
 			if (subSet != null) {
@@ -186,11 +220,12 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 		acquireExclusiveLock();
 
 		try {
-			final ONavigableMap<Object, OIdentifiable> subSet = map.subMap(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive);
+			final ONavigableMap<Object, OIdentifiable> subMap = map.subMap(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive);
 
-			final Set<OIdentifiable> result = getLazySet(subSet);
+      if(subMap == null)
+        return Collections.emptySet();
 
-			return result;
+			return new HashSet<OIdentifiable>(subMap.values());
 
 		} finally {
 			releaseExclusiveLock();
@@ -204,7 +239,7 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 		acquireExclusiveLock();
 
 		try {
-			final Set<ODocument> result = new HashSet<ODocument>();
+			final Set<ODocument> result = new ODocumentFieldsHashSet();
 
 			final ONavigableMap<Object, OIdentifiable> subSet = map.subMap(iRangeFrom, iInclusive, iRangeTo, iInclusive);
 			if (subSet != null) {
@@ -239,14 +274,6 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 				iProgressListener, OStreamSerializerRID.INSTANCE);
 	}
 
-	private Set<OIdentifiable> getLazySet(final ONavigableMap<Object, OIdentifiable> iSubSet) {
-		if (iSubSet == null)
-			return ORecordLazySet.EMPTY_SET;
-
-		final Set<OIdentifiable> result = new ORecordLazySet(getDatabase());
-		result.addAll(iSubSet.values());
-		return result;
-	}
 
 	public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
 		final List<Comparable> sortedKeys = new ArrayList<Comparable>((Collection<? extends Comparable>) iKeys);
@@ -270,7 +297,7 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 		final List<Comparable> sortedKeys = new ArrayList<Comparable>((Collection<? extends Comparable>) iKeys);
 		Collections.sort(sortedKeys);
 
-		final Set<ODocument> result = new HashSet<ODocument>();
+		final Set<ODocument> result = new ODocumentFieldsHashSet();
 		acquireExclusiveLock();
 		try {
 			for (final Object key : sortedKeys) {

@@ -137,14 +137,13 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
 	public Collection<ODocument> getEntries(final Collection<?> iKeys) {
 		final Collection<?> keys = new ArrayList<Object>(iKeys);
 
-		final Set<ODocument> result = new HashSet<ODocument>();
+		final Set<ODocument> result = new ODocumentFieldsHashSet();
 
 		final Set<Object> keysToRemove = new HashSet<Object>();
 		final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
 
 		if (indexChanges == null) {
-			result.addAll(super.getEntries(keys));
-			return result;
+			return super.getEntries(keys);
 		}
 
 		for (final Object key : keys) {
