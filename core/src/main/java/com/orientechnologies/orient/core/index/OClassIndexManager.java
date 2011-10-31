@@ -152,8 +152,6 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
 	@Override
 	public boolean onRecordAfterDelete(ODocument iRecord) {
-		iRecord = checkForLoading(iRecord);
-
 		final OClass cls = iRecord.getSchemaClass();
 		if (cls == null)
 			return false;
