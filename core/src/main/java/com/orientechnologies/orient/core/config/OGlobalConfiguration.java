@@ -54,8 +54,7 @@ public enum OGlobalConfiguration {
 			"Tells to the engine to not close the storage when a database is closed. Storages will be closed when the process will shutdown",
 			Boolean.class, Boolean.TRUE),
 
-	STORAGE_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record", Integer.class,
-			5000),
+	STORAGE_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record", Integer.class, 5000),
 
 	// CACHE
 	CACHE_LEVEL1_ENABLED("cache.level1.enabled", "Uses the level-1 cache", Boolean.class, true),
@@ -112,8 +111,7 @@ public enum OGlobalConfiguration {
 
 	MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Number of entry points to start searching entries", Integer.class, 64),
 
-	MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR(
-			"mvrbtree.optimizeEntryPointsFactor",
+	MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR("mvrbtree.optimizeEntryPointsFactor",
 			"Multiplicand factor to apply to entry-points list (parameter mvrbtree.entrypoints) to determine if needs of optimization",
 			Float.class, 1.0f),
 
@@ -199,6 +197,8 @@ public enum OGlobalConfiguration {
 	NETWORK_HTTP_MAX_CONTENT_LENGTH("network.http.maxLength", "TCP/IP max content length in bytes of HTTP requests", Integer.class,
 			100000),
 
+	NETWORK_HTTP_CONTENT_CHARSET("network.http.charset", "Http response charset", String.class, "utf-8"),
+
 	NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT("network.http.sessionExpireTimeout", "Timeout to consider a http session expired in ms",
 			Integer.class, 600000),
 
@@ -241,11 +241,11 @@ public enum OGlobalConfiguration {
 	DISTRIBUTED_SYNC_MAXRECORDS_BUFFER("distributed.sync.maxRecordsBuffer",
 			"Maximum number of records to buffer before to send to the slave nodes", Integer.class, 100);
 
-	private final String							key;
-	private final Object							defValue;
-	private final Class<?>						type;
-	private Object									value				= null;
-	private String									description;
+	private final String									key;
+	private final Object									defValue;
+	private final Class<?>								type;
+	private Object												value						= null;
+	private String												description;
 	private OConfigurationChangeCallback	changeCallback	= null;
 
 	// AT STARTUP AUTO-CONFIG
@@ -331,7 +331,7 @@ public enum OGlobalConfiguration {
 	 * Find the OGlobalConfiguration instance by the key. Key is case insensitive.
 	 * 
 	 * @param iKey
-	 *           Key to find. It's case insensitive.
+	 *          Key to find. It's case insensitive.
 	 * @return OGlobalConfiguration instance if found, otherwise null
 	 */
 	public static OGlobalConfiguration findByKey(final String iKey) {

@@ -36,6 +36,7 @@
 			<listener protocol="http" port-range="2480-2490" ip-address="127.0.0.1">
 				<parameters>
 					<!-- Connection's custom parameters. If not specified the global configuration will be taken -->
+					<parameter name="network.http.charset" value="utf-8" />
 				</parameters>
 				<commands>
 					<command

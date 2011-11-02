@@ -62,6 +62,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	private final StringBuilder								requestContent		= new StringBuilder();
 	private final Map<String, OServerCommand>	exactCommands			= new HashMap<String, OServerCommand>();
 	private final Map<String, OServerCommand>	wildcardCommands	= new HashMap<String, OServerCommand>();
+	private String														responseCharSet;
 
 	public ONetworkProtocolHttpAbstract() {
 		super(Orient.getThreadGroup(), "IO-HTTP");
@@ -73,6 +74,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		server = iServer;
 		requestMaxContentLength = iConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_HTTP_MAX_CONTENT_LENGTH);
 		socketTimeout = iConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
+		responseCharSet = iConfiguration.getValueAsString(OGlobalConfiguration.NETWORK_HTTP_CONTENT_CHARSET);
 
 		channel = new OChannelTextServer(iSocket, iConfiguration);
 		connection = iConnection;
@@ -273,7 +275,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		writeLine("Cache-Control: no-cache, no-store, max-age=0, must-revalidate");
 		writeLine("Pragma: no-cache");
 		writeLine("Date: " + new Date());
-		writeLine("Content-Type: " + iContentType);
+		writeLine("Content-Type: " + iContentType + "; charset=" + responseCharSet);
 		writeLine("Server: " + data.serverInfo);
 		writeLine("Connection: Keep-Alive");
 	}
@@ -532,5 +534,13 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		else
 			commandString.append(command);
 		return commandString.toString();
+	}
+
+	public String getResponseCharSet() {
+		return responseCharSet;
+	}
+
+	public void setResponseCharSet(String responseCharSet) {
+		this.responseCharSet = responseCharSet;
 	}
 }

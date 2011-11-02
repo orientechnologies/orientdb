@@ -104,7 +104,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 		onBeforeResponseHeader(iRequest);
 
 		writeLine(iRequest, "Date: " + new Date());
-		writeLine(iRequest, "Content-Type: " + iContentType);
+		writeLine(iRequest, "Content-Type: " + iContentType + "; charset=" + iRequest.executor.getResponseCharSet());
 		writeLine(iRequest, "Server: " + iRequest.data.serverInfo);
 		writeLine(iRequest, "Connection: " + (iKeepAlive ? "Keep-Alive" : "close"));
 
