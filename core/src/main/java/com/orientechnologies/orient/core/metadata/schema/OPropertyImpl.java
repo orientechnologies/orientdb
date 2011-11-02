@@ -410,7 +410,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		if (attribute == null)
 			throw new IllegalArgumentException("attribute is null");
 
-		final String stringValue = iValue != null ? iValue.toString() : null;
+		String stringValue = iValue != null ? iValue.toString() : null;
 
 		switch (attribute) {
 		case LINKEDCLASS:
@@ -574,19 +574,20 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	}
 
 	private void checkForDateFormat(final String iDateAsString) {
-		if (type == OType.DATE) {
-			try {
-				owner.owner.getDocument().getDatabase().getStorage().getConfiguration().getDateFormatInstance().parse(iDateAsString);
-			} catch (ParseException e) {
-				throw new OSchemaException("Invalid date format was set", e);
+		if (iDateAsString != null)
+			if (type == OType.DATE) {
+				try {
+					owner.owner.getDocument().getDatabase().getStorage().getConfiguration().getDateFormatInstance().parse(iDateAsString);
+				} catch (ParseException e) {
+					throw new OSchemaException("Invalid date format was set", e);
+				}
+			} else if (type == OType.DATETIME) {
+				try {
+					owner.owner.getDocument().getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance().parse(iDateAsString);
+				} catch (ParseException e) {
+					throw new OSchemaException("Invalid datetime format was set", e);
+				}
 			}
-		} else if (type == OType.DATETIME) {
-			try {
-				owner.owner.getDocument().getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance().parse(iDateAsString);
-			} catch (ParseException e) {
-				throw new OSchemaException("Invalid datetime format was set", e);
-			}
-		}
 	}
 
 	protected ODatabaseRecord getDatabase() {

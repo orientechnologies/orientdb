@@ -222,7 +222,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 
 		if (p.getMin() != null) {
 			// MIN
-			String min = p.getMin();
+			final String min = p.getMin();
 
 			if (p.getType().equals(OType.STRING) && (fieldValue != null && ((String) fieldValue).length() < Integer.parseInt(min)))
 				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName()
@@ -265,7 +265,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 
 		if (p.getMax() != null) {
 			// MAX
-			String max = p.getMax();
+			final String max = p.getMax();
 
 			if (p.getType().equals(OType.STRING) && (fieldValue != null && ((String) fieldValue).length() > Integer.parseInt(max)))
 				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName()
