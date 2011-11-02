@@ -256,8 +256,8 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 								+ fieldValue + "that is before the datetime accepted (" + min + ")");
 				} catch (ParseException e) {
 				}
-			} else if (p.getType().equals(OType.EMBEDDEDLIST) || p.getType().equals(OType.EMBEDDEDSET)
-					|| p.getType().equals(OType.LINKLIST) || p.getType().equals(OType.LINKSET)
+			} else if ((p.getType().equals(OType.EMBEDDEDLIST) || p.getType().equals(OType.EMBEDDEDSET)
+					|| p.getType().equals(OType.LINKLIST) || p.getType().equals(OType.LINKSET))
 					&& (fieldValue != null && ((Collection<?>) fieldValue).size() < Integer.parseInt(min)))
 				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' contains less items then "
 						+ min + " requested");
@@ -299,8 +299,8 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 								+ fieldValue + "that is after the datetime accepted (" + max + ")");
 				} catch (ParseException e) {
 				}
-			} else if (p.getType().equals(OType.EMBEDDEDLIST) || p.getType().equals(OType.EMBEDDEDSET)
-					|| p.getType().equals(OType.LINKLIST) || p.getType().equals(OType.LINKSET)
+			} else if ((p.getType().equals(OType.EMBEDDEDLIST) || p.getType().equals(OType.EMBEDDEDSET)
+					|| p.getType().equals(OType.LINKLIST) || p.getType().equals(OType.LINKSET))
 					&& (fieldValue != null && ((Collection<?>) fieldValue).size() > Integer.parseInt(max)))
 				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' contains more items then "
 						+ max + " requested");
