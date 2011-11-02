@@ -602,6 +602,25 @@ public abstract class OStringSerializerHelper {
 	}
 
 	/**
+	 * Returns the binary representation of a content. If it's a String a Base64 decoding is applied.
+	 */
+	public static byte[] getBinaryContent(final Object iValue) {
+		if (iValue == null)
+			return null;
+		else if (iValue instanceof byte[])
+			return (byte[]) iValue;
+		else if (iValue instanceof String) {
+			String s = (String) iValue;
+			if (s.length() > 1 && (s.charAt(0) == '^' && s.charAt(s.length() - 1) == '^'))
+				s = s.substring(1, s.length() - 1);
+
+			return OBase64Utils.decode(s);
+		} else
+			throw new IllegalArgumentException("Can't parse binary as type the value (class=" + iValue.getClass().getName() + "): "
+					+ iValue);
+	}
+
+	/**
 	 * Checks if a string contains alphanumeric only characters.
 	 * 
 	 * @param iContent
