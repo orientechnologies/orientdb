@@ -485,6 +485,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			} else {
 				final Integer depthLevel = getDepthLevel(record, iFetchPlan, fieldName);
 				if (depthLevel != null) {
+					if (depthLevel == 0)
+						continue;
 					if (depthLevel > -1 && iCurrentLevel > depthLevel) {
 						// MAX DEPTH REACHED: STOP TO FETCH THIS FIELD
 						continue;
@@ -657,8 +659,11 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				} else {
 					json.beginObject(indentLevel + 1, true, null);
 					writeSignature(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, (ODocument) d);
-					processRecord(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, (ODocument) d,
-							iFetchPlan, keepTypes, iCurrentLevel + 1, iMaxFetch, parsedRecords);
+					final Integer depthLevel = getDepthLevel((ODocument) d, iFetchPlan, fieldName);
+					if (depthLevel == -1 || (iCurrentLevel + 1) < depthLevel) {
+						processRecord(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, (ODocument) d,
+								iFetchPlan, keepTypes, iCurrentLevel + 1, iMaxFetch, parsedRecords);
+					}
 					json.endObject(indentLevel + 1, true);
 				}
 			} else {
