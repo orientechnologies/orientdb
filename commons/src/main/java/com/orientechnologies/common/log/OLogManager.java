@@ -36,11 +36,13 @@ public class OLogManager {
 			final Object... iAdditionalArgs) {
 		if (iMessage != null) {
 			final Logger log = iRequester != null ? Logger.getLogger(iRequester.getClass().getName()) : Logger.getLogger("");
-			if (log.isLoggable(iLevel))
+			if (log.isLoggable(iLevel)) {
+				final String msg = String.format(iMessage, iAdditionalArgs);
 				if (iException != null)
-					log.log(iLevel, iMessage, iException);
+					log.log(iLevel, msg, iException);
 				else
-					log.log(iLevel, iMessage, iAdditionalArgs);
+					log.log(iLevel, msg, iAdditionalArgs);
+			}
 		}
 	}
 
@@ -248,7 +250,7 @@ public class OLogManager {
 			final Logger log = Logger.getLogger("");
 			if (log.getHandlers().length == 0) {
 				// SET DEFAULT LOG FORMATTER
-				Handler h = new ConsoleHandler();
+				final Handler h = new ConsoleHandler();
 				h.setFormatter(new OLogFormatter());
 				log.addHandler(h);
 			} else {
