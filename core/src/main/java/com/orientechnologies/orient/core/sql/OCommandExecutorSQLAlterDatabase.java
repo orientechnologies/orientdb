@@ -77,6 +77,9 @@ public class OCommandExecutorSQLAlterDatabase extends OCommandExecutorSQLPermiss
 		if (value.length() == 0)
 			throw new OCommandSQLParsingException("Missed the database's value to change for attribute '" + attribute + "'", text, oldPos);
 
+		if (value.equalsIgnoreCase("null"))
+			value = null;
+
 		return this;
 	}
 

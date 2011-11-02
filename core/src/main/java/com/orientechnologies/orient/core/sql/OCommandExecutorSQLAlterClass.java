@@ -85,6 +85,9 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLPermission
 		if (value.length() == 0)
 			throw new OCommandSQLParsingException("Missed the property's value to change for attribute '" + attribute + "'", text, oldPos);
 
+		if (value.equalsIgnoreCase("null"))
+			value = null;
+
 		return this;
 	}
 
