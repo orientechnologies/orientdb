@@ -81,13 +81,17 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 
 		writeLine(iRequest, "Set-Cookie: OSESSIONID=" + sessId + "; Path=/; HttpOnly");
 
-		writeLine(iRequest, OHttpUtils.HEADER_CONTENT_LENGTH + (empty ? 0 : content.length()));
+		final byte[] binaryContent = empty ? null : OBinaryProtocol.string2bytes(content);
+
+		writeLine(iRequest, OHttpUtils.HEADER_CONTENT_LENGTH + (empty ? 0 : binaryContent.length));
 
 		writeLine(iRequest, null);
 
 		if (!empty)
 			writeContent(iRequest, content);
 
+		if (binaryContent != null)
+			iRequest.channel.outStream.write(binaryContent);
 		iRequest.channel.flush();
 	}
 

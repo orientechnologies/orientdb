@@ -145,7 +145,7 @@ function ODatabase(databasePath) {
 				this.setErrorMessage(null);
 				this.setDatabaseInfo(this.transformResponse(msg));
 			},
-			error : function(msg) {
+			error : function(msg, textStatus, errorThrown) {
 				this.setErrorMessage('Connect error: ' + msg.responseText);
 				this.setDatabaseInfo(null);
 			}
