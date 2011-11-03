@@ -46,6 +46,7 @@ public abstract class OStringSerializerHelper {
 	public static final char								COLLECTION_END					= ']';
 	public static final char								MAP_BEGIN								= '{';
 	public static final char								MAP_END									= '}';
+	public static final char								BINARY_BEGINEND					= '_';
 	public static final char								CUSTOM_TYPE							= '^';
 	public static final char								ENTRY_SEPARATOR					= ':';
 	public static final char								PARAMETER_NAMED					= ':';
@@ -107,14 +108,7 @@ public abstract class OStringSerializerHelper {
 			return new Byte(getStringContent(iValue));
 
 		case BINARY:
-			if (iValue instanceof byte[])
-				return iValue;
-			if (iValue instanceof String) {
-				final String s = (String) iValue;
-				if (s.length() > 2)
-					return OBase64Utils.decode(s.substring(1, s.length() - 1));
-				return null;
-			}
+			return getBinaryContent(iValue);
 
 		case DATE:
 		case DATETIME:
@@ -611,8 +605,10 @@ public abstract class OStringSerializerHelper {
 			return (byte[]) iValue;
 		else if (iValue instanceof String) {
 			String s = (String) iValue;
-			if (s.length() > 1 && (s.charAt(0) == '^' && s.charAt(s.length() - 1) == '^'))
+			if (s.length() > 1 && (s.charAt(0) == BINARY_BEGINEND && s.charAt(s.length() - 1) == BINARY_BEGINEND))
 				s = s.substring(1, s.length() - 1);
+			else
+				throw new IllegalArgumentException("Not binary type: " + iValue);
 
 			return OBase64Utils.decode(s);
 		} else

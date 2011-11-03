@@ -29,8 +29,8 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 /**
  * Generic representation of a type.<br/>
@@ -303,7 +303,7 @@ public enum OType {
 
 		try {
 			if (byte[].class.isAssignableFrom(iTargetClass)) {
-				return OBase64Utils.decode(iValue.toString());
+				return OStringSerializerHelper.getBinaryContent(iValue);
 			} else if (byte[].class.isAssignableFrom(iValue.getClass())) {
 				return iValue;
 			} else if (iTargetClass.isEnum()) {

@@ -135,14 +135,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 			return convertValue((String) iValue, iType);
 
 		case BINARY:
-			if (iValue instanceof byte[])
-				return iValue;
-			if (iValue instanceof String) {
-				final String s = (String) iValue;
-				if (s.length() > 2)
-					return OBase64Utils.decode(s.substring(1, s.length() - 1));
-				return null;
-			}
+			return OStringSerializerHelper.getBinaryContent(iValue);
 
 		case DATE:
 		case DATETIME:
@@ -316,6 +309,8 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 			return OType.LINK;
 		else if (firstChar == '\'' || firstChar == '"')
 			return OType.STRING;
+		else if (firstChar == OStringSerializerHelper.BINARY_BEGINEND)
+			return OType.BINARY;
 		else if (firstChar == OStringSerializerHelper.PARENTHESIS_BEGIN)
 			return OType.EMBEDDED;
 		else if (firstChar == OStringSerializerHelper.LINK)
@@ -393,9 +388,17 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 		if (iValue == null)
 			return null;
 
-		if (iValue.length() > 1 && iValue.charAt(0) == '"' && iValue.charAt(iValue.length() - 1) == '"')
+		if (iValue.length() == 0)
+			return "";
+
+		if (iValue.length() > 1)
+			if (iValue.charAt(0) == '"' && iValue.charAt(iValue.length() - 1) == '"')
 			// STRING
 			return OStringSerializerHelper.decode(iValue.substring(1, iValue.length() - 1));
+			else if (iValue.charAt(0) == OStringSerializerHelper.BINARY_BEGINEND
+					&& iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.BINARY_BEGINEND)
+				// STRING
+				return OStringSerializerHelper.getBinaryContent(iValue);
 
 		if (iValue.charAt(0) == ORID.PREFIX)
 			// RID
@@ -495,12 +498,12 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 			break;
 
 		case BINARY:
-			iBuffer.append('"');
+			iBuffer.append(OStringSerializerHelper.BINARY_BEGINEND);
 			if (iValue instanceof Byte)
-				iBuffer.append(new String(new byte[] { ((Byte) iValue).byteValue() }));
+				iBuffer.append(OBase64Utils.encodeBytes(new byte[] { ((Byte) iValue).byteValue() }));
 			else
 				iBuffer.append(OBase64Utils.encodeBytes((byte[]) iValue));
-			iBuffer.append('"');
+			iBuffer.append(OStringSerializerHelper.BINARY_BEGINEND);
 			break;
 
 		case DATE:
