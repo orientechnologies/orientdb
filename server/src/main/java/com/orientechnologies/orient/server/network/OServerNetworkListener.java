@@ -135,7 +135,7 @@ public class OServerNetworkListener extends Thread {
 			while (active) {
 				try {
 					// listen for and accept a client connection to serverSocket
-					Socket socket = serverSocket.accept();
+					final Socket socket = serverSocket.accept();
 
 					socket.setPerformancePreferences(0, 2, 1);
 					socket.setSendBufferSize(socketBufferSize);

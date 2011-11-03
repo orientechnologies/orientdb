@@ -92,7 +92,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	protected int											lastRequestType;
 	protected int											lastClientTxId;
 	private OServerUserConfiguration	serverUser;
-	private boolean										firstConnection	= true;
 
 	public ONetworkProtocolBinary() {
 		super(Orient.getThreadGroup(), "IO-Binary");
