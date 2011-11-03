@@ -34,8 +34,8 @@ import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorCluster;
-import com.orientechnologies.orient.core.iterator.OObjectIteratorMultiCluster;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
@@ -87,27 +87,26 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 		return null;
 	}
 
-	public <RET> OObjectIteratorMultiCluster<RET> browseClass(final Class<RET> iClusterClass) {
+	public <RET> OObjectIteratorClass<RET> browseClass(final Class<RET> iClusterClass) {
 		return browseClass(iClusterClass, true);
 	}
 
-	public <RET> OObjectIteratorMultiCluster<RET> browseClass(final Class<RET> iClusterClass, final boolean iPolymorphic) {
+	public <RET> OObjectIteratorClass<RET> browseClass(final Class<RET> iClusterClass, final boolean iPolymorphic) {
 		if (iClusterClass == null)
 			return null;
 
 		return browseClass(iClusterClass.getSimpleName(), iPolymorphic);
 	}
 
-	public <RET> OObjectIteratorMultiCluster<RET> browseClass(final String iClassName) {
+	public <RET> OObjectIteratorClass<RET> browseClass(final String iClassName) {
 		return browseClass(iClassName, true);
 	}
 
-	public <RET> OObjectIteratorMultiCluster<RET> browseClass(final String iClassName, final boolean iPolymorphic) {
+	public <RET> OObjectIteratorClass<RET> browseClass(final String iClassName, final boolean iPolymorphic) {
 		checkOpeness();
 		checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, iClassName);
 
-		return new OObjectIteratorMultiCluster<RET>(this, (ODatabaseRecordAbstract) getUnderlying().getUnderlying(), iClassName,
-				iPolymorphic);
+		return new OObjectIteratorClass<RET>(this, (ODatabaseRecordAbstract) getUnderlying().getUnderlying(), iClassName, iPolymorphic);
 	}
 
 	public <RET> OObjectIteratorCluster<RET> browseCluster(final String iClusterName) {

@@ -113,7 +113,7 @@ public class CRUDObjectPhysicalTest {
 		int i = 0;
 		for (Account a : database.browseClass(Account.class).setFetchPlan("*:-1")) {
 
-			Assert.assertTrue(a.getId() == i);
+			Assert.assertEquals(a.getId(), i);
 			Assert.assertEquals(a.getName(), "Bill");
 			Assert.assertEquals(a.getSurname(), "Gates");
 			Assert.assertEquals(a.getSalary(), i + 300.1f);

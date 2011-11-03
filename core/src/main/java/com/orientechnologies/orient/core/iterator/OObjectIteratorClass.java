@@ -23,12 +23,12 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("unchecked")
-public class OObjectIteratorMultiCluster<T> implements Iterator<T>, Iterable<T> {
+public class OObjectIteratorClass<T> implements Iterator<T>, Iterable<T> {
 	private ODatabaseObject									database;
 	private ORecordIteratorClass<ODocument>	underlying;
 	private String													fetchPlan;
 
-	public OObjectIteratorMultiCluster(final ODatabaseObject iDatabase, final ODatabaseRecordAbstract iUnderlyingDatabase,
+	public OObjectIteratorClass(final ODatabaseObject iDatabase, final ODatabaseRecordAbstract iUnderlyingDatabase,
 			final String iClusterName, final boolean iPolymorphic) {
 		database = iDatabase;
 		underlying = new ORecordIteratorClass<ODocument>((ODatabaseRecord) iDatabase.getUnderlying(), iUnderlyingDatabase,
@@ -59,7 +59,7 @@ public class OObjectIteratorMultiCluster<T> implements Iterator<T>, Iterable<T> 
 		return fetchPlan;
 	}
 
-	public OObjectIteratorMultiCluster<T> setFetchPlan(String fetchPlan) {
+	public OObjectIteratorClass<T> setFetchPlan(String fetchPlan) {
 		this.fetchPlan = fetchPlan;
 		return this;
 	}

@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.db.object;
 import com.orientechnologies.orient.core.db.ODatabaseSchemaAware;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorCluster;
-import com.orientechnologies.orient.core.iterator.OObjectIteratorMultiCluster;
+import com.orientechnologies.orient.core.iterator.OObjectIteratorClass;
 
 /**
  * Generic interface for object based Database implementations. Binds to/from Document and POJOs.
@@ -59,7 +59,7 @@ public interface ODatabaseObject extends ODatabaseSchemaAware<Object> {
    *          Class name to iterate
    * @return Iterator of Object instances
    */
-  public <RET> OObjectIteratorMultiCluster<RET> browseClass(Class<RET> iClusterClass);
+  public <RET> OObjectIteratorClass<RET> browseClass(Class<RET> iClusterClass);
 
   /**
    * Creates a new entity of the specified class.
