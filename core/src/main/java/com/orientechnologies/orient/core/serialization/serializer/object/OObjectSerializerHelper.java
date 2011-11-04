@@ -219,9 +219,13 @@ public class OObjectSerializerHelper {
 		// CALL BEFORE UNMARSHALLING
 		invokeCallback(iPojo, iRecord, OBeforeDeserialization.class);
 
+		final String[] fieldNames = new String[properties.size()];
+
 		// BIND BASIC FIELDS, LINKS WILL BE BOUND BY THE FETCH API
+		int f = 0;
 		for (Field p : properties) {
 			fieldName = p.getName();
+			fieldNames[f++] = fieldName;
 
 			if (fieldName.equals(idFieldName) || fieldName.equals(vFieldName))
 				continue;
@@ -288,7 +292,7 @@ public class OObjectSerializerHelper {
 
 		// BIND LINKS FOLLOWING THE FETCHING PLAN
 		final Map<String, Integer> fetchPlan = OFetchHelper.buildFetchPlan(iFetchPlan);
-		OFetchHelper.fetch(iRecord, iPojo, fetchPlan, null, 0, -1, new OFetchListener() {
+		OFetchHelper.fetch(iRecord, iPojo, fieldNames, fetchPlan, null, 0, -1, new OFetchListener() {
 			/***
 			 * Doesn't matter size.
 			 */

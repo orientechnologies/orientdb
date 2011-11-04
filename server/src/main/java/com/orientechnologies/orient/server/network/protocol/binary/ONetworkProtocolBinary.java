@@ -526,7 +526,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 								final Map<String, Integer> fetchPlan = OFetchHelper.buildFetchPlan(fetchPlanString);
 
 								final Set<ODocument> recordsToSend = new HashSet<ODocument>();
-								OFetchHelper.fetch((ODocument) record, record, fetchPlan, null, 0, -1, new OFetchListener() {
+								final ODocument doc = (ODocument) record;
+								OFetchHelper.fetch(doc, doc, doc.fieldNames(), fetchPlan, null, 0, -1, new OFetchListener() {
 									@Override
 									public int size() {
 										return recordsToSend.size();
@@ -550,11 +551,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 								});
 
 								// SEND RECORDS TO LOAD IN CLIENT CACHE
-								for (ODocument doc : recordsToSend) {
-									if (doc.getIdentity().isValid()) {
+								for (ODocument d : recordsToSend) {
+									if (d.getIdentity().isValid()) {
 										channel.writeByte((byte) 2); // CLIENT CACHE
 										// RECORD. IT ISN'T PART OF THE RESULT SET
-										writeIdentifiable(doc);
+										writeIdentifiable(d);
 									}
 								}
 							}
@@ -706,7 +707,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 								writeIdentifiable((ORecordInternal<?>) iRecord);
 
 								if (fetchPlan != null && iRecord instanceof ODocument) {
-									OFetchHelper.fetch((ODocument) iRecord, iRecord, fetchPlan, null, 0, -1, new OFetchListener() {
+									final ODocument doc = (ODocument) iRecord;
+									OFetchHelper.fetch(doc, iRecord, doc.fieldNames(), fetchPlan, null, 0, -1, new OFetchListener() {
 										@Override
 										public int size() {
 											return recordsToSend.size();

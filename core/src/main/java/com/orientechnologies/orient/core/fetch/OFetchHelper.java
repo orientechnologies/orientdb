@@ -59,8 +59,9 @@ public class OFetchHelper {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static void fetch(final ODocument iRootRecord, final Object iUserObject, final Map<String, Integer> iFetchPlan,
-			final String iCurrentField, final int iCurrentLevel, final int iMaxFetch, final OFetchListener iListener) {
+	public static void fetch(final ODocument iRootRecord, final Object iUserObject, final String[] iFieldNames,
+			final Map<String, Integer> iFetchPlan, final String iCurrentField, final int iCurrentLevel, final int iMaxFetch,
+			final OFetchListener iListener) {
 
 		if (iMaxFetch > -1 && iListener.size() >= iMaxFetch)
 			// MAX FETCH SIZE REACHED: STOP TO FETCH AT ALL
@@ -72,7 +73,7 @@ public class OFetchHelper {
 				: Integer.valueOf(0);
 		try {
 			// BROWSE ALL THE DOCUMENT'S FIELDS
-			for (String fieldName : iRootRecord.fieldNames()) {
+			for (String fieldName : iFieldNames) {
 				fieldValue = iRootRecord.field(fieldName);
 
 				if (fieldValue == null
@@ -105,7 +106,7 @@ public class OFetchHelper {
 						userObject = iListener.fetchLinked(iRootRecord, iUserObject, fieldName, linked);
 						if (userObject != null)
 							// GO RECURSIVELY
-							fetch(linked, userObject, iFetchPlan, fieldName, iCurrentLevel + 1, iMaxFetch, iListener);
+							fetch(linked, userObject, linked.fieldNames(), iFetchPlan, fieldName, iCurrentLevel + 1, iMaxFetch, iListener);
 					} catch (ORecordNotFoundException e) {
 						OLogManager.instance().error(null, "Linked record %s was not found", linked);
 					}
@@ -117,7 +118,7 @@ public class OFetchHelper {
 						for (ODocument d : (Collection<ODocument>) userObject) {
 							// GO RECURSIVELY
 							if (d != null)
-								fetch(d, d, iFetchPlan, fieldName, iCurrentLevel + 1, iMaxFetch, iListener);
+								fetch(d, d, d.fieldNames(), iFetchPlan, fieldName, iCurrentLevel + 1, iMaxFetch, iListener);
 						}
 				} else if (fieldValue instanceof Map<?, ?>) {
 					final Map<String, ODocument> linked = (Map<String, ODocument>) fieldValue;
@@ -126,7 +127,7 @@ public class OFetchHelper {
 						for (ODocument d : ((Map<String, ODocument>) userObject).values()) {
 							// GO RECURSIVELY
 							if (d != null)
-								fetch(d, d, iFetchPlan, fieldName, iCurrentLevel + 1, iMaxFetch, iListener);
+								fetch(d, d, d.fieldNames(), iFetchPlan, fieldName, iCurrentLevel + 1, iMaxFetch, iListener);
 						}
 				}
 
