@@ -59,7 +59,7 @@ public class ODistributedServerConfiguration {
 			networkMulticastAddress = InetAddress.getByName("235.1.1.1");
 			networkMulticastPort = 2424;
 			networkMulticastHeartbeat = 5000;
-			networkTimeoutLeader = 3000;
+			networkTimeoutLeader = 2000;
 			networkTimeoutNode = 5000;
 			networkHeartbeatDelay = 5000;
 			securityAlgorithm = "Blowfish";

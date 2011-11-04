@@ -95,11 +95,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		discoverySignaler = new ODiscoverySignaler(this, distributedNetworkListener);
 	}
 
-	public void becomePeer(final ONetworkProtocolDistributed iNetworkProtocolDistributed) {
-		if (peer != null)
-			// I'M ALREADY A PEER, DO NOTHING
-			return;
-
+	public void becomePeer() {
 		if (discoverySignaler != null) {
 			discoverySignaler.shutdown();
 			discoverySignaler = null;
@@ -110,7 +106,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 			leader = null;
 		}
 
-		peer = new OPeerNode(this);
+		if (peer == null)
+			peer = new OPeerNode(this);
 	}
 
 	/**
@@ -118,17 +115,15 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	 * 
 	 */
 	public void becameLeader() {
-		if (leader != null)
-			// I'M ALREADY THE LEADER, DO NOTHING
-			return;
-
 		if (peer != null) {
 			peer.shutdown();
 			peer = null;
 		}
 
-		leader = new OLeaderNode(this);
-		sendPresence();
+		if (leader == null) {
+			leader = new OLeaderNode(this);
+			sendPresence();
+		}
 	}
 
 	@Override

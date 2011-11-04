@@ -108,7 +108,7 @@ public class ORemotePeer {
 							this,
 							"Error: remote server node %s:%d has refused the connection because it's the new Leader of cluster '%s'. Switching to be a Peer Node...",
 							networkAddress, networkPort, leader.getManager().getConfig().name);
-			leader.getManager().becomePeer(null);
+			leader.getManager().becomePeer();
 			return false;
 		}
 

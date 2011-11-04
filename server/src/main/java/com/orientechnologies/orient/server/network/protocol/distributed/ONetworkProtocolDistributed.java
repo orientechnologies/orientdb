@@ -96,7 +96,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 				}
 
 				channel.writeByte((byte) 1);
-				manager.becomePeer(this);
+				manager.becomePeer();
 
 				// SEND AVAILABLE DATABASES
 				doc.reset();
