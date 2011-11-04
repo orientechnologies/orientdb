@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.handler.distributed;
+package com.orientechnologies.orient.server.replication;
 
 
 public class ODistributedSynchronizationException extends ODistributedException {

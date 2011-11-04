@@ -56,7 +56,7 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
 
 		acquireExclusiveLock();
 		try {
-			connection = new OClientConnection(++connectionSerial, iSocket, iProtocol);
+			connection = new OClientConnection(++connectionSerial, iProtocol);
 
 			connections.put(connection.id, connection);
 			handlers.put(connection.id, connection.protocol);
@@ -152,6 +152,26 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
 				}
 			}
 
+		} finally {
+			releaseSharedLock();
+		}
+	}
+
+	/**
+	 * Retrieves the connection by address/port.
+	 * 
+	 * @param iAddress
+	 *          The address as string in the format address as format <ip>:<port>
+	 * @return The connection if any, otherwise null
+	 */
+	public OClientConnection getConnection(final String iAddress) {
+		acquireSharedLock();
+		try {
+			for (OClientConnection conn : connections.values()) {
+				if (iAddress.equals(conn.getRemoteAddress()))
+					return conn;
+			}
+			return null;
 		} finally {
 			releaseSharedLock();
 		}

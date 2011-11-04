@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.network.protocol.distributed;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.Arrays;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -29,8 +30,9 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryInpu
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.handler.distributed.ODistributedServerNodeRemote;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
+import com.orientechnologies.orient.server.replication.ODistributedNode;
+import com.orientechnologies.orient.server.replication.OReplicator;
 
 /**
  * Extends binary protocol to include cluster commands.
@@ -40,6 +42,7 @@ import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProto
  */
 public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implements OCommandOutputListener {
 	private ODistributedServerManager	manager;
+	private OReplicator								replicator;
 
 	public ONetworkProtocolDistributed() {
 		super("Distributed-DB");
@@ -55,55 +58,69 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 		// DISTRIBUTED SERVER REQUESTS
 		switch (lastRequestType) {
-		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_HEARTBEAT:
-			checkConnected();
-			data.commandInfo = "Keep-alive";
-			manager.updateHeartBeatTime();
+		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_LEADER_CONNECT: {
+			data.commandInfo = "Clustered connection from leader";
+			final ODocument doc = new ODocument().fromStream(channel.readBytes());
+			final String clusterName = doc.field("clusterName");
+			final byte[] encodedSecurityKey = doc.field("clusterKey");
+			final String leaderAddress = doc.field("leaderNodeAddress");
 
-			sendOk(lastClientTxId);
-
-			// SEND DB VERSION BACK
-			// channel.writeLong(connection.database == null ? 0 : connection.database.getStorage().getVersion());
-			break;
-
-		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_CONNECT: {
-			data.commandInfo = "Cluster connection";
-			final String clusterName = channel.readString();
-			final byte[] encodedSecurityKey = channel.readBytes();
-			final long runningSince = channel.readLong();
-
-			if (!clusterName.equals(manager.getName()) || !Arrays.equals(encodedSecurityKey, manager.getSecurityKey()))
+			if (!clusterName.equals(manager.getName()) || !Arrays.equals(encodedSecurityKey, manager.getConfig().getSecurityKey()))
 				throw new OSecurityException("Invalid combination of cluster name and key received");
+
+			// final long leaderNodeRunningSince = doc.field("leaderNodeRunningSince");
 
 			channel.acquireExclusiveLock();
 			try {
 				sendOk(lastClientTxId);
+				channel.writeInt(connection.id);
 
 				if (manager.isLeader()) {
 					OLogManager.instance().warn(this,
 							"Received remote connection from the leader node %s, but current node is leader itself: split network problem?",
-							channel.socket.getRemoteSocketAddress());
+							leaderAddress);
 
-					if (runningSince > manager.getRunningSince()) {
-						// OTHER NODE IS OLDER: WINS
-						OLogManager.instance().warn(this, "Current node becames Non-Leader since the other node is running since longer time");
-						manager.receivedLeaderConnection(this);
-						channel.writeByte((byte) 1);
-					} else {
-						OLogManager.instance().warn(this, "Current node remains Leader since it's running since longer time");
+					// CHECK WHAT LEADER WINS
+					final String myUid = InetAddress.getLocalHost().getHostAddress() + ":" + channel.socket.getLocalPort();
+
+					if (leaderAddress.compareTo(myUid) > 0) {
+						// BY CONVENTION THE LOWER VALUE WINS AND REMAIN LEADER
 						// THIS NODE IS OLDER: WIN! REFUSE THE CONNECTION
 						channel.writeByte((byte) 0);
+						channel.flush();
+
+						OLogManager.instance().warn(this, "Current node remains the Leader of the cluster because has lower network address",
+								leaderAddress);
+						return;
 					}
-				} else {
-					manager.receivedLeaderConnection(this);
-					channel.writeByte((byte) 1);
 				}
+
+				channel.writeByte((byte) 1);
+				manager.becomePeer(this);
+
+				// SEND AVAILABLE DATABASES
+				doc.reset();
+				doc.field("availableDatabases", OServerMain.server().getAvailableStorageNames().keySet());
+				channel.writeBytes(doc.toStream());
+				channel.flush();
+
+				manager.getPeer().updateHeartBeatTime();
+
+				replicator = new OReplicator(manager, new ODocument(channel.readBytes()));
 
 			} finally {
 				channel.releaseExclusiveLock();
 			}
 			break;
 		}
+
+		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_HEARTBEAT:
+			checkConnected();
+			data.commandInfo = "Cluster Heartbeat";
+			manager.getPeer().updateHeartBeatTime();
+
+			sendOk(lastClientTxId);
+			break;
 
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_OPEN: {
 			checkConnected();
@@ -119,7 +136,6 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			try {
 				sendOk(lastClientTxId);
 				channel.writeInt(connection.id);
-				channel.writeLong(connection.database.getStorage().getVersion());
 			} finally {
 				channel.releaseExclusiveLock();
 			}
@@ -141,7 +157,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 			final String engineName = connection.database.getStorage() instanceof OStorageLocal ? "local" : "memory";
 
-			final ODistributedServerNodeRemote remoteServerNode = manager.getNode(remoteServerName);
+			final ODistributedNode remoteServerNode = null;// manager.getPeerNode(remoteServerName);
 
 			remoteServerNode.shareDatabase(connection.database, remoteServerName, dbUser, dbPassword, engineName, synchronousMode);
 
@@ -152,7 +168,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 				channel.releaseExclusiveLock();
 			}
 
-			manager.addServerInConfiguration(dbUrl, remoteServerName, synchronousMode);
+			manager.getPeer().updateConfigurationToLeader(dbUrl, remoteServerName, synchronousMode);
 
 			break;
 		}
@@ -168,7 +184,6 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 			ODistributedRequesterThreadLocal.INSTANCE.set(true);
 
-			manager.setStatus(ODistributedServerManager.STATUS.SYNCHRONIZING);
 			try {
 				OLogManager.instance().info(this, "Received database '%s' to share on local server node", dbName);
 
@@ -194,14 +209,12 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 					sendOk(lastClientTxId);
 					channel.writeInt(connection.id);
-					channel.writeLong(connection.database.getStorage().getVersion());
 				} finally {
 					channel.releaseExclusiveLock();
 				}
 
 			} finally {
-				manager.updateHeartBeatTime();
-				manager.setStatus(ODistributedServerManager.STATUS.ONLINE);
+				manager.getPeer().updateHeartBeatTime();
 			}
 			break;
 		}
@@ -210,10 +223,10 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			checkConnected();
 			data.commandInfo = "Update db configuration from server node leader";
 
-			final ODocument config = (ODocument) new ODocument().fromStream(channel.readBytes());
-			manager.setClusterConfiguration(connection.database.getName(), config);
+			replicator.getClusterConfiguration().fromStream(channel.readBytes());
 
-			OLogManager.instance().warn(this, "Changed distributed server configuration:\n%s", config.toJSON(""));
+			OLogManager.instance().warn(this, "Changed distributed server configuration:\n%s",
+					replicator.getClusterConfiguration().toJSON(""));
 
 			channel.acquireExclusiveLock();
 			try {
@@ -243,8 +256,5 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 	}
 
 	protected void checkConnected() {
-		if (!manager.isLeaderConnected())
-			throw new OSecurityException("Invalid request from a non-connected node");
 	}
-
 }

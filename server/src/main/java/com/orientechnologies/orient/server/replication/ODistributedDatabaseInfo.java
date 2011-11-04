@@ -12,16 +12,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.handler.distributed;
+package com.orientechnologies.orient.server.replication;
 
 /**
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OServerNodeDatabaseEntry {
-	public String	databaseName;
-	public String	userName;
-	public String	userPassword;
-	public int		sessionId;
-	public long		version;
+public class ODistributedDatabaseInfo {
+
+	public enum SYNCH_TYPE {
+		SYNCHRONOUS, ASYNCHRONOUS
+	}
+
+	public String			databaseName;
+	public String			userName;
+	public String			userPassword;
+	public int				sessionId;
+	public SYNCH_TYPE	synchType;
 }

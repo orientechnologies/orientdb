@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.handler.distributed;
+package com.orientechnologies.orient.server.clustering;
 
 import java.util.List;
 import java.util.TimerTask;
 
-import com.orientechnologies.orient.server.handler.distributed.ODistributedServerNodeRemote.STATUS;
+import com.orientechnologies.orient.server.clustering.ORemotePeer.STATUS;
 
 /**
  * Checks that active nodes are up and running
@@ -26,28 +26,28 @@ import com.orientechnologies.orient.server.handler.distributed.ODistributedServe
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ODistributedServerNodeChecker extends TimerTask {
-	private ODistributedServerManager	manager;
+public class OPeerCheckerTask extends TimerTask {
+	private OLeaderNode	leader;
 
-	public ODistributedServerNodeChecker(ODistributedServerManager manager) {
-		this.manager = manager;
+	public OPeerCheckerTask(OLeaderNode oDistributedServerLeader) {
+		this.leader = oDistributedServerLeader;
 	}
 
 	@Override
 	public void run() {
-		final List<ODistributedServerNodeRemote> nodeList = manager.getNodeList();
+		final List<ORemotePeer> nodeList = leader.getPeerNodeList();
 
-		if (nodeList == null)
+		if (nodeList == null || nodeList.size() == 0)
 			// NO NODES, JUST RETURN
 			return;
 
 		try {
 
 			// CHECK EVERY SINGLE NODE
-			for (ODistributedServerNodeRemote node : nodeList) {
+			for (ORemotePeer node : nodeList) {
 				if (node.getStatus() == STATUS.CONNECTED)
-					if (!node.sendHeartBeat(manager.networkTimeoutLeader)) {
-						manager.handleNodeFailure(node);
+					if (!node.sendHeartBeat(leader.getManager().getConfig().networkTimeoutLeader)) {
+						leader.handlePeerNodeFailure(node);
 					}
 			}
 

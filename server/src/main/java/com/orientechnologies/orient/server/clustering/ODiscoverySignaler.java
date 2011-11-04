@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.handler.distributed;
+package com.orientechnologies.orient.server.clustering;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -24,39 +24,38 @@ import com.orientechnologies.common.thread.OPollerThread;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.server.handler.distributed.ODistributedServerConfiguration;
+import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 
 /**
- * Sends regularly packets using IP multicast protocol to signal the presence in the network.
+ * Sends packets using IP multicast protocol to signal the presence in the network. If any Leader Node is listening then it will
+ * connect to me ASAP, otherwise the timer will expire and I will become the new Cluster Leader Node.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ODistributedServerDiscoverySignaler extends OPollerThread {
+public class ODiscoverySignaler extends OPollerThread {
 	private byte[]										discoveryPacket;
 	private DatagramPacket						dgram;
 	private DatagramSocket						socket;
 	private ODistributedServerManager	manager;
-	private boolean										forceLeadership;
 	private TimerTask									runningTask;
 
-	public ODistributedServerDiscoverySignaler(final ODistributedServerManager iManager,
-			final OServerNetworkListener iNetworkListener, final boolean iForceLeadership) {
-		super(iManager.networkMulticastHeartbeat * 1000, Orient.getThreadGroup(), "IO-Cluster-DiscoverySignaler");
+	public ODiscoverySignaler(final ODistributedServerManager iManager, final OServerNetworkListener iNetworkListener) {
+		super(iManager.getConfig().networkMulticastHeartbeat * 1000, Orient.getThreadGroup(), "IO-Cluster-DiscoverySignaler");
 
 		manager = iManager;
-		forceLeadership = iForceLeadership;
 
-		final String buffer = ODistributedServerManager.PACKET_HEADER + OConstants.ORIENT_VERSION + "|"
-				+ ODistributedServerManager.PROTOCOL_VERSION + "|" + manager.name + "|" + iNetworkListener.getInboundAddr().getHostName()
-				+ "|" + iNetworkListener.getInboundAddr().getPort();
+		final String buffer = ODistributedServerConfiguration.PACKET_HEADER + OConstants.ORIENT_VERSION + "|"
+				+ ODistributedServerConfiguration.PROTOCOL_VERSION + "|" + manager.getConfig().name + "|"
+				+ iNetworkListener.getInboundAddr().getHostName() + "|" + iNetworkListener.getInboundAddr().getPort();
 
-		discoveryPacket = OSecurityManager.instance().encrypt(manager.securityAlgorithm, manager.securityKey, buffer.getBytes());
-
-		if (forceLeadership)
-			startTimeoutPresenceTask();
+		discoveryPacket = OSecurityManager.instance().encrypt(manager.getConfig().securityAlgorithm, manager.getConfig().securityKey,
+				buffer.getBytes());
 
 		start();
+		startTimeoutPresenceTask();
 	}
 
 	private void startTimeoutPresenceTask() {
@@ -64,9 +63,9 @@ public class ODistributedServerDiscoverySignaler extends OPollerThread {
 			@Override
 			public void run() {
 				try {
-					if (running && !manager.isLeaderConnected())
+					if (running)
 						// TIMEOUT: STOP TO SEND PACKETS TO BEING DISCOVERED
-						manager.becameLeader(forceLeadership);
+						manager.becameLeader();
 
 				} catch (Exception e) {
 					// AVOID THE TIMER IS NOT SCHEDULED ANYMORE IN CASE OF EXCEPTION
@@ -74,14 +73,14 @@ public class ODistributedServerDiscoverySignaler extends OPollerThread {
 			}
 		};
 
-		Orient.getTimer().schedule(runningTask, manager.networkTimeoutLeader);
+		Orient.getTimer().schedule(runningTask, manager.getConfig().networkTimeoutLeader);
 	}
 
 	@Override
 	public void startup() {
 		try {
-			dgram = new DatagramPacket(discoveryPacket, discoveryPacket.length, manager.networkMulticastAddress,
-					manager.networkMulticastPort);
+			dgram = new DatagramPacket(discoveryPacket, discoveryPacket.length, manager.getConfig().networkMulticastAddress,
+					manager.getConfig().networkMulticastPort);
 			socket = new DatagramSocket();
 		} catch (Exception e) {
 			OLogManager.instance().error(this, "Can't startup distributed server discovery signaler", e);

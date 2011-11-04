@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.handler.distributed;
+package com.orientechnologies.orient.server.clustering;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -24,32 +24,31 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.thread.OSoftThread;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.server.handler.distributed.ODistributedServerConfiguration;
+import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 
-public class ODistributedServerDiscoveryListener extends OSoftThread {
+public class ODiscoveryListener extends OSoftThread {
 	private final byte[]							recvBuffer	= new byte[50000];
 	private DatagramPacket						dgram;
-	private ODistributedServerManager	serverNode;
+	private ODistributedServerManager	manager;
 	private OServerNetworkListener		binaryNetworkListener;
 
 	private MulticastSocket						socket;
 
-	public ODistributedServerDiscoveryListener(final ODistributedServerManager iManager, final OServerNetworkListener iNetworkListener) {
+	public ODiscoveryListener(final ODistributedServerManager iManager, final OServerNetworkListener iNetworkListener) {
 		super(Orient.getThreadGroup(), "IO-Cluster-DiscoveryListener");
 
-		serverNode = iManager;
+		manager = iManager;
 		binaryNetworkListener = iNetworkListener;
 
-		OLogManager.instance()
-				.info(
-						this,
-						"Listening for distributed nodes on IP multicast " + iManager.networkMulticastAddress + ":"
-								+ iManager.networkMulticastPort);
+		OLogManager.instance().info(this, "Cluster '%s': listening for distributed nodes on IP multicast: %s:%d",
+				iManager.getConfig().name, iManager.getConfig().networkMulticastAddress, iManager.getConfig().networkMulticastPort);
 
 		dgram = new DatagramPacket(recvBuffer, recvBuffer.length);
 		try {
-			socket = new MulticastSocket(iManager.networkMulticastPort);
-			socket.joinGroup(iManager.networkMulticastAddress);
+			socket = new MulticastSocket(iManager.getConfig().networkMulticastPort);
+			socket.joinGroup(iManager.getConfig().networkMulticastAddress);
 		} catch (IOException e) {
 			throw new OIOException(
 					"Can't startup the Discovery Listener service to catch distributed server nodes, probably the IP MULTICAST is disabled in current network configuration: "
@@ -71,30 +70,30 @@ public class ODistributedServerDiscoveryListener extends OSoftThread {
 			OLogManager.instance().debug(this, "Received multicast packet %d bytes from %s:%d", dgram.getLength(), dgram.getAddress(),
 					dgram.getPort());
 
-			byte[] buffer = new byte[dgram.getLength()];
+			final byte[] buffer = new byte[dgram.getLength()];
 			System.arraycopy(dgram.getData(), 0, buffer, 0, buffer.length);
 
 			try {
-				String packet = new String(OSecurityManager.instance()
-						.decrypt(serverNode.securityAlgorithm, serverNode.securityKey, buffer));
+				String packet = new String(OSecurityManager.instance().decrypt(manager.getConfig().securityAlgorithm,
+						manager.getConfig().securityKey, buffer));
 
 				// UNPACK DATA
 				String[] parts = packet.trim().split("\\|");
 
 				int i = 0;
 
-				if (!parts[i].startsWith(ODistributedServerManager.PACKET_HEADER))
+				if (!parts[i].startsWith(ODistributedServerConfiguration.PACKET_HEADER))
 					return;
 
-				if (Integer.parseInt(parts[++i]) != ODistributedServerManager.PROTOCOL_VERSION) {
+				if (Integer.parseInt(parts[++i]) != ODistributedServerConfiguration.PROTOCOL_VERSION) {
 					OLogManager.instance().debug(this, "Received bad multicast packet with version %s not equals to the current %d",
-							parts[i], ODistributedServerManager.PROTOCOL_VERSION);
+							parts[i], ODistributedServerConfiguration.PROTOCOL_VERSION);
 					return;
 				}
 
-				if (!parts[++i].equals(serverNode.name)) {
+				if (!parts[++i].equals(manager.getConfig().name)) {
 					OLogManager.instance().debug(this, "Received bad multicast packet with cluster name %s not equals to the current %s",
-							parts[i], serverNode.name);
+							parts[i], manager.getConfig().name);
 					return;
 				}
 
@@ -109,7 +108,8 @@ public class ODistributedServerDiscoveryListener extends OSoftThread {
 					return;
 
 				// GOOD PACKET, PASS TO THE DISTRIBUTED NODE MANAGER THIS INFO
-				serverNode.joinNode(new String[] { sourceServerAddress, configuredServerAddress }, serverPort);
+				if (manager.getLeader() != null)
+					manager.getLeader().connect2Peer(new String[] { sourceServerAddress, configuredServerAddress }, serverPort);
 
 			} catch (Exception e) {
 				// WRONG PACKET
@@ -120,4 +120,5 @@ public class ODistributedServerDiscoveryListener extends OSoftThread {
 		} finally {
 		}
 	}
+
 }

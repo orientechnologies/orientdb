@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.handler.distributed;
+package com.orientechnologies.orient.server.clustering;
 
 import java.util.TimerTask;
 
@@ -25,41 +25,28 @@ import com.orientechnologies.common.log.OLogManager;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ODistributedServerLeaderChecker extends TimerTask {
-	private ODistributedServerManager	manager;
-	private long											heartBeatDelay;
+public class OLeaderCheckerTask extends TimerTask {
+	private OPeerNode	peer;
+	private long			heartBeatDelay;
 
-	public ODistributedServerLeaderChecker(final ODistributedServerManager iManager) {
-		this.manager = iManager;
+	public OLeaderCheckerTask(final OPeerNode iPeerNode) {
+		this.peer = iPeerNode;
 
 		// COMPUTE THE HEARTBEAT THRESHOLD AS THE 30% MORE THAN THE HEARTBEAT TIME
-		heartBeatDelay = manager.getNetworkHeartbeatDelay() * 130 / 100;
+		heartBeatDelay = peer.getManager().getConfig().getNetworkHeartbeatDelay() * 130 / 100;
 	}
 
 	@Override
 	public void run() {
-		if (manager.isLeader()) {
-			// THE NODE IS THE LEADER: CANCEL THIS TASK
-			cancel();
-			return;
-		}
-
-		if (manager.getStatus() != ODistributedServerManager.STATUS.ONLINE)
-			// THE NODE IS NOT ONLINE, IGNORE THE HEARTBEAT
-			return;
-
-		final long time = System.currentTimeMillis() - manager.getLastHeartBeat();
+		final long time = System.currentTimeMillis() - peer.getLastHeartBeat();
 		if (time > heartBeatDelay) {
 			// NO LEADER HEARTBEAT RECEIVED FROM LONG TIME: BECAME THE LEADER!
-			OLogManager
-					.instance()
-					.warn(
-							this,
-							"No heartbeat message has been received from the Leader node (last was %d ms ago)",
-							time);
+			OLogManager.instance().warn(this,
+					"Cluster '%s': no heartbeat message has been received from the Leader node (last was %d ms ago)",
+					peer.getManager().getConfig().name, time);
 
 			cancel();
-			manager.becameLeader(false);
+			peer.getManager().becameLeader();
 		}
 	}
 }

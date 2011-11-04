@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.handler.distributed;
+package com.orientechnologies.orient.server.replication;
 
 import java.io.IOException;
 
@@ -24,57 +24,42 @@ import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 
 /**
- * Record hook implementation. Catches all the relevant events and propagates to the cluster's slave nodes.
+ * Record hook implementation. Catches all the relevant events and propagates to the other cluster nodes.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class ODistributedServerRecordHook implements ORecordHook, ODatabaseLifecycleListener {
+public class OReplicatorRecordHook implements ORecordHook, ODatabaseLifecycleListener {
 
-	private ODistributedServerManager	manager;
+	private OReplicator	replicator;
 
 	/**
 	 * Auto install itself as lifecycle listener for databases.
 	 */
-	public ODistributedServerRecordHook(final ODistributedServerManager iDistributedServerManager) {
-		manager = iDistributedServerManager;
+	public OReplicatorRecordHook(final OReplicator iReplicator) {
+		replicator = iReplicator;
 		Orient.instance().addDbLifecycleListener(this);
 	}
 
 	@Override
 	public boolean onTrigger(final TYPE iType, final ORecord<?> iRecord) {
-		// if (!manager.isDistributedConfiguration())
-		// return;
-
 		try {
 			switch (iType) {
-			case BEFORE_CREATE:
-			case BEFORE_UPDATE:
-			case BEFORE_DELETE:
-				// CHECK IF THE CURRENT NODE IS THE OWNER FOR THAT CLUSTER
-				final String clusterName = iRecord.getDatabase().getClusterNameById(iRecord.getIdentity().getClusterId());
-
-				if (!manager.isCurrentNodeTheClusterOwner(iRecord.getDatabase().getName(), clusterName)) {
-					final ODocument servers = manager.getServersForCluster(iRecord.getDatabase().getName(), clusterName);
-					throw new ODistributedException("Can't apply changes to the cluster '" + clusterName
-							+ "' because the current node is not the owner for that record cluster. Please connect to the server: "
-							+ servers.field("owner"));
-				}
-				break;
-
 			case AFTER_CREATE:
-				manager.distributeRequest(new OTransactionRecordEntry((ORecordInternal<?>) iRecord, OTransactionRecordEntry.CREATED, null));
+				replicator.distributeRequest(new OTransactionRecordEntry((ORecordInternal<?>) iRecord, OTransactionRecordEntry.CREATED,
+						null));
 				break;
 
 			case AFTER_UPDATE:
-				manager.distributeRequest(new OTransactionRecordEntry((ORecordInternal<?>) iRecord, OTransactionRecordEntry.UPDATED, null));
+				replicator.distributeRequest(new OTransactionRecordEntry((ORecordInternal<?>) iRecord, OTransactionRecordEntry.UPDATED,
+						null));
 				break;
 
 			case AFTER_DELETE:
-				manager.distributeRequest(new OTransactionRecordEntry((ORecordInternal<?>) iRecord, OTransactionRecordEntry.DELETED, null));
+				replicator.distributeRequest(new OTransactionRecordEntry((ORecordInternal<?>) iRecord, OTransactionRecordEntry.DELETED,
+						null));
 				break;
 			}
 		} catch (IOException e) {
