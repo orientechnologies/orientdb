@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
@@ -43,8 +44,6 @@ import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
-import java.util.*;
-
 /**
  * Shared schema class. It's shared by all the database instances that point to the same storage.
  * 
@@ -53,10 +52,10 @@ import java.util.*;
  */
 @SuppressWarnings("unchecked")
 public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, OCloseable {
-	public static final int					CURRENT_VERSION_NUMBER	= 4;
-    private static final String DROP_INDEX_QUERY = "drop index ";
-    protected Map<String, OClass>		classes									= new HashMap<String, OClass>();
-	private final OSharedResourceExternal	lock								= new OSharedResourceExternal();
+	public static final int								CURRENT_VERSION_NUMBER	= 4;
+	private static final String						DROP_INDEX_QUERY				= "drop index ";
+	protected Map<String, OClass>					classes									= new HashMap<String, OClass>();
+	private final OSharedResourceExternal	lock										= new OSharedResourceExternal();
 
 	public OSchemaShared(final int schemaClusterId) {
 		super(new ODocument());
@@ -350,24 +349,32 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 		}
 	}
 
-    private void dropClassIndexes(final  OClass cls) {
-        for (final OIndex<?> index : getDatabase().getMetadata().getIndexManager().getClassIndexes(cls.getName())) {
-            getDatabase().command(new OCommandSQL(DROP_INDEX_QUERY + index.getName()));
-        }
-    }
-
-    @Override
-	public <RET extends ODocumentWrapper> RET reload() {
-		lock.acquireExclusiveLock();
-		try {
-
-			getDatabase();
-			super.reload(null);
-			return (RET) this;
-
-		} finally {
-			lock.releaseExclusiveLock();
+	private void dropClassIndexes(final OClass cls) {
+		for (final OIndex<?> index : getDatabase().getMetadata().getIndexManager().getClassIndexes(cls.getName())) {
+			getDatabase().command(new OCommandSQL(DROP_INDEX_QUERY + index.getName()));
 		}
+	}
+
+	/**
+	 * Reloads the schema inside a storage's shared lock.
+	 */
+	@Override
+	public <RET extends ODocumentWrapper> RET reload() {
+		getDatabase().getStorage().callInLock(new Callable<Void>() {
+
+			public Void call() throws Exception {
+				lock.acquireExclusiveLock();
+				try {
+					reload(null);
+				} finally {
+					lock.releaseExclusiveLock();
+				}
+
+				return null;
+			}
+		}, false);
+
+		return (RET) this;
 	}
 
 	public boolean existsClass(final String iClassName) {
