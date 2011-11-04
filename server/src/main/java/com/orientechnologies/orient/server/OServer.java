@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -418,15 +419,28 @@ public class OServer {
 			}
 	}
 
+	public void addUser(final String iName, String iPassword, final String iPermissions) throws IOException {
+		if (iName == null || iName.length() == 0)
+			throw new IllegalArgumentException("User name null or empty");
+
+		if (iPermissions == null || iPermissions.length() == 0)
+			throw new IllegalArgumentException("User permissions null or empty");
+
+		configuration.users = Arrays.copyOf(configuration.users, configuration.users.length + 1);
+
+		if (iPassword == null)
+			// AUTO GENERATE PASSWORD
+			iPassword = OSecurityManager.instance().digest2String(String.valueOf(new Random(System.currentTimeMillis()).nextLong()),
+					false);
+
+		configuration.users[configuration.users.length - 1] = new OServerUserConfiguration(iName, iPassword, iPermissions);
+
+		saveConfiguration();
+	}
+
 	protected void createAdminAndDbListerUsers() throws IOException {
-		configuration.users = new OServerUserConfiguration[2];
-
-		final long generatedPassword = new Random(System.currentTimeMillis()).nextLong();
-		String encodedPassword = OSecurityManager.instance().digest2String(String.valueOf(generatedPassword), false);
-
-		configuration.users[0] = new OServerUserConfiguration(OServerConfiguration.SRV_ROOT_ADMIN, encodedPassword, "*");
-		configuration.users[1] = new OServerUserConfiguration(OServerConfiguration.SRV_ROOT_GUEST, OServerConfiguration.SRV_ROOT_GUEST,
-				"connect,server.listDatabases");
+		addUser(OServerConfiguration.SRV_ROOT_ADMIN, null, "*");
+		addUser(OServerConfiguration.SRV_ROOT_GUEST, OServerConfiguration.SRV_ROOT_GUEST, "connect,server.listDatabases");
 		saveConfiguration();
 	}
 

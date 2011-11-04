@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 
@@ -50,6 +51,7 @@ public class ODistributedServerConfiguration {
 
 	public static final String	PACKET_HEADER			= "OrientDB v.";
 	public static final int			PROTOCOL_VERSION	= 1;
+	public static final String	REPLICATOR_USER		= "replicator";
 
 	public ODistributedServerConfiguration(final OServer iServer, final ODistributedServerManager iManager,
 			final OServerParameterConfiguration[] iParams) {
@@ -92,6 +94,10 @@ public class ODistributedServerConfiguration {
 					else if ("server.outsynch.maxbuffers".equalsIgnoreCase(param.name))
 						serverOutSynchMaxBuffers = Integer.parseInt(param.value);
 				}
+
+			if (OServerMain.server().getUser(REPLICATOR_USER) == null)
+				// CREATE REPLICATOR USER
+				OServerMain.server().addUser(REPLICATOR_USER, null, "database.passthrough");
 
 			if (tempSecurityKey == null) {
 				OLogManager.instance().info(this, "Generating Server security key and save it in configuration...");
