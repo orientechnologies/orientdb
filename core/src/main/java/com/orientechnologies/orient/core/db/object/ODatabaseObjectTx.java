@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.db.object;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -210,29 +211,34 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 
 		if (iPojo == null)
 			return this;
-
-		OSerializationThreadLocal.INSTANCE.get().clear();
-
-		// GET THE ASSOCIATED DOCUMENT
-		final ODocument record = getRecordByUserObject(iPojo, true);
-		try {
-			record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.MARSHALLING);
-
-			if (!saveOnlyDirty || record.isDirty()) {
-				// REGISTER BEFORE TO SERIALIZE TO AVOID PROBLEMS WITH CIRCULAR DEPENDENCY
-				// registerUserObject(iPojo, record);
-
-				pojo2Stream(iPojo, record);
-
-				underlying.save(record, iClusterName);
-
-				// RE-REGISTER FOR NEW RECORDS SINCE THE ID HAS CHANGED
-				registerUserObject(iPojo, record);
+		else if (OMultiValue.isMultiValue(iPojo)) {
+			// MULTI VALUE OBJECT: STORE SINGLE POJOS
+			for (Object pojo : OMultiValue.getMultiValueIterable(iPojo)) {
+				save(pojo, iClusterName);
 			}
-		} finally {
-			record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.LOADED);
-		}
+		} else {
+			OSerializationThreadLocal.INSTANCE.get().clear();
 
+			// GET THE ASSOCIATED DOCUMENT
+			final ODocument record = getRecordByUserObject(iPojo, true);
+			try {
+				record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.MARSHALLING);
+
+				if (!saveOnlyDirty || record.isDirty()) {
+					// REGISTER BEFORE TO SERIALIZE TO AVOID PROBLEMS WITH CIRCULAR DEPENDENCY
+					// registerUserObject(iPojo, record);
+
+					pojo2Stream(iPojo, record);
+
+					underlying.save(record, iClusterName);
+
+					// RE-REGISTER FOR NEW RECORDS SINCE THE ID HAS CHANGED
+					registerUserObject(iPojo, record);
+				}
+			} finally {
+				record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.LOADED);
+			}
+		}
 		return this;
 	}
 
