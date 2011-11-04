@@ -194,15 +194,23 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 	}
 
 	/**
-	 * If the record is new and a class was specified, the configured cluster id will be used to store the class.
+	 * Saves an object to the database. First checks if the object is new or not. In case it's new a new ODocument is created and
+	 * bound to the object, otherwise the ODocument is retrieved and updated. The object is introspected using the Java Reflection to
+	 * extract the field values. <br/>
+	 * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
 	 */
 	public ODatabaseObject save(final Object iContent) {
 		return save(iContent, null);
 	}
 
 	/**
-	 * Store the record on the specified cluster only after having checked the cluster is allowed and figures in the configured and
-	 * the record is valid following the constraints declared in the schema.
+	 * Saves an object to the database forcing a record cluster where to store it. First checks if the object is new or not. In case
+	 * it's new a new ODocument is created and bound to the object, otherwise the ODocument is retrieved and updated. The object is
+	 * introspected using the Java Reflection to extract the field values. <br/>
+	 * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
+	 * 
+	 * Before to use the specified cluster a check is made to know if is allowed and figures in the configured and the record is valid
+	 * following the constraints declared in the schema.
 	 * 
 	 * @see ORecordSchemaAware#validate()
 	 */
