@@ -176,7 +176,10 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 								} else
 									linkedType = OType.EMBEDDED;
 							} else {
-								if (firstValue instanceof Enum<?>)
+								// EMBEDDED COLLECTION
+								if (firstValue instanceof ODocument && ((ODocument) firstValue).hasOwners())
+									linkedType = OType.EMBEDDED;
+								else if (firstValue instanceof Enum<?>)
 									linkedType = OType.STRING;
 								else {
 									linkedType = OType.getTypeByClass(firstValue.getClass());
