@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.db.record;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
@@ -241,16 +242,23 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 						lockedIndexes.add(index);
 					}
 
-				getStorage().commit(currentTx);
+				getStorage().callInLock(new Callable<Void>() {
 
-				// COMMIT INDEX CHANGES
-				final ODocument indexEntries = currentTx.getIndexChanges();
-				if (indexEntries != null) {
-					for (Entry<String, Object> indexEntry : indexEntries) {
-						final OIndex<?> index = getMetadata().getIndexManager().getIndexInternal(indexEntry.getKey());
-						index.commit((ODocument) indexEntry.getValue());
+					public Void call() throws Exception {
+						getStorage().commit(currentTx);
+
+						// COMMIT INDEX CHANGES
+						final ODocument indexEntries = currentTx.getIndexChanges();
+						if (indexEntries != null) {
+							for (Entry<String, Object> indexEntry : indexEntries) {
+								final OIndex<?> index = getMetadata().getIndexManager().getIndexInternal(indexEntry.getKey());
+								index.commit((ODocument) indexEntry.getValue());
+							}
+						}
+						return null;
 					}
-				}
+
+				}, true);
 
 			} finally {
 				// RELEASE INDEX LOCKS IF ANY

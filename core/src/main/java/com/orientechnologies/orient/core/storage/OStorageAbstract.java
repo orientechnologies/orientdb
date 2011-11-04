@@ -167,6 +167,8 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 			lock.acquireSharedLock();
 		try {
 			return iCallable.call();
+		} catch (RuntimeException e) {
+			throw e;
 		} catch (Exception e) {
 			throw new OException("Error on nested call in lock", e);
 		} finally {
