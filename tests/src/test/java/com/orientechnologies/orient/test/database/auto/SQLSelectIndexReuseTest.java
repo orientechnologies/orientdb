@@ -148,9 +148,6 @@ public class SQLSelectIndexReuseTest {
     public void testCompositeSearchHasChainOperatorsEquals() {
         long oldIndexUsage =  profiler.getCounter("Query.indexUsage");
 
-        if(oldIndexUsage == -1)
-            oldIndexUsage = 0;
-
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop1.asInteger() = 1 and prop2 = 2")).execute();
 
@@ -196,9 +193,6 @@ public class SQLSelectIndexReuseTest {
     @Test
     public void testNoCompositeSearchEquals() {
         long oldIndexUsage =  profiler.getCounter("Query.indexUsage");
-
-        if(oldIndexUsage == -1)
-            oldIndexUsage = 0;
 
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop2 = 1")).execute();
@@ -276,9 +270,6 @@ public class SQLSelectIndexReuseTest {
     @Test
     public void testNoCompositeSearchEqualsWithArgs() {
         long oldIndexUsage =  profiler.getCounter("Query.indexUsage");
-
-        if(oldIndexUsage == -1)
-            oldIndexUsage = 0;
 
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop2 = ?")).execute(1);
@@ -362,9 +353,6 @@ public class SQLSelectIndexReuseTest {
     @Test
     public void testCompositeSearchGTOneFieldNoSearch() {
         long oldIndexUsage =  profiler.getCounter("Query.indexUsage");
-
-        if(oldIndexUsage == -1)
-            oldIndexUsage = 0;
 
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop2 > 7")).execute();
@@ -452,9 +440,6 @@ public class SQLSelectIndexReuseTest {
     public void testCompositeSearchGTOneFieldNoSearchWithArgs() {
         long oldIndexUsage =  profiler.getCounter("Query.indexUsage");
 
-        if(oldIndexUsage == -1)
-            oldIndexUsage = 0;
-
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop2 > ?")).execute(7);
 
@@ -541,9 +526,6 @@ public class SQLSelectIndexReuseTest {
     public void testCompositeSearchGTQOneFieldNoSearch() {
         long oldIndexUsage =  profiler.getCounter("Query.indexUsage");
 
-        if(oldIndexUsage == -1)
-            oldIndexUsage = 0;
-
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop2 >= 7")).execute();
 
@@ -629,9 +611,6 @@ public class SQLSelectIndexReuseTest {
     @Test
     public void testCompositeSearchGTQOneFieldNoSearchWithArgs() {
         long oldIndexUsage =  profiler.getCounter("Query.indexUsage");
-
-        if(oldIndexUsage == -1)
-            oldIndexUsage = 0;
 
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop2 >= ?")).execute(7);
@@ -722,9 +701,6 @@ public class SQLSelectIndexReuseTest {
     public void testCompositeSearchLTQOneFieldNoSearch() {
         long oldIndexUsage =  profiler.getCounter("Query.indexUsage");
 
-        if(oldIndexUsage == -1)
-            oldIndexUsage = 0;
-
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop2 <= 7")).execute();
 
@@ -811,9 +787,6 @@ public class SQLSelectIndexReuseTest {
     @Test
     public void testCompositeSearchLTQOneFieldNoSearchWithArgs() {
         long oldIndexUsage =  profiler.getCounter("Query.indexUsage");
-
-        if(oldIndexUsage == -1)
-            oldIndexUsage = 0;
 
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop2 <= ?")).execute(7);
@@ -902,9 +875,6 @@ public class SQLSelectIndexReuseTest {
     public void testCompositeSearchLTOneFieldNoSearch() {
         long oldIndexUsage =  profiler.getCounter("Query.indexUsage");
 
-        if(oldIndexUsage == -1)
-            oldIndexUsage = 0;
-
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop2 < 7")).execute();
 
@@ -991,9 +961,6 @@ public class SQLSelectIndexReuseTest {
     @Test
     public void testCompositeSearchLTOneFieldNoSearchWithArgs() {
         long oldIndexUsage =  profiler.getCounter("Query.indexUsage");
-
-        if(oldIndexUsage == -1)
-            oldIndexUsage = 0;
 
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop2 < ?")).execute(7);
@@ -1083,9 +1050,6 @@ public class SQLSelectIndexReuseTest {
     public void testCompositeSearchBetweenOneFieldNoSearch() {
         long oldIndexUsage =  profiler.getCounter("Query.indexUsage");
 
-        if(oldIndexUsage == -1)
-            oldIndexUsage = 0;
-
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop2 between 1 and 3")).execute();
 
@@ -1173,9 +1137,6 @@ public class SQLSelectIndexReuseTest {
     public void testCompositeSearchBetweenOneFieldNoSearchWithArgs() {
         long oldIndexUsage =  profiler.getCounter("Query.indexUsage");
 
-        if(oldIndexUsage == -1)
-            oldIndexUsage = 0;
-
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop2 between ? and ?")).execute(1, 3);
 
@@ -1202,8 +1163,6 @@ public class SQLSelectIndexReuseTest {
 
         if(oldIndexUsage == -1)
             oldIndexUsage = 0;
-        if(oldCompositeIndexUsage == -1)
-            oldCompositeIndexUsage = 0;
 
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop3 = 1")).execute();
@@ -1223,8 +1182,6 @@ public class SQLSelectIndexReuseTest {
 
         if(oldIndexUsage == -1)
             oldIndexUsage = 0;
-        if(oldCompositeIndexUsage == -1)
-            oldCompositeIndexUsage = 0;
 
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop3 = ?")).execute(1);
@@ -1245,8 +1202,6 @@ public class SQLSelectIndexReuseTest {
 
         if(oldIndexUsage == -1)
             oldIndexUsage = 0;
-        if(oldCompositeIndexUsage == -1)
-            oldCompositeIndexUsage = 0;
 
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop3 > 90")).execute();
@@ -1270,8 +1225,6 @@ public class SQLSelectIndexReuseTest {
 
         if(oldIndexUsage == -1)
             oldIndexUsage = 0;
-        if(oldCompositeIndexUsage == -1)
-            oldCompositeIndexUsage = 0;
 
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop3 > ?")).execute(90);
@@ -1296,8 +1249,6 @@ public class SQLSelectIndexReuseTest {
 
         if(oldIndexUsage == -1)
             oldIndexUsage = 0;
-        if(oldCompositeIndexUsage == -1)
-            oldCompositeIndexUsage = 0;
 
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop3 >= 90")).execute();
@@ -1321,8 +1272,6 @@ public class SQLSelectIndexReuseTest {
 
         if(oldIndexUsage == -1)
             oldIndexUsage = 0;
-        if(oldCompositeIndexUsage == -1)
-            oldCompositeIndexUsage = 0;
 
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop3 >= ?")).execute(90);
@@ -1347,8 +1296,6 @@ public class SQLSelectIndexReuseTest {
 
         if(oldIndexUsage == -1)
             oldIndexUsage = 0;
-        if(oldCompositeIndexUsage == -1)
-            oldCompositeIndexUsage = 0;
 
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop3 <= 10")).execute();
@@ -1372,8 +1319,6 @@ public class SQLSelectIndexReuseTest {
 
         if(oldIndexUsage == -1)
             oldIndexUsage = 0;
-        if(oldCompositeIndexUsage == -1)
-            oldCompositeIndexUsage = 0;
 
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop3 <= ?")).execute(10);
@@ -1398,8 +1343,6 @@ public class SQLSelectIndexReuseTest {
 
         if(oldIndexUsage == -1)
             oldIndexUsage = 0;
-        if(oldCompositeIndexUsage == -1)
-            oldCompositeIndexUsage = 0;
 
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop3 < 10")).execute();
@@ -1423,8 +1366,6 @@ public class SQLSelectIndexReuseTest {
 
         if(oldIndexUsage == -1)
             oldIndexUsage = 0;
-        if(oldCompositeIndexUsage == -1)
-            oldCompositeIndexUsage = 0;
 
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop3 < ?")).execute(10);
@@ -1449,8 +1390,6 @@ public class SQLSelectIndexReuseTest {
 
         if(oldIndexUsage == -1)
             oldIndexUsage = 0;
-        if(oldCompositeIndexUsage == -1)
-            oldCompositeIndexUsage = 0;
 
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop3 between 1 and 10")).execute();
@@ -1474,8 +1413,6 @@ public class SQLSelectIndexReuseTest {
 
         if(oldIndexUsage == -1)
             oldIndexUsage = 0;
-        if(oldCompositeIndexUsage == -1)
-            oldCompositeIndexUsage = 0;
 
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop3 between ? and ?")).execute(1, 10);
@@ -1500,8 +1437,6 @@ public class SQLSelectIndexReuseTest {
 
         if(oldIndexUsage == -1)
             oldIndexUsage = 0;
-        if(oldCompositeIndexUsage == -1)
-            oldCompositeIndexUsage = 0;
 
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop3 in [0, 5, 10]")).execute();
@@ -1525,8 +1460,6 @@ public class SQLSelectIndexReuseTest {
 
         if(oldIndexUsage == -1)
             oldIndexUsage = 0;
-        if(oldCompositeIndexUsage == -1)
-            oldCompositeIndexUsage = 0;
 
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop3 in [?, ?, ?]")).execute(0, 5, 10);
@@ -1741,9 +1674,6 @@ public class SQLSelectIndexReuseTest {
 
         if(oldIndexUsage == -1)
             oldIndexUsage = 0;
-        if(oldCompositeIndexUsage == -1)
-            oldCompositeIndexUsage = 0;
-
 
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop7 containstext 'Alice' "))
@@ -1819,9 +1749,6 @@ public class SQLSelectIndexReuseTest {
     @Test
     public void testNotIndexOperatorSecondCase() {
         long oldIndexUsage =  profiler.getCounter("Query.indexUsage");
-
-        if(oldIndexUsage == -1)
-            oldIndexUsage = 0;
 
         final List<ODocument> result = database.command(
                 new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where ( prop1 = 1 and prop2 = 2 ) or ( prop4  = 1 and prop6 = 2 )")).execute();
