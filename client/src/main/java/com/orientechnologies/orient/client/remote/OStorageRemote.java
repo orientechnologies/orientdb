@@ -26,6 +26,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
@@ -97,6 +101,7 @@ public class OStorageRemote extends OStorageAbstract {
 	private String																	connectionUserName;
 	private String																	connectionUserPassword;
 	private Map<String, Object>											connectionOptions;
+	private final ExecutorService										asynchExecutor;
 
 	public OStorageRemote(final String iURL, final String iMode) throws IOException {
 		super(iURL, iURL, iMode);
@@ -107,6 +112,8 @@ public class OStorageRemote extends OStorageAbstract {
 		connectionRetryDelay = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY_DELAY);
 
 		parseServerURLs();
+
+		asynchExecutor = Executors.newSingleThreadExecutor();
 	}
 
 	public int getSessionId() {
@@ -287,15 +294,17 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType) {
+		return createRecord(iRid, iContent, iRecordType, true);
+	}
+
+	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType, final boolean iSynch) {
 		checkConnection();
 
 		do {
 			try {
 
-				OChannelBinaryClient network = null;
+				final OChannelBinaryClient network = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_CREATE);
 				try {
-					network = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_CREATE);
-
 					network.writeShort((short) iRid.clusterId);
 					network.writeBytes(iContent);
 					network.writeByte(iRecordType);
@@ -304,14 +313,35 @@ public class OStorageRemote extends OStorageAbstract {
 					endRequest(network);
 				}
 
-				try {
-					beginResponse(network);
+				if (iSynch)
+					try {
+						beginResponse(network);
+						iRid.clusterPosition = network.readLong();
+						return iRid.clusterPosition;
+					} finally {
+						endResponse(network);
+					}
+				else {
+					Callable<Object> response = new Callable<Object>() {
+						public Object call() throws Exception {
+							beginResponse(network);
+							try {
+								final long clusterPosition = network.readLong();
 
-					iRid.clusterPosition = network.readLong();
-					return iRid.clusterPosition;
+								// if (clusterPosition != iRid.getClusterPosition())
+								// handleError(iRequest, iRequestType, new ODistributedException("Error on distributed insert for database '"
+								// + record.getDatabase().getName() + "': the recordId received from the remote server node '" + getName()
+								// + "' is different from the current one. Master=" + iRid + ", " + getName() + "=#" + iRid.getClusterId() + ":"
+								// + clusterPosition + ". Unsharing the database against the remote server node..."));
 
-				} finally {
-					endResponse(network);
+							} finally {
+								endResponse(network);
+							}
+							return null;
+						}
+
+					};
+					asynchExecutor.submit(new FutureTask<Object>(response));
 				}
 
 			} catch (OException e) {
@@ -376,14 +406,16 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType) {
+		return updateRecord(iRid, iContent, iVersion, iRecordType, true);
+	}
+
+	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType, boolean iSynch) {
 		checkConnection();
 
 		do {
 			try {
-				OChannelBinaryClient network = null;
+				final OChannelBinaryClient network = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_UPDATE);
 				try {
-					network = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_UPDATE);
-
 					network.writeRID(iRid);
 					network.writeBytes(iContent);
 					network.writeInt(iVersion);
@@ -393,13 +425,35 @@ public class OStorageRemote extends OStorageAbstract {
 					endRequest(network);
 				}
 
-				try {
-					beginResponse(network);
-					return network.readInt();
-				} finally {
-					endResponse(network);
-				}
+				if (iSynch)
+					try {
+						beginResponse(network);
+						return network.readInt();
+					} finally {
+						endResponse(network);
+					}
+				else {
+					Callable<Object> response = new Callable<Object>() {
+						public Object call() throws Exception {
+							beginResponse(network);
+							try {
+								final int version = network.readInt();
 
+								// if (version != record.getVersion())
+								// handleError(iRequest, iRequestType, new ODistributedException("Error on distributed update for database '"
+								// + record.getDatabase().getName() + "': the version received from the remote server node '" + getName()
+								// + "' is different from the current one. Master=" + record.getVersion() + ", " + getName() + "=" + version
+								// + ". Unsharing the database against the remote server node..."));
+
+							} finally {
+								endResponse(network);
+							}
+							return null;
+						}
+
+					};
+					asynchExecutor.submit(new FutureTask<Object>(response));
+				}
 			} catch (OException e) {
 				// PASS THROUGH
 				throw e;
@@ -411,13 +465,16 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public boolean deleteRecord(final ORecordId iRid, final int iVersion) {
+		return deleteRecord(iRid, iVersion, true);
+	}
+
+	public boolean deleteRecord(final ORecordId iRid, final int iVersion, boolean iSynch) {
 		checkConnection();
 
 		do {
 			try {
-				OChannelBinaryClient network = null;
+				final OChannelBinaryClient network = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_DELETE);
 				try {
-					network = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_DELETE);
 
 					network.writeRID(iRid);
 					network.writeInt(iVersion);
@@ -426,13 +483,28 @@ public class OStorageRemote extends OStorageAbstract {
 					endRequest(network);
 				}
 
-				try {
-					beginResponse(network);
-					return network.readByte() == 1;
-				} finally {
-					endResponse(network);
-				}
+				if (iSynch)
+					try {
+						beginResponse(network);
+						return network.readByte() == 1;
+					} finally {
+						endResponse(network);
+					}
+				else {
+					Callable<Object> response = new Callable<Object>() {
+						public Object call() throws Exception {
+							beginResponse(network);
+							try {
+								final boolean ok = network.readByte() == 1;
+							} finally {
+								endResponse(network);
+							}
+							return null;
+						}
 
+					};
+					asynchExecutor.submit(new FutureTask<Object>(response));
+				}
 			} catch (OException e) {
 				// PASS THROUGH
 				throw e;
