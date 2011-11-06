@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.operator.math;
 
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
@@ -63,9 +64,20 @@ public class OQueryOperatorPlus extends OQueryOperator {
 	}
 
     @Override
-    public OIndexReuseType getIndexReuseType(Object iLeft, Object iRight) {
-        if (iLeft instanceof Number && iRight instanceof Number)
-            return OIndexReuseType.INDEX_KEY;
-        return OIndexReuseType.NO_INDEX;
-    }
+  public OIndexReuseType getIndexReuseType(Object iLeft, Object iRight) {
+      if (iLeft instanceof Number && iRight instanceof Number)
+          return OIndexReuseType.INDEX_KEY;
+      return OIndexReuseType.NO_INDEX;
+  }
+
+
+  @Override
+  public ORID getBeginRidRange(Object iLeft, Object iRight) {
+    return null;
+  }
+
+  @Override
+  public ORID getEndRidRange(Object iLeft, Object iRight) {
+    return null;
+  }
 }

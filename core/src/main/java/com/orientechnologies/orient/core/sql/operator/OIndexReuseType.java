@@ -15,10 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-/**
- * 
- *
- */
+
 public enum OIndexReuseType {
 	LEFT_INDEX, RIGHT_INDEX, INDEX_INTERSECTION, INDEX_UNION, NO_INDEX, INDEX_METHOD, INDEX_KEY
 }

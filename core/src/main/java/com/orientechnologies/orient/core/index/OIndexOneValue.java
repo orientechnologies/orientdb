@@ -25,7 +25,6 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
 
@@ -89,175 +88,6 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 		}
 	}
 
-  public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive) {
-
-    acquireExclusiveLock();
-
-    try {
-
-      OMVRBTreeEntry<Object, OIdentifiable> firstEntry;
-      if(isInclusive)
-         firstEntry = map.getCeilingEntry(fromKey, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
-      else
-          firstEntry = map.getHigherEntry(fromKey);
-
-      if (firstEntry == null)
-        return Collections.emptySet();
-
-      int firstPageIndex = map.getPageIndex();
-      int size = 0;
-
-      OMVRBTreeEntry<Object, OIdentifiable> entry = firstEntry;
-
-      while (entry != null) {
-        size += entry.getSize();
-        entry = OMVRBTree.successor(entry);
-      }
-
-      final Set<OIdentifiable> result = new HashSet<OIdentifiable>(size);
-
-      entry = firstEntry;
-      map.setPageIndex(firstPageIndex);
-
-      while (entry != null) {
-        result.add(entry.getValue(map.getPageIndex()));
-        entry = OMVRBTree.next(entry);
-      }
-
-      return result;
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
-
-  public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive) {
-
-		acquireExclusiveLock();
-
-		try {
-      final ONavigableMap<Object, OIdentifiable>  headMap = map.headMap(toKey, isInclusive);
-      if(headMap == null)
-        return Collections.emptySet();
-
-			return new HashSet<OIdentifiable>(headMap.values());
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
-
-	public Collection<ODocument> getEntriesMajor(final Object fromKey, final boolean isInclusive) {
-
-		acquireExclusiveLock();
-
-		try {
-			final Set<ODocument> result;
-
-			final ONavigableMap<Object, OIdentifiable> subSet = map.tailMap(fromKey, isInclusive);
-			if (subSet != null) {
-        result = new ODocumentFieldsHashSet();
-
-				for (final Entry<Object, OIdentifiable> v : subSet.entrySet()) {
-					final ODocument document = new ODocument();
-					document.field("key", v.getKey());
-					document.field("rid", v.getValue().getIdentity());
-					document.unsetDirty();
-					result.add(document);
-				}
-			} else
-        result = Collections.emptySet();
-
-			return result;
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
-
-	public Collection<ODocument> getEntriesMinor(final Object toKey, final boolean isInclusive) {
-
-		acquireExclusiveLock();
-
-		try {
-			final Set<ODocument> result = new ODocumentFieldsHashSet();
-
-			final ONavigableMap<Object, OIdentifiable> subSet = map.headMap(toKey, isInclusive);
-			if (subSet != null) {
-				for (final Entry<Object, OIdentifiable> v : subSet.entrySet()) {
-					final ODocument document = new ODocument();
-					document.field("key", v.getKey());
-					document.field("rid", v.getValue().getIdentity());
-					document.unsetDirty();
-					result.add(document);
-				}
-			}
-
-			return result;
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
-
-	/**
-	 * Returns a set of records with key between the range passed as parameter.
-	 * <p/>
-	 * In case of {@link com.orientechnologies.common.collection.OCompositeKey}s partial keys can be used as values boundaries.
-	 * 
-	 * @param iRangeFrom
-	 *          Starting range
-	 * @param iFromInclusive
-	 *          Indicates whether start range boundary is included in result.
-	 * @param iRangeTo
-	 *          Ending range
-	 * @param iToInclusive
-	 *          Indicates whether end range boundary is included in result.
-	 * @return Returns a set of records with key between the range passed as parameter.
-	 * @see com.orientechnologies.common.collection.OCompositeKey#compareTo(com.orientechnologies.common.collection.OCompositeKey)
-	 */
-	public Set<OIdentifiable> getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
-			final boolean iToInclusive) {
-		if (iRangeFrom.getClass() != iRangeTo.getClass())
-			throw new IllegalArgumentException("Range from-to parameters are of different types");
-
-		acquireExclusiveLock();
-
-		try {
-			final ONavigableMap<Object, OIdentifiable> subMap = map.subMap(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive);
-
-      if(subMap == null)
-        return Collections.emptySet();
-
-			return new HashSet<OIdentifiable>(subMap.values());
-
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
-
-	public Set<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
-		if (iRangeFrom.getClass() != iRangeTo.getClass())
-			throw new IllegalArgumentException("Range from-to parameters are of different types");
-
-		acquireExclusiveLock();
-
-		try {
-			final Set<ODocument> result = new ODocumentFieldsHashSet();
-
-			final ONavigableMap<Object, OIdentifiable> subSet = map.subMap(iRangeFrom, iInclusive, iRangeTo, iInclusive);
-			if (subSet != null) {
-				for (final Entry<Object, OIdentifiable> v : subSet.entrySet()) {
-					final ODocument document = new ODocument();
-					document.field("key", v.getKey());
-					document.field("rid", v.getValue().getIdentity());
-					document.unsetDirty();
-					result.add(document);
-				}
-			}
-
-			return result;
-
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
 
 	@Override
 	public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
@@ -275,44 +105,305 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 	}
 
 
-	public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
-		final List<Comparable> sortedKeys = new ArrayList<Comparable>((Collection<? extends Comparable>) iKeys);
-		Collections.sort(sortedKeys);
+  public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive,
+                                                    final Object iRangeTo,final boolean iToInclusive,
+                                                    final int maxValuesToFetch) {
+    if (iRangeFrom.getClass() != iRangeTo.getClass())
+      throw new IllegalArgumentException("Range from-to parameters are of different types");
 
-		final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
-		acquireExclusiveLock();
-		try {
-			for (final Object key : sortedKeys) {
-				final OIdentifiable val = map.get(key);
-				if (val != null)
-					result.add(val);
-			}
-		} finally {
-			releaseExclusiveLock();
-		}
-		return result;
-	}
+    acquireExclusiveLock();
 
-	public Collection<ODocument> getEntries(final Collection<?> iKeys) {
-		final List<Comparable> sortedKeys = new ArrayList<Comparable>((Collection<? extends Comparable>) iKeys);
-		Collections.sort(sortedKeys);
+    try {
+      final OMVRBTreeEntry<Object, OIdentifiable> firstEntry;
 
-		final Set<ODocument> result = new ODocumentFieldsHashSet();
-		acquireExclusiveLock();
-		try {
-			for (final Object key : sortedKeys) {
-				final OIdentifiable val = map.get(key);
-				if (val != null) {
-					final ODocument document = new ODocument();
-					document.field("key", key);
-					document.field("rid", val.getIdentity());
-					document.unsetDirty();
-					result.add(document);
-				}
-			}
-		} finally {
-			releaseExclusiveLock();
-		}
-		return result;
-	}
+      if (iFromInclusive)
+        firstEntry = map.getCeilingEntry(iRangeFrom, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
+      else
+        firstEntry = map.getHigherEntry(iRangeFrom);
+
+      if (firstEntry == null)
+        return Collections.emptySet();
+
+      final int firstEntryIndex = map.getPageIndex();
+
+      final OMVRBTreeEntry<Object, OIdentifiable> lastEntry;
+
+      if (iToInclusive)
+        lastEntry = map.getHigherEntry(iRangeTo);
+      else
+        lastEntry = map.getCeilingEntry(iRangeTo, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
+
+      final int lastEntryIndex;
+
+      if (lastEntry != null)
+        lastEntryIndex = map.getPageIndex();
+      else
+        lastEntryIndex = -1;
+
+      OMVRBTreeEntry<Object, OIdentifiable> entry = firstEntry;
+      map.setPageIndex(firstEntryIndex);
+
+      final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+
+      while (entry != null && !(entry == lastEntry && map.getPageIndex() == lastEntryIndex) &&
+              !(maxValuesToFetch > -1 && result.size() == maxValuesToFetch)) {
+        result.add(entry.getValue());
+
+        entry = OMVRBTree.next(entry);
+      }
+
+      return result;
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  public Collection<OIdentifiable> getValuesMajor(final Object fromKey,final boolean isInclusive,
+                                                  final int maxValuesToFetch) {
+    acquireExclusiveLock();
+
+    try {
+      final OMVRBTreeEntry<Object, OIdentifiable> firstEntry;
+      if (isInclusive)
+        firstEntry = map.getCeilingEntry(fromKey, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
+      else
+        firstEntry = map.getHigherEntry(fromKey);
+
+      if(firstEntry == null)
+        return Collections.emptySet();
+
+      OMVRBTreeEntry<Object, OIdentifiable> entry = firstEntry;
+
+      final HashSet<OIdentifiable> result = new HashSet<OIdentifiable>();
+
+      while (entry != null && !(maxValuesToFetch > -1 && result.size() == maxValuesToFetch)) {
+        result.add(entry.getValue());
+        entry = OMVRBTree.next(entry);
+      }
+
+      return result;
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive,
+                                                  final int maxValuesToFetch) {
+    acquireExclusiveLock();
+
+    try {
+
+      final OMVRBTreeEntry<Object, OIdentifiable> lastEntry;
+
+      if (isInclusive)
+        lastEntry = map.getFloorEntry(toKey, OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY);
+      else
+        lastEntry = map.getLowerEntry(toKey);
+
+      if(lastEntry == null)
+        return Collections.emptySet();
+
+      OMVRBTreeEntry<Object, OIdentifiable> entry = lastEntry;
+
+      final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+
+      while (entry != null && !(maxValuesToFetch > -1 && result.size() == maxValuesToFetch)) {
+        result.add(entry.getValue());
+
+        entry = OMVRBTree.previous(entry);
+      }
+
+      return result;
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  public Collection<OIdentifiable> getValues(final Collection<?> iKeys, final int maxValuesToSearch) {
+    final List<Comparable> sortedKeys = new ArrayList<Comparable>((Collection<? extends Comparable>) iKeys);
+    Collections.sort(sortedKeys);
+
+    acquireExclusiveLock();
+
+    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    try {
+      for (final Object key : sortedKeys) {
+        if(maxValuesToSearch > -1 && result.size() == maxValuesToSearch)
+          return result;
+
+        final OIdentifiable val = map.get(key);
+        if (val != null)  {
+          result.add(val);
+        }
+      }
+
+      return result;
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+
+  public Collection<ODocument> getEntriesMajor(final Object fromKey,final boolean isInclusive,
+                                               final int maxEntriesToFetch) {
+    acquireExclusiveLock();
+
+    try {
+      final OMVRBTreeEntry<Object, OIdentifiable> firstEntry;
+      if (isInclusive)
+        firstEntry = map.getCeilingEntry(fromKey, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
+      else
+        firstEntry = map.getHigherEntry(fromKey);
+
+      if(firstEntry == null)
+        return Collections.emptySet();
+
+      OMVRBTreeEntry<Object, OIdentifiable> entry = firstEntry;
+
+      final Set<ODocument> result = new ODocumentFieldsHashSet();
+
+      while (entry != null && !(maxEntriesToFetch > -1 && result.size() != maxEntriesToFetch)) {
+        final ODocument document = new ODocument();
+        document.field("key", entry.getKey());
+        document.field("rid", entry.getValue().getIdentity());
+        document.unsetDirty();
+
+        result.add(document);
+
+        entry = OMVRBTree.next(entry);
+      }
+
+      return result;
+    } finally {
+      releaseExclusiveLock();
+    }
+
+  }
+
+  public Collection<ODocument> getEntriesMinor(final Object toKey,final boolean isInclusive,
+                                               final int maxEntriesToFetch) {
+    acquireExclusiveLock();
+
+    try {
+
+      final OMVRBTreeEntry<Object, OIdentifiable> lastEntry;
+
+      if (isInclusive)
+        lastEntry = map.getFloorEntry(toKey, OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY);
+      else
+        lastEntry = map.getLowerEntry(toKey);
+
+      if(lastEntry == null)
+        return Collections.emptySet();
+
+      OMVRBTreeEntry<Object, OIdentifiable> entry = lastEntry;
+
+      final Set<ODocument> result = new ODocumentFieldsHashSet();
+
+      while (entry != null && !(maxEntriesToFetch > -1 && result.size() == maxEntriesToFetch)) {
+        final ODocument document = new ODocument();
+        document.field("key", entry.getKey());
+        document.field("rid", entry.getValue().getIdentity());
+        document.unsetDirty();
+
+        result.add(document);
+
+        entry = OMVRBTree.previous(entry);
+      }
+
+      return result;
+    } finally {
+      releaseExclusiveLock();
+    }
+
+  }
+
+  public Collection<ODocument> getEntriesBetween(final Object iRangeFrom,final Object iRangeTo,
+                                                 final boolean iInclusive,final int maxEntriesToFetch) {
+    if (iRangeFrom.getClass() != iRangeTo.getClass())
+      throw new IllegalArgumentException("Range from-to parameters are of different types");
+
+    acquireExclusiveLock();
+
+    try {
+      final OMVRBTreeEntry<Object, OIdentifiable> firstEntry;
+
+      if (iInclusive)
+        firstEntry = map.getCeilingEntry(iRangeFrom, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
+      else
+        firstEntry = map.getHigherEntry(iRangeFrom);
+
+      if (firstEntry == null)
+        return Collections.emptySet();
+
+      final int firstEntryIndex = map.getPageIndex();
+
+      final OMVRBTreeEntry<Object, OIdentifiable> lastEntry;
+
+      if (iInclusive)
+        lastEntry = map.getHigherEntry(iRangeTo);
+      else
+        lastEntry = map.getCeilingEntry(iRangeTo, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
+
+      final int lastEntryIndex;
+
+      if (lastEntry != null)
+        lastEntryIndex = map.getPageIndex();
+      else
+        lastEntryIndex = -1;
+
+      OMVRBTreeEntry<Object, OIdentifiable> entry = firstEntry;
+      map.setPageIndex(firstEntryIndex);
+
+      final Set<ODocument> result = new ODocumentFieldsHashSet();
+
+      while (entry != null && !(entry == lastEntry && map.getPageIndex() == lastEntryIndex) &&
+              !(maxEntriesToFetch > -1 && result.size() == maxEntriesToFetch)) {
+
+        final ODocument document = new ODocument();
+        document.field("key", entry.getKey());
+        document.field("rid", entry.getValue().getIdentity());
+        document.unsetDirty();
+
+        result.add(document);
+
+        entry = OMVRBTree.next(entry);
+      }
+
+      return result;
+    } finally {
+      releaseExclusiveLock();
+    }
+
+  }
+
+  public Collection<ODocument> getEntries(final Collection<?> iKeys,final int maxEntriesToFetch) {
+    final List<Comparable> sortedKeys = new ArrayList<Comparable>((Collection<? extends Comparable>) iKeys);
+    Collections.sort(sortedKeys);
+
+    acquireExclusiveLock();
+
+    final Set<ODocument> result = new ODocumentFieldsHashSet();
+    try {
+      for (final Object key : sortedKeys) {
+        if(maxEntriesToFetch > -1 && result.size() == maxEntriesToFetch)
+          return result;
+
+        final OIdentifiable val = map.get(key);
+        if (val != null)  {
+          final ODocument document = new ODocument();
+          document.field("key", key);
+          document.field("rid", val.getIdentity());
+          document.unsetDirty();
+
+          result.add(document);
+        }
+      }
+
+      return result;
+    } finally {
+      releaseExclusiveLock();
+    }
+
+  }
 }

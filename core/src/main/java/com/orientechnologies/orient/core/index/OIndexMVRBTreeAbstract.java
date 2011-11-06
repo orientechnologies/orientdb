@@ -16,14 +16,8 @@
 package com.orientechnologies.orient.core.index;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
@@ -256,7 +250,52 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 		return getEntriesBetween(iRangeFrom, iRangeTo, true);
 	}
 
-	public ORID getIdentity() {
+  public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive) {
+    return getValuesMajor(fromKey, isInclusive, -1);
+  }
+
+  public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive) {
+    return getValuesMinor(toKey, isInclusive, -1);
+  }
+
+  public Collection<ODocument> getEntriesMajor(final Object fromKey, final boolean isInclusive) {
+    return getEntriesMajor(fromKey, isInclusive, -1);
+  }
+
+  public Collection<ODocument> getEntriesMinor(final Object toKey, final boolean isInclusive) {
+    return getEntriesMinor(toKey, isInclusive, -1);
+  }
+
+  /**
+   * Returns a set of records with key between the range passed as parameter.
+   * <p/>
+   * In case of {@link com.orientechnologies.common.collection.OCompositeKey}s partial keys can be used as values boundaries.
+   *
+   * @param iRangeFrom     Starting range
+   * @param iFromInclusive Indicates whether start range boundary is included in result.
+   * @param iRangeTo       Ending range
+   * @param iToInclusive   Indicates whether end range boundary is included in result.
+   * @return Returns a set of records with key between the range passed as parameter.
+   * @see com.orientechnologies.common.collection.OCompositeKey#compareTo(com.orientechnologies.common.collection.OCompositeKey)
+   */
+  public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
+                                             final boolean iToInclusive) {
+    return getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, -1);
+  }
+
+  public Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
+    return getEntriesBetween(iRangeFrom, iRangeTo, iInclusive, -1);
+  }
+
+  public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
+    return getValues(iKeys, -1);
+  }
+
+  public Collection<ODocument> getEntries(final Collection<?> iKeys) {
+    return getEntries(iKeys, -1);
+  }
+
+  public ORID getIdentity() {
 		return map.getRecord().getIdentity();
 	}
 

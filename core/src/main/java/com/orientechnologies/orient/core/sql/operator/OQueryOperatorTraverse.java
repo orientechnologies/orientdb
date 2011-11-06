@@ -196,4 +196,14 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 	public String toString() {
 		return String.format("%s(%d,%d,%s)", keyword, startDeepLevel, endDeepLevel, Arrays.toString(cfgFields));
 	}
+
+  @Override
+  public ORID getBeginRidRange(Object iLeft, Object iRight) {
+    return null;
+  }
+
+  @Override
+  public ORID getEndRidRange(Object iLeft, Object iRight) {
+    return null;
+  }
 }

@@ -63,8 +63,6 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
 	public List<T> run(Object... iArgs) {
 		if (!result.isEmpty()) {
 			// HANDLE PAGINATION AUTOMATICALLY BY MOVING THE PAGE RANGE
-			beginRange.copyFrom(database.getRecordByUserObject(result.get(result.size() - 1), true).getIdentity());
-			beginRange.clusterPosition++;
 			result.clear();
 		}
 

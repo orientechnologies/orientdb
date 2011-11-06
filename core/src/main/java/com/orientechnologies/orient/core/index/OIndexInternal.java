@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.Collection;
 import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;

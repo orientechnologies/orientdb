@@ -15,13 +15,11 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
-import java.lang.reflect.Array;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 import java.util.regex.Pattern;
 
 import com.orientechnologies.common.collection.OMultiValue;
@@ -83,7 +81,27 @@ public class OSQLFilterCondition {
       return operator.evaluateRecord(iRecord, this, l, r);
    }
 
-   private Object[] checkForConversion(final ORecordSchemaAware<?> iRecord, final Object l, final Object r) {
+   public ORID getBeginRidRange() {
+     if(operator == null)
+       if(left instanceof OSQLFilterCondition)
+        return ((OSQLFilterCondition) left).getBeginRidRange();
+       else
+        return null;
+
+     return operator.getBeginRidRange(left, right);
+   }
+
+  public ORID getEndRidRange() {
+    if(operator == null)
+      if(left instanceof OSQLFilterCondition)
+       return ((OSQLFilterCondition) left).getEndRidRange();
+      else
+       return null;
+
+    return operator.getEndRidRange(left, right);
+  }
+
+  private Object[] checkForConversion(final ORecordSchemaAware<?> iRecord, final Object l, final Object r) {
       Object[] result = null;
 
       // DEFINED OPERATOR

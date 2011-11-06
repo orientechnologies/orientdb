@@ -22,8 +22,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 
 @SuppressWarnings("serial")
 public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAbstract implements OQuery<T> {
-	protected ORecordId	beginRange	= new ORecordId();
-	protected ORecordId	endRange		= new ORecordId();
 	protected String		fetchPlan;
 
 	public OQueryAbstract() {
@@ -49,22 +47,6 @@ public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAb
 		else
 			this.fetchPlan = fetchPlan;
 		return this;
-	}
-
-	public ORecordId getBeginRange() {
-		return beginRange;
-	}
-
-	public void setBeginRange(final ORecordId beginRange) {
-		this.beginRange = beginRange;
-	}
-
-	public ORecordId getEndRange() {
-		return endRange;
-	}
-
-	public void setEndRange(final ORecordId endRange) {
-		this.endRange = endRange;
 	}
 
 	@Override

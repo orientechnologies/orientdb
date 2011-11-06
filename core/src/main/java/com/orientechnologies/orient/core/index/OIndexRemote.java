@@ -76,6 +76,8 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 	public static final String		QUERY_GET_VALUES_BEETWEN_INCLUSIVE_TO_CONDITION		= "key <= ?";
 	public static final String		QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_TO_CONDITION		= "key < ?";
 	public static final String		QUERY_GET_VALUES_AND_OPERATOR											= " and ";
+	public static final String		QUERY_GET_VALUES_LIMIT											= " limit ";
+
 
 	public OIndexRemote(final String iName, final String iWrappedType, final ORID iRid, final OIndexDefinition iIndexDefinition,
 			final ODocument iConfiguration) {
@@ -337,4 +339,132 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 	public int hashCode() {
 		return name.hashCode();
 	}
+
+  public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom,final boolean iFromInclusive,
+                                                    final Object iRangeTo,final boolean iToInclusive,
+                                                    final int maxValuesToFetch) {
+    if(maxValuesToFetch < 0)
+      return getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive);
+
+    final StringBuilder query = new StringBuilder(QUERY_GET_VALUES_BEETWEN_SELECT);
+
+    if (iFromInclusive) {
+      query.append(QUERY_GET_VALUES_BEETWEN_INCLUSIVE_FROM_CONDITION);
+    } else {
+      query.append(QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_FROM_CONDITION);
+    }
+
+    query.append(QUERY_GET_VALUES_AND_OPERATOR);
+
+    if (iToInclusive) {
+      query.append(QUERY_GET_VALUES_BEETWEN_INCLUSIVE_TO_CONDITION);
+    } else {
+      query.append(QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_TO_CONDITION);
+    }
+
+    query.append(QUERY_GET_VALUES_LIMIT).append(maxValuesToFetch);
+
+    final OCommandRequest cmd = formatCommand(query.toString());
+    return getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
+  }
+
+  public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive,
+                                                  final int maxValuesToFetch) {
+    if(maxValuesToFetch < 0)
+      return getValuesMajor(fromKey, isInclusive);
+
+    final OCommandRequest cmd;
+		if (isInclusive)
+			cmd = formatCommand(QUERY_GET_VALUE_MAJOR_EQUALS + QUERY_GET_VALUES_LIMIT + maxValuesToFetch, name);
+		else
+			cmd = formatCommand(QUERY_GET_VALUE_MAJOR + QUERY_GET_VALUES_LIMIT + maxValuesToFetch, name);
+
+   	return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(fromKey);
+  }
+
+  public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive,
+                                                  final int maxValuesToFetch) {
+
+    if(maxValuesToFetch < 0)
+      return getValuesMinor(toKey, isInclusive);
+
+    final OCommandRequest cmd;
+
+    if (isInclusive)
+			cmd = formatCommand(QUERY_GET_VALUE_MINOR_EQUALS + QUERY_GET_VALUES_LIMIT + maxValuesToFetch, name);
+		else
+			cmd = formatCommand(QUERY_GET_VALUE_MINOR + QUERY_GET_VALUES_LIMIT + maxValuesToFetch, name);
+		return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(toKey);
+  }
+
+  public Collection<ODocument> getEntriesMajor(final Object fromKey,final boolean isInclusive,
+                                               final int maxEntriesToFetch) {
+    if(maxEntriesToFetch < 0)
+      return getEntriesMajor(fromKey, isInclusive);
+
+    final OCommandRequest cmd;
+		if (isInclusive)
+			cmd = formatCommand(QUERY_GET_MAJOR_EQUALS + QUERY_GET_VALUES_LIMIT + maxEntriesToFetch, name);
+		else
+			cmd = formatCommand(QUERY_GET_MAJOR + QUERY_GET_VALUES_LIMIT + maxEntriesToFetch, name);
+
+		return (Collection<ODocument>) getDatabase().command(cmd).execute(fromKey);
+  }
+
+  public Collection<ODocument> getEntriesMinor(final Object toKey,final boolean isInclusive,
+                                               final int maxEntriesToFetch) {
+    if(maxEntriesToFetch < 0)
+      return getEntriesMinor(toKey, isInclusive);
+
+    final OCommandRequest cmd;
+    if (isInclusive)
+      cmd = formatCommand(QUERY_GET_MINOR_EQUALS + QUERY_GET_VALUES_LIMIT + maxEntriesToFetch, name);
+    else
+      cmd = formatCommand(QUERY_GET_MINOR + QUERY_GET_VALUES_LIMIT + maxEntriesToFetch, name);
+    return (Collection<ODocument>) getDatabase().command(cmd).execute(toKey);
+  }
+
+  public Collection<ODocument> getEntriesBetween(final Object iRangeFrom,final Object iRangeTo,final boolean iInclusive,
+                                                 final int maxEntriesToFetch) {
+    if(maxEntriesToFetch < 0)
+      return getEntriesBetween(iRangeFrom, iRangeTo, iInclusive);
+
+    final OCommandRequest cmd = formatCommand(QUERY_GET_RANGE + QUERY_GET_VALUES_LIMIT + maxEntriesToFetch, name);
+    return (Set<ODocument>) getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
+  }
+
+  public Collection<OIdentifiable> getValues(final Collection<?> iKeys,final int maxValuesToFetch) {
+    if(maxValuesToFetch < 0)
+      return getValues(iKeys);
+
+   	final StringBuilder params = new StringBuilder();
+		if (!iKeys.isEmpty()) {
+			params.append("?");
+			for (int i = 1; i < iKeys.size(); i++) {
+				params.append(", ?");
+			}
+		}
+
+		final OCommandRequest cmd = formatCommand(QUERY_GET_VALUES + QUERY_GET_VALUES_LIMIT + maxValuesToFetch,
+            name, params.toString());
+		return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(iKeys.toArray());
+  }
+
+  public Collection<ODocument> getEntries(final Collection<?> iKeys,final int maxEntriesToFetch) {
+    if(maxEntriesToFetch < 0)
+      return getEntries(iKeys);
+
+    final StringBuilder params = new StringBuilder();
+    if (!iKeys.isEmpty()) {
+      params.append("?");
+      for (int i = 1; i < iKeys.size(); i++) {
+        params.append(", ?");
+      }
+    }
+
+    final OCommandRequest cmd = formatCommand(QUERY_GET_ENTRIES + QUERY_GET_VALUES_LIMIT + maxEntriesToFetch,
+            name, params.toString());
+    return (Collection<ODocument>) getDatabase().command(cmd).execute(iKeys.toArray());
+
+  }
 }

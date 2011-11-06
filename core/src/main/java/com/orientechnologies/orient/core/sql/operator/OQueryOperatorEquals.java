@@ -20,8 +20,10 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 
 /**
  * EQUALS operator.
@@ -70,4 +72,35 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
 		return OIndexReuseType.INDEX_METHOD;
 	}
 
+
+  @Override
+  public ORID getBeginRidRange(final Object iLeft, final Object iRight) {
+    if (iLeft instanceof OSQLFilterItemField &&
+            ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iLeft).getRoot()))
+      if (iRight instanceof ORID)
+        return (ORID) iRight;
+      else {
+        if (iRight instanceof OSQLFilterItemParameter &&
+                ((OSQLFilterItemParameter) iRight).getValue(null) instanceof ORID)
+          return (ORID) ((OSQLFilterItemParameter) iRight).getValue(null);
+      }
+
+
+    if (iRight instanceof OSQLFilterItemField &&
+            ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iRight).getRoot()))
+      if (iLeft instanceof ORID)
+        return (ORID) iLeft;
+      else {
+        if (iLeft instanceof OSQLFilterItemParameter &&
+                ((OSQLFilterItemParameter) iLeft).getValue(null) instanceof ORID)
+          return (ORID) ((OSQLFilterItemParameter) iLeft).getValue(null);
+      }
+
+    return null;
+  }
+
+  @Override
+  public ORID getEndRidRange(final Object iLeft,final Object iRight) {
+    return getBeginRidRange(iLeft, iRight);
+  }
 }

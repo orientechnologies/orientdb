@@ -53,7 +53,11 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 
 		long[] range = database.getStorage().getClusterDataRange(current.clusterId);
 		firstClusterPosition = range[0];
-		lastClusterPosition = range[1];
+
+    if(rangeTo > -1)
+		  lastClusterPosition = Math.min(rangeTo, range[1]);
+    else
+      lastClusterPosition = range[1];
 
 		totalAvailableRecords = database.countClusterElements(current.clusterId);
 

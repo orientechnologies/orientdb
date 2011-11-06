@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.sql.operator;
 
 import java.util.List;
 
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
@@ -65,5 +66,9 @@ public abstract class OQueryOperator {
 
 	public String getSyntax() {
 		return "<left> " + keyword + " <right>";
-	}
+  }
+
+  public abstract ORID getBeginRidRange(final Object iLeft, final Object iRight);
+
+  public abstract ORID getEndRidRange(final Object iLeft, final Object iRight);
 }

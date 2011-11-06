@@ -77,15 +77,13 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 	 * Browse N clusters. The entire operation use a shared lock on the storage and lock the cluster from the external avoiding atomic
 	 * lock at every record read.
 	 * 
-	 * @param iRequesterId
-	 *          The requester of the operation. Needed to know who locks
 	 * @param iClusterId
 	 *          Array of cluster ids
 	 * @param iListener
 	 *          The listener to call for each record found
 	 * @param ioRecord
 	 */
-	public void browse(final int[] iClusterId, final ORecordId iBeginRange, final ORecordId iEndRange,
+	public void browse(final int[] iClusterId, final ORID iBeginRange, final ORID iEndRange,
 			final ORecordBrowsingListener iListener, ORecordInternal<?> ioRecord, final boolean iLockEntireCluster) {
 		checkOpeness();
 

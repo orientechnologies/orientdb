@@ -15,9 +15,14 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 
 /**
  * MAJOR EQUALS operator.
@@ -47,4 +52,24 @@ public class OQueryOperatorMajorEquals extends OQueryOperatorEqualityNotNulls {
 			return OIndexReuseType.NO_INDEX;
 		return OIndexReuseType.INDEX_METHOD;
 	}
+
+  @Override
+  public ORID getBeginRidRange(final Object iLeft,final Object iRight) {
+    if (iLeft instanceof OSQLFilterItemField &&
+          ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iLeft).getRoot()))
+    if (iRight instanceof ORID)
+      return (ORID) iRight;
+    else {
+      if (iRight instanceof OSQLFilterItemParameter &&
+              ((OSQLFilterItemParameter) iRight).getValue(null) instanceof ORID)
+        return (ORID) ((OSQLFilterItemParameter) iRight).getValue(null);
+    }
+
+    return null;
+  }
+
+  @Override
+  public ORID getEndRidRange(Object iLeft, Object iRight) {
+    return null;
+  }
 }

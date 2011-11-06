@@ -18,9 +18,12 @@ package com.orientechnologies.orient.core.sql.operator;
 import java.util.Iterator;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 
 /**
  * BETWEEN operator.
@@ -38,14 +41,9 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
 	@SuppressWarnings("unchecked")
 	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
-		if (!OMultiValue.isMultiValue(iRight.getClass())) {
-			throw new IllegalArgumentException("Found '" + iRight + "' while was expected: " + getSyntax());
-		}
+    validate(iRight);
 
-		final Iterator<?> valueIterator = OMultiValue.getMultiValueIterator(iRight);
-
-		if (OMultiValue.getSize(iRight) != 3)
-			throw new IllegalArgumentException("Found '" + OMultiValue.toString(iRight) + "' while was expected: " + getSyntax());
+    final Iterator<?> valueIterator = OMultiValue.getMultiValueIterator(iRight);
 
 		final Object right1 = OType.convert(valueIterator.next(), iLeft.getClass());
 		if (right1 == null)
@@ -58,7 +56,16 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
 		return ((Comparable<Object>) iLeft).compareTo(right1) >= 0 && ((Comparable<Object>) iLeft).compareTo(right2) <= 0;
 	}
 
-	@Override
+  private void validate(Object iRight) {
+    if (!OMultiValue.isMultiValue(iRight.getClass())) {
+      throw new IllegalArgumentException("Found '" + iRight + "' while was expected: " + getSyntax());
+    }
+
+    if (OMultiValue.getSize(iRight) != 3)
+      throw new IllegalArgumentException("Found '" + OMultiValue.toString(iRight) + "' while was expected: " + getSyntax());
+  }
+
+  @Override
 	public String getSyntax() {
 		return "<left> " + keyword + " <minRange> AND <maxRange>";
 	}
@@ -67,4 +74,49 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
 	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
 		return OIndexReuseType.INDEX_METHOD;
 	}
+
+  @Override
+  public ORID getBeginRidRange(final Object iLeft, final Object iRight) {
+    validate(iRight);
+
+    if (iLeft instanceof OSQLFilterItemField &&
+            ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iLeft).getRoot())) {
+      final Iterator<?> valueIterator = OMultiValue.getMultiValueIterator(iRight);
+
+      final Object right1 = valueIterator.next();
+      if (right1 != null)
+        return (ORID)right1;
+
+      valueIterator.next();
+
+      return (ORID)valueIterator.next();
+    }
+
+    return null;
+  }
+
+  @Override
+  public ORID getEndRidRange(final Object iLeft,final Object iRight) {
+    validate(iRight);
+
+    validate(iRight);
+
+    if(iLeft instanceof OSQLFilterItemField &&
+            ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iLeft).getRoot())) {
+      final Iterator<?> valueIterator = OMultiValue.getMultiValueIterator(iRight);
+
+      final Object right1 = valueIterator.next();
+
+      valueIterator.next();
+
+      final Object right2 = valueIterator.next();
+
+      if(right2 == null)
+        return (ORID)right1;
+
+      return (ORID)right2;
+    }
+
+    return null;
+  }
 }

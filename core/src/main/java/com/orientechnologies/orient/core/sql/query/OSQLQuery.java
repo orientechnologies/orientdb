@@ -95,8 +95,6 @@ public abstract class OSQLQuery<T extends Object> extends OQueryAbstract<T> impl
 		try {
 			text = buffer.getAsString();
 			limit = buffer.getAsInteger();
-			beginRange = new ORecordId().fromStream(buffer.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
-			endRange = new ORecordId().fromStream(buffer.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
 			setFetchPlan(buffer.getAsString());
 
 			byte[] paramBuffer = buffer.getAsByteArray();
@@ -129,8 +127,6 @@ public abstract class OSQLQuery<T extends Object> extends OQueryAbstract<T> impl
 		try {
 			buffer.add(text); // TEXT AS STRING
 			buffer.add(limit); // LIMIT AS INTEGER
-			buffer.addAsFixed(beginRange.toStream()); // THE RID WHERE TO BEGIN, OR -1:-1 to ignore it
-			buffer.addAsFixed(endRange.toStream()); // THE RID WHERE TO END, OR -1:-1 to ignore it
 			buffer.add(fetchPlan != null ? fetchPlan : ""); // FETCH PLAN IN FORM OF STRING (to know more goto:
 																											// http://code.google.com/p/orient/wiki/FetchingStrategies)
 

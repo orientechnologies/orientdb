@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.sql.operator;
 
 import java.util.Collection;
 
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -115,4 +116,15 @@ public class OQueryOperatorContainsAll extends OQueryOperatorEqualityNotNulls {
 	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
 		return OIndexReuseType.NO_INDEX;
 	}
+
+
+  @Override
+  public ORID getBeginRidRange(Object iLeft, Object iRight) {
+    return null;
+  }
+
+  @Override
+  public ORID getEndRidRange(Object iLeft, Object iRight) {
+    return null;
+  }
 }

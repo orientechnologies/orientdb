@@ -205,4 +205,36 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
 	public int hashCode() {
 		return delegate.hashCode();
 	}
+
+  public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive, int maxValuesToFetch) {
+    return delegate.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, maxValuesToFetch);
+  }
+
+  public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive, int maxValuesToFetch) {
+    return delegate.getValuesMajor(fromKey, isInclusive, maxValuesToFetch);
+  }
+
+  public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive, int maxValuesToFetch) {
+    return delegate.getValuesMinor(toKey, isInclusive, maxValuesToFetch);
+  }
+
+  public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive, int maxEntriesToFetch) {
+    return delegate.getEntriesMajor(fromKey, isInclusive, maxEntriesToFetch);
+  }
+
+  public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive, int maxEntriesToFetch) {
+    return delegate.getEntriesMinor(toKey, isInclusive, maxEntriesToFetch);
+  }
+
+  public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, int maxEntriesToFetch) {
+    return delegate.getEntriesBetween(iRangeFrom, iRangeTo, iInclusive, maxEntriesToFetch);
+  }
+
+  public Collection<OIdentifiable> getValues(Collection<?> iKeys, int maxValuesToFetch) {
+    return delegate.getValues(iKeys, maxValuesToFetch);
+  }
+
+  public Collection<ODocument> getEntries(Collection<?> iKeys, int maxEntriesToFetch) {
+    return delegate.getEntries(iKeys, maxEntriesToFetch);
+  }
 }

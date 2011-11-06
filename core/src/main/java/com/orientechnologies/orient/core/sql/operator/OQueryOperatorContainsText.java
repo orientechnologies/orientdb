@@ -20,6 +20,7 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexFullText;
@@ -97,4 +98,15 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
 	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
 		return OIndexReuseType.INDEX_METHOD;
 	}
+
+
+  @Override
+  public ORID getBeginRidRange(Object iLeft, Object iRight) {
+    return null;
+  }
+
+  @Override
+  public ORID getEndRidRange(Object iLeft, Object iRight) {
+    return null;
+  }
 }

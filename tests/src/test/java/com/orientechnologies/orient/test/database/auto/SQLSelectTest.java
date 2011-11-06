@@ -895,38 +895,16 @@ public class SQLSelectTest {
 	}
 
 	@Test
-	public void queryWithRange() {
-		database.open("admin", "admin");
-
-		final String query = "select from Profile limit 3";
-
-		List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>(query));
-		Assert.assertFalse(resultset.isEmpty());
-		Assert.assertTrue(resultset.size() <= 3);
-
-		while (!resultset.isEmpty()) {
-			ORID last = resultset.get(resultset.size() - 1).getIdentity();
-
-			resultset = database.query(new OSQLSynchQuery<ODocument>(query + " range " + last.next()));
-			Assert.assertTrue(resultset.size() <= 3);
-
-			for (ODocument d : resultset)
-				Assert.assertTrue(d.getIdentity().getClusterId() >= last.getClusterId()
-						&& d.getIdentity().getClusterPosition() > last.getClusterPosition());
-		}
-
-		database.close();
-	}
-
-	@Test
 	public void queryWithPagination() {
 		database.open("admin", "admin");
 
-		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile LIMIT 3");
-
+		final OSQLSynchQuery<ODocument> firstQuery = new OSQLSynchQuery<ODocument>("select from Profile LIMIT 3");
+    final OSQLSynchQuery<ODocument> nextQuery = new OSQLSynchQuery<ODocument>("select from Profile where @rid > ? LIMIT 3");
 		ORID last = new ORecordId();
 
-		for (List<ODocument> resultset = database.query(query); !resultset.isEmpty(); resultset = query.execute()) {
+    List<ODocument> resultset = database.query(firstQuery);
+
+		while (!resultset.isEmpty()){
 			Assert.assertTrue(resultset.size() <= 3);
 
 			for (ODocument d : resultset) {
@@ -935,6 +913,8 @@ public class SQLSelectTest {
 			}
 
 			last = resultset.get(resultset.size() - 1).getIdentity();
+
+      resultset = database.query(nextQuery, last);
 		}
 
 		database.close();

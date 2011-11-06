@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
@@ -45,4 +46,46 @@ public class OQueryOperatorOr extends OQueryOperator {
 			return OIndexReuseType.NO_INDEX;
 		return OIndexReuseType.INDEX_UNION;
 	}
+
+  @Override
+  public ORID getBeginRidRange(final Object iLeft,final Object iRight) {
+    final ORID leftRange;
+    final ORID rightRange;
+
+    if(iLeft instanceof OSQLFilterCondition)
+      leftRange = ((OSQLFilterCondition) iLeft).getBeginRidRange();
+    else
+      leftRange = null;
+
+    if(iRight instanceof OSQLFilterCondition)
+      rightRange = ((OSQLFilterCondition) iRight).getBeginRidRange();
+    else
+      rightRange = null;
+
+    if(leftRange == null || rightRange == null)
+      return null;
+    else
+      return leftRange.compareTo(rightRange) <= 0 ? leftRange : rightRange;
+  }
+
+  @Override
+  public ORID getEndRidRange(final Object iLeft,final Object iRight) {
+    final ORID leftRange;
+    final ORID rightRange;
+
+    if(iLeft instanceof OSQLFilterCondition)
+      leftRange = ((OSQLFilterCondition) iLeft).getEndRidRange();
+    else
+      leftRange = null;
+
+    if(iRight instanceof OSQLFilterCondition)
+      rightRange = ((OSQLFilterCondition) iRight).getEndRidRange();
+    else
+      rightRange = null;
+
+    if(leftRange == null || rightRange == null)
+      return null;
+    else
+      return leftRange.compareTo(rightRange) >= 0 ? leftRange : rightRange;
+  }
 }
