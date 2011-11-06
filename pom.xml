@@ -169,8 +169,8 @@
     </scm>
 
     <ciManagement>
-        <system>hudson</system>
-        <url>http://www.danysoft.org/ci/job/orientdb</url>
+        <system>jenkins</system>
+        <url>http://datastorm.com.ua/jenkins/</url>
     </ciManagement>
 
     <issueManagement>
