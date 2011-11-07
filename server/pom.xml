@@ -28,7 +28,7 @@
 			<groupId>com.orientechnologies</groupId>
 			<artifactId>orientdb-client</artifactId>
 			<version>${project.version}</version>
-			<type>pom</type>
+			<type>bundle</type>
 			<scope>compile</scope>
 		</dependency>
 	</dependencies>
