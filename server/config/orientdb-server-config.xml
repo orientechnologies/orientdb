@@ -30,7 +30,7 @@
 			<protocol implementation="com.orientechnologies.orient.server.network.protocol.distributed.ONetworkProtocolDistributed" name="distributed" />
 		</protocols>
 		<listeners>
-			<listener protocol="distributed" port-range="2424-2430" ip-address="127.0.0.1" />
+			<listener protocol="distributed" port-range="2424-2430" ip-address="0.0.0.0" />
 			<listener protocol="http" port-range="2480-2490" ip-address="127.0.0.1">
 				<parameters>
 					<!-- Connection's custom parameters. If not specified the global configuration will be taken -->
