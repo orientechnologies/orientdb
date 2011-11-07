@@ -36,7 +36,6 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
  */
 public class ODistributedServerConfiguration {
 	public String								name;
-	public int									nodeNumber;
 	public SecretKey						securityKey;
 	public String								securityAlgorithm;
 	public InetAddress					networkMulticastAddress;
@@ -57,7 +56,6 @@ public class ODistributedServerConfiguration {
 			final OServerParameterConfiguration[] iParams) {
 		try {
 			name = "unknown";
-			nodeNumber = -1;
 			securityKey = null;
 			networkMulticastAddress = InetAddress.getByName("235.1.1.1");
 			networkMulticastPort = 2424;
@@ -73,8 +71,6 @@ public class ODistributedServerConfiguration {
 				for (OServerParameterConfiguration param : iParams) {
 					if ("name".equalsIgnoreCase(param.name))
 						name = param.value;
-					else if ("node.number".equalsIgnoreCase(param.name))
-						nodeNumber = Short.parseShort(param.value);
 					else if ("security.algorithm".equalsIgnoreCase(param.name))
 						securityAlgorithm = param.value;
 					else if ("security.key".equalsIgnoreCase(param.name))
