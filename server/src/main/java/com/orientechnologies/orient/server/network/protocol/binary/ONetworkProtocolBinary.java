@@ -574,18 +574,15 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			data.commandInfo = "Create record";
 
 			final ORecordId rid = new ORecordId(channel.readShort(), ORID.CLUSTER_POS_INVALID);
-
 			final byte[] buffer = channel.readBytes();
 			final byte recordType = channel.readByte();
 
-			final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(connection.database, recordType);
-			record.fill(connection.database, rid, 0, buffer, true);
-			connection.database.save(record);
+			final long clusterPosition = createRecord(rid, buffer, recordType);
 
 			channel.acquireExclusiveLock();
 			try {
 				sendOk(lastClientTxId);
-				channel.writeLong(record.getIdentity().getClusterPosition());
+				channel.writeLong(clusterPosition);
 			} finally {
 				channel.releaseExclusiveLock();
 			}
@@ -596,43 +593,16 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			data.commandInfo = "Update record";
 
 			final ORecordId rid = channel.readRID();
-
 			final byte[] buffer = channel.readBytes();
 			final int version = channel.readInt();
 			final byte recordType = channel.readByte();
-			final ORecordInternal<?> newRecord = Orient.instance().getRecordFactoryManager().newInstance(connection.database, recordType);
-			newRecord.fill(connection.database, rid, version, buffer, true);
 
-			if (((OSchemaProxy) connection.database.getMetadata().getSchema()).getIdentity().equals(rid))
-				// || ((OIndexManagerImpl) connection.database.getMetadata().getIndexManager()).getDocument().getIdentity().equals(rid)) {
-				throw new OSecurityAccessException("Can't update internal record " + rid);
-
-			final ORecordInternal<?> currentRecord;
-			if (newRecord instanceof ODocument) {
-				currentRecord = connection.database.load(rid);
-
-				if (currentRecord == null)
-					throw new ORecordNotFoundException(rid.toString());
-
-				final ODocument doc = (ODocument) currentRecord;
-				doc.merge((ODocument) newRecord, false, false);
-
-			} else
-				currentRecord = newRecord;
-
-			currentRecord.setVersion(version);
-
-			connection.database.save(currentRecord);
-
-			if (currentRecord.getIdentity().toString().equals(connection.database.getStorage().getConfiguration().indexMgrRecordId)) {
-				// FORCE INDEX MANAGER UPDATE. THIS HAPPENS FOR DIRECT CHANGES FROM REMOTE LIKE IN GRAPH
-				connection.database.getMetadata().getIndexManager().reload();
-			}
+			final int newVersion = updateRecord(rid, buffer, version, recordType);
 
 			channel.acquireExclusiveLock();
 			try {
 				sendOk(lastClientTxId);
-				channel.writeInt(currentRecord.getVersion());
+				channel.writeInt(newVersion);
 			} finally {
 				channel.releaseExclusiveLock();
 			}
@@ -641,14 +611,16 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 		case OChannelBinaryProtocol.REQUEST_RECORD_DELETE: {
 			data.commandInfo = "Delete record";
-			ORecordInternal<?> record = connection.database.load(channel.readRID());
-			record.setVersion(channel.readInt());
-			record.delete();
+
+			final ORID rid = channel.readRID();
+			final int version = channel.readInt();
+
+			final int result = deleteRecord(rid, version);
 
 			channel.acquireExclusiveLock();
 			try {
 				sendOk(lastClientTxId);
-				channel.writeByte((byte) 1);
+				channel.writeByte((byte) result); // TODO: REMOV SINCE IT'S NOT MORE NECESSARY
 			} finally {
 				channel.releaseExclusiveLock();
 			}
@@ -898,6 +870,52 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			channel.clearInput();
 			sendError(lastClientTxId, new ONetworkProtocolException("Request not supported. Code: " + lastRequestType));
 		}
+	}
+
+	protected int deleteRecord(final ORID rid, final int version) {
+		ORecordInternal<?> record = connection.database.load(rid);
+		record.setVersion(version);
+		record.delete();
+		return 1;
+	}
+
+	protected long createRecord(final ORecordId rid, final byte[] buffer, final byte recordType) {
+		final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(connection.database, recordType);
+		record.fill(connection.database, rid, 0, buffer, true);
+		connection.database.save(record);
+		return record.getIdentity().getClusterPosition();
+	}
+
+	protected int updateRecord(final ORecordId rid, final byte[] buffer, final int version, final byte recordType) {
+		final ORecordInternal<?> newRecord = Orient.instance().getRecordFactoryManager().newInstance(connection.database, recordType);
+		newRecord.fill(connection.database, rid, version, buffer, true);
+
+		if (((OSchemaProxy) connection.database.getMetadata().getSchema()).getIdentity().equals(rid))
+			// || ((OIndexManagerImpl) connection.database.getMetadata().getIndexManager()).getDocument().getIdentity().equals(rid)) {
+			throw new OSecurityAccessException("Can't update internal record " + rid);
+
+		final ORecordInternal<?> currentRecord;
+		if (newRecord instanceof ODocument) {
+			currentRecord = connection.database.load(rid);
+
+			if (currentRecord == null)
+				throw new ORecordNotFoundException(rid.toString());
+
+			final ODocument doc = (ODocument) currentRecord;
+			doc.merge((ODocument) newRecord, false, false);
+
+		} else
+			currentRecord = newRecord;
+
+		currentRecord.setVersion(version);
+
+		connection.database.save(currentRecord);
+
+		if (currentRecord.getIdentity().toString().equals(connection.database.getStorage().getConfiguration().indexMgrRecordId)) {
+			// FORCE INDEX MANAGER UPDATE. THIS HAPPENS FOR DIRECT CHANGES FROM REMOTE LIKE IN GRAPH
+			connection.database.getMetadata().getIndexManager().reload();
+		}
+		return currentRecord.getVersion();
 	}
 
 	private void sendDatabaseInformation() throws IOException {

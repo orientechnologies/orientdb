@@ -83,6 +83,7 @@ public class OStorageRemote extends OStorageAbstract {
 	public static final String											PARAM_MIN_POOL							= "minpool";
 	public static final String											PARAM_MAX_POOL							= "maxpool";
 
+	protected final ExecutorService									asynchExecutor;
 	private OStorageRemoteServiceThread							serviceThread;
 	private OContextConfiguration										clientConfiguration;
 	private int																			connectionRetry;
@@ -102,7 +103,6 @@ public class OStorageRemote extends OStorageAbstract {
 	private String																	connectionUserName;
 	private String																	connectionUserPassword;
 	private Map<String, Object>											connectionOptions;
-	private final ExecutorService										asynchExecutor;
 
 	public OStorageRemote(final String iURL, final String iMode) throws IOException {
 		super(iURL, iURL, iMode);
@@ -157,9 +157,9 @@ public class OStorageRemote extends OStorageAbstract {
 			if (!OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean())
 				close();
 
-			if (e instanceof OException)
+			if (e instanceof RuntimeException)
 				// PASS THROUGH
-				throw (OException) e;
+				throw (RuntimeException) e;
 			else
 				throw new OStorageException("Can't open the remote storage: " + name, e);
 

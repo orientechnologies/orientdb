@@ -24,15 +24,16 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryInputStream;
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.orientechnologies.orient.server.replication.ODistributedNode;
-import com.orientechnologies.orient.server.replication.OReplicator;
 
 /**
  * Extends binary protocol to include cluster commands.
@@ -42,7 +43,6 @@ import com.orientechnologies.orient.server.replication.OReplicator;
  */
 public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implements OCommandOutputListener {
 	private ODistributedServerManager	manager;
-	private OReplicator								replicator;
 
 	public ONetworkProtocolDistributed() {
 		super("Distributed-DB");
@@ -51,8 +51,6 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 		if (manager == null)
 			throw new OConfigurationException(
 					"Can't find a ODistributedServerDiscoveryManager instance registered as handler. Check the server configuration in the handlers section.");
-
-		replicator = new OReplicator(manager);
 	}
 
 	@Override
@@ -108,7 +106,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 				manager.getPeer().updateHeartBeatTime();
 
-				replicator.updateConfiguration(new ODocument(channel.readBytes()));
+				manager.getReplicator().updateConfiguration(new ODocument(channel.readBytes()));
 
 			} finally {
 				channel.releaseExclusiveLock();
@@ -128,6 +126,53 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 				channel.releaseExclusiveLock();
 			}
 			break;
+
+		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_RECORD_CHANGE: {
+			data.commandInfo = "Distributed record change";
+
+			final byte operationType = channel.readByte();
+			final long operationId = channel.readLong(); // USE THIS FOR LOGGING
+
+			final ORecordId rid = channel.readRID();
+			final byte[] buffer = channel.readBytes();
+			final int version = channel.readInt();
+			final byte recordType = channel.readByte();
+
+			final long result;
+
+			// REPLICATION SOURCE: AVOID LOOP
+			ODistributedRequesterThreadLocal.INSTANCE.set(true);
+			try {
+
+				switch (operationType) {
+				case OTransactionRecordEntry.CREATED:
+					result = createRecord(rid, buffer, recordType);
+					break;
+
+				case OTransactionRecordEntry.UPDATED:
+					result = updateRecord(rid, buffer, version, recordType);
+					break;
+
+				case OTransactionRecordEntry.DELETED:
+					result = deleteRecord(rid, version);
+					break;
+
+				default:
+					throw new IllegalArgumentException("Received invalid distributed record change operation type: " + operationType);
+				}
+			} finally {
+				ODistributedRequesterThreadLocal.INSTANCE.set(false);
+			}
+
+			channel.acquireExclusiveLock();
+			try {
+				sendOk(lastClientTxId);
+				channel.writeLong(result);
+			} finally {
+				channel.releaseExclusiveLock();
+			}
+			break;
+		}
 
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_SENDER: {
 			data.commandInfo = "Share the database to a remote server";
@@ -169,8 +214,6 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			final String dbPasswd = channel.readString();
 			final String engineName = channel.readString();
 
-			ODistributedRequesterThreadLocal.INSTANCE.set(true);
-
 			try {
 				OLogManager.instance().info(this, "Received database '%s' to share on local server node", dbName);
 
@@ -210,10 +253,10 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			checkConnected();
 			data.commandInfo = "Update db configuration from server node leader";
 
-			replicator.getClusterConfiguration().fromStream(channel.readBytes());
+			manager.getReplicator().updateConfiguration(new ODocument().fromStream(channel.readBytes()));
 
 			OLogManager.instance().warn(this, "Changed distributed server configuration:\n%s",
-					replicator.getClusterConfiguration().toJSON(""));
+					manager.getReplicator().getClusterConfiguration().toJSON(""));
 
 			channel.acquireExclusiveLock();
 			try {

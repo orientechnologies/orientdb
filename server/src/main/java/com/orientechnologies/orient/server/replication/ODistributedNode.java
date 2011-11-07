@@ -23,12 +23,9 @@ import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.SYNCH_TYPE;
@@ -69,10 +66,13 @@ public class ODistributedNode implements OCommandOutputListener {
 					iDatabase.databaseName, networkAddress, networkPort);
 
 			try {
-				iDatabase.storage = new OStorageRemote(id + "/" + iDatabase.databaseName, "rw");
+				iDatabase.storage = new ODistributedStorage(id + "/" + iDatabase.databaseName, "rw");
 				iDatabase.storage.open(iDatabase.userName, iDatabase.userPassword, null);
+
 				iDatabase.sessionId = iDatabase.storage.getSessionId();
+
 				databases.put(iDatabase.databaseName, iDatabase);
+
 			} catch (Exception e) {
 				databases.remove(iDatabase.databaseName);
 				OLogManager.instance().warn(this,
@@ -93,77 +93,15 @@ public class ODistributedNode implements OCommandOutputListener {
 		final ORecordInternal<?> record = iRequest.getRecord();
 
 		try {
-			switch (iRequest.status) {
-			case OTransactionRecordEntry.CREATED:
-				if (OLogManager.instance().isWarnEnabled())
-					OLogManager.instance().warn(this, "-> %s (%s mode) CREATE record cluster %d...", this, iRequestType,
-							record.getIdentity().getClusterPosition());
-
-				if (iRequestType == SYNCH_TYPE.SYNCH) {
-					if (databaseEntry.storage.createRecord((ORecordId) record.getIdentity(), record.toStream(), record.getRecordType(), null) != record
-							.getIdentity().getClusterPosition())
-						logIntegrityError(record, OTransactionRecordEntry.CREATED);
-				} else
-					databaseEntry.storage.createRecord((ORecordId) record.getIdentity(), record.toStream(), record.getRecordType(),
-							new ORecordCallback<Long>() {
-								@Override
-								public void call(final Long iParamater) {
-									if (iParamater.longValue() != record.getIdentity().getClusterPosition())
-										logIntegrityError(record, OTransactionRecordEntry.CREATED);
-								}
-							});
-				break;
-
-			case OTransactionRecordEntry.UPDATED:
-				if (OLogManager.instance().isWarnEnabled())
-					OLogManager.instance().warn(this, "-> %s (%s mode) UPDATE record %s...", this, iRequestType, record.getIdentity());
-
-				if (iRequestType == SYNCH_TYPE.SYNCH) {
-					if (databaseEntry.storage.updateRecord((ORecordId) record.getIdentity(), record.toStream(), record.getVersion() - 1,
-							record.getRecordType(), null) != record.getVersion())
-						logIntegrityError(record, OTransactionRecordEntry.UPDATED);
-				} else
-					databaseEntry.storage.updateRecord((ORecordId) record.getIdentity(), record.toStream(), record.getVersion() - 1,
-							record.getRecordType(), new ORecordCallback<Integer>() {
-								@Override
-								public void call(final Integer iParamater) {
-									if (iParamater.intValue() != record.getVersion())
-										logIntegrityError(record, OTransactionRecordEntry.UPDATED);
-								}
-							});
-				break;
-
-			case OTransactionRecordEntry.DELETED:
-				if (OLogManager.instance().isWarnEnabled())
-					OLogManager.instance().warn(this, "-> %s (%s mode) DELETE record %s...", this, iRequestType, record.getIdentity());
-
-				if (iRequestType == SYNCH_TYPE.SYNCH) {
-					if (!databaseEntry.storage.deleteRecord((ORecordId) record.getIdentity(), record.getVersion() - 1, null))
-						logIntegrityError(record, OTransactionRecordEntry.DELETED);
-				} else
-					databaseEntry.storage.deleteRecord((ORecordId) record.getIdentity(), record.getVersion() - 1,
-							new ORecordCallback<Boolean>() {
-								@Override
-								public void call(final Boolean iParamater) {
-									if (!iParamater.booleanValue())
-										logIntegrityError(record, OTransactionRecordEntry.DELETED);
-								}
-							});
-				break;
-			}
+			databaseEntry.storage.distributeChange(databaseEntry, iRequest, iRequestType, record);
 
 		} catch (Exception e) {
 			handleError(iRequest, iRequestType, e);
 		}
 	}
 
-	protected void logIntegrityError(ORecordInternal<?> record, byte created) {
-		// TODO Auto-generated method stub
-
-	}
-
 	protected void handleError(final OTransactionRecordEntry iRequest, final SYNCH_TYPE iRequestType, final Exception iException)
-			throws IOException {
+			throws RuntimeException {
 		disconnect();
 
 		// ERROR
@@ -184,10 +122,8 @@ public class ODistributedNode implements OCommandOutputListener {
 
 		if (iRequestType == SYNCH_TYPE.SYNCH) {
 			// SYNCHRONOUS CASE: RE-THROW THE EXCEPTION NOW TO BEING PROPAGATED UP TO THE CLIENT
-			if (iException instanceof IOException)
-				throw (IOException) iException;
-			else
-				throw new IOException("Timeout on get lock against channel", iException);
+			if (iException instanceof RuntimeException)
+				throw (RuntimeException) iException;
 		}
 	}
 

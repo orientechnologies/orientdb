@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.server.replication;
 
-import com.orientechnologies.orient.client.remote.OStorageRemote;
 
 /**
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
@@ -27,10 +26,10 @@ public class ODistributedDatabaseInfo {
 		SYNCH, ASYNCH
 	}
 
-	public String					databaseName;
-	public String					userName;
-	public String					userPassword;
-	public int						sessionId;
-	public SYNCH_TYPE			synchType;
-	public OStorageRemote	storage;
+	public String								databaseName;
+	public String								userName;
+	public String								userPassword;
+	public int									sessionId;
+	public SYNCH_TYPE						synchType;
+	public ODistributedStorage	storage;
 }

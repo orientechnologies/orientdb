@@ -31,7 +31,7 @@ import com.orientechnologies.orient.test.database.base.OrientTest;
 @Test(groups = "query")
 public class NativeQueryTest {
 	private ODatabaseDocument	database;
-	private ODocument				record;
+	private ODocument					record;
 
 	@Parameters(value = "url")
 	public NativeQueryTest(String iURL) {
@@ -42,6 +42,7 @@ public class NativeQueryTest {
 	public void queryNativeLike() {
 		database.open("admin", "admin");
 
+		@SuppressWarnings("serial")
 		List<ODocument> result = new ONativeSynchQuery<OQueryContextNative>(database, "Profile", new OQueryContextNative()) {
 
 			@Override

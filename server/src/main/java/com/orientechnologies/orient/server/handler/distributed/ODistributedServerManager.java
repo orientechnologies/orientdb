@@ -35,6 +35,7 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.distributed.ONetworkProtocolDistributed;
+import com.orientechnologies.orient.server.replication.OReplicator;
 
 /**
  * Distributed server node handler. It starts the discovery signaler and listener and manages the configuration of the distributed
@@ -63,8 +64,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	protected OServer													server;
 	private volatile ODiscoverySignaler				discoverySignaler;
 	private volatile ODiscoveryListener				discoveryListener;
-
 	private OServerNetworkListener						distributedNetworkListener;
+	private OReplicator												replicator;
 	private final long												startupDate	= System.currentTimeMillis();
 
 	private OLeaderNode												leader;
@@ -75,6 +76,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	public void startup() {
 		status = STATUS.STARTING;
 		sendPresence();
+		replicator = new OReplicator(this);
 	}
 
 	@Override
@@ -83,6 +85,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 			discoverySignaler.sendShutdown();
 		if (discoveryListener != null)
 			discoveryListener.sendShutdown();
+
+		replicator.shutdown();
 
 		status = STATUS.OFFLINE;
 	}
@@ -242,5 +246,9 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 			if (peer != null)
 				peer.updateHeartBeatTime();
 		}
+	}
+
+	public OReplicator getReplicator() {
+		return replicator;
 	}
 }

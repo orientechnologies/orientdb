@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.server.OServerMain;
@@ -37,7 +38,7 @@ import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.
  */
 public class OReplicator {
 	public enum STATUS {
-		ONLINE, SYNCHRONIZING
+		OFFLINE, ONLINE, SYNCHRONIZING
 	}
 
 	/**
@@ -64,6 +65,12 @@ public class OReplicator {
 		trigger = new OReplicatorRecordHook(this);
 
 		replicatorUser = OServerMain.server().getConfiguration().getUser(ODistributedServerConfiguration.REPLICATOR_USER);
+		Orient.instance().registerEngine(new ODistributedEngine());
+	}
+
+	public void shutdown() {
+		nodes.clear();
+		status = STATUS.OFFLINE;
 	}
 
 	/**
@@ -80,31 +87,43 @@ public class OReplicator {
 			final ODocument db = clusterConfiguration.field(dbName);
 			final Collection<ODocument> dbNodes = db.field("nodes");
 
+			boolean currentNodeInvolved = false;
+
+			// CHECK IF CURRENT NODE IS INVOLVED
 			for (ODocument node : dbNodes) {
 				final String nodeId = node.field("id");
-
-				if (manager.itsMe(nodeId))
-					// DON'T OPEN A CONNECTION TO MYSELF
-					continue;
-
-				if (!nodes.containsKey(nodeId)) {
-					final ODistributedNode dNode = new ODistributedNode(manager, nodeId);
-					nodes.put(nodeId, dNode);
-
-					try {
-						final ODistributedDatabaseInfo dbInfo = new ODistributedDatabaseInfo();
-						dbInfo.databaseName = dbName;
-						dbInfo.userName = replicatorUser.name;
-						dbInfo.userPassword = replicatorUser.password;
-						dbInfo.synchType = SYNCH_TYPE.valueOf(node.field("mode").toString().toUpperCase());
-
-						dNode.connectDatabase(dbInfo);
-					} catch (IOException e) {
-						// REMOVE THE NODE
-						removeDistributedNode(nodeId, e);
-					}
+				if (manager.itsMe(nodeId)) {
+					currentNodeInvolved = true;
+					break;
 				}
 			}
+
+			if (currentNodeInvolved)
+				for (ODocument node : dbNodes) {
+					final String nodeId = node.field("id");
+
+					if (manager.itsMe(nodeId))
+						// DON'T OPEN A CONNECTION TO MYSELF
+						continue;
+
+					if (!nodes.containsKey(nodeId)) {
+						final ODistributedNode dNode = new ODistributedNode(manager, nodeId);
+						nodes.put(nodeId, dNode);
+
+						try {
+							final ODistributedDatabaseInfo dbInfo = new ODistributedDatabaseInfo();
+							dbInfo.databaseName = dbName;
+							dbInfo.userName = replicatorUser.name;
+							dbInfo.userPassword = replicatorUser.password;
+							dbInfo.synchType = SYNCH_TYPE.valueOf(node.field("mode").toString().toUpperCase());
+
+							dNode.connectDatabase(dbInfo);
+						} catch (IOException e) {
+							// REMOVE THE NODE
+							removeDistributedNode(nodeId, e);
+						}
+					}
+				}
 		}
 	}
 

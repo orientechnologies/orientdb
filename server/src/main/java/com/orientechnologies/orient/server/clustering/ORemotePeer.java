@@ -125,6 +125,8 @@ public class ORemotePeer {
 
 		OLogManager.instance().info(this, "Cluster '%s': joined peer node %s:%d", iClusterName, networkAddress, networkPort);
 
+		leader.getManager().getReplicator().updateConfiguration(doc);
+
 		status = STATUS.CONNECTED;
 		return true;
 	}
@@ -179,7 +181,8 @@ public class ORemotePeer {
 			return false;
 
 		configuration.setValue(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT, iNetworkTimeout);
-		OLogManager.instance().debug(this, "Sending keepalive message to distributed server node %s:%d...", networkAddress, networkPort);
+		OLogManager.instance()
+				.debug(this, "Sending keepalive message to distributed server node %s:%d...", networkAddress, networkPort);
 
 		try {
 			channel.beginRequest();

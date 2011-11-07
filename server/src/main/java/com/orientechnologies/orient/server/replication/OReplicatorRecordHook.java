@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
+import com.orientechnologies.orient.server.network.protocol.distributed.ODistributedRequesterThreadLocal;
 
 /**
  * Record hook implementation. Catches all the relevant events and propagates to the other cluster nodes.
@@ -45,6 +46,10 @@ public class OReplicatorRecordHook implements ORecordHook, ODatabaseLifecycleLis
 
 	@Override
 	public boolean onTrigger(final TYPE iType, final ORecord<?> iRecord) {
+		if (ODistributedRequesterThreadLocal.INSTANCE.get())
+			// REPLICATED RECORD, AVOID TO PROPAGATE IT AGAIN
+			return false;
+
 		try {
 			switch (iType) {
 			case AFTER_CREATE:

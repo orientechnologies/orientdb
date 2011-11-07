@@ -204,13 +204,12 @@ public class JSONTest {
 
 		List<ODocument> result = database.getUnderlying()
 				.command(new OSQLSynchQuery<ODocument>("select * from Profile where name = 'Barack' and surname = 'Obama'")).execute();
-		int i = 0;
+		
 		for (ODocument doc : result) {
 			String jsonFull = doc.toJSON("type,rid,version,class,attribSameRow,indent:0,fetchPlan:*:-1");
 			ODocument loadedDoc = new ODocument().fromJSON(jsonFull);
 
 			Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
-			i++;
 		}
 	}
 }
