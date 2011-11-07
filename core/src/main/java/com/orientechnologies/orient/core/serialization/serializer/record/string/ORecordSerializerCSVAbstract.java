@@ -54,7 +54,7 @@ import com.orientechnologies.orient.core.serialization.serializer.object.OObject
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStringAbstract {
 	public static final char	FIELD_VALUE_SEPARATOR	= ':';
 
@@ -399,7 +399,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		}
 
 		if (it != null && it.hasNext()) {
-			for (int items = 0; it.hasNext(); items++) {
+			while (it.hasNext()) {
 				if (buffer.length() > 0)
 					buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
@@ -549,7 +549,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				// EMBEDDED LITERAL
 				if (iLinkedType == null)
 					iLinkedType = getType(item);
-				
+
 				if (iLinkedType == null)
 					throw new IllegalArgumentException(
 							"Linked type can't be null. Probably the serialized type has not stored the type along with data");

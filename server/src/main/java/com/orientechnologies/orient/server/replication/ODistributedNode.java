@@ -48,13 +48,11 @@ public class ODistributedNode implements OCommandOutputListener {
 	public String																	networkAddress;
 	public int																		networkPort;
 	public Date																		connectedOn;
-	private ODistributedServerManager							manager;
 	private List<OTransactionRecordEntry>					bufferedChanges	= new ArrayList<OTransactionRecordEntry>();
 	private Map<String, ODistributedDatabaseInfo>	databases				= new HashMap<String, ODistributedDatabaseInfo>();
 	private STATUS																status;
 
 	public ODistributedNode(final ODistributedServerManager iNode, final String iId) {
-		manager = iNode;
 		id = iId;
 
 		final String[] parts = iId.split(":");
