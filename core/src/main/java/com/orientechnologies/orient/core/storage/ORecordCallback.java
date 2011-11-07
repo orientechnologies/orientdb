@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2011 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 1999-2010 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.replication;
+package com.orientechnologies.orient.core.storage;
 
-import com.orientechnologies.orient.client.remote.OStorageRemote;
 
 /**
- * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Callback to handle response against record operations.
+ * 
+ * @author Luca Garulli
  * 
  */
-public class ODistributedDatabaseInfo {
-
-	public enum SYNCH_TYPE {
-		SYNCH, ASYNCH
+public interface ORecordCallback<T> {
+	public enum OPERATION {
+		CREATE, READ, UPDATE, DELETE
 	}
 
-	public String					databaseName;
-	public String					userName;
-	public String					userPassword;
-	public int						sessionId;
-	public SYNCH_TYPE			synchType;
-	public OStorageRemote	storage;
+	public void call(T iParameter);
 }

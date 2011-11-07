@@ -62,6 +62,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -293,16 +294,12 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 	}
 
-	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType) {
-		return createRecord(iRid, iContent, iRecordType, true);
-	}
-
-	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType, final boolean iSynch) {
+	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType,
+			final ORecordCallback<Long> iCallback) {
 		checkConnection();
 
 		do {
 			try {
-
 				final OChannelBinaryClient network = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_CREATE);
 				try {
 					network.writeShort((short) iRid.clusterId);
@@ -313,7 +310,7 @@ public class OStorageRemote extends OStorageAbstract {
 					endRequest(network);
 				}
 
-				if (iSynch)
+				if (iCallback == null)
 					try {
 						beginResponse(network);
 						iRid.clusterPosition = network.readLong();
@@ -324,19 +321,15 @@ public class OStorageRemote extends OStorageAbstract {
 				else {
 					Callable<Object> response = new Callable<Object>() {
 						public Object call() throws Exception {
+							final Long result;
+
 							beginResponse(network);
 							try {
-								final long clusterPosition = network.readLong();
-
-								// if (clusterPosition != iRid.getClusterPosition())
-								// handleError(iRequest, iRequestType, new ODistributedException("Error on distributed insert for database '"
-								// + record.getDatabase().getName() + "': the recordId received from the remote server node '" + getName()
-								// + "' is different from the current one. Master=" + iRid + ", " + getName() + "=#" + iRid.getClusterId() + ":"
-								// + clusterPosition + ". Unsharing the database against the remote server node..."));
-
+								result = network.readLong();
 							} finally {
 								endResponse(network);
 							}
+							iCallback.call(result);
 							return null;
 						}
 
@@ -354,7 +347,8 @@ public class OStorageRemote extends OStorageAbstract {
 		} while (true);
 	}
 
-	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final ORecordId iRid, final String iFetchPlan) {
+	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final ORecordId iRid, final String iFetchPlan,
+			final ORecordCallback<ORawBuffer> iCallback) {
 		checkConnection();
 
 		if (OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting)
@@ -366,7 +360,6 @@ public class OStorageRemote extends OStorageAbstract {
 
 				OChannelBinaryClient network = null;
 				try {
-
 					network = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_LOAD);
 					network.writeRID(iRid);
 					network.writeString(iFetchPlan != null ? iFetchPlan : "");
@@ -405,11 +398,8 @@ public class OStorageRemote extends OStorageAbstract {
 		} while (true);
 	}
 
-	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType) {
-		return updateRecord(iRid, iContent, iVersion, iRecordType, true);
-	}
-
-	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType, boolean iSynch) {
+	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType,
+			final ORecordCallback<Integer> iCallback) {
 		checkConnection();
 
 		do {
@@ -425,7 +415,7 @@ public class OStorageRemote extends OStorageAbstract {
 					endRequest(network);
 				}
 
-				if (iSynch)
+				if (iCallback == null)
 					try {
 						beginResponse(network);
 						return network.readInt();
@@ -435,19 +425,16 @@ public class OStorageRemote extends OStorageAbstract {
 				else {
 					Callable<Object> response = new Callable<Object>() {
 						public Object call() throws Exception {
+							int result;
+
 							beginResponse(network);
 							try {
-								final int version = network.readInt();
-
-								// if (version != record.getVersion())
-								// handleError(iRequest, iRequestType, new ODistributedException("Error on distributed update for database '"
-								// + record.getDatabase().getName() + "': the version received from the remote server node '" + getName()
-								// + "' is different from the current one. Master=" + record.getVersion() + ", " + getName() + "=" + version
-								// + ". Unsharing the database against the remote server node..."));
-
+								result = network.readInt();
 							} finally {
 								endResponse(network);
 							}
+
+							iCallback.call(result);
 							return null;
 						}
 
@@ -464,11 +451,7 @@ public class OStorageRemote extends OStorageAbstract {
 		} while (true);
 	}
 
-	public boolean deleteRecord(final ORecordId iRid, final int iVersion) {
-		return deleteRecord(iRid, iVersion, true);
-	}
-
-	public boolean deleteRecord(final ORecordId iRid, final int iVersion, boolean iSynch) {
+	public boolean deleteRecord(final ORecordId iRid, final int iVersion, final ORecordCallback<Boolean> iCallback) {
 		checkConnection();
 
 		do {
@@ -483,7 +466,7 @@ public class OStorageRemote extends OStorageAbstract {
 					endRequest(network);
 				}
 
-				if (iSynch)
+				if (iCallback == null)
 					try {
 						beginResponse(network);
 						return network.readByte() == 1;
@@ -493,12 +476,16 @@ public class OStorageRemote extends OStorageAbstract {
 				else {
 					Callable<Object> response = new Callable<Object>() {
 						public Object call() throws Exception {
+							Boolean result;
+
 							beginResponse(network);
 							try {
-								final boolean ok = network.readByte() == 1;
+								result = network.readByte() == 1;
 							} finally {
 								endResponse(network);
 							}
+
+							iCallback.call(result);
 							return null;
 						}
 

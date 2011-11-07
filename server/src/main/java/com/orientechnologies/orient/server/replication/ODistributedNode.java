@@ -1,4 +1,5 @@
 /*
+ * Copyright 1999-2011 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,24 +21,15 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryOutputStream;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
-import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.SYNCH_TYPE;
 
@@ -57,21 +49,13 @@ public class ODistributedNode implements OCommandOutputListener {
 	public int																		networkPort;
 	public Date																		connectedOn;
 	private ODistributedServerManager							manager;
-	private OChannelBinaryClient									channel;
-	private OContextConfiguration									configuration;
 	private List<OTransactionRecordEntry>					bufferedChanges	= new ArrayList<OTransactionRecordEntry>();
-	private int																		clientTxId;
-	private final ExecutorService									asynchExecutor;
 	private Map<String, ODistributedDatabaseInfo>	databases				= new HashMap<String, ODistributedDatabaseInfo>();
-	private static AtomicInteger									serialClientId	= new AtomicInteger(-1);
 	private STATUS																status;
 
 	public ODistributedNode(final ODistributedServerManager iNode, final String iId) {
 		manager = iNode;
 		id = iId;
-
-		configuration = new OContextConfiguration();
-		asynchExecutor = Executors.newSingleThreadExecutor();
 
 		final String[] parts = iId.split(":");
 		networkAddress = parts[0];
@@ -83,45 +67,20 @@ public class ODistributedNode implements OCommandOutputListener {
 			// REMOVE ANY OTHER PREVIOUS ENTRY
 			databases.remove(iDatabase.databaseName);
 
-			if (channel == null)
-				// CONNECT TO THE NODE THE FIRST TIME
-				connect();
+			OLogManager.instance().warn(this, "Starting replication for database '%s' against distributed node %s:%d...",
+					iDatabase.databaseName, networkAddress, networkPort);
 
 			try {
-				channel.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_OPEN);
-				channel.writeInt(clientTxId);
-
-				// PACKET DB INFO TO SEND
-				channel.writeString(iDatabase.databaseName);
-				channel.writeString(iDatabase.userName);
-				channel.writeString(iDatabase.userPassword);
-				channel.flush();
-
-				channel.readStatus();
-				iDatabase.sessionId = channel.readInt();
+				iDatabase.storage = new OStorageRemote(id + "/" + iDatabase.databaseName, "rw");
+				iDatabase.storage.open(iDatabase.userName, iDatabase.userPassword, null);
+				iDatabase.sessionId = iDatabase.storage.getSessionId();
+				databases.put(iDatabase.databaseName, iDatabase);
 			} catch (Exception e) {
 				databases.remove(iDatabase.databaseName);
 				OLogManager.instance().warn(this,
-						"Database '" + iDatabase.databaseName + "' is not present on remote server. Removing database from shared list.");
+						"Database '" + iDatabase.databaseName + "' is not present on remote server. Removing database from shared list.", e);
 			}
 		}
-	}
-
-	/**
-	 * Connects to the remote node.
-	 * 
-	 * @throws IOException
-	 */
-	protected void connect() throws IOException {
-		configuration.setValue(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT, manager.getConfig().networkTimeoutNode);
-
-		OLogManager.instance().warn(this, "Connecting to distributed node %s:%d...", networkAddress, networkPort);
-
-		channel = new OChannelBinaryClient(networkAddress, networkPort, configuration);
-		OChannelBinaryProtocol.checkProtocolVersion(channel);
-
-		clientTxId = serialClientId.decrementAndGet();
-		connectedOn = new Date();
 	}
 
 	public void sendRequest(final OTransactionRecordEntry iRequest, final SYNCH_TYPE iRequestType) throws IOException {
@@ -131,143 +90,78 @@ public class ODistributedNode implements OCommandOutputListener {
 		if (databaseEntry == null)
 			return;
 
-		if (OLogManager.instance().isDebugEnabled())
-			OLogManager.instance().debug(this, "-> Sending request to remote server %s in %s mode...", this, iRequestType);
+		databaseEntry.storage.setSessionId(databaseEntry.sessionId);
 
 		final ORecordInternal<?> record = iRequest.getRecord();
 
 		try {
-			final Callable<Object> response;
-
 			switch (iRequest.status) {
 			case OTransactionRecordEntry.CREATED:
-				channel.beginRequest();
-				try {
-					channel.writeByte(OChannelBinaryProtocol.REQUEST_RECORD_CREATE);
-					channel.writeInt(databaseEntry.sessionId);
-					channel.writeShort((short) record.getIdentity().getClusterId());
-					channel.writeBytes(record.toStream());
-					channel.writeByte(record.getRecordType());
-				} finally {
-					channel.endRequest();
-				}
+				if (OLogManager.instance().isWarnEnabled())
+					OLogManager.instance().warn(this, "-> %s (%s mode) CREATE record cluster %d...", this, iRequestType,
+							record.getIdentity().getClusterPosition());
 
-				response = new Callable<Object>() {
-					@Override
-					public Object call() throws Exception {
-						beginResponse(databaseEntry.sessionId);
-						try {
-							final long clusterPosition = channel.readLong();
-
-							if (clusterPosition != record.getIdentity().getClusterPosition())
-								handleError(iRequest, iRequestType, new ODistributedException("Error on distributed insert for database '"
-										+ record.getDatabase().getName() + "': the recordId received from the remote server node '" + getName()
-										+ "' is different from the current one. Master=" + record.getIdentity() + ", " + getName() + "=#"
-										+ record.getIdentity().getClusterId() + ":" + clusterPosition
-										+ ". Unsharing the database against the remote server node..."));
-
-						} finally {
-							endResponse();
-						}
-						return null;
-					}
-				};
-
-				if (iRequestType == SYNCH_TYPE.ASYNCHRONOUS)
-					asynchExecutor.submit(new FutureTask<Object>(response));
-				else
-					try {
-						response.call();
-					} catch (Exception e) {
-					}
-
+				if (iRequestType == SYNCH_TYPE.SYNCH) {
+					if (databaseEntry.storage.createRecord((ORecordId) record.getIdentity(), record.toStream(), record.getRecordType(), null) != record
+							.getIdentity().getClusterPosition())
+						logIntegrityError(record, OTransactionRecordEntry.CREATED);
+				} else
+					databaseEntry.storage.createRecord((ORecordId) record.getIdentity(), record.toStream(), record.getRecordType(),
+							new ORecordCallback<Long>() {
+								@Override
+								public void call(final Long iParamater) {
+									if (iParamater.longValue() != record.getIdentity().getClusterPosition())
+										logIntegrityError(record, OTransactionRecordEntry.CREATED);
+								}
+							});
 				break;
 
 			case OTransactionRecordEntry.UPDATED:
-				channel.beginRequest();
-				try {
-					channel.writeByte(OChannelBinaryProtocol.REQUEST_RECORD_UPDATE);
-					channel.writeInt(databaseEntry.sessionId);
-					channel.writeShort((short) record.getIdentity().getClusterId());
-					channel.writeLong(record.getIdentity().getClusterPosition());
-					channel.writeBytes(record.toStream());
-					channel.writeInt(record.getVersion());
-					channel.writeByte(record.getRecordType());
-				} finally {
-					channel.endRequest();
-				}
+				if (OLogManager.instance().isWarnEnabled())
+					OLogManager.instance().warn(this, "-> %s (%s mode) UPDATE record %s...", this, iRequestType, record.getIdentity());
 
-				response = new Callable<Object>() {
-					@Override
-					public Object call() throws Exception {
-						beginResponse(databaseEntry.sessionId);
-						try {
-							final int version = channel.readInt();
-
-							// if (version != record.getVersion())
-							// handleError(iRequest, iRequestType, new ODistributedException("Error on distributed update for database '"
-							// + record.getDatabase().getName() + "': the version received from the remote server node '" + getName()
-							// + "' is different from the current one. Master=" + record.getVersion() + ", " + getName() + "=" + version
-							// + ". Unsharing the database against the remote server node..."));
-
-						} finally {
-							endResponse();
-						}
-						return null;
-					}
-				};
-
-				if (iRequestType == SYNCH_TYPE.ASYNCHRONOUS)
-					asynchExecutor.submit(new FutureTask<Object>(response));
-				else
-					try {
-						response.call();
-					} catch (Exception e) {
-					}
-
+				if (iRequestType == SYNCH_TYPE.SYNCH) {
+					if (databaseEntry.storage.updateRecord((ORecordId) record.getIdentity(), record.toStream(), record.getVersion() - 1,
+							record.getRecordType(), null) != record.getVersion())
+						logIntegrityError(record, OTransactionRecordEntry.UPDATED);
+				} else
+					databaseEntry.storage.updateRecord((ORecordId) record.getIdentity(), record.toStream(), record.getVersion() - 1,
+							record.getRecordType(), new ORecordCallback<Integer>() {
+								@Override
+								public void call(final Integer iParamater) {
+									if (iParamater.intValue() != record.getVersion())
+										logIntegrityError(record, OTransactionRecordEntry.UPDATED);
+								}
+							});
 				break;
 
 			case OTransactionRecordEntry.DELETED:
-				channel.beginRequest();
-				try {
-					channel.writeByte(OChannelBinaryProtocol.REQUEST_RECORD_DELETE);
-					channel.writeInt(databaseEntry.sessionId);
-					channel.writeShort((short) record.getIdentity().getClusterId());
-					channel.writeLong(record.getIdentity().getClusterPosition());
-					channel.writeInt(record.getVersion());
+				if (OLogManager.instance().isWarnEnabled())
+					OLogManager.instance().warn(this, "-> %s (%s mode) DELETE record %s...", this, iRequestType, record.getIdentity());
 
-				} finally {
-					channel.endRequest();
-				}
-
-				response = new Callable<Object>() {
-					@Override
-					public Object call() throws Exception {
-						try {
-							beginResponse(databaseEntry.sessionId);
-							channel.readByte();
-
-						} finally {
-							endResponse();
-						}
-						return null;
-					}
-				};
-
-				if (iRequestType == SYNCH_TYPE.ASYNCHRONOUS)
-					asynchExecutor.submit(new FutureTask<Object>(response));
-				else
-					try {
-						response.call();
-					} catch (Exception e) {
-					}
-
+				if (iRequestType == SYNCH_TYPE.SYNCH) {
+					if (!databaseEntry.storage.deleteRecord((ORecordId) record.getIdentity(), record.getVersion() - 1, null))
+						logIntegrityError(record, OTransactionRecordEntry.DELETED);
+				} else
+					databaseEntry.storage.deleteRecord((ORecordId) record.getIdentity(), record.getVersion() - 1,
+							new ORecordCallback<Boolean>() {
+								@Override
+								public void call(final Boolean iParamater) {
+									if (!iParamater.booleanValue())
+										logIntegrityError(record, OTransactionRecordEntry.DELETED);
+								}
+							});
 				break;
 			}
 
-		} catch (IOException e) {
+		} catch (Exception e) {
 			handleError(iRequest, iRequestType, e);
 		}
+	}
+
+	protected void logIntegrityError(ORecordInternal<?> record, byte created) {
+		// TODO Auto-generated method stub
+
 	}
 
 	protected void handleError(final OTransactionRecordEntry iRequest, final SYNCH_TYPE iRequestType, final Exception iException)
@@ -290,7 +184,7 @@ public class ODistributedNode implements OCommandOutputListener {
 
 		disconnect();
 
-		if (iRequestType == SYNCH_TYPE.SYNCHRONOUS) {
+		if (iRequestType == SYNCH_TYPE.SYNCH) {
 			// SYNCHRONOUS CASE: RE-THROW THE EXCEPTION NOW TO BEING PROPAGATED UP TO THE CLIENT
 			if (iException instanceof IOException)
 				throw (IOException) iException;
@@ -307,23 +201,7 @@ public class ODistributedNode implements OCommandOutputListener {
 	protected void logChange(final OTransactionRecordEntry iRequest) {
 		synchronized (bufferedChanges) {
 			try {
-				// CHECK IF ANOTHER REQUEST FOR THE SAME RECORD ID HAS BEEN ALREADY BUFFERED
-				OTransactionRecordEntry entry;
-				for (int i = 0; i < bufferedChanges.size(); ++i) {
-					entry = bufferedChanges.get(i);
-
-					if (entry.getRecord().getIdentity().equals(iRequest.getRecord().getIdentity())) {
-						// FOUND: REPLACE IT
-						bufferedChanges.set(i, iRequest);
-						return;
-					}
-				}
-
-				// BUFFERIZE THE REQUEST
-				bufferedChanges.add(iRequest);
 			} finally {
-				OLogManager.instance().info(this, "Can't reach the remote node '%s', buffering change %d/%d for the record %s", id,
-						bufferedChanges.size(), manager.getConfig().serverOutSynchMaxBuffers, iRequest.getRecord().getIdentity());
 			}
 		}
 	}
@@ -341,48 +219,47 @@ public class ODistributedNode implements OCommandOutputListener {
 			throw new ODistributedSynchronizationException("Can't share database '" + iDatabase.getName() + "' on remote server node '"
 					+ iRemoteServerName + "' because is disconnected");
 
-		final String dbName = iDatabase.getName();
-
-		final ODistributedDatabaseInfo databaseEntry;
-
-		channel.beginRequest();
-		try {
-			status = STATUS.SYNCHRONIZING;
-
-			OLogManager.instance().info(this, "Sharing database '" + dbName + "' to remote server " + iRemoteServerName + "...");
-
-			// EXECUTE THE REQUEST ON THE REMOTE SERVER NODE
-			channel.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_RECEIVER);
-			channel.writeInt(clientTxId);
-			channel.writeString(dbName);
-			channel.writeString(iDbUser);
-			channel.writeString(iDbPasswd);
-			channel.writeString(iEngineName);
-		} finally {
-			channel.endRequest();
-		}
-
-		OLogManager.instance().info(this, "Exporting database '%s' via streaming to remote server node: %s...", iDatabase.getName(),
-				iRemoteServerName);
-
-		// START THE EXPORT GIVING AS OUTPUTSTREAM THE CHANNEL TO STREAM THE EXPORT
-		new ODatabaseExport(iDatabase, new OChannelBinaryOutputStream(channel), this).exportDatabase();
-
-		OLogManager.instance().info(this, "Database exported correctly");
-
-		databaseEntry = new ODistributedDatabaseInfo();
-		databaseEntry.databaseName = dbName;
-		databaseEntry.userName = iDbUser;
-		databaseEntry.userPassword = iDbPasswd;
-
-		channel.beginResponse(clientTxId);
-		try {
-			databaseEntry.sessionId = channel.readInt();
-
-			databases.put(dbName, databaseEntry);
-		} finally {
-			channel.endResponse();
-		}
+		// final String dbName = iDatabase.getName();
+		// final ODistributedDatabaseInfo databaseEntry;
+		//
+		// channel.beginRequest();
+		// try {
+		// status = STATUS.SYNCHRONIZING;
+		//
+		// OLogManager.instance().info(this, "Sharing database '" + dbName + "' to remote server " + iRemoteServerName + "...");
+		//
+		// // EXECUTE THE REQUEST ON THE REMOTE SERVER NODE
+		// channel.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_RECEIVER);
+		// channel.writeInt(clientTxId);
+		// channel.writeString(dbName);
+		// channel.writeString(iDbUser);
+		// channel.writeString(iDbPasswd);
+		// channel.writeString(iEngineName);
+		// } finally {
+		// channel.endRequest();
+		// }
+		//
+		// OLogManager.instance().info(this, "Exporting database '%s' via streaming to remote server node: %s...", iDatabase.getName(),
+		// iRemoteServerName);
+		//
+		// // START THE EXPORT GIVING AS OUTPUTSTREAM THE CHANNEL TO STREAM THE EXPORT
+		// new ODatabaseExport(iDatabase, new OChannelBinaryOutputStream(channel), this).exportDatabase();
+		//
+		// OLogManager.instance().info(this, "Database exported correctly");
+		//
+		// databaseEntry = new ODistributedDatabaseInfo();
+		// databaseEntry.databaseName = dbName;
+		// databaseEntry.userName = iDbUser;
+		// databaseEntry.userPassword = iDbPasswd;
+		//
+		// channel.beginResponse(clientTxId);
+		// try {
+		// databaseEntry.sessionId = channel.readInt();
+		//
+		// databases.put(dbName, databaseEntry);
+		// } finally {
+		// channel.endResponse();
+		// }
 
 		status = STATUS.ONLINE;
 	}
@@ -409,7 +286,7 @@ public class ODistributedNode implements OCommandOutputListener {
 			final long time = System.currentTimeMillis();
 
 			for (OTransactionRecordEntry entry : bufferedChanges) {
-				sendRequest(entry, SYNCH_TYPE.SYNCHRONOUS);
+				sendRequest(entry, SYNCH_TYPE.SYNCH);
 			}
 			bufferedChanges.clear();
 
@@ -420,45 +297,16 @@ public class ODistributedNode implements OCommandOutputListener {
 		}
 	}
 
-	public void beginResponse(final int iSessionId) throws IOException {
-		channel.beginResponse(iSessionId);
-	}
-
-	public void beginResponse() throws IOException {
-		if (channel != null)
-			channel.beginResponse(clientTxId);
-	}
-
-	public void endResponse() {
-		if (channel != null)
-			channel.endResponse();
-	}
-
 	public String getName() {
 		return networkAddress + ":" + networkPort;
 	}
 
-	/**
-	 * Check if a remote node is really connected.
-	 * 
-	 * @return true if it's connected, otherwise false
-	 */
-	public boolean checkConnection() {
-		boolean connected = false;
-
-		if (channel != null && channel.socket != null)
-			try {
-				connected = channel.socket.isConnected();
-			} catch (Exception e) {
-			}
-
-		return connected;
-	}
-
 	public void disconnect() {
-		if (channel != null)
-			channel.close();
-		channel = null;
+		for (ODistributedDatabaseInfo db : databases.values()) {
+			if (db.storage != null)
+				db.storage.close();
+		}
+		databases.values().clear();
 	}
 
 	public Map<String, ODistributedDatabaseInfo> getDatabases() {

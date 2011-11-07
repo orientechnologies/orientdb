@@ -204,7 +204,7 @@ public class ODatabaseRaw implements ODatabase {
 		OFetchHelper.checkFetchPlanValid(iFetchPlan);
 
 		try {
-			return storage.readRecord(databaseOwner, iRid, iFetchPlan);
+			return storage.readRecord(databaseOwner, iRid, iFetchPlan, null);
 
 		} catch (Throwable t) {
 			if (iRid.isTemporary())
@@ -222,11 +222,11 @@ public class ODatabaseRaw implements ODatabase {
 		try {
 			if (iRid.clusterPosition < 0) {
 				// CREATE
-				return storage.createRecord(iRid, iContent, iRecordType);
+				return storage.createRecord(iRid, iContent, iRecordType, null);
 
 			} else {
 				// UPDATE
-				return storage.updateRecord(iRid, iContent, iVersion, iRecordType);
+				return storage.updateRecord(iRid, iContent, iVersion, iRecordType, null);
 			}
 		} catch (OException e) {
 			// PASS THROUGH
@@ -238,7 +238,7 @@ public class ODatabaseRaw implements ODatabase {
 
 	public void delete(final ORecordId iRid, final int iVersion) {
 		try {
-			if (!storage.deleteRecord(iRid, iVersion))
+			if (!storage.deleteRecord(iRid, iVersion, null))
 				throw new ORecordNotFoundException("The record with id " + iRid + " was not found");
 
 		} catch (OException e) {

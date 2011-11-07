@@ -26,19 +26,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-enterprise</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orient-commons</artifactId>
-			<version>${project.version}</version>
-			<type>pom</type>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-core</artifactId>
+			<artifactId>orientdb-client</artifactId>
 			<version>${project.version}</version>
 			<type>pom</type>
 			<scope>compile</scope>

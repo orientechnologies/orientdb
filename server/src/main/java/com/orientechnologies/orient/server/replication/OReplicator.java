@@ -23,7 +23,11 @@ import java.util.Map;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
+import com.orientechnologies.orient.server.OServerMain;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
+import com.orientechnologies.orient.server.handler.distributed.ODistributedServerConfiguration;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.SYNCH_TYPE;
 
 /**
  * Replicates requests across network remote server nodes.
@@ -52,10 +56,24 @@ public class OReplicator {
 	private OReplicatorRecordHook					trigger;
 	private volatile STATUS								status	= STATUS.ONLINE;
 	private Map<String, ODistributedNode>	nodes		= new HashMap<String, ODistributedNode>();
+	private OServerUserConfiguration			replicatorUser;
+	private ODistributedServerManager			manager;
 
-	public OReplicator(final ODistributedServerManager iManager, final ODocument iDocument) {
-		clusterConfiguration = iDocument;
+	public OReplicator(final ODistributedServerManager iManager) {
+		manager = iManager;
 		trigger = new OReplicatorRecordHook(this);
+
+		replicatorUser = OServerMain.server().getConfiguration().getUser(ODistributedServerConfiguration.REPLICATOR_USER);
+	}
+
+	/**
+	 * Updates the distributed configuration and reconnect to new servers.
+	 * 
+	 * @param iDocument
+	 *          Configuration as JSON document
+	 */
+	public void updateConfiguration(final ODocument iDocument) {
+		clusterConfiguration = iDocument;
 
 		// OPEN CONNECTIONS AGAINST OTHER SERVERS
 		for (String dbName : clusterConfiguration.fieldNames()) {
@@ -65,17 +83,20 @@ public class OReplicator {
 			for (ODocument node : dbNodes) {
 				final String nodeId = node.field("id");
 
-				if (iManager.itsMe(nodeId))
+				if (manager.itsMe(nodeId))
 					// DON'T OPEN A CONNECTION TO MYSELF
 					continue;
 
 				if (!nodes.containsKey(nodeId)) {
-					final ODistributedNode dNode = new ODistributedNode(iManager, nodeId);
+					final ODistributedNode dNode = new ODistributedNode(manager, nodeId);
 					nodes.put(nodeId, dNode);
 
 					try {
 						final ODistributedDatabaseInfo dbInfo = new ODistributedDatabaseInfo();
 						dbInfo.databaseName = dbName;
+						dbInfo.userName = replicatorUser.name;
+						dbInfo.userPassword = replicatorUser.password;
+						dbInfo.synchType = SYNCH_TYPE.valueOf(node.field("mode").toString().toUpperCase());
 
 						dNode.connectDatabase(dbInfo);
 					} catch (IOException e) {

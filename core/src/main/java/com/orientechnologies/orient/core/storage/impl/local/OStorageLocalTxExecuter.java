@@ -248,7 +248,7 @@ public class OStorageLocalTxExecuter {
 				if (iUseLog)
 					createRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getRecordType());
 				else
-					iTx.getDatabase().getStorage().createRecord(rid, stream, txEntry.getRecord().getRecordType());
+					iTx.getDatabase().getStorage().createRecord(rid, stream, txEntry.getRecord().getRecordType(), null);
 
 				iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_CREATE, txEntry.getRecord());
 			} else {
@@ -260,7 +260,7 @@ public class OStorageLocalTxExecuter {
 				else
 					txEntry.getRecord().setVersion(
 							iTx.getDatabase().getStorage()
-									.updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType()));
+									.updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), null));
 			}
 			break;
 		}

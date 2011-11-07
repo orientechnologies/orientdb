@@ -75,7 +75,7 @@ public class OStorageConfiguration implements OSerializableStream {
 	 * @throws OSerializationException
 	 */
 	public OStorageConfiguration load() throws OSerializationException {
-		final byte[] record = storage.readRecord(null, CONFIG_RID, null).buffer;
+		final byte[] record = storage.readRecord(null, CONFIG_RID, null, null).buffer;
 
 		if (record == null)
 			throw new OStorageException("Can't load database's configuration. The database seems to be corrupted.");
@@ -86,7 +86,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
 	public void update() throws OSerializationException {
 		final byte[] record = toStream();
-		storage.updateRecord(CONFIG_RID, record, -1, ORecordBytes.RECORD_TYPE);
+		storage.updateRecord(CONFIG_RID, record, -1, ORecordBytes.RECORD_TYPE, null);
 	}
 
 	public boolean isEmpty() {
@@ -359,6 +359,6 @@ public class OStorageConfiguration implements OSerializableStream {
 	}
 
 	public void create() throws IOException {
-		storage.createRecord(CONFIG_RID, new byte[] { 0, 0, 0, 0 }, ORecordBytes.RECORD_TYPE);
+		storage.createRecord(CONFIG_RID, new byte[] { 0, 0, 0, 0 }, ORecordBytes.RECORD_TYPE, null);
 	}
 }

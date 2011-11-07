@@ -74,13 +74,13 @@ public interface OStorage extends OSharedContainer {
 	public OLevel2RecordCache getLevel2Cache();
 
 	// CRUD OPERATIONS
-	public long createRecord(ORecordId iRecordId, byte[] iContent, final byte iRecordType);
+	public long createRecord(ORecordId iRecordId, byte[] iContent, byte iRecordType, ORecordCallback<Long> iCallback);
 
-	public ORawBuffer readRecord(ODatabaseRecord iDatabase, ORecordId iRid, String iFetchPlan);
+	public ORawBuffer readRecord(ODatabaseRecord iDatabase, ORecordId iRid, String iFetchPlan, ORecordCallback<ORawBuffer> iCallback);
 
-	public int updateRecord(ORecordId iRecordId, byte[] iContent, final int iVersion, final byte iRecordType);
+	public int updateRecord(ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType, ORecordCallback<Integer> iCallback);
 
-	public boolean deleteRecord(ORecordId iRecordId, final int iVersion);
+	public boolean deleteRecord(ORecordId iRecordId, int iVersion, ORecordCallback<Boolean> iCallback);
 
 	// TX OPERATIONS
 	public void commit(OTransaction iTx);

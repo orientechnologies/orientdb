@@ -108,9 +108,10 @@ public class ORole extends ODocumentWrapper {
 		parentRole = roleName != null ? document.getDatabase().getMetadata().getSecurity().getRole(roleName) : null;
 
 		final Map<String, Number> storedRules = document.field("rules");
-		for (Entry<String, Number> a : storedRules.entrySet()) {
-			rules.put(a.getKey(), a.getValue().byteValue());
-		}
+		if (storedRules != null)
+			for (Entry<String, Number> a : storedRules.entrySet()) {
+				rules.put(a.getKey(), a.getValue().byteValue());
+			}
 	}
 
 	public boolean allow(final String iResource, final int iCRUDOperation) {

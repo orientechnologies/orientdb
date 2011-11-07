@@ -39,6 +39,8 @@ public class OPeerNode {
 		leaderCheckerTask = new OLeaderCheckerTask(this);
 		Orient.getTimer().schedule(leaderCheckerTask, manager.getConfig().networkHeartbeatDelay,
 				manager.getConfig().networkHeartbeatDelay / 2);
+
+		updateHeartBeatTime();
 	}
 
 	public void shutdown() {

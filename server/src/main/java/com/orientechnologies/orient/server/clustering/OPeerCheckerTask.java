@@ -18,8 +18,6 @@ package com.orientechnologies.orient.server.clustering;
 import java.util.List;
 import java.util.TimerTask;
 
-import com.orientechnologies.orient.server.clustering.ORemotePeer.STATUS;
-
 /**
  * Checks that active nodes are up and running
  * 
@@ -35,23 +33,18 @@ public class OPeerCheckerTask extends TimerTask {
 
 	@Override
 	public void run() {
-		final List<ORemotePeer> nodeList = leader.getPeerNodeList();
-
-		if (nodeList == null || nodeList.size() == 0)
-			// NO NODES, JUST RETURN
-			return;
-
 		try {
+			final List<ORemotePeer> nodeList = leader.getPeerNodeList();
+
+			if (nodeList == null || nodeList.size() == 0)
+				// NO NODES, JUST RETURN
+				return;
 
 			// CHECK EVERY SINGLE NODE
 			for (ORemotePeer node : nodeList) {
-				if (node.getStatus() == STATUS.CONNECTED)
-					if (!node.sendHeartBeat(leader.getManager().getConfig().networkTimeoutLeader)) {
-						leader.handlePeerNodeFailure(node);
-					}
+				if (!node.sendHeartBeat(leader.getManager().getConfig().networkTimeoutLeader))
+					leader.handlePeerNodeFailure(node);
 			}
-
-			nodeList.clear();
 
 		} catch (Exception e) {
 			// AVOID THE TIMER IS NOT SCHEDULED ANYMORE IN CASE OF EXCEPTION

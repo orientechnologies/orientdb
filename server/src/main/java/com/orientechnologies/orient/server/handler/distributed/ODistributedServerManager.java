@@ -96,18 +96,21 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	}
 
 	public void becomePeer() {
-		if (discoverySignaler != null) {
-			discoverySignaler.shutdown();
-			discoverySignaler = null;
-		}
+		synchronized (this) {
 
-		if (leader != null) {
-			leader.shutdown();
-			leader = null;
-		}
+			if (discoverySignaler != null) {
+				discoverySignaler.shutdown();
+				discoverySignaler = null;
+			}
 
-		if (peer == null)
-			peer = new OPeerNode(this);
+			if (leader != null) {
+				leader.shutdown();
+				leader = null;
+			}
+
+			if (peer == null)
+				peer = new OPeerNode(this);
+		}
 	}
 
 	/**
@@ -115,14 +118,17 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	 * 
 	 */
 	public void becameLeader() {
-		if (peer != null) {
-			peer.shutdown();
-			peer = null;
-		}
+		synchronized (this) {
 
-		if (leader == null) {
-			leader = new OLeaderNode(this);
-			sendPresence();
+			if (peer != null) {
+				peer.shutdown();
+				peer = null;
+			}
+
+			if (leader == null) {
+				leader = new OLeaderNode(this);
+				sendPresence();
+			}
 		}
 	}
 
@@ -229,5 +235,12 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		final String[] parts = iNodeId.split(":");
 
 		return iNodeId.equals(distributedNetworkListener.getInboundAddr().getAddress().getHostAddress() + ":" + parts[1]);
+	}
+
+	public void updateHeartBeatTime() {
+		synchronized (this) {
+			if (peer != null)
+				peer.updateHeartBeatTime();
+		}
 	}
 }

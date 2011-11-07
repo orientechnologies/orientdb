@@ -54,7 +54,7 @@ public class OMVRBTreeEntryStorage<K, V> extends OMVRBTreeEntryPersistent<K, V> 
 	@Override
 	public OMVRBTreeEntryStorage<K, V> load() throws IOException {
 		pTree.checkForOptimization();
-		ORawBuffer raw = ((OMVRBTreeStorage<K, V>) tree).storage.readRecord(null, (ORecordId) record.getIdentity(), null);
+		ORawBuffer raw = ((OMVRBTreeStorage<K, V>) tree).storage.readRecord(null, (ORecordId) record.getIdentity(), null, null);
 		record.fill(null, (ORecordId) record.getIdentity(), raw.version, raw.buffer, false);
 		fromStream(raw.buffer);
 		return this;
@@ -66,11 +66,11 @@ public class OMVRBTreeEntryStorage<K, V> extends OMVRBTreeEntryPersistent<K, V> 
 		if (record.getIdentity().isValid())
 			// UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
 			record.setVersion(((OMVRBTreeStorage<K, V>) tree).storage.updateRecord((ORecordId) record.getIdentity(), record.toStream(),
-					-1, record.getRecordType()));
+					-1, record.getRecordType(), null));
 		else {
 			// CREATE IT
 			record.setIdentity(record.getIdentity().getClusterId(), ((OMVRBTreeStorage<K, V>) tree).storage.createRecord(
-					(ORecordId) record.getIdentity(), record.toStream(), record.getRecordType()));
+					(ORecordId) record.getIdentity(), record.toStream(), record.getRecordType(), null));
 		}
 		record.unsetDirty();
 	}
@@ -78,7 +78,7 @@ public class OMVRBTreeEntryStorage<K, V> extends OMVRBTreeEntryPersistent<K, V> 
 	@Override
 	protected void deleteRecord() {
 		// DELETE MYSELF
-		((OMVRBTreeStorage<K, V>) tree).storage.deleteRecord((ORecordId) record.getIdentity(), record.getVersion());
+		((OMVRBTreeStorage<K, V>) tree).storage.deleteRecord((ORecordId) record.getIdentity(), record.getVersion(), null);
 	}
 
 	@Override

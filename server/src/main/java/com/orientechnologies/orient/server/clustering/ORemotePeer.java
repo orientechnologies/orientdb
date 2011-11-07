@@ -175,9 +175,11 @@ public class ORemotePeer {
 		if (channel == null)
 			return false;
 
+		if (status != STATUS.CONNECTED)
+			return false;
+
 		configuration.setValue(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT, iNetworkTimeout);
-		OLogManager.instance()
-				.debug(this, "Sending keepalive message to distributed server node %s:%d...", networkAddress, networkPort);
+		OLogManager.instance().debug(this, "Sending keepalive message to distributed server node %s:%d...", networkAddress, networkPort);
 
 		try {
 			channel.beginRequest();

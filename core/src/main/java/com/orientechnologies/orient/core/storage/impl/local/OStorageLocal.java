@@ -53,6 +53,7 @@ import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.fs.OMMapManager;
@@ -579,24 +580,24 @@ public class OStorageLocal extends OStorageEmbedded {
 		}
 	}
 
-	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType) {
+	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType, ORecordCallback iCallback) {
 		checkOpeness();
 
 		iRid.clusterPosition = createRecord(getClusterById(iRid.clusterId), iContent, iRecordType);
 		return iRid.clusterPosition;
 	}
 
-	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final ORecordId iRid, final String iFetchPlan) {
+	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final ORecordId iRid, final String iFetchPlan, ORecordCallback iCallback) {
 		checkOpeness();
 		return readRecord(getClusterById(iRid.clusterId), iRid, true);
 	}
 
-	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType) {
+	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType, ORecordCallback iCallback) {
 		checkOpeness();
 		return updateRecord(getClusterById(iRid.clusterId), iRid, iContent, iVersion, iRecordType);
 	}
 
-	public boolean deleteRecord(final ORecordId iRid, final int iVersion) {
+	public boolean deleteRecord(final ORecordId iRid, final int iVersion, ORecordCallback iCallback) {
 		checkOpeness();
 		return deleteRecord(getClusterById(iRid.clusterId), iRid, iVersion);
 	}

@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
@@ -134,19 +135,19 @@ public class OStorageRemoteThread implements OStorage {
 		return delegate.getClusterNames();
 	}
 
-	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType) {
+	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType, ORecordCallback iCallback) {
 		delegate.setSessionId(sessionId);
-		return delegate.createRecord(iRid, iContent, iRecordType);
+		return delegate.createRecord(iRid, iContent, iRecordType, null);
 	}
 
-	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final ORecordId iRid, final String iFetchPlan) {
+	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final ORecordId iRid, final String iFetchPlan, ORecordCallback iCallback) {
 		delegate.setSessionId(sessionId);
-		return delegate.readRecord(iDatabase, iRid, iFetchPlan);
+		return delegate.readRecord(iDatabase, iRid, iFetchPlan, null);
 	}
 
-	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType) {
+	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType, ORecordCallback iCallback) {
 		delegate.setSessionId(sessionId);
-		return delegate.updateRecord(iRid, iContent, iVersion, iRecordType);
+		return delegate.updateRecord(iRid, iContent, iVersion, iRecordType, null);
 	}
 
 	public String toString() {
@@ -154,9 +155,9 @@ public class OStorageRemoteThread implements OStorage {
 		return delegate.toString();
 	}
 
-	public boolean deleteRecord(final ORecordId iRid, final int iVersion) {
+	public boolean deleteRecord(final ORecordId iRid, final int iVersion, ORecordCallback iCallback) {
 		delegate.setSessionId(sessionId);
-		return delegate.deleteRecord(iRid, iVersion);
+		return delegate.deleteRecord(iRid, iVersion, null);
 	}
 
 	public long count(final int iClusterId) {

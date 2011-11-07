@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>com.orientechnologies</groupId>
@@ -17,12 +16,6 @@
 		<name>Orient Technologies</name>
 		<url>http://www.orientechnologies.com</url>
 	</organization>
-	<properties>
-		<jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
-        <import.package>*</import.package>
-        <export.package>com.orientechnologies.orient.client.*</export.package>
-	</properties>
-
 	<dependencies>
 		<dependency>
 			<groupId>com.orientechnologies</groupId>
@@ -30,19 +23,12 @@
 			<version>${project.version}</version>
 		</dependency>
 	</dependencies>
-
 	<build>
 		<plugins>
-			<plugin>
-				<artifactId>maven-jar-plugin</artifactId>
-				<configuration>
-					<archive>
-						<manifest>
-							<mainClass>${jar.manifest.mainclass}</mainClass>
-						</manifest>
-					</archive>
-				</configuration>
-			</plugin>
 		</plugins>
 	</build>
+	<properties>
+		<import.package>*</import.package>
+		<export.package>com.orientechnologies.orient.client.*</export.package>
+	</properties>
 </project>

@@ -441,7 +441,7 @@ public class OTxSegment extends OSingleFileSegment {
 		switch (iOperation) {
 		case OPERATION_CREATE:
 			// JUST DELETE THE RECORD
-			storage.deleteRecord(iRid, -1);
+			storage.deleteRecord(iRid, -1, null);
 			break;
 
 		case OPERATION_UPDATE:

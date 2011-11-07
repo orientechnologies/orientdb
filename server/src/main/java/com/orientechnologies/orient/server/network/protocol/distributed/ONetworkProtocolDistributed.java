@@ -51,6 +51,8 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 		if (manager == null)
 			throw new OConfigurationException(
 					"Can't find a ODistributedServerDiscoveryManager instance registered as handler. Check the server configuration in the handlers section.");
+
+		replicator = new OReplicator(manager);
 	}
 
 	@Override
@@ -106,7 +108,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 				manager.getPeer().updateHeartBeatTime();
 
-				replicator = new OReplicator(manager, new ODocument(channel.readBytes()));
+				replicator.updateConfiguration(new ODocument(channel.readBytes()));
 
 			} finally {
 				channel.releaseExclusiveLock();
@@ -117,30 +119,15 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_HEARTBEAT:
 			checkConnected();
 			data.commandInfo = "Cluster Heartbeat";
-			manager.getPeer().updateHeartBeatTime();
-
-			sendOk(lastClientTxId);
-			break;
-
-		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_OPEN: {
-			checkConnected();
-			data.commandInfo = "Open database connection";
-
-			// REOPEN PREVIOUSLY MANAGED DATABASE
-			final String dbUrl = channel.readString();
-			openDatabase(dbUrl, channel.readString(), channel.readString());
-
-			ODistributedRequesterThreadLocal.INSTANCE.set(true);
+			manager.updateHeartBeatTime();
 
 			channel.acquireExclusiveLock();
 			try {
 				sendOk(lastClientTxId);
-				channel.writeInt(connection.id);
 			} finally {
 				channel.releaseExclusiveLock();
 			}
 			break;
-		}
 
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_SENDER: {
 			data.commandInfo = "Share the database to a remote server";

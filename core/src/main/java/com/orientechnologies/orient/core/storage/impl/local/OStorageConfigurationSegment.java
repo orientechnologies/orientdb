@@ -57,7 +57,7 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
 
 				// @COMPATIBILITY0.9.25
 				// CHECK FOR OLD VERSION OF DATABASE
-				final ORawBuffer rawRecord = storage.readRecord(null, CONFIG_RID, null);
+				final ORawBuffer rawRecord = storage.readRecord(null, CONFIG_RID, null, null);
 				if (rawRecord != null)
 					fromStream(rawRecord.buffer);
 
