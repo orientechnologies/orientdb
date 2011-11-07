@@ -4,12 +4,11 @@
 		<handler class="com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager">
 			<parameters>
 				<parameter name="name" value="default" />
+				<parameter name="node.number" value="-1" />
 				<parameter name="security.algorithm" value="Blowfish" />
 				<parameter name="network.multicast.address" value="235.1.1.1" />
 				<parameter name="network.multicast.port" value="2424" />
 				<parameter name="network.multicast.heartbeat" value="10" />
-				<parameter name="server.update.delay" value="5000" />
-				<parameter name="server.electedForLeadership" value="true" />
 			</parameters>
 		</handler>
 		<!-- AUTOMATIC BACKUP, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->

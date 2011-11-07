@@ -36,6 +36,7 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
  */
 public class ODistributedServerConfiguration {
 	public String								name;
+	public int									nodeNumber;
 	public SecretKey						securityKey;
 	public String								securityAlgorithm;
 	public InetAddress					networkMulticastAddress;
@@ -45,7 +46,6 @@ public class ODistributedServerConfiguration {
 	public int									networkTimeoutNode;								// IN
 	public int									networkHeartbeatDelay;							// IN
 	public int									serverUpdateDelay;									// IN
-	public int									serverOutSynchMaxBuffers;
 
 	public static final String	CHECKSUM					= "ChEcKsUm1976";
 
@@ -57,6 +57,7 @@ public class ODistributedServerConfiguration {
 			final OServerParameterConfiguration[] iParams) {
 		try {
 			name = "unknown";
+			nodeNumber = -1;
 			securityKey = null;
 			networkMulticastAddress = InetAddress.getByName("235.1.1.1");
 			networkMulticastPort = 2424;
@@ -66,13 +67,14 @@ public class ODistributedServerConfiguration {
 			networkHeartbeatDelay = 5000;
 			securityAlgorithm = "Blowfish";
 			serverUpdateDelay = 0;
-			serverOutSynchMaxBuffers = 300;
 			byte[] tempSecurityKey = null;
 
 			if (iParams != null)
 				for (OServerParameterConfiguration param : iParams) {
 					if ("name".equalsIgnoreCase(param.name))
 						name = param.value;
+					else if ("node.number".equalsIgnoreCase(param.name))
+						nodeNumber = Short.parseShort(param.value);
 					else if ("security.algorithm".equalsIgnoreCase(param.name))
 						securityAlgorithm = param.value;
 					else if ("security.key".equalsIgnoreCase(param.name))
@@ -91,8 +93,6 @@ public class ODistributedServerConfiguration {
 						networkHeartbeatDelay = Integer.parseInt(param.value);
 					else if ("server.update.delay".equalsIgnoreCase(param.name))
 						serverUpdateDelay = Integer.parseInt(param.value);
-					else if ("server.outsynch.maxbuffers".equalsIgnoreCase(param.name))
-						serverOutSynchMaxBuffers = Integer.parseInt(param.value);
 				}
 
 			if (OServerMain.server().getUser(REPLICATOR_USER) == null)
