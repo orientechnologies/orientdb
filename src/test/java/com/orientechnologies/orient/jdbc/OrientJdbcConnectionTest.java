@@ -19,6 +19,7 @@ public class OrientJdbcConnectionTest extends OrientJdbcBaseTest {
 		Statement stmt = conn.createStatement();
 		assertNotNull(stmt);
 		stmt.close();
+		
 	}
 
 	@Test
@@ -33,6 +34,7 @@ public class OrientJdbcConnectionTest extends OrientJdbcBaseTest {
 		// conn.setTransactionIsolation(Connection.TRANSACTION_NONE);
 		// assertEquals(Connection.TRANSACTION_NONE,
 		// conn.getTransactionIsolation());
+
 	}
 
 	@Test

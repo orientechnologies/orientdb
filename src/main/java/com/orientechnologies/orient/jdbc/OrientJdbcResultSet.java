@@ -41,15 +41,20 @@ import java.util.Map;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import static java.util.Arrays.binarySearch;
+
 public class OrientJdbcResultSet implements ResultSet {
 	private List<ODocument> records = null;
 	private OrientJdbcStatement statement;
+
 	private int cursor = -1;
 	private int rowCount = 0;
 	private ODocument document;
 	private String[] fieldNames;
+	private final OrientJdbcConnection connection;
 
-	public OrientJdbcResultSet(OrientJdbcStatement iOrientJdbcStatement, List<ODocument> iRecords) {
+	public OrientJdbcResultSet(OrientJdbcConnection connection, OrientJdbcStatement iOrientJdbcStatement, List<ODocument> iRecords) {
+		this.connection = connection;
 		statement = iOrientJdbcStatement;
 		records = iRecords;
 		rowCount = iRecords.size();
@@ -134,7 +139,7 @@ public class OrientJdbcResultSet implements ResultSet {
 	}
 
 	public ResultSetMetaData getMetaData() throws SQLException {
-		return new OrientJdbcMetaData(this);
+		return new OrientJdbcMetaData(connection, this);
 	}
 
 	public void deleteRow() throws SQLException {
@@ -142,8 +147,8 @@ public class OrientJdbcResultSet implements ResultSet {
 	}
 
 	public int findColumn(String columnLabel) throws SQLException {
-		
-		return 0;
+
+		return binarySearch(fieldNames, 0, fieldNames.length, columnLabel) + 1;
 	}
 
 	public Array getArray(int columnIndex) throws SQLException {
@@ -208,8 +213,9 @@ public class OrientJdbcResultSet implements ResultSet {
 		return getBoolean(fieldNames[columnIndex - 1]);
 	}
 
+	@SuppressWarnings("boxing")
 	public boolean getBoolean(String columnLabel) throws SQLException {
-		return document.field(columnLabel, OType.BOOLEAN);
+		return (Boolean) document.field(columnLabel, OType.BOOLEAN);
 
 	}
 
@@ -217,8 +223,9 @@ public class OrientJdbcResultSet implements ResultSet {
 		return getByte(fieldNames[columnIndex - 1]);
 	}
 
+	@SuppressWarnings("boxing")
 	public byte getByte(String columnLabel) throws SQLException {
-		return document.field(columnLabel, OType.BYTE);
+		return (Byte) document.field(columnLabel, OType.BYTE);
 	}
 
 	public byte[] getBytes(int columnIndex) throws SQLException {
@@ -283,6 +290,7 @@ public class OrientJdbcResultSet implements ResultSet {
 		return getDouble(fieldNames[columnIndex - 1]);
 	}
 
+	@SuppressWarnings("boxing")
 	public double getDouble(String columnLabel) throws SQLException {
 
 		return (Double) document.field(columnLabel, OType.DOUBLE);
@@ -299,13 +307,12 @@ public class OrientJdbcResultSet implements ResultSet {
 	}
 
 	public float getFloat(int columnIndex) throws SQLException {
-
 		return getFloat(fieldNames[columnIndex - 1]);
 	}
 
+	@SuppressWarnings("boxing")
 	public float getFloat(String columnLabel) throws SQLException {
-
-		return (Float) (document.field(columnLabel, OType.FLOAT));
+		return (Float) document.field(columnLabel, OType.FLOAT);
 	}
 
 	public int getHoldability() throws SQLException {
@@ -318,6 +325,7 @@ public class OrientJdbcResultSet implements ResultSet {
 		return getInt(fieldNames[columnIndex - 1]);
 	}
 
+	@SuppressWarnings("boxing")
 	public int getInt(String columnLabel) throws SQLException {
 
 		return (Integer) document.field(columnLabel, OType.INTEGER);
@@ -327,6 +335,7 @@ public class OrientJdbcResultSet implements ResultSet {
 		return getLong(fieldNames[columnIndex - 1]);
 	}
 
+	@SuppressWarnings("boxing")
 	public long getLong(String columnLabel) throws SQLException {
 
 		return (Long) document.field(columnLabel, OType.LONG);
@@ -364,12 +373,12 @@ public class OrientJdbcResultSet implements ResultSet {
 
 	public Object getObject(int columnIndex) throws SQLException {
 
-		return null;
+		return getObject(fieldNames[columnIndex - 1]);
 	}
 
 	public Object getObject(String columnLabel) throws SQLException {
 
-		return null;
+		return document.field(columnLabel);
 	}
 
 	public Object getObject(int columnIndex, Map<String, Class<?>> map) throws SQLException {
@@ -422,9 +431,10 @@ public class OrientJdbcResultSet implements ResultSet {
 		return getShort(fieldNames[columnIndex - 1]);
 	}
 
+	@SuppressWarnings("boxing")
 	public short getShort(String columnLabel) throws SQLException {
 
-		return document.field(columnLabel, OType.SHORT);
+		return (Short) document.field(columnLabel, OType.SHORT);
 	}
 
 	public String getString(int columnIndex) throws SQLException {
@@ -898,4 +908,14 @@ public class OrientJdbcResultSet implements ResultSet {
 
 	public void clearWarnings() throws SQLException {
 	}
+
+	// not on iterface
+	public List<ODocument> getRecords() {
+		return records;
+	}
+
+	public ODocument getDocument() {
+		return document;
+	}
+
 }

@@ -50,7 +50,7 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
 			if (rawResult instanceof List<?>) documents = (List<ODocument>) rawResult;
 			else throw new SQLException("unable to create a valid resultSet: is query a SELECT?");
 
-			resultSet = new OrientJdbcResultSet(this, documents);
+			resultSet = new OrientJdbcResultSet(connection,this, documents);
 			return resultSet;
 
 		} catch (OQueryParsingException e) {

@@ -21,8 +21,12 @@ import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
+@SuppressWarnings("boxing")
 public class OrientJdbcMetaData implements ResultSetMetaData {
 	
 	private final  static Map<OType, Integer> oTypesSqlTypes = new HashMap<OType, Integer>();
@@ -38,14 +42,18 @@ public class OrientJdbcMetaData implements ResultSetMetaData {
 	}
 	
 	private OrientJdbcResultSet resultSet;
+	private final OrientJdbcConnection connection;
 
-	public OrientJdbcMetaData(OrientJdbcResultSet iResultSet) {
+	public OrientJdbcMetaData(OrientJdbcConnection connection, OrientJdbcResultSet iResultSet) {
+		this.connection = connection;
 		resultSet = iResultSet;
 	}
 
 	
 	public int getColumnCount() throws SQLException {
-		return 0;
+		ODocument document = resultSet.getDocument();
+		
+		return document.fields();
 	}
 
 	public String getCatalogName(int column) throws SQLException {
@@ -69,13 +77,19 @@ public class OrientJdbcMetaData implements ResultSetMetaData {
 	}
 
 	public String getColumnName(int column) throws SQLException {
-
-		return null;
+		return resultSet.getDocument().fieldNames()[column-1];
 	}
 
 	public int getColumnType(int column) throws SQLException {
-
-		return 0;
+		String columnName = getColumnClassName(column);
+		String className = resultSet.getDocument().getClassName();
+		System.out.println("class:: " + className);
+		OClass theClass = connection.getDatabase().getMetadata().getSchema().getClass(className);
+		
+		OProperty property = theClass.getProperty(columnName);
+		
+		if(property != null) return oTypesSqlTypes.get(property.getType());
+		return oTypesSqlTypes.get(OType.STRING);
 	}
 
 	public String getColumnTypeName(int column) throws SQLException {

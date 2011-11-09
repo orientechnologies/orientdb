@@ -60,7 +60,7 @@ public class OrientJdbcStatement implements Statement {
 
 			if (rawResult instanceof List<?>) {
 				documents = (List<ODocument>) rawResult;
-				resultSet = new OrientJdbcResultSet(this, documents);
+				resultSet = new OrientJdbcResultSet(connection, this, documents);
 				return true;
 			}
 			return false;
@@ -81,7 +81,7 @@ public class OrientJdbcStatement implements Statement {
 			if (rawResult instanceof List<?>) documents = (List<ODocument>) rawResult;
 			else throw new SQLException("unable to create a valid resultSet: is query a SELECT?");
 
-			resultSet = new OrientJdbcResultSet(this, documents);
+			resultSet = new OrientJdbcResultSet(connection,this, documents);
 			return resultSet;
 
 		} catch (OQueryParsingException e) {
@@ -97,7 +97,7 @@ public class OrientJdbcStatement implements Statement {
 			rawResult = database.command(query).execute();
 			if (rawResult instanceof List<?>) documents = (List<ODocument>) rawResult;
 
-			resultSet = new OrientJdbcResultSet(this, documents);
+			resultSet = new OrientJdbcResultSet(connection,this, documents);
 			return resultSet;
 
 		} catch (OQueryParsingException e) {
@@ -106,6 +106,7 @@ public class OrientJdbcStatement implements Statement {
 
 	}
 
+	@SuppressWarnings("boxing")
 	public int executeUpdate(final String sql) throws SQLException {
 		query = new OCommandSQL(sql);
 		rawResult = database.command(query).execute();

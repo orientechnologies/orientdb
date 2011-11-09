@@ -28,7 +28,6 @@ public abstract class OrientJdbcBaseTest {
 		String dbUrl = "local:./working/db/test";
 		dbUrl = "memory:test";
 		ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
-
 		createDB(db);
 		loadDB(db, 20);
 

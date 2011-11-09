@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>com.orientechnologies</groupId>
 		<artifactId>orientdb-parent</artifactId>
-		<version>1.0rc5</version>
+		<version>1.0rc7-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>orientdb-jdbc</artifactId>
@@ -19,6 +19,7 @@
 	</organization>
 	<properties>
 		<jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
+		<orient.version>1.0rc7-SNAPSHOT</orient.version>
 	</properties>
 	<repositories>
 		<repository>
@@ -49,7 +50,7 @@
 		<dependency>
 			<groupId>com.orientechnologies</groupId>
 			<artifactId>orientdb-enterprise</artifactId>
-			<version>1.0rc5</version>
+			<version>${orient.version}</version>
 		</dependency>
 	</dependencies>
 
