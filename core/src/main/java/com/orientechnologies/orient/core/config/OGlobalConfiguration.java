@@ -199,8 +199,8 @@ public enum OGlobalConfiguration {
 
 	NETWORK_HTTP_CONTENT_CHARSET("network.http.charset", "Http response charset", String.class, "utf-8"),
 
-	NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT("network.http.sessionExpireTimeout", "Timeout to consider a http session expired in ms",
-			Integer.class, 600000),
+	NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT("network.http.sessionExpireTimeout", "Timeout to consider a http session expired in seconds",
+			Integer.class, 300),
 
 	// PROFILER
 	PROFILER_ENABLED("profiler.enabled", "Enable the recording of statistics and counters", Boolean.class, false,

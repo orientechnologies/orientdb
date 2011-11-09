@@ -38,7 +38,7 @@ public class OHttpSessionManager extends OSharedResourceAbstract {
 	private int																expirationTime;
 
 	protected OHttpSessionManager() {
-		expirationTime = OGlobalConfiguration.NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT.getValueAsInteger();
+		expirationTime = OGlobalConfiguration.NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT.getValueAsInteger() * 1000;
 
 		Orient.getTimer().schedule(new TimerTask() {
 			@Override
