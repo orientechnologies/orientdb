@@ -580,24 +580,26 @@ public class OStorageLocal extends OStorageEmbedded {
 		}
 	}
 
-	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType, ORecordCallback iCallback) {
+	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType, ORecordCallback<Long> iCallback) {
 		checkOpeness();
 
 		iRid.clusterPosition = createRecord(getClusterById(iRid.clusterId), iContent, iRecordType);
 		return iRid.clusterPosition;
 	}
 
-	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final ORecordId iRid, final String iFetchPlan, ORecordCallback iCallback) {
+	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final ORecordId iRid, final String iFetchPlan,
+			ORecordCallback<ORawBuffer> iCallback) {
 		checkOpeness();
 		return readRecord(getClusterById(iRid.clusterId), iRid, true);
 	}
 
-	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType, ORecordCallback iCallback) {
+	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType,
+			ORecordCallback<Integer> iCallback) {
 		checkOpeness();
 		return updateRecord(getClusterById(iRid.clusterId), iRid, iContent, iVersion, iRecordType);
 	}
 
-	public boolean deleteRecord(final ORecordId iRid, final int iVersion, ORecordCallback iCallback) {
+	public boolean deleteRecord(final ORecordId iRid, final int iVersion, ORecordCallback<Boolean> iCallback) {
 		checkOpeness();
 		return deleteRecord(getClusterById(iRid.clusterId), iRid, iVersion);
 	}
@@ -1026,28 +1028,22 @@ public class OStorageLocal extends OStorageEmbedded {
 		lock.acquireSharedLock();
 		try {
 
-			lockManager.acquireLock(Thread.currentThread(), ORecordId.EMPTY_RECORD_ID, LOCK.EXCLUSIVE);
-			try {
+			final int dataSegment = getDataSegmentForRecord(iClusterSegment, iContent);
+			final ODataLocal data = getDataSegment(dataSegment);
 
-				final int dataSegment = getDataSegmentForRecord(iClusterSegment, iContent);
-				final ODataLocal data = getDataSegment(dataSegment);
+			final ORecordId rid = new ORecordId(iClusterSegment.getId());
+			rid.clusterPosition = iClusterSegment.addPhysicalPosition(-1, -1, iRecordType);
 
-				final ORecordId rid = new ORecordId(iClusterSegment.getId());
-				rid.clusterPosition = iClusterSegment.addPhysicalPosition(-1, -1, iRecordType);
+			final long dataOffset = data.addRecord(rid, iContent);
 
-				final long dataOffset = data.addRecord(rid, iContent);
+			// UPDATE THE POSITION IN CLUSTER WITH THE POSITION OF RECORD IN
+			// DATA
+			iClusterSegment.setPhysicalPosition(rid.clusterPosition, dataSegment, dataOffset, iRecordType, 0);
 
-				// UPDATE THE POSITION IN CLUSTER WITH THE POSITION OF RECORD IN
-				// DATA
-				iClusterSegment.setPhysicalPosition(rid.clusterPosition, dataSegment, dataOffset, iRecordType, 0);
+			incrementVersion();
 
-				incrementVersion();
+			return rid.clusterPosition;
 
-				return rid.clusterPosition;
-
-			} finally {
-				lockManager.releaseLock(Thread.currentThread(), ORecordId.EMPTY_RECORD_ID, LOCK.EXCLUSIVE);
-			}
 		} catch (IOException e) {
 
 			OLogManager.instance().error(this, "Error on creating record in cluster: " + iClusterSegment, e);

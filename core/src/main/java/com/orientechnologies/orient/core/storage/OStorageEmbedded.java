@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.storage;
 
 import java.io.IOException;
 
-import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -44,12 +43,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public abstract class OStorageEmbedded extends OStorageAbstract {
-	protected final OLockManager<ORID, Runnable>	lockManager;
+	protected final ORecordLockManager	lockManager;
 
 	public OStorageEmbedded(final String iName, final String iFilePath, final String iMode) {
 		super(iName, iFilePath, iMode);
 
-		lockManager = new OLockManager<ORID, Runnable>(OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
+		lockManager = new ORecordLockManager(OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
 	}
 
 	protected abstract ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock);
@@ -83,8 +82,8 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 	 *          The listener to call for each record found
 	 * @param ioRecord
 	 */
-	public void browse(final int[] iClusterId, final ORID iBeginRange, final ORID iEndRange,
-			final ORecordBrowsingListener iListener, ORecordInternal<?> ioRecord, final boolean iLockEntireCluster) {
+	public void browse(final int[] iClusterId, final ORID iBeginRange, final ORID iEndRange, final ORecordBrowsingListener iListener,
+			ORecordInternal<?> ioRecord, final boolean iLockEntireCluster) {
 		checkOpeness();
 
 		final long timer = OProfiler.getInstance().startChrono();

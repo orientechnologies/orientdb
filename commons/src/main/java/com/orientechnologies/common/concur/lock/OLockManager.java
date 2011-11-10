@@ -50,10 +50,11 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 			lock = map.get(iResourceId);
 			if (lock == null) {
 				lock = new CountableLock(iTimeout > 0);
-				map.put(iResourceId, lock);
+				map.put(getImmutableResourceId(iResourceId), lock);
 			}
 			lock.countLocks++;
 		}
+
 		try {
 			if (iTimeout <= 0) {
 				if (iLockType == LOCK.SHARED)
@@ -121,4 +122,7 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 		}
 	}
 
+	protected RESOURCE_TYPE getImmutableResourceId(final RESOURCE_TYPE iResourceId) {
+		return iResourceId;
+	}
 }
