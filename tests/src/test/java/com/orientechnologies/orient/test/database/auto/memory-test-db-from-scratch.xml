@@ -21,127 +21,140 @@
 			<class name="com.orientechnologies.orient.test.database.auto.SchemaTest" />
 		</classes>
 	</test>
-    <test name="Security">
-        <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.SecurityTest" />
-        </classes>
-    </test>
-    <test name="Hook">
-        <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.HookTest" />
-        </classes>
-    </test>
-    <test name="Population">
-        <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.ComplexTypesTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.CRUDFlatPhysicalTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentLogicalTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentPhysicalTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.CRUDObjectPhysicalTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.CRUDObjectInheritanceTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.CRUDFlatPhysicalTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentValidationTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.ObjectTreeTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.ObjectDetachingTest" />
-        </classes>
-    </test>
-    <test name="Index">
-        <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.IndexTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.FullTextIndexTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.ClassIndexManagerTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.SQLSelectIndexReuseTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.SQLCreateIndexTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.SQLDropIndexTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.SQLDropClassIndexTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.SQLDropPropertyIndexTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.SchemaIndexTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.ClassIndexTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.PropertyIndexTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.CollectionIndexTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.SQLSelectCompositeIndexDirectSearchTest"/>
-        </classes>
-    </test>
-    <test name="Dictionary">
-        <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.DictionaryTest" />
-        </classes>
-    </test>
-    <test name="Query">
-        <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.NativeQueryTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.WrongQueryTest" />
-        </classes>
-    </test>
-    <test name="Parsing">
-        <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.JSONTest" />
-        </classes>
-    </test>
-    <test name="Graph">
-        <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.GraphTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.GraphDatabaseTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.GraphTestFixedDensity" />
-        </classes>
-    </test>
-    <test name="GEO">
-        <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.GEOTest" />
-        </classes>
-    </test>
-    <test name="IndexManager">
-        <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.IndexManagerTest"/>
-        </classes>
-    </test>
-    <test name="Binary">
-        <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.BinaryTest" />
-        </classes>
-    </test>
-    <test name="sql-commands">
-        <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.SQLCommandsTest" />
-        </classes>
-    </test>
-    <test name="sql-insert">
-        <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.SQLInsertTest" />
-        </classes>
-    </test>
-    <test name="sql-select">
-        <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.SQLSelectTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.SQLSelectProjectionsTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.SQLFunctionsTest" />
-        </classes>
-    </test>
-    <test name="sql-update">
-        <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.SQLUpdateTest" />
-        </classes>
-    </test>
-    <test name="sql-delete">
-        <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.SQLDeleteTest" />
-        </classes>
-    </test>
-    <test name="misc">
-        <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.DateTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.SQLFindReferencesTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.SQLCreateLinkTest" />
-        </classes>
-    </test>
-    <test name="DbTools">
-        <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.DbDeleteTest" />
-        </classes>
-    </test>
-    <test name="End">
-        <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.DbClosedTest" />
-        </classes>
-    </test>
+	<test name="Security">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.SecurityTest" />
+		</classes>
+	</test>
+	<test name="Hook">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.HookTest" />
+		</classes>
+	</test>
+	<test name="Population">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.ComplexTypesTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.CRUDFlatPhysicalTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentLogicalTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentPhysicalTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.CRUDObjectPhysicalTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.CRUDObjectInheritanceTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.CRUDFlatPhysicalTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentValidationTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.ObjectTreeTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.ObjectDetachingTest" />
+		</classes>
+	</test>
+	<test name="Index">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.IndexTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.FullTextIndexTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.ClassIndexManagerTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectIndexReuseTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.SQLCreateIndexTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.SQLDropIndexTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.SQLDropClassIndexTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.SQLDropPropertyIndexTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.SchemaIndexTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.ClassIndexTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.PropertyIndexTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.CollectionIndexTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectCompositeIndexDirectSearchTest" />
+<!--
+			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetValuesTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetValuesTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetEntriesTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetEntriesTest" />
+-->
+		</classes>
+	</test>
+	<test name="Dictionary">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.DictionaryTest" />
+		</classes>
+	</test>
+	<test name="Query">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.NativeQueryTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.WrongQueryTest" />
+		</classes>
+	</test>
+	<test name="Parsing">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.JSONTest" />
+		</classes>
+	</test>
+	<test name="Graph">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.GraphTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.GraphDatabaseTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.GraphTestFixedDensity" />
+		</classes>
+	</test>
+	<test name="GEO">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.GEOTest" />
+		</classes>
+	</test>
+	<test name="IndexManager">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.IndexManagerTest" />
+		</classes>
+	</test>
+	<test name="Binary">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.BinaryTest" />
+		</classes>
+	</test>
+	<test name="sql-commands">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.SQLCommandsTest" />
+		</classes>
+	</test>
+	<test name="sql-insert">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.SQLInsertTest" />
+		</classes>
+	</test>
+	<test name="sql-select">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectProjectionsTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.SQLFunctionsTest" />
+		</classes>
+	</test>
+	<test name="sql-update">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.SQLUpdateTest" />
+		</classes>
+	</test>
+	<test name="sql-delete">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.SQLDeleteTest" />
+		</classes>
+	</test>
+	<test name="misc">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.DateTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.SQLFindReferencesTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.SQLCreateLinkTest" />
+		</classes>
+	</test>
+	<test name="DbTools">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.DbDeleteTest" />
+		</classes>
+	</test>
+	<test name="Internals">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.LockManagerTest" />
+		</classes>
+	</test>
+	<test name="End">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.DbClosedTest" />
+		</classes>
+	</test>
 </suite>

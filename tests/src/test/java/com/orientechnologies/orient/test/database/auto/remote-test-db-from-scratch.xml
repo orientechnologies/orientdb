@@ -51,17 +51,20 @@
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.IndexTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.FullTextIndexTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.ClassIndexManagerTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.SQLSelectIndexReuseTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.SQLCreateIndexTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.SQLDropIndexTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.SQLDropClassIndexTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.SQLDropPropertyIndexTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.SchemaIndexTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.ClassIndexTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.PropertyIndexTest"/>
-			<class name="com.orientechnologies.orient.test.database.auto.CollectionIndexTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.SQLSelectCompositeIndexDirectSearchTest"/>
+			<class name="com.orientechnologies.orient.test.database.auto.ClassIndexManagerTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectIndexReuseTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.SQLCreateIndexTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.SQLDropIndexTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.SQLDropClassIndexTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.SQLDropPropertyIndexTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.SchemaIndexTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.ClassIndexTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.PropertyIndexTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.CollectionIndexTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectCompositeIndexDirectSearchTest" />
+			<!-- <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetValuesTest"/> <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetValuesTest"/> 
+				<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetTest"/> <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetTest"/> 
+				<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetEntriesTest"/> <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetEntriesTest"/> -->
 		</classes>
 	</test>
 	<test name="Dictionary">
@@ -87,11 +90,11 @@
 			<class name="com.orientechnologies.orient.test.database.auto.GEOTest" />
 		</classes>
 	</test>
-    <test name="IndexManager">
-        <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.IndexManagerTest"/>
-        </classes>
-    </test>
+	<test name="IndexManager">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.IndexManagerTest" />
+		</classes>
+	</test>
 	<test name="Binary">
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.BinaryTest" />
@@ -125,15 +128,15 @@
 			<class name="com.orientechnologies.orient.test.database.auto.SQLCreateLinkTest" />
 		</classes>
 	</test>
+	<test name="DbTools">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.DbImportExportTest" />
+		</classes>
+	</test>
 	<test name="End">
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.DbClosedTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.DbDeleteTest" />
-		</classes>
-	</test>
-	<test name="DbTools">
-		<classes>
-			<class name="com.orientechnologies.orient.test.database.auto.DbImportExportTest" />
 		</classes>
 	</test>
 </suite>

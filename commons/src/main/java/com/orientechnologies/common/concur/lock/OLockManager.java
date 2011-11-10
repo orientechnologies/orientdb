@@ -86,7 +86,7 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 
 	public void releaseLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType)
 			throws OLockException {
-		CountableLock lock;
+		final CountableLock lock;
 		synchronized (map) {
 			lock = map.get(iResourceId);
 			if (lock == null)
