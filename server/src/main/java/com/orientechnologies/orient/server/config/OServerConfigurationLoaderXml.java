@@ -56,7 +56,7 @@ public class OServerConfigurationLoaderXml {
 				if (file.exists())
 					obj = rootClass.cast(unmarshaller.unmarshal(file));
 				else
-					return rootClass.getConstructor(OServerConfigurationLoaderXml.class, String.class).newInstance(this, file);
+					return rootClass.getConstructor(OServerConfigurationLoaderXml.class).newInstance(this);
 				obj.location = file.getAbsolutePath();
 			} else {
 				obj = rootClass.cast(unmarshaller.unmarshal(new StringReader(configurationText)));
@@ -95,14 +95,15 @@ public class OServerConfigurationLoaderXml {
 	}
 
 	public void save(final OServerConfiguration iRootObject) throws IOException {
-		try {
-			context = JAXBContext.newInstance(rootClass);
-			Marshaller marshaller = context.createMarshaller();
-			marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-			marshaller.marshal(iRootObject, new FileWriter(file));
-		} catch (JAXBException e) {
-			throw new IOException(e);
-		}
+		if (file != null)
+			try {
+				context = JAXBContext.newInstance(rootClass);
+				Marshaller marshaller = context.createMarshaller();
+				marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+				marshaller.marshal(iRootObject, new FileWriter(file));
+			} catch (JAXBException e) {
+				throw new IOException(e);
+			}
 	}
 
 	public File getFile() {
