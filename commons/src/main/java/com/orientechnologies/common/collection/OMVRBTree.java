@@ -34,7 +34,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 
-
 /**
  * Base abstract class of MVRB-Tree algorithm.
  * 
@@ -79,27 +78,27 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	protected boolean													lastSearchFound			= false;
 	protected int															lastSearchIndex			= -1;
 
-    /**
-     * Indicates search behaviour in case of {@link OCompositeKey) keys that have less amount of internal keys are used,
-     * whether lowest or highest partially matched key should be used.
-     * Such keys is allowed to use only in {@link OMVRBTree#subMap(K, boolean, K, boolean)},
-     * {@link OMVRBTree#tailMap(K, boolean, K, boolean)} and {@link OMVRBTree#headMap(K, boolean, K, boolean)} .
-     */
-    public static enum PartialSearchMode {
-        /**
-         * Any partially matched key will be used as search result.
-         */
-        NONE,
-        /**
-         * The biggest partially matched key will be used as search result.
-         */
-        HIGHEST_BOUNDARY,
+	/**
+	 * Indicates search behaviour in case of {@link OCompositeKey) keys that have less amount of internal keys are used, whether
+	 * lowest or highest partially matched key should be used. Such keys is allowed to use only in {
+	 * @link OMVRBTree#subMap(K, boolean, K, boolean)}, {@link OMVRBTree#tailMap(K, boolean, K, boolean)} and
+	 * {@link OMVRBTree#headMap(K, boolean, K, boolean)} .
+	 */
+	public static enum PartialSearchMode {
+		/**
+		 * Any partially matched key will be used as search result.
+		 */
+		NONE,
+		/**
+		 * The biggest partially matched key will be used as search result.
+		 */
+		HIGHEST_BOUNDARY,
 
-        /**
-         * The smallest partially matched key will be used as search result.
-         */
-        LOWEST_BOUNDARY
-    }
+		/**
+		 * The smallest partially matched key will be used as search result.
+		 */
+		LOWEST_BOUNDARY
+	}
 
 	public OMVRBTree(final int iSize, final float iLoadFactor) {
 		lastPageSize = iSize;
@@ -344,23 +343,25 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
 	/**
 	 * Returns this map's entry for the given key, or <tt>null</tt> if the map does not contain an entry for the key.
-     *
-     * In case of {@link OCompositeKey} keys you can specify which key can be used: lowest, highest, any.
-	 *
-     * @param key Key to search.
-     * @param  partialSearchMode Which key can be used in case of {@link OCompositeKey} key is passed in.
-     *
+	 * 
+	 * In case of {@link OCompositeKey} keys you can specify which key can be used: lowest, highest, any.
+	 * 
+	 * @param key
+	 *          Key to search.
+	 * @param partialSearchMode
+	 *          Which key can be used in case of {@link OCompositeKey} key is passed in.
+	 * 
 	 * @return this map's entry for the given key, or <tt>null</tt> if the map does not contain an entry for the key
 	 * @throws ClassCastException
 	 *           if the specified key cannot be compared with the keys currently in the map
 	 * @throws NullPointerException
 	 *           if the specified key is null and this map uses natural ordering, or its comparator does not permit null keys
 	 */
-	public final OMVRBTreeEntry<K, V> getEntry(final Object key,final PartialSearchMode partialSearchMode) {
+	public final OMVRBTreeEntry<K, V> getEntry(final Object key, final PartialSearchMode partialSearchMode) {
 		return getEntry(key, false, partialSearchMode);
 	}
 
-	final OMVRBTreeEntry<K, V> getEntry(final Object key, final boolean iGetContainer,final PartialSearchMode partialSearchMode) {
+	final OMVRBTreeEntry<K, V> getEntry(final Object key, final boolean iGetContainer, final PartialSearchMode partialSearchMode) {
 		if (key == null)
 			return setLastSearchNode(null, null);
 
@@ -405,11 +406,11 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 					pageItemFound = true;
 					pageItemComparator = 0;
 
-                    if (((Comparable)k) instanceof OCompositeKey) {
-                        return adjustSearchResult(partialSearchMode, p, k);
-                    }
+					if (((Comparable) k) instanceof OCompositeKey) {
+						return adjustSearchResult(partialSearchMode, p, k);
+					}
 
-                    return setLastSearchNode(key, p);
+					return setLastSearchNode(key, p);
 				}
 
 				if (comparator != null)
@@ -448,17 +449,17 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 				// SEARCH INSIDE THE NODE
 				final V value = lastNode.search(k);
 
-        setLastSearchNode(key, lastNode);
+				setLastSearchNode(key, lastNode);
 
-        // PROBABLY PARTIAL KEY IS FOUND USE SEARCH MODE TO FIND PREFERRED ONE
-        if (value != null && key instanceof OCompositeKey)
-          return adjustSearchResult(partialSearchMode, p, k);
+				// PROBABLY PARTIAL KEY IS FOUND USE SEARCH MODE TO FIND PREFERRED ONE
+				if (value != null && key instanceof OCompositeKey)
+					return adjustSearchResult(partialSearchMode, p, k);
 
-        if (value != null || iGetContainer)
-          // FOUND: RETURN CURRENT NODE OR AT LEAST THE CONTAINER NODE
-          return lastNode;
+				if (value != null || iGetContainer)
+					// FOUND: RETURN CURRENT NODE OR AT LEAST THE CONTAINER NODE
+					return lastNode;
 
-        // NOT FOUND
+				// NOT FOUND
 				return null;
 			}
 		} finally {
@@ -470,26 +471,26 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		return setLastSearchNode(key, null);
 	}
 
-    private OMVRBTreeEntry<K, V> adjustSearchResult(PartialSearchMode partialSearchMode, OMVRBTreeEntry<K, V> p, Comparable k) {
-        final OCompositeKey foundKey = (OCompositeKey) p.getKey();
-        final OCompositeKey keyToFind = (OCompositeKey) k;
+	private OMVRBTreeEntry<K, V> adjustSearchResult(PartialSearchMode partialSearchMode, OMVRBTreeEntry<K, V> p, Comparable k) {
+		final OCompositeKey foundKey = (OCompositeKey) p.getKey();
+		final OCompositeKey keyToFind = (OCompositeKey) k;
 
-        if(keyToFind.getKeys().size() >= foundKey.getKeys().size())
-            return p;
+		if (keyToFind.getKeys().size() >= foundKey.getKeys().size())
+			return p;
 
-        switch (partialSearchMode) {
-            case NONE:
-                return p;
-            case LOWEST_BOUNDARY:
-                return findLowestBoundary(p, k);
-            case HIGHEST_BOUNDARY:
-                return findHighestBoundary(p, k);
-            default:
-                throw new OException("Invalid value of search mode (" + partialSearchMode + ").");
-        }
-    }
+		switch (partialSearchMode) {
+		case NONE:
+			return p;
+		case LOWEST_BOUNDARY:
+			return findLowestBoundary(p, k);
+		case HIGHEST_BOUNDARY:
+			return findHighestBoundary(p, k);
+		default:
+			throw new OException("Invalid value of search mode (" + partialSearchMode + ").");
+		}
+	}
 
-    /**
+	/**
 	 * Basic implementation that returns the root node.
 	 */
 	protected OMVRBTreeEntry<K, V> getBestEntryPoint(final K key) {
@@ -508,156 +509,156 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 * Gets the entry corresponding to the specified key; if no such entry exists, returns the entry for the least key greater than
 	 * the specified key; if no such entry exists (i.e., the greatest key in the Tree is less than the specified key), returns
 	 * <tt>null</tt>.
-     *
-     * @param key Key to search.
-     * @param partialSearchMode In case of {@link OCompositeKey} key is passed in
-     * this parameter will be used to find preferred one.
+	 * 
+	 * @param key
+	 *          Key to search.
+	 * @param partialSearchMode
+	 *          In case of {@link OCompositeKey} key is passed in this parameter will be used to find preferred one.
 	 */
 	public final OMVRBTreeEntry<K, V> getCeilingEntry(final K key, final PartialSearchMode partialSearchMode) {
-        final OMVRBTreeEntry<K, V> p = getEntry(key, true, partialSearchMode);
+		final OMVRBTreeEntry<K, V> p = getEntry(key, true, partialSearchMode);
 
 		if (p == null)
 			return null;
 
 		if (pageItemFound)
-             return p;
-        // NOT MATCHED, POSITION IS ALREADY TO THE NEXT ONE
-        else if (pageIndex < p.getSize())
-            if(key instanceof OCompositeKey) {
-                final OCompositeKey keyToSearch = (OCompositeKey) key;
-                final OCompositeKey foundKey = (OCompositeKey) p.getKey();
+			return p;
+		// NOT MATCHED, POSITION IS ALREADY TO THE NEXT ONE
+		else if (pageIndex < p.getSize())
+			if (key instanceof OCompositeKey) {
+				final OCompositeKey keyToSearch = (OCompositeKey) key;
+				final OCompositeKey foundKey = (OCompositeKey) p.getKey();
 
-                if(keyToSearch.getKeys().size() < foundKey.getKeys().size()) {
-                    final OCompositeKey keyToAdjust = new OCompositeKey(
-                            foundKey.getKeys().subList(0, keyToSearch.getKeys().size()));
-                    return adjustSearchResult(partialSearchMode, p, keyToAdjust);
-                }
-            } else {
-                return p;
-            }
-        return null;
+				if (keyToSearch.getKeys().size() < foundKey.getKeys().size()) {
+					final OCompositeKey keyToAdjust = new OCompositeKey(foundKey.getKeys().subList(0, keyToSearch.getKeys().size()));
+					return adjustSearchResult(partialSearchMode, p, keyToAdjust);
+				}
+			} else {
+				return p;
+			}
+		return null;
 
 	}
 
-    /**
+	/**
 	 * Gets the entry corresponding to the specified key; if no such entry exists, returns the entry for the greatest key less than
 	 * the specified key; if no such entry exists, returns <tt>null</tt>.
-     *
-     * @param key Key to search.
-     * @param partialSearchMode In case of {@link OCompositeKey} composite key is passed in
-     * this parameter will be used to find preferred one.
+	 * 
+	 * @param key
+	 *          Key to search.
+	 * @param partialSearchMode
+	 *          In case of {@link OCompositeKey} composite key is passed in this parameter will be used to find preferred one.
 	 */
-    public final OMVRBTreeEntry<K, V> getFloorEntry(final K key, final PartialSearchMode partialSearchMode) {
-        final OMVRBTreeEntry<K, V> p = getEntry(key, true, partialSearchMode);
+	public final OMVRBTreeEntry<K, V> getFloorEntry(final K key, final PartialSearchMode partialSearchMode) {
+		final OMVRBTreeEntry<K, V> p = getEntry(key, true, partialSearchMode);
 
-        if (p == null)
-            return null;
+		if (p == null)
+			return null;
 
-        if (pageItemFound)
-            return p;
+		if (pageItemFound)
+			return p;
 
-        final OMVRBTreeEntry<K, V>  adjacentEntry = previous(p);
-        if(key instanceof OCompositeKey) {
-            final OCompositeKey keyToSearch = (OCompositeKey) key;
-            final OCompositeKey foundKey = (OCompositeKey) adjacentEntry.getKey();
+		final OMVRBTreeEntry<K, V> adjacentEntry = previous(p);
+		if (key instanceof OCompositeKey) {
+			final OCompositeKey keyToSearch = (OCompositeKey) key;
+			final OCompositeKey foundKey = (OCompositeKey) adjacentEntry.getKey();
 
-            if(keyToSearch.getKeys().size() < foundKey.getKeys().size()) {
-                final OCompositeKey keyToAdjust = new OCompositeKey(
-                        foundKey.getKeys().subList(0, keyToSearch.getKeys().size()));
-                return adjustSearchResult(partialSearchMode, adjacentEntry, keyToAdjust);
-            }
-        }
-        return adjacentEntry;
-    }
+			if (keyToSearch.getKeys().size() < foundKey.getKeys().size()) {
+				final OCompositeKey keyToAdjust = new OCompositeKey(foundKey.getKeys().subList(0, keyToSearch.getKeys().size()));
+				return adjustSearchResult(partialSearchMode, adjacentEntry, keyToAdjust);
+			}
+		}
+		return adjacentEntry;
+	}
 
 	/**
 	 * Gets the entry for the least key greater than the specified key; if no such entry exists, returns the entry for the least key
 	 * greater than the specified key; if no such entry exists returns <tt>null</tt>.
 	 */
-    public final OMVRBTreeEntry<K, V> getHigherEntry(final K key) {
-        final OMVRBTreeEntry<K, V> p = getEntry(key, true, PartialSearchMode.HIGHEST_BOUNDARY);
+	public final OMVRBTreeEntry<K, V> getHigherEntry(final K key) {
+		final OMVRBTreeEntry<K, V> p = getEntry(key, true, PartialSearchMode.HIGHEST_BOUNDARY);
 
-        if (p == null)
-            return null;
+		if (p == null)
+			return null;
 
-        if (pageItemFound)
-            // MATCH, RETURN THE NEXT ONE
-            return next(p);
-        else if (pageIndex < p.getSize())
-            // NOT MATCHED, POSITION IS ALREADY TO THE NEXT ONE
-            return p;
+		if (pageItemFound)
+			// MATCH, RETURN THE NEXT ONE
+			return next(p);
+		else if (pageIndex < p.getSize())
+			// NOT MATCHED, POSITION IS ALREADY TO THE NEXT ONE
+			return p;
 
-        return null;
-    }
+		return null;
+	}
 
 	/**
 	 * Returns the entry for the greatest key less than the specified key; if no such entry exists (i.e., the least key in the Tree is
 	 * greater than the specified key), returns <tt>null</tt>.
 	 */
-    public final OMVRBTreeEntry<K, V> getLowerEntry(final K key) {
-        final OMVRBTreeEntry<K, V> p = getEntry(key, true, PartialSearchMode.LOWEST_BOUNDARY);
+	public final OMVRBTreeEntry<K, V> getLowerEntry(final K key) {
+		final OMVRBTreeEntry<K, V> p = getEntry(key, true, PartialSearchMode.LOWEST_BOUNDARY);
 
-        if (p == null)
-            return null;
+		if (p == null)
+			return null;
 
-        return previous(p);
-    }
+		return previous(p);
+	}
 
-    private OMVRBTreeEntry<K, V> findHighestBoundary(final OMVRBTreeEntry<K, V> p, final Comparable key) {
-        OMVRBTreeEntry<K, V> currentEntry = p;
-        int currentIndex = pageIndex;
+	private OMVRBTreeEntry<K, V> findHighestBoundary(final OMVRBTreeEntry<K, V> p, final Comparable key) {
+		OMVRBTreeEntry<K, V> currentEntry = p;
+		int currentIndex = pageIndex;
 
-        int result;
-        do {
-            OMVRBTreeEntry<K, V> nextEntry = next(currentEntry);
+		int result;
+		do {
+			OMVRBTreeEntry<K, V> nextEntry = next(currentEntry);
 
-            if(nextEntry == null) {
-                break;
-            }
+			if (nextEntry == null) {
+				break;
+			}
 
-            final Comparable nextKey = (Comparable) nextEntry.getKey();
+			final Comparable nextKey = (Comparable) nextEntry.getKey();
 
-            result = key.compareTo(nextKey);
+			result = key.compareTo(nextKey);
 
-            if(result == 0) {
-                currentEntry = nextEntry;
-                currentIndex = pageIndex;
-            }
+			if (result == 0) {
+				currentEntry = nextEntry;
+				currentIndex = pageIndex;
+			}
 
-        } while (result == 0);
+		} while (result == 0);
 
-        pageIndex = currentIndex;
-        return currentEntry;
-    }
+		pageIndex = currentIndex;
+		return currentEntry;
+	}
 
-    private OMVRBTreeEntry<K, V> findLowestBoundary(final OMVRBTreeEntry<K, V> p, final Comparable key) {
-        OMVRBTreeEntry<K, V> currentEntry = p;
-        int currentIndex = pageIndex;
+	private OMVRBTreeEntry<K, V> findLowestBoundary(final OMVRBTreeEntry<K, V> p, final Comparable key) {
+		OMVRBTreeEntry<K, V> currentEntry = p;
+		int currentIndex = pageIndex;
 
-        int result;
-        do {
-            OMVRBTreeEntry<K, V> prevEntry = previous(currentEntry);
+		int result;
+		do {
+			OMVRBTreeEntry<K, V> prevEntry = previous(currentEntry);
 
-            if(prevEntry == null) {
-                break;
-            }
+			if (prevEntry == null) {
+				break;
+			}
 
-            final Comparable prevKey = (Comparable) prevEntry.getKey();
+			final Comparable prevKey = (Comparable) prevEntry.getKey();
 
-            result = key.compareTo(prevKey);
+			result = key.compareTo(prevKey);
 
-            if(result == 0) {
-                currentEntry = prevEntry;
-                currentIndex = pageIndex;
-            }
+			if (result == 0) {
+				currentEntry = prevEntry;
+				currentIndex = pageIndex;
+			}
 
-        } while (result == 0);
+		} while (result == 0);
 
-        pageIndex = currentIndex;
-        return currentEntry;
-    }
+		pageIndex = currentIndex;
+		return currentEntry;
+	}
 
-    /**
+	/**
 	 * Associates the specified value with the specified key in this map. If the map previously contained a mapping for the key, the
 	 * old value is replaced.
 	 * 
@@ -922,7 +923,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 * @since 1.6
 	 */
 	public Map.Entry<K, V> ceilingEntry(final K key) {
-		return exportEntry(getCeilingEntry(key,  PartialSearchMode.NONE));
+		return exportEntry(getCeilingEntry(key, PartialSearchMode.NONE));
 	}
 
 	/**
@@ -933,7 +934,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 * @since 1.6
 	 */
 	public K ceilingKey(final K key) {
-		return keyOrNull(getCeilingEntry(key,  PartialSearchMode.NONE));
+		return keyOrNull(getCeilingEntry(key, PartialSearchMode.NONE));
 	}
 
 	/**
@@ -1492,12 +1493,14 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		 */
 
 		final OMVRBTreeEntryPosition<K, V> absLowest() {
-			OMVRBTreeEntry<K, V> e = (fromStart ? m.getFirstEntry() : (loInclusive ? m.getCeilingEntry(lo, PartialSearchMode.LOWEST_BOUNDARY) : m.getHigherEntry(lo)));
+			OMVRBTreeEntry<K, V> e = (fromStart ? m.getFirstEntry() : (loInclusive ? m.getCeilingEntry(lo,
+					PartialSearchMode.LOWEST_BOUNDARY) : m.getHigherEntry(lo)));
 			return (e == null || tooHigh(e.getKey())) ? null : new OMVRBTreeEntryPosition<K, V>(e);
 		}
 
 		final OMVRBTreeEntryPosition<K, V> absHighest() {
-			OMVRBTreeEntry<K, V> e = (toEnd ? m.getLastEntry() : (hiInclusive ? m.getFloorEntry(hi, PartialSearchMode.HIGHEST_BOUNDARY) : m.getLowerEntry(hi)));
+			OMVRBTreeEntry<K, V> e = (toEnd ? m.getLastEntry() : (hiInclusive ? m.getFloorEntry(hi, PartialSearchMode.HIGHEST_BOUNDARY)
+					: m.getLowerEntry(hi)));
 			return (e == null || tooLow(e.getKey())) ? null : new OMVRBTreeEntryPosition<K, V>(e);
 		}
 
@@ -1531,12 +1534,14 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
 		/** Returns the absolute high fence for ascending traversal */
 		final OMVRBTreeEntryPosition<K, V> absHighFence() {
-			return (toEnd ? null : new OMVRBTreeEntryPosition<K, V>(hiInclusive ? m.getHigherEntry(hi) : m.getCeilingEntry(hi, PartialSearchMode.LOWEST_BOUNDARY)));
+			return (toEnd ? null : new OMVRBTreeEntryPosition<K, V>(hiInclusive ? m.getHigherEntry(hi) : m.getCeilingEntry(hi,
+					PartialSearchMode.LOWEST_BOUNDARY)));
 		}
 
 		/** Return the absolute low fence for descending traversal */
 		final OMVRBTreeEntryPosition<K, V> absLowFence() {
-			return (fromStart ? null : new OMVRBTreeEntryPosition<K, V>(loInclusive ? m.getLowerEntry(lo) : m.getFloorEntry(lo, PartialSearchMode.HIGHEST_BOUNDARY)));
+			return (fromStart ? null : new OMVRBTreeEntryPosition<K, V>(loInclusive ? m.getLowerEntry(lo) : m.getFloorEntry(lo,
+					PartialSearchMode.HIGHEST_BOUNDARY)));
 		}
 
 		// Abstract methods defined in ascending vs descending classes
@@ -2099,7 +2104,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		return p;
 	}
 
-    /**
+	/**
 	 * Returns the last Entry in the OMVRBTree (according to the OMVRBTree's key-sort function). Returns null if the OMVRBTree is
 	 * empty.
 	 */
@@ -2498,7 +2503,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 					sib = leftOf(parentOf(x));
 				}
 
-				if (colorOf(rightOf(sib)) == BLACK && colorOf(leftOf(sib)) == BLACK) {
+				if (x != null && colorOf(rightOf(sib)) == BLACK && colorOf(leftOf(sib)) == BLACK) {
 					setColor(sib, RED);
 					x = parentOf(x);
 				} else {
