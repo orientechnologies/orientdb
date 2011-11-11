@@ -16,117 +16,122 @@
 package com.orientechnologies.common.collection;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
- * Container for the list of heterogeneous values that are going to be stored in {@link OMVRBTree} as
- * composite keys.
- *
+ * Container for the list of heterogeneous values that are going to be stored in {@link OMVRBTree} as composite keys.
+ * 
  * Such keys is allowed to use only in {@link OMVRBTree#subMap(Object, boolean, Object, boolean)},
  * {@link OMVRBTree#tailMap(Object, boolean)} and {@link OMVRBTree#headMap(Object, boolean)} methods.
- *
+ * 
  * @see OMVRBTree.PartialSearchMode
  * @author Andrey lomakin, Artem Orobets
  */
+@SuppressWarnings("rawtypes")
 public class OCompositeKey implements Comparable<OCompositeKey>, Serializable {
-    /**
-     * List of heterogeneous values that are going to be stored in {@link OMVRBTree}.
-     */
-    private final List<Comparable> keys;
+	private static final long				serialVersionUID	= 1L;
+	/**
+	 * List of heterogeneous values that are going to be stored in {@link OMVRBTree}.
+	 */
+	private final List<Comparable>	keys;
 
-    public OCompositeKey(final List<? extends Comparable> keys) {
-        this();
-        for(final Comparable key : keys)
-            addKey(key);
-    }
+	public OCompositeKey(final List<? extends Comparable> keys) {
+		this();
+		for (final Comparable key : keys)
+			addKey(key);
+	}
 
-    public OCompositeKey() {
-        this.keys = new LinkedList<Comparable>();
-    }
+	public OCompositeKey() {
+		this.keys = new LinkedList<Comparable>();
+	}
 
-    /**
-     * @return List of heterogeneous values that are going to be stored in {@link OMVRBTree}.
-     */
-    public List<Comparable> getKeys() {
-        return Collections.unmodifiableList(keys);
-    }
+	/**
+	 * @return List of heterogeneous values that are going to be stored in {@link OMVRBTree}.
+	 */
+	public List<Comparable> getKeys() {
+		return Collections.unmodifiableList(keys);
+	}
 
-    /**
-     * Add new key value to the list of already registered values.
-     *
-     * If passed in value is {@link OCompositeKey} itself then its values will be copied in current index.
-     * But key itself will not be added.
-     *
-     * @param key Key to add.
-     */
-    public void addKey(final Comparable key) {
-        if (key instanceof OCompositeKey) {
-            final OCompositeKey compositeKey = (OCompositeKey) key;
-            for (final Comparable inKey : compositeKey.keys) {
-                addKey(inKey);
-            }
-        } else {
-            keys.add(key);
-        }
-    }
+	/**
+	 * Add new key value to the list of already registered values.
+	 * 
+	 * If passed in value is {@link OCompositeKey} itself then its values will be copied in current index. But key itself will not be
+	 * added.
+	 * 
+	 * @param key
+	 *          Key to add.
+	 */
+	public void addKey(final Comparable key) {
+		if (key instanceof OCompositeKey) {
+			final OCompositeKey compositeKey = (OCompositeKey) key;
+			for (final Comparable inKey : compositeKey.keys) {
+				addKey(inKey);
+			}
+		} else {
+			keys.add(key);
+		}
+	}
 
-    /**
-     * Performs partial comparison of two composite keys.
-     *
-     * Two objects will be equal if the common subset of their keys is equal.
-     * For example if first object contains two keys and second contains four keys then only
-     * first two keys will be compared.
-     *
-     * @param otherKey Key to compare.
-     *
-     * @return a negative integer, zero, or a positive integer as this object
-     *		is less than, equal to, or greater than the specified object.
-     */
-    public int compareTo(final OCompositeKey otherKey) {
-        final Iterator<Comparable> inIter = keys.iterator();
-        final Iterator<Comparable> outIter = otherKey.keys.iterator();
+	/**
+	 * Performs partial comparison of two composite keys.
+	 * 
+	 * Two objects will be equal if the common subset of their keys is equal. For example if first object contains two keys and second
+	 * contains four keys then only first two keys will be compared.
+	 * 
+	 * @param otherKey
+	 *          Key to compare.
+	 * 
+	 * @return a negative integer, zero, or a positive integer as this object is less than, equal to, or greater than the specified
+	 *         object.
+	 */
+	public int compareTo(final OCompositeKey otherKey) {
+		final Iterator<Comparable> inIter = keys.iterator();
+		final Iterator<Comparable> outIter = otherKey.keys.iterator();
 
-        while (inIter.hasNext() && outIter.hasNext()) {
-            final Comparable inKey = inIter.next();
-            final Comparable outKey = outIter.next();
+		while (inIter.hasNext() && outIter.hasNext()) {
+			final Comparable inKey = inIter.next();
+			final Comparable outKey = outIter.next();
 
-            @SuppressWarnings("unchecked")
-            final int result = inKey.compareTo(outKey);
-            if (result != 0)
-                return result;
-        }
+			@SuppressWarnings("unchecked")
+			final int result = inKey.compareTo(outKey);
+			if (result != 0)
+				return result;
+		}
 
-        return 0;
-    }
+		return 0;
+	}
 
-    /**
-     * {@inheritDoc }
-     */
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+	/**
+	 * {@inheritDoc }
+	 */
+	@Override
+	public boolean equals(final Object o) {
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
 
-        final OCompositeKey that = (OCompositeKey) o;
+		final OCompositeKey that = (OCompositeKey) o;
 
-        return keys.equals(that.keys);
-    }
+		return keys.equals(that.keys);
+	}
 
-    /**
-     * {@inheritDoc }
-     */
-    @Override
-    public int hashCode() {
-        return keys.hashCode();
-    }
+	/**
+	 * {@inheritDoc }
+	 */
+	@Override
+	public int hashCode() {
+		return keys.hashCode();
+	}
 
-    /**
-     * {@inheritDoc }
-     */
-    @Override
-    public String toString() {
-        return "OCompositeKey{" +
-                "keys=" + keys +
-                '}';
-    }
+	/**
+	 * {@inheritDoc }
+	 */
+	@Override
+	public String toString() {
+		return "OCompositeKey{" + "keys=" + keys + '}';
+	}
 }

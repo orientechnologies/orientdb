@@ -6,67 +6,70 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 
 public class OIdentityHashSet<E> extends AbstractSet<E> implements Serializable {
-  private static final Object VALUE = new Object();
+	private static final long											serialVersionUID	= 1L;
 
-  private transient IdentityHashMap<E, Object> identityHashMap;
+	private static final Object										VALUE							= new Object();
 
-  public OIdentityHashSet() {
-    identityHashMap =  new IdentityHashMap<E, Object>();
-  }
+	private transient IdentityHashMap<E, Object>	identityHashMap;
 
-  @Override
-  public Iterator<E> iterator() {
-    return identityHashMap.keySet().iterator();
-  }
+	public OIdentityHashSet() {
+		identityHashMap = new IdentityHashMap<E, Object>();
+	}
 
-  @Override
-  public int size() {
-    return identityHashMap.size();
-  }
+	@Override
+	public Iterator<E> iterator() {
+		return identityHashMap.keySet().iterator();
+	}
 
-  @Override
-  public boolean add(E e) {
-    return identityHashMap.put(e, VALUE) == null;
-  }
+	@Override
+	public int size() {
+		return identityHashMap.size();
+	}
 
-  @Override
-  public boolean remove(Object o) {
-    return identityHashMap.remove(o) == VALUE;
-  }
+	@Override
+	public boolean add(E e) {
+		return identityHashMap.put(e, VALUE) == null;
+	}
 
-  @Override
-  public boolean contains(Object o) {
-    return identityHashMap.containsKey(o);
-  }
+	@Override
+	public boolean remove(Object o) {
+		return identityHashMap.remove(o) == VALUE;
+	}
 
-  @Override
-  public boolean isEmpty() {
-    return identityHashMap.isEmpty();
-  }
+	@Override
+	public boolean contains(Object o) {
+		return identityHashMap.containsKey(o);
+	}
 
-  @Override
-  public void clear() {
-    identityHashMap.clear();
-  }
+	@Override
+	public boolean isEmpty() {
+		return identityHashMap.isEmpty();
+	}
 
-  private void writeObject(java.io.ObjectOutputStream s) throws java.io.IOException {
-    s.defaultWriteObject();
+	@Override
+	public void clear() {
+		identityHashMap.clear();
+	}
 
-    s.write(identityHashMap.size());
+	private void writeObject(java.io.ObjectOutputStream s) throws java.io.IOException {
+		s.defaultWriteObject();
 
-    for(E e : identityHashMap.keySet())
-      s.writeObject(e);
-  }
+		s.write(identityHashMap.size());
 
-  private void readObject(java.io.ObjectInputStream s) throws java.io.IOException, ClassNotFoundException {
-    s.defaultReadObject();
+		for (E e : identityHashMap.keySet())
+			s.writeObject(e);
+	}
 
-    int size = s.readInt();
+	@SuppressWarnings("unchecked")
+	private void readObject(java.io.ObjectInputStream s) throws java.io.IOException, ClassNotFoundException {
+		s.defaultReadObject();
 
-    identityHashMap = new IdentityHashMap<E, Object>(size);
+		int size = s.readInt();
 
-    for(int i = 0; i < size; i++)
-      identityHashMap.put((E)s.readObject(), VALUE);
+		identityHashMap = new IdentityHashMap<E, Object>(size);
 
-  }
+		for (int i = 0; i < size; i++)
+			identityHashMap.put((E) s.readObject(), VALUE);
+
+	}
 }
