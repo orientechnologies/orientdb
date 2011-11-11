@@ -55,6 +55,7 @@ public class OHttpUtils {
 	public static final String	CONTENT_TEXT_PLAIN									= "text/plain";
 	public static final String	CONTENT_JSON												= "application/json";
 	public static final String	CONTENT_JAVASCRIPT									= "text/javascript";
+	public static final String	CONTENT_GZIP												= "application/x-gzip";
 
 	public static final String	CALLBACK_PARAMETER_NAME							= "callback=";
 
