@@ -470,12 +470,12 @@ public class OTxSegment extends OSingleFileSegment {
 		}
 	}
 
-	private void synchRecord() {
+	private void synchRecord() throws IOException {
 		if (((OStorageTxConfiguration) config).isSynchRecord())
 			file.synch();
 	}
 
-	private void synchTx() {
+	private void synchTx() throws IOException {
 		if (((OStorageTxConfiguration) config).isSynchTx())
 			file.synch();
 	}

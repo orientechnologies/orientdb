@@ -31,12 +31,17 @@ public class OSingleFileSegment extends OSharedResourceAdaptive {
 	protected OFile											file;
 	protected OStorageFileConfiguration	config;
 
-	public OSingleFileSegment(OStorageLocal iStorage, final OStorageFileConfiguration iConfig) throws IOException {
+	public OSingleFileSegment(final OStorageLocal iStorage, final OStorageFileConfiguration iConfig) throws IOException {
+		this(iStorage, iConfig, iConfig.type);
+	}
+
+	public OSingleFileSegment(final OStorageLocal iStorage, final OStorageFileConfiguration iConfig, final String iType)
+			throws IOException {
 		super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
 
 		config = iConfig;
 		storage = iStorage;
-		file = OFileFactory.create(iConfig.type, iStorage.getVariableParser().resolveVariables(iConfig.path), iStorage.getMode());
+		file = OFileFactory.create(iType, iStorage.getVariableParser().resolveVariables(iConfig.path), iStorage.getMode());
 		file.setMaxSize((int) OFileUtils.getSizeAsNumber(iConfig.maxSize));
 		file.setIncrementSize((int) OFileUtils.getSizeAsNumber(iConfig.incrementSize));
 	}

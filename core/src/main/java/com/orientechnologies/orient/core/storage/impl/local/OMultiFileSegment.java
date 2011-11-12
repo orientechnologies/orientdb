@@ -160,7 +160,7 @@ public class OMultiFileSegment extends OSegment {
 		}
 	}
 
-	public void synch() {
+	public void synch() throws IOException {
 		acquireSharedLock();
 		try {
 			for (OFile file : files) {

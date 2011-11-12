@@ -111,7 +111,7 @@ public interface OCluster {
 
 	public int getId();
 
-	public void synch();
+	public void synch() throws IOException;
 
 	public String getName();
 

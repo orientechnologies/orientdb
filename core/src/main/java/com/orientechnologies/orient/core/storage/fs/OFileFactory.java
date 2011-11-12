@@ -25,11 +25,11 @@ public class OFileFactory {
 		MMAP, CLASSIC,
 	}
 
-	public static OFile create(TYPE iType, String iFileName, String iOpenMode) throws IOException {
+	public static OFile create(final TYPE iType, final String iFileName, final String iOpenMode) throws IOException {
 		return create(iType.toString(), iFileName, iOpenMode);
 	}
 
-	public static OFile create(String iType, String iFileName, String iOpenMode) throws IOException {
+	public static OFile create(final String iType, final String iFileName, final String iOpenMode) throws IOException {
 		if (iType.equals(MMAP))
 			return new OFileMMap(iFileName, iOpenMode);
 		else if (iType.equals(CLASSIC))

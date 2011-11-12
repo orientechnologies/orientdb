@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.OConstants;
  * <br/>
  */
 public class OFileClassic extends OFile {
-	protected ByteBuffer internalWriteBuffer = getBuffer(OConstants.SIZE_LONG);
+	protected ByteBuffer	internalWriteBuffer	= getBuffer(OConstants.SIZE_LONG);
 
 	public OFileClassic(String iFileName, String iMode) throws IOException {
 		super(iFileName, iMode);
@@ -50,8 +50,7 @@ public class OFileClassic extends OFile {
 	}
 
 	@Override
-	public void read(long iOffset, byte[] iDestBuffer, int iLenght)
-			throws IOException {
+	public void read(long iOffset, byte[] iDestBuffer, int iLenght) throws IOException {
 		iOffset = checkRegions(iOffset, iLenght);
 
 		ByteBuffer buffer = ByteBuffer.wrap(iDestBuffer);
@@ -130,26 +129,26 @@ public class OFileClassic extends OFile {
 			openChannel(iSize);
 
 		} catch (IOException e) {
-			OLogManager.instance().error(this,
-					"Error on changing the file size to " + iSize + " bytes",
-					e, OIOException.class);
+			OLogManager.instance().error(this, "Error on changing the file size to " + iSize + " bytes", e, OIOException.class);
 		}
 	}
 
 	/**
 	 * Do nothing. Use OFileSecure to be assure the file is saved
 	 * 
+	 * @throws IOException
+	 * 
 	 * @see OFileMMapSecure
 	 */
 	@Override
-	public void synch() {
+	public void synch() throws IOException {
+		channel.force(false);
 	}
 
 	@Override
 	protected void readHeader() throws IOException {
 		size = readData(0, OConstants.SIZE_INT).getInt();
-		filledUpTo = readData(OConstants.SIZE_INT, OConstants.SIZE_INT)
-				.getInt();
+		filledUpTo = readData(OConstants.SIZE_INT, OConstants.SIZE_INT).getInt();
 	}
 
 	@Override
@@ -161,8 +160,7 @@ public class OFileClassic extends OFile {
 	}
 
 	@Override
-	public void writeHeaderLong(final int iPosition,final  long iValue)
-			throws IOException {
+	public void writeHeaderLong(final int iPosition, final long iValue) throws IOException {
 		ByteBuffer buffer = getWriteBuffer(OConstants.SIZE_LONG);
 		buffer.putLong(iValue);
 		writeData(buffer, HEADER_DATA_OFFSET + iPosition);
@@ -186,7 +184,7 @@ public class OFileClassic extends OFile {
 		synch();
 	}
 
-	private ByteBuffer readData(final long iOffset,final  int iSize) throws IOException {
+	private ByteBuffer readData(final long iOffset, final int iSize) throws IOException {
 		ByteBuffer buffer = getBuffer(iSize);
 		channel.read(buffer, iOffset);
 		buffer.rewind();

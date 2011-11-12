@@ -86,7 +86,7 @@ public abstract class OFile {
 
 	protected abstract boolean isSoftlyClosed() throws IOException;
 
-	public abstract void synch();
+	public abstract void synch() throws IOException;
 
 	public abstract void read(long iOffset, byte[] iDestBuffer, int iLenght) throws IOException;
 
