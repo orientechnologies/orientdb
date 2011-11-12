@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -408,7 +407,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 					pageItemFound = true;
 					pageItemComparator = 0;
 
-					if (k instanceof OCompositeKey)
+					if (((Comparable<?>) k) instanceof OCompositeKey)
 						return adjustSearchResult(partialSearchMode, p, k);
 
 					return setLastSearchNode(key, p);
@@ -532,8 +531,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 				final OCompositeKey foundKey = (OCompositeKey) p.getKey();
 
 				if (keyToSearch.getKeys().size() < foundKey.getKeys().size()) {
-					final OCompositeKey keyToAdjust = new OCompositeKey((List<? extends Comparable<Object>>) foundKey.getKeys().subList(0,
-							keyToSearch.getKeys().size()));
+					final OCompositeKey keyToAdjust = new OCompositeKey(foundKey.getKeys().subList(0, keyToSearch.getKeys().size()));
 					return adjustSearchResult(partialSearchMode, p, keyToAdjust);
 				}
 			} else {
@@ -567,8 +565,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			final OCompositeKey foundKey = (OCompositeKey) adjacentEntry.getKey();
 
 			if (keyToSearch.getKeys().size() < foundKey.getKeys().size()) {
-				final OCompositeKey keyToAdjust = new OCompositeKey((List<? extends Comparable<Object>>) foundKey.getKeys().subList(0,
-						keyToSearch.getKeys().size()));
+				final OCompositeKey keyToAdjust = new OCompositeKey(foundKey.getKeys().subList(0, keyToSearch.getKeys().size()));
 				return adjustSearchResult(partialSearchMode, adjacentEntry, keyToAdjust);
 			}
 		}
