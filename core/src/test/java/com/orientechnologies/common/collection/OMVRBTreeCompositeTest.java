@@ -543,9 +543,7 @@ public class OMVRBTreeCompositeTest {
 		assertEquals(entry.getKey(), compositeKey(2.0, 9.0));
 	}
 
-	@SuppressWarnings("unchecked")
 	private OCompositeKey compositeKey(Comparable<?>... params) {
-		return new OCompositeKey((List<? extends Comparable<OCompositeKey>>) Arrays.asList(params));
+		return new OCompositeKey((List<Comparable<?>>) Arrays.asList(params));
 	}
-
 }
