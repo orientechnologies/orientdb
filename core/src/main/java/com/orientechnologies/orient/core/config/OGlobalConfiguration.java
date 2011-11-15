@@ -88,6 +88,13 @@ public enum OGlobalConfiguration {
 	TX_USE_LOG("tx.useLog", "Transactions use log file to store temporary data to being rollbacked in case of crash", Boolean.class,
 			true),
 
+	TX_LOG_TYPE("tx.log.fileType", "File type to handle transaction logs: mmap or classic", String.class, "classic"),
+
+	TX_LOG_SYNCH(
+			"tx.log.synch",
+			"Executes a synch against the file-system at every log entry. This slows down transactions but guarantee transaction reliability on non-reliable drives",
+			Boolean.class, Boolean.FALSE),
+
 	TX_COMMIT_SYNCH("tx.commit.synch", "Synchronizes the storage after transaction commit", Boolean.class, false),
 
 	// GRAPH

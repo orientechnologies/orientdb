@@ -143,7 +143,7 @@ public class OFileClassic extends OFile {
 	 */
 	@Override
 	public void synch() throws IOException {
-		// channel.force(false);
+		channel.force(false);
 	}
 
 	@Override

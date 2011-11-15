@@ -21,10 +21,10 @@ import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 /**
@@ -59,9 +59,11 @@ public class OTxSegment extends OSingleFileSegment {
 	private static final int	OFFSET_TX_ID					= 2;
 	private static final int	OFFSET_RECORD_SIZE		= 21;
 	private static final int	OFFSET_RECORD_CONTENT	= 25;
+	private final boolean			synchEnabled;
 
 	public OTxSegment(final OStorageLocal iStorage, final OStorageTxConfiguration iConfig) throws IOException {
-		super(iStorage, iConfig, OFileFactory.CLASSIC);
+		super(iStorage, iConfig, OGlobalConfiguration.TX_LOG_TYPE.getValueAsString());
+		synchEnabled = OGlobalConfiguration.TX_LOG_SYNCH.getValueAsBoolean();
 	}
 
 	/**
@@ -131,7 +133,8 @@ public class OTxSegment extends OSingleFileSegment {
 			file.write(offset, iRecordContent);
 			offset += contentSize;
 
-			file.synch();
+			if (synchEnabled)
+				file.synch();
 
 		} finally {
 			releaseExclusiveLock();
@@ -325,16 +328,6 @@ public class OTxSegment extends OSingleFileSegment {
 			storage.updateRecord(cluster, iRid, iRecordContent, iRecordVersion, iRecordType);
 			break;
 		}
-	}
-
-	private void synchRecord() throws IOException {
-		if (((OStorageTxConfiguration) config).isSynchRecord())
-			file.synch();
-	}
-
-	private void synchTx() throws IOException {
-		if (((OStorageTxConfiguration) config).isSynchTx())
-			file.synch();
 	}
 
 	private boolean eof(final long iOffset) {
