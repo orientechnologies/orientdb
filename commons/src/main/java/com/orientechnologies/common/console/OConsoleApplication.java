@@ -51,6 +51,8 @@ public class OConsoleApplication {
 	protected boolean							interactiveMode;
 	protected String[]						args;
 
+	protected static final String	COMMENT_PREFIX		= "#";
+
 	public void setReader(OConsoleReader iReader) {
 		this.reader = iReader;
 		reader.setConsole(this);
@@ -129,6 +131,10 @@ public class OConsoleApplication {
 
 		if (iCommand.length() == 0)
 			// NULL LINE: JUMP IT
+			return true;
+
+		if (iCommand.startsWith(COMMENT_PREFIX))
+			// COMMENT: JUMP IT
 			return true;
 
 		final String[] commandWords = OStringParser.getWords(iCommand, wordSeparator);
