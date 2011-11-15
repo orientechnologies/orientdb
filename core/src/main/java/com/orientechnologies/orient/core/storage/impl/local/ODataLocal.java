@@ -535,8 +535,6 @@ public class ODataLocal extends OMultiFileSegment {
 
 		writeRecord(getRelativePosition(iDestinationPosition), clusterId, clusterPosition, content);
 
-		storage.getTxManager().getTxSegment().movedRecord(getId(), iSourcePosition, iDestinationPosition);
-
 		OProfiler.getInstance().stopChrono(PROFILER_MOVE_RECORD, timer);
 
 		return recordSize + RECORD_FIX_SIZE;

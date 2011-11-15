@@ -169,7 +169,6 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
 			json.beginCollection(1, false, "txSegment");
 			final OTxSegment txSegment = ((OStorageLocal) db.getStorage()).getTxManager().getTxSegment();
 			json.beginObject(2, true, null);
-			json.writeAttribute(3, false, "totalLogs", txSegment.getTotalLogCount());
 			json.writeAttribute(3, false, "size", txSegment.getSize());
 			json.writeAttribute(3, false, "filled", txSegment.getFilledUpTo());
 			json.writeAttribute(3, false, "maxSize", txSegment.getConfig().maxSize);

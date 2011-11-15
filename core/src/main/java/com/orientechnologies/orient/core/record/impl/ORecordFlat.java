@@ -70,6 +70,20 @@ public class ORecordFlat extends ORecordAbstract<String> implements ORecordStrin
 		return this;
 	}
 
+	@Override
+	public ORecordFlat unload() {
+		super.unload();
+		value = null;
+		return this;
+	}
+
+	@Override
+	public ORecordFlat clear() {
+		super.clear();
+		value = null;
+		return this;
+	}
+
 	public ORecordFlat copy() {
 		ORecordFlat cloned = new ORecordFlat();
 		cloned._source = _source;

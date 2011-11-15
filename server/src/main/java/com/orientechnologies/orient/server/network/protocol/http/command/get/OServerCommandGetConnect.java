@@ -149,7 +149,6 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 				json.beginCollection(1, false, "txSegment");
 				final OTxSegment txSegment = ((OStorageLocal) db.getStorage()).getTxManager().getTxSegment();
 				json.beginObject(2, true, null);
-				json.writeAttribute(3, false, "totalLogs", txSegment.getTotalLogCount());
 				json.writeAttribute(3, false, "size", txSegment.getSize());
 				json.writeAttribute(3, false, "filled", txSegment.getFilledUpTo());
 				json.writeAttribute(3, false, "maxSize", txSegment.getConfig().maxSize);
@@ -261,21 +260,21 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 			json.endCollection(1, true);
 		}
 
-        final Set<OIndex<?>> indexes = cls.getIndexes();
-        if(!indexes.isEmpty()) {
-            json.beginCollection(3, true, "indexes");
-            for(final OIndex<?> index : indexes) {
-                json.beginObject(4, true, null);
-                json.writeAttribute(4, true, "name", index.getName());
-                json.writeAttribute(4, true, "type", index.getType());
+		final Set<OIndex<?>> indexes = cls.getIndexes();
+		if (!indexes.isEmpty()) {
+			json.beginCollection(3, true, "indexes");
+			for (final OIndex<?> index : indexes) {
+				json.beginObject(4, true, null);
+				json.writeAttribute(4, true, "name", index.getName());
+				json.writeAttribute(4, true, "type", index.getType());
 
-                final OIndexDefinition indexDefinition = index.getDefinition();
-                if(indexDefinition != null && !indexDefinition.getFields().isEmpty())
-                    json.writeAttribute(4, true, "fields", indexDefinition.getFields());
-                json.endObject(3, true);
-            }
-            json.endCollection(1, true);
-        }
+				final OIndexDefinition indexDefinition = index.getDefinition();
+				if (indexDefinition != null && !indexDefinition.getFields().isEmpty())
+					json.writeAttribute(4, true, "fields", indexDefinition.getFields());
+				json.endObject(3, true);
+			}
+			json.endCollection(1, true);
+		}
 
 		json.endObject(1, false);
 	}

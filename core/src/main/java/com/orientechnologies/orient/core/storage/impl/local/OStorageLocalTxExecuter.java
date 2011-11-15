@@ -21,12 +21,11 @@ import java.util.List;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
@@ -62,20 +61,10 @@ public class OStorageLocalTxExecuter {
 		iRid.clusterPosition = -1;
 
 		try {
-			// CREATE DATA SEGMENT. IF TX FAILS AT THIS POINT UN-REFERENCED DATA WILL REMAIN UNTIL NEXT DEFRAG
-			final int dataSegment = storage.getDataSegmentForRecord(iClusterSegment, iContent);
-			final ODataLocal data = storage.getDataSegment(dataSegment);
-
-			// REFERENCE IN THE CLUSTER THE DATA JUST CREATED. IF TX FAILS AT THIS POINT AN EMPTY ENTRY IS KEPT UNTIL DEFRAG
-			iRid.clusterPosition = iClusterSegment.addPhysicalPosition(-1, -1, iRecordType);
-
-			final long dataOffset = data.addRecord(iRid, iContent);
-
-			// UPDATE THE POSITION IN CLUSTER WITH THE POSITION OF RECORD IN DATA
-			iClusterSegment.setPhysicalPosition(iRid.clusterPosition, dataSegment, dataOffset, iRecordType, 0);
-
 			// SAVE INTO THE LOG THE POSITION OF THE RECORD JUST CREATED. IF TX FAILS AT THIS POINT A GHOST RECORD IS CREATED UNTIL DEFRAG
-			txSegment.addLog(OTxSegment.OPERATION_CREATE, iTxId, iRid.clusterId, iRid.clusterPosition, dataSegment, dataOffset, 0);
+			txSegment.addLog(OTxSegment.OPERATION_CREATE, iTxId, iRid.clusterId, iRid.clusterPosition, iRecordType, 0, null);
+
+			return storage.createRecord(iClusterSegment, iContent, iRecordType);
 
 		} catch (IOException e) {
 
@@ -102,38 +91,13 @@ public class OStorageLocalTxExecuter {
 			final int iVersion, final byte iRecordType) {
 		try {
 			// READ CURRENT RECORD CONTENT
-			final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
-			if (ppos == null)
-				// DELETED
-				throw new OTransactionException("Can't retrieve the updated record #" + iRid);
-
-			// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-			if (iVersion > -1 && ppos.version != iVersion)
-				throw new OConcurrentModificationException(
-						"Can't update the record "
-								+ iRid
-								+ " because the version is not the latest one. Probably you are updating an old record or it has been modified by another user (db=v"
-								+ ppos.version + " your=v" + iVersion + ")");
-
-			final ODataLocal dataSegment = storage.getDataSegment(storage.getDataSegmentForRecord(iClusterSegment, iContent));
-
-			// STORE THE NEW CONTENT
-			final long dataOffset;
-			if (iContent != null) {
-				// IF TX FAILS AT THIS POINT UN-REFERENCED DATA WILL REMAIN UNTIL NEXT DEFRAG
-				dataOffset = dataSegment.addRecord(iRid, iContent);
-				iClusterSegment.setPhysicalPosition(iRid.clusterPosition, dataSegment.getId(), dataOffset, iRecordType, ++ppos.version);
-			} else
-				// NO DATA
-				dataOffset = -1;
-
-			dataSegment.updateRid(ppos.dataPosition, ORecordId.EMPTY_RECORD_ID);
+			final ORawBuffer buffer = storage.readRecord(iClusterSegment, iRid, false);
 
 			// SAVE INTO THE LOG THE POSITION OF THE OLD RECORD JUST DELETED. IF TX FAILS AT THIS POINT AS ABOVE
-			txSegment.addLog(OTxSegment.OPERATION_UPDATE, iTxId, iRid.clusterId, iRid.clusterPosition, ppos.dataSegment,
-					ppos.dataPosition, ppos.version - 1);
+			txSegment.addLog(OTxSegment.OPERATION_UPDATE, iTxId, iRid.clusterId, iRid.clusterPosition, iRecordType, buffer.version - 1,
+					buffer.buffer);
 
-			return ppos.version;
+			return storage.updateRecord(iClusterSegment, iRid, iContent, iVersion, iRecordType);
 
 		} catch (IOException e) {
 
@@ -145,31 +109,16 @@ public class OStorageLocalTxExecuter {
 
 	protected void deleteRecord(final int iTxId, final OCluster iClusterSegment, final long iPosition, final int iVersion) {
 		try {
-			// GET THE PPOS OF THE RECORD
-			final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iPosition, new OPhysicalPosition());
+			final ORecordId rid = new ORecordId(iClusterSegment.getId(), iPosition);
 
-			if (!storage.checkForRecordValidity(ppos))
-				// ALREADY DELETED
-				return;
+			// READ CURRENT RECORD CONTENT
+			final ORawBuffer buffer = storage.readRecord(iClusterSegment, rid, false);
 
-			// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-			if (iVersion > -1 && ppos.version != iVersion)
-				throw new OConcurrentModificationException(
-						"Can't delete the record #"
-								+ iClusterSegment.getId()
-								+ ":"
-								+ iPosition
-								+ " because the version is not the latest one. Probably you are deleting an old record or it has been modified by another user (db=v"
-								+ ppos.version + " your=v" + iVersion + ")");
+			// SAVE INTO THE LOG THE OLD RECORD
+			txSegment.addLog(OTxSegment.OPERATION_DELETE, iTxId, iClusterSegment.getId(), iPosition, buffer.recordType, buffer.version,
+					buffer.buffer);
 
-			// SAVE INTO THE LOG THE POSITION OF THE RECORD JUST DELETED
-			txSegment.addLog(OTxSegment.OPERATION_DELETE, iTxId, iClusterSegment.getId(), iPosition, ppos.dataSegment, ppos.dataPosition,
-					iVersion);
-
-			// DELETE THE RECORD BUT LEAVING THE PPOS INTACT, BUT THE VERSION = -1 TO RECOGNIZE THAT THE ENTRY HAS BEEN DELETED. IF TX
-			// FAILS AT THIS POINT CAN BE RECOVERED THANKS TO THE TX-LOG. NO CONCURRENT THREAD CAN REUSE THE HOLE CREATED BECAUSE THE
-			// EXCLUSIVE LOCK
-			iClusterSegment.removePhysicalPosition(iPosition, ppos);
+			storage.deleteRecord(iClusterSegment, rid, iVersion);
 
 		} catch (IOException e) {
 
@@ -246,9 +195,9 @@ public class OStorageLocalTxExecuter {
 				rid.clusterId = cluster.getId();
 
 				if (iUseLog)
-					createRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getRecordType());
+					rid.clusterPosition = createRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getRecordType());
 				else
-					iTx.getDatabase().getStorage().createRecord(rid, stream, txEntry.getRecord().getRecordType(), null);
+					rid.clusterPosition = iTx.getDatabase().getStorage().createRecord(rid, stream, txEntry.getRecord().getRecordType(), null);
 
 				iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_CREATE, txEntry.getRecord());
 			} else {
@@ -272,8 +221,12 @@ public class OStorageLocalTxExecuter {
 				// RECORD CHANGED: RE-STREAM IT
 				stream = txEntry.getRecord().toStream();
 
-			txEntry.getRecord().setVersion(
-					updateRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType()));
+			if (iUseLog)
+				txEntry.getRecord().setVersion(
+						updateRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType()));
+			else
+				iTx.getDatabase().getStorage()
+						.updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), null);
 
 			iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, txEntry.getRecord());
 			break;
@@ -282,7 +235,10 @@ public class OStorageLocalTxExecuter {
 		case OTransactionRecordEntry.DELETED: {
 			iTx.getDatabase().callbackHooks(ORecordHook.TYPE.BEFORE_DELETE, txEntry.getRecord());
 
-			deleteRecord(iTx.getId(), cluster, rid.clusterPosition, txEntry.getRecord().getVersion());
+			if (iUseLog)
+				deleteRecord(iTx.getId(), cluster, rid.clusterPosition, txEntry.getRecord().getVersion());
+			else
+				iTx.getDatabase().getStorage().deleteRecord(rid, txEntry.getRecord().getVersion(), null);
 
 			iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_DELETE, txEntry.getRecord());
 		}

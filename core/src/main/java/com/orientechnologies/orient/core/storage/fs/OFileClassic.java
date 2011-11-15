@@ -82,7 +82,7 @@ public class OFileClassic extends OFile {
 	}
 
 	@Override
-	public void writeInt(long iOffset, int iValue) throws IOException {
+	public void writeInt(long iOffset, final int iValue) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_INT);
 		ByteBuffer buffer = getWriteBuffer(OConstants.SIZE_INT);
 		buffer.putInt(iValue);
@@ -90,7 +90,7 @@ public class OFileClassic extends OFile {
 	}
 
 	@Override
-	public void writeLong(long iOffset, long iValue) throws IOException {
+	public void writeLong(long iOffset, final long iValue) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_LONG);
 		ByteBuffer buffer = getWriteBuffer(OConstants.SIZE_LONG);
 		buffer.putLong(iValue);
@@ -98,7 +98,7 @@ public class OFileClassic extends OFile {
 	}
 
 	@Override
-	public void writeShort(long iOffset, short iValue) throws IOException {
+	public void writeShort(long iOffset, final short iValue) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_INT);
 		ByteBuffer buffer = getWriteBuffer(OConstants.SIZE_SHORT);
 		buffer.putShort(iValue);
@@ -106,7 +106,7 @@ public class OFileClassic extends OFile {
 	}
 
 	@Override
-	public void writeByte(long iOffset, byte iValue) throws IOException {
+	public void writeByte(long iOffset, final byte iValue) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_BYTE);
 		ByteBuffer buffer = getWriteBuffer(OConstants.SIZE_BYTE);
 		buffer.put(iValue);
@@ -114,14 +114,15 @@ public class OFileClassic extends OFile {
 	}
 
 	@Override
-	public void write(long iOffset, byte[] iSourceBuffer) throws IOException {
-		iOffset = checkRegions(iOffset, iSourceBuffer.length);
-
-		channel.write(ByteBuffer.wrap(iSourceBuffer), iOffset);
+	public void write(long iOffset, final byte[] iSourceBuffer) throws IOException {
+		if (iSourceBuffer != null) {
+			iOffset = checkRegions(iOffset, iSourceBuffer.length);
+			channel.write(ByteBuffer.wrap(iSourceBuffer), iOffset);
+		}
 	}
 
 	@Override
-	public void changeSize(int iSize) {
+	public void changeSize(final int iSize) {
 		super.changeSize(iSize);
 		try {
 			channel.force(false);
@@ -142,7 +143,7 @@ public class OFileClassic extends OFile {
 	 */
 	@Override
 	public void synch() throws IOException {
-//		channel.force(false);
+		// channel.force(false);
 	}
 
 	@Override
@@ -206,5 +207,13 @@ public class OFileClassic extends OFile {
 			return (ByteBuffer) internalWriteBuffer.rewind();
 
 		return getBuffer(iLenght);
+	}
+
+	/**
+	 * ALWAYS ADD THE HEADER SIZE BECAUSE ON THIS TYPE IS ALWAYS NEEDED
+	 */
+	@Override
+	protected long checkRegions(final long iOffset, final int iLength) {
+		return super.checkRegions(iOffset, iLength) + HEADER_SIZE;
 	}
 }

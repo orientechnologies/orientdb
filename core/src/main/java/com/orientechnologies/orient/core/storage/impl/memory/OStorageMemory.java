@@ -273,7 +273,8 @@ public class OStorageMemory extends OStorageEmbedded {
 		}
 	}
 
-	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType, ORecordCallback iCallback) {
+	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType,
+			ORecordCallback iCallback) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		final OCluster cluster = getClusterById(iRid.clusterId);
@@ -288,17 +289,24 @@ public class OStorageMemory extends OStorageEmbedded {
 				if (ppos == null)
 					return -1;
 
-				// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-				if (iVersion > -1 && ppos.version != iVersion)
-					throw new OConcurrentModificationException(
-							"Can't update record "
-									+ iRid
-									+ " because the version is not the latest one. Probably you are updating an old record or it has been modified by another user (db=v"
-									+ ppos.version + " your=v" + iVersion + ")");
+				if (iVersion != -1) {
+					if (iVersion > -1) {
+						// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
+						if (iVersion != ppos.version)
+							throw new OConcurrentModificationException(
+									"Can't update record "
+											+ iRid
+											+ " because the version is not the latest one. Probably you are updating an old record or it has been modified by another user (db=v"
+											+ ppos.version + " your=v" + iVersion + ")");
+
+						++ppos.version;
+					} else
+						--ppos.version;
+				}
 
 				data.updateRecord(ppos.dataPosition, iContent);
 
-				return ++(ppos.version);
+				return ppos.version;
 
 			} finally {
 				lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
@@ -625,7 +633,8 @@ public class OStorageMemory extends OStorageEmbedded {
 
 		case OTransactionRecordEntry.UPDATED:
 			txEntry.getRecord().setVersion(
-					updateRecord(rid, txEntry.getRecord().toStream(), txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), null));
+					updateRecord(rid, txEntry.getRecord().toStream(), txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(),
+							null));
 			break;
 
 		case OTransactionRecordEntry.DELETED:

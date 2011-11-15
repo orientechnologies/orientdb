@@ -248,7 +248,7 @@ public abstract class OFile {
 	 * @throws IOException
 	 */
 	public void shrink(final int iSize) throws IOException {
-		if (iSize > filledUpTo)
+		if (iSize >= filledUpTo)
 			return;
 
 		OLogManager.instance().debug(this, "Shrinking filled file from " + filledUpTo + " to " + iSize + " bytes. " + toString());
@@ -292,7 +292,7 @@ public abstract class OFile {
 			throw new OIOException("You can't access outside the file size (" + filledUpTo + " bytes). You've requested portion "
 					+ iOffset + "-" + (iOffset + iLength) + " bytes. File: " + toString());
 
-		return iOffset;// + HEADER_SIZE;
+		return iOffset;
 	}
 
 	public int getFreeSpace() {

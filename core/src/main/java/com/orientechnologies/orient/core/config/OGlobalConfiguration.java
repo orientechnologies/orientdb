@@ -86,7 +86,7 @@ public enum OGlobalConfiguration {
 
 	// TRANSACTIONS
 	TX_USE_LOG("tx.useLog", "Transactions use log file to store temporary data to being rollbacked in case of crash", Boolean.class,
-			false),
+			true),
 
 	TX_COMMIT_SYNCH("tx.commit.synch", "Synchronizes the storage after transaction commit", Boolean.class, false),
 

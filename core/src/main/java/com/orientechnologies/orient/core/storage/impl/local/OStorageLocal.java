@@ -670,6 +670,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		try {
 
 			try {
+				txManager.clearLogEntries(iTx);
 				txManager.commitAllPendingRecords(iTx);
 
 				incrementVersion();
@@ -684,14 +685,14 @@ public class OStorageLocal extends OStorageEmbedded {
 				// WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
 				rollback(iTx);
 				throw new OException(e);
-			}
-
-			try {
-				txManager.clearLogEntries(iTx);
-			} catch (Exception e) {
-				// XXX WHAT CAN WE DO HERE ? ROLLBACK IS NOT POSSIBLE
-				// IF WE THROW EXCEPTION, A ROLLBACK WILL BE DONE AT DB LEVEL BUT NOT AT STORAGE LEVEL
-				OLogManager.instance().error(this, "Clear tx log entries failed", e);
+			} finally {
+				try {
+					txManager.clearLogEntries(iTx);
+				} catch (Exception e) {
+					// XXX WHAT CAN WE DO HERE ? ROLLBACK IS NOT POSSIBLE
+					// IF WE THROW EXCEPTION, A ROLLBACK WILL BE DONE AT DB LEVEL BUT NOT AT STORAGE LEVEL
+					OLogManager.instance().error(this, "Clear tx log entries failed", e);
+				}
 			}
 		} finally {
 			lock.releaseExclusiveLock();
@@ -1124,18 +1125,25 @@ public class OStorageLocal extends OStorageEmbedded {
 					// DELETED
 					return -1;
 
-				// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-				if (iVersion > -1 && iVersion != ppos.version)
-					throw new OConcurrentModificationException(
-							"Can't update record "
-									+ iRid
-									+ " because the version is not the latest one. Probably you are updating an old record or it has been modified by another user (db=v"
-									+ ppos.version + " your=v" + iVersion + ")");
+				if (iVersion != -1) {
+					if (iVersion > -1) {
+						// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
+						if (iVersion != ppos.version)
+							throw new OConcurrentModificationException(
+									"Can't update record "
+											+ iRid
+											+ " because the version is not the latest one. Probably you are updating an old record or it has been modified by another user (db=v"
+											+ ppos.version + " your=v" + iVersion + ")");
+
+						++ppos.version;
+					} else
+						--ppos.version;
+
+					iClusterSegment.updateVersion(iRid.clusterPosition, ppos.version);
+				}
 
 				if (ppos.type != iRecordType)
 					iClusterSegment.updateRecordType(iRid.clusterPosition, iRecordType);
-
-				iClusterSegment.updateVersion(iRid.clusterPosition, ++ppos.version);
 
 				final long newDataSegmentOffset;
 				if (ppos.dataPosition == -1)

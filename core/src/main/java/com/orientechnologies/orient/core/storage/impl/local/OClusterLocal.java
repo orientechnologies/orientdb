@@ -280,7 +280,7 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 	 * 
 	 * @throws IOException
 	 */
-	public void removePhysicalPosition(long iPosition, final OPhysicalPosition iPPosition) throws IOException {
+	public void removePhysicalPosition(final long iPosition, final OPhysicalPosition iPPosition) throws IOException {
 		final long position = iPosition * RECORD_SIZE;
 
 		acquireExclusiveLock();
@@ -301,49 +301,7 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 			// SET VERSION = -1
 			file.writeInt(p, -1);
 
-			if (iPosition == beginOffsetData) {
-				if (getEntries() == 0)
-					beginOffsetData = -1;
-				else {
-					// DISCOVER THE BEGIN OF DATA
-					beginOffsetData++;
-
-					long[] fetchPos;
-					for (long currentPos = position + RECORD_SIZE; currentPos < getFilledUpTo(); currentPos += RECORD_SIZE) {
-						fetchPos = getRelativePosition(currentPos);
-
-						if (files[(int) fetchPos[0]].readShort(fetchPos[1]) != -1)
-							// GOOD RECORD: SET IT AS BEGIN
-							break;
-
-						beginOffsetData++;
-					}
-				}
-
-				files[0].writeHeaderLong(0, beginOffsetData);
-			}
-
-			if (iPosition == endOffsetData) {
-				if (getEntries() == 0)
-					endOffsetData = -1;
-				else {
-					// DISCOVER THE END OF DATA
-					endOffsetData--;
-
-					long[] fetchPos;
-					for (long currentPos = position - RECORD_SIZE; currentPos >= beginOffsetData; currentPos -= RECORD_SIZE) {
-
-						fetchPos = getRelativePosition(currentPos);
-
-						if (files[(int) fetchPos[0]].readShort(fetchPos[1]) != -1)
-							// GOOD RECORD: SET IT AS BEGIN
-							break;
-						endOffsetData--;
-					}
-				}
-
-				files[0].writeHeaderLong(OConstants.SIZE_LONG, endOffsetData);
-			}
+			updateBoundsAfterDeletion(iPosition);
 
 		} finally {
 			releaseExclusiveLock();
@@ -391,17 +349,7 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 
 			final long returnedPosition = offset / RECORD_SIZE;
 
-			if (returnedPosition < beginOffsetData || beginOffsetData == -1) {
-				// UPDATE END OF DATA
-				beginOffsetData = returnedPosition;
-				files[0].writeHeaderLong(0, beginOffsetData);
-			}
-
-			if (endOffsetData > -1 && returnedPosition > endOffsetData) {
-				// UPDATE END OF DATA
-				endOffsetData = returnedPosition;
-				files[0].writeHeaderLong(OConstants.SIZE_LONG, endOffsetData);
-			}
+			updateBoundsAfterInsertion(returnedPosition);
 
 			return returnedPosition;
 
@@ -532,5 +480,67 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 			releaseExclusiveLock();
 		}
 
+	}
+
+	protected void updateBoundsAfterInsertion(final long iPosition) throws IOException {
+		if (iPosition < beginOffsetData || beginOffsetData == -1) {
+			// UPDATE END OF DATA
+			beginOffsetData = iPosition;
+			files[0].writeHeaderLong(0, beginOffsetData);
+		}
+
+		if (endOffsetData > -1 && iPosition > endOffsetData) {
+			// UPDATE END OF DATA
+			endOffsetData = iPosition;
+			files[0].writeHeaderLong(OConstants.SIZE_LONG, endOffsetData);
+		}
+	}
+
+	protected void updateBoundsAfterDeletion(final long iPosition) throws IOException {
+		final long position = iPosition * RECORD_SIZE;
+
+		if (iPosition == beginOffsetData) {
+			if (getEntries() == 0)
+				beginOffsetData = -1;
+			else {
+				// DISCOVER THE BEGIN OF DATA
+				beginOffsetData++;
+
+				long[] fetchPos;
+				for (long currentPos = position + RECORD_SIZE; currentPos < getFilledUpTo(); currentPos += RECORD_SIZE) {
+					fetchPos = getRelativePosition(currentPos);
+
+					if (files[(int) fetchPos[0]].readShort(fetchPos[1]) != -1)
+						// GOOD RECORD: SET IT AS BEGIN
+						break;
+
+					beginOffsetData++;
+				}
+			}
+
+			files[0].writeHeaderLong(0, beginOffsetData);
+		}
+
+		if (iPosition == endOffsetData) {
+			if (getEntries() == 0)
+				endOffsetData = -1;
+			else {
+				// DISCOVER THE END OF DATA
+				endOffsetData--;
+
+				long[] fetchPos;
+				for (long currentPos = position - RECORD_SIZE; currentPos >= beginOffsetData; currentPos -= RECORD_SIZE) {
+
+					fetchPos = getRelativePosition(currentPos);
+
+					if (files[(int) fetchPos[0]].readShort(fetchPos[1]) != -1)
+						// GOOD RECORD: SET IT AS BEGIN
+						break;
+					endOffsetData--;
+				}
+			}
+
+			files[0].writeHeaderLong(OConstants.SIZE_LONG, endOffsetData);
+		}
 	}
 }
