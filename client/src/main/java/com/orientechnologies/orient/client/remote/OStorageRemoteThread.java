@@ -135,17 +135,19 @@ public class OStorageRemoteThread implements OStorage {
 		return delegate.getClusterNames();
 	}
 
-	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType, ORecordCallback iCallback) {
+	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType, ORecordCallback<Long> iCallback) {
 		delegate.setSessionId(sessionId);
 		return delegate.createRecord(iRid, iContent, iRecordType, null);
 	}
 
-	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final ORecordId iRid, final String iFetchPlan, ORecordCallback iCallback) {
+	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final ORecordId iRid, final String iFetchPlan,
+			ORecordCallback<ORawBuffer> iCallback) {
 		delegate.setSessionId(sessionId);
 		return delegate.readRecord(iDatabase, iRid, iFetchPlan, null);
 	}
 
-	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType, ORecordCallback iCallback) {
+	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType,
+			ORecordCallback<Integer> iCallback) {
 		delegate.setSessionId(sessionId);
 		return delegate.updateRecord(iRid, iContent, iVersion, iRecordType, null);
 	}
@@ -155,7 +157,7 @@ public class OStorageRemoteThread implements OStorage {
 		return delegate.toString();
 	}
 
-	public boolean deleteRecord(final ORecordId iRid, final int iVersion, ORecordCallback iCallback) {
+	public boolean deleteRecord(final ORecordId iRid, final int iVersion, ORecordCallback<Boolean> iCallback) {
 		delegate.setSessionId(sessionId);
 		return delegate.deleteRecord(iRid, iVersion, null);
 	}
