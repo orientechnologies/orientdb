@@ -26,6 +26,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
+import com.orientechnologies.orient.core.storage.impl.local.TestSimulateError;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
 @Test
@@ -37,13 +39,20 @@ public class TransactionConsistencyTest {
 
 	public static final String		NAME	= "name";
 
+	// static {
+	// boolean assertsEnabled = false;
+	// assert assertsEnabled = true; // Intentional side effect!!!
+	// if (!assertsEnabled)
+	// throw new RuntimeException("Asserts must be enabled for this test");
+	// }
+
 	@Parameters(value = "url")
-	public TransactionConsistencyTest(String iURL) {
+	public TransactionConsistencyTest(String iURL) throws IOException {
 		url = iURL;
 	}
 
 	@Test
-	public void testRollbackOnConcurrentException() throws IOException {
+	public void test1RollbackOnConcurrentException() throws IOException {
 		database1 = new ODatabaseDocumentTx(url).open("admin", "admin");
 		database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
 
@@ -109,7 +118,7 @@ public class TransactionConsistencyTest {
 	}
 
 	@Test
-	public void testRollbackWithPin() throws IOException {
+	public void test4RollbackWithPin() throws IOException {
 		database1 = new ODatabaseDocumentTx(url).open("admin", "admin");
 		database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
 
@@ -160,7 +169,7 @@ public class TransactionConsistencyTest {
 	}
 
 	@Test
-	public void testRollbackWithCopyCacheStrategy() throws IOException {
+	public void test3RollbackWithCopyCacheStrategy() throws IOException {
 		database1 = new ODatabaseDocumentTx(url).open("admin", "admin");
 		database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
 
@@ -212,7 +221,7 @@ public class TransactionConsistencyTest {
 	}
 
 	@Test
-	public void testCacheUpdatedMultipleDbs() {
+	public void test5CacheUpdatedMultipleDbs() {
 		database1 = new ODatabaseDocumentTx(url).open("admin", "admin");
 		database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
 
@@ -241,5 +250,78 @@ public class TransactionConsistencyTest {
 
 		database1.close();
 		database2.close();
+	}
+
+	@Test
+	public void test2RollbackOnRuntimeException() throws IOException {
+		database1 = new ODatabaseDocumentTx(url).open("admin", "admin");
+
+		if (database1.getURL().startsWith("remote"))
+			// ONLY NOT-REMOTE TESTS
+			return;
+
+		database1.begin(TXTYPE.OPTIMISTIC);
+
+		// Create docA.
+		ODocument vDocA = database1.newInstance();
+		vDocA.field(NAME, "docA");
+		vDocA.save();
+
+		// Create docB.
+		ODocument vDocB = database1.newInstance();
+		vDocB.field(NAME, "docB");
+		vDocB.save();
+
+		database1.commit();
+
+		// Keep the IDs.
+		final ORID vDocA_Rid = vDocA.getIdentity().copy();
+		final ORID vDocB_Rid = vDocB.getIdentity().copy();
+
+		// Inject exception on second writeRecord().
+		TestSimulateError.onDataLocalWriteRecord = new TestSimulateError() {
+			protected int	fCountRecordWritten	= 0;
+
+			@Override
+			public boolean checkDataLocalWriteRecord(ODataLocal iODataLocal, long[] iFilePosition, int iClusterSegment,
+					long iClusterPosition, byte[] iContent) {
+				fCountRecordWritten++;
+				if (fCountRecordWritten == 2)
+					throw new RuntimeException("checkDataLocalWriteRecord on #" + iClusterSegment + ":" + iClusterPosition);
+				return true;
+			}
+		};
+
+		try {
+			database1.begin(TXTYPE.OPTIMISTIC);
+			vDocA.field(NAME, "docA_v2");
+			vDocA.save();
+			vDocB.field(NAME, "docB_v2");
+			vDocB.save();
+			database1.commit();
+			Assert.fail("Should throw Exception");
+		} catch (Exception e) {
+			// Catch Exception and reload records
+			vDocA = database1.load(vDocA_Rid);
+			vDocB = database1.load(vDocB_Rid);
+		}
+
+		// Check values.
+		Assert.assertEquals(vDocA.field(NAME), "docA");
+		Assert.assertEquals(vDocB.field(NAME), "docB");
+
+		// Force reload all (to be sure it is not a cache problem)
+		database1.close();
+		database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
+
+		//
+		ODocument vDocA_db2 = database2.load(vDocA_Rid);
+		Assert.assertEquals(vDocA_db2.field(NAME), "docA");
+
+		ODocument vDocB_db2 = database2.load(vDocB_Rid);
+		Assert.assertEquals(vDocB_db2.field(NAME), "docB");
+
+		database2.close();
+
 	}
 }

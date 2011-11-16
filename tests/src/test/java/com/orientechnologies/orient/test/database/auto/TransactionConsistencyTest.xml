@@ -1,0 +1,11 @@
+<!DOCTYPE suite SYSTEM "http://beust.com/testng/testng-1.0.dtd">
+<suite name="TransactionConsistencyTest" verbose="2" parallel="false">
+
+	<parameter name="url" value="local:D:\OrientDb\TransactionConsistencyTest" />
+
+	<test name="TransactionConsistencyTest">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.TransactionConsistencyTest" />
+		</classes>
+	</test>
+</suite>

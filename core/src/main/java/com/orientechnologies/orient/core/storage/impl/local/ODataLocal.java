@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -221,8 +222,6 @@ public class ODataLocal extends OMultiFileSegment {
 			final OFile file = files[(int) pos[0]];
 
 			final int recordSize = file.readInt(pos[1]);
-			// if (recordSize <= 0)
-			// OLogManager.instance().error(this, "Error while writing to data file. The record size was invalid", OIOException.class);
 
 			if (iContent.length == recordSize) {
 				// USE THE OLD SPACE SINCE SIZE ISN'T CHANGED
@@ -276,13 +275,6 @@ public class ODataLocal extends OMultiFileSegment {
 		} finally {
 			releaseExclusiveLock();
 		}
-	}
-
-	public void updateRid(final long iPosition, final ORecordId iRid) throws IOException {
-		long[] pos = getRelativePosition(iPosition);
-		final OFile file = files[(int) pos[0]];
-		file.writeShort(pos[1] + OConstants.SIZE_INT, (short) iRid.clusterId);
-		file.writeLong(pos[1] + OConstants.SIZE_INT + OConstants.SIZE_SHORT, iRid.clusterPosition);
 	}
 
 	/**
@@ -527,8 +519,9 @@ public class ODataLocal extends OMultiFileSegment {
 			final OPhysicalPosition ppos = cluster.getPhysicalPosition(clusterPosition, new OPhysicalPosition());
 
 			if (ppos.dataPosition != iSourcePosition)
-				throw new OStorageException("Found corrupted record hole for rid " + clusterId + ":" + clusterPosition
-						+ ": data position is wrong: " + ppos.dataPosition + "<->" + iSourcePosition);
+				OLogManager.instance().warn(this,
+						"Found corrupted record hole for rid %d:%d: data position is wrong: %d <-> %d. Auto fixed by writing position %d",
+						clusterId, clusterPosition, ppos.dataPosition, iSourcePosition, iDestinationPosition);
 
 			cluster.setPhysicalPosition(clusterPosition, iDestinationPosition);
 		}
@@ -546,6 +539,7 @@ public class ODataLocal extends OMultiFileSegment {
 
 		file.writeInt(iFilePosition[1], iContent.length);
 		file.writeShort(iFilePosition[1] + OConstants.SIZE_INT, (short) iClusterSegment);
+		TestSimulateError.onDataLocalWriteRecord(this, iFilePosition, iClusterSegment, iClusterPosition, iContent);
 		file.writeLong(iFilePosition[1] + OConstants.SIZE_INT + OConstants.SIZE_SHORT, iClusterPosition);
 
 		file.write(iFilePosition[1] + RECORD_FIX_SIZE, iContent);

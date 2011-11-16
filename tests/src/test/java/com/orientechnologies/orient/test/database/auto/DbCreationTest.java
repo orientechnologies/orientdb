@@ -51,6 +51,8 @@ public class DbCreationTest {
 		if (!url.startsWith(OEngineRemote.NAME)) {
 			database = new ODatabaseObjectTx(url);
 			database.setProperty("security", Boolean.FALSE);
+
+			ODatabaseHelper.deleteDatabase(database);
 			ODatabaseHelper.createDatabase(database, url);
 			ODatabaseHelper.deleteDatabase(database);
 		}
