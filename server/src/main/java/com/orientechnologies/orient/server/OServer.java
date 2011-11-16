@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javax.management.InstanceAlreadyExistsException;
@@ -78,6 +79,7 @@ public class OServer {
 	private OrientServer																			managedServer;
 	private ObjectName																				onProfiler	= new ObjectName("OrientDB:type=Profiler");
 	private ObjectName																				onServer		= new ObjectName("OrientDB:type=Server");
+  private final CountDownLatch                              startupLatch = new CountDownLatch(1);
 
 	public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
 			InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
@@ -150,6 +152,7 @@ public class OServer {
 		registerHandlers();
 
 		OLogManager.instance().info(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " is active.");
+    startupLatch.countDown();
 	}
 
 	public void shutdown() {
@@ -332,6 +335,12 @@ public class OServer {
 
 	@SuppressWarnings("unchecked")
 	public <RET extends OServerHandler> RET getHandler(final Class<RET> iHandlerClass) {
+    try {
+       startupLatch.await();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+
 		for (OServerHandler h : handlers)
 			if (h.getClass().equals(iHandlerClass))
 				return (RET) h;
