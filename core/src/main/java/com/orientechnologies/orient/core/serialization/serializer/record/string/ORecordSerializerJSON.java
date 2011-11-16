@@ -459,6 +459,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 	private void processRecord(final OJSONWriter json, int indentLevel, boolean includeType, boolean includeId, boolean includeVer,
 			boolean includeClazz, boolean attribSameRow, final ORecordSchemaAware<?> record, Map<String, Integer> iFetchPlan,
 			boolean keepTypes, final int iCurrentLevel, final int iMaxFetch, final Map<ORID, Integer> parsedRecords) throws IOException {
+		if (iMaxFetch > -1 && iCurrentLevel >= iMaxFetch)
+			// MAX FETCH SIZE REACHED: STOP TO FETCH AT ALL
+			return;
+
 		Object fieldValue;
 
 		final StringBuilder types = new StringBuilder();
@@ -482,14 +486,12 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				}
 				json.writeAttribute(indentLevel + 1, true, fieldName, OJSONWriter.encode(v));
 			} else {
-				final Integer depthLevel = getDepthLevel(record, iFetchPlan, fieldName);
-				if (depthLevel != null) {
-					if (depthLevel == 0)
-						continue;
-					if (depthLevel > -1 && iCurrentLevel > depthLevel) {
-						// MAX DEPTH REACHED: STOP TO FETCH THIS FIELD
-						continue;
-					}
+				final int depthLevel = getDepthLevel(record, iFetchPlan, fieldName);
+				if (depthLevel == 0)
+					continue;
+				if (depthLevel > -1 && iCurrentLevel > depthLevel) {
+					// MAX DEPTH REACHED: STOP TO FETCH THIS FIELD
+					continue;
 				}
 				fieldValue = record.field(fieldName);
 				if (fieldValue == null
@@ -556,13 +558,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			final String fieldName, final int iCurrentLevel, final int iMaxFetch, final OJSONWriter json, int indentLevel,
 			boolean includeType, final boolean includeId, final boolean includeVer, final boolean includeClazz,
 			final boolean attribSameRow, final boolean keepTypes, final Map<ORID, Integer> parsedRecords) throws IOException {
-		Integer depthLevel;
-		final Integer anyFieldDepthLevel = iFetchPlan != null ? iFetchPlan.get(OFetchHelper.ANY_FIELD) : -1;
-		depthLevel = getDepthLevel(iRootRecord, iFetchPlan, fieldName);
-
-		if (depthLevel == null)
-			// NO SPECIFIED: ASSIGN DEFAULT LEVEL TAKEN FROM * WILDCARD IF ANY
-			depthLevel = anyFieldDepthLevel;
+		int depthLevel = getDepthLevel(iRootRecord, iFetchPlan, fieldName);
 
 		if (depthLevel > -1 && iCurrentLevel > depthLevel)
 			// MAX DEPTH REACHED: STOP TO FETCH THIS FIELD
@@ -583,11 +579,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			fetchMap(iFetchPlan, fieldValue, fieldName, iCurrentLevel, iMaxFetch, json, indentLevel, includeType, includeId, includeVer,
 					includeClazz, attribSameRow, keepTypes, parsedRecords);
 		}
-		if (iMaxFetch > -1 && iCurrentLevel >= iMaxFetch) {
-			// MAX FETCH SIZE REACHED: STOP TO FETCH AT ALL
-			return;
-		}
-
 	}
 
 	@SuppressWarnings("unchecked")
@@ -599,7 +590,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 		json.beginObject(indentLevel + 1, true, fieldValue);
 		for (ODocument d : (linked).values()) {
 			// GO RECURSIVELY
-			Integer fieldDepthLevel = parsedRecords.get(d.getIdentity());
+			final Integer fieldDepthLevel = parsedRecords.get(d.getIdentity());
 			if (fieldDepthLevel != null && fieldDepthLevel.intValue() == iCurrentLevel) {
 				parsedRecords.remove(d.getIdentity());
 				json.beginObject(indentLevel + 1, true, null);
@@ -623,7 +614,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			json.beginCollection(indentLevel + 1, true, fieldName);
 			for (ODocument d : linked) {
 				// GO RECURSIVELY
-				Integer fieldDepthLevel = parsedRecords.get(d.getIdentity());
+				final Integer fieldDepthLevel = parsedRecords.get(d.getIdentity());
 				if (fieldDepthLevel != null && fieldDepthLevel.intValue() == iCurrentLevel) {
 					parsedRecords.remove(d.getIdentity());
 					json.beginObject(indentLevel + 1, true, null);
@@ -650,7 +641,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 		json.beginCollection(indentLevel + 1, true, fieldName);
 		for (OIdentifiable d : linked) {
 			// GO RECURSIVELY
-			Integer fieldDepthLevel = parsedRecords.get(d.getIdentity());
+			final Integer fieldDepthLevel = parsedRecords.get(d.getIdentity());
 			if (fieldDepthLevel != null && fieldDepthLevel.intValue() == iCurrentLevel) {
 				parsedRecords.remove(d.getIdentity());
 				if (d instanceof ORecordId) {
@@ -661,7 +652,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				} else {
 					json.beginObject(indentLevel + 1, true, null);
 					writeSignature(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, (ODocument) d);
-					final Integer depthLevel = getDepthLevel((ODocument) d, iFetchPlan, fieldName);
+					final int depthLevel = getDepthLevel((ODocument) d, iFetchPlan, fieldName);
 					if (depthLevel == -1 || (iCurrentLevel + 1) < depthLevel) {
 						processRecord(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, (ODocument) d,
 								iFetchPlan, keepTypes, iCurrentLevel + 1, iMaxFetch, parsedRecords);
@@ -678,7 +669,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 	private void fetchDocument(Map<String, Integer> iFetchPlan, Object fieldValue, String fieldName, final int iCurrentLevel,
 			final int iMaxFetch, OJSONWriter json, int indentLevel, boolean includeType, boolean includeId, boolean includeVer,
 			boolean includeClazz, boolean attribSameRow, boolean keepTypes, final Map<ORID, Integer> parsedRecords) throws IOException {
-		Integer fieldDepthLevel = parsedRecords.get(((ODocument) fieldValue).getIdentity());
+		final Integer fieldDepthLevel = parsedRecords.get(((ODocument) fieldValue).getIdentity());
 		if (fieldDepthLevel != null && fieldDepthLevel.intValue() == iCurrentLevel) {
 			parsedRecords.remove(((ODocument) fieldValue).getIdentity());
 			final ODocument linked = (ODocument) fieldValue;
@@ -692,7 +683,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 		}
 	}
 
-	private Integer getDepthLevel(final ORecordSchemaAware<?> record, final Map<String, Integer> iFetchPlan, final String iFieldName) {
+	private int getDepthLevel(final ORecordSchemaAware<?> record, final Map<String, Integer> iFetchPlan, final String iFieldName) {
 		Integer depthLevel;
 
 		if (iFetchPlan != null) {
@@ -707,14 +698,16 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 					if (depthLevel == null)
 						cls = cls.getSuperClass();
 				}
-				if (depthLevel == null && iFetchPlan.containsKey(OFetchHelper.ANY_FIELD))
-					depthLevel = iFetchPlan.get(OFetchHelper.ANY_FIELD);
+				if (depthLevel == null) {
+					final Integer anyLevel = iFetchPlan.get(OFetchHelper.ANY_FIELD);
+					depthLevel = anyLevel != null ? anyLevel : -1;
+				}
 			}
 		} else
 			// INFINITE
 			depthLevel = -1;
 
-		return depthLevel;
+		return depthLevel.intValue();
 	}
 
 	private boolean hasTypeField(String[] fields) {
@@ -728,36 +721,39 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 	private void processRecordRidMap(final ORecordSchemaAware<?> record, Map<String, Integer> iFetchPlan, final int iCurrentLevel,
 			final int iMaxFetch, final Map<ORID, Integer> parsedRecords) throws IOException {
-		Object fieldValue;
+		if (iFetchPlan == null)
+			return;
 
+		if (iMaxFetch > -1 && iCurrentLevel >= iMaxFetch)
+			// MAX FETCH SIZE REACHED: STOP TO FETCH AT ALL
+			return;
+
+		Object fieldValue;
 		for (String fieldName : record.fieldNames()) {
-			if (iFetchPlan != null) {
-				final Integer depthLevel = getDepthLevel(record, iFetchPlan, fieldName);
-				if (depthLevel != null) {
-					if (depthLevel == 0) {
-						// NO FETCH THIS FIELD PLEASE
-						continue;
-					}
-					if (depthLevel > -1 && iCurrentLevel >= depthLevel) {
-						// MAX DEPTH REACHED: STOP TO FETCH THIS FIELD
-						continue;
-					}
-				}
-				fieldValue = record.field(fieldName);
-				if (fieldValue == null
-						|| !(fieldValue instanceof OIdentifiable)
-						&& (!(fieldValue instanceof Collection<?>) || ((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue)
-								.iterator().next() instanceof OIdentifiable))
-						&& (!(fieldValue instanceof Map<?, ?>) || ((Map<?, ?>) fieldValue).size() == 0 || !(((Map<?, ?>) fieldValue).values()
-								.iterator().next() instanceof OIdentifiable))) {
-					continue;
-				} else {
-					try {
-						fetchRidMap(record, iFetchPlan, fieldValue, fieldName, iCurrentLevel, iMaxFetch, parsedRecords);
-					} catch (Exception e) {
-						e.printStackTrace();
-						OLogManager.instance().error(null, "Fetching error on record %s", e, record.getIdentity());
-					}
+
+			final int depthLevel = getDepthLevel(record, iFetchPlan, fieldName);
+			if (depthLevel == 0)
+				// NO FETCH THIS FIELD PLEASE
+				continue;
+
+			if (depthLevel > -1 && iCurrentLevel >= depthLevel)
+				// MAX DEPTH REACHED: STOP TO FETCH THIS FIELD
+				continue;
+
+			fieldValue = record.field(fieldName);
+			if (fieldValue == null
+					|| !(fieldValue instanceof OIdentifiable)
+					&& (!(fieldValue instanceof Collection<?>) || ((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue)
+							.iterator().next() instanceof OIdentifiable))
+					&& (!(fieldValue instanceof Map<?, ?>) || ((Map<?, ?>) fieldValue).size() == 0 || !(((Map<?, ?>) fieldValue).values()
+							.iterator().next() instanceof OIdentifiable))) {
+				continue;
+			} else {
+				try {
+					fetchRidMap(record, iFetchPlan, fieldValue, fieldName, iCurrentLevel, iMaxFetch, parsedRecords);
+				} catch (Exception e) {
+					e.printStackTrace();
+					OLogManager.instance().error(null, "Fetching error on record %s", e, record.getIdentity());
 				}
 			}
 		}
@@ -766,17 +762,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 	private void fetchRidMap(final ORecordSchemaAware<?> iRootRecord, final Map<String, Integer> iFetchPlan, final Object fieldValue,
 			final String fieldName, final int iCurrentLevel, final int iMaxFetch, final Map<ORID, Integer> parsedRecords)
 			throws IOException {
-		Integer depthLevel;
-		depthLevel = getDepthLevel(iRootRecord, iFetchPlan, fieldName);
-
-		if (depthLevel == null || depthLevel == 0)
-			// NO NEED TO FETCH
-			return;
-
-		if (depthLevel > -1 && iCurrentLevel >= depthLevel)
-			// MAX DEPTH REACHED: STOP TO FETCH THIS FIELD
-			return;
-
 		if (fieldValue == null) {
 			return;
 		} else if (fieldValue instanceof ODocument) {
@@ -788,21 +773,11 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 		} else if (fieldValue instanceof Map<?, ?>) {
 			fetchMapRidMap(iFetchPlan, fieldValue, fieldName, iCurrentLevel, iMaxFetch, parsedRecords);
 		}
-		if (iMaxFetch > -1 && iCurrentLevel >= iMaxFetch) {
-			// MAX FETCH SIZE REACHED: STOP TO FETCH AT ALL
-			return;
-		}
 	}
 
 	private void fetchDocumentRidMap(Map<String, Integer> iFetchPlan, Object fieldValue, String fieldName, final int iCurrentLevel,
 			final int iMaxFetch, final Map<ORID, Integer> parsedRecords) throws IOException {
-		if (!parsedRecords.containsKey(((ODocument) fieldValue).getIdentity())) {
-			parsedRecords.put(((ODocument) fieldValue).getIdentity(), iCurrentLevel);
-			processRecordRidMap((ODocument) fieldValue, iFetchPlan, iCurrentLevel + 1, iMaxFetch, parsedRecords);
-		} else if (parsedRecords.get(((ODocument) fieldValue).getIdentity()) > iCurrentLevel) {
-			parsedRecords.put(((ODocument) fieldValue).getIdentity(), iCurrentLevel);
-			processRecordRidMap((ODocument) fieldValue, iFetchPlan, iCurrentLevel + 1, iMaxFetch, parsedRecords);
-		}
+		updateRidMap(iFetchPlan, (ODocument) fieldValue, iCurrentLevel, iMaxFetch, parsedRecords);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -812,18 +787,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 		final Collection<ODocument> linked = (Collection<ODocument>) fieldValue;
 		for (OIdentifiable d : linked) {
 			// GO RECURSIVELY
-			if (d instanceof ORecordId) {
+			if (d instanceof ORecordId)
 				d = iDatabase.load((ORecordId) d);
-			}
-			if (d instanceof ODocument) {
-				if (!parsedRecords.containsKey(((ODocument) d).getIdentity())) {
-					parsedRecords.put(((ODocument) d).getIdentity(), iCurrentLevel);
-					processRecordRidMap((ODocument) d, iFetchPlan, iCurrentLevel + 1, iMaxFetch, parsedRecords);
-				} else if (parsedRecords.get(((ODocument) d).getIdentity()) > iCurrentLevel) {
-					parsedRecords.put(((ODocument) d).getIdentity(), iCurrentLevel);
-					processRecordRidMap((ODocument) d, iFetchPlan, iCurrentLevel + 1, iMaxFetch, parsedRecords);
-				}
-			}
+
+			updateRidMap(iFetchPlan, (ODocument) d, iCurrentLevel, iMaxFetch, parsedRecords);
 		}
 	}
 
@@ -831,16 +798,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			final int iCurrentLevel, final int iMaxFetch, final Map<ORID, Integer> parsedRecords) throws IOException {
 		if (fieldValue instanceof ODocument[]) {
 			final ODocument[] linked = (ODocument[]) fieldValue;
-			for (ODocument d : linked) {
+			for (ODocument d : linked)
 				// GO RECURSIVELY
-				if (!parsedRecords.containsKey(d.getIdentity())) {
-					parsedRecords.put(d.getIdentity(), iCurrentLevel);
-					processRecordRidMap(d, iFetchPlan, iCurrentLevel + 1, iMaxFetch, parsedRecords);
-				} else if (parsedRecords.get(d.getIdentity()) > iCurrentLevel) {
-					parsedRecords.put(d.getIdentity(), iCurrentLevel);
-					processRecordRidMap(d, iFetchPlan, iCurrentLevel + 1, iMaxFetch, parsedRecords);
-				}
-			}
+				updateRidMap(iFetchPlan, (ODocument) d, iCurrentLevel, iMaxFetch, parsedRecords);
 		}
 	}
 
@@ -848,15 +808,20 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 	private void fetchMapRidMap(Map<String, Integer> iFetchPlan, Object fieldValue, String fieldName, final int iCurrentLevel,
 			final int iMaxFetch, final Map<ORID, Integer> parsedRecords) throws IOException {
 		final Map<String, ODocument> linked = (Map<String, ODocument>) fieldValue;
-		for (ODocument d : (linked).values()) {
+		for (ODocument d : (linked).values())
 			// GO RECURSIVELY
-			if (!parsedRecords.containsKey(d.getIdentity())) {
-				parsedRecords.put(d.getIdentity(), iCurrentLevel);
-				processRecordRidMap(d, iFetchPlan, iCurrentLevel + 1, iMaxFetch, parsedRecords);
-			} else if (parsedRecords.get(d.getIdentity()) > iCurrentLevel) {
-				parsedRecords.put(d.getIdentity(), iCurrentLevel);
-				processRecordRidMap(d, iFetchPlan, iCurrentLevel + 1, iMaxFetch, parsedRecords);
-			}
+			updateRidMap(iFetchPlan, (ODocument) d, iCurrentLevel, iMaxFetch, parsedRecords);
+	}
+
+	private void updateRidMap(final Map<String, Integer> iFetchPlan, final ODocument fieldValue, final int iCurrentLevel,
+			final int iMaxFetch, final Map<ORID, Integer> parsedRecords) throws IOException {
+		Integer fetchedLevel = parsedRecords.get(fieldValue.getIdentity());
+		if (fetchedLevel == null) {
+			parsedRecords.put(fieldValue.getIdentity(), iCurrentLevel);
+			processRecordRidMap(fieldValue, iFetchPlan, iCurrentLevel + 1, iMaxFetch, parsedRecords);
+		} else if (fetchedLevel > iCurrentLevel) {
+			parsedRecords.put(fieldValue.getIdentity(), iCurrentLevel);
+			processRecordRidMap((ODocument) fieldValue, iFetchPlan, iCurrentLevel + 1, iMaxFetch, parsedRecords);
 		}
 	}
 
