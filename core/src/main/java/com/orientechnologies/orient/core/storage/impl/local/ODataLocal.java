@@ -539,7 +539,7 @@ public class ODataLocal extends OMultiFileSegment {
 
 		file.writeInt(iFilePosition[1], iContent.length);
 		file.writeShort(iFilePosition[1] + OConstants.SIZE_INT, (short) iClusterSegment);
-		TestSimulateError.onDataLocalWriteRecord(this, iFilePosition, iClusterSegment, iClusterPosition, iContent);
+		// TestSimulateError.onDataLocalWriteRecord(this, iFilePosition, iClusterSegment, iClusterPosition, iContent);
 		file.writeLong(iFilePosition[1] + OConstants.SIZE_INT + OConstants.SIZE_SHORT, iClusterPosition);
 
 		file.write(iFilePosition[1] + RECORD_FIX_SIZE, iContent);
