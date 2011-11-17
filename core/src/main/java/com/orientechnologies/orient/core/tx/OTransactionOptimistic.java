@@ -113,7 +113,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 				iRecord.onBeforeIdentityChanged(rid);
 
 				// ASSIGN A UNIQUE SERIAL TEMPORARY ID
-				rid.clusterId = iClusterName != null ? database.getClusterIdByName(iClusterName) : database.getDefaultClusterId();
+				if (rid.clusterId == ORID.CLUSTER_ID_INVALID)
+					rid.clusterId = iClusterName != null ? database.getClusterIdByName(iClusterName) : database.getDefaultClusterId();
 				rid.clusterPosition = newObjectCounter--;
 
 				iRecord.onAfterIdentityChanged(iRecord);
