@@ -574,7 +574,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			try {
 				return super.get(iKey);
 			} catch (OLowMemoryException e) {
-				OLogManager.instance().debug(this, "Optimization required during load %d/%d", i, OPTIMIZE_MAX_RETRY);
+				OLogManager.instance().debug(this, "Optimization required during node search %d/%d", i, OPTIMIZE_MAX_RETRY);
 
 				// LOW MEMORY DURING LOAD: THIS MEANS DEEP LOADING OF NODES. EXECUTE THE OPTIMIZATION AND RETRY IT
 				optimize(true);
@@ -591,6 +591,56 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		}
 
 		throw new OLowMemoryException("OMVRBTreePersistent.get()");
+	}
+
+	@Override
+	public boolean containsKey(final Object iKey) {
+		for (int i = 0; i < OPTIMIZE_MAX_RETRY; ++i) {
+			try {
+				return super.containsKey(iKey);
+			} catch (OLowMemoryException e) {
+				OLogManager.instance().debug(this, "Optimization required during node search %d/%d", i, OPTIMIZE_MAX_RETRY);
+
+				// LOW MEMORY DURING LOAD: THIS MEANS DEEP LOADING OF NODES. EXECUTE THE OPTIMIZATION AND RETRY IT
+				optimize(true);
+
+				System.gc();
+
+				if (i > 0)
+					// WAIT A PROPORTIONAL TIME
+					try {
+						Thread.sleep(300 * i);
+					} catch (InterruptedException e1) {
+					}
+			}
+		}
+
+		throw new OLowMemoryException("OMVRBTreePersistent.containsKey()");
+	}
+
+	@Override
+	public boolean containsValue(final Object iValue) {
+		for (int i = 0; i < OPTIMIZE_MAX_RETRY; ++i) {
+			try {
+				return super.containsValue(iValue);
+			} catch (OLowMemoryException e) {
+				OLogManager.instance().debug(this, "Optimization required during node search %d/%d", i, OPTIMIZE_MAX_RETRY);
+
+				// LOW MEMORY DURING LOAD: THIS MEANS DEEP LOADING OF NODES. EXECUTE THE OPTIMIZATION AND RETRY IT
+				optimize(true);
+
+				System.gc();
+
+				if (i > 0)
+					// WAIT A PROPORTIONAL TIME
+					try {
+						Thread.sleep(300 * i);
+					} catch (InterruptedException e1) {
+					}
+			}
+		}
+
+		throw new OLowMemoryException("OMVRBTreePersistent.containsValue()");
 	}
 
 	public V get(final Object iKey, final String iFetchPlan) {
