@@ -24,8 +24,8 @@ import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
+import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
@@ -76,7 +76,7 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
 	}
 
 	public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
-		final OMemoryInputStream buffer = new OMemoryInputStream(iStream);
+		final OMemoryStream buffer = new OMemoryStream(iStream);
 		try {
 			text = buffer.getAsString();
 

@@ -47,10 +47,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue, ORecordElement, ORecordLazyListener {
 	public static final ORecordLazySet						EMPTY_SET			= new ORecordLazySet((ODatabaseRecord) null);
+	private static final Object										NEWMAP_VALUE	= new Object();
 	protected final ORecordLazyList								delegate;
 	protected IdentityHashMap<ORecord<?>, Object>	newItems;
-	private boolean																sorted				= true;
-	private static final Object										NEWMAP_VALUE	= new Object();
+	protected boolean															sorted				= true;
 
 	public ORecordLazySet(final ODatabaseRecord iDatabase) {
 		delegate = new ORecordLazyList(iDatabase).setListener(this);
@@ -88,8 +88,8 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 	public Iterator<OIdentifiable> iterator() {
 		if (hasNewItems()) {
 			lazyLoad(false);
-			return new OLazyRecordMultiIterator(delegate.sourceRecord, ODatabaseRecordThreadLocal.INSTANCE.get(), delegate.recordType, new Object[] {
-					delegate.iterator(), newItems.keySet().iterator() }, delegate.autoConvertToRecord);
+			return new OLazyRecordMultiIterator(delegate.sourceRecord, ODatabaseRecordThreadLocal.INSTANCE.get(), delegate.recordType,
+					new Object[] { delegate.iterator(), newItems.keySet().iterator() }, delegate.autoConvertToRecord);
 		}
 		return delegate.iterator();
 	}
@@ -207,16 +207,16 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 			return true;
 		} else if (OGlobalConfiguration.LAZYSET_WORK_ON_STREAM.getValueAsBoolean() && getStreamedContent() != null) {
 			// FAST INSERT
-            final String ridString = e.getIdentity().toString();
-            final StringBuilder buffer = getStreamedContent();
-            if (buffer.indexOf(ridString) < 0) {
-                if (buffer.length() > 0)
-                    buffer.append(',');
-                e.getIdentity().toString(buffer);
-                setDirty();
-                return true;
-            }
-            return false;
+			final String ridString = e.getIdentity().toString();
+			final StringBuilder buffer = getStreamedContent();
+			if (buffer.indexOf(ridString) < 0) {
+				if (buffer.length() > 0)
+					buffer.append(',');
+				e.getIdentity().toString(buffer);
+				setDirty();
+				return true;
+			}
+			return false;
 		} else {
 			final int pos = indexOf(e);
 

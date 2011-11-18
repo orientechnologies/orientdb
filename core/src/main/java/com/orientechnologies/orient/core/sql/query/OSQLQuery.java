@@ -28,12 +28,11 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.query.OQueryAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
+import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
 /**
@@ -91,32 +90,29 @@ public abstract class OSQLQuery<T extends Object> extends OQueryAbstract<T> impl
 	}
 
 	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
-		final OMemoryInputStream buffer = new OMemoryInputStream(iStream);
-		try {
-			text = buffer.getAsString();
-			limit = buffer.getAsInteger();
-			setFetchPlan(buffer.getAsString());
+		final OMemoryStream buffer = new OMemoryStream(iStream);
 
-			byte[] paramBuffer = buffer.getAsByteArray();
+		text = buffer.getAsString();
+		limit = buffer.getAsInteger();
+		setFetchPlan(buffer.getAsString());
 
-			if (paramBuffer.length == 0)
-				parameters = null;
-			else {
-				final ODocument param = new ODocument();
-				param.fromStream(paramBuffer);
+		byte[] paramBuffer = buffer.getAsByteArray();
 
-				final Map<String, Object> params = param.rawField("params");
+		if (paramBuffer.length == 0)
+			parameters = null;
+		else {
+			final ODocument param = new ODocument();
+			param.fromStream(paramBuffer);
 
-				parameters = new HashMap<Object, Object>();
-				for (Entry<String, Object> p : params.entrySet()) {
-					if (Character.isDigit(p.getKey().charAt(0)))
-						parameters.put(Integer.parseInt(p.getKey()), p.getValue());
-					else
-						parameters.put(p.getKey(), p.getValue());
-				}
+			final Map<String, Object> params = param.rawField("params");
+
+			parameters = new HashMap<Object, Object>();
+			for (Entry<String, Object> p : params.entrySet()) {
+				if (Character.isDigit(p.getKey().charAt(0)))
+					parameters.put(Integer.parseInt(p.getKey()), p.getValue());
+				else
+					parameters.put(p.getKey(), p.getValue());
 			}
-		} catch (IOException e) {
-			throw new OSerializationException("Error while unmarshalling OSQLQuery", e);
 		}
 		return this;
 	}

@@ -41,8 +41,8 @@ import com.orientechnologies.orient.core.memory.OLowMemoryException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.record.impl.ORecordBytesLazy;
-import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
+import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
@@ -93,8 +93,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		record.setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
 	}
 
-	public OMVRBTreePersistent(String iClusterName, final OStreamSerializer iKeySerializer,
-                               final OStreamSerializer iValueSerializer) {
+	public OMVRBTreePersistent(String iClusterName, final OStreamSerializer iKeySerializer, final OStreamSerializer iValueSerializer) {
 		// MINIMIZE I/O USING A LARGER PAGE THAN THE DEFAULT USED IN MEMORY
 		super(OGlobalConfiguration.MVRBTREE_NODE_PAGE_SIZE.getValueAsInteger(), (Float) OGlobalConfiguration.MVRBTREE_LOAD_FACTOR
 				.getValue());
@@ -448,9 +447,9 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 										cache.put(node.record.getIdentity().copy(), node);
 								}
 
-								cache.put(node.record.getIdentity(), node);
+									cache.put(node.record.getIdentity(), node);
+								}
 							}
-						}
 
 					totalCommitted += tmp.size();
 					tmp.clear();
@@ -474,7 +473,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		final ORID rootRid = new ORecordId();
 
 		try {
-			final OMemoryInputStream stream = new OMemoryInputStream(iStream);
+			final OMemoryStream stream = new OMemoryStream(iStream);
 
 			byte protocolVersion = stream.peek();
 			if (protocolVersion != -1) {
@@ -854,7 +853,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		entryPointsSize = OGlobalConfiguration.MVRBTREE_ENTRYPOINTS.getValueAsInteger();
 	}
 
-	protected void serializerFromStream(final OMemoryInputStream stream) throws IOException {
+	protected void serializerFromStream(final OMemoryStream stream) throws IOException {
 		keySerializer = OStreamSerializerFactory.get(stream.getAsString());
 		valueSerializer = OStreamSerializerFactory.get(stream.getAsString());
 	}

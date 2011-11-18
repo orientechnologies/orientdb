@@ -92,7 +92,7 @@ public class OBinaryProtocol {
 		return chopped;
 	}// end encode
 
-	public static final String bytes2string(final OMemoryInputStream input, final int iLenght) throws IOException {
+	public static final String bytes2string(final OMemoryStream input, final int iLenght) {
 		final char[] output = new char[iLenght];
 		// index input[]
 		int i = 0;

@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.OConstants;
 
 /**
@@ -27,7 +28,7 @@ import com.orientechnologies.orient.core.OConstants;
  * @author Luca Garulli
  * 
  */
-public class OMemoryOutputStream extends OutputStream {
+public class OMemoryStream extends OutputStream {
 	private byte[]						buffer;
 	private int								position;
 
@@ -36,18 +37,18 @@ public class OMemoryOutputStream extends OutputStream {
 
 	// private int fixedSize = 0;
 
-	public OMemoryOutputStream() {
+	public OMemoryStream() {
 		this(DEF_SIZE);
 	}
 
 	/**
 	 * Callee takes ownership of 'buf'.
 	 */
-	public OMemoryOutputStream(final int initialCapacity) {
+	public OMemoryStream(final int initialCapacity) {
 		buffer = new byte[initialCapacity];
 	}
 
-	public OMemoryOutputStream(byte[] stream) {
+	public OMemoryStream(byte[] stream) {
 		buffer = stream;
 	}
 
@@ -77,14 +78,6 @@ public class OMemoryOutputStream extends OutputStream {
 			System.arraycopy(mbuf, 0, result, 0, pos);
 
 		return result;
-	}
-
-	public final int size() {
-		return position;
-	}
-
-	public final int capacity() {
-		return buffer.length;
 	}
 
 	/**
@@ -128,7 +121,7 @@ public class OMemoryOutputStream extends OutputStream {
 		reset();
 	}
 
-	public final void addAsFixed(final byte[] iContent) throws IOException {
+	public final void addAsFixed(final byte[] iContent) {
 		if (iContent == null)
 			return;
 		write(iContent, 0, iContent.length);
@@ -141,7 +134,7 @@ public class OMemoryOutputStream extends OutputStream {
 	 * @return The begin offset of the appended content
 	 * @throws IOException
 	 */
-	public int add(final byte[] iContent) throws IOException {
+	public int add(final byte[] iContent) {
 		if (iContent == null)
 			return -1;
 
@@ -156,31 +149,41 @@ public class OMemoryOutputStream extends OutputStream {
 		return begin;
 	}
 
-	public void add(final byte iContent) throws IOException {
+	public void remove(final int iBegin, final int iEnd) {
+		if (iBegin > iEnd)
+			throw new IllegalArgumentException("Begin is bigger than end");
+
+		if (iEnd > buffer.length)
+			throw new IndexOutOfBoundsException("Position " + iEnd + " is out of buffer length (" + buffer.length + ")");
+
+		System.arraycopy(buffer, iEnd, buffer, iBegin, buffer.length - iEnd);
+	}
+
+	public void add(final byte iContent) {
 		write(iContent);
 	}
 
-	public final int add(final String iContent) throws IOException {
+	public final int add(final String iContent) {
 		return add(OBinaryProtocol.string2bytes(iContent));
 	}
 
-	public void add(final boolean iContent) throws IOException {
+	public void add(final boolean iContent) {
 		write(iContent ? 1 : 0);
 	}
 
-	public void add(final char iContent) throws IOException {
+	public void add(final char iContent) {
 		assureSpaceFor(OConstants.SIZE_CHAR);
 		OBinaryProtocol.char2bytes(iContent, buffer, position);
 		position += OConstants.SIZE_CHAR;
 	}
 
-	public void add(final int iContent) throws IOException {
+	public void add(final int iContent) {
 		assureSpaceFor(OConstants.SIZE_INT);
 		OBinaryProtocol.int2bytes(iContent, buffer, position);
 		position += OConstants.SIZE_INT;
 	}
 
-	public int add(final long iContent) throws IOException {
+	public int add(final long iContent) {
 		assureSpaceFor(OConstants.SIZE_LONG);
 		final int begin = position;
 		OBinaryProtocol.long2bytes(iContent, buffer, position);
@@ -188,7 +191,7 @@ public class OMemoryOutputStream extends OutputStream {
 		return begin;
 	}
 
-	public int add(final short iContent) throws IOException {
+	public int add(final short iContent) {
 		assureSpaceFor(OConstants.SIZE_SHORT);
 		final int begin = position;
 		OBinaryProtocol.short2bytes(iContent, buffer, position);
@@ -233,8 +236,158 @@ public class OMemoryOutputStream extends OutputStream {
 		position += iLength;
 	}
 
-	public OMemoryOutputStream jump(final int iOffset) {
-		position += iOffset;
+	public OMemoryStream jump(final int iOffset) {
+		if (iOffset > buffer.length)
+			throw new IndexOutOfBoundsException("Offset " + iOffset + " is out of bound of buffer size " + buffer.length);
+		position = iOffset;
 		return this;
+	}
+
+	public byte[] getAsByteArrayFixed(final int iSize) {
+		if (position >= buffer.length)
+			return null;
+
+		final byte[] portion = OArrays.copyOfRange(buffer, position, position + iSize);
+		position += iSize;
+
+		return portion;
+	}
+
+	/**
+	 * Browse the stream but just return the begin of the byte array. This is used to lazy load the information only when needed.
+	 * 
+	 */
+	public int getAsByteArrayOffset() {
+		if (position >= buffer.length)
+			return -1;
+
+		final int begin = position;
+
+		final int size = OBinaryProtocol.bytes2int(buffer, position);
+		position += OConstants.SIZE_INT + size;
+
+		return begin;
+	}
+
+	public int read() {
+		return buffer[position++];
+	}
+
+	public int read(final byte[] b) {
+		return read(b, 0, b.length);
+	}
+
+	public int read(final byte[] b, final int off, final int len) {
+		if (position >= buffer.length)
+			return 0;
+
+		System.arraycopy(buffer, position, b, off, len);
+		position += len;
+
+		return len;
+	}
+
+	public byte[] getAsByteArray(int iOffset) {
+		if (buffer == null || iOffset >= buffer.length)
+			return null;
+
+		final int size = OBinaryProtocol.bytes2int(buffer, iOffset);
+
+		if (size == 0)
+			return null;
+
+		iOffset += OConstants.SIZE_INT;
+
+		return OArrays.copyOfRange(buffer, iOffset, iOffset + size);
+	}
+
+	public byte[] getAsByteArray() {
+		if (position >= buffer.length)
+			return null;
+
+		final int size = OBinaryProtocol.bytes2int(buffer, position);
+		position += OConstants.SIZE_INT;
+
+		final byte[] portion = OArrays.copyOfRange(buffer, position, position + size);
+		position += size;
+
+		return portion;
+	}
+
+	public String getAsString() {
+		final int size = getVariableSize();
+		if (size < 0)
+			return null;
+		return OBinaryProtocol.bytes2string(this, size);
+	}
+
+	public boolean getAsBoolean() {
+		return buffer[position++] == 1;
+	}
+
+	public char getAsChar() {
+		final char value = OBinaryProtocol.bytes2char(buffer, position);
+		position += OConstants.SIZE_CHAR;
+		return value;
+	}
+
+	public byte getAsByte() {
+		return buffer[position++];
+	}
+
+	public long getAsLong() {
+		final long value = OBinaryProtocol.bytes2long(buffer, position);
+		position += OConstants.SIZE_LONG;
+		return value;
+	}
+
+	public int getAsInteger() {
+		final int value = OBinaryProtocol.bytes2int(buffer, position);
+		position += OConstants.SIZE_INT;
+		return value;
+	}
+
+	public short getAsShort() {
+		final short value = OBinaryProtocol.bytes2short(buffer, position);
+		position += OConstants.SIZE_SHORT;
+		return value;
+	}
+
+	public byte peek() {
+		return buffer[position];
+	}
+
+	public void setSource(final byte[] iBuffer) {
+		buffer = iBuffer;
+		position = 0;
+	}
+
+	public byte[] copy() {
+		if (buffer == null)
+			return null;
+
+		final int size = position > 0 ? position : buffer.length;
+
+		final byte[] copy = new byte[size];
+		System.arraycopy(buffer, 0, copy, 0, size);
+		return copy;
+	}
+
+	public int getVariableSize() {
+		if (position >= buffer.length)
+			return -1;
+
+		final int size = OBinaryProtocol.bytes2int(buffer, position);
+		position += OConstants.SIZE_INT;
+
+		return size;
+	}
+
+	public int getSize() {
+		return buffer.length;
+	}
+
+	public final int size() {
+		return position;
 	}
 }

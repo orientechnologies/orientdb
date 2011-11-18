@@ -506,9 +506,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			} else {
 				final ORecordInternal<?> record = connection.database.load(rid, fetchPlanString);
 
-				// if (rid.equals(((OSchemaImpl) connection.database.getMetadata().getSchema()).getDocument().getIdentity()))
-				// connection.database.getMetadata().getSchema().reload();
-
 				channel.acquireExclusiveLock();
 				try {
 					sendOk(lastClientTxId);

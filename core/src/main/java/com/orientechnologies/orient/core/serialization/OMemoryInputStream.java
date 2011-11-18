@@ -64,14 +64,6 @@ public class OMemoryInputStream extends InputStream {
 		return begin;
 	}
 
-	public OMemoryInputStreamCursor getCursor(final int iOffset) throws IOException {
-		if (buffer == null || iOffset >= buffer.length)
-			return null;
-
-		position = iOffset;
-		return new OMemoryInputStreamCursor(this, iOffset, getVariableSize());
-	}
-
 	@Override
 	public int read() throws IOException {
 		return buffer[position++];
@@ -120,13 +112,6 @@ public class OMemoryInputStream extends InputStream {
 		return portion;
 	}
 
-	public String getAsString() throws IOException {
-		final int size = getVariableSize();
-		if (size < 0)
-			return null;
-		return OBinaryProtocol.bytes2string(this, size);
-	}
-
 	public boolean getAsBoolean() throws IOException {
 		return buffer[position++] == 1;
 	}
@@ -170,6 +155,11 @@ public class OMemoryInputStream extends InputStream {
 	public void setSource(final byte[] iBuffer) {
 		buffer = iBuffer;
 		position = 0;
+	}
+
+	public OMemoryInputStream jump(final int iOffset) {
+		position += iOffset;
+		return this;
 	}
 
 	public byte[] move(final int iOffset, final int iCopyToOffset) {

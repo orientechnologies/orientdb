@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 public class ORecordId implements ORID {
@@ -191,6 +192,12 @@ public class ORecordId implements ORID {
 		return this;
 	}
 
+	public ORecordId fromStream(final OMemoryStream iStream) {
+		clusterId = iStream.getAsShort();
+		clusterPosition = iStream.getAsLong();
+		return this;
+	}
+
 	public ORecordId fromStream(final byte[] iBuffer) {
 		if (iBuffer != null) {
 			clusterId = OBinaryProtocol.bytes2short(iBuffer, 0);
@@ -200,6 +207,12 @@ public class ORecordId implements ORID {
 	}
 
 	public int toStream(final OutputStream iStream) throws IOException {
+		final int beginOffset = OBinaryProtocol.short2bytes((short) clusterId, iStream);
+		OBinaryProtocol.long2bytes(clusterPosition, iStream);
+		return beginOffset;
+	}
+
+	public int toStream(final OMemoryStream iStream) throws IOException {
 		final int beginOffset = OBinaryProtocol.short2bytes((short) clusterId, iStream);
 		OBinaryProtocol.long2bytes(clusterPosition, iStream);
 		return beginOffset;
