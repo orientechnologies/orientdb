@@ -44,6 +44,12 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable {
 			addKey(key);
 	}
 
+	public OCompositeKey(final Comparable... keys) {
+		this();
+		for (final Comparable key : keys)
+			addKey(key);
+	}
+
 	public OCompositeKey() {
 		this.keys = new LinkedList<Comparable>();
 	}
