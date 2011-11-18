@@ -389,6 +389,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
 		try {
 			while (p != null && p.getSize() > 0) {
+				searchNodeCallback();
 				steps++;
 
 				lastNode = p;
@@ -699,7 +700,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 				if (lastSearchFound) {
 					// EXACT MATCH: UPDATE THE VALUE
 					pageIndex = lastSearchIndex;
-          modCount++;
+					modCount++;
 					return parentNode.setValue(value);
 				}
 			}
@@ -2830,5 +2831,8 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		lastSearchFound = iNode != null ? iNode.tree.pageItemFound : false;
 		lastSearchIndex = iNode != null ? iNode.tree.pageIndex : -1;
 		return iNode;
+	}
+
+	protected void searchNodeCallback() {
 	}
 }

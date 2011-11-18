@@ -69,8 +69,6 @@ public class OMVRBTreeEntryDatabase<K, V> extends OMVRBTreeEntryPersistent<K, V>
 
 	@Override
 	public OMVRBTreeEntryDatabase<K, V> load() throws IOException {
-		pTree.checkForOptimization();
-
 		try {
 			record.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
 			record.reload();

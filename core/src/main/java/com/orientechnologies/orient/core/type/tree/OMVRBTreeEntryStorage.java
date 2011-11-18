@@ -53,7 +53,6 @@ public class OMVRBTreeEntryStorage<K, V> extends OMVRBTreeEntryPersistent<K, V> 
 
 	@Override
 	public OMVRBTreeEntryStorage<K, V> load() throws IOException {
-		pTree.checkForOptimization();
 		ORawBuffer raw = ((OMVRBTreeStorage<K, V>) tree).storage.readRecord(null, (ORecordId) record.getIdentity(), null, null);
 		record.fill(null, (ORecordId) record.getIdentity(), raw.version, raw.buffer, false);
 		fromStream(raw.buffer);

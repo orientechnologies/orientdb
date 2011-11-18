@@ -57,36 +57,26 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 @SuppressWarnings("serial")
 public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implements OMVRBTreeEventListener<K, V>,
 		OSerializableStream {
+	public final static byte																	CURRENT_PROTOCOL_VERSION	= 0;
+
 	protected OStreamSerializer																keySerializer;
-
 	protected OStreamSerializer																valueSerializer;
-
 	protected final Set<OMVRBTreeEntryPersistent<K, V>>				recordsToCommit						= new HashSet<OMVRBTreeEntryPersistent<K, V>>();
-
 	protected final String																		clusterName;
-
 	protected ORecordBytesLazy																record;
-
 	protected String																					fetchPlan;
 
 	// STORES IN MEMORY DIRECT REFERENCES TO PORTION OF THE TREE
 	protected int																							optimizeThreshold;
-
 	protected volatile int																		optimization							= 0;
-
 	private int																								insertionCounter					= 0;
-
 	protected int																							entryPointsSize;
 
 	protected float																						optimizeEntryPointsFactor;
-
 	private final TreeMap<K, OMVRBTreeEntryPersistent<K, V>>	entryPoints								= new TreeMap<K, OMVRBTreeEntryPersistent<K, V>>();
-
 	private final Map<ORID, OMVRBTreeEntryPersistent<K, V>>		cache											= new HashMap<ORID, OMVRBTreeEntryPersistent<K, V>>();
-
 	private final OMemoryOutputStream													entryRecordBuffer;
-
-	public final static byte																	CURRENT_PROTOCOL_VERSION	= 0;
+	private static final int																	OPTIMIZE_MAX_RETRY				= 10;
 
 	public OMVRBTreePersistent(final String iClusterName, final ORID iRID) {
 		this(iClusterName, null, null);
@@ -119,8 +109,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	 */
 	protected OMVRBTreeEntryPersistent<K, V> loadEntry(final OMVRBTreeEntryPersistent<K, V> iParent, final ORID iRecordId)
 			throws IOException {
-		checkForOptimization();
-
 		// SEARCH INTO THE CACHE
 		OMVRBTreeEntryPersistent<K, V> entry = searchNodeInCache(iRecordId);
 		if (entry == null) {
@@ -376,7 +364,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		final long timer = OProfiler.getInstance().startChrono();
 
 		try {
-			for (int i = 0; i < 10; ++i) {
+			for (int i = 0; i < OPTIMIZE_MAX_RETRY; ++i) {
 				try {
 
 					V v = super.remove(key);
@@ -384,7 +372,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 					return v;
 
 				} catch (OLowMemoryException e) {
-					OLogManager.instance().debug(this, "Optimization required during remove %d/10", i);
+					OLogManager.instance().debug(this, "Optimization required during remove %d/%d", i, OPTIMIZE_MAX_RETRY);
 
 					// LOW MEMORY DURING REMOVAL: THIS MEANS DEEP LOADING OF NODES. EXECUTE THE OPTIMIZATION AND RETRY IT
 					optimize(true);
@@ -447,9 +435,9 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 										cache.put(node.record.getIdentity().copy(), node);
 								}
 
-									cache.put(node.record.getIdentity(), node);
-								}
+								cache.put(node.record.getIdentity(), node);
 							}
+						}
 
 					totalCommitted += tmp.size();
 					tmp.clear();
@@ -582,11 +570,11 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 	@Override
 	public V get(final Object iKey) {
-		for (int i = 0; i < 10; ++i) {
+		for (int i = 0; i < OPTIMIZE_MAX_RETRY; ++i) {
 			try {
 				return super.get(iKey);
 			} catch (OLowMemoryException e) {
-				OLogManager.instance().debug(this, "Optimization required during load %d/10", i);
+				OLogManager.instance().debug(this, "Optimization required during load %d/%d", i, OPTIMIZE_MAX_RETRY);
 
 				// LOW MEMORY DURING LOAD: THIS MEANS DEEP LOADING OF NODES. EXECUTE THE OPTIMIZATION AND RETRY IT
 				optimize(true);
@@ -637,7 +625,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	/**
 	 * Checks if optimization is needed by raising a {@link OLowMemoryException}.
 	 */
-	protected void checkForOptimization() {
+	@Override
+	protected void searchNodeCallback() {
 		if (optimization > 0)
 			throw new OLowMemoryException("Optimization level: " + optimization);
 	}
@@ -678,7 +667,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		return buffer.toString();
 	}
 
-	private V internalPut(final K key, final V value) {
+	private V internalPut(final K key, final V value) throws OLowMemoryException {
 		ORecord<?> rec;
 
 		if (key instanceof ORecord<?>) {
@@ -695,7 +684,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 				rec.save();
 		}
 
-		for (int i = 0; i < 10; ++i) {
+		for (int i = 0; i < OPTIMIZE_MAX_RETRY; ++i) {
 			try {
 				final V previous = super.put(key, value);
 
@@ -707,7 +696,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 				return previous;
 			} catch (OLowMemoryException e) {
-				OLogManager.instance().debug(this, "Optimization required during put %d/10", i);
+				OLogManager.instance().debug(this, "Optimization required during put %d/%d", i, OPTIMIZE_MAX_RETRY);
 
 				// LOW MEMORY DURING PUT: THIS MEANS DEEP LOADING OF NODES. EXECUTE THE OPTIMIZATION AND RETRY IT
 				optimize(true);
