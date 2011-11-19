@@ -214,10 +214,10 @@ public class Orient extends OSharedResourceAbstract {
 					break;
 				}
 			}
-
-			for (Entry<String, OEngine> engine : engines.entrySet()) {
-				engine.getValue().removeStorage(iStorage);
-			}
+			//
+			// for (Entry<String, OEngine> engine : engines.entrySet()) {
+			// engine.getValue().removeStorage(iStorage);
+			// }
 		} finally {
 			releaseExclusiveLock();
 		}
