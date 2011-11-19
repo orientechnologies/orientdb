@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Per database cache of documents. It's not synchronized since database object are not thread-safes.
@@ -46,12 +47,17 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
 		PROFILER_CACHE_NOTFOUND = profilerPrefix + ".cache.notFound";
 
 		super.startup();
+		setExcludedCluster(database.getClusterIdByName(OStorage.CLUSTER_INDEX_NAME));
 
 		level2cache = (OLevel2RecordCache) database.getLevel2Cache();
 	}
 
 	public void updateRecord(final ORecordInternal<?> iRecord) {
 		if (enabled) {
+			if (iRecord.getIdentity().getClusterId() == excludedCluster)
+				// EXCLUDED CLUSTER
+				return;
+
 			acquireExclusiveLock();
 			try {
 				if (entries.get(iRecord.getIdentity()) != iRecord)

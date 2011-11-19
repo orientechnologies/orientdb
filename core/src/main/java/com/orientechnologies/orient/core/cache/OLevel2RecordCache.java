@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
  */
 public class OLevel2RecordCache extends OAbstractRecordCache {
 
-	@SuppressWarnings("unused")
 	final private OStorage	storage;
 	private STRATEGY				strategy;
 
@@ -61,6 +60,9 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
 				if (record == null || record.isDirty() || record.getIdentity().isNew())
 					continue;
 
+				if (record.getIdentity().getClusterId() == excludedCluster)
+					continue;
+
 				if (record.isPinned()) {
 					final ORecordInternal<?> prevEntry = entries.get(record.getIdentity());
 					if (prevEntry != null && prevEntry.getVersion() >= record.getVersion())
@@ -82,6 +84,9 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
 	public void updateRecord(final ORecordInternal<?> iRecord) {
 		if (!enabled || iRecord == null || iRecord.isDirty() || iRecord.getIdentity().isNew())
 			// PRECONDITIONS
+			return;
+
+		if (iRecord.getIdentity().getClusterId() == excludedCluster)
 			return;
 
 		acquireExclusiveLock();
@@ -120,6 +125,9 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
 	protected ORecordInternal<?> retrieveRecord(final ORID iRID) {
 		if (!enabled)
 			// PRECONDITIONS
+			return null;
+
+		if (iRID.getClusterId() == excludedCluster)
 			return null;
 
 		acquireExclusiveLock();

@@ -35,12 +35,13 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * 
  */
 public abstract class OAbstractRecordCache extends OSharedResourceAbstract {
-	protected boolean				enabled	= true;
+	protected boolean				enabled					= true;
 	protected int						maxSize;
 	protected ORecordCache	entries;
 
 	protected Listener			watchDogListener;
 	protected String				profilerPrefix;
+	protected int						excludedCluster	= -1;
 
 	/**
 	 * Create the cache of iMaxSize size.
@@ -283,5 +284,13 @@ public abstract class OAbstractRecordCache extends OSharedResourceAbstract {
 				return maxSize;
 			}
 		});
+	}
+
+	public int getExcludedCluster() {
+		return excludedCluster;
+	}
+
+	public void setExcludedCluster(int excludedCluster) {
+		this.excludedCluster = excludedCluster;
 	}
 }
