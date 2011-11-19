@@ -1164,8 +1164,6 @@ public class OStorageLocal extends OStorageEmbedded {
 
 				incrementVersion();
 
-				//System.out.printf("\nrecord=%s, db=%s, version=%d", iRid, this, ppos.version);
-
 				return ppos.version;
 
 			} finally {
