@@ -72,7 +72,7 @@ public class OClusterLocalHole extends OSingleFileSegment {
 		file.writeLong(position, iPosition);
 
 		if (OLogManager.instance().isDebugEnabled())
-			OLogManager.instance().debug(this, "Pushed new hole at #%d containing the position #%d:%d", position / RECORD_SIZE,
+			OLogManager.instance().debug(this, "Pushed new hole %s/#%d -> #%d:%d", owner.getName(), position / RECORD_SIZE,
 					owner.getId(), iPosition);
 
 		return position;
@@ -91,7 +91,7 @@ public class OClusterLocalHole extends OSingleFileSegment {
 
 			if (recycledPosition > -1) {
 				if (OLogManager.instance().isDebugEnabled())
-					OLogManager.instance().debug(this, "Recycling hole cluster #%d containing the position #%d:%d", pos, owner.getId(),
+					OLogManager.instance().debug(this, "Recycled hole %s/#%d -> #%d:%d", owner.getName(), pos, owner.getId(),
 							recycledPosition);
 
 				// SHRINK THE FILE
