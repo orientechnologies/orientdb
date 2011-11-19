@@ -200,25 +200,33 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	 * instance has the same identity and values but all the internal structure are totally independent by the source.
 	 */
 	public ODocument copy() {
-		final ODocument cloned = (ODocument) copyTo(new ODocument());
-		cloned._ordered = _ordered;
-		cloned._clazz = _clazz;
-		cloned._trackingChanges = _trackingChanges;
+		return copy((ODocument) copyTo(new ODocument()));
+	}
+
+	/**
+	 * Copies all the fields into iDestination document.
+	 */
+	public ODocument copy(final ODocument iDestination) {
+		checkForFields();
+		
+		iDestination._ordered = _ordered;
+		iDestination._clazz = _clazz;
+		iDestination._trackingChanges = _trackingChanges;
 
 		if (_fieldValues != null) {
-			cloned._fieldValues = _fieldValues instanceof LinkedHashMap ? new LinkedHashMap<String, Object>()
+			iDestination._fieldValues = _fieldValues instanceof LinkedHashMap ? new LinkedHashMap<String, Object>()
 					: new HashMap<String, Object>();
 			for (Entry<String, Object> entry : _fieldValues.entrySet())
-				ODocumentHelper.copyFieldValue(cloned, entry);
+				ODocumentHelper.copyFieldValue(iDestination, entry);
 		}
 
 		if (_fieldTypes != null)
-			cloned._fieldTypes = new HashMap<String, OType>(_fieldTypes);
+			iDestination._fieldTypes = new HashMap<String, OType>(_fieldTypes);
 
-		cloned._fieldOriginalValues = null;
-		cloned._dirty = _dirty; // LEAVE IT AS LAST TO AVOID SOMETHING SET THE FLAG TO TRUE
+		iDestination._fieldOriginalValues = null;
+		iDestination._dirty = _dirty; // LEAVE IT AS LAST TO AVOID SOMETHING SET THE FLAG TO TRUE
 
-		return cloned;
+		return iDestination;
 	}
 
 	@Override

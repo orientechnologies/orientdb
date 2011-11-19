@@ -15,11 +15,19 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import com.orientechnologies.common.collection.OCompositeKey;
-import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -31,9 +39,13 @@ import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexFullText;
+import com.orientechnologies.orient.core.index.OIndexNotUnique;
+import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -43,9 +55,22 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.sql.filter.*;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-import com.orientechnologies.orient.core.sql.operator.*;
+import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsText;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNotEquals;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
@@ -78,7 +103,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	private int																			resultCount;
 	private Object																	flattenTarget;
 	private boolean																	anyFunctionAggregates	= false;
-  private int fetchLimit                          = -1;
+	private int																			fetchLimit						= -1;
 
 	/**
 	 * Presents query subset in form of field1 = "field1 value" AND field2 = "field2 value" ... AND fieldN anyOpetator "fieldN value"
@@ -220,7 +245,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		// TODO: SUPPORT MULTIPLE CLASSES LIKE A SQL JOIN
 		compiledFilter.bindParameters(iArgs);
 
-    fetchLimit = getQueryFetchLimit();
+		fetchLimit = getQueryFetchLimit();
 
 		if (compiledFilter.getTargetClasses() != null)
 			searchInClasses();
@@ -283,28 +308,28 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		return true;
 	}
 
-  private int getQueryFetchLimit() {
-    final int sqlLimit;
-    final int requestLimit;
+	private int getQueryFetchLimit() {
+		final int sqlLimit;
+		final int requestLimit;
 
-    if (orderedFields == null && limit > -1)
-      sqlLimit = limit;
-    else
-      sqlLimit = -1;
+		if (orderedFields == null && limit > -1)
+			sqlLimit = limit;
+		else
+			sqlLimit = -1;
 
-    if(request.getLimit() > -1)
-      requestLimit = request.getLimit();
-    else
-      requestLimit = -1;
+		if (request.getLimit() > -1)
+			requestLimit = request.getLimit();
+		else
+			requestLimit = -1;
 
-    if(sqlLimit == -1)
-      return requestLimit;
+		if (sqlLimit == -1)
+			return requestLimit;
 
-    if(requestLimit == -1)
-      return sqlLimit;
+		if (requestLimit == -1)
+			return sqlLimit;
 
-    return Math.min(sqlLimit, requestLimit);
-  }
+		return Math.min(sqlLimit, requestLimit);
+	}
 
 	public Map<String, Object> getProjections() {
 		return projections;
@@ -368,8 +393,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		if (word.toString().equals(KEYWORD_LIMIT))
 			// GO BACK
 			currentPos -= KEYWORD_LIMIT.length();
-  }
-
+	}
 
 	/**
 	 * Parses the limit keyword if found.
@@ -459,14 +483,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 						if (keyOne == null || keyTwo == null)
 							continue;
 
+						final Collection<OIdentifiable> result;
+						if (fetchLimit > -1)
+							result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
+						else
+							result = index.getValuesBetween(keyOne, true, keyTwo, true);
 
-            final Collection<OIdentifiable> result;
-            if(fetchLimit > -1)
-						  result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
-            else
-              result = index.getValuesBetween(keyOne, true, keyTwo, true);
-
-            fillSearchIndexResultSet(result);
+						fillSearchIndexResultSet(result);
 						return true;
 					}
 
@@ -488,13 +511,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 						if (containsNotCompatibleKey)
 							continue;
 
-            final Collection<OIdentifiable> result;
-            if (fetchLimit > -1)
-              result = index.getValues(inKeys, fetchLimit);
-            else
-              result = index.getValues(inKeys);
+						final Collection<OIdentifiable> result;
+						if (fetchLimit > -1)
+							result = index.getValues(inKeys, fetchLimit);
+						else
+							result = index.getValues(inKeys);
 
-            fillSearchIndexResultSet(result);
+						fillSearchIndexResultSet(result);
 						return true;
 					}
 
@@ -504,7 +527,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 						continue;
 
 					if (internalIndex instanceof OIndexFullText && operator instanceof OQueryOperatorContainsText) {
-            fillSearchIndexResultSet(index.get(key));
+						fillSearchIndexResultSet(index.get(key));
 						return true;
 					}
 
@@ -512,51 +535,51 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 						continue;
 
 					if (operator instanceof OQueryOperatorEquals) {
-            fillSearchIndexResultSet(index.get(key));
-	  				return true;
+						fillSearchIndexResultSet(index.get(key));
+						return true;
 					}
 
 					if (operator instanceof OQueryOperatorMajor) {
-            final Collection<OIdentifiable> result;
-            if (fetchLimit > -1)
-              result = index.getValuesMajor(key, false, fetchLimit);
-            else
-              result =  index.getValuesMajor(key, false);
+						final Collection<OIdentifiable> result;
+						if (fetchLimit > -1)
+							result = index.getValuesMajor(key, false, fetchLimit);
+						else
+							result = index.getValuesMajor(key, false);
 
-            fillSearchIndexResultSet(result);
+						fillSearchIndexResultSet(result);
 						return true;
 					}
 
 					if (operator instanceof OQueryOperatorMajorEquals) {
-            final Collection<OIdentifiable> result;
-            if (fetchLimit > -1)
-              result = index.getValuesMajor(key, true, fetchLimit);
-            else
-              result =  index.getValuesMajor(key, true);
+						final Collection<OIdentifiable> result;
+						if (fetchLimit > -1)
+							result = index.getValuesMajor(key, true, fetchLimit);
+						else
+							result = index.getValuesMajor(key, true);
 
-            fillSearchIndexResultSet(result);
+						fillSearchIndexResultSet(result);
 						return true;
 					}
 
 					if (operator instanceof OQueryOperatorMinor) {
-            final Collection<OIdentifiable> result;
-            if (fetchLimit > -1)
-              result = index.getValuesMinor(key, false, fetchLimit);
-            else
-              result =  index.getValuesMinor(key, false);
+						final Collection<OIdentifiable> result;
+						if (fetchLimit > -1)
+							result = index.getValuesMinor(key, false, fetchLimit);
+						else
+							result = index.getValuesMinor(key, false);
 
-            fillSearchIndexResultSet(result);
+						fillSearchIndexResultSet(result);
 						return true;
 					}
 
 					if (operator instanceof OQueryOperatorMinorEquals) {
-            final Collection<OIdentifiable> result;
-            if (fetchLimit > -1)
-              result = index.getValuesMinor(key, true, fetchLimit);
-            else
-              result =  index.getValuesMinor(key, true);
+						final Collection<OIdentifiable> result;
+						if (fetchLimit > -1)
+							result = index.getValuesMinor(key, true, fetchLimit);
+						else
+							result = index.getValuesMinor(key, true);
 
-            fillSearchIndexResultSet(result);
+						fillSearchIndexResultSet(result);
 						return true;
 					}
 				} else {
@@ -594,14 +617,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 						if (keyTwo == null)
 							continue;
 
-            final Collection<OIdentifiable> result;
-            if (fetchLimit > -1)
-              result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
-            else
-              result =  index.getValuesBetween(keyOne, true, keyTwo, true);
+						final Collection<OIdentifiable> result;
+						if (fetchLimit > -1)
+							result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
+						else
+							result = index.getValuesBetween(keyOne, true, keyTwo, true);
 
-            fillSearchIndexResultSet(result);
-
+						fillSearchIndexResultSet(result);
 
 						if (OProfiler.getInstance().isRecording()) {
 							OProfiler.getInstance().updateCounter("Query.compositeIndexUsage", 1);
@@ -622,13 +644,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 						final Object keyTwo = indexDefinition.createValue(keyParams);
 
-            final Collection<OIdentifiable> result;
-            if (fetchLimit > -1)
-              result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
-            else
-              result =  index.getValuesBetween(keyOne, true, keyTwo, true);
+						final Collection<OIdentifiable> result;
+						if (fetchLimit > -1)
+							result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
+						else
+							result = index.getValuesBetween(keyOne, true, keyTwo, true);
 
-            fillSearchIndexResultSet(result);
+						fillSearchIndexResultSet(result);
 
 						if (OProfiler.getInstance().isRecording()) {
 							OProfiler.getInstance().updateCounter("Query.compositeIndexUsage", 1);
@@ -653,13 +675,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 						if (keyTwo == null)
 							continue;
 
-            final Collection<OIdentifiable> result;
-            if (fetchLimit > -1)
-              result = index.getValuesBetween(keyOne, false, keyTwo, true, fetchLimit);
-            else
-              result =  index.getValuesBetween(keyOne, false, keyTwo, true);
+						final Collection<OIdentifiable> result;
+						if (fetchLimit > -1)
+							result = index.getValuesBetween(keyOne, false, keyTwo, true, fetchLimit);
+						else
+							result = index.getValuesBetween(keyOne, false, keyTwo, true);
 
-            fillSearchIndexResultSet(result);
+						fillSearchIndexResultSet(result);
 
 						if (OProfiler.getInstance().isRecording()) {
 							OProfiler.getInstance().updateCounter("Query.compositeIndexUsage", 1);
@@ -684,13 +706,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 						if (keyTwo == null)
 							continue;
 
-            final Collection<OIdentifiable> result;
-            if (fetchLimit > -1)
-              result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
-            else
-              result =  index.getValuesBetween(keyOne, true, keyTwo, true);
+						final Collection<OIdentifiable> result;
+						if (fetchLimit > -1)
+							result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
+						else
+							result = index.getValuesBetween(keyOne, true, keyTwo, true);
 
-            fillSearchIndexResultSet(result);
+						fillSearchIndexResultSet(result);
 
 						if (OProfiler.getInstance().isRecording()) {
 							OProfiler.getInstance().updateCounter("Query.compositeIndexUsage", 1);
@@ -715,13 +737,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 						if (keyTwo == null)
 							continue;
 
-            final Collection<OIdentifiable> result;
-            if (fetchLimit > -1)
-              result = index.getValuesBetween(keyOne, true, keyTwo, false, fetchLimit);
-            else
-              result =  index.getValuesBetween(keyOne, true, keyTwo, false);
+						final Collection<OIdentifiable> result;
+						if (fetchLimit > -1)
+							result = index.getValuesBetween(keyOne, true, keyTwo, false, fetchLimit);
+						else
+							result = index.getValuesBetween(keyOne, true, keyTwo, false);
 
-            fillSearchIndexResultSet(result);
+						fillSearchIndexResultSet(result);
 
 						if (OProfiler.getInstance().isRecording()) {
 							OProfiler.getInstance().updateCounter("Query.compositeIndexUsage", 1);
@@ -746,14 +768,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 						if (keyTwo == null)
 							continue;
 
+						final Collection<OIdentifiable> result;
+						if (fetchLimit > -1)
+							result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
+						else
+							result = index.getValuesBetween(keyOne, true, keyTwo, true);
 
-            final Collection<OIdentifiable> result;
-            if (fetchLimit > -1)
-              result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
-            else
-              result =  index.getValuesBetween(keyOne, true, keyTwo, true);
-
-            fillSearchIndexResultSet(result);
+						fillSearchIndexResultSet(result);
 
 						if (OProfiler.getInstance().isRecording()) {
 							OProfiler.getInstance().updateCounter("Query.compositeIndexUsage", 1);
@@ -849,38 +870,38 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		return new OIndexSearchResult(iCondition.getOperator(), item.getRoot(), value);
 	}
 
-  private void fillSearchIndexResultSet(final Object indexResult) {
-    if (indexResult != null) {
-      if (indexResult instanceof Collection<?>) {
-        Collection<OIdentifiable> indexResultSet = (Collection<OIdentifiable>) indexResult;
-        if (!indexResultSet.isEmpty()) {
-          // FOUND USING INDEXES
-          for (OIdentifiable identifiable : indexResultSet) {
-           ORecord<?> record = identifiable.getRecord();
-            if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
-              try {
-                record = record.<ORecord>load();
-              } catch (ORecordNotFoundException e) {
-                throw new OException("Error during loading record with id : " + record.getIdentity());
-              }
-            }
+	private void fillSearchIndexResultSet(final Object indexResult) {
+		if (indexResult != null) {
+			if (indexResult instanceof Collection<?>) {
+				Collection<OIdentifiable> indexResultSet = (Collection<OIdentifiable>) indexResult;
+				if (!indexResultSet.isEmpty()) {
+					// FOUND USING INDEXES
+					for (OIdentifiable identifiable : indexResultSet) {
+						ORecord<?> record = identifiable.getRecord();
+						if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+							try {
+								record = record.<ORecord> load();
+							} catch (ORecordNotFoundException e) {
+								throw new OException("Error during loading record with id : " + record.getIdentity());
+							}
+						}
 
-            if (filter((ORecordInternal<?>) record)) {
-              final boolean continueResultParsing = addResult(record);
-              if (!continueResultParsing)
-                break;
-            }
-          }
-        }
-      } else {
-        final ORecord<?> record = ((OIdentifiable) indexResult).getRecord();
-        if (filter((ORecordInternal<?>) record))
-          addResult(record);
-      }
-    }
+						if (filter((ORecordInternal<?>) record)) {
+							final boolean continueResultParsing = addResult(record);
+							if (!continueResultParsing)
+								break;
+						}
+					}
+				}
+			} else {
+				final ORecord<?> record = ((OIdentifiable) indexResult).getRecord();
+				if (filter((ORecordInternal<?>) record))
+					addResult(record);
+			}
+		}
 	}
 
-  protected boolean filter(final ORecordInternal<?> iRecord) {
+	protected boolean filter(final ORecordInternal<?> iRecord) {
 		return compiledFilter.evaluate(database, (ORecordSchemaAware<?>) iRecord);
 	}
 
@@ -993,17 +1014,17 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		return endPos;
 	}
 
-  private void scanEntireClusters(final int[] clusterIds) {
-    final OSQLFilterCondition rootCondition = compiledFilter.getRootCondition();
-    if(rootCondition == null)
-      ((OStorageEmbedded) database.getStorage()).browse(clusterIds,null,
-             null, this, (ORecordInternal<?>) database.newInstance(), false);
-    else
-      ((OStorageEmbedded) database.getStorage()).browse(clusterIds, rootCondition.getBeginRidRange(),
-              rootCondition.getEndRidRange(), this, (ORecordInternal<?>) database.newInstance(), false);
-  }
+	private void scanEntireClusters(final int[] clusterIds) {
+		final OSQLFilterCondition rootCondition = compiledFilter.getRootCondition();
+		if (rootCondition == null)
+			((OStorageEmbedded) database.getStorage()).browse(clusterIds, null, null, this, (ORecordInternal<?>) database.newInstance(),
+					false);
+		else
+			((OStorageEmbedded) database.getStorage()).browse(clusterIds, rootCondition.getBeginRidRange(),
+					rootCondition.getEndRidRange(), this, (ORecordInternal<?>) database.newInstance(), false);
+	}
 
-  private void applyOrderBy() {
+	private void applyOrderBy() {
 		if (orderedFields == null)
 			return;
 
@@ -1052,7 +1073,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 			Object value;
 			for (Entry<String, Object> projection : projections.entrySet()) {
-				if (projection.getValue() instanceof OSQLFilterItemField)
+				if (projection.getValue().equals("*")) {
+					doc.copy(result);
+					value = null;
+				} else if (projection.getValue() instanceof OSQLFilterItemField)
 					value = ((OSQLFilterItemField) projection.getValue()).getValue(doc);
 				else if (projection.getValue() instanceof OSQLFunctionRuntime) {
 					final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection.getValue();
@@ -1079,7 +1103,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		return iRecord;
 	}
 
-	@SuppressWarnings("rawtypes")
 	private void searchInClasses() {
 		final int[] clusterIds;
 		final OClass cls = compiledFilter.getTargetClasses().keySet().iterator().next();
@@ -1094,7 +1117,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 		if (searchForIndexes(cls))
 			OProfiler.getInstance().updateCounter("Query.indexUsage", 1);
-		  else
+		else
 			// NO INDEXES: SCAN THE ENTIRE CLUSTER
 			scanEntireClusters(clusterIds);
 	}
