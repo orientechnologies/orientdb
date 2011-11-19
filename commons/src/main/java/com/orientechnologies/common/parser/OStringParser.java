@@ -77,8 +77,8 @@ public class OStringParser {
 			final boolean iIncludeStringSep) {
 		iText = iText.trim();
 
-		ArrayList<String> fields = new ArrayList<String>();
-		StringBuilder buffer = new StringBuilder();
+		final ArrayList<String> fields = new ArrayList<String>();
+		final StringBuilder buffer = new StringBuilder();
 		char stringBeginChar = ' ';
 		char c;
 		int openBraket = 0;
@@ -90,27 +90,26 @@ public class OStringParser {
 			c = iText.charAt(i);
 
 			if (openBraket == 0 && openGraph == 0 && !escape && c == '\\') {
-				if (iText.charAt(i + 1) == 'u') {
+				// ESCAPE CHARS
+				final char nextChar = iText.charAt(i + 1);
+
+				if (nextChar == 'u') {
 					i = readUnicode(iText, i + 2, buffer);
-				} else if (iText.charAt(i + 1) == 'n') {
+				} else if (nextChar == 'n') {
 					buffer.append("\n");
 					i++;
-					continue;
-				} else if (iText.charAt(i + 1) == 'r') {
+				} else if (nextChar == 'r') {
 					buffer.append("\r");
 					i++;
-					continue;
-				} else if (iText.charAt(i + 1) == 't') {
+				} else if (nextChar == 't') {
 					buffer.append("\t");
 					i++;
-					continue;
-				} else if (iText.charAt(i + 1) == 'f') {
+				} else if (nextChar == 'f') {
 					buffer.append("\f");
 					i++;
-					continue;
-				} else {
+				} else
 					escape = true;
-				}
+
 				continue;
 			}
 
@@ -162,10 +161,8 @@ public class OStringParser {
 					if (charFound)
 						continue;
 				}
-			}
 
-			// CHECK IF IT MUST JUMP THE CHAR
-			if (buffer.length() == 0) {
+				// CHECK FOR CHAR TO JUMP
 				charFound = false;
 
 				for (int jumpIndex = 0; jumpIndex < iJumpChars.length(); ++jumpIndex) {

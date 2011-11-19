@@ -623,8 +623,16 @@ public class ODocumentHelper {
 						if (myEntry.getValue() instanceof ODocument) {
 							if (!hasSameContentOf((ODocument) myEntry.getValue(), (ODocument) otherMap.get(myEntry.getKey())))
 								return false;
-						} else if (!myEntry.getValue().equals(otherMap.get(myEntry.getKey())))
-							return false;
+						} else {
+							final Object myValue = myEntry.getValue();
+							final Object otherValue = otherMap.get(myEntry.getKey());
+
+							if (myValue == null) {
+								if (otherValue != null)
+									return false;
+							} else if (!myValue.equals(otherValue))
+								return false;
+						}
 					}
 				} else {
 					if (!myFieldValue.equals(otherFieldValue))

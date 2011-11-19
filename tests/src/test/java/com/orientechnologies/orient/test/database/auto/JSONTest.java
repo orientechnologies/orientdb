@@ -40,6 +40,20 @@ public class JSONTest {
 	}
 
 	@Test
+	public void testNullity() {
+		ODocument newDoc = new ODocument();
+
+		newDoc.fromJSON("{\"gender\":{\"name\":\"Male\"},\"firstName\":\"Jack\",\"lastName\":\"Williams\","
+				+ "\"phone\":\"561-401-3348\",\"email\":\"0586548571@example.com\",\"address\":{\"street1\":\"Smith Ave\","
+				+ "\"street2\":null,\"city\":\"GORDONSVILLE\",\"state\":\"VA\",\"code\":\"22942\"}," + "\"dob\":\"2011-11-17T03:17:04Z\"}");
+
+		String json = newDoc.toJSON();
+		ODocument loadedDoc = new ODocument().fromJSON(json);
+
+		Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
+	}
+
+	@Test
 	public void testEmbeddedList() {
 		ODocument newDoc = new ODocument();
 
@@ -204,7 +218,7 @@ public class JSONTest {
 
 		List<ODocument> result = database.getUnderlying()
 				.command(new OSQLSynchQuery<ODocument>("select * from Profile where name = 'Barack' and surname = 'Obama'")).execute();
-		
+
 		for (ODocument doc : result) {
 			String jsonFull = doc.toJSON("type,rid,version,class,attribSameRow,indent:0,fetchPlan:*:-1");
 			ODocument loadedDoc = new ODocument().fromJSON(jsonFull);

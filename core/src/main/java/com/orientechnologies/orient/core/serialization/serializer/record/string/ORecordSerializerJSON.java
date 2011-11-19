@@ -90,18 +90,14 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 		if (fields.length % 2 != 0)
 			throw new OSerializationException("Error on unmarshalling JSON content: wrong format. Use <field> : <value>");
 
-		String fieldName;
-		String fieldValue;
-		String fieldValueAsString;
 		Map<String, Character> fieldTypes = null;
 
-		// SEARCH FOR FIELD TYPES IF ANY
 		if (fields != null && fields.length > 0) {
+			// SEARCH FOR FIELD TYPES IF ANY
 			for (int i = 0; i < fields.length; i += 2) {
-				fieldName = fields[i];
-				fieldName = fieldName.substring(1, fieldName.length() - 1);
-				fieldValue = fields[i + 1];
-				fieldValueAsString = fieldValue.length() >= 2 ? fieldValue.substring(1, fieldValue.length() - 1) : fieldValue;
+				final String fieldName = OStringSerializerHelper.getStringContent(fields[i]);
+				final String fieldValue = fields[i + 1];
+				final String fieldValueAsString = OStringSerializerHelper.getStringContent(fieldValue);
 
 				if (fieldName.equals(ATTRIBUTE_FIELD_TYPES) && iRecord instanceof ODocument) {
 					// LOAD THE FIELD TYPE MAP
@@ -125,10 +121,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 			try {
 				for (int i = 0; i < fields.length; i += 2) {
-					fieldName = fields[i];
-					fieldName = fieldName.substring(1, fieldName.length() - 1);
-					fieldValue = fields[i + 1].trim();
-					fieldValueAsString = fieldValue.length() >= 2 ? fieldValue.substring(1, fieldValue.length() - 1) : fieldValue;
+					final String fieldName = OStringSerializerHelper.getStringContent(fields[i]);
+					final String fieldValue = fields[i + 1];
+					final String fieldValueAsString = OStringSerializerHelper.getStringContent(fieldValue);
 
 					// RECORD ATTRIBUTES
 					if (fieldName.equals(ODocumentHelper.ATTRIBUTE_RID))
@@ -211,7 +206,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 		if (iFieldValue.startsWith("{") && iFieldValue.endsWith("}")) {
 			// OBJECT OR MAP. CHECK THE TYPE ATTRIBUTE TO KNOW IT
-			String[] fields = OStringParser.getWords(iFieldValueAsString, ":,", true);
+			iFieldValueAsString = iFieldValue.substring(1, iFieldValue.length() - 1);
+			final String[] fields = OStringParser.getWords(iFieldValueAsString, ":,", true);
 			if (fields == null || fields.length == 0)
 				// EMPTY, RETURN an EMPTY HASHMAP
 				return new HashMap<String, Object>();
@@ -235,7 +231,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 					if (iFieldName.length() >= 2)
 						iFieldName = iFieldName.substring(1, iFieldName.length() - 1);
 					iFieldValue = fields[i + 1];
-					iFieldValueAsString = iFieldValue.length() >= 2 ? iFieldValue.substring(1, iFieldValue.length() - 1) : iFieldValue;
+					iFieldValueAsString = OStringSerializerHelper.getStringContent(iFieldValue);
 
 					embeddedMap.put(iFieldName, getValue(iRecord, null, iFieldValue, iFieldValueAsString, iLinkedType, null, iFieldTypes));
 				}
