@@ -143,6 +143,8 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 		tree.getListener().signalNodeChanged(this);
 
+		p.markDirty();
+
 		pTree.addNodeAsEntrypoint(this);
 	}
 
@@ -564,21 +566,11 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 		final OMVRBTreeEntryPersistent<K, V> source = (OMVRBTreeEntryPersistent<K, V>) iSource;
 
-		parent = source.parent;
-		left = source.left;
-		right = source.right;
-
-		parentRid = source.parentRid;
-		leftRid = source.leftRid;
-		rightRid = source.rightRid;
-
 		serializedKeys = new int[source.serializedKeys.length];
-		for (int i = 0; i < source.serializedKeys.length; ++i)
-			serializedKeys[i] = source.serializedKeys[i];
+		System.arraycopy(source.serializedKeys, 0, serializedKeys, 0, source.serializedKeys.length);
 
 		serializedValues = new int[source.serializedValues.length];
-		for (int i = 0; i < source.serializedValues.length; ++i)
-			serializedValues[i] = source.serializedValues[i];
+		System.arraycopy(source.serializedValues, 0, serializedValues, 0, source.serializedValues.length);
 
 		super.copyFrom(source);
 	}

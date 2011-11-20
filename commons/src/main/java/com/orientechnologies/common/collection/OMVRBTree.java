@@ -421,12 +421,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
 				if (beginKey < 0) {
 					if (pageItemComparator < 0) {
-						// System.out.println("-> Load predecessor of " + p + "...");
 						tmpNode = predecessor(p);
-						// System.out.println("-> Loaded " + tmpNode);
 						if (tmpNode != null && tmpNode != prevNode) {
 							// MINOR THAN THE CURRENT: GET THE LEFT NODE
-							// p = p.getLeft();
 							prevNode = p;
 							p = tmpNode;
 							continue;
@@ -434,12 +431,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 					}
 				} else if (beginKey > 0) {
 					if (pageItemComparator > 0) {
-						// System.out.println("-> Load successor of " + p + "...");
 						tmpNode = successor(p);
-						// System.out.println("-> Loaded " + tmpNode);
 						if (tmpNode != null && tmpNode != prevNode) {
 							// MAJOR THAN THE CURRENT: GET THE RIGHT NODE
-							// p = p.getRight();
 							prevNode = p;
 							p = tmpNode;
 							continue;
@@ -708,9 +702,11 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			// SEARCH THE ITEM
 			parentNode = getEntry(key, true, PartialSearchMode.NONE);
 
-			if (pageItemFound)
+			if (pageItemFound) {
+				modCount++;
 				// EXACT MATCH: UPDATE THE VALUE
 				return parentNode.setValue(value);
+			}
 
 			setLastSearchNode(null, null);
 
@@ -733,25 +729,49 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 					// INSERT IN THE NEW NODE
 					newNode.insert(pageIndex - parentNode.getPageSplitItems(), key, value);
 
-				final OMVRBTreeEntry<K, V> prevNode = parentNode.getRight();
+				OMVRBTreeEntry<K, V> node = parentNode.getRight();
+				OMVRBTreeEntry<K, V> prevNode = parentNode;
+				int cmp = 0;
+				if (comparator != null)
+					while (node != null) {
+						cmp = comparator.compare(newNode.getFirstKey(), node.getFirstKey());
+						if (cmp < 0) {
+							prevNode = node;
+							node = node.getLeft();
+						} else if (cmp > 0) {
+							prevNode = node;
+							node = node.getRight();
+						} else {
+							throw new IllegalStateException("Duplicated keys were found in OMVRBTree.");
+						}
+					}
+				else
+					while (node != null) {
+						cmp = ((Comparable<K>) newNode.getFirstKey()).compareTo(node.getFirstKey());
+						if (cmp < 0) {
+							prevNode = node;
+							node = node.getLeft();
+						} else if (cmp > 0) {
+							prevNode = node;
+							node = node.getRight();
+						} else {
+							throw new IllegalStateException("Duplicated keys were found in OMVRBTree.");
+						}
+					}
 
-				// REPLACE THE RIGHT ONE WITH THE NEW NODE
-				parentNode.setRight(newNode);
+				if (prevNode == parentNode)
+					parentNode.setRight(newNode);
+				else if (cmp < 0)
+					prevNode.setLeft(newNode);
+				else if (cmp > 0)
+					prevNode.setRight(newNode);
+				else
+					throw new IllegalStateException("Duplicated keys were found in OMVRBTree.");
 
-				if (prevNode != null) {
-					// INSERT THE NODE IN THE TREE IN THE RIGHT MOVING CURRENT RIGHT TO THE RIGHT OF THE NEW NODE
-					newNode.setRight(prevNode);
-					fixAfterInsertion(prevNode);
-				} else
-					fixAfterInsertion(newNode);
-
-				checkTreeStructure(parentNode);
-
-				modCount++;
+				fixAfterInsertion(newNode);
 			}
 
-			checkTreeStructure(parentNode);
-
+			modCount++;
 			size++;
 
 			if (listener != null)
@@ -2306,33 +2326,6 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		}
 	}
 
-	/** From CLR */
-	/*
-	 * private void fixAfterInsertion(OMVRBTreeEntry<K, V> x) { x.setColor(RED);
-	 * 
-	 * // if (x != null && x != root && x.getParent() != null && x.getParent().getColor() == RED) { //
-	 * //System.out.println("BEFORE FIX on node: " + x); // printInMemoryStructure(x);
-	 * 
-	 * OMVRBTreeEntry<K, V> parent; OMVRBTreeEntry<K, V> grandParent;
-	 * 
-	 * while (x != null && x != root && x.getParent() != null && x.getParent().getColor() == RED) { parent = parentOf(x); grandParent
-	 * = parentOf(parent);
-	 * 
-	 * if (parent == leftOf(grandParent)) { // MY PARENT IS THE LEFT OF THE GRANDFATHER. GET MY UNCLE final OMVRBTreeEntry<K, V> uncle
-	 * = rightOf(grandParent); if (colorOf(uncle) == RED) { // SET MY PARENT AND UNCLE TO BLACK setColor(parent, BLACK);
-	 * setColor(uncle, BLACK); // SET GRANDPARENT'S COLOR TO RED setColor(grandParent, RED); // CONTINUE RECURSIVELY WITH MY
-	 * GRANDFATHER x = grandParent; } else { if (x == rightOf(parent)) { // I'M THE RIGHT x = parent; parent = parentOf(x);
-	 * grandParent = parentOf(parent); rotateLeft(x); } setColor(parent, BLACK); setColor(grandParent, RED); rotateRight(grandParent);
-	 * } } else { // MY PARENT IS THE RIGHT OF THE GRANDFATHER. GET MY UNCLE final OMVRBTreeEntry<K, V> uncle = leftOf(grandParent);
-	 * if (colorOf(uncle) == RED) { setColor(parent, BLACK); setColor(uncle, BLACK); setColor(grandParent, RED); x = grandParent; }
-	 * else { if (x == leftOf(parent)) { x = parentOf(x); parent = parentOf(x); grandParent = parentOf(parent); rotateRight(x); }
-	 * setColor(parent, BLACK); setColor(grandParent, RED); rotateLeft(grandParent); } } }
-	 * 
-	 * // //System.out.println("AFTER FIX"); // printInMemoryStructure(x); // }
-	 * 
-	 * root.setColor(BLACK); }
-	 */
-
 	private OMVRBTreeEntry<K, V> grandparent(final OMVRBTreeEntry<K, V> n) {
 		return parentOf(parentOf(n));
 	}
@@ -2385,7 +2378,6 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		if (n == leftOf(parentOf(n)) && parentOf(n) == leftOf(grandparent(n))) {
 			rotateRight(grandparent(n));
 		} else {
-			/* Here, n == parentOf(n)->right && parentOf(n) == grandparent(n)->right */
 			rotateLeft(grandparent(n));
 		}
 	}
@@ -2506,7 +2498,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 					sib = leftOf(parentOf(x));
 				}
 
-				if (x != null && colorOf(rightOf(sib)) == BLACK && colorOf(leftOf(sib)) == BLACK) {
+				if (colorOf(rightOf(sib)) == BLACK && colorOf(leftOf(sib)) == BLACK) {
 					setColor(sib, RED);
 					x = parentOf(x);
 				} else {
@@ -2747,13 +2739,13 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 				if (prevNode.getTree() == null)
 					OLogManager.instance().error(this, "[OMVRBTree.checkTreeStructure] Freed record %d found in memory\n", i);
 
-				if (((Comparable) e.getFirstKey()).compareTo((e.getLastKey())) > 0) {
+				if (((Comparable<K>) e.getFirstKey()).compareTo((e.getLastKey())) > 0) {
 					OLogManager.instance().error(this, "[OMVRBTree.checkTreeStructure] begin key is > than last key\n", e.getFirstKey(),
 							e.getLastKey());
 					printInMemoryStructure(iRootNode);
 				}
 
-				if (((Comparable) e.getFirstKey()).compareTo((prevNode.getLastKey())) < 0) {
+				if (((Comparable<K>) e.getFirstKey()).compareTo((prevNode.getLastKey())) < 0) {
 					OLogManager.instance().error(this,
 							"[OMVRBTree.checkTreeStructure] Node %s starts with a key minor than the last key of the previous node %s\n", e,
 							prevNode);
@@ -2788,7 +2780,58 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			++i;
 		}
 
+		if (colorOf(root) != BLACK) {
+			OLogManager.instance().error(this, "[OMVRBTree.checkTreeStructure] Root node %s color is not BLACK !\n", root);
+			printInMemoryStructure(root);
+		}
+
+		int blackPathLength = 1;
+		OMVRBTreeEntry<K, V> node = root;
+		while (node != null) {
+			node = node.getLeft();
+			if (colorOf(node) == BLACK) {
+				blackPathLength++;
+			}
+		}
+
+		checkLeafPath(blackPathLength, root, 0);
+
+		checkRedNodesContainOnlyBlackLeaves(root.getLeft(), root);
+		checkRedNodesContainOnlyBlackLeaves(root.getRight(), root);
+
 		pageIndex = currPageIndex;
+	}
+
+	private void checkLeafPath(final int blackPathToCompare, OMVRBTreeEntry<K, V> node, int blackPathLength) {
+		if (colorOf(node) == BLACK)
+			blackPathLength++;
+
+		if (node != null) {
+			checkLeafPath(blackPathToCompare, node.getLeft(), blackPathLength);
+			checkLeafPath(blackPathToCompare, node.getRight(), blackPathLength);
+		} else if (blackPathLength != blackPathToCompare) {
+			OLogManager.instance()
+					.error(
+							this,
+							"[OMVRBTree.checkTreeStructure] Amount of black nodes from the root to any leaf"
+									+ " should always be the same ! Expected amount of nodes %d, actual amount %d\n", blackPathToCompare,
+							blackPathLength);
+			printInMemoryStructure(root);
+		}
+	}
+
+	private void checkRedNodesContainOnlyBlackLeaves(OMVRBTreeEntry<K, V> node, OMVRBTreeEntry<K, V> parentNode) {
+		if (colorOf(node) == RED && parentNode.getColor() == RED) {
+			OLogManager.instance().error(this,
+					"[OMVRBTree.checkTreeStructure] RED nodes should contain only BLACK leaves ! " + "Parent node %s. Tested node %s.",
+					parentNode, node);
+			printInMemoryStructure(root);
+		}
+
+		if (node != null) {
+			checkRedNodesContainOnlyBlackLeaves(node.getLeft(), node);
+			checkRedNodesContainOnlyBlackLeaves(node.getRight(), node);
+		}
 	}
 
 	public boolean isRuntimeCheckEnabled() {
