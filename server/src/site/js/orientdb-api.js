@@ -112,12 +112,18 @@ function ODatabase(databasePath) {
 	}
 	
 	ODatabase.prototype.getUserName = function() {
+		if( !this.databaseInfo )
+			return null;
+		
 		return this.databaseInfo.currentUser;
 	}
 	
 	ODatabase.prototype.getUser = function() {
 		var queryString = "select from OUser where name = '" + this.getUserName() + "'";
 		query = this.query(queryString, null, '*:-1');
+		if( query == null )
+			return null;
+
 		var dbUser = query.result[0];
 		queryString = "select from HResource where dbUser = " + dbUser['@rid'];;
 		query = window.database.query(queryString, null, '*:-1');
