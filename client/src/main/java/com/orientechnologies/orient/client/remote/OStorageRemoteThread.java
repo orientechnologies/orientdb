@@ -120,8 +120,6 @@ public class OStorageRemoteThread implements OStorage {
 	public void close() {
 		delegate.setSessionId(sessionId);
 		delegate.close();
-		Orient.instance().unregisterStorage(this);
-		Orient.instance().unregisterStorage(delegate);
 	}
 
 	public void delete() {
@@ -312,7 +310,6 @@ public class OStorageRemoteThread implements OStorage {
 	}
 
 	public String getURL() {
-		delegate.setSessionId(sessionId);
 		return delegate.getURL();
 	}
 

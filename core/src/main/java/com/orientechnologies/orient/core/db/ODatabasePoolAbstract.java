@@ -45,7 +45,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
 		maxSize = iMaxSize;
 		timeout = iTimeout;
 		owner = iOwner;
-		//Orient.instance().registerListener(this);
+		Orient.instance().registerListener(this);
 	}
 
 	public DB acquire(final String iURL, final String iUserName, final String iUserPassword) throws OLockException {
@@ -116,7 +116,6 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
 
 		if (pool != null) {
 			for (DB db : pool.getResources()) {
-				pool.close();
 				try {
 					OLogManager.instance().debug(this, "Closing pooled database '%s'...", db.getName());
 					((ODatabasePooled) db).forceClose();
@@ -126,6 +125,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
 				}
 
 			}
+			pool.close();
 			pools.remove(iPoolName);
 		}
 	}
@@ -138,21 +138,26 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
 	}
 
 	/**
-	 * Deletes the pool associated to the closed storage. This avoids pool open against closed storages.
+	 * Removes from memory the pool associated to the closed storage. This avoids pool open against closed storages.
 	 */
 	public void onStorageUnregistered(final OStorage iStorage) {
 		final String storageURL = iStorage.getURL();
 
-		final Set<String> poolToClose = new HashSet<String>();
+		Set<String> poolToClose = null;
 
 		for (Entry<String, OResourcePool<String, DB>> e : pools.entrySet()) {
 			final int pos = e.getKey().indexOf("@");
 			final String dbName = e.getKey().substring(pos + 1);
-			if (storageURL.equals(dbName))
+			if (storageURL.equals(dbName)) {
+				if (poolToClose == null)
+					poolToClose = new HashSet<String>();
+
 				poolToClose.add(e.getKey());
+			}
 		}
 
-		for (String pool : poolToClose)
-			remove(pool);
+		if (poolToClose != null)
+			for (String pool : poolToClose)
+				remove(pool);
 	}
 }
