@@ -254,7 +254,7 @@ public class ODatabaseRaw implements ODatabase {
 	}
 
 	public boolean isClosed() {
-		return status == STATUS.CLOSED;
+		return status == STATUS.CLOSED || storage.isClosed();
 	}
 
 	public String getName() {
@@ -394,7 +394,8 @@ public class ODatabaseRaw implements ODatabase {
 	}
 
 	public void registerListener(final ODatabaseListener iListener) {
-		listeners.add(iListener);
+		if (!listeners.contains(iListener))
+			listeners.add(iListener);
 	}
 
 	public void unregisterListener(final ODatabaseListener iListener) {
