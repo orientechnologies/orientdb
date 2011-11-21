@@ -70,6 +70,11 @@ public class OStorageMemory extends OStorageEmbedded {
 		configuration = new OStorageConfiguration(this);
 	}
 
+	@Override
+	public String getURL() {
+		return OEngineMemory.NAME + ":" + super.getURL();
+	}
+
 	public void create(final Map<String, Object> iOptions) {
 		addUser();
 

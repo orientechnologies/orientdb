@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.config.OStorageMemoryClusterConfigurati
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -839,6 +840,11 @@ public class OStorageLocal extends OStorageEmbedded {
 		} finally {
 			lock.releaseSharedLock();
 		}
+	}
+
+	@Override
+	public String getURL() {
+		return OEngineLocal.NAME + ":" + super.getURL();
 	}
 
 	@Override
