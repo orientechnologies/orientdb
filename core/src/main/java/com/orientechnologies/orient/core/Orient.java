@@ -48,6 +48,7 @@ public class Orient extends OSharedResourceAbstract {
 	protected Map<String, OEngine>						engines								= new HashMap<String, OEngine>();
 	protected Map<String, OStorage>						storages							= new HashMap<String, OStorage>();
 	protected Set<ODatabaseLifecycleListener>	dbLifecycleListeners	= new HashSet<ODatabaseLifecycleListener>();
+	protected final List<OOrientListener>			listeners							= new ArrayList<OOrientListener>();
 	protected ORecordFactoryManager						recordFactoryManager	= new ORecordFactoryManager();
 	protected volatile boolean								active								= false;
 
@@ -136,6 +137,9 @@ public class Orient extends OSharedResourceAbstract {
 				storages.put(dbName + "__" + serialId.incrementAndGet(), storage);
 			}
 
+			for (OOrientListener l : listeners)
+				l.onStorageRegistered(storage);
+
 			return storage;
 
 		} finally {
@@ -144,6 +148,9 @@ public class Orient extends OSharedResourceAbstract {
 	}
 
 	public void registerStorage(final OStorage iStorage) throws IOException {
+		for (OOrientListener l : listeners)
+			l.onStorageRegistered(iStorage);
+
 		acquireExclusiveLock();
 		try {
 			if (!storages.containsKey(iStorage.getName()))
@@ -206,6 +213,9 @@ public class Orient extends OSharedResourceAbstract {
 	}
 
 	public void unregisterStorage(final OStorage iStorage) {
+		for (OOrientListener l : listeners)
+			l.onStorageUnregistered(iStorage);
+
 		acquireExclusiveLock();
 		try {
 			for (Entry<String, OStorage> s : storages.entrySet()) {
@@ -254,6 +264,7 @@ public class Orient extends OSharedResourceAbstract {
 
 			// STOP ALL THE PENDING THREADS
 			threadGroup.interrupt();
+			listeners.clear();
 
 			OLogManager.instance().debug(this, "Orient Engine shutdown complete");
 
@@ -297,4 +308,22 @@ public class Orient extends OSharedResourceAbstract {
 	public ORecordFactoryManager getRecordFactoryManager() {
 		return recordFactoryManager;
 	}
+
+	public void registerListener(final OOrientListener iListener) {
+		if (!listeners.contains(iListener))
+			listeners.add(iListener);
+	}
+
+	public void unregisterListener(final OOrientListener iListener) {
+		for (int i = 0; i < listeners.size(); ++i)
+			if (listeners.get(i) == iListener) {
+				listeners.remove(i);
+				break;
+			}
+	}
+
+	public List<OOrientListener> getListeners() {
+		return listeners;
+	}
+
 }

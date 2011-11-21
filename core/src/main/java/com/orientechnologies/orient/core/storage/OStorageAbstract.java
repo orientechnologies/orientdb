@@ -45,7 +45,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 		CLOSED, OPEN, CLOSING
 	}
 
-	public OStorageAbstract(final String iName, final String iFilePath, final String iMode) {
+	public OStorageAbstract(final String iName, final String iURL, final String iMode) {
 		if (OStringSerializerHelper.contains(iName, '/'))
 			name = iName.substring(iName.lastIndexOf("/") + 1);
 		else
@@ -57,7 +57,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 		level2Cache = new OLevel2RecordCache(this);
 		level2Cache.startup();
 
-		url = iFilePath;
+		url = iURL;
 		mode = iMode;
 	}
 

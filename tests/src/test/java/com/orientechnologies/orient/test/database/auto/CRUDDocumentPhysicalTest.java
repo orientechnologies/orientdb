@@ -118,7 +118,6 @@ public class CRUDDocumentPhysicalTest {
 	@Test(dependsOnMethods = "create")
 	public void testCreate() {
 		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-		database.open("admin", "admin");
 
 		Assert.assertEquals(database.countClusterElements("Account") - startRecordNumber, TOT_RECORDS);
 
@@ -367,7 +366,6 @@ public class CRUDDocumentPhysicalTest {
 	@Test
 	public void commandWithPositionalParameters() {
 		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-		database.open("admin", "admin");
 
 		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile where name = ? and surname = ?");
 		List<ODocument> result = database.command(query).execute("Barack", "Obama");
@@ -380,7 +378,6 @@ public class CRUDDocumentPhysicalTest {
 	@Test
 	public void queryWithPositionalParameters() {
 		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-		database.open("admin", "admin");
 
 		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile where name = ? and surname = ?");
 		List<ODocument> result = database.query(query, "Barack", "Obama");
@@ -434,7 +431,6 @@ public class CRUDDocumentPhysicalTest {
 	@Test
 	public void queryWithNamedParameters() {
 		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-		database.open("admin", "admin");
 
 		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
 				"select from Profile where name = :name and surname = :surname");
@@ -453,7 +449,6 @@ public class CRUDDocumentPhysicalTest {
 	@Test
 	public void testTransientField() {
 		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-		database.open("admin", "admin");
 
 		ODocument doc = new ODocument(database, "Profile");
 		doc.field("nick", "LucaPhotoTest");
