@@ -45,7 +45,7 @@ public class ODatabaseObjectPool extends ODatabasePoolBase<ODatabaseObjectTx> {
 						public ODatabaseObjectTx reuseResource(final String iKey, final Object[] iAdditionalArgs, final ODatabaseObjectTx iValue) {
 							ODatabaseRecordThreadLocal.INSTANCE.set(iValue.getUnderlying());
 
-							((ODatabaseObjectTxPooled) iValue).reuse(owner);
+							((ODatabaseObjectTxPooled) iValue).reuse(owner, iAdditionalArgs);
 
 							if (iValue.getStorage().isClosed())
 								// STORAGE HAS BEEN CLOSED: REOPEN IT

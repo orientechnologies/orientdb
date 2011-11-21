@@ -40,19 +40,18 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
 		super.open(iUserName, iUserPassword);
 	}
 
-	public void reuse(final Object iOwner) {
+	public void reuse(final Object iOwner, final Object[] iAdditionalArgs) {
 		ownerPool = (ODatabaseDocumentPool) iOwner;
+		if (isClosed())
+			open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
+
 		getMetadata().reload();
 	}
 
 	@Override
 	public ODatabaseDocumentTxPooled open(final String iUserName, final String iUserPassword) {
-		checkOpeness();
-		if (!getUser().getName().equals(iUserName))
-			throw new UnsupportedOperationException("Database instance was retrieved from a pool and has been used with the user '"
-					+ getUser().getName() + "'. Get another database instance fro mthe pool with the right username and password");
-
-		return this;
+		throw new UnsupportedOperationException(
+				"Database instance was retrieved from a pool. You can't open the database in this way. Please use directly ODatabaseDocumentTx.open()");
 	}
 
 	@Override

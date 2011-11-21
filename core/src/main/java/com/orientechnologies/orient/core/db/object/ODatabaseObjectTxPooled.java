@@ -41,26 +41,24 @@ public class ODatabaseObjectTxPooled extends ODatabaseObjectTx implements ODatab
 		super.open(iUserName, iUserPassword);
 	}
 
-	public void reuse(final Object iOwner) {
+	public void reuse(final Object iOwner, final Object[] iAdditionalArgs) {
 		ownerPool = (ODatabaseObjectPool) iOwner;
+		if (isClosed())
+			open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
 		init();
 		getMetadata().reload();
 	}
 
 	@Override
 	public ODatabaseObjectTxPooled open(String iUserName, String iUserPassword) {
-		checkOpeness();
-		if (!getUser().getName().equals(iUserName))
-			throw new UnsupportedOperationException("Database instance was retrieved from a pool and has been used with the user '"
-					+ getUser().getName() + "'. Get another database instance from the pool with the right username and password");
-
-		return this;
+		throw new UnsupportedOperationException(
+				"Database instance was retrieved from a pool. You can't open the database in this way. Please use directly ODatabaseObjectTx.open()");
 	}
 
 	@Override
 	public ODatabaseObjectTxPooled create() {
 		throw new UnsupportedOperationException(
-				"Database instance was retrieved from a pool. You can't create the database in this way. Please use directly ODatabaseDocumentTx.create()");
+				"Database instance was retrieved from a pool. You can't create the database in this way. Please use directly ODatabaseObjectTx.create()");
 	}
 
 	@Override

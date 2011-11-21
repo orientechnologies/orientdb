@@ -73,7 +73,7 @@ public class CRUDObjectPhysicalTest {
 		database.close();
 	}
 
-	@Test(dependsOnMethods = "create", expectedExceptions = ODatabaseException.class)
+	@Test(dependsOnMethods = "create", expectedExceptions = UnsupportedOperationException.class)
 	public void testReleasedPoolDatabase() {
 		database.open("admin", "admin");
 	}

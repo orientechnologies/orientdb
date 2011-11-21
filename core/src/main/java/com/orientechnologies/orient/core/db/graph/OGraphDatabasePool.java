@@ -46,7 +46,7 @@ public class OGraphDatabasePool extends ODatabasePoolBase<OGraphDatabase> {
 						public OGraphDatabase reuseResource(final String iKey, final Object[] iAdditionalArgs, final OGraphDatabase iValue) {
 							ODatabaseRecordThreadLocal.INSTANCE.set(iValue);
 
-							((OGraphDatabasePooled) iValue).reuse(owner);
+							((OGraphDatabasePooled) iValue).reuse(owner, iAdditionalArgs);
 
 							if (iValue.getStorage().isClosed())
 								// STORAGE HAS BEEN CLOSED: REOPEN IT

@@ -40,26 +40,24 @@ public class OGraphDatabasePooled extends OGraphDatabase implements ODatabasePoo
 		super.open(iUserName, iUserPassword);
 	}
 
-	public void reuse(final Object iOwner) {
+	public void reuse(final Object iOwner, final Object[] iAdditionalArgs) {
 		ownerPool = (OGraphDatabasePool) iOwner;
+		if (isClosed())
+			open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
 		getMetadata().reload();
 		checkForGraphSchema();
 	}
 
 	@Override
 	public OGraphDatabasePooled open(String iUserName, String iUserPassword) {
-		checkOpeness();
-		if (!getUser().getName().equals(iUserName))
-			throw new UnsupportedOperationException("Database instance was retrieved from a pool and has been used with the user '"
-					+ getUser().getName() + "'. Get another database instance fro mthe pool with the right username and password");
-
-		return this;
+		throw new UnsupportedOperationException(
+				"Database instance was retrieved from a pool. You can't open the database in this way. Please use directly OGraphDatabase.open()");
 	}
 
 	@Override
 	public OGraphDatabasePooled create() {
 		throw new UnsupportedOperationException(
-				"Database instance was retrieved from a pool. You can't create the database in this way. Please use directly ODatabaseDocumentTx.create()");
+				"Database instance was retrieved from a pool. You can't create the database in this way. Please use directly OGraphDatabase.create()");
 	}
 
 	@Override

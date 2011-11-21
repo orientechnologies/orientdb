@@ -16,15 +16,20 @@
 package com.orientechnologies.orient.core.db;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.OOrientListener;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.storage.OStorage;
 
-public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements OResourcePoolListener<String, DB> {
+public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements OResourcePoolListener<String, DB>, OOrientListener {
 
 	private static final int															DEF_WAIT_TIMEOUT	= 5000;
 	private final Map<String, OResourcePool<String, DB>>	pools							= new HashMap<String, OResourcePool<String, DB>>();
@@ -40,6 +45,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
 		maxSize = iMaxSize;
 		timeout = iTimeout;
 		owner = iOwner;
+		//Orient.instance().registerListener(this);
 	}
 
 	public DB acquire(final String iURL, final String iUserName, final String iUserPassword) throws OLockException {
@@ -101,12 +107,14 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
 		}
 	}
 
-	public void remove(String iName, String iUser) {
-		final String dbPooledName = iUser + "@" + iName;
+	public void remove(final String iName, final String iUser) {
+		remove(iUser + "@" + iName);
+	}
 
-		final OResourcePool<String, DB> pool = pools.get(dbPooledName);
+	public void remove(final String iPoolName) {
+		final OResourcePool<String, DB> pool = pools.get(iPoolName);
 
-		if (pool != null)
+		if (pool != null) {
 			for (DB db : pool.getResources()) {
 				pool.close();
 				try {
@@ -118,9 +126,33 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
 				}
 
 			}
+			pools.remove(iPoolName);
+		}
 	}
 
 	public int getMaxSize() {
 		return maxSize;
+	}
+
+	public void onStorageRegistered(final OStorage iStorage) {
+	}
+
+	/**
+	 * Deletes the pool associated to the closed storage. This avoids pool open against closed storages.
+	 */
+	public void onStorageUnregistered(final OStorage iStorage) {
+		final String storageURL = iStorage.getURL();
+
+		final Set<String> poolToClose = new HashSet<String>();
+
+		for (Entry<String, OResourcePool<String, DB>> e : pools.entrySet()) {
+			final int pos = e.getKey().indexOf("@");
+			final String dbName = e.getKey().substring(pos + 1);
+			if (storageURL.equals(dbName))
+				poolToClose.add(e.getKey());
+		}
+
+		for (String pool : poolToClose)
+			remove(pool);
 	}
 }
