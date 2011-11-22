@@ -45,25 +45,23 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 	}
 
 	@Override
-	public boolean onRecordAfterCreate(ODocument iRecord) {
+	public void onRecordAfterCreate(ODocument iRecord) {
 		iRecord = checkForLoading(iRecord);
 
 		final OClass cls = iRecord.getSchemaClass();
-		if (cls == null)
-			return false;
-
-		final Collection<OIndex<?>> indexes = cls.getIndexes();
-		for (final OIndex<?> index : indexes) {
-			final Object key = index.getDefinition().getDocumentValueToIndex(iRecord);
-			// SAVE A COPY TO AVOID PROBLEM ON RECYCLING OF THE RECORD
-			if (key instanceof Collection) {
-				for (final Object keyItem : (Collection<?>) key)
-					if (keyItem != null)
-						index.put(keyItem, iRecord.placeholder());
-			} else if (key != null)
-				index.put(key, iRecord.placeholder());
+		if (cls != null) {
+			final Collection<OIndex<?>> indexes = cls.getIndexes();
+			for (final OIndex<?> index : indexes) {
+				final Object key = index.getDefinition().getDocumentValueToIndex(iRecord);
+				// SAVE A COPY TO AVOID PROBLEM ON RECYCLING OF THE RECORD
+				if (key instanceof Collection) {
+					for (final Object keyItem : (Collection<?>) key)
+						if (keyItem != null)
+							index.put(keyItem, iRecord.placeholder());
+				} else if (key != null)
+					index.put(key, iRecord.placeholder());
+			}
 		}
-		return false;
 	}
 
 	@Override
@@ -75,12 +73,12 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 	}
 
 	@Override
-	public boolean onRecordAfterUpdate(ODocument iRecord) {
+	public void onRecordAfterUpdate(ODocument iRecord) {
 		iRecord = checkForLoading(iRecord);
 
 		final OClass cls = iRecord.getSchemaClass();
 		if (cls == null)
-			return false;
+			return;
 
 		final Collection<OIndex<?>> indexes = cls.getIndexes();
 
@@ -146,8 +144,6 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 			iRecord.setTrackingChanges(false);
 			iRecord.setTrackingChanges(true);
 		}
-
-		return false;
 	}
 
 	@Override
@@ -159,10 +155,10 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 	};
 
 	@Override
-	public boolean onRecordAfterDelete(final ODocument iRecord) {
+	public void onRecordAfterDelete(final ODocument iRecord) {
 		final OClass cls = iRecord.getSchemaClass();
 		if (cls == null)
-			return false;
+			return;
 
 		final Collection<OIndex<?>> indexes = new ArrayList<OIndex<?>>(cls.getIndexes());
 
@@ -221,8 +217,6 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 			iRecord.setTrackingChanges(false);
 			iRecord.setTrackingChanges(true);
 		}
-
-		return false;
 	}
 
 	private void checkIndexedProperties(final ODocument iRecord) {

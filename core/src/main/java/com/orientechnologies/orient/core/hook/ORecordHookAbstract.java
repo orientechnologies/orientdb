@@ -24,56 +24,114 @@ import com.orientechnologies.orient.core.record.ORecord;
  * @see ORecordHook
  */
 public abstract class ORecordHookAbstract implements ORecordHook {
-	public boolean onRecordBeforeCreate(final ORecord<?> iRecord) {
+	/**
+	 * It's called just before to create the new iRecord.
+	 * 
+	 * @param iiRecord
+	 *          The iRecord to create
+	 * @return True if the iRecord has been modified and a new marshalling is required, otherwise false
+	 */
+	public boolean onRecordBeforeCreate(final ORecord<?> iiRecord) {
 		return false;
 	};
 
-	public boolean onRecordAfterCreate(final ORecord<?> iRecord) {
+	/**
+	 * It's called just after the iRecord is created.
+	 * 
+	 * @param iiRecord
+	 *          The iRecord just created
+	 */
+	public void onRecordAfterCreate(final ORecord<?> iiRecord) {
+	};
+
+	/**
+	 * It's called just before to read the iRecord.
+	 * 
+	 * @param iiRecord
+	 *          The iRecord to read
+	 */
+	public void onRecordBeforeRead(final ORecord<?> iiRecord) {
+	};
+
+	/**
+	 * It's called just after the iRecord is read.
+	 * 
+	 * @param iiRecord
+	 *          The iRecord just read
+	 */
+	public void onRecordAfterRead(final ORecord<?> iiRecord) {
+	};
+
+	/**
+	 * It's called just before to update the iRecord.
+	 * 
+	 * @param iiRecord
+	 *          The iRecord to update
+	 * @return True if the iRecord has been modified and a new marshalling is required, otherwise false
+	 */
+	public boolean onRecordBeforeUpdate(final ORecord<?> iiRecord) {
 		return false;
 	};
 
-	public boolean onRecordBeforeRead(final ORecord<?> iRecord) {
+	/**
+	 * It's called just after the iRecord is updated.
+	 * 
+	 * @param iiRecord
+	 *          The iRecord just updated
+	 */
+	public void onRecordAfterUpdate(final ORecord<?> iiRecord) {
+	};
+
+	/**
+	 * It's called just before to delete the iRecord.
+	 * 
+	 * @param iiRecord
+	 *          The iRecord to delete
+	 * @return True if the iRecord has been modified and a new marshalling is required, otherwise false
+	 */
+	public boolean onRecordBeforeDelete(final ORecord<?> iiRecord) {
 		return false;
 	};
 
-	public boolean onRecordAfterRead(final ORecord<?> iRecord) {
-		return false;
-	};
-
-	public boolean onRecordBeforeUpdate(final ORecord<?> iRecord) {
-		return false;
-	};
-
-	public boolean onRecordAfterUpdate(final ORecord<?> iRecord) {
-		return false;
-	};
-
-	public boolean onRecordBeforeDelete(final ORecord<?> iRecord) {
-		return false;
-	};
-
-	public boolean onRecordAfterDelete(final ORecord<?> iRecord) {
-		return false;
+	/**
+	 * It's called just after the iRecord is deleted.
+	 * 
+	 * @param iiRecord
+	 *          The iRecord just deleted
+	 */
+	public void onRecordAfterDelete(final ORecord<?> iiRecord) {
 	};
 
 	public boolean onTrigger(final TYPE iType, final ORecord<?> iRecord) {
 		switch (iType) {
 		case BEFORE_CREATE:
 			return onRecordBeforeCreate(iRecord);
+
 		case AFTER_CREATE:
-			return onRecordAfterCreate(iRecord);
+			onRecordAfterCreate(iRecord);
+			break;
+
 		case BEFORE_READ:
-			return onRecordBeforeRead(iRecord);
+			onRecordBeforeRead(iRecord);
+			break;
+
 		case AFTER_READ:
-			return onRecordAfterRead(iRecord);
+			onRecordAfterRead(iRecord);
+			break;
+
 		case BEFORE_UPDATE:
 			return onRecordBeforeUpdate(iRecord);
+
 		case AFTER_UPDATE:
-			return onRecordAfterUpdate(iRecord);
+			onRecordAfterUpdate(iRecord);
+			break;
+
 		case BEFORE_DELETE:
 			return onRecordBeforeDelete(iRecord);
+
 		case AFTER_DELETE:
-			return onRecordAfterDelete(iRecord);
+			onRecordAfterDelete(iRecord);
+			break;
 		}
 		return false;
 	}

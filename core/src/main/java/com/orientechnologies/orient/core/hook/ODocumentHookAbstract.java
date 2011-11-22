@@ -26,36 +26,82 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @see ORecordHook
  */
 public abstract class ODocumentHookAbstract implements ORecordHook {
+	/**
+	 * It's called just before to create the new document.
+	 * 
+	 * @param iDocument
+	 *          The document to create
+	 * @return True if the document has been modified and a new marshalling is required, otherwise false
+	 */
 	public boolean onRecordBeforeCreate(final ODocument iDocument) {
 		return false;
 	};
 
-	public boolean onRecordAfterCreate(final ODocument iDocument) {
-		return false;
+	/**
+	 * It's called just after the document is created.
+	 * 
+	 * @param iDocument
+	 *          The document just created
+	 */
+	public void onRecordAfterCreate(final ODocument iDocument) {
 	};
 
-	public boolean onRecordBeforeRead(final ODocument iDocument) {
-		return false;
+	/**
+	 * It's called just before to read the document.
+	 * 
+	 * @param iDocument
+	 *          The document to read
+	 */
+	public void onRecordBeforeRead(final ODocument iDocument) {
 	};
 
-	public boolean onRecordAfterRead(final ODocument iDocument) {
-		return false;
+	/**
+	 * It's called just after the document is read.
+	 * 
+	 * @param iDocument
+	 *          The document just read
+	 */
+	public void onRecordAfterRead(final ODocument iDocument) {
 	};
 
+	/**
+	 * It's called just before to update the document.
+	 * 
+	 * @param iDocument
+	 *          The document to update
+	 * @return True if the document has been modified and a new marshalling is required, otherwise false
+	 */
 	public boolean onRecordBeforeUpdate(final ODocument iDocument) {
 		return false;
 	};
 
-	public boolean onRecordAfterUpdate(final ODocument iDocument) {
-		return false;
+	/**
+	 * It's called just after the document is updated.
+	 * 
+	 * @param iDocument
+	 *          The document just updated
+	 */
+	public void onRecordAfterUpdate(final ODocument iDocument) {
 	};
 
+	/**
+	 * It's called just before to delete the document.
+	 * 
+	 * @param iDocument
+	 *          The document to delete
+	 * @return True if the document has been modified and a new marshalling is required, otherwise false
+	 */
 	public boolean onRecordBeforeDelete(final ODocument iDocument) {
 		return false;
 	};
 
-	public boolean onRecordAfterDelete(final ODocument iDocument) {
-		return false;
+	/**
+	 * It's called just after the document is deleted.
+	 * 
+	 * @param iDocument
+	 *          The document just deleted
+	 */
+	public void onRecordAfterDelete(final ODocument iDocument) {
 	};
 
 	public boolean onTrigger(final TYPE iType, final ORecord<?> iRecord) {
@@ -70,20 +116,32 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
 		switch (iType) {
 		case BEFORE_CREATE:
 			return onRecordBeforeCreate(document);
+
 		case AFTER_CREATE:
-			return onRecordAfterCreate(document);
+			onRecordAfterCreate(document);
+			break;
+
 		case BEFORE_READ:
-			return onRecordBeforeRead(document);
+			onRecordBeforeRead(document);
+			break;
+
 		case AFTER_READ:
-			return onRecordAfterRead(document);
+			onRecordAfterRead(document);
+			break;
+
 		case BEFORE_UPDATE:
 			return onRecordBeforeUpdate(document);
+
 		case AFTER_UPDATE:
-			return onRecordAfterUpdate(document);
+			onRecordAfterUpdate(document);
+			break;
+
 		case BEFORE_DELETE:
 			return onRecordBeforeDelete(document);
+
 		case AFTER_DELETE:
-			return onRecordAfterDelete(document);
+			onRecordAfterDelete(document);
+			break;
 		}
 
 		return false;
