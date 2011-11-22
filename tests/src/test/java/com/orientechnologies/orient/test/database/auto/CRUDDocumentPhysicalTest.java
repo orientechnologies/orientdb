@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.index.OIndex;
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -33,9 +32,10 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.iterator.ORecordIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -212,9 +212,9 @@ public class CRUDDocumentPhysicalTest {
 
 		Set<OIndex<?>> indexes = database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getIndexes();
 
-        Assert.assertEquals( indexes.size(), 1 );
+		Assert.assertEquals(indexes.size(), 1);
 
-        OIndex indexDefinition = indexes.iterator().next();
+		OIndex indexDefinition = indexes.iterator().next();
 		OIdentifiable vOldName = (OIdentifiable) indexDefinition.get("JayM1");
 		Assert.assertNull(vOldName);
 
@@ -243,9 +243,9 @@ public class CRUDDocumentPhysicalTest {
 		vDoc.save();
 
 		Collection<OIndex<?>> indexes = database.getMetadata().getSchema().getClass("Profile").getProperty("name").getIndexes();
-        Assert.assertEquals( indexes.size(), 1 );
+		Assert.assertEquals(indexes.size(), 1);
 
-        OIndex<?> indexName = indexes.iterator().next();
+		OIndex<?> indexName = indexes.iterator().next();
 		// We must get 2 records for "nameA".
 		Collection<OIdentifiable> vName1 = (Collection<OIdentifiable>) indexName.get("Jack");
 		Assert.assertEquals(vName1.size(), 2);
@@ -608,5 +608,34 @@ public class CRUDDocumentPhysicalTest {
 
 		doc.reload(null, true);
 		Assert.assertEquals(doc.field("test"), s);
+	}
+
+	@Test
+	public void polymorphicQuery() {
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+		final ORecordAbstract<Object> newAccount = new ODocument(database, "Account").field("name", "testInheritanceName").save();
+
+		List<ODocument> superClassResult = database.query(new OSQLSynchQuery<ODocument>("select from Account"));
+		List<ODocument> subClassResult = database.query(new OSQLSynchQuery<ODocument>("select from Company"));
+
+		Assert.assertTrue(superClassResult.size() != 0);
+		Assert.assertTrue(subClassResult.size() != 0);
+		Assert.assertTrue(superClassResult.size() >= subClassResult.size());
+
+		// VERIFY ALL THE SUBCLASS RESULT ARE ALSO CONTAINED IN SUPERCLASS RESULT
+		for (ODocument d : subClassResult) {
+			Assert.assertTrue(superClassResult.contains(d));
+		}
+
+		HashSet<ODocument> browsed = new HashSet<ODocument>();
+		for (ODocument d : database.browseClass("Account")) {
+			Assert.assertFalse(browsed.contains(d));
+			browsed.add(d);
+		}
+
+		newAccount.delete();
+
+		database.close();
 	}
 }

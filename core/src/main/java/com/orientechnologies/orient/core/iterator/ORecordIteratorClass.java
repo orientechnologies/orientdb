@@ -19,7 +19,9 @@ import java.util.NoSuchElementException;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 
 /**
@@ -34,17 +36,21 @@ import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
  *          Record Type
  */
 public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecordIterator<REC> {
-	protected final int[]	clusterIds;
-	protected int					currentClusterIdx;
-	protected boolean			polymorphic;
+	protected final OClass	targetClass;
+	protected final int[]		clusterIds;
+	protected int						currentClusterIdx;
+	protected boolean				polymorphic;
 
 	public ORecordIteratorClass(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
 			final String iClassName, final boolean iPolymorphic) {
 		super(iDatabase, iLowLevelDatabase);
 
+		targetClass = database.getMetadata().getSchema().getClass(iClassName);
+		if (targetClass == null)
+			throw new IllegalArgumentException("Class '" + iClassName + "' was not found in database schema");
+
 		polymorphic = iPolymorphic;
-		clusterIds = polymorphic ? database.getMetadata().getSchema().getClass(iClassName).getPolymorphicClusterIds() : database
-				.getMetadata().getSchema().getClass(iClassName).getClusterIds();
+		clusterIds = polymorphic ? targetClass.getPolymorphicClusterIds() : targetClass.getClusterIds();
 
 		currentClusterIdx = 0; // START FROM THE FIRST CLUSTER
 
@@ -145,9 +151,16 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 
 			// MOVE BACKWARD IN THE CURRENT CLUSTER
 			while (hasPrevious()) {
-				if ((record = readCurrentRecord(record, -1)) != null)
+				if (record == null)
+					record = readCurrentRecord(null, -1);
+
+				if (record != null)
 					// FOUND
-					return (REC) record;
+					if (record instanceof ODocument) {
+						final ODocument doc = (ODocument) record;
+						if (targetClass.isSuperClassOf(doc.getSchemaClass()))
+							return (REC) record;
+					}
 			}
 
 			// CLUSTER EXHAUSTED, TRY WITH THE PREVIOUS ONE
@@ -176,12 +189,16 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 			// MOVE FORWARD IN THE CURRENT CLUSTER
 			while (hasNext()) {
 				record = getTransactionEntry();
-				if (record != null)
-					return (REC) record;
+				if (record == null)
+					record = readCurrentRecord(null, +1);
 
-				if ((record = readCurrentRecord(null, +1)) != null)
+				if (record != null)
 					// FOUND
-					return (REC) record;
+					if (record instanceof ODocument) {
+						final ODocument doc = (ODocument) record;
+						if (targetClass.isSuperClassOf(doc.getSchemaClass()))
+							return (REC) record;
+					}
 			}
 
 			// CLUSTER EXHAUSTED, TRY WITH THE NEXT ONE
@@ -195,7 +212,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 		record = getTransactionEntry();
 		if (record != null)
 			return (REC) record;
-		
+
 		throw new NoSuchElementException();
 	}
 
