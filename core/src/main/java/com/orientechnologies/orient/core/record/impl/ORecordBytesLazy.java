@@ -47,7 +47,7 @@ public class ORecordBytesLazy extends ORecordBytes {
 		return serializableContent;
 	}
 
-	public void recycle(final OSerializableStream serializableContent) {
-		this.serializableContent = serializableContent;
+	public void recycle(final OSerializableStream iSerializableContent) {
+		this.serializableContent = iSerializableContent;
 	}
 }

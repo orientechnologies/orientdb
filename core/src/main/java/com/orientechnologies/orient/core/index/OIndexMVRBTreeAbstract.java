@@ -53,6 +53,7 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerLiteral;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
+import com.orientechnologies.orient.core.type.tree.generic.OTreeDataProviderGeneric;
 
 /**
  * Handles indexing when records change.
@@ -306,7 +307,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 	}
 
 	public ORID getIdentity() {
-		return map.getRecord().getIdentity();
+		return ((OTreeDataProviderGeneric) map.getDataTree()).getRecord().getIdentity();
 	}
 
 	public long rebuild() {
@@ -437,7 +438,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 	}
 
 	public ORecordBytes getRecord() {
-		return map.getRecord();
+		return ((OTreeDataProviderGeneric) map.getDataTree()).getRecord();
 	}
 
 	public Iterator<Entry<Object, T>> iterator() {
@@ -557,7 +558,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 				}
 
 				configuration.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);
-				configuration.field(CONFIG_MAP_RID, map.getRecord().getIdentity());
+				configuration.field(CONFIG_MAP_RID, ((OTreeDataProviderGeneric) map.getDataTree()).getRecord().getIdentity());
 
 			} finally {
 				configuration.setInternalStatus(ORecordElement.STATUS.LOADED);

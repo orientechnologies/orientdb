@@ -31,22 +31,10 @@ import com.orientechnologies.common.collection.OMVRBTreeEventListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.memory.OLowMemoryException;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.record.impl.ORecordBytesLazy;
-import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
-import com.orientechnologies.orient.core.serialization.OMemoryStream;
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerFactory;
 
 /**
  * Persistent based MVRB-Tree implementation. The difference with the class OMVRBTreePersistent is the level. In facts this class
@@ -55,60 +43,86 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
  * 
  */
 @SuppressWarnings("serial")
-public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implements OMVRBTreeEventListener<K, V>,
-		OSerializableStream {
-	public final static byte																	CURRENT_PROTOCOL_VERSION	= 0;
+public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implements OMVRBTreeEventListener<K, V> {
 
-	protected OStreamSerializer																keySerializer;
-	protected OStreamSerializer																valueSerializer;
-	protected final Set<OMVRBTreeEntryPersistent<K, V>>				recordsToCommit						= new HashSet<OMVRBTreeEntryPersistent<K, V>>();
-	protected final String																		clusterName;
-	protected ORecordBytesLazy																record;
-	protected String																					fetchPlan;
+	protected final OTreeDataProvider<K, V>										dataTree;
+
+	protected final Set<OMVRBTreeEntryPersistent<K, V>>				recordsToCommit			= new HashSet<OMVRBTreeEntryPersistent<K, V>>();
 
 	// STORES IN MEMORY DIRECT REFERENCES TO PORTION OF THE TREE
 	protected int																							optimizeThreshold;
-	protected volatile int																		optimization							= 0;
-	private int																								insertionCounter					= 0;
+	protected volatile int																		optimization				= 0;
+	private int																								insertionCounter		= 0;
 	protected int																							entryPointsSize;
 
 	protected float																						optimizeEntryPointsFactor;
-	private final TreeMap<K, OMVRBTreeEntryPersistent<K, V>>	entryPoints								= new TreeMap<K, OMVRBTreeEntryPersistent<K, V>>();
-	private final Map<ORID, OMVRBTreeEntryPersistent<K, V>>		cache											= new HashMap<ORID, OMVRBTreeEntryPersistent<K, V>>();
-	private final OMemoryOutputStream													entryRecordBuffer;
-	private static final int																	OPTIMIZE_MAX_RETRY				= 10;
+	private final TreeMap<K, OMVRBTreeEntryPersistent<K, V>>	entryPoints					= new TreeMap<K, OMVRBTreeEntryPersistent<K, V>>();
+	private final Map<ORID, OMVRBTreeEntryPersistent<K, V>>		cache								= new HashMap<ORID, OMVRBTreeEntryPersistent<K, V>>();
+	private static final int																	OPTIMIZE_MAX_RETRY	= 10;
 
-	public OMVRBTreePersistent(final String iClusterName, final ORID iRID) {
-		this(iClusterName, null, null);
-		record.setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
-	}
-
-	public OMVRBTreePersistent(String iClusterName, final OStreamSerializer iKeySerializer, final OStreamSerializer iValueSerializer) {
-		// MINIMIZE I/O USING A LARGER PAGE THAN THE DEFAULT USED IN MEMORY
-		super(OGlobalConfiguration.MVRBTREE_NODE_PAGE_SIZE.getValueAsInteger(), (Float) OGlobalConfiguration.MVRBTREE_LOAD_FACTOR
-				.getValue());
+	public OMVRBTreePersistent(OTreeDataProvider<K, V> iProvider) {
+		super();
+		pageLoadFactor = (Float) OGlobalConfiguration.MVRBTREE_LOAD_FACTOR.getValue();
+		dataTree = iProvider;
 		config();
-
-		clusterName = iClusterName;
-		record = new ORecordBytesLazy(this);
-
-		keySerializer = iKeySerializer;
-		valueSerializer = iValueSerializer;
-
-		entryRecordBuffer = new OMemoryOutputStream(getPageSize() * 15);
-
 		setListener(this);
 	}
 
-	public abstract OMVRBTreePersistent<K, V> load() throws IOException;
+	@Override
+	protected OMVRBTreeEntryPersistent<K, V> createEntry(OMVRBTreeEntry<K, V> iParent) {
+		adjustPageSize();
+		return new OMVRBTreeEntryPersistent<K, V>(iParent, iParent.getPageSplitItems());
+	}
 
-	public abstract OMVRBTreePersistent<K, V> save() throws IOException;
+	@Override
+	protected OMVRBTreeEntryPersistent<K, V> createEntry(final K key, final V value) {
+		adjustPageSize();
+		return new OMVRBTreeEntryPersistent<K, V>(this, key, value, null);
+	}
+
+	/**
+	 * Create a new entry for {@link #loadEntry(OMVRBTreeEntryPersistent, ORID)}.
+	 */
+	protected OMVRBTreeEntryPersistent<K, V> createEntry(OMVRBTreeEntryPersistent<K, V> iParent, ORID iRecordId) {
+		return new OMVRBTreeEntryPersistent<K, V>(this, iParent, iRecordId);
+	}
+
+	public OMVRBTreePersistent<K, V> load() {
+		dataTree.load();
+
+		// RESET LAST SEARCH STATE
+		setLastSearchNode(null, null);
+
+		// LOAD THE ROOT OBJECT AFTER ALL
+		ORID rootRid = dataTree.getRoot();
+		if (rootRid != null && dataTree.getRoot().isValid())
+			root = loadEntry(null, rootRid);
+		return this;
+	}
+
+	protected void initAfterLoad() throws IOException {
+	}
+
+	public OMVRBTreePersistent<K, V> save() throws IOException {
+		commitChanges();
+		return this;
+	}
+
+	protected void saveTreeNode() throws IOException {
+		if (root != null) {
+			OMVRBTreeEntryPersistent<K, V> pRoot = (OMVRBTreeEntryPersistent<K, V>) root;
+			if (pRoot.getDataEntry().getIdentity().isNew()) {
+				// FIRST TIME: SAVE IT
+				pRoot.save();
+			}
+		}
+		dataTree.save();
+	}
 
 	/**
 	 * Lazy loads a node.
 	 */
-	protected OMVRBTreeEntryPersistent<K, V> loadEntry(final OMVRBTreeEntryPersistent<K, V> iParent, final ORID iRecordId)
-			throws IOException {
+	protected OMVRBTreeEntryPersistent<K, V> loadEntry(final OMVRBTreeEntryPersistent<K, V> iParent, final ORID iRecordId) {
 		// SEARCH INTO THE CACHE
 		OMVRBTreeEntryPersistent<K, V> entry = searchNodeInCache(iRecordId);
 		if (entry == null) {
@@ -117,23 +131,23 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			addNodeInCache(entry);
 
 			// RECONNECT THE LOADED NODE WITH IN-MEMORY PARENT, LEFT AND RIGHT
-			if (entry.parent == null && entry.parentRid.isValid()) {
+			if (entry.parent == null && entry.dataEntry.getParent().isValid()) {
 				// TRY TO ASSIGN THE PARENT IN CACHE IF ANY
-				final OMVRBTreeEntryPersistent<K, V> parentNode = searchNodeInCache(entry.parentRid);
+				final OMVRBTreeEntryPersistent<K, V> parentNode = searchNodeInCache(entry.dataEntry.getParent());
 				if (parentNode != null)
 					entry.setParent(parentNode);
 			}
 
-			if (entry.left == null && entry.leftRid.isValid()) {
+			if (entry.left == null && entry.dataEntry.getLeft().isValid()) {
 				// TRY TO ASSIGN THE PARENT IN CACHE IF ANY
-				final OMVRBTreeEntryPersistent<K, V> leftNode = searchNodeInCache(entry.leftRid);
+				final OMVRBTreeEntryPersistent<K, V> leftNode = searchNodeInCache(entry.dataEntry.getLeft());
 				if (leftNode != null)
 					entry.setLeft(leftNode);
 			}
 
-			if (entry.right == null && entry.rightRid.isValid()) {
+			if (entry.right == null && entry.dataEntry.getRight().isValid()) {
 				// TRY TO ASSIGN THE PARENT IN CACHE IF ANY
-				final OMVRBTreeEntryPersistent<K, V> rightNode = searchNodeInCache(entry.rightRid);
+				final OMVRBTreeEntryPersistent<K, V> rightNode = searchNodeInCache(entry.dataEntry.getRight());
 				if (rightNode != null)
 					entry.setRight(rightNode);
 			}
@@ -151,33 +165,43 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		return entry;
 	}
 
-	/**
-	 * Create a new entry for {@link #loadEntry(OMVRBTreeEntryPersistent, ORID)}.
-	 */
-	protected abstract OMVRBTreeEntryPersistent<K, V> createEntry(OMVRBTreeEntryPersistent<K, V> iParent, ORID iRecordId)
-			throws IOException;
+	public int size() {
+		return dataTree.getSize();
+	}
+
+	protected void setSize(int iSize) {
+		if (dataTree.setSize(iSize))
+			markDirty();
+	}
+
+	public int getDefaultPageSize() {
+		return dataTree.getDefaultPageSize();
+	}
 
 	@Override
 	public void clear() {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		try {
+			recordsToCommit.clear();
 			if (root != null) {
 				((OMVRBTreeEntryPersistent<K, V>) root).delete();
 				super.clear();
-				getListener().signalTreeChanged(this);
+				markDirty();
 			}
-
-			recordsToCommit.clear();
 			entryPoints.clear();
 			cache.clear();
 
 		} catch (IOException e) {
-			OLogManager.instance().error(this, "Error on deleting the tree: " + record.getIdentity(), e, OStorageException.class);
+			OLogManager.instance().error(this, "Error on deleting the tree: " + dataTree, e, OStorageException.class);
 		} finally {
-
 			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.clear", timer);
 		}
+	}
+
+	public void delete() {
+		clear();
+		dataTree.delete();
 	}
 
 	/**
@@ -198,10 +222,9 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 			load();
 
-		} catch (IOException e) {
-			OLogManager.instance().error(this, "Error on unload the tree: " + record.getIdentity(), e, OStorageException.class);
+		} catch (Exception e) {
+			OLogManager.instance().error(this, "Error on unload the tree: " + dataTree, e, OStorageException.class);
 		} finally {
-
 			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.unload", timer);
 		}
 	}
@@ -219,6 +242,10 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	 * @return The total freed nodes
 	 */
 	public int optimize(final boolean iForce) {
+		// optimization = 0;
+		// if (true)
+		// return 0;
+
 		if (optimization == -1)
 			// IS ALREADY RUNNING
 			return 0;
@@ -249,7 +276,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			config();
 
 			if (OLogManager.instance().isDebugEnabled())
-				OLogManager.instance().debug(this, "Found %d items on disk, threshold=%f, entryPoints=%d, nodesInCache=%d", size,
+				OLogManager.instance().debug(this, "Found %d items on disk, threshold=%f, entryPoints=%d, nodesInCache=%d", size(),
 						(entryPointsSize * optimizeEntryPointsFactor), entryPoints.size(), cache.size());
 
 			final int nodesInMemory = cache.size();
@@ -302,10 +329,11 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			// COUNT ALL IN-MEMORY NODES BY BROWSING ALL THE ENTRYPOINT NODES
 			if (OLogManager.instance().isDebugEnabled())
 				OLogManager.instance().debug(this, "After optimization: %d items on disk, threshold=%f, entryPoints=%d, nodesInCache=%d",
-						size, (entryPointsSize * optimizeEntryPointsFactor), entryPoints.size(), cache.size());
+						size(), (entryPointsSize * optimizeEntryPointsFactor), entryPoints.size(), cache.size());
 
 			if (debug) {
 				int i = 0;
+				System.out.println();
 				for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints.values())
 					System.out.println("- Entrypoint " + ++i + "/" + entryPoints.size() + ": " + entryPoint);
 			}
@@ -402,10 +430,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 		int totalCommitted = 0;
 		try {
-			if (record.isDirty()) {
-				// TREE IS CHANGED AS WELL
-				save();
-			}
 
 			if (!recordsToCommit.isEmpty()) {
 				final List<OMVRBTreeEntryPersistent<K, V>> tmp = new ArrayList<OMVRBTreeEntryPersistent<K, V>>();
@@ -417,31 +441,36 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 					recordsToCommit.clear();
 
 					for (OMVRBTreeEntryPersistent<K, V> node : tmp)
-						if (node.record.isDirty()) {
-							boolean wasNew = node.record.getIdentity().isNew();
+						if (node.dataEntry.isEntryDirty()) {
+							boolean wasNew = node.dataEntry.getIdentity().isNew();
 
 							// CREATE THE RECORD
 							node.save();
 
 							if (debug)
 								System.out.printf("\nSaved %s tree node %s: parent %s, left %s, right %s", wasNew ? "new" : "",
-										node.record.getIdentity(), node.parentRid, node.leftRid, node.rightRid);
+										node.dataEntry.getIdentity(), node.dataEntry.getParent(), node.dataEntry.getLeft(), node.dataEntry.getRight());
 
-							if (wasNew) {
-								if (node.record.getIdentity().getClusterPosition() < -1) {
-									// TX RECORD
-									if (cache.get(node.record.getIdentity()) != node)
-										// INSERT A COPY TO PREVENT CHANGES
-										cache.put(node.record.getIdentity().copy(), node);
-								}
-
-								cache.put(node.record.getIdentity(), node);
-							}
+							// Sylvain : already done in node.save();
+							// if (wasNew) {
+							// if (node.dataEntry.getIdentity().getClusterPosition() < -1) {
+							// // TX RECORD
+							// if (cache.get(node.dataEntry.getIdentity()) != node)
+							// // INSERT A COPY TO PREVENT CHANGES
+							// cache.put(node.dataEntry.getIdentity().copy(), node);
+							// }
+							//
+							// cache.put(node.dataEntry.getIdentity(), node);
+							// }
 						}
 
 					totalCommitted += tmp.size();
 					tmp.clear();
 				}
+			}
+			if (dataTree.isTreeDirty()) {
+				// TREE IS CHANGED AS WELL
+				saveTreeNode();
 			}
 
 		} catch (IOException e) {
@@ -455,100 +484,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		return totalCommitted;
 	}
 
-	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
-		final long timer = OProfiler.getInstance().startChrono();
-
-		final ORID rootRid = new ORecordId();
-
-		try {
-			final OMemoryStream stream = new OMemoryStream(iStream);
-
-			byte protocolVersion = stream.peek();
-			if (protocolVersion != -1) {
-				// @COMPATIBILITY BEFORE 0.9.25
-				stream.getAsByte();
-				if (protocolVersion != CURRENT_PROTOCOL_VERSION)
-					throw new OSerializationException(
-							"The index has been created with a previous version of OrientDB. Soft transitions between version is a featured supported since 0.9.25. In order to use it with this version of OrientDB you need to export and import your database. "
-									+ protocolVersion + "<->" + CURRENT_PROTOCOL_VERSION);
-			}
-
-			rootRid.fromStream(stream.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
-
-			size = stream.getAsInteger();
-			if (protocolVersion == -1)
-				// @COMPATIBILITY BEFORE 0.9.25
-				lastPageSize = stream.getAsShort();
-			else
-				lastPageSize = stream.getAsInteger();
-
-			serializerFromStream(stream);
-
-			// LOAD THE ROOT OBJECT AFTER ALL
-			if (rootRid.isValid())
-				root = loadEntry(null, rootRid);
-
-			return this;
-
-		} catch (Exception e) {
-
-			OLogManager.instance().error(this, "Error on unmarshalling OMVRBTreePersistent object from record: %s", e,
-					OSerializationException.class, rootRid);
-
-		} finally {
-			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.fromStream", timer);
-		}
-		return this;
-	}
-
-	public byte[] toStream() throws OSerializationException {
-		final long timer = OProfiler.getInstance().startChrono();
-
-		// CHECK IF THE RECORD IS PENDING TO BE MARSHALLED
-		final Integer identityRecord = System.identityHashCode(record);
-		final Set<Integer> marshalledRecords = OSerializationThreadLocal.INSTANCE.get();
-		if (marshalledRecords.contains(identityRecord)) {
-			// ALREADY IN STACK, RETURN EMPTY
-			return new byte[] {};
-		} else
-			marshalledRecords.add(identityRecord);
-
-		OMemoryOutputStream stream = entryRecordBuffer;
-
-		try {
-			stream.add(CURRENT_PROTOCOL_VERSION);
-
-			if (root != null) {
-				OMVRBTreeEntryPersistent<K, V> pRoot = (OMVRBTreeEntryPersistent<K, V>) root;
-				if (pRoot.record.getIdentity().isNew()) {
-					// FIRST TIME: SAVE IT
-					pRoot.save();
-				}
-
-				stream.addAsFixed(pRoot.record.getIdentity().toStream());
-			} else
-				stream.addAsFixed(ORecordId.EMPTY_RECORD_ID_STREAM);
-
-			stream.add(size);
-			stream.add(lastPageSize);
-
-			stream.add(keySerializer.getName());
-			stream.add(valueSerializer.getName());
-
-			record.fromStream(stream.getByteArray());
-			return record.toStream();
-
-		} catch (IOException e) {
-			throw new OSerializationException("Error on marshalling RB+Tree", e);
-		} finally {
-			marshalledRecords.remove(identityRecord);
-
-			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.toStream", timer);
-		}
-	}
-
 	public void signalTreeChanged(final OMVRBTree<K, V> iTree) {
-		record.setDirty();
 	}
 
 	public void signalNodeChanged(final OMVRBTreeEntry<K, V> iNode) {
@@ -557,12 +493,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 	@Override
 	public int hashCode() {
-		final ORID rid = record.getIdentity();
-		return rid == null ? 0 : rid.hashCode();
-	}
-
-	public ORecordBytes getRecord() {
-		return record;
+		return dataTree.hashCode();
 	}
 
 	protected void adjustPageSize() {
@@ -643,21 +574,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		throw new OLowMemoryException("OMVRBTreePersistent.containsValue()");
 	}
 
-	public V get(final Object iKey, final String iFetchPlan) {
-		fetchPlan = iFetchPlan;
-		return get(iKey);
-	}
-
-	public String getClusterName() {
-		return clusterName;
-	}
-
-	public String getFetchPlan() {
-		return fetchPlan;
-	}
-
-	public void setFetchPlan(String fetchPlan) {
-		this.fetchPlan = fetchPlan;
+	public OTreeDataProvider<K, V> getDataTree() {
+		return dataTree;
 	}
 
 	public int getOptimization() {
@@ -685,8 +603,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		return optimizeThreshold;
 	}
 
-	public void setOptimizeThreshold(int optimizeThreshold) {
-		this.optimizeThreshold = optimizeThreshold;
+	public void setOptimizeThreshold(int iOptimizeThreshold) {
+		this.optimizeThreshold = iOptimizeThreshold;
 	}
 
 	public int getEntryPointSize() {
@@ -703,9 +621,9 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		final StringBuilder buffer = new StringBuilder();
 		buffer.append("size=");
 
-		buffer.append(size);
+		buffer.append(size());
 
-		if (size > 0) {
+		if (size() > 0) {
 			final int currPageIndex = pageIndex;
 			buffer.append(" ");
 			buffer.append(getFirstEntry().getFirstKey());
@@ -765,14 +683,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		throw new OLowMemoryException("OMVRBTreePersistent.put()");
 	}
 
-	public Object getKeySerializer() {
-		return keySerializer;
-	}
-
-	public Object getValueSerializer() {
-		return valueSerializer;
-	}
-
 	/**
 	 * Returns the best entry point to start the search. Searches first between entrypoints. If nothing is found "root" is always
 	 * returned.
@@ -805,7 +715,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	synchronized void removeEntry(final ORID iEntryId) {
 		// DELETE THE NODE FROM THE PENDING RECORDS TO COMMIT
 		for (OMVRBTreeEntryPersistent<K, V> node : recordsToCommit) {
-			if (node.record.getIdentity().equals(iEntryId)) {
+			if (node.dataEntry.getIdentity().equals(iEntryId)) {
 				recordsToCommit.remove(node);
 				break;
 			}
@@ -885,36 +795,26 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	}
 
 	protected void config() {
-		lastPageSize = OGlobalConfiguration.MVRBTREE_NODE_PAGE_SIZE.getValueAsInteger();
+		if (dataTree.updateConfig())
+			markDirty();
 		pageLoadFactor = OGlobalConfiguration.MVRBTREE_LOAD_FACTOR.getValueAsFloat();
 		optimizeEntryPointsFactor = OGlobalConfiguration.MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR.getValueAsFloat();
 		optimizeThreshold = OGlobalConfiguration.MVRBTREE_OPTIMIZE_THRESHOLD.getValueAsInteger();
 		entryPointsSize = OGlobalConfiguration.MVRBTREE_ENTRYPOINTS.getValueAsInteger();
 	}
 
-	protected void serializerFromStream(final OMemoryStream stream) throws IOException {
-		keySerializer = OStreamSerializerFactory.get(stream.getAsString());
-		valueSerializer = OStreamSerializerFactory.get(stream.getAsString());
-	}
-
 	@Override
 	protected void rotateLeft(final OMVRBTreeEntry<K, V> p) {
 		if (debug && p != null)
-			System.out.printf("\nRotating to the left the node %s", ((OMVRBTreeEntryPersistent<K, V>) p).record.getIdentity());
+			System.out.printf("\nRotating to the left the node %s", ((OMVRBTreeEntryPersistent<K, V>) p).dataEntry.getIdentity());
 		super.rotateLeft(p);
 	}
 
 	@Override
 	protected void rotateRight(final OMVRBTreeEntry<K, V> p) {
 		if (debug && p != null)
-			System.out.printf("\nRotating to the right the node %s", ((OMVRBTreeEntryPersistent<K, V>) p).record.getIdentity());
+			System.out.printf("\nRotating to the right the node %s", ((OMVRBTreeEntryPersistent<K, V>) p).dataEntry.getIdentity());
 		super.rotateRight(p);
-	}
-
-	protected ODatabaseRecord getDatabase() {
-		final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
-		record.setDatabase(database);
-		return database;
 	}
 
 	/**
@@ -933,8 +833,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	 *          Node to remove
 	 */
 	protected void removeNodeFromMemory(final OMVRBTreeEntryPersistent<K, V> iNode) {
-		if (iNode.record != null)
-			cache.remove(iNode.record.getIdentity());
+		if (iNode.dataEntry != null && iNode.dataEntry.getIdentity().isValid())
+			cache.remove(iNode.dataEntry.getIdentity());
 		if (iNode.getSize() > 0)
 			entryPoints.remove(iNode.getKeyAt(0));
 	}
@@ -972,8 +872,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	 *          Node to store
 	 */
 	protected void addNodeInCache(final OMVRBTreeEntryPersistent<K, V> iNode) {
-		if (iNode.record != null)
-			cache.put(iNode.record.getIdentity(), iNode);
+		if (iNode.dataEntry != null && iNode.dataEntry.getIdentity().isValid())
+			cache.put(iNode.dataEntry.getIdentity(), iNode);
 	}
 
 	/**
@@ -1006,5 +906,9 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	 */
 	protected void removeNodeFromCache(final ORID iRid) {
 		cache.remove(iRid);
+	}
+
+	protected void markDirty() {
+		getListener().signalTreeChanged(this);
 	}
 }

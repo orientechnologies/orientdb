@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeStorage;
+import com.orientechnologies.orient.core.type.tree.generic.OTreeDataProviderGeneric;
 
 /**
  * Handle a cluster using a logical structure stored into a real physical local cluster.<br/>
@@ -65,7 +66,6 @@ public class OClusterLogical implements OCluster {
 		try {
 			map = new OMVRBTreeStorage<Long, OPhysicalPosition>(iStorage, iStorage.getClusterById(iPhysicalClusterId).getName(),
 					OStreamSerializerLong.INSTANCE, OStreamSerializerAnyStreamable.INSTANCE);
-			map.getRecord().setIdentity(iPhysicalClusterId, ORID.CLUSTER_POS_INVALID);
 
 			total = new OPhysicalPosition(0, -1, (byte) 0);
 			map.put(new Long(-1), total);
@@ -165,7 +165,8 @@ public class OClusterLogical implements OCluster {
 	/**
 	 * Change the PhysicalPosition of the logical record iPosition.
 	 */
-	public void setPhysicalPosition(final long iPosition, final int iDataId, final long iDataPosition, final byte iRecordType, int iVersion) {
+	public void setPhysicalPosition(final long iPosition, final int iDataId, final long iDataPosition, final byte iRecordType,
+			int iVersion) {
 		Long key = new Long(iPosition);
 		final OPhysicalPosition ppos = map.get(key);
 		ppos.dataSegment = iDataId;
@@ -268,16 +269,17 @@ public class OClusterLogical implements OCluster {
 	}
 
 	public ORID getRID() {
-		return map.getRecord().getIdentity();
+		return ((OTreeDataProviderGeneric) map.getDataTree()).getRecord().getIdentity();
 	}
 
-	public void setId(final int id) {
-		this.id = id;
+	public void setId(final int iId) {
+		this.id = iId;
 	}
 
-	public void setRID(final ORID iRID) {
-		this.map.getRecord().setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
-	}
+	// XXX Sylvain : map has been already loaded in constructor. Can't be updated.
+	// public void setRID(final ORID iRID) {
+	// this.map.getRecord().setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
+	// }
 
 	public String getType() {
 		return TYPE;

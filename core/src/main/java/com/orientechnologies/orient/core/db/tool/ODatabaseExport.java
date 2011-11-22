@@ -41,7 +41,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLogical;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreePersistent;
+import com.orientechnologies.orient.core.type.tree.generic.OTreeDataProviderGeneric;
 
 /**
  * Export data from a database to a file.
@@ -276,7 +276,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 			writer.writeAttribute(2, true, "engine-build", engineBuild);
 		writer.writeAttribute(2, true, "storage-config-version", OStorageConfiguration.CURRENT_VERSION);
 		writer.writeAttribute(2, true, "schema-version", OSchemaShared.CURRENT_VERSION_NUMBER);
-		writer.writeAttribute(2, true, "mvrbtree-version", OMVRBTreePersistent.CURRENT_PROTOCOL_VERSION);
+		writer.writeAttribute(2, true, "mvrbtree-version", OTreeDataProviderGeneric.CURRENT_PROTOCOL_VERSION);
 		writer.endObject(1, true);
 
 		listener.onMessage("OK");

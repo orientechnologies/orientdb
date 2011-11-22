@@ -15,19 +15,11 @@
  */
 package com.orientechnologies.common.collection;
 
-import java.util.Arrays;
 import java.util.Map;
 
 @SuppressWarnings("unchecked")
 public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparable<OMVRBTreeEntry<K, V>> {
 	protected OMVRBTree<K, V>	tree;
-
-	protected int							size										= 1;
-	protected int							pageSize;
-
-	protected K[]							keys;
-	protected V[]							values;
-	protected boolean					color										= OMVRBTree.RED;
 
 	private int								pageSplitItems;
 	public static final int		BINARY_SEARCH_THRESHOLD	= 10;
@@ -37,54 +29,14 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
 	 * 
 	 */
 	protected OMVRBTreeEntry(final OMVRBTree<K, V> iTree) {
-		this.tree = iTree;
-		init();
-	}
-
-	/**
-	 * Make a new cell with given key, value, and parent, and with <tt>null</tt> child links, and BLACK color.
-	 */
-	protected OMVRBTreeEntry(final OMVRBTree<K, V> iTree, final K iKey, final V iValue, final OMVRBTreeEntry<K, V> iParent) {
-		this.tree = iTree;
-		setParent(iParent);
-		this.pageSize = tree.getPageSize();
-		this.keys = (K[]) new Object[pageSize];
-		this.keys[0] = iKey;
-		this.values = (V[]) new Object[pageSize];
-		this.values[0] = iValue;
-		init();
-	}
-
-	/**
-	 * Copy values from the parent node.
-	 * 
-	 * @param iParent
-	 * @param iPosition
-	 * @param iLeft
-	 */
-	protected OMVRBTreeEntry(final OMVRBTreeEntry<K, V> iParent, final int iPosition) {
-		this.tree = iParent.tree;
-		this.pageSize = tree.getPageSize();
-		this.keys = (K[]) new Object[pageSize];
-		this.values = (V[]) new Object[pageSize];
-
-		this.size = iParent.size - iPosition;
-		System.arraycopy(iParent.keys, iPosition, keys, 0, size);
-		System.arraycopy(iParent.values, iPosition, values, 0, size);
-
-		Arrays.fill(iParent.keys, iPosition, iParent.size, null);
-		Arrays.fill(iParent.values, iPosition, iParent.size, null);
-
-		iParent.size = iPosition;
-
-		init();
+		tree = iTree;
 	}
 
 	public abstract void setLeft(OMVRBTreeEntry<K, V> left);
 
 	public abstract OMVRBTreeEntry<K, V> getLeft();
 
-	public abstract OMVRBTreeEntry<K, V> setRight(OMVRBTreeEntry<K, V> right);
+	public abstract void setRight(OMVRBTreeEntry<K, V> right);
 
 	public abstract OMVRBTreeEntry<K, V> getRight();
 
@@ -161,16 +113,14 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
 	}
 
 	public K getKey(final int iIndex) {
-		if (iIndex >= size)
-			throw new IndexOutOfBoundsException("Requested index " + iIndex + " when the range is 0-" + size);
+		if (iIndex >= getSize())
+			throw new IndexOutOfBoundsException("Requested index " + iIndex + " when the range is 0-" + getSize());
 
 		tree.pageIndex = iIndex;
 		return getKeyAt(iIndex);
 	}
 
-	protected K getKeyAt(final int iIndex) {
-		return keys[iIndex];
-	}
+	protected abstract K getKeyAt(final int iIndex);
 
 	/**
 	 * Returns the value associated with the key.
@@ -189,47 +139,10 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
 		return getValueAt(iIndex);
 	}
 
-	protected V getValueAt(int iIndex) {
-		return values[iIndex];
-	}
-
-	/**
-	 * Replaces the value currently associated with the key with the given value.
-	 * 
-	 * @return the value associated with the key before this method was called
-	 */
-	public V setValue(final V value) {
-		V oldValue = this.getValue();
-		this.values[tree.pageIndex] = value;
-		return oldValue;
-	}
+	protected abstract V getValueAt(int iIndex);
 
 	public int getFreeSpace() {
-		return pageSize - size;
-	}
-
-	@Override
-	public String toString() {
-		if (keys == null)
-			return "?";
-
-		final StringBuilder buffer = new StringBuilder();
-
-		final Object k = tree.pageIndex >= size ? '?' : getKey();
-
-		buffer.append(k);
-		buffer.append(" (size=");
-		buffer.append(size);
-		if (size > 0) {
-			buffer.append(" [");
-			buffer.append(keys[0] != null ? keys[0] : "{lazy}");
-			buffer.append('-');
-			buffer.append(keys[size - 1] != null ? keys[size - 1] : "{lazy}");
-			buffer.append(']');
-		}
-		buffer.append(')');
-
-		return buffer.toString();
+		return getPageSize() - getSize();
 	}
 
 	/**
@@ -242,7 +155,7 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
 	 */
 	protected V search(final Comparable<? super K> iKey) {
 		tree.pageItemFound = false;
-
+		int size = getSize();
 		if (size == 0)
 			return null;
 
@@ -295,7 +208,7 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
 		V value = null;
 		int i = 0;
 		tree.pageItemComparator = -1;
-		for (; i < size; ++i) {
+		for (int s = getSize(); i < s; ++i) {
 			if (tree.comparator != null)
 				tree.pageItemComparator = tree.comparator.compare(getKeyAt(i), (K) iKey);
 			else
@@ -325,7 +238,7 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
 	 */
 	private V binarySearch(final Comparable<? super K> iKey) {
 		int low = 0;
-		int high = size - 1;
+		int high = getSize() - 1;
 		int mid = 0;
 
 		while (low <= high) {
@@ -357,78 +270,35 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
 		return null;
 	}
 
-	protected void insert(final int iPosition, final K key, final V value) {
-		if (iPosition < size) {
-			// MOVE RIGHT TO MAKE ROOM FOR THE ITEM
-			System.arraycopy(keys, iPosition, keys, iPosition + 1, size - iPosition);
-			System.arraycopy(values, iPosition, values, iPosition + 1, size - iPosition);
-		}
+	protected abstract void insert(final int iPosition, final K key, final V value);
 
-		keys[iPosition] = key;
-		values[iPosition] = value;
-		size++;
-	}
+	protected abstract void remove();
 
-	protected void remove() {
-		if (tree.pageIndex == size - 1) {
-			// LAST ONE: JUST REMOVE IT
-		} else if (tree.pageIndex > -1) {
-			// SHIFT LEFT THE VALUES
-			System.arraycopy(keys, tree.pageIndex + 1, keys, tree.pageIndex, size - tree.pageIndex - 1);
-			System.arraycopy(values, tree.pageIndex + 1, values, tree.pageIndex, size - tree.pageIndex - 1);
-		}
+	protected abstract void setColor(boolean iColor);
 
-		// FREE RESOURCES
-		keys[size - 1] = null;
-		values[size - 1] = null;
+	public abstract boolean getColor();
 
-		size--;
-		tree.pageIndex = 0;
-	}
-
-	protected void setColor(final boolean iColor) {
-		this.color = iColor;
-	}
-
-	public boolean getColor() {
-		return color;
-	}
-
-	public int getSize() {
-		return size;
-	}
+	public abstract int getSize();
 
 	public K getLastKey() {
-		return getKey(size - 1);
+		return getKey(getSize() - 1);
 	}
 
 	public K getFirstKey() {
 		return getKey(0);
 	}
 
-	protected void copyFrom(final OMVRBTreeEntry<K, V> iSource) {
-		keys = (K[]) new Object[iSource.keys.length];
-		for (int i = 0; i < iSource.keys.length; ++i)
-			keys[i] = iSource.keys[i];
-
-		values = (V[]) new Object[iSource.values.length];
-		for (int i = 0; i < iSource.values.length; ++i)
-			values[i] = iSource.values[i];
-
-		size = iSource.size;
-	}
+	protected abstract void copyFrom(final OMVRBTreeEntry<K, V> iSource);
 
 	public int getPageSplitItems() {
 		return pageSplitItems;
 	}
 
 	protected void init() {
-		pageSplitItems = (int) (pageSize * tree.pageLoadFactor);
+		pageSplitItems = (int) (getPageSize() * tree.pageLoadFactor);
 	}
 
-	public int getPageSize() {
-		return pageSize;
-	}
+	public abstract int getPageSize();
 
 	/**
 	 * Compares two nodes by their first keys.
@@ -438,9 +308,9 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
 			return 1;
 		if (o == this)
 			return 0;
-		if (size == 0)
+		if (getSize() == 0)
 			return -1;
-		if (o.size == 0)
+		if (o.getSize() == 0)
 			return 1;
 		return ((Comparable<K>) getFirstKey()).compareTo(o.getFirstKey());
 	}

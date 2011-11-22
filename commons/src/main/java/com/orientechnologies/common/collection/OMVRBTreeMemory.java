@@ -22,6 +22,12 @@ import java.util.SortedMap;
 @SuppressWarnings("serial")
 public class OMVRBTreeMemory<K, V> extends OMVRBTree<K, V> {
 	/**
+	 * The number of entries in the tree
+	 */
+	protected int	size						= 0;
+	protected int	defaultPageSize	= 63;
+
+	/**
 	 * Memory based MVRB-Tree implementation. Constructs a new, empty tree map, using the natural ordering of its keys. All keys
 	 * inserted into the map must implement the {@link Comparable} interface. Furthermore, all such keys must be <i>mutually
 	 * comparable</i>: <tt>k1.compareTo(k2)</tt> must not throw a <tt>ClassCastException</tt> for any keys <tt>k1</tt> and <tt>k2</tt>
@@ -33,8 +39,10 @@ public class OMVRBTreeMemory<K, V> extends OMVRBTree<K, V> {
 		runtimeCheckEnabled = false;
 	}
 
-	public OMVRBTreeMemory(final int iSize, final float iLoadFactor) {
-		super(iSize, iLoadFactor);
+	public OMVRBTreeMemory(final int iPageSize, final float iLoadFactor) {
+		super();
+		defaultPageSize = iPageSize;
+		pageLoadFactor = iLoadFactor;
 	}
 
 	public OMVRBTreeMemory(final OMVRBTreeEventListener<K, V> iListener) {
@@ -87,12 +95,25 @@ public class OMVRBTreeMemory<K, V> extends OMVRBTree<K, V> {
 	}
 
 	@Override
+	public int size() {
+		return size;
+	}
+
+	protected void setSize(int pSize) {
+		size = pSize;
+	}
+
+	public int getDefaultPageSize() {
+		return defaultPageSize;
+	}
+
+	@Override
 	protected OMVRBTreeEntry<K, V> createEntry(final K key, final V value) {
 		return new OMVRBTreeEntryMemory<K, V>(this, key, value, null);
 	}
 
 	@Override
 	protected OMVRBTreeEntry<K, V> createEntry(final OMVRBTreeEntry<K, V> parent) {
-		return new OMVRBTreeEntryMemory<K, V>(parent, parent.getPageSplitItems());
+		return new OMVRBTreeEntryMemory<K, V>((OMVRBTreeEntryMemory<K, V>) parent, parent.getPageSplitItems());
 	}
 }

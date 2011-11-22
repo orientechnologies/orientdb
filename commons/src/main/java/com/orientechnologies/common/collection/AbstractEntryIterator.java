@@ -48,7 +48,7 @@ abstract class AbstractEntryIterator<K, V, T> implements Iterator<T> {
 		if (next == null)
 			throw new NoSuchElementException();
 
-		if (tree.pageIndex < next.size - 1) {
+		if (tree.pageIndex < next.getSize() - 1) {
 			// ITERATE INSIDE THE NODE
 			tree.pageIndex++;
 		} else {
@@ -77,7 +77,7 @@ abstract class AbstractEntryIterator<K, V, T> implements Iterator<T> {
 				throw new ConcurrentModificationException();
 
 			next = OMVRBTree.predecessor(e);
-			tree.pageIndex = next.size - 1;
+			tree.pageIndex = next.getSize() - 1;
 			lastReturned = e;
 		}
 

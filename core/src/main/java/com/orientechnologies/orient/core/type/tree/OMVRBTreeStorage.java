@@ -15,17 +15,11 @@
  */
 package com.orientechnologies.orient.core.type.tree;
 
-import java.io.IOException;
-
-import com.orientechnologies.common.collection.OMVRBTreeEntry;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLogical;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.type.tree.generic.OTreeDataProviderGeneric;
 
 /**
  * Persistent MVRB-Tree implementation. The difference with the class OMVRBTreeDatabase is the level. In facts this class works
@@ -36,72 +30,18 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
  */
 @SuppressWarnings("serial")
 public class OMVRBTreeStorage<K, V> extends OMVRBTreePersistent<K, V> {
-	protected OStorageLocal	storage;
 
-	protected int						clusterId;
+	public OMVRBTreeStorage(OTreeDataProvider<K, V> iProvider) {
+		super(iProvider);
+	}
 
 	public OMVRBTreeStorage(final OStorageLocal iStorage, final String iClusterName, final ORID iRID) {
-		super(iClusterName, iRID);
-		storage = iStorage;
-		clusterId = storage.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME);
+		super(new OTreeDataProviderGeneric<K, V>(iStorage, iClusterName, iRID));
 	}
 
 	public OMVRBTreeStorage(final OStorageLocal iStorage, String iClusterName, final OStreamSerializer iKeySerializer,
 			final OStreamSerializer iValueSerializer) {
-		super(iClusterName, iKeySerializer, iValueSerializer);
-		storage = iStorage;
-		clusterId = storage.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME);
+		super(new OTreeDataProviderGeneric<K, V>(iStorage, iClusterName, iKeySerializer, iValueSerializer));
 	}
 
-	@Override
-	protected OMVRBTreeEntryPersistent<K, V> createEntry(OMVRBTreeEntry<K, V> iParent) {
-		adjustPageSize();
-		return new OMVRBTreeEntryStorage<K, V>(iParent, iParent.getPageSplitItems());
-	}
-
-	@Override
-	protected OMVRBTreeEntryPersistent<K, V> createEntry(final K key, final V value) {
-		adjustPageSize();
-		return new OMVRBTreeEntryStorage<K, V>(this, key, value, null);
-	}
-
-	@Override
-	protected OMVRBTreeEntryPersistent<K, V> createEntry(OMVRBTreeEntryPersistent<K, V> iParent, ORID iRecordId) throws IOException {
-		return new OMVRBTreeEntryStorage<K, V>(this, iParent, iRecordId);
-	}
-
-	@Override
-	public OMVRBTreePersistent<K, V> load() throws IOException {
-		((ORecordId) record.getIdentity()).clusterId = clusterId;
-		ORawBuffer raw = storage.readRecord(null, (ORecordId) record.getIdentity(), null, null);
-		if (raw == null)
-			throw new OConfigurationException("Can't load map with id " + clusterId + ":" + record.getIdentity().getClusterPosition());
-		record.setVersion(raw.version);
-		record.recycle(this);
-		fromStream(raw.buffer);
-		setLastSearchNode(null, null);
-		return this;
-	}
-
-	@Override
-	public OMVRBTreePersistent<K, V> save() throws IOException {
-		record.fromStream(toStream());
-		if (record.getIdentity().isValid())
-			// UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
-			record.setVersion(storage.updateRecord((ORecordId) record.getIdentity(), record.toStream(), -1, record.getRecordType(), null));
-		else {
-			// CREATE IT
-			if (record.getIdentity().getClusterId() == ORID.CLUSTER_ID_INVALID)
-				((ORecordId) record.getIdentity()).clusterId = clusterId;
-
-			storage.createRecord((ORecordId) record.getIdentity(), record.toStream(), record.getRecordType(), null);
-		}
-		record.unsetDirty();
-		return this;
-	}
-
-	public void delete() {
-		clear();
-		storage.deleteRecord((ORecordId) record.getIdentity(), record.getVersion(), null);
-	}
 }

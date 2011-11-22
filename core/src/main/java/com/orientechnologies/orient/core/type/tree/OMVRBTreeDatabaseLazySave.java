@@ -33,6 +33,10 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> {
 	protected int			updates							= 0;
 	protected boolean	transactionRunning	= false;
 
+	public OMVRBTreeDatabaseLazySave(OTreeDataProvider<K, V> iProvider) {
+		super(iProvider);
+	}
+
 	public OMVRBTreeDatabaseLazySave(ODatabaseRecord iDatabase, ORID iRID) {
 		super(iDatabase, iRID);
 	}

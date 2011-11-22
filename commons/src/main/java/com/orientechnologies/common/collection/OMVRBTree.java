@@ -16,6 +16,8 @@
 package com.orientechnologies.common.collection;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.AbstractCollection;
 import java.util.AbstractMap;
 import java.util.AbstractSet;
@@ -50,12 +52,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	boolean																		pageItemFound				= false;
 	protected int															pageItemComparator	= 0;
 	protected int															pageIndex						= -1;
-	protected int															lastPageSize				= 63;		// PERSISTENT FIELDS
 
-	/**
-	 * The number of entries in the tree
-	 */
-	protected int															size								= 0;			// PERSISTENT FIELDS
 	protected float														pageLoadFactor			= 0.7f;
 
 	/**
@@ -101,13 +98,6 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		LOWEST_BOUNDARY
 	}
 
-	public OMVRBTree(final int iSize, final float iLoadFactor) {
-		lastPageSize = iSize;
-		pageLoadFactor = iLoadFactor;
-		comparator = null;
-		init();
-	}
-
 	public OMVRBTree(final OMVRBTreeEventListener<K, V> iListener) {
 		init();
 		comparator = null;
@@ -133,13 +123,13 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 * to put a key into the map that violates this constraint, the <tt>put(Object
 	 * key, Object value)</tt> call will throw a <tt>ClassCastException</tt>.
 	 * 
-	 * @param comparator
+	 * @param iComparator
 	 *          the comparator that will be used to order this map. If <tt>null</tt>, the {@linkplain Comparable natural ordering} of
 	 *          the keys will be used.
 	 */
-	public OMVRBTree(final Comparator<? super K> comparator) {
+	public OMVRBTree(final Comparator<? super K> iComparator) {
 		init();
-		this.comparator = comparator;
+		this.comparator = iComparator;
 	}
 
 	/**
@@ -202,15 +192,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		return counter;
 	}
 
-	/**
-	 * Returns the number of key-value mappings in this map.
-	 * 
-	 * @return the number of key-value mappings in this map
-	 */
-	@Override
-	public int size() {
-		return size;
-	}
+	protected abstract void setSize(int iSize);
+
+	public abstract int getDefaultPageSize();
 
 	/**
 	 * Returns <tt>true</tt> if this map contains a mapping for the specified key.
@@ -267,7 +251,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 */
 	@Override
 	public V get(final Object key) {
-		if (size == 0)
+		if (size() == 0)
 			return null;
 
 		OMVRBTreeEntry<K, V> entry = null;
@@ -327,7 +311,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	@Override
 	public void putAll(final Map<? extends K, ? extends V> map) {
 		int mapSize = map.size();
-		if (size == 0 && mapSize != 0 && map instanceof SortedMap) {
+		if (size() == 0 && mapSize != 0 && map instanceof SortedMap) {
 			Comparator<?> c = ((SortedMap<? extends K, ? extends V>) map).comparator();
 			if (c == comparator || (c != null && c.equals(comparator))) {
 				++modCount;
@@ -368,7 +352,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
 		pageItemFound = false;
 
-		if (size == 0) {
+		if (size() == 0) {
 			pageIndex = 0;
 			return iGetContainer ? root : null;
 		}
@@ -497,8 +481,8 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		return listener;
 	}
 
-	public void setListener(final OMVRBTreeEventListener<K, V> listener) {
-		this.listener = listener;
+	public void setListener(final OMVRBTreeEventListener<K, V> iListener) {
+		this.listener = iListener;
 	}
 
 	/**
@@ -679,7 +663,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 				root = createEntry(key, value);
 				root.setColor(BLACK);
 
-				size = 1;
+				setSize(1);
 				modCount++;
 
 				if (listener != null)
@@ -772,7 +756,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			}
 
 			modCount++;
-			size++;
+			setSize(size() + 1);
 
 			if (listener != null)
 				listener.signalTreeChanged(this);
@@ -813,7 +797,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	@Override
 	public void clear() {
 		modCount++;
-		size = 0;
+		setSize(0);
 		setLastSearchNode(null, null);
 		setRoot(null);
 	}
@@ -834,13 +818,12 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
 		// Put clone into "virgin" state (except for comparator)
 		clone.listener = listener;
-		clone.lastPageSize = lastPageSize;
 		clone.pageIndex = pageIndex;
 		clone.pageItemFound = pageItemFound;
 		clone.pageLoadFactor = pageLoadFactor;
 
 		clone.root = null;
-		clone.size = 0;
+		clone.setSize(0);
 		clone.modCount = 0;
 		clone.entrySet = null;
 		clone.navigableKeySet = null;
@@ -848,7 +831,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
 		// Initialize clone with our mappings
 		try {
-			clone.buildFromSorted(size, entrySet().iterator(), null, null);
+			clone.buildFromSorted(size(), entrySet().iterator(), null, null);
 		} catch (java.io.IOException cannotHappen) {
 		} catch (ClassNotFoundException cannotHappen) {
 		}
@@ -2104,8 +2087,8 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
 	// Red-black mechanics
 
-	static final boolean	RED		= false;
-	static final boolean	BLACK	= true;
+	public static final boolean	RED		= false;
+	public static final boolean	BLACK	= true;
 
 	/**
 	 * Node in the Tree. Doubles as a means to pass key-value pairs back to user (see Map.Entry).
@@ -2244,7 +2227,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		if (index <= 0) {
 			prev = predecessor(t);
 			if (prev != null)
-				t.tree.pageIndex = prev.size - 1;
+				t.tree.pageIndex = prev.getSize() - 1;
 			else
 				t.tree.pageIndex = 0;
 		} else {
@@ -2389,7 +2372,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 *          node to delete
 	 */
 	void deleteEntry(OMVRBTreeEntry<K, V> p) {
-		size--;
+		setSize(size() - 1);
 
 		if (listener != null)
 			listener.signalTreeChanged(this);
@@ -2498,7 +2481,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 					sib = leftOf(parentOf(x));
 				}
 
-				if (colorOf(rightOf(sib)) == BLACK && colorOf(leftOf(sib)) == BLACK) {
+				if (x != null && colorOf(rightOf(sib)) == BLACK && colorOf(leftOf(sib)) == BLACK) {
 					setColor(sib, RED);
 					x = parentOf(x);
 				} else {
@@ -2528,12 +2511,12 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 *             key-order (as determined by the OMVRBTree's Comparator, or by the keys' natural ordering if the OMVRBTree has no
 	 *             Comparator).
 	 */
-	private void writeObject(final java.io.ObjectOutputStream s) throws java.io.IOException {
+	private void writeObject(final ObjectOutputStream s) throws java.io.IOException {
 		// Write out the Comparator and any hidden stuff
 		s.defaultWriteObject();
 
 		// Write out size (number of Mappings)
-		s.writeInt(size);
+		s.writeInt(size());
 
 		// Write out keys and values (alternating)
 		for (Iterator<Map.Entry<K, V>> i = entrySet().iterator(); i.hasNext();) {
@@ -2546,19 +2529,19 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	/**
 	 * Reconstitute the <tt>OMVRBTree</tt> instance from a stream (i.e., deserialize it).
 	 */
-	private void readObject(final java.io.ObjectInputStream s) throws java.io.IOException, ClassNotFoundException {
+	private void readObject(final java.io.ObjectInputStream s) throws IOException, ClassNotFoundException {
 		// Read in the Comparator and any hidden stuff
 		s.defaultReadObject();
 
 		// Read in size
-		int size = s.readInt();
+		setSize(s.readInt());
 
-		buildFromSorted(size, null, s, null);
+		buildFromSorted(size(), null, s, null);
 	}
 
 	/** Intended to be called only from OTreeSet.readObject */
-	void readOTreeSet(int size, java.io.ObjectInputStream s, V defaultVal) throws java.io.IOException, ClassNotFoundException {
-		buildFromSorted(size, null, s, defaultVal);
+	void readOTreeSet(int iSize, ObjectInputStream s, V defaultVal) throws java.io.IOException, ClassNotFoundException {
+		buildFromSorted(iSize, null, s, defaultVal);
 	}
 
 	/** Intended to be called only from OTreeSet.addAll */
@@ -2597,7 +2580,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 */
 	private void buildFromSorted(final int size, final Iterator<?> it, final java.io.ObjectInputStream str, final V defaultVal)
 			throws java.io.IOException, ClassNotFoundException {
-		this.size = size;
+		setSize(size);
 		root = buildFromSorted(0, 0, size - 1, computeRedLevel(size), it, str, defaultVal);
 	}
 
@@ -2685,10 +2668,6 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		return level;
 	}
 
-	public int getPageSize() {
-		return lastPageSize;
-	}
-
 	public int getPageIndex() {
 		return pageIndex;
 	}
@@ -2739,13 +2718,13 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 				if (prevNode.getTree() == null)
 					OLogManager.instance().error(this, "[OMVRBTree.checkTreeStructure] Freed record %d found in memory\n", i);
 
-				if (((Comparable<K>) e.getFirstKey()).compareTo((e.getLastKey())) > 0) {
+				if (((Comparable) e.getFirstKey()).compareTo((e.getLastKey())) > 0) {
 					OLogManager.instance().error(this, "[OMVRBTree.checkTreeStructure] begin key is > than last key\n", e.getFirstKey(),
 							e.getLastKey());
 					printInMemoryStructure(iRootNode);
 				}
 
-				if (((Comparable<K>) e.getFirstKey()).compareTo((prevNode.getLastKey())) < 0) {
+				if (((Comparable) e.getFirstKey()).compareTo((prevNode.getLastKey())) < 0) {
 					OLogManager.instance().error(this,
 							"[OMVRBTree.checkTreeStructure] Node %s starts with a key minor than the last key of the previous node %s\n", e,
 							prevNode);
@@ -2780,58 +2759,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			++i;
 		}
 
-		if (colorOf(root) != BLACK) {
-			OLogManager.instance().error(this, "[OMVRBTree.checkTreeStructure] Root node %s color is not BLACK !\n", root);
-			printInMemoryStructure(root);
-		}
-
-		int blackPathLength = 1;
-		OMVRBTreeEntry<K, V> node = root;
-		while (node != null) {
-			node = node.getLeft();
-			if (colorOf(node) == BLACK) {
-				blackPathLength++;
-			}
-		}
-
-		checkLeafPath(blackPathLength, root, 0);
-
-		checkRedNodesContainOnlyBlackLeaves(root.getLeft(), root);
-		checkRedNodesContainOnlyBlackLeaves(root.getRight(), root);
-
 		pageIndex = currPageIndex;
-	}
-
-	private void checkLeafPath(final int blackPathToCompare, OMVRBTreeEntry<K, V> node, int blackPathLength) {
-		if (colorOf(node) == BLACK)
-			blackPathLength++;
-
-		if (node != null) {
-			checkLeafPath(blackPathToCompare, node.getLeft(), blackPathLength);
-			checkLeafPath(blackPathToCompare, node.getRight(), blackPathLength);
-		} else if (blackPathLength != blackPathToCompare) {
-			OLogManager.instance()
-					.error(
-							this,
-							"[OMVRBTree.checkTreeStructure] Amount of black nodes from the root to any leaf"
-									+ " should always be the same ! Expected amount of nodes %d, actual amount %d\n", blackPathToCompare,
-							blackPathLength);
-			printInMemoryStructure(root);
-		}
-	}
-
-	private void checkRedNodesContainOnlyBlackLeaves(OMVRBTreeEntry<K, V> node, OMVRBTreeEntry<K, V> parentNode) {
-		if (colorOf(node) == RED && parentNode.getColor() == RED) {
-			OLogManager.instance().error(this,
-					"[OMVRBTree.checkTreeStructure] RED nodes should contain only BLACK leaves ! " + "Parent node %s. Tested node %s.",
-					parentNode, node);
-			printInMemoryStructure(root);
-		}
-
-		if (node != null) {
-			checkRedNodesContainOnlyBlackLeaves(node.getLeft(), node);
-			checkRedNodesContainOnlyBlackLeaves(node.getRight(), node);
-		}
 	}
 
 	public boolean isRuntimeCheckEnabled() {

@@ -16,23 +16,12 @@
 package com.orientechnologies.orient.core.type.tree;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Set;
 
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.impl.ORecordBytesLazy;
-import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
-import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 
 /**
  * 
@@ -82,71 +71,16 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
  * @param <V>
  */
 @SuppressWarnings({ "unchecked", "serial" })
-public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> implements OSerializableStream {
+public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 	protected OMVRBTreePersistent<K, V>				pTree;
 
-	protected int[]														serializedKeys;
-
-	protected int[]														serializedValues;
-
-	protected ORID														parentRid;
-
-	protected ORID														leftRid;
-
-	protected ORID														rightRid;
-
-	public ORecordBytesLazy										record;
+	protected OTreeEntryDataProvider<K, V>		dataEntry;
 
 	protected OMVRBTreeEntryPersistent<K, V>	parent;
 
 	protected OMVRBTreeEntryPersistent<K, V>	left;
 
 	protected OMVRBTreeEntryPersistent<K, V>	right;
-
-	protected OMemoryInputStream							inStream	= new OMemoryInputStream();
-
-	/**
-	 * Called on event of splitting an entry.
-	 * 
-	 * @param iParent
-	 *          Parent node
-	 * @param iPosition
-	 *          Current position
-	 * @param iLeft
-	 */
-	public OMVRBTreeEntryPersistent(final OMVRBTreeEntry<K, V> iParent, final int iPosition) {
-		super(iParent, iPosition);
-		pTree = (OMVRBTreePersistent<K, V>) tree;
-		record = new ORecordBytesLazy(this);
-
-		setParent(iParent);
-
-		parentRid = new ORecordId();
-		leftRid = new ORecordId();
-		rightRid = new ORecordId();
-
-		pageSize = pTree.getPageSize();
-
-		// COPY ALSO THE SERIALIZED KEYS/VALUES
-		serializedKeys = new int[pageSize];
-		serializedValues = new int[pageSize];
-
-		final OMVRBTreeEntryPersistent<K, V> p = (OMVRBTreeEntryPersistent<K, V>) iParent;
-
-		inStream.setSource(p.inStream.copy());
-
-		System.arraycopy(p.serializedKeys, iPosition, serializedKeys, 0, size);
-		System.arraycopy(p.serializedValues, iPosition, serializedValues, 0, size);
-
-		Arrays.fill(p.serializedKeys, iPosition, p.pageSize, 0);
-		Arrays.fill(p.serializedValues, iPosition, p.pageSize, 0);
-
-		tree.getListener().signalNodeChanged(this);
-
-		p.markDirty();
-
-		pTree.addNodeAsEntrypoint(this);
-	}
 
 	/**
 	 * Called upon unmarshalling.
@@ -159,45 +93,57 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 	 *          Record to unmarshall
 	 */
 	public OMVRBTreeEntryPersistent(final OMVRBTreePersistent<K, V> iTree, final OMVRBTreeEntryPersistent<K, V> iParent,
-			final ORID iRecordId) throws IOException {
+			final ORID iRecordId) {
 		super(iTree);
 		pTree = iTree;
-		record = new ORecordBytesLazy(this);
-		record.setIdentity((ORecordId) iRecordId);
-
+		dataEntry = pTree.dataTree.getEntry(iRecordId);
+		init();
 		parent = iParent;
-		parentRid = iParent == null ? ORecordId.EMPTY_RECORD_ID : parent.record.getIdentity();
-
-		load();
+		// setParent(iParent);
 		pTree.addNodeAsEntrypoint(this);
 	}
 
-	public OMVRBTreeEntryPersistent(final OMVRBTreePersistent<K, V> iTree, final K key, final V value,
+	/**
+	 * Make a new cell with given key, value, and parent, and with <tt>null</tt> child links, and BLACK color.
+	 */
+	public OMVRBTreeEntryPersistent(final OMVRBTreePersistent<K, V> iTree, final K iKey, final V iValue,
 			final OMVRBTreeEntryPersistent<K, V> iParent) {
-		super(iTree, key, value, iParent);
+		super(iTree);
 		pTree = iTree;
-
-		parentRid = new ORecordId();
-		leftRid = new ORecordId();
-		rightRid = new ORecordId();
-
-		record = new ORecordBytesLazy(this);
-
-		pageSize = pTree.getPageSize();
-
-		serializedKeys = new int[pageSize];
-		serializedValues = new int[pageSize];
-
-		tree.getListener().signalNodeChanged(this);
+		dataEntry = pTree.dataTree.createEntry();
+		dataEntry.insertAt(0, iKey, iValue);
+		init();
+		setParent(iParent);
 		pTree.addNodeAsEntrypoint(this);
+		// created entry : force dispatch dirty node.
+		markDirty();
 	}
 
-	protected abstract Object keyFromStream(final int iIndex) throws IOException;
+	/**
+	 * Called on event of splitting an entry. Copy values from the parent node.
+	 * 
+	 * @param iParent
+	 *          Parent node
+	 * @param iPosition
+	 *          Current position
+	 */
+	public OMVRBTreeEntryPersistent(final OMVRBTreeEntry<K, V> iParent, final int iPosition) {
+		super(((OMVRBTreeEntryPersistent<K, V>) iParent).getTree());
+		pTree = (OMVRBTreePersistent<K, V>) tree;
+		OMVRBTreeEntryPersistent<K, V> pParent = (OMVRBTreeEntryPersistent<K, V>) iParent;
+		dataEntry = pTree.dataTree.createEntry();
+		dataEntry.copyDataFrom(pParent.dataEntry, iPosition);
+		if (pParent.dataEntry.truncate(iPosition))
+			pParent.markDirty();
+		init();
+		setParent(pParent);
+		pTree.addNodeAsEntrypoint(this);
+		// created entry : force dispatch dirty node.
+		markDirty();
+	}
 
-	protected abstract Object valueFromStream(final int iIndex) throws IOException;
-
-	public OMVRBTreeEntryPersistent<K, V> load() throws IOException {
-		return this;
+	public OTreeEntryDataProvider<K, V> getDataEntry() {
+		return dataEntry;
 	}
 
 	/**
@@ -205,46 +151,52 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 	 * 
 	 */
 	public OMVRBTreeEntryPersistent<K, V> save() throws OSerializationException {
-		if (!record.isDirty())
+		if (!dataEntry.isEntryDirty())
 			return this;
 
-		final boolean isNew = record.getIdentity().isNew();
+		final boolean isNew = dataEntry.getIdentity().isNew();
 
-		saveRecord();
-
-		// RE-ASSIGN RID
-		if (isNew) {
-			final ORecordId rid = (ORecordId) record.getIdentity();
-
-			if (left != null) {
-				left.parentRid = rid;
-				left.markDirty();
-			}
-
-			if (right != null) {
-				right.parentRid = rid;
-				right.markDirty();
-			}
-
-			if (parent != null) {
-				parentRid = parent.record.getIdentity();
-				if (parent.left == this)
-					parent.leftRid = rid;
-				else if (parent.right == this)
-					parent.rightRid = rid;
-				parent.markDirty();
-			}
+		// FOR EACH NEW LINK, SAVE BEFORE
+		if (left != null && left.dataEntry.getIdentity().isNew()) {
+			if (isNew) {
+				// TEMPORARY INCORRECT SAVE FOR GETTING AN ID. WILL BE SET DIRTY AGAIN JUST AFTER
+				left.dataEntry.save();
+				left.updateRefsAfterCreation();
+			} else
+				left.save();
+		}
+		if (right != null && right.dataEntry.getIdentity().isNew()) {
+			if (isNew) {
+				// TEMPORARY INCORRECT SAVE FOR GETTING AN ID. WILL BE SET DIRTY AGAIN JUST AFTER
+				right.dataEntry.save();
+				right.updateRefsAfterCreation();
+			} else
+				right.save();
+		}
+		if (parent != null && parent.dataEntry.getIdentity().isNew()) {
+			if (isNew) {
+				// TEMPORARY INCORRECT SAVE FOR GETTING AN ID. WILL BE SET DIRTY AGAIN JUST AFTER
+				parent.dataEntry.save();
+				parent.updateRefsAfterCreation();
+			} else
+				parent.save();
 		}
 
-		if (parent != null)
-			if (!parent.record.getIdentity().equals(parentRid))
-				OLogManager.instance().error(this,
-						"[save]: Tree node %s has parentRid '%s' different by the rid of the assigned parent node: %s", record.getIdentity(),
-						parentRid, parent.record.getIdentity());
+		dataEntry.save();
+
+		// RE-ASSIGN RID
+		if (isNew)
+			updateRefsAfterCreation();
+
+		// if (parent != null)
+		// if (!parent.record.getIdentity().equals(parentRid))
+		// OLogManager.instance().error(this,
+		// "[save]: Tree node %s has parentRid '%s' different by the rid of the assigned parent node: %s", record.getIdentity(),
+		// parentRid, parent.record.getIdentity());
 
 		checkEntryStructure();
 
-		if (pTree.searchNodeInCache(record.getIdentity()) != this) {
+		if (pTree.searchNodeInCache(dataEntry.getIdentity()) != this) {
 			// UPDATE THE CACHE
 			pTree.addNodeInCache(this);
 		}
@@ -252,7 +204,38 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		return this;
 	}
 
-	protected abstract void saveRecord();
+	protected void updateRefsAfterCreation() {
+		final ORID rid = dataEntry.getIdentity();
+
+		if (left != null) {
+			if (left.dataEntry.setParent(rid))
+				left.markDirty();
+		}
+
+		if (right != null) {
+			if (right.dataEntry.setParent(rid))
+				right.markDirty();
+		}
+
+		if (parent != null) {
+			// XXX Sylvain: should be set when parent is saved
+			// parentRid = parent.record.getIdentity();
+			// if (dataEntry.setParent(parent.dataEntry.getIdentity()))
+			// markDirty();
+			if (parent.left == this) {
+				if (parent.dataEntry.setLeft(rid))
+					parent.markDirty();
+			} else if (parent.right == this) {
+				if (parent.dataEntry.setRight(rid))
+					parent.markDirty();
+			} else {
+				OLogManager.instance().error(this, "[save]: Tree inconsitant entries.");
+			}
+		} else if (pTree.getRoot() == this) {
+			if (pTree.dataTree.setRoot(rid))
+				pTree.markDirty();
+		}
+	}
 
 	/**
 	 * Delete all the nodes recursively. IF they are not loaded in memory, load all the tree.
@@ -261,31 +244,22 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 	 */
 	public OMVRBTreeEntryPersistent<K, V> delete() throws IOException {
 		pTree.removeNodeFromMemory(this);
-		pTree.removeEntry(record.getIdentity());
+		pTree.removeEntry(dataEntry.getIdentity());
 
 		// EARLY LOAD LEFT AND DELETE IT RECURSIVELY
 		if (getLeft() != null)
 			((OMVRBTreeEntryPersistent<K, V>) getLeft()).delete();
-		leftRid = null;
 
 		// EARLY LOAD RIGHT AND DELETE IT RECURSIVELY
 		if (getRight() != null)
 			((OMVRBTreeEntryPersistent<K, V>) getRight()).delete();
-		rightRid = null;
 
 		// DELETE MYSELF
-		deleteRecord();
-
-		// FORCE REMOVING OF K/V AND SEIALIZED K/V AS WELL
-		keys = null;
-		values = null;
-		serializedKeys = null;
-		serializedValues = null;
+		dataEntry.delete();
+		clear();
 
 		return this;
 	}
-
-	protected abstract void deleteRecord();
 
 	/**
 	 * Disconnect the current node from others.
@@ -295,15 +269,15 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 	 * @param i
 	 */
 	protected int disconnect(final boolean iForceDirty, final int iLevel) {
-		if (record == null)
+		if (dataEntry == null)
 			// DIRTY NODE, JUST REMOVE IT
 			return 1;
 
 		int totalDisconnected = 0;
 
-		final ORID rid = record.getIdentity();
+		final ORID rid = dataEntry.getIdentity();
 
-		if ((!record.isDirty() || iForceDirty) && !pTree.isNodeEntryPoint(this)) {
+		if ((!dataEntry.isEntryDirty() || iForceDirty) && !pTree.isNodeEntryPoint(this)) {
 			totalDisconnected = 1;
 			pTree.removeNodeFromMemory(this);
 			clear();
@@ -351,21 +325,12 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		return totalDisconnected;
 	}
 
-	public void clear() {
+	protected void clear() {
 		// SPEED UP MEMORY CLAIM BY RESETTING INTERNAL FIELDS
-		keys = null;
-		values = null;
-		if (inStream != null) {
-			inStream.close();
-			inStream = null;
-		}
-		serializedKeys = null;
-		serializedValues = null;
 		pTree = null;
 		tree = null;
-		record.recycle(null);
-		record = null;
-		size = 0;
+		dataEntry.clear();
+		dataEntry = null;
 	}
 
 	/**
@@ -402,33 +367,27 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 	@Override
 	public OMVRBTreeEntry<K, V> getParent() {
-		if (parentRid == null)
+		if (dataEntry == null)
 			return null;
 
-		if (parent == null && parentRid.isValid()) {
-			try {
-				// System.out.println("Node " + record.getIdentity() + " is loading PARENT node " + parentRid + "...");
+		if (parent == null && dataEntry.getParent().isValid()) {
+			// System.out.println("Node " + record.getIdentity() + " is loading PARENT node " + parentRid + "...");
 
-				// LAZY LOADING OF THE PARENT NODE
-				parent = pTree.loadEntry(null, parentRid);
+			// LAZY LOADING OF THE PARENT NODE
+			parent = pTree.loadEntry(null, dataEntry.getParent());
 
-				checkEntryStructure();
+			checkEntryStructure();
 
-				if (parent != null) {
-					// TRY TO ASSIGN IT FOLLOWING THE RID
-					if (parent.leftRid.isValid() && parent.leftRid.equals(record.getIdentity()))
-						parent.left = this;
-					else if (parent.rightRid.isValid() && parent.rightRid.equals(record.getIdentity()))
-						parent.right = this;
-					else {
-						OLogManager.instance().error(this, "getParent: Can't assign node %s to parent. Nodes parent-left=%s, parent-right=%s",
-								parentRid, parent.leftRid, parent.rightRid);
-					}
+			if (parent != null) {
+				// TRY TO ASSIGN IT FOLLOWING THE RID
+				if (parent.dataEntry.getLeft().isValid() && parent.dataEntry.getLeft().equals(dataEntry.getIdentity()))
+					parent.left = this;
+				else if (parent.dataEntry.getRight().isValid() && parent.dataEntry.getRight().equals(dataEntry.getIdentity()))
+					parent.right = this;
+				else {
+					OLogManager.instance().error(this, "getParent: Can't assign node %s to parent. Nodes parent-left=%s, parent-right=%s",
+							dataEntry.getParent(), parent.dataEntry.getLeft(), parent.dataEntry.getRight());
 				}
-
-			} catch (IOException e) {
-				OLogManager.instance().error(this, "getParent: Can't load the tree. The tree could be invalid.", e,
-						ODatabaseException.class);
 			}
 		}
 		return parent;
@@ -437,21 +396,25 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 	@Override
 	public OMVRBTreeEntry<K, V> setParent(final OMVRBTreeEntry<K, V> iParent) {
 		if (iParent != parent) {
-			this.parent = (OMVRBTreeEntryPersistent<K, V>) iParent;
+			OMVRBTreeEntryPersistent<K, V> newParent = (OMVRBTreeEntryPersistent<K, V>) iParent;
+			ORID newParentId = iParent == null ? ORecordId.EMPTY_RECORD_ID : newParent.dataEntry.getIdentity();
 
-			if (parent != null && !parent.record.getIdentity().equals(parentRid))
+			parent = newParent;
+
+			if (dataEntry.setParent(newParentId))
 				markDirty();
 
-			this.parentRid = iParent == null ? ORecordId.EMPTY_RECORD_ID : parent.record.getIdentity();
-
 			if (parent != null) {
-				if (parent.left == this && !parent.leftRid.equals(record.getIdentity()))
-					parent.leftRid = record.getIdentity();
-				if (parent.left != this && parent.leftRid.isValid() && parent.leftRid.equals(record.getIdentity()))
+				ORID thisRid = dataEntry.getIdentity();
+				if (parent.left == this && !parent.dataEntry.getLeft().equals(thisRid))
+					if (parent.dataEntry.setLeft(thisRid))
+						parent.markDirty();
+				if (parent.left != this && parent.dataEntry.getLeft().isValid() && parent.dataEntry.getLeft().equals(thisRid))
 					parent.left = this;
-				if (parent.right == this && !parent.rightRid.equals(record.getIdentity()))
-					parent.rightRid = record.getIdentity();
-				if (parent.right != this && parent.rightRid.isValid() && parent.rightRid.equals(record.getIdentity()))
+				if (parent.right == this && !parent.dataEntry.getRight().equals(thisRid))
+					if (parent.dataEntry.setRight(thisRid))
+						parent.markDirty();
+				if (parent.right != this && parent.dataEntry.getRight().isValid() && parent.dataEntry.getRight().equals(thisRid))
 					parent.right = this;
 			}
 		}
@@ -460,18 +423,12 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 	@Override
 	public OMVRBTreeEntry<K, V> getLeft() {
-		if (left == null && leftRid != null && leftRid.isValid()) {
-			try {
-				// System.out.println("Node " + record.getIdentity() + " is loading LEFT node " + leftRid + "...");
-
-				// LAZY LOADING OF THE LEFT LEAF
-				left = pTree.loadEntry(this, leftRid);
-
-				checkEntryStructure();
-
-			} catch (IOException e) {
-				OLogManager.instance().error(this, "getLeft: Can't load the tree. The tree could be invalid.", e, ODatabaseException.class);
-			}
+		if (dataEntry == null)
+			return null;
+		if (left == null && dataEntry.getLeft().isValid()) {
+			// LAZY LOADING OF THE LEFT LEAF
+			left = pTree.loadEntry(this, dataEntry.getLeft());
+			checkEntryStructure();
 		}
 		return left;
 	}
@@ -479,12 +436,12 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 	@Override
 	public void setLeft(final OMVRBTreeEntry<K, V> iLeft) {
 		if (iLeft != left) {
-			left = (OMVRBTreeEntryPersistent<K, V>) iLeft;
+			OMVRBTreeEntryPersistent<K, V> newLeft = (OMVRBTreeEntryPersistent<K, V>) iLeft;
+			ORID newLeftId = iLeft == null ? ORecordId.EMPTY_RECORD_ID : newLeft.dataEntry.getIdentity();
 
-			if (left != null && !left.record.getIdentity().equals(leftRid))
+			left = newLeft;
+			if (dataEntry.setLeft(newLeftId))
 				markDirty();
-
-			leftRid = iLeft == null ? ORecordId.EMPTY_RECORD_ID : left.record.getIdentity();
 
 			if (left != null && left.parent != this)
 				left.setParent(this);
@@ -495,178 +452,127 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 	@Override
 	public OMVRBTreeEntry<K, V> getRight() {
-		if (right == null && rightRid != null && rightRid.isValid()) {
+		if (dataEntry == null)
+			return null;
+		if (right == null && dataEntry.getRight().isValid()) {
 			// LAZY LOADING OF THE RIGHT LEAF
-			try {
-				right = pTree.loadEntry(this, rightRid);
-
-				checkEntryStructure();
-
-			} catch (IOException e) {
-				OLogManager.instance().error(this, "getRight: Can't load tree. The tree could be invalid.", e, ODatabaseException.class);
-			}
+			right = pTree.loadEntry(this, dataEntry.getRight());
+			checkEntryStructure();
 		}
 		return right;
 	}
 
 	@Override
-	public OMVRBTreeEntry<K, V> setRight(final OMVRBTreeEntry<K, V> iRight) {
+	public void setRight(final OMVRBTreeEntry<K, V> iRight) {
 		if (iRight != right) {
-			right = (OMVRBTreeEntryPersistent<K, V>) iRight;
+			OMVRBTreeEntryPersistent<K, V> newRight = (OMVRBTreeEntryPersistent<K, V>) iRight;
+			ORID newRightId = iRight == null ? ORecordId.EMPTY_RECORD_ID : newRight.dataEntry.getIdentity();
 
-			if (right != null && !right.record.getIdentity().equals(rightRid))
+			right = newRight;
+			if (dataEntry.setRight(newRightId))
 				markDirty();
-
-			rightRid = iRight == null ? ORecordId.EMPTY_RECORD_ID : right.record.getIdentity();
 
 			if (right != null && right.parent != this)
 				right.setParent(this);
 
 			checkEntryStructure();
 		}
-		return right;
 	}
 
 	public void checkEntryStructure() {
 		if (!tree.isRuntimeCheckEnabled())
 			return;
 
-		if (parentRid == null)
+		if (dataEntry.getParent() == null)
 			OLogManager.instance().error(this, "checkEntryStructure: Node %s has parentRid null!\n", this);
-		if (leftRid == null)
+		if (dataEntry.getLeft() == null)
 			OLogManager.instance().error(this, "checkEntryStructure: Node %s has leftRid null!\n", this);
-		if (rightRid == null)
+		if (dataEntry.getRight() == null)
 			OLogManager.instance().error(this, "checkEntryStructure: Node %s has rightRid null!\n", this);
 
-		if (this == left || record.getIdentity().isValid() && record.getIdentity().equals(leftRid))
+		if (this == left || dataEntry.getIdentity().isValid() && dataEntry.getIdentity().equals(dataEntry.getLeft()))
 			OLogManager.instance().error(this, "checkEntryStructure: Node %s has left that points to itself!\n", this);
-		if (this == right || record.getIdentity().isValid() && record.getIdentity().equals(rightRid))
+		if (this == right || dataEntry.getIdentity().isValid() && dataEntry.getIdentity().equals(dataEntry.getRight()))
 			OLogManager.instance().error(this, "checkEntryStructure: Node %s has right that points to itself!\n", this);
 		if (left != null && left == right)
 			OLogManager.instance().error(this, "checkEntryStructure: Node %s has left and right equals!\n", this);
 
 		if (left != null) {
-			if (!left.record.getIdentity().equals(leftRid))
-				OLogManager.instance().error(this, "checkEntryStructure: Wrong left node loaded: " + leftRid);
-			// if (left.parent != this)
-			// OLogManager.instance().error(this, "checkEntryStructure: Left node is not correctly connected to the parent" + leftRid);
+			if (!left.dataEntry.getIdentity().equals(dataEntry.getLeft()))
+				OLogManager.instance().error(this, "checkEntryStructure: Wrong left node loaded: " + dataEntry.getLeft());
+			if (left.parent != this)
+				OLogManager.instance().error(this,
+						"checkEntryStructure: Left node is not correctly connected to the parent" + dataEntry.getLeft());
 		}
 
 		if (right != null) {
-			if (!right.record.getIdentity().equals(rightRid))
-				OLogManager.instance().error(this, "checkEntryStructure: Wrong right node loaded: " + rightRid);
-			// if (right.parent != this)
-			// OLogManager.instance().error(this, "checkEntryStructure: Right node is not correctly connected to the parent" + leftRid);
+			if (!right.dataEntry.getIdentity().equals(dataEntry.getRight()))
+				OLogManager.instance().error(this, "checkEntryStructure: Wrong right node loaded: " + dataEntry.getRight());
+			if (right.parent != this)
+				OLogManager.instance().error(this,
+						"checkEntryStructure: Right node is not correctly connected to the parent" + dataEntry.getRight());
 		}
 	}
 
 	@Override
 	protected void copyFrom(final OMVRBTreeEntry<K, V> iSource) {
-		markDirty();
-
-		final OMVRBTreeEntryPersistent<K, V> source = (OMVRBTreeEntryPersistent<K, V>) iSource;
-
-		serializedKeys = new int[source.serializedKeys.length];
-		System.arraycopy(source.serializedKeys, 0, serializedKeys, 0, source.serializedKeys.length);
-
-		serializedValues = new int[source.serializedValues.length];
-		System.arraycopy(source.serializedValues, 0, serializedValues, 0, source.serializedValues.length);
-
-		super.copyFrom(source);
+		if (dataEntry.copyFrom(((OMVRBTreeEntryPersistent) iSource).dataEntry))
+			markDirty();
 	}
 
 	@Override
-	protected void insert(final int iPosition, final K key, final V value) {
-		markDirty();
+	protected void insert(final int iIndex, final K iKey, final V iValue) {
+		K oldKey = iIndex == 0 ? dataEntry.getKeyAt(0) : null;
+		if (dataEntry.insertAt(iIndex, iKey, iValue))
+			markDirty();
 
-		if (iPosition < size) {
-			System.arraycopy(serializedKeys, iPosition, serializedKeys, iPosition + 1, size - iPosition);
-			System.arraycopy(serializedValues, iPosition, serializedValues, iPosition + 1, size - iPosition);
-		}
-
-		serializedKeys[iPosition] = 0;
-		serializedValues[iPosition] = 0;
-
-		super.insert(iPosition, key, value);
-
-		if (iPosition == 0)
-			pTree.updateEntryPoint(keys[1], this);
+		if (iIndex == 0)
+			pTree.updateEntryPoint(oldKey, this);
 	}
 
 	@Override
 	protected void remove() {
-		markDirty();
-
 		final int index = tree.getPageIndex();
-
 		final K oldKey = index == 0 ? getKeyAt(0) : null;
 
-		if (index == size - 1) {
-			// LAST ONE: JUST REMOVE IT
-		} else if (index > -1) {
-			// SHIFT LEFT THE VALUES
-			System.arraycopy(serializedKeys, index + 1, serializedKeys, index, size - index - 1);
-			System.arraycopy(serializedValues, index + 1, serializedValues, index, size - index - 1);
-		}
+		if (dataEntry.removeAt(index))
+			markDirty();
 
-		// FREE RESOURCES
-		serializedKeys[size - 1] = 0;
-		serializedValues[size - 1] = 0;
-
-		super.remove();
+		tree.setPageIndex(0);
 
 		if (index == 0)
 			pTree.updateEntryPoint(oldKey, this);
 	}
 
-	/**
-	 * Return the key. Keys are lazy loaded.
-	 * 
-	 * @param iIndex
-	 * @return
-	 */
 	@Override
 	public K getKeyAt(final int iIndex) {
-		if (keys[iIndex] == null)
-			try {
-				OProfiler.getInstance().updateCounter("OMVRBTreeEntryP.unserializeKey", 1);
-
-				keys[iIndex] = (K) keyFromStream(iIndex);
-			} catch (IOException e) {
-
-				OLogManager.instance().error(this, "Can't lazy load the key #" + iIndex + " in tree node " + this, e,
-						OSerializationException.class);
-			}
-
-		return keys[iIndex];
+		return dataEntry.getKeyAt(iIndex);
 	}
 
 	@Override
 	protected V getValueAt(final int iIndex) {
-		if (values[iIndex] == null)
-			try {
-				OProfiler.getInstance().updateCounter("OMVRBTreeEntryP.unserializeValue", 1);
-
-				values[iIndex] = (V) valueFromStream(iIndex);
-			} catch (IOException e) {
-
-				OLogManager.instance().error(this, "Can't lazy load the value #" + iIndex + " in tree node " + this, e,
-						OSerializationException.class);
-			}
-
-		return values[iIndex];
+		return dataEntry.getValueAt(iIndex);
 	}
 
 	/**
 	 * Invalidate serialized Value associated in order to be re-marshalled on the next node storing.
 	 */
-	@Override
-	public V setValue(final V value) {
-		markDirty();
+	public V setValue(final V iValue) {
+		V oldValue = getValue();
 
-		V oldValue = super.setValue(value);
-		serializedValues[tree.getPageIndex()] = -1;
+		int index = tree.getPageIndex();
+		if (dataEntry.setValueAt(index, iValue))
+			markDirty();
+
 		return oldValue;
+	}
+
+	public int getSize() {
+		return dataEntry != null ? dataEntry.getSize() : 0;
+	}
+
+	public int getPageSize() {
+		return dataEntry.getPageSize();
 	}
 
 	public int getMaxDepthInMemory() {
@@ -715,181 +621,18 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		return p;
 	}
 
-	public final OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
-		final long timer = OProfiler.getInstance().startChrono();
-
-		inStream.setSource(iStream);
-
-		try {
-			pageSize = inStream.getAsInteger();
-
-			parentRid = new ORecordId().fromStream(inStream.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
-			leftRid = new ORecordId().fromStream(inStream.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
-			rightRid = new ORecordId().fromStream(inStream.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
-
-			color = inStream.getAsBoolean();
-			init();
-			size = inStream.getAsInteger();
-
-			if (size > pageSize)
-				throw new OConfigurationException("Loaded index with page size setted to " + pageSize
-						+ " while the loaded was built with: " + size);
-
-			// UNCOMPACT KEYS SEPARATELY
-			serializedKeys = new int[pageSize];
-			for (int i = 0; i < size; ++i) {
-				serializedKeys[i] = inStream.getAsByteArrayOffset();
-			}
-
-			// KEYS WILL BE LOADED LAZY
-			keys = (K[]) new Object[pageSize];
-
-			// UNCOMPACT VALUES SEPARATELY
-			serializedValues = new int[pageSize];
-			for (int i = 0; i < size; ++i) {
-				serializedValues[i] = inStream.getAsByteArrayOffset();
-			}
-
-			// VALUES WILL BE LOADED LAZY
-			values = (V[]) new Object[pageSize];
-
-			return this;
-		} catch (IOException e) {
-			throw new OSerializationException("Can't unmarshall RB+Tree node", e);
-		} finally {
-			OProfiler.getInstance().stopChrono("OMVRBTreeEntryP.fromStream", timer);
-		}
-	}
-
-	public final byte[] toStream() throws OSerializationException {
-		record.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
-
-		// CHECK IF THE RECORD IS PENDING TO BE MARSHALLED
-		final Integer identityRecord = System.identityHashCode(record);
-		final Set<Integer> marshalledRecords = OSerializationThreadLocal.INSTANCE.get();
-		if (marshalledRecords.contains(identityRecord)) {
-			// ALREADY IN STACK, RETURN EMPTY
-			return new byte[] {};
-		} else
-			marshalledRecords.add(identityRecord);
-
-		if (parent != null && parentRid.isNew()) {
-			// FORCE DIRTY
-			parent.record.setDirty();
-
-			parent.save();
-			parentRid = parent.record.getIdentity();
-			record.setDirty();
-		}
-
-		if (left != null && leftRid.isNew()) {
-			// FORCE DIRTY
-			left.record.setDirty();
-
-			left.save();
-
-			// COPY THE NEW LEFT RID INTO THE CURRENT NODE
-			leftRid = left.record.getIdentity();
-			record.setDirty();
-		}
-
-		if (right != null && rightRid.isNew()) {
-			// FORCE DIRTY
-			right.record.setDirty();
-
-			right.save();
-
-			// COPY THE NEW RIGHT RID INTO THE CURRENT NODE
-			rightRid = right.record.getIdentity();
-			record.setDirty();
-		}
-
-		final long timer = OProfiler.getInstance().startChrono();
-
-		final OMemoryOutputStream outStream = new OMemoryOutputStream();
-
-		try {
-			outStream.add(pageSize);
-
-			outStream.addAsFixed(parentRid.toStream());
-			outStream.addAsFixed(leftRid.toStream());
-			outStream.addAsFixed(rightRid.toStream());
-
-			outStream.add(color);
-			outStream.add(size);
-
-			for (int i = 0; i < size; ++i)
-				serializedKeys[i] = outStream.add(serializeNewKey(i));
-
-			for (int i = 0; i < size; ++i)
-				serializedValues[i] = outStream.add(serializeNewValue(i));
-
-			outStream.flush();
-
-			final byte[] buffer = outStream.getByteArray();
-
-			inStream.setSource(buffer);
-
-			record.fromStream(buffer);
-			return buffer;
-
-		} catch (IOException e) {
-			throw new OSerializationException("Can't marshall RB+Tree node", e);
-		} finally {
-			marshalledRecords.remove(identityRecord);
-
-			checkEntryStructure();
-
-			OProfiler.getInstance().stopChrono("OMVRBTreeEntryP.toStream", timer);
-		}
-	}
-
-	/**
-	 * Serialize only the new keys or the changed.
-	 * 
-	 * @return
-	 * 
-	 * @throws IOException
-	 */
-	private byte[] serializeNewKey(final int iIndex) throws IOException {
-		if (serializedKeys[iIndex] <= 0) {
-			// NEW OR MODIFIED: MARSHALL CONTENT
-			OProfiler.getInstance().updateCounter("OMVRBTreeEntryP.serializeValue", 1);
-			return pTree.keySerializer.toStream(null, keys[iIndex]);
-		}
-		// RETURN ORIGINAL CONTENT
-		return inStream.getAsByteArray(serializedKeys[iIndex]);
-	}
-
-	/**
-	 * Serialize only the new values or the changed.
-	 * 
-	 * @throws IOException
-	 */
-	private byte[] serializeNewValue(final int iIndex) throws IOException {
-		if (serializedValues[iIndex] <= 0) {
-			// NEW OR MODIFIED: MARSHALL CONTENT
-			OProfiler.getInstance().updateCounter("OMVRBTreeEntryP.serializeKey", 1);
-			return pTree.valueSerializer.toStream(null, values[iIndex]);
-		}
-		// RETURN ORIGINAL CONTENT
-		return inStream.getAsByteArray(serializedValues[iIndex]);
+	@Override
+	public boolean getColor() {
+		return dataEntry.getColor();
 	}
 
 	@Override
 	protected void setColor(final boolean iColor) {
-		if (iColor == color)
-			return;
-
-		markDirty();
-		super.setColor(iColor);
+		if (dataEntry.setColor(iColor))
+			markDirty();
 	}
 
-	void markDirty() {
-		if (record == null || record.isDirty())
-			return;
-
-		record.setDirty();
+	protected void markDirty() {
 		tree.getListener().signalNodeChanged(this);
 	}
 
@@ -910,10 +653,6 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 	@Override
 	public String toString() {
-		final StringBuilder builder = new StringBuilder();
-		if (record != null && record.getIdentity().isValid())
-			builder.append('@').append(record.getIdentity()).append(" ");
-		builder.append(super.toString());
-		return builder.toString();
+		return dataEntry != null ? dataEntry.toString() : "entry cleared";
 	}
 }
