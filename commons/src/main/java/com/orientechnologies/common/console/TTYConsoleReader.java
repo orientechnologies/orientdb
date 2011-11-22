@@ -7,6 +7,9 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.io.Reader;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -51,6 +54,10 @@ public class TTYConsoleReader implements OConsoleReader {
 
 	protected String						historyBuffer;
 
+	protected Reader						inStream;
+
+	protected PrintStream				outStream;
+
 	public TTYConsoleReader() {
 		File file = getHistoryFile(true);
 		BufferedReader reader;
@@ -60,6 +67,13 @@ public class TTYConsoleReader implements OConsoleReader {
 			while (historyEntry != null) {
 				history.add(historyEntry);
 				historyEntry = reader.readLine();
+			}
+			if (System.getProperty("file.encoding") != null) {
+				inStream = new InputStreamReader(System.in, System.getProperty("file.encoding"));
+				outStream = new PrintStream(System.out, true, System.getProperty("file.encoding"));
+			} else {
+				inStream = new InputStreamReader(System.in);
+				outStream = System.out;
 			}
 		} catch (FileNotFoundException fnfe) {
 			OLogManager.instance().error(this, "History file not found", fnfe, "");
@@ -82,20 +96,20 @@ public class TTYConsoleReader implements OConsoleReader {
 
 				boolean escape = false;
 				boolean ctrl = false;
-				int next = System.in.read();
+				int next = inStream.read();
 				if (next == 27) {
 					escape = true;
-					System.in.read();
-					next = System.in.read();
+					inStream.read();
+					next = inStream.read();
 				}
 				if (escape) {
 					if (next == 49) {
-						System.in.read();
-						next = System.in.read();
+						inStream.read();
+						next = inStream.read();
 					}
 					if (next == 53) {
 						ctrl = true;
-						next = System.in.read();
+						next = inStream.read();
 					}
 					if (ctrl) {
 						if (next == RIGHT_CHAR) {
@@ -213,7 +227,7 @@ public class TTYConsoleReader implements OConsoleReader {
 					}
 				} else {
 					if (next == NEW_LINE_CHAR) {
-						System.out.println();
+						outStream.println();
 						break;
 					} else if (next == BACKSPACE_CHAR) {
 						if (buffer.length() > 0 && currentPos > 0) {
@@ -260,8 +274,8 @@ public class TTYConsoleReader implements OConsoleReader {
 							rewriteConsole(cleaner, true);
 							rewriteConsole(buffer, false);
 						} else {
-							System.out.println();
-							System.out.print(buffer);
+							outStream.println();
+							outStream.print(buffer);
 						}
 					}
 					historyNum = history.size();
@@ -277,12 +291,12 @@ public class TTYConsoleReader implements OConsoleReader {
 			return null;
 		}
 		if (consoleInput.equals("clear")) {
-			System.out.flush();
+			outStream.flush();
 			for (int i = 0; i < 150; i++) {
-				System.out.println();
+				outStream.println();
 			}
-			System.out.print("\r");
-			System.out.print("> ");
+			outStream.print("\r");
+			outStream.print("> ");
 			return readLine();
 		} else {
 			return consoleInput;
@@ -390,19 +404,19 @@ public class TTYConsoleReader implements OConsoleReader {
 	}
 
 	private void rewriteConsole(StringBuffer buffer, boolean cleaner) {
-		System.out.print("\r");
-		System.out.print("> ");
+		outStream.print("\r");
+		outStream.print("> ");
 		if (currentPos < buffer.length() && buffer.length() > 0 && !cleaner) {
-			System.out.print("\033[0m" + buffer.substring(0, currentPos) + "\033[0;30;47m" + buffer.substring(currentPos, currentPos + 1)
+			outStream.print("\033[0m" + buffer.substring(0, currentPos) + "\033[0;30;47m" + buffer.substring(currentPos, currentPos + 1)
 					+ "\033[0m" + buffer.substring(currentPos + 1) + "\033[0m");
 		} else {
-			System.out.print(buffer);
+			outStream.print(buffer);
 		}
 	}
 
 	private void rewriteHintConsole(StringBuffer buffer) {
-		System.out.print("\r");
-		System.out.print(buffer);
+		outStream.print("\r");
+		outStream.print(buffer);
 	}
 
 	private int getHintedHistoryIndexUp(int historyNum) {
@@ -447,4 +461,5 @@ public class TTYConsoleReader implements OConsoleReader {
 		}
 		return file;
 	}
+
 }
