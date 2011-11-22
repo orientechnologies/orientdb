@@ -70,7 +70,7 @@ public class TTYConsoleReader implements OConsoleReader {
 			}
 			if (System.getProperty("file.encoding") != null) {
 				inStream = new InputStreamReader(System.in, System.getProperty("file.encoding"));
-				outStream = new PrintStream(System.out, true, System.getProperty("file.encoding"));
+				outStream = new PrintStream(System.out, false, System.getProperty("file.encoding"));
 			} else {
 				inStream = new InputStreamReader(System.in);
 				outStream = System.out;
@@ -93,7 +93,6 @@ public class TTYConsoleReader implements OConsoleReader {
 			int historyNum = history.size();
 			boolean hintedHistory = false;
 			while (true) {
-
 				boolean escape = false;
 				boolean ctrl = false;
 				int next = inStream.read();
@@ -260,7 +259,7 @@ public class TTYConsoleReader implements OConsoleReader {
 						rewriteConsole(buffer, false);
 						currentPos = buffer.length();
 					} else {
-						if (next > UNIT_SEPARATOR_CHAR && next < BACKSPACE_CHAR) {
+						if ((next > UNIT_SEPARATOR_CHAR && next < BACKSPACE_CHAR) || next > BACKSPACE_CHAR) {
 							StringBuffer cleaner = new StringBuffer();
 							for (int i = 0; i < buffer.length(); i++) {
 								cleaner.append(" ");
