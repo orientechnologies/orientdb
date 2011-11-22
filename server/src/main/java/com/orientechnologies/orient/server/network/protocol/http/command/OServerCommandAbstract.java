@@ -35,7 +35,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 public abstract class OServerCommandAbstract implements OServerCommand {
 
-	private static final String	JSON_FORMAT	= "type,indent:2,rid,version,attribSameRow,class";
+	protected static final String	JSON_FORMAT	= "type,indent:2,rid,version,attribSameRow,class";
 
 	/**
 	 * Default constructor. Disable cache of content at HTTP level

@@ -15,13 +15,16 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandGetClass extends OServerCommandAuthenticatedDbAbstract {
@@ -55,7 +58,16 @@ public class OServerCommandGetClass extends OServerCommandAuthenticatedDbAbstrac
 				response.add(rec);
 			}
 
-			sendRecordsContent(iRequest, response);
+			if (response != null && response.size() > 0) {
+				sendRecordsContent(iRequest, response);
+			} else {
+				final StringWriter buffer = new StringWriter();
+				final OJSONWriter json = new OJSONWriter(buffer, JSON_FORMAT);
+				json.beginObject();
+				exportClassSchema(db, json, db.getMetadata().getSchema().getClass(urlParts[2]));
+				json.endObject();
+				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
+			}
 		} finally {
 			if (db != null)
 				OSharedDocumentDatabase.release(db);
