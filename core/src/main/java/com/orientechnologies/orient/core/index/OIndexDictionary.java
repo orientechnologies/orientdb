@@ -45,4 +45,11 @@ public class OIndexDictionary extends OIndexOneValue {
 			releaseExclusiveLock();
 		}
 	}
+
+	/**
+	 * Disables check of entries.
+	 */
+	@Override
+	public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
+	}
 }

@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -979,6 +980,24 @@ public class IndexTest {
 
 		db.close();
 	}
+
+	public void testDictionary() {
+		ODatabaseDocument db = new ODatabaseDocumentTx(database.getURL());
+		db.open("admin", "admin");
+
+		OClass pClass = db.getMetadata().getSchema().createClass("Person2");
+		pClass.createProperty("firstName", OType.STRING);
+		pClass.createProperty("lastName", OType.STRING);
+		pClass.createProperty("age", OType.INTEGER);
+		pClass.createIndex("testIdx", INDEX_TYPE.DICTIONARY, "firstName", "lastName");
+
+		ODocument person = new ODocument(db, "Person2");
+		person.field("firstName", "foo").field("lastName", "bar").save();
+
+		person = new ODocument(db, "Person2");
+		person.field("firstName", "foo").field("lastName", "bar").field("age", 32).save();
+	}
+
 	/*
 	 * @Test(dependsOnMethods = "linkedIndexedProperty") public void testIndexRemovalLink() { List<ODocument> result =
 	 * database.command(new OCommandSQL("select rid from index:Profile.nick")).execute(); Assert.assertNotNull(result);
