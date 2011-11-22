@@ -58,6 +58,10 @@ public class OJSONReader {
 		return this;
 	}
 
+	public boolean isContent(final String iExpected) {
+		return value.equals(iExpected);
+	}
+
 	public int readInteger(final char[] iUntil) throws IOException, ParseException {
 		return readNumber(iUntil, false);
 	}

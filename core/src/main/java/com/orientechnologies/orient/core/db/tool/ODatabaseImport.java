@@ -252,13 +252,18 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
 				String next = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).getValue();
 
-				if (next.equals("\"id\""))
+				if (next.equals("\"id\"")) {
 					// @COMPATIBILITY 1.0rc4 IGNORE THE ID
 					next = jsonReader.readString(OJSONReader.COMMA_SEPARATOR);
+					next = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).getValue();
+				}
 
-				next = jsonReader.checkContent("\"default-cluster-id\"").readString(OJSONReader.NEXT_IN_OBJECT);
-
-				final int classDefClusterId = Integer.parseInt(next);
+				final int classDefClusterId;
+				if (jsonReader.isContent("\"default-cluster-id\"")) {
+					next = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+					classDefClusterId = Integer.parseInt(next);
+				} else
+					classDefClusterId = database.getDefaultClusterId();
 
 				String classClusterIds = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"cluster-ids\"")
 						.readString(OJSONReader.NEXT_IN_OBJECT).trim();
@@ -341,10 +346,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
 		String next = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).getValue();
 
-		if (next.equals("\"id\""))
+		if (next.equals("\"id\"")) {
 			// @COMPATIBILITY 1.0rc4 IGNORE THE ID
 			next = jsonReader.readString(OJSONReader.COMMA_SEPARATOR);
-
+			next = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).getValue();
+		}
+		
 		next = jsonReader.checkContent("\"type\"").readString(OJSONReader.NEXT_IN_OBJECT);
 
 		final OType type = OType.valueOf(next);
