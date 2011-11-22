@@ -17,10 +17,10 @@ package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.IOException;
 
-import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 
 /**
@@ -67,7 +67,7 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
 
 			final int size = segment.getFile().readInt(0);
 			byte[] buffer = new byte[size];
-			segment.getFile().read(OConstants.SIZE_INT, buffer, size);
+			segment.getFile().read(OBinaryProtocol.SIZE_INT, buffer, size);
 
 			fromStream(buffer);
 		} catch (Exception e) {
@@ -84,13 +84,13 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
 
 			final byte[] buffer = toStream();
 
-			final int requiredSpace = buffer.length + OConstants.SIZE_INT;
+			final int requiredSpace = buffer.length + OBinaryProtocol.SIZE_INT;
 			if (segment.getFile().getFileSize() < requiredSpace)
 				segment.getFile().changeSize(requiredSpace);
 
-			segment.getFile().allocateSpace(buffer.length + OConstants.SIZE_INT);
+			segment.getFile().allocateSpace(buffer.length + OBinaryProtocol.SIZE_INT);
 			segment.getFile().writeInt(0, buffer.length);
-			segment.getFile().write(OConstants.SIZE_INT, buffer);
+			segment.getFile().write(OBinaryProtocol.SIZE_INT, buffer);
 		} catch (Exception e) {
 			throw new OSerializationException("Error on update storage configuration", e);
 		}

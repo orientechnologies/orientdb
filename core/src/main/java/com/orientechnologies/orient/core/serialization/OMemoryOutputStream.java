@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.core.OConstants;
 
 /**
  * Class to parse and write buffers in very fast way.
@@ -98,7 +97,7 @@ public class OMemoryOutputStream extends OutputStream {
 
 	@Override
 	public final void write(final int b) {
-		assureSpaceFor(OConstants.SIZE_BYTE);
+		assureSpaceFor(OBinaryProtocol.SIZE_BYTE);
 		buffer[position++] = (byte) b;
 	}
 
@@ -147,10 +146,10 @@ public class OMemoryOutputStream extends OutputStream {
 
 		final int begin = position;
 
-		assureSpaceFor(OConstants.SIZE_INT + iContent.length);
+		assureSpaceFor(OBinaryProtocol.SIZE_INT + iContent.length);
 
 		OBinaryProtocol.int2bytes(iContent.length, buffer, position);
-		position += OConstants.SIZE_INT;
+		position += OBinaryProtocol.SIZE_INT;
 		write(iContent, 0, iContent.length);
 
 		return begin;
@@ -169,30 +168,30 @@ public class OMemoryOutputStream extends OutputStream {
 	}
 
 	public void add(final char iContent) throws IOException {
-		assureSpaceFor(OConstants.SIZE_CHAR);
+		assureSpaceFor(OBinaryProtocol.SIZE_CHAR);
 		OBinaryProtocol.char2bytes(iContent, buffer, position);
-		position += OConstants.SIZE_CHAR;
+		position += OBinaryProtocol.SIZE_CHAR;
 	}
 
 	public void add(final int iContent) throws IOException {
-		assureSpaceFor(OConstants.SIZE_INT);
+		assureSpaceFor(OBinaryProtocol.SIZE_INT);
 		OBinaryProtocol.int2bytes(iContent, buffer, position);
-		position += OConstants.SIZE_INT;
+		position += OBinaryProtocol.SIZE_INT;
 	}
 
 	public int add(final long iContent) throws IOException {
-		assureSpaceFor(OConstants.SIZE_LONG);
+		assureSpaceFor(OBinaryProtocol.SIZE_LONG);
 		final int begin = position;
 		OBinaryProtocol.long2bytes(iContent, buffer, position);
-		position += OConstants.SIZE_LONG;
+		position += OBinaryProtocol.SIZE_LONG;
 		return begin;
 	}
 
 	public int add(final short iContent) throws IOException {
-		assureSpaceFor(OConstants.SIZE_SHORT);
+		assureSpaceFor(OBinaryProtocol.SIZE_SHORT);
 		final int begin = position;
 		OBinaryProtocol.short2bytes(iContent, buffer, position);
-		position += OConstants.SIZE_SHORT;
+		position += OBinaryProtocol.SIZE_SHORT;
 		return begin;
 	}
 

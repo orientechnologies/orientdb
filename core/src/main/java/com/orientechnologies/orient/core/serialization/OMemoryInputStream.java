@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import com.orientechnologies.common.util.OArrays;
-import com.orientechnologies.orient.core.OConstants;
 
 /**
  * Class to parse and write buffers in very fast way.
@@ -59,7 +58,7 @@ public class OMemoryInputStream extends InputStream {
 		final int begin = position;
 
 		final int size = OBinaryProtocol.bytes2int(buffer, position);
-		position += OConstants.SIZE_INT + size;
+		position += OBinaryProtocol.SIZE_INT + size;
 
 		return begin;
 	}
@@ -94,7 +93,7 @@ public class OMemoryInputStream extends InputStream {
 		if (size == 0)
 			return null;
 
-		iOffset += OConstants.SIZE_INT;
+		iOffset += OBinaryProtocol.SIZE_INT;
 
 		return OArrays.copyOfRange(buffer, iOffset, iOffset + size);
 	}
@@ -104,7 +103,7 @@ public class OMemoryInputStream extends InputStream {
 			return null;
 
 		final int size = OBinaryProtocol.bytes2int(buffer, position);
-		position += OConstants.SIZE_INT;
+		position += OBinaryProtocol.SIZE_INT;
 
 		final byte[] portion = OArrays.copyOfRange(buffer, position, position + size);
 		position += size;
@@ -118,7 +117,7 @@ public class OMemoryInputStream extends InputStream {
 
 	public char getAsChar() throws IOException {
 		final char value = OBinaryProtocol.bytes2char(buffer, position);
-		position += OConstants.SIZE_CHAR;
+		position += OBinaryProtocol.SIZE_CHAR;
 		return value;
 	}
 
@@ -128,19 +127,19 @@ public class OMemoryInputStream extends InputStream {
 
 	public long getAsLong() throws IOException {
 		final long value = OBinaryProtocol.bytes2long(buffer, position);
-		position += OConstants.SIZE_LONG;
+		position += OBinaryProtocol.SIZE_LONG;
 		return value;
 	}
 
 	public int getAsInteger() throws IOException {
 		final int value = OBinaryProtocol.bytes2int(buffer, position);
-		position += OConstants.SIZE_INT;
+		position += OBinaryProtocol.SIZE_INT;
 		return value;
 	}
 
 	public short getAsShort() throws IOException {
 		final short value = OBinaryProtocol.bytes2short(buffer, position);
-		position += OConstants.SIZE_SHORT;
+		position += OBinaryProtocol.SIZE_SHORT;
 		return value;
 	}
 
@@ -184,7 +183,7 @@ public class OMemoryInputStream extends InputStream {
 			return -1;
 
 		final int size = OBinaryProtocol.bytes2int(buffer, position);
-		position += OConstants.SIZE_INT;
+		position += OBinaryProtocol.SIZE_INT;
 
 		return size;
 	}

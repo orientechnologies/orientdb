@@ -347,4 +347,10 @@ public class OBinaryProtocol {
 	public static char bytes2char(final byte[] b, final int offset) {
 		return (char) ((b[offset] << 8) + (b[offset + 1] << 0));
 	}
+
+	public static final int		SIZE_BYTE		= 1;
+	public static final int		SIZE_CHAR		= 2;
+	public static final int		SIZE_SHORT		= 2;
+	public static final int		SIZE_INT			= 4;
+	public static final int		SIZE_LONG		= 8;
 }

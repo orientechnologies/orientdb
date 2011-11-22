@@ -22,12 +22,12 @@ import java.util.List;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataHoleConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.fs.OFile;
@@ -265,8 +265,8 @@ public class ODataLocal extends OMultiFileSegment {
 
 			final long[] pos = getRelativePosition(iPosition);
 			final OFile file = files[(int) pos[0]];
-			file.writeShort(pos[1] + OConstants.SIZE_INT, (short) -1);
-			file.writeLong(pos[1] + OConstants.SIZE_INT + OConstants.SIZE_SHORT, -1);
+			file.writeShort(pos[1] + OBinaryProtocol.SIZE_INT, (short) -1);
+			file.writeLong(pos[1] + OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_SHORT, -1);
 
 			final int recordSize = file.readInt(pos[1]);
 			handleHole(iPosition, recordSize);
@@ -325,7 +325,7 @@ public class ODataLocal extends OMultiFileSegment {
 		acquireExclusiveLock();
 		try {
 
-			return files[0].readHeaderLong(OConstants.SIZE_LONG);
+			return files[0].readHeaderLong(OBinaryProtocol.SIZE_LONG);
 
 		} finally {
 			releaseExclusiveLock();
@@ -336,7 +336,7 @@ public class ODataLocal extends OMultiFileSegment {
 		acquireExclusiveLock();
 		try {
 
-			files[0].writeHeaderLong(OConstants.SIZE_LONG, iVersion);
+			files[0].writeHeaderLong(OBinaryProtocol.SIZE_LONG, iVersion);
 
 		} finally {
 			releaseExclusiveLock();
@@ -507,8 +507,8 @@ public class ODataLocal extends OMultiFileSegment {
 
 		final long timer = OProfiler.getInstance().startChrono();
 
-		final short clusterId = file.readShort(pos[1] + OConstants.SIZE_INT);
-		final long clusterPosition = file.readLong(pos[1] + OConstants.SIZE_INT + OConstants.SIZE_SHORT);
+		final short clusterId = file.readShort(pos[1] + OBinaryProtocol.SIZE_INT);
+		final long clusterPosition = file.readLong(pos[1] + OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_SHORT);
 
 		final byte[] content = new byte[recordSize];
 		file.read(pos[1] + RECORD_FIX_SIZE, content, recordSize);
@@ -538,9 +538,9 @@ public class ODataLocal extends OMultiFileSegment {
 		final OFile file = files[(int) iFilePosition[0]];
 
 		file.writeInt(iFilePosition[1], iContent.length);
-		file.writeShort(iFilePosition[1] + OConstants.SIZE_INT, (short) iClusterSegment);
+		file.writeShort(iFilePosition[1] + OBinaryProtocol.SIZE_INT, (short) iClusterSegment);
 		// TestSimulateError.onDataLocalWriteRecord(this, iFilePosition, iClusterSegment, iClusterPosition, iContent);
-		file.writeLong(iFilePosition[1] + OConstants.SIZE_INT + OConstants.SIZE_SHORT, iClusterPosition);
+		file.writeLong(iFilePosition[1] + OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_SHORT, iClusterPosition);
 
 		file.write(iFilePosition[1] + RECORD_FIX_SIZE, iContent);
 	}

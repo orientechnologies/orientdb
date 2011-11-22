@@ -22,7 +22,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
-import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 
 @Test(enabled = false)
@@ -51,12 +51,12 @@ public abstract class OFileAbstractTest extends SpeedTestMonoThread {
 	public void cycle() throws IOException {
 		System.out.println("Writing " + NUMS + " integers...");
 		for (int i = 0; i < NUMS; ++i)
-			file.writeInt(file.allocateSpace(OConstants.SIZE_INT), i);
+			file.writeInt(file.allocateSpace(OBinaryProtocol.SIZE_INT), i);
 		data.printSnapshot();
 
 		System.out.println("Checking all written data...");
 		for (int i = 0; i < NUMS; ++i)
-			Assert.assertTrue(file.readInt(i * OConstants.SIZE_INT) == i);
+			Assert.assertTrue(file.readInt(i * OBinaryProtocol.SIZE_INT) == i);
 		data.printSnapshot();
 
 		file.close();

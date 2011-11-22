@@ -20,7 +20,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
-import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -32,7 +31,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 public class ORecordId implements ORID {
 	private static final long			serialVersionUID				= 247070594054408657L;
 
-	public static final int				PERSISTENT_SIZE					= OConstants.SIZE_SHORT + OConstants.SIZE_LONG;
+	public static final int				PERSISTENT_SIZE					= OBinaryProtocol.SIZE_SHORT + OBinaryProtocol.SIZE_LONG;
 
 	public static final ORecordId	EMPTY_RECORD_ID					= new ORecordId();
 	public static final byte[]		EMPTY_RECORD_ID_STREAM	= EMPTY_RECORD_ID.toStream();
@@ -201,7 +200,7 @@ public class ORecordId implements ORID {
 	public ORecordId fromStream(final byte[] iBuffer) {
 		if (iBuffer != null) {
 			clusterId = OBinaryProtocol.bytes2short(iBuffer, 0);
-			clusterPosition = OBinaryProtocol.bytes2long(iBuffer, OConstants.SIZE_SHORT);
+			clusterPosition = OBinaryProtocol.bytes2long(iBuffer, OBinaryProtocol.SIZE_SHORT);
 		}
 		return this;
 	}
@@ -221,7 +220,7 @@ public class ORecordId implements ORID {
 	public byte[] toStream() {
 		byte[] buffer = new byte[PERSISTENT_SIZE];
 		OBinaryProtocol.short2bytes((short) clusterId, buffer, 0);
-		OBinaryProtocol.long2bytes(clusterPosition, buffer, OConstants.SIZE_SHORT);
+		OBinaryProtocol.long2bytes(clusterPosition, buffer, OBinaryProtocol.SIZE_SHORT);
 		return buffer;
 	}
 

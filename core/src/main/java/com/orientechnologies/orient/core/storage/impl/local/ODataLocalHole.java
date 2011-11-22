@@ -22,9 +22,9 @@ import java.util.List;
 
 import com.orientechnologies.common.collection.OMVRBTreeMemory;
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 
 /**
  * Handles the holes inside data segments. Exists only 1 hole segment per data-segment even if multiple data-files are configured.
@@ -124,7 +124,7 @@ public class ODataLocalHole extends OSingleFileSegment {
 		// TO FILE
 		final long p = recycledPosition * RECORD_SIZE;
 		file.writeLong(p, iRecordOffset);
-		file.writeInt(p + OConstants.SIZE_LONG, iRecordSize);
+		file.writeInt(p + OBinaryProtocol.SIZE_LONG, iRecordSize);
 
 		OProfiler.getInstance().stopChrono(PROFILER_DATA_HOLE_CREATE, timer);
 	}
@@ -256,7 +256,7 @@ public class ODataLocalHole extends OSingleFileSegment {
 		if (offsetChanged)
 			file.writeLong(holePosition, iNewDataOffset);
 		if (sizeChanged)
-			file.writeInt(holePosition + OConstants.SIZE_LONG, iNewRecordSize);
+			file.writeInt(holePosition + OBinaryProtocol.SIZE_LONG, iNewRecordSize);
 
 		OProfiler.getInstance().stopChrono(PROFILER_DATA_HOLE_UPDATE, timer);
 	}
@@ -291,7 +291,7 @@ public class ODataLocalHole extends OSingleFileSegment {
 
 		for (int pos = 0; pos < holes; ++pos) {
 			final long dataOffset = file.readLong(pos * RECORD_SIZE);
-			final int recordSize = file.readInt(pos * RECORD_SIZE + OConstants.SIZE_LONG);
+			final int recordSize = file.readInt(pos * RECORD_SIZE + OBinaryProtocol.SIZE_LONG);
 
 			final ODataHoleInfo hole = new ODataHoleInfo(recordSize, dataOffset, pos);
 

@@ -20,10 +20,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
@@ -107,28 +107,28 @@ public class OTxSegment extends OSingleFileSegment {
 			int offset = file.allocateSpace(size);
 
 			file.writeByte(offset, STATUS_COMMITTING);
-			offset += OConstants.SIZE_BYTE;
+			offset += OBinaryProtocol.SIZE_BYTE;
 
 			file.writeByte(offset, iOperation);
-			offset += OConstants.SIZE_BYTE;
+			offset += OBinaryProtocol.SIZE_BYTE;
 
 			file.writeInt(offset, iTxId);
-			offset += OConstants.SIZE_INT;
+			offset += OBinaryProtocol.SIZE_INT;
 
 			file.writeShort(offset, (short) iClusterId);
-			offset += OConstants.SIZE_SHORT;
+			offset += OBinaryProtocol.SIZE_SHORT;
 
 			file.writeLong(offset, iClusterOffset);
-			offset += OConstants.SIZE_LONG;
+			offset += OBinaryProtocol.SIZE_LONG;
 
 			file.writeByte(offset, iRecordType);
-			offset += OConstants.SIZE_BYTE;
+			offset += OBinaryProtocol.SIZE_BYTE;
 
 			file.writeInt(offset, iRecordVersion);
-			offset += OConstants.SIZE_INT;
+			offset += OBinaryProtocol.SIZE_INT;
 
 			file.writeInt(offset, contentSize);
-			offset += OConstants.SIZE_INT;
+			offset += OBinaryProtocol.SIZE_INT;
 
 			file.write(offset, iRecordContent);
 			offset += contentSize;
@@ -249,33 +249,33 @@ public class OTxSegment extends OSingleFileSegment {
 			long offset = beginEntry;
 
 			final byte status = file.readByte(offset);
-			offset += OConstants.SIZE_BYTE;
+			offset += OBinaryProtocol.SIZE_BYTE;
 
 			if (status != STATUS_FREE) {
 				// DIRTY TX LOG ENTRY
 				final byte operation = file.readByte(offset);
-				offset += OConstants.SIZE_BYTE;
+				offset += OBinaryProtocol.SIZE_BYTE;
 
 				final int txId = file.readInt(offset);
 
 				if (txId == iTxId) {
 					// TX ID FOUND
-					offset += OConstants.SIZE_INT;
+					offset += OBinaryProtocol.SIZE_INT;
 
 					rid.clusterId = file.readShort(offset);
-					offset += OConstants.SIZE_SHORT;
+					offset += OBinaryProtocol.SIZE_SHORT;
 
 					rid.clusterPosition = file.readLong(offset);
-					offset += OConstants.SIZE_LONG;
+					offset += OBinaryProtocol.SIZE_LONG;
 
 					final byte recordType = file.readByte(offset);
-					offset += OConstants.SIZE_BYTE;
+					offset += OBinaryProtocol.SIZE_BYTE;
 
 					final int recordVersion = file.readInt(offset);
-					offset += OConstants.SIZE_INT;
+					offset += OBinaryProtocol.SIZE_INT;
 
 					final int recordSize = file.readInt(offset);
-					offset += OConstants.SIZE_INT;
+					offset += OBinaryProtocol.SIZE_INT;
 
 					final byte[] buffer;
 					if (recordSize > 0) {

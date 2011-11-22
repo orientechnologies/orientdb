@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage;
 
-import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -60,16 +59,16 @@ public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysi
 		int pos = 0;
 
 		dataSegment = OBinaryProtocol.bytes2int(iStream, pos);
-		pos += OConstants.SIZE_INT;
+		pos += OBinaryProtocol.SIZE_INT;
 
 		dataPosition = OBinaryProtocol.bytes2long(iStream, pos);
-		pos += OConstants.SIZE_LONG;
+		pos += OBinaryProtocol.SIZE_LONG;
 
 		type = iStream[pos];
-		pos += OConstants.SIZE_BYTE;
+		pos += OBinaryProtocol.SIZE_BYTE;
 
 		recordSize = OBinaryProtocol.bytes2int(iStream, pos);
-		pos += OConstants.SIZE_INT;
+		pos += OBinaryProtocol.SIZE_INT;
 
 		version = OBinaryProtocol.bytes2int(iStream, pos);
 
@@ -77,21 +76,21 @@ public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysi
 	}
 
 	public byte[] toStream() throws OSerializationException {
-		byte[] buffer = new byte[OConstants.SIZE_INT + OConstants.SIZE_LONG + OConstants.SIZE_BYTE + OConstants.SIZE_INT
-				+ OConstants.SIZE_INT];
+		byte[] buffer = new byte[OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_BYTE + OBinaryProtocol.SIZE_INT
+				+ OBinaryProtocol.SIZE_INT];
 		int pos = 0;
 
 		OBinaryProtocol.int2bytes(dataSegment, buffer, pos);
-		pos += OConstants.SIZE_INT;
+		pos += OBinaryProtocol.SIZE_INT;
 
 		OBinaryProtocol.long2bytes(dataPosition, buffer, pos);
-		pos += OConstants.SIZE_LONG;
+		pos += OBinaryProtocol.SIZE_LONG;
 
 		buffer[pos] = type;
-		pos += OConstants.SIZE_BYTE;
+		pos += OBinaryProtocol.SIZE_BYTE;
 
 		OBinaryProtocol.int2bytes(recordSize, buffer, pos);
-		pos += OConstants.SIZE_INT;
+		pos += OBinaryProtocol.SIZE_INT;
 
 		OBinaryProtocol.int2bytes(version, buffer, pos);
 		return buffer;

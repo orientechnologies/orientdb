@@ -20,7 +20,7 @@ import java.nio.ByteBuffer;
 
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 
 /**
  * Need to be synchronized by the external. Multiple Reader, Single Writer.<br/>
@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.OConstants;
  * <br/>
  */
 public class OFileClassic extends OFile {
-	protected ByteBuffer	internalWriteBuffer	= getBuffer(OConstants.SIZE_LONG);
+	protected ByteBuffer	internalWriteBuffer	= getBuffer(OBinaryProtocol.SIZE_LONG);
 
 	public OFileClassic(String iFileName, String iMode) throws IOException {
 		super(iFileName, iMode);
@@ -59,56 +59,56 @@ public class OFileClassic extends OFile {
 
 	@Override
 	public int readInt(long iOffset) throws IOException {
-		iOffset = checkRegions(iOffset, OConstants.SIZE_INT);
-		return readData(iOffset, OConstants.SIZE_INT).getInt();
+		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_INT);
+		return readData(iOffset, OBinaryProtocol.SIZE_INT).getInt();
 	}
 
 	@Override
 	public long readLong(long iOffset) throws IOException {
-		iOffset = checkRegions(iOffset, OConstants.SIZE_LONG);
-		return readData(iOffset, OConstants.SIZE_LONG).getLong();
+		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_LONG);
+		return readData(iOffset, OBinaryProtocol.SIZE_LONG).getLong();
 	}
 
 	@Override
 	public short readShort(long iOffset) throws IOException {
-		iOffset = checkRegions(iOffset, OConstants.SIZE_SHORT);
-		return readData(iOffset, OConstants.SIZE_SHORT).getShort();
+		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_SHORT);
+		return readData(iOffset, OBinaryProtocol.SIZE_SHORT).getShort();
 	}
 
 	@Override
 	public byte readByte(long iOffset) throws IOException {
-		iOffset = checkRegions(iOffset, OConstants.SIZE_BYTE);
-		return readData(iOffset, OConstants.SIZE_BYTE).get();
+		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_BYTE);
+		return readData(iOffset, OBinaryProtocol.SIZE_BYTE).get();
 	}
 
 	@Override
 	public void writeInt(long iOffset, final int iValue) throws IOException {
-		iOffset = checkRegions(iOffset, OConstants.SIZE_INT);
-		ByteBuffer buffer = getWriteBuffer(OConstants.SIZE_INT);
+		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_INT);
+		ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_INT);
 		buffer.putInt(iValue);
 		writeData(buffer, iOffset);
 	}
 
 	@Override
 	public void writeLong(long iOffset, final long iValue) throws IOException {
-		iOffset = checkRegions(iOffset, OConstants.SIZE_LONG);
-		ByteBuffer buffer = getWriteBuffer(OConstants.SIZE_LONG);
+		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_LONG);
+		ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_LONG);
 		buffer.putLong(iValue);
 		writeData(buffer, iOffset);
 	}
 
 	@Override
 	public void writeShort(long iOffset, final short iValue) throws IOException {
-		iOffset = checkRegions(iOffset, OConstants.SIZE_INT);
-		ByteBuffer buffer = getWriteBuffer(OConstants.SIZE_SHORT);
+		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_INT);
+		ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_SHORT);
 		buffer.putShort(iValue);
 		writeData(buffer, iOffset);
 	}
 
 	@Override
 	public void writeByte(long iOffset, final byte iValue) throws IOException {
-		iOffset = checkRegions(iOffset, OConstants.SIZE_BYTE);
-		ByteBuffer buffer = getWriteBuffer(OConstants.SIZE_BYTE);
+		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_BYTE);
+		ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_BYTE);
 		buffer.put(iValue);
 		writeData(buffer, iOffset);
 	}
@@ -148,13 +148,13 @@ public class OFileClassic extends OFile {
 
 	@Override
 	protected void readHeader() throws IOException {
-		size = readData(0, OConstants.SIZE_INT).getInt();
-		filledUpTo = readData(OConstants.SIZE_INT, OConstants.SIZE_INT).getInt();
+		size = readData(0, OBinaryProtocol.SIZE_INT).getInt();
+		filledUpTo = readData(OBinaryProtocol.SIZE_INT, OBinaryProtocol.SIZE_INT).getInt();
 	}
 
 	@Override
 	protected void writeHeader() throws IOException {
-		ByteBuffer buffer = getWriteBuffer(OConstants.SIZE_INT * 2);
+		ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_INT * 2);
 		buffer.putInt(size);
 		buffer.putInt(filledUpTo);
 		writeData(buffer, 0);
@@ -162,24 +162,24 @@ public class OFileClassic extends OFile {
 
 	@Override
 	public void writeHeaderLong(final int iPosition, final long iValue) throws IOException {
-		ByteBuffer buffer = getWriteBuffer(OConstants.SIZE_LONG);
+		ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_LONG);
 		buffer.putLong(iValue);
 		writeData(buffer, HEADER_DATA_OFFSET + iPosition);
 	}
 
 	@Override
 	public long readHeaderLong(final int iPosition) throws IOException {
-		return readData(HEADER_DATA_OFFSET + iPosition, OConstants.SIZE_LONG).getLong();
+		return readData(HEADER_DATA_OFFSET + iPosition, OBinaryProtocol.SIZE_LONG).getLong();
 	}
 
 	@Override
 	public boolean isSoftlyClosed() throws IOException {
-		return readData(SOFTLY_CLOSED_OFFSET, OConstants.SIZE_BYTE).get() == 1;
+		return readData(SOFTLY_CLOSED_OFFSET, OBinaryProtocol.SIZE_BYTE).get() == 1;
 	}
 
 	@Override
 	protected void setSoftlyClosed(final boolean iValue) throws IOException {
-		final ByteBuffer buffer = getWriteBuffer(OConstants.SIZE_BYTE);
+		final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_BYTE);
 		buffer.put((byte) (iValue ? 1 : 0));
 		writeData(buffer, SOFTLY_CLOSED_OFFSET);
 		synch();
@@ -202,7 +202,7 @@ public class OFileClassic extends OFile {
 	}
 
 	private ByteBuffer getWriteBuffer(final int iLenght) {
-		if (iLenght <= OConstants.SIZE_LONG)
+		if (iLenght <= OBinaryProtocol.SIZE_LONG)
 			// RECYCLE WRITE BYTE BUFFER SINCE WRITES ARE SYNCHRONIZED
 			return (ByteBuffer) internalWriteBuffer.rewind();
 

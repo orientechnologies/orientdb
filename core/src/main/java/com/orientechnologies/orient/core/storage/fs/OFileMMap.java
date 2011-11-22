@@ -25,8 +25,8 @@ import java.util.List;
 
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.fs.OMMapManager.OPERATION_TYPE;
 
 /**
@@ -80,8 +80,8 @@ public class OFileMMap extends OFile {
 
 	@Override
 	public int readInt(long iOffset) throws IOException {
-		iOffset = checkRegions(iOffset, OConstants.SIZE_INT);
-		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_INT, OPERATION_TYPE.READ, strategy);
+		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_INT);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OBinaryProtocol.SIZE_INT, OPERATION_TYPE.READ, strategy);
 		if (entry != null) {
 			// MMAP READ
 			synchronized (entry.buffer) {
@@ -89,7 +89,7 @@ public class OFileMMap extends OFile {
 			}
 		} else {
 			// DIRECT READ
-			final ByteBuffer buffer = acquireByteBuffer(OConstants.SIZE_INT);
+			final ByteBuffer buffer = acquireByteBuffer(OBinaryProtocol.SIZE_INT);
 			channel.read(buffer, iOffset + HEADER_SIZE);
 			buffer.rewind();
 			final int value = buffer.getInt();
@@ -100,8 +100,8 @@ public class OFileMMap extends OFile {
 
 	@Override
 	public long readLong(long iOffset) throws IOException {
-		iOffset = checkRegions(iOffset, OConstants.SIZE_LONG);
-		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_LONG, OPERATION_TYPE.READ, strategy);
+		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_LONG);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OBinaryProtocol.SIZE_LONG, OPERATION_TYPE.READ, strategy);
 		if (entry != null) {
 			// MMAP READ
 			synchronized (entry.buffer) {
@@ -109,7 +109,7 @@ public class OFileMMap extends OFile {
 			}
 		} else {
 			// DIRECT READ
-			final ByteBuffer buffer = acquireByteBuffer(OConstants.SIZE_LONG);
+			final ByteBuffer buffer = acquireByteBuffer(OBinaryProtocol.SIZE_LONG);
 			channel.read(buffer, iOffset + HEADER_SIZE);
 			buffer.rewind();
 			final long value = buffer.getLong();
@@ -120,8 +120,8 @@ public class OFileMMap extends OFile {
 
 	@Override
 	public short readShort(long iOffset) throws IOException {
-		iOffset = checkRegions(iOffset, OConstants.SIZE_SHORT);
-		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_SHORT, OPERATION_TYPE.READ, strategy);
+		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_SHORT);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OBinaryProtocol.SIZE_SHORT, OPERATION_TYPE.READ, strategy);
 		if (entry != null) {
 			// MMAP READ
 			synchronized (entry.buffer) {
@@ -129,7 +129,7 @@ public class OFileMMap extends OFile {
 			}
 		} else {
 			// DIRECT READ
-			final ByteBuffer buffer = acquireByteBuffer(OConstants.SIZE_SHORT);
+			final ByteBuffer buffer = acquireByteBuffer(OBinaryProtocol.SIZE_SHORT);
 			channel.read(buffer, iOffset + HEADER_SIZE);
 			buffer.rewind();
 			final short value = buffer.getShort();
@@ -140,8 +140,8 @@ public class OFileMMap extends OFile {
 
 	@Override
 	public byte readByte(long iOffset) throws IOException {
-		iOffset = checkRegions(iOffset, OConstants.SIZE_BYTE);
-		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_BYTE, OPERATION_TYPE.READ, strategy);
+		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_BYTE);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OBinaryProtocol.SIZE_BYTE, OPERATION_TYPE.READ, strategy);
 		if (entry != null) {
 			// MMAP READ
 			synchronized (entry.buffer) {
@@ -149,7 +149,7 @@ public class OFileMMap extends OFile {
 			}
 		} else {
 			// DIRECT READ
-			final ByteBuffer buffer = acquireByteBuffer(OConstants.SIZE_BYTE);
+			final ByteBuffer buffer = acquireByteBuffer(OBinaryProtocol.SIZE_BYTE);
 			channel.read(buffer, iOffset + HEADER_SIZE);
 			buffer.rewind();
 			final byte value = buffer.get();
@@ -160,8 +160,8 @@ public class OFileMMap extends OFile {
 
 	@Override
 	public void writeInt(long iOffset, final int iValue) throws IOException {
-		iOffset = checkRegions(iOffset, OConstants.SIZE_INT);
-		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_INT, OPERATION_TYPE.WRITE, strategy);
+		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_INT);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OBinaryProtocol.SIZE_INT, OPERATION_TYPE.WRITE, strategy);
 		if (entry != null) {
 			// MMAP WRITE
 			synchronized (entry.buffer) {
@@ -169,7 +169,7 @@ public class OFileMMap extends OFile {
 			}
 		} else {
 			// DIRECT WRITE
-			final ByteBuffer buffer = acquireByteBuffer(OConstants.SIZE_INT);
+			final ByteBuffer buffer = acquireByteBuffer(OBinaryProtocol.SIZE_INT);
 			buffer.putInt(iValue);
 			buffer.rewind();
 			channel.write(buffer, iOffset + HEADER_SIZE);
@@ -179,8 +179,8 @@ public class OFileMMap extends OFile {
 
 	@Override
 	public void writeLong(long iOffset, final long iValue) throws IOException {
-		iOffset = checkRegions(iOffset, OConstants.SIZE_LONG);
-		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_LONG, OPERATION_TYPE.WRITE, strategy);
+		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_LONG);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OBinaryProtocol.SIZE_LONG, OPERATION_TYPE.WRITE, strategy);
 		if (entry != null) {
 			// MMAP WRITE
 			synchronized (entry.buffer) {
@@ -188,7 +188,7 @@ public class OFileMMap extends OFile {
 			}
 		} else {
 			// DIRECT WRITE
-			final ByteBuffer buffer = acquireByteBuffer(OConstants.SIZE_LONG);
+			final ByteBuffer buffer = acquireByteBuffer(OBinaryProtocol.SIZE_LONG);
 			buffer.putLong(iValue);
 			buffer.rewind();
 			channel.write(buffer, iOffset + HEADER_SIZE);
@@ -198,8 +198,8 @@ public class OFileMMap extends OFile {
 
 	@Override
 	public void writeShort(long iOffset, final short iValue) throws IOException {
-		iOffset = checkRegions(iOffset, OConstants.SIZE_SHORT);
-		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_SHORT, OPERATION_TYPE.WRITE, strategy);
+		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_SHORT);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OBinaryProtocol.SIZE_SHORT, OPERATION_TYPE.WRITE, strategy);
 		if (entry != null) {
 			// MMAP WRITE
 			synchronized (entry.buffer) {
@@ -207,7 +207,7 @@ public class OFileMMap extends OFile {
 			}
 		} else {
 			// DIRECT WRITE
-			final ByteBuffer buffer = acquireByteBuffer(OConstants.SIZE_SHORT);
+			final ByteBuffer buffer = acquireByteBuffer(OBinaryProtocol.SIZE_SHORT);
 			buffer.putShort(iValue);
 			buffer.rewind();
 			channel.write(buffer, iOffset + HEADER_SIZE);
@@ -217,8 +217,8 @@ public class OFileMMap extends OFile {
 
 	@Override
 	public void writeByte(long iOffset, final byte iValue) throws IOException {
-		iOffset = checkRegions(iOffset, OConstants.SIZE_BYTE);
-		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_BYTE, OPERATION_TYPE.WRITE, strategy);
+		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_BYTE);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OBinaryProtocol.SIZE_BYTE, OPERATION_TYPE.WRITE, strategy);
 		if (entry != null) {
 			// MMAP WRITE
 			synchronized (entry.buffer) {
@@ -226,7 +226,7 @@ public class OFileMMap extends OFile {
 			}
 		} else {
 			// DIRECT WRITE
-			final ByteBuffer buffer = acquireByteBuffer(OConstants.SIZE_BYTE);
+			final ByteBuffer buffer = acquireByteBuffer(OBinaryProtocol.SIZE_BYTE);
 			buffer.put(iValue);
 			buffer.rewind();
 			channel.write(buffer, iOffset + HEADER_SIZE);
