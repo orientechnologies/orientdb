@@ -183,7 +183,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 
 		if (p.isNotNull() && fieldValue == null)
 			// NULLITY
-			throw new OValidationException("The field '" + p.getName() + "' is null");
+			throw new OValidationException("The field '" + p.getName() + "' cannot be null");
 
 		if (fieldValue != null && p.getRegexp() != null) {
 			// REGEXP
