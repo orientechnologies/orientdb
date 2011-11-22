@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.record.impl;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -208,7 +209,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	 */
 	public ODocument copy(final ODocument iDestination) {
 		checkForFields();
-		
+
 		iDestination._ordered = _ordered;
 		iDestination._clazz = _clazz;
 		iDestination._trackingChanges = _trackingChanges;
@@ -810,6 +811,17 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 			_owners = new ArrayList<WeakReference<ORecordElement>>();
 		this._owners.add(new WeakReference<ORecordElement>(iOwner));
 		return this;
+	}
+
+	public Iterable<ORecordElement> getOwners() {
+		if (_owners == null)
+			return Collections.emptyList();
+
+		final List<ORecordElement> result = new ArrayList<ORecordElement>();
+		for (WeakReference<ORecordElement> o : _owners)
+			result.add(o.get());
+
+		return result;
 	}
 
 	public ODocument removeOwner(final ORecordElement iRecordElement) {
