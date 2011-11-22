@@ -195,6 +195,7 @@ public class ODocumentHelper {
 		if (fieldNameLength == 0)
 			return null;
 
+		ODocument currentRecord = iRecord;
 		Object value = null;
 
 		int beginPos = 0;
@@ -220,10 +221,13 @@ public class ODocumentHelper {
 
 			if (nextSeparator == '[') {
 				if (value == null)
-					value = getIdentifiableValue(iRecord, fieldName);
+					value = getIdentifiableValue(currentRecord, fieldName);
 
 				if (value == null)
 					return null;
+
+				if (value instanceof ODocument)
+					currentRecord = (ODocument) value;
 
 				final int end = iFieldName.indexOf(']', nextSeparatorPos);
 				if (end == -1)
@@ -236,12 +240,12 @@ public class ODocumentHelper {
 					final List<String> indexParts = OStringSerializerHelper.smartSplit(index, ',');
 					if (indexParts.size() == 1)
 						// SINGLE VALUE
-						value = ((ODocument) value).field(index);
+						value = currentRecord.field(index);
 					else {
 						// MULTI VALUE
 						final Object[] values = new Object[indexParts.size()];
 						for (int i = 0; i < indexParts.size(); ++i) {
-							values[i] = ((ODocument) value).field(indexParts.get(i));
+							values[i] = currentRecord.field(indexParts.get(i));
 						}
 						value = values;
 					}
@@ -334,12 +338,15 @@ public class ODocumentHelper {
 					value = evaluateFunction(value, fieldName);
 				else {
 					// GET THE LINKED OBJECT IF ANY
-					value = getIdentifiableValue(iRecord, fieldName);
+					value = getIdentifiableValue(currentRecord, fieldName);
 					if (value != null && value instanceof ORecord<?> && ((ORecord<?>) value).getInternalStatus() == STATUS.NOT_LOADED)
 						// RELOAD IT
 						((ORecord<?>) value).reload();
 				}
 			}
+
+			if (value instanceof ODocument)
+				currentRecord = (ODocument) value;
 
 			beginPos = ++nextSeparatorPos;
 		} while (nextSeparatorPos < fieldNameLength && value != null);
