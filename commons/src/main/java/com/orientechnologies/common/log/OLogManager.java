@@ -32,11 +32,14 @@ public class OLogManager {
 		setLevel(iLevel, FileHandler.class);
 	}
 
-	public void log(final Object iRequester, final Level iLevel, final String iMessage, final Throwable iException,
+	public void log(final Object iRequester, final Level iLevel, String iMessage, final Throwable iException,
 			final Object... iAdditionalArgs) {
 		if (iMessage != null) {
 			final Logger log = iRequester != null ? Logger.getLogger(iRequester.getClass().getName()) : Logger.getLogger("");
 			if (log.isLoggable(iLevel)) {
+				// ENCODE OF SPECIAL FORMAT CHAR '%' IF ANY
+				if (iMessage.contains("%"))
+					iMessage = iMessage.replaceAll("%", "%%");
 				final String msg = String.format(iMessage, iAdditionalArgs);
 				if (iException != null)
 					log.log(iLevel, msg, iException);
