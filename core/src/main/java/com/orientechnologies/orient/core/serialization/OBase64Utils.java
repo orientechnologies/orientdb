@@ -1177,7 +1177,7 @@ public class OBase64Utils {
 	 * @since 1.4
 	 */
 	public static byte[] decode(String s) {
-		return decode(s, NO_OPTIONS);
+		return decode(s, DONT_GUNZIP);
 	}
 
 	/**
