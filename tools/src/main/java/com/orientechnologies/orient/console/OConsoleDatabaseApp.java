@@ -1015,6 +1015,22 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		}
 	}
 
+	@ConsoleCommand(description = "Export a database schema")
+	public void exportSchema(@ConsoleParameter(name = "output-file", description = "Output file path") final String iOutputFilePath)
+			throws IOException {
+		checkCurrentDatabase();
+
+		out.println("Exporting current database to: " + iOutputFilePath + "...");
+
+		try {
+			ODatabaseExport exporter = new ODatabaseExport(currentDatabase, iOutputFilePath, this);
+			exporter.setIncludeRecords(false);
+			exporter.exportDatabase().close();
+		} catch (ODatabaseExportException e) {
+			printError(e);
+		}
+	}
+
 	@ConsoleCommand(description = "Import a database into the current one")
 	public void importDatabase(@ConsoleParameter(name = "input-file", description = "Input file path") final String iInputFilePath)
 			throws IOException {
