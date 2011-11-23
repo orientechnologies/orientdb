@@ -49,6 +49,7 @@ import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
@@ -209,6 +210,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 			out.println("OK");
 		}
+	}
+
+	public void test() {
+		ODocument doc = currentDatabase.load(new ORecordId(2, 0l));
+		doc.field("prova", "stocazzochettesefrega");
+		currentDatabase.save(doc);
 	}
 
 	@ConsoleCommand(description = "Create a new database")
@@ -406,6 +413,19 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	public void loadRecord(
 			@ConsoleParameter(name = "record-id", description = "The unique Record Id of the record to load. If you don't have the Record Id execute a query first") String iRecordId) {
 		loadRecordInternal(iRecordId, null);
+	}
+
+	@ConsoleCommand(description = "Reloads a record using passed fetch plan")
+	public void reloadRecord(
+			@ConsoleParameter(name = "record-id", description = "The unique Record Id of the record to load. If you don't have the Record Id execute a query first") String iRecordId,
+			@ConsoleParameter(name = "fetch-plan", description = "The fetch plan to load the record with") String iFetchPlan) {
+		reloadRecordInternal(iRecordId, iFetchPlan);
+	}
+
+	@ConsoleCommand(description = "Reload a record and set it as the current one")
+	public void reloadRecord(
+			@ConsoleParameter(name = "record-id", description = "The unique Record Id of the record to load. If you don't have the Record Id execute a query first") String iRecordId) {
+		reloadRecordInternal(iRecordId, null);
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Insert a new record into the database")
@@ -1225,6 +1245,16 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		checkCurrentDatabase();
 
 		currentRecord = currentDatabase.load(new ORecordId(iRecordId), iFetchPlan);
+		displayRecord(null);
+
+		out.println("OK");
+	}
+
+	protected void reloadRecordInternal(String iRecordId, String iFetchPlan) {
+		checkCurrentDatabase();
+
+		currentRecord = ((ODatabaseRecordAbstract) currentDatabase.getUnderlying()).executeReadRecord(new ORecordId(iRecordId), null,
+				iFetchPlan, true);
 		displayRecord(null);
 
 		out.println("OK");
