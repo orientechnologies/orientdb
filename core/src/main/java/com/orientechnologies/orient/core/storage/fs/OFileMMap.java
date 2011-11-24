@@ -236,7 +236,7 @@ public class OFileMMap extends OFile {
 
 	@Override
 	public void write(long iOffset, final byte[] iSourceBuffer) throws IOException {
-		if (iSourceBuffer.length == 0)
+		if (iSourceBuffer == null || iSourceBuffer.length == 0)
 			return;
 
 		iOffset = checkRegions(iOffset, iSourceBuffer.length);
