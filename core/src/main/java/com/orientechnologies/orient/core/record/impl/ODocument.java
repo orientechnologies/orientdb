@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
@@ -37,7 +38,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -148,13 +148,13 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
 	/**
 	 * Creates a new instance in memory of the specified schema class. New instances are not persistent until {@link #save()} is
-	 * called. The database reference is taken by the OClass instance received.
+	 * called. The database reference is taken from the thread local.
 	 * 
 	 * @param iClass
 	 *          OClass instance
 	 */
 	public ODocument(final OClass iClass) {
-		super(((OClassImpl) iClass).getDocument().getDatabase());
+		super(ODatabaseRecordThreadLocal.INSTANCE.get());
 		setup();
 		_clazz = iClass;
 	}
