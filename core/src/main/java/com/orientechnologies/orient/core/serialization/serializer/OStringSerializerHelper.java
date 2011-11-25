@@ -230,6 +230,11 @@ public abstract class OStringSerializerHelper {
 					}
 				}
 
+				if (iJumpChars.length > 0) {
+					if (isCharPresent(c, iJumpChars))
+						continue;
+				}
+
 			} else {
 				// INSIDE A STRING
 				if ((c == '"' || iStringSeparatorExtended && c == '\'') && !encodeMode) {
@@ -245,11 +250,6 @@ public abstract class OStringSerializerHelper {
 				encodeMode = true;
 			else
 				encodeMode = false;
-
-			if (iJumpChars.length > 0) {
-				if (isCharPresent(c, iJumpChars))
-					continue;
-			}
 
 			iBuffer.append(c);
 		}
