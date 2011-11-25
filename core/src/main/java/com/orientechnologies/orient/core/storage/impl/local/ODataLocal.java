@@ -445,7 +445,9 @@ public class ODataLocal extends OMultiFileSegment {
 					}
 
 					if (moveFrom != moveUpTo)
-						throw new IllegalStateException("Corrupted holes: Found offset " + moveFrom + " instead of " + moveUpTo);
+						throw new IllegalStateException("Corrupted holes: found offset " + moveFrom + " instead of " + moveUpTo
+								+ " while creating a new hole on position " + iRecordOffset + ", size " + iRecordSize + ". The closest hole "
+								+ closestHole.holeOffset + " points to position " + closestHole.dataOffset + ", size " + closestHole.size);
 
 					holePositionOffset = moveTo;
 					holeSize += closestHole.size;
