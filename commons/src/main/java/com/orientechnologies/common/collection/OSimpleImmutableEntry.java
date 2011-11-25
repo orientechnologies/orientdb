@@ -32,7 +32,7 @@ public class OSimpleImmutableEntry<K, V> implements Entry<K, V>, java.io.Seriali
 	 * @param value
 	 *          the value represented by this entry
 	 */
-	public OSimpleImmutableEntry(K key, V value) {
+	public OSimpleImmutableEntry(final K key, final V value) {
 		this.key = key;
 		this.value = value;
 	}
@@ -43,7 +43,7 @@ public class OSimpleImmutableEntry<K, V> implements Entry<K, V>, java.io.Seriali
 	 * @param entry
 	 *          the entry to copy
 	 */
-	public OSimpleImmutableEntry(Entry<? extends K, ? extends V> entry) {
+	public OSimpleImmutableEntry(final Entry<? extends K, ? extends V> entry) {
 		this.key = entry.getKey();
 		this.value = entry.getValue();
 	}

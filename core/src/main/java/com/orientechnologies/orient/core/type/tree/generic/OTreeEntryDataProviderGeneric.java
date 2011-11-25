@@ -20,10 +20,11 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.tree.OTreeEntryDataProvider;
 
 public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvider<K, V>, OSerializableStream {
+	private static final long									serialVersionUID	= 1L;
 
 	protected OTreeDataProviderGeneric<K, V>	treeDataProvider;
 
-	protected int															size			= 0;
+	protected int															size							= 0;
 	protected int															pageSize;
 	protected K[]															keys;
 	protected V[]															values;
@@ -33,12 +34,13 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 	protected ORecordId												leftRid;
 	protected ORecordId												rightRid;
 
-	protected boolean													color			= OMVRBTree.RED;
+	protected boolean													color							= OMVRBTree.RED;
 
 	protected ORecordBytesLazy								record;
 
-	protected OMemoryInputStream							inStream	= new OMemoryInputStream();
+	protected OMemoryInputStream							inStream					= new OMemoryInputStream();
 
+	@SuppressWarnings("unchecked")
 	public OTreeEntryDataProviderGeneric(final OTreeDataProviderGeneric<K, V> iTreeDataProvider) {
 		treeDataProvider = iTreeDataProvider;
 		record = new ORecordBytesLazy(this);
@@ -219,6 +221,7 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 		return setDirty();
 	}
 
+	@SuppressWarnings("unchecked")
 	public boolean copyFrom(OTreeEntryDataProvider<K, V> iSource) {
 
 		final OTreeEntryDataProviderGeneric<K, V> source = (OTreeEntryDataProviderGeneric<K, V>) iSource;
@@ -335,6 +338,7 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 		size = 0;
 	}
 
+	@SuppressWarnings("unchecked")
 	public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
 		final long timer = OProfiler.getInstance().startChrono();
 
