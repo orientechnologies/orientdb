@@ -101,6 +101,10 @@ public enum OGlobalConfiguration {
 	BLUEPRINTS_TX_MODE("blueprints.graph.txMode",
 			"Transaction mode used in TinkerPop Blueprints implementation. 0 = Automatic (default), 1 = Manual", Integer.class, 0),
 
+	// COLLECTION
+	RIDSET_NODE_PAGE_SIZE("ridset.nodePageSize",
+			"Page size of each single node. 512 means that 512 entries can be stored inside a node", Integer.class, 512),
+
 	// TREEMAP
 	MVRBTREE_LAZY_UPDATES("mvrbtree.lazyUpdates",
 			"Configure the TreeMaps (indexes and dictionaries) as buffered or not. -1 means buffered up to tx.commit() or db.close()",
@@ -121,6 +125,11 @@ public enum OGlobalConfiguration {
 	MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR("mvrbtree.optimizeEntryPointsFactor",
 			"Multiplicand factor to apply to entry-points list (parameter mvrbtree.entrypoints) to determine if needs of optimization",
 			Float.class, 1.0f),
+
+	MVRBTREE_ENTRY_KEYS_IN_MEMORY("mvrbtree.entryKeysInMemory", "Keep in memory unserialized keys", Boolean.class, Boolean.FALSE),
+
+	MVRBTREE_ENTRY_VALUES_IN_MEMORY("mvrbtree.entryValuesInMemory", "Keep in memory unserialized values", Boolean.class,
+			Boolean.FALSE),
 
 	// COLLECTIONS
 	LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Upon add avoid to unmarshall set", Boolean.class, true),

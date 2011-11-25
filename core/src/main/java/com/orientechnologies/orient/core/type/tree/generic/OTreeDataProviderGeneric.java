@@ -36,6 +36,8 @@ public class OTreeDataProviderGeneric<K, V> implements OTreeDataProvider<K, V>, 
 	protected ORecordId									root;
 	protected ORecordBytesLazy					record;
 	protected final OMemoryOutputStream	entryRecordBuffer;
+	protected boolean										keepKeysInMemory;
+	protected boolean										keepValuesInMemory;
 
 	protected OStorage									storage;
 
@@ -107,11 +109,16 @@ public class OTreeDataProviderGeneric<K, V> implements OTreeDataProvider<K, V>, 
 
 	public boolean updateConfig() {
 		boolean isChanged = false;
+
 		int newSize = OGlobalConfiguration.MVRBTREE_NODE_PAGE_SIZE.getValueAsInteger();
 		if (newSize != defaultPageSize) {
 			defaultPageSize = newSize;
 			isChanged = true;
 		}
+
+		keepKeysInMemory = OGlobalConfiguration.MVRBTREE_ENTRY_KEYS_IN_MEMORY.getValueAsBoolean();
+		keepValuesInMemory = OGlobalConfiguration.MVRBTREE_ENTRY_VALUES_IN_MEMORY.getValueAsBoolean();
+
 		return isChanged ? setDirty() : false;
 	}
 

@@ -39,7 +39,7 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 
 	protected OMemoryInputStream							inStream	= new OMemoryInputStream();
 
-	public OTreeEntryDataProviderGeneric(OTreeDataProviderGeneric<K, V> iTreeDataProvider) {
+	public OTreeEntryDataProviderGeneric(final OTreeDataProviderGeneric<K, V> iTreeDataProvider) {
 		treeDataProvider = iTreeDataProvider;
 		record = new ORecordBytesLazy(this);
 		record.setIdentity(new ORecordId());
@@ -53,7 +53,7 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 		serializedValues = new int[pageSize];
 	}
 
-	public OTreeEntryDataProviderGeneric(OTreeDataProviderGeneric<K, V> iTreeDataProvider, ORID iRID) {
+	public OTreeEntryDataProviderGeneric(final OTreeDataProviderGeneric<K, V> iTreeDataProvider, final ORID iRID) {
 		super();
 		treeDataProvider = iTreeDataProvider;
 		record = new ORecordBytesLazy(this);
@@ -64,7 +64,7 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 			load(treeDataProvider.storage);
 	}
 
-	protected void load(ODatabaseRecord iDb) {
+	protected void load(final ODatabaseRecord iDb) {
 		try {
 			record.setDatabase(iDb);
 			record.reload();
@@ -76,8 +76,8 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 		fromStream(record.toStream());
 	}
 
-	protected void load(OStorage iSt) {
-		ORawBuffer raw = iSt.readRecord(null, (ORecordId) record.getIdentity(), null, null);
+	protected void load(final OStorage iStorage) {
+		ORawBuffer raw = iStorage.readRecord(null, (ORecordId) record.getIdentity(), null, null);
 		record.fill(null, (ORecordId) record.getIdentity(), raw.version, raw.buffer, false);
 		fromStream(raw.buffer);
 	}
@@ -86,33 +86,48 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 		return record.getIdentity();
 	}
 
-	public K getKeyAt(int iIndex) {
-		if (keys[iIndex] == null)
+	@SuppressWarnings("unchecked")
+	public K getKeyAt(final int iIndex) {
+		K k = keys[iIndex];
+		if (k == null)
 			try {
 				OProfiler.getInstance().updateCounter("OMVRBTreeEntryP.unserializeKey", 1);
 
-				keys[iIndex] = (K) keyFromStream(iIndex);
+				k = (K) keyFromStream(iIndex);
+
+				if (iIndex == 0 || iIndex == size || treeDataProvider.keepKeysInMemory)
+					// KEEP THE UNMARSHALLED KEY IN MEMORY. TO OPTIMIZE FIRST AND LAST ITEM ARE ALWAYS KEPT IN MEMORY TO SPEEDUP FREQUENT
+					// NODE CHECKING OF BOUNDS
+					keys[iIndex] = k;
+
 			} catch (IOException e) {
 				OLogManager.instance().error(this, "Can't lazy load the key #" + iIndex + " in tree node " + this, e,
 						OSerializationException.class);
 			}
 
-		return keys[iIndex];
+		return k;
 	}
 
-	public V getValueAt(int iIndex) {
-		if (values[iIndex] == null)
+	@SuppressWarnings("unchecked")
+	public V getValueAt(final int iIndex) {
+		V v = values[iIndex];
+		if (v == null)
 			try {
 				OProfiler.getInstance().updateCounter("OMVRBTreeEntryP.unserializeValue", 1);
 
-				values[iIndex] = (V) valueFromStream(iIndex);
+				v = (V) valueFromStream(iIndex);
+
+				if (treeDataProvider.keepValuesInMemory)
+					// KEEP THE UNMARSHALLED VALUE IN MEMORY
+					values[iIndex] = v;
+
 			} catch (IOException e) {
 
 				OLogManager.instance().error(this, "Can't lazy load the value #" + iIndex + " in tree node " + this, e,
 						OSerializationException.class);
 			}
 
-		return values[iIndex];
+		return v;
 	}
 
 	public int getSize() {

@@ -70,16 +70,12 @@ import com.orientechnologies.orient.core.id.ORecordId;
  * @param <K>
  * @param <V>
  */
-@SuppressWarnings({ "unchecked", "serial" })
 public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
+	protected OTreeEntryDataProvider<K, V>		dataEntry;
 	protected OMVRBTreePersistent<K, V>				pTree;
 
-	protected OTreeEntryDataProvider<K, V>		dataEntry;
-
 	protected OMVRBTreeEntryPersistent<K, V>	parent;
-
 	protected OMVRBTreeEntryPersistent<K, V>	left;
-
 	protected OMVRBTreeEntryPersistent<K, V>	right;
 
 	/**
@@ -516,7 +512,7 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 
 	@Override
 	protected void copyFrom(final OMVRBTreeEntry<K, V> iSource) {
-		if (dataEntry.copyFrom(((OMVRBTreeEntryPersistent) iSource).dataEntry))
+		if (dataEntry.copyFrom(((OMVRBTreeEntryPersistent<K, V>) iSource).dataEntry))
 			markDirty();
 	}
 
