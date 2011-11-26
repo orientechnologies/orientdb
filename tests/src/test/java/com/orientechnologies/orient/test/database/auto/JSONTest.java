@@ -24,6 +24,7 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -225,5 +226,16 @@ public class JSONTest {
 
 			Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
 		}
+	}
+
+	public void testSpecialChar() {
+		ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
+		database.open("admin", "admin");
+
+		ODocument doc = new ODocument(database).fromJSON("{Field1:{\"%Key\":[\"value1\",\"value2\"]}}");
+		doc.save();
+
+		ODocument doc2 = database.load(doc.getIdentity());
+		Assert.assertEquals(doc, doc2);
 	}
 }
