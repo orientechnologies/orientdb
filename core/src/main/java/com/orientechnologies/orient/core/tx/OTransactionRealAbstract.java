@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OTransactionException;
@@ -155,13 +156,15 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 		return list;
 	}
 
+	@SuppressWarnings("rawtypes")
 	public ODocument getIndexChanges() {
 		final StringBuilder value = new StringBuilder();
 
+		final ODatabaseRecordTx database = getDatabase();
 		final ODocument result = new ODocument();
 
 		for (Entry<String, OTransactionIndexChanges> indexEntry : indexEntries.entrySet()) {
-			final ODocument indexDoc = new ODocument().addOwner(result);
+			final ODocument indexDoc = new ODocument(database).addOwner(result);
 			result.field(indexEntry.getKey(), indexDoc, OType.EMBEDDED);
 
 			if (indexEntry.getValue().cleared)
@@ -174,9 +177,13 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 			for (OTransactionIndexChangesPerKey entry : indexEntry.getValue().changesPerKey.values()) {
 				// SERIALIZE KEY
 				value.setLength(0);
-				if (entry.key != null)
-					ORecordSerializerStringAbstract.fieldTypeToString(value, null, OType.getTypeByClass(entry.key.getClass()), entry.key);
-				else
+				if (entry.key != null) {
+					if (entry.key instanceof OCompositeKey) {
+						final List<Comparable> keys = ((OCompositeKey) entry.key).getKeys();
+						ORecordSerializerStringAbstract.fieldTypeToString(value, null, OType.EMBEDDEDLIST, keys);
+					} else
+						ORecordSerializerStringAbstract.fieldTypeToString(value, null, OType.getTypeByClass(entry.key.getClass()), entry.key);
+				} else
 					value.append('*');
 				String key = value.toString();
 

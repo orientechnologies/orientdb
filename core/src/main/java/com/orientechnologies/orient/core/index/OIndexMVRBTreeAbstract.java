@@ -25,6 +25,7 @@ import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
 import com.orientechnologies.common.listener.OProgressListener;
@@ -586,7 +587,14 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 			final Collection<ODocument> entries = iDocument.field("entries");
 
 			for (final ODocument entry : entries) {
-				final Object key = ORecordSerializerStringAbstract.getTypeValue(OStringSerializerHelper.decode((String) entry.field("k")));
+				final String serializedKey = OStringSerializerHelper.decode((String) entry.field("k"));
+
+				final Object key;
+				if (serializedKey.startsWith("["))
+					key = new OCompositeKey((List<? extends Comparable<?>>) ORecordSerializerStringAbstract.fieldTypeFromStream(iDocument,
+							OType.EMBEDDEDLIST, OStringSerializerHelper.decode(serializedKey)));
+				else
+					key = ORecordSerializerStringAbstract.getTypeValue(serializedKey);
 
 				final List<ODocument> operations = (List<ODocument>) entry.field("ops");
 				if (operations != null) {

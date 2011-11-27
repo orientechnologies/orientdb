@@ -175,9 +175,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 		for (String item : items) {
 			if (item != null && !item.isEmpty()) {
-				final List<String> entry = OStringSerializerHelper.smartSplit(item, OStringSerializerHelper.ENTRY_SEPARATOR);
-				if (!entry.isEmpty()) {
-					String mapValue = entry.get(1);
+				final List<String> entries = OStringSerializerHelper.smartSplit(item, OStringSerializerHelper.ENTRY_SEPARATOR);
+				if (!entries.isEmpty()) {
+					String mapValue = entries.get(1);
 
 					final OType linkedType;
 
@@ -202,7 +202,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					if (mapValueObject != null && mapValueObject instanceof ODocument)
 						((ODocument) mapValueObject).addOwner(iSourceDocument);
 
-					map.put(fieldTypeFromStream(iSourceDocument, OType.STRING, entry.get(0)), mapValueObject);
+					map.put(fieldTypeFromStream(iSourceDocument, OType.STRING, entries.get(0)), mapValueObject);
 				}
 
 			}
