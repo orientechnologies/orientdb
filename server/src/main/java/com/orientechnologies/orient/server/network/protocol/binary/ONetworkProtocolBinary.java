@@ -889,7 +889,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 		if (((OSchemaProxy) connection.database.getMetadata().getSchema()).getIdentity().equals(rid))
 			// || ((OIndexManagerImpl) connection.database.getMetadata().getIndexManager()).getDocument().getIdentity().equals(rid)) {
-			throw new OSecurityAccessException("Can't update internal record " + rid);
+			throw new OSecurityAccessException("Cannot update internal record " + rid);
 
 		final ORecordInternal<?> currentRecord;
 		if (newRecord instanceof ODocument) {
@@ -1009,7 +1009,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			throw new OSecurityAccessException("Server user not authenticated.");
 
 		if (!OServerMain.server().authenticate(serverUser.name, null, iResource))
-			throw new OSecurityAccessException("User '" + serverUser.name + "' can't access to the resource [" + iResource
+			throw new OSecurityAccessException("User '" + serverUser.name + "' cannot access to the resource [" + iResource
 					+ "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
 	}
 
@@ -1139,7 +1139,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		} else if (iStorageMode.equals(OEngineMemory.NAME)) {
 			path = iStorageMode + ":" + iDbName;
 		} else
-			throw new IllegalArgumentException("Can't create database: storage mode '" + iStorageMode + "' is not supported.");
+			throw new IllegalArgumentException("Cannot create database: storage mode '" + iStorageMode + "' is not supported.");
 
 		return new ODatabaseDocumentTx(path);
 	}

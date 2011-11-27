@@ -103,7 +103,7 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 					keys[iIndex] = k;
 
 			} catch (IOException e) {
-				OLogManager.instance().error(this, "Can't lazy load the key #" + iIndex + " in tree node " + this, e,
+				OLogManager.instance().error(this, "Cannot lazy load the key #" + iIndex + " in tree node " + this, e,
 						OSerializationException.class);
 			}
 
@@ -125,7 +125,7 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 
 			} catch (IOException e) {
 
-				OLogManager.instance().error(this, "Can't lazy load the value #" + iIndex + " in tree node " + this, e,
+				OLogManager.instance().error(this, "Cannot lazy load the value #" + iIndex + " in tree node " + this, e,
 						OSerializationException.class);
 			}
 
@@ -283,7 +283,7 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 	protected void save(ODatabaseRecord iDb) {
 		if (iDb == null) {
 			throw new IllegalStateException(
-					"Current thread has no database setted and the tree can't be saved correctly. Assure to close the database before the application if off.");
+					"Current thread has no database set and the tree cannot be saved correctly. Ensure that the database is closed before the application if off.");
 		}
 		record.setDatabase(iDb);
 		record.save(treeDataProvider.clusterName);
@@ -379,7 +379,7 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 
 			return this;
 		} catch (IOException e) {
-			throw new OSerializationException("Can't unmarshall RB+Tree node", e);
+			throw new OSerializationException("Cannot unmarshall RB+Tree node", e);
 		} finally {
 			OProfiler.getInstance().stopChrono("OMVRBTreeEntryP.fromStream", timer);
 		}
@@ -427,7 +427,7 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 			return buffer;
 
 		} catch (IOException e) {
-			throw new OSerializationException("Can't marshall RB+Tree node", e);
+			throw new OSerializationException("Cannot marshall RB+Tree node", e);
 		} finally {
 			// marshalledRecords.remove(identityRecord);
 			OProfiler.getInstance().stopChrono("OMVRBTreeEntryP.toStream", timer);

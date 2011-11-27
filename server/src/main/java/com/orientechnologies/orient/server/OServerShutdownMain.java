@@ -110,7 +110,7 @@ public class OServerShutdownMain {
 			}
 
 		if (channel == null)
-			throw new ONetworkProtocolException("Can't connect to server host '" + networkAddress + "', ports: "
+			throw new ONetworkProtocolException("Cannot connect to server host '" + networkAddress + "', ports: "
 					+ Arrays.toString(networkPort));
 
 		channel.writeByte(OChannelBinaryProtocol.REQUEST_SHUTDOWN);

@@ -189,7 +189,7 @@ public class OMMapManager {
 		} while (entry == null && maxMemory > MIN_MEMORY);
 
 		if (entry == null)
-			throw new OIOException("You can't access to the file portion " + iBeginOffset + "-" + iBeginOffset + iSize + " bytes");
+			throw new OIOException("You cannot access to the file portion " + iBeginOffset + "-" + iBeginOffset + iSize + " bytes");
 
 		totalMemory += bufferSize;
 		bufferPoolLRU.add(entry);
@@ -445,13 +445,13 @@ public class OMMapManager {
 				break;
 			} catch (Exception e) {
 				OLogManager.instance()
-						.debug(iEntry, "Can't write memory buffer to disk. Retrying (" + (i + 1) + "/" + FORCE_RETRY + ")...");
+						.debug(iEntry, "Cannot write memory buffer to disk. Retrying (" + (i + 1) + "/" + FORCE_RETRY + ")...");
 				OMemoryWatchDog.freeMemory(FORCE_DELAY);
 			}
 		}
 
 		if (!forceSucceed)
-			OLogManager.instance().debug(iEntry, "Can't commit memory buffer to disk after %d retries", FORCE_RETRY);
+			OLogManager.instance().debug(iEntry, "Cannot commit memory buffer to disk after %d retries", FORCE_RETRY);
 		else
 			OProfiler.getInstance().updateCounter("OMMapManager.pagesCommitted", 1);
 

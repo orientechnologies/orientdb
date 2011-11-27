@@ -166,7 +166,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 
 	protected void checkFieldAccess(final int iIndex) {
 		if (iIndex < 0 || iIndex >= fields())
-			throw new IndexOutOfBoundsException("Index " + iIndex + " is out of range allowed: 0-" + fields());
+			throw new IndexOutOfBoundsException("Index " + iIndex + " is outside the range allowed: 0-" + fields());
 	}
 
 	public static void validateField(ORecordSchemaAwareAbstract<?> iRecord, OProperty p) throws OValidationException {
@@ -188,7 +188,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 		if (fieldValue != null && p.getRegexp() != null) {
 			// REGEXP
 			if (!fieldValue.toString().matches(p.getRegexp()))
-				throw new OValidationException("The field '" + p.getName() + "' doesn't match the regular expression '" + p.getRegexp()
+				throw new OValidationException("The field '" + p.getName() + "' does not match the regular expression '" + p.getRegexp()
 						+ "'. Field value is: " + fieldValue);
 		}
 
@@ -226,25 +226,25 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 
 			if (p.getType().equals(OType.STRING) && (fieldValue != null && ((String) fieldValue).length() < Integer.parseInt(min)))
 				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName()
-						+ "' contains less characters than " + min + " requested");
+						+ "' contains fewer characters than " + min + " requested");
 			else if (p.getType().equals(OType.BINARY) && (fieldValue != null && ((byte[]) fieldValue).length < Integer.parseInt(min)))
-				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' contains less bytes than "
+				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' contains fewer bytes than "
 						+ min + " requested");
 			else if (p.getType().equals(OType.INTEGER) && (fieldValue != null && type.asInt(fieldValue) < Integer.parseInt(min)))
-				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' is minor than " + min);
+				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' is less than " + min);
 			else if (p.getType().equals(OType.LONG) && (fieldValue != null && type.asLong(fieldValue) < Long.parseLong(min)))
-				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' is minor than " + min);
+				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' is less than " + min);
 			else if (p.getType().equals(OType.FLOAT) && (fieldValue != null && type.asFloat(fieldValue) < Float.parseFloat(min)))
-				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' is minor than " + min);
+				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' is less than " + min);
 			else if (p.getType().equals(OType.DOUBLE) && (fieldValue != null && type.asDouble(fieldValue) < Double.parseDouble(min)))
-				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' is minor than " + min);
+				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' is less than " + min);
 			else if (p.getType().equals(OType.DATE)) {
 				try {
 					if (fieldValue != null
 							&& ((Date) fieldValue).before(iRecord.getDatabase().getStorage().getConfiguration().getDateFormatInstance()
 									.parse(min)))
 						throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' contains the date "
-								+ fieldValue + "that is before the date accepted (" + min + ")");
+								+ fieldValue + " which precedes the first acceptable date (" + min + ")");
 				} catch (ParseException e) {
 				}
 			} else if (p.getType().equals(OType.DATETIME)) {
@@ -253,13 +253,13 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 							&& ((Date) fieldValue).before(iRecord.getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance()
 									.parse(min)))
 						throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' contains the datetime "
-								+ fieldValue + "that is before the datetime accepted (" + min + ")");
+								+ fieldValue + " which precedes the first acceptable datetime (" + min + ")");
 				} catch (ParseException e) {
 				}
 			} else if ((p.getType().equals(OType.EMBEDDEDLIST) || p.getType().equals(OType.EMBEDDEDSET)
 					|| p.getType().equals(OType.LINKLIST) || p.getType().equals(OType.LINKSET))
 					&& (fieldValue != null && ((Collection<?>) fieldValue).size() < Integer.parseInt(min)))
-				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' contains less items then "
+				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' contains fewer items than "
 						+ min + " requested");
 		}
 
@@ -274,20 +274,20 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' contains more bytes than "
 						+ max + " requested");
 			else if (p.getType().equals(OType.INTEGER) && (fieldValue != null && type.asInt(fieldValue) > Integer.parseInt(max)))
-				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' is major than " + max);
+				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' is greater than " + max);
 			else if (p.getType().equals(OType.LONG) && (fieldValue != null && type.asLong(fieldValue) > Long.parseLong(max)))
-				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' is major than " + max);
+				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' is greater than " + max);
 			else if (p.getType().equals(OType.FLOAT) && (fieldValue != null && type.asFloat(fieldValue) > Float.parseFloat(max)))
-				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' is major than " + max);
+				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' is greater than " + max);
 			else if (p.getType().equals(OType.DOUBLE) && (fieldValue != null && type.asDouble(fieldValue) > Double.parseDouble(max)))
-				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' is major than " + max);
+				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' is greater than " + max);
 			else if (p.getType().equals(OType.DATE)) {
 				try {
 					if (fieldValue != null
 							&& ((Date) fieldValue).before(iRecord.getDatabase().getStorage().getConfiguration().getDateFormatInstance()
 									.parse(max)))
 						throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' contains the date "
-								+ fieldValue + "that is after the date accepted (" + max + ")");
+								+ fieldValue + " which is after the last acceptable date (" + max + ")");
 				} catch (ParseException e) {
 				}
 			} else if (p.getType().equals(OType.DATETIME)) {
@@ -296,13 +296,13 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 							&& ((Date) fieldValue).before(iRecord.getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance()
 									.parse(max)))
 						throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' contains the datetime "
-								+ fieldValue + "that is after the datetime accepted (" + max + ")");
+								+ fieldValue + " which is after the last acceptable datetime (" + max + ")");
 				} catch (ParseException e) {
 				}
 			} else if ((p.getType().equals(OType.EMBEDDEDLIST) || p.getType().equals(OType.EMBEDDEDSET)
 					|| p.getType().equals(OType.LINKLIST) || p.getType().equals(OType.LINKSET))
 					&& (fieldValue != null && ((Collection<?>) fieldValue).size() > Integer.parseInt(max)))
-				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' contains more items then "
+				throw new OValidationException("The field '" + iRecord.getClassName() + "." + p.getName() + "' contains more items than "
 						+ max + " requested");
 		}
 	}

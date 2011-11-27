@@ -190,7 +190,7 @@ public abstract class OFile {
 				break;
 			} catch (OverlappingFileLockException e) {
 				OLogManager.instance().debug(this,
-						"Can't open file '" + osFile.getAbsolutePath() + "' because it's locked. Waiting %d ms and retry %d/%d...",
+						"Cannot open file '" + osFile.getAbsolutePath() + "' because it is locked. Waiting %d ms and retrying %d/%d...",
 						LOCK_WAIT_TIME, i, LOCK_MAX_RETRIES);
 
 				// FORCE FINALIZATION TO COLLECT ALL THE PENDING BUFFERS
@@ -223,7 +223,7 @@ public abstract class OFile {
 		if (iSize < filledUpTo)
 			OLogManager.instance().error(
 					this,
-					"You can't size down the file to " + iSize + " bytes, since it's minor of than current space used: " + filledUpTo
+					"You cannot resize down the file to " + iSize + " bytes, since it is less than current space used: " + filledUpTo
 							+ " bytes", OIOException.class);
 	}
 
@@ -262,7 +262,7 @@ public abstract class OFile {
 
 		if (getFreeSpace() < iSize) {
 			if (maxSize > 0 && maxSize - size < iSize)
-				throw new IllegalArgumentException("Can't enlarge file since the configured max size ("
+				throw new IllegalArgumentException("Cannot enlarge file since the configured max size ("
 						+ OFileUtils.getSizeAsString(maxSize) + ") was reached! " + toString());
 
 			// MAKE ROOM
@@ -289,7 +289,7 @@ public abstract class OFile {
 
 	protected long checkRegions(final long iOffset, final int iLength) {
 		if (iOffset + iLength > filledUpTo)
-			throw new OIOException("You can't access outside the file size (" + filledUpTo + " bytes). You've requested portion "
+			throw new OIOException("You cannot access outside the file size (" + filledUpTo + " bytes). You have requested portion "
 					+ iOffset + "-" + (iOffset + iLength) + " bytes. File: " + toString());
 
 		return iOffset;

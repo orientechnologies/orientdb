@@ -85,7 +85,7 @@ public class OCommandExecutorSQLRevoke extends OCommandExecutorSQLPermissionAbst
 	 */
 	public Object execute(final Map<Object, Object> iArgs) {
 		if (role == null)
-			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
+			throw new OCommandExecutionException("Cannot execute the command because it has not yet been parsed");
 
 		role.revoke(resource, privilege);
 		role.save();

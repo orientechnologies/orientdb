@@ -46,7 +46,7 @@ public class OIndexFactory extends ODynamicFactory<String, Class<? extends OInde
 		try {
 			return (T) indexClass.newInstance();
 		} catch (final Exception e) {
-			throw new OConfigurationException("Can't create index type '" + iIndexType + "'", e);
+			throw new OConfigurationException("Cannot create index type '" + iIndexType + "'", e);
 		}
 	}
 

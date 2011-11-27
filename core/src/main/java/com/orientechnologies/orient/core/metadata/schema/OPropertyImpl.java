@@ -373,7 +373,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		}
 
 		if (!ok)
-			throw new IllegalArgumentException("Can't change property type from " + type + " to " + iType);
+			throw new IllegalArgumentException("Cannot change property type from " + type + " to " + iType);
 
 		type = iType;
 	}
@@ -403,7 +403,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 			return getType();
 		}
 
-		throw new IllegalArgumentException("Can't find attribute '" + iAttribute + "'");
+		throw new IllegalArgumentException("Cannot find attribute '" + iAttribute + "'");
 	}
 
 	public void setInternalAndSave(final ATTRIBUTES attribute, final Object iValue) {
@@ -579,13 +579,13 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 				try {
 					owner.owner.getDocument().getDatabase().getStorage().getConfiguration().getDateFormatInstance().parse(iDateAsString);
 				} catch (ParseException e) {
-					throw new OSchemaException("Invalid date format was set", e);
+					throw new OSchemaException("Invalid date format", e);
 				}
 			} else if (type == OType.DATETIME) {
 				try {
 					owner.owner.getDocument().getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance().parse(iDateAsString);
 				} catch (ParseException e) {
-					throw new OSchemaException("Invalid datetime format was set", e);
+					throw new OSchemaException("Invalid datetime format", e);
 				}
 			}
 	}

@@ -96,7 +96,7 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLPermis
 	 */
 	public Object execute(final Map<Object, Object> iArgs) {
 		if (type == null)
-			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
+			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
 		final OClassImpl sourceClass = (OClassImpl) database.getMetadata().getSchema().getClass(className);
 		if (sourceClass == null)

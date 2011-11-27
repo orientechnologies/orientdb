@@ -233,7 +233,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	@Override
 	public ODocument flatCopy() {
 		if (isDirty())
-			throw new IllegalStateException("Can't execute a flat copy of a dirty record");
+			throw new IllegalStateException("Cannot execute a flat copy of a dirty record");
 
 		final ODocument cloned = new ODocument();
 		cloned.fill(_database, _recordId, _version, _source, false);

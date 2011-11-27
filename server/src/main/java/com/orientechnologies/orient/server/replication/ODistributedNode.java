@@ -150,7 +150,7 @@ public class ODistributedNode implements OCommandOutputListener {
 	public void shareDatabase(final ODatabaseRecord iDatabase, final String iRemoteServerName, final String iDbUser,
 			final String iDbPasswd, final String iEngineName, final boolean iSynchronousMode) throws IOException, InterruptedException {
 		if (status != STATUS.ONLINE)
-			throw new ODistributedSynchronizationException("Can't share database '" + iDatabase.getName() + "' on remote server node '"
+			throw new ODistributedSynchronizationException("Cannot share database '" + iDatabase.getName() + "' on remote server node '"
 					+ iRemoteServerName + "' because is disconnected");
 
 		// final String dbName = iDatabase.getName();

@@ -60,14 +60,10 @@
 			<class name="com.orientechnologies.orient.test.database.auto.PropertyIndexTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.CollectionIndexTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectCompositeIndexDirectSearchTest" />
-<!--
-			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetValuesTest" />
-			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetValuesTest" />
-			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetTest" />
-			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetTest" />
-			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetEntriesTest" />
-			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetEntriesTest" />
--->
+			<!-- <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetValuesTest" /> <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetValuesTest" 
+				/> <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetTest" /> <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetTest" 
+				/> <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetEntriesTest" /> <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetEntriesTest" 
+				/> -->
 		</classes>
 	</test>
 	<test name="Dictionary">
@@ -149,6 +145,7 @@
 	</test>
 	<test name="Internals">
 		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.StringsTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.LockManagerTest" />
 		</classes>
 	</test>

@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable {
 	/**
 	 * Removes all the dependencies with other records. All the relationships remain in form of RecordID. If some links contain dirty
-	 * records, the detach can't be complete and this method returns false.
+	 * records, the detach cannot be complete and this method returns false.
 	 * 
 	 * @return True if the document has been successfully detached, otherwise false.
 	 */
@@ -121,7 +121,7 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
 
 	/**
 	 * Loads the record content in memory. If the record is in cache will be returned a new instance, so pay attention to use the
-	 * returned. If the record is dirty, then it returns to the original content. If the record doesn't exist a
+	 * returned. If the record is dirty, then it returns to the original content. If the record does not exist a
 	 * ORecordNotFoundException exception is thrown.
 	 * 
 	 * @return The record loaded or itself if the record has been reloaded from the storage. Useful to call methods in chain.
@@ -130,7 +130,7 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
 
 	/**
 	 * Loads the record content in memory. No cache is used. If the record is dirty, then it returns to the original content. If the
-	 * record doesn't exist a ORecordNotFoundException exception is thrown.
+	 * record does not exist a ORecordNotFoundException exception is thrown.
 	 * 
 	 * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
@@ -141,7 +141,7 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
 	 * running then changes apply immediately. If an Optimistic transaction is running then the record will be changed at commit
 	 * time. The current transaction will continue to see the record as modified, while others not. If a Pessimistic transaction is
 	 * running, then an exclusive lock is acquired against the record. Current transaction will continue to see the record as
-	 * modified, while others can't access to it since it's locked.
+	 * modified, while others cannot access to it since it's locked.
 	 * 
 	 * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
@@ -152,7 +152,7 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
 	 * transaction if any. If no transaction is running then changes apply immediately. If an Optimistic transaction is running then
 	 * the record will be changed at commit time. The current transaction will continue to see the record as modified, while others
 	 * not. If a Pessimistic transaction is running, then an exclusive lock is acquired against the record. Current transaction will
-	 * continue to see the record as modified, while others can't access to it since it's locked.
+	 * continue to see the record as modified, while others cannot access to it since it's locked.
 	 * 
 	 * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
@@ -163,7 +163,7 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
 	 * then the record is deleted immediately. If an Optimistic transaction is running then the record will be deleted at commit
 	 * time. The current transaction will continue to see the record as deleted, while others not. If a Pessimistic transaction is
 	 * running, then an exclusive lock is acquired against the record. Current transaction will continue to see the record as
-	 * deleted, while others can't access to it since it's locked.
+	 * deleted, while others cannot access to it since it's locked.
 	 * 
 	 * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */

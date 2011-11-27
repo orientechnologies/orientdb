@@ -93,9 +93,9 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 		} catch (OSecurityAccessException e) {
 			// WRONG USER/PASSWD
 		} catch (OLockException e) {
-			OLogManager.instance().error(this, "Can't access to the database", ODatabaseException.class, e);
+			OLogManager.instance().error(this, "Cannot access to the database", ODatabaseException.class, e);
 		} catch (InterruptedException e) {
-			OLogManager.instance().error(this, "Can't access to the database", ODatabaseException.class, e);
+			OLogManager.instance().error(this, "Cannot access to the database", ODatabaseException.class, e);
 		} finally {
 			if (db != null)
 				OSharedDocumentDatabase.release(db);

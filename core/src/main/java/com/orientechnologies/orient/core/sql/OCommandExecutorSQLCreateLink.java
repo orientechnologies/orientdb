@@ -155,7 +155,7 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 	 */
 	public Object execute(final Map<Object, Object> iArgs) {
 		if (destField == null)
-			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
+			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
 		if (!(database.getDatabaseOwner() instanceof ODatabaseDocumentTx))
 			throw new OCommandSQLParsingException("This command supports only the database type ODatabaseDocumentTx and type '"
@@ -220,7 +220,7 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 						if (result == null || result.size() == 0)
 							value = null;
 						else if (result.size() > 1)
-							throw new OCommandExecutionException("Can't create link because multiple records was found in class '"
+							throw new OCommandExecutionException("Cannot create link because multiple records was found in class '"
 									+ destClass.getName() + "' with value " + value + " in field '" + destField + "'");
 						else {
 							target = result.get(0);

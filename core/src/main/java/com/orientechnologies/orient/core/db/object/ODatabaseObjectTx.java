@@ -260,7 +260,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 		if (record == null) {
 			final ORecordId rid = OObjectSerializerHelper.getObjectID(this, iPojo);
 			if (rid == null)
-				throw new OObjectNotDetachedException("Can't retrieve the object's ID for '" + iPojo + "' because hasn't been detached");
+				throw new OObjectNotDetachedException("Cannot retrieve the object's ID for '" + iPojo + "' because has not been detached");
 
 			record = (ODocument) underlying.load(rid);
 		}

@@ -51,7 +51,7 @@ public class ODiscoveryListener extends OSoftThread {
 			socket.joinGroup(iManager.getConfig().networkMulticastAddress);
 		} catch (IOException e) {
 			throw new OIOException(
-					"Can't startup the Discovery Listener service to catch distributed server nodes, probably the IP MULTICAST is disabled in current network configuration: "
+					"Cannot startup the Discovery Listener service to catch distributed server nodes, probably the IP MULTICAST is disabled in current network configuration: "
 							+ e.getMessage());
 		}
 

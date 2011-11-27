@@ -28,7 +28,7 @@ import java.util.Set;
 
 /**
  * Contains the user settings about security and permissions. Each user has one or more roles associated. Roles contains the
- * permission rules that define what the user can access and what he can't.
+ * permission rules that define what the user can access and what he cannot.
  * 
  * @author Luca Garulli
  * 

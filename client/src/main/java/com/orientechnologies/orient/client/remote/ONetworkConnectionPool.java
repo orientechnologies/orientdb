@@ -80,7 +80,7 @@ public class ONetworkConnectionPool<CH extends OChannel> implements OResourcePoo
 
 		final OResourcePool<String, CH> pool = pools.get(address);
 		if (pool == null)
-			throw new OLockException("Can't release a network channel not acquired before. Remote address: " + address);
+			throw new OLockException("Cannot release a network channel not acquired before. Remote address: " + address);
 
 		pool.returnResource(iChannel);
 	}

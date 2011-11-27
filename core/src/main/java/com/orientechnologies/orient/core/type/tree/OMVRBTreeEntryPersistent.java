@@ -225,7 +225,7 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 				if (parent.dataEntry.setRight(rid))
 					parent.markDirty();
 			} else {
-				OLogManager.instance().error(this, "[save]: Tree inconsitant entries.");
+				OLogManager.instance().error(this, "[save]: Tree inconsistent entries.");
 			}
 		} else if (pTree.getRoot() == this) {
 			if (pTree.dataTree.setRoot(rid))
@@ -312,7 +312,7 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 				right.parent = null;
 			else
 				OLogManager.instance().warn(this,
-						"Node " + rid + " has the right (" + right + ")unlinked to itself. It links to " + right.parent);
+						"Node " + rid + " has the right (" + right + ") unlinked to itself. It links to " + right.parent);
 
 			totalDisconnected += right.disconnect(iForceDirty, iLevel + 1);
 			right = null;
@@ -381,7 +381,7 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 				else if (parent.dataEntry.getRight().isValid() && parent.dataEntry.getRight().equals(dataEntry.getIdentity()))
 					parent.right = this;
 				else {
-					OLogManager.instance().error(this, "getParent: Can't assign node %s to parent. Nodes parent-left=%s, parent-right=%s",
+					OLogManager.instance().error(this, "getParent: Cannot assign node %s to parent. Nodes parent-left=%s, parent-right=%s",
 							dataEntry.getParent(), parent.dataEntry.getLeft(), parent.dataEntry.getRight());
 				}
 			}

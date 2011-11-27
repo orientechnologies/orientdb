@@ -78,13 +78,13 @@ public class OChannelBinaryProtocol {
 		try {
 			srvProtocolVersion = iNetwork.readShort();
 		} catch (IOException e) {
-			throw new ONetworkProtocolException("Can't read data from remote server " + iNetwork.socket.getRemoteSocketAddress() + ": "
+			throw new ONetworkProtocolException("Cannot read data from remote server " + iNetwork.socket.getRemoteSocketAddress() + ": "
 					+ e);
 		}
 
 		if (srvProtocolVersion != OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION) {
 			iNetwork.close();
-			throw new ONetworkProtocolException("Binary protocol is uncompatible with the Server connected: client="
+			throw new ONetworkProtocolException("Binary protocol is incompatible with the Server connected: client="
 					+ OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION + ", server=" + srvProtocolVersion);
 		}
 	}

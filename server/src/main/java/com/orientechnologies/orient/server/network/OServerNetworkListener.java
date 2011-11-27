@@ -53,7 +53,7 @@ public class OServerNetworkListener extends Thread {
 		server = iServer;
 
 		if (iProtocol == null)
-			throw new IllegalArgumentException("Can't start listener: protocol not found");
+			throw new IllegalArgumentException("Cannot start listener: protocol not found");
 
 		listen(iHostName, iHostPortRange, iProtocolName);
 		protocolType = iProtocol;
@@ -70,7 +70,7 @@ public class OServerNetworkListener extends Thread {
 							OServerCommandConfiguration.class);
 					commands[i] = c.newInstance(new Object[] { iCommands[i] });
 				} catch (Exception e) {
-					throw new IllegalArgumentException("Can't create custom command '" + iCommands[i] + "'", e);
+					throw new IllegalArgumentException("Cannot create custom command '" + iCommands[i] + "'", e);
 				}
 			}
 		}
@@ -117,7 +117,7 @@ public class OServerNetworkListener extends Thread {
 			}
 		}
 
-		OLogManager.instance().error(this, "Unable to listen connection using the configured ports '%s' on host '%s'", iHostPortRange,
+		OLogManager.instance().error(this, "Unable to listen for connections using the configured ports '%s' on host '%s'", iHostPortRange,
 				iHostName);
 		System.exit(1);
 	}

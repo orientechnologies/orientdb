@@ -110,7 +110,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
 	public <T> T newInstance() throws InstantiationException, IllegalAccessException {
 		if (javaClass == null)
-			throw new IllegalArgumentException("Can't create an instance of class '" + name + "' since no Java class was specified");
+			throw new IllegalArgumentException("Cannot create an instance of class '" + name + "' since no Java class was specified");
 
 		return (T) javaClass.newInstance();
 	}
@@ -269,7 +269,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
 	public OProperty createProperty(final String iPropertyName, final OType iType, final OClass iLinkedClass) {
 		if (iLinkedClass == null)
-			throw new OSchemaException("Missed linked class");
+			throw new OSchemaException("Missing linked class");
 
 		return addProperty(iPropertyName, iType, null, iLinkedClass);
 	}
@@ -323,7 +323,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		final String lowerName = iPropertyName.toLowerCase();
 
 		if (properties.containsKey(lowerName))
-			throw new OSchemaException("Class " + name + " already has the property '" + iPropertyName + "'");
+			throw new OSchemaException("Class " + name + " already has property '" + iPropertyName + "'");
 
 		final StringBuilder cmd = new StringBuilder("create property ");
 		// CLASS.PROPERTY NAME
@@ -637,7 +637,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 			return getOverSize();
 		}
 
-		throw new IllegalArgumentException("Can't find attribute '" + iAttribute + "'");
+		throw new IllegalArgumentException("Cannot find attribute '" + iAttribute + "'");
 	}
 
 	public void setInternalAndSave(final ATTRIBUTES attribute, final Object iValue) {
@@ -716,12 +716,12 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
 		final Character wrongCharacter = OSchemaShared.checkNameIfValid(iName);
 		if (wrongCharacter != null)
-			throw new OSchemaException("Found invalid property name. Character '" + wrongCharacter + "' can't be used in property name.");
+			throw new OSchemaException("Invalid property name found. Character '" + wrongCharacter + "' cannot be used in property name.");
 
 		final String lowerName = iName.toLowerCase();
 
 		if (properties.containsKey(lowerName))
-			throw new OSchemaException("Class " + name + " already has the property '" + iName + "'");
+			throw new OSchemaException("Class " + name + " already has property '" + iName + "'");
 
 		final OPropertyImpl prop = new OPropertyImpl(this, iName, iType);
 
@@ -747,13 +747,13 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 			final String... fields) {
 		if (!(INDEX_TYPE.DICTIONARY.equals(iType) || INDEX_TYPE.FULLTEXT.equals(iType) || INDEX_TYPE.NOTUNIQUE.equals(iType) || INDEX_TYPE.UNIQUE
 				.equals(iType)))
-			throw new OIndexException("Index of this type (" + iType + ") can not be used in class indexes.");
+			throw new OIndexException("Index of this type (" + iType + ") cannot be used in class indexes.");
 
 		if (fields.length == 0)
-			throw new OIndexException("List of fields to index can not be empty.");
+			throw new OIndexException("List of fields to index cannot be empty.");
 
 		if (fields.length > 1 && INDEX_TYPE.FULLTEXT.equals(iType))
-			throw new OIndexException(INDEX_TYPE.FULLTEXT + " indexes can not be used as composite ones.");
+			throw new OIndexException(INDEX_TYPE.FULLTEXT + " indexes cannot be used as composite ones.");
 
 		final Set<String> existingFieldNames = properties.keySet();
 		final List<String> fieldsToIndex = new LinkedList<String>();
@@ -761,7 +761,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		for (final String fieldName : fields) {
 			final String normalizedFiledName = fieldName.toLowerCase();
 			if (!existingFieldNames.contains(normalizedFiledName))
-				throw new OIndexException("Index with name : '" + iName + "' can not be created on class : '" + name + "' because field: '"
+				throw new OIndexException("Index with name : '" + iName + "' cannot be created on class : '" + name + "' because field: '"
 						+ fieldName + "' is absent in class definition.");
 
 			fieldsToIndex.add(fieldName);

@@ -133,7 +133,7 @@ public class OLeaderNode {
 			}
 		}
 
-		OLogManager.instance().error(this, "Can't connect to distributed server node using addresses %s:%d and %s:%d", lastException,
+		OLogManager.instance().error(this, "Cannot connect to distributed server node using addresses %s:%d and %s:%d", lastException,
 				iServerAddresses[0], iServerPort, iServerAddresses[1], iServerPort);
 	}
 

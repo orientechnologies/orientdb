@@ -150,7 +150,7 @@ public class OMemoryWatchDog {
 			}, null, null);
 		} else
 			OLogManager.instance().warn(this,
-					"Installed JVM's MemoryMXBean '%s' doesn't support notifications. This could cause problems on run-time memory usage",
+					"Installed JVM's MemoryMXBean '%s' does not support notifications. This could cause problems with run-time memory usage",
 					memBean);
 
 		OProfiler.getInstance().registerHookValue("memory.alerts", new OProfilerHookValue() {
@@ -175,7 +175,7 @@ public class OMemoryWatchDog {
 
 	public static void setPercentageUsageThreshold(double percentage) {
 		if (percentage <= 0.0 || percentage > 1.0) {
-			throw new IllegalArgumentException("Percentage not in range");
+			throw new IllegalArgumentException("Percentage out of range");
 		}
 		long maxMemory = tenuredGenPool.getUsage().getMax();
 		long warningThreshold = (long) (maxMemory * percentage);

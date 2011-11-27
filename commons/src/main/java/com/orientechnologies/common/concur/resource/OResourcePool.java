@@ -41,9 +41,9 @@ public class OResourcePool<K, V> {
 		// First, get permission to take or create a resource
 		try {
 			if (!sem.tryAcquire(iMaxWaitMillis, TimeUnit.MILLISECONDS))
-				throw new OLockException("Can't acquire lock on requested resource: " + iKey);
+				throw new OLockException("Cannot acquire lock on requested resource: " + iKey);
 		} catch (InterruptedException e) {
-			throw new OLockException("Can't acquire lock on requested resource: " + iKey, e);
+			throw new OLockException("Cannot acquire lock on requested resource: " + iKey, e);
 		}
 
 		// Then, actually take one if available...

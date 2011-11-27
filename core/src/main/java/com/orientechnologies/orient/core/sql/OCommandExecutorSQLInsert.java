@@ -145,7 +145,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 	 */
 	public Object execute(final Map<Object, Object> iArgs) {
 		if (fields == null)
-			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
+			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
 		if (indexName != null) {
 			final OIndex<?> index = database.getMetadata().getIndexManager().getIndex(indexName);

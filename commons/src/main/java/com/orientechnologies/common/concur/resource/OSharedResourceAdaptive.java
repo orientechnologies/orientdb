@@ -43,7 +43,7 @@ public class OSharedResourceAdaptive {
 
 	public int removeUser() {
 		if (users.get() < 1)
-			throw new IllegalStateException("Can't remove user of the shared resource " + toString() + " because no user is using it");
+			throw new IllegalStateException("Cannot remove user of the shared resource " + toString() + " because no user is using it");
 
 		return users.decrementAndGet();
 	}

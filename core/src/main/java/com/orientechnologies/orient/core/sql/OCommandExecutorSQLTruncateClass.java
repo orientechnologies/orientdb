@@ -71,7 +71,7 @@ public class OCommandExecutorSQLTruncateClass extends OCommandExecutorSQLPermiss
 	 */
 	public Object execute(final Map<Object, Object> iArgs) {
 		if (schemaClass == null)
-			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
+			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
 		final long recs = schemaClass.count();
 

@@ -21,7 +21,7 @@ import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 /**
- * Pooled wrapper to the ODatabaseObjectTx class. Allows to being reused across calls. The close() method doesn't close the database
+ * Pooled wrapper to the ODatabaseObjectTx class. Allows to being reused across calls. The close() method does not close the database
  * for real but release it to the owner pool. The database born as opened and will leave open until the pool is closed.
  * 
  * @author Luca Garulli
@@ -51,13 +51,13 @@ public class OGraphDatabasePooled extends OGraphDatabase implements ODatabasePoo
 	@Override
 	public OGraphDatabasePooled open(String iUserName, String iUserPassword) {
 		throw new UnsupportedOperationException(
-				"Database instance was retrieved from a pool. You can't open the database in this way. Please use directly OGraphDatabase.open()");
+				"Database instance was retrieved from a pool. You cannot open the database in this way. Please use directly OGraphDatabase.open()");
 	}
 
 	@Override
 	public OGraphDatabasePooled create() {
 		throw new UnsupportedOperationException(
-				"Database instance was retrieved from a pool. You can't create the database in this way. Please use directly OGraphDatabase.create()");
+				"Database instance was retrieved from a pool. You cannot create the database in this way. Please use directly OGraphDatabase.create()");
 	}
 
 	@Override

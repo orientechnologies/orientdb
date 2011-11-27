@@ -102,7 +102,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLPermissio
 							clusterIds[i] = database.getStorage().getClusterIdByName(clusterIdsAsStrings[i]);
 
 						if (database.getStorage().getClusterById(clusterIds[i]) == null)
-							throw new OCommandSQLParsingException("Cluster with id " + clusterIds[i] + " doesn't exists", text, oldPos);
+							throw new OCommandSQLParsingException("Cluster with id " + clusterIds[i] + " does not exists", text, oldPos);
 					}
 				}
 			}
@@ -125,7 +125,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLPermissio
 	 */
 	public Object execute(final Map<Object, Object> iArgs) {
 		if (className == null)
-			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
+			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
 		if (database.getMetadata().getSchema().existsClass(className))
 			throw new OCommandExecutionException("Class " + className + " already exists");

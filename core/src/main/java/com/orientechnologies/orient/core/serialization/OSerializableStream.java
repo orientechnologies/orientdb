@@ -32,7 +32,7 @@ public interface OSerializableStream extends Serializable {
 	 * @return The byte array representation of the object
 	 * @see #fromStream(byte[])
 	 * @throws OSerializationException
-	 *           if the marshalling doesn't succeed
+	 *           if the marshalling does not succeed
 	 */
 	public byte[] toStream() throws OSerializationException;
 
@@ -44,7 +44,7 @@ public interface OSerializableStream extends Serializable {
 	 *          byte array representation of the object
 	 * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 * @throws OSerializationException
-	 *           if the unmarshalling doesn't succeed
+	 *           if the unmarshalling does not succeed
 	 */
 	public OSerializableStream fromStream(byte[] iStream) throws OSerializationException;
 }

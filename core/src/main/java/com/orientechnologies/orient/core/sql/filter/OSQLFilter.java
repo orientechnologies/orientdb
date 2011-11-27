@@ -454,7 +454,7 @@ public class OSQLFilter extends OCommandToParse {
 			return;
 
 		if (iArgs.size() < parameterItems.size())
-			throw new OCommandExecutionException("Can't execute because " + (parameterItems.size() - iArgs.size())
+			throw new OCommandExecutionException("Cannot execute because " + (parameterItems.size() - iArgs.size())
 					+ " parameter(s) are unbounded");
 
 		String paramName;

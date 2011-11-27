@@ -67,7 +67,7 @@ public interface OStorage extends OSharedContainer {
 	public boolean isClosed();
 
 	/**
-	 * Returns the level1 cache. Can't be null.
+	 * Returns the level1 cache. Cannot be null.
 	 * 
 	 * @return Current cache.
 	 */

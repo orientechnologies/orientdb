@@ -54,7 +54,7 @@ public class OStreamSerializerRecord implements OStreamSerializer {
 			return null;
 
 		if (((ORecord<?>) iObject).getIdentity() == null)
-			throw new OSerializationException("Can't serialize record without identity. Store it before to serialize.");
+			throw new OSerializationException("Cannot serialize record without identity. Store it before to serialize.");
 
 		return ((ORecord<?>) iObject).getIdentity().toStream();
 	}

@@ -100,7 +100,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
 		} catch (IOException e) {
 			rollback();
-			throw new OSerializationException("Can't read transaction record from the network. Transaction aborted", e);
+			throw new OSerializationException("Cannot read transaction record from the network. Transaction aborted", e);
 		}
 	}
 

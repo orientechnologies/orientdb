@@ -140,11 +140,11 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	public ODocument createEdge(final ORID iSourceVertexRid, final ORID iDestVertexRid, final String iClassName) {
 		final ODocument sourceVertex = load(iSourceVertexRid);
 		if (sourceVertex == null)
-			throw new IllegalArgumentException("Source vertex '" + iSourceVertexRid + "' doesn't exist");
+			throw new IllegalArgumentException("Source vertex '" + iSourceVertexRid + "' does not exist");
 
 		final ODocument destVertex = load(iDestVertexRid);
 		if (destVertex == null)
-			throw new IllegalArgumentException("Source vertex '" + iDestVertexRid + "' doesn't exist");
+			throw new IllegalArgumentException("Source vertex '" + iDestVertexRid + "' does not exist");
 
 		return createEdge(sourceVertex, destVertex, iClassName);
 	}
@@ -620,14 +620,14 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 				throw new IllegalArgumentException("The class '" + iVertexTypeName + "' was not found");
 
 			if (!cls.isSubClassOf(vertexBaseClass))
-				throw new IllegalArgumentException("The class '" + iVertexTypeName + "' doesn't extend the vertex type");
+				throw new IllegalArgumentException("The class '" + iVertexTypeName + "' does not extend the vertex type");
 		}
 	}
 
 	public void checkVertexClass(final OClass iVertexType) {
 		if (useCustomTypes && iVertexType != null) {
 			if (!iVertexType.isSubClassOf(vertexBaseClass))
-				throw new IllegalArgumentException("The class '" + iVertexType + "' doesn't extend the vertex type");
+				throw new IllegalArgumentException("The class '" + iVertexType + "' does not extend the vertex type");
 		}
 	}
 
@@ -643,14 +643,14 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 				throw new IllegalArgumentException("The class '" + iEdgeTypeName + "' was not found");
 
 			if (!cls.isSubClassOf(edgeBaseClass))
-				throw new IllegalArgumentException("The class '" + iEdgeTypeName + "' doesn't extend the edge type");
+				throw new IllegalArgumentException("The class '" + iEdgeTypeName + "' does not extend the edge type");
 		}
 	}
 
 	public void checkEdgeClass(final OClass iEdgeType) {
 		if (useCustomTypes && iEdgeType != null) {
 			if (!iEdgeType.isSubClassOf(edgeBaseClass))
-				throw new IllegalArgumentException("The class '" + iEdgeType + "' doesn't extend the edge type");
+				throw new IllegalArgumentException("The class '" + iEdgeType + "' does not extend the edge type");
 		}
 	}
 

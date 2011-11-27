@@ -202,7 +202,7 @@ public enum OType {
 		else if (iValue instanceof Boolean)
 			return ((Boolean) iValue) ? 1 : 0;
 
-		throw new IllegalArgumentException("Can't convert value " + iValue + " to int for the type: " + name);
+		throw new IllegalArgumentException("Cannot convert value " + iValue + " to int for type: " + name);
 	}
 
 	/**
@@ -220,7 +220,7 @@ public enum OType {
 		else if (iValue instanceof Boolean)
 			return ((Boolean) iValue) ? 1 : 0;
 
-		throw new IllegalArgumentException("Can't convert value " + iValue + " to long for the type: " + name);
+		throw new IllegalArgumentException("Cannot convert value " + iValue + " to long for type: " + name);
 	}
 
 	/**
@@ -236,7 +236,7 @@ public enum OType {
 		else if (iValue instanceof String)
 			return Float.valueOf((String) iValue);
 
-		throw new IllegalArgumentException("Can't convert value " + iValue + " to float for the type: " + name);
+		throw new IllegalArgumentException("Cannot convert value " + iValue + " to float for type: " + name);
 	}
 
 	/**
@@ -252,7 +252,7 @@ public enum OType {
 		else if (iValue instanceof String)
 			return Double.valueOf((String) iValue);
 
-		throw new IllegalArgumentException("Can't convert value " + iValue + " to double for the type: " + name);
+		throw new IllegalArgumentException("Cannot convert value " + iValue + " to double for type: " + name);
 	}
 
 	/**

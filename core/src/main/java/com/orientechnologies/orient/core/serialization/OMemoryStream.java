@@ -153,7 +153,7 @@ public class OMemoryStream extends OutputStream {
 			throw new IllegalArgumentException("Begin is bigger than end");
 
 		if (iEnd > buffer.length)
-			throw new IndexOutOfBoundsException("Position " + iEnd + " is out of buffer length (" + buffer.length + ")");
+			throw new IndexOutOfBoundsException("Position " + iEnd + " is greater than the buffer length (" + buffer.length + ")");
 
 		System.arraycopy(buffer, iEnd, buffer, iBegin, buffer.length - iEnd);
 	}
@@ -237,7 +237,7 @@ public class OMemoryStream extends OutputStream {
 
 	public OMemoryStream jump(final int iOffset) {
 		if (iOffset > buffer.length)
-			throw new IndexOutOfBoundsException("Offset " + iOffset + " is out of bound of buffer size " + buffer.length);
+			throw new IndexOutOfBoundsException("Offset " + iOffset + " is greater than the buffer size " + buffer.length);
 		position = iOffset;
 		return this;
 	}

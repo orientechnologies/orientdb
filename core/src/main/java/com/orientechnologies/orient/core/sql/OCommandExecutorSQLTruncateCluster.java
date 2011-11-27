@@ -70,7 +70,7 @@ public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLPermi
 	 */
 	public Object execute(final Map<Object, Object> iArgs) {
 		if (clusterName == null)
-			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
+			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
 		OCluster cluster = ((OStorageEmbedded) database.getStorage()).getClusterByName(clusterName);
 

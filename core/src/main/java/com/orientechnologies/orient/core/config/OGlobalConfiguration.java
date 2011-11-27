@@ -36,12 +36,12 @@ import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 public enum OGlobalConfiguration {
 	// ENVIRONMENT
 	ENVIRONMENT_CONCURRENT("environment.concurrent",
-			"Tells if runs in multi-threads environment. Setting this to false turns off the internal lock management", Boolean.class,
+			"Specifies if running in multi-thread environment. Setting this to false turns off the internal lock management", Boolean.class,
 			Boolean.TRUE),
 
 	// MEMORY
 	MEMORY_OPTIMIZE_THRESHOLD("memory.optimizeThreshold",
-			"Threshold of heap memory where to start the optimization of memory usage. ", Float.class, 0.70,
+			"Threshold for heap memory at which optimization of memory usage starts. ", Float.class, 0.70,
 			new OConfigurationChangeCallback() {
 				public void change(final Object iCurrentValue, final Object iNewValue) {
 					OMemoryWatchDog.setPercentageUsageThreshold(((Number) iNewValue).floatValue());
@@ -51,22 +51,22 @@ public enum OGlobalConfiguration {
 	// STORAGE
 	STORAGE_KEEP_OPEN(
 			"storage.keepOpen",
-			"Tells to the engine to not close the storage when a database is closed. Storages will be closed when the process will shutdown",
+			"Tells to the engine to not close the storage when a database is closed. Storages will be closed when the process shuts down",
 			Boolean.class, Boolean.TRUE),
 
 	STORAGE_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record", Integer.class, 5000),
 
 	// CACHE
-	CACHE_LEVEL1_ENABLED("cache.level1.enabled", "Uses the level-1 cache", Boolean.class, true),
+	CACHE_LEVEL1_ENABLED("cache.level1.enabled", "Use the level-1 cache", Boolean.class, true),
 
-	CACHE_LEVEL1_SIZE("cache.level1.size", "Size of the cache that keep the record in memory", Integer.class, -1),
+	CACHE_LEVEL1_SIZE("cache.level1.size", "Size of the cache that keeps the record in memory", Integer.class, -1),
 
-	CACHE_LEVEL2_ENABLED("cache.level2.enabled", "Uses the level-2 cache", Boolean.class, true),
+	CACHE_LEVEL2_ENABLED("cache.level2.enabled", "Use the level-2 cache", Boolean.class, true),
 
-	CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keep the record in memory", Integer.class, -1),
+	CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keeps the record in memory", Integer.class, -1),
 
 	CACHE_LEVEL2_STRATEGY("cache.level2.strategy",
-			"Strategy to use when a database asks for a record: 0 = pop the record, 1 = copy the record", Integer.class, 0,
+			"Strategy to use when a database requests a record: 0 = pop the record, 1 = copy the record", Integer.class, 0,
 			new OConfigurationChangeCallback() {
 				public void change(final Object iCurrentValue, final Object iNewValue) {
 					// UPDATE ALL THE OPENED STORAGES SETTING THE NEW STRATEGY
@@ -77,22 +77,22 @@ public enum OGlobalConfiguration {
 			}),
 
 	// DATABASE
-	OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database saves only object bound to dirty records", Boolean.class, false),
+	OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database only saves objects bound to dirty records", Boolean.class, false),
 
-	DB_MVCC("db.mvcc", "Enables or disables the MVCC (Multi-Version Concurrency Control) even outside transactions", Boolean.class,
+	DB_MVCC("db.mvcc", "Enables or disables MVCC (Multi-Version Concurrency Control) even outside transactions", Boolean.class,
 			true),
 
-	DB_VALIDATION("db.validation", "Enables or disables the validation against records", Boolean.class, true),
+	DB_VALIDATION("db.validation", "Enables or disables validation of records", Boolean.class, true),
 
 	// TRANSACTIONS
-	TX_USE_LOG("tx.useLog", "Transactions use log file to store temporary data to being rollbacked in case of crash", Boolean.class,
+	TX_USE_LOG("tx.useLog", "Transactions use log file to store temporary data to be rolled back in case of crash", Boolean.class,
 			true),
 
 	TX_LOG_TYPE("tx.log.fileType", "File type to handle transaction logs: mmap or classic", String.class, "classic"),
 
 	TX_LOG_SYNCH(
 			"tx.log.synch",
-			"Executes a synch against the file-system at every log entry. This slows down transactions but guarantee transaction reliability on non-reliable drives",
+			"Executes a synch against the file-system at every log entry. This slows down transactions but guarantee transaction reliability on unreliable drives",
 			Boolean.class, Boolean.FALSE),
 
 	TX_COMMIT_SYNCH("tx.commit.synch", "Synchronizes the storage after transaction commit", Boolean.class, false),
@@ -103,39 +103,39 @@ public enum OGlobalConfiguration {
 
 	// COLLECTION
 	RIDSET_NODE_PAGE_SIZE("ridset.nodePageSize",
-			"Page size of each single node. 512 means that 512 entries can be stored inside a node", Integer.class, 512),
+			"Page size of each node. 512 means that 512 entries can be stored inside each node", Integer.class, 512),
 
 	// TREEMAP
 	MVRBTREE_LAZY_UPDATES("mvrbtree.lazyUpdates",
-			"Configure the TreeMaps (indexes and dictionaries) as buffered or not. -1 means buffered up to tx.commit() or db.close()",
+			"Configure the TreeMaps (indexes and dictionaries) as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
 			Integer.class, 20000),
 
 	MVRBTREE_NODE_PAGE_SIZE("mvrbtree.nodePageSize",
-			"Page size of each single node. 512 means that 512 entries can be stored inside a node", Integer.class, 512),
+			"Page size of each node. 512 means that 512 entries can be stored inside each node", Integer.class, 512),
 
 	MVRBTREE_LOAD_FACTOR("mvrbtree.loadFactor", "HashMap load factor", Float.class, 0.7f),
 
 	MVRBTREE_OPTIMIZE_THRESHOLD(
 			"mvrbtree.optimizeThreshold",
-			"Auto optimize the TreeMap every X tree rotations. This force the optimization of the tree after many changes to recompute entrypoints. -1 means never",
+			"Auto optimize the TreeMap every X tree rotations. This forces the optimization of the tree after many changes to recompute entry points. -1 means never",
 			Integer.class, 100000),
 
 	MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Number of entry points to start searching entries", Integer.class, 64),
 
 	MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR("mvrbtree.optimizeEntryPointsFactor",
-			"Multiplicand factor to apply to entry-points list (parameter mvrbtree.entrypoints) to determine if needs of optimization",
+			"Multiplicand factor to apply to entry-points list (parameter mvrbtree.entrypoints) to determine optimization is needed",
 			Float.class, 1.0f),
 
-	MVRBTREE_ENTRY_KEYS_IN_MEMORY("mvrbtree.entryKeysInMemory", "Keep in memory unserialized keys", Boolean.class, Boolean.FALSE),
+	MVRBTREE_ENTRY_KEYS_IN_MEMORY("mvrbtree.entryKeysInMemory", "Keep unserialized keys in memory", Boolean.class, Boolean.FALSE),
 
-	MVRBTREE_ENTRY_VALUES_IN_MEMORY("mvrbtree.entryValuesInMemory", "Keep in memory unserialized values", Boolean.class,
+	MVRBTREE_ENTRY_VALUES_IN_MEMORY("mvrbtree.entryValuesInMemory", "Keep unserialized values in memory", Boolean.class,
 			Boolean.FALSE),
 
 	// COLLECTIONS
-	LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Upon add avoid to unmarshall set", Boolean.class, true),
+	LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Upon add avoid unmarshalling set", Boolean.class, true),
 
 	// FILE
-	FILE_LOCK("file.lock", "Locks files when used. Default is false for local connections and true when runs as Server",
+	FILE_LOCK("file.lock", "Locks files when used. Default is false for local connections and true when running as Server",
 			boolean.class, true),
 
 	FILE_DEFRAG_STRATEGY(
@@ -145,7 +145,7 @@ public enum OGlobalConfiguration {
 
 	FILE_DEFRAG_HOLE_MAX_DISTANCE(
 			"file.defrag.holeMaxDistance",
-			"Max distance in bytes between holes to execute the defrag of them. Set it to -1 to use dynamic size. Pay attention that is db is huge, then moving blocks to defrag could be expensive",
+			"Max distance in bytes between holes to cause their defrag. Set it to -1 to use dynamic size. Beware that if the db is huge moving blocks to defrag could be expensive",
 			Integer.class, 32768),
 
 	FILE_MMAP_STRATEGY(
@@ -164,7 +164,7 @@ public enum OGlobalConfiguration {
 			Integer.class, 8192),
 
 	FILE_MMAP_MAX_MEMORY("file.mmap.maxMemory",
-			"Max memory allocable by memory mapping manager. Note that on 32bit OS the limit is to 2Gb but can change to OS by OS",
+			"Max memory allocatable by memory mapping manager. Note that on 32bit operating systems, the limit is 2Gb but will vary between operating systems.",
 			Long.class, 134217728, new OConfigurationChangeCallback() {
 				public void change(final Object iCurrentValue, final Object iNewValue) {
 					OMMapManager.setMaxMemory(OFileUtils.getSizeAsNumber(iNewValue));
@@ -173,7 +173,7 @@ public enum OGlobalConfiguration {
 
 	FILE_MMAP_OVERLAP_STRATEGY(
 			"file.mmap.overlapStrategy",
-			"Strategy when a request overlap in-memory buffers: 0 = Use the channel access, 1 = force the in memory buffer and use the channel access, 2 = always create an overlapped in-memory buffer (default)",
+			"Strategy to use when a request overlaps in-memory buffers: 0 = Use the channel access, 1 = force the in-memory buffer and use the channel access, 2 = always create an overlapped in-memory buffer (default)",
 			Integer.class, 2, new OConfigurationChangeCallback() {
 				public void change(final Object iCurrentValue, final Object iNewValue) {
 					OMMapManager.setOverlapStrategy((Integer) iNewValue);
@@ -181,9 +181,9 @@ public enum OGlobalConfiguration {
 			}),
 
 	FILE_MMAP_FORCE_DELAY("file.mmap.forceDelay",
-			"Delay time in ms to wait for another force flush of the memory mapped block to the disk", Integer.class, 10),
+			"Delay time in ms to wait for another forced flush of the memory-mapped block to disk", Integer.class, 10),
 
-	FILE_MMAP_FORCE_RETRY("file.mmap.forceRetry", "Number of times the memory mapped block will try to flush to the disk",
+	FILE_MMAP_FORCE_RETRY("file.mmap.forceRetry", "Number of times the memory-mapped block will try to flush to disk",
 			Integer.class, 50),
 
 	// NETWORK
@@ -194,13 +194,13 @@ public enum OGlobalConfiguration {
 	NETWORK_SOCKET_TIMEOUT("network.socketTimeout", "TCP/IP Socket timeout in ms", Integer.class, 10000),
 
 	NETWORK_SOCKET_RETRY("network.retry",
-			"Number of times the client connection retries to connect to the server in case of failure", Integer.class, 5),
+			"Number of times the client retries its connection to the server on failure", Integer.class, 5),
 
-	NETWORK_SOCKET_RETRY_DELAY("network.retryDelay", "Number of ms the client wait to reconnect to the server in case of failure",
+	NETWORK_SOCKET_RETRY_DELAY("network.retryDelay", "Number of ms the client waits before reconnecting to the server on failure",
 			Integer.class, 500),
 
 	NETWORK_BINARY_DNS_LOADBALANCING_ENABLED("network.binary.loadBalancing.enabled",
-			"Asks for DNS TXT record to know if load balancing is supported", Boolean.class, Boolean.FALSE),
+			"Asks for DNS TXT record to determine if load balancing is supported", Boolean.class, Boolean.FALSE),
 
 	NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT("network.binary.loadBalancing.timeout",
 			"Maximum time (in ms) to wait for the answer from DNS about the TXT record for load balancing", Integer.class, 2000),
@@ -208,14 +208,14 @@ public enum OGlobalConfiguration {
 	NETWORK_BINARY_MAX_CONTENT_LENGTH("network.binary.maxLength", "TCP/IP max content length in bytes of BINARY requests",
 			Integer.class, 100000),
 
-	NETWORK_BINARY_DEBUG("network.binary.debug", "Debug mode: print all the incoming data on binary channel", Boolean.class, false),
+	NETWORK_BINARY_DEBUG("network.binary.debug", "Debug mode: print all data incoming on the binary channel", Boolean.class, false),
 
-	NETWORK_HTTP_MAX_CONTENT_LENGTH("network.http.maxLength", "TCP/IP max content length in bytes of HTTP requests", Integer.class,
+	NETWORK_HTTP_MAX_CONTENT_LENGTH("network.http.maxLength", "TCP/IP max content length in bytes for HTTP requests", Integer.class,
 			100000),
 
 	NETWORK_HTTP_CONTENT_CHARSET("network.http.charset", "Http response charset", String.class, "utf-8"),
 
-	NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT("network.http.sessionExpireTimeout", "Timeout to consider a http session expired in seconds",
+	NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT("network.http.sessionExpireTimeout", "Timeout after which an http session is considered tp have expired (seconds)",
 			Integer.class, 300),
 
 	// PROFILER
@@ -230,32 +230,32 @@ public enum OGlobalConfiguration {
 			}),
 
 	// LOG
-	LOG_CONSOLE_LEVEL("log.console.level", "Console's logging level", String.class, "info", new OConfigurationChangeCallback() {
+	LOG_CONSOLE_LEVEL("log.console.level", "Console logging level", String.class, "info", new OConfigurationChangeCallback() {
 		public void change(final Object iCurrentValue, final Object iNewValue) {
 			OLogManager.instance().setLevel((String) iNewValue, ConsoleHandler.class);
 		}
 	}),
 
-	LOG_FILE_LEVEL("log.file.level", "File's logging level", String.class, "fine", new OConfigurationChangeCallback() {
+	LOG_FILE_LEVEL("log.file.level", "File logging level", String.class, "fine", new OConfigurationChangeCallback() {
 		public void change(final Object iCurrentValue, final Object iNewValue) {
 			OLogManager.instance().setLevel((String) iNewValue, FileHandler.class);
 		}
 	}),
 
 	// CLIENT
-	CLIENT_CHANNEL_MIN_POOL("client.channel.minPool", "Minimum size of the channel pool", Integer.class, 1),
+	CLIENT_CHANNEL_MIN_POOL("client.channel.minPool", "Minimum pool size", Integer.class, 1),
 
-	CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool", "Maximum size of the channel pool", Integer.class, 1),
+	CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool", "Maximum channel pool size", Integer.class, 1),
 
 	// SERVER
-	SERVER_CACHE_FILE_STATIC("server.cache.file.static", "Cache static resources after loaded", Boolean.class, false),
+	SERVER_CACHE_FILE_STATIC("server.cache.file.static", "Cache static resources loading", Boolean.class, false),
 
 	// DISTRIBUTED SERVERS
 	DISTRIBUTED_ASYNC_TIME_DELAY("distributed.async.timeDelay",
-			"Delay time (in ms) of synchronization with slave nodes. 0 means early synchronization", Integer.class, 0),
+			"Delay time (in ms) for synchronization with slave nodes. 0 means early synchronization", Integer.class, 0),
 
 	DISTRIBUTED_SYNC_MAXRECORDS_BUFFER("distributed.sync.maxRecordsBuffer",
-			"Maximum number of records to buffer before to send to the slave nodes", Integer.class, 100);
+			"Maximum number of records to buffer before transmitting to slave nodes", Integer.class, 100);
 
 	private final String									key;
 	private final Object									defValue;

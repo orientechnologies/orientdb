@@ -107,7 +107,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 					rollback();
 				} catch (Exception e) {
 				}
-				OLogManager.instance().debug(this, "Can't commit the transaction: caught exception on execution of %s.onBeforeTxCommit()",
+				OLogManager.instance().debug(this, "Cannot commit the transaction: caught exception on execution of %s.onBeforeTxCommit()",
 						t, OTransactionException.class, listener.getClass());
 			}
 

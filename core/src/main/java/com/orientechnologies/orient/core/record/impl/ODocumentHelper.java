@@ -160,7 +160,7 @@ public class ODocumentHelper {
 				iValue = iValue.toString();
 			if (!(iValue instanceof String) && !iFieldType.isAssignableFrom(iValue.getClass()))
 				throw new IllegalArgumentException("Property '" + iFieldName + "' of type '" + iFieldType
-						+ "' can't accept value of type: " + iValue.getClass());
+						+ "' cannot accept value of type: " + iValue.getClass());
 		} else if (Date.class.isAssignableFrom(iFieldType)) {
 			if (iValue instanceof String && iDocument.getDatabase() != null) {
 				final OStorageConfiguration config = iDocument.getDatabase().getStorage().getConfiguration();

@@ -276,7 +276,7 @@ public class OClusterLogical implements OCluster {
 		this.id = iId;
 	}
 
-	// XXX Sylvain : map has been already loaded in constructor. Can't be updated.
+	// XXX Sylvain : map has been already loaded in constructor. Cannot be updated.
 	// public void setRID(final ORID iRID) {
 	// this.map.getRecord().setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
 	// }

@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 
 /**
- * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator can't change
+ * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator cannot change
  * it. This iterator with "live updates" set is able to catch updates to the cluster sizes while browsing. This is the case when
  * concurrent clients/threads insert and remove item in any cluster the iterator is browsing. If the cluster are hot removed by from
  * the database the iterator could be invalid and throw exception of cluster not found.

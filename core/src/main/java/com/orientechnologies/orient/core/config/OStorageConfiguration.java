@@ -78,7 +78,7 @@ public class OStorageConfiguration implements OSerializableStream {
 		final byte[] record = storage.readRecord(null, CONFIG_RID, null, null).buffer;
 
 		if (record == null)
-			throw new OStorageException("Can't load database's configuration. The database seems to be corrupted.");
+			throw new OStorageException("Cannot load database's configuration. The database seems to be corrupted.");
 
 		fromStream(record);
 		return this;

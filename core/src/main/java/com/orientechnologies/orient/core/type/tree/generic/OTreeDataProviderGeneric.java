@@ -149,7 +149,7 @@ public class OTreeDataProviderGeneric<K, V> implements OTreeDataProvider<K, V>, 
 			return;
 		ORawBuffer raw = iSt.readRecord(null, (ORecordId) record.getIdentity(), null, null);
 		if (raw == null)
-			throw new OConfigurationException("Can't load map with id " + record.getIdentity());
+			throw new OConfigurationException("Cannot load map with id " + record.getIdentity());
 		record.setVersion(raw.version);
 		record.recycle(this);
 		fromStream(raw.buffer);
@@ -245,7 +245,7 @@ public class OTreeDataProviderGeneric<K, V> implements OTreeDataProvider<K, V>, 
 				stream.getAsByte();
 				if (protocolVersion != CURRENT_PROTOCOL_VERSION)
 					throw new OSerializationException(
-							"The index has been created with a previous version of OrientDB. Soft transitions between version is a featured supported since 0.9.25. In order to use it with this version of OrientDB you need to export and import your database. "
+							"The index has been created with a previous version of OrientDB. Soft transitions between versions is supported since 0.9.25. To use it with this version of OrientDB you need to export and import your database. "
 									+ protocolVersion + "<->" + CURRENT_PROTOCOL_VERSION);
 			}
 

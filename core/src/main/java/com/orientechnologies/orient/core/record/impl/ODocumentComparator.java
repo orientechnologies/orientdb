@@ -52,7 +52,7 @@ public class ODocumentComparator implements Comparator<OIdentifiable> {
 				return -1;
 
 			if (!(fieldValue1 instanceof Comparable<?>))
-				throw new IllegalArgumentException("Can't sort documents because the field '" + field.getKey() + "' is not comparable");
+				throw new IllegalArgumentException("Cannot sort documents because the field '" + field.getKey() + "' is not comparable");
 
 			partialResult = ((Comparable<Object>) fieldValue1).compareTo(fieldValue2);
 

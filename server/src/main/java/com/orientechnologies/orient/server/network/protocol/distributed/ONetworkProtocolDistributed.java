@@ -50,7 +50,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 		manager = OServerMain.server().getHandler(ODistributedServerManager.class);
 		if (manager == null)
 			throw new OConfigurationException(
-					"Can't find a ODistributedServerDiscoveryManager instance registered as handler. Check the server configuration in the handlers section.");
+					"Cannot find a ODistributedServerDiscoveryManager instance registered as handler. Check the server configuration in the handlers section.");
 	}
 
 	@Override
@@ -77,7 +77,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 				if (manager.isLeader()) {
 					OLogManager.instance().warn(this,
-							"Received remote connection from the leader node %s, but current node is leader itself: split network problem?",
+							"Received remote connection from the leader node %s, but current node is itself leader: split network problem?",
 							leaderAddress);
 
 					// CHECK WHAT LEADER WINS
@@ -89,7 +89,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 						channel.writeByte((byte) 0);
 						channel.flush();
 
-						OLogManager.instance().warn(this, "Current node remains the Leader of the cluster because has lower network address",
+						OLogManager.instance().warn(this, "Current node remains the Leader of the cluster because it has lower network address",
 								leaderAddress);
 						return;
 					}

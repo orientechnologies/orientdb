@@ -134,7 +134,7 @@ public abstract class OStringSerializerHelper {
 			return ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapFromStream(iDocument, null, value);
 		}
 
-		throw new IllegalArgumentException("Type " + iType + " not supported to convert value: " + iValue);
+		throw new IllegalArgumentException("Type " + iType + " does not support converting value: " + iValue);
 	}
 
 	public static List<String> smartSplit(final String iSource, final char iRecordSeparator, final char... iJumpChars) {
@@ -183,7 +183,7 @@ public abstract class OStringSerializerHelper {
 					if (!isCharPresent(c, iRecordSeparator)) {
 						if (insideCollection == 0)
 							throw new OSerializationException("Found invalid " + COLLECTION_END
-									+ " character. Assure to open and close correctly.");
+									+ " character. Ensure it is opened and closed correctly.");
 						insideCollection--;
 					}
 
@@ -193,7 +193,7 @@ public abstract class OStringSerializerHelper {
 					if (!isCharPresent(c, iRecordSeparator)) {
 						if (insideParenthesis == 0)
 							throw new OSerializationException("Found invalid " + PARENTHESIS_END
-									+ " character. Assure to open and close correctly.");
+									+ " character. Ensure it is opened and closed correctly.");
 						insideParenthesis--;
 					}
 
@@ -202,7 +202,7 @@ public abstract class OStringSerializerHelper {
 				} else if (c == MAP_END) {
 					if (!isCharPresent(c, iRecordSeparator)) {
 						if (insideMap == 0)
-							throw new OSerializationException("Found invalid " + MAP_END + " character. Assure to open and close correctly.");
+							throw new OSerializationException("Found invalid " + MAP_END + " character. Ensure it is opened and closed correctly.");
 						insideMap--;
 					}
 				}
@@ -614,7 +614,7 @@ public abstract class OStringSerializerHelper {
 
 			return OBase64Utils.decode(s);
 		} else
-			throw new IllegalArgumentException("Can't parse binary as type the value (class=" + iValue.getClass().getName() + "): "
+			throw new IllegalArgumentException("Cannot parse binary as the same type as the value (class=" + iValue.getClass().getName() + "): "
 					+ iValue);
 	}
 

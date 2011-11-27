@@ -174,7 +174,7 @@ public class ODataLocal extends OMultiFileSegment {
 								+ OFileUtils.getSizeAsString(recordSize)
 								+ ": the record size is bigger then the file itself ("
 								+ OFileUtils.getSizeAsString(getFilledUpTo())
-								+ "). Probably the record is dirty due to a previous crash. It strongly suggested to restore the database or export and reimport this one.");
+								+ "). Probably the record is dirty due to a previous crash. It is strongly suggested to restore the database or export and reimport this one.");
 
 			final byte[] content = new byte[recordSize];
 			file.read(pos[1] + RECORD_FIX_SIZE, content, recordSize);
@@ -418,7 +418,7 @@ public class ODataLocal extends OMultiFileSegment {
 						final int sizeMoved = moveRecord(item[0], gap - item[1]);
 
 						if (sizeMoved < 0)
-							throw new IllegalStateException("Can't move record at position " + moveFrom + ": found hole");
+							throw new IllegalStateException("Cannot move record at position " + moveFrom + ": found hole");
 						else if (sizeMoved != item[1])
 							throw new IllegalStateException("Corrupted hole at position " + item[0] + ": found size " + sizeMoved
 									+ " instead of " + item[1]);
@@ -438,7 +438,7 @@ public class ODataLocal extends OMultiFileSegment {
 						final int sizeMoved = moveRecord(moveFrom, moveTo);
 
 						if (sizeMoved < 0)
-							throw new IllegalStateException("Can't move record at position " + moveFrom + ": found hole");
+							throw new IllegalStateException("Cannot move record at position " + moveFrom + ": found hole");
 
 						moveFrom += sizeMoved;
 						moveTo += sizeMoved;

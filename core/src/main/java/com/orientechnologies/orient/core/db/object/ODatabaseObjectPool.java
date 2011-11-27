@@ -32,7 +32,7 @@ public class ODatabaseObjectPool extends ODatabasePoolBase<ODatabaseObjectTx> {
 
 						public ODatabaseObjectTx createNewResource(final String iDatabaseName, final Object... iAdditionalArgs) {
 							if (iAdditionalArgs.length < 2)
-								throw new OSecurityAccessException("Username and/or password missed");
+								throw new OSecurityAccessException("Username and/or password missing");
 
 							final ODatabaseObjectTxPooled db = new ODatabaseObjectTxPooled((ODatabaseObjectPool) owner, iDatabaseName,
 									(String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);

@@ -21,7 +21,7 @@ import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 /**
- * Pooled wrapper to the ODatabaseDocumentTx class. Allows to being reused across calls. The close() method doesn't close the
+ * Pooled wrapper to the ODatabaseDocumentTx class. Allows to being reused across calls. The close() method does not close the
  * database for real but release it to the owner pool. The database born as opened and will leave open until the pool is closed.
  * 
  * @author Luca Garulli
@@ -51,13 +51,13 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
 	@Override
 	public ODatabaseDocumentTxPooled open(final String iUserName, final String iUserPassword) {
 		throw new UnsupportedOperationException(
-				"Database instance was retrieved from a pool. You can't open the database in this way. Please use directly ODatabaseDocumentTx.open()");
+				"Database instance was retrieved from a pool. You cannot open the database in this way. Please use directly ODatabaseDocumentTx.open()");
 	}
 
 	@Override
 	public ODatabaseDocumentTxPooled create() {
 		throw new UnsupportedOperationException(
-				"Database instance was retrieved from a pool. You can't create the database in this way. Please use directly ODatabaseDocumentTx.create()");
+				"Database instance was retrieved from a pool. You cannot create the database in this way. Please use directly ODatabaseDocumentTx.create()");
 	}
 
 	@Override

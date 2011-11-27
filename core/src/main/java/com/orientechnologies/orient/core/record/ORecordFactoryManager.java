@@ -94,7 +94,7 @@ public class ORecordFactoryManager {
 
 	public void declareRecordType(byte iByte, String iName, Class<? extends ORecordInternal<?>> iClass, final ORecordFactory iFactory) {
 		if (recordTypes[iByte] != null)
-			throw new OException("Record type byte '" + iByte + "' already in used : " + recordTypes[iByte].getName());
+			throw new OException("Record type byte '" + iByte + "' already in use : " + recordTypes[iByte].getName());
 		recordTypeNames[iByte] = iName;
 		recordTypes[iByte] = iClass;
 		recordFactories[iByte] = iFactory;

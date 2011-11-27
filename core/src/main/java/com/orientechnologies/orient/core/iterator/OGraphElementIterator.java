@@ -91,7 +91,7 @@ public abstract class OGraphElementIterator<T extends OGraphElement> implements 
 
 	/**
 	 * Tells to the iterator to use the same object for browsing. The object will be reset before every use. This improve the
-	 * performance and reduce memory utilization since it doesn't create a new one for each operation, but pay attention to copy the
+	 * performance and reduce memory utilization since it does not create a new one for each operation, but pay attention to copy the
 	 * data of the object once read otherwise they will be reset to the next operation.
 	 * 
 	 * @param iReuse

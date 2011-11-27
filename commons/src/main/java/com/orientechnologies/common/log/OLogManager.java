@@ -172,7 +172,7 @@ public class OLogManager {
 		if (exceptionToThrow != null)
 			throw exceptionToThrow;
 		else
-			throw new IllegalArgumentException("Can't create the exception of type: " + iExceptionClass);
+			throw new IllegalArgumentException("Cannot create the exception of type: " + iExceptionClass);
 	}
 
 	public boolean isWarn() {

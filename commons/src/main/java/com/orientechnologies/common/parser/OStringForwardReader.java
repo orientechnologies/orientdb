@@ -57,7 +57,7 @@ public class OStringForwardReader implements CharSequence {
 
 	public char charAt(final int iIndex) {
 		if (iIndex < start)
-			throw new IllegalStateException("Can't read backward");
+			throw new IllegalStateException("Cannot read backward");
 
 		if (iIndex >= end)
 			read(iIndex);

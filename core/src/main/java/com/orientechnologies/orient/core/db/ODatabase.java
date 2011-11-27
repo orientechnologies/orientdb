@@ -136,14 +136,14 @@ public interface ODatabase {
 	public OStorage getStorage();
 
 	/**
-	 * Returns the level1 cache. Can't be null.
+	 * Returns the level1 cache. Cannot be null.
 	 * 
 	 * @return Current cache.
 	 */
 	public OLevel1RecordCache getLevel1Cache();
 
 	/**
-	 * Returns the level1 cache. Can't be null.
+	 * Returns the level1 cache. Cannot be null.
 	 * 
 	 * @return Current cache.
 	 */

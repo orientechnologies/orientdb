@@ -51,12 +51,12 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 				listener.onMessage("\n\nDatabases match.");
 				return true;
 			} else {
-				listener.onMessage("\n\nDatabases not match. Found " + differences + " difference(s).");
+				listener.onMessage("\n\nDatabases do not match. Found " + differences + " difference(s).");
 				return false;
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new ODatabaseExportException("Error on compare of databases '" + storage1.getName() + "' against '"
+			throw new ODatabaseExportException("Error on compare of database '" + storage1.getName() + "' against '"
 					+ storage2.getName() + "'", e);
 		} finally {
 			storage1.close();
@@ -107,7 +107,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 			}
 
 			if (storage1.count(cluster2Id) != storage2.count(cluster2Id)) {
-				listener.onMessage("KO: number of records differents in cluster '" + clusterName + "' (id=" + cluster2Id + "): "
+				listener.onMessage("KO: number of records different in cluster '" + clusterName + "' (id=" + cluster2Id + "): "
 						+ storage1.count(cluster2Id) + " <-> " + storage2.count(cluster2Id));
 				++differences;
 				ok = false;
@@ -122,7 +122,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 	}
 
 	private boolean compareRecords() {
-		listener.onMessage("\nStarting deep comparison record by record. It can takes some minutes. Wait please...");
+		listener.onMessage("\nStarting deep comparison record by record. This may take a few minutes. Wait please...");
 
 		int clusterId;
 

@@ -73,7 +73,7 @@ public interface ORecordSchemaAware<T> extends ORecordInternal<T> {
 	public ORecordSchemaAware<T> field(String iFieldName, Object iFieldValue, OType iType);
 
 	/**
-	 * Removes a field. This operation doesn't set the field value to null but remove the field itself.
+	 * Removes a field. This operation does not set the field value to null but remove the field itself.
 	 * 
 	 * @param iFieldName
 	 *          Field name

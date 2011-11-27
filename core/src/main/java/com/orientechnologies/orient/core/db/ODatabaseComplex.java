@@ -159,7 +159,7 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 
 	/**
 	 * Saves an entity in the specified cluster. If the entity is not dirty, then the operation will be ignored. For custom entity
-	 * implementations assure to set the entity as dirty. If the cluster doesn't exist, an error will be thrown.
+	 * implementations assure to set the entity as dirty. If the cluster does not exist, an error will be thrown.
 	 * 
 	 * @param iObject
 	 *          The entity to save
@@ -179,7 +179,7 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	public ODatabaseComplex<T> delete(T iObject);
 
 	/**
-	 * Return active transaction. Can't be null. If no transaction is active, then a OTransactionNoTx instance is returned.
+	 * Return active transaction. Cannot be null. If no transaction is active, then a OTransactionNoTx instance is returned.
 	 * 
 	 * @return OTransaction implementation
 	 */
@@ -250,7 +250,7 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	public <RET extends OCommandRequest> RET command(OCommandRequest iCommand);
 
 	/**
-	 * Return the OMetadata instance. Can't be null.
+	 * Return the OMetadata instance. Cannot be null.
 	 * 
 	 * @return The OMetadata instance.
 	 */

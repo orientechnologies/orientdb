@@ -58,7 +58,7 @@ public class OAutomaticBackup extends OServerHandlerAbstract {
 		}
 
 		if (delay <= 0)
-			throw new OConfigurationException("Can't find mandatory parameter 'delay'");
+			throw new OConfigurationException("Cannot find mandatory parameter 'delay'");
 		if (!targetDirectory.endsWith("/"))
 			targetDirectory += "/";
 

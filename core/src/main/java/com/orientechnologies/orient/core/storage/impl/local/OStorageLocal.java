@@ -125,7 +125,7 @@ public class OStorageLocal extends OStorageEmbedded {
 				return;
 
 			if (!exists())
-				throw new OStorageException("Can't open the storage '" + name + "' because it not exists in path: " + url);
+				throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
 
 			status = STATUS.OPEN;
 
@@ -195,7 +195,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
 		} catch (Exception e) {
 			close(true);
-			throw new OStorageException("Can't open local storage '" + url + "' with mode=" + mode, e);
+			throw new OStorageException("Cannot open local storage '" + url + "' with mode=" + mode, e);
 		} finally {
 			lock.releaseExclusiveLock();
 
@@ -210,7 +210,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		try {
 
 			if (status != STATUS.CLOSED)
-				throw new OStorageException("Can't create new storage '" + name + "' because it isn't closed");
+				throw new OStorageException("Cannot create new storage '" + name + "' because it is not closed");
 
 			addUser();
 
@@ -219,7 +219,7 @@ public class OStorageLocal extends OStorageEmbedded {
 				storageFolder.mkdir();
 
 			if (exists())
-				throw new OStorageException("Can't create new storage '" + name + "' because it already exists");
+				throw new OStorageException("Cannot create new storage '" + name + "' because it already exists");
 
 			status = STATUS.OPEN;
 
@@ -300,7 +300,7 @@ public class OStorageLocal extends OStorageEmbedded {
 			Orient.instance().unregisterStorage(this);
 			status = STATUS.CLOSED;
 		} catch (IOException e) {
-			OLogManager.instance().error(this, "Error on closing of the storage '" + name, e, OStorageException.class);
+			OLogManager.instance().error(this, "Error on closing of storage '" + name, e, OStorageException.class);
 
 		} finally {
 			lock.releaseExclusiveLock();
@@ -326,7 +326,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		try {
 			Orient.instance().unregisterStorage(this);
 		} catch (Exception e) {
-			OLogManager.instance().error(this, "Can't unregister storage", e);
+			OLogManager.instance().error(this, "Cannot unregister storage", e);
 		}
 
 		final long timer = OProfiler.getInstance().startChrono();
@@ -365,14 +365,14 @@ public class OStorageLocal extends OStorageEmbedded {
 					return;
 
 				OLogManager.instance().debug(this,
-						"Can't delete database files because are locked by the OrientDB process yet: waiting a %d ms and retry %d/%d...",
+						"Cannot delete database files because they are still locked by the OrientDB process: waiting %d ms and retrying %d/%d...",
 						DELETE_WAIT_TIME, i, DELETE_MAX_RETRIES);
 
 				// FORCE FINALIZATION TO COLLECT ALL THE PENDING BUFFERS
 				OMemoryWatchDog.freeMemory(DELETE_WAIT_TIME);
 			}
 
-			throw new OStorageException("Can't delete database '" + name + "' located in: " + dbDir + ". Database files seems locked");
+			throw new OStorageException("Cannot delete database '" + name + "' located in: " + dbDir + ". Database files seem locked");
 
 		} finally {
 			lock.releaseExclusiveLock();
@@ -388,7 +388,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		try {
 
 			if (iDataSegmentId >= dataSegments.length)
-				throw new IllegalArgumentException("Data segment #" + iDataSegmentId + " doesn't exist in storage '" + name + "'");
+				throw new IllegalArgumentException("Data segment #" + iDataSegmentId + " does not exist in storage '" + name + "'");
 
 			return dataSegments[iDataSegmentId];
 
@@ -419,7 +419,7 @@ public class OStorageLocal extends OStorageEmbedded {
 			final int pos = registerDataSegment(conf);
 
 			if (pos == -1)
-				throw new OConfigurationException("Can't add segment " + conf.name + " because it's already part of storage '" + name + "'");
+				throw new OConfigurationException("Cannot add segment " + conf.name + " because it is already part of storage '" + name + "'");
 
 			dataSegments[pos].create(-1);
 			configuration.update();
@@ -489,7 +489,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		try {
 
 			if (iClusterId < 0 || iClusterId >= clusters.length)
-				throw new IllegalArgumentException("Cluster id '" + iClusterId + "' is out of range of configured clusters (0-"
+				throw new IllegalArgumentException("Cluster id '" + iClusterId + "' is outside the of range of configured clusters (0-"
 						+ (clusters.length - 1) + ") in storage '" + name + "'");
 
 			final OCluster cluster = clusters[iClusterId];
@@ -855,7 +855,7 @@ public class OStorageLocal extends OStorageEmbedded {
 			final OCluster cluster = clusterMap.get(iClusterName.toLowerCase());
 
 			if (cluster == null)
-				throw new IllegalArgumentException("Cluster " + iClusterName + " not exists in storage '" + name + "'");
+				throw new IllegalArgumentException("Cluster " + iClusterName + " does not exist in storage '" + name + "'");
 			return cluster;
 
 		} finally {
@@ -1000,8 +1000,8 @@ public class OStorageLocal extends OStorageEmbedded {
 		if (iCluster != null) {
 			// CHECK FOR DUPLICATION OF NAMES
 			if (clusterMap.containsKey(iCluster.getName()))
-				throw new OConfigurationException("Can't add segment '" + iCluster.getName()
-						+ "' because it was already registered in storage '" + name + "'");
+				throw new OConfigurationException("Cannot add segment '" + iCluster.getName()
+						+ "' because it is already registered in storage '" + name + "'");
 			// CREATE AND ADD THE NEW REF SEGMENT
 			clusterMap.put(iCluster.getName(), iCluster);
 			id = iCluster.getId();
@@ -1016,7 +1016,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
 	private void checkClusterSegmentIndexRange(final int iClusterId) {
 		if (iClusterId > clusters.length - 1)
-			throw new IllegalArgumentException("Cluster segment #" + iClusterId + " not exists in storage '" + name + "'");
+			throw new IllegalArgumentException("Cluster segment #" + iClusterId + " does not exist in storage '" + name + "'");
 	}
 
 	protected int getDataSegmentForRecord(final OCluster iCluster, final byte[] iContent) {
@@ -1066,7 +1066,7 @@ public class OStorageLocal extends OStorageEmbedded {
 	@Override
 	protected ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock) {
 		if (iRid.clusterPosition < 0)
-			throw new IllegalArgumentException("Can't read the record " + iRid + " since the position is invalid in storage '" + name
+			throw new IllegalArgumentException("Cannot read record " + iRid + " since the position is invalid in storage '" + name
 					+ "'");
 
 		// NOT FOUND: SEARCH IT IN THE STORAGE
@@ -1087,11 +1087,11 @@ public class OStorageLocal extends OStorageEmbedded {
 				final long lastPos = iClusterSegment.getLastEntryPosition();
 
 				if (lastPos < 0)
-					throw new ORecordNotFoundException("Record " + iRid + " is out cluster range. The cluster '" + iClusterSegment.getName()
+					throw new ORecordNotFoundException("Record " + iRid + " is outside cluster range. The cluster '" + iClusterSegment.getName()
 							+ "' is empty in storage '" + name + "'");
 
 				if (iRid.clusterPosition > lastPos)
-					throw new ORecordNotFoundException("Record " + iRid + " is out cluster range. Valid range for cluster '"
+					throw new ORecordNotFoundException("Record " + iRid + " is outside cluster range. Valid range for cluster '"
 							+ iClusterSegment.getName() + "' is 0-" + lastPos + " in storage '" + name + "'");
 
 				final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
@@ -1138,11 +1138,11 @@ public class OStorageLocal extends OStorageEmbedded {
 						// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
 						if (iVersion != ppos.version)
 							throw new OConcurrentModificationException(
-									"Can't update record "
+									"Cannot update record "
 											+ iRid
 											+ " in storage '"
 											+ name
-											+ "' because the version is not the latest one. Probably you are updating an old record or it has been modified by another user (db=v"
+											+ "' because the version is not the latest. Probably you are updating an old record or it has been modified by another user (db=v"
 											+ ppos.version + " your=v" + iVersion + ")");
 
 						++ppos.version;
@@ -1206,11 +1206,11 @@ public class OStorageLocal extends OStorageEmbedded {
 				// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
 				if (iVersion > -1 && ppos.version != iVersion)
 					throw new OConcurrentModificationException(
-							"Can't delete the record "
+							"Cannot delete the record "
 									+ iRid
 									+ " in storage '"
 									+ name
-									+ "' because the version is not the latest one. Probably you are deleting an old record or it has been modified by another user (db=v"
+									+ "' because the version is not the latest. Probably you are deleting an old record or it has been modified by another user (db=v"
 									+ ppos.version + " your=v" + iVersion + ")");
 
 				iClusterSegment.removePhysicalPosition(iRid.clusterPosition, ppos);

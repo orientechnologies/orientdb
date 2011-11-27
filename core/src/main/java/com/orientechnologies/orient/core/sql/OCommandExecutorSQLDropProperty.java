@@ -15,19 +15,18 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import com.orientechnologies.common.util.OCaseIncentiveComparator;
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * SQL CREATE PROPERTY command: Creates a new property in the target class.
@@ -42,7 +41,7 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLPermissi
 
 	private String							className;
 	private String							fieldName;
-    private boolean                         force = false;
+	private boolean							force							= false;
 
 	public OCommandExecutorSQLDropProperty parse(final OCommandRequestText iRequest) {
 		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_DELETE);
@@ -73,15 +72,15 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLPermissi
 			throw new OCommandSQLParsingException("Class not found", text, pos);
 		fieldName = parts[1];
 
-        pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
-        if (pos != -1) {
-            final String forceParameter = word.toString();
-            if ("FORCE".equals(forceParameter)) {
-                force = true;
-            } else {
-                throw new OCommandSQLParsingException("Wrong query parameter", text, pos);
-            }
-        }
+		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
+		if (pos != -1) {
+			final String forceParameter = word.toString();
+			if ("FORCE".equals(forceParameter)) {
+				force = true;
+			} else {
+				throw new OCommandSQLParsingException("Wrong query parameter", text, pos);
+			}
+		}
 
 		return this;
 	}
@@ -91,56 +90,56 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLPermissi
 	 */
 	public Object execute(final Map<Object, Object> iArgs) {
 		if (fieldName == null)
-			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
+			throw new OCommandExecutionException("Cannot execute the command because it has not yet been parsed");
 
 		final OClassImpl sourceClass = (OClassImpl) database.getMetadata().getSchema().getClass(className);
 		if (sourceClass == null)
 			throw new OCommandExecutionException("Source class '" + className + "' not found");
 
-        final List<OIndex<?>> indexes = relatedIndexes(fieldName);
-        if (!indexes.isEmpty()) {
-            if (force) {
-                dropRelatedIndexes(indexes);
-            } else {
-                final StringBuilder indexNames = new StringBuilder();
+		final List<OIndex<?>> indexes = relatedIndexes(fieldName);
+		if (!indexes.isEmpty()) {
+			if (force) {
+				dropRelatedIndexes(indexes);
+			} else {
+				final StringBuilder indexNames = new StringBuilder();
 
-                boolean first = true;
-                for (final OIndex index : sourceClass.getClassInvolvedIndexes(fieldName)) {
-                    if (!first) {
-                        indexNames.append(", ");
-                    } else {
-                        first = false;
-                    }
-                    indexNames.append(index.getName());
-                }
+				boolean first = true;
+				for (final OIndex<?> index : sourceClass.getClassInvolvedIndexes(fieldName)) {
+					if (!first) {
+						indexNames.append(", ");
+					} else {
+						first = false;
+					}
+					indexNames.append(index.getName());
+				}
 
-                throw new OCommandExecutionException("Property contains in indexes (" + indexNames.toString() + ")." +
-                        "Please, drop this indexes before removing property or use FORCE parameter.");
-            }
-        }
+				throw new OCommandExecutionException("Property used in indexes (" + indexNames.toString()
+						+ "). Please drop these indexes before removing property or use FORCE parameter.");
+			}
+		}
 
-        // REMOVE THE PROPERTY
+		// REMOVE THE PROPERTY
 		sourceClass.dropPropertyInternal(fieldName);
 		sourceClass.saveInternal();
 
 		return null;
 	}
 
-    private void dropRelatedIndexes(final List<OIndex<?>> indexes) {
-        for (final OIndex<?> index : indexes) {
-            database.command(new OCommandSQL("DROP INDEX " + index.getName())).execute();
-        }
-    }
+	private void dropRelatedIndexes(final List<OIndex<?>> indexes) {
+		for (final OIndex<?> index : indexes) {
+			database.command(new OCommandSQL("DROP INDEX " + index.getName())).execute();
+		}
+	}
 
-    private List<OIndex<?>> relatedIndexes(final String fieldName) {
-        final List<OIndex<?>> result = new ArrayList<OIndex<?>>();
+	private List<OIndex<?>> relatedIndexes(final String fieldName) {
+		final List<OIndex<?>> result = new ArrayList<OIndex<?>>();
 
-        for (final OIndex<?> oIndex : database.getMetadata().getIndexManager().getClassIndexes(className)) {
-            if (OCollections.indexOf(oIndex.getDefinition().getFields(), fieldName, new OCaseIncentiveComparator()) > -1) {
-                result.add(oIndex);
-            }
-        }
+		for (final OIndex<?> oIndex : database.getMetadata().getIndexManager().getClassIndexes(className)) {
+			if (OCollections.indexOf(oIndex.getDefinition().getFields(), fieldName, new OCaseIncentiveComparator()) > -1) {
+				result.add(oIndex);
+			}
+		}
 
-        return result;
-    }
+		return result;
+	}
 }

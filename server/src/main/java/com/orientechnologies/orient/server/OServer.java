@@ -419,7 +419,7 @@ public class OServer {
 
 					OLogManager.instance().info(this, "-> Loaded " + type + " database '" + stg.name + "'");
 				} catch (Exception e) {
-					OLogManager.instance().error(this, "-> Can't load " + type + " database '" + stg.name + "': " + e);
+					OLogManager.instance().error(this, "-> Cannot load " + type + " database '" + stg.name + "': " + e);
 
 				} finally {
 					if (db != null)

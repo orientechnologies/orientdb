@@ -62,7 +62,7 @@ import com.orientechnologies.common.io.OIOException;
  * forth. Fixed some javadocs that were inconsistent. Removed imports and specified things like java.io.IOException explicitly
  * inline.</li>
  * <li>v2.3.2 - Reduced memory footprint! Finally refined the "guessing" of how big the final encoded data will be so that the code
- * doesn't have to create two output arrays: an oversized initial one and then a final, exact-sized one. Big win when using the
+ * does not have to create two output arrays: an oversized initial one and then a final, exact-sized one. Big win when using the
  * {@link #encodeBytesToBytes(byte[])} family of methods (and not using the gzip options which uses a different mechanism with
  * streams and stuff).</li>
  * <li>v2.3.1 - Added {@link #encodeBytesToBytes(byte[], int, int, int)} and some similar helper methods to be more efficient with
@@ -110,7 +110,7 @@ import com.orientechnologies.common.io.OIOException;
  * <li>v1.5.1 - Fixed bug when decompressing and decoding to a byte[] using <tt>decode( String s, boolean gzipCompressed )</tt>.
  * Added the ability to "suspend" encoding in the Output Stream so you can turn on and off the encoding if you need to embed base64
  * data in an otherwise "normal" stream (like an XML file).</li>
- * <li>v1.5 - Output stream pases on flush() command but doesn't do anything itself. This helps when using GZIP streams. Added the
+ * <li>v1.5 - Output stream pases on flush() command but does not do anything itself. This helps when using GZIP streams. Added the
  * ability to GZip-compress objects before encoding them.</li>
  * <li>v1.4 - Added helper methods to read/write files.</li>
  * <li>v1.3.6 - Fixed OutputStream.flush() so that 'position' is reset.</li>

@@ -77,21 +77,21 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLPermissi
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Missed the cluster's attribute to change", text, oldPos);
+			throw new OCommandSQLParsingException("Missing cluster attribute to change", text, oldPos);
 
 		final String attributeAsString = word.toString();
 
 		try {
 			attribute = OCluster.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
 		} catch (IllegalArgumentException e) {
-			throw new OCommandSQLParsingException("Unknown class's attribute '" + attributeAsString + "'. Supported attributes are: "
+			throw new OCommandSQLParsingException("Unknown class attribute '" + attributeAsString + "'. Supported attributes are: "
 					+ Arrays.toString(OCluster.ATTRIBUTES.values()), text, oldPos);
 		}
 
 		value = text.substring(pos + 1).trim();
 
 		if (value.length() == 0)
-			throw new OCommandSQLParsingException("Missed the property's value to change for attribute '" + attribute + "'", text, oldPos);
+			throw new OCommandSQLParsingException("Missing property value to change for attribute '" + attribute + "'", text, oldPos);
 
 		if (value.equalsIgnoreCase("null"))
 			value = null;
@@ -104,7 +104,7 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLPermissi
 	 */
 	public Object execute(final Map<Object, Object> iArgs) {
 		if (attribute == null)
-			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
+			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
 		final OCluster cls = getCluster();
 

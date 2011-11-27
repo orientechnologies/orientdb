@@ -121,7 +121,7 @@ public class OStorageMemory extends OStorageEmbedded {
 		try {
 
 			if (!exists())
-				throw new OStorageException("Can't open the storage '" + name + "' because it not exists in path: " + url);
+				throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
 
 			status = STATUS.OPEN;
 
@@ -258,7 +258,7 @@ public class OStorageMemory extends OStorageEmbedded {
 			final long lastPos = iClusterSegment.getLastEntryPosition();
 
 			if (iRid.clusterPosition > lastPos)
-				throw new ORecordNotFoundException("Record " + iRid + " is out cluster size. Valid range for cluster '"
+				throw new ORecordNotFoundException("Record " + iRid + " is outside cluster size. Valid range for cluster '"
 						+ iClusterSegment.getName() + "' is 0-" + lastPos);
 
 			try {
@@ -302,9 +302,9 @@ public class OStorageMemory extends OStorageEmbedded {
 						// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
 						if (iVersion != ppos.version)
 							throw new OConcurrentModificationException(
-									"Can't update record "
+									"Cannot update record "
 											+ iRid
-											+ " because the version is not the latest one. Probably you are updating an old record or it has been modified by another user (db=v"
+											+ " because the version is not the latest. Probably you are updating an old record or it has been modified by another user (db=v"
 											+ ppos.version + " your=v" + iVersion + ")");
 
 						++ppos.version;
@@ -347,9 +347,9 @@ public class OStorageMemory extends OStorageEmbedded {
 				// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
 				if (iVersion > -1 && ppos.version != iVersion)
 					throw new OConcurrentModificationException(
-							"Can't delete record "
+							"Cannot delete record "
 									+ iRid
-									+ " because the version is not the latest one. Probably you are deleting an old record or it has been modified by another user (db=v"
+									+ " because the version is not the latest. Probably you are deleting an old record or it has been modified by another user (db=v"
 									+ ppos.version + " your=v" + iVersion + ")");
 
 				cluster.removePhysicalPosition(iRid.clusterPosition, null);

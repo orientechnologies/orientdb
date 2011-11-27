@@ -39,13 +39,13 @@ public class ORecordTrackedList extends OTrackedList<OIdentifiable> {
 	}
 
 	/**
-	 * The item's identity doesn't affect nothing.
+	 * The item's identity does not affect nothing.
 	 */
 	public void onBeforeIdentityChanged(final ORID iRID) {
 	}
 
 	/**
-	 * The item's identity doesn't affect nothing.
+	 * The item's identity does not affect nothing.
 	 */
 	public void onAfterIdentityChanged(final ORecord<?> iRecord) {
 	}

@@ -38,13 +38,13 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract {
 
 			delegate = (OCommandExecutorSQLAbstract) OSQLEngine.getInstance().getCommand(textUpperCase);
 			if (delegate == null)
-				throw new IllegalArgumentException("Can't find a command executor for the command request: " + iCommand);
+				throw new IllegalArgumentException("Cannot find a command executor for the command request: " + iCommand);
 
 			delegate.setLimit(iCommand.getLimit());
 			delegate.parse(iCommand);
 			delegate.setProgressListener(progressListener);
 		} else
-			throw new IllegalArgumentException("Can't find a command executor for the command request: " + iCommand);
+			throw new IllegalArgumentException("Cannot find a command executor for the command request: " + iCommand);
 		return this;
 	}
 

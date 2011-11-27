@@ -135,7 +135,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 
 		final ODocument record = getRecordByUserObject(iPojo, false);
 		if (record == null)
-			throw new OObjectNotManagedException("The object " + iPojo + " is not managed by the current database");
+			throw new OObjectNotManagedException("The object " + iPojo + " is not managed by current database");
 
 		record.setDirty();
 	}
@@ -172,7 +172,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 		final ODocument record = getRecordByUserObject(iPojo, false);
 
 		if (record == null)
-			throw new OObjectNotManagedException("The object " + iPojo + " is not managed by the current database");
+			throw new OObjectNotManagedException("The object " + iPojo + " is not managed by current database");
 
 		return record.getVersion();
 	}
@@ -186,7 +186,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 	public ORID getIdentity(final Object iPojo) {
 		final ODocument record = getRecordByUserObject(iPojo, false);
 		if (record == null)
-			throw new OObjectNotManagedException("The object " + iPojo + " is not managed by the current database");
+			throw new OObjectNotManagedException("The object " + iPojo + " is not managed by current database");
 
 		return record.getIdentity();
 	}
@@ -363,7 +363,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 				stream2pojo(record, pojo, iFetchPlan);
 
 			} catch (Exception e) {
-				throw new OConfigurationException("Can't retrieve pojo from the record " + record, e);
+				throw new OConfigurationException("Cannot retrieve pojo from record " + record, e);
 			}
 		}
 
@@ -379,7 +379,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 
 		if (OObjectSerializerHelper.hasObjectID(iPojo)) {
 		} else {
-			throw new OObjectNotDetachedException("Cannot attach a non detached object");
+			throw new OObjectNotDetachedException("Cannot attach a non-detached object");
 		}
 	}
 

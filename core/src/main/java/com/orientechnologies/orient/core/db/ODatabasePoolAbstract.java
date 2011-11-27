@@ -76,7 +76,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
 
 		final OResourcePool<String, DB> pool = pools.get(dbPooledName);
 		if (pool == null)
-			throw new OLockException("Can't release a database URL not acquired before. URL: " + iDatabase.getName());
+			throw new OLockException("Cannot release a database URL not acquired before. URL: " + iDatabase.getName());
 
 		pool.returnResource(iDatabase);
 	}

@@ -297,13 +297,13 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 	protected void checkClusterBoundedToClass(int iClusterId) {
 		for (OClass clazz : getMetadata().getSchema().getClasses()) {
 			if (clazz.getDefaultClusterId() == iClusterId)
-				throw new OSchemaException("Can't drop the cluster '" + getClusterNameById(iClusterId) + "' because the classes ['"
-						+ clazz.getName() + "'] are bound to it. Drop these classes before to drop the cluster");
+				throw new OSchemaException("Cannot drop the cluster '" + getClusterNameById(iClusterId) + "' because the classes ['"
+						+ clazz.getName() + "'] are bound to it. Drop these classes before dropping the cluster");
 			else if (clazz.getClusterIds().length > 1) {
 				for (int i : clazz.getClusterIds()) {
 					if (i == iClusterId)
-						throw new OSchemaException("Can't drop the cluster '" + getClusterNameById(iClusterId) + "' because the classes ['"
-								+ clazz.getName() + "'] are bound to it. Drop these classes before to drop the cluster");
+						throw new OSchemaException("Cannot drop the cluster '" + getClusterNameById(iClusterId) + "' because the classes ['"
+								+ clazz.getName() + "'] are bound to it. Drop these classes before dropping the cluster");
 				}
 			}
 		}

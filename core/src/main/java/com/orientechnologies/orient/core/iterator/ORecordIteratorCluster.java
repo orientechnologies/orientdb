@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 
 /**
- * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator can't change
+ * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator cannot change
  * it.
  * 
  * @author Luca Garulli

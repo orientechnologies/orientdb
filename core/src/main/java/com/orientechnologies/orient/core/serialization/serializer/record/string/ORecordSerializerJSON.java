@@ -440,7 +440,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			} else
 
 				throw new OSerializationException("Error on marshalling record of type '" + iRecord.getClass()
-						+ "' to JSON. The record type can't be exported to JSON");
+						+ "' to JSON. The record type cannot be exported to JSON");
 
 			json.endObject(indentLevel);
 			parsedRecords.clear();

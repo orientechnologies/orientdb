@@ -413,7 +413,7 @@ public class OGremlinHelper {
 			db = new OGraphDatabase((ODatabaseRecordTx) currentDb);
 			ODatabaseRecordThreadLocal.INSTANCE.set(db);
 		} else
-			throw new OCommandExecutionException("Can't find a database of type OGraphDatabase or ODatabaseRecordTx");
+			throw new OCommandExecutionException("Cannot find a database of type OGraphDatabase or ODatabaseRecordTx");
 		return db;
 	}
 

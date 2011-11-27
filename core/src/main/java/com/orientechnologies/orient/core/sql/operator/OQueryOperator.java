@@ -55,7 +55,7 @@ public abstract class OQueryOperator {
 	}
 
 	/**
-	 * Default State-less implementation: doesn't save parameters and just return itself
+	 * Default State-less implementation: does not save parameters and just return itself
 	 * 
 	 * @param iParams
 	 * @return

@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 /**
- * SQL TRUNCATE RECORD command: Truncates a record without loading it. Useful when the record is dirty in any way and can't be
+ * SQL TRUNCATE RECORD command: Truncates a record without loading it. Useful when the record is dirty in any way and cannot be
  * loaded correctly.
  * 
  * @author Luca Garulli
@@ -77,7 +77,7 @@ public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLPermis
 	 */
 	public Object execute(final Map<Object, Object> iArgs) {
 		if (records.isEmpty())
-			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
+			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
 		for (String rec : records) {
 			try {

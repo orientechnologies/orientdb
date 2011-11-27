@@ -97,7 +97,7 @@ public class OServerAdmin {
 			}
 
 		} catch (Exception e) {
-			OLogManager.instance().error(this, "Can't connect to the remote server: " + storage.getName(), e, OStorageException.class);
+			OLogManager.instance().error(this, "Cannot connect to the remote server: " + storage.getName(), e, OStorageException.class);
 			storage.close(true);
 		}
 		return this;
@@ -129,7 +129,7 @@ public class OServerAdmin {
 			}
 
 		} catch (Exception e) {
-			OLogManager.instance().exception("Can't retrieve the configuration list", e, OStorageException.class);
+			OLogManager.instance().exception("Cannot retrieve the configuration list", e, OStorageException.class);
 			storage.close(true);
 		}
 		return (Map<String, String>) result.field("databases");
@@ -152,7 +152,7 @@ public class OServerAdmin {
 
 		try {
 			if (storage.getName() == null || storage.getName().length() <= 0) {
-				OLogManager.instance().error(this, "Can't create unnamed remote storage check your syntax", OStorageException.class);
+				OLogManager.instance().error(this, "Cannot create unnamed remote storage. Check your syntax", OStorageException.class);
 			} else {
 				if (iStorageMode == null)
 					iStorageMode = "csv";
@@ -170,7 +170,7 @@ public class OServerAdmin {
 			}
 
 		} catch (Exception e) {
-			OLogManager.instance().error(this, "Can't create the remote storage: " + storage.getName(), e, OStorageException.class);
+			OLogManager.instance().error(this, "Cannot create the remote storage: " + storage.getName(), e, OStorageException.class);
 			storage.close(true);
 		}
 		return this;
@@ -201,7 +201,7 @@ public class OServerAdmin {
 			}
 
 		} catch (Exception e) {
-			OLogManager.instance().exception("Error on checking existance of the remote storage: " + storage.getName(), e,
+			OLogManager.instance().exception("Error on checking existence of the remote storage: " + storage.getName(), e,
 					OStorageException.class);
 			storage.close(true);
 		}
@@ -241,7 +241,7 @@ public class OServerAdmin {
 			storage.getResponse(network);
 
 		} catch (Exception e) {
-			OLogManager.instance().exception("Can't delete the remote storage: " + storage.getName(), e, OStorageException.class);
+			OLogManager.instance().exception("Cannot delete the remote storage: " + storage.getName(), e, OStorageException.class);
 			storage.close(true);
 		}
 
@@ -291,7 +291,7 @@ public class OServerAdmin {
 					iSynchronousMode, iRemoteName);
 
 		} catch (Exception e) {
-			OLogManager.instance().exception("Can't share the database: " + iDatabaseName, e, OStorageException.class);
+			OLogManager.instance().exception("Cannot share the database: " + iDatabaseName, e, OStorageException.class);
 		}
 
 		return this;
@@ -316,7 +316,7 @@ public class OServerAdmin {
 			}
 
 		} catch (Exception e) {
-			OLogManager.instance().exception("Can't retrieve the configuration list", e, OStorageException.class);
+			OLogManager.instance().exception("Cannot retrieve the configuration list", e, OStorageException.class);
 			storage.close(true);
 		}
 		return config;
@@ -337,7 +337,7 @@ public class OServerAdmin {
 			}
 
 		} catch (Exception e) {
-			OLogManager.instance().exception("Can't retrieve the configuration value: " + iConfig.getKey(), e, OStorageException.class);
+			OLogManager.instance().exception("Cannot retrieve the configuration value: " + iConfig.getKey(), e, OStorageException.class);
 			storage.close(true);
 		}
 		return null;
@@ -353,7 +353,7 @@ public class OServerAdmin {
 			storage.getResponse(network);
 
 		} catch (Exception e) {
-			OLogManager.instance().exception("Can't set the configuration value: " + iConfig.getKey(), e, OStorageException.class);
+			OLogManager.instance().exception("Cannot set the configuration value: " + iConfig.getKey(), e, OStorageException.class);
 			storage.close(true);
 		}
 		return this;

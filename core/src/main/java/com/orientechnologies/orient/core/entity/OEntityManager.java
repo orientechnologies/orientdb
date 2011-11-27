@@ -56,7 +56,7 @@ public class OEntityManager {
 	 */
 	public Object createPojo(final String iClassName) throws OConfigurationException {
 		if (iClassName == null)
-			throw new IllegalArgumentException("Can't create the object: class name is empty");
+			throw new IllegalArgumentException("Cannot create the object: class name is empty");
 
 		final Class<?> entityClass = getEntityClass(iClassName);
 
@@ -73,7 +73,7 @@ public class OEntityManager {
 			return createInstance(Class.forName(iClassName));
 		} catch (Exception e) {
 			throw new OConfigurationException("The class '" + iClassName
-					+ "' was not found between the entity classes. Assure to call the registerEntityClasses(package) before.", e);
+					+ "' was not found between the entity classes. Ensure registerEntityClasses(package) has been called first.", e);
 		}
 	}
 
@@ -88,8 +88,8 @@ public class OEntityManager {
 		}
 
 		if (defaultConstructor == null)
-			throw new IllegalArgumentException("Can't create an object of class '" + iClass.getName()
-					+ "' because has no default constructor. Please define the method: " + iClass.getSimpleName() + "()");
+			throw new IllegalArgumentException("Cannot create an object of class '" + iClass.getName()
+					+ "' because it has no default constructor. Please define the method: " + iClass.getSimpleName() + "()");
 
 		if (!defaultConstructor.isAccessible())
 			// OVERRIDE PROTECTION

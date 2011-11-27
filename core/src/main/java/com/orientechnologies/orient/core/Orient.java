@@ -96,7 +96,7 @@ public class Orient extends OSharedResourceAbstract {
 
 			if (engine == null)
 				throw new OConfigurationException("Error on opening database: the engine '" + engineName + "' was not found. URL was: "
-						+ iURL + ". registered engines are: " + engines.keySet());
+						+ iURL + ". Registered engines are: " + engines.keySet());
 
 			// SEARCH FOR DB-NAME
 			iURL = iURL.substring(pos + 1);
@@ -115,7 +115,7 @@ public class Orient extends OSharedResourceAbstract {
 				for (String pair : pairs) {
 					kv = pair.split("=");
 					if (kv.length < 2)
-						throw new OConfigurationException("Error on opening database: the parameter has no value. Syntax is: " + URL_SYNTAX
+						throw new OConfigurationException("Error on opening database: parameter has no value. Syntax is: " + URL_SYNTAX
 								+ ". URL was: " + iURL);
 					parameters.put(kv[0], kv[1]);
 				}
@@ -250,12 +250,12 @@ public class Orient extends OSharedResourceAbstract {
 			if (!active)
 				return;
 
-			OLogManager.instance().debug(this, "Orient Engine is shutdowning...");
+			OLogManager.instance().debug(this, "Orient Engine is shutting down...");
 
 			// CLOSE ALL THE STORAGES
 			final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
 			for (OStorage stg : storagesCopy) {
-				OLogManager.instance().debug(this, "Shutdowning storage: " + stg.getName() + "...");
+				OLogManager.instance().debug(this, "Shutting down storage: " + stg.getName() + "...");
 				stg.close(true);
 			}
 

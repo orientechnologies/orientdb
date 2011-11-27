@@ -68,7 +68,7 @@ public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLPermissi
 	 */
 	public Object execute(final Map<Object, Object> iArgs) {
 		if (name == null)
-			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
+			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
 		if (name.equals("*")) {
 			long totalIndexed = 0;
@@ -86,7 +86,7 @@ public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLPermissi
 				throw new OCommandExecutionException("Index '" + name + "' not found");
 
 			if (!idx.isAutomatic())
-				throw new OCommandExecutionException("Can't rebuild index '" + name
+				throw new OCommandExecutionException("Cannot rebuild index '" + name
 						+ "' because it's manual and there aren't indications of what to index");
 
 			return idx.rebuild();

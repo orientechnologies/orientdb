@@ -90,7 +90,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 
 	public Object execute(final Map<Object, Object> iArgs) {
 		if (query == null && indexName == null)
-			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
+			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
 		if (query != null) {
 			// AGAINST CLUSTERS AND CLASSES

@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 
 /**
- * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator can't change
+ * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator cannot change
  * it.
  * 
  * @author Luca Garulli
@@ -105,7 +105,7 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 
 	/**
 	 * Tell to the iterator to use the same record for browsing. The record will be reset before every use. This improve the
-	 * performance and reduce memory utilization since it doesn't create a new one for each operation, but pay attention to copy the
+	 * performance and reduce memory utilization since it does not create a new one for each operation, but pay attention to copy the
 	 * data of the record once read otherwise they will be reset to the next operation.
 	 * 
 	 * @param reuseSameRecord
@@ -195,6 +195,6 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 			// SET THE DIRECTION
 			directionForward = iForward;
 		else if (directionForward != iForward)
-			throw new OIterationException("Iterator can't change direction while browsing");
+			throw new OIterationException("Iterator cannot change direction while browsing");
 	}
 }

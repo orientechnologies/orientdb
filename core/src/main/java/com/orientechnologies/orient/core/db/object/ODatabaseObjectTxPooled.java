@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 /**
- * Pooled wrapper to the ODatabaseObjectTx class. Allows to being reused across calls. The close() method doesn't close the database
+ * Pooled wrapper to the ODatabaseObjectTx class. Allows to being reused across calls. The close() method does not close the database
  * for real but release it to the owner pool. The database born as opened and will leave open until the pool is closed.
  * 
  * @author Luca Garulli
@@ -52,13 +52,13 @@ public class ODatabaseObjectTxPooled extends ODatabaseObjectTx implements ODatab
 	@Override
 	public ODatabaseObjectTxPooled open(String iUserName, String iUserPassword) {
 		throw new UnsupportedOperationException(
-				"Database instance was retrieved from a pool. You can't open the database in this way. Please use directly ODatabaseObjectTx.open()");
+				"Database instance was retrieved from a pool. You cannot open the database in this way. Please use directly ODatabaseObjectTx.open()");
 	}
 
 	@Override
 	public ODatabaseObjectTxPooled create() {
 		throw new UnsupportedOperationException(
-				"Database instance was retrieved from a pool. You can't create the database in this way. Please use directly ODatabaseObjectTx.create()");
+				"Database instance was retrieved from a pool. You cannot create the database in this way. Please use directly ODatabaseObjectTx.create()");
 	}
 
 	@Override

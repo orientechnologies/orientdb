@@ -49,12 +49,12 @@ public class OCommandManager {
 		final Class<? extends OCommandRequest> reqClass = commandRequesters.get(iType);
 
 		if (reqClass == null)
-			throw new IllegalArgumentException("Can't find a command requester for type: " + iType);
+			throw new IllegalArgumentException("Cannot find a command requester for type: " + iType);
 
 		try {
 			return reqClass.newInstance();
 		} catch (Exception e) {
-			throw new IllegalArgumentException("Can't create the command requester of class " + reqClass + " for type: " + iType, e);
+			throw new IllegalArgumentException("Cannot create the command requester of class " + reqClass + " for type: " + iType, e);
 		}
 	}
 
@@ -68,12 +68,12 @@ public class OCommandManager {
 		final Class<? extends OCommandExecutor> executorClass = commandReqExecMap.get(iCommand.getClass());
 
 		if (executorClass == null)
-			throw new IllegalArgumentException("Can't find a command executor for the command request: " + iCommand);
+			throw new IllegalArgumentException("Cannot find a command executor for the command request: " + iCommand);
 
 		try {
 			return executorClass.newInstance();
 		} catch (Exception e) {
-			throw new IllegalArgumentException("Can't create the command executor of class " + executorClass
+			throw new IllegalArgumentException("Cannot create the command executor of class " + executorClass
 					+ " for the command request: " + iCommand, e);
 		}
 	}

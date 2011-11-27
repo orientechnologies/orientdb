@@ -96,7 +96,7 @@ public class ODistributedServerConfiguration {
 				OServerMain.server().addUser(REPLICATOR_USER, null, "database.passthrough");
 
 			if (tempSecurityKey == null) {
-				OLogManager.instance().info(this, "Generating Server security key and save it in configuration...");
+				OLogManager.instance().info(this, "Generating Server security key and saving it in configuration...");
 				// GENERATE NEW SECURITY KEY
 				securityKey = OSecurityManager.instance().generateKey(securityAlgorithm, 96);
 
@@ -118,7 +118,7 @@ public class ODistributedServerConfiguration {
 				securityKey = OSecurityManager.instance().createKey(securityAlgorithm, tempSecurityKey);
 
 		} catch (Exception e) {
-			throw new OConfigurationException("Can't configure OrientDB Server as Cluster Node", e);
+			throw new OConfigurationException("Cannot configure OrientDB Server as Cluster Node", e);
 		}
 	}
 

@@ -68,7 +68,7 @@ public class OIndexFullText extends OIndexMultiValues {
 		try {
 			map.save();
 		} catch (final IOException e) {
-			throw new OIndexException("Can't save index entry for document '" + iDocument.getIdentity() + "'");
+			throw new OIndexException("Cannot save index entry for document '" + iDocument.getIdentity() + "'");
 		} finally {
 			releaseExclusiveLock();
 		}

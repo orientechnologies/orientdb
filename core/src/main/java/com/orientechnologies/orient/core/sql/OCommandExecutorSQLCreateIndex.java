@@ -85,7 +85,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 
 		if (word.toString().equals(KEYWORD_ON)) {
 			if (indexName.contains(".")) {
-				throw new OCommandSQLParsingException("Index name can't contain '.' character", text, namePos);
+				throw new OCommandSQLParsingException("Index name cannot contain '.' character", text, namePos);
 			}
 
 			oldPos = pos;
@@ -182,7 +182,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 	 */
 	public Object execute(final Map<Object, Object> iArgs) {
 		if (indexName == null)
-			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
+			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
 		final OIndex<?> idx;
 		if (fields == null || fields.length == 0) {

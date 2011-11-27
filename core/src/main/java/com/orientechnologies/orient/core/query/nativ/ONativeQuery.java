@@ -34,11 +34,11 @@ public abstract class ONativeQuery<CTX extends OQueryContextNative> extends OQue
 	}
 
 	public byte[] toStream() throws OSerializationException {
-		throw new OSerializationException("Native queries can't be serialized");
+		throw new OSerializationException("Native queries cannot be serialized");
 	}
 
 	public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
-		throw new OSerializationException("Native queries can't be deserialized");
+		throw new OSerializationException("Native queries cannot be deserialized");
 	}
 
 }

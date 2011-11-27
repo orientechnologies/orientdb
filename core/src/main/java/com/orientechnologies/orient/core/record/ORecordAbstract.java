@@ -231,11 +231,11 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 			final ORecordInternal<?> result = _database.load(this);
 
 			if (result == null)
-				throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found");
+				throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found");
 
 			return (ORecordInternal<T>) result;
 		} catch (Exception e) {
-			throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found", e);
+			throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found", e);
 		}
 	}
 
@@ -252,7 +252,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 			throw new ODatabaseException("No database assigned to current record");
 
 		if (!getIdentity().isValid())
-			throw new ORecordNotFoundException("The record has no id, probably it's new or transient yet ");
+			throw new ORecordNotFoundException("The record has no id. It is probably new or still transient");
 
 		try {
 			_database.reload(this, iFetchPlan, iIgnoreCache);
@@ -262,7 +262,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 
 			return this;
 		} catch (Exception e) {
-			throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found", e);
+			throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found", e);
 		}
 	}
 

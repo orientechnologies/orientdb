@@ -166,13 +166,13 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 			distributedNetworkListener = server.getListenerByProtocol(ONetworkProtocolDistributed.class);
 			if (distributedNetworkListener == null)
 				OLogManager.instance().error(this,
-						"Can't find a configured network listener with 'distributed' protocol. Can't start distributed node", null,
+						"Cannot find a configured network listener with 'distributed' protocol. Cannot start distributed node", null,
 						OConfigurationException.class);
 
 			id = InetAddress.getLocalHost().getHostAddress() + ":" + distributedNetworkListener.getInboundAddr().getPort();
 
 		} catch (Exception e) {
-			throw new OConfigurationException("Can't configure OrientDB Server as Cluster Node", e);
+			throw new OConfigurationException("Cannot configure OrientDB Server as Cluster Node", e);
 		}
 	}
 

@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
- * Dictionary index similar to unique index but doesn't check for updates, just executes changes. Last put always wins and override
+ * Dictionary index similar to unique index but does not check for updates, just executes changes. Last put always wins and override
  * the previous value.
  * 
  * @author Luca Garulli

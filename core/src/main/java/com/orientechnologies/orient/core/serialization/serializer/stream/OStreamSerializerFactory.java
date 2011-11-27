@@ -53,7 +53,7 @@ public class OStreamSerializerFactory {
 			throw new OConfigurationException("Stream Serializer '" + iName + "' not registered");
 
 		} catch (Exception e) {
-			throw new OConfigurationException("Error on the retrieving of Stream Serializer '" + iName + "'", e);
+			throw new OConfigurationException("Error on retrieving of Stream Serializer '" + iName + "'", e);
 		}
 	}
 }

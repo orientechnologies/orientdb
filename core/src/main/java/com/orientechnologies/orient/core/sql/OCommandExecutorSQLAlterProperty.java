@@ -78,21 +78,21 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLPermiss
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Missed the property's attribute to change", text, oldPos);
+			throw new OCommandSQLParsingException("Missing property attribute to change", text, oldPos);
 
 		final String attributeAsString = word.toString();
 
 		try {
 			attribute = OProperty.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
 		} catch (IllegalArgumentException e) {
-			throw new OCommandSQLParsingException("Unknown property's attribute '" + attributeAsString + "'. Supported attributes are: "
+			throw new OCommandSQLParsingException("Unknown property attribute '" + attributeAsString + "'. Supported attributes are: "
 					+ Arrays.toString(OProperty.ATTRIBUTES.values()), text, oldPos);
 		}
 
 		value = text.substring(pos + 1).trim();
 
 		if (value.length() == 0)
-			throw new OCommandSQLParsingException("Missed the property's value to change for attribute '" + attribute + "'", text, oldPos);
+			throw new OCommandSQLParsingException("Missing property value to change for attribute '" + attribute + "'", text, oldPos);
 
 		if (value.equalsIgnoreCase("null"))
 			value = null;
@@ -105,7 +105,7 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLPermiss
 	 */
 	public Object execute(final Map<Object, Object> iArgs) {
 		if (attribute == null)
-			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
+			throw new OCommandExecutionException("Cannot execute the command because it has not yet been parsed");
 
 		final OClassImpl sourceClass = (OClassImpl) database.getMetadata().getSchema().getClass(className);
 		if (sourceClass == null)

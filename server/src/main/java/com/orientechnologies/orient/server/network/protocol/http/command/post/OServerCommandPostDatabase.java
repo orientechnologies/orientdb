@@ -80,7 +80,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
 				database.create();
 				sendDatabaseInfo(iRequest, database);
 			} else {
-				throw new OCommandExecutionException("The '" + storageMode + "' storage mode doesn't exists.");
+				throw new OCommandExecutionException("The '" + storageMode + "' storage mode does not exists.");
 			}
 		} finally {
 		}

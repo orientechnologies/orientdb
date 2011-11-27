@@ -98,7 +98,7 @@ public class ODatabaseRaw implements ODatabase {
 			// PASS THROUGH
 			throw e;
 		} catch (Exception e) {
-			throw new ODatabaseException("Can't open database", e);
+			throw new ODatabaseException("Cannot open database", e);
 		}
 		return (DB) this;
 	}
@@ -125,7 +125,7 @@ public class ODatabaseRaw implements ODatabase {
 
 			status = STATUS.OPEN;
 		} catch (Exception e) {
-			throw new ODatabaseException("Can't create database", e);
+			throw new ODatabaseException("Cannot create database", e);
 		}
 		return (DB) this;
 	}
@@ -155,7 +155,7 @@ public class ODatabaseRaw implements ODatabase {
 			// PASS THROUGH
 			throw e;
 		} catch (Exception e) {
-			throw new ODatabaseException("Can't delete database", e);
+			throw new ODatabaseException("Cannot delete database", e);
 		}
 	}
 

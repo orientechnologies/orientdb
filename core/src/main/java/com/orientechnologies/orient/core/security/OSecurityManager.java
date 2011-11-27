@@ -43,7 +43,7 @@ public class OSecurityManager {
 		try {
 			md = MessageDigest.getInstance(ALGORITHM);
 		} catch (NoSuchAlgorithmException e) {
-			OLogManager.instance().error(this, "Can't use OSecurityManager", e);
+			OLogManager.instance().error(this, "Cannot use OSecurityManager", e);
 		}
 	}
 
@@ -91,7 +91,7 @@ public class OSecurityManager {
 		try {
 			return md.digest(iInput.getBytes("UTF-8"));
 		} catch (UnsupportedEncodingException e) {
-			OLogManager.instance().error(this, "The request encoding is not supported: can't execute secutity checks", e,
+			OLogManager.instance().error(this, "The requested encoding is not supported: cannot execute security checks", e,
 					OConfigurationException.class);
 		}
 		return null;

@@ -71,7 +71,7 @@ public class OStreamSerializerAnyRecord implements OStreamSerializer {
 		OLogManager
 				.instance()
 				.exception(
-						"Can'r unmarshall the record since the serialized object of class %s has no a constructor with right parameters: %s(%s, ORID)",
+						"Cannot unmarshall the record since the serialized object of class %s has no constructor with suitable parameters: %s(%s, ORID)",
 						null, OSerializationException.class, cls.getSimpleName(), cls.getSimpleName(), iDatabase.getClass().getSimpleName());
 
 		return null;
@@ -82,7 +82,7 @@ public class OStreamSerializerAnyRecord implements OStreamSerializer {
 			return null;
 
 		if (((ORecord<?>) iObject).getIdentity() == null)
-			throw new OSerializationException("Can't serialize record without identity. Store it before to serialize.");
+			throw new OSerializationException("Cannot serialize record without identity. Store it before serialization.");
 
 		final StringBuilder buffer = OStreamSerializerHelper.writeRecordType(iObject.getClass(), new StringBuilder());
 		buffer.append(((ORecord<?>) iObject).getIdentity().toString());

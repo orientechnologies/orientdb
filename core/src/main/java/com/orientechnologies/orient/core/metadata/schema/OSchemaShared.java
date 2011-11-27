@@ -230,7 +230,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
 		final Character wrongCharacter = checkNameIfValid(iClassName);
 		if (wrongCharacter != null)
-			throw new OSchemaException("Found invalid class name. Character '" + wrongCharacter + "' can't be used in class name.");
+			throw new OSchemaException("Found invalid class name. Character '" + wrongCharacter + "' cannot be used in class name.");
 
 		if (iClusterIds == null || iClusterIds.length == 0)
 			// CREATE A NEW CLUSTER
@@ -306,7 +306,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
 			if (cls.getBaseClasses() != null)
 				throw new OSchemaException("Class " + iClassName
-						+ " can't be dropped since has sub classes. Remove the dependencies before to drop it again");
+						+ " cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
 
 			final StringBuilder cmd = new StringBuilder("drop class ");
 			cmd.append(iClassName);
@@ -334,7 +334,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
 			if (cls.getBaseClasses() != null)
 				throw new OSchemaException("Class " + iClassName
-						+ " can't be dropped since has sub classes. Remove the dependencies before to drop it again");
+						+ " cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
 
 			if (cls.getSuperClass() != null) {
 				// REMOVE DEPENDENCY FROM SUPERCLASS
@@ -447,7 +447,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 		if (schemaVersion != CURRENT_VERSION_NUMBER) {
 			// HANDLE SCHEMA UPGRADE
 			throw new OConfigurationException(
-					"Database schema is different. Please export your old database with the previous verison of OrientDB and reimport it using the current one.");
+					"Database schema is different. Please export your old database with the previous version of OrientDB and reimport it using the current one.");
 		}
 
 		// REGISTER ALL THE CLASSES
@@ -545,7 +545,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 		getDatabase();
 
 		if (document.getDatabase().getTransaction().isActive())
-			throw new OSchemaException("Can't change the schema while a transaction is active. Schema changes is not transactional");
+			throw new OSchemaException("Cannot change the schema while a transaction is active. Schema changes are not transactional");
 
 		lock.acquireExclusiveLock();
 		try {

@@ -73,7 +73,7 @@ public class SchemaIndexTest {
 		} catch (OSchemaException e) {
 			Assert
 					.assertEquals(e.getMessage(),
-							"Class SchemaSharedIndexSuperTest can't be dropped since has sub classes. Remove the dependencies before to drop it again");
+							"Class SchemaSharedIndexSuperTest cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
 		}
 
 		database.getMetadata().getSchema().reload();

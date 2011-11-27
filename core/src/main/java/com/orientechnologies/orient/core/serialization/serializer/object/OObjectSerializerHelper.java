@@ -144,7 +144,7 @@ public class OObjectSerializerHelper {
 			else
 				return ((Method) o).getReturnType();
 		} catch (Exception e) {
-			throw new OSchemaException("Can't get the value of the property: " + iProperty, e);
+			throw new OSchemaException("Cannot get the value of the property: " + iProperty, e);
 		}
 	}
 
@@ -174,7 +174,7 @@ public class OObjectSerializerHelper {
 				return ((Field) o).get(iPojo);
 			return null;
 		} catch (Exception e) {
-			throw new OSchemaException("Can't get the value of the property: " + iProperty, e);
+			throw new OSchemaException("Cannot get the value of the property: " + iProperty, e);
 		}
 	}
 
@@ -195,7 +195,7 @@ public class OObjectSerializerHelper {
 
 		} catch (Exception e) {
 
-			throw new OSchemaException("Can't set the value '" + iValue + "' to the property '" + iProperty + "' for the pojo: " + iPojo,
+			throw new OSchemaException("Cannot set the value '" + iValue + "' to the property '" + iProperty + "' for the pojo: " + iPojo,
 					e);
 		}
 	}
@@ -315,7 +315,7 @@ public class OObjectSerializerHelper {
 									+ iRoot.getClassName()
 									+ "."
 									+ iFieldName
-									+ "' is unknown. Probably needs to be registered with <db>.getEntityManager().registerEntityClasses(<package>) or <db>.getEntityManager().registerEntityClass(<class>) or the package can't be loaded correctly due to a classpath problem. In this case register the single classes one by one.");
+									+ "' is unknown. Probably needs to be registered with <db>.getEntityManager().registerEntityClasses(<package>) or <db>.getEntityManager().registerEntityClass(<class>) or the package cannot be loaded correctly due to a classpath problem. In this case register the single classes one by one.");
 
 				Object fieldValue = null;
 				Class<?> fieldClass;
@@ -510,7 +510,7 @@ public class OObjectSerializerHelper {
 					return Integer.parseInt((String) ver);
 			}
 		}
-		throw new OObjectNotDetachedException("Can't retrieve the object's VERSION for '" + iPojo + "' because hasn't been detached");
+		throw new OObjectNotDetachedException("Cannot retrieve the object's VERSION for '" + iPojo + "' because has not been detached");
 	}
 
 	public static boolean hasObjectVersion(final Object iPojo) {
@@ -592,8 +592,8 @@ public class OObjectSerializerHelper {
 		}
 
 		if (db.isMVCC() && !versionConfigured && db.getTransaction() instanceof OTransactionOptimistic)
-			throw new OTransactionException("Can't involve an object of class '" + pojoClass
-					+ "' in an Optimistic Transaction commit because it doesn't define @Version or @OVersion and therefore can't handle MVCC");
+			throw new OTransactionException("Cannot involve an object of class '" + pojoClass
+					+ "' in an Optimistic Transaction commit because it does not define @Version or @OVersion and therefore cannot handle MVCC");
 
 		// SET OBJECT CLASS
 		iRecord.setClassName(schemaClass != null ? schemaClass.getName() : null);
@@ -736,7 +736,7 @@ public class OObjectSerializerHelper {
 
 				} else
 					throw new OSerializationException("Linked type [" + iFieldValue.getClass() + ":" + iFieldValue
-							+ "] can't be serialized because is not part of registered entities. To fix this error register this class");
+							+ "] cannot be serialized because is not part of registered entities. To fix this error register this class");
 			}
 		}
 		return iFieldValue;
@@ -923,11 +923,11 @@ public class OObjectSerializerHelper {
 				if (idFound) {
 					// CHECK FOR TYPE
 					if (fieldType.isPrimitive())
-						OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' can't be a literal to manage the Record Id",
+						OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' cannot be a literal to manage the Record Id",
 								f.toString());
 					else if (!ORID.class.isAssignableFrom(fieldType) && fieldType != String.class && fieldType != Object.class
 							&& !Number.class.isAssignableFrom(fieldType))
-						OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' can't be managed as type: %s", f.toString(),
+						OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' cannot be managed as type: %s", f.toString(),
 								fieldType);
 				}
 
@@ -946,10 +946,10 @@ public class OObjectSerializerHelper {
 				if (vFound) {
 					// CHECK FOR TYPE
 					if (fieldType.isPrimitive())
-						OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' can't be a literal to manage the Version",
+						OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' cannot be a literal to manage the Version",
 								f.toString());
 					else if (fieldType != String.class && fieldType != Object.class && !Number.class.isAssignableFrom(fieldType))
-						OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' can't be managed as type: %s", f.toString(),
+						OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' cannot be managed as type: %s", f.toString(),
 								fieldType);
 				}
 

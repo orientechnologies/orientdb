@@ -74,7 +74,7 @@ public class CRUDDocumentValidationTest {
 		record.save();
 	}
 
-	@Test(dependsOnMethods = "validationMaxString", expectedExceptions = OValidationException.class, expectedExceptionsMessageRegExp = ".*before.*")
+	@Test(dependsOnMethods = "validationMaxString", expectedExceptions = OValidationException.class, expectedExceptionsMessageRegExp = ".*precedes.*")
 	public void validationMinDate() throws ParseException {
 		record.clear();
 		record.field("account", account);

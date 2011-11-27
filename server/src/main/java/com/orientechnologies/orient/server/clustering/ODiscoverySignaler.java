@@ -83,7 +83,7 @@ public class ODiscoverySignaler extends OPollerThread {
 					manager.getConfig().networkMulticastPort);
 			socket = new DatagramSocket();
 		} catch (Exception e) {
-			OLogManager.instance().error(this, "Can't startup distributed server discovery signaler", e);
+			OLogManager.instance().error(this, "Cannot startup distributed server discovery signaler", e);
 		}
 		super.startup();
 	}

@@ -121,7 +121,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			throw e;
 		} catch (Exception e) {
 			close();
-			throw new ODatabaseException("Can't open database", e);
+			throw new ODatabaseException("Cannot open database", e);
 		}
 		return (DB) this;
 	}
@@ -148,7 +148,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 			user = getMetadata().getSecurity().getUser(OUser.ADMIN);
 		} catch (Exception e) {
-			throw new ODatabaseException("Can't create database", e);
+			throw new ODatabaseException("Cannot create database", e);
 		}
 		return (DB) this;
 	}
@@ -516,7 +516,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 		if (rid == null)
 			throw new ODatabaseException(
-					"Can't create record because it has no identity. Probably is not a regular record or contains projections of fields rather than a full record");
+					"Cannot create record because it has no identity. Probably is not a regular record or contains projections of fields rather than a full record");
 
 		setCurrentDatabaseinThreadLocal();
 
@@ -608,7 +608,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 		if (rid == null)
 			throw new ODatabaseException(
-					"Can't delete record because it has no identity. Probably was created from scratch or contains projections of fields rather than a full record");
+					"Cannot delete record because it has no identity. Probably was created from scratch or contains projections of fields rather than a full record");
 
 		if (!rid.isValid())
 			return;

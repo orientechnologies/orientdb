@@ -166,7 +166,7 @@ public class OStorageRemote extends OStorageAbstract {
 				// PASS THROUGH
 				throw (RuntimeException) e;
 			else
-				throw new OStorageException("Can't open the remote storage: " + name, e);
+				throw new OStorageException("Cannot open the remote storage: " + name, e);
 
 		} finally {
 			lock.releaseExclusiveLock();
@@ -208,12 +208,12 @@ public class OStorageRemote extends OStorageAbstract {
 
 	public void create(final Map<String, Object> iOptions) {
 		throw new UnsupportedOperationException(
-				"Can't create a database in a remote server. Please use the console or the OServerAdmin class.");
+				"Cannot create a database in a remote server. Please use the console or the OServerAdmin class.");
 	}
 
 	public boolean exists() {
 		throw new UnsupportedOperationException(
-				"Can't check the existance of a database in a remote server. Please use the console or the OServerAdmin class.");
+				"Cannot check the existance of a database in a remote server. Please use the console or the OServerAdmin class.");
 	}
 
 	public void close(final boolean iForce) {
@@ -267,7 +267,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 	public void delete() {
 		throw new UnsupportedOperationException(
-				"Can't delete a database in a remote server. Please use the console or the OServerAdmin class.");
+				"Cannot delete a database in a remote server. Please use the console or the OServerAdmin class.");
 	}
 
 	public Set<String> getClusterNames() {
@@ -676,7 +676,7 @@ public class OStorageRemote extends OStorageAbstract {
 		checkConnection();
 
 		if (!(iCommand instanceof OSerializableStream))
-			throw new OCommandExecutionException("Can't serialize the command to being executed to the server side.");
+			throw new OCommandExecutionException("Cannot serialize the command to be executed to the server side.");
 
 		OSerializableStream command = iCommand;
 		Object result = null;
@@ -1112,7 +1112,7 @@ public class OStorageRemote extends OStorageAbstract {
 				openRemoteDatabase();
 
 				OLogManager.instance().info(this,
-						"Connection re-acquired in transparent way after %dms and %d retries: no errors will be thrown at application level",
+						"Connection re-acquired transparently after %dms and %d retries: no errors will be thrown at application level",
 						System.currentTimeMillis() - lostConnectionTime, retry + 1);
 
 				// RECONNECTED!
@@ -1271,7 +1271,7 @@ public class OStorageRemote extends OStorageAbstract {
 			buffer.append(server);
 		}
 
-		throw new OIOException("Can't connect to any configured remote nodes: " + buffer);
+		throw new OIOException("Cannot connect to any configured remote nodes: " + buffer);
 	}
 
 	protected void checkConnection() {

@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * Presentation of index that is used information and contained in document
  * {@link com.orientechnologies.orient.core.metadata.schema.OClass} .
  * 
- * This object can not be created directly, use {@link com.orientechnologies.orient.core.metadata.schema.OClass} manipulation method
+ * This object cannot be created directly, use {@link com.orientechnologies.orient.core.metadata.schema.OClass} manipulation method
  * instead.
  * 
  * @author Andrey Lomakin, Artem Orobets

@@ -33,7 +33,7 @@ public class OGraphDatabasePool extends ODatabasePoolBase<OGraphDatabase> {
 
 						public OGraphDatabase createNewResource(final String iDatabaseName, final Object... iAdditionalArgs) {
 							if (iAdditionalArgs.length < 2)
-								throw new OSecurityAccessException("Username and/or password missed");
+								throw new OSecurityAccessException("Username and/or password missing");
 
 							final OGraphDatabasePooled db = new OGraphDatabasePooled((OGraphDatabasePool) owner, iDatabaseName,
 									(String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);

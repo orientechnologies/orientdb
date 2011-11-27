@@ -552,7 +552,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 				if (iLinkedType == null)
 					throw new IllegalArgumentException(
-							"Linked type can't be null. Probably the serialized type has not stored the type along with data");
+							"Linked type cannot be null. Probably the serialized type has not stored the type along with data");
 				else if (iLinkedType == OType.CUSTOM)
 					item = item.substring(1);
 

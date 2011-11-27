@@ -53,7 +53,7 @@ public class OStreamSerializerAnyRuntime implements OStreamSerializer {
 		try {
 			return in.readObject();
 		} catch (ClassNotFoundException e) {
-			throw new OSerializationException("Can't unmarshall Java serialized object", e);
+			throw new OSerializationException("Cannot unmarshall Java serialized object", e);
 		} finally {
 			in.close();
 			is.close();

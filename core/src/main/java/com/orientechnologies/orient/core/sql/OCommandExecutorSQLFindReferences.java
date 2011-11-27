@@ -79,7 +79,7 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLPermis
 
 		final String recordIdString = word.toString();
 		if (recordIdString == null || recordIdString.equals(""))
-			throw new OCommandSQLParsingException("Record to search can't be null", text, pos);
+			throw new OCommandSQLParsingException("Record to search cannot be null", text, pos);
 		try {
 			recordId = new ORecordId(recordIdString);
 			if (!recordId.isValid())
@@ -107,7 +107,7 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLPermis
 	 */
 	public Object execute(final Map<Object, Object> iArgs) {
 		if (recordId == null)
-			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
+			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
 		Set<ORID> result = new HashSet<ORID>();
 		if (classList == null || classList.equals("")) {

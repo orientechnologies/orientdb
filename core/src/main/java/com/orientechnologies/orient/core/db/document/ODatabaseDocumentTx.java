@@ -76,7 +76,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 	 * changes apply immediately. If an Optimistic transaction is running then the record will be changed at commit time. The current
 	 * transaction will continue to see the record as modified, while others not. If a Pessimistic transaction is running, then an
 	 * exclusive lock is acquired against the record. Current transaction will continue to see the record as modified, while others
-	 * can't access to it since it's locked.
+	 * cannot access to it since it's locked.
 	 * 
 	 * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
 	 * {@link OConcurrentModificationException} exception is thrown.Before to save the document it must be valid following the
@@ -136,7 +136,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 	 * no transaction is running then changes apply immediately. If an Optimistic transaction is running then the record will be
 	 * changed at commit time. The current transaction will continue to see the record as modified, while others not. If a Pessimistic
 	 * transaction is running, then an exclusive lock is acquired against the record. Current transaction will continue to see the
-	 * record as modified, while others can't access to it since it's locked.
+	 * record as modified, while others cannot access to it since it's locked.
 	 * 
 	 * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
 	 * {@link OConcurrentModificationException} exception is thrown. Before to save the document it must be valid following the
@@ -206,7 +206,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 	 * deleted immediately. If an Optimistic transaction is running then the record will be deleted at commit time. The current
 	 * transaction will continue to see the record as deleted, while others not. If a Pessimistic transaction is running, then an
 	 * exclusive lock is acquired against the record. Current transaction will continue to see the record as deleted, while others
-	 * can't access to it since it's locked.
+	 * cannot access to it since it's locked.
 	 * 
 	 * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
 	 * {@link OConcurrentModificationException} exception is thrown.

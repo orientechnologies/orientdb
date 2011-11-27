@@ -113,7 +113,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	 * 
 	 * Such data structure is used because from composite index point of view any "field and value" pairs can be reordered to match
 	 * keys order that is used in index in case all fields and values are related to each other using equals operator, but position of
-	 * field - value pair that uses non equals operator can not be changed. Actually only one non-equals operator can be used for
+	 * field - value pair that uses non equals operator cannot be changed. Actually only one non-equals operator can be used for
 	 * composite index search and filed - value pair that uses this index should always be placed at last position.
 	 */
 	private static final class OIndexSearchResult {

@@ -19,7 +19,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 
 /**
- * SQL asynchronous query. When executed the caller doesn't wait the the execution, rather the listener will be called foreach item
+ * SQL asynchronous query. When executed the caller does not wait the the execution, rather the listener will be called foreach item
  * found in the query. OSQLAsynchQuery has been built on top of this.
  * 
  * @author Luca Garulli
