@@ -41,12 +41,12 @@ public class OTreeDataProviderGeneric<K, V> implements OTreeDataProvider<K, V>, 
 
 	protected OStorage									storage;
 
-	public OTreeDataProviderGeneric(OStorage iStorage, final String iClusterName, final ORID iRID) {
+	public OTreeDataProviderGeneric(final OStorage iStorage, final String iClusterName, final ORID iRID) {
 		this(iStorage, iClusterName, null, null);
 		record.setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
 	}
 
-	public OTreeDataProviderGeneric(OStorage iStorage, String iClusterName, final OStreamSerializer iKeySerializer,
+	public OTreeDataProviderGeneric(final OStorage iStorage, final String iClusterName, final OStreamSerializer iKeySerializer,
 			final OStreamSerializer iValueSerializer) {
 
 		storage = iStorage;
@@ -83,15 +83,20 @@ public class OTreeDataProviderGeneric<K, V> implements OTreeDataProvider<K, V>, 
 		return root;
 	}
 
-	public boolean setSize(int iSize) {
+	public boolean setSize(final int iSize) {
 		size = iSize;
 		return setDirty();
 	}
 
-	public boolean setRoot(ORID iRid) {
+	public boolean setRoot(final ORID iRid) {
 		if (root == null)
 			root = new ORecordId();
-		root.copyFrom(iRid);
+
+		if (iRid == null)
+			root.reset();
+		else if (!iRid.equals(root))
+			root.copyFrom(iRid);
+		
 		return setDirty();
 	}
 
@@ -99,7 +104,7 @@ public class OTreeDataProviderGeneric<K, V> implements OTreeDataProvider<K, V>, 
 		return record.isDirty();
 	}
 
-	public OTreeEntryDataProvider<K, V> getEntry(ORID iRid) {
+	public OTreeEntryDataProvider<K, V> getEntry(final ORID iRid) {
 		return new OTreeEntryDataProviderGeneric<K, V>(this, iRid);
 	}
 
@@ -129,7 +134,7 @@ public class OTreeDataProviderGeneric<K, V> implements OTreeDataProvider<K, V>, 
 			load(storage);
 	}
 
-	protected void load(ODatabaseRecord iDb) {
+	protected void load(final ODatabaseRecord iDb) {
 		if (!record.getIdentity().isValid())
 			return;
 		record.setDatabase(iDb);
@@ -138,7 +143,7 @@ public class OTreeDataProviderGeneric<K, V> implements OTreeDataProvider<K, V>, 
 		fromStream(record.toStream());
 	}
 
-	protected void load(OStorage iSt) {
+	protected void load(final OStorage iSt) {
 		if (!record.getIdentity().isValid())
 			// NOTHING TO LOAD
 			return;
@@ -150,7 +155,7 @@ public class OTreeDataProviderGeneric<K, V> implements OTreeDataProvider<K, V>, 
 		fromStream(raw.buffer);
 	}
 
-	protected void save(ODatabaseRecord iDb) {
+	protected void save(final ODatabaseRecord iDb) {
 		record.fromStream(toStream());
 		record.setDatabase(iDb);
 		record.save(clusterName);
@@ -163,7 +168,7 @@ public class OTreeDataProviderGeneric<K, V> implements OTreeDataProvider<K, V>, 
 			save(storage);
 	}
 
-	protected void save(OStorage iSt) {
+	protected void save(final OStorage iSt) {
 		record.fromStream(toStream());
 		if (record.getIdentity().isValid())
 			// UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
@@ -183,13 +188,14 @@ public class OTreeDataProviderGeneric<K, V> implements OTreeDataProvider<K, V>, 
 			delete(getDatabase());
 		else
 			delete(storage);
+		root = null;
 	}
 
-	protected void delete(ODatabaseRecord iDb) {
+	protected void delete(final ODatabaseRecord iDb) {
 		iDb.delete(record);
 	}
 
-	protected void delete(OStorage iSt) {
+	protected void delete(final OStorage iSt) {
 		iSt.deleteRecord((ORecordId) record.getIdentity(), record.getVersion(), null);
 	}
 
@@ -229,7 +235,7 @@ public class OTreeDataProviderGeneric<K, V> implements OTreeDataProvider<K, V>, 
 		}
 	}
 
-	public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
+	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
 		final long timer = OProfiler.getInstance().startChrono();
 		try {
 			final OMemoryStream stream = new OMemoryStream(iStream);

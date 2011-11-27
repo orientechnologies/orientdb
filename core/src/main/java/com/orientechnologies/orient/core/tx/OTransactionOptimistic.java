@@ -61,7 +61,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
 		for (OTransactionRecordEntry v : allEntries.values())
 			v.getRecord().unload();
-
+				
+		indexEntries.clear();
 	}
 
 	public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan) {

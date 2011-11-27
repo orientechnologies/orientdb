@@ -131,11 +131,18 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 
 			rebuild(iProgressListener);
 			updateConfiguration();
-			return this;
+		} catch (Exception e) {
+			if (map != null)
+				map.delete();
+			if (e instanceof OIndexException)
+				throw (OIndexException) e;
+
+			throw new OIndexException("Cannot create the index '" + iName + "'", e);
 
 		} finally {
 			releaseExclusiveLock();
 		}
+		return this;
 	}
 
 	public OIndexInternal<T> loadFromConfiguration(final ODocument iConfig) {
@@ -308,7 +315,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 	}
 
 	public ORID getIdentity() {
-		return ((OTreeDataProviderGeneric) map.getDataTree()).getRecord().getIdentity();
+		return ((OTreeDataProviderGeneric<Object, ?>) map.getDataTree()).getRecord().getIdentity();
 	}
 
 	public long rebuild() {
@@ -439,7 +446,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 	}
 
 	public ORecordBytes getRecord() {
-		return ((OTreeDataProviderGeneric) map.getDataTree()).getRecord();
+		return ((OTreeDataProviderGeneric<Object, ?>) map.getDataTree()).getRecord();
 	}
 
 	public Iterator<Entry<Object, T>> iterator() {
@@ -559,7 +566,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 				}
 
 				configuration.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);
-				configuration.field(CONFIG_MAP_RID, ((OTreeDataProviderGeneric) map.getDataTree()).getRecord().getIdentity());
+				configuration.field(CONFIG_MAP_RID, ((OTreeDataProviderGeneric<Object, ?>) map.getDataTree()).getRecord().getIdentity());
 
 			} finally {
 				configuration.setInternalStatus(ORecordElement.STATUS.LOADED);

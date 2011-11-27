@@ -15,6 +15,11 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -24,11 +29,6 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 
 /**
  * SQL CREATE INDEX command: Create a new index against a property.
@@ -44,14 +44,14 @@ import java.util.Map;
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissionAbstract {
 	public static final String	KEYWORD_CREATE	= "CREATE";
-	public static final String	KEYWORD_INDEX	= "INDEX";
-	public static final String	KEYWORD_ON		= "ON";
+	public static final String	KEYWORD_INDEX		= "INDEX";
+	public static final String	KEYWORD_ON			= "ON";
 
-	private String					indexName;
-	private OClass					oClass;
-	private String[]				fields;
-	private OClass.INDEX_TYPE	indexType;
-	private OType[]				keyTypes;
+	private String							indexName;
+	private OClass							oClass;
+	private String[]						fields;
+	private OClass.INDEX_TYPE		indexType;
+	private OType[]							keyTypes;
 
 	public OCommandExecutorSQLCreateIndex parse(final OCommandRequestText iRequest) {
 		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
@@ -184,7 +184,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 		if (indexName == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 
-		final OIndex idx;
+		final OIndex<?> idx;
 		if (fields == null || fields.length == 0) {
 			if (keyTypes != null)
 				idx = database.getMetadata().getIndexManager()

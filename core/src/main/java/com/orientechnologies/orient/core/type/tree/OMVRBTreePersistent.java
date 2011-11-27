@@ -94,7 +94,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		setLastSearchNode(null, null);
 
 		// LOAD THE ROOT OBJECT AFTER ALL
-		ORID rootRid = dataTree.getRoot();
+		final ORID rootRid = dataTree.getRoot();
 		if (rootRid != null && dataTree.getRoot().isValid())
 			root = loadEntry(null, rootRid);
 		return this;
@@ -116,6 +116,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 				pRoot.save();
 			}
 		}
+
 		dataTree.save();
 	}
 
@@ -188,6 +189,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 				((OMVRBTreeEntryPersistent<K, V>) root).delete();
 				super.clear();
 				markDirty();
+				save();
 			}
 			entryPoints.clear();
 			cache.clear();
@@ -790,6 +792,10 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			return;
 
 		super.setRoot(iRoot);
+
+		if (iRoot == null)
+			dataTree.setRoot(null);
+
 		if (listener != null)
 			listener.signalTreeChanged(this);
 	}

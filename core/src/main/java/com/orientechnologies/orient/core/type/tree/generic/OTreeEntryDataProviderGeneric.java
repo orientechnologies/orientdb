@@ -13,7 +13,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ORecordBytesLazy;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
-import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
+import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -277,6 +277,7 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 			save(treeDataProvider.getDatabase());
 		else
 			save(treeDataProvider.storage);
+		int a = 4;
 	}
 
 	protected void save(ODatabaseRecord iDb) {
@@ -398,7 +399,7 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 
 		final long timer = OProfiler.getInstance().startChrono();
 
-		final OMemoryOutputStream outStream = new OMemoryOutputStream();
+		final OMemoryStream outStream = new OMemoryStream();
 
 		try {
 			outStream.add(pageSize);
