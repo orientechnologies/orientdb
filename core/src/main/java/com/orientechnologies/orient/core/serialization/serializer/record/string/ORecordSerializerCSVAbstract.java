@@ -605,7 +605,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					OObjectSerializerHelper.invokeCallback(o, doc, OAfterSerialization.class);
 					id = doc;
 				} else if (!o.getClass().getName().startsWith("java.lang.") && (iLinkedType == null || iLinkedType == OType.EMBEDDED))
-					iLinkedType = OType.CUSTOM;
+					iLinkedType = OType.getTypeByClass(o.getClass());
 				linkedClass = iLinkedClass;
 			} else {
 				id = (OIdentifiable) o;

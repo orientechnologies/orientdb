@@ -238,4 +238,21 @@ public class JSONTest {
 		ODocument doc2 = database.load(doc.getIdentity());
 		Assert.assertEquals(doc, doc2);
 	}
+
+	public void testArrayOfArray() {
+		ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
+		database.open("admin", "admin");
+
+		ODocument newDoc = new ODocument(database);
+
+		newDoc
+				.fromJSON("{\"@type\": \"d\",\"@class\": \"Track\",\"type\": \"LineString\",\"coordinates\": [ [ 100,  0 ],  [ 101, 1 ] ]}");
+
+		newDoc.save();
+
+		ODocument loadedDoc = database.load(newDoc.getIdentity());
+
+		Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
+		database.close();
+	}
 }
