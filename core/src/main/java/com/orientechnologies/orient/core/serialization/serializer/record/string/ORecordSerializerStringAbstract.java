@@ -311,7 +311,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 			return OType.STRING;
 		else if (firstChar == OStringSerializerHelper.BINARY_BEGINEND)
 			return OType.BINARY;
-		else if (firstChar == OStringSerializerHelper.PARENTHESIS_BEGIN)
+		else if (firstChar == OStringSerializerHelper.EMBEDDED_BEGIN)
 			return OType.EMBEDDED;
 		else if (firstChar == OStringSerializerHelper.LINK)
 			return OType.LINK;

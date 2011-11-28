@@ -40,8 +40,8 @@ public abstract class OStringSerializerHelper {
 
 	public static final String							CLASS_SEPARATOR					= "@";
 	public static final char								LINK										= ORID.PREFIX;
-	public static final char								PARENTHESIS_BEGIN				= '(';
-	public static final char								PARENTHESIS_END					= ')';
+	public static final char								EMBEDDED_BEGIN					= '(';
+	public static final char								EMBEDDED_END						= ')';
 	public static final char								COLLECTION_BEGIN				= '[';
 	public static final char								COLLECTION_END					= ']';
 	public static final char								MAP_BEGIN								= '{';
@@ -187,12 +187,12 @@ public abstract class OStringSerializerHelper {
 						insideCollection--;
 					}
 
-				} else if (c == PARENTHESIS_BEGIN) {
+				} else if (c == EMBEDDED_BEGIN) {
 					insideParenthesis++;
-				} else if (c == PARENTHESIS_END) {
+				} else if (c == EMBEDDED_END) {
 					if (!isCharPresent(c, iRecordSeparator)) {
 						if (insideParenthesis == 0)
-							throw new OSerializationException("Found invalid " + PARENTHESIS_END
+							throw new OSerializationException("Found invalid " + EMBEDDED_END
 									+ " character. Ensure it is opened and closed correctly.");
 						insideParenthesis--;
 					}
@@ -202,7 +202,8 @@ public abstract class OStringSerializerHelper {
 				} else if (c == MAP_END) {
 					if (!isCharPresent(c, iRecordSeparator)) {
 						if (insideMap == 0)
-							throw new OSerializationException("Found invalid " + MAP_END + " character. Ensure it is opened and closed correctly.");
+							throw new OSerializationException("Found invalid " + MAP_END
+									+ " character. Ensure it is opened and closed correctly.");
 						insideMap--;
 					}
 				}
@@ -414,7 +415,7 @@ public abstract class OStringSerializerHelper {
 	public static int getParameters(final String iText, final int iBeginPosition, int iEndPosition, final List<String> iParameters) {
 		iParameters.clear();
 
-		final int openPos = iText.indexOf(PARENTHESIS_BEGIN, iBeginPosition);
+		final int openPos = iText.indexOf(EMBEDDED_BEGIN, iBeginPosition);
 		if (openPos == -1 || (iEndPosition > -1 && openPos > iEndPosition))
 			return iBeginPosition;
 
@@ -614,8 +615,8 @@ public abstract class OStringSerializerHelper {
 
 			return OBase64Utils.decode(s);
 		} else
-			throw new IllegalArgumentException("Cannot parse binary as the same type as the value (class=" + iValue.getClass().getName() + "): "
-					+ iValue);
+			throw new IllegalArgumentException("Cannot parse binary as the same type as the value (class=" + iValue.getClass().getName()
+					+ "): " + iValue);
 	}
 
 	/**

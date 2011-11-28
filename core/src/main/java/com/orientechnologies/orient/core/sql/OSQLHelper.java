@@ -207,9 +207,9 @@ public class OSQLHelper {
 
 	public static Object getFunction(final ODatabaseRecord database, final OCommandToParse iCommand, final String iWord) {
 		final int separator = iWord.indexOf('.');
-		final int beginParenthesis = iWord.indexOf(OStringSerializerHelper.PARENTHESIS_BEGIN);
+		final int beginParenthesis = iWord.indexOf(OStringSerializerHelper.EMBEDDED_BEGIN);
 		if (beginParenthesis > -1 && (separator == -1 || separator > beginParenthesis)) {
-			final int endParenthesis = iWord.indexOf(OStringSerializerHelper.PARENTHESIS_END, beginParenthesis);
+			final int endParenthesis = iWord.indexOf(OStringSerializerHelper.EMBEDDED_END, beginParenthesis);
 
 			if (endParenthesis > -1 && Character.isLetter(iWord.charAt(0)))
 				// FUNCTION: CREATE A RUN-TIME CONTAINER FOR IT TO SAVE THE PARAMETERS

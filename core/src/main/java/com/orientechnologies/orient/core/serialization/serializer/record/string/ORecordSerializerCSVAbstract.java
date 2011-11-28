@@ -354,9 +354,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 		case EMBEDDED:
 			if (iValue instanceof ODocument) {
-				iOutput.append(OStringSerializerHelper.PARENTHESIS_BEGIN);
+				iOutput.append(OStringSerializerHelper.EMBEDDED_BEGIN);
 				toString((ODocument) iValue, iOutput, null, iObjHandler, iMarshalledRecords, false);
-				iOutput.append(OStringSerializerHelper.PARENTHESIS_END);
+				iOutput.append(OStringSerializerHelper.EMBEDDED_END);
 			} else if (iValue != null)
 				iOutput.append(iValue.toString());
 			OProfiler.getInstance().stopChrono("serializer.rec.str.embed2string", timer);
@@ -463,9 +463,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 												}
 											}, null, iSaveOnlyDirty);
 
-						iOutput.append(OStringSerializerHelper.PARENTHESIS_BEGIN);
+						iOutput.append(OStringSerializerHelper.EMBEDDED_BEGIN);
 						toString(record, iOutput, null, iObjHandler, iMarshalledRecords, false);
-						iOutput.append(OStringSerializerHelper.PARENTHESIS_END);
+						iOutput.append(OStringSerializerHelper.EMBEDDED_END);
 					} else if (o.getValue() instanceof Set<?>) {
 						// SUB SET
 						fieldTypeToString(iOutput, iDatabase, OType.EMBEDDEDSET, o.getValue());
@@ -491,14 +491,14 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 	}
 
 	public Object embeddedCollectionFromStream(final ODatabaseRecord iDatabase, final ODocument iDocument, final OType iType,
-			OClass iLinkedClass, OType iLinkedType, final String iValue) {
+			OClass iLinkedClass, final OType iLinkedType, final String iValue) {
 		if (iValue.length() == 0)
 			return null;
 
 		// REMOVE BEGIN & END COLLECTIONS CHARACTERS IF IT'S A COLLECTION
 		final String value = iValue.charAt(0) == '[' ? iValue.substring(1, iValue.length() - 1) : iValue;
 
-		final Collection<?> coll;
+		Collection<?> coll;
 		if (iLinkedType == OType.LINK) {
 			if (iDocument != null)
 				coll = iType == OType.EMBEDDEDLIST ? new ORecordLazyList(iDocument).setStreamedContent(new StringBuilder(value))
@@ -506,23 +506,13 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			else
 				coll = iType == OType.EMBEDDEDLIST ? new ORecordLazyList(iDatabase).setStreamedContent(new StringBuilder(value))
 						: new ORecordLazySet(iDatabase).setStreamedContent(new StringBuilder(value));
-
-			// LAZY LOADED: RETURN
-			return coll;
-		}
-
-		coll = iType == OType.EMBEDDEDLIST ? new OTrackedList<Object>(iDocument) : new OTrackedSet<Object>(iDocument);
+		} else
+			coll = iType == OType.EMBEDDEDLIST ? new OTrackedList<Object>(iDocument) : new OTrackedSet<Object>(iDocument);
 
 		if (value.length() == 0)
 			return coll;
 
-		if (iLinkedType == null) {
-			final char begin = value.charAt(0);
-
-			// AUTO-DETERMINE LINKED TYPE
-			if (begin == OStringSerializerHelper.LINK)
-				iLinkedType = OType.LINK;
-		}
+		OType linkedType;
 
 		if (coll instanceof ORecordElement)
 			((ORecordElement) coll).setInternalStatus(STATUS.UNMARSHALLING);
@@ -530,8 +520,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR);
 		for (String item : items) {
 			Object objectToAdd = null;
+			linkedType = null;
 
-			if (item.length() > 2 && item.charAt(0) == OStringSerializerHelper.PARENTHESIS_BEGIN) {
+			if (item.length() > 2 && item.charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN) {
 				// REMOVE EMBEDDED BEGIN/END CHARS
 				item = item.substring(1, item.length() - 1);
 
@@ -539,24 +530,31 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					// EMBEDDED RECORD, EXTRACT THE CLASS NAME IF DIFFERENT BY THE PASSED (SUB-CLASS OR IT WAS PASSED NULL)
 					iLinkedClass = OStringSerializerHelper.getRecordClassName(iDatabase, item, iLinkedClass);
 
-					if (iLinkedClass != null) {
+					if (iLinkedClass != null)
 						objectToAdd = fromString(iDocument.getDatabase(), item, new ODocument(iDatabase, iLinkedClass.getName()));
-					} else
+					else
 						// EMBEDDED OBJECT
-						objectToAdd = fieldTypeFromStream(iDocument, iLinkedType, item);
+						objectToAdd = fieldTypeFromStream(iDocument, OType.EMBEDDED, item);
 				}
 			} else {
-				// EMBEDDED LITERAL
-				if (iLinkedType == null)
-					iLinkedType = getType(item);
+				if (linkedType == null) {
+					final char begin = value.charAt(0);
 
-				if (iLinkedType == null)
-					throw new IllegalArgumentException(
-							"Linked type cannot be null. Probably the serialized type has not stored the type along with data");
-				else if (iLinkedType == OType.CUSTOM)
-					item = item.substring(1);
+					// AUTO-DETERMINE LINKED TYPE
+					if (begin == OStringSerializerHelper.LINK)
+						linkedType = OType.LINK;
+					else
+						linkedType = getType(item);
 
-				objectToAdd = fieldTypeFromStream(iDocument, iLinkedType, item);
+					if (linkedType == null)
+						throw new IllegalArgumentException(
+								"Linked type cannot be null. Probably the serialized type has not stored the type along with data");
+				}
+
+				if (iLinkedType == OType.CUSTOM)
+					item = item.substring(1, item.length() - 1);
+
+				objectToAdd = fieldTypeFromStream(iDocument, linkedType, item);
 			}
 
 			if (objectToAdd != null) {
@@ -573,12 +571,13 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 	}
 
 	public StringBuilder embeddedCollectionToStream(final ODatabaseComplex<?> iDatabase, final OUserObject2RecordHandler iObjHandler,
-			final StringBuilder iOutput, final OClass iLinkedClass, OType iLinkedType, final Object iValue,
+			final StringBuilder iOutput, final OClass iLinkedClass, final OType iLinkedType, final Object iValue,
 			final Set<Integer> iMarshalledRecords, final boolean iSaveOnlyDirty) {
 		iOutput.append(OStringSerializerHelper.COLLECTION_BEGIN);
 
 		final Iterator<Object> iterator = iValue instanceof Collection<?> ? ((Collection<Object>) iValue).iterator() : null;
 		final int size = iValue instanceof Collection<?> ? ((Collection<Object>) iValue).size() : Array.getLength(iValue);
+		OType linkedType = iLinkedType;
 
 		for (int i = 0; i < size; ++i) {
 			final Object o;
@@ -604,8 +603,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					doc = (ODocument) OObjectSerializerHelper.getFieldValue(o, fieldBound);
 					OObjectSerializerHelper.invokeCallback(o, doc, OAfterSerialization.class);
 					id = doc;
-				} else if (!o.getClass().getName().startsWith("java.lang.") && (iLinkedType == null || iLinkedType == OType.EMBEDDED))
-					iLinkedType = OType.getTypeByClass(o.getClass());
+				} else if (iLinkedType == null)
+					linkedType = OType.getTypeByClass(o.getClass());
+
 				linkedClass = iLinkedClass;
 			} else {
 				id = (OIdentifiable) o;
@@ -613,9 +613,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				if (iLinkedType == null)
 					// AUTO-DETERMINE LINKED TYPE
 					if (id.getIdentity().isValid())
-						iLinkedType = OType.LINK;
+						linkedType = OType.LINK;
 					else
-						iLinkedType = OType.EMBEDDED;
+						linkedType = OType.EMBEDDED;
 
 				if (id instanceof ODocument) {
 					doc = (ODocument) id;
@@ -628,10 +628,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					linkedClass = null;
 			}
 
-			if (id != null && iLinkedType != OType.LINK)
-				iOutput.append(OStringSerializerHelper.PARENTHESIS_BEGIN);
+			if (id != null && linkedType != OType.LINK)
+				iOutput.append(OStringSerializerHelper.EMBEDDED_BEGIN);
 
-			if (iLinkedType != OType.LINK && (linkedClass != null || doc != null)) {
+			if (linkedType != OType.LINK && (linkedClass != null || doc != null)) {
 				if (id == null)
 					// EMBEDDED OBJECTS
 					id = OObjectSerializerHelper.toStream(o, new ODocument((ODatabaseRecord) iDatabase, o.getClass().getSimpleName()),
@@ -659,14 +659,14 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				// EMBEDDED LITERALS
 				if (iLinkedType == null) {
 					if (o != null)
-						iLinkedType = OType.getTypeByClass(o.getClass());
+						linkedType = OType.getTypeByClass(o.getClass());
 				} else if (iLinkedType == OType.CUSTOM)
 					iOutput.append(OStringSerializerHelper.CUSTOM_TYPE);
-				fieldTypeToString(iOutput, iDatabase, iLinkedType, o);
+				fieldTypeToString(iOutput, iDatabase, linkedType, o);
 			}
 
-			if (id != null && iLinkedType != OType.LINK)
-				iOutput.append(OStringSerializerHelper.PARENTHESIS_END);
+			if (id != null && linkedType != OType.LINK)
+				iOutput.append(OStringSerializerHelper.EMBEDDED_END);
 		}
 
 		iOutput.append(OStringSerializerHelper.COLLECTION_END);
