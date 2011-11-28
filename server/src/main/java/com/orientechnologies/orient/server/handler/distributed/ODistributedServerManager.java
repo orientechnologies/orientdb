@@ -35,6 +35,7 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.distributed.ONetworkProtocolDistributed;
+import com.orientechnologies.orient.server.replication.ODistributedException;
 import com.orientechnologies.orient.server.replication.OReplicator;
 
 /**
@@ -76,7 +77,11 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	public void startup() {
 		status = STATUS.STARTING;
 		sendPresence();
-		replicator = new OReplicator(this);
+		try {
+			replicator = new OReplicator(this);
+		} catch (IOException e) {
+			throw new ODistributedException("Cannot start replicator agent");
+		}
 	}
 
 	@Override

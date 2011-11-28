@@ -100,7 +100,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 				// SEND AVAILABLE DATABASES
 				doc.reset();
-				doc.field("availableDatabases", OServerMain.server().getAvailableStorageNames().keySet());
+				doc.field("availableDatabases", manager.getReplicator().getDatabaseConfiguration());
 				channel.writeBytes(doc.toStream());
 				channel.flush();
 

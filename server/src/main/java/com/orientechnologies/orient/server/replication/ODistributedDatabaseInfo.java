@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.server.replication;
 
-
 /**
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
@@ -32,4 +31,5 @@ public class ODistributedDatabaseInfo {
 	public int									sessionId;
 	public SYNCH_TYPE						synchType;
 	public ODistributedStorage	storage;
+	public OOperationLog				log;
 }

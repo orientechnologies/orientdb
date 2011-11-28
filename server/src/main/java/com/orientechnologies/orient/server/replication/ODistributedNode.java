@@ -16,16 +16,16 @@
 package com.orientechnologies.orient.server.replication;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.SYNCH_TYPE;
@@ -45,11 +45,11 @@ public class ODistributedNode implements OCommandOutputListener {
 	public String																	networkAddress;
 	public int																		networkPort;
 	public Date																		connectedOn;
-	private List<OTransactionRecordEntry>					bufferedChanges	= new ArrayList<OTransactionRecordEntry>();
-	private Map<String, ODistributedDatabaseInfo>	databases				= new HashMap<String, ODistributedDatabaseInfo>();
+	private Map<String, ODistributedDatabaseInfo>	databases	= new HashMap<String, ODistributedDatabaseInfo>();
 	private STATUS																status;
+	private OOperationLog													log;
 
-	public ODistributedNode(final ODistributedServerManager iNode, final String iId) {
+	public ODistributedNode(final ODistributedServerManager iNode, final String iId) throws IOException {
 		id = iId;
 
 		final String[] parts = iId.split(":");
@@ -81,7 +81,8 @@ public class ODistributedNode implements OCommandOutputListener {
 		}
 	}
 
-	public void sendRequest(final OTransactionRecordEntry iRequest, final SYNCH_TYPE iRequestType) throws IOException {
+	public void sendRequest(final long iOperationId, final OTransactionRecordEntry iRequest, final SYNCH_TYPE iRequestType)
+			throws IOException {
 		logChange(iRequest);
 
 		final ODistributedDatabaseInfo databaseEntry = databases.get(iRequest.getRecord().getDatabase().getName());
@@ -128,23 +129,13 @@ public class ODistributedNode implements OCommandOutputListener {
 	}
 
 	/**
-	 * Log changes to the disk. TODO: Write to disk not memory
+	 * Logs operation to disk.
 	 * 
 	 * @param iRequest
+	 * @throws IOException
 	 */
-	protected void logChange(final OTransactionRecordEntry iRequest) {
-		synchronized (bufferedChanges) {
-			try {
-			} finally {
-			}
-		}
-	}
-
-	public void startSynchronization() throws InterruptedException, IOException {
-		if (status != STATUS.SYNCHRONIZING) {
-			synchronizeDelta();
-			status = STATUS.ONLINE;
-		}
+	protected long logChange(final OTransactionRecordEntry iRequest) throws IOException {
+		return log.addLog(iRequest.status, (ORecordId) iRequest.getRecord().getIdentity());
 	}
 
 	public void shareDatabase(final ODatabaseRecord iDatabase, final String iRemoteServerName, final String iDbUser,
@@ -207,28 +198,20 @@ public class ODistributedNode implements OCommandOutputListener {
 		return id;
 	}
 
-	private void synchronizeDelta() throws IOException {
-		synchronized (bufferedChanges) {
-			if (bufferedChanges.isEmpty())
-				return;
+	private void synchronizeDelta(final ODocument iNodes) throws IOException {
+		if (log.isEmpty())
+			return;
 
-			OLogManager.instance().info(this, "Started realignment of remote node '%s' after a reconnection. Found %d updates", id,
-					bufferedChanges.size());
+		OLogManager.instance().info(this, "Started realignment of remote node '%s' after a reconnection. Found %d updates", id,
+				log.totalEntries());
 
-			status = STATUS.SYNCHRONIZING;
+		status = STATUS.SYNCHRONIZING;
 
-			final long time = System.currentTimeMillis();
+		final long time = System.currentTimeMillis();
 
-			for (OTransactionRecordEntry entry : bufferedChanges) {
-				sendRequest(entry, SYNCH_TYPE.SYNCH);
-			}
-			bufferedChanges.clear();
+		OLogManager.instance().info(this, "Realignment of remote node '%s' completed in %d ms", id, System.currentTimeMillis() - time);
 
-			OLogManager.instance()
-					.info(this, "Realignment of remote node '%s' completed in %d ms", id, System.currentTimeMillis() - time);
-
-			status = STATUS.ONLINE;
-		}
+		status = STATUS.ONLINE;
 	}
 
 	public String getName() {
@@ -245,5 +228,9 @@ public class ODistributedNode implements OCommandOutputListener {
 
 	public Map<String, ODistributedDatabaseInfo> getDatabases() {
 		return databases;
+	}
+
+	public long getOperationId() throws IOException {
+		return log.getLastOperationId();
 	}
 }

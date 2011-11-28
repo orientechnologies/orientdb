@@ -20,6 +20,7 @@ import java.io.IOException;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.storage.fs.OFile;
@@ -30,6 +31,11 @@ public class OSingleFileSegment extends OSharedResourceAdaptive {
 	protected OStorageLocal							storage;
 	protected OFile											file;
 	protected OStorageFileConfiguration	config;
+
+	public OSingleFileSegment(final String iPath, final String iType) throws IOException {
+		super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
+		file = OFileFactory.create(iType, OSystemVariableResolver.resolveSystemVariables(iPath), "rw");
+	}
 
 	public OSingleFileSegment(final OStorageLocal iStorage, final OStorageFileConfiguration iConfig) throws IOException {
 		this(iStorage, iConfig, iConfig.type);
@@ -62,7 +68,7 @@ public class OSingleFileSegment extends OSharedResourceAdaptive {
 		}
 	}
 
-	public void create(int iStartSize) throws IOException {
+	public void create(final int iStartSize) throws IOException {
 		acquireExclusiveLock();
 		try {
 			file.create(iStartSize);
@@ -105,6 +111,10 @@ public class OSingleFileSegment extends OSharedResourceAdaptive {
 		} finally {
 			releaseExclusiveLock();
 		}
+	}
+
+	public boolean exists() {
+		return file.exists();
 	}
 
 	public long getSize() {

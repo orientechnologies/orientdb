@@ -58,6 +58,7 @@ public abstract class OFile {
 	protected int								filledUpTo;																			// PART OF HEADER (4 bytes)
 	protected byte[]						securityCode						= new byte[32];					// PART OF HEADER (32 bytes)
 	protected String						mode;
+	protected boolean						failCheck								= true;
 
 	protected static final int	HEADER_SIZE							= 1024;
 	protected static final int	HEADER_DATA_OFFSET			= 128;
@@ -134,12 +135,15 @@ public abstract class OFile {
 			OLogManager.instance().error(this, "Invalid filledUp size (=" + filledUpTo + "). The file could be corrupted", null,
 					OStorageException.class);
 
-		boolean softlyClosed = isSoftlyClosed();
+		if (failCheck) {
+			boolean softlyClosed = isSoftlyClosed();
 
-		if (softlyClosed)
-			setSoftlyClosed(false);
+			if (softlyClosed)
+				setSoftlyClosed(false);
 
-		return softlyClosed;
+			return softlyClosed;
+		}
+		return true;
 	}
 
 	public void create(int iStartSize) throws IOException {
@@ -150,7 +154,7 @@ public abstract class OFile {
 
 		filledUpTo = 0;
 		writeHeader();
-		setSoftlyClosed(false);
+		setSoftlyClosed(!failCheck);
 	}
 
 	public void close() throws IOException {
@@ -394,5 +398,13 @@ public abstract class OFile {
 
 	public boolean exists() {
 		return osFile != null && osFile.exists();
+	}
+
+	public boolean isFailCheck() {
+		return failCheck;
+	}
+
+	public void setFailCheck(boolean failCheck) {
+		this.failCheck = failCheck;
 	}
 }

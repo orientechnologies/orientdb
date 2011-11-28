@@ -15,13 +15,16 @@
  */
 package com.orientechnologies.orient.server.replication;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.server.OServerMain;
@@ -53,17 +56,18 @@ public class OReplicator {
 	 * <code>{ "demo" : [ { "192.168.0.10:2425", "synch" } ] } </code>
 	 * </p>
 	 */
+	public final static String						DIRECTORY_NAME	= "${ORIENTDB_HOME}/replication";
 	private ODocument											clusterConfiguration;
 	private OReplicatorRecordHook					trigger;
-	private volatile STATUS								status	= STATUS.ONLINE;
-	private Map<String, ODistributedNode>	nodes		= new HashMap<String, ODistributedNode>();
+	private volatile STATUS								status					= STATUS.ONLINE;
+	private Map<String, ODistributedNode>	nodes						= new HashMap<String, ODistributedNode>();
 	private OServerUserConfiguration			replicatorUser;
 	private ODistributedServerManager			manager;
+	private Map<String, OOperationLog>		logs						= new HashMap<String, OOperationLog>();
 
-	public OReplicator(final ODistributedServerManager iManager) {
+	public OReplicator(final ODistributedServerManager iManager) throws IOException {
 		manager = iManager;
 		trigger = new OReplicatorRecordHook(this);
-
 		replicatorUser = OServerMain.server().getConfiguration().getUser(ODistributedServerConfiguration.REPLICATOR_USER);
 		Orient.instance().registerEngine(new ODistributedEngine());
 	}
@@ -78,12 +82,17 @@ public class OReplicator {
 	 * 
 	 * @param iDocument
 	 *          Configuration as JSON document
+	 * @throws IOException
 	 */
-	public void updateConfiguration(final ODocument iDocument) {
+	public void updateConfiguration(final ODocument iDocument) throws IOException {
 		clusterConfiguration = iDocument;
 
 		// OPEN CONNECTIONS AGAINST OTHER SERVERS
 		for (String dbName : clusterConfiguration.fieldNames()) {
+
+			if (!logs.containsKey(dbName))
+				logs.put(dbName, new OOperationLog(manager.getId(), dbName));
+
 			final ODocument db = clusterConfiguration.field(dbName);
 			final Collection<ODocument> dbNodes = db.field("nodes");
 
@@ -116,6 +125,7 @@ public class OReplicator {
 							dbInfo.userName = replicatorUser.name;
 							dbInfo.userPassword = replicatorUser.password;
 							dbInfo.synchType = SYNCH_TYPE.valueOf(node.field("mode").toString().toUpperCase());
+							dbInfo.log = new OOperationLog(nodeId, dbName);
 
 							dNode.connectDatabase(dbInfo);
 						} catch (IOException e) {
@@ -147,11 +157,14 @@ public class OReplicator {
 
 			final String dbName = iTransactionEntry.getRecord().getDatabase().getName();
 
+			// LOG THE OPERATION
+			final long opId = logs.get(dbName).addLog(iTransactionEntry.status, (ORecordId) iTransactionEntry.getRecord().getIdentity());
+
 			// GET THE NODES INVOLVED IN THE UPDATE
 			for (ODistributedNode node : nodes.values()) {
 				final ODistributedDatabaseInfo dbEntry = node.getDatabases().get(dbName);
 				if (dbEntry != null)
-					node.sendRequest(iTransactionEntry, dbEntry.synchType);
+					node.sendRequest(opId, iTransactionEntry, dbEntry.synchType);
 			}
 		}
 	}
@@ -166,5 +179,32 @@ public class OReplicator {
 
 	public void setStatus(final STATUS iOnline) {
 		status = iOnline;
+	}
+
+	public ODocument getDatabaseConfiguration() {
+		final ODocument doc = new ODocument();
+		for (String dbName : OServerMain.server().getAvailableStorageNames().keySet()) {
+			final ODocument dbCfg = new ODocument().addOwner(doc);
+			doc.field(dbName, dbCfg);
+
+			final File dbDir = new File(OSystemVariableResolver.resolveSystemVariables(DIRECTORY_NAME + "/" + dbName));
+			if (dbDir.exists() && dbDir.isDirectory()) {
+				for (File f : dbDir.listFiles()) {
+					if (f.isFile() && f.getName().endsWith(OOperationLog.EXTENSION)) {
+						final String nodeId = f.getName().substring(0, f.getName().indexOf('.')).replace('_', '.').replace('-', ':');
+
+						final ODistributedNode node = nodes.get(nodeId);
+						if (node != null) {
+							try {
+								dbCfg.field(nodeId, node.getOperationId());
+							} catch (IOException e) {
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return doc;
 	}
 }

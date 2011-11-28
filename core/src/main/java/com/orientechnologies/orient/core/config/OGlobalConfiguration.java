@@ -36,13 +36,12 @@ import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 public enum OGlobalConfiguration {
 	// ENVIRONMENT
 	ENVIRONMENT_CONCURRENT("environment.concurrent",
-			"Specifies if running in multi-thread environment. Setting this to false turns off the internal lock management", Boolean.class,
-			Boolean.TRUE),
+			"Specifies if running in multi-thread environment. Setting this to false turns off the internal lock management",
+			Boolean.class, Boolean.TRUE),
 
 	// MEMORY
-	MEMORY_OPTIMIZE_THRESHOLD("memory.optimizeThreshold",
-			"Threshold for heap memory at which optimization of memory usage starts. ", Float.class, 0.70,
-			new OConfigurationChangeCallback() {
+	MEMORY_OPTIMIZE_THRESHOLD("memory.optimizeThreshold", "Threshold for heap memory at which optimization of memory usage starts. ",
+			Float.class, 0.70, new OConfigurationChangeCallback() {
 				public void change(final Object iCurrentValue, final Object iNewValue) {
 					OMemoryWatchDog.setPercentageUsageThreshold(((Number) iNewValue).floatValue());
 				}
@@ -79,8 +78,7 @@ public enum OGlobalConfiguration {
 	// DATABASE
 	OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database only saves objects bound to dirty records", Boolean.class, false),
 
-	DB_MVCC("db.mvcc", "Enables or disables MVCC (Multi-Version Concurrency Control) even outside transactions", Boolean.class,
-			true),
+	DB_MVCC("db.mvcc", "Enables or disables MVCC (Multi-Version Concurrency Control) even outside transactions", Boolean.class, true),
 
 	DB_VALIDATION("db.validation", "Enables or disables validation of records", Boolean.class, true),
 
@@ -102,11 +100,12 @@ public enum OGlobalConfiguration {
 			"Transaction mode used in TinkerPop Blueprints implementation. 0 = Automatic (default), 1 = Manual", Integer.class, 0),
 
 	// COLLECTION
-	RIDSET_NODE_PAGE_SIZE("ridset.nodePageSize",
-			"Page size of each node. 512 means that 512 entries can be stored inside each node", Integer.class, 512),
+	RIDSET_NODE_PAGE_SIZE("ridset.nodePageSize", "Page size of each node. 512 means that 512 entries can be stored inside each node",
+			Integer.class, 512),
 
 	// TREEMAP
-	MVRBTREE_LAZY_UPDATES("mvrbtree.lazyUpdates",
+	MVRBTREE_LAZY_UPDATES(
+			"mvrbtree.lazyUpdates",
 			"Configure the TreeMaps (indexes and dictionaries) as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
 			Integer.class, 20000),
 
@@ -163,7 +162,8 @@ public enum OGlobalConfiguration {
 	FILE_MMAP_BUFFER_SIZE("file.mmap.bufferSize", "Size of the buffer for direct access to the file through the channel",
 			Integer.class, 8192),
 
-	FILE_MMAP_MAX_MEMORY("file.mmap.maxMemory",
+	FILE_MMAP_MAX_MEMORY(
+			"file.mmap.maxMemory",
 			"Max memory allocatable by memory mapping manager. Note that on 32bit operating systems, the limit is 2Gb but will vary between operating systems.",
 			Long.class, 134217728, new OConfigurationChangeCallback() {
 				public void change(final Object iCurrentValue, final Object iNewValue) {
@@ -183,8 +183,8 @@ public enum OGlobalConfiguration {
 	FILE_MMAP_FORCE_DELAY("file.mmap.forceDelay",
 			"Delay time in ms to wait for another forced flush of the memory-mapped block to disk", Integer.class, 10),
 
-	FILE_MMAP_FORCE_RETRY("file.mmap.forceRetry", "Number of times the memory-mapped block will try to flush to disk",
-			Integer.class, 50),
+	FILE_MMAP_FORCE_RETRY("file.mmap.forceRetry", "Number of times the memory-mapped block will try to flush to disk", Integer.class,
+			50),
 
 	// NETWORK
 	NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", "TCP/IP Socket buffer size", Integer.class, 32768),
@@ -193,8 +193,8 @@ public enum OGlobalConfiguration {
 
 	NETWORK_SOCKET_TIMEOUT("network.socketTimeout", "TCP/IP Socket timeout in ms", Integer.class, 10000),
 
-	NETWORK_SOCKET_RETRY("network.retry",
-			"Number of times the client retries its connection to the server on failure", Integer.class, 5),
+	NETWORK_SOCKET_RETRY("network.retry", "Number of times the client retries its connection to the server on failure",
+			Integer.class, 5),
 
 	NETWORK_SOCKET_RETRY_DELAY("network.retryDelay", "Number of ms the client waits before reconnecting to the server on failure",
 			Integer.class, 500),
@@ -215,8 +215,8 @@ public enum OGlobalConfiguration {
 
 	NETWORK_HTTP_CONTENT_CHARSET("network.http.charset", "Http response charset", String.class, "utf-8"),
 
-	NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT("network.http.sessionExpireTimeout", "Timeout after which an http session is considered tp have expired (seconds)",
-			Integer.class, 300),
+	NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT("network.http.sessionExpireTimeout",
+			"Timeout after which an http session is considered tp have expired (seconds)", Integer.class, 300),
 
 	// PROFILER
 	PROFILER_ENABLED("profiler.enabled", "Enable the recording of statistics and counters", Boolean.class, false,
@@ -255,7 +255,14 @@ public enum OGlobalConfiguration {
 			"Delay time (in ms) for synchronization with slave nodes. 0 means early synchronization", Integer.class, 0),
 
 	DISTRIBUTED_SYNC_MAXRECORDS_BUFFER("distributed.sync.maxRecordsBuffer",
-			"Maximum number of records to buffer before transmitting to slave nodes", Integer.class, 100);
+			"Maximum number of records to buffer before transmitting to slave nodes", Integer.class, 100),
+
+	DISTRIBUTED_LOG_TYPE("distributed.log.fileType", "File type to handle server logs: mmap or classic", String.class, "classic"),
+
+	DISTRIBUTED_LOG_SYNCH(
+			"distributed.log.synch",
+			"Executes a synch against the file-system at every log entry. This slows down server operations, but guarantee transaction reliability on unreliable drives",
+			Boolean.class, Boolean.FALSE);
 
 	private final String									key;
 	private final Object									defValue;

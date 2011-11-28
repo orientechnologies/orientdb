@@ -16,7 +16,6 @@ package com.orientechnologies.orient.server.clustering;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.util.Collection;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -116,7 +115,7 @@ public class ORemotePeer {
 		doc.reset();
 		doc.fromStream(channel.readBytes());
 
-		final Collection<String> databases = doc.field("availableDatabases");
+		final ODocument databases = doc.field("availableDatabases");
 
 		// SEND UPDATED CLUSTER CONFIGURATION TO THE REMOTE PEER NODE
 		updateClusteredDatabaseConfiguration(doc, databases);
@@ -134,10 +133,12 @@ public class ORemotePeer {
 	/**
 	 * Return the clustered configuration for the requested databases.
 	 */
-	protected ODocument updateClusteredDatabaseConfiguration(final ODocument iConfiguration, final Collection<String> iDatabases)
+	protected ODocument updateClusteredDatabaseConfiguration(final ODocument iConfiguration, final ODocument databases)
 			throws UnknownHostException {
 		iConfiguration.reset();
-		for (String dbName : iDatabases) {
+		for (String dbName : databases.fieldNames()) {
+			final ODocument dbCfg = databases.field(dbName);
+
 			// TODO: GET THE CONFIGURED SYNCH MODE
 			leader.addServerInConfiguration(dbName, id, "synch");
 
