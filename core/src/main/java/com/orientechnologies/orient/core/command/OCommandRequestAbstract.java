@@ -20,6 +20,7 @@ import java.util.Map;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
  * Text based Command Request abstract class.
@@ -71,7 +72,13 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
 			} else {
 				parameters = new HashMap<Object, Object>();
 				for (int i = 0; i < iArgs.length; ++i) {
-					parameters.put(i, iArgs[i]);
+					Object par = iArgs[i];
+
+					if (par instanceof OIdentifiable && ((OIdentifiable) par).getIdentity().isValid())
+						// USE THE RID ONLY
+						par = ((OIdentifiable) par).getIdentity();
+
+					parameters.put(i, par);
 				}
 			}
 		}

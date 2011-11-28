@@ -14,6 +14,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexTxAwareMultiValue;
+import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 @Test
@@ -28,7 +30,8 @@ public class IndexTxAwareMultiValueGetEntriesTest {
 	@BeforeClass
 	public void beforeClass() {
 		database.open("admin", "admin");
-		database.command(new OCommandSQL("create index idxTxAwareMultiValueGetEntriesTest notunique")).execute();
+		database.getMetadata().getIndexManager()
+				.createIndex("idxTxAwareMultiValueGetEntriesTest", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null);
 		database.close();
 	}
 

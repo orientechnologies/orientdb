@@ -232,7 +232,7 @@ public class JSONTest {
 		ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
 		database.open("admin", "admin");
 
-		ODocument doc = new ODocument(database).fromJSON("{Field1:{\"%Key\":[\"value1\",\"value2\"]}}");
+		ODocument doc = new ODocument(database).fromJSON("{name:{\"%Field\":[\"value1\",\"value2\"],\"%Field2\":{},\"%Field3\":\"value3\"}}");
 		doc.save();
 
 		ODocument doc2 = database.load(doc.getIdentity());

@@ -57,7 +57,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 	protected StringBuilder toString(ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
 			final OUserObject2RecordHandler iObjHandler, final Set<Integer> iMarshalledRecords, final boolean iOnlyDelta) {
 		if (!(iRecord instanceof ODocument))
-			throw new OSerializationException("Can't marshall a record of type " + iRecord.getClass().getSimpleName() + " to CSV");
+			throw new OSerializationException("Cannot marshall a record of type " + iRecord.getClass().getSimpleName() + " to CSV");
 
 		final ODocument record = (ODocument) iRecord;
 
@@ -203,34 +203,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 					} else if (type == null)
 						type = OType.EMBEDDEDLIST;
 
-				} else if (fieldValue instanceof Map<?, ?>) {
-					if (type == null)
-						type = OType.EMBEDDEDMAP;
-
-					if (OMultiValue.getSize(fieldValue) > 0) {
-						Object firstValue = OMultiValue.getFirstValue(fieldValue);
-
-						if (firstValue instanceof ORID) {
-							linkedClass = null;
-							linkedType = OType.LINK;
-							type = OType.LINKMAP;
-						} else if (database != null
-								&& (firstValue instanceof ORecordSchemaAware<?> || (database.getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) database
-										.getDatabaseOwner()).getEntityManager().getEntityClass(getClassName(firstValue)) != null))) {
-							if (((ORecordInternal<?>) firstValue).getIdentity().isValid())
-								type = OType.LINKMAP;
-
-							// LINK: GET THE CLASS
-							linkedType = type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDSET || type == OType.EMBEDDEDMAP ? OType.EMBEDDED
-									: OType.LINK;
-							linkedClass = getLinkInfo(database, getClassName(firstValue));
-						} else {
-							linkedType = OType.getTypeByClass(firstValue.getClass());
-							if (linkedType == OType.LINK && type == OType.EMBEDDEDMAP)
-								type = OType.LINKMAP;
-						}
-					}
-				}
+				} else if (fieldValue instanceof Map<?, ?> && type == null)
+					type = OType.EMBEDDEDMAP;
 			}
 
 			if (type == OType.TRANSIENT)
