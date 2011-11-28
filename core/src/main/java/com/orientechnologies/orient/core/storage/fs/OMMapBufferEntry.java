@@ -33,7 +33,7 @@ public class OMMapBufferEntry implements Comparable<OMMapBufferEntry> {
 	static {
 		// GET SUN JDK METHOD TO CLEAN MMAP BUFFERS
 		try {
-			//sunClass = Class.forName("sun.nio.ch.DirectBuffer");
+			// sunClass = Class.forName("sun.nio.ch.DirectBuffer");
 		} catch (Exception e) {
 			// IGNORE IT AND USE GC TO FREE RESOURCES
 		}
@@ -87,5 +87,9 @@ public class OMMapBufferEntry implements Comparable<OMMapBufferEntry> {
 
 	public int compareTo(final OMMapBufferEntry iOther) {
 		return (int) (beginOffset - iOther.beginOffset);
+	}
+
+	public boolean isValid() {
+		return buffer != null;
 	}
 }
