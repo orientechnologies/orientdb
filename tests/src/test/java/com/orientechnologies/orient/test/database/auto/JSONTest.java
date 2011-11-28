@@ -232,7 +232,8 @@ public class JSONTest {
 		ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
 		database.open("admin", "admin");
 
-		ODocument doc = new ODocument(database).fromJSON("{name:{\"%Field\":[\"value1\",\"value2\"],\"%Field2\":{},\"%Field3\":\"value3\"}}");
+		ODocument doc = new ODocument(database)
+				.fromJSON("{name:{\"%Field\":[\"value1\",\"value2\"],\"%Field2\":{},\"%Field3\":\"value3\"}}");
 		doc.save();
 
 		ODocument doc2 = database.load(doc.getIdentity());
@@ -254,5 +255,17 @@ public class JSONTest {
 
 		Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
 		database.close();
+	}
+
+	public void testSpecialChars() {
+		ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
+		database.open("admin", "admin");
+
+		ODocument doc = new ODocument(database)
+				.fromJSON("{Field:{\"Key1\":[\"Value1\",\"Value2\"],\"Key2\":{\"%%dummy%%\":null},\"Key3\":\"Value3\"}}");
+		doc.save();
+
+		ODocument doc2 = database.load(doc.getIdentity());
+		Assert.assertEquals(doc, doc2);
 	}
 }
