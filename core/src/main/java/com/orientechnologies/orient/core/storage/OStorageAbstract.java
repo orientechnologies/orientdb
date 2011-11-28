@@ -86,7 +86,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 		return level2Cache;
 	}
 
-	public String getURL() {
+	public final String getURL() {
 		return url;
 	}
 

@@ -43,7 +43,6 @@ import com.orientechnologies.orient.core.config.OStorageMemoryClusterConfigurati
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -364,9 +363,12 @@ public class OStorageLocal extends OStorageEmbedded {
 				} else
 					return;
 
-				OLogManager.instance().debug(this,
-						"Cannot delete database files because they are still locked by the OrientDB process: waiting %d ms and retrying %d/%d...",
-						DELETE_WAIT_TIME, i, DELETE_MAX_RETRIES);
+				OLogManager
+						.instance()
+						.debug(
+								this,
+								"Cannot delete database files because they are still locked by the OrientDB process: waiting %d ms and retrying %d/%d...",
+								DELETE_WAIT_TIME, i, DELETE_MAX_RETRIES);
 
 				// FORCE FINALIZATION TO COLLECT ALL THE PENDING BUFFERS
 				OMemoryWatchDog.freeMemory(DELETE_WAIT_TIME);
@@ -419,7 +421,8 @@ public class OStorageLocal extends OStorageEmbedded {
 			final int pos = registerDataSegment(conf);
 
 			if (pos == -1)
-				throw new OConfigurationException("Cannot add segment " + conf.name + " because it is already part of storage '" + name + "'");
+				throw new OConfigurationException("Cannot add segment " + conf.name + " because it is already part of storage '" + name
+						+ "'");
 
 			dataSegments[pos].create(-1);
 			configuration.update();
@@ -843,11 +846,6 @@ public class OStorageLocal extends OStorageEmbedded {
 	}
 
 	@Override
-	public String getURL() {
-		return OEngineLocal.NAME + ":" + super.getURL();
-	}
-
-	@Override
 	public OCluster getClusterByName(final String iClusterName) {
 		lock.acquireSharedLock();
 		try {
@@ -1066,8 +1064,7 @@ public class OStorageLocal extends OStorageEmbedded {
 	@Override
 	protected ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock) {
 		if (iRid.clusterPosition < 0)
-			throw new IllegalArgumentException("Cannot read record " + iRid + " since the position is invalid in storage '" + name
-					+ "'");
+			throw new IllegalArgumentException("Cannot read record " + iRid + " since the position is invalid in storage '" + name + "'");
 
 		// NOT FOUND: SEARCH IT IN THE STORAGE
 		final long timer = OProfiler.getInstance().startChrono();
@@ -1087,8 +1084,8 @@ public class OStorageLocal extends OStorageEmbedded {
 				final long lastPos = iClusterSegment.getLastEntryPosition();
 
 				if (lastPos < 0)
-					throw new ORecordNotFoundException("Record " + iRid + " is outside cluster range. The cluster '" + iClusterSegment.getName()
-							+ "' is empty in storage '" + name + "'");
+					throw new ORecordNotFoundException("Record " + iRid + " is outside cluster range. The cluster '"
+							+ iClusterSegment.getName() + "' is empty in storage '" + name + "'");
 
 				if (iRid.clusterPosition > lastPos)
 					throw new ORecordNotFoundException("Record " + iRid + " is outside cluster range. Valid range for cluster '"

@@ -137,11 +137,6 @@ public class OStorageRemote extends OStorageAbstract {
 		remoteServerEventListeners.remove(iListener);
 	}
 
-	@Override
-	public String getURL() {
-		return OEngineRemote.NAME + ":" + super.getURL();
-	}
-
 	public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iOptions) {
 		addUser();
 
