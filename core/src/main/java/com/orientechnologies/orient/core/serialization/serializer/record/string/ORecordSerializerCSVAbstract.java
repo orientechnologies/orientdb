@@ -177,30 +177,34 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			if (item != null && !item.isEmpty()) {
 				final List<String> entries = OStringSerializerHelper.smartSplit(item, OStringSerializerHelper.ENTRY_SEPARATOR);
 				if (!entries.isEmpty()) {
-					String mapValue = entries.get(1);
+					final Object mapValueObject;
+					if (entries.size() > 1) {
+						String mapValue = entries.get(1);
 
-					final OType linkedType;
+						final OType linkedType;
 
-					if (iLinkedType == null)
-						if (!mapValue.isEmpty()) {
-							linkedType = getType(mapValue);
-							if (linkedType == OType.LINK && !(map instanceof ORecordLazyMap)) {
-								// CONVERT IT TO A LAZY MAP
-								map = new ORecordLazyMap(iSourceDocument, ODocument.RECORD_TYPE);
-								((ORecordElement) map).setInternalStatus(STATUS.UNMARSHALLING);
-							}
-						} else
-							linkedType = OType.EMBEDDED;
-					else
-						linkedType = iLinkedType;
+						if (iLinkedType == null)
+							if (!mapValue.isEmpty()) {
+								linkedType = getType(mapValue);
+								if (linkedType == OType.LINK && !(map instanceof ORecordLazyMap)) {
+									// CONVERT IT TO A LAZY MAP
+									map = new ORecordLazyMap(iSourceDocument, ODocument.RECORD_TYPE);
+									((ORecordElement) map).setInternalStatus(STATUS.UNMARSHALLING);
+								}
+							} else
+								linkedType = OType.EMBEDDED;
+						else
+							linkedType = iLinkedType;
 
-					if (linkedType == OType.EMBEDDED)
-						mapValue = mapValue.substring(1, mapValue.length() - 1);
+						if (linkedType == OType.EMBEDDED)
+							mapValue = mapValue.substring(1, mapValue.length() - 1);
 
-					final Object mapValueObject = fieldTypeFromStream(iSourceDocument, linkedType, mapValue);
+						mapValueObject = fieldTypeFromStream(iSourceDocument, linkedType, mapValue);
 
-					if (mapValueObject != null && mapValueObject instanceof ODocument)
-						((ODocument) mapValueObject).addOwner(iSourceDocument);
+						if (mapValueObject != null && mapValueObject instanceof ODocument)
+							((ODocument) mapValueObject).addOwner(iSourceDocument);
+					} else
+						mapValueObject = null;
 
 					map.put(fieldTypeFromStream(iSourceDocument, OType.STRING, entries.get(0)), mapValueObject);
 				}
@@ -477,7 +481,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 						fieldTypeToString(iOutput, iDatabase, OType.EMBEDDEDMAP, o.getValue());
 					} else {
 						// EMBEDDED LITERALS
-						if (iLinkedType == null)
+						if (iLinkedType == null && o.getValue() != null)
 							iLinkedType = OType.getTypeByClass(o.getValue().getClass());
 						fieldTypeToString(iOutput, iDatabase, iLinkedType, o.getValue());
 					}
