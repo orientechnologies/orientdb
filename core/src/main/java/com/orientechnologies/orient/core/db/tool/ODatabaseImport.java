@@ -223,7 +223,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			if (index != null)
 				listener.onMessage("OK (" + tot + " entries)");
 			else
-				listener.onMessage("KO, the index wasn't found in configuration");
+				listener.onMessage("ERR, the index wasn't found in configuration");
 
 			jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
 

@@ -56,8 +56,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new ODatabaseExportException("Error on compare of database '" + storage1.getName() + "' against '"
-					+ storage2.getName() + "'", e);
+			throw new ODatabaseExportException("Error on compare of database '" + storage1.getName() + "' against '" + storage2.getName()
+					+ "'", e);
 		} finally {
 			storage1.close();
 			storage2.close();
@@ -70,7 +70,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 		listener.onMessage("\nChecking the number of clusters...");
 
 		if (storage1.getClusterNames().size() != storage1.getClusterNames().size()) {
-			listener.onMessage("KO: cluster sizes are different: " + storage1.getClusterNames().size() + " <-> "
+			listener.onMessage("ERR: cluster sizes are different: " + storage1.getClusterNames().size() + " <-> "
 					+ storage1.getClusterNames().size());
 			++differences;
 		}
@@ -94,20 +94,20 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 			listener.onMessage("\n- Checking cluster " + String.format("%-25s: ", "'" + clusterName + "'"));
 
 			if (cluster2Id == -1) {
-				listener.onMessage("KO: cluster name " + clusterName + " was not found on database " + storage2);
+				listener.onMessage("ERR: cluster name " + clusterName + " was not found on database " + storage2);
 				++differences;
 				ok = false;
 			}
 
 			if (cluster2Id != storage1.getClusterIdByName(clusterName)) {
-				listener.onMessage("KO: cluster id is different for cluster " + clusterName + ": "
+				listener.onMessage("ERR: cluster id is different for cluster " + clusterName + ": "
 						+ storage1.getClusterIdByName(clusterName) + " <-> " + cluster2Id);
 				++differences;
 				ok = false;
 			}
 
 			if (storage1.count(cluster2Id) != storage2.count(cluster2Id)) {
-				listener.onMessage("KO: number of records different in cluster '" + clusterName + "' (id=" + cluster2Id + "): "
+				listener.onMessage("ERR: number of records different in cluster '" + clusterName + "' (id=" + cluster2Id + "): "
 						+ storage1.count(cluster2Id) + " <-> " + storage2.count(cluster2Id));
 				++differences;
 				ok = false;
@@ -159,26 +159,26 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 					continue;
 				else if (buffer1 == null && buffer2 != null) {
 					// REC1 NULL
-					listener.onMessage("\n- KO: RID=" + clusterId + ":" + i + " is null in DB1");
+					listener.onMessage("\n- ERR: RID=" + clusterId + ":" + i + " is null in DB1");
 					++differences;
 				} else if (buffer1 != null && buffer2 == null) {
 					// REC2 NULL
-					listener.onMessage("\n- KO: RID=" + clusterId + ":" + i + " is null in DB2");
+					listener.onMessage("\n- ERR: RID=" + clusterId + ":" + i + " is null in DB2");
 					++differences;
 				} else {
 					if (buffer1.recordType != buffer2.recordType) {
-						listener.onMessage("\n- KO: RID=" + clusterId + ":" + i + " recordType is different: " + (char) buffer1.recordType
+						listener.onMessage("\n- ERR: RID=" + clusterId + ":" + i + " recordType is different: " + (char) buffer1.recordType
 								+ " <-> " + (char) buffer2.recordType);
 						++differences;
 					}
 
 					if (buffer1.buffer == null && buffer2.buffer == null) {
 					} else if (buffer1.buffer == null && buffer2.buffer != null) {
-						listener.onMessage("\n- KO: RID=" + clusterId + ":" + i + " content is different: null <-> " + buffer2.buffer.length);
+						listener.onMessage("\n- ERR: RID=" + clusterId + ":" + i + " content is different: null <-> " + buffer2.buffer.length);
 						++differences;
 
 					} else if (buffer1.buffer != null && buffer2.buffer == null) {
-						listener.onMessage("\n- KO: RID=" + clusterId + ":" + i + " content is different: " + buffer1.buffer.length
+						listener.onMessage("\n- ERR: RID=" + clusterId + ":" + i + " content is different: " + buffer1.buffer.length
 								+ " <-> null");
 						++differences;
 
@@ -188,7 +188,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 						final String rec2 = new String(buffer2.buffer).trim();
 
 						if (rec1.length() != rec2.length()) {
-							listener.onMessage("\n- KO: RID=" + clusterId + ":" + i + " content length is different: " + buffer1.buffer.length
+							listener.onMessage("\n- ERR: RID=" + clusterId + ":" + i + " content length is different: " + buffer1.buffer.length
 									+ " <-> " + buffer2.buffer.length);
 
 							if (buffer1.recordType == ODocument.RECORD_TYPE || buffer1.recordType == ORecordFlat.RECORD_TYPE)
@@ -209,7 +209,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 							doc2.fromStream(buffer2.buffer);
 
 							if (!doc1.hasSameContentOf(doc2)) {
-								listener.onMessage("\n- KO: RID=" + clusterId + ":" + i + " document content is different");
+								listener.onMessage("\n- ERR: RID=" + clusterId + ":" + i + " document content is different");
 								listener.onMessage("\n--- REC1: " + new String(buffer1.buffer));
 								listener.onMessage("\n--- REC2: " + new String(buffer2.buffer));
 								listener.onMessage("\n");
@@ -219,7 +219,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 							// CHECK BYTE PER BYTE
 							for (int b = 0; b < buffer1.buffer.length; ++b) {
 								if (buffer1.buffer[b] != buffer2.buffer[b]) {
-									listener.onMessage("\n- KO: RID=" + clusterId + ":" + i + " content is different at byte #" + b + ": "
+									listener.onMessage("\n- ERR: RID=" + clusterId + ":" + i + " content is different at byte #" + b + ": "
 											+ buffer1.buffer[b] + " <-> " + buffer2.buffer[b]);
 									listener.onMessage("\n--- REC1: " + new String(buffer1.buffer));
 									listener.onMessage("\n--- REC2: " + new String(buffer2.buffer));
