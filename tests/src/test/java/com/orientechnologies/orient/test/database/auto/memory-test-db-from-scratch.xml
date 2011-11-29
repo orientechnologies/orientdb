@@ -136,6 +136,7 @@
 			<class name="com.orientechnologies.orient.test.database.auto.DateTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.SQLFindReferencesTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.SQLCreateLinkTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.MultipleDBTest" />
 		</classes>
 	</test>
 	<test name="DbTools">
