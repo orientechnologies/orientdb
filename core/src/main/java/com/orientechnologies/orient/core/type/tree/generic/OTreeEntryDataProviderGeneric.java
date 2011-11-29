@@ -277,10 +277,9 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 			save(treeDataProvider.getDatabase());
 		else
 			save(treeDataProvider.storage);
-		int a = 4;
 	}
 
-	protected void save(ODatabaseRecord iDb) {
+	protected void save(final ODatabaseRecord iDb) {
 		if (iDb == null) {
 			throw new IllegalStateException(
 					"Current thread has no database set and the tree cannot be saved correctly. Ensure that the database is closed before the application if off.");
@@ -289,7 +288,7 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 		record.save(treeDataProvider.clusterName);
 	}
 
-	protected void save(OStorage iSt) {
+	protected void save(final OStorage iSt) {
 		record.fromStream(toStream());
 		if (record.getIdentity().isValid())
 			// UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
@@ -316,12 +315,12 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 		serializedValues = null;
 	}
 
-	protected void delete(ODatabaseRecord iDb) {
+	protected void delete(final ODatabaseRecord iDb) {
 		record.setDatabase(iDb);
 		record.delete();
 	}
 
-	protected void delete(OStorage iSt) {
+	protected void delete(final OStorage iSt) {
 		iSt.deleteRecord((ORecordId) record.getIdentity(), record.getVersion(), null);
 	}
 
@@ -340,7 +339,7 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 	}
 
 	@SuppressWarnings("unchecked")
-	public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
+	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		inStream.setSource(iStream);
