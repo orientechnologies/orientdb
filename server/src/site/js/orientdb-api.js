@@ -32,6 +32,7 @@ function ODatabase(databasePath) {
 	this.parseResponseLink = true;
 	this.removeObjectCircleReferences = true;
 	this.urlPrefix = "";
+	this.urlSuffix = "";
 
 	if (databasePath) {
 		var pos = databasePath.indexOf('orientdb_proxy', 8); // JUMP HTTP
@@ -61,6 +62,13 @@ function ODatabase(databasePath) {
 	ODatabase.prototype.setDatabaseInfo = function(iDatabaseInfo) {
 		this.databaseInfo = iDatabaseInfo;
 	}
+
+    ODatabase.prototype.getUrlSuffix = function() {
+        return this.urlSuffix;
+    }
+    ODatabase.prototype.setUrlSuffix = function(iUrlSuffix) {
+        this.urlSuffix = iUrlSuffix;
+    }
 
 	ODatabase.prototype.getCommandResult = function() {
 		return this.commandResult;
@@ -94,7 +102,7 @@ function ODatabase(databasePath) {
 		return this.encodedDatabaseName;
 	}
 	ODatabase.prototype.setDatabaseName = function(iDatabaseName) {
-		this.databaseName = iDatabaseName;
+		this.encodedDatabaseName = iDatabaseName;
 	}
 
 	ODatabase.prototype.getEvalResponse = function() {
@@ -156,7 +164,7 @@ function ODatabase(databasePath) {
 		}
 		$.ajax({
 			type : type,
-			url : urlPrefix + 'connect/' + this.encodedDatabaseName,
+			url : urlPrefix + 'connect/' + this.encodedDatabaseName + this.urlSuffix,
 			context : this,
 			async : false,
 			username : userName,
@@ -190,7 +198,7 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : "POST",
 			url : urlPrefix + 'database/' + this.encodedDatabaseName
-			+ '/' + type,
+			+ '/' + type + this.urlSuffix,
 			context : this,
 			async : false,
 			username : userName,
@@ -229,7 +237,7 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : "GET",
 			url : urlPrefix + 'query/' + this.encodedDatabaseName + '/sql/'
-					+ iQuery + iLimit + iFetchPlan,
+					+ iQuery + iLimit + iFetchPlan + this.urlSuffix,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -262,7 +270,7 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : "GET",
 			url : urlPrefix + 'document/' + this.encodedDatabaseName + '/'
-					+ iRID + iFetchPlan,
+					+ iRID + iFetchPlan + this.urlSuffix,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -293,7 +301,7 @@ function ODatabase(databasePath) {
 		
 		$.ajax({
 			type : methodType,
-			url : url,
+			url : url + this.urlSuffix,
 			data : $.toJSON(obj),
 			processData : false,
 			context : this,
@@ -332,7 +340,7 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : "DELETE",
 			url : urlPrefix + 'document/' + this.encodedDatabaseName + '/'
-					+ rid,
+					+ rid + this.urlSuffix,
 			processData : false,
 			context : this,
 			async : false,
@@ -371,7 +379,7 @@ function ODatabase(databasePath) {
 
 		$.ajax({
 			type : "PUT",
-			url : req,
+			url : req + this.urlSuffix,
 			context : this,
 			async : false,
 			data : content,
@@ -394,7 +402,7 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : "GET",
 			url : urlPrefix + 'index/' + this.encodedDatabaseName + '/'
-					+ iIndexName + "/" + iKey,
+					+ iIndexName + "/" + iKey + this.urlSuffix,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -417,7 +425,7 @@ function ODatabase(databasePath) {
 				.ajax({
 					type : "DELETE",
 					url : urlPrefix + 'index/' + this.encodedDatabaseName + '/'
-							+ iIndexName + "/" + iKey,
+							+ iIndexName + "/" + iKey + this.urlSuffix,
 					context : this,
 					async : false,
 					success : function(msg) {
@@ -440,7 +448,7 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : "GET",
 			url : urlPrefix + 'class/' + this.encodedDatabaseName + '/'
-					+ iClassName,
+					+ iClassName + this.urlSuffix,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -462,7 +470,7 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : "POST",
 			url : urlPrefix + 'class/' + this.encodedDatabaseName + '/'
-					+ iClassName,
+					+ iClassName + this.urlSuffix,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -484,7 +492,7 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : "GET",
 			url : urlPrefix + 'cluster/' + this.encodedDatabaseName + '/'
-					+ iClassName,
+					+ iClassName + this.urlSuffix,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -515,7 +523,7 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : "POST",
 			url : urlPrefix + 'command/' + this.encodedDatabaseName + '/'
-					+ iLanguage + '/' + iCommand + "/" + iLimit,
+					+ iLanguage + '/' + iCommand + "/" + iLimit + this.urlSuffix,
 			context : this,
 			async : false,
 			'dataType' : dataType,
@@ -537,7 +545,7 @@ function ODatabase(databasePath) {
 		}
 		$.ajax({
 			type : "GET",
-			url : urlPrefix + 'server',
+			url : urlPrefix + 'server' + this.urlSuffix,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -555,7 +563,7 @@ function ODatabase(databasePath) {
 	ODatabase.prototype.listDatabases = function() {
 		$.ajax({
 			type : "GET",
-			url : this.databaseUrl + '/' + 'listDatabases',
+			url : this.databaseUrl + '/' + 'listDatabases' + this.urlSuffix,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -598,7 +606,7 @@ function ODatabase(databasePath) {
 		if (this.databaseInfo != null) {
 			$.ajax({
 				type : 'GET',
-				url : urlPrefix + 'disconnect',
+				url : urlPrefix + 'disconnect' + this.urlSuffix,
 				dataType : "json",
 				async : false,
 				context : this,
@@ -799,36 +807,8 @@ function ODatabase(databasePath) {
 		}
 	}
 
-	/*
-	 * !
-	 * 
-	 * jQuery URL Encoder Decoder Plugin
-	 * 
-	 * http://0061276.netsolhost.com/tony/testurl.html
-	 * 
-	 */
 	ODatabase.prototype.URLEncode = function(c) {
-		var o = '';
-		var x = 0;
-		c = c.toString();
-		var r = /(^[a-zA-Z0-9_.]*)/;
-		while (x < c.length) {
-			var m = r.exec(c.substr(x));
-			if (m != null && m.length > 1 && m[1] != '') {
-				o += m[1];
-				x += m[1].length;
-			} else {
-				if (c[x] == ' ')
-					o += '+';
-				else {
-					var d = c.charCodeAt(x);
-					var h = d.toString(16);
-					o += '%' + (h.length < 2 ? '0' : '') + h.toUpperCase();
-				}
-				x++;
-			}
-		}
-		return o;
+		return encodeURIComponent(c);
 	}
 
 	ODatabase.prototype.URLDecode = function(s) {
