@@ -162,18 +162,20 @@ public class OStringParser {
 						continue;
 				}
 
-				// CHECK FOR CHAR TO JUMP
-				charFound = false;
+				if (stringBeginChar == ' ') {
+					// CHECK FOR CHAR TO JUMP
+					charFound = false;
 
-				for (int jumpIndex = 0; jumpIndex < iJumpChars.length(); ++jumpIndex) {
-					if (iJumpChars.charAt(jumpIndex) == c) {
-						charFound = true;
-						break;
+					for (int jumpIndex = 0; jumpIndex < iJumpChars.length(); ++jumpIndex) {
+						if (iJumpChars.charAt(jumpIndex) == c) {
+							charFound = true;
+							break;
+						}
 					}
-				}
 
-				if (charFound)
-					continue;
+					if (charFound)
+						continue;
+				}
 			}
 
 			buffer.append(c);

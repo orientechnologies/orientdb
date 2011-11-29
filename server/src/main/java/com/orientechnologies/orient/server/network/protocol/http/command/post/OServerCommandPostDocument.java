@@ -29,7 +29,7 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
 
 	@Override
 	public boolean execute(final OHttpRequest iRequest) throws Exception {
-		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: document/<database>");
+		final String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: document/<database>");
 
 		iRequest.data.commandInfo = "Create document";
 

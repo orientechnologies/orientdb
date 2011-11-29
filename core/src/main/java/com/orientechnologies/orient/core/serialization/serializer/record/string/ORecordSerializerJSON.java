@@ -62,6 +62,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 	public static final ORecordSerializerJSON	INSTANCE							= new ORecordSerializerJSON();
 	public static final String								ATTRIBUTE_FIELD_TYPES	= "@fieldTypes";
 	public static final String								DEF_DATE_FORMAT				= "yyyy-MM-dd HH:mm:ss:SSS";
+	public static final char[]								PARAMETER_SEPARATOR		= new char[] { ':', ',' };
 
 	private SimpleDateFormat									dateFormat						= new SimpleDateFormat(DEF_DATE_FORMAT);
 
@@ -85,18 +86,19 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 		iSource = iSource.substring(1, iSource.length() - 1).trim();
 
-		final String[] fields = OStringParser.getWords(iSource, ":,", true);
+		final List<String> fields = OStringSerializerHelper
+				.smartSplit(iSource, PARAMETER_SEPARATOR, 0, -1, true, ' ', '\n', '\r', '\t');
 
-		if (fields.length % 2 != 0)
+		if (fields.size() % 2 != 0)
 			throw new OSerializationException("Error on unmarshalling JSON content: wrong format. Use <field> : <value>");
 
 		Map<String, Character> fieldTypes = null;
 
-		if (fields != null && fields.length > 0) {
+		if (fields != null && fields.size() > 0) {
 			// SEARCH FOR FIELD TYPES IF ANY
-			for (int i = 0; i < fields.length; i += 2) {
-				final String fieldName = OStringSerializerHelper.getStringContent(fields[i]);
-				final String fieldValue = fields[i + 1];
+			for (int i = 0; i < fields.size(); i += 2) {
+				final String fieldName = OStringSerializerHelper.getStringContent(fields.get(i));
+				final String fieldValue = fields.get(i + 1);
 				final String fieldValueAsString = OStringSerializerHelper.getStringContent(fieldValue);
 
 				if (fieldName.equals(ATTRIBUTE_FIELD_TYPES) && iRecord instanceof ODocument) {
@@ -120,9 +122,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			}
 
 			try {
-				for (int i = 0; i < fields.length; i += 2) {
-					final String fieldName = OStringSerializerHelper.getStringContent(fields[i]);
-					final String fieldValue = fields[i + 1];
+				for (int i = 0; i < fields.size(); i += 2) {
+					final String fieldName = OStringSerializerHelper.getStringContent(fields.get(i));
+					final String fieldValue = fields.get(i + 1);
 					final String fieldValueAsString = OStringSerializerHelper.getStringContent(fieldValue);
 
 					// RECORD ATTRIBUTES
