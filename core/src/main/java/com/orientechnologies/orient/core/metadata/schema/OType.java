@@ -40,47 +40,47 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  * 
  */
 public enum OType {
-	STRING("String", 0, false, 8, new Class<?>[] { String.class }, new Class<?>[] { String.class }) {
+	BOOLEAN("Boolean", 0, true, 1, new Class<?>[] { Boolean.class, Boolean.TYPE }, new Class<?>[] { Boolean.class }) {
 	},
-	BOOLEAN("Boolean", 1, true, 1, new Class<?>[] { Boolean.class, Boolean.TYPE }, new Class<?>[] { Boolean.class }) {
+	INTEGER("Integer", 1, true, 4, new Class<?>[] { Integer.class, Integer.TYPE }, new Class<?>[] { Number.class }) {
 	},
-	INTEGER("Integer", 2, true, 4, new Class<?>[] { Integer.class, Integer.TYPE }, new Class<?>[] { Number.class }) {
+	SHORT("Short", 2, true, 2, new Class<?>[] { Short.class, Short.TYPE }, new Class<?>[] { Number.class }) {
 	},
-	SHORT("Short", 3, true, 2, new Class<?>[] { Short.class, Short.TYPE }, new Class<?>[] { Number.class }) {
+	LONG("Long", 3, true, 8, new Class<?>[] { Long.class, Long.TYPE }, new Class<?>[] { Number.class }) {
 	},
-	LONG("Long", 4, true, 8, new Class<?>[] { Long.class, Long.TYPE }, new Class<?>[] { Number.class }) {
+	FLOAT("Float", 4, true, 4, new Class<?>[] { Float.class, Float.TYPE }, new Class<?>[] { Number.class }) {
 	},
-	FLOAT("Float", 5, true, 4, new Class<?>[] { Float.class, Float.TYPE }, new Class<?>[] { Number.class }) {
+	DOUBLE("Double", 5, true, 8, new Class<?>[] { Double.class, Double.TYPE }, new Class<?>[] { Number.class }) {
 	},
-	DOUBLE("Double", 6, true, 8, new Class<?>[] { Double.class, Double.TYPE }, new Class<?>[] { Number.class }) {
+	DATETIME("Datetime", 6, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Long.class }) {
 	},
-	DATETIME("Datetime", 7, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Long.class }) {
+	STRING("String", 7, false, 8, new Class<?>[] { String.class }, new Class<?>[] { String.class }) {
 	},
 	BINARY("Binary", 8, false, 8, new Class<?>[] { Array.class }, new Class<?>[] { Array.class }) {
 	},
-	EMBEDDEDLIST("EmbeddedList", 9, false, 8, new Class<?>[] { List.class }, new Class<?>[] { Collection.class, Array.class }) {
+	EMBEDDED("Embedded", 9, false, 8, new Class<?>[] { Object.class }, new Class<?>[] { Object.class }) {
 	},
-	EMBEDDEDSET("EmbeddedSet", 10, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Collection.class, Array.class }) {
+	EMBEDDEDLIST("EmbeddedList", 10, false, 8, new Class<?>[] { List.class }, new Class<?>[] { Collection.class, Array.class }) {
 	},
-	EMBEDDEDMAP("EmbeddedMap", 11, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
+	EMBEDDEDSET("EmbeddedSet", 11, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Collection.class, Array.class }) {
 	},
-	LINK("Link", 12, true, 8, new Class<?>[] { Object.class, ORecordId.class }, new Class<?>[] { ORecord.class, ORID.class }) {
+	EMBEDDEDMAP("EmbeddedMap", 12, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
 	},
-	LINKLIST("LinkList", 13, false, 8, new Class<?>[] { List.class }, new Class<?>[] { Collection.class, Array.class }) {
+	LINK("Link", 13, true, 8, new Class<?>[] { Object.class, ORecordId.class }, new Class<?>[] { ORecord.class, ORID.class }) {
 	},
-	LINKSET("LinkSet", 14, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Collection.class, Array.class }) {
+	LINKLIST("LinkList", 14, false, 8, new Class<?>[] { List.class }, new Class<?>[] { Collection.class, Array.class }) {
 	},
-	LINKMAP("LinkMap", 15, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
+	LINKSET("LinkSet", 15, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Collection.class, Array.class }) {
 	},
-	BYTE("Byte", 16, true, 1, new Class<?>[] { Byte.class, Byte.TYPE }, new Class<?>[] { Number.class, Character.class }) {
+	LINKMAP("LinkMap", 16, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
 	},
-	DATE("Date", 17, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Long.class }) {
+	BYTE("Byte", 17, true, 1, new Class<?>[] { Byte.class, Byte.TYPE }, new Class<?>[] { Number.class, Character.class }) {
 	},
-	CUSTOM("Custom", 18, false, 8, new Class<?>[] { OSerializableStream.class }, new Class<?>[] { OSerializableStream.class }) {
+	TRANSIENT("Transient", 18, true, 0, new Class<?>[] {}, new Class<?>[] {}) {
 	},
-	EMBEDDED("Embedded", 19, false, 8, new Class<?>[] { Object.class }, new Class<?>[] { Object.class }) {
+	DATE("Date", 19, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Long.class }) {
 	},
-	TRANSIENT("Transient", 20, true, 0, new Class<?>[] {}, new Class<?>[] {}) {
+	CUSTOM("Custom", 20, false, 8, new Class<?>[] { OSerializableStream.class }, new Class<?>[] { OSerializableStream.class }) {
 	};
 
 	protected static final OType[]	TYPES	= new OType[] { STRING, BOOLEAN, BYTE, INTEGER, SHORT, LONG, FLOAT, DOUBLE, DATE, DATETIME,
