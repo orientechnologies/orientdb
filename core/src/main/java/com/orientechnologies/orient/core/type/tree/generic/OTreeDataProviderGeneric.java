@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.type.tree.generic;
 
 import java.io.IOException;
-import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -13,10 +12,8 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ORecordBytesLazy;
-import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerFactory;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -25,21 +22,22 @@ import com.orientechnologies.orient.core.type.tree.OTreeDataProvider;
 import com.orientechnologies.orient.core.type.tree.OTreeEntryDataProvider;
 
 public class OTreeDataProviderGeneric<K, V> implements OTreeDataProvider<K, V>, OSerializableStream {
-	public final static byte						CURRENT_PROTOCOL_VERSION	= 0;
+	private static final long					serialVersionUID					= 1L;
 
-	protected int												size;
-	protected int												defaultPageSize;
-	protected OStreamSerializer					keySerializer;
-	protected OStreamSerializer					valueSerializer;
-	protected final String							clusterName;
-	protected final int									clusterId;
-	protected ORecordId									root;
-	protected ORecordBytesLazy					record;
-	protected final OMemoryOutputStream	entryRecordBuffer;
-	protected boolean										keepKeysInMemory;
-	protected boolean										keepValuesInMemory;
+	public final static byte					CURRENT_PROTOCOL_VERSION	= 0;
 
-	protected OStorage									storage;
+	protected final String						clusterName;
+	protected final int								clusterId;
+	protected final ORecordBytesLazy	record;
+	protected final OMemoryStream			entryRecordBuffer;
+	protected final OStorage					storage;
+	protected int											size;
+	protected int											defaultPageSize;
+	protected OStreamSerializer				keySerializer;
+	protected OStreamSerializer				valueSerializer;
+	protected boolean									keepKeysInMemory;
+	protected boolean									keepValuesInMemory;
+	protected ORecordId								root;
 
 	public OTreeDataProviderGeneric(final OStorage iStorage, final String iClusterName, final ORID iRID) {
 		this(iStorage, iClusterName, null, null);
@@ -67,7 +65,7 @@ public class OTreeDataProviderGeneric<K, V> implements OTreeDataProvider<K, V>, 
 		keySerializer = iKeySerializer;
 		valueSerializer = iValueSerializer;
 
-		entryRecordBuffer = new OMemoryOutputStream(getDefaultPageSize() * 15);
+		entryRecordBuffer = new OMemoryStream(getDefaultPageSize() * 15);
 		updateConfig();
 	}
 
@@ -96,7 +94,7 @@ public class OTreeDataProviderGeneric<K, V> implements OTreeDataProvider<K, V>, 
 			root.reset();
 		else if (!iRid.equals(root))
 			root.copyFrom(iRid);
-		
+
 		return setDirty();
 	}
 
@@ -202,18 +200,8 @@ public class OTreeDataProviderGeneric<K, V> implements OTreeDataProvider<K, V>, 
 	public byte[] toStream() throws OSerializationException {
 		final long timer = OProfiler.getInstance().startChrono();
 
-		// XXX Sylvain : really necessary ?
-		// CHECK IF THE RECORD IS PENDING TO BE MARSHALLED
-		final Integer identityRecord = System.identityHashCode(record);
-		final Set<Integer> marshalledRecords = OSerializationThreadLocal.INSTANCE.get();
-		if (marshalledRecords.contains(identityRecord)) {
-			// ALREADY IN STACK, RETURN EMPTY
-			return new byte[] {};
-		} else
-			marshalledRecords.add(identityRecord);
-
 		try {
-			OMemoryOutputStream stream = entryRecordBuffer;
+			final OMemoryStream stream = entryRecordBuffer;
 			stream.add(CURRENT_PROTOCOL_VERSION);
 			stream.addAsFixed(root != null ? root.toStream() : ORecordId.EMPTY_RECORD_ID_STREAM);
 
@@ -223,14 +211,11 @@ public class OTreeDataProviderGeneric<K, V> implements OTreeDataProvider<K, V>, 
 			stream.add(keySerializer.getName());
 			stream.add(valueSerializer.getName());
 
-			byte[] result = stream.getByteArray();
+			final byte[] result = stream.getByteArray();
 			record.fromStream(result);
 			return result;
 
-		} catch (IOException e) {
-			throw new OSerializationException("Error on marshalling RB+Tree", e);
 		} finally {
-			marshalledRecords.remove(identityRecord);
 			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.toStream", timer);
 		}
 	}

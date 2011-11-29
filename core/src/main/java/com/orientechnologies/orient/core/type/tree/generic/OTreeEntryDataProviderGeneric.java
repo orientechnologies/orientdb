@@ -20,25 +20,25 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.tree.OTreeEntryDataProvider;
 
 public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvider<K, V>, OSerializableStream {
-	private static final long									serialVersionUID	= 1L;
+	private static final long												serialVersionUID	= 1L;
 
-	protected OTreeDataProviderGeneric<K, V>	treeDataProvider;
+	protected final OTreeDataProviderGeneric<K, V>	treeDataProvider;
 
-	protected int															size							= 0;
-	protected int															pageSize;
-	protected K[]															keys;
-	protected V[]															values;
-	protected int[]														serializedKeys;
-	protected int[]														serializedValues;
-	protected ORecordId												parentRid;
-	protected ORecordId												leftRid;
-	protected ORecordId												rightRid;
+	protected int																		size							= 0;
+	protected int																		pageSize;
+	protected K[]																		keys;
+	protected V[]																		values;
+	protected int[]																	serializedKeys;
+	protected int[]																	serializedValues;
+	protected ORecordId															parentRid;
+	protected ORecordId															leftRid;
+	protected ORecordId															rightRid;
 
-	protected boolean													color							= OMVRBTree.RED;
+	protected boolean																color							= OMVRBTree.RED;
 
-	protected ORecordBytesLazy								record;
+	protected ORecordBytesLazy											record;
 
-	protected OMemoryInputStream							inStream					= new OMemoryInputStream();
+	protected OMemoryInputStream										inStream					= new OMemoryInputStream();
 
 	@SuppressWarnings("unchecked")
 	public OTreeEntryDataProviderGeneric(final OTreeDataProviderGeneric<K, V> iTreeDataProvider) {
@@ -156,13 +156,13 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 		return color;
 	}
 
-	public boolean setValueAt(int iIndex, V iValue) {
+	public boolean setValueAt(int iIndex, final V iValue) {
 		values[iIndex] = iValue;
 		serializedValues[iIndex] = -1;
 		return setDirty();
 	}
 
-	public boolean insertAt(int iIndex, K iKey, V iValue) {
+	public boolean insertAt(final int iIndex, final K iKey, final V iValue) {
 		if (iIndex < size) {
 			// MOVE RIGHT TO MAKE ROOM FOR THE ITEM
 			System.arraycopy(keys, iIndex, keys, iIndex + 1, size - iIndex);
@@ -180,7 +180,7 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 		return setDirty();
 	}
 
-	public boolean removeAt(int iIndex) {
+	public boolean removeAt(final int iIndex) {
 		if (iIndex == size - 1) {
 			// LAST ONE: JUST REMOVE IT
 		} else if (iIndex > -1) {
@@ -200,7 +200,7 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 		return setDirty();
 	}
 
-	public boolean copyDataFrom(OTreeEntryDataProvider<K, V> iFrom, int iStartPosition) {
+	public boolean copyDataFrom(final OTreeEntryDataProvider<K, V> iFrom, int iStartPosition) {
 		OTreeEntryDataProviderGeneric<K, V> parent = (OTreeEntryDataProviderGeneric<K, V>) iFrom;
 		size = iFrom.getSize() - iStartPosition;
 		System.arraycopy(parent.keys, iStartPosition, keys, 0, size);
@@ -211,7 +211,7 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 		return setDirty();
 	}
 
-	public boolean truncate(int iNewSize) {
+	public boolean truncate(final int iNewSize) {
 		// TRUNCATE PARENT
 		Arrays.fill(keys, iNewSize, size, null);
 		Arrays.fill(values, iNewSize, size, null);
@@ -222,7 +222,7 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 	}
 
 	@SuppressWarnings("unchecked")
-	public boolean copyFrom(OTreeEntryDataProvider<K, V> iSource) {
+	public boolean copyFrom(final OTreeEntryDataProvider<K, V> iSource) {
 
 		final OTreeEntryDataProviderGeneric<K, V> source = (OTreeEntryDataProviderGeneric<K, V>) iSource;
 
@@ -242,21 +242,21 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 		return setDirty();
 	}
 
-	public boolean setLeft(ORID iRid) {
+	public boolean setLeft(final ORID iRid) {
 		if (leftRid.equals(iRid))
 			return false;
 		leftRid.copyFrom(iRid);
 		return setDirty();
 	}
 
-	public boolean setRight(ORID iRid) {
+	public boolean setRight(final ORID iRid) {
 		if (rightRid.equals(iRid))
 			return false;
 		rightRid.copyFrom(iRid);
 		return setDirty();
 	}
 
-	public boolean setParent(ORID iRid) {
+	public boolean setParent(final ORID iRid) {
 		if (parentRid.equals(iRid))
 			return false;
 		parentRid.copyFrom(iRid);
@@ -385,17 +385,6 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 	}
 
 	public byte[] toStream() throws OSerializationException {
-
-		// XXX Sylvain : really necessary ?
-		// CHECK IF THE RECORD IS PENDING TO BE MARSHALLED
-		// final Integer identityRecord = System.identityHashCode(record);
-		// final Set<Integer> marshalledRecords = OSerializationThreadLocal.INSTANCE.get();
-		// if (marshalledRecords.contains(identityRecord)) {
-		// // ALREADY IN STACK, RETURN EMPTY
-		// return new byte[] {};
-		// } else
-		// marshalledRecords.add(identityRecord);
-
 		final long timer = OProfiler.getInstance().startChrono();
 
 		final OMemoryStream outStream = new OMemoryStream();
@@ -428,7 +417,6 @@ public class OTreeEntryDataProviderGeneric<K, V> implements OTreeEntryDataProvid
 		} catch (IOException e) {
 			throw new OSerializationException("Cannot marshall RB+Tree node", e);
 		} finally {
-			// marshalledRecords.remove(identityRecord);
 			OProfiler.getInstance().stopChrono("OMVRBTreeEntryP.toStream", timer);
 		}
 	}
