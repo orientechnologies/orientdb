@@ -76,7 +76,7 @@ public class OServerAdmin {
 	 * @return The instance itself. Useful to execute method in chain
 	 * @throws IOException
 	 */
-	public OServerAdmin connect(final String iUserName, final String iUserPassword) throws IOException {
+	public synchronized OServerAdmin connect(final String iUserName, final String iUserPassword) throws IOException {
 		storage.createConnectionPool();
 
 		try {
@@ -114,7 +114,7 @@ public class OServerAdmin {
 	 * @throws IOException
 	 */
 	@SuppressWarnings("unchecked")
-	public Map<String, String> listDatabases() throws IOException {
+	public synchronized Map<String, String> listDatabases() throws IOException {
 		storage.createConnectionPool();
 		final ODocument result = new ODocument();
 		try {
@@ -147,7 +147,7 @@ public class OServerAdmin {
 	 * @return The instance itself. Useful to execute method in chain
 	 * @throws IOException
 	 */
-	public OServerAdmin createDatabase(String iStorageMode) throws IOException {
+	public synchronized OServerAdmin createDatabase(String iStorageMode) throws IOException {
 		storage.checkConnection();
 
 		try {
@@ -182,7 +182,7 @@ public class OServerAdmin {
 	 * @return true if exists, otherwise false
 	 * @throws IOException
 	 */
-	public boolean existsDatabase() throws IOException {
+	public synchronized boolean existsDatabase() throws IOException {
 		storage.checkConnection();
 
 		try {
@@ -226,7 +226,7 @@ public class OServerAdmin {
 	 * @return The instance itself. Useful to execute method in chain
 	 * @throws IOException
 	 */
-	public OServerAdmin dropDatabase() throws IOException {
+	public synchronized OServerAdmin dropDatabase() throws IOException {
 		storage.checkConnection();
 
 		try {
@@ -268,8 +268,8 @@ public class OServerAdmin {
 	 * @return The instance itself. Useful to execute method in chain
 	 * @throws IOException
 	 */
-	public OServerAdmin shareDatabase(final String iDatabaseName, final String iDatabaseUserName, final String iDatabaseUserPassword,
-			final String iRemoteName, final boolean iSynchronousMode) throws IOException {
+	public synchronized OServerAdmin shareDatabase(final String iDatabaseName, final String iDatabaseUserName,
+			final String iDatabaseUserPassword, final String iRemoteName, final boolean iSynchronousMode) throws IOException {
 		storage.checkConnection();
 
 		try {
@@ -297,7 +297,7 @@ public class OServerAdmin {
 		return this;
 	}
 
-	public Map<String, String> getGlobalConfigurations() throws IOException {
+	public synchronized Map<String, String> getGlobalConfigurations() throws IOException {
 		storage.checkConnection();
 
 		final Map<String, String> config = new HashMap<String, String>();
@@ -322,7 +322,7 @@ public class OServerAdmin {
 		return config;
 	}
 
-	public String getGlobalConfiguration(final OGlobalConfiguration iConfig) throws IOException {
+	public synchronized String getGlobalConfiguration(final OGlobalConfiguration iConfig) throws IOException {
 		storage.checkConnection();
 
 		try {
@@ -343,7 +343,8 @@ public class OServerAdmin {
 		return null;
 	}
 
-	public OServerAdmin setGlobalConfiguration(final OGlobalConfiguration iConfig, final Object iValue) throws IOException {
+	public synchronized OServerAdmin setGlobalConfiguration(final OGlobalConfiguration iConfig, final Object iValue)
+			throws IOException {
 		storage.checkConnection();
 
 		try {
@@ -362,15 +363,15 @@ public class OServerAdmin {
 	/**
 	 * Close the connection if open.
 	 */
-	public void close() {
+	public synchronized void close() {
 		storage.close();
 	}
 
-	public void close(boolean iForce) {
+	public synchronized void close(boolean iForce) {
 		storage.close(iForce);
 	}
 
-	public String getURL() {
+	public synchronized String getURL() {
 		return storage != null ? storage.getURL() : null;
 	}
 }

@@ -237,7 +237,7 @@ public class Orient extends OSharedResourceAbstract {
 		try {
 			acquireSharedLock();
 
-			return Collections.unmodifiableCollection(storages.values());
+			return new ArrayList<OStorage>(storages.values());
 
 		} finally {
 			releaseSharedLock();
