@@ -48,7 +48,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 	public OStorageEmbedded(final String iName, final String iFilePath, final String iMode) {
 		super(iName, iFilePath, iMode);
 
-		lockManager = new ORecordLockManager(OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
+		lockManager = new ORecordLockManager(OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT.getValueAsInteger());
 	}
 
 	protected abstract ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock);

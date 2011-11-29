@@ -19,6 +19,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import com.orientechnologies.common.concur.OTimeoutException;
+
 /**
  * Shared resource. Sub classes can acquire and release shared and exclusive locks.
  * 
@@ -26,25 +28,35 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * 
  */
 public abstract class OSharedResourceTimeout {
-	protected ReadWriteLock	lock	= new ReentrantReadWriteLock();
-	protected int						timeout;
+	protected final ReadWriteLock	lock	= new ReentrantReadWriteLock();
+	protected int									timeout;
 
 	public OSharedResourceTimeout(final int timeout) {
 		this.timeout = timeout;
 	}
 
-	protected void acquireSharedLock() throws InterruptedException {
-		if (!lock.readLock().tryLock(timeout, TimeUnit.MILLISECONDS))
-			throw new InterruptedException("Timeout on acquiring shared resource");
+	protected void acquireSharedLock() throws OTimeoutException {
+		try {
+			if (lock.readLock().tryLock(timeout, TimeUnit.MILLISECONDS))
+				// OK
+				return;
+		} catch (InterruptedException e) {
+		}
+		throw new OTimeoutException("Timeout on acquiring shared lock against resource: " + this);
 	}
 
 	protected void releaseSharedLock() {
 		lock.readLock().unlock();
 	}
 
-	protected void acquireExclusiveLock() throws InterruptedException {
-		if (!lock.writeLock().tryLock(timeout, TimeUnit.MILLISECONDS))
-			throw new InterruptedException("Timeout on acquiring shared resource");
+	protected void acquireExclusiveLock() throws OTimeoutException {
+		try {
+			if (lock.writeLock().tryLock(timeout, TimeUnit.MILLISECONDS))
+				// OK
+				return;
+		} catch (InterruptedException e) {
+		}
+		throw new OTimeoutException("Timeout on acquiring exclusive lock against resource: " + this);
 	}
 
 	protected void releaseExclusiveLock() {

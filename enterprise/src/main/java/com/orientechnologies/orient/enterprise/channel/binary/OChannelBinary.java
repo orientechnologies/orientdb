@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -282,7 +283,7 @@ public abstract class OChannelBinary extends OChannel {
 	public void close() {
 		try {
 			acquireExclusiveLock();
-		} catch (InterruptedException e1) {
+		} catch (OTimeoutException e1) {
 			return;
 		}
 

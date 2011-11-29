@@ -26,14 +26,14 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.collection.OCompositeKey;
-import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
-import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
+import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -62,7 +62,8 @@ import com.orientechnologies.orient.core.type.tree.generic.OTreeDataProviderGene
  * @author Luca Garulli
  * 
  */
-public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal implements OIndexInternal<T>, ODatabaseListener {
+public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveExternal implements OIndexInternal<T>,
+		ODatabaseListener {
 	protected static final String										CONFIG_MAP_RID	= "mapRid";
 	protected static final String										CONFIG_CLUSTERS	= "clusters";
 	protected String																name;
@@ -76,8 +77,9 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 	private final Listener													watchDog;
 
 	public OIndexMVRBTreeAbstract(final String iType) {
-		type = iType;
+		super(true, OGlobalConfiguration.MVRBTREE_TIMEOUT.getValueAsInteger());
 
+		type = iType;
 		watchDog = new Listener() {
 			public void memoryUsageLow(final TYPE iType, final long usedMemory, final long maxMemory) {
 				if (iType == TYPE.JVM)
@@ -790,10 +792,6 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceExternal 
 
 	public OIndexDefinition getDefinition() {
 		return indexDefinition;
-	}
-
-	public OSharedResourceAbstract getLock() {
-		return this;
 	}
 
 	@Override

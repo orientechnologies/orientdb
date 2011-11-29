@@ -13,33 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.common.concur.resource;
+package com.orientechnologies.common.concur;
 
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import com.orientechnologies.common.exception.OException;
 
 /**
- * Shared resource abstract class. Sub classes can acquire and release shared and exclusive locks.
+ * Abstract base exception to extend for all the exception that report to the user it has been thrown but re-executing it could
+ * succeed.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public abstract class OSharedResourceAbstract {
-	protected final ReadWriteLock	lock	= new ReentrantReadWriteLock();
+public abstract class ONeedRetryException extends OException {
+	private static final long	serialVersionUID	= 1L;
 
-	protected void acquireSharedLock() {
-		lock.readLock().lock();
+	public ONeedRetryException() {
+		super();
 	}
 
-	protected void releaseSharedLock() {
-		lock.readLock().unlock();
+	public ONeedRetryException(String message, Throwable cause) {
+		super(message, cause);
 	}
 
-	protected void acquireExclusiveLock() {
-		lock.writeLock().lock();
+	public ONeedRetryException(String message) {
+		super(message);
 	}
 
-	protected void releaseExclusiveLock() {
-		lock.writeLock().unlock();
+	public ONeedRetryException(Throwable cause) {
+		super(cause);
 	}
 }

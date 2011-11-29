@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 
 /**
- * Handle the holes inside cluster segments. The synchronization is in charge to the OClusterLocal instance.<br/>
+ * Handles the holes inside cluster segments. The synchronization is in charge to the OClusterLocal instance.<br/>
  * <br/>
  * Record structure:<br/>
  * <br/>

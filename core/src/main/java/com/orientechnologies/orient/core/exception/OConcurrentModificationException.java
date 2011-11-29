@@ -15,7 +15,9 @@
  */
 package com.orientechnologies.orient.core.exception;
 
-public class OConcurrentModificationException extends OTransactionException {
+import com.orientechnologies.common.concur.ONeedRetryException;
+
+public class OConcurrentModificationException extends ONeedRetryException {
 
 	private static final long	serialVersionUID	= 2347493191705052402L;
 

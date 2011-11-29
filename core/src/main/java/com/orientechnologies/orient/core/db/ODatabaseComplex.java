@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
@@ -208,7 +209,7 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 * 
 	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
-	public ODatabaseComplex<T> begin(OTransaction iTx);
+	public ODatabaseComplex<T> begin(OTransaction iTx) throws OTransactionException;
 
 	/**
 	 * Commits the current transaction. The approach is all or nothing. All changes will be permanent following the storage type. If
@@ -217,7 +218,7 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 * 
 	 * @return
 	 */
-	public ODatabaseComplex<T> commit();
+	public ODatabaseComplex<T> commit() throws OTransactionException;
 
 	/**
 	 * Aborts the current running transaction. All the pending changed entities will be restored in the datastore. Memory instances
@@ -225,7 +226,7 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 * 
 	 * @return
 	 */
-	public ODatabaseComplex<T> rollback();
+	public ODatabaseComplex<T> rollback() throws OTransactionException;
 
 	/**
 	 * Execute a query against the database.

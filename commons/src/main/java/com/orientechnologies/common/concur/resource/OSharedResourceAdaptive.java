@@ -1,26 +1,86 @@
+/*
+ * Copyright 1999-2011 Luca Garulli (l.garulli--at--orientechnologies.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.orientechnologies.common.concur.resource;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class OSharedResourceAdaptive {
-	private ReadWriteLock	lock	= new ReentrantReadWriteLock();
-	private AtomicInteger	users	= new AtomicInteger(0);
-	private final boolean	concurrent;
+import com.orientechnologies.common.concur.OTimeoutException;
 
-	public OSharedResourceAdaptive(final boolean iConcurrent) {
+/**
+ * Adaptive class to handle shared resources. It's configurable specifying if it's running in a concurrent environment and allow o
+ * specify a maximum timeout to avoid deadlocks.
+ * 
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * 
+ */
+public class OSharedResourceAdaptive {
+	private final ReadWriteLock	lock	= new ReentrantReadWriteLock();
+	private final AtomicInteger	users	= new AtomicInteger(0);
+	private final boolean				concurrent;
+	private final int						timeout;
+
+	protected OSharedResourceAdaptive() {
+		this.concurrent = true;
+		this.timeout = 0;
+	}
+
+	protected OSharedResourceAdaptive(final int iTimeout) {
+		this.concurrent = true;
+		this.timeout = iTimeout;
+	}
+
+	protected OSharedResourceAdaptive(final boolean iConcurrent) {
 		this.concurrent = iConcurrent;
+		this.timeout = 0;
+	}
+
+	protected OSharedResourceAdaptive(final boolean iConcurrent, final int iTimeout) {
+		this.concurrent = iConcurrent;
+		this.timeout = iTimeout;
 	}
 
 	protected void acquireExclusiveLock() {
 		if (concurrent)
-			lock.writeLock().lock();
+			if (timeout > 0) {
+				try {
+					if (lock.writeLock().tryLock(timeout, TimeUnit.MILLISECONDS))
+						// OK
+						return;
+				} catch (InterruptedException e) {
+				}
+				throw new OTimeoutException("Timeout on acquiring exclusive lock against resource: " + this);
+			} else
+				lock.writeLock().lock();
 	}
 
 	protected void acquireSharedLock() {
 		if (concurrent)
-			lock.readLock().lock();
+			if (timeout > 0) {
+				try {
+					if (lock.readLock().tryLock(timeout, TimeUnit.MILLISECONDS))
+						// OK
+						return;
+				} catch (InterruptedException e) {
+				}
+				throw new OTimeoutException("Timeout on acquiring shared lock against resource: " + this);
+			} else
+				lock.readLock().lock();
 	}
 
 	protected void releaseExclusiveLock() {
@@ -51,5 +111,4 @@ public class OSharedResourceAdaptive {
 	public boolean isConcurrent() {
 		return concurrent;
 	}
-
 }

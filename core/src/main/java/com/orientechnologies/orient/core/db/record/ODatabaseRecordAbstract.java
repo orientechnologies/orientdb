@@ -748,7 +748,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	@Override
 	protected void checkOpeness() {
 		if (isClosed())
-			throw new ODatabaseException("Database is closed");
+			throw new ODatabaseException("Database '" + getURL() + "' is closed");
 	}
 
 	protected void setCurrentDatabaseinThreadLocal() {

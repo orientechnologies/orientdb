@@ -259,6 +259,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 
 	protected void checkOpeness() {
 		if (isClosed())
-			throw new ODatabaseException("Database is closed. Open it before to use.");
+			throw new ODatabaseException("Database '" + getURL() + "' is closed");
 	}
 }

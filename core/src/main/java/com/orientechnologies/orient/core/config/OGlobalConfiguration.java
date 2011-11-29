@@ -53,7 +53,8 @@ public enum OGlobalConfiguration {
 			"Tells to the engine to not close the storage when a database is closed. Storages will be closed when the process shuts down",
 			Boolean.class, Boolean.TRUE),
 
-	STORAGE_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record", Integer.class, 5000),
+	STORAGE_RECORD_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record",
+			Integer.class, 5000),
 
 	// CACHE
 	CACHE_LEVEL1_ENABLED("cache.level1.enabled", "Use the level-1 cache", Boolean.class, true),
@@ -104,6 +105,8 @@ public enum OGlobalConfiguration {
 			Integer.class, 512),
 
 	// TREEMAP
+	MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 1000),
+
 	MVRBTREE_LAZY_UPDATES(
 			"mvrbtree.lazyUpdates",
 			"Configure the TreeMaps (indexes and dictionaries) as buffered or not. -1 means buffered until tx.commit() or db.close() are called",

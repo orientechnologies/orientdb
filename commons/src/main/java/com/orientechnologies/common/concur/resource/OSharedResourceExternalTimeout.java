@@ -1,5 +1,7 @@
 package com.orientechnologies.common.concur.resource;
 
+import com.orientechnologies.common.concur.OTimeoutException;
+
 public class OSharedResourceExternalTimeout extends OSharedResourceTimeout {
 
 	public OSharedResourceExternalTimeout(final int timeout) {
@@ -7,12 +9,12 @@ public class OSharedResourceExternalTimeout extends OSharedResourceTimeout {
 	}
 
 	@Override
-	public void acquireExclusiveLock() throws InterruptedException {
+	public void acquireExclusiveLock() throws OTimeoutException {
 		super.acquireExclusiveLock();
 	}
 
 	@Override
-	public void acquireSharedLock() throws InterruptedException {
+	public void acquireSharedLock() throws OTimeoutException {
 		super.acquireSharedLock();
 	}
 

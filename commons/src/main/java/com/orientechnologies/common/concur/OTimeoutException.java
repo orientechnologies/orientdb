@@ -13,33 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.common.concur.resource;
+package com.orientechnologies.common.concur;
 
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * Shared resource abstract class. Sub classes can acquire and release shared and exclusive locks.
+ * Timeout exception. The acquiring of a shared resource caused a timeout.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public abstract class OSharedResourceAbstract {
-	protected final ReadWriteLock	lock	= new ReentrantReadWriteLock();
+public class OTimeoutException extends ONeedRetryException {
+	private static final long	serialVersionUID	= 1L;
 
-	protected void acquireSharedLock() {
-		lock.readLock().lock();
+	public OTimeoutException() {
+		super();
 	}
 
-	protected void releaseSharedLock() {
-		lock.readLock().unlock();
+	public OTimeoutException(String message, Throwable cause) {
+		super(message, cause);
 	}
 
-	protected void acquireExclusiveLock() {
-		lock.writeLock().lock();
+	public OTimeoutException(String message) {
+		super(message);
 	}
 
-	protected void releaseExclusiveLock() {
-		lock.writeLock().unlock();
+	public OTimeoutException(Throwable cause) {
+		super(cause);
 	}
 }
