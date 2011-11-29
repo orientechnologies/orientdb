@@ -56,6 +56,7 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -962,8 +963,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	}
 
 	@ConsoleCommand(description = "Insert or modify an entry in the database dictionary. The entry is comprised of key=String, value=record-id")
-	public void dictionaryPut(
-			@ConsoleParameter(name = "key", description = "The key to bind") final String iKey,
+	public void dictionaryPut(@ConsoleParameter(name = "key", description = "The key to bind") final String iKey,
 			@ConsoleParameter(name = "record-id", description = "The record-id of the record to bind to the key") final String iRecordId) {
 		checkCurrentDatabase();
 
@@ -1264,7 +1264,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		if (currentDatabase == null)
 			throw new OException("Database not selected. Use 'connect <database-name>' to connect to a database.");
 		if (currentDatabase.isClosed())
-			throw new OException("Database is closed");
+			throw new ODatabaseException("Database '" + currentDatabaseName + "' is closed");
 	}
 
 	protected void checkCurrentObject() {
