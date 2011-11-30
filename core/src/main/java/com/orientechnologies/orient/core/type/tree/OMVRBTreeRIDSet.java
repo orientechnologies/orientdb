@@ -29,17 +29,17 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
  * 
  */
 @SuppressWarnings("serial")
-public class OMVRBTreeRIDDatabase extends OMVRBTreePersistent<ORecordId, ORecordId> {
+public class OMVRBTreeRIDSet extends OMVRBTreePersistent<ORecordId, ORecordId> {
 
-	public OMVRBTreeRIDDatabase(OMVRBTreeProvider<ORecordId, ORecordId> iProvider) {
+	public OMVRBTreeRIDSet(OMVRBTreeProvider<ORecordId, ORecordId> iProvider) {
 		super(iProvider);
 	}
 
-	public OMVRBTreeRIDDatabase(final ODatabaseRecord iDatabase, final ORID iRID) {
+	public OMVRBTreeRIDSet(final ODatabaseRecord iDatabase, final ORID iRID) {
 		super(new OMVRBTreeRIDProvider(null, iDatabase.getClusterNameById(iRID.getClusterId()), iRID));
 	}
 
-	public OMVRBTreeRIDDatabase(final ODatabaseRecord iDatabase, String iClusterName) {
+	public OMVRBTreeRIDSet(final ODatabaseRecord iDatabase, String iClusterName) {
 		super(new OMVRBTreeRIDProvider(null, iClusterName));
 		((OMVRBTreeRIDProvider) dataProvider).setTree(this);
 	}
