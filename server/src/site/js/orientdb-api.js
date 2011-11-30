@@ -92,7 +92,7 @@ function ODatabase(databasePath) {
 	}
 
 	ODatabase.prototype.getDatabaseUrl = function() {
-		return databaseUrl;
+		return this.databaseUrl;
 	}
 	ODatabase.prototype.setDatabaseUrl = function(iDatabaseUrl) {
 		this.databaseUrl = iDatabaseUrl;

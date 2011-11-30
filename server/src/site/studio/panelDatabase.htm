@@ -17,6 +17,7 @@
 			<li><a href="#tab-db-allocation"><span>Allocation</span> </a></li>
 			<li><a href="#tab-db-security"><span>Security</span> </a></li>
 			<li><a href="#tab-db-config"><span>Configuration</span> </a></li>
+			<li><a href="#tab-db-importExport"><span>Import\Export</span> </a></li>
 		</ul>
 		<div id="tab-db-schema">
 			<table style="width: 100%;" cellpadding="5">
@@ -283,6 +284,21 @@
 					<td valign="top">
 						<table id="databaseConfigProperties" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
 						</table>
+					</td>
+					<td valign="top" class="help"></td>
+				</tr>
+			</table>
+		</div>
+		<div id="tab-db-importExport">
+			<table style="width: 100%;" cellpadding="5">
+				<tr>
+					<td valign="top">
+						<button id="exportDatabase" class="ui-button-text" style="text-align: left; width: 100%;" >Export Database</button>
+					</td>
+					<td valign="top" class="help">Orient server can export databases as JSON data. Click the <b>Export Database</b> button to download a gzip compressed file containing said JSON file.</td>
+				</tr>
+				<tr>
+					<td valign="top">
 					</td>
 					<td valign="top" class="help"></td>
 				</tr>
@@ -902,6 +918,13 @@
 				databaseInfo['config'].properties, {
 					sortname : 'name'
 				});
+		
+		$("#exportDatabase").click(
+                function() {
+                	orientServer.open();
+                    var exportUrl = orientServer.getDatabaseUrl() + "export/" + orientServer.getDatabaseName();
+                    window.open(exportUrl,'Download');
+                });
 	}
 
 	function askDatabaseInfo() {
