@@ -27,6 +27,9 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 public class ORecordBytesLazy extends ORecordBytes {
 	private OSerializableStream	serializableContent;
 
+	public ORecordBytesLazy() {
+	}
+
 	public ORecordBytesLazy(final OSerializableStream iSerializable) {
 		this.serializableContent = iSerializable;
 	}

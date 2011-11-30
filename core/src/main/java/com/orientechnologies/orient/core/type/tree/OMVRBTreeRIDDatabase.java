@@ -1,7 +1,7 @@
 /*
  * Copyright 1999-2010 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Kersion 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -20,29 +20,28 @@ import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
-import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider;
+import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 
 /**
- * Persistent MVRB-Tree implementation. The difference with the class OMVRBTreeStorage is the level. In facts this class works
- * directly at the database level, while the other at storage level.
+ * Persistent MVRB-Tree Set implementation.
  * 
  */
 @SuppressWarnings("serial")
-public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
+public class OMVRBTreeRIDDatabase extends OMVRBTreePersistent<ORecordId, ORecordId> {
 
-	public OMVRBTreeDatabase(OMVRBTreeProvider<K, V> iProvider) {
+	public OMVRBTreeRIDDatabase(OMVRBTreeProvider<ORecordId, ORecordId> iProvider) {
 		super(iProvider);
 	}
 
-	public OMVRBTreeDatabase(final ODatabaseRecord iDatabase, final ORID iRID) {
-		super(new OMVRBTreeMapProvider<K, V>(null, iDatabase.getClusterNameById(iRID.getClusterId()), iRID));
+	public OMVRBTreeRIDDatabase(final ODatabaseRecord iDatabase, final ORID iRID) {
+		super(new OMVRBTreeRIDProvider(null, iDatabase.getClusterNameById(iRID.getClusterId()), iRID));
 	}
 
-	public OMVRBTreeDatabase(final ODatabaseRecord iDatabase, String iClusterName, final OStreamSerializer iKeySerializer,
-			final OStreamSerializer iValueSerializer) {
-		super(new OMVRBTreeMapProvider<K, V>(null, iClusterName, iKeySerializer, iValueSerializer));
+	public OMVRBTreeRIDDatabase(final ODatabaseRecord iDatabase, String iClusterName) {
+		super(new OMVRBTreeRIDProvider(null, iClusterName));
+		((OMVRBTreeRIDProvider) dataProvider).setTree(this);
 	}
 
 	public void onAfterTxCommit() {
@@ -53,11 +52,11 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
 
 		// FIX THE CACHE CONTENT WITH FINAL RECORD-IDS
 		final Set<ORID> keys = new HashSet<ORID>(nodesInMemory);
-		OMVRBTreeEntryPersistent<K, V> entry;
+		OMVRBTreeEntryPersistent<ORecordId, ORecordId> entry;
 		for (ORID rid : keys) {
 			if (rid.getClusterPosition() < -1) {
 				// FIX IT IN CACHE
-				entry = (OMVRBTreeEntryPersistent<K, V>) searchNodeInCache(rid);
+				entry = (OMVRBTreeEntryPersistent<ORecordId, ORecordId>) searchNodeInCache(rid);
 
 				// OVERWRITE IT WITH THE NEW RID
 				removeNodeFromCache(rid);

@@ -36,9 +36,11 @@ public class ORecordId implements ORID {
 	public static final ORecordId	EMPTY_RECORD_ID					= new ORecordId();
 	public static final byte[]		EMPTY_RECORD_ID_STREAM	= EMPTY_RECORD_ID.toStream();
 
-	public int										clusterId								= CLUSTER_ID_INVALID;													// INT TO AVOID JVM
-																																																				// PENALITY, BUT IT'S STORED
-																																																				// AS SHORT
+	public int										clusterId								= CLUSTER_ID_INVALID;																		// INT TO AVOID
+																																																									// JVM
+																																																									// PENALITY, BUT
+																																																									// IT'S STORED
+																																																									// AS SHORT
 	public long										clusterPosition					= CLUSTER_POS_INVALID;
 
 	public ORecordId() {

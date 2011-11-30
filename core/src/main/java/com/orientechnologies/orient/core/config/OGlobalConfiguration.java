@@ -100,10 +100,6 @@ public enum OGlobalConfiguration {
 	BLUEPRINTS_TX_MODE("blueprints.graph.txMode",
 			"Transaction mode used in TinkerPop Blueprints implementation. 0 = Automatic (default), 1 = Manual", Integer.class, 0),
 
-	// COLLECTION
-	RIDSET_NODE_PAGE_SIZE("ridset.nodePageSize", "Page size of each node. 512 means that 512 entries can be stored inside each node",
-			Integer.class, 512),
-
 	// TREEMAP
 	MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 1000),
 
@@ -132,6 +128,9 @@ public enum OGlobalConfiguration {
 
 	MVRBTREE_ENTRY_VALUES_IN_MEMORY("mvrbtree.entryValuesInMemory", "Keep unserialized values in memory", Boolean.class,
 			Boolean.FALSE),
+
+	MVRBTREE_SET_BINARY_THRESHOLD("mvrbtree.setBinaryThreshold",
+			"The threshold as number of entries to use the binary streaming instead of classic string streaming", Integer.class, 8),
 
 	// COLLECTIONS
 	LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Upon add avoid unmarshalling set", Boolean.class, true),

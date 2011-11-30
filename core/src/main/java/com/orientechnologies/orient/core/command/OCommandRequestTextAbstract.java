@@ -24,7 +24,6 @@ import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -133,15 +132,15 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
 	}
 
 	public byte[] toStream() throws OSerializationException {
-		final OMemoryOutputStream buffer = new OMemoryOutputStream();
+		final OMemoryStream buffer = new OMemoryStream();
 		try {
-			buffer.add(text);
+			buffer.set(text);
 
 			if (parameters == null || parameters.size() == 0) {
 				// simple params are absent
-				buffer.add(false);
+				buffer.set(false);
 				// composite keys are absent
-				buffer.add(false);
+				buffer.set(false);
 			} else {
 				final Map<Object, Object> params = new HashMap<Object, Object>();
 				final Map<Object, byte[]> compositeKeyParams = new HashMap<Object, byte[]>();
@@ -152,18 +151,18 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
 					else
 						params.put(paramEntry.getKey(), paramEntry.getValue());
 
-				buffer.add(!params.isEmpty());
+				buffer.set(!params.isEmpty());
 				if (!params.isEmpty()) {
 					final ODocument param = new ODocument(database);
 					param.field("params", params);
-					buffer.add(param.toStream());
+					buffer.set(param.toStream());
 				}
 
-				buffer.add(!compositeKeyParams.isEmpty());
+				buffer.set(!compositeKeyParams.isEmpty());
 				if (!compositeKeyParams.isEmpty()) {
 					final ODocument compositeKey = new ODocument(database);
 					compositeKey.field("compositeKeyParams", compositeKeyParams);
-					buffer.add(compositeKey.toStream());
+					buffer.set(compositeKey.toStream());
 				}
 			}
 

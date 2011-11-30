@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2010 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 1999-2011 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,17 @@ import java.io.OutputStream;
  */
 public class OBinaryProtocol {
 
+	public static final int	SIZE_BYTE		= 1;
+	public static final int	SIZE_CHAR		= 2;
+	public static final int	SIZE_SHORT	= 2;
+	public static final int	SIZE_INT		= 4;
+	public static final int	SIZE_LONG		= 8;
+
 	public static int string2bytes(final String iInputText, final OutputStream iStream) throws IOException {
 		if (iInputText == null)
 			return -1;
 
-		final int beginOffset = iStream instanceof OMemoryOutputStream ? ((OMemoryOutputStream) iStream).getPosition() : -1;
+		final int beginOffset = iStream instanceof OMemoryStream ? ((OMemoryStream) iStream).getPosition() : -1;
 
 		final int len = iInputText.length();
 		for (int i = 0; i < len; i++) {
@@ -214,7 +220,7 @@ public class OBinaryProtocol {
 	}
 
 	public static int long2bytes(final long value, final OutputStream iStream) throws IOException {
-		final int beginOffset = iStream instanceof OMemoryOutputStream ? ((OMemoryOutputStream) iStream).getPosition() : -1;
+		final int beginOffset = iStream instanceof OMemoryStream ? ((OMemoryStream) iStream).getPosition() : -1;
 
 		iStream.write((int) (value >>> 56) & 0xFF);
 		iStream.write((int) (value >>> 48) & 0xFF);
@@ -245,7 +251,7 @@ public class OBinaryProtocol {
 	}
 
 	public static int int2bytes(final int value, final OutputStream iStream) throws IOException {
-		final int beginOffset = iStream instanceof OMemoryOutputStream ? ((OMemoryOutputStream) iStream).getPosition() : -1;
+		final int beginOffset = iStream instanceof OMemoryStream ? ((OMemoryStream) iStream).getPosition() : -1;
 
 		iStream.write((value >>> 24) & 0xFF);
 		iStream.write((value >>> 16) & 0xFF);
@@ -268,7 +274,7 @@ public class OBinaryProtocol {
 	}
 
 	public static int short2bytes(final short value, final OutputStream iStream) throws IOException {
-		final int beginOffset = iStream instanceof OMemoryOutputStream ? ((OMemoryOutputStream) iStream).getPosition() : -1;
+		final int beginOffset = iStream instanceof OMemoryStream ? ((OMemoryStream) iStream).getPosition() : -1;
 		iStream.write((value >>> 8) & 0xFF);
 		iStream.write((value >>> 0) & 0xFF);
 		return beginOffset;
@@ -347,10 +353,4 @@ public class OBinaryProtocol {
 	public static char bytes2char(final byte[] b, final int offset) {
 		return (char) ((b[offset] << 8) + (b[offset + 1] << 0));
 	}
-
-	public static final int		SIZE_BYTE		= 1;
-	public static final int		SIZE_CHAR		= 2;
-	public static final int		SIZE_SHORT		= 2;
-	public static final int		SIZE_INT			= 4;
-	public static final int		SIZE_LONG		= 8;
 }

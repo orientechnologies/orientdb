@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.serialization;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
 
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OArrays;
@@ -51,32 +52,61 @@ public class OMemoryStream extends OutputStream {
 		buffer = stream;
 	}
 
+	/**
+	 * Move bytes left or right of an offset.
+	 * 
+	 * @param iFrom
+	 *          Starting position
+	 * @param iPosition
+	 *          Offset to the iFrom value: positive values mean move right, otherwise move left
+	 */
+	public void move(final int iFrom, final int iPosition) {
+		if (iPosition == 0)
+			return;
+
+		final int to = iFrom + iPosition;
+		final int size = iPosition > 0 ? buffer.length - to : buffer.length - iFrom;
+
+		System.arraycopy(buffer, iFrom, buffer, to, size);
+	}
+
+	public void copyFrom(final OMemoryStream iSource, final int iSize) {
+		if (iSize < 0)
+			return;
+
+		System.arraycopy(iSource.buffer, iSource.position, buffer, position, iSize);
+	}
+
 	public final void writeTo(final OutputStream out) throws IOException {
 		out.write(buffer, 0, position);
 	}
 
-	public final byte[] getByteArray() {
-		position = 0;
+	public final byte[] getInternalBuffer() {
 		return buffer;
 	}
 
 	/**
+	 * Returns the used buffer as byte[].
 	 * 
 	 * @return [result.length = size()]
 	 */
 	public final byte[] toByteArray() {
+		if (position == buffer.length - 1)
+			// 100% USED, RETURN THE FULL BUFFER
+			return buffer;
+
 		final int pos = position;
 
-		final byte[] result = new byte[pos];
-		final byte[] mbuf = buffer;
+		final byte[] destinBuffer = new byte[pos];
+		final byte[] sourceBuffer = buffer;
 
 		if (pos < NATIVE_COPY_THRESHOLD)
 			for (int i = 0; i < pos; ++i)
-				result[i] = mbuf[i];
+				destinBuffer[i] = sourceBuffer[i];
 		else
-			System.arraycopy(mbuf, 0, result, 0, pos);
+			System.arraycopy(sourceBuffer, 0, destinBuffer, 0, pos);
 
-		return result;
+		return destinBuffer;
 	}
 
 	/**
@@ -101,13 +131,13 @@ public class OMemoryStream extends OutputStream {
 
 		assureSpaceFor(iLength);
 
-		byte[] mbuf = buffer;
+		final byte[] localBuffer = buffer;
 
 		if (iLength < NATIVE_COPY_THRESHOLD)
 			for (int i = 0; i < iLength; ++i)
-				mbuf[pos + i] = iBuffer[iOffset + i];
+				localBuffer[pos + i] = iBuffer[iOffset + i];
 		else
-			System.arraycopy(iBuffer, iOffset, mbuf, pos, iLength);
+			System.arraycopy(iBuffer, iOffset, localBuffer, pos, iLength);
 
 		position = tot;
 	}
@@ -120,7 +150,7 @@ public class OMemoryStream extends OutputStream {
 		reset();
 	}
 
-	public final void addAsFixed(final byte[] iContent) {
+	public final void setAsFixed(final byte[] iContent) {
 		if (iContent == null)
 			return;
 		write(iContent, 0, iContent.length);
@@ -133,7 +163,7 @@ public class OMemoryStream extends OutputStream {
 	 * @return The begin offset of the appended content
 	 * @throws IOException
 	 */
-	public int add(final byte[] iContent) {
+	public int set(final byte[] iContent) {
 		if (iContent == null)
 			return -1;
 
@@ -158,31 +188,37 @@ public class OMemoryStream extends OutputStream {
 		System.arraycopy(buffer, iEnd, buffer, iBegin, buffer.length - iEnd);
 	}
 
-	public void add(final byte iContent) {
+	public void set(final byte iContent) {
 		write(iContent);
 	}
 
-	public final int add(final String iContent) {
-		return add(OBinaryProtocol.string2bytes(iContent));
+	public final int set(final String iContent) {
+		return set(OBinaryProtocol.string2bytes(iContent));
 	}
 
-	public void add(final boolean iContent) {
-		write(iContent ? 1 : 0);
+	public int set(final boolean iContent) {
+		final int begin = position;
+		write((byte) (iContent ? 1 : 0));
+		return begin;
 	}
 
-	public void add(final char iContent) {
+	public int set(final char iContent) {
 		assureSpaceFor(OBinaryProtocol.SIZE_CHAR);
+		final int begin = position;
 		OBinaryProtocol.char2bytes(iContent, buffer, position);
 		position += OBinaryProtocol.SIZE_CHAR;
+		return begin;
 	}
 
-	public void add(final int iContent) {
+	public int set(final int iContent) {
 		assureSpaceFor(OBinaryProtocol.SIZE_INT);
+		final int begin = position;
 		OBinaryProtocol.int2bytes(iContent, buffer, position);
 		position += OBinaryProtocol.SIZE_INT;
+		return begin;
 	}
 
-	public int add(final long iContent) {
+	public int set(final long iContent) {
 		assureSpaceFor(OBinaryProtocol.SIZE_LONG);
 		final int begin = position;
 		OBinaryProtocol.long2bytes(iContent, buffer, position);
@@ -190,7 +226,7 @@ public class OMemoryStream extends OutputStream {
 		return begin;
 	}
 
-	public int add(final short iContent) {
+	public int set(final short iContent) {
 		assureSpaceFor(OBinaryProtocol.SIZE_SHORT);
 		final int begin = position;
 		OBinaryProtocol.short2bytes(iContent, buffer, position);
@@ -203,22 +239,22 @@ public class OMemoryStream extends OutputStream {
 	}
 
 	private void assureSpaceFor(final int iLength) {
-		final byte[] mbuf = buffer;
+		final byte[] localBuffer = buffer;
 		final int pos = position;
 		final int capacity = position + iLength;
 
-		final int mbuflen = mbuf.length;
+		final int bufferLength = localBuffer.length;
 
-		if (mbuflen <= capacity) {
+		if (bufferLength <= capacity) {
 			OProfiler.getInstance().updateCounter("OMemOutStream.resize", +1);
 
-			final byte[] newbuf = new byte[Math.max(mbuflen << 1, capacity)];
+			final byte[] newbuf = new byte[Math.max(bufferLength << 1, capacity)];
 
 			if (pos < NATIVE_COPY_THRESHOLD)
 				for (int i = 0; i < pos; ++i)
-					newbuf[i] = mbuf[i];
+					newbuf[i] = localBuffer[i];
 			else
-				System.arraycopy(mbuf, 0, newbuf, 0, pos);
+				System.arraycopy(localBuffer, 0, newbuf, 0, pos);
 
 			buffer = newbuf;
 		}
@@ -232,6 +268,20 @@ public class OMemoryStream extends OutputStream {
 	 */
 	public void fill(final int iLength) {
 		assureSpaceFor(iLength);
+		position += iLength;
+	}
+
+	/**
+	 * Fills the stream from current position writing iLength times the iFiller byte
+	 * 
+	 * @param iLength
+	 *          Bytes to jump
+	 * @param iFiller
+	 *          Byte to use to fill the space
+	 */
+	public void fill(final int iLength, final byte iFiller) {
+		assureSpaceFor(iLength);
+		Arrays.fill(buffer, position, position + iLength, iFiller);
 		position += iLength;
 	}
 

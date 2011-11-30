@@ -19,7 +19,8 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLogical;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
-import com.orientechnologies.orient.core.type.tree.generic.OTreeDataProviderGeneric;
+import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
+import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider;
 
 /**
  * Persistent MVRB-Tree implementation. The difference with the class OMVRBTreeDatabase is the level. In facts this class works
@@ -31,17 +32,17 @@ import com.orientechnologies.orient.core.type.tree.generic.OTreeDataProviderGene
 @SuppressWarnings("serial")
 public class OMVRBTreeStorage<K, V> extends OMVRBTreePersistent<K, V> {
 
-	public OMVRBTreeStorage(OTreeDataProvider<K, V> iProvider) {
+	public OMVRBTreeStorage(OMVRBTreeProvider<K, V> iProvider) {
 		super(iProvider);
 	}
 
 	public OMVRBTreeStorage(final OStorageLocal iStorage, final String iClusterName, final ORID iRID) {
-		super(new OTreeDataProviderGeneric<K, V>(iStorage, iClusterName, iRID));
+		super(new OMVRBTreeMapProvider<K, V>(iStorage, iClusterName, iRID));
 	}
 
 	public OMVRBTreeStorage(final OStorageLocal iStorage, String iClusterName, final OStreamSerializer iKeySerializer,
 			final OStreamSerializer iValueSerializer) {
-		super(new OTreeDataProviderGeneric<K, V>(iStorage, iClusterName, iKeySerializer, iValueSerializer));
+		super(new OMVRBTreeMapProvider<K, V>(iStorage, iClusterName, iKeySerializer, iValueSerializer));
 	}
 
 }

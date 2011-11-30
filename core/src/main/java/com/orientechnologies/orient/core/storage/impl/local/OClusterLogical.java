@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeStorage;
-import com.orientechnologies.orient.core.type.tree.generic.OTreeDataProviderGeneric;
+import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProviderBinary;
 
 /**
  * Handle a cluster using a logical structure stored into a real physical local cluster.<br/>
@@ -269,7 +269,7 @@ public class OClusterLogical implements OCluster {
 	}
 
 	public ORID getRID() {
-		return ((OTreeDataProviderGeneric) map.getDataTree()).getRecord().getIdentity();
+		return ((OMVRBTreeProviderBinary) map.getDataTree()).getRecord().getIdentity();
 	}
 
 	public void setId(final int iId) {

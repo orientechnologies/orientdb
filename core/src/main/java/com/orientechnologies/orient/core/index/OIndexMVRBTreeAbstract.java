@@ -46,7 +46,6 @@ import com.orientechnologies.orient.core.memory.OMemoryWatchDog.Listener;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OCompositeKeySerializer;
@@ -54,7 +53,7 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerLiteral;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
-import com.orientechnologies.orient.core.type.tree.generic.OTreeDataProviderGeneric;
+import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProviderBinary;
 
 /**
  * Handles indexing when records change.
@@ -317,7 +316,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 	}
 
 	public ORID getIdentity() {
-		return ((OTreeDataProviderGeneric<Object, ?>) map.getDataTree()).getRecord().getIdentity();
+		return ((OMVRBTreeProviderBinary<Object, ?>) map.getDataTree()).getRecord().getIdentity();
 	}
 
 	public long rebuild() {
@@ -447,8 +446,8 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 		}
 	}
 
-	public ORecordBytes getRecord() {
-		return ((OTreeDataProviderGeneric<Object, ?>) map.getDataTree()).getRecord();
+	public ORecord<?> getRecord() {
+		return ((OMVRBTreeProviderBinary<Object, ?>) map.getDataTree()).getRecord();
 	}
 
 	public Iterator<Entry<Object, T>> iterator() {
@@ -568,7 +567,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 				}
 
 				configuration.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);
-				configuration.field(CONFIG_MAP_RID, ((OTreeDataProviderGeneric<Object, ?>) map.getDataTree()).getRecord().getIdentity());
+				configuration.field(CONFIG_MAP_RID, ((OMVRBTreeProviderBinary<Object, ?>) map.getDataTree()).getRecord().getIdentity());
 
 			} finally {
 				configuration.setInternalStatus(ORecordElement.STATUS.LOADED);

@@ -1297,15 +1297,15 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		}
 
 		public ONavigableSet<E> subSet(final E fromElement, final boolean fromInclusive, final E toElement, final boolean toInclusive) {
-			return new OMVRBTreeSetMemory<E>(m.subMap(fromElement, fromInclusive, toElement, toInclusive));
+			return new OMVRBTreeSet<E>(m.subMap(fromElement, fromInclusive, toElement, toInclusive));
 		}
 
 		public ONavigableSet<E> headSet(final E toElement, final boolean inclusive) {
-			return new OMVRBTreeSetMemory<E>(m.headMap(toElement, inclusive));
+			return new OMVRBTreeSet<E>(m.headMap(toElement, inclusive));
 		}
 
 		public ONavigableSet<E> tailSet(final E fromElement, final boolean inclusive) {
-			return new OMVRBTreeSetMemory<E>(m.tailMap(fromElement, inclusive));
+			return new OMVRBTreeSet<E>(m.tailMap(fromElement, inclusive));
 		}
 
 		public SortedSet<E> subSet(final E fromElement, final E toElement) {
@@ -1321,7 +1321,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		}
 
 		public ONavigableSet<E> descendingSet() {
-			return new OMVRBTreeSetMemory<E>(m.descendingMap());
+			return new OMVRBTreeSet<E>(m.descendingMap());
 		}
 	}
 

@@ -4,7 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
+import com.orientechnologies.orient.core.serialization.OMemoryStream;
 
 public class BinarySerializationStream {
 
@@ -25,20 +25,15 @@ public class BinarySerializationStream {
 		}
 		System.out.println("Data Output Stream " + (System.currentTimeMillis() - time));
 		time = System.currentTimeMillis();
-		OMemoryOutputStream mou = new OMemoryOutputStream();
-		try {
-
-			for (int i = 0; i < 1000000; i++) {
-				mou.add("adfsdfsdfadfsdfsdfadfsdfsdfadfsdfsdf");
-				mou.add(32);
-				mou.add(32l);
-				mou.add((byte) 32);
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
+		OMemoryStream mou = new OMemoryStream();
+		for (int i = 0; i < 1000000; i++) {
+			mou.set("adfsdfsdfadfsdfsdfadfsdfsdfadfsdfsdf");
+			mou.set(32);
+			mou.set(32l);
+			mou.set((byte) 32);
 		}
 
-		System.out.println("OMemoryOutputStream " + (System.currentTimeMillis() - time));
+		System.out.println("OMemoryStream " + (System.currentTimeMillis() - time));
 
 		System.out.println("" + s.toByteArray().length + " " + mou.toByteArray().length);
 

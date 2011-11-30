@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.memory.OLowMemoryException;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
 
 /**
  * Persistent based MVRB-Tree implementation. The difference with the class OMVRBTreePersistent is the level. In facts this class
@@ -45,7 +46,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 @SuppressWarnings("serial")
 public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implements OMVRBTreeEventListener<K, V> {
 
-	protected final OTreeDataProvider<K, V>										dataTree;
+	protected final OMVRBTreeProvider<K, V>								dataProvider;
 
 	protected final Set<OMVRBTreeEntryPersistent<K, V>>				recordsToCommit			= new HashSet<OMVRBTreeEntryPersistent<K, V>>();
 
@@ -60,10 +61,10 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	private final Map<ORID, OMVRBTreeEntryPersistent<K, V>>		cache								= new HashMap<ORID, OMVRBTreeEntryPersistent<K, V>>();
 	private static final int																	OPTIMIZE_MAX_RETRY	= 10;
 
-	public OMVRBTreePersistent(OTreeDataProvider<K, V> iProvider) {
+	public OMVRBTreePersistent(OMVRBTreeProvider<K, V> iProvider) {
 		super();
 		pageLoadFactor = (Float) OGlobalConfiguration.MVRBTREE_LOAD_FACTOR.getValue();
-		dataTree = iProvider;
+		dataProvider = iProvider;
 		config();
 		setListener(this);
 	}
@@ -88,14 +89,14 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	}
 
 	public OMVRBTreePersistent<K, V> load() {
-		dataTree.load();
+		dataProvider.load();
 
 		// RESET LAST SEARCH STATE
 		setLastSearchNode(null, null);
 
 		// LOAD THE ROOT OBJECT AFTER ALL
-		final ORID rootRid = dataTree.getRoot();
-		if (rootRid != null && dataTree.getRoot().isValid())
+		final ORID rootRid = dataProvider.getRoot();
+		if (rootRid != null && dataProvider.getRoot().isValid())
 			root = loadEntry(null, rootRid);
 		return this;
 	}
@@ -117,7 +118,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			}
 		}
 
-		dataTree.save();
+		dataProvider.save();
 	}
 
 	/**
@@ -132,23 +133,23 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			addNodeInCache(entry);
 
 			// RECONNECT THE LOADED NODE WITH IN-MEMORY PARENT, LEFT AND RIGHT
-			if (entry.parent == null && entry.dataEntry.getParent().isValid()) {
+			if (entry.parent == null && entry.dataProvider.getParent().isValid()) {
 				// TRY TO ASSIGN THE PARENT IN CACHE IF ANY
-				final OMVRBTreeEntryPersistent<K, V> parentNode = searchNodeInCache(entry.dataEntry.getParent());
+				final OMVRBTreeEntryPersistent<K, V> parentNode = searchNodeInCache(entry.dataProvider.getParent());
 				if (parentNode != null)
 					entry.setParent(parentNode);
 			}
 
-			if (entry.left == null && entry.dataEntry.getLeft().isValid()) {
+			if (entry.left == null && entry.dataProvider.getLeft().isValid()) {
 				// TRY TO ASSIGN THE PARENT IN CACHE IF ANY
-				final OMVRBTreeEntryPersistent<K, V> leftNode = searchNodeInCache(entry.dataEntry.getLeft());
+				final OMVRBTreeEntryPersistent<K, V> leftNode = searchNodeInCache(entry.dataProvider.getLeft());
 				if (leftNode != null)
 					entry.setLeft(leftNode);
 			}
 
-			if (entry.right == null && entry.dataEntry.getRight().isValid()) {
+			if (entry.right == null && entry.dataProvider.getRight().isValid()) {
 				// TRY TO ASSIGN THE PARENT IN CACHE IF ANY
-				final OMVRBTreeEntryPersistent<K, V> rightNode = searchNodeInCache(entry.dataEntry.getRight());
+				final OMVRBTreeEntryPersistent<K, V> rightNode = searchNodeInCache(entry.dataProvider.getRight());
 				if (rightNode != null)
 					entry.setRight(rightNode);
 			}
@@ -167,16 +168,16 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	}
 
 	public int size() {
-		return dataTree.getSize();
+		return dataProvider.getSize();
 	}
 
 	protected void setSize(int iSize) {
-		if (dataTree.setSize(iSize))
+		if (dataProvider.setSize(iSize))
 			markDirty();
 	}
 
 	public int getDefaultPageSize() {
-		return dataTree.getDefaultPageSize();
+		return dataProvider.getDefaultPageSize();
 	}
 
 	@Override
@@ -195,7 +196,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			cache.clear();
 
 		} catch (IOException e) {
-			OLogManager.instance().error(this, "Error on deleting the tree: " + dataTree, e, OStorageException.class);
+			OLogManager.instance().error(this, "Error on deleting the tree: " + dataProvider, e, OStorageException.class);
 		} finally {
 			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.clear", timer);
 		}
@@ -203,7 +204,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 	public void delete() {
 		clear();
-		dataTree.delete();
+		dataProvider.delete();
 	}
 
 	/**
@@ -225,7 +226,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			load();
 
 		} catch (Exception e) {
-			OLogManager.instance().error(this, "Error on unload the tree: " + dataTree, e, OStorageException.class);
+			OLogManager.instance().error(this, "Error on unload the tree: " + dataProvider, e, OStorageException.class);
 		} finally {
 			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.unload", timer);
 		}
@@ -443,15 +444,15 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 					recordsToCommit.clear();
 
 					for (OMVRBTreeEntryPersistent<K, V> node : tmp)
-						if (node.dataEntry.isEntryDirty()) {
-							boolean wasNew = node.dataEntry.getIdentity().isNew();
+						if (node.dataProvider.isEntryDirty()) {
+							boolean wasNew = node.dataProvider.getIdentity().isNew();
 
 							// CREATE THE RECORD
 							node.save();
 
 							if (debug)
 								System.out.printf("\nSaved %s tree node %s: parent %s, left %s, right %s", wasNew ? "new" : "",
-										node.dataEntry.getIdentity(), node.dataEntry.getParent(), node.dataEntry.getLeft(), node.dataEntry.getRight());
+										node.dataProvider.getIdentity(), node.dataProvider.getParent(), node.dataProvider.getLeft(), node.dataProvider.getRight());
 
 							// Sylvain : already done in node.save();
 							// if (wasNew) {
@@ -470,7 +471,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 					tmp.clear();
 				}
 			}
-			if (dataTree.isTreeDirty()) {
+			if (dataProvider.isTreeDirty()) {
 				// TREE IS CHANGED AS WELL
 				saveTreeNode();
 			}
@@ -495,7 +496,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 	@Override
 	public int hashCode() {
-		return dataTree.hashCode();
+		return dataProvider.hashCode();
 	}
 
 	protected void adjustPageSize() {
@@ -576,8 +577,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		throw new OLowMemoryException("OMVRBTreePersistent.containsValue()");
 	}
 
-	public OTreeDataProvider<K, V> getDataTree() {
-		return dataTree;
+	public OMVRBTreeProvider<K, V> getDataTree() {
+		return dataProvider;
 	}
 
 	public int getOptimization() {
@@ -717,7 +718,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	synchronized void removeEntry(final ORID iEntryId) {
 		// DELETE THE NODE FROM THE PENDING RECORDS TO COMMIT
 		for (OMVRBTreeEntryPersistent<K, V> node : recordsToCommit) {
-			if (node.dataEntry.getIdentity().equals(iEntryId)) {
+			if (node.dataProvider.getIdentity().equals(iEntryId)) {
 				recordsToCommit.remove(node);
 				break;
 			}
@@ -794,14 +795,14 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		super.setRoot(iRoot);
 
 		if (iRoot == null)
-			dataTree.setRoot(null);
+			dataProvider.setRoot(null);
 
 		if (listener != null)
 			listener.signalTreeChanged(this);
 	}
 
 	protected void config() {
-		if (dataTree.updateConfig())
+		if (dataProvider.updateConfig())
 			markDirty();
 		pageLoadFactor = OGlobalConfiguration.MVRBTREE_LOAD_FACTOR.getValueAsFloat();
 		optimizeEntryPointsFactor = OGlobalConfiguration.MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR.getValueAsFloat();
@@ -812,14 +813,14 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	@Override
 	protected void rotateLeft(final OMVRBTreeEntry<K, V> p) {
 		if (debug && p != null)
-			System.out.printf("\nRotating to the left the node %s", ((OMVRBTreeEntryPersistent<K, V>) p).dataEntry.getIdentity());
+			System.out.printf("\nRotating to the left the node %s", ((OMVRBTreeEntryPersistent<K, V>) p).dataProvider.getIdentity());
 		super.rotateLeft(p);
 	}
 
 	@Override
 	protected void rotateRight(final OMVRBTreeEntry<K, V> p) {
 		if (debug && p != null)
-			System.out.printf("\nRotating to the right the node %s", ((OMVRBTreeEntryPersistent<K, V>) p).dataEntry.getIdentity());
+			System.out.printf("\nRotating to the right the node %s", ((OMVRBTreeEntryPersistent<K, V>) p).dataProvider.getIdentity());
 		super.rotateRight(p);
 	}
 
@@ -839,8 +840,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	 *          Node to remove
 	 */
 	protected void removeNodeFromMemory(final OMVRBTreeEntryPersistent<K, V> iNode) {
-		if (iNode.dataEntry != null && iNode.dataEntry.getIdentity().isValid())
-			cache.remove(iNode.dataEntry.getIdentity());
+		if (iNode.dataProvider != null && iNode.dataProvider.getIdentity().isValid())
+			cache.remove(iNode.dataProvider.getIdentity());
 		if (iNode.getSize() > 0)
 			entryPoints.remove(iNode.getKeyAt(0));
 	}
@@ -878,8 +879,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	 *          Node to store
 	 */
 	protected void addNodeInCache(final OMVRBTreeEntryPersistent<K, V> iNode) {
-		if (iNode.dataEntry != null && iNode.dataEntry.getIdentity().isValid())
-			cache.put(iNode.dataEntry.getIdentity(), iNode);
+		if (iNode.dataProvider != null && iNode.dataProvider.getIdentity().isValid())
+			cache.put(iNode.dataProvider.getIdentity(), iNode);
 	}
 
 	/**

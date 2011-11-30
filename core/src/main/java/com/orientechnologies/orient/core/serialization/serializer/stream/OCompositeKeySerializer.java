@@ -5,7 +5,7 @@ import java.io.IOException;
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
-import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
+import com.orientechnologies.orient.core.serialization.OMemoryStream;
 
 /**
  * @author LomakiA <a href="mailto:Andrey.Lomakin@exigenservices.com">Andrey Lomakin</a>
@@ -15,19 +15,19 @@ public class OCompositeKeySerializer implements OStreamSerializer {
 	public static final String									NAME			= "cks";
 	public static final OCompositeKeySerializer	INSTANCE	= new OCompositeKeySerializer();
 
-	public byte[] toStream(ODatabaseRecord iDatabase, Object iObject) throws IOException {
+	public byte[] toStream(final ODatabaseRecord iDatabase, final Object iObject) throws IOException {
 		final OCompositeKey compositeKey = (OCompositeKey) iObject;
 
-		final OMemoryOutputStream outputStream = new OMemoryOutputStream();
-		outputStream.add(compositeKey.getKeys().size());
+		final OMemoryStream outputStream = new OMemoryStream();
+		outputStream.set(compositeKey.getKeys().size());
 		for (final Comparable<?> comparable : compositeKey.getKeys()) {
-			outputStream.add(OStreamSerializerLiteral.INSTANCE.toStream(iDatabase, comparable));
+			outputStream.set(OStreamSerializerLiteral.INSTANCE.toStream(iDatabase, comparable));
 		}
 
-		return outputStream.getByteArray();
+		return outputStream.getInternalBuffer();
 	}
 
-	public Object fromStream(ODatabaseRecord iDatabase, byte[] iStream) throws IOException {
+	public Object fromStream(final ODatabaseRecord iDatabase, final byte[] iStream) throws IOException {
 		final OCompositeKey compositeKey = new OCompositeKey();
 		final OMemoryInputStream inputStream = new OMemoryInputStream(iStream);
 
