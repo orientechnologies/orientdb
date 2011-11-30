@@ -74,7 +74,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
 
 				for (OStorage stg : Orient.instance().getStorages()) {
 					if (stg.getName().equalsIgnoreCase(database.getName()) && stg.exists())
-						throw new ODatabaseException("Database '" + database.getURL() + "' already exists: " + stg);
+						throw new ODatabaseException("Database named '" + database.getName() + "' already exists: " + stg);
 				}
 				OLogManager.instance().info(this, "Creating database " + path);
 				database.create();

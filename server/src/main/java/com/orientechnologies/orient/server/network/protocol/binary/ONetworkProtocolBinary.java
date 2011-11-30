@@ -302,6 +302,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			String storageMode = channel.readString();
 
 			checkServerAccess("database.create");
+			checkStorageExistence(dbName);
 			connection.database = getDatabaseInstance(dbName, storageMode);
 			createDatabase(connection.database, null, null);
 
@@ -1101,11 +1102,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		if (iDatabase.exists())
 			throw new ODatabaseException("Database '" + iDatabase.getURL() + "' already exists");
 
-		for (OStorage stg : Orient.instance().getStorages()) {
-			if (stg.getName().equalsIgnoreCase(iDatabase.getName()) && stg.exists())
-				throw new ODatabaseException("Database '" + iDatabase.getURL() + "' already exists: " + stg);
-		}
-
 		iDatabase.create();
 		if (dbUser != null) {
 
@@ -1126,6 +1122,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		}
 
 		connection.rawDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) iDatabase.getUnderlying()).getUnderlying());
+	}
+
+	protected void checkStorageExistence(final String iDatabaseName) {
+		for (OStorage stg : Orient.instance().getStorages()) {
+			if (stg.getName().equalsIgnoreCase(iDatabaseName) && stg.exists())
+				throw new ODatabaseException("Database named '" + iDatabaseName + "' already exists: " + stg);
+		}
 	}
 
 	protected ODatabaseDocumentTx getDatabaseInstance(final String iDbName, final String iStorageMode) {
