@@ -26,10 +26,10 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-public abstract class OMVRBTreeEntryDataProviderBinary<K, V> implements OMVRBTreeEntryDataProvider<K, V>, OSerializableStream {
+public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBTreeEntryDataProvider<K, V>, OSerializableStream {
 	private static final long													serialVersionUID	= 1L;
 
-	protected final OMVRBTreeProviderBinary<K, V>	treeDataProvider;
+	protected final OMVRBTreeProviderAbstract<K, V>	treeDataProvider;
 
 	protected int																			size							= 0;
 	protected int																			pageSize;
@@ -41,14 +41,14 @@ public abstract class OMVRBTreeEntryDataProviderBinary<K, V> implements OMVRBTre
 	protected ORecordBytesLazy												record;
 	protected OMemoryStream														stream						= new OMemoryStream();
 
-	public OMVRBTreeEntryDataProviderBinary(final OMVRBTreeProviderBinary<K, V> iTreeDataProvider) {
+	public OMVRBTreeEntryDataProviderAbstract(final OMVRBTreeProviderAbstract<K, V> iTreeDataProvider) {
 		treeDataProvider = iTreeDataProvider;
 		record = new ORecordBytesLazy(this);
 		record.setIdentity(new ORecordId());
 		pageSize = treeDataProvider.getDefaultPageSize();
 	}
 
-	public OMVRBTreeEntryDataProviderBinary(final OMVRBTreeProviderBinary<K, V> iTreeDataProvider, final ORID iRID) {
+	public OMVRBTreeEntryDataProviderAbstract(final OMVRBTreeProviderAbstract<K, V> iTreeDataProvider, final ORID iRID) {
 		treeDataProvider = iTreeDataProvider;
 		record = new ORecordBytesLazy(this);
 		record.setIdentity(iRID.getClusterId(), iRID.getClusterPosition());

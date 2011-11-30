@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
-public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderBinary<K, V> {
+public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderAbstract<K, V> {
 	private static final long	serialVersionUID	= 1L;
 	protected K[]							keys;
 	protected V[]							values;

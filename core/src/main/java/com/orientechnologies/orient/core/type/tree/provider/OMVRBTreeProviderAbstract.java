@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-public abstract class OMVRBTreeProviderBinary<K, V> implements OMVRBTreeProvider<K, V>, OSerializableStream {
+public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvider<K, V>, OSerializableStream {
 	private static final long						serialVersionUID	= 1L;
 
 	protected final String							clusterName;
@@ -38,13 +38,13 @@ public abstract class OMVRBTreeProviderBinary<K, V> implements OMVRBTreeProvider
 	protected int												defaultPageSize;
 	protected ORecordId									root;
 
-	public OMVRBTreeProviderBinary(final ORecordInternal<?> iRecord, final OStorage iStorage, final String iClusterName,
+	public OMVRBTreeProviderAbstract(final ORecordInternal<?> iRecord, final OStorage iStorage, final String iClusterName,
 			final ORID iRID) {
 		this(iRecord, iStorage, iClusterName);
 		record.setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
 	}
 
-	public OMVRBTreeProviderBinary(final ORecordInternal<?> iRecord, final OStorage iStorage, final String iClusterName) {
+	public OMVRBTreeProviderAbstract(final ORecordInternal<?> iRecord, final OStorage iStorage, final String iClusterName) {
 		storage = iStorage;
 		clusterName = iClusterName;
 		if (storage != null) {

@@ -53,7 +53,7 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerLiteral;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
-import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProviderBinary;
+import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProviderAbstract;
 
 /**
  * Handles indexing when records change.
@@ -316,7 +316,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 	}
 
 	public ORID getIdentity() {
-		return ((OMVRBTreeProviderBinary<Object, ?>) map.getDataTree()).getRecord().getIdentity();
+		return ((OMVRBTreeProviderAbstract<Object, ?>) map.getDataTree()).getRecord().getIdentity();
 	}
 
 	public long rebuild() {
@@ -447,7 +447,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 	}
 
 	public ORecord<?> getRecord() {
-		return ((OMVRBTreeProviderBinary<Object, ?>) map.getDataTree()).getRecord();
+		return ((OMVRBTreeProviderAbstract<Object, ?>) map.getDataTree()).getRecord();
 	}
 
 	public Iterator<Entry<Object, T>> iterator() {
@@ -567,7 +567,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 				}
 
 				configuration.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);
-				configuration.field(CONFIG_MAP_RID, ((OMVRBTreeProviderBinary<Object, ?>) map.getDataTree()).getRecord().getIdentity());
+				configuration.field(CONFIG_MAP_RID, ((OMVRBTreeProviderAbstract<Object, ?>) map.getDataTree()).getRecord().getIdentity());
 
 			} finally {
 				configuration.setInternalStatus(ORecordElement.STATUS.LOADED);

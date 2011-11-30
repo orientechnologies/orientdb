@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com) *
  */
-public class OMVRBTreeRIDProvider extends OMVRBTreeProviderBinary<ORecordId, ORecordId> implements OStringBuilderSerializable {
+public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<ORecordId, ORecordId> implements OStringBuilderSerializable {
 	private static final long								serialVersionUID	= 1L;
 	private static final int								PROTOCOL_VERSION	= 0;
 

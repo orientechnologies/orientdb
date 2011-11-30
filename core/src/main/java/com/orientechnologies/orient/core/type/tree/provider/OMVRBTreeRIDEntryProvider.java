@@ -41,7 +41,7 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com) *
  * 
  */
-public class OMVRBTreeRIDEntryProvider extends OMVRBTreeEntryDataProviderBinary<ORecordId, ORecordId> {
+public class OMVRBTreeRIDEntryProvider extends OMVRBTreeEntryDataProviderAbstract<ORecordId, ORecordId> {
 	private static final long		serialVersionUID	= 1L;
 
 	protected final static int	OFFSET_NODESIZE		= 0;

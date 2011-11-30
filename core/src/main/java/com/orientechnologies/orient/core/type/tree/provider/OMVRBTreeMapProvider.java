@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerFactory;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderBinary<K, V> {
+public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> {
 	private static final long			serialVersionUID					= 1L;
 
 	public final static byte			CURRENT_PROTOCOL_VERSION	= 0;
