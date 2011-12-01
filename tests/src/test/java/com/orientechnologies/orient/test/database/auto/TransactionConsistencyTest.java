@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
+import java.util.HashSet;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -250,76 +251,119 @@ public class TransactionConsistencyTest {
 		database2.close();
 	}
 
-//	@Test
-//	public void test2RollbackOnRuntimeException() throws IOException {
-//		database1 = new ODatabaseDocumentTx(url).open("admin", "admin");
-//
-//		if (database1.getURL().startsWith("remote"))
-//			// ONLY NOT-REMOTE TESTS
-//			return;
-//
-//		database1.begin(TXTYPE.OPTIMISTIC);
-//
-//		// Create docA.
-//		ODocument vDocA = database1.newInstance();
-//		vDocA.field(NAME, "docA");
-//		vDocA.save();
-//
-//		// Create docB.
-//		ODocument vDocB = database1.newInstance();
-//		vDocB.field(NAME, "docB");
-//		vDocB.save();
-//
-//		database1.commit();
-//
-//		// Keep the IDs.
-//		final ORID vDocA_Rid = vDocA.getIdentity().copy();
-//		final ORID vDocB_Rid = vDocB.getIdentity().copy();
-//
-//		// Inject exception on second writeRecord().
-//		TestSimulateError.onDataLocalWriteRecord = new TestSimulateError() {
-//			protected int	fCountRecordWritten	= 0;
-//
-//			@Override
-//			public boolean checkDataLocalWriteRecord(ODataLocal iODataLocal, long[] iFilePosition, int iClusterSegment,
-//					long iClusterPosition, byte[] iContent) {
-//				fCountRecordWritten++;
-//				if (fCountRecordWritten == 2)
-//					throw new RuntimeException("checkDataLocalWriteRecord on #" + iClusterSegment + ":" + iClusterPosition);
-//				return true;
-//			}
-//		};
-//
-//		try {
-//			database1.begin(TXTYPE.OPTIMISTIC);
-//			vDocA.field(NAME, "docA_v2");
-//			vDocA.save();
-//			vDocB.field(NAME, "docB_v2");
-//			vDocB.save();
-//			database1.commit();
-//			Assert.fail("Should throw Exception");
-//		} catch (Exception e) {
-//			// Catch Exception and reload records
-//			vDocA = database1.load(vDocA_Rid);
-//			vDocB = database1.load(vDocB_Rid);
-//		}
-//
-//		// Check values.
-//		Assert.assertEquals(vDocA.field(NAME), "docA");
-//		Assert.assertEquals(vDocB.field(NAME), "docB");
-//
-//		// Force reload all (to be sure it is not a cache problem)
-//		database1.close();
-//		database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
-//
-//		//
-//		ODocument vDocA_db2 = database2.load(vDocA_Rid);
-//		Assert.assertEquals(vDocA_db2.field(NAME), "docA");
-//
-//		ODocument vDocB_db2 = database2.load(vDocB_Rid);
-//		Assert.assertEquals(vDocB_db2.field(NAME), "docB");
-//
-//		database2.close();
-//
-//	}
+	// @Test
+	// public void test2RollbackOnRuntimeException() throws IOException {
+	// database1 = new ODatabaseDocumentTx(url).open("admin", "admin");
+	//
+	// if (database1.getURL().startsWith("remote"))
+	// // ONLY NOT-REMOTE TESTS
+	// return;
+	//
+	// database1.begin(TXTYPE.OPTIMISTIC);
+	//
+	// // Create docA.
+	// ODocument vDocA = database1.newInstance();
+	// vDocA.field(NAME, "docA");
+	// vDocA.save();
+	//
+	// // Create docB.
+	// ODocument vDocB = database1.newInstance();
+	// vDocB.field(NAME, "docB");
+	// vDocB.save();
+	//
+	// database1.commit();
+	//
+	// // Keep the IDs.
+	// final ORID vDocA_Rid = vDocA.getIdentity().copy();
+	// final ORID vDocB_Rid = vDocB.getIdentity().copy();
+	//
+	// // Inject exception on second writeRecord().
+	// TestSimulateError.onDataLocalWriteRecord = new TestSimulateError() {
+	// protected int fCountRecordWritten = 0;
+	//
+	// @Override
+	// public boolean checkDataLocalWriteRecord(ODataLocal iODataLocal, long[] iFilePosition, int iClusterSegment,
+	// long iClusterPosition, byte[] iContent) {
+	// fCountRecordWritten++;
+	// if (fCountRecordWritten == 2)
+	// throw new RuntimeException("checkDataLocalWriteRecord on #" + iClusterSegment + ":" + iClusterPosition);
+	// return true;
+	// }
+	// };
+	//
+	// try {
+	// database1.begin(TXTYPE.OPTIMISTIC);
+	// vDocA.field(NAME, "docA_v2");
+	// vDocA.save();
+	// vDocB.field(NAME, "docB_v2");
+	// vDocB.save();
+	// database1.commit();
+	// Assert.fail("Should throw Exception");
+	// } catch (Exception e) {
+	// // Catch Exception and reload records
+	// vDocA = database1.load(vDocA_Rid);
+	// vDocB = database1.load(vDocB_Rid);
+	// }
+	//
+	// // Check values.
+	// Assert.assertEquals(vDocA.field(NAME), "docA");
+	// Assert.assertEquals(vDocB.field(NAME), "docB");
+	//
+	// // Force reload all (to be sure it is not a cache problem)
+	// database1.close();
+	// database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
+	//
+	// //
+	// ODocument vDocA_db2 = database2.load(vDocA_Rid);
+	// Assert.assertEquals(vDocA_db2.field(NAME), "docA");
+	//
+	// ODocument vDocB_db2 = database2.load(vDocB_Rid);
+	// Assert.assertEquals(vDocB_db2.field(NAME), "docB");
+	//
+	// database2.close();
+	//
+	// }
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void checkVersionsInConnectedDocuments() {
+		ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+		db.open("admin", "admin");
+
+		db.begin();
+
+		ODocument kim = new ODocument(db, "Profile").field("name", "Kim").field("surname", "Bauer");
+		ODocument teri = new ODocument(db, "Profile").field("name", "Teri").field("surname", "Bauer");
+		ODocument jack = new ODocument(db, "Profile").field("name", "Jack").field("surname", "Bauer");
+
+		((HashSet<ODocument>) jack.field("following", new HashSet<ODocument>()).field("following")).add(kim);
+		((HashSet<ODocument>) kim.field("following", new HashSet<ODocument>()).field("following")).add(teri);
+		((HashSet<ODocument>) teri.field("following", new HashSet<ODocument>()).field("following")).add(jack);
+
+		jack.save();
+
+		db.commit();
+
+		db.close();
+		db.open("admin", "admin");
+
+		ODocument loadedJack = db.load(jack.getIdentity());
+
+		int jackLastVersion = loadedJack.getVersion();
+		db.begin();
+		loadedJack.field("occupation", "agent");
+		loadedJack.save();
+		db.commit();
+		Assert.assertTrue(jackLastVersion != loadedJack.getVersion());
+
+		loadedJack = db.load(jack.getIdentity());
+		Assert.assertTrue(jackLastVersion != loadedJack.getVersion());
+
+		db.close();
+
+		db.open("admin", "admin");
+		loadedJack = db.load(jack.getIdentity());
+		Assert.assertTrue(jackLastVersion != loadedJack.getVersion());
+		db.close();
+	}
 }
