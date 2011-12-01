@@ -31,8 +31,10 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -42,9 +44,11 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 public class SQLSelectTest {
 	private ODatabaseDocument	database;
 	private ODocument					record;
+	private String						url;
 
 	@Parameters(value = "url")
 	public SQLSelectTest(String iURL) {
+		url = iURL;
 		database = new ODatabaseDocumentTx(iURL);
 	}
 
@@ -899,12 +903,12 @@ public class SQLSelectTest {
 		database.open("admin", "admin");
 
 		final OSQLSynchQuery<ODocument> firstQuery = new OSQLSynchQuery<ODocument>("select from Profile LIMIT 3");
-    final OSQLSynchQuery<ODocument> nextQuery = new OSQLSynchQuery<ODocument>("select from Profile where @rid > ? LIMIT 3");
+		final OSQLSynchQuery<ODocument> nextQuery = new OSQLSynchQuery<ODocument>("select from Profile where @rid > ? LIMIT 3");
 		ORID last = new ORecordId();
 
-    List<ODocument> resultset = database.query(firstQuery);
+		List<ODocument> resultset = database.query(firstQuery);
 
-		while (!resultset.isEmpty()){
+		while (!resultset.isEmpty()) {
 			Assert.assertTrue(resultset.size() <= 3);
 
 			for (ODocument d : resultset) {
@@ -914,7 +918,7 @@ public class SQLSelectTest {
 
 			last = resultset.get(resultset.size() - 1).getIdentity();
 
-      resultset = database.query(nextQuery, last);
+			resultset = database.query(nextQuery, last);
 		}
 
 		database.close();
@@ -1028,4 +1032,52 @@ public class SQLSelectTest {
 		database.close();
 	}
 
+	@Test
+	public void testTraverse() {
+		OGraphDatabase db1 = new OGraphDatabase(url);
+		db1 = db1.open("admin", "admin");
+
+		OClass oc = db1.createVertexType("vertexA");
+		oc.createProperty("name", OType.STRING);
+		oc.createIndex("vertexA_name_idx", OClass.INDEX_TYPE.UNIQUE, "name");
+
+		OClass ocb = db1.createVertexType("vertexB");
+		ocb.createProperty("name", OType.STRING);
+		ocb.createProperty("map", OType.EMBEDDEDMAP);
+		ocb.createIndex("vertexB_name_idx", OClass.INDEX_TYPE.UNIQUE, "name");
+
+		// FIRST: create a root vertex
+		ODocument docA = db1.createVertex("vertexA");
+		docA.field("name", "valueA");
+		docA.save();
+
+		Map<String, String> map = new HashMap<String, String>();
+		map.put("key", "value");
+
+		createAndLink(db1, "valueB1", map, docA);
+		createAndLink(db1, "valueB2", map, docA);
+
+		StringBuilder sb = new StringBuilder("select from vertexB");
+		sb.append(" where any() traverse(0, -1) (@class = '");
+		sb.append("vertexA");
+		sb.append("' AND name = 'valueA')");
+
+		List<ODocument> recordDocs = db1.query(new OSQLSynchQuery<ODocument>(sb.toString()));
+
+		for (ODocument doc : recordDocs) {
+			System.out.println(doc);
+		}
+
+		db1.close();
+	}
+
+	private static void createAndLink(OGraphDatabase db1, String name, Map<String, String> map, ODocument root) {
+		ODocument docB = db1.createVertex("vertexB");
+		docB.field("name", name);
+		docB.field("map", map);
+		docB.save();
+
+		ODocument edge = db1.createEdge(root, docB);
+		edge.save();
+	}
 }

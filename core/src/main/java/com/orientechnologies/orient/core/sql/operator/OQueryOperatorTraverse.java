@@ -146,8 +146,8 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 			}
 		} else if (iTarget instanceof Map<?, ?>) {
 
-			final Map<String, ODocument> map = (Map<String, ODocument>) iTarget;
-			for (final ODocument o : map.values()) {
+			final Map<Object, Object> map = (Map<Object, Object>) iTarget;
+			for (final Object o : map.values()) {
 				if (traverse(iRecord, iRootCondition, iCondition, o, iLevel + 1, iEvaluatedRecords) == Boolean.TRUE)
 					return true;
 			}
