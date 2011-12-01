@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 /**
  * MVRB-Tree implementation to handle a set of RID.
  * 
- * @author Luca Garulli (l.garulli--at--orientechnologies.com) *
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<ORecordId, ORecordId> implements OStringBuilderSerializable {
 	private static final long								serialVersionUID	= 1L;
