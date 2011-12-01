@@ -18,7 +18,6 @@ package com.orientechnologies.orient.core.type.tree;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
@@ -31,8 +30,8 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
 public class OMVRBTreeRID extends OMVRBTreePersistent<ORecordId, ORecordId> {
 	private static final long	serialVersionUID	= 1L;
 
-	public OMVRBTreeRID(final ODatabaseRecord iDatabase, final ORID iRID) {
-		this(new OMVRBTreeRIDProvider(null, iDatabase.getClusterNameById(iRID.getClusterId()), iRID));
+	public OMVRBTreeRID(final ORID iRID) {
+		this(new OMVRBTreeRIDProvider(null, iRID.getClusterId(), iRID));
 	}
 
 	public OMVRBTreeRID(final String iClusterName) {

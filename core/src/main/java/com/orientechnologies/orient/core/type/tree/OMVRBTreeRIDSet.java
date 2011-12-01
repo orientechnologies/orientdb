@@ -15,13 +15,15 @@
  */
 package com.orientechnologies.orient.core.type.tree;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 
 /**
  * Persistent Set<ORecordId> implementation that uses the MVRB-Tree to handle entries in persistent way.
@@ -32,11 +34,11 @@ import com.orientechnologies.orient.core.id.ORecordId;
 public class OMVRBTreeRIDSet implements Set<ORecordId> {
 	private final OMVRBTreeRID	tree;
 
-	public OMVRBTreeRIDSet(final ODatabaseRecord iDatabase, final ORID iRID) {
-		this(new OMVRBTreeRID(iDatabase, iRID));
+	public OMVRBTreeRIDSet(final ORID iRID) {
+		this(new OMVRBTreeRID(iRID));
 	}
 
-	public OMVRBTreeRIDSet(final ODatabaseRecord iDatabase, String iClusterName) {
+	public OMVRBTreeRIDSet(final String iClusterName) {
 		this(new OMVRBTreeRID(iClusterName));
 	}
 
@@ -111,5 +113,13 @@ public class OMVRBTreeRIDSet implements Set<ORecordId> {
 
 	public void clear() {
 		tree.clear();
+	}
+
+	public void save() throws IOException {
+		tree.save();
+	}
+
+	public ODocument getAsDocument() {
+		return ((OMVRBTreeRIDProvider)tree.getProvider()).toDocument();
 	}
 }

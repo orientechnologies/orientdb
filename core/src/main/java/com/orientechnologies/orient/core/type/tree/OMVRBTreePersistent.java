@@ -46,7 +46,7 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
 @SuppressWarnings("serial")
 public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implements OMVRBTreeEventListener<K, V> {
 
-	protected final OMVRBTreeProvider<K, V>								dataProvider;
+	protected final OMVRBTreeProvider<K, V>										dataProvider;
 
 	protected final Set<OMVRBTreeEntryPersistent<K, V>>				recordsToCommit			= new HashSet<OMVRBTreeEntryPersistent<K, V>>();
 
@@ -452,7 +452,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 							if (debug)
 								System.out.printf("\nSaved %s tree node %s: parent %s, left %s, right %s", wasNew ? "new" : "",
-										node.dataProvider.getIdentity(), node.dataProvider.getParent(), node.dataProvider.getLeft(), node.dataProvider.getRight());
+										node.dataProvider.getIdentity(), node.dataProvider.getParent(), node.dataProvider.getLeft(),
+										node.dataProvider.getRight());
 
 							// Sylvain : already done in node.save();
 							// if (wasNew) {
@@ -577,7 +578,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		throw new OLowMemoryException("OMVRBTreePersistent.containsValue()");
 	}
 
-	public OMVRBTreeProvider<K, V> getDataTree() {
+	public OMVRBTreeProvider<K, V> getProvider() {
 		return dataProvider;
 	}
 

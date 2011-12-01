@@ -269,7 +269,7 @@ public class OClusterLogical implements OCluster {
 	}
 
 	public ORID getRID() {
-		return ((OMVRBTreeProviderAbstract) map.getDataTree()).getRecord().getIdentity();
+		return ((OMVRBTreeProviderAbstract) map.getProvider()).getRecord().getIdentity();
 	}
 
 	public void setId(final int iId) {

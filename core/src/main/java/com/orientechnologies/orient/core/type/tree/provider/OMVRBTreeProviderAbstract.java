@@ -190,7 +190,7 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
 		return record;
 	}
 
-	protected ODatabaseRecord getDatabase() {
+	protected static ODatabaseRecord getDatabase() {
 		return ODatabaseRecordThreadLocal.INSTANCE.get();
 	}
 

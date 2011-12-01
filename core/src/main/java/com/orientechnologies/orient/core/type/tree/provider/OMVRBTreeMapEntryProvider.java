@@ -41,9 +41,6 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
 		values = (V[]) new Object[pageSize];
 		serializedKeys = new int[pageSize];
 		serializedValues = new int[pageSize];
-		parentRid = new ORecordId();
-		leftRid = new ORecordId();
-		rightRid = new ORecordId();
 	}
 
 	public OMVRBTreeMapEntryProvider(final OMVRBTreeMapProvider<K, V> iTreeDataProvider, final ORID iRID) {

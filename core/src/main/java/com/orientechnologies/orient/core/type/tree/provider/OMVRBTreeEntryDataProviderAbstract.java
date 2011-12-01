@@ -27,35 +27,41 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBTreeEntryDataProvider<K, V>, OSerializableStream {
-	private static final long													serialVersionUID	= 1L;
+	private static final long												serialVersionUID	= 1L;
 
 	protected final OMVRBTreeProviderAbstract<K, V>	treeDataProvider;
 
-	protected int																			size							= 0;
-	protected int																			pageSize;
+	protected int																		size							= 0;
+	protected int																		pageSize;
 
-	protected ORecordId																parentRid;
-	protected ORecordId																leftRid;
-	protected ORecordId																rightRid;
-	protected boolean																	color							= OMVRBTree.RED;
-	protected ORecordBytesLazy												record;
-	protected OMemoryStream														stream						= new OMemoryStream();
+	protected ORecordId															parentRid;
+	protected ORecordId															leftRid;
+	protected ORecordId															rightRid;
+	protected boolean																color							= OMVRBTree.RED;
+	protected ORecordBytesLazy											record;
+	protected OMemoryStream													stream						= new OMemoryStream();
 
 	public OMVRBTreeEntryDataProviderAbstract(final OMVRBTreeProviderAbstract<K, V> iTreeDataProvider) {
-		treeDataProvider = iTreeDataProvider;
-		record = new ORecordBytesLazy(this);
-		record.setIdentity(new ORecordId());
+		this(iTreeDataProvider, null);
 		pageSize = treeDataProvider.getDefaultPageSize();
 	}
 
 	public OMVRBTreeEntryDataProviderAbstract(final OMVRBTreeProviderAbstract<K, V> iTreeDataProvider, final ORID iRID) {
 		treeDataProvider = iTreeDataProvider;
+
+		parentRid = new ORecordId();
+		leftRid = new ORecordId();
+		rightRid = new ORecordId();
+
 		record = new ORecordBytesLazy(this);
-		record.setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
-		if (treeDataProvider.storage == null)
-			load(treeDataProvider.getDatabase());
-		else
-			load(treeDataProvider.storage);
+		if (iRID != null) {
+			record.setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
+			if (treeDataProvider.storage == null)
+				load(OMVRBTreeProviderAbstract.getDatabase());
+			else
+				load(treeDataProvider.storage);
+		} else
+			record.setIdentity(new ORecordId());
 	}
 
 	protected void load(final ODatabaseRecord iDb) {
@@ -136,7 +142,7 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
 
 	public void save() {
 		if (treeDataProvider.storage == null)
-			save(treeDataProvider.getDatabase());
+			save(OMVRBTreeProviderAbstract.getDatabase());
 		else
 			save(treeDataProvider.storage);
 	}
@@ -167,10 +173,9 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
 
 	public void delete() {
 		if (treeDataProvider.storage == null)
-			delete(treeDataProvider.getDatabase());
+			delete(OMVRBTreeProviderAbstract.getDatabase());
 		else
 			delete(treeDataProvider.storage);
-		// FORCE REMOVING OF K/V AND SEIALIZED K/V AS WELL
 	}
 
 	protected void delete(final ODatabaseRecord iDb) {

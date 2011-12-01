@@ -1,70 +1,62 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <orient-server>
-	<handlers>
-		<handler class="com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager">
-			<parameters>
-				<parameter name="name" value="default" />
-				<parameter name="security.algorithm" value="Blowfish" />
-				<parameter name="network.multicast.address" value="235.1.1.1" />
-				<parameter name="network.multicast.port" value="2424" />
-				<parameter name="network.multicast.heartbeat" value="10" />
-			</parameters>
-		</handler>
-		<!-- AUTOMATIC BACKUP, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
-		<handler class="com.orientechnologies.orient.server.handler.OAutomaticBackup">
-			<parameters>
-				<parameter name="enabled" value="false" />
-				<parameter name="delay" value="4h" />
-				<parameter name="target.directory" value="backup" />
-				<parameter name="target.fileName" value="${DBNAME}-${DATE:yyyyMMddHHmmss}.json" /><!-- ${DBNAME} AND ${DATE:} VARIABLES ARE SUPPORTED -->
-				<parameter name="db.include" value="" /><!-- DEFAULT: NO ONE, THAT MEANS ALL DATABASES. USE COMMA TO SEPARATE MULTIPLE DATABASE NAMES -->
-				<parameter name="db.exclude" value="" /><!-- USE COMMA TO SEPARATE MULTIPLE DATABASE NAMES -->
-			</parameters>
-		</handler>
-	</handlers>
-	<network>
-		<protocols>
-			<!-- Default registered protocol. It reads commands using the HTTP protocol and write data locally -->
-			<protocol implementation="com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary" name="binary" />
-			<protocol implementation="com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb" name="http" />
-			<protocol implementation="com.orientechnologies.orient.server.network.protocol.distributed.ONetworkProtocolDistributed" name="distributed" />
-		</protocols>
-		<listeners>
-			<listener protocol="distributed" port-range="2424-2430" ip-address="0.0.0.0" />
-			<listener protocol="http" port-range="2480-2490" ip-address="127.0.0.1">
-				<parameters>
-					<!-- Connection's custom parameters. If not specified the global configuration will be taken -->
-					<parameter name="network.http.charset" value="utf-8" />
-				</parameters>
-				<commands>
-					<command
-						pattern="GET|www GET|studio/ GET| GET|*.htm GET|*.html GET|*.xml GET|*.jpeg GET|*.jpg GET|*.png GET|*.gif GET|*.js GET|*.css GET|*.swf GET|*.ico GET|*.txt"
-						implementation="com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent">
-						<parameters>
-							<!-- Don't cache html resources in development mode -->
-							<entry name="http.cache:*.htm *.html" value="Cache-Control: no-cache, no-store, max-age=0, must-revalidate\r\nPragma: no-cache" />
-							<!-- Default caching -->
-							<entry name="http.cache:default" value="Cache-Control: max-age=120" />
-						</parameters>
-					</command>
-				</commands>
-			</listener>
-		</listeners>
-		<cluster>
-		</cluster>
-	</network>
-	<storages>
-		<!-- Default in-memory storage. Data are not saved permanently. -->
-		<storage path="memory:temp" name="temp" userName="admin" userPassword="admin" loaded-at-startup="true" />
-	</storages>
-	<users>
-	</users>
-	<properties>
-		<!-- Caches static contents. If enabled the files will be kept in memory the first time are loaded. Changes to the files will be taken on the next restart -->
-		<entry name="server.cache.file.static" value="false" />
-
-		<!-- Enable/Disable logging. Levels are: finer, fine, finest, info, warning -->
-		<entry name="log.console.level" value="info" />
-		<entry name="log.file.level" value="fine" />
-	</properties>
+    <handlers>
+        <handler class="com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager">
+            <parameters>
+                <parameter name="name" value="default"/>
+                <parameter name="security.algorithm" value="Blowfish"/>
+                <parameter name="network.multicast.address" value="235.1.1.1"/>
+                <parameter name="network.multicast.port" value="2424"/>
+                <parameter name="network.multicast.heartbeat" value="10"/>
+                <parameter name="security.key" value="0nQG1gUkgKHRZpjR"/>
+            </parameters>
+        </handler>
+        <handler class="com.orientechnologies.orient.server.handler.OAutomaticBackup">
+            <parameters>
+                <parameter name="enabled" value="false"/>
+                <parameter name="delay" value="4h"/>
+                <parameter name="target.directory" value="backup"/>
+                <parameter name="target.fileName" value="${DBNAME}-${DATE:yyyyMMddHHmmss}.json"/>
+                <parameter name="db.include" value=""/>
+                <parameter name="db.exclude" value=""/>
+            </parameters>
+        </handler>
+    </handlers>
+    <network>
+        <protocols>
+            <protocol name="binary" implementation="com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary"/>
+            <protocol name="http" implementation="com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb"/>
+            <protocol name="distributed" implementation="com.orientechnologies.orient.server.network.protocol.distributed.ONetworkProtocolDistributed"/>
+        </protocols>
+        <listeners>
+            <listener ip-address="0.0.0.0" port-range="2424-2430" protocol="distributed"/>
+            <listener ip-address="0.0.0.0" port-range="2480-2490" protocol="http">
+                <commands>
+                    <command pattern="GET|www GET|studio/ GET| GET|*.htm GET|*.html GET|*.xml GET|*.jpeg GET|*.jpg GET|*.png GET|*.gif GET|*.js GET|*.css GET|*.swf GET|*.ico GET|*.txt" implementation="com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent">
+                        <parameters>
+                            <entry name="http.cache:*.htm *.html" value="Cache-Control: no-cache, no-store, max-age=0, must-revalidate\r\nPragma: no-cache"/>
+                            <entry name="http.cache:default" value="Cache-Control: max-age=120"/>
+                        </parameters>
+                    </command>
+                </commands>
+                <parameters>
+                    <parameter name="network.http.charset" value="utf-8"/>
+                </parameters>
+            </listener>
+        </listeners>
+    </network>
+    <storages>
+        <storage name="temp" path="memory:temp" userName="admin" userPassword="admin" loaded-at-startup="true"/>
+    </storages>
+    <users>
+        <user name="root" password="099492FDD3D804847E29F9A3914226A7387F6134906FDFC12C7FB0226D024957" resources="*"/>
+        <user name="guest" password="guest" resources="connect,server.listDatabases"/>
+        <user name="replicator" password="4E86A93041A79A0040D001CCFA35F8D320D80E50ABEA4CB9332D5EC0BED1D54B" resources="database.passthrough"/>
+    </users>
+    <properties>
+        <entry name="server.cache.file.static" value="false"/>
+        <entry name="network.http.sessionExpireTimeout" value="300"/>
+        <entry name="log.console.level" value="info"/>
+        <entry name="log.file.level" value="fine"/>
+    </properties>
 </orient-server>

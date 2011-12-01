@@ -316,7 +316,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 	}
 
 	public ORID getIdentity() {
-		return ((OMVRBTreeProviderAbstract<Object, ?>) map.getDataTree()).getRecord().getIdentity();
+		return ((OMVRBTreeProviderAbstract<Object, ?>) map.getProvider()).getRecord().getIdentity();
 	}
 
 	public long rebuild() {
@@ -447,7 +447,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 	}
 
 	public ORecord<?> getRecord() {
-		return ((OMVRBTreeProviderAbstract<Object, ?>) map.getDataTree()).getRecord();
+		return ((OMVRBTreeProviderAbstract<Object, ?>) map.getProvider()).getRecord();
 	}
 
 	public Iterator<Entry<Object, T>> iterator() {
@@ -567,7 +567,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 				}
 
 				configuration.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);
-				configuration.field(CONFIG_MAP_RID, ((OMVRBTreeProviderAbstract<Object, ?>) map.getDataTree()).getRecord().getIdentity());
+				configuration.field(CONFIG_MAP_RID, ((OMVRBTreeProviderAbstract<Object, ?>) map.getProvider()).getRecord().getIdentity());
 
 			} finally {
 				configuration.setInternalStatus(ORecordElement.STATUS.LOADED);
