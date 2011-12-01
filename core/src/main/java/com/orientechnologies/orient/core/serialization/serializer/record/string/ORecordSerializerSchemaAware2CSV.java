@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -150,6 +151,14 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 				if (fieldValue instanceof Collection<?> || fieldValue.getClass().isArray()) {
 					int size = OMultiValue.getSize(fieldValue);
 
+					Boolean autoConvertLinks = null;
+					if (fieldValue instanceof ORecordLazyMultiValue) {
+						autoConvertLinks = ((ORecordLazyMultiValue) fieldValue).isAutoConvertToRecord();
+						if (autoConvertLinks)
+							// DISABLE AUTO CONVERT
+							((ORecordLazyMultiValue) fieldValue).setAutoConvertToRecord(false);
+					}
+
 					if (size > 0) {
 						final Object firstValue = OMultiValue.getFirstValue(fieldValue);
 
@@ -202,6 +211,11 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 						}
 					} else if (type == null)
 						type = OType.EMBEDDEDLIST;
+
+					if (fieldValue instanceof ORecordLazyMultiValue && autoConvertLinks) {
+						// REPLACE PREVIOUS SETTINGS
+						((ORecordLazyMultiValue) fieldValue).setAutoConvertToRecord(true);
+					}
 
 				} else if (fieldValue instanceof Map<?, ?> && type == null)
 					type = OType.EMBEDDEDMAP;
