@@ -54,4 +54,7 @@ public interface OMVRBTreeProvider<K, V> {
 
 	public void delete();
 
+	public int getClusterId();
+
+	public String getClusterName();
 }

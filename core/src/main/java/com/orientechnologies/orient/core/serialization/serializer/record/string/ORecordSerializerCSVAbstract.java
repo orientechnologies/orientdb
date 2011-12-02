@@ -508,8 +508,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				coll = iType == OType.EMBEDDEDLIST ? new ORecordLazyList(iDocument).setStreamedContent(new StringBuilder(value))
 						: new ORecordLazySet(iDocument).setStreamedContent(new StringBuilder(value));
 			else
-				coll = iType == OType.EMBEDDEDLIST ? new ORecordLazyList(iDatabase).setStreamedContent(new StringBuilder(value))
-						: new ORecordLazySet(iDatabase).setStreamedContent(new StringBuilder(value));
+				coll = iType == OType.EMBEDDEDLIST ? new ORecordLazyList().setStreamedContent(new StringBuilder(value))
+						: new ORecordLazySet().setStreamedContent(new StringBuilder(value));
 		} else
 			coll = iType == OType.EMBEDDEDLIST ? new OTrackedList<Object>(iDocument) : new OTrackedSet<Object>(iDocument);
 

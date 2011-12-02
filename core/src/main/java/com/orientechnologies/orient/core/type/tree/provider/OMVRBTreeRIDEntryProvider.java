@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.type.tree.provider;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -41,7 +42,7 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com) *
  * 
  */
-public class OMVRBTreeRIDEntryProvider extends OMVRBTreeEntryDataProviderAbstract<ORecordId, ORecordId> {
+public class OMVRBTreeRIDEntryProvider extends OMVRBTreeEntryDataProviderAbstract<OIdentifiable, OIdentifiable> {
 	private static final long		serialVersionUID	= 1L;
 
 	protected final static int	OFFSET_NODESIZE		= 0;
@@ -59,25 +60,28 @@ public class OMVRBTreeRIDEntryProvider extends OMVRBTreeEntryDataProviderAbstrac
 		super(iTreeDataProvider, iRID);
 	}
 
-	public ORecordId getKeyAt(final int iIndex) {
+	public OIdentifiable getKeyAt(final int iIndex) {
 		return new ORecordId().fromStream(moveToIndex(iIndex));
 	}
 
-	public ORecordId getValueAt(final int iIndex) {
-		throw new UnsupportedOperationException("getValueAt");
+	/**
+	 * Returns the key
+	 */
+	public OIdentifiable getValueAt(final int iIndex) {
+		return new ORecordId().fromStream(moveToIndex(iIndex));
 	}
 
-	public boolean setValueAt(int iIndex, final ORecordId iValue) {
-		throw new UnsupportedOperationException("setValueAt");
+	public boolean setValueAt(int iIndex, final OIdentifiable iValue) {
+		return false;
 	}
 
-	public boolean insertAt(final int iIndex, final ORecordId iKey, final ORecordId iValue) {
+	public boolean insertAt(final int iIndex, final OIdentifiable iKey, final OIdentifiable iValue) {
 		if (iIndex < size)
 			// MOVE RIGHT TO MAKE ROOM FOR THE ITEM
-			stream.move(getKeyPositionInStream(iIndex), getKeyPositionInStream(iIndex + 1));
+			stream.move(getKeyPositionInStream(iIndex), ORecordId.PERSISTENT_SIZE);
 
 		try {
-			iKey.toStream(moveToIndex(iIndex));
+			iKey.getIdentity().toStream(moveToIndex(iIndex));
 		} catch (IOException e) {
 			throw new OSerializationException("Cannot serialize entryRID object: " + this, e);
 		}
@@ -90,14 +94,14 @@ public class OMVRBTreeRIDEntryProvider extends OMVRBTreeEntryDataProviderAbstrac
 	public boolean removeAt(final int iIndex) {
 		if (iIndex > -1 && iIndex < size - 1)
 			// SHIFT LEFT THE VALUES
-			stream.move(getKeyPositionInStream(iIndex + 1), getKeyPositionInStream(iIndex));
+			stream.move(getKeyPositionInStream(iIndex + 1), ORecordId.PERSISTENT_SIZE * -1);
 
 		// FREE RESOURCES
 		size--;
 		return setDirty();
 	}
 
-	public boolean copyDataFrom(final OMVRBTreeEntryDataProvider<ORecordId, ORecordId> iFrom, int iStartPosition) {
+	public boolean copyDataFrom(final OMVRBTreeEntryDataProvider<OIdentifiable, OIdentifiable> iFrom, int iStartPosition) {
 		OMVRBTreeRIDEntryProvider parent = (OMVRBTreeRIDEntryProvider) iFrom;
 		size = iFrom.getSize() - iStartPosition;
 		stream.jump(0).copyFrom(parent.moveToIndex(iStartPosition), size);
@@ -111,7 +115,7 @@ public class OMVRBTreeRIDEntryProvider extends OMVRBTreeEntryDataProviderAbstrac
 		return setDirty();
 	}
 
-	public boolean copyFrom(final OMVRBTreeEntryDataProvider<ORecordId, ORecordId> iSource) {
+	public boolean copyFrom(final OMVRBTreeEntryDataProvider<OIdentifiable, OIdentifiable> iSource) {
 		final OMVRBTreeRIDEntryProvider source = (OMVRBTreeRIDEntryProvider) iSource;
 
 		stream = source.stream;

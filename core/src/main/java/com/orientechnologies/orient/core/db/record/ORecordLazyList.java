@@ -20,7 +20,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -42,22 +41,19 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMultiValue {
 	protected ORecordLazyListener															listener;
 	protected final byte																			recordType;
-	protected ODatabaseRecord																	database;
 	protected ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE	contentType					= MULTIVALUE_CONTENT_TYPE.EMPTY;
 	protected StringBuilder																		stream;
 	protected boolean																					autoConvertToRecord	= true;
 	protected boolean																					marshalling					= false;
 	protected boolean																					ridOnly							= false;
 
-	public ORecordLazyList(final ODatabaseRecord iDatabase) {
+	public ORecordLazyList() {
 		super(null);
-		this.database = iDatabase;
 		this.recordType = ODocument.RECORD_TYPE;
 	}
 
 	public ORecordLazyList(final ORecordInternal<?> iSourceRecord) {
 		super(iSourceRecord);
-		this.database = iSourceRecord.getDatabase();
 		this.recordType = iSourceRecord.getRecordType();
 	}
 
@@ -104,7 +100,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 				ORecordLazyList.this.remove(pos);
 			}
 		};
-		return new OLazyRecordIterator(sourceRecord, database, recordType, subIterator, false);
+		return new OLazyRecordIterator(sourceRecord, subIterator, false);
 	}
 
 	public OIdentifiable rawGet(final int index) {
@@ -115,8 +111,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	@Override
 	public Iterator<OIdentifiable> iterator() {
 		lazyLoad(false);
-		return new OLazyRecordIterator(sourceRecord, ODatabaseRecordThreadLocal.INSTANCE.get(), recordType, super.iterator(),
-				autoConvertToRecord);
+		return new OLazyRecordIterator(sourceRecord, super.iterator(), autoConvertToRecord);
 	}
 
 	@Override
@@ -260,7 +255,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
 	public void convertLinks2Records() {
 		lazyLoad(false);
-		if (contentType == MULTIVALUE_CONTENT_TYPE.ALL_RECORDS || !autoConvertToRecord || database == null)
+		if (contentType == MULTIVALUE_CONTENT_TYPE.ALL_RECORDS || !autoConvertToRecord)
 			// PRECONDITIONS
 			return;
 
@@ -276,7 +271,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	}
 
 	public boolean convertRecords2Links() {
-		if (contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || sourceRecord == null || database == null)
+		if (contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || sourceRecord == null)
 			// PRECONDITIONS
 			return true;
 
@@ -303,7 +298,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	 *          Position of the item to convert
 	 */
 	private void convertLink2Record(final int iIndex) {
-		if (ridOnly || !autoConvertToRecord || database == null)
+		if (ridOnly || !autoConvertToRecord)
 			// PRECONDITIONS
 			return;
 
@@ -318,9 +313,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
 			marshalling = true;
 			try {
-				final ORecordInternal<?> record = database.load(rid);
-
-				super.set(iIndex, (OIdentifiable) record);
+				super.set(iIndex, rid.getRecord());
 
 			} catch (ORecordNotFoundException e) {
 				// IGNORE THIS
@@ -337,7 +330,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	 *          Position of the item to convert
 	 */
 	private boolean convertRecord2Link(final int iIndex) {
-		if (contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || database == null)
+		if (contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS)
 			// PRECONDITIONS
 			return true;
 
@@ -383,19 +376,8 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 		return recordType;
 	}
 
-	@Override
-	public boolean setDatabase(final ODatabaseRecord iDatabase) {
-		if (database != iDatabase) {
-			database = iDatabase;
-			super.setDatabase(iDatabase);
-			return true;
-		}
-		return false;
-	}
-
 	public ORecordLazyList copy(final ODocument iSourceRecord) {
 		final ORecordLazyList copy = new ORecordLazyList(iSourceRecord);
-		copy.database = database;
 		copy.contentType = contentType;
 		copy.stream = stream;
 		copy.autoConvertToRecord = autoConvertToRecord;

@@ -32,7 +32,7 @@ import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 
-@Test(groups = { "record-object" }, sequential = true)
+@Test(groups = { "record-object" })
 public class ObjectTreeTest {
 	private ODatabaseObjectTx	database;
 	protected long						startRecordNumber;

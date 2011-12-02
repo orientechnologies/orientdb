@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.memory.OLowMemoryException;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
 
 /**
@@ -47,7 +48,7 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
 public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implements OMVRBTreeEventListener<K, V> {
 
 	protected final OMVRBTreeProvider<K, V>										dataProvider;
-
+	protected ORecord<?>																			owner;
 	protected final Set<OMVRBTreeEntryPersistent<K, V>>				recordsToCommit			= new HashSet<OMVRBTreeEntryPersistent<K, V>>();
 
 	// STORES IN MEMORY DIRECT REFERENCES TO PORTION OF THE TREE
@@ -59,6 +60,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	protected float																						optimizeEntryPointsFactor;
 	private final TreeMap<K, OMVRBTreeEntryPersistent<K, V>>	entryPoints					= new TreeMap<K, OMVRBTreeEntryPersistent<K, V>>();
 	private final Map<ORID, OMVRBTreeEntryPersistent<K, V>>		cache								= new HashMap<ORID, OMVRBTreeEntryPersistent<K, V>>();
+
 	private static final int																	OPTIMIZE_MAX_RETRY	= 10;
 
 	public OMVRBTreePersistent(OMVRBTreeProvider<K, V> iProvider) {
@@ -631,8 +633,10 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			final int currPageIndex = pageIndex;
 			buffer.append(" ");
 			buffer.append(getFirstEntry().getFirstKey());
-			buffer.append("-");
-			buffer.append(getLastEntry().getLastKey());
+			if (size() > 1) {
+				buffer.append("-");
+				buffer.append(getLastEntry().getLastKey());
+			}
 			pageIndex = currPageIndex;
 		}
 
@@ -640,18 +644,18 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	}
 
 	private V internalPut(final K key, final V value) throws OLowMemoryException {
-		ORecord<?> rec;
+		ORecordInternal<?> rec;
 
-		if (key instanceof ORecord<?>) {
+		if (key instanceof ORecordInternal<?>) {
 			// RECORD KEY: ASSURE IT'S PERSISTENT TO AVOID STORING INVALID RIDs
-			rec = (ORecord<?>) key;
+			rec = (ORecordInternal<?>) key;
 			if (!rec.getIdentity().isValid())
 				rec.save();
 		}
 
-		if (value instanceof ORecord<?>) {
+		if (value instanceof ORecordInternal<?>) {
 			// RECORD VALUE: ASSURE IT'S PERSISTENT TO AVOID STORING INVALID RIDs
-			rec = (ORecord<?>) value;
+			rec = (ORecordInternal<?>) value;
 			if (!rec.getIdentity().isValid())
 				rec.save();
 		}
@@ -918,5 +922,14 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 	protected void markDirty() {
 		getListener().signalTreeChanged(this);
+	}
+
+	public ORecord<?> getOwner() {
+		return owner;
+	}
+
+	public OMVRBTreePersistent<K, V> setOwner(ORecord<?> owner) {
+		this.owner = owner;
+		return this;
 	}
 }

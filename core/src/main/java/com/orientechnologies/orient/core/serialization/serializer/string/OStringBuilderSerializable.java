@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.serialization.serializer.string;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 
 public interface OStringBuilderSerializable {
-	public void toStream(StringBuilder iOutput) throws OSerializationException;
+	public OStringBuilderSerializable toStream(StringBuilder iOutput) throws OSerializationException;
 
-	public void fromStream(StringBuilder iInput) throws OSerializationException;
+	public OStringBuilderSerializable fromStream(StringBuilder iInput) throws OSerializationException;
 }

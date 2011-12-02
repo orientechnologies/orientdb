@@ -70,6 +70,10 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
 		return defaultPageSize;
 	}
 
+	public int getClusterId() {
+		return clusterId;
+	}
+
 	public ORID getRoot() {
 		return root;
 	}
@@ -199,5 +203,9 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
 			return false;
 		record.setDirty();
 		return true;
+	}
+
+	public String getClusterName() {
+		return clusterName;
 	}
 }

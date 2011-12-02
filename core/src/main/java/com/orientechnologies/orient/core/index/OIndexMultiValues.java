@@ -73,7 +73,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 			Set<OIdentifiable> values = map.get(iKey);
 
 			if (values == null)
-				values = new ORecordLazySet(getDatabase()).setRidOnly(true);
+				values = new ORecordLazySet().setRidOnly(true);
 
 			if (!iSingleValue.getIdentity().isValid())
 				((ORecord<?>) iSingleValue).save();

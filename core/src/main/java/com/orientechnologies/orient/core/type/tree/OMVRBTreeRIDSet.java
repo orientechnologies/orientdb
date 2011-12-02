@@ -20,19 +20,32 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.OLazyRecordIterator;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 
 /**
- * Persistent Set<ORecordId> implementation that uses the MVRB-Tree to handle entries in persistent way.
+ * Persistent Set<OIdentifiable> implementation that uses the MVRB-Tree to handle entries in persistent way.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OMVRBTreeRIDSet implements Set<ORecordId> {
+public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializable, OSerializableStream {
+	private static final long		serialVersionUID		= 1L;
+
 	private final OMVRBTreeRID	tree;
+	private boolean							autoConvertToRecord	= true;
+
+	public OMVRBTreeRIDSet() {
+		this(new OMVRBTreeRID());
+	}
 
 	public OMVRBTreeRIDSet(final ORID iRID) {
 		this(new OMVRBTreeRID(iRID));
@@ -40,6 +53,10 @@ public class OMVRBTreeRIDSet implements Set<ORecordId> {
 
 	public OMVRBTreeRIDSet(final String iClusterName) {
 		this(new OMVRBTreeRID(iClusterName));
+	}
+
+	public OMVRBTreeRIDSet(final ORecord<?> iOwner) {
+		this((OMVRBTreeRID) new OMVRBTreeRID().setOwner(iOwner));
 	}
 
 	public OMVRBTreeRIDSet(final OMVRBTreeRID iProvider) {
@@ -58,8 +75,8 @@ public class OMVRBTreeRIDSet implements Set<ORecordId> {
 		return tree.containsKey(o);
 	}
 
-	public Iterator<ORecordId> iterator() {
-		return tree.keySet().iterator();
+	public Iterator<OIdentifiable> iterator() {
+		return new OLazyRecordIterator(tree.keySet().iterator(), autoConvertToRecord);
 	}
 
 	public Object[] toArray() {
@@ -70,7 +87,7 @@ public class OMVRBTreeRIDSet implements Set<ORecordId> {
 		return tree.keySet().toArray(a);
 	}
 
-	public boolean add(final ORecordId e) {
+	public boolean add(final OIdentifiable e) {
 		return tree.put(e, e) != null;
 	}
 
@@ -85,9 +102,9 @@ public class OMVRBTreeRIDSet implements Set<ORecordId> {
 		return true;
 	}
 
-	public boolean addAll(final Collection<? extends ORecordId> c) {
-		for (ORecordId o : c)
-			tree.put(o, o);
+	public boolean addAll(final Collection<? extends OIdentifiable> c) {
+		for (OIdentifiable o : c)
+			tree.put(o, null);
 		return true;
 	}
 
@@ -119,7 +136,54 @@ public class OMVRBTreeRIDSet implements Set<ORecordId> {
 		tree.save();
 	}
 
-	public ODocument getAsDocument() {
-		return ((OMVRBTreeRIDProvider)tree.getProvider()).toDocument();
+	public ODocument toDocument() {
+		return ((OMVRBTreeRIDProvider) tree.getProvider()).toDocument();
+	}
+
+	public OStringBuilderSerializable fromStream(final StringBuilder iSource) {
+		((OMVRBTreeRIDProvider) tree.getProvider()).fromStream(iSource);
+		return this;
+	}
+
+	public OStringBuilderSerializable toStream(StringBuilder iOutput) throws OSerializationException {
+		((OMVRBTreeRIDProvider) tree.getProvider()).toStream(iOutput);
+		return this;
+	}
+
+	public OMVRBTreeRIDSet fromDocument(final ODocument iDocument) {
+		((OMVRBTreeRIDProvider) tree.getProvider()).fromDocument(iDocument);
+		return this;
+	}
+
+	public OMVRBTreeRIDSet copy() {
+		final OMVRBTreeRIDSet clone = new OMVRBTreeRIDSet(new OMVRBTreeRID(new OMVRBTreeRIDProvider(null, tree.getProvider()
+				.getClusterId())));
+		clone.addAll(this);
+		return clone;
+	}
+
+	public byte[] toStream() throws OSerializationException {
+		final StringBuilder buffer = new StringBuilder();
+		toStream(buffer);
+		return buffer.toString().getBytes();
+	}
+
+	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
+		fromStream(new StringBuilder(OBinaryProtocol.bytes2string(iStream)));
+		return this;
+	}
+
+	@Override
+	public String toString() {
+		return tree.toString();
+	}
+
+	public boolean isAutoConvert() {
+		return autoConvertToRecord;
+	}
+
+	public OMVRBTreeRIDSet setAutoConvert(boolean autoConvert) {
+		this.autoConvertToRecord = autoConvert;
+		return this;
 	}
 }

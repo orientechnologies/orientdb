@@ -18,8 +18,10 @@ package com.orientechnologies.orient.core.type.tree;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 
@@ -27,8 +29,16 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
  * Persistent MVRB-Tree Set implementation.
  * 
  */
-public class OMVRBTreeRID extends OMVRBTreePersistent<ORecordId, ORecordId> {
-	private static final long	serialVersionUID	= 1L;
+public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiable> {
+	private static final long	serialVersionUID		= 1L;
+
+	protected int							maxUpdatesBeforeSave;
+	protected int							updates							= 0;
+	protected boolean					transactionRunning	= false;
+
+	public OMVRBTreeRID() {
+		this(new OMVRBTreeRIDProvider(null, ODatabaseRecordThreadLocal.INSTANCE.get().getDefaultClusterId()));
+	}
 
 	public OMVRBTreeRID(final ORID iRID) {
 		this(new OMVRBTreeRIDProvider(null, iRID.getClusterId(), iRID));
@@ -38,9 +48,72 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<ORecordId, ORecordId> {
 		this(new OMVRBTreeRIDProvider(null, iClusterName));
 	}
 
-	public OMVRBTreeRID(final OMVRBTreeProvider<ORecordId, ORecordId> iProvider) {
+	public OMVRBTreeRID(final OMVRBTreeProvider<OIdentifiable, OIdentifiable> iProvider) {
 		super(iProvider);
 		((OMVRBTreeRIDProvider) dataProvider).setTree(this);
+	}
+
+	/**
+	 * Do nothing since all the changes will be committed expressly at lazySave() time or on closing.
+	 */
+	@Override
+	public synchronized int commitChanges() {
+		if (transactionRunning || maxUpdatesBeforeSave == 0 || (maxUpdatesBeforeSave > 0 && ++updates >= maxUpdatesBeforeSave)) {
+			updates = 0;
+			return lazySave();
+		}
+		return 0;
+	}
+
+	@Override
+	public void clear() {
+		super.clear();
+		lazySave();
+	}
+
+	public int lazySave() {
+		return super.commitChanges();
+	}
+
+	/**
+	 * Returns the maximum updates to save the map persistently.
+	 * 
+	 * @return 0 means no automatic save, 1 means non-lazy map (save each operation) and > 1 is lazy.
+	 */
+	public int getMaxUpdatesBeforeSave() {
+		return maxUpdatesBeforeSave;
+	}
+
+	/**
+	 * Sets the maximum updates to save the map persistently.
+	 * 
+	 * @param iValue
+	 *          0 means no automatic save, 1 means non-lazy map (save each operation) and > 1 is lazy.
+	 */
+	public void setMaxUpdatesBeforeSave(final int iValue) {
+		this.maxUpdatesBeforeSave = iValue;
+	}
+
+	@Override
+	protected void config() {
+		super.config();
+		maxUpdatesBeforeSave = OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.getValueAsInteger();
+	}
+
+	/**
+	 * Change the transaction running mode.
+	 * 
+	 * @param iTxRunning
+	 *          true if a transaction is running, otherwise false
+	 */
+	public void setRunningTransaction(final boolean iTxRunning) {
+		transactionRunning = iTxRunning;
+
+		if (iTxRunning) {
+			// ASSURE ALL PENDING CHANGES ARE COMMITTED BEFORE TO START A TX
+			updates = 0;
+			lazySave();
+		}
 	}
 
 	public void onAfterTxCommit() {
@@ -51,11 +124,11 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<ORecordId, ORecordId> {
 
 		// FIX THE CACHE CONTENT WITH FINAL RECORD-IDS
 		final Set<ORID> keys = new HashSet<ORID>(nodesInMemory);
-		OMVRBTreeEntryPersistent<ORecordId, ORecordId> entry;
+		OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable> entry;
 		for (ORID rid : keys) {
 			if (rid.getClusterPosition() < -1) {
 				// FIX IT IN CACHE
-				entry = (OMVRBTreeEntryPersistent<ORecordId, ORecordId>) searchNodeInCache(rid);
+				entry = (OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable>) searchNodeInCache(rid);
 
 				// OVERWRITE IT WITH THE NEW RID
 				removeNodeFromCache(rid);

@@ -899,8 +899,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			if (currentRecord == null)
 				throw new ORecordNotFoundException(rid.toString());
 
-			final ODocument doc = (ODocument) currentRecord;
-			doc.merge((ODocument) newRecord, false, false);
+			((ODocument) currentRecord).merge((ODocument) newRecord, false, false);
 
 		} else
 			currentRecord = newRecord;

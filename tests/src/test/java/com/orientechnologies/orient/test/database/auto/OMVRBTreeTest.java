@@ -21,6 +21,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
@@ -53,7 +54,7 @@ public class OMVRBTreeTest {
 			set.add(new ORecordId(10, i));
 
 		Assert.assertEquals(set.size(), 10000);
-		ODocument doc = set.getAsDocument();
+		ODocument doc = set.toDocument();
 		doc.save();
 		database.close();
 
@@ -62,8 +63,8 @@ public class OMVRBTreeTest {
 		Assert.assertEquals(set2.size(), 10000);
 
 		int i = 0;
-		for (ORecordId rid : set2)
-			Assert.assertEquals(rid.clusterPosition, i++);
+		for (OIdentifiable rid : set2)
+			Assert.assertEquals(rid.getIdentity().getClusterPosition(), i++);
 
 		database.close();
 	}

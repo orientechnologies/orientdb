@@ -23,7 +23,6 @@ import java.util.Iterator;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -46,14 +45,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue, ORecordElement, ORecordLazyListener {
-	public static final ORecordLazySet						EMPTY_SET			= new ORecordLazySet((ODatabaseRecord) null);
+	public static final ORecordLazySet						EMPTY_SET			= new ORecordLazySet();
 	private static final Object										NEWMAP_VALUE	= new Object();
 	protected final ORecordLazyList								delegate;
 	protected IdentityHashMap<ORecord<?>, Object>	newItems;
 	protected boolean															sorted				= true;
 
-	public ORecordLazySet(final ODatabaseRecord iDatabase) {
-		delegate = new ORecordLazyList(iDatabase).setListener(this);
+	public ORecordLazySet() {
+		delegate = new ORecordLazyList().setListener(this);
 	}
 
 	public ORecordLazySet(final ORecordInternal<?> iSourceRecord) {
@@ -88,7 +87,7 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 	public Iterator<OIdentifiable> iterator() {
 		if (hasNewItems()) {
 			lazyLoad(false);
-			return new OLazyRecordMultiIterator(delegate.sourceRecord, ODatabaseRecordThreadLocal.INSTANCE.get(), delegate.recordType,
+			return new OLazyRecordMultiIterator(delegate.sourceRecord,
 					new Object[] { delegate.iterator(), newItems.keySet().iterator() }, delegate.autoConvertToRecord);
 		}
 		return delegate.iterator();
@@ -97,17 +96,16 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 	public Iterator<OIdentifiable> rawIterator() {
 		if (hasNewItems()) {
 			lazyLoad(false);
-			return new OLazyRecordMultiIterator(delegate.sourceRecord, delegate.database, delegate.recordType, new Object[] {
-					delegate.rawIterator(), newItems.keySet().iterator() }, false);
+			return new OLazyRecordMultiIterator(delegate.sourceRecord, new Object[] { delegate.rawIterator(),
+					newItems.keySet().iterator() }, false);
 		}
 		return delegate.rawIterator();
 	}
 
 	public Iterator<OIdentifiable> newItemsIterator() {
-		if (hasNewItems()) {
-			return new OLazyRecordIterator(delegate.sourceRecord, delegate.database, delegate.recordType, newItems.keySet().iterator(),
-					false);
-		}
+		if (hasNewItems())
+			return new OLazyRecordIterator(delegate.sourceRecord, newItems.keySet().iterator(), false);
+
 		return null;
 	}
 

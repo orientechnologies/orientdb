@@ -524,12 +524,12 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			iRecord.setDatabase(this);
 
 		try {
-			boolean wasNew = rid.isNew();
+			final boolean wasNew = rid.isNew();
 
 			// STREAM.LENGTH == 0 -> RECORD IN STACK: WILL BE SAVED AFTER
 			byte[] stream = iRecord.toStream();
 
-			boolean isNew = rid.isNew();
+			final boolean isNew = rid.isNew();
 			if (isNew)
 				// NOTIFY IDENTITY HAS CHANGED
 				iRecord.onBeforeIdentityChanged(rid);
@@ -577,14 +577,12 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				((ORecordId) iRecord.getIdentity()).copyFrom(rid);
 				// NOTIFY IDENTITY HAS CHANGED
 				iRecord.onAfterIdentityChanged(iRecord);
-			}
-
-			if (isNew)
 				// UPDATE INFORMATION: CLUSTER ID+POSITION
 				iRecord.fill(iRecord.getDatabase(), rid, 0, stream, stream == null || stream.length == 0);
-			else
+			} else {
 				// UPDATE INFORMATION: VERSION
 				iRecord.fill(iRecord.getDatabase(), rid, (int) result, stream, stream == null || stream.length == 0);
+			}
 
 			callbackHooks(wasNew ? TYPE.AFTER_CREATE : TYPE.AFTER_UPDATE, iRecord);
 

@@ -15,9 +15,12 @@
  */
 package com.orientechnologies.orient.core.type.tree.provider;
 
+import java.util.StringTokenizer;
+
 import com.orientechnologies.common.collection.OMVRBTree;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -32,12 +35,13 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<ORecordId, ORecordId> implements OStringBuilderSerializable {
-	private static final long								serialVersionUID	= 1L;
-	private static final int								PROTOCOL_VERSION	= 0;
+public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiable, OIdentifiable> implements
+		OStringBuilderSerializable {
+	private static final long												serialVersionUID	= 1L;
+	private static final int												PROTOCOL_VERSION	= 0;
 
-	private OMVRBTree<ORecordId, ORecordId>	tree;
-	private boolean													embeddedStreaming	= true;
+	private OMVRBTree<OIdentifiable, OIdentifiable>	tree;
+	private boolean																	embeddedStreaming	= true;
 
 	public OMVRBTreeRIDProvider(final OStorage iStorage, final int iClusterId, final ORID iRID) {
 		this(iStorage, getDatabase().getClusterNameById(iClusterId));
@@ -48,6 +52,11 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<ORecordId, O
 	public OMVRBTreeRIDProvider(final OStorage iStorage, final String iClusterName, final ORID iRID) {
 		this(iStorage, iClusterName);
 		record.setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
+		load();
+	}
+
+	public OMVRBTreeRIDProvider(final OStorage iStorage, final int iClusterId) {
+		this(iStorage, getDatabase().getClusterNameById(iClusterId));
 	}
 
 	public OMVRBTreeRIDProvider(final OStorage iStorage, final String iClusterName) {
@@ -62,7 +71,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<ORecordId, O
 		return new OMVRBTreeRIDEntryProvider(this);
 	}
 
-	public void toStream(final StringBuilder buffer) throws OSerializationException {
+	public OStringBuilderSerializable toStream(final StringBuilder buffer) throws OSerializationException {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		try {
@@ -72,10 +81,14 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<ORecordId, O
 			if (embeddedStreaming) {
 				// SERIALIZE AS AN EMBEDDED STRING
 				buffer.append('[');
-				for (ORecordId rid : tree.keySet()) {
-					if (buffer.length() > 1)
+				boolean first = true;
+				for (OIdentifiable rid : tree.keySet()) {
+					if (!first)
 						buffer.append(',');
-					rid.toString(buffer);
+					else
+						first = false;
+
+					rid.getIdentity().toString(buffer);
 				}
 				buffer.append(']');
 			} else
@@ -84,9 +97,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<ORecordId, O
 		} finally {
 			OProfiler.getInstance().stopChrono("OMVRBTreeRIDProvider.toStream", timer);
 		}
-	}
-
-	public void fromStream(final StringBuilder iInput) throws OSerializationException {
+		return this;
 	}
 
 	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
@@ -94,15 +105,28 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<ORecordId, O
 		return this;
 	}
 
+	public OStringBuilderSerializable fromStream(final StringBuilder iInput) throws OSerializationException {
+		if (iInput != null && iInput.length() > 0) {
+			final String value = iInput.charAt(0) == '[' ? iInput.substring(1, iInput.length() - 1) : iInput.toString();
+
+			final StringTokenizer tokenizer = new StringTokenizer(value, ",");
+			while (tokenizer.hasMoreElements()) {
+				final ORecordId rid = new ORecordId(tokenizer.nextToken());
+				tree.put(rid, rid);
+			}
+		}
+		return this;
+	}
+
 	public byte[] toStream() throws OSerializationException {
 		return toDocument().toStream();
 	}
 
-	public OMVRBTree<ORecordId, ORecordId> getTree() {
+	public OMVRBTree<OIdentifiable, OIdentifiable> getTree() {
 		return tree;
 	}
 
-	public void setTree(OMVRBTree<ORecordId, ORecordId> tree) {
+	public void setTree(OMVRBTree<OIdentifiable, OIdentifiable> tree) {
 		this.tree = tree;
 	}
 

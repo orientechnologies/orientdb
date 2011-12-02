@@ -97,7 +97,7 @@ public class OIndexFullText extends OIndexMultiValues {
 
 				if (refs == null)
 					// WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
-					refs = new ORecordLazySet(configuration.getDatabase()).setRidOnly(true);
+					refs = new ORecordLazySet().setRidOnly(true);
 
 				// ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
 				refs.add(iSingleValue);
