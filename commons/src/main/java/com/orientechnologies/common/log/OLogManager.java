@@ -38,8 +38,8 @@ public class OLogManager {
 			final Logger log = iRequester != null ? Logger.getLogger(iRequester.getClass().getName()) : Logger.getLogger("");
 			if (log.isLoggable(iLevel)) {
 				// ENCODE OF SPECIAL FORMAT CHAR '%' IF ANY
-				if (iMessage.contains("%"))
-					iMessage = iMessage.replaceAll("%", "%%");
+//				if (iMessage.contains("%"))
+//					iMessage = iMessage.replaceAll("%", "%%");
 				final String msg = String.format(iMessage, iAdditionalArgs);
 				if (iException != null)
 					log.log(iLevel, msg, iException);
