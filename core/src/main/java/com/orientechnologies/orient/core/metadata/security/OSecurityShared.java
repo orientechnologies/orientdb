@@ -76,7 +76,7 @@ public class OSecurityShared extends OSharedResourceAbstract implements OSecurit
 		try {
 
 			final List<ODocument> result = getDatabase().<OCommandRequest> command(
-					new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "'").setFetchPlan("*:-1")).execute();
+					new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("*:-1")).execute();
 
 			if (result != null && !result.isEmpty())
 				return new OUser(result.get(0));
@@ -111,7 +111,7 @@ public class OSecurityShared extends OSharedResourceAbstract implements OSecurit
 		try {
 
 			final List<ODocument> result = getDatabase().<OCommandRequest> command(
-					new OSQLSynchQuery<ODocument>("select from ORole where name = '" + iRoleName + "'").setFetchPlan("*:-1")).execute();
+					new OSQLSynchQuery<ODocument>("select from ORole where name = '" + iRoleName + "' limit 1").setFetchPlan("*:-1")).execute();
 
 			if (result != null && !result.isEmpty())
 				return new ORole(result.get(0));
