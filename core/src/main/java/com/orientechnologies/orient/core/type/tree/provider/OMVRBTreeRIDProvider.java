@@ -120,8 +120,8 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<ORecordId, O
 	}
 
 	public void fromDocument(final ODocument document) {
-		size = document.field("size");
-		defaultPageSize = document.field("defaultPageSize");
+		size = (Integer) document.field("size");
+		defaultPageSize = (Integer) document.field("defaultPageSize");
 		root = document.field("root", OType.LINK);
 	}
 }
