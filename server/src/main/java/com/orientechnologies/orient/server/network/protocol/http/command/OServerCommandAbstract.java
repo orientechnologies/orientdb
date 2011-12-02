@@ -87,9 +87,6 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 
 		writeLine(iRequest, null);
 
-		if (!empty)
-			writeContent(iRequest, content);
-
 		if (binaryContent != null)
 			iRequest.channel.outStream.write(binaryContent);
 		iRequest.channel.flush();
