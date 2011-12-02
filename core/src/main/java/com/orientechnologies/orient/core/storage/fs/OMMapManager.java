@@ -130,7 +130,7 @@ public class OMMapManager {
 		lastStrategy = iStrategy;
 
 		OMMapBufferEntry entry = searchBetweenLastBlocks(iFile, iBeginOffset, iSize);
-		if (entry != null)
+		if (entry != null && entry.buffer != null)
 			return entry;
 
 		// SEARCH THE REQUESTED RANGE IN THE CACHED BUFFERS
@@ -141,9 +141,12 @@ public class OMMapManager {
 		}
 
 		int position = searchEntry(fileEntries, iBeginOffset, iSize);
-		if (position > -1)
+		if (position > -1) {
 			// FOUND !!!
-			return fileEntries.get(position);
+			entry = fileEntries.get(position);
+			if (entry != null && entry.buffer != null)
+				return entry;
+		}
 
 		int p = (position + 2) * -1;
 
@@ -171,9 +174,12 @@ public class OMMapManager {
 			// RECOMPUTE THE POSITION AFTER REMOVING
 			fileEntries = bufferPoolPerFile.get(iFile);
 			position = searchEntry(fileEntries, iBeginOffset, iSize);
-			if (position > -1)
+			if (position > -1) {
 				// FOUND: THIS IS PRETTY STRANGE SINCE IT WASN'T FOUND!
-				return fileEntries.get(position);
+				entry = fileEntries.get(position);
+				if (entry != null && entry.buffer != null)
+					return entry;
+			}
 
 			// LOAD THE PAGE
 			try {
@@ -206,7 +212,10 @@ public class OMMapManager {
 
 		fileEntries.add(p, entry);
 
-		return entry;
+		if (entry != null && entry.buffer != null)
+			return entry;
+
+		return null;
 	}
 
 	private static void freeResources() {
