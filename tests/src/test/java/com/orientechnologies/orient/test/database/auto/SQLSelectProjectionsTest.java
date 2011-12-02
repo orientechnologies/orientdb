@@ -155,16 +155,16 @@ public class SQLSelectProjectionsTest {
 		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>("select name.prefix('Mr. ').append('!') from Profile where name is not null")).execute();
+				new OSQLSynchQuery<ODocument>(
+						"select *, name.prefix('Mr. ').append(' ').append(surname).append('!') as test from Profile where name is not null"))
+				.execute();
 
 		Assert.assertTrue(result.size() != 0);
 
 		for (ODocument d : result) {
-			Assert.assertTrue(d.fieldNames().length <= 1);
-			Assert.assertTrue(d.field("name").toString().startsWith("Mr. "));
-			Assert.assertTrue(d.field("name").toString().endsWith("!"));
+			Assert.assertEquals(d.field("test").toString(), "Mr. " + d.field("name") + " " + d.field("surname") + "!");
 
-			Assert.assertNull(d.getClassName());
+			Assert.assertFalse(d.getIdentity().isValid());
 			Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
 		}
 

@@ -38,7 +38,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 		if (iRecord == null)
 			throw new OCommandExecutionException("expression item '" + name + "' cannot be resolved");
 
-		return transformValue(ODocumentHelper.getFieldValue((ODocument) iRecord, name));
+		return transformValue(iRecord, ODocumentHelper.getFieldValue((ODocument) iRecord, name));
 	}
 
 	public String getRoot() {

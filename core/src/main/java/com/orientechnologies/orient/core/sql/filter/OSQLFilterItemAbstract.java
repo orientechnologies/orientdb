@@ -28,6 +28,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -99,7 +100,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
 	protected abstract void setRoot(OCommandToParse iQueryToParse, final String iRoot);
 
-	public Object transformValue(Object ioResult) {
+	public Object transformValue(final OIdentifiable iRecord, Object ioResult) {
 		if (ioResult != null && operationsChain != null) {
 			// APPLY OPERATIONS FOLLOWING THE STACK ORDER
 			int operator = -2;
@@ -193,15 +194,11 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 						ioResult = ioResult != null ? ioResult.toString().substring(Integer.parseInt(op.value.get(0)), endIndex) : null;
 
 					} else if (operator == OSQLFilterFieldOperator.APPEND.id) {
-						String v = op.value.get(0);
-						if (v.charAt(0) == '\'' || v.charAt(0) == '"')
-							v = v.substring(1, v.length() - 1);
+						final Object v = getParameterValue(iRecord, op.value.get(0));
 						ioResult = ioResult != null ? ioResult.toString() + v : null;
 
 					} else if (operator == OSQLFilterFieldOperator.PREFIX.id) {
-						String v = op.value.get(0);
-						if (v.charAt(0) == '\'' || v.charAt(0) == '"')
-							v = v.substring(1, v.length() - 1);
+						final Object v = getParameterValue(iRecord, op.value.get(0));
 						ioResult = ioResult != null ? v + ioResult.toString() : null;
 
 					} else if (operator == OSQLFilterFieldOperator.FORMAT.id)
@@ -290,5 +287,17 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 			}
 		}
 		return buffer.toString();
+	}
+
+	public Object getParameterValue(final OIdentifiable iRecord, final String iValue) {
+		if (iValue == null)
+			return null;
+
+		if (iValue.charAt(0) == '\'' || iValue.charAt(0) == '"')
+			// GET THE VALUE AS STRING
+			return iValue.substring(1, iValue.length() - 1);
+
+		// SEARCH FOR FIELD
+		return ((ODocument) iRecord.getRecord()).field(iValue);
 	}
 }

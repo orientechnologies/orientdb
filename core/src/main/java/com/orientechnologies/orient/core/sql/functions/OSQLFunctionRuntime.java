@@ -18,7 +18,6 @@ package com.orientechnologies.orient.core.sql.functions;
 import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandExecutor;
-import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
@@ -72,11 +71,11 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
 
 		final Object functionResult = function.execute(iRecord, runtimeParameters, iRequester);
 
-		return transformValue(functionResult);
+		return transformValue(iRecord, functionResult);
 	}
 
 	public Object getResult() {
-		return transformValue(function.getResult());
+		return transformValue(null, function.getResult());
 	}
 
 	public void setResult(final Object iValue) {
