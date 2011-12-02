@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OGraphException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -183,13 +184,8 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 
 			if (docs != null) {
 				// TRANSFORM ALL THE ARCS
-				ODocument doc;
 				for (Object o : docs) {
-					if (o instanceof ODocument)
-						doc = (ODocument) o;
-					else
-						doc = database.getRecordById((ORID) o);
-
+					final ODocument doc = (ODocument) ((OIdentifiable) o).getRecord();
 					if (iEdgeLabel != null && !iEdgeLabel.equals(doc.field(OGraphDatabase.LABEL)))
 						continue;
 
@@ -231,13 +227,8 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 
 			if (docs != null) {
 				// TRANSFORM ALL THE ARCS
-				ODocument doc;
 				for (Object o : docs) {
-					if (o instanceof ODocument)
-						doc = (ODocument) o;
-					else
-						doc = database.getRecordById((ORID) o);
-
+					final ODocument doc = (ODocument) ((OIdentifiable) o).getRecord();
 					if (iEdgeLabel != null && !iEdgeLabel.equals(doc.field(OGraphDatabase.LABEL)))
 						continue;
 
@@ -267,12 +258,13 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 		Set<OGraphEdge> temp = out != null ? out.get() : null;
 
 		if (temp == null) {
-			final Set<ODocument> docEdges = (Set<ODocument>) document.field(OGraphDatabase.VERTEX_FIELD_OUT);
+			final Set<OIdentifiable> docEdges = (Set<OIdentifiable>) document.field(OGraphDatabase.VERTEX_FIELD_OUT);
 
 			// TRANSFORM ALL THE EDGES
 			if (docEdges != null)
-				for (ODocument d : docEdges) {
-					resultset.add((OGraphVertex) database.getUserObjectByRecord((ODocument) d.field(OGraphDatabase.EDGE_FIELD_IN), null));
+				for (OIdentifiable d : docEdges) {
+					resultset.add((OGraphVertex) database.getUserObjectByRecord(
+							(ODocument) ((ODocument) d.getRecord()).field(OGraphDatabase.EDGE_FIELD_IN), null));
 				}
 		} else {
 			for (OGraphEdge edge : temp) {
@@ -429,11 +421,13 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 		Set<ODocument> docs = iSourceVertex.field(OGraphDatabase.VERTEX_FIELD_OUT);
 		if (docs != null) {
 			// USE A TEMP ARRAY TO AVOID CONCURRENT MODIFICATION TO THE ITERATOR
-			for (ODocument d : docs)
-				if (d.<ODocument> field(OGraphDatabase.EDGE_FIELD_IN).equals(iTargetVertex)) {
-					edges2Remove.add(d);
-					edge = d;
+			for (OIdentifiable d : docs) {
+				final ODocument doc = (ODocument) d.getRecord();
+				if (doc.field(OGraphDatabase.EDGE_FIELD_IN).equals(iTargetVertex)) {
+					edges2Remove.add(doc);
+					edge = doc;
 				}
+			}
 
 			for (ODocument d : edges2Remove)
 				docs.remove(d);
@@ -451,9 +445,11 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 		if (docs != null) {
 			edges2Remove.clear();
 
-			for (ODocument d : docs)
-				if (d.<ODocument> field(OGraphDatabase.EDGE_FIELD_IN).equals(iTargetVertex))
-					edges2Remove.add(d);
+			for (OIdentifiable d : docs) {
+				final ODocument doc = (ODocument) d.getRecord();
+				if (doc.field(OGraphDatabase.EDGE_FIELD_IN).equals(iTargetVertex))
+					edges2Remove.add(doc);
+			}
 
 			for (ODocument d : edges2Remove)
 				docs.remove(d);

@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.record;
 
 import java.util.Arrays;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -268,7 +269,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 
 	public ORecordAbstract<T> save() {
 		if (_database == null)
-			throw new ODatabaseException("No database assigned to current record. Create it using the <DB>.newInstance()");
+			_database = ODatabaseRecordThreadLocal.INSTANCE.get();
 
 		_database.save(this);
 
