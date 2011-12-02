@@ -1,0 +1,186 @@
+@charset 'UTF-8';
+/*
+* jQuery File Upload Plugin CSS 4.1
+* https://github.com/blueimp/jQuery-File-Upload
+*
+* Copyright 2010, Sebastian Tschan
+* https://blueimp.net
+*
+* Licensed under the MIT license:
+* http://creativecommons.org/licenses/MIT/
+*/
+
+form.file_upload {
+  position: relative;
+  overflow: hidden;
+  direction: ltr;
+  cursor: pointer;
+  text-align: center;
+  color: #333;
+  font-weight: bold;
+  -moz-border-radius: 10px;
+  -webkit-border-radius: 10px;
+  border-radius: 10px;
+  width: 15em;
+  height: 2.5em;
+  line-height: 2.5em;
+  background: #3399FF;
+  border: 1px solid #2e6e9e;
+}
+
+form.file_upload_small {
+  width: 15em;
+  height: 2.5em;
+  line-height: 2.5em;
+  font-size: 100%;
+  background: #3399FF;
+  border: 1px solid #2e6e9e;
+}
+
+form.file_upload_large {
+  width: 100%;
+  height: 7em;
+  line-height: 7em;
+  font-size: 2em;
+  background: #3399FF;
+  border: 1px solid #2e6e9e;
+}
+
+form.file_upload_highlight,
+form.file_upload:hover {
+  background: #33CCFF;
+}
+
+form.file_upload input {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  margin: 0;
+  border: 300px solid transparent;
+  opacity: 0;
+  -ms-filter: 'alpha(opacity=0)';
+  filter: alpha(opacity=0);
+  -o-transform: translate(-300px, -300px) scale(10);
+  -moz-transform: translate(-800px, 0) scale(10);
+  cursor: pointer;
+  height: 100%;
+}
+
+:root form.file_upload input {
+  height: auto;
+}
+
+form.file_upload button,
+.no-js .file_upload_label,
+.no-js .file_upload_overall_progress,
+.no-js .file_upload_buttons {
+  display: none;
+}
+
+.file_upload .file_upload_label,
+.file_upload .file_upload_overall_progress,
+.file_upload .file_upload_buttons {
+  display: block;
+}
+
+.file_upload img {
+  border: none;
+}
+
+.file_upload_progressbar, .progressbar div {
+  border: 1px solid #aaa;
+  -moz-border-radius: 4px;
+  -webkit-border-radius: 4px;
+  border-radius: 4px;
+}
+
+.file_upload_progressbar div {
+  width: 100%;
+  height: 100%;
+  margin: -1px;
+}
+
+.file_upload_progress .ui-progressbar-value,
+.file_upload_overall_progress .ui-progressbar-value,
+.progressbar div {
+  background: url(images/pbar-ani.png);
+}
+
+.file_upload_progress div {
+  width: 150px;
+  height: 17px;
+}
+
+.file_upload_overall_progress div {
+  width: 350px;
+  height: 17px;
+}
+
+.file_upload .file_name {
+  padding: 0 10px;
+  font-size: 1.1em;
+}
+
+.file_upload .file_size {
+  padding: 0 10px 0 0;
+  text-align: right;
+  font-size: 1.1em;
+}
+
+.file_upload .files,
+.file_upload_overall_progress {
+  margin: 10px 0;
+}
+
+#dialog{
+	background-color: #FFF;
+	border: 1px dotted #666;
+}
+
+.t-head thead tr td {
+	text-align: left;
+	background-color: #3E7FB9;
+	color: #FFF;
+	border: 1px solid #036;
+	padding-left: 5px;
+	font-family: Arial;
+	font-size: 11pt;
+	font-weight: bold;
+}
+
+#ui-dialog-title-dialog{
+  background-color: #3E7FB9;
+	color: #FFF;
+	border: 1px solid #036;
+	padding-left: 5px;
+	font-family: Arial;
+	font-size: 9pt;
+	font-weight: bold;
+	padding-right: 5px;
+}
+
+.ui-dialog-titlebar-close{
+	background-color: #eee;
+	color: #666;
+	border: 1px solid #CCC;
+	padding-left: 469px;
+	font-family: Arial;
+	font-size: 9pt;
+	font-weight: bold;
+	padding-right: 5px;
+}
+
+.file_upload_label{
+		font-family: Arial;
+	font-size: 11pt;
+	font-weight: bold;
+
+	}
+	
+.ui-widget-content .ui-widget-overlay{
+top: -600px!important;
+left: 300px!important;	
+}
+.ui-dialog{
+/*	width:780px!important;*/
+}

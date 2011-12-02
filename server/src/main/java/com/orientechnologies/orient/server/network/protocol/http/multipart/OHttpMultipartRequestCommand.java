@@ -38,7 +38,7 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
 	}
 
 	public void parse(OHttpRequest iRequest, OHttpMultipartContentParser<B> standardContentParser,
-			OHttpMultipartContentParser<F> fileContentParser, ODatabaseRecord database) throws IOException {
+			OHttpMultipartContentParser<F> fileContentParser, ODatabaseRecord database) throws Exception {
 		int in;
 		char currChar;
 		boolean endRequest = false;
@@ -92,8 +92,7 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
 			}
 			parseStatus = STATUS.STATUS_EXPECTED_BOUNDARY;
 		} catch (Exception e) {
-			sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, e.getMessage(), null, OHttpUtils.CONTENT_TEXT_PLAIN,
-					e.getMessage());
+			throw e;
 		}
 	}
 

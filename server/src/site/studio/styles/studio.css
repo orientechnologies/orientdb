@@ -179,3 +179,26 @@ ul#navigation .menu-server a {
 	-moz-box-shadow:0 0 10px #000;
 	-webkit-box-shadow:0 0 10px #000;
 }
+
+button.exportButton {
+  position: relative;
+  overflow: hidden;
+  direction: ltr;
+  cursor: pointer;
+  text-align: center;
+  color: #333;
+  font-weight: bold;
+  -moz-border-radius: 10px;
+  -webkit-border-radius: 10px;
+  border-radius: 10px;
+  width: 15em;
+  height: 2.5em;
+  line-height: 2.5em;
+  background: #3399FF;
+  border: 1px solid #2e6e9e;
+  text-align: center !important; 
+}
+
+button.exportButton:hover{
+ background: #33CCFF;
+}

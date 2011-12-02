@@ -293,14 +293,34 @@
 			<table style="width: 100%;" cellpadding="5">
 				<tr>
 					<td valign="top">
-						<button id="exportDatabase" class="ui-button-text" style="text-align: left; width: 100%;" >Export Database</button>
+						<button id="exportDatabase" class="ui-button-text exportButton" style="text-align: left; width: 100%;" >Export Database</button>
 					</td>
 					<td valign="top" class="help">Orient server can export databases as JSON data. Click the <b>Export Database</b> button to download a gzip compressed file containing said JSON file.</td>
 				</tr>
 				<tr>
 					<td valign="top">
+						<div id="importDatabaseContainer">
+							<form id="importDatabase" class="file_upload"
+								enctype="multipart/form-data" method="POST">
+								<input type="file" multiple="" name="databaseFile" />
+								<button type="button">Upload</button>
+								<div class="file_upload_label">Import Database</div>
+							</form>
+							<table id="importFileUploadTable">
+							</table>
+							<table id="importFileDownloadTable">
+							</table>
+						</div>
 					</td>
-					<td valign="top" class="help"></td>
+					<td valign="top" class="help">Import a previously exported
+						database. JSON data.<br /> <b>Requirements:</b>
+						<ul>
+							<li>Supported only JSON text file types.</li>
+							<li>The default max request content lenght is
+								100000 bytes.<br />To change it add the following entry (value expressed in bytes) in the
+								<b>orientdb-server-config.xml</b>:<br> <code>&lt;entry name=&#34;network.http.maxLength&#34; value=&#34;&#34; &#47;&gt;</code></li>
+						</ul>
+					</td>
 				</tr>
 			</table>
 		</div>
@@ -1070,6 +1090,26 @@
 						}
 					});
 	$('#tabs-security').tabs();
-
+	
+	$('#importDatabase').fileUploadUI({
+		url: orientServer.getDatabaseUrl() + 'import/' + orientServer.getDatabaseName(),
+		uploadTable: $('#importFileUploadTable'),
+		downloadTable: $('#importFileDownloadTable'),
+		buildUploadRow: function() {
+			orientServer.open();
+			return $('<tr>' +
+			'<td class="file_upload_progress"><div><\/div><\/td>' +
+			'<td class="file_upload_cancel">' +
+			'<button class="ui-state-default ui-corner-all" title="Cancel">' +
+			'<span class="ui-icon ui-icon-cancel">Cancel<\/span>' +
+			'<\/button>' +
+			'<\/td>' +
+			'<\/tr>');
+		},
+		buildDownloadRow: function(response) {
+			var responseText = response.responseText;
+			jQuery('#output').val(responseText);
+		}
+	});
 	showDatabaseInfo();
 </script>
