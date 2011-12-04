@@ -40,45 +40,45 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  * 
  */
 public enum OType {
-	BOOLEAN("Boolean", 0, true, 1, new Class<?>[] { Boolean.class, Boolean.TYPE }, new Class<?>[] { Boolean.class }) {
+	BOOLEAN("Boolean", 0, true, 1, new Class<?>[] { Boolean.class, Boolean.TYPE }, new Class<?>[] { Boolean.class, Number.class }) {
 	},
-	INTEGER("Integer", 1, true, 4, new Class<?>[] { Integer.class, Integer.TYPE }, new Class<?>[] { Number.class }) {
+	INTEGER("Integer", 1, true, 4, new Class<?>[] { Integer.class, Integer.TYPE }, new Class<?>[] { Integer.class, Number.class}) {
 	},
-	SHORT("Short", 2, true, 2, new Class<?>[] { Short.class, Short.TYPE }, new Class<?>[] { Number.class }) {
+	SHORT("Short", 2, true, 2, new Class<?>[] { Short.class, Short.TYPE }, new Class<?>[] { Short.class, Number.class  }) {
 	},
-	LONG("Long", 3, true, 8, new Class<?>[] { Long.class, Long.TYPE }, new Class<?>[] { Number.class }) {
+	LONG("Long", 3, true, 8, new Class<?>[] { Long.class, Long.TYPE }, new Class<?>[] { Long.class, Number.class, }) {
 	},
-	FLOAT("Float", 4, true, 4, new Class<?>[] { Float.class, Float.TYPE }, new Class<?>[] { Number.class }) {
+	FLOAT("Float", 4, true, 4, new Class<?>[] { Float.class, Float.TYPE }, new Class<?>[] { Float.class, Number.class}) {
 	},
-	DOUBLE("Double", 5, true, 8, new Class<?>[] { Double.class, Double.TYPE }, new Class<?>[] { Number.class }) {
+	DOUBLE("Double", 5, true, 8, new Class<?>[] { Double.class, Double.TYPE }, new Class<?>[] { Double.class, Number.class}) {
 	},
-	DATETIME("Datetime", 6, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Long.class }) {
+	DATETIME("Datetime", 6, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Number.class}) {
 	},
 	STRING("String", 7, false, 8, new Class<?>[] { String.class }, new Class<?>[] { String.class }) {
 	},
 	BINARY("Binary", 8, false, 8, new Class<?>[] { Array.class }, new Class<?>[] { Array.class }) {
 	},
-	EMBEDDED("Embedded", 9, false, 8, new Class<?>[] { Object.class }, new Class<?>[] { Object.class }) {
+	EMBEDDED("Embedded", 9, false, 8, new Class<?>[] { Object.class }, new Class<?>[] { OSerializableStream.class }) {
 	},
-	EMBEDDEDLIST("EmbeddedList", 10, false, 8, new Class<?>[] { List.class }, new Class<?>[] { Collection.class, Array.class }) {
+	EMBEDDEDLIST("EmbeddedList", 10, false, 8, new Class<?>[] { List.class }, new Class<?>[] { List.class}) {
 	},
-	EMBEDDEDSET("EmbeddedSet", 11, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Collection.class, Array.class }) {
+	EMBEDDEDSET("EmbeddedSet", 11, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Set.class }) {
 	},
 	EMBEDDEDMAP("EmbeddedMap", 12, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
 	},
-	LINK("Link", 13, true, 8, new Class<?>[] { Object.class, ORecordId.class }, new Class<?>[] { ORecord.class, ORID.class }) {
+	LINK("Link", 13, true, 8, new Class<?>[] { Object.class, ORecordId.class }, new Class<?>[] { ORID.class }) {
 	},
-	LINKLIST("LinkList", 14, false, 8, new Class<?>[] { List.class }, new Class<?>[] { Collection.class, Array.class }) {
+	LINKLIST("LinkList", 14, false, 8, new Class<?>[] { List.class }, new Class<?>[] { List.class }) {
 	},
-	LINKSET("LinkSet", 15, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Collection.class, Array.class }) {
+	LINKSET("LinkSet", 15, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Set.class }) {
 	},
 	LINKMAP("LinkMap", 16, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
 	},
-	BYTE("Byte", 17, true, 1, new Class<?>[] { Byte.class, Byte.TYPE }, new Class<?>[] { Number.class, Character.class }) {
+	BYTE("Byte", 17, true, 1, new Class<?>[] { Byte.class, Byte.TYPE }, new Class<?>[] { Byte.class, Number.class }) {
 	},
 	TRANSIENT("Transient", 18, true, 0, new Class<?>[] {}, new Class<?>[] {}) {
 	},
-	DATE("Date", 19, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Long.class }) {
+	DATE("Date", 19, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Number.class}) {
 	},
 	CUSTOM("Custom", 20, false, 8, new Class<?>[] { OSerializableStream.class }, new Class<?>[] { OSerializableStream.class }) {
 	};
@@ -119,30 +119,6 @@ public enum OType {
 	}
 
 	/**
-	 * Check if the value is assignable by the current type
-	 * 
-	 * @param iPropertyValue
-	 *          Object to check
-	 * @return true if it's assignable, otherwise false
-	 */
-	public boolean isAssignableFrom(final Object iPropertyValue) {
-		if (iPropertyValue == null)
-			return true;
-
-		final Class<?> cls = iPropertyValue.getClass();
-
-		for (int i = 0; i < allowAssignmentFrom.length; ++i) {
-			if (allowAssignmentFrom[i].equals(Array.class) && cls.isArray())
-				// SPECIAL CASE: GET ARRAYS
-				return true;
-
-			if (allowAssignmentFrom[i].isAssignableFrom(cls))
-				return true;
-		}
-		return false;
-	}
-
-	/**
 	 * Return the correspondent type by checking the "assignability" of the class received as parameter.
 	 * 
 	 * @param iClass
@@ -155,11 +131,27 @@ public enum OType {
 
 		for (final OType type : TYPES)
 			for (int i = 0; i < type.javaTypes.length; ++i) {
-				if (type.javaTypes[i].isAssignableFrom(iClass))
+				if (type.javaTypes[i] == iClass)
 					return type;
 				if (type.javaTypes[i] == Array.class && iClass.isArray())
 					return type;
 			}
+
+    int priority = 0;
+    boolean comparedAtLeastOnce = false;
+    do{
+      for (final OType type : TYPES) {
+        if(type.allowAssignmentFrom.length > priority) {
+          if(type.allowAssignmentFrom[priority].isAssignableFrom(iClass))
+            return type;
+          if(type.allowAssignmentFrom[priority].isArray() && iClass.isArray())
+            return type;
+          comparedAtLeastOnce = true;
+        }
+      }
+
+      priority++;
+    } while (comparedAtLeastOnce);
 
 		if (ORecord.class.isAssignableFrom(iClass))
 			return OType.LINK;
@@ -167,25 +159,6 @@ public enum OType {
 		return null;
 	}
 
-	/**
-	 * Return the correspondent type by checking the "assignability" of the class received as parameter.
-	 * 
-	 * @param iClass
-	 *          Class to check
-	 * @return OType instance if found, otherwise null
-	 */
-	public static OType getTypeByAssignability(final Class<?> iClass) {
-		if (iClass == null)
-			return null;
-
-		for (OType type : TYPES)
-			for (int i = 0; i < type.allowAssignmentFrom.length; ++i) {
-				if (type.allowAssignmentFrom[i].isAssignableFrom(iClass))
-					return type;
-			}
-
-		return null;
-	}
 
 	/**
 	 * Convert the input object to an integer.
