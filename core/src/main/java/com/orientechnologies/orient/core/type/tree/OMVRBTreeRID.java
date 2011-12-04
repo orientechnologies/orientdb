@@ -42,6 +42,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
 	public OMVRBTreeRID(final ORID iRID) {
 		this(new OMVRBTreeRIDProvider(null, iRID.getClusterId(), iRID));
+		load();
 	}
 
 	public OMVRBTreeRID(final String iClusterName) {

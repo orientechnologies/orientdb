@@ -35,9 +35,9 @@ public interface OMVRBTreeProvider<K, V> {
 
 	public ORID getRoot();
 
-	public boolean setSize(int iSize);
-
 	public boolean setRoot(ORID iRid);
+
+	public boolean setSize(int iSize);
 
 	/** Give a chance to update config parameters (defaultSizePage, ...) */
 	public boolean updateConfig();

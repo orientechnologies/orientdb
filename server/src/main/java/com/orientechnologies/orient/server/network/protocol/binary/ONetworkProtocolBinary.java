@@ -871,9 +871,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	}
 
 	protected int deleteRecord(final ORID rid, final int version) {
-		ORecordInternal<?> record = connection.database.load(rid);
-		record.setVersion(version);
-		record.delete();
+		final ORecordInternal<?> record = connection.database.load(rid);
+		if (record != null) {
+			record.setVersion(version);
+			record.delete();
+		}
 		return 1;
 	}
 

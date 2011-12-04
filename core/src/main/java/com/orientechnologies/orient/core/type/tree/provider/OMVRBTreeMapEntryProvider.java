@@ -36,7 +36,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
 
 	@SuppressWarnings("unchecked")
 	public OMVRBTreeMapEntryProvider(final OMVRBTreeMapProvider<K, V> iTreeDataProvider) {
-		super(iTreeDataProvider);
+		super(iTreeDataProvider, OMemoryStream.DEF_SIZE);
 		keys = (K[]) new Object[pageSize];
 		values = (V[]) new Object[pageSize];
 		serializedKeys = new int[pageSize];
@@ -199,7 +199,10 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
 	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
 		final long timer = OProfiler.getInstance().startChrono();
 
-		stream.setSource(iStream);
+		if (stream == null)
+			stream = new OMemoryStream(iStream);
+		else
+			stream.setSource(iStream);
 
 		try {
 			pageSize = stream.getAsInteger();

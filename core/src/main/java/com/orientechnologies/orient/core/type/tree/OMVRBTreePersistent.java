@@ -31,6 +31,7 @@ import com.orientechnologies.common.collection.OMVRBTreeEventListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.memory.OLowMemoryException;
@@ -114,7 +115,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	protected void saveTreeNode() throws IOException {
 		if (root != null) {
 			OMVRBTreeEntryPersistent<K, V> pRoot = (OMVRBTreeEntryPersistent<K, V>) root;
-			if (pRoot.getDataEntry().getIdentity().isNew()) {
+			if (pRoot.getProvider().getIdentity().isNew()) {
 				// FIRST TIME: SAVE IT
 				pRoot.save();
 			}
@@ -189,7 +190,10 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		try {
 			recordsToCommit.clear();
 			if (root != null) {
-				((OMVRBTreeEntryPersistent<K, V>) root).delete();
+				try {
+					((OMVRBTreeEntryPersistent<K, V>) root).delete();
+				} catch (ORecordNotFoundException e) {
+				}
 				super.clear();
 				markDirty();
 				save();
@@ -835,6 +839,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	@Override
 	protected void removeNode(final OMVRBTreeEntry<K, V> p) {
 		removeNodeFromMemory((OMVRBTreeEntryPersistent<K, V>) p);
+		((OMVRBTreeEntryPersistent<K, V>) p).getProvider().delete();
 		super.removeNode(p);
 	}
 

@@ -29,11 +29,12 @@ import com.orientechnologies.common.util.OArrays;
  * 
  */
 public class OMemoryStream extends OutputStream {
+	public static final int		DEF_SIZE							= 1024;
+
 	private byte[]						buffer;
 	private int								position;
 
 	private static final int	NATIVE_COPY_THRESHOLD	= 9;
-	private static final int	DEF_SIZE							= 1024;
 
 	// private int fixedSize = 0;
 
@@ -74,6 +75,7 @@ public class OMemoryStream extends OutputStream {
 		if (iSize < 0)
 			return;
 
+		assureSpaceFor(position + iSize);
 		System.arraycopy(iSource.buffer, iSource.position, buffer, position, iSize);
 	}
 
@@ -245,7 +247,7 @@ public class OMemoryStream extends OutputStream {
 
 		final int bufferLength = localBuffer.length;
 
-		if (bufferLength <= capacity) {
+		if (bufferLength < capacity) {
 			OProfiler.getInstance().updateCounter("OMemOutStream.resize", +1);
 
 			final byte[] newbuf = new byte[Math.max(bufferLength << 1, capacity)];

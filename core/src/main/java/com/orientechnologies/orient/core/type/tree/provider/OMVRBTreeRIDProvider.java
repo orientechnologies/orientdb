@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreePersistent;
 
 /**
  * MVRB-Tree implementation to handle a set of RID.
@@ -37,22 +38,20 @@ import com.orientechnologies.orient.core.storage.OStorage;
  */
 public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiable, OIdentifiable> implements
 		OStringBuilderSerializable {
-	private static final long												serialVersionUID	= 1L;
-	private static final int												PROTOCOL_VERSION	= 0;
+	private static final long																	serialVersionUID	= 1L;
+	private static final int																	PROTOCOL_VERSION	= 0;
 
-	private OMVRBTree<OIdentifiable, OIdentifiable>	tree;
-	private boolean																	embeddedStreaming	= true;
+	private OMVRBTreePersistent<OIdentifiable, OIdentifiable>	tree;
+	private boolean																						embeddedStreaming	= true;
 
 	public OMVRBTreeRIDProvider(final OStorage iStorage, final int iClusterId, final ORID iRID) {
 		this(iStorage, getDatabase().getClusterNameById(iClusterId));
 		record.setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
-		load();
 	}
 
 	public OMVRBTreeRIDProvider(final OStorage iStorage, final String iClusterName, final ORID iRID) {
 		this(iStorage, iClusterName);
 		record.setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
-		load();
 	}
 
 	public OMVRBTreeRIDProvider(final OStorage iStorage, final int iClusterId) {
@@ -126,7 +125,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 		return tree;
 	}
 
-	public void setTree(OMVRBTree<OIdentifiable, OIdentifiable> tree) {
+	public void setTree(final OMVRBTreePersistent<OIdentifiable, OIdentifiable> tree) {
 		this.tree = tree;
 	}
 

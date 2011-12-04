@@ -2377,8 +2377,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 * 
 	 * @param p
 	 *          node to delete
+	 * @return
 	 */
-	void deleteEntry(OMVRBTreeEntry<K, V> p) {
+	OMVRBTreeEntry<K, V> deleteEntry(OMVRBTreeEntry<K, V> p) {
 		setSize(size() - 1);
 
 		if (listener != null)
@@ -2389,11 +2390,15 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			p.remove();
 
 			if (p.getSize() > 0)
-				return;
+				return p;
 		}
 
+		final OMVRBTreeEntry<K, V> next = successor(p);
 		// DELETE THE ENTIRE NODE, RE-BUILDING THE STRUCTURE
 		removeNode(p);
+		
+		// RETURN NEXT NODE
+		return next;
 	}
 
 	/**

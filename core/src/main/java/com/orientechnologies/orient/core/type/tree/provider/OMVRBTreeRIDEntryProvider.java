@@ -53,7 +53,7 @@ public class OMVRBTreeRIDEntryProvider extends OMVRBTreeEntryDataProviderAbstrac
 	protected final static int	OFFSET_RIDLIST		= OFFSET_RIGHT + ORecordId.PERSISTENT_SIZE;
 
 	public OMVRBTreeRIDEntryProvider(final OMVRBTreeRIDProvider iTreeDataProvider) {
-		super(iTreeDataProvider);
+		super(iTreeDataProvider, OFFSET_RIDLIST + (iTreeDataProvider.getDefaultPageSize() * ORecordId.PERSISTENT_SIZE));
 	}
 
 	public OMVRBTreeRIDEntryProvider(final OMVRBTreeRIDProvider iTreeDataProvider, final ORID iRID) {
@@ -101,16 +101,14 @@ public class OMVRBTreeRIDEntryProvider extends OMVRBTreeEntryDataProviderAbstrac
 		return setDirty();
 	}
 
-	public boolean copyDataFrom(final OMVRBTreeEntryDataProvider<OIdentifiable, OIdentifiable> iFrom, int iStartPosition) {
-		OMVRBTreeRIDEntryProvider parent = (OMVRBTreeRIDEntryProvider) iFrom;
+	public boolean copyDataFrom(final OMVRBTreeEntryDataProvider<OIdentifiable, OIdentifiable> iFrom, final int iStartPosition) {
 		size = iFrom.getSize() - iStartPosition;
-		stream.jump(0).copyFrom(parent.moveToIndex(iStartPosition), size);
-		stream.setSource(parent.stream.copy());
+		moveToIndex(0).copyFrom(((OMVRBTreeRIDEntryProvider) iFrom).moveToIndex(iStartPosition), size * ORecordId.PERSISTENT_SIZE);
 		return setDirty();
 	}
 
 	public boolean truncate(final int iNewSize) {
-		stream.jump(iNewSize).fill(size - iNewSize, (byte) 0);
+		moveToIndex(iNewSize).fill((size - iNewSize) * ORecordId.PERSISTENT_SIZE, (byte) 0);
 		size = iNewSize;
 		return setDirty();
 	}
@@ -125,7 +123,10 @@ public class OMVRBTreeRIDEntryProvider extends OMVRBTreeEntryDataProviderAbstrac
 	}
 
 	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
-		stream.setSource(iStream);
+		if (stream == null)
+			stream = new OMemoryStream(iStream);
+		else
+			stream.setSource(iStream);
 
 		size = stream.jump(OFFSET_NODESIZE).getAsInteger();
 		color = stream.jump(OFFSET_COLOR).getAsBoolean();
@@ -148,7 +149,7 @@ public class OMVRBTreeRIDEntryProvider extends OMVRBTreeEntryDataProviderAbstrac
 		}
 
 		// RETURN DIRECTLY THE UNDERLYING BUFFER SINCE IT'S FIXED
-		final byte[] buffer = stream.toByteArray();
+		final byte[] buffer = stream.getInternalBuffer();
 		record.fromStream(buffer);
 		return buffer;
 	}

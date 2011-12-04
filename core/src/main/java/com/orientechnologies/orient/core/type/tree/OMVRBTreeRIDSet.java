@@ -137,6 +137,7 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerial
 	}
 
 	public ODocument toDocument() {
+		tree.lazySave();
 		return ((OMVRBTreeRIDProvider) tree.getProvider()).toDocument();
 	}
 

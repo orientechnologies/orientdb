@@ -39,11 +39,12 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
 	protected ORecordId															rightRid;
 	protected boolean																color							= OMVRBTree.RED;
 	protected ORecordBytesLazy											record;
-	protected OMemoryStream													stream						= new OMemoryStream();
+	protected OMemoryStream													stream;
 
-	public OMVRBTreeEntryDataProviderAbstract(final OMVRBTreeProviderAbstract<K, V> iTreeDataProvider) {
+	public OMVRBTreeEntryDataProviderAbstract(final OMVRBTreeProviderAbstract<K, V> iTreeDataProvider, final int iFixedSize) {
 		this(iTreeDataProvider, null);
 		pageSize = treeDataProvider.getDefaultPageSize();
+		stream = new OMemoryStream(iFixedSize);
 	}
 
 	public OMVRBTreeEntryDataProviderAbstract(final OMVRBTreeProviderAbstract<K, V> iTreeDataProvider, final ORID iRID) {

@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.Iterator;
+
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -22,6 +24,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
@@ -48,23 +51,45 @@ public class OMVRBTreeTest {
 	@Test
 	public void treeSet() {
 		database.open("admin", "admin");
+		int total = 1000;
 
 		OMVRBTreeRIDSet set = new OMVRBTreeRIDSet("index");
-		for (int i = 0; i < 10000; ++i)
+		for (int i = 0; i < total; ++i)
 			set.add(new ORecordId(10, i));
 
-		Assert.assertEquals(set.size(), 10000);
+		Assert.assertEquals(set.size(), total);
 		ODocument doc = set.toDocument();
 		doc.save();
 		database.close();
 
 		database.open("admin", "admin");
-		OMVRBTreeRIDSet set2 = new OMVRBTreeRIDSet(doc.getIdentity());
-		Assert.assertEquals(set2.size(), 10000);
+		OMVRBTreeRIDSet set2 = new OMVRBTreeRIDSet(doc.getIdentity()).setAutoConvert(false);
+		Assert.assertEquals(set2.size(), total);
 
+		// ITERABLE
 		int i = 0;
-		for (OIdentifiable rid : set2)
-			Assert.assertEquals(rid.getIdentity().getClusterPosition(), i++);
+		for (OIdentifiable rid : set2) {
+			Assert.assertEquals(rid.getIdentity().getClusterPosition(), i);
+			// System.out.println("Adding " + rid);
+			i++;
+		}
+		Assert.assertEquals(i, total);
+
+		ORID rootRID = doc.field("root", ORecordId.class);
+
+		// ITERATOR REMOVE
+		i = 0;
+		for (Iterator<OIdentifiable> it = set2.iterator(); it.hasNext();) {
+			final OIdentifiable rid = it.next();
+			Assert.assertEquals(rid.getIdentity().getClusterPosition(), i);
+			// System.out.println("Removing " + rid);
+			it.remove();
+			i++;
+		}
+		Assert.assertEquals(i, total);
+		Assert.assertEquals(set2.size(), 0);
+
+		//Assert.assertNull(database.load(rootRID));
 
 		database.close();
 	}

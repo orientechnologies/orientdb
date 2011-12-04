@@ -700,7 +700,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			// JUST THE REFERENCE
 			rid = (ORID) iLinked;
 
-			if (rid.isNew()) {
+			if (rid.isValid() && rid.isNew()) {
 				// SAVE AT THE FLY AND STORE THE NEW RID
 				final ORecord<?> record = rid.getRecord();
 

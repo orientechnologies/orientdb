@@ -58,8 +58,8 @@ abstract class AbstractEntryIterator<K, V, T> implements Iterator<T> {
 
 			next = OMVRBTree.successor(next);
 			tree.pageIndex = 0;
-			lastReturned = next;
 		}
+		lastReturned = next;
 
 		return next;
 	}
@@ -78,9 +78,9 @@ abstract class AbstractEntryIterator<K, V, T> implements Iterator<T> {
 
 			next = OMVRBTree.predecessor(e);
 			tree.pageIndex = next.getSize() - 1;
-			lastReturned = e;
 		}
 
+		lastReturned = e;
 		return e;
 	}
 
@@ -92,7 +92,7 @@ abstract class AbstractEntryIterator<K, V, T> implements Iterator<T> {
 		// deleted entries are replaced by their successors
 		if (lastReturned.getLeft() != null && lastReturned.getRight() != null)
 			next = lastReturned;
-		tree.deleteEntry(lastReturned);
+		next = tree.deleteEntry(lastReturned);
 		expectedModCount = tree.modCount;
 		lastReturned = null;
 	}

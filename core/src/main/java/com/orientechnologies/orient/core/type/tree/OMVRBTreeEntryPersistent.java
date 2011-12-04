@@ -139,7 +139,7 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 		markDirty();
 	}
 
-	public OMVRBTreeEntryDataProvider<K, V> getDataEntry() {
+	public OMVRBTreeEntryDataProvider<K, V> getProvider() {
 		return dataProvider;
 	}
 
@@ -240,20 +240,22 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 	 * @throws IOException
 	 */
 	public OMVRBTreeEntryPersistent<K, V> delete() throws IOException {
-		pTree.removeNodeFromMemory(this);
-		pTree.removeEntry(dataProvider.getIdentity());
+		if (dataProvider != null) {
+			pTree.removeNodeFromMemory(this);
+			pTree.removeEntry(dataProvider.getIdentity());
 
-		// EARLY LOAD LEFT AND DELETE IT RECURSIVELY
-		if (getLeft() != null)
-			((OMVRBTreeEntryPersistent<K, V>) getLeft()).delete();
+			// EARLY LOAD LEFT AND DELETE IT RECURSIVELY
+			if (getLeft() != null)
+				((OMVRBTreeEntryPersistent<K, V>) getLeft()).delete();
 
-		// EARLY LOAD RIGHT AND DELETE IT RECURSIVELY
-		if (getRight() != null)
-			((OMVRBTreeEntryPersistent<K, V>) getRight()).delete();
+			// EARLY LOAD RIGHT AND DELETE IT RECURSIVELY
+			if (getRight() != null)
+				((OMVRBTreeEntryPersistent<K, V>) getRight()).delete();
 
-		// DELETE MYSELF
-		dataProvider.delete();
-		clear();
+			// DELETE MYSELF
+			dataProvider.delete();
+			clear();
+		}
 
 		return this;
 	}
@@ -535,7 +537,7 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 		if (dataProvider.removeAt(index))
 			markDirty();
 
-		tree.setPageIndex(0);
+		tree.setPageIndex(index - 1);
 
 		if (index == 0)
 			pTree.updateEntryPoint(oldKey, this);
