@@ -18,6 +18,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
@@ -78,7 +79,7 @@ public class MultipleDBTest {
 							DummyObject dummy = new DummyObject("name" + j);
 							tx.save(dummy);
 
-							Assert.assertEquals(dummy.getId().toString(), "#5:" + j);
+							Assert.assertEquals(((ORID) dummy.getId()).getClusterPosition(), j);
 
 							if ((j + 1) % 20000 == 0) {
 								System.out.println("(" + dbUrl + ") " + "Operations (WRITE) executed: " + (j + 1));
@@ -182,7 +183,7 @@ public class MultipleDBTest {
 							dummy.field("name", "name" + j);
 
 							tx.save(dummy);
-							Assert.assertEquals(dummy.getIdentity().toString(), "#5:" + j);
+							Assert.assertEquals(((ORID) dummy.getIdentity()).getClusterPosition(), j);
 
 							// Assert.assertEquals(dummy.getId().toString(), "#5:" + j);
 
