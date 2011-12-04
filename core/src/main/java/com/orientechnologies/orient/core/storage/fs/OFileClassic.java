@@ -42,7 +42,9 @@ public class OFileClassic extends OFile {
 
 	@Override
 	public void close() throws IOException {
-		setSoftlyClosed(true);
+		if (channel != null)
+			setSoftlyClosed(true);
+		
 		if (internalWriteBuffer != null)
 			internalWriteBuffer = null;
 
