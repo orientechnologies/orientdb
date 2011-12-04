@@ -75,7 +75,7 @@ public class OMVRBTreeTest {
 		}
 		Assert.assertEquals(i, total);
 
-		ORID rootRID = doc.field("root", ORecordId.class);
+		final ORID rootRID = doc.field("root", ORecordId.class);
 
 		// ITERATOR REMOVE
 		i = 0;
@@ -89,7 +89,7 @@ public class OMVRBTreeTest {
 		Assert.assertEquals(i, total);
 		Assert.assertEquals(set2.size(), 0);
 
-		//Assert.assertNull(database.load(rootRID));
+		Assert.assertNull(database.load(rootRID));
 
 		database.close();
 	}
