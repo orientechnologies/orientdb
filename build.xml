@@ -188,6 +188,7 @@
       <fileset dir="${graph.release}/databases/" includes="**"/>
     </delete>
     
+	<!--
     <java classname="com.orientechnologies.orient.graph.gremlin.TestLoadGraph">
       <arg value="graphdb/target/test-classes/graph-example-2.xml"/>
       <arg value="local:${graph.release}/databases/tinkerpop"/>
@@ -198,6 +199,7 @@
 				</fileset>
 			</classpath>
 		</java>
+		-->
 	</target>
 	
 	<target name="md5" depends="init">
@@ -231,9 +233,11 @@
 	</target>
 
   <target name="release" depends="install">
+		<mkdir dir="${global.release}" />
 		<delete file="../releases/orientdb-${version}.zip" />
 		<zip destfile="../releases/orientdb-${version}.zip" basedir="${db.release}" level="9" update="false" excludes="**/*.log.*" />
 		
+		<mkdir dir="${graph.release}" />
 		<delete file="../releases/orientdb-graphed-${version}.zip" />
 		<zip destfile="../releases/orientdb-graphed-${version}.zip" basedir="${graph.release}" level="9" update="false" excludes="**/*.log.*" />
 	</target>

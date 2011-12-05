@@ -158,7 +158,8 @@ public class OGremlinHelper {
 
 	public OrientGraph acquireGraph(final OGraphDatabase iDatabase) {
 		checkStatus();
-		return graphPool.getResource(iDatabase.getUser().getName() + "," + iDatabase.getURL(), Long.MAX_VALUE).reuse(iDatabase);
+		return ((OrientGraph) graphPool.getResource(iDatabase.getUser().getName() + "," + iDatabase.getURL(), Long.MAX_VALUE))
+				.reuse(iDatabase);
 	}
 
 	public void releaseGraph(final OrientGraph iGraph) {
