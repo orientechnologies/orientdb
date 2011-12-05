@@ -252,15 +252,15 @@ public class SQLFunctionsTest {
 		Assert.assertEquals(result.size(), 1);
 		int tot = ((Number) result.get(0).field("tot")).intValue();
 
-		int updated = database.command(new OCommandSQL("update Account set created = date()")).execute();
+		int updated = ((Number) database.command(new OCommandSQL("update Account set created = date()")).execute()).intValue();
 		Assert.assertEquals(updated, tot);
 
 		String pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 		SimpleDateFormat dateFormat = new SimpleDateFormat(pattern);
 
 		result = database.command(
-				new OSQLSynchQuery<ODocument>("select from Account where created <= date('" + dateFormat.format(new Date()) + "', '" + pattern
-						+ "')")).execute();
+				new OSQLSynchQuery<ODocument>("select from Account where created <= date('" + dateFormat.format(new Date()) + "', '"
+						+ pattern + "')")).execute();
 
 		Assert.assertEquals(result.size(), tot);
 		for (ODocument d : result) {
