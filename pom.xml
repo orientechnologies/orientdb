@@ -199,7 +199,7 @@
         <site>
             <id>orientdb-site</id>
             <name>Maven Site</name>
-            <url>scp://ec2-79-125-98-209.eu-west-1.compute.amazonaws.com/var/www/html/orientdb/site</url>
+            <url>http://datastorm.com.ua/jenkins/</url>
         </site>
     </distributionManagement>
 
