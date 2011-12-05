@@ -608,7 +608,7 @@ public abstract class OStringSerializerHelper {
 			String s = (String) iValue;
 			if (s.length() > 1 && (s.charAt(0) == BINARY_BEGINEND && s.charAt(s.length() - 1) == BINARY_BEGINEND)
 					|| (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\''))
-				// @COMPATIBILITY 1.0rc7 ' TO SUPPORT OLD DATABASES
+				// @COMPATIBILITY 1.0rc7-SNAPSHOT ' TO SUPPORT OLD DATABASES
 				s = s.substring(1, s.length() - 1);
 			else
 				throw new IllegalArgumentException("Not binary type: " + iValue);
