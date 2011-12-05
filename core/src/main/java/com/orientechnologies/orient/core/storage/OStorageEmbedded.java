@@ -109,6 +109,9 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 						: -1;
 
 				ioRecord = browseCluster(iListener, ioRecord, cluster, beginClusterPosition, endClusterPosition, iLockEntireCluster);
+				if (ioRecord == null)
+					// BREAK: LIMIT REACHED
+					break;
 			}
 		} catch (IOException e) {
 
@@ -146,9 +149,11 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 					// GET THE CACHED RECORD
 					recordToCheck = record;
 
-					if (!iListener.foreach(recordToCheck))
-						// LISTENER HAS INTERRUPTED THE EXECUTION
+					if (!iListener.foreach(recordToCheck)) {
+						// LISTENER HAS INTERRUPTED THE EXECUTION: RETURN NULL TO TELL TO THE CALLER TO STOP ITERATION
+						ioRecord = null;
 						break;
+					}
 				} catch (OCommandExecutionException e) {
 					// PASS THROUGH
 					throw e;
