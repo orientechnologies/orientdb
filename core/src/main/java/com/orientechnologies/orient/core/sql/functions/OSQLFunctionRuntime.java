@@ -83,7 +83,7 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
 	}
 
 	public Object getValue(final OIdentifiable iRecord) {
-		return execute((ORecordSchemaAware<?>) iRecord.getRecord(), null);
+		return execute(iRecord != null ? (ORecordSchemaAware<?>) iRecord.getRecord() : null, null);
 	}
 
 	@Override

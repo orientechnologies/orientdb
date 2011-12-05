@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMax;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMin;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionSum;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
+import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionDate;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionFormat;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionSysdate;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
@@ -120,6 +121,7 @@ public class OSQLEngine {
 
 		// MISC FUNCTIONS
 		registerFunction(OSQLFunctionFormat.NAME, new OSQLFunctionFormat());
+		registerFunction(OSQLFunctionDate.NAME, OSQLFunctionDate.class);
 		registerFunction(OSQLFunctionSysdate.NAME, OSQLFunctionSysdate.class);
 		registerFunction(OSQLFunctionCount.NAME, OSQLFunctionCount.class);
 		registerFunction(OSQLFunctionDistinct.NAME, OSQLFunctionDistinct.class);

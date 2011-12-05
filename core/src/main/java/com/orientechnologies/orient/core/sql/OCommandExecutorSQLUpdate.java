@@ -107,10 +107,12 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 				break;
 		}
 
-		String whereCondition = word.toString();
+		final String additionalStatement = word.toString();
 
-		if (whereCondition.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE))
-			query = new OSQLAsynchQuery<ODocument>("select from " + subjectName + " where " + text.substring(pos), this);
+		if (additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)
+				|| additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT))
+			query = new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + additionalStatement + " " + text.substring(pos),
+					this);
 		else
 			query = new OSQLAsynchQuery<ODocument>("select from " + subjectName, this);
 

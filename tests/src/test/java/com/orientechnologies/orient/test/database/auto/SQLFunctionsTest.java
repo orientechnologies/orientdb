@@ -15,7 +15,9 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -29,6 +31,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
@@ -236,6 +239,32 @@ public class SQLFunctionsTest {
 				d.field("date").equals(lastDate);
 
 			lastDate = d.field("date");
+		}
+
+		database.close();
+	}
+
+	@Test
+	public void queryDate() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select count(*) as tot from Account")).execute();
+		Assert.assertEquals(result.size(), 1);
+		int tot = ((Number) result.get(0).field("tot")).intValue();
+
+		int updated = database.command(new OCommandSQL("update Account set created = date()")).execute();
+		Assert.assertEquals(updated, tot);
+
+		String pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+		SimpleDateFormat dateFormat = new SimpleDateFormat(pattern);
+
+		result = database.command(
+				new OSQLSynchQuery<ODocument>("select from Account where created <= date('" + dateFormat.format(new Date()) + "', '" + pattern
+						+ "')")).execute();
+
+		Assert.assertEquals(result.size(), tot);
+		for (ODocument d : result) {
+			Assert.assertNotNull(d.field("created"));
 		}
 
 		database.close();

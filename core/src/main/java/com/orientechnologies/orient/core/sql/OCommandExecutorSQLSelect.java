@@ -92,7 +92,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	public static final String											KEYWORD_ORDER					= "ORDER";
 	public static final String											KEYWORD_BY						= "BY";
 	public static final String											KEYWORD_ORDER_BY			= "ORDER BY";
-	public static final String											KEYWORD_LIMIT					= "LIMIT";
 	private static final String											KEYWORD_FROM_2FIND		= " " + KEYWORD_FROM + " ";
 
 	private OSQLAsynchQuery<ORecordSchemaAware<?>>	request;
@@ -870,6 +869,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		return new OIndexSearchResult(iCondition.getOperator(), item.getRoot(), value);
 	}
 
+	@SuppressWarnings("rawtypes")
 	private void fillSearchIndexResultSet(final Object indexResult) {
 		if (indexResult != null) {
 			if (indexResult instanceof Collection<?>) {

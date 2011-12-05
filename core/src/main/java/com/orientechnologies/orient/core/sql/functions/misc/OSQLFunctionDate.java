@@ -15,43 +15,53 @@
  */
 package com.orientechnologies.orient.core.sql.functions.misc;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
- * Returns the current date time. If no formatting is passed, then long format is used.
+ * Builds a date object from the format passed. If no arguments are passed, than the system date is built (like sysdate() function)
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * @see OSQLFunctionDate
+ * @see OSQLFunctionSysdate
  * 
  */
-public class OSQLFunctionSysdate extends OSQLFunctionAbstract {
-	public static final String	NAME	= "sysdate";
+public class OSQLFunctionDate extends OSQLFunctionAbstract {
+	public static final String	NAME	= "date";
 
-	private final Date					now;
+	private Date								date;
 	private SimpleDateFormat		format;
 
 	/**
 	 * Get the date at construction to have the same date for all the iteration.
 	 */
-	public OSQLFunctionSysdate() {
-		super(NAME, 0, 1);
-		now = new Date();
+	public OSQLFunctionDate() {
+		super(NAME, 0, 2);
+		date = new Date();
 	}
 
 	public Object execute(ORecord<?> iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
 		if (iParameters.length == 0)
-			return now;
+			return date;
+
+		if (iParameters.length != 2)
+			throw new OCommandSQLParsingException(getSyntax());
 
 		if (format == null)
-			format = new SimpleDateFormat((String) iParameters[0]);
+			format = new SimpleDateFormat((String) iParameters[1]);
 
 		synchronized (format) {
-			return format.format(now);
+			try {
+				return format.parse((String) iParameters[0]);
+			} catch (ParseException e) {
+				throw new OQueryParsingException("Error on formatting date '" + iParameters[0] + "' using the format: " + iParameters[1], e);
+			}
 		}
 	}
 
@@ -60,7 +70,7 @@ public class OSQLFunctionSysdate extends OSQLFunctionAbstract {
 	}
 
 	public String getSyntax() {
-		return "Syntax error: sysdate([<format>])";
+		return "Syntax error: date([<date-as-string>, <format>])";
 	}
 
 	@Override

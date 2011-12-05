@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.sql.filter;
 
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -201,10 +202,13 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 						final Object v = getParameterValue(iRecord, op.value.get(0));
 						ioResult = ioResult != null ? v + ioResult.toString() : null;
 
-					} else if (operator == OSQLFilterFieldOperator.FORMAT.id)
-						ioResult = ioResult != null ? String.format(op.value.get(0), ioResult) : null;
-
-					else if (operator == OSQLFilterFieldOperator.LEFT.id) {
+					} else if (operator == OSQLFilterFieldOperator.FORMAT.id) {
+						final Object v = getParameterValue(iRecord, op.value.get(0));
+						if (ioResult instanceof Date)
+							ioResult = new SimpleDateFormat(v.toString()).format(ioResult);
+						else
+							ioResult = ioResult != null ? String.format(v.toString(), ioResult) : null;
+					} else if (operator == OSQLFilterFieldOperator.LEFT.id) {
 						final int len = Integer.parseInt(op.value.get(0));
 						ioResult = ioResult != null ? ioResult.toString().substring(0,
 								len <= ioResult.toString().length() ? len : ioResult.toString().length()) : null;
