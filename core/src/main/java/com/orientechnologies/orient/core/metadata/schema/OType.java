@@ -42,17 +42,17 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 public enum OType {
 	BOOLEAN("Boolean", 0, true, 1, new Class<?>[] { Boolean.class, Boolean.TYPE }, new Class<?>[] { Boolean.class, Number.class }) {
 	},
-	INTEGER("Integer", 1, true, 4, new Class<?>[] { Integer.class, Integer.TYPE }, new Class<?>[] { Integer.class, Number.class}) {
+	INTEGER("Integer", 1, true, 4, new Class<?>[] { Integer.class, Integer.TYPE }, new Class<?>[] { Integer.class, Number.class }) {
 	},
-	SHORT("Short", 2, true, 2, new Class<?>[] { Short.class, Short.TYPE }, new Class<?>[] { Short.class, Number.class  }) {
+	SHORT("Short", 2, true, 2, new Class<?>[] { Short.class, Short.TYPE }, new Class<?>[] { Short.class, Number.class }) {
 	},
 	LONG("Long", 3, true, 8, new Class<?>[] { Long.class, Long.TYPE }, new Class<?>[] { Long.class, Number.class, }) {
 	},
-	FLOAT("Float", 4, true, 4, new Class<?>[] { Float.class, Float.TYPE }, new Class<?>[] { Float.class, Number.class}) {
+	FLOAT("Float", 4, true, 4, new Class<?>[] { Float.class, Float.TYPE }, new Class<?>[] { Float.class, Number.class }) {
 	},
-	DOUBLE("Double", 5, true, 8, new Class<?>[] { Double.class, Double.TYPE }, new Class<?>[] { Double.class, Number.class}) {
+	DOUBLE("Double", 5, true, 8, new Class<?>[] { Double.class, Double.TYPE }, new Class<?>[] { Double.class, Number.class }) {
 	},
-	DATETIME("Datetime", 6, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Number.class}) {
+	DATETIME("Datetime", 6, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Number.class }) {
 	},
 	STRING("String", 7, false, 8, new Class<?>[] { String.class }, new Class<?>[] { String.class }) {
 	},
@@ -60,7 +60,7 @@ public enum OType {
 	},
 	EMBEDDED("Embedded", 9, false, 8, new Class<?>[] { Object.class }, new Class<?>[] { OSerializableStream.class }) {
 	},
-	EMBEDDEDLIST("EmbeddedList", 10, false, 8, new Class<?>[] { List.class }, new Class<?>[] { List.class}) {
+	EMBEDDEDLIST("EmbeddedList", 10, false, 8, new Class<?>[] { List.class }, new Class<?>[] { List.class }) {
 	},
 	EMBEDDEDSET("EmbeddedSet", 11, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Set.class }) {
 	},
@@ -78,7 +78,7 @@ public enum OType {
 	},
 	TRANSIENT("Transient", 18, true, 0, new Class<?>[] {}, new Class<?>[] {}) {
 	},
-	DATE("Date", 19, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Number.class}) {
+	DATE("Date", 19, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Number.class }) {
 	},
 	CUSTOM("Custom", 20, false, 8, new Class<?>[] { OSerializableStream.class }, new Class<?>[] { OSerializableStream.class }) {
 	};
@@ -137,28 +137,28 @@ public enum OType {
 					return type;
 			}
 
-    int priority = 0;
-    boolean comparedAtLeastOnce = false;
-    do{
-      for (final OType type : TYPES) {
-        if(type.allowAssignmentFrom.length > priority) {
-          if(type.allowAssignmentFrom[priority].isAssignableFrom(iClass))
-            return type;
-          if(type.allowAssignmentFrom[priority].isArray() && iClass.isArray())
-            return type;
-          comparedAtLeastOnce = true;
-        }
-      }
+		int priority = 0;
+		boolean comparedAtLeastOnce;
+		do {
+			comparedAtLeastOnce = false;
+			for (final OType type : TYPES) {
+				if (type.allowAssignmentFrom.length > priority) {
+					if (type.allowAssignmentFrom[priority].isAssignableFrom(iClass))
+						return type;
+					if (type.allowAssignmentFrom[priority].isArray() && iClass.isArray())
+						return type;
+					comparedAtLeastOnce = true;
+				}
+			}
 
-      priority++;
-    } while (comparedAtLeastOnce);
+			priority++;
+		} while (comparedAtLeastOnce);
 
 		if (ORecord.class.isAssignableFrom(iClass))
 			return OType.LINK;
 
 		return null;
 	}
-
 
 	/**
 	 * Convert the input object to an integer.

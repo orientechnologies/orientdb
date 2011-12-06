@@ -195,8 +195,8 @@ public class OObjectSerializerHelper {
 
 		} catch (Exception e) {
 
-			throw new OSchemaException("Cannot set the value '" + iValue + "' to the property '" + iProperty + "' for the pojo: " + iPojo,
-					e);
+			throw new OSchemaException(
+					"Cannot set the value '" + iValue + "' to the property '" + iProperty + "' for the pojo: " + iPojo, e);
 		}
 	}
 
@@ -592,8 +592,10 @@ public class OObjectSerializerHelper {
 		}
 
 		if (db.isMVCC() && !versionConfigured && db.getTransaction() instanceof OTransactionOptimistic)
-			throw new OTransactionException("Cannot involve an object of class '" + pojoClass
-					+ "' in an Optimistic Transaction commit because it does not define @Version or @OVersion and therefore cannot handle MVCC");
+			throw new OTransactionException(
+					"Cannot involve an object of class '"
+							+ pojoClass
+							+ "' in an Optimistic Transaction commit because it does not define @Version or @OVersion and therefore cannot handle MVCC");
 
 		// SET OBJECT CLASS
 		iRecord.setClassName(schemaClass != null ? schemaClass.getName() : null);
@@ -617,16 +619,20 @@ public class OObjectSerializerHelper {
 
 			schemaProperty = schemaClass != null ? schemaClass.getProperty(fieldName) : null;
 
-			if (fieldValue != null
-					&& getEmbeddetTypesByJPAAnnotation(iPojo.getClass(), fieldValue.getClass(), fieldName, iEntityManager) != null
-					&& getEmbeddetTypesByJPAAnnotation(iPojo.getClass(), fieldValue.getClass(), fieldName, iEntityManager).equals(
-							OType.EMBEDDED)) {
-				if (schemaClass == null) {
-					db.getMetadata().getSchema().createClass(iPojo.getClass());
-					iRecord.setClassNameIfExists(iPojo.getClass().getSimpleName());
-				}
-				if (schemaProperty == null) {
-					schemaProperty = iRecord.getSchemaClass().createProperty(fieldName, OType.EMBEDDED);
+			if (fieldValue != null) {
+				if (isEmbeddedObject(iPojo.getClass(), fieldValue.getClass(), fieldName, iEntityManager)) {
+					// AUTO CREATE SCHEMA PROPERTY
+					if (schemaClass == null) {
+						db.getMetadata().getSchema().createClass(iPojo.getClass());
+						iRecord.setClassNameIfExists(iPojo.getClass().getSimpleName());
+					}
+
+					if (schemaProperty == null) {
+						OType t = OType.getTypeByClass(fieldValue.getClass());
+						if (t == null)
+							t = OType.EMBEDDED;
+						schemaProperty = iRecord.getSchemaClass().createProperty(fieldName, t);
+					}
 				}
 			}
 
@@ -1024,12 +1030,8 @@ public class OObjectSerializerHelper {
 		getters.put(iClass.getName() + "." + fieldName, f);
 	}
 
-	private static OType getEmbeddetTypesByJPAAnnotation(final Class<?> iPojoClass, final Class<?> iFieldClass,
-			final String iFieldName, final OEntityManager iEntityManager) {
-		if (embeddedFields.get(iPojoClass) != null && embeddedFields.get(iPojoClass).contains(iFieldName))
-			return OType.EMBEDDED;
-		else if (iEntityManager.getEntityClass(iFieldClass.getSimpleName()) != null)
-			return OType.LINK;
-		return null;
+	private static boolean isEmbeddedObject(final Class<?> iPojoClass, final Class<?> iFieldClass, final String iFieldName,
+			final OEntityManager iEntityManager) {
+		return embeddedFields.get(iPojoClass) != null && embeddedFields.get(iPojoClass).contains(iFieldName);
 	}
 }

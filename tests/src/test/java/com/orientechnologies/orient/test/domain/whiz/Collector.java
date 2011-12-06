@@ -4,13 +4,16 @@ import com.orientechnologies.orient.core.annotation.OId;
 
 import java.util.Collection;
 
+import javax.persistence.Embedded;
+
 /**
  * Data object that collects things.
  */
 public class Collector {
 	@OId
-	private String id;
-	private Collection<String> stringCollection;
+	private String							id;
+	@Embedded
+	private Collection<String>	stringCollection;
 
 	public String getId() {
 		return id;
