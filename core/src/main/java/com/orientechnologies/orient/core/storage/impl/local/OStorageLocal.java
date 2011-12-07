@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -169,18 +170,25 @@ public class OStorageLocal extends OStorageEmbedded {
 				if (clusterConfig != null) {
 					pos = createClusterFromConfig(clusterConfig);
 
-					if (pos == -1) {
-						// CLOSE AND REOPEN TO BE SURE ALL THE FILE SEGMENTS ARE
-						// OPENED
-						clusters[i].close();
-						clusters[i] = new OClusterLocal(this, (OStoragePhysicalClusterConfiguration) clusterConfig);
-						clusterMap.put(clusters[i].getName(), clusters[i]);
-						clusters[i].open();
-					} else {
-						if (clusterConfig.getName().equals(OStorage.CLUSTER_DEFAULT_NAME))
-							defaultClusterId = pos;
+					try {
+						if (pos == -1) {
+							// CLOSE AND REOPEN TO BE SURE ALL THE FILE SEGMENTS ARE
+							// OPENED
+							clusters[i].close();
+							clusters[i] = new OClusterLocal(this, (OStoragePhysicalClusterConfiguration) clusterConfig);
+							clusterMap.put(clusters[i].getName(), clusters[i]);
+							clusters[i].open();
+						} else {
+							if (clusterConfig.getName().equals(OStorage.CLUSTER_DEFAULT_NAME))
+								defaultClusterId = pos;
 
-						clusters[pos].open();
+							clusters[pos].open();
+						}
+					} catch (FileNotFoundException e) {
+						OLogManager.instance().warn(
+								this,
+								"Error on loading cluster '" + clusters[i].getName() + "' (" + pos
+										+ "). It will be excluded from current database '" + getName() + "'.");
 					}
 				} else {
 					clusters = Arrays.copyOf(clusters, clusters.length + 1);
