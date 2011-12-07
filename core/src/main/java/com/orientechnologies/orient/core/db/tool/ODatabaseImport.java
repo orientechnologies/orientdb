@@ -351,7 +351,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			next = jsonReader.readString(OJSONReader.COMMA_SEPARATOR);
 			next = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).getValue();
 		}
-		
+
 		next = jsonReader.checkContent("\"type\"").readString(OJSONReader.NEXT_IN_OBJECT);
 
 		final OType type = OType.valueOf(next);
@@ -509,6 +509,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 				++totalRecords;
 			} else
 				lastClusterId = 0;
+			record = null;
 		}
 
 		listener.onMessage("\n\nDone. Imported " + totalRecords + " records\n");
