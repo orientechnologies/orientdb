@@ -587,6 +587,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
+		// VERSION MANAGEMENT:
+		// -1 : DOCUMENT UPDATE, NO VERSION CONTROL
+		// -2 : DOCUMENT UPDATE, NO VERSION CONTROL, NO VERSION INCREMENT
+		// -3 : DOCUMENT ROLLBACK, DECREMENT VERSION
+		// >-1 : MVCC CONTROL, RECORD UPDATE AND VERSION INCREMENT
+		// <-3 : WRONG VERSION VALUE
 		case OChannelBinaryProtocol.REQUEST_RECORD_UPDATE: {
 			data.commandInfo = "Update record";
 

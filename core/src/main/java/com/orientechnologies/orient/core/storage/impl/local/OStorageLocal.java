@@ -1130,7 +1130,26 @@ public class OStorageLocal extends OStorageEmbedded {
 					// DELETED
 					return -1;
 
-				if (iVersion != -1) {
+				// VERSION CONTROL CHECK
+				switch (iVersion) {
+				// DOCUMENT UPDATE, NO VERSION CONTROL
+				case -1:
+					++ppos.version;
+					iClusterSegment.updateVersion(iRid.clusterPosition, ppos.version);
+					break;
+
+				// DOCUMENT UPDATE, NO VERSION CONTROL, NO VERSION INCREMENT
+				case -2:
+					break;
+
+				// DOCUMENT ROLLBACK, DECREMENT VERSION
+				case -3:
+					--ppos.version;
+					iClusterSegment.updateVersion(iRid.clusterPosition, ppos.version);
+					break;
+
+				default:
+					// MVCC CONTROL AND RECORD UPDATE OR WRONG VERSION VALUE
 					if (iVersion > -1) {
 						// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
 						if (iVersion != ppos.version)
@@ -1143,10 +1162,13 @@ public class OStorageLocal extends OStorageEmbedded {
 											+ ppos.version + " your=v" + iVersion + ")");
 
 						++ppos.version;
+						iClusterSegment.updateVersion(iRid.clusterPosition, ppos.version);
 					} else
-						--ppos.version;
+						throw new IllegalArgumentException("Cannot update record " + iRid + " in storage '" + name
+								+ "' because the version is not correct: recieved=" + iVersion
+								+ " expected=-1 (skip version control),-2 (skip version control and increment),-3 (rollback) or " + ppos.version
+								+ "(current version)");
 
-					iClusterSegment.updateVersion(iRid.clusterPosition, ppos.version);
 				}
 
 				if (ppos.type != iRecordType)
