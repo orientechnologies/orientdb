@@ -876,27 +876,33 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	public void clusters() {
 		if (currentDatabaseName != null) {
 			out.println("\nCLUSTERS:");
-			out.println("----------------------------------------------+------+---------------------+-----------+");
-			out.println(" NAME                                         |  ID  | TYPE                | RECORDS   |");
-			out.println("----------------------------------------------+------+---------------------+-----------+");
+			out.println("----------------------------------------------+------+---------------------+-----------+-----------+");
+			out.println(" NAME                                         |  ID  | TYPE                | RECORDS   | SIZE      |");
+			out.println("----------------------------------------------+------+---------------------+-----------+-----------+");
 
 			int clusterId;
 			String clusterType = null;
 			long totalElements = 0;
 			long count;
+			long size;
+			long totalSize = 0;
 			for (String clusterName : currentDatabase.getClusterNames()) {
 				try {
 					clusterId = currentDatabase.getClusterIdByName(clusterName);
 					clusterType = currentDatabase.getClusterType(clusterName);
 					count = currentDatabase.countClusterElements(clusterName);
+					size = currentDatabase.getClusterRecordSizeByName(clusterName);
 					totalElements += count;
-					out.printf(" %-45s|%6d| %-20s|%10d |\n", clusterName, clusterId, clusterType, count);
+					totalSize += size;
+					out.printf(" %-45s|%6d| %-20s|%10d |%10s |\n", clusterName, clusterId, clusterType, count,
+							OFileUtils.getSizeAsString(size));
 				} catch (Exception e) {
 				}
 			}
-			out.println("----------------------------------------------+------+---------------------+-----------+");
-			out.printf(" TOTAL                                                                 %15d |\n", totalElements);
-			out.println("---------------------------------------------------------------------------------------+");
+			out.println("----------------------------------------------+------+---------------------+-----------+-----------+");
+			out.printf(" TOTAL                                                                 %15d | %9s |\n", totalElements,
+					OFileUtils.getSizeAsString(totalSize));
+			out.println("--------------------------------------------------------------------------------------- -----------+");
 		} else
 			out.println("No database selected yet.");
 	}
