@@ -112,6 +112,8 @@ public class SQLSelectIndexReuseTest {
             database.open("admin", "admin");
 
         database.command(new OCommandSQL("drop class sqlSelectIndexReuseTestClass")).execute();
+        database.getMetadata().getSchema().reload();
+        database.getLevel2Cache().clear();
 
         database.close();
         closeJMXConnector();

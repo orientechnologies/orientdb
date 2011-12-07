@@ -40,6 +40,8 @@ public class SchemaIndexTest {
 		database.command(new OCommandSQL("drop class SchemaIndexTest")).execute();
 		database.command(new OCommandSQL("drop class SchemaSharedIndexSuperTest")).execute();
 		database.getMetadata().getSchema().reload();
+    database.getLevel2Cache().clear();
+
 
 		database.close();
 	}

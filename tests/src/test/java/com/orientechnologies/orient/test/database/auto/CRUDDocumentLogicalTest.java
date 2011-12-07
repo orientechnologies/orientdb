@@ -95,7 +95,7 @@ public class CRUDDocumentLogicalTest {
 
 		record = database.browseClass("Animal").last().previous();
 
-		List<ODocument> races = record.field("races");
+		Collection<ODocument> races = record.field("races");
 		races.add(((ODocument) database.newInstance("AnimalRace")).field("name", "Egyptian"));
 		record.setDirty();
 
@@ -113,7 +113,7 @@ public class CRUDDocumentLogicalTest {
 		record = database.browseClass("Animal").last().previous();
 
 		Assert.assertEquals(record.field("name"), "Cat");
-		Assert.assertEquals(((List<ODocument>) record.field("races")).size(), 3);
+		Assert.assertEquals(((Collection<ODocument>) record.field("races")).size(), 3);
 
 		database.close();
 	}

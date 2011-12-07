@@ -40,6 +40,8 @@ public class SQLDropIndexTest {
             database.open("admin", "admin");
         database.command(new OCommandSQL("delete from SQLDropIndexTestClass"));
         database.command(new OCommandSQL("drop class SQLDropIndexTestClass"));
+        database.getMetadata().getSchema().reload();
+        database.getLevel2Cache().clear();
         database.close();
     }
 

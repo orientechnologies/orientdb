@@ -41,9 +41,11 @@ public class SQLInsertTest {
 	public void insertOperator() {
 		database.open("admin", "admin");
 
+		int addressId = database.getMetadata().getSchema().getClass("Address").getDefaultClusterId();
+
 		ODocument doc = (ODocument) database.command(
-				new OCommandSQL("insert into Profile (name, surname, salary, location, dummy) values ('Luca','Smith', 109.9, 13:3, name)"))
-				.execute();
+				new OCommandSQL("insert into Profile (name, surname, salary, location, dummy) values ('Luca','Smith', 109.9, " + addressId
+						+ ":3, name)")).execute();
 
 		Assert.assertTrue(doc != null);
 
@@ -54,15 +56,17 @@ public class SQLInsertTest {
 	public void insertWithWildcards() {
 		database.open("admin", "admin");
 
+		int addressId = database.getMetadata().getSchema().getClass("Address").getDefaultClusterId();
+
 		ODocument doc = (ODocument) database.command(
 				new OCommandSQL("insert into Profile (name, surname, salary, location, dummy) values (?,?,?,?,?)")).execute("Marc",
-				"Smith", 120.0, new ORecordId(13, 3), "hooray");
+				"Smith", 120.0, new ORecordId(addressId, 3), "hooray");
 
 		Assert.assertTrue(doc != null);
 		Assert.assertEquals(doc.field("name"), "Marc");
 		Assert.assertEquals(doc.field("surname"), "Smith");
 		Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 120.0f);
-		Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(13, 3));
+		Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, 3));
 		Assert.assertEquals(doc.field("dummy"), "hooray");
 
 		database.close();

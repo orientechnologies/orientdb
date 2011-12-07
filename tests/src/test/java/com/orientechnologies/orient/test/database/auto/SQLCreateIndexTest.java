@@ -65,6 +65,8 @@ public class SQLCreateIndexTest {
 
 		database.command(new OCommandSQL("delete from sqlCreateIndexTestClass")).execute();
 		database.command(new OCommandSQL("drop class sqlCreateIndexTestClass")).execute();
+    database.getMetadata().getSchema().reload();
+    database.getLevel2Cache().clear();
 		database.close();
 	}
 

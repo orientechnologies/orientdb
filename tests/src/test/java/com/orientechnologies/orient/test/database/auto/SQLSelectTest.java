@@ -745,12 +745,13 @@ public class SQLSelectTest {
 	public void queryRecordTargetRid() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from 10:0")).execute();
+		int profileClusterId = database.getMetadata().getSchema().getClass("Profile").getDefaultClusterId();
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from " + profileClusterId + ":0")).execute();
 
-		Assert.assertTrue(result.size() == 1);
+		Assert.assertEquals(result.size(), 1);
 
 		for (ODocument d : result) {
-			Assert.assertTrue(d.getIdentity().toString().equals("#10:0"));
+			Assert.assertEquals(d.getIdentity().toString(), "#" + profileClusterId + ":0");
 		}
 
 		database.close();
@@ -759,13 +760,15 @@ public class SQLSelectTest {
 	@Test
 	public void queryRecordTargetRids() {
 		database.open("admin", "admin");
+		int profileClusterId = database.getMetadata().getSchema().getClass("Profile").getDefaultClusterId();
 
-		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>(" select from [10:0, 10:1]")).execute();
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>(" select from [" + profileClusterId + ":0, " + profileClusterId + ":1]")).execute();
 
-		Assert.assertTrue(result.size() == 2);
+		Assert.assertEquals(result.size(), 2);
 
-		Assert.assertTrue(result.get(0).getIdentity().toString().equals("#10:0"));
-		Assert.assertTrue(result.get(1).getIdentity().toString().equals("#10:1"));
+		Assert.assertEquals(result.get(0).getIdentity().toString(), "#" + profileClusterId + ":0");
+		Assert.assertEquals(result.get(1).getIdentity().toString(), "#" + profileClusterId + ":1");
 
 		database.close();
 	}
@@ -773,13 +776,15 @@ public class SQLSelectTest {
 	@Test
 	public void queryRecordAttribRid() {
 		database.open("admin", "admin");
+		int profileClusterId = database.getMetadata().getSchema().getClass("Profile").getDefaultClusterId();
 
-		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where @rid = #10:0")).execute();
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>("select from Profile where @rid = #" + profileClusterId + ":0")).execute();
 
-		Assert.assertTrue(result.size() == 1);
+		Assert.assertEquals(result.size(), 1);
 
 		for (ODocument d : result) {
-			Assert.assertTrue(d.getIdentity().toString().equals("#10:0"));
+			Assert.assertEquals(d.getIdentity().toString(), "#" + profileClusterId + ":0");
 		}
 
 		database.close();
@@ -795,7 +800,7 @@ public class SQLSelectTest {
 		Assert.assertTrue(result.size() != 0);
 
 		for (ODocument d : result) {
-			Assert.assertTrue(d.getClassName().equals("Profile"));
+			Assert.assertEquals(d.getClassName(), "Profile");
 		}
 
 		database.close();
