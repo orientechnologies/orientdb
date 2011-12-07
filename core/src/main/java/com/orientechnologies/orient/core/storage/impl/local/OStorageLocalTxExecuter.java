@@ -225,8 +225,9 @@ public class OStorageLocalTxExecuter {
 				txEntry.getRecord().setVersion(
 						updateRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType()));
 			else
-				iTx.getDatabase().getStorage()
-						.updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), null);
+				txEntry.getRecord().setVersion(
+						iTx.getDatabase().getStorage()
+								.updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), null));
 
 			iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, txEntry.getRecord());
 			break;
