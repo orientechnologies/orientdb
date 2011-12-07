@@ -1283,8 +1283,16 @@ public class OStorageLocal extends OStorageEmbedded {
 			final OClusterLocal cluster;
 
 			if (iClusterName != null) {
+				// FIND THE FIRST AVAILABLE CLUSTER ID
+				int clusterPos = clusters.length;
+				for (int i = 0; i < clusters.length; ++i)
+					if (clusters[i] == null) {
+						clusterPos = i;
+						break;
+					}
+
 				final OStoragePhysicalClusterConfiguration config = new OStoragePhysicalClusterConfiguration(configuration, iClusterName,
-						clusters.length);
+						clusterPos);
 				configuration.clusters.add(config);
 
 				cluster = new OClusterLocal(this, config);
