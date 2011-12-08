@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.db.record;
 
 import java.util.Iterator;
 
-public interface ORecordLazyMultiValue {
+public interface ORecordLazyMultiValue extends ODetachable {
 	public Iterator<OIdentifiable> rawIterator();
 
 	/**

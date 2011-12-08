@@ -27,7 +27,6 @@ import java.util.TreeMap;
 
 import com.orientechnologies.common.collection.OMVRBTree;
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
-import com.orientechnologies.common.collection.OMVRBTreeEventListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -42,11 +41,11 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
 /**
  * Persistent based MVRB-Tree implementation. The difference with the class OMVRBTreePersistent is the level. In facts this class
  * works directly at the storage level, while the other at database level. This class is used for Logical Clusters. It can'be
- * transactional. It uses the entryPoints linked list to get the best entry point for searching a node.
+ * transactional. It uses the entryPoints tree-map to get the closest entry point where start searching a node.
  * 
  */
 @SuppressWarnings("serial")
-public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implements OMVRBTreeEventListener<K, V> {
+public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 
 	protected final OMVRBTreeProvider<K, V>										dataProvider;
 	protected ORecord<?>																			owner;
@@ -69,7 +68,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		pageLoadFactor = (Float) OGlobalConfiguration.MVRBTREE_LOAD_FACTOR.getValue();
 		dataProvider = iProvider;
 		config();
-		setListener(this);
 	}
 
 	@Override
@@ -99,7 +97,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 		// LOAD THE ROOT OBJECT AFTER ALL
 		final ORID rootRid = dataProvider.getRoot();
-		if (rootRid != null && dataProvider.getRoot().isValid())
+		if (rootRid != null && rootRid.isValid())
 			root = loadEntry(null, rootRid);
 		return this;
 	}
@@ -107,7 +105,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	protected void initAfterLoad() throws IOException {
 	}
 
-	public OMVRBTreePersistent<K, V> save() throws IOException {
+	public OMVRBTreePersistent<K, V> save() {
 		commitChanges();
 		return this;
 	}
@@ -133,7 +131,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		if (entry == null) {
 			// NOT FOUND: CREATE IT AND PUT IT INTO THE CACHE
 			entry = createEntry(iParent, iRecordId);
-			addNodeInCache(entry);
+			addNodeInMemory(entry);
 
 			// RECONNECT THE LOADED NODE WITH IN-MEMORY PARENT, LEFT AND RIGHT
 			if (entry.parent == null && entry.dataProvider.getParent().isValid()) {
@@ -175,8 +173,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	}
 
 	protected void setSize(int iSize) {
-		if (dataProvider.setSize(iSize))
-			markDirty();
+		dataProvider.setSize(iSize);
+		markDirty();
 	}
 
 	public int getDefaultPageSize() {
@@ -251,10 +249,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	 * @return The total freed nodes
 	 */
 	public int optimize(final boolean iForce) {
-		// optimization = 0;
-		// if (true)
-		// return 0;
-
 		if (optimization == -1)
 			// IS ALREADY RUNNING
 			return 0;
@@ -460,28 +454,16 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 								System.out.printf("\nSaved %s tree node %s: parent %s, left %s, right %s", wasNew ? "new" : "",
 										node.dataProvider.getIdentity(), node.dataProvider.getParent(), node.dataProvider.getLeft(),
 										node.dataProvider.getRight());
-
-							// Sylvain : already done in node.save();
-							// if (wasNew) {
-							// if (node.dataEntry.getIdentity().getClusterPosition() < -1) {
-							// // TX RECORD
-							// if (cache.get(node.dataEntry.getIdentity()) != node)
-							// // INSERT A COPY TO PREVENT CHANGES
-							// cache.put(node.dataEntry.getIdentity().copy(), node);
-							// }
-							//
-							// cache.put(node.dataEntry.getIdentity(), node);
-							// }
 						}
 
 					totalCommitted += tmp.size();
 					tmp.clear();
 				}
 			}
-			if (dataProvider.isTreeDirty()) {
+
+			if (dataProvider.isDirty())
 				// TREE IS CHANGED AS WELL
 				saveTreeNode();
-			}
 
 		} catch (IOException e) {
 			OLogManager.instance().exception("Error on saving the tree", e, OStorageException.class);
@@ -492,9 +474,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		}
 
 		return totalCommitted;
-	}
-
-	public void signalTreeChanged(final OMVRBTree<K, V> iTree) {
 	}
 
 	public void signalNodeChanged(final OMVRBTreeEntry<K, V> iNode) {
@@ -630,14 +609,14 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 		final StringBuilder buffer = new StringBuilder();
 		buffer.append("size=");
+		final int size = size();
+		buffer.append(size);
 
-		buffer.append(size());
-
-		if (size() > 0) {
+		if (size > 0) {
 			final int currPageIndex = pageIndex;
 			buffer.append(" ");
 			buffer.append(getFirstEntry().getFirstKey());
-			if (size() > 1) {
+			if (size > 1) {
 				buffer.append("-");
 				buffer.append(getLastEntry().getLastKey());
 			}
@@ -805,9 +784,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 		if (iRoot == null)
 			dataProvider.setRoot(null);
-
-		if (listener != null)
-			listener.signalTreeChanged(this);
+		else
+			dataProvider.setRoot(((OMVRBTreeEntryPersistent<K, V>) iRoot).getProvider().getIdentity());
 	}
 
 	protected void config() {
@@ -856,6 +834,11 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			entryPoints.remove(iNode.getKeyAt(0));
 	}
 
+	protected void addNodeInMemory(final OMVRBTreeEntryPersistent<K, V> iNode) {
+		addNodeAsEntrypoint(iNode);
+		addNodeInCache(iNode);
+	}
+
 	protected boolean isNodeEntryPoint(final OMVRBTreeEntryPersistent<K, V> iNode) {
 		if (iNode != null && iNode.getSize() > 0)
 			return entryPoints.containsKey(iNode.getKeyAt(0));
@@ -877,9 +860,11 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	 */
 	protected void updateEntryPoint(final K iOldKey, final OMVRBTreeEntryPersistent<K, V> iNode) {
 		final OMVRBTreeEntryPersistent<K, V> node = entryPoints.remove(iOldKey);
-		if (node != iNode)
-			OLogManager.instance().warn(this, "Entrypoints nodes are different during update: old %s <-> new %s", node, iNode);
-		addNodeAsEntrypoint(node);
+		if (node != null) {
+			if (node != iNode)
+				OLogManager.instance().warn(this, "Entrypoints nodes are different during update: old %s <-> new %s", node, iNode);
+			addNodeAsEntrypoint(iNode);
+		}
 	}
 
 	/**
@@ -926,7 +911,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	}
 
 	protected void markDirty() {
-		getListener().signalTreeChanged(this);
 	}
 
 	public ORecord<?> getOwner() {

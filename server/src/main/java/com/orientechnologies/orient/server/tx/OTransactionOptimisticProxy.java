@@ -22,7 +22,6 @@ import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -137,8 +136,6 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 			for (Entry<String, Object> field : ((ODocument) iRecord)) {
 				if (field.getValue() instanceof ORecordLazyList)
 					((ORecordLazyList) field.getValue()).lazyLoad(true);
-				else if (field.getValue() instanceof ORecordLazySet)
-					((ORecordLazySet) field.getValue()).lazyLoad(true);
 			}
 		}
 	}

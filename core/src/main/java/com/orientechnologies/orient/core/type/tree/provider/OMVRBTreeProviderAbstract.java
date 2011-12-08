@@ -35,7 +35,7 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
 	protected final ORecordInternal<?>	record;
 	protected final OStorage						storage;
 	protected int												size;
-	protected int												defaultPageSize;
+	protected int												pageSize;
 	protected ORecordId									root;
 
 	public OMVRBTreeProviderAbstract(final ORecordInternal<?> iRecord, final OStorage iStorage, final String iClusterName,
@@ -67,7 +67,7 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
 	}
 
 	public int getDefaultPageSize() {
-		return defaultPageSize;
+		return pageSize;
 	}
 
 	public int getClusterId() {
@@ -95,16 +95,28 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
 		return setDirty();
 	}
 
-	public boolean isTreeDirty() {
+	public boolean isDirty() {
 		return record.isDirty();
+	}
+
+	/**
+	 * Set the tree as dirty. This happens on change of root.
+	 * 
+	 * @return
+	 */
+	public boolean setDirty() {
+		if (record.isDirty())
+			return false;
+		record.setDirty();
+		return true;
 	}
 
 	public boolean updateConfig() {
 		boolean isChanged = false;
 
 		int newSize = OGlobalConfiguration.MVRBTREE_NODE_PAGE_SIZE.getValueAsInteger();
-		if (newSize != defaultPageSize) {
-			defaultPageSize = newSize;
+		if (newSize != pageSize) {
+			pageSize = newSize;
 			isChanged = true;
 		}
 		return isChanged ? setDirty() : false;
@@ -138,6 +150,7 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
 
 	protected void save(final ODatabaseRecord iDb) {
 		record.fromStream(toStream());
+		record.setDirty();
 		record.setDatabase(iDb);
 		record.save(clusterName);
 	}
@@ -196,13 +209,6 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
 
 	protected static ODatabaseRecord getDatabase() {
 		return ODatabaseRecordThreadLocal.INSTANCE.get();
-	}
-
-	protected boolean setDirty() {
-		if (record.isDirty())
-			return false;
-		record.setDirty();
-		return true;
 	}
 
 	public String getClusterName() {

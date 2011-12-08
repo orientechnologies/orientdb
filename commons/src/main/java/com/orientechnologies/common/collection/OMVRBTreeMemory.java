@@ -45,10 +45,6 @@ public class OMVRBTreeMemory<K, V> extends OMVRBTree<K, V> {
 		pageLoadFactor = iLoadFactor;
 	}
 
-	public OMVRBTreeMemory(final OMVRBTreeEventListener<K, V> iListener) {
-		super(iListener);
-	}
-
 	/**
 	 * Constructs a new, empty tree map, ordered according to the given comparator. All keys inserted into the map must be <i>mutually
 	 * comparable</i> by the given comparator: <tt>comparator.compare(k1,

@@ -97,7 +97,7 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 		init();
 		parent = iParent;
 		// setParent(iParent);
-		pTree.addNodeAsEntrypoint(this);
+		pTree.addNodeInMemory(this);
 	}
 
 	/**
@@ -111,7 +111,7 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 		dataProvider.insertAt(0, iKey, iValue);
 		init();
 		setParent(iParent);
-		pTree.addNodeAsEntrypoint(this);
+		pTree.addNodeInMemory(this);
 		// created entry : force dispatch dirty node.
 		markDirty();
 	}
@@ -134,7 +134,7 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 			pParent.markDirty();
 		init();
 		setParent(pParent);
-		pTree.addNodeAsEntrypoint(this);
+		pTree.addNodeInMemory(this);
 		// created entry : force dispatch dirty node.
 		markDirty();
 	}
@@ -195,7 +195,7 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 
 		if (pTree.searchNodeInCache(dataProvider.getIdentity()) != this) {
 			// UPDATE THE CACHE
-			pTree.addNodeInCache(this);
+			pTree.addNodeInMemory(this);
 		}
 
 		return this;
@@ -215,10 +215,6 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 		}
 
 		if (parent != null) {
-			// XXX Sylvain: should be set when parent is saved
-			// parentRid = parent.record.getIdentity();
-			// if (dataEntry.setParent(parent.dataEntry.getIdentity()))
-			// markDirty();
 			if (parent.left == this) {
 				if (parent.dataProvider.setLeft(rid))
 					parent.markDirty();
@@ -632,7 +628,7 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 	}
 
 	protected void markDirty() {
-		tree.getListener().signalNodeChanged(this);
+		pTree.signalNodeChanged(this);
 	}
 
 	@Override

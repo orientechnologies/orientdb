@@ -15,14 +15,21 @@
  */
 package com.orientechnologies.orient.core.type.tree;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.OLazyRecordIterator;
+import com.orientechnologies.orient.core.db.record.OLazyRecordMultiIterator;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
+import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDEntryProvider;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 
 /**
@@ -30,11 +37,11 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
  * 
  */
 public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiable> {
-	private static final long	serialVersionUID		= 1L;
+	private IdentityHashMap<ORecord<?>, Object>	newItems;
+	private boolean															autoConvertToRecord	= true;
 
-	protected int							maxUpdatesBeforeSave;
-	protected int							updates							= 0;
-	protected boolean					transactionRunning	= false;
+	private static final Object									NEWMAP_VALUE				= new Object();
+	private static final long										serialVersionUID		= 1L;
 
 	public OMVRBTreeRID() {
 		this(new OMVRBTreeRIDProvider(null, ODatabaseRecordThreadLocal.INSTANCE.get().getDefaultClusterId()));
@@ -54,67 +61,197 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 		((OMVRBTreeRIDProvider) dataProvider).setTree(this);
 	}
 
-	/**
-	 * Do nothing since all the changes will be committed expressly at lazySave() time or on closing.
-	 */
 	@Override
-	public synchronized int commitChanges() {
-		if (transactionRunning || maxUpdatesBeforeSave == 0 || (maxUpdatesBeforeSave > 0 && ++updates >= maxUpdatesBeforeSave)) {
-			updates = 0;
-			return lazySave();
+	public OMVRBTreePersistent<OIdentifiable, OIdentifiable> load() {
+		super.load();
+		if (root != null)
+			setSize(((OMVRBTreeRIDEntryProvider) ((OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable>) root).getProvider())
+					.getTreeSize());
+		else
+			setSize(0);
+		return this;
+	}
+
+	@Override
+	public OIdentifiable put(final OIdentifiable e, final OIdentifiable v) {
+		if (e.getIdentity().isNew()) {
+			final ORecord<?> record = e.getRecord();
+
+			// ADD IN TEMP LIST
+			if (newItems == null)
+				newItems = new IdentityHashMap<ORecord<?>, Object>();
+			else if (newItems.containsKey(record))
+				return (OIdentifiable) newItems.get(record);
+			newItems.put(record, NEWMAP_VALUE);
+			setDirty();
+			return null;
 		}
-		return 0;
+
+		return super.put(e, null);
+	}
+
+	public OIdentifiable remove(final Object o) {
+		OIdentifiable removed = super.remove(o);
+
+		if (removed == null && hasNewItems()) {
+			// SEARCH INSIDE NEW ITEMS MAP
+			newItems.remove(o);
+			if (newItems.size() == 0)
+				// EARLY REMOVE THE MAP TO SAVE MEMORY
+				newItems = null;
+			setDirty();
+		}
+
+		return null;
+	}
+
+	public boolean removeAll(final Collection<?> c) {
+		if (hasNewItems()) {
+			final Collection<ORecord<?>> v = newItems.keySet();
+			v.removeAll(c);
+			if (newItems.size() == 0)
+				newItems = null;
+		}
+
+		boolean modified = false;
+		for (Object o : c)
+			if (remove(o) != null)
+				modified = true;
+		return modified;
+	}
+
+	public boolean retainAll(final Collection<?> c) {
+		if (hasNewItems()) {
+			final Collection<ORecord<?>> v = newItems.keySet();
+			v.retainAll(c);
+			if (newItems.size() == 0)
+				newItems = null;
+		}
+
+		boolean modified = false;
+		final Iterator<?> e = iterator();
+		while (e.hasNext()) {
+			if (!c.contains(e.next())) {
+				e.remove();
+				modified = true;
+			}
+		}
+		return modified;
 	}
 
 	@Override
 	public void clear() {
+		if (newItems != null) {
+			newItems.clear();
+			newItems = null;
+		}
+		setDirty();
 		super.clear();
-		lazySave();
+		save();
 	}
 
-	public int lazySave() {
-		return super.commitChanges();
-	}
-
-	/**
-	 * Returns the maximum updates to save the map persistently.
-	 * 
-	 * @return 0 means no automatic save, 1 means non-lazy map (save each operation) and > 1 is lazy.
-	 */
-	public int getMaxUpdatesBeforeSave() {
-		return maxUpdatesBeforeSave;
-	}
-
-	/**
-	 * Sets the maximum updates to save the map persistently.
-	 * 
-	 * @param iValue
-	 *          0 means no automatic save, 1 means non-lazy map (save each operation) and > 1 is lazy.
-	 */
-	public void setMaxUpdatesBeforeSave(final int iValue) {
-		this.maxUpdatesBeforeSave = iValue;
+	public boolean detach() {
+		if (saveAllNewItems())
+			return false;
+		return true;
 	}
 
 	@Override
-	protected void config() {
-		super.config();
-		maxUpdatesBeforeSave = OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.getValueAsInteger();
+	public int size() {
+		int tot = super.size();
+		if (newItems != null)
+			tot += newItems.size();
+		return tot;
+	}
+
+	@Override
+	public boolean isEmpty() {
+		boolean empty = super.isEmpty();
+
+		if (empty && newItems != null)
+			empty = newItems.isEmpty();
+
+		return empty;
+	}
+
+	@Override
+	public boolean containsKey(final Object o) {
+		boolean found = super.containsKey(o);
+
+		if (!found && hasNewItems())
+			// SEARCH INSIDE NEW ITEMS MAP
+			found = newItems.containsKey(o);
+
+		return found;
+	}
+
+	public Iterator<OIdentifiable> iterator() {
+		return iterator(autoConvertToRecord);
+	}
+
+	public Iterator<OIdentifiable> iterator(final boolean iAutoConvertToRecord) {
+		if (hasNewItems())
+			return new OLazyRecordMultiIterator(null, new Object[] { keySet().iterator(), newItems.keySet().iterator() },
+					iAutoConvertToRecord);
+
+		return new OLazyRecordIterator(keySet().iterator(), iAutoConvertToRecord);
+	}
+
+	public Object[] toArray() {
+		Object[] result = keySet().toArray();
+		if (newItems != null && !newItems.isEmpty()) {
+			int start = result.length;
+			result = Arrays.copyOf(result, start + newItems.size());
+
+			for (ORecord<?> r : newItems.keySet()) {
+				result[start++] = r;
+			}
+		}
+
+		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> T[] toArray(final T[] a) {
+		T[] result = toArray(a);
+
+		if (newItems != null && !newItems.isEmpty()) {
+			int start = result.length;
+			result = Arrays.copyOf(result, start + newItems.size());
+
+			for (ORecord<?> r : newItems.keySet()) {
+				result[start++] = (T) r;
+			}
+		}
+
+		return result;
+	}
+
+	@Override
+	protected void saveTreeNode() {
+	}
+
+	@Override
+	public int commitChanges() {
+		if (!((OMVRBTreeRIDProvider) getProvider()).isEmbeddedStreaming()) {
+			updateSize();
+			return super.commitChanges();
+		}
+		return 0;
+	}
+
+	public OMVRBTreePersistent<OIdentifiable, OIdentifiable> save() {
+		saveAllNewItems();
+		updateSize();
+		return this;
 	}
 
 	/**
-	 * Change the transaction running mode.
-	 * 
-	 * @param iTxRunning
-	 *          true if a transaction is running, otherwise false
+	 * Notifies to the owner the change
 	 */
-	public void setRunningTransaction(final boolean iTxRunning) {
-		transactionRunning = iTxRunning;
-
-		if (iTxRunning) {
-			// ASSURE ALL PENDING CHANGES ARE COMMITTED BEFORE TO START A TX
-			updates = 0;
-			lazySave();
-		}
+	public void setDirtyOwner() {
+		if (getOwner() != null)
+			getOwner().setDirty();
 	}
 
 	public void onAfterTxCommit() {
@@ -135,6 +272,79 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 				removeNodeFromCache(rid);
 				addNodeInCache(entry);
 			}
+		}
+	}
+
+	public boolean saveAllNewItems() {
+		if (hasNewItems()) {
+			for (ORecord<?> record : newItems.keySet()) {
+				if (record.getIdentity().isNew())
+					record.save();
+
+				// NEW ITEM OR NOT CONTENT IN STREAMED BUFFER
+				super.put(record.getIdentity(), null);
+			}
+
+			if (newItems != null)
+				newItems.clear();
+			newItems = null;
+			return true;
+		}
+		return false;
+	}
+
+	public boolean hasNewItems() {
+		return newItems != null && !newItems.isEmpty();
+	}
+
+	public boolean isAutoConvert() {
+		return autoConvertToRecord;
+	}
+
+	public OMVRBTreeRID setAutoConvert(boolean autoConvert) {
+		this.autoConvertToRecord = autoConvert;
+		return this;
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder buffer = new StringBuilder(super.toString());
+		if (hasNewItems()) {
+			buffer.append(" + new items (");
+			buffer.append(newItems.size());
+			buffer.append("): ");
+			boolean first = true;
+			for (ORecord<?> item : newItems.keySet()) {
+				if (!first) {
+					buffer.append(", ");
+					first = false;
+				}
+
+				buffer.append(item.toString());
+			}
+		}
+		return buffer.toString();
+	}
+
+	/**
+	 * Notifies the changes to the owner if it's embedded.
+	 */
+	@SuppressWarnings("unchecked")
+	protected <RET> RET setDirty() {
+		if (((OMVRBTreeRIDProvider) getProvider()).isEmbeddedStreaming())
+			setDirtyOwner();
+		else
+			// SAVE IT RIGHT NOW SINCE IT'S DISCONNECTED FROM OWNER
+			save();
+
+		return (RET) this;
+	}
+
+	protected void updateSize() {
+		if (root != null) {
+			if (((OMVRBTreeRIDEntryProvider) ((OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable>) root).getProvider())
+					.setTreeSize(size()))
+				((OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable>) root).markDirty();
 		}
 	}
 }

@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -23,9 +22,9 @@ import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 /**
  * Fast index for full-text searches.
@@ -64,11 +63,10 @@ public class OIndexFullText extends OIndexMultiValues {
 		}
 
 		acquireExclusiveLock();
-
 		try {
+			
 			map.save();
-		} catch (final IOException e) {
-			throw new OIndexException("Cannot save index entry for document '" + iDocument.getIdentity() + "'");
+			
 		} finally {
 			releaseExclusiveLock();
 		}
@@ -97,7 +95,7 @@ public class OIndexFullText extends OIndexMultiValues {
 
 				if (refs == null)
 					// WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
-					refs = new ORecordLazySet().setRidOnly(true);
+					refs = new OMVRBTreeRIDSet().setAutoConvert(false);
 
 				// ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
 				refs.add(iSingleValue);

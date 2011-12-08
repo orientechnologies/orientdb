@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
-@Test(groups = "sql-insert", sequential = true)
+@Test(groups = "sql-insert")
 public class SQLInsertTest {
 	private ODatabaseDocument	database;
 

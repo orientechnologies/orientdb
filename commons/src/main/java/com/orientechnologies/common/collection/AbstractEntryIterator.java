@@ -27,8 +27,9 @@ abstract class AbstractEntryIterator<K, V, T> implements Iterator<T> {
 	OMVRBTreeEntry<K, V>	next;
 	OMVRBTreeEntry<K, V>	lastReturned;
 	int										expectedModCount;
+	int										pageIndex;
 
-	AbstractEntryIterator(OMVRBTreeEntry<K, V> first) {
+	AbstractEntryIterator(final OMVRBTreeEntry<K, V> first) {
 		if (first == null)
 			// IN CASE OF ABSTRACTMAP.HASHCODE()
 			return;
@@ -37,29 +38,44 @@ abstract class AbstractEntryIterator<K, V, T> implements Iterator<T> {
 		next = first;
 		expectedModCount = tree.modCount;
 		lastReturned = null;
-		tree.pageIndex = -1;
+		pageIndex = -1;
 	}
 
 	public final boolean hasNext() {
-		return next != null && (OMVRBTree.successor(next) != null || tree.pageIndex < next.getSize() - 1);
+		if (tree != null && expectedModCount != tree.modCount) {
+			// CONCURRENT CHANGE: TRY TO REUSE LAST POSITION
+			pageIndex--;
+			expectedModCount = tree.modCount;
+		}
+
+		return next != null && (pageIndex < next.getSize() - 1 || OMVRBTree.successor(next) != null);
+	}
+
+	final K nextKey() {
+		return nextEntry().getKey(pageIndex);
+	}
+
+	final V nextValue() {
+		return nextEntry().getValue(pageIndex);
 	}
 
 	final OMVRBTreeEntry<K, V> nextEntry() {
 		if (next == null)
 			throw new NoSuchElementException();
 
-		if (tree.pageIndex < next.getSize() - 1) {
+		if (pageIndex < next.getSize() - 1) {
 			// ITERATE INSIDE THE NODE
-			tree.pageIndex++;
+			pageIndex++;
 		} else {
 			// GET THE NEXT NODE
 			if (tree.modCount != expectedModCount)
 				throw new ConcurrentModificationException();
 
 			next = OMVRBTree.successor(next);
-			tree.pageIndex = 0;
+			pageIndex = 0;
 		}
 		lastReturned = next;
+		tree.pageIndex = pageIndex;
 
 		return next;
 	}
@@ -69,15 +85,15 @@ abstract class AbstractEntryIterator<K, V, T> implements Iterator<T> {
 		if (e == null)
 			throw new NoSuchElementException();
 
-		if (tree.pageIndex > 0) {
+		if (pageIndex > 0) {
 			// ITERATE INSIDE THE NODE
-			tree.pageIndex--;
+			pageIndex--;
 		} else {
 			if (tree.modCount != expectedModCount)
 				throw new ConcurrentModificationException();
 
 			next = OMVRBTree.predecessor(e);
-			tree.pageIndex = next.getSize() - 1;
+			pageIndex = next.getSize() - 1;
 		}
 
 		lastReturned = e;
@@ -92,7 +108,9 @@ abstract class AbstractEntryIterator<K, V, T> implements Iterator<T> {
 		// deleted entries are replaced by their successors
 		if (lastReturned.getLeft() != null && lastReturned.getRight() != null)
 			next = lastReturned;
+		tree.pageIndex = pageIndex;
 		next = tree.deleteEntry(lastReturned);
+		pageIndex--;
 		expectedModCount = tree.modCount;
 		lastReturned = null;
 	}

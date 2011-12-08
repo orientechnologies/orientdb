@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> implements ORecordSchemaAware<T> {
@@ -59,13 +58,13 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 
 	@Override
 	public ORecordAbstract<T> save(final String iClusterName) {
-		OSerializationThreadLocal.INSTANCE.get().clear();
-		try {
-			validate();
-			return super.save(iClusterName);
-		} finally {
-			OSerializationThreadLocal.INSTANCE.get().clear();
-		}
+		// OSerializationThreadLocal.INSTANCE.get().clear();
+		// try {
+		validate();
+		return super.save(iClusterName);
+		// } finally {
+		// OSerializationThreadLocal.INSTANCE.get().clear();
+		// }
 	}
 
 	/**

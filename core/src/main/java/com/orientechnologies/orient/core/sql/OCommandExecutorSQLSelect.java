@@ -35,7 +35,6 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -75,6 +74,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -275,6 +275,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	}
 
 	public boolean foreach(final ORecordInternal<?> iRecord) {
+		if (iRecord != null)
 		if (filter(iRecord))
 			return addResult(iRecord);
 
@@ -1239,7 +1240,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				final Entry<Object, Object> current = it.next();
 
 				if (current.getValue() instanceof Collection<?>)
-					for (Iterator<OIdentifiable> collIt = ((ORecordLazySet) current.getValue()).rawIterator(); collIt.hasNext();)
+					for (Iterator<OIdentifiable> collIt = ((OMVRBTreeRIDSet) current.getValue()).iterator(); collIt.hasNext();)
 						addResult(createIndexEntryAsDocument(current.getKey(), collIt.next().getIdentity()));
 				else
 					addResult(createIndexEntryAsDocument(current.getKey(), (OIdentifiable) current.getValue()));

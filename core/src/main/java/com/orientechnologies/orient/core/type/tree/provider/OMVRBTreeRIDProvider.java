@@ -27,22 +27,24 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreePersistent;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRID;
 
 /**
- * MVRB-Tree implementation to handle a set of RID.
+ * MVRB-Tree implementation to handle a set of RID. It's serialized as embedded or external binary. Once external cannot come back
+ * to the embedded mode.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiable, OIdentifiable> implements
 		OStringBuilderSerializable {
-	private static final long																	serialVersionUID	= 1L;
-	private static final int																	PROTOCOL_VERSION	= 0;
+	private static final long	serialVersionUID	= 1L;
 
-	private OMVRBTreePersistent<OIdentifiable, OIdentifiable>	tree;
-	private boolean																						embeddedStreaming	= true;
+	private OMVRBTreeRID			tree;
+	private boolean						embeddedStreaming	= true; // KEEP THE STREAMING MODE
 
 	public OMVRBTreeRIDProvider(final OStorage iStorage, final int iClusterId, final ORID iRID) {
 		this(iStorage, getDatabase().getClusterNameById(iClusterId));
@@ -59,7 +61,9 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 	}
 
 	public OMVRBTreeRIDProvider(final OStorage iStorage, final String iClusterName) {
-		super(new ODocument(getDatabase(), "OMVRBTreeRID"), iStorage, iClusterName);
+		super(new ODocument(getDatabase(), "ORIDs"), iStorage, iClusterName);
+		((ODocument) record).field("pageSize", pageSize);
+		((ODocument) record).unsetDirty();
 	}
 
 	public OMVRBTreeRIDEntryProvider getEntry(final ORID iRid) {
@@ -74,24 +78,24 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 		final long timer = OProfiler.getInstance().startChrono();
 
 		try {
-			if (embeddedStreaming && size > OGlobalConfiguration.MVRBTREE_SET_BINARY_THRESHOLD.getValueAsInteger())
-				embeddedStreaming = false;
-
-			if (embeddedStreaming) {
+			if (isEmbeddedStreaming()) {
 				// SERIALIZE AS AN EMBEDDED STRING
-				buffer.append('[');
+				buffer.append(OStringSerializerHelper.COLLECTION_BEGIN);
 				boolean first = true;
 				for (OIdentifiable rid : tree.keySet()) {
 					if (!first)
-						buffer.append(',');
+						buffer.append(OStringSerializerHelper.COLLECTION_SEPARATOR);
 					else
 						first = false;
 
 					rid.getIdentity().toString(buffer);
 				}
-				buffer.append(']');
-			} else
-				buffer.append(toDocument().toString());
+				buffer.append(OStringSerializerHelper.COLLECTION_END);
+			} else {
+				buffer.append(OStringSerializerHelper.EMBEDDED_BEGIN);
+				buffer.append(new String(toDocument().toStream()));
+				buffer.append(OStringSerializerHelper.EMBEDDED_END);
+			}
 
 		} finally {
 			OProfiler.getInstance().stopChrono("OMVRBTreeRIDProvider.toStream", timer);
@@ -106,14 +110,27 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 
 	public OStringBuilderSerializable fromStream(final StringBuilder iInput) throws OSerializationException {
 		if (iInput != null && iInput.length() > 0) {
-			final String value = iInput.charAt(0) == '[' ? iInput.substring(1, iInput.length() - 1) : iInput.toString();
+			final char firstChar = iInput.charAt(0);
 
-			final StringTokenizer tokenizer = new StringTokenizer(value, ",");
-			while (tokenizer.hasMoreElements()) {
-				final ORecordId rid = new ORecordId(tokenizer.nextToken());
-				tree.put(rid, rid);
+			String value = firstChar == OStringSerializerHelper.COLLECTION_BEGIN ? iInput.substring(1, iInput.length() - 1) : iInput
+					.toString();
+
+			if (firstChar == OStringSerializerHelper.COLLECTION_BEGIN || firstChar == OStringSerializerHelper.LINK) {
+				embeddedStreaming = true;
+				value = firstChar == OStringSerializerHelper.COLLECTION_BEGIN ? value.substring(1, value.length() - 1) : value.toString();
+				final StringTokenizer tokenizer = new StringTokenizer(value, ",");
+				while (tokenizer.hasMoreElements()) {
+					final ORecordId rid = new ORecordId(tokenizer.nextToken());
+					tree.put(rid, rid);
+				}
+			} else {
+				embeddedStreaming = false;
+				value = firstChar == OStringSerializerHelper.EMBEDDED_BEGIN ? value.substring(1, value.length() - 1) : value.toString();
+				fromStream(value.getBytes());
+				tree.load();
 			}
 		}
+
 		return this;
 	}
 
@@ -126,25 +143,40 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 	}
 
 	public void setTree(final OMVRBTreePersistent<OIdentifiable, OIdentifiable> tree) {
-		this.tree = tree;
+		this.tree = (OMVRBTreeRID) tree;
 	}
 
 	public ODocument toDocument() {
 		// SERIALIZE AS LINK TO THE TREE STRUCTURE
-		final ODocument document = (ODocument) record;
-		document.clear();
-
-		document.field("protocolVersion", PROTOCOL_VERSION);
-		document.field("size", size);
-		document.field("defaultPageSize", defaultPageSize);
-		if (root != null)
-			document.field("root", root.getIdentity());
-		return document;
+		return ((ODocument) record).field("root", root != null ? root.getIdentity() : null);
 	}
 
-	public void fromDocument(final ODocument document) {
-		size = (Integer) document.field("size");
-		defaultPageSize = (Integer) document.field("defaultPageSize");
-		root = document.field("root", OType.LINK);
+	public void fromDocument(final ODocument iDocument) {
+		pageSize = (Integer) iDocument.field("pageSize");
+		root = iDocument.field("root", OType.LINK);
+	}
+
+	@Override
+	public boolean updateConfig() {
+		boolean isChanged = false;
+
+		int newSize = OGlobalConfiguration.MVRBTREE_RID_NODE_PAGE_SIZE.getValueAsInteger();
+		if (newSize != pageSize) {
+			pageSize = newSize;
+			isChanged = true;
+		}
+		return isChanged ? setDirty() : false;
+	}
+
+	public boolean isEmbeddedStreaming() {
+		if (embeddedStreaming) {
+			final int binaryThreshold = OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger();
+			if (binaryThreshold > 0 && size > binaryThreshold) {
+				// CHANGE TO EXTERNAL BINARY
+				tree.setDirtyOwner();
+				embeddedStreaming = false;
+			}
+		}
+		return embeddedStreaming;
 	}
 }

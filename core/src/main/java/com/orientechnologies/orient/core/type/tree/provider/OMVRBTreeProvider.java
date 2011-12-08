@@ -42,7 +42,7 @@ public interface OMVRBTreeProvider<K, V> {
 	/** Give a chance to update config parameters (defaultSizePage, ...) */
 	public boolean updateConfig();
 
-	public boolean isTreeDirty();
+	public boolean isDirty();
 
 	public OMVRBTreeEntryDataProvider<K, V> createEntry();
 

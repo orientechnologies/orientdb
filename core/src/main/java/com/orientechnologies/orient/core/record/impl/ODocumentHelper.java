@@ -39,7 +39,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedList;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
@@ -53,6 +52,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 /**
  * Helper class to manage documents.
@@ -98,7 +98,7 @@ public class ODocumentHelper {
 				final Collection<?> newValue;
 
 				if (iValue instanceof ORecordLazyList || iValue instanceof ORecordLazyMap)
-					newValue = new ORecordLazySet(iDocument);
+					newValue = new OMVRBTreeRIDSet(iDocument);
 				else
 					newValue = new OTrackedSet<Object>(iDocument);
 
@@ -127,7 +127,7 @@ public class ODocumentHelper {
 				// CONVERT IT TO LIST
 				final Collection<?> newValue;
 
-				if (iValue instanceof ORecordLazySet || iValue instanceof ORecordLazyMap)
+				if (iValue instanceof OMVRBTreeRIDSet || iValue instanceof ORecordLazyMap)
 					newValue = new ORecordLazyList(iDocument);
 				else
 					newValue = new OTrackedList<Object>(iDocument);
@@ -377,8 +377,7 @@ public class ODocumentHelper {
 						.getRecordTypeName(((ORecordInternal<?>) iCurrent.getRecord()).getRecordType());
 			else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_SIZE)) {
 				final byte[] stream = ((ORecordInternal<?>) iCurrent.getRecord()).toStream();
-				if (stream != null)
-					return stream.length;
+				return stream != null ? stream.length : 0;
 			} else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_FIELDS))
 				return ((ODocument) iCurrent.getRecord()).fieldNames();
 
@@ -508,8 +507,8 @@ public class ODocumentHelper {
 				iCloned._fieldValues.put(iEntry.getKey(), new ArrayList<Object>((List<Object>) fieldValue));
 
 				// SETS
-			} else if (fieldValue instanceof ORecordLazySet) {
-				iCloned._fieldValues.put(iEntry.getKey(), ((ORecordLazySet) fieldValue).copy(iCloned));
+			} else if (fieldValue instanceof OMVRBTreeRIDSet) {
+				iCloned._fieldValues.put(iEntry.getKey(), ((OMVRBTreeRIDSet) fieldValue).copy());
 
 			} else if (fieldValue instanceof ORecordTrackedSet) {
 				final ORecordTrackedSet newList = new ORecordTrackedSet(iCloned);

@@ -30,8 +30,8 @@ import java.util.Map.Entry;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODetachable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -54,7 +54,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
  * be added at run-time. Instances can be reused across calls by using the reset() before to re-use.
  */
 @SuppressWarnings({ "unchecked", "serial" })
-public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Iterable<Entry<String, Object>> {
+public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Iterable<Entry<String, Object>>, ODetachable {
 	public static final byte											RECORD_TYPE				= 'd';
 	public static final char[]										INDEX_SEPARATOR		= { ',', '-' };
 	protected Map<String, Object>									_fieldValues;
@@ -213,6 +213,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 		iDestination._ordered = _ordered;
 		iDestination._clazz = _clazz;
 		iDestination._trackingChanges = _trackingChanges;
+		if (_owners != null)
+			iDestination._owners = new ArrayList<WeakReference<ORecordElement>>(_owners);
 
 		if (_fieldValues != null) {
 			iDestination._fieldValues = _fieldValues instanceof LinkedHashMap ? new LinkedHashMap<String, Object>()
@@ -269,8 +271,9 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 						fullyDetached = false;
 					else
 						_fieldValues.put(entry.getKey(), ((ORecord<?>) fieldValue).getIdentity());
-				else if (fieldValue instanceof ORecordLazyMultiValue) {
-					if (!((ORecordLazyMultiValue) fieldValue).convertRecords2Links())
+
+				if (fieldValue instanceof ODetachable) {
+					if (!((ODetachable) fieldValue).detach())
 						fullyDetached = false;
 				}
 			}
@@ -926,6 +929,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 		super.clear();
 		if (_fieldValues != null)
 			_fieldValues.clear();
+		_owners = null;
 		return this;
 	}
 

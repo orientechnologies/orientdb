@@ -457,4 +457,8 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 		this.ridOnly = ridOnly;
 		return this;
 	}
+
+	public boolean detach() {
+		return convertRecords2Links();
+	}
 }

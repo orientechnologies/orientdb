@@ -15,13 +15,12 @@
  */
 package com.orientechnologies.orient.core.type.tree;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.db.record.ODetachable;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.OLazyRecordIterator;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -37,11 +36,10 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializable, OSerializableStream {
-	private static final long		serialVersionUID		= 1L;
+public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializable, OSerializableStream, ODetachable {
+	private static final long		serialVersionUID	= 1L;
 
 	private final OMVRBTreeRID	tree;
-	private boolean							autoConvertToRecord	= true;
 
 	public OMVRBTreeRIDSet() {
 		this(new OMVRBTreeRID());
@@ -75,24 +73,28 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerial
 		return tree.containsKey(o);
 	}
 
+	public Iterator<OIdentifiable> iterator(final boolean iAutoConvertToRecord) {
+		return tree.iterator(iAutoConvertToRecord);
+	}
+
 	public Iterator<OIdentifiable> iterator() {
-		return new OLazyRecordIterator(tree.keySet().iterator(), autoConvertToRecord);
+		return tree.iterator();
 	}
 
 	public Object[] toArray() {
-		return tree.keySet().toArray();
+		return tree.toArray();
 	}
 
 	public <T> T[] toArray(final T[] a) {
-		return tree.keySet().toArray(a);
+		return tree.toArray(a);
 	}
 
 	public boolean add(final OIdentifiable e) {
-		return tree.put(e, e) != null;
+		return tree.put(e, null) != null;
 	}
 
 	public boolean remove(final Object o) {
-		return tree.remove(o) != null;
+		return tree.remove(o) == null;
 	}
 
 	public boolean containsAll(final Collection<?> c) {
@@ -103,57 +105,37 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerial
 	}
 
 	public boolean addAll(final Collection<? extends OIdentifiable> c) {
+		boolean changed = false;
 		for (OIdentifiable o : c)
-			tree.put(o, null);
-		return true;
+			if (add(o) && !changed)
+				changed = true;
+		return changed;
 	}
 
 	public boolean retainAll(final Collection<?> c) {
-		boolean modified = false;
-		final Iterator<?> e = iterator();
-		while (e.hasNext()) {
-			if (!c.contains(e.next())) {
-				e.remove();
-				modified = true;
-			}
-		}
-		return modified;
+		return tree.retainAll(c);
 	}
 
 	public boolean removeAll(final Collection<?> c) {
-		boolean modified = false;
-		for (Object o : c)
-			if (tree.remove(o) != null)
-				modified = true;
-		return modified;
+		return tree.removeAll(c);
+	}
+
+	public boolean detach() {
+		return tree.detach();
 	}
 
 	public void clear() {
 		tree.clear();
 	}
 
-	public void save() throws IOException {
-		tree.save();
+	public OMVRBTreeRIDSet fromDocument(final ODocument iDocument) {
+		fromStream(iDocument.toStream());
+		return this;
 	}
 
 	public ODocument toDocument() {
-		tree.lazySave();
+		tree.save();
 		return ((OMVRBTreeRIDProvider) tree.getProvider()).toDocument();
-	}
-
-	public OStringBuilderSerializable fromStream(final StringBuilder iSource) {
-		((OMVRBTreeRIDProvider) tree.getProvider()).fromStream(iSource);
-		return this;
-	}
-
-	public OStringBuilderSerializable toStream(StringBuilder iOutput) throws OSerializationException {
-		((OMVRBTreeRIDProvider) tree.getProvider()).toStream(iOutput);
-		return this;
-	}
-
-	public OMVRBTreeRIDSet fromDocument(final ODocument iDocument) {
-		((OMVRBTreeRIDProvider) tree.getProvider()).fromDocument(iDocument);
-		return this;
 	}
 
 	public OMVRBTreeRIDSet copy() {
@@ -163,10 +145,9 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerial
 		return clone;
 	}
 
-	public byte[] toStream() throws OSerializationException {
-		final StringBuilder buffer = new StringBuilder();
-		toStream(buffer);
-		return buffer.toString().getBytes();
+	public OStringBuilderSerializable fromStream(final StringBuilder iSource) {
+		((OMVRBTreeRIDProvider) tree.getProvider()).fromStream(iSource);
+		return this;
 	}
 
 	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
@@ -174,17 +155,25 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerial
 		return this;
 	}
 
+	public OStringBuilderSerializable toStream(StringBuilder iOutput) throws OSerializationException {
+		tree.save();
+		((OMVRBTreeRIDProvider) tree.getProvider()).toStream(iOutput);
+		return this;
+	}
+
+	public byte[] toStream() throws OSerializationException {
+		final StringBuilder buffer = new StringBuilder();
+		toStream(buffer);
+		return buffer.toString().getBytes();
+	}
+
 	@Override
 	public String toString() {
 		return tree.toString();
 	}
 
-	public boolean isAutoConvert() {
-		return autoConvertToRecord;
-	}
-
-	public OMVRBTreeRIDSet setAutoConvert(boolean autoConvert) {
-		this.autoConvertToRecord = autoConvert;
+	public OMVRBTreeRIDSet setAutoConvert(final boolean b) {
+		tree.setAutoConvert(b);
 		return this;
 	}
 }

@@ -393,8 +393,8 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 
 		if (iValue.length() > 1)
 			if (iValue.charAt(0) == '"' && iValue.charAt(iValue.length() - 1) == '"')
-			// STRING
-			return OStringSerializerHelper.decode(iValue.substring(1, iValue.length() - 1));
+				// STRING
+				return OStringSerializerHelper.decode(iValue.substring(1, iValue.length() - 1));
 			else if (iValue.charAt(0) == OStringSerializerHelper.BINARY_BEGINEND
 					&& iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.BINARY_BEGINEND)
 				// STRING

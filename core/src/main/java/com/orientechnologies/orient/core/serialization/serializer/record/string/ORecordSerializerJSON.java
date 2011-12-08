@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -54,6 +53,7 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 @SuppressWarnings("serial")
 public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
@@ -158,10 +158,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 							if (v != null)
 								if (v instanceof Collection<?> && !((Collection<?>) v).isEmpty()) {
-									if (v instanceof ORecordLazySet)
-										((ORecordLazySet) v).setAutoConvertToRecord(false);
-									else if (v instanceof ORecordLazyList)
+									if (v instanceof ORecordLazyList)
 										((ORecordLazyList) v).setAutoConvertToRecord(false);
+									else if (v instanceof OMVRBTreeRIDSet)
+										((OMVRBTreeRIDSet) v).setAutoConvert(false);
 
 									// CHECK IF THE COLLECTION IS EMBEDDED
 									Object first = ((Collection<?>) v).iterator().next();
@@ -244,7 +244,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			// EMBEDDED VALUES
 			final Collection<?> embeddedCollection;
 			if (iType == OType.LINKSET)
-				embeddedCollection = new ORecordLazySet(iRecord);
+				embeddedCollection = new OMVRBTreeRIDSet(iRecord);
 			else if (iType == OType.EMBEDDEDSET)
 				embeddedCollection = new OTrackedSet<Object>(iRecord);
 			else if (iType == OType.LINKLIST)

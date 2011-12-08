@@ -208,4 +208,8 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
 	public Iterator<OIdentifiable> rawIterator() {
 		return new OLazyRecordIterator(sourceRecord, super.values().iterator(), false);
 	}
+
+	public boolean detach() {
+		return convertRecords2Links();
+	}
 }

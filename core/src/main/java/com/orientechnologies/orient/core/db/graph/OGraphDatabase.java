@@ -26,13 +26,13 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 /**
  * Super light GraphDB implementation on top of the underlying Document. The generated vertexes and edges are compatible with those
@@ -260,16 +260,16 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 			edge.field(EDGE_FIELD_OUT, iOutVertex);
 			edge.field(EDGE_FIELD_IN, iInVertex);
 
-			ORecordLazySet out = ((ORecordLazySet) iOutVertex.field(VERTEX_FIELD_OUT));
+			OMVRBTreeRIDSet out = ((OMVRBTreeRIDSet) iOutVertex.field(VERTEX_FIELD_OUT));
 			if (out == null) {
-				out = new ORecordLazySet(iOutVertex);
+				out = new OMVRBTreeRIDSet(iOutVertex);
 				iOutVertex.field(VERTEX_FIELD_OUT, out);
 			}
 			out.add(edge);
 
-			ORecordLazySet in = ((ORecordLazySet) iInVertex.field(VERTEX_FIELD_IN));
+			OMVRBTreeRIDSet in = ((OMVRBTreeRIDSet) iInVertex.field(VERTEX_FIELD_IN));
 			if (in == null) {
-				in = new ORecordLazySet(iInVertex);
+				in = new OMVRBTreeRIDSet(iInVertex);
 				iInVertex.field(VERTEX_FIELD_IN, in);
 			}
 			in.add(edge);
@@ -375,7 +375,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	public Set<OIdentifiable> getOutEdges(final ODocument iVertex, final String iLabel) {
 		checkVertexClass(iVertex);
 
-		final ORecordLazySet set = iVertex.field(VERTEX_FIELD_OUT);
+		final OMVRBTreeRIDSet set = iVertex.field(VERTEX_FIELD_OUT);
 
 		if (iLabel == null)
 			// RETURN THE ENTIRE COLLECTION
@@ -385,7 +385,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 				return Collections.emptySet();
 
 		// FILTER BY LABEL
-		final ORecordLazySet result = new ORecordLazySet();
+		final OMVRBTreeRIDSet result = new OMVRBTreeRIDSet();
 		if (set != null)
 			for (OIdentifiable item : set) {
 				if (iLabel == null || iLabel.equals(((ODocument) item).field(LABEL)))
@@ -407,7 +407,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	public Set<OIdentifiable> getOutEdgesHavingProperties(final ODocument iVertex, final Map<String, Object> iProperties) {
 		checkVertexClass(iVertex);
 
-		return filterEdgesByProperties((ORecordLazySet) iVertex.field(VERTEX_FIELD_OUT), iProperties);
+		return filterEdgesByProperties((OMVRBTreeRIDSet) iVertex.field(VERTEX_FIELD_OUT), iProperties);
 	}
 
 	/**
@@ -422,7 +422,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	public Set<OIdentifiable> getOutEdgesHavingProperties(final ODocument iVertex, Iterable<String> iProperties) {
 		checkVertexClass(iVertex);
 
-		return filterEdgesByProperties((ORecordLazySet) iVertex.field(VERTEX_FIELD_OUT), iProperties);
+		return filterEdgesByProperties((OMVRBTreeRIDSet) iVertex.field(VERTEX_FIELD_OUT), iProperties);
 	}
 
 	public Set<OIdentifiable> getInEdges(final ODocument iVertex) {
@@ -432,7 +432,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	public Set<OIdentifiable> getInEdges(final ODocument iVertex, final String iLabel) {
 		checkVertexClass(iVertex);
 
-		final ORecordLazySet set = iVertex.field(VERTEX_FIELD_IN);
+		final OMVRBTreeRIDSet set = iVertex.field(VERTEX_FIELD_IN);
 
 		if (iLabel == null)
 			// RETURN THE ENTIRE COLLECTION
@@ -442,7 +442,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 				return Collections.emptySet();
 
 		// FILTER BY LABEL
-		final ORecordLazySet result = new ORecordLazySet();
+		final OMVRBTreeRIDSet result = new OMVRBTreeRIDSet();
 		if (set != null)
 			for (OIdentifiable item : set) {
 				if (iLabel == null || iLabel.equals(((ODocument) item).field(LABEL)))
@@ -464,7 +464,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	public Set<OIdentifiable> getInEdgesHavingProperties(final ODocument iVertex, Iterable<String> iProperties) {
 		checkVertexClass(iVertex);
 
-		return filterEdgesByProperties((ORecordLazySet) iVertex.field(VERTEX_FIELD_IN), iProperties);
+		return filterEdgesByProperties((OMVRBTreeRIDSet) iVertex.field(VERTEX_FIELD_IN), iProperties);
 	}
 
 	/**
@@ -478,7 +478,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	 */
 	public Set<OIdentifiable> getInEdgesHavingProperties(final ODocument iVertex, final Map<String, Object> iProperties) {
 		checkVertexClass(iVertex);
-		return filterEdgesByProperties((ORecordLazySet) iVertex.field(VERTEX_FIELD_IN), iProperties);
+		return filterEdgesByProperties((OMVRBTreeRIDSet) iVertex.field(VERTEX_FIELD_IN), iProperties);
 	}
 
 	public ODocument getInVertex(final ODocument iEdge) {
@@ -556,7 +556,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		return edgeBaseClass;
 	}
 
-	public Set<OIdentifiable> filterEdgesByProperties(final ORecordLazySet iEdges, final Iterable<String> iPropertyNames) {
+	public Set<OIdentifiable> filterEdgesByProperties(final OMVRBTreeRIDSet iEdges, final Iterable<String> iPropertyNames) {
 		if (iPropertyNames == null)
 			// RETURN THE ENTIRE COLLECTION
 			if (iEdges != null)
@@ -565,7 +565,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 				return Collections.emptySet();
 
 		// FILTER BY PROPERTY VALUES
-		final ORecordLazySet result = new ORecordLazySet();
+		final OMVRBTreeRIDSet result = new OMVRBTreeRIDSet();
 		if (iEdges != null)
 			for (OIdentifiable item : iEdges) {
 				final ODocument doc = (ODocument) item;
@@ -579,7 +579,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		return result;
 	}
 
-	public Set<OIdentifiable> filterEdgesByProperties(final ORecordLazySet iEdges, final Map<String, Object> iProperties) {
+	public Set<OIdentifiable> filterEdgesByProperties(final OMVRBTreeRIDSet iEdges, final Map<String, Object> iProperties) {
 		if (iProperties == null)
 			// RETURN THE ENTIRE COLLECTION
 			if (iEdges != null)
@@ -588,7 +588,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 				return Collections.emptySet();
 
 		// FILTER BY PROPERTY VALUES
-		final ORecordLazySet result = new ORecordLazySet();
+		final OMVRBTreeRIDSet result = new OMVRBTreeRIDSet();
 		if (iEdges != null)
 			for (OIdentifiable item : iEdges) {
 				final ODocument doc = (ODocument) item;

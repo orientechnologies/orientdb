@@ -18,11 +18,11 @@ package com.orientechnologies.orient.core.serialization.serializer.stream;
 import java.io.IOException;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 public class OStreamSerializerListRID implements OStreamSerializer {
 	public static final String														NAME			= "y";
@@ -36,17 +36,15 @@ public class OStreamSerializerListRID implements OStreamSerializer {
 
 		final String s = OBinaryProtocol.bytes2string(iStream);
 
-		ORecordLazySet set = (ORecordLazySet) FORMAT.embeddedCollectionFromStream(iDatabase, null, OType.EMBEDDEDSET, null, OType.LINK, s);
-		set.setRidOnly(true);
-		return set;
+		return (OMVRBTreeRIDSet) FORMAT.embeddedCollectionFromStream(iDatabase, null, OType.EMBEDDEDSET, null,
+				OType.LINK, s);
 	}
 
 	public byte[] toStream(final ODatabaseRecord iDatabase, final Object iObject) throws IOException {
 		if (iObject == null)
 			return null;
 
-		return OBinaryProtocol.string2bytes(ORecordSerializerSchemaAware2CSV.linkSetToStream(new StringBuilder(), null,
-				(ORecordLazySet) iObject).toString());
+		return ((OMVRBTreeRIDSet) iObject).toStream();
 	}
 
 	public String getName() {

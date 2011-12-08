@@ -92,7 +92,7 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 			stream.setAsFixed(root != null ? root.toStream() : ORecordId.EMPTY_RECORD_ID_STREAM);
 
 			stream.set(size);
-			stream.set(defaultPageSize);
+			stream.set(pageSize);
 
 			stream.set(keySerializer.getName());
 			stream.set(valueSerializer.getName());
@@ -126,9 +126,9 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 			size = stream.getAsInteger();
 			if (protocolVersion == -1)
 				// @COMPATIBILITY BEFORE 0.9.25
-				defaultPageSize = stream.getAsShort();
+				pageSize = stream.getAsShort();
 			else
-				defaultPageSize = stream.getAsInteger();
+				pageSize = stream.getAsInteger();
 
 			serializerFromStream(stream);
 

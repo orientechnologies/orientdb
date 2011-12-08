@@ -67,6 +67,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 @SuppressWarnings("unchecked")
 /**
@@ -302,7 +303,7 @@ public class OObjectSerializerHelper {
 
 			public Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName, final Object iLinked) {
 				final Class<?> type;
-				if (iLinked != null && iLinked instanceof ODocument)
+				if (iLinked != null && iLinked instanceof ODocument && (!"ORIDs".equals(((ODocument) iLinked).getClassName())))
 					// GET TYPE BY DOCUMENT'S CLASS. THIS WORKS VERY WELL FOR SUB-TYPES
 					type = getFieldType((ODocument) iLinked, iEntityManager);
 				else
@@ -322,12 +323,15 @@ public class OObjectSerializerHelper {
 				boolean propagate = false;
 
 				if (Set.class.isAssignableFrom(type)) {
-
-					final Collection<Object> set = (Collection<Object>) iLinked;
+					final Collection<?> set;
+					if (iLinked instanceof Collection)
+						set = (Collection<Object>) iLinked;
+					else
+						set = new OMVRBTreeRIDSet().fromDocument((ODocument) iLinked);
 
 					final Set<Object> target;
 					if (iLazyLoading)
-						target = new OLazyObjectSet<Object>(iRoot, set).setFetchPlan(iFetchPlan);
+						target = new OLazyObjectSet<Object>(iRoot, (Collection<Object>) set).setFetchPlan(iFetchPlan);
 					else {
 						target = new HashSet();
 						if (set != null && !set.isEmpty())

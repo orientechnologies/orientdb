@@ -426,4 +426,8 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 		delegate.setRidOnly(ridOnly);
 		return this;
 	}
+
+	public boolean detach() {
+		return convertRecords2Links();
+	}
 }

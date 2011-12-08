@@ -448,7 +448,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			final String iFetchPlan, final boolean iIgnoreCache) {
 		checkOpeness();
 
-		setCurrentDatabaseinThreadLocal();
+		//setCurrentDatabaseinThreadLocal();
 
 		try {
 			checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, getClusterNameById(iRid.getClusterId()));

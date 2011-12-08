@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
@@ -53,6 +52,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStringAbstract {
@@ -82,7 +82,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			final String value = iValue.startsWith("[") ? iValue.substring(1, iValue.length() - 1) : iValue;
 
 			return iType == OType.LINKLIST ? new ORecordLazyList(iSourceRecord).setStreamedContent(new StringBuilder(value))
-					: new ORecordLazySet(iSourceRecord).setStreamedContent(new StringBuilder(value));
+					: new OMVRBTreeRIDSet(iSourceRecord).fromStream(new StringBuilder(value));
 		}
 
 		case LINKMAP: {
@@ -292,18 +292,18 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		}
 
 		case LINKSET: {
-			final ORecordLazySet coll;
+			final OMVRBTreeRIDSet coll;
 
-			if (!(iValue instanceof ORecordLazySet)) {
+			if (!(iValue instanceof OMVRBTreeRIDSet)) {
 				// FIRST TIME: CONVERT THE ENTIRE COLLECTION
-				coll = new ORecordLazySet(iRecord);
+				coll = new OMVRBTreeRIDSet(iRecord);
 				coll.addAll((Collection<? extends OIdentifiable>) iValue);
 				((Collection<? extends OIdentifiable>) iValue).clear();
 
 				iRecord.field(iName, coll);
 			} else
 				// LAZY SET
-				coll = (ORecordLazySet) iValue;
+				coll = (OMVRBTreeRIDSet) iValue;
 
 			linkSetToStream(iOutput, iRecord, coll);
 			OProfiler.getInstance().stopChrono("serializer.rec.str.linkSet2string", timer);
@@ -389,38 +389,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		}
 	}
 
-	public static StringBuilder linkSetToStream(final StringBuilder iOutput, final ODocument iRecord, final ORecordLazySet iSet) {
-		final Iterator<OIdentifiable> it;
-		final StringBuilder buffer;
-		if (iSet.getStreamedContent() != null) {
-			// APPEND STREAMED CONTENT
-			buffer = iSet.getStreamedContent();
-			OProfiler.getInstance().updateCounter("serializer.rec.str.linkSet2string.cached", +1);
-			it = iSet.newItemsIterator();
-		} else {
-			buffer = new StringBuilder();
-			it = iSet.rawIterator();
-		}
-
-		if (it != null && it.hasNext()) {
-			while (it.hasNext()) {
-				if (buffer.length() > 0)
-					buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
-
-				final OIdentifiable item = it.next();
-
-				linkToStream(buffer, iRecord, item);
-			}
-		}
-
-		iSet.convertRecords2Links();
-
-		iOutput.append(OStringSerializerHelper.COLLECTION_BEGIN);
-		iOutput.append(buffer);
-		iOutput.append(OStringSerializerHelper.COLLECTION_END);
-
-		iSet.setStreamedContent(buffer);
-
+	public static StringBuilder linkSetToStream(final StringBuilder iOutput, final ODocument iRecord, final OMVRBTreeRIDSet iSet) {
+		iSet.toStream(iOutput);
 		return iOutput;
 	}
 
@@ -505,11 +475,15 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		Collection<?> coll;
 		if (iLinkedType == OType.LINK) {
 			if (iDocument != null)
-				coll = iType == OType.EMBEDDEDLIST ? new ORecordLazyList(iDocument).setStreamedContent(new StringBuilder(value))
-						: new ORecordLazySet(iDocument).setStreamedContent(new StringBuilder(value));
-			else
-				coll = iType == OType.EMBEDDEDLIST ? new ORecordLazyList().setStreamedContent(new StringBuilder(value))
-						: new ORecordLazySet().setStreamedContent(new StringBuilder(value));
+				coll = (Collection<?>) (iType == OType.EMBEDDEDLIST ? new ORecordLazyList(iDocument).setStreamedContent(new StringBuilder(
+						value)) : new OMVRBTreeRIDSet(iDocument).fromStream(new StringBuilder(value)));
+			else {
+				if (iType == OType.EMBEDDEDLIST)
+					coll = (Collection<?>) new ORecordLazyList().setStreamedContent(new StringBuilder(value));
+				else {
+					return new OMVRBTreeRIDSet().fromStream(new StringBuilder(value));
+				}
+			}
 		} else
 			coll = iType == OType.EMBEDDEDLIST ? new OTrackedList<Object>(iDocument) : new OTrackedSet<Object>(iDocument);
 

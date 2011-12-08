@@ -187,8 +187,8 @@ public class OStorageLocal extends OStorageEmbedded {
 					} catch (FileNotFoundException e) {
 						OLogManager.instance().warn(
 								this,
-								"Error on loading cluster '" + clusters[i].getName() + "' (" + i
-										+ "). It will be excluded from current database '" + getName() + "'.");
+								"Error on loading cluster '" + clusters[i].getName() + "' (" + i + "). It will be excluded from current database '"
+										+ getName() + "'.");
 
 						clusterMap.remove(clusters[i].getName());
 						clusters[i] = null;
@@ -1149,7 +1149,7 @@ public class OStorageLocal extends OStorageEmbedded {
 					iClusterSegment.updateVersion(iRid.clusterPosition, ppos.version);
 					break;
 
-				// DOCUMENT UPDATE, NO VERSION CONTROL, NO VERSION INCREMENT
+				// DOCUMENT UPDATE, NO VERSION CONTROL, NO VERSION UPDATE
 				case -2:
 					break;
 

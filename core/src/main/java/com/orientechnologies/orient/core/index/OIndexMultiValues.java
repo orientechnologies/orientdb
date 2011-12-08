@@ -28,10 +28,10 @@ import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 /**
  * Abstract index implementation that supports multi-values for the same key.
@@ -49,12 +49,10 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 		acquireExclusiveLock();
 		try {
 
-			final ORecordLazySet values = (ORecordLazySet) map.get(iKey);
-			if (values != null)
-				values.setDatabase(getDatabase());
+			final OMVRBTreeRIDSet values = (OMVRBTreeRIDSet) map.get(iKey);
 
 			if (values == null)
-				return ORecordLazySet.EMPTY_SET;
+				return Collections.emptySet();
 
 			return values;
 
@@ -73,7 +71,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 			Set<OIdentifiable> values = map.get(iKey);
 
 			if (values == null)
-				values = new ORecordLazySet().setRidOnly(true);
+				values = new OMVRBTreeRIDSet().setAutoConvert(false);
 
 			if (!iSingleValue.getIdentity().isValid())
 				((ORecord<?>) iSingleValue).save();
@@ -198,9 +196,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 			final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
 
 			while (entry != null && !(entry == lastEntry && map.getPageIndex() == lastEntryIndex)) {
-				final ORecordLazySet values = (ORecordLazySet) entry.getValue();
-				values.setDatabase(getDatabase());
-
+				final OMVRBTreeRIDSet values = (OMVRBTreeRIDSet) entry.getValue();
 				if (values.isEmpty())
 					continue;
 
@@ -238,8 +234,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 			final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
 
 			while (entry != null) {
-				final ORecordLazySet values = (ORecordLazySet) entry.getValue();
-				values.setDatabase(getDatabase());
+				final OMVRBTreeRIDSet values = (OMVRBTreeRIDSet) entry.getValue();
 
 				if (values.isEmpty())
 					continue;
@@ -279,9 +274,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 			final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
 
 			while (entry != null) {
-				final ORecordLazySet values = (ORecordLazySet) entry.getValue();
-				values.setDatabase(getDatabase());
-
+				final OMVRBTreeRIDSet values = (OMVRBTreeRIDSet) entry.getValue();
 				if (values.isEmpty())
 					continue;
 
@@ -311,12 +304,10 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 			final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
 
 			for (final Object key : sortedKeys) {
-				final ORecordLazySet values = (ORecordLazySet) map.get(key);
+				final OMVRBTreeRIDSet values = (OMVRBTreeRIDSet) map.get(key);
 
 				if (values == null)
 					continue;
-
-				values.setDatabase(getDatabase());
 
 				if (!values.isEmpty()) {
 					for (final OIdentifiable value : values) {
@@ -353,8 +344,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 
 			while (entry != null) {
 				final Object key = entry.getKey();
-				final ORecordLazySet values = (ORecordLazySet) entry.getValue();
-				values.setDatabase(getDatabase());
+				final OMVRBTreeRIDSet values = (OMVRBTreeRIDSet) entry.getValue();
 
 				if (values.isEmpty())
 					continue;
@@ -400,8 +390,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 
 			while (entry != null) {
 				final Object key = entry.getKey();
-				final ORecordLazySet values = (ORecordLazySet) entry.getValue();
-				values.setDatabase(getDatabase());
+				final OMVRBTreeRIDSet values = (OMVRBTreeRIDSet) entry.getValue();
 
 				if (values.isEmpty())
 					continue;
@@ -464,8 +453,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 
 			while (entry != null && !(entry == lastEntry && map.getPageIndex() == lastEntryIndex)) {
 				final Object key = entry.getKey();
-				final ORecordLazySet values = (ORecordLazySet) entry.getValue();
-				values.setDatabase(getDatabase());
+				final OMVRBTreeRIDSet values = (OMVRBTreeRIDSet) entry.getValue();
 
 				if (values.isEmpty())
 					continue;
@@ -502,12 +490,10 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 			final Set<ODocument> result = new ODocumentFieldsHashSet();
 
 			for (final Object key : sortedKeys) {
-				final ORecordLazySet values = (ORecordLazySet) map.get(key);
+				final OMVRBTreeRIDSet values = (OMVRBTreeRIDSet) map.get(key);
 
 				if (values == null)
 					continue;
-
-				values.setDatabase(getDatabase());
 
 				if (!values.isEmpty()) {
 					for (final OIdentifiable value : values) {

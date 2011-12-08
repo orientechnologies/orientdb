@@ -48,7 +48,6 @@ import com.orientechnologies.common.profiler.OProfiler;
  */
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavigableMap<K, V>, Cloneable, java.io.Serializable {
-	protected OMVRBTreeEventListener<K, V>		listener;
 	boolean																		pageItemFound				= false;
 	protected int															pageItemComparator	= 0;
 	protected int															pageIndex						= -1;
@@ -96,12 +95,6 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		 * The smallest partially matched key will be used as search result.
 		 */
 		LOWEST_BOUNDARY
-	}
-
-	public OMVRBTree(final OMVRBTreeEventListener<K, V> iListener) {
-		init();
-		comparator = null;
-		listener = iListener;
 	}
 
 	/**
@@ -477,14 +470,6 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		return root;
 	}
 
-	public OMVRBTreeEventListener<K, V> getListener() {
-		return listener;
-	}
-
-	public void setListener(final OMVRBTreeEventListener<K, V> iListener) {
-		this.listener = iListener;
-	}
-
 	/**
 	 * Gets the entry corresponding to the specified key; if no such entry exists, returns the entry for the least key greater than
 	 * the specified key; if no such entry exists (i.e., the greatest key in the Tree is less than the specified key), returns
@@ -665,10 +650,6 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
 				setSize(1);
 				modCount++;
-
-				if (listener != null)
-					listener.signalTreeChanged(this);
-
 				return null;
 			}
 
@@ -758,8 +739,6 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			modCount++;
 			setSize(size() + 1);
 
-			if (listener != null)
-				listener.signalTreeChanged(this);
 		} finally {
 			checkTreeStructure(parentNode);
 		}
@@ -817,7 +796,6 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		}
 
 		// Put clone into "virgin" state (except for comparator)
-		clone.listener = listener;
 		clone.pageIndex = pageIndex;
 		clone.pageItemFound = pageItemFound;
 		clone.pageLoadFactor = pageLoadFactor;
@@ -1341,7 +1319,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		}
 
 		public V next() {
-			return nextEntry().getValue();
+			return nextValue();
 		}
 	}
 
@@ -1351,7 +1329,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		}
 
 		public K next() {
-			return nextEntry().getKey();
+			return nextKey();
 		}
 	}
 
@@ -2381,10 +2359,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 */
 	OMVRBTreeEntry<K, V> deleteEntry(OMVRBTreeEntry<K, V> p) {
 		setSize(size() - 1);
-
-		if (listener != null)
-			listener.signalTreeChanged(this);
-
+		modCount++;
 		if (pageIndex > -1) {
 			// DELETE INSIDE THE NODE
 			p.remove();
@@ -2396,7 +2371,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		final OMVRBTreeEntry<K, V> next = successor(p);
 		// DELETE THE ENTIRE NODE, RE-BUILDING THE STRUCTURE
 		removeNode(p);
-		
+
 		// RETURN NEXT NODE
 		return next;
 	}

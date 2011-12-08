@@ -74,15 +74,15 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLPermissionA
 		if (className == null)
 			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-        final OClass oClass = database.getMetadata().getSchema().getClass(className);
-        if(oClass == null)
-            return null;
+		final OClass oClass = database.getMetadata().getSchema().getClass(className);
+		if (oClass == null)
+			return null;
 
-        for (final OIndex oIndex : oClass.getClassIndexes()) {
-            database.getMetadata().getIndexManager().dropIndex(oIndex.getName());
-        }
+		for (final OIndex oIndex : oClass.getClassIndexes()) {
+			database.getMetadata().getIndexManager().dropIndex(oIndex.getName());
+		}
 
-        final int clusterId = oClass.getDefaultClusterId();
+		final int clusterId = oClass.getDefaultClusterId();
 
 		((OSchemaProxy) database.getMetadata().getSchema()).dropClassInternal(className);
 		((OSchemaProxy) database.getMetadata().getSchema()).saveInternal();

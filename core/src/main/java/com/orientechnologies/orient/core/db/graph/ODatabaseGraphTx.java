@@ -165,7 +165,7 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 		OFetchHelper.checkFetchPlanValid(iFetchPlan);
 		if (doc.getClassName() == null)
 			throw new OGraphException(
-					"The document loaded has no class, while it should be a OGraphVertex, OGraphEdge or any subclass of its");
+					"The document loaded has no class, while it should be a OGraphVertex, OGraphEdge or any subclass of its. Record: " + doc);
 
 		return doc;
 	}
