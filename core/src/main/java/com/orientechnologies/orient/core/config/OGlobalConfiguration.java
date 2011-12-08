@@ -132,7 +132,7 @@ public enum OGlobalConfiguration {
 	// TREEMAP OF RIDS
 	MVRBTREE_RID_BINARY_THRESHOLD(
 			"mvrbtree.ridBinaryThreshold",
-			"Valid for set of rids. It's the threshold as number of entries to use the binary streaming instead of classic string streaming. -1 means never use binary streaming.",
+			"Valid for set of rids. It's the threshold as number of entries to use the binary streaming instead of classic string streaming. -1 means never use binary streaming",
 			Integer.class, 8),
 
 	MVRBTREE_RID_NODE_PAGE_SIZE("mvrbtree.ridNodePageSize",

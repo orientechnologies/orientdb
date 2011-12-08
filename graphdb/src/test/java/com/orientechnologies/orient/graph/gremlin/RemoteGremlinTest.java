@@ -6,7 +6,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.testng.annotations.*;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -17,10 +21,10 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 
 public class RemoteGremlinTest {
-	private final OServer	server;
-  private OGraphDatabase graphDatabase;
+	private final OServer		server;
+	private OGraphDatabase	graphDatabase;
 
-  public RemoteGremlinTest() throws Exception {
+	public RemoteGremlinTest() throws Exception {
 		OGremlinHelper.global().create();
 		server = OServerMain.create();
 	}
@@ -36,15 +40,15 @@ public class RemoteGremlinTest {
 			server.shutdown();
 	}
 
-  @BeforeMethod
-  public void beforeMethod() {
-    graphDatabase = new OGraphDatabase("remote:localhost/tinkerpop");
+	@BeforeMethod
+	public void beforeMethod() {
+		graphDatabase = new OGraphDatabase("remote:localhost/tinkerpop");
 		graphDatabase.open("admin", "admin");
-  }
+	}
 
-  @AfterMethod
-  public void afterMethod() {
-    graphDatabase.close();
+	@AfterMethod
+	public void afterMethod() {
+		graphDatabase.close();
 	}
 
 	@Test
@@ -54,13 +58,15 @@ public class RemoteGremlinTest {
 		ODocument edge = (ODocument) graphDatabase.createEdge(vertex1, vertex2).field("label", "drives").save();
 
 		List<?> result = graphDatabase.query(new OSQLSynchQuery<Object>(
-            "select gremlin('current.out.in') as value from V where out.size() > 0 limit 3"));
+				"select gremlin('current.out.in') as value from V where out.size() > 0 limit 3"));
 		System.out.println("Query result: " + result);
 
 		result = graphDatabase.query(new OSQLSynchQuery<Object>("select gremlin('current.out') as value from V"));
 		System.out.println("Query result: " + result);
 
-		result = graphDatabase.query(new OSQLSynchQuery<Object>("select gremlin('current.out.in') as value from 5:1"));
+		int clusterId = graphDatabase.getVertexBaseClass().getDefaultClusterId();
+
+		result = graphDatabase.query(new OSQLSynchQuery<Object>("select gremlin('current.out.in') as value from " + clusterId + ":1"));
 		System.out.println("Query result: " + result);
 
 		result = graphDatabase.query(new OSQLSynchQuery<Object>("select gremlin('current.out(\"drives\").count()') as value from V"));
@@ -79,8 +85,9 @@ public class RemoteGremlinTest {
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("par1", 100);
 
-		result = graphDatabase.command(new OCommandSQL("select gremlin('current.out{ it.performances > par1 }') from V")).execute(params);
+		result = graphDatabase.command(new OCommandSQL("select gremlin('current.out{ it.performances > par1 }') from V")).execute(
+				params);
 		System.out.println("Command result: " + result);
-  }
+	}
 
 }

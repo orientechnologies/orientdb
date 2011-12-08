@@ -33,7 +33,9 @@ public class LocalGremlinTest {
 		result = db.query(new OSQLSynchQuery<Object>("select gremlin('current.out') as value from V"));
 		System.out.println("Query result: " + result);
 
-		result = db.query(new OSQLSynchQuery<Object>("select gremlin('current.out.in') as value from 5:1"));
+		int clusterId = db.getVertexBaseClass().getDefaultClusterId();
+
+		result = db.query(new OSQLSynchQuery<Object>("select gremlin('current.out.in') as value from " + clusterId + ":1"));
 		System.out.println("Query result: " + result);
 
 		result = db.query(new OSQLSynchQuery<Object>("select gremlin('current.out(\"drives\").count()') as value from V"));
@@ -60,8 +62,7 @@ public class LocalGremlinTest {
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("par1", 100);
 
-		result = db.command(new OCommandSQL("select gremlin('current.out{ it.performances > par1 }') from V")).execute(
-				params);
+		result = db.command(new OCommandSQL("select gremlin('current.out{ it.performances > par1 }') from V")).execute(params);
 		System.out.println("Command result: " + result);
 
 		db.close();
