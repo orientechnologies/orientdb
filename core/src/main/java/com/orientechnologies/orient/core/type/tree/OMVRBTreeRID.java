@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.db.record.OLazyRecordIterator;
 import com.orientechnologies.orient.core.db.record.OLazyRecordMultiIterator;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDEntryProvider;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
@@ -87,25 +88,35 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 			return null;
 		}
 
+		((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
 		return super.put(e, null);
 	}
 
 	public OIdentifiable remove(final Object o) {
-		OIdentifiable removed = super.remove(o);
+		final OIdentifiable removed;
 
-		if (removed == null && hasNewItems()) {
-			// SEARCH INSIDE NEW ITEMS MAP
+		if (hasNewItems() && newItems.containsKey(o)) {
+			// REMOVE IT INSIDE NEW ITEMS MAP
+			removed = (OIdentifiable) o;
 			newItems.remove(o);
 			if (newItems.size() == 0)
 				// EARLY REMOVE THE MAP TO SAVE MEMORY
 				newItems = null;
 			setDirty();
+		} else {
+			if (containsKey(o)) {
+				removed = super.remove(o);
+				setDirty();
+			} else
+				removed = null;
 		}
 
-		return null;
+		return removed;
 	}
 
 	public boolean removeAll(final Collection<?> c) {
+		((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
+
 		if (hasNewItems()) {
 			final Collection<ORecord<?>> v = newItems.keySet();
 			v.removeAll(c);
@@ -121,6 +132,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 	}
 
 	public boolean retainAll(final Collection<?> c) {
+		((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
 		if (hasNewItems()) {
 			final Collection<ORecord<?>> v = newItems.keySet();
 			v.retainAll(c);
@@ -151,13 +163,12 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 	}
 
 	public boolean detach() {
-		if (saveAllNewItems())
-			return false;
-		return true;
+		return saveAllNewItems();
 	}
 
 	@Override
 	public int size() {
+		((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
 		int tot = super.size();
 		if (newItems != null)
 			tot += newItems.size();
@@ -166,6 +177,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
 	@Override
 	public boolean isEmpty() {
+		((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
 		boolean empty = super.isEmpty();
 
 		if (empty && newItems != null)
@@ -176,6 +188,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
 	@Override
 	public boolean containsKey(final Object o) {
+		((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
 		boolean found = super.containsKey(o);
 
 		if (!found && hasNewItems())
@@ -190,11 +203,24 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 	}
 
 	public Iterator<OIdentifiable> iterator(final boolean iAutoConvertToRecord) {
+		((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
 		if (hasNewItems())
 			return new OLazyRecordMultiIterator(null, new Object[] { keySet().iterator(), newItems.keySet().iterator() },
 					iAutoConvertToRecord);
 
 		return new OLazyRecordIterator(keySet().iterator(), iAutoConvertToRecord);
+	}
+
+	@Override
+	public Set<OIdentifiable> keySet() {
+		((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
+		return super.keySet();
+	}
+
+	@Override
+	public Collection<OIdentifiable> values() {
+		((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
+		return super.values();
 	}
 
 	public Object[] toArray() {
@@ -213,7 +239,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
 	@SuppressWarnings("unchecked")
 	public <T> T[] toArray(final T[] a) {
-		T[] result = toArray(a);
+		T[] result = keySet().toArray(a);
 
 		if (newItems != null && !newItems.isEmpty()) {
 			int start = result.length;
@@ -233,16 +259,14 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
 	@Override
 	public int commitChanges() {
-		if (!((OMVRBTreeRIDProvider) getProvider()).isEmbeddedStreaming()) {
-			updateSize();
+		if (updateSize())
 			return super.commitChanges();
-		}
 		return 0;
 	}
 
 	public OMVRBTreePersistent<OIdentifiable, OIdentifiable> save() {
-		saveAllNewItems();
-		updateSize();
+		if (saveAllNewItems())
+			updateSize();
 		return this;
 	}
 
@@ -288,9 +312,8 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 			if (newItems != null)
 				newItems.clear();
 			newItems = null;
-			return true;
 		}
-		return false;
+		return true;
 	}
 
 	public boolean hasNewItems() {
@@ -308,6 +331,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
 	@Override
 	public String toString() {
+		((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
 		final StringBuilder buffer = new StringBuilder(super.toString());
 		if (hasNewItems()) {
 			buffer.append(" + new items (");
@@ -331,20 +355,26 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 	 */
 	@SuppressWarnings("unchecked")
 	protected <RET> RET setDirty() {
+		((OMVRBTreeRIDProvider) getProvider()).setDirty();
+
 		if (((OMVRBTreeRIDProvider) getProvider()).isEmbeddedStreaming())
 			setDirtyOwner();
-		else
+		else if (ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().getStatus() != OTransaction.TXSTATUS.BEGUN)
 			// SAVE IT RIGHT NOW SINCE IT'S DISCONNECTED FROM OWNER
 			save();
 
 		return (RET) this;
 	}
 
-	protected void updateSize() {
-		if (root != null) {
-			if (((OMVRBTreeRIDEntryProvider) ((OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable>) root).getProvider())
-					.setTreeSize(size()))
-				((OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable>) root).markDirty();
+	protected boolean updateSize() {
+		if (!((OMVRBTreeRIDProvider) getProvider()).isEmbeddedStreaming()) {
+			if (root != null) {
+				if (((OMVRBTreeRIDEntryProvider) ((OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable>) root).getProvider())
+						.setTreeSize(size()))
+					((OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable>) root).markDirty();
+				return true;
+			}
 		}
+		return false;
 	}
 }

@@ -221,72 +221,72 @@ public class TransactionOptimisticTest {
 		ODocument loadedJack = db.load(jack.getIdentity());
 		Assert.assertEquals(loadedJack.field("name"), "Jack");
 		Collection<ODocument> jackFollowings = loadedJack.field("following");
-		Assert.assertNotNull(jackFollowings.size());
+		Assert.assertNotNull(jackFollowings);
 		Assert.assertEquals(jackFollowings.size(), 1);
 
 		ODocument loadedKim = jackFollowings.iterator().next();
 		Assert.assertEquals(loadedKim.field("name"), "Kim");
 		Collection<ODocument> kimFollowings = loadedKim.field("following");
-		Assert.assertNotNull(kimFollowings.size());
+		Assert.assertNotNull(kimFollowings);
 		Assert.assertEquals(kimFollowings.size(), 1);
 
 		ODocument loadedTeri = kimFollowings.iterator().next();
 		Assert.assertEquals(loadedTeri.field("name"), "Teri");
 		Collection<ODocument> teriFollowings = loadedTeri.field("following");
-		Assert.assertNotNull(teriFollowings.size());
+		Assert.assertNotNull(teriFollowings);
 		Assert.assertEquals(teriFollowings.size(), 1);
 
 		Assert.assertEquals(teriFollowings.iterator().next().field("name"), "Jack");
 
 		db.close();
 	}
-//
-//	@SuppressWarnings("unchecked")
-//	@Test
-//	public void createGraphInTxWithSchemaDefined() {
-//		ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-//		db.open("admin", "admin");
-//
-//		OClass profileClass = db.getMetadata().getSchema().getClass("Profile");
-//		profileClass.createProperty("following", OType.LINKSET, profileClass);
-//
-//		db.begin();
-//
-//		ODocument kim = new ODocument(db, "Profile").field("name", "Kim").field("surname", "Bauer");
-//		ODocument teri = new ODocument(db, "Profile").field("name", "Teri").field("surname", "Bauer");
-//		ODocument jack = new ODocument(db, "Profile").field("name", "Jack").field("surname", "Bauer");
-//
-//		((HashSet<ODocument>) jack.field("following", new HashSet<ODocument>()).field("following")).add(kim);
-//		((HashSet<ODocument>) kim.field("following", new HashSet<ODocument>()).field("following")).add(teri);
-//		((HashSet<ODocument>) teri.field("following", new HashSet<ODocument>()).field("following")).add(jack);
-//
-//		jack.save();
-//
-//		db.commit();
-//
-//		db.close();
-//		db.open("admin", "admin");
-//
-//		ODocument loadedJack = db.load(jack.getIdentity());
-//		Assert.assertEquals(loadedJack.field("name"), "Jack");
-//		Collection<ODocument> jackFollowings = loadedJack.field("following");
-//		Assert.assertNotNull(jackFollowings.size());
-//		Assert.assertEquals(jackFollowings.size(), 1);
-//
-//		ODocument loadedKim = jackFollowings.iterator().next();
-//		Assert.assertEquals(loadedKim.field("name"), "Kim");
-//		Collection<ODocument> kimFollowings = loadedKim.field("following");
-//		Assert.assertNotNull(kimFollowings.size());
-//		Assert.assertEquals(kimFollowings.size(), 1);
-//
-//		ODocument loadedTeri = kimFollowings.iterator().next();
-//		Assert.assertEquals(loadedTeri.field("name"), "Teri");
-//		Collection<ODocument> teriFollowings = loadedTeri.field("following");
-//		Assert.assertNotNull(teriFollowings.size());
-//		Assert.assertEquals(teriFollowings.size(), 1);
-//
-//		Assert.assertEquals(teriFollowings.iterator().next().field("name"), "Jack");
-//
-//		db.close();
-//	}
+	//
+	// @SuppressWarnings("unchecked")
+	// @Test
+	// public void createGraphInTxWithSchemaDefined() {
+	// ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+	// db.open("admin", "admin");
+	//
+	// OClass profileClass = db.getMetadata().getSchema().getClass("Profile");
+	// profileClass.createProperty("following", OType.LINKSET, profileClass);
+	//
+	// db.begin();
+	//
+	// ODocument kim = new ODocument(db, "Profile").field("name", "Kim").field("surname", "Bauer");
+	// ODocument teri = new ODocument(db, "Profile").field("name", "Teri").field("surname", "Bauer");
+	// ODocument jack = new ODocument(db, "Profile").field("name", "Jack").field("surname", "Bauer");
+	//
+	// ((HashSet<ODocument>) jack.field("following", new HashSet<ODocument>()).field("following")).add(kim);
+	// ((HashSet<ODocument>) kim.field("following", new HashSet<ODocument>()).field("following")).add(teri);
+	// ((HashSet<ODocument>) teri.field("following", new HashSet<ODocument>()).field("following")).add(jack);
+	//
+	// jack.save();
+	//
+	// db.commit();
+	//
+	// db.close();
+	// db.open("admin", "admin");
+	//
+	// ODocument loadedJack = db.load(jack.getIdentity());
+	// Assert.assertEquals(loadedJack.field("name"), "Jack");
+	// Collection<ODocument> jackFollowings = loadedJack.field("following");
+	// Assert.assertNotNull(jackFollowings.size());
+	// Assert.assertEquals(jackFollowings.size(), 1);
+	//
+	// ODocument loadedKim = jackFollowings.iterator().next();
+	// Assert.assertEquals(loadedKim.field("name"), "Kim");
+	// Collection<ODocument> kimFollowings = loadedKim.field("following");
+	// Assert.assertNotNull(kimFollowings.size());
+	// Assert.assertEquals(kimFollowings.size(), 1);
+	//
+	// ODocument loadedTeri = kimFollowings.iterator().next();
+	// Assert.assertEquals(loadedTeri.field("name"), "Teri");
+	// Collection<ODocument> teriFollowings = loadedTeri.field("following");
+	// Assert.assertNotNull(teriFollowings.size());
+	// Assert.assertEquals(teriFollowings.size(), 1);
+	//
+	// Assert.assertEquals(teriFollowings.iterator().next().field("name"), "Jack");
+	//
+	// db.close();
+	// }
 }

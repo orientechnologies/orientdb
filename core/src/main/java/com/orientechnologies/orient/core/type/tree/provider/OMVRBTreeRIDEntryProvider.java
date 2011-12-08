@@ -146,7 +146,7 @@ public class OMVRBTreeRIDEntryProvider extends OMVRBTreeEntryDataProviderAbstrac
 	public boolean truncate(final int iNewSize) {
 		moveToIndex(iNewSize).fill((size - iNewSize) * ORecordId.PERSISTENT_SIZE, (byte) 0);
 		if (rids != null)
-			Arrays.fill(rids, size - iNewSize, iNewSize, null);
+			Arrays.fill(rids, iNewSize, size, null);
 		size = iNewSize;
 		return setDirty();
 	}

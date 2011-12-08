@@ -43,6 +43,8 @@ public interface OMVRBTreeProvider<K, V> {
 	public boolean updateConfig();
 
 	public boolean isDirty();
+	
+	public boolean setDirty();
 
 	public OMVRBTreeEntryDataProvider<K, V> createEntry();
 

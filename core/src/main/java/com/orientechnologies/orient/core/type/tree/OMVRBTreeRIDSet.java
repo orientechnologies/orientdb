@@ -94,7 +94,7 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerial
 	}
 
 	public boolean remove(final Object o) {
-		return tree.remove(o) == null;
+		return tree.remove(o) != null;
 	}
 
 	public boolean containsAll(final Collection<?> c) {
