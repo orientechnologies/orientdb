@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
 
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
@@ -31,7 +32,6 @@ import com.tinkerpop.blueprints.pgm.impls.orientdb.OrientEdge;
 import com.tinkerpop.blueprints.pgm.impls.orientdb.OrientElement;
 import com.tinkerpop.blueprints.pgm.impls.orientdb.OrientGraph;
 import com.tinkerpop.blueprints.pgm.impls.orientdb.OrientVertex;
-import com.tinkerpop.gremlin.jsr223.GremlinScriptEngine;
 
 /**
  * Executes a GREMLIN expression as function of SQL engine.
@@ -65,7 +65,7 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 				: null, currentParameters, result, new OGremlinHelper.OGremlinCallback() {
 
 			@Override
-			public boolean call(GremlinScriptEngine iEngine, OrientGraph iGraph) {
+			public boolean call(ScriptEngine iEngine, OrientGraph iGraph) {
 				final OrientElement graphElement;
 
 				final ODocument document = (ODocument) iCurrentRecord;

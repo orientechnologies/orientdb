@@ -21,7 +21,6 @@ import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.orient.console.OConsoleDatabaseApp;
 import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
 import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
-import com.tinkerpop.gremlin.jsr223.GremlinScriptEngineFactory;
 
 /**
  * Gremlin specialized console.
@@ -63,7 +62,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
 	protected void onBefore() {
 		super.onBefore();
 
-		out.println("\nInstalling extensions for GREMLIN language v." + new GremlinScriptEngineFactory().getEngineVersion());
+		out.println("\nInstalling extensions for GREMLIN language v." + OGremlinHelper.getEngineVersion());
 
 		OGremlinHelper.global().create();
 	}

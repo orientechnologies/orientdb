@@ -51,21 +51,16 @@
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.tinkerpop</groupId>
-			<artifactId>gremlin</artifactId>
-			<version>1.2</version>
-		</dependency>
-		<dependency>
 			<groupId>com.tinkerpop.blueprints</groupId>
 			<artifactId>blueprints-orient-graph</artifactId>
-			<version>1.1-SNAPSHOT</version>
+			<version>1.1</version>
 			<type>jar</type>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.tinkerpop.blueprints</groupId>
 			<artifactId>blueprints-core</artifactId>
-			<version>1.1-SNAPSHOT</version>
+			<version>1.1</version>
 			<type>jar</type>
 		</dependency>
 		<dependency>
@@ -77,11 +72,36 @@
 		<dependency>
 			<groupId>com.tinkerpop</groupId>
 			<artifactId>pipes</artifactId>
-			<version>0.7</version>
+			<version>0.9</version>
 			<type>pom</type>
 			<scope>compile</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.tinkerpop</groupId>
+			<artifactId>pipes</artifactId>
+			<version>0.9</version>
+			<type>jar</type>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.tinkerpop.gremlin</groupId>
+			<artifactId>gremlin-java</artifactId>
+			<version>1.4</version>
+			<type>jar</type>
+			<scope>compile</scope>
+		</dependency>
 	</dependencies>
+	<repositories>
+		<repository>
+			<id>tinkerpop-repository</id>
+			<name>TinkerPop Maven2 Repository</name>
+			<url>http://tinkerpop.com/maven2</url>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>always</updatePolicy>
+			</snapshots>
+		</repository>
+	</repositories>
 	<build>
 		<plugins>
 			<plugin>
@@ -101,20 +121,20 @@
 						</manifest>
 					</archive>
 				</configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <systemPropertyVariables>
-                        <ORIENTDB_HOME>${project.build.directory}</ORIENTDB_HOME>
-                    </systemPropertyVariables>
-                    <suiteXmlFiles>
-                        <suiteXmlFile>src/test/resources/com/orientechnologies/orient/graph/gremlin/graphdb-test.xml
-                        </suiteXmlFile>
-                    </suiteXmlFiles>
-                </configuration>
-            </plugin>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<systemPropertyVariables>
+						<ORIENTDB_HOME>${project.build.directory}</ORIENTDB_HOME>
+					</systemPropertyVariables>
+					<suiteXmlFiles>
+						<suiteXmlFile>src/test/resources/com/orientechnologies/orient/graph/gremlin/graphdb-test.xml
+						</suiteXmlFile>
+					</suiteXmlFiles>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 </project>

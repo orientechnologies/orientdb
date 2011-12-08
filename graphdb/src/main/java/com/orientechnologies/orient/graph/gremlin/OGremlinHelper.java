@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
 
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
@@ -45,22 +46,23 @@ import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.tinkerpop.blueprints.pgm.impls.orientdb.OrientGraph;
-import com.tinkerpop.gremlin.jsr223.GremlinScriptEngine;
-import com.tinkerpop.gremlin.pipes.GremlinPipeline;
+import com.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngineFactory;
+import com.tinkerpop.gremlin.java.GremlinPipeline;
 
 public class OGremlinHelper {
-	private static final String													PARAM_OUTPUT	= "output";
-	private static Object																ONE						= new Object();
-	private static OGremlinHelper												instance			= new OGremlinHelper();
+	private static final String											PARAM_OUTPUT	= "output";
+	private static Object														ONE						= new Object();
+	private static GremlinGroovyScriptEngineFactory	factory				= new GremlinGroovyScriptEngineFactory();
+	private static OGremlinHelper										instance			= new OGremlinHelper();
 
-	private int																					maxEngines		= 50;
-	private int																					maxGraphs			= 50;
+	private int																			maxEngines		= 50;
+	private int																			maxGraphs			= 50;
 
-	private OResourcePool<Object, GremlinScriptEngine>	enginePool;
-	private OResourcePool<String, OrientGraph>					graphPool;
+	private OResourcePool<Object, ScriptEngine>			enginePool;
+	private OResourcePool<String, OrientGraph>			graphPool;
 
 	public static interface OGremlinCallback {
-		public boolean call(GremlinScriptEngine iEngine, OrientGraph iGraph);
+		public boolean call(ScriptEngine iEngine, OrientGraph iGraph);
 	}
 
 	public OGremlinHelper() {
@@ -77,24 +79,23 @@ public class OGremlinHelper {
 			// ALREADY CREATED
 			return;
 
-		enginePool = new OResourcePool<Object, GremlinScriptEngine>(maxEngines,
-				new OResourcePoolListener<Object, GremlinScriptEngine>() {
+		enginePool = new OResourcePool<Object, ScriptEngine>(maxEngines, new OResourcePoolListener<Object, ScriptEngine>() {
 
-					@Override
-					public GremlinScriptEngine createNewResource(Object iKey, Object... iAdditionalArgs) {
-						try {
-							return new GremlinScriptEngine();
-						} catch (Throwable e) {
-							throw new OConfigurationException("Error on loading Gremlin engine", e);
-						}
-					}
+			@Override
+			public ScriptEngine createNewResource(Object iKey, Object... iAdditionalArgs) {
+				try {
+					return getGroovyEngine();
+				} catch (Throwable e) {
+					throw new OConfigurationException("Error on loading Gremlin engine", e);
+				}
+			}
 
-					@Override
-					public GremlinScriptEngine reuseResource(Object iKey, Object[] iAdditionalArgs, GremlinScriptEngine iReusedEngine) {
-						iReusedEngine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
-						return iReusedEngine;
-					}
-				});
+			@Override
+			public ScriptEngine reuseResource(Object iKey, Object[] iAdditionalArgs, ScriptEngine iReusedEngine) {
+				iReusedEngine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
+				return iReusedEngine;
+			}
+		});
 
 		graphPool = new OResourcePool<String, OrientGraph>(maxGraphs, new OResourcePoolListener<String, OrientGraph>() {
 
@@ -116,7 +117,7 @@ public class OGremlinHelper {
 	 */
 	public void destroy() {
 		if (enginePool != null) {
-			for (GremlinScriptEngine engine : enginePool.getResources()) {
+			for (ScriptEngine engine : enginePool.getResources()) {
 				engine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
 			}
 			enginePool.close();
@@ -130,12 +131,12 @@ public class OGremlinHelper {
 		}
 	}
 
-	public GremlinScriptEngine acquireEngine() {
+	public ScriptEngine acquireEngine() {
 		checkStatus();
 		return enginePool.getResource(ONE, Long.MAX_VALUE);
 	}
 
-	public void releaseEngine(final GremlinScriptEngine engine) {
+	public void releaseEngine(final ScriptEngine engine) {
 		checkStatus();
 		engine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
 		enginePool.returnResource(engine);
@@ -172,7 +173,7 @@ public class OGremlinHelper {
 			final OGremlinCallback iAfterExecution) {
 		final OrientGraph graph = OGremlinHelper.global().acquireGraph(iDatabase);
 		try {
-			final GremlinScriptEngine engine = OGremlinHelper.global().acquireEngine();
+			final ScriptEngine engine = OGremlinHelper.global().acquireEngine();
 			try {
 				engine.getBindings(ScriptContext.ENGINE_SCOPE).put("g", graph);
 
@@ -255,7 +256,7 @@ public class OGremlinHelper {
 		}
 	}
 
-	public static String bindParameters(final GremlinScriptEngine iEngine, final Map<Object, Object> iParameters,
+	public static String bindParameters(final ScriptEngine iEngine, final Map<Object, Object> iParameters,
 			Map<Object, Object> iCurrentParameters) {
 		if (iParameters == null || iParameters.isEmpty())
 			return null;
@@ -418,4 +419,11 @@ public class OGremlinHelper {
 		return db;
 	}
 
+	public static String getEngineVersion() {
+		return factory.getEngineVersion();
+	}
+
+	protected ScriptEngine getGroovyEngine() {
+		return factory.getScriptEngine();
+	}
 }
