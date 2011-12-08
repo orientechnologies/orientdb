@@ -62,7 +62,7 @@ public class LocalGremlinTest {
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("par1", 100);
 
-		result = db.command(new OCommandSQL("select gremlin('current.out{ it.performances > par1 }') from V")).execute(params);
+		result = db.command(new OCommandSQL("select gremlin('current.out.filter{ it.performances > par1 }') from V")).execute(params);
 		System.out.println("Command result: " + result);
 
 		db.close();

@@ -73,19 +73,19 @@
 			<groupId>com.tinkerpop</groupId>
 			<artifactId>pipes</artifactId>
 			<version>0.9</version>
-			<type>pom</type>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.tinkerpop</groupId>
-			<artifactId>pipes</artifactId>
-			<version>0.9</version>
 			<type>jar</type>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.tinkerpop.gremlin</groupId>
 			<artifactId>gremlin-java</artifactId>
+			<version>1.4</version>
+			<type>jar</type>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.tinkerpop.gremlin</groupId>
+			<artifactId>gremlin-groovy</artifactId>
 			<version>1.4</version>
 			<type>jar</type>
 			<scope>compile</scope>
