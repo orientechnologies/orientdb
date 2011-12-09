@@ -880,8 +880,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		if (record != null) {
 			record.setVersion(version);
 			record.delete();
-		}
 		return 1;
+	}
+		return 0;
 	}
 
 	protected long createRecord(final ORecordId rid, final byte[] buffer, final byte recordType) {

@@ -263,6 +263,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		out.println("\nDone.");
 	}
 
+	@SuppressWarnings("deprecation")
 	@ConsoleCommand(description = "Create a new cluster in the current database. The cluster can be physical or logical")
 	public void createCluster(
 			@ConsoleParameter(name = "cluster-name", description = "The name of the cluster to create") String iClusterName,
@@ -804,7 +805,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			out.println("-------------------------------+----------------+");
 			out.println(" NAME                          | PROPERTIES     |");
 			out.println("-------------------------------+----------------+");
-			for (final OIndex index : indexes) {
+			for (final OIndex<?> index : indexes) {
 				final OIndexDefinition indexDefinition = index.getDefinition();
 				if (indexDefinition != null) {
 					final List<String> fields = indexDefinition.getFields();
