@@ -22,6 +22,7 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Set;
 
+import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OLazyRecordIterator;
@@ -198,11 +199,11 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 		return found;
 	}
 
-	public Iterator<OIdentifiable> iterator() {
+	public OLazyIterator<OIdentifiable> iterator() {
 		return iterator(autoConvertToRecord);
 	}
 
-	public Iterator<OIdentifiable> iterator(final boolean iAutoConvertToRecord) {
+	public OLazyIterator<OIdentifiable> iterator(final boolean iAutoConvertToRecord) {
 		((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
 		if (hasNewItems())
 			return new OLazyRecordMultiIterator(null, new Object[] { keySet().iterator(), newItems.keySet().iterator() },

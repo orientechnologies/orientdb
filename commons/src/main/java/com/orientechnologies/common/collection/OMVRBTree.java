@@ -1178,11 +1178,11 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 * classes.
 	 */
 
-	Iterator<K> keyIterator() {
+	OLazyIterator<K> keyIterator() {
 		return new KeyIterator(getFirstEntry());
 	}
 
-	Iterator<K> descendingKeyIterator() {
+	OLazyIterator<K> descendingKeyIterator() {
 		return new DescendingKeyIterator(getLastEntry());
 	}
 
@@ -1195,14 +1195,14 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		}
 
 		@Override
-		public Iterator<E> iterator() {
+		public OLazyIterator<E> iterator() {
 			if (m instanceof OMVRBTree)
 				return ((OMVRBTree<E, Object>) m).keyIterator();
 			else
 				return (((OMVRBTree.NavigableSubMap) m).keyIterator());
 		}
 
-		public Iterator<E> descendingIterator() {
+		public OLazyIterator<E> descendingIterator() {
 			if (m instanceof OMVRBTree)
 				return ((OMVRBTree<E, Object>) m).descendingKeyIterator();
 			else
@@ -1545,10 +1545,10 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		abstract OMVRBTreeEntry<K, V> subLower(K key);
 
 		/** Returns ascending iterator from the perspective of this submap */
-		abstract Iterator<K> keyIterator();
+		abstract OLazyIterator<K> keyIterator();
 
 		/** Returns descending iterator from the perspective of this submap */
-		abstract Iterator<K> descendingKeyIterator();
+		abstract OLazyIterator<K> descendingKeyIterator();
 
 		// public methods
 
@@ -1739,7 +1739,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		/**
 		 * Iterators for SubMaps
 		 */
-		abstract class SubMapIterator<T> implements Iterator<T> {
+		abstract class SubMapIterator<T> implements OLazyIterator<T> {
 			OMVRBTreeEntryPosition<K, V>	lastReturned;
 			OMVRBTreeEntryPosition<K, V>	next;
 			final K												fenceKey;
@@ -1790,6 +1790,14 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 				next.assign(OMVRBTree.previous(e));
 				lastReturned = e;
 				return e;
+			}
+
+			final public void update(final T iValue) {
+				if (lastReturned == null)
+					throw new IllegalStateException();
+				if (m.modCount != expectedModCount)
+					throw new ConcurrentModificationException();
+				lastReturned.entry.setValue((V) iValue);
 			}
 
 			final void removeAscending() {
@@ -1920,12 +1928,12 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		}
 
 		@Override
-		Iterator<K> keyIterator() {
+		OLazyIterator<K> keyIterator() {
 			return new SubMapKeyIterator(absLowest(), absHighFence());
 		}
 
 		@Override
-		Iterator<K> descendingKeyIterator() {
+		OLazyIterator<K> descendingKeyIterator() {
 			return new DescendingSubMapKeyIterator(absHighest(), absLowFence());
 		}
 
@@ -2017,12 +2025,12 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		}
 
 		@Override
-		Iterator<K> keyIterator() {
+		OLazyIterator<K> keyIterator() {
 			return new DescendingSubMapKeyIterator(absHighest(), absLowFence());
 		}
 
 		@Override
-		Iterator<K> descendingKeyIterator() {
+		OLazyIterator<K> descendingKeyIterator() {
 			return new SubMapKeyIterator(absLowest(), absHighFence());
 		}
 

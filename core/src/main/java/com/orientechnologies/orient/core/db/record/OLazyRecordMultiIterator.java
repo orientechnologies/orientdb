@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.db.record;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 
@@ -30,7 +31,7 @@ import com.orientechnologies.orient.core.record.ORecord;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OLazyRecordMultiIterator implements Iterator<OIdentifiable> {
+public class OLazyRecordMultiIterator implements OLazyIterator<OIdentifiable> {
 	final private ORecord<?>	sourceRecord;
 	final private Object[]		underlyingIterators;
 	final private boolean			convertToRecord;
@@ -47,13 +48,17 @@ public class OLazyRecordMultiIterator implements Iterator<OIdentifiable> {
 			throw new NoSuchElementException();
 
 		final Iterator<OIdentifiable> underlying = getCurrentIterator();
-		final OIdentifiable value = underlying.next();
+		OIdentifiable value = underlying.next();
 
 		if (value == null)
 			return null;
 
-		if (value instanceof ORecordId && convertToRecord)
-			return ((ORecordId) value).getRecord();
+		if (value instanceof ORecordId && convertToRecord) {
+			value = ((ORecordId) value).getRecord();
+
+			if (underlying instanceof OLazyIterator<?>)
+				((OLazyIterator<OIdentifiable>) underlying).update(value);
+		}
 
 		return value;
 	}
@@ -68,6 +73,16 @@ public class OLazyRecordMultiIterator implements Iterator<OIdentifiable> {
 		}
 
 		return again;
+	}
+
+	public void update(final OIdentifiable iValue) {
+		final Iterator<OIdentifiable> underlying = getCurrentIterator();
+		if (underlying instanceof OLazyIterator) {
+			((OLazyRecordIterator) underlying).update(iValue);
+			if (sourceRecord != null)
+				sourceRecord.setDirty();
+		} else
+			throw new UnsupportedOperationException("Underlying iterator not supports lazy updates (Interface OLazyIterator");
 	}
 
 	public void remove() {

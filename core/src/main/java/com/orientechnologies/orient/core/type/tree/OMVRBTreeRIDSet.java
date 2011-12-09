@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
+import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.orient.core.db.record.ODetachable;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -73,11 +74,11 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerial
 		return tree.containsKey(o);
 	}
 
-	public Iterator<OIdentifiable> iterator(final boolean iAutoConvertToRecord) {
+	public OLazyIterator<OIdentifiable> iterator(final boolean iAutoConvertToRecord) {
 		return tree.iterator(iAutoConvertToRecord);
 	}
 
-	public Iterator<OIdentifiable> iterator() {
+	public OLazyIterator<OIdentifiable> iterator() {
 		return tree.iterator();
 	}
 

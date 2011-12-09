@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.db.record;
 
 import java.util.Iterator;
 
+import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 
@@ -27,7 +28,7 @@ import com.orientechnologies.orient.core.record.ORecord;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OLazyRecordIterator implements Iterator<OIdentifiable> {
+public class OLazyRecordIterator implements OLazyIterator<OIdentifiable> {
 	final private ORecord<?>												sourceRecord;
 	final private Iterator<? extends OIdentifiable>	underlying;
 	final private boolean														autoConvert2Record;
@@ -45,20 +46,34 @@ public class OLazyRecordIterator implements Iterator<OIdentifiable> {
 		this.autoConvert2Record = iConvertToRecord;
 	}
 
+	@SuppressWarnings("unchecked")
 	public OIdentifiable next() {
-		final OIdentifiable value = underlying.next();
+		OIdentifiable value = underlying.next();
 
 		if (value == null)
 			return null;
 
-		if (value instanceof ORecordId && autoConvert2Record)
-			return ((ORecordId) value).getRecord();
+		if (value instanceof ORecordId && autoConvert2Record) {
+			value = ((ORecordId) value).getRecord();
+
+			if (underlying instanceof OLazyIterator<?>)
+				((OLazyIterator<OIdentifiable>) underlying).update(value);
+		}
 
 		return value;
 	}
 
 	public boolean hasNext() {
 		return underlying.hasNext();
+	}
+
+	public void update(final OIdentifiable iValue) {
+		if (underlying instanceof OLazyIterator) {
+			((OLazyRecordIterator) underlying).update(iValue);
+			if (sourceRecord != null)
+				sourceRecord.setDirty();
+		} else
+			throw new UnsupportedOperationException("Underlying iterator not supports lazy updates (Interface OLazyIterator");
 	}
 
 	public void remove() {

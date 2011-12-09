@@ -16,13 +16,12 @@
 package com.orientechnologies.common.collection;
 
 import java.util.ConcurrentModificationException;
-import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
  * Base class for OMVRBTree Iterators
  */
-abstract class AbstractEntryIterator<K, V, T> implements Iterator<T> {
+abstract class AbstractEntryIterator<K, V, T> implements OLazyIterator<T> {
 	OMVRBTree<K, V>				tree;
 	OMVRBTreeEntry<K, V>	next;
 	OMVRBTreeEntry<K, V>	lastReturned;
@@ -98,6 +97,15 @@ abstract class AbstractEntryIterator<K, V, T> implements Iterator<T> {
 
 		lastReturned = e;
 		return e;
+	}
+
+	public void update(final T iValue) {
+		if (lastReturned == null)
+			throw new IllegalStateException();
+		if (tree.modCount != expectedModCount)
+			throw new ConcurrentModificationException();
+		tree.pageIndex = pageIndex;
+		next.setValue((V) iValue);
 	}
 
 	public void remove() {

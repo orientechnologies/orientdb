@@ -483,12 +483,32 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 
 	public ODocument getInVertex(final ODocument iEdge) {
 		checkEdgeClass(iEdge);
-		return iEdge.field(EDGE_FIELD_IN);
+		OIdentifiable v = iEdge.field(EDGE_FIELD_IN);
+		if (v != null && v instanceof ORID) {
+			// REPLACE WITH THE DOCUMENT
+			v = v.getRecord();
+			final boolean wasDirty = iEdge.isDirty();
+			iEdge.field(EDGE_FIELD_IN, v);
+			if (!wasDirty)
+				iEdge.unsetDirty();
+		}
+
+		return (ODocument) v;
 	}
 
 	public ODocument getOutVertex(final ODocument iEdge) {
 		checkEdgeClass(iEdge);
-		return iEdge.field(EDGE_FIELD_OUT);
+		OIdentifiable v = iEdge.field(EDGE_FIELD_OUT);
+		if (v != null && v instanceof ORID) {
+			// REPLACE WITH THE DOCUMENT
+			v = v.getRecord();
+			final boolean wasDirty = iEdge.isDirty();
+			iEdge.field(EDGE_FIELD_OUT, v);
+			if (!wasDirty)
+				iEdge.unsetDirty();
+		}
+
+		return (ODocument) v;
 	}
 
 	public ODocument getRoot(final String iName) {

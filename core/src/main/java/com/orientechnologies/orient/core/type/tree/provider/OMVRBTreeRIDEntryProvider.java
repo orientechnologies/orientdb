@@ -45,28 +45,28 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  * 
  */
 public class OMVRBTreeRIDEntryProvider extends OMVRBTreeEntryDataProviderAbstract<OIdentifiable, OIdentifiable> {
-	private static final long		serialVersionUID	= 1L;
+	private static final long			serialVersionUID	= 1L;
 
-	protected final static int	OFFSET_TREESIZE		= 0;
-	protected final static int	OFFSET_NODESIZE		= OFFSET_TREESIZE + OBinaryProtocol.SIZE_INT;
-	protected final static int	OFFSET_COLOR			= OFFSET_NODESIZE + OBinaryProtocol.SIZE_INT;
-	protected final static int	OFFSET_PARENT			= OFFSET_COLOR + OBinaryProtocol.SIZE_BYTE;
-	protected final static int	OFFSET_LEFT				= OFFSET_PARENT + ORecordId.PERSISTENT_SIZE;
-	protected final static int	OFFSET_RIGHT			= OFFSET_LEFT + ORecordId.PERSISTENT_SIZE;
-	protected final static int	OFFSET_RIDLIST		= OFFSET_RIGHT + ORecordId.PERSISTENT_SIZE;
+	protected final static int		OFFSET_TREESIZE		= 0;
+	protected final static int		OFFSET_NODESIZE		= OFFSET_TREESIZE + OBinaryProtocol.SIZE_INT;
+	protected final static int		OFFSET_COLOR			= OFFSET_NODESIZE + OBinaryProtocol.SIZE_INT;
+	protected final static int		OFFSET_PARENT			= OFFSET_COLOR + OBinaryProtocol.SIZE_BYTE;
+	protected final static int		OFFSET_LEFT				= OFFSET_PARENT + ORecordId.PERSISTENT_SIZE;
+	protected final static int		OFFSET_RIGHT			= OFFSET_LEFT + ORecordId.PERSISTENT_SIZE;
+	protected final static int		OFFSET_RIDLIST		= OFFSET_RIGHT + ORecordId.PERSISTENT_SIZE;
 
-	private int									treeSize;
-	private final ORecordId[]		rids;
+	private int										treeSize;
+	private final OIdentifiable[]	rids;
 
 	public OMVRBTreeRIDEntryProvider(final OMVRBTreeRIDProvider iTreeDataProvider) {
 		super(iTreeDataProvider, OFFSET_RIDLIST + (iTreeDataProvider.getDefaultPageSize() * ORecordId.PERSISTENT_SIZE));
-		rids = OGlobalConfiguration.MVRBTREE_RID_NODE_SAVE_MEMORY.getValueAsBoolean() ? null : new ORecordId[pageSize];
+		rids = OGlobalConfiguration.MVRBTREE_RID_NODE_SAVE_MEMORY.getValueAsBoolean() ? null : new OIdentifiable[pageSize];
 	}
 
 	public OMVRBTreeRIDEntryProvider(final OMVRBTreeRIDProvider iTreeDataProvider, final ORID iRID) {
 		super(iTreeDataProvider, iRID);
 		pageSize = treeDataProvider.getDefaultPageSize();
-		rids = OGlobalConfiguration.MVRBTREE_RID_NODE_SAVE_MEMORY.getValueAsBoolean() ? null : new ORecordId[pageSize];
+		rids = OGlobalConfiguration.MVRBTREE_RID_NODE_SAVE_MEMORY.getValueAsBoolean() ? null : new OIdentifiable[pageSize];
 	}
 
 	/**
@@ -92,7 +92,19 @@ public class OMVRBTreeRIDEntryProvider extends OMVRBTreeEntryDataProviderAbstrac
 	}
 
 	public boolean setValueAt(int iIndex, final OIdentifiable iValue) {
-		return false;
+		if( iValue == null )
+			return false;
+		
+		try {
+			itemToStream(iValue, iIndex);
+		} catch (IOException e) {
+			throw new OSerializationException("Cannot serialize entryRID object: " + this, e);
+		}
+
+		if (rids != null)
+			rids[iIndex] = iValue;
+
+		return setDirty();
 	}
 
 	public boolean insertAt(final int iIndex, final OIdentifiable iKey, final OIdentifiable iValue) {
@@ -110,7 +122,7 @@ public class OMVRBTreeRIDEntryProvider extends OMVRBTreeEntryDataProviderAbstrac
 		}
 
 		if (rids != null)
-			rids[iIndex] = (ORecordId) iKey.getIdentity();
+			rids[iIndex] = iKey;
 
 		size++;
 

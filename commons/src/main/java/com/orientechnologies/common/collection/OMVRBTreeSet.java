@@ -102,7 +102,7 @@ public class OMVRBTreeSet<E> extends AbstractSet<E> implements ONavigableSet<E>,
 	 * @return an iterator over the elements in this set in ascending order
 	 */
 	@Override
-	public Iterator<E> iterator() {
+	public OLazyIterator<E> iterator() {
 		return m.navigableKeySet().iterator();
 	}
 
@@ -112,7 +112,7 @@ public class OMVRBTreeSet<E> extends AbstractSet<E> implements ONavigableSet<E>,
 	 * @return an iterator over the elements in this set in descending order
 	 * @since 1.6
 	 */
-	public Iterator<E> descendingIterator() {
+	public OLazyIterator<E> descendingIterator() {
 		return m.descendingKeySet().iterator();
 	}
 

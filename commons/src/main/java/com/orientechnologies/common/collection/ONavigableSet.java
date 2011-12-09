@@ -95,7 +95,7 @@ public interface ONavigableSet<E> extends SortedSet<E> {
 	 * 
 	 * @return an iterator over the elements in this set, in ascending order
 	 */
-	Iterator<E> iterator();
+	OLazyIterator<E> iterator();
 
 	/**
 	 * Returns a reverse order view of the elements contained in this set. The descending set is backed by this set, so changes to the
