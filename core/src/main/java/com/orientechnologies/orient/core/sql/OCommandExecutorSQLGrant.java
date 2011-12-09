@@ -34,9 +34,9 @@ public class OCommandExecutorSQLGrant extends OCommandExecutorSQLPermissionAbstr
 
 	@SuppressWarnings("unchecked")
 	public OCommandExecutorSQLGrant parse(final OCommandRequestText iRequest) {
-		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
 
-		init(iRequest.getDatabase(), iRequest.getText());
+		init(iRequest.getText());
 
 		privilege = ORole.PERMISSION_NONE;
 		resource = null;
@@ -74,7 +74,7 @@ public class OCommandExecutorSQLGrant extends OCommandExecutorSQLPermissionAbstr
 			throw new OCommandSQLParsingException("Invalid role", text, oldPos);
 
 		final String roleName = word.toString();
-		role = database.getMetadata().getSecurity().getRole(roleName);
+		role = getDatabase().getMetadata().getSecurity().getRole(roleName);
 		if (role == null)
 			throw new OCommandSQLParsingException("Invalid role: " + roleName);
 		return this;

@@ -22,6 +22,7 @@ import java.util.Map;
 
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -48,9 +49,10 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 
 	@SuppressWarnings("unchecked")
 	public OCommandExecutorSQLInsert parse(final OCommandRequestText iRequest) {
-		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
+		final ODatabaseRecord database = getDatabase();
+		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
 
-		init(iRequest.getDatabase(), iRequest.getText());
+		init(iRequest.getText());
 
 		className = null;
 		fields = null;
@@ -131,7 +133,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 		// TRANSFORM FIELD VALUES
 		final Object[] fieldValues = new Object[values.size()];
 		for (int i = 0; i < values.size(); ++i)
-			fieldValues[i] = OSQLHelper.parseValue(database, this, OStringSerializerHelper.decode(values.get(i).trim()));
+			fieldValues[i] = OSQLHelper.parseValue(this, OStringSerializerHelper.decode(values.get(i).trim()));
 
 		fields = new LinkedHashMap<String, Object>();
 		for (int i = 0; i < fieldNames.size(); ++i)
@@ -148,7 +150,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
 		if (indexName != null) {
-			final OIndex<?> index = database.getMetadata().getIndexManager().getIndex(indexName);
+			final OIndex<?> index = getDatabase().getMetadata().getIndexManager().getIndex(indexName);
 			if (index == null)
 				throw new OCommandExecutionException("Target index '" + indexName + "' not found");
 
@@ -157,7 +159,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 			return null;
 		} else {
 			// CREATE NEW DOCUMENT
-			ODocument doc = className != null ? new ODocument(database, className) : new ODocument(database);
+			ODocument doc = className != null ? new ODocument(className) : new ODocument();
 
 			OSQLHelper.bindParameters(doc, fields, iArgs);
 

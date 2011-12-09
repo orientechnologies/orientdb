@@ -49,20 +49,4 @@ public class ORecordTrackedList extends OTrackedList<OIdentifiable> {
 	 */
 	public void onAfterIdentityChanged(final ORecord<?> iRecord) {
 	}
-
-	public boolean setDatabase(final ODatabaseRecord iDatabase) {
-		boolean changed = false;
-
-		// USE RAW ITERATOR TO AVOID CONVERSIONS
-		final Iterator<OIdentifiable> it = rawIterator();
-		while (it.hasNext()) {
-			final OIdentifiable o = it.next();
-
-			if (o instanceof ORecordElement)
-				if (((ORecordElement) o).setDatabase(iDatabase))
-					changed = true;
-		}
-
-		return changed;
-	}
 }

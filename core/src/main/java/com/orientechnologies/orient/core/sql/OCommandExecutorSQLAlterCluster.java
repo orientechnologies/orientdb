@@ -23,6 +23,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -46,9 +47,10 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLPermissi
 	protected String						value;
 
 	public OCommandExecutorSQLAlterCluster parse(final OCommandRequestText iRequest) {
-		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_UPDATE);
+		final ODatabaseRecord database = getDatabase();
+		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_UPDATE);
 
-		init(iRequest.getDatabase(), iRequest.getText());
+		init(iRequest.getText());
 
 		StringBuilder word = new StringBuilder();
 
@@ -127,6 +129,7 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLPermissi
 	}
 
 	protected OCluster getCluster() {
+		final ODatabaseRecord database = getDatabase();
 		if (clusterId > -1) {
 			return database.getStorage().getClusterById(clusterId);
 		} else {

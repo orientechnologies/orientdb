@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -41,7 +40,7 @@ public class OStreamSerializerAnyRecord implements OStreamSerializer {
 	/**
 	 * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
 	 */
-	public Object fromStream(final ODatabaseRecord iDatabase, byte[] iStream) throws IOException {
+	public Object fromStream(byte[] iStream) throws IOException {
 		if (iStream == null || iStream.length == 0)
 			// NULL VALUE
 			return null;
@@ -58,8 +57,8 @@ public class OStreamSerializerAnyRecord implements OStreamSerializer {
 			for (Constructor<?> c : cls.getDeclaredConstructors()) {
 				Class<?>[] params = c.getParameterTypes();
 
-				if (params.length == 2 && params[0].isAssignableFrom(iDatabase.getClass()) && params[1].equals(ORID.class)) {
-					ORecord<?> rec = (ORecord<?>) c.newInstance(iDatabase, new ORecordId(content.toString()));
+				if (params.length == 2 && params[1].equals(ORID.class)) {
+					ORecord<?> rec = (ORecord<?>) c.newInstance(new ORecordId(content.toString()));
 					// rec.load();
 					return rec;
 				}
@@ -71,13 +70,13 @@ public class OStreamSerializerAnyRecord implements OStreamSerializer {
 		OLogManager
 				.instance()
 				.exception(
-						"Cannot unmarshall the record since the serialized object of class %s has no constructor with suitable parameters: %s(%s, ORID)",
-						null, OSerializationException.class, cls.getSimpleName(), cls.getSimpleName(), iDatabase.getClass().getSimpleName());
+						"Cannot unmarshall the record since the serialized object of class %s has no constructor with suitable parameters: %s(ORID)",
+						null, OSerializationException.class, cls.getSimpleName(), cls.getSimpleName());
 
 		return null;
 	}
 
-	public byte[] toStream(final ODatabaseRecord iDatabase, Object iObject) throws IOException {
+	public byte[] toStream(Object iObject) throws IOException {
 		if (iObject == null)
 			return null;
 

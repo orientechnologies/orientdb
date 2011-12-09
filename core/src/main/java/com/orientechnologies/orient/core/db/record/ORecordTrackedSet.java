@@ -139,18 +139,6 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
 		map.put(iRecord, ENTRY_REMOVAL);
 	}
 
-	public boolean setDatabase(final ODatabaseRecord iDatabase) {
-		boolean changed = false;
-
-		for (Object o : map.keySet()) {
-			if (o instanceof ORecordElement)
-				if (((ORecordElement) o).setDatabase(iDatabase))
-					changed = true;
-		}
-
-		return changed;
-	}
-
 	public STATUS getInternalStatus() {
 		return status;
 	}

@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.serialization.serializer.stream;
 
 import java.io.IOException;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
@@ -31,16 +30,16 @@ public class OStreamSerializerLiteral implements OStreamSerializer {
 		return NAME;
 	}
 
-	public Object fromStream(final ODatabaseRecord iDatabase, final byte[] iStream) throws IOException {
+	public Object fromStream(final byte[] iStream) throws IOException {
 		return ORecordSerializerStringAbstract.getTypeValue(OBinaryProtocol.bytes2string(iStream));
 	}
 
-	public byte[] toStream(final ODatabaseRecord iDatabase, final Object iObject) throws IOException {
+	public byte[] toStream(final Object iObject) throws IOException {
 		if (iObject == null)
 			return null;
 
 		final StringBuilder buffer = new StringBuilder();
-		ORecordSerializerStringAbstract.fieldTypeToString(buffer, iDatabase, OType.getTypeByClass(iObject.getClass()), iObject);
+		ORecordSerializerStringAbstract.fieldTypeToString(buffer, OType.getTypeByClass(iObject.getClass()), iObject);
 		return OBinaryProtocol.string2bytes(buffer.toString());
 	}
 }

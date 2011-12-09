@@ -20,6 +20,7 @@ import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
@@ -36,15 +37,13 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
 public class OMetadata {
-	protected ODatabaseRecord			database;
 	protected int									schemaClusterId;
 
 	protected OSchemaProxy				schema;
 	protected OSecurity						security;
 	protected OIndexManagerProxy	indexManager;
 
-	public OMetadata(final ODatabaseRecord iDatabase) {
-		this.database = iDatabase;
+	public OMetadata() {
 	}
 
 	public void load() {
@@ -53,7 +52,7 @@ public class OMetadata {
 		try {
 			init(true);
 
-			if (schemaClusterId == -1 || database.countClusterElements(OStorage.CLUSTER_INTERNAL_NAME) == 0)
+			if (schemaClusterId == -1 || getDatabase().countClusterElements(OStorage.CLUSTER_INTERNAL_NAME) == 0)
 				return;
 		} finally {
 			OProfiler.getInstance().stopChrono("OMetadata.load", timer);
@@ -91,8 +90,7 @@ public class OMetadata {
 	}
 
 	private void init(final boolean iLoad) {
-		// ODatabaseRecordThreadLocal.INSTANCE.set(database);
-
+		final ODatabaseRecord database = getDatabase();
 		schemaClusterId = database.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME);
 
 		indexManager = new OIndexManagerProxy(database.getStorage().getResource(OIndexManager.class.getSimpleName(),
@@ -145,7 +143,6 @@ public class OMetadata {
 		indexManager.load();
 		security.load();
 	}
-	
 
 	/**
 	 * Closes internal objects
@@ -154,5 +151,9 @@ public class OMetadata {
 		indexManager.flush();
 		schema.close();
 		security.close();
+	}
+
+	protected ODatabaseRecord getDatabase() {
+		return ODatabaseRecordThreadLocal.INSTANCE.get();
 	}
 }

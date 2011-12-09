@@ -51,7 +51,6 @@ public class OCompositeIndexDefinition extends ODocumentWrapperNoClass implement
 	 */
 	public OCompositeIndexDefinition(final String iClassName) {
 		super(new ODocument());
-		document.setDatabase(getDatabase());
 
 		indexDefinitions = new LinkedList<OIndexDefinition>();
 		className = iClassName;
@@ -67,8 +66,6 @@ public class OCompositeIndexDefinition extends ODocumentWrapperNoClass implement
 	 */
 	public OCompositeIndexDefinition(final String iClassName, final List<? extends OIndexDefinition> iIndexes) {
 		super(new ODocument());
-		document.setDatabase(getDatabase());
-
 		indexDefinitions = new LinkedList<OIndexDefinition>();
 		indexDefinitions.addAll(iIndexes);
 		className = iClassName;
@@ -266,7 +263,6 @@ public class OCompositeIndexDefinition extends ODocumentWrapperNoClass implement
 			for (int i = 0; i < indClasses.size(); i++) {
 				final Class<?> clazz = Class.forName(indClasses.get(i));
 				final ODocument indDoc = inds.get(i);
-				indDoc.setDatabase(document.getDatabase());
 
 				final OIndexDefinition indexDefinition = (OIndexDefinition) clazz.getDeclaredConstructor().newInstance();
 				indexDefinition.fromStream(indDoc);

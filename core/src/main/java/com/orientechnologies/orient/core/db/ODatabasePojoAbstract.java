@@ -350,10 +350,6 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 			checkOpeness();
 
 			try {
-				// MAKING SURE THAT DATABASE USER IS CURRENT (IN CASE OF DETACHING)
-				if (iRecord.getDatabase() != underlying)
-					iRecord.setDatabase(underlying);
-
 				if (iRecord.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
 					record = (ODocument) record.load();
 

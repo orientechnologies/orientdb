@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
@@ -54,9 +55,9 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 	private OType[]							keyTypes;
 
 	public OCommandExecutorSQLCreateIndex parse(final OCommandRequestText iRequest) {
-		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
 
-		init(iRequest.getDatabase(), iRequest.getText());
+		init(iRequest.getText());
 
 		final StringBuilder word = new StringBuilder();
 
@@ -174,7 +175,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 	}
 
 	private OClass findClass(String part) {
-		return database.getMetadata().getSchema().getClass(part);
+		return getDatabase().getMetadata().getSchema().getClass(part);
 	}
 
 	/**
@@ -184,6 +185,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 		if (indexName == null)
 			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
+		final ODatabaseRecord database = getDatabase();
 		final OIndex<?> idx;
 		if (fields == null || fields.length == 0) {
 			if (keyTypes != null)

@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.query.nativ;
 import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -30,19 +31,24 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 public abstract class ONativeAsynchQuery<CTX extends OQueryContextNative> extends ONativeQuery<CTX> implements
 		ORecordBrowsingListener {
 	protected OCommandResultListener	resultListener;
-	protected int							resultCount	= 0;
-	protected ORecordInternal<?>		record;
+	protected int											resultCount	= 0;
+	protected ORecordInternal<?>			record;
 
-	public ONativeAsynchQuery(final ODatabaseRecord iDatabase, final String iCluster, final CTX iQueryRecordImpl) {
-		this(iDatabase, iCluster, iQueryRecordImpl, null);
+	public ONativeAsynchQuery(final String iCluster, final CTX iQueryRecordImpl) {
+		this(iCluster, iQueryRecordImpl, null);
 	}
 
-	public ONativeAsynchQuery(final ODatabaseRecord iDatabase, final String iCluster, final CTX iQueryRecordImpl,
-			final OCommandResultListener iResultListener) {
-		super(iDatabase, iCluster);
+	public ONativeAsynchQuery(final String iCluster, final CTX iQueryRecordImpl, final OCommandResultListener iResultListener) {
+		super(iCluster);
 		resultListener = iResultListener;
 		queryRecord = iQueryRecordImpl;
-		record = new ODocument(database);
+		record = new ODocument();
+	}
+
+	@Deprecated
+	public ONativeAsynchQuery(final ODatabaseRecord iDatabase, final String iCluster, final CTX iQueryRecordImpl,
+			final OCommandResultListener iResultListener) {
+		this(iCluster, iQueryRecordImpl, iResultListener);
 	}
 
 	public boolean isAsynchronous() {
@@ -65,6 +71,8 @@ public abstract class ONativeAsynchQuery<CTX extends OQueryContextNative> extend
 	}
 
 	public List<ODocument> run(final Object... iArgs) {
+		final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
+
 		if (!(database.getStorage() instanceof OStorageEmbedded))
 			throw new OCommandExecutionException("Native queries can run only in embedded-local version. Not in the remote one.");
 

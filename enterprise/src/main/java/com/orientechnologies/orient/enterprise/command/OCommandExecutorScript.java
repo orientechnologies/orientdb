@@ -92,7 +92,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 		final Bindings binding = scriptEngine.createBindings();
 
 		// BIND FIXED VARIABLES
-		binding.put("db", database);
+		binding.put("db", getDatabase());
 
 		// BIND PARAMETERS INTO THE SCRIPT
 		if (iArgs != null)

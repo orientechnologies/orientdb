@@ -15,9 +15,7 @@
  */
 package com.orientechnologies.orient.core.record;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OValidationException;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
@@ -151,10 +149,4 @@ public interface ORecordSchemaAware<T> extends ORecordInternal<T> {
 	 * @throws OValidationException
 	 */
 	public void validate() throws OValidationException;
-
-	/**
-	 * Internal only. Fills the record in one shot.
-	 */
-	public ORecordSchemaAware<T> fill(ODatabaseRecord iDatabase, int iClassId, ORecordId iRid, int iVersion, byte[] iBuffer,
-			boolean iDirty);
 }

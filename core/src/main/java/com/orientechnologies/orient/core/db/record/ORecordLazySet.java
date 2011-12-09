@@ -80,10 +80,6 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 		return (RET) this;
 	}
 
-	public boolean setDatabase(final ODatabaseRecord iDatabase) {
-		return delegate.setDatabase(iDatabase);
-	}
-
 	public Iterator<OIdentifiable> iterator() {
 		if (hasNewItems()) {
 			lazyLoad(false);

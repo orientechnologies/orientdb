@@ -15,16 +15,15 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
-
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Contains the user settings about security and permissions. Each user has one or more roles associated. Roles contains the
@@ -50,14 +49,14 @@ public class OUser extends ODocumentWrapper {
 	public OUser() {
 	}
 
-	public OUser(final ODatabaseRecord iDatabase, final String iName) {
-		super(iDatabase, "OUser");
+	public OUser(final String iName) {
+		super("OUser");
 		document.field("name", iName);
 		setAccountStatus(STATUSES.ACTIVE);
 	}
 
-	public OUser(ODatabaseRecord iDatabase, String iUserName, final String iUserPassword) {
-		super(iDatabase, "OUser");
+	public OUser(String iUserName, final String iUserPassword) {
+		super("OUser");
 		document.field("name", iUserName);
 		setPassword(iUserPassword);
 		setAccountStatus(STATUSES.ACTIVE);

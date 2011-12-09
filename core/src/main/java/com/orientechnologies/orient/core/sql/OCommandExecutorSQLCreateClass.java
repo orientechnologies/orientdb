@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.sql;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
@@ -43,9 +44,10 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLPermissio
 	private int[]								clusterIds;
 
 	public OCommandExecutorSQLCreateClass parse(final OCommandRequestText iRequest) {
-		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
+		final ODatabaseRecord database = getDatabase();
+		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
 
-		init(iRequest.getDatabase(), iRequest.getText());
+		init(iRequest.getText());
 
 		StringBuilder word = new StringBuilder();
 
@@ -127,6 +129,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLPermissio
 		if (className == null)
 			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
+		final ODatabaseRecord database = getDatabase();
 		if (database.getMetadata().getSchema().existsClass(className))
 			throw new OCommandExecutionException("Class " + className + " already exists");
 

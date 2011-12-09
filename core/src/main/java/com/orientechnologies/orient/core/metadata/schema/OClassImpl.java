@@ -381,7 +381,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		OPropertyImpl prop;
 		Collection<ODocument> storedProperties = document.field("properties");
 		for (ODocument p : storedProperties) {
-			p.setDatabase(getDatabase());
 			prop = new OPropertyImpl(this, p);
 			prop.fromStream();
 			properties.put(prop.getName().toLowerCase(), prop);

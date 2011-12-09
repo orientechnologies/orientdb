@@ -522,7 +522,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 	private ORID importRecord() throws IOException, ParseException {
 		final String value = jsonReader.readString(OJSONReader.END_OBJECT, true);
 
-		record = ORecordSerializerJSON.INSTANCE.fromString(database, value, record);
+		record = ORecordSerializerJSON.INSTANCE.fromString(value, record);
 
 		try {
 			if (schemaImported && record.getIdentity().toString().equals(database.getStorage().getConfiguration().schemaRecordId)) {

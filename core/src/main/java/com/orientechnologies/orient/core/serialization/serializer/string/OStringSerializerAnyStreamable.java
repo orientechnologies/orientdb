@@ -16,8 +16,6 @@
 package com.orientechnologies.orient.core.serialization.serializer.string;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
@@ -31,7 +29,7 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
 	/**
 	 * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
 	 */
-	public Object fromStream(final ODatabaseComplex<?> iDatabase, final String iStream) {
+	public Object fromStream(final String iStream) {
 		if (iStream == null || iStream.length() == 0)
 			// NULL VALUE
 			return null;
@@ -41,7 +39,7 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
 		int propertyPos = iStream.indexOf(':');
 		int pos = iStream.indexOf(OStreamSerializerHelper.SEPARATOR);
 		if (pos < 0 || pos > propertyPos) {
-			instance = new ODocument((ODatabaseRecord) iDatabase);
+			instance = new ODocument();
 			pos = -1;
 		} else {
 			final String className = iStream.substring(0, pos);
@@ -62,7 +60,7 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
 	 * 
 	 * @param iValue
 	 */
-	public StringBuilder toStream(final ODatabaseComplex<?> iDatabase, final StringBuilder iOutput, Object iValue) {
+	public StringBuilder toStream(final StringBuilder iOutput, Object iValue) {
 		if (iValue != null) {
 			if (!(iValue instanceof OSerializableStream))
 				throw new OSerializationException("Cannot serialize the object since it's not implements the OSerializableStream interface");

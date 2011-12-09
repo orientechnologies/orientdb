@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
 /**
- * Shared security class. It's shared by all the getDatabase() instances that point to the same storage.
+ * Shared security class. It's shared by all the database instances that point to the same storage.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
@@ -76,7 +76,8 @@ public class OSecurityShared extends OSharedResourceAbstract implements OSecurit
 		try {
 
 			final List<ODocument> result = getDatabase().<OCommandRequest> command(
-					new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("*:-1")).execute();
+					new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("*:-1"))
+					.execute();
 
 			if (result != null && !result.isEmpty())
 				return new OUser(result.get(0));
@@ -92,7 +93,7 @@ public class OSecurityShared extends OSharedResourceAbstract implements OSecurit
 		acquireExclusiveLock();
 		try {
 
-			final OUser user = new OUser(getDatabase(), iUserName, iUserPassword);
+			final OUser user = new OUser(iUserName, iUserPassword);
 
 			if (iRoles != null)
 				for (String r : iRoles) {
@@ -111,7 +112,8 @@ public class OSecurityShared extends OSharedResourceAbstract implements OSecurit
 		try {
 
 			final List<ODocument> result = getDatabase().<OCommandRequest> command(
-					new OSQLSynchQuery<ODocument>("select from ORole where name = '" + iRoleName + "' limit 1").setFetchPlan("*:-1")).execute();
+					new OSQLSynchQuery<ODocument>("select from ORole where name = '" + iRoleName + "' limit 1").setFetchPlan("*:-1"))
+					.execute();
 
 			if (result != null && !result.isEmpty())
 				return new ORole(result.get(0));
@@ -131,7 +133,7 @@ public class OSecurityShared extends OSharedResourceAbstract implements OSecurit
 		acquireExclusiveLock();
 		try {
 
-			final ORole role = new ORole(getDatabase(), iRoleName, iParent, iAllowMode);
+			final ORole role = new ORole(iRoleName, iParent, iAllowMode);
 			return role.save();
 
 		} finally {
@@ -165,16 +167,18 @@ public class OSecurityShared extends OSharedResourceAbstract implements OSecurit
 		acquireExclusiveLock();
 		try {
 
-			if (!getDatabase().getMetadata().getSchema().getClasses().isEmpty())
+			final ODatabaseRecord database = getDatabase();
+
+			if (!database.getMetadata().getSchema().getClasses().isEmpty())
 				throw new OSecurityException("Default users and roles already installed");
 
 			// CREATE ROLE AND USER SCHEMA CLASSES
-			final OClass roleClass = getDatabase().getMetadata().getSchema().createClass("ORole");
+			final OClass roleClass = database.getMetadata().getSchema().createClass("ORole");
 			roleClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
 			roleClass.createProperty("mode", OType.BYTE);
 			roleClass.createProperty("rules", OType.EMBEDDEDMAP, OType.BYTE);
 
-			final OClass userClass = getDatabase().getMetadata().getSchema().createClass("OUser");
+			final OClass userClass = database.getMetadata().getSchema().createClass("OUser");
 			userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
 			userClass.createProperty("password", OType.STRING).setMandatory(true).setNotNull(true);
 			userClass.createProperty("roles", OType.LINKSET, roleClass);

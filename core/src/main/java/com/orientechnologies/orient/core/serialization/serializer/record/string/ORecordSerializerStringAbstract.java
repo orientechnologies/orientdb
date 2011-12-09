@@ -21,9 +21,8 @@ import java.util.Date;
 import java.util.Set;
 
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -46,37 +45,38 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 	protected abstract StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
 			final OUserObject2RecordHandler iObjHandler, final Set<Integer> iMarshalledRecords, boolean iOnlyDelta);
 
-	protected abstract ORecordInternal<?> fromString(final ODatabaseRecord iDatabase, final String iContent,
-			final ORecordInternal<?> iRecord);
+	public abstract ORecordInternal<?> fromString(final String iContent, final ORecordInternal<?> iRecord);
 
 	public StringBuilder toString(final ORecordInternal<?> iRecord, final String iFormat) {
-		return toString(iRecord, new StringBuilder(), iFormat, iRecord.getDatabase(), OSerializationThreadLocal.INSTANCE.get(), false);
+		return toString(iRecord, new StringBuilder(), iFormat, ODatabaseRecordThreadLocal.INSTANCE.get(),
+				OSerializationThreadLocal.INSTANCE.get(), false);
 	}
 
 	public StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat) {
-		return toString(iRecord, iOutput, iFormat, iRecord.getDatabase(), OSerializationThreadLocal.INSTANCE.get(), false);
+		return toString(iRecord, iOutput, iFormat, ODatabaseRecordThreadLocal.INSTANCE.get(), OSerializationThreadLocal.INSTANCE.get(),
+				false);
 	}
 
-	public ORecordInternal<?> fromString(final ODatabaseRecord iDatabase, final String iSource) {
-		return fromString(iDatabase, iSource, (ORecordInternal<?>) iDatabase.newInstance());
+	public ORecordInternal<?> fromString(final String iSource) {
+		return fromString(iSource, (ORecordInternal<?>) ODatabaseRecordThreadLocal.INSTANCE.get().newInstance());
 	}
 
-	public ORecordInternal<?> fromStream(final ODatabaseRecord iDatabase, final byte[] iSource, final ORecordInternal<?> iRecord) {
+	public ORecordInternal<?> fromStream(final byte[] iSource, final ORecordInternal<?> iRecord) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		try {
-			return fromString(iDatabase, OBinaryProtocol.bytes2string(iSource), iRecord);
+			return fromString(OBinaryProtocol.bytes2string(iSource), iRecord);
 		} finally {
 
 			OProfiler.getInstance().stopChrono("ORecordSerializerStringAbstract.fromStream", timer);
 		}
 	}
 
-	public byte[] toStream(final ODatabaseRecord iDatabase, final ORecordInternal<?> iRecord, boolean iOnlyDelta) {
+	public byte[] toStream(final ORecordInternal<?> iRecord, boolean iOnlyDelta) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		try {
-			return OBinaryProtocol.string2bytes(toString(iRecord, new StringBuilder(), null, iDatabase,
+			return OBinaryProtocol.string2bytes(toString(iRecord, new StringBuilder(), null, null,
 					OSerializationThreadLocal.INSTANCE.get(), iOnlyDelta).toString());
 		} finally {
 
@@ -154,7 +154,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 		case EMBEDDED:
 		case CUSTOM:
 			// RECORD
-			final Object result = OStringSerializerAnyStreamable.INSTANCE.fromStream(iDocument.getDatabase(), (String) iValue);
+			final Object result = OStringSerializerAnyStreamable.INSTANCE.fromStream((String) iValue);
 			if (result instanceof ODocument)
 				((ODocument) result).addOwner(iDocument);
 			return result;
@@ -162,8 +162,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 		case EMBEDDEDSET:
 		case EMBEDDEDLIST: {
 			final String value = (String) iValue;
-			return ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedCollectionFromStream(iDocument.getDatabase(), iDocument, iType,
-					null, null, value);
+			return ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedCollectionFromStream(iDocument, iType, null, null, value);
 		}
 
 		case EMBEDDEDMAP: {
@@ -180,8 +179,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 		return OType.convert(v, iExpectedType.getDefaultJavaType());
 	}
 
-	public static void fieldTypeToString(final StringBuilder iBuffer, final ODatabaseComplex<?> iDatabase, OType iType,
-			final Object iValue) {
+	public static void fieldTypeToString(final StringBuilder iBuffer, OType iType, final Object iValue) {
 		if (iValue == null)
 			return;
 
@@ -259,26 +257,27 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 			break;
 
 		case EMBEDDEDSET:
-			ORecordSerializerSchemaAware2CSV.INSTANCE
-					.embeddedCollectionToStream(iDatabase, null, iBuffer, null, null, iValue, null, true);
+			ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedCollectionToStream(ODatabaseRecordThreadLocal.INSTANCE.get(), null,
+					iBuffer, null, null, iValue, null, true);
 			OProfiler.getInstance().stopChrono("serializer.rec.str.embedSet2string", timer);
 			break;
 
 		case EMBEDDEDLIST:
-			ORecordSerializerSchemaAware2CSV.INSTANCE
-					.embeddedCollectionToStream(iDatabase, null, iBuffer, null, null, iValue, null, true);
+			ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedCollectionToStream(ODatabaseRecordThreadLocal.INSTANCE.get(), null,
+					iBuffer, null, null, iValue, null, true);
 			OProfiler.getInstance().stopChrono("serializer.rec.str.embedList2string", timer);
 			break;
 
 		case EMBEDDEDMAP:
-			ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapToStream(iDatabase, null, iBuffer, null, null, iValue, null, true);
+			ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapToStream(ODatabaseRecordThreadLocal.INSTANCE.get(), null, iBuffer, null,
+					null, iValue, null, true);
 			OProfiler.getInstance().stopChrono("serializer.rec.str.embedMap2string", timer);
 			break;
 
 		case EMBEDDED:
 		case CUSTOM:
 			// RECORD OR CUSTOM
-			OStringSerializerAnyStreamable.INSTANCE.toStream(iDatabase, iBuffer, iValue);
+			OStringSerializerAnyStreamable.INSTANCE.toStream(iBuffer, iValue);
 			OProfiler.getInstance().stopChrono("serializer.rec.str.embed2string", timer);
 			break;
 

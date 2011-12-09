@@ -20,6 +20,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES;
@@ -43,9 +44,10 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLPermission
 	private String							value;
 
 	public OCommandExecutorSQLAlterClass parse(final OCommandRequestText iRequest) {
-		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_UPDATE);
+		final ODatabaseRecord database = getDatabase();
+		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_UPDATE);
 
-		init(iRequest.getDatabase(), iRequest.getText());
+		init(iRequest.getText());
 
 		StringBuilder word = new StringBuilder();
 
@@ -98,7 +100,7 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLPermission
 		if (attribute == null)
 			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-		final OClassImpl cls = (OClassImpl) database.getMetadata().getSchema().getClass(className);
+		final OClassImpl cls = (OClassImpl) getDatabase().getMetadata().getSchema().getClass(className);
 		if (cls == null)
 			throw new OCommandExecutionException("Source class '" + className + "' not found");
 
@@ -108,12 +110,14 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLPermission
 	}
 
 	private void renameCluster() {
+		final ODatabaseRecord database = getDatabase();
 		if (attribute.equals(OClass.ATTRIBUTES.NAME) && checkClusterRenameOk(database.getStorage().getClusterIdByName(value))) {
 			database.command(new OCommandSQL("alter cluster " + className + " name " + value)).execute();
 		}
 	}
 
 	private boolean checkClusterRenameOk(int clusterId) {
+		final ODatabaseRecord database = getDatabase();
 		for (OClass clazz : database.getMetadata().getSchema().getClasses()) {
 			if (clazz.getName().equals(value))
 				continue;

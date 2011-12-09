@@ -253,9 +253,6 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		final boolean safeMode = beginBlock();
 
 		try {
-			iInVertex.setDatabase(this);
-			iOutVertex.setDatabase(this);
-
 			final ODocument edge = new ODocument(this, iClassName != null ? iClassName : EDGE_CLASS_NAME).setOrdered(true);
 			edge.field(EDGE_FIELD_OUT, iOutVertex);
 			edge.field(EDGE_FIELD_IN, iInVertex);

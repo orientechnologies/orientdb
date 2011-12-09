@@ -100,8 +100,6 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
 
 			if (record != null) {
 				// FOUND: MOVE IT INTO THE DB'S CACHE
-				record.setDatabase(database);
-
 				acquireExclusiveLock();
 				try {
 					entries.put(record.getIdentity(), record);

@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.id.ORID;
@@ -43,19 +44,18 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 		setup();
 	}
 
-	public ORecordBytes(final ODatabaseRecord iDatabase) {
-		super(iDatabase);
-		setup();
+	public ORecordBytes(final ODatabaseRecord iDatabase, byte[] iSource) {
+		this(iSource);
+		ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
 	}
 
-	public ORecordBytes(final ODatabaseRecord iDatabase, final byte[] iSource) {
-		super(iDatabase, iSource);
+	public ORecordBytes(final byte[] iSource) {
+		super(iSource);
 		_dirty = true;
 		setup();
 	}
 
-	public ORecordBytes(final ODatabaseRecord iDatabase, final ORID iRecordId) {
-		super(iDatabase);
+	public ORecordBytes(final ORID iRecordId) {
 		_recordId = (ORecordId) iRecordId;
 		setup();
 	}

@@ -28,7 +28,7 @@ public abstract class ONativeSynchQuery<CTX extends OQueryContextNative> extends
 	protected final List<ODocument>	result	= new ArrayList<ODocument>();
 
 	public ONativeSynchQuery(final ODatabaseRecord iDatabase, final String iCluster, final CTX iQueryRecordImpl) {
-		super(iDatabase, iCluster, iQueryRecordImpl, null);
+		super(iCluster, iQueryRecordImpl, null);
 		resultListener = this;
 	}
 

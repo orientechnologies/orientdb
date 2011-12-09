@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.sql;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -37,9 +38,9 @@ public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLPermissi
 	private String							name;
 
 	public OCommandExecutorSQLRebuildIndex parse(final OCommandRequestText iRequest) {
-		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
 
-		init(iRequest.getDatabase(), iRequest.getText());
+		init(iRequest.getText());
 
 		final StringBuilder word = new StringBuilder();
 
@@ -70,6 +71,7 @@ public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLPermissi
 		if (name == null)
 			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
+		final ODatabaseRecord database = getDatabase();
 		if (name.equals("*")) {
 			long totalIndexed = 0;
 			for (OIndex<?> idx : database.getMetadata().getIndexManager().getIndexes()) {
@@ -80,7 +82,6 @@ public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLPermissi
 			return totalIndexed;
 
 		} else {
-
 			final OIndex<?> idx = database.getMetadata().getIndexManager().getIndex(name);
 			if (idx == null)
 				throw new OCommandExecutionException("Index '" + name + "' not found");

@@ -15,17 +15,17 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.Map;
+
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.storage.OCluster;
-
-import java.util.Map;
 
 /**
  * SQL CREATE PROPERTY command: Creates a new property in the target class.
@@ -41,9 +41,9 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLPermissionA
 	private String							className;
 
 	public OCommandExecutorSQLDropClass parse(final OCommandRequestText iRequest) {
-		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_DELETE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_DELETE);
 
-		init(iRequest.getDatabase(), iRequest.getText());
+		init(iRequest.getText());
 
 		final StringBuilder word = new StringBuilder();
 
@@ -74,6 +74,7 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLPermissionA
 		if (className == null)
 			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
+		final ODatabaseRecord database = getDatabase();
 		final OClass oClass = database.getMetadata().getSchema().getClass(className);
 		if (oClass == null)
 			return null;
@@ -93,6 +94,7 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLPermissionA
 	}
 
 	protected void deleteDefaultCluster(int clusterId) {
+		final ODatabaseRecord database = getDatabase();
 		OCluster cluster = database.getStorage().getClusterById(clusterId);
 		if (cluster.getName().equalsIgnoreCase(className)) {
 			if (isClusterDeletable(clusterId)) {
@@ -102,6 +104,7 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLPermissionA
 	}
 
 	protected boolean isClusterDeletable(int clusterId) {
+		final ODatabaseRecord database = getDatabase();
 		for (OClass iClass : database.getMetadata().getSchema().getClasses()) {
 			for (int i : iClass.getClusterIds()) {
 				if (i == clusterId)

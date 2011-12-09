@@ -16,19 +16,13 @@
 package com.orientechnologies.orient.core.query;
 
 import com.orientechnologies.orient.core.command.OCommandRequestAbstract;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
-import com.orientechnologies.orient.core.id.ORecordId;
 
 @SuppressWarnings("serial")
 public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAbstract implements OQuery<T> {
-	protected String		fetchPlan;
+	protected String	fetchPlan;
 
 	public OQueryAbstract() {
-	}
-
-	public OQueryAbstract(final ODatabaseRecord iDatabase) {
-		super(iDatabase);
 	}
 
 	@SuppressWarnings("unchecked")

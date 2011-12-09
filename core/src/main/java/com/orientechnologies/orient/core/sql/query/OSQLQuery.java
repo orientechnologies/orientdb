@@ -24,6 +24,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -57,6 +59,7 @@ public abstract class OSQLQuery<T extends Object> extends OQueryAbstract<T> impl
 	 */
 	@SuppressWarnings("unchecked")
 	public List<T> run(final Object... iArgs) {
+		final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
 		if (database == null)
 			throw new OQueryParsingException("No database configured");
 

@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.record;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -41,23 +42,23 @@ public class ORecordFactoryManager {
 	protected final ORecordFactory[]							recordFactories	= new ORecordFactory[Byte.MAX_VALUE];
 
 	public interface ORecordFactory {
-		public ORecord<?> newRecord(ODatabaseRecord iDatabase);
+		public ORecord<?> newRecord();
 	}
 
 	public ORecordFactoryManager() {
 		declareRecordType(ODocument.RECORD_TYPE, "document", ODocument.class, new ORecordFactory() {
-			public ORecord<?> newRecord(ODatabaseRecord iDatabase) {
-				return new ODocument(iDatabase);
+			public ORecord<?> newRecord() {
+				return new ODocument();
 			}
 		});
 		declareRecordType(ORecordFlat.RECORD_TYPE, "flat", ORecordFlat.class, new ORecordFactory() {
-			public ORecord<?> newRecord(ODatabaseRecord iDatabase) {
-				return new ORecordFlat(iDatabase);
+			public ORecord<?> newRecord() {
+				return new ORecordFlat();
 			}
 		});
 		declareRecordType(ORecordBytes.RECORD_TYPE, "bytes", ORecordBytes.class, new ORecordFactory() {
-			public ORecord<?> newRecord(ODatabaseRecord iDatabase) {
-				return new ORecordBytes(iDatabase);
+			public ORecord<?> newRecord() {
+				return new ORecordBytes();
 			}
 		});
 	}
@@ -76,17 +77,18 @@ public class ORecordFactoryManager {
 		return cls;
 	}
 
-	public ORecordInternal<?> newInstance(final ODatabaseRecord iDatabase) {
+	public ORecordInternal<?> newInstance() {
+		final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
 		try {
-			return (ORecordInternal<?>) recordFactories[iDatabase.getRecordType()].newRecord(iDatabase);
+			return (ORecordInternal<?>) recordFactories[database.getRecordType()].newRecord();
 		} catch (Exception e) {
-			throw new IllegalArgumentException("Unsupported record type: " + iDatabase.getRecordType(), e);
+			throw new IllegalArgumentException("Unsupported record type: " + database.getRecordType(), e);
 		}
 	}
 
-	public ORecordInternal<?> newInstance(final ODatabaseRecord iDatabase, final byte iRecordType) {
+	public ORecordInternal<?> newInstance(final byte iRecordType) {
 		try {
-			return (ORecordInternal<?>) recordFactories[iRecordType].newRecord(iDatabase);
+			return (ORecordInternal<?>) recordFactories[iRecordType].newRecord();
 		} catch (Exception e) {
 			throw new IllegalArgumentException("Unsupported record type: " + iRecordType, e);
 		}

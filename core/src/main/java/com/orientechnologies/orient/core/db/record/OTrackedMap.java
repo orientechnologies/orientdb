@@ -91,22 +91,6 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
 		super.put(iRecord.getIdentity(), (T) iRecord);
 	}
 
-	public boolean setDatabase(final ODatabaseRecord iDatabase) {
-		boolean changed = false;
-
-		for (Map.Entry<Object, T> e : entrySet()) {
-			if (e.getKey() instanceof ORecordElement)
-				if (((ORecordElement) e.getKey()).setDatabase(iDatabase))
-					changed = true;
-
-			if (e.getValue() instanceof ORecordElement)
-				if (((ORecordElement) e.getValue()).setDatabase(iDatabase))
-					changed = true;
-		}
-
-		return changed;
-	}
-
 	public STATUS getInternalStatus() {
 		return status;
 	}

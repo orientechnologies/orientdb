@@ -34,7 +34,6 @@ import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
@@ -708,7 +707,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		checkCurrentDatabase();
 
 		ORecordId rid = new ORecordId(iRecordId);
-		final ORawBuffer buffer = currentDatabase.getStorage().readRecord(currentDatabase, rid, null, null);
+		final ORawBuffer buffer = currentDatabase.getStorage().readRecord(rid, null, null);
 
 		if (buffer == null)
 			throw new OException("The record has been deleted");
@@ -1461,7 +1460,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 		currentResultSet.clear();
 
-		final Object result = new OCommandSQL(iReceivedCommand).setDatabase(currentDatabase).setProgressListener(this).execute();
+		final Object result = new OCommandSQL(iReceivedCommand).setProgressListener(this).execute();
 
 		if (result != null)
 			out.printf(iMessage, result, (float) (System.currentTimeMillis() - start) / 1000);

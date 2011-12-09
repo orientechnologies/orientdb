@@ -19,7 +19,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
@@ -206,8 +205,8 @@ public class OSQLEngine {
 		return null;
 	}
 
-	public OSQLFilter parseFromWhereCondition(final ODatabaseRecord iDatabase, final String iText) {
-		return new OSQLFilter(iDatabase, iText);
+	public OSQLFilter parseFromWhereCondition(final String iText) {
+		return new OSQLFilter(iText);
 	}
 
 	public static OSQLEngine getInstance() {

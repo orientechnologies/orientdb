@@ -608,7 +608,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 				if (operations != null) {
 					for (final ODocument op : operations) {
 						final int operation = (Integer) op.rawField("o");
-						final OIdentifiable value = op.field("v");
+						final OIdentifiable value = op.field("v", OType.LINK);
 
 						if (operation == OPERATION.PUT.ordinal())
 							put(key, value);

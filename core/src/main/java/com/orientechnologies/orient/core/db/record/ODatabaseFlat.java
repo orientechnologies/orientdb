@@ -37,7 +37,7 @@ public class ODatabaseFlat extends ODatabaseRecordTx {
 	@SuppressWarnings("unchecked")
 	@Override
 	public ORecordFlat newInstance() {
-		return new ORecordFlat(this);
+		return new ORecordFlat();
 	}
 
 	@Override

@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.annotation.OBeforeDeserialization;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
@@ -71,15 +70,8 @@ public class ORole extends ODocumentWrapper {
 	public ORole() {
 	}
 
-	/**
-	 * Constructor used in unmarshalling.
-	 */
-	public ORole(final ODatabaseRecord iDatabase) {
-		super(iDatabase, "ORole");
-	}
-
-	public ORole(final ODatabaseRecord iDatabase, final String iName, final ORole iParent, final ALLOW_MODES iAllowMode) {
-		this(iDatabase);
+	public ORole(final String iName, final ORole iParent, final ALLOW_MODES iAllowMode) {
+		super("ORole");
 		document.field("name", iName);
 		parentRole = iParent;
 		document.field("inheritedRole", parentRole != null ? parentRole.getName() : null);

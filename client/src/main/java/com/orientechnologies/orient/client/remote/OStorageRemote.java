@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -347,8 +348,7 @@ public class OStorageRemote extends OStorageAbstract {
 		} while (true);
 	}
 
-	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final ORecordId iRid, final String iFetchPlan,
-			final ORecordCallback<ORawBuffer> iCallback) {
+	public ORawBuffer readRecord(final ORecordId iRid, final String iFetchPlan, final ORecordCallback<ORawBuffer> iCallback) {
 		checkConnection();
 
 		if (OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting)
@@ -376,12 +376,13 @@ public class OStorageRemote extends OStorageAbstract {
 
 					final ORawBuffer buffer = new ORawBuffer(network.readBytes(), network.readInt(), network.readByte());
 
+					final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
 					ORecordInternal<?> record;
 					while (network.readByte() == 2) {
-						record = (ORecordInternal<?>) readIdentifiable(network, iDatabase);
+						record = (ORecordInternal<?>) readIdentifiable(network);
 
 						// PUT IN THE CLIENT LOCAL CACHE
-						iDatabase.getLevel1Cache().updateRecord(record);
+						database.getLevel1Cache().updateRecord(record);
 					}
 					return buffer;
 				} finally {
@@ -676,6 +677,8 @@ public class OStorageRemote extends OStorageAbstract {
 		OSerializableStream command = iCommand;
 		Object result = null;
 
+		final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
+
 		do {
 			OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting = true;
 
@@ -689,7 +692,7 @@ public class OStorageRemote extends OStorageAbstract {
 					network = beginRequest(OChannelBinaryProtocol.REQUEST_COMMAND);
 
 					network.writeByte((byte) (asynch ? 'a' : 's')); // ASYNC / SYNC
-					network.writeBytes(OStreamSerializerAnyStreamable.INSTANCE.toStream(iCommand.getDatabase(), command));
+					network.writeBytes(OStreamSerializerAnyStreamable.INSTANCE.toStream(command));
 
 				} finally {
 					endRequest(network);
@@ -703,7 +706,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 						// ASYNCH: READ ONE RECORD AT TIME
 						while ((status = network.readByte()) > 0) {
-							final ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) readIdentifiable(network, iCommand.getDatabase());
+							final ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) readIdentifiable(network);
 							if (record == null)
 								break;
 
@@ -722,12 +725,12 @@ public class OStorageRemote extends OStorageAbstract {
 									// ABSORBE ALL THE USER EXCEPTIONS
 									t.printStackTrace();
 								}
-								iCommand.getDatabase().getLevel1Cache().updateRecord(record);
+								database.getLevel1Cache().updateRecord(record);
 								break;
 
 							case 2:
 								// PUT IN THE CLIENT LOCAL CACHE
-								iCommand.getDatabase().getLevel1Cache().updateRecord(record);
+								database.getLevel1Cache().updateRecord(record);
 							}
 						}
 					} else {
@@ -738,18 +741,18 @@ public class OStorageRemote extends OStorageAbstract {
 							break;
 
 						case 'r':
-							result = readIdentifiable(network, iCommand.getDatabase());
+							result = readIdentifiable(network);
 							if (result instanceof ORecord<?>)
-								iCommand.getDatabase().getLevel1Cache().updateRecord((ORecordInternal<?>) result);
+								database.getLevel1Cache().updateRecord((ORecordInternal<?>) result);
 							break;
 
 						case 'l':
 							final int tot = network.readInt();
 							final Collection<OIdentifiable> list = new ArrayList<OIdentifiable>();
 							for (int i = 0; i < tot; ++i) {
-								final OIdentifiable resultItem = readIdentifiable(network, iCommand.getDatabase());
+								final OIdentifiable resultItem = readIdentifiable(network);
 								if (resultItem instanceof ORecord<?>)
-									iCommand.getDatabase().getLevel1Cache().updateRecord((ORecordInternal<?>) resultItem);
+									database.getLevel1Cache().updateRecord((ORecordInternal<?>) resultItem);
 								list.add(resultItem);
 							}
 							result = list;
@@ -1284,7 +1287,7 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 	}
 
-	static OIdentifiable readIdentifiable(final OChannelBinaryClient network, final ODatabaseRecord iDatabase) throws IOException {
+	static OIdentifiable readIdentifiable(final OChannelBinaryClient network) throws IOException {
 		final int classId = network.readShort();
 		if (classId == OChannelBinaryProtocol.RECORD_NULL)
 			return null;
@@ -1292,13 +1295,13 @@ public class OStorageRemote extends OStorageAbstract {
 		if (classId == OChannelBinaryProtocol.RECORD_RID) {
 			return network.readRID();
 		} else {
-			final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(iDatabase, network.readByte());
+			final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(network.readByte());
 
 			if (record instanceof ORecordSchemaAware<?>)
-				((ORecordSchemaAware<?>) record).fill(iDatabase, classId, network.readRID(), network.readInt(), network.readBytes(), false);
+				((ORecordSchemaAware<?>) record).fill(network.readRID(), network.readInt(), network.readBytes(), false);
 			else
 				// DISCARD CLASS ID
-				record.fill(iDatabase, network.readRID(), network.readInt(), network.readBytes(), false);
+				record.fill(network.readRID(), network.readInt(), network.readBytes(), false);
 
 			return record;
 		}

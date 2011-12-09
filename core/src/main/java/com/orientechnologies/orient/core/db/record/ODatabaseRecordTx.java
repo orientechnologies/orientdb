@@ -52,6 +52,8 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 	}
 
 	public ODatabaseRecord begin(final TXTYPE iType) {
+		setCurrentDatabaseinThreadLocal();
+
 		if (currentTx.isActive())
 			currentTx.rollback();
 
@@ -98,6 +100,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 	}
 
 	public ODatabaseRecord commit() {
+		setCurrentDatabaseinThreadLocal();
 		// WAKE UP LISTENERS
 		for (ODatabaseListener listener : underlying.getListeners())
 			try {
@@ -208,6 +211,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 
 	@Override
 	public ODatabaseRecord save(final ORecordInternal<?> iContent, final String iClusterName) {
+		setCurrentDatabaseinThreadLocal();
 		currentTx.saveRecord(iContent, iClusterName);
 		return this;
 	}

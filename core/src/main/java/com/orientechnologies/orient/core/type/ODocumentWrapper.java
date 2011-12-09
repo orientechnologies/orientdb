@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.type;
 
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -33,19 +32,19 @@ public class ODocumentWrapper {
 	@ODocumentInstance
 	protected ODocument	document;
 
-	public ODocumentWrapper(final ODatabaseRecord iDatabase, final ORID iRID) {
-		this(new ODocument(iDatabase, iRID));
+	public ODocumentWrapper() {
 	}
 
-	public ODocumentWrapper(final ODatabaseRecord iDatabase, final String iClassName) {
-		this(new ODocument(iDatabase, iClassName));
+	public ODocumentWrapper(final ORID iRID) {
+		this(new ODocument(iRID));
+	}
+
+	public ODocumentWrapper(final String iClassName) {
+		this(new ODocument(iClassName));
 	}
 
 	public ODocumentWrapper(final ODocument iDocument) {
 		document = iDocument;
-	}
-
-	public ODocumentWrapper() {
 	}
 
 	@OAfterDeserialization

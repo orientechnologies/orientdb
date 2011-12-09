@@ -33,7 +33,7 @@ public class OHttpMultipartFileToRecordContentParser implements OHttpMultipartCo
 	@Override
 	public ORID parse(final OHttpRequest iRequest, final Map<String, String> headers, final OHttpMultipartContentInputStream in,
 			ODatabaseRecord database) throws IOException {
-		ORecordBytes record = new ORecordBytes(database);
+		final ORecordBytes record = new ORecordBytes();
 		record.fromInputStream(in);
 		record.save();
 		return record.getIdentity();

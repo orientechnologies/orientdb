@@ -48,7 +48,6 @@ public class SecMaskTest {
 			doc.field("val5", "this is the description for a long comic books -" + i);
 			doc.field("name", "this is secmask put on top - " + i);
 			doc.setClassName("Account");
-			doc.setDatabase(database);
 			doc.save();
 			doc.reset();
 			if (i % 100000 == 0) {

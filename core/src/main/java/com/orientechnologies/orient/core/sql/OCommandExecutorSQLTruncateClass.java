@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -37,8 +38,9 @@ public class OCommandExecutorSQLTruncateClass extends OCommandExecutorSQLPermiss
 
 	@SuppressWarnings("unchecked")
 	public OCommandExecutorSQLTruncateClass parse(final OCommandRequestText iRequest) {
-		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_DELETE);
-		init(iRequest.getDatabase(), iRequest.getText());
+		final ODatabaseRecord database = getDatabase();
+		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_DELETE);
+		init(iRequest.getText());
 
 		StringBuilder word = new StringBuilder();
 

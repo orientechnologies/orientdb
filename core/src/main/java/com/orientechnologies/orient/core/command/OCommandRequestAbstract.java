@@ -19,7 +19,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
@@ -30,26 +29,12 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  */
 @SuppressWarnings("serial")
 public abstract class OCommandRequestAbstract implements OCommandRequestInternal {
-	protected ODatabaseRecord					database;
 	protected OCommandResultListener	resultListener;
 	protected OProgressListener				progressListener;
 	protected int											limit	= -1;
 	protected Map<Object, Object>			parameters;
 
 	protected OCommandRequestAbstract() {
-	}
-
-	protected OCommandRequestAbstract(final ODatabaseRecord iDatabase) {
-		database = iDatabase;
-	}
-
-	public ODatabaseRecord getDatabase() {
-		return database;
-	}
-
-	public OCommandRequestInternal setDatabase(final ODatabaseRecord iDatabase) {
-		this.database = iDatabase;
-		return this;
 	}
 
 	public OCommandResultListener getResultListener() {

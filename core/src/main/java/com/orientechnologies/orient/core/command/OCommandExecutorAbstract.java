@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.command;
 import java.util.Map;
 
 import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 
 /**
@@ -29,13 +29,11 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
  */
 @SuppressWarnings("unchecked")
 public abstract class OCommandExecutorAbstract extends OCommandToParse implements OCommandExecutor {
-	protected ODatabaseRecord			database;
 	protected OProgressListener		progressListener;
 	protected int									limit	= -1;
 	protected Map<Object, Object>	parameters;
 
-	public OCommandExecutorAbstract init(final ODatabaseRecord iDatabase, final String iText) {
-		database = iDatabase;
+	public OCommandExecutorAbstract init(final String iText) {
 		text = iText;
 		return this;
 	}
@@ -46,10 +44,6 @@ public abstract class OCommandExecutorAbstract extends OCommandToParse implement
 	public Object execute(final OCommandRequestText iRequest, final Map<Object, Object> iArgs) {
 		parse(iRequest);
 		return execute(iArgs);
-	}
-
-	public ODatabase getDatabase() {
-		return database;
 	}
 
 	@Override
@@ -79,4 +73,7 @@ public abstract class OCommandExecutorAbstract extends OCommandToParse implement
 		return parameters;
 	}
 
+	public ODatabaseRecord getDatabase() {
+		return ODatabaseRecordThreadLocal.INSTANCE.get();
+	}
 }

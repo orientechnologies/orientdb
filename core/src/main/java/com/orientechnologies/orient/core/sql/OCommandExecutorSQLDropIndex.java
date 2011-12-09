@@ -15,14 +15,12 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.Map;
+
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-
-import java.util.Map;
 
 /**
  * SQL REMOVE INDEX command: Remove an index
@@ -38,9 +36,9 @@ public class OCommandExecutorSQLDropIndex extends OCommandExecutorSQLPermissionA
 	private String							name;
 
 	public OCommandExecutorSQLDropIndex parse(final OCommandRequestText iRequest) {
-		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
 
-		init(iRequest.getDatabase(), iRequest.getText());
+		init(iRequest.getText());
 
 		final StringBuilder word = new StringBuilder();
 
@@ -71,7 +69,7 @@ public class OCommandExecutorSQLDropIndex extends OCommandExecutorSQLPermissionA
 		if (name == null)
 			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-        database.getMetadata().getIndexManager().dropIndex(name);
-        return null;
+		getDatabase().getMetadata().getIndexManager().dropIndex(name);
+		return null;
 	}
 }

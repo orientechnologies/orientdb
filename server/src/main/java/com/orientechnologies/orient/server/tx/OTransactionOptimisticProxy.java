@@ -64,21 +64,21 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 				switch (entry.status) {
 				case OTransactionRecordEntry.CREATED:
 					entry.clusterName = channel.readString();
-					entry.getRecord().fill(database, rid, 0, channel.readBytes(), true);
+					entry.getRecord().fill(rid, 0, channel.readBytes(), true);
 
 					// SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW RID TO SEND BACK TO THE REQUESTER
 					createdRecords.put(rid.copy(), entry.getRecord());
 					break;
 
 				case OTransactionRecordEntry.UPDATED:
-					entry.getRecord().fill(database, rid, channel.readInt(), channel.readBytes(), true);
+					entry.getRecord().fill(rid, channel.readInt(), channel.readBytes(), true);
 
 					// SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW VERSIONS TO SEND BACK TO THE REQUESTER
 					updatedRecords.put(rid, entry.getRecord());
 					break;
 
 				case OTransactionRecordEntry.DELETED:
-					entry.getRecord().fill(database, rid, channel.readInt(), null, false);
+					entry.getRecord().fill(rid, channel.readInt(), null, false);
 					break;
 
 				default:

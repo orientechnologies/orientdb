@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -32,26 +34,25 @@ public class ORecordFlat extends ORecordAbstract<String> implements ORecordStrin
 
 	public static final byte	RECORD_TYPE	= 'f';
 
+	public ORecordFlat(ODatabaseFlat iDatabase) {
+		this();
+		ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
+	}
+
 	public ORecordFlat() {
 		setup();
 	}
 
-	public ORecordFlat(ODatabaseRecord iDatabase) {
-		super(iDatabase);
+	public ORecordFlat(final byte[] iSource) {
+		super(iSource);
 		setup();
 	}
 
-	public ORecordFlat(ODatabaseRecord iDatabase, byte[] iSource) {
-		super(iDatabase, iSource);
-		setup();
-	}
-
-	public ORecordFlat(ODatabaseRecord iDatabase, ORID iRID) {
-		this(iDatabase);
+	public ORecordFlat(final ODatabaseRecord iDatabase, final ORID iRID) {
 		_recordId = (ORecordId) iRID;
 	}
 
-	public ORecordFlat value(String iValue) {
+	public ORecordFlat value(final String iValue) {
 		value = iValue;
 		setDirty();
 		return this;
@@ -88,7 +89,6 @@ public class ORecordFlat extends ORecordAbstract<String> implements ORecordStrin
 		ORecordFlat cloned = new ORecordFlat();
 		cloned._source = _source;
 		cloned.value = value;
-		cloned._database = _database;
 		cloned._recordId = _recordId.copy();
 		cloned._dirty = _dirty;
 		cloned._version = _version;

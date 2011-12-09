@@ -23,6 +23,7 @@ import java.util.Map;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 
 /**
@@ -37,7 +38,7 @@ public class OCommandGremlinExecutor extends OCommandExecutorAbstract {
 	@Override
 	public <RET extends OCommandExecutor> RET parse(OCommandRequestText iRequest) {
 		text = iRequest.getText();
-		db = OGremlinHelper.getGraphDatabase( iRequest.getDatabase() );
+		db = OGremlinHelper.getGraphDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
 		return (RET) this;
 	}
 

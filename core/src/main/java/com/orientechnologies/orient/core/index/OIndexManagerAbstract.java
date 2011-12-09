@@ -84,7 +84,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 	public OIndexManagerAbstract load() {
 		acquireExclusiveLock();
 		try {
-			document.setDatabase(getDatabase());
+
 			if (getDatabase().getStorage().getConfiguration().indexMgrRecordId == null)
 				// @COMPATIBILITY: CREATE THE INDEX MGR
 				create();
@@ -106,7 +106,6 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 	public <RET extends ODocumentWrapper> RET reload() {
 		acquireExclusiveLock();
 		try {
-			document.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
 			return (RET) super.reload();
 		} finally {
 			releaseExclusiveLock();
@@ -117,7 +116,6 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 	public <RET extends ODocumentWrapper> RET save() {
 		acquireExclusiveLock();
 		try {
-			document.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
 			return (RET) super.save();
 		} finally {
 			releaseExclusiveLock();

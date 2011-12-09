@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -30,7 +29,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<T> {
-	protected transient ODatabaseRecord		_database;
 	protected ORecordId										_recordId;
 	protected int													_version;
 	protected byte[]											_source;
@@ -44,20 +42,13 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	public ORecordAbstract() {
 	}
 
-	public ORecordAbstract(final ODatabaseRecord iDatabase) {
-		_database = iDatabase;
-	}
-
-	public ORecordAbstract(final ODatabaseRecord iDatabase, final byte[] iSource) {
-		this(iDatabase);
+	public ORecordAbstract(final byte[] iSource) {
 		_source = iSource;
 		_size = iSource.length;
 		unsetDirty();
 	}
 
-	public ORecordAbstract<?> fill(final ODatabaseRecord iDatabase, final ORecordId iRid, final int iVersion, final byte[] iBuffer,
-			boolean iDirty) {
-		_database = iDatabase;
+	public ORecordAbstract<?> fill(final ORecordId iRid, final int iVersion, final byte[] iBuffer, boolean iDirty) {
 		_recordId.clusterId = iRid.clusterId;
 		_recordId.clusterPosition = iRid.clusterPosition;
 		_version = iVersion;
@@ -94,7 +85,6 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	}
 
 	public boolean detach() {
-		_database = null;
 		return true;
 	}
 
@@ -119,7 +109,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 
 	public byte[] toStream() {
 		if (_source == null)
-			_source = _recordFormat.toStream(_database, this, false);
+			_source = _recordFormat.toStream(this, false);
 
 		invokeListenerEvent(ORecordListener.EVENT.MARSHALL);
 
@@ -175,20 +165,8 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		return this;
 	}
 
-	public ODatabaseRecord getDatabase() {
-		return _database;
-	}
-
-	public boolean setDatabase(final ODatabaseRecord iDatabase) {
-		if (_database != iDatabase) {
-			this._database = iDatabase;
-			return true;
-		}
-		return false;
-	}
-
 	public <RET extends ORecord<T>> RET fromJSON(final String iSource) {
-		ORecordSerializerJSON.INSTANCE.fromString(_database, iSource, this);
+		ORecordSerializerJSON.INSTANCE.fromString(iSource, this);
 		return (RET) this;
 	}
 
@@ -222,14 +200,11 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	}
 
 	public ORecordInternal<T> load() {
-		if (_database == null)
-			throw new ODatabaseException("No database assigned to current record");
-
 		if (!getIdentity().isValid())
 			throw new ORecordNotFoundException("The record has no id, probably it's new or transient yet ");
 
 		try {
-			final ORecordInternal<?> result = _database.load(this);
+			final ORecordInternal<?> result = getDatabase().load(this);
 
 			if (result == null)
 				throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found");
@@ -238,6 +213,10 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		} catch (Exception e) {
 			throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found", e);
 		}
+	}
+
+	public ODatabaseRecord getDatabase() {
+		return ODatabaseRecordThreadLocal.INSTANCE.get();
 	}
 
 	public ORecordInternal<T> reload() {
@@ -249,14 +228,11 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	}
 
 	public ORecordInternal<T> reload(final String iFetchPlan, final boolean iIgnoreCache) {
-		if (_database == null)
-			throw new ODatabaseException("No database assigned to current record");
-
 		if (!getIdentity().isValid())
 			throw new ORecordNotFoundException("The record has no id. It is probably new or still transient");
 
 		try {
-			_database.reload(this, iFetchPlan, iIgnoreCache);
+			getDatabase().reload(this, iFetchPlan, iIgnoreCache);
 
 			// GET CONTENT
 			// fromStream(toStream());
@@ -268,28 +244,18 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	}
 
 	public ORecordAbstract<T> save() {
-		if (_database == null)
-			_database = ODatabaseRecordThreadLocal.INSTANCE.get();
-
-		_database.save(this);
+		getDatabase().save(this);
 
 		return this;
 	}
 
 	public ORecordAbstract<T> save(final String iClusterName) {
-		if (_database == null)
-			throw new ODatabaseException("No database assigned to current record. Create it using the <DB>.newInstance()");
-
-		_database.save(this, iClusterName);
-
+		getDatabase().save(this, iClusterName);
 		return this;
 	}
 
 	public ORecordAbstract<T> delete() {
-		if (_database == null)
-			throw new ODatabaseException("No database assigned to current record");
-
-		_database.delete(this);
+		getDatabase().delete(this);
 		setDirty();
 		return this;
 	}
@@ -348,7 +314,6 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	public ORecordAbstract<T> copyTo(final ORecordAbstract<T> cloned) {
 		cloned._source = _source;
 		cloned._size = _size;
-		cloned._database = _database;
 		cloned._recordId = _recordId.copy();
 		cloned._version = _version;
 		cloned._pinned = _pinned;

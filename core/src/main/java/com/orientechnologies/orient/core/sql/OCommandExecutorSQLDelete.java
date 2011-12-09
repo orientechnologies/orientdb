@@ -19,6 +19,7 @@ import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -52,9 +53,10 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 
 	@SuppressWarnings("unchecked")
 	public OCommandExecutorSQLDelete parse(final OCommandRequestText iRequest) {
-		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_DELETE);
+		final ODatabaseRecord database = getDatabase();
+		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_DELETE);
 
-		init(iRequest.getDatabase(), iRequest.getText());
+		init(iRequest.getText());
 
 		query = null;
 		recordCount = 0;
@@ -80,7 +82,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 		if (subjectName.startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX)) {
 			// INDEX
 			indexName = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_PREFIX.length());
-			compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(iRequest.getDatabase(), text.substring(oldPos));
+			compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(text.substring(oldPos));
 		} else {
 			query = database.command(new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + text.substring(pos), this));
 		}
@@ -98,7 +100,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 			return recordCount;
 		} else {
 			// AGAINST INDEXES
-			final OIndex<?> index = database.getMetadata().getIndexManager().getIndex(indexName);
+			final OIndex<?> index = getDatabase().getMetadata().getIndexManager().getIndex(indexName);
 			if (index == null)
 				throw new OCommandExecutionException("Target index '" + indexName + "' not found");
 
@@ -143,8 +145,6 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 	 */
 	public boolean result(final Object iRecord) {
 		final ORecordAbstract<?> record = (ORecordAbstract<?>) iRecord;
-		record.setDatabase(database);
-
 		record.delete();
 
 		recordCount++;

@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.serialization.serializer.record;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -24,21 +23,19 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 public class ORecordSerializerRaw implements ORecordSerializer {
 	public static final String	NAME	= "ORecordDocumentRaw";
 
-	public ORecordInternal<?> fromStream(ODatabaseRecord iDatabase, byte[] iSource) {
-		return new ORecordBytes(iDatabase, iSource);
+	public ORecordInternal<?> fromStream(final byte[] iSource) {
+		return new ORecordBytes(iSource);
 	}
 
-	public ORecordInternal<?> fromStream(final ODatabaseRecord iDatabase, final byte[] iSource, final ORecordInternal<?> iRecord) {
+	public ORecordInternal<?> fromStream(final byte[] iSource, final ORecordInternal<?> iRecord) {
 		final ORecordBytes record = (ORecordBytes) iRecord;
-
 		record.fromStream(iSource);
 		record.reset(iSource);
-		record.setDatabase(iDatabase);
 
 		return record;
 	}
 
-	public byte[] toStream(final ODatabaseRecord iDatabase, final ORecordInternal<?> iSource, boolean iOnlyDelta) {
+	public byte[] toStream(final ORecordInternal<?> iSource, boolean iOnlyDelta) {
 		try {
 			return iSource.toStream();
 		} catch (Exception e) {

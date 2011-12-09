@@ -22,6 +22,7 @@ import java.util.Map;
 import com.orientechnologies.common.util.OCaseIncentiveComparator;
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
@@ -44,9 +45,9 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLPermissi
 	private boolean							force							= false;
 
 	public OCommandExecutorSQLDropProperty parse(final OCommandRequestText iRequest) {
-		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_DELETE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_DELETE);
 
-		init(iRequest.getDatabase(), iRequest.getText());
+		init(iRequest.getText());
 
 		final StringBuilder word = new StringBuilder();
 
@@ -92,6 +93,7 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLPermissi
 		if (fieldName == null)
 			throw new OCommandExecutionException("Cannot execute the command because it has not yet been parsed");
 
+		final ODatabaseRecord database = getDatabase();
 		final OClassImpl sourceClass = (OClassImpl) database.getMetadata().getSchema().getClass(className);
 		if (sourceClass == null)
 			throw new OCommandExecutionException("Source class '" + className + "' not found");
@@ -126,6 +128,7 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLPermissi
 	}
 
 	private void dropRelatedIndexes(final List<OIndex<?>> indexes) {
+		final ODatabaseRecord database = getDatabase();
 		for (final OIndex<?> index : indexes) {
 			database.command(new OCommandSQL("DROP INDEX " + index.getName())).execute();
 		}
@@ -134,6 +137,7 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLPermissi
 	private List<OIndex<?>> relatedIndexes(final String fieldName) {
 		final List<OIndex<?>> result = new ArrayList<OIndex<?>>();
 
+		final ODatabaseRecord database = getDatabase();
 		for (final OIndex<?> oIndex : database.getMetadata().getIndexManager().getClassIndexes(className)) {
 			if (OCollections.indexOf(oIndex.getDefinition().getFields(), fieldName, new OCaseIncentiveComparator()) > -1) {
 				result.add(oIndex);

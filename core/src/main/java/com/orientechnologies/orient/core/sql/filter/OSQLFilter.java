@@ -26,11 +26,10 @@ import java.util.Set;
 
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandToParse;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
@@ -58,9 +57,9 @@ public class OSQLFilter extends OCommandToParse {
 	protected List<OSQLFilterItemParameter>	parameterItems;
 	protected int														braces;
 
-	public OSQLFilter(final ODatabaseRecord iDatabase, final String iText) {
+	public OSQLFilter(final String iText) {
 		try {
-			database = iDatabase;
+			database = ODatabaseRecordThreadLocal.INSTANCE.get();
 			text = iText.trim();
 			textUpperCase = text.toUpperCase(Locale.ENGLISH);
 
@@ -88,8 +87,8 @@ public class OSQLFilter extends OCommandToParse {
 		}
 	}
 
-	public boolean evaluate(final ODatabaseRecord iDatabase, final ORecordSchemaAware<?> iRecord) {
-        if (targetClasses != null) {
+	public boolean evaluate(final ORecordSchemaAware<?> iRecord) {
+		if (targetClasses != null) {
 			final OClass cls = targetClasses.keySet().iterator().next();
 			// CHECK IF IT'S PART OF THE REQUESTED CLASS
 			if (iRecord.getSchemaClass() == null || !iRecord.getSchemaClass().isSubClassOf(cls))
@@ -284,21 +283,21 @@ public class OSQLFilter extends OCommandToParse {
 				final List<String> stringItems = new ArrayList<String>();
 				currentPos = OStringSerializerHelper.getCollection(text, currentPos, stringItems);
 
-                if (stringItems.get(0).charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN) {
+				if (stringItems.get(0).charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN) {
 
-                    List<List<Object>> coll = new ArrayList<List<Object>>();
-                    for (String stringItem : stringItems) {
-                        final List<String> stringSubItems = new ArrayList<String>();
-                        OStringSerializerHelper.getCollection(stringItem, 0, stringSubItems);
+					List<List<Object>> coll = new ArrayList<List<Object>>();
+					for (String stringItem : stringItems) {
+						final List<String> stringSubItems = new ArrayList<String>();
+						OStringSerializerHelper.getCollection(stringItem, 0, stringSubItems);
 
-                        coll.add(convertCollectionItems(stringSubItems));
-                    }
+						coll.add(convertCollectionItems(stringSubItems));
+					}
 
-                    result[i] = coll;
+					result[i] = coll;
 
-                } else {
-                    result[i] = convertCollectionItems(stringItems);
-                }
+				} else {
+					result[i] = convertCollectionItems(stringItems);
+				}
 
 				currentPos++;
 
@@ -323,22 +322,22 @@ public class OSQLFilter extends OCommandToParse {
 					}
 				}
 
-				result[i] = OSQLHelper.parseValue(this, database, this, words[1]);
+				result[i] = OSQLHelper.parseValue(this, this, words[1]);
 			}
 		}
 
 		return iExpectedWords == 1 ? result[0] : result;
 	}
 
-    private List<Object> convertCollectionItems(List<String> stringItems) {
-        List<Object> coll = new ArrayList<Object>();
-        for (String s : stringItems) {
-            coll.add(OSQLHelper.parseValue(this, database, this, s));
-        }
-        return coll;
-    }
+	private List<Object> convertCollectionItems(List<String> stringItems) {
+		List<Object> coll = new ArrayList<Object>();
+		for (String s : stringItems) {
+			coll.add(OSQLHelper.parseValue(this, this, s));
+		}
+		return coll;
+	}
 
-    public Map<String, String> getTargetClusters() {
+	public Map<String, String> getTargetClusters() {
 		return targetClusters;
 	}
 

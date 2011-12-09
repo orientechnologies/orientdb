@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.record;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
@@ -26,7 +25,7 @@ public interface ORecordInternal<T> extends ORecord<T>, OSerializableStream {
 	/**
 	 * Internal only. Fills in one shot the record.
 	 */
-	public ORecordAbstract<?> fill(ODatabaseRecord iDatabase, ORecordId iRid, int iVersion, byte[] iBuffer, boolean iDirty);
+	public ORecordAbstract<?> fill(ORecordId iRid, int iVersion, byte[] iBuffer, boolean iDirty);
 
 	/**
 	 * Internal only. Changes the identity of the record.

@@ -59,7 +59,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 			}
 
 			getDatabase().command(new OCommandSQL(createIndexDDL)).execute();
-			document.setDatabase(getDatabase());
+
 			document.setIdentity(new ORecordId(document.getDatabase().getStorage().getConfiguration().indexMgrRecordId));
 
 			if (iProgressListener != null) {
@@ -95,7 +95,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 		acquireExclusiveLock();
 
 		try {
-			document.setDatabase(getDatabase());
+
 			final Collection<ODocument> idxs = document.field(CONFIG_INDEXES);
 
 			indexes.clear();
@@ -105,7 +105,6 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 				OIndexInternal<?> index;
 				for (final ODocument d : idxs) {
 					index = OIndexFactory.instance().newInstance(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE));
-					d.setDatabase(getDatabase());
 					((OIndexInternal<?>) index).loadFromConfiguration(d);
 					addIndexInternal(index);
 				}
@@ -123,7 +122,6 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 		acquireExclusiveLock();
 
 		try {
-			document.setDatabase(getDatabase());
 			document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
 			try {

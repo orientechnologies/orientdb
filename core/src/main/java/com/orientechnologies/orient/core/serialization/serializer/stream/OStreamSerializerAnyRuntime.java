@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyRuntime;
 
@@ -43,7 +42,7 @@ public class OStreamSerializerAnyRuntime implements OStreamSerializer {
 	/**
 	 * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
 	 */
-	public Object fromStream(final ODatabaseRecord iDatabase, final byte[] iStream) throws IOException {
+	public Object fromStream(final byte[] iStream) throws IOException {
 		if (iStream == null || iStream.length == 0)
 			// NULL VALUE
 			return null;
@@ -60,7 +59,7 @@ public class OStreamSerializerAnyRuntime implements OStreamSerializer {
 		}
 	}
 
-	public byte[] toStream(final ODatabaseRecord iDatabase, final Object iObject) throws IOException {
+	public byte[] toStream(final Object iObject) throws IOException {
 		if (iObject == null)
 			return new byte[0];
 

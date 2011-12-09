@@ -44,8 +44,6 @@ public class OServerCommandPostAction extends OServerCommandAuthenticatedPattern
 
 		try {
 			db = getProfiledDatabaseInstance(iRequest);
-
-			doc.setDatabase(db);
 			doc.save();
 
 		} finally {

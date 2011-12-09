@@ -67,7 +67,6 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
 
 	protected void load(final ODatabaseRecord iDb) {
 		try {
-			record.setDatabase(iDb);
 			record.reload();
 		} catch (Exception e) {
 			// ERROR, MAYBE THE RECORD WASN'T CREATED
@@ -78,8 +77,8 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
 	}
 
 	protected void load(final OStorage iStorage) {
-		ORawBuffer raw = iStorage.readRecord(null, (ORecordId) record.getIdentity(), null, null);
-		record.fill(null, (ORecordId) record.getIdentity(), raw.version, raw.buffer, false);
+		ORawBuffer raw = iStorage.readRecord((ORecordId) record.getIdentity(), null, null);
+		record.fill((ORecordId) record.getIdentity(), raw.version, raw.buffer, false);
 		fromStream(raw.buffer);
 	}
 
@@ -153,7 +152,6 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
 			throw new IllegalStateException(
 					"Current thread has no database set and the tree cannot be saved correctly. Ensure that the database is closed before the application if off.");
 		}
-		record.setDatabase(iDb);
 		record.save(treeDataProvider.clusterName);
 	}
 
@@ -180,7 +178,6 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
 	}
 
 	protected void delete(final ODatabaseRecord iDb) {
-		record.setDatabase(iDb);
 		record.delete();
 	}
 

@@ -81,12 +81,6 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, Serial
 	public void onAfterIdentityChanged(ORecord<?> iRecord) {
 	}
 
-	public boolean setDatabase(final ODatabaseRecord iDatabase) {
-		if (sourceRecord != null)
-			return sourceRecord.setDatabase(iDatabase);
-		return false;
-	}
-
 	public STATUS getInternalStatus() {
 		return status;
 	}

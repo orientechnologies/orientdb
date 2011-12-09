@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.orientechnologies.common.collection.OCompositeKey;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
@@ -44,12 +44,6 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
 	}
 
 	protected OCommandRequestTextAbstract(final String iText) {
-		this(iText, null);
-	}
-
-	protected OCommandRequestTextAbstract(final String iText, final ODatabaseRecord iDatabase) {
-		super(iDatabase);
-
 		if (iText == null)
 			throw new IllegalArgumentException("Text cannot be null");
 
@@ -62,7 +56,7 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
 	@SuppressWarnings("unchecked")
 	public <RET> RET execute(final Object... iArgs) {
 		setParameters(iArgs);
-		return (RET) database.getStorage().command(this);
+		return (RET) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().command(this);
 	}
 
 	public String getText() {
@@ -84,7 +78,7 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
 			final boolean simpleParams = buffer.getAsBoolean();
 			if (simpleParams) {
 				final byte[] paramBuffer = buffer.getAsByteArray();
-				final ODocument param = new ODocument(database);
+				final ODocument param = new ODocument();
 				param.fromStream(paramBuffer);
 
 				Map<String, Object> params = param.field("params");
@@ -107,7 +101,7 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
 			final boolean compositeKeyParamsPresent = buffer.getAsBoolean();
 			if (compositeKeyParamsPresent) {
 				final byte[] paramBuffer = buffer.getAsByteArray();
-				final ODocument param = new ODocument(database);
+				final ODocument param = new ODocument();
 				param.fromStream(paramBuffer);
 
 				final Map<String, Object> compositeKeyParams = param.field("compositeKeyParams");
@@ -116,8 +110,7 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
 					parameters = new HashMap<Object, Object>();
 
 				for (final Entry<String, Object> p : compositeKeyParams.entrySet()) {
-					final Object value = OCompositeKeySerializer.INSTANCE.fromStream(database,
-							OStringSerializerHelper.getBinaryContent(p.getValue()));
+					final Object value = OCompositeKeySerializer.INSTANCE.fromStream(OStringSerializerHelper.getBinaryContent(p.getValue()));
 
 					if (Character.isDigit(p.getKey().charAt(0)))
 						parameters.put(Integer.parseInt(p.getKey()), value);
@@ -147,20 +140,20 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
 
 				for (final Entry<Object, Object> paramEntry : parameters.entrySet())
 					if (paramEntry.getValue() instanceof OCompositeKey)
-						compositeKeyParams.put(paramEntry.getKey(), OCompositeKeySerializer.INSTANCE.toStream(database, paramEntry.getValue()));
+						compositeKeyParams.put(paramEntry.getKey(), OCompositeKeySerializer.INSTANCE.toStream(paramEntry.getValue()));
 					else
 						params.put(paramEntry.getKey(), paramEntry.getValue());
 
 				buffer.set(!params.isEmpty());
 				if (!params.isEmpty()) {
-					final ODocument param = new ODocument(database);
+					final ODocument param = new ODocument();
 					param.field("params", params);
 					buffer.set(param.toStream());
 				}
 
 				buffer.set(!compositeKeyParams.isEmpty());
 				if (!compositeKeyParams.isEmpty()) {
-					final ODocument compositeKey = new ODocument(database);
+					final ODocument compositeKey = new ODocument();
 					compositeKey.field("compositeKeyParams", compositeKeyParams);
 					buffer.set(compositeKey.toStream());
 				}

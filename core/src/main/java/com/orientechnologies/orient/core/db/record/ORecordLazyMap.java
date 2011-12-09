@@ -195,16 +195,6 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
 		return recordType;
 	}
 
-	@Override
-	public boolean setDatabase(final ODatabaseRecord iDatabase) {
-		if (database != iDatabase) {
-			database = iDatabase;
-			super.setDatabase(iDatabase);
-			return true;
-		}
-		return false;
-	}
-
 	public Iterator<OIdentifiable> rawIterator() {
 		return new OLazyRecordIterator(sourceRecord, super.values().iterator(), false);
 	}

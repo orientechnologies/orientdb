@@ -105,12 +105,6 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, Ser
 	public void onAfterIdentityChanged(ORecord<?> iRecord) {
 	}
 
-	public boolean setDatabase(final ODatabaseRecord iDatabase) {
-		if (sourceRecord != null)
-			return sourceRecord.setDatabase(iDatabase);
-		return false;
-	}
-
 	protected boolean rawAdd(T element) {
 		return super.add(element);
 	}

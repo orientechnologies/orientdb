@@ -128,14 +128,12 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 	protected void fromStream() {
 		acquireExclusiveLock();
 		try {
-			document.setDatabase(getDatabase());
 			final Collection<ODocument> idxs = document.field(CONFIG_INDEXES);
 
 			if (idxs != null) {
 				OIndexInternal<?> index;
 				for (final ODocument d : idxs) {
 					index = OIndexFactory.instance().newInstance(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE));
-					d.setDatabase(getDatabase());
 					((OIndexInternal<?>) index).loadFromConfiguration(d);
 					addIndexInternal(index);
 				}
@@ -152,7 +150,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 	public ODocument toStream() {
 		acquireExclusiveLock();
 		try {
-			document.setDatabase(getDatabase());
 			document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
 			try {

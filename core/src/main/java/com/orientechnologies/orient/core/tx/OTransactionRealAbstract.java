@@ -160,7 +160,6 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 	public ODocument getIndexChanges() {
 		final StringBuilder value = new StringBuilder();
 
-		final ODatabaseRecordTx database = getDatabase();
 		final ODocument result = new ODocument();
 
 		for (Entry<String, OTransactionIndexChanges> indexEntry : indexEntries.entrySet()) {
@@ -180,9 +179,9 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 				if (entry.key != null) {
 					if (entry.key instanceof OCompositeKey) {
 						final List<Comparable> keys = ((OCompositeKey) entry.key).getKeys();
-						ORecordSerializerStringAbstract.fieldTypeToString(value, null, OType.EMBEDDEDLIST, keys);
+						ORecordSerializerStringAbstract.fieldTypeToString(value, OType.EMBEDDEDLIST, keys);
 					} else
-						ORecordSerializerStringAbstract.fieldTypeToString(value, null, OType.getTypeByClass(entry.key.getClass()), entry.key);
+						ORecordSerializerStringAbstract.fieldTypeToString(value, OType.getTypeByClass(entry.key.getClass()), entry.key);
 				} else
 					value.append('*');
 				String key = value.toString();

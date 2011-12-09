@@ -18,7 +18,6 @@ package com.orientechnologies.orient.core.command;
 import java.util.Map;
 
 import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
 /**
@@ -30,10 +29,6 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  */
 public interface OCommandRequestInternal extends OCommandRequest, OSerializableStream {
 	public Map<Object, Object> getParameters();
-
-	public ODatabaseRecord getDatabase();
-
-	public OCommandRequestInternal setDatabase(final ODatabaseRecord iDatabase);
 
 	public OCommandResultListener getResultListener();
 

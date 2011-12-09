@@ -63,12 +63,4 @@ public interface ORecordElement {
 	 * Internal only.
 	 */
 	public void onAfterIdentityChanged(ORecord<?> iRecord);
-
-	/**
-	 * Sets the current database.
-	 * 
-	 * @return true if the database is changed, otherwise false
-	 */
-	public boolean setDatabase(ODatabaseRecord iDatabase);
-
 }

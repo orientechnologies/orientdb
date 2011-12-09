@@ -60,12 +60,12 @@ public class TransactionConsistencyTest {
 		// Create docA.
 		ODocument vDocA_db1 = database1.newInstance();
 		vDocA_db1.field(NAME, "docA");
-		vDocA_db1.save();
+		database1.save(vDocA_db1);
 
 		// Create docB.
 		ODocument vDocB_db1 = database1.newInstance();
 		vDocB_db1.field(NAME, "docB");
-		vDocB_db1.save();
+		database1.save(vDocB_db1);
 
 		database1.commit();
 
@@ -78,13 +78,13 @@ public class TransactionConsistencyTest {
 			// Get docA and update in db2 transaction context
 			ODocument vDocA_db2 = database2.load(vDocA_Rid);
 			vDocA_db2.field(NAME, "docA_v2");
-			vDocA_db2.save();
+			database2.save(vDocA_db2);
 
 			// Concurrent update docA via database1 -> will throw OConcurrentModificationException at database2.commit().
 			database1.begin(TXTYPE.OPTIMISTIC);
 			try {
 				vDocA_db1.field(NAME, "docA_v3");
-				vDocA_db1.save();
+				database1.save(vDocA_db1);
 				database1.commit();
 			} catch (OConcurrentModificationException e) {
 				Assert.fail("Should not failed here...");
@@ -94,7 +94,7 @@ public class TransactionConsistencyTest {
 			// Update docB in db2 transaction context -> should be rollbacked.
 			ODocument vDocB_db2 = database2.load(vDocB_Rid);
 			vDocB_db2.field(NAME, "docB_UpdatedInTranscationThatWillBeRollbacked");
-			vDocB_db2.save();
+			database2.save(vDocB_db2);
 
 			// Will throw OConcurrentModificationException
 			database2.commit();
@@ -125,7 +125,7 @@ public class TransactionConsistencyTest {
 		ODocument vDocA_db1 = database1.newInstance();
 		vDocA_db1.field(NAME, "docA");
 		vDocA_db1.unpin();
-		vDocA_db1.save();
+		database1.save(vDocA_db1);
 
 		// Keep the IDs.
 		ORID vDocA_Rid = vDocA_db1.getIdentity().copy();
@@ -135,12 +135,12 @@ public class TransactionConsistencyTest {
 			// Get docA and update in db2 transaction context
 			ODocument vDocA_db2 = database2.load(vDocA_Rid);
 			vDocA_db2.field(NAME, "docA_v2");
-			vDocA_db2.save();
+			database2.save(vDocA_db2);
 
 			database1.begin(TXTYPE.OPTIMISTIC);
 			try {
 				vDocA_db1.field(NAME, "docA_v3");
-				vDocA_db1.save();
+				database1.save(vDocA_db1);
 				database1.commit();
 			} catch (OConcurrentModificationException e) {
 				Assert.fail("Should not failed here...");
@@ -177,7 +177,7 @@ public class TransactionConsistencyTest {
 		// Create docA.
 		ODocument vDocA_db1 = database1.newInstance();
 		vDocA_db1.field(NAME, "docA");
-		vDocA_db1.save();
+		database1.save(vDocA_db1);
 
 		// Keep the IDs.
 		ORID vDocA_Rid = vDocA_db1.getIdentity().copy();
@@ -187,12 +187,12 @@ public class TransactionConsistencyTest {
 			// Get docA and update in db2 transaction context
 			ODocument vDocA_db2 = database2.load(vDocA_Rid);
 			vDocA_db2.field(NAME, "docA_v2");
-			vDocA_db2.save();
+			database2.save(vDocA_db2);
 
 			database1.begin(TXTYPE.OPTIMISTIC);
 			try {
 				vDocA_db1.field(NAME, "docA_v3");
-				vDocA_db1.save();
+				database1.save(vDocA_db1);
 				database1.commit();
 			} catch (OConcurrentModificationException e) {
 				Assert.fail("Should not failed here...");
@@ -228,7 +228,7 @@ public class TransactionConsistencyTest {
 		database1.begin(TXTYPE.OPTIMISTIC);
 		ODocument vDocA_db1 = database1.newInstance();
 		vDocA_db1.field(NAME, "docA");
-		vDocA_db1.save();
+		database1.save(vDocA_db1);
 		database1.commit();
 
 		// Keep the ID.
@@ -238,7 +238,7 @@ public class TransactionConsistencyTest {
 		database2.begin(TXTYPE.OPTIMISTIC);
 		ODocument vDocA_db2 = database2.load(vDocA_Rid);
 		vDocA_db2.field(NAME, "docA_v2");
-		vDocA_db2.save();
+		database2.save( vDocA_db2);
 		database2.commit();
 
 		// Later... read docA with db1.

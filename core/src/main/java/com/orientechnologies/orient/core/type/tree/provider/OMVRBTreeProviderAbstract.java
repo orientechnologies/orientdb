@@ -132,7 +132,6 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
 	protected void load(final ODatabaseRecord iDb) {
 		if (!record.getIdentity().isValid())
 			return;
-		record.setDatabase(iDb);
 		record.reload();
 		fromStream(record.toStream());
 	}
@@ -141,7 +140,7 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
 		if (!record.getIdentity().isValid())
 			// NOTHING TO LOAD
 			return;
-		ORawBuffer raw = iSt.readRecord(null, (ORecordId) record.getIdentity(), null, null);
+		ORawBuffer raw = iSt.readRecord((ORecordId) record.getIdentity(), null, null);
 		if (raw == null)
 			throw new OConfigurationException("Cannot load map with id " + record.getIdentity());
 		record.setVersion(raw.version);
@@ -151,7 +150,6 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
 	protected void save(final ODatabaseRecord iDb) {
 		record.fromStream(toStream());
 		record.setDirty();
-		record.setDatabase(iDb);
 		record.save(clusterName);
 	}
 

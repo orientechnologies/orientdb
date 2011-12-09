@@ -56,7 +56,7 @@ public class OStorageRemoteServiceThread extends OSoftThread {
 
 			switch (request) {
 			case OChannelBinaryProtocol.REQUEST_PUSH_RECORD:
-				final ORecordInternal<?> record = (ORecordInternal<?>) OStorageRemote.readIdentifiable(network, null);
+				final ORecordInternal<?> record = (ORecordInternal<?>) OStorageRemote.readIdentifiable(network);
 
 				for (ORemoteServerEventListener listener : storage.getRemoteServerEventListeners())
 					listener.onRecordPulled(record);

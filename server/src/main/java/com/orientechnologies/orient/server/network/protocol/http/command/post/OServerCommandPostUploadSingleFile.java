@@ -163,7 +163,7 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
 			fileDocument = null;
 		} else {
 			if (fileRID != null) {
-				ORecordBytes file = new ORecordBytes(database, fileRID);
+				ORecordBytes file = new ORecordBytes(fileRID);
 				database.delete(file);
 			}
 			sendTextContent(iRequest, OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Document template cannot be null", null,

@@ -45,15 +45,13 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
 
 	public ORecordInternal<?> fromStream(ODatabaseRecord iDatabase, byte[] iSource) {
 		// TODO: HANDLE FACTORIES
-		return fromStream(iDatabase, iSource, null);
+		return fromStream(iSource, null);
 	}
 
-	public ORecordInternal<?> fromStream(ODatabaseRecord iDatabase, byte[] iSource, ORecordInternal<?> iRecord) {
+	public ORecordInternal<?> fromStream(byte[] iSource, ORecordInternal<?> iRecord) {
 		ODocument record = (ODocument) iRecord;
-		ODatabaseDocument database = (ODatabaseDocument) iDatabase;
-
 		if (iRecord == null)
-			record = new ODocument(database);
+			record = new ODocument();
 
 		ByteArrayInputStream stream = null;
 		DataInputStream in = null;
@@ -97,7 +95,7 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
 						// != NULL
 						buffer = new byte[length];
 						in.readFully(buffer);
-						value = new ODocument(database, p.getLinkedClass().getName()).fromStream(buffer);
+						value = new ODocument(p.getLinkedClass().getName()).fromStream(buffer);
 					}
 					break;
 				case EMBEDDEDLIST:
@@ -146,7 +144,7 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
 		return iRecord;
 	}
 
-	public byte[] toStream(final ODatabaseRecord iDatabase, final ORecordInternal<?> iRecord, boolean iOnlyDelta) {
+	public byte[] toStream(final ORecordInternal<?> iRecord, boolean iOnlyDelta) {
 		ODocument record = (ODocument) iRecord;
 
 		ByteArrayOutputStream stream = null;

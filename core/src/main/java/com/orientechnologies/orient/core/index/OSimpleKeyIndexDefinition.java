@@ -18,9 +18,6 @@ public class OSimpleKeyIndexDefinition extends ODocumentWrapperNoClass implement
 
 	public OSimpleKeyIndexDefinition(final OType... keyTypes) {
 		super(new ODocument());
-
-		document.setDatabase(getDatabase());
-
 		this.keyTypes = keyTypes;
 	}
 
@@ -35,18 +32,18 @@ public class OSimpleKeyIndexDefinition extends ODocumentWrapperNoClass implement
 		return null;
 	}
 
-	public Comparable createValue(final List<?> params) {
+	public Comparable<?> createValue(final List<?> params) {
 		if (params == null || params.isEmpty())
 			return null;
 
 		if (keyTypes.length == 1)
-			return (Comparable) OType.convert(params.iterator().next(), keyTypes[0].getDefaultJavaType());
+			return (Comparable<?>) OType.convert(params.iterator().next(), keyTypes[0].getDefaultJavaType());
 
 		final OCompositeKey compositeKey = new OCompositeKey();
 
 		int i = 0;
 		for (final Object param : params) {
-			final Comparable paramValue = (Comparable) OType.convert(param, keyTypes[i].getDefaultJavaType());
+			final Comparable<?> paramValue = (Comparable<?>) OType.convert(param, keyTypes[i].getDefaultJavaType());
 
 			if (paramValue == null)
 				return null;
@@ -57,7 +54,7 @@ public class OSimpleKeyIndexDefinition extends ODocumentWrapperNoClass implement
 		return compositeKey;
 	}
 
-	public Comparable createValue(final Object... params) {
+	public Comparable<?> createValue(final Object... params) {
 		return createValue(Arrays.asList(params));
 	}
 
@@ -72,7 +69,6 @@ public class OSimpleKeyIndexDefinition extends ODocumentWrapperNoClass implement
 	@Override
 	public ODocument toStream() {
 		document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-		document.setDatabase(getDatabase());
 		try {
 
 			final List<String> keyTypeNames = new ArrayList<String>(keyTypes.length);

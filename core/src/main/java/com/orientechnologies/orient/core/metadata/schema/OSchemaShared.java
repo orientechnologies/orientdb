@@ -455,7 +455,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 		OClassImpl cls;
 		Collection<ODocument> storedClasses = document.field("classes");
 		for (ODocument c : storedClasses) {
-			c.setDatabase(getDatabase());
 			cls = new OClassImpl(this, c);
 			cls.fromStream();
 			classes.put(cls.getName().toLowerCase(), cls);
@@ -609,8 +608,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 	}
 
 	private ODatabaseRecord getDatabase() {
-		document.setDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
-		return document.getDatabase();
+		return ODatabaseRecordThreadLocal.INSTANCE.get();
 	}
 
 	public void close() {

@@ -284,7 +284,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
 		if (serializedKeys[iIndex] <= 0) {
 			// NEW OR MODIFIED: MARSHALL CONTENT
 			OProfiler.getInstance().updateCounter("OMVRBTreeMapEntry.serializeValue", 1);
-			return ((OMVRBTreeMapProvider<K, V>) treeDataProvider).keySerializer.toStream(null, keys[iIndex]);
+			return ((OMVRBTreeMapProvider<K, V>) treeDataProvider).keySerializer.toStream(keys[iIndex]);
 		}
 		// RETURN ORIGINAL CONTENT
 		return stream.getAsByteArray(serializedKeys[iIndex]);
@@ -298,19 +298,18 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
 		if (serializedValues[iIndex] <= 0) {
 			// NEW OR MODIFIED: MARSHALL CONTENT
 			OProfiler.getInstance().updateCounter("OMVRBTreeMapEntry.serializeKey", 1);
-			return ((OMVRBTreeMapProvider<K, V>) treeDataProvider).valueSerializer.toStream(null, values[iIndex]);
+			return ((OMVRBTreeMapProvider<K, V>) treeDataProvider).valueSerializer.toStream(values[iIndex]);
 		}
 		// RETURN ORIGINAL CONTENT
 		return stream.getAsByteArray(serializedValues[iIndex]);
 	}
 
 	protected Object keyFromStream(final int iIndex) throws IOException {
-		return ((OMVRBTreeMapProvider<K, V>) treeDataProvider).keySerializer.fromStream(
-				treeDataProvider.storage == null ? treeDataProvider.getDatabase() : null, stream.getAsByteArray(serializedKeys[iIndex]));
+		return ((OMVRBTreeMapProvider<K, V>) treeDataProvider).keySerializer.fromStream(stream.getAsByteArray(serializedKeys[iIndex]));
 	}
 
 	protected Object valueFromStream(final int iIndex) throws IOException {
-		return ((OMVRBTreeMapProvider<K, V>) treeDataProvider).valueSerializer.fromStream(
-				treeDataProvider.storage == null ? treeDataProvider.getDatabase() : null, stream.getAsByteArray(serializedValues[iIndex]));
+		return ((OMVRBTreeMapProvider<K, V>) treeDataProvider).valueSerializer.fromStream(stream
+				.getAsByteArray(serializedValues[iIndex]));
 	}
 }

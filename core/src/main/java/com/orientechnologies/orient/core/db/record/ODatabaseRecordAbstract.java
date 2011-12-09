@@ -51,7 +51,6 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.security.OUserTrigger;
 import com.orientechnologies.orient.core.query.OQuery;
-import com.orientechnologies.orient.core.query.OQueryAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -101,7 +100,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			super.open(iUserName, iUserPassword);
 			level1Cache.startup();
 
-			metadata = new OMetadata(this);
+			metadata = new OMetadata();
 			metadata.load();
 
 			recordFormat = DEF_RECORD_FORMAT;
@@ -112,7 +111,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				registerHook(new OClassIndexManager());
 			} else
 				// CREATE DUMMY USER
-				user = new OUser(this, iUserName, OUser.encryptPassword(iUserPassword)).addRole(new ORole(this, "passthrough", null,
+				user = new OUser(iUserName, OUser.encryptPassword(iUserPassword)).addRole(new ORole("passthrough", null,
 						ORole.ALLOW_MODES.ALLOW_ALL_BUT));
 
 			checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
@@ -143,7 +142,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			}
 
 			// CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
-			metadata = new OMetadata(this);
+			metadata = new OMetadata();
 			metadata.create();
 
 			user = getMetadata().getSecurity().getUser(OUser.ADMIN);
@@ -276,8 +275,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 		try {
 			command.reset();
-			command.setDatabase(this);
-
 			return command;
 
 		} catch (Exception e) {
@@ -289,10 +286,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		setCurrentDatabaseinThreadLocal();
 
 		iCommand.reset();
-
-		if (iCommand instanceof OQueryAbstract)
-			((OQueryAbstract<?>) iCommand).setDatabase(this);
-
 		return (RET) iCommand.execute(iArgs);
 	}
 
@@ -301,7 +294,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	}
 
 	public <RET extends Object> RET newInstance() {
-		return (RET) Orient.instance().getRecordFactoryManager().newInstance(this, recordType);
+		return (RET) Orient.instance().getRecordFactoryManager().newInstance(recordType);
 	}
 
 	@Override
@@ -448,7 +441,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			final String iFetchPlan, final boolean iIgnoreCache) {
 		checkOpeness();
 
-		//setCurrentDatabaseinThreadLocal();
+		// setCurrentDatabaseinThreadLocal();
 
 		try {
 			checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, getClusterNameById(iRid.getClusterId()));
@@ -476,13 +469,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 			if (iRecord == null || iRecord.getRecordType() != recordBuffer.recordType)
 				// NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
-				iRecord = Orient.instance().getRecordFactoryManager().newInstance(this, recordBuffer.recordType);
+				iRecord = Orient.instance().getRecordFactoryManager().newInstance(recordBuffer.recordType);
 
-			ODatabaseRecord currDb = iRecord.getDatabase();
-			if (currDb == null)
-				currDb = (ODatabaseRecord) databaseOwner;
-
-			iRecord.fill(currDb, iRid, recordBuffer.version, recordBuffer.buffer, false);
+			iRecord.fill(iRid, recordBuffer.version, recordBuffer.buffer, false);
 
 			callbackHooks(TYPE.BEFORE_READ, iRecord);
 
@@ -519,9 +508,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 					"Cannot create record because it has no identity. Probably is not a regular record or contains projections of fields rather than a full record");
 
 		setCurrentDatabaseinThreadLocal();
-
-		if (iRecord.getDatabase() == null)
-			iRecord.setDatabase(this);
 
 		try {
 			final boolean wasNew = rid.isNew();
@@ -578,10 +564,10 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				// NOTIFY IDENTITY HAS CHANGED
 				iRecord.onAfterIdentityChanged(iRecord);
 				// UPDATE INFORMATION: CLUSTER ID+POSITION
-				iRecord.fill(iRecord.getDatabase(), rid, 0, stream, stream == null || stream.length == 0);
+				iRecord.fill(rid, 0, stream, stream == null || stream.length == 0);
 			} else {
 				// UPDATE INFORMATION: VERSION
-				iRecord.fill(iRecord.getDatabase(), rid, (int) result, stream, stream == null || stream.length == 0);
+				iRecord.fill(rid, (int) result, stream, stream == null || stream.length == 0);
 			}
 
 			callbackHooks(wasNew ? TYPE.AFTER_CREATE : TYPE.AFTER_UPDATE, iRecord);

@@ -95,8 +95,8 @@ public class TransactionOptimisticTest {
 			record1.load();
 			ORecordFlat record2 = db2.load(record1.getIdentity());
 
-			record2.value("This is the second version").save();
-			record1.value("This is the third version").save();
+			db2.save(record2.value("This is the second version"));
+			db1.save(record1.value("This is the third version"));
 
 			db1.commit();
 

@@ -40,8 +40,6 @@ public class OPropertyIndexDefinition extends ODocumentWrapperNoClass implements
 	public OPropertyIndexDefinition(final String iClassName, final String iField, final OType iType) {
 		super(new ODocument());
 
-		document.setDatabase(getDatabase());
-
 		className = iClassName;
 		field = iField;
 		keyType = iType;

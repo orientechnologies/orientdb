@@ -67,12 +67,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 	private SimpleDateFormat									dateFormat						= new SimpleDateFormat(DEF_DATE_FORMAT);
 
 	@Override
-	public ORecordInternal<?> fromString(final ODatabaseRecord iDatabase, final String iSource) {
-		return fromString(iDatabase, iSource, null);
-	}
-
-	@Override
-	public ORecordInternal<?> fromString(final ODatabaseRecord iDatabase, String iSource, ORecordInternal<?> iRecord) {
+	public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord) {
 		if (iSource == null)
 			throw new OSerializationException("Error on unmarshalling JSON content: content is null");
 
@@ -116,7 +111,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				} else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_TYPE)) {
 					if (iRecord == null || iRecord.getRecordType() != fieldValueAsString.charAt(0)) {
 						// CREATE THE RIGHT RECORD INSTANCE
-						iRecord = Orient.instance().getRecordFactoryManager().newInstance(iDatabase, (byte) fieldValueAsString.charAt(0));
+						iRecord = Orient.instance().getRecordFactoryManager().newInstance((byte) fieldValueAsString.charAt(0));
 					}
 				}
 			}
@@ -216,7 +211,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 			if (hasTypeField(fields)) {
 				// OBJECT
-				final ORecordInternal<?> recordInternal = fromString(iRecord.getDatabase(), iFieldValue, null);
+				final ORecordInternal<?> recordInternal = fromString(iFieldValue, null);
 				if (recordInternal instanceof ODocument)
 					((ODocument) recordInternal).addOwner(iRecord);
 				return recordInternal;
@@ -334,7 +329,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				}
 
 			case EMBEDDED:
-				return fromString(iRecord.getDatabase(), iFieldValueAsString);
+				return fromString(iFieldValueAsString);
 
 			case DATE:
 			case DATETIME:

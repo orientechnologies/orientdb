@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -40,8 +41,8 @@ public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLPermis
 
 	@SuppressWarnings("unchecked")
 	public OCommandExecutorSQLTruncateRecord parse(final OCommandRequestText iRequest) {
-		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_DELETE);
-		init(iRequest.getDatabase(), iRequest.getText());
+		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_DELETE);
+		init(iRequest.getText());
 
 		StringBuilder word = new StringBuilder();
 
@@ -79,6 +80,7 @@ public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLPermis
 		if (records.isEmpty())
 			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
+		final ODatabaseRecord database = getDatabase();
 		for (String rec : records) {
 			try {
 				final ORecordId rid = new ORecordId(rec);

@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODetachable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -94,8 +93,12 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	 *          Database instance
 	 */
 	public ODocument(final ODatabaseRecord iDatabase) {
-		super(iDatabase);
 		setup();
+	}
+
+	public ODocument(final ODatabaseRecord iDatabase, final ORID iRID) {
+		this(iRID);
+		ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
 	}
 
 	/**
@@ -107,11 +110,16 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	 * @param iRID
 	 *          Record Id
 	 */
-	public ODocument(final ODatabaseRecord iDatabase, final ORID iRID) {
-		this(iDatabase);
+	public ODocument(final ORID iRID) {
+		setup();
 		_recordId = (ORecordId) iRID;
 		_status = STATUS.NOT_LOADED;
 		_dirty = false;
+	}
+
+	public ODocument(final ODatabaseRecord iDatabase, final String iClassName, final ORID iRID) {
+		this(iClassName, iRID);
+		ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
 	}
 
 	/**
@@ -125,11 +133,17 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	 * @param iRID
 	 *          Record Id
 	 */
-	public ODocument(final ODatabaseRecord iDatabase, final String iClassName, final ORID iRID) {
-		this(iDatabase, iClassName);
+	public ODocument(final String iClassName, final ORID iRID) {
+		this(iClassName);
 		_recordId = (ORecordId) iRID;
 		_dirty = false;
 		_status = STATUS.NOT_LOADED;
+	}
+
+	public ODocument(final ODatabaseRecord iDatabase, final String iClassName) {
+		ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
+		setClassName(iClassName);
+		setup();
 	}
 
 	/**
@@ -140,8 +154,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	 * @param iClassName
 	 *          Class name
 	 */
-	public ODocument(final ODatabaseRecord iDatabase, final String iClassName) {
-		super(iDatabase);
+	public ODocument(final String iClassName) {
 		setClassName(iClassName);
 		setup();
 	}
@@ -154,7 +167,6 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	 *          OClass instance
 	 */
 	public ODocument(final OClass iClass) {
-		super(ODatabaseRecordThreadLocal.INSTANCE.get());
 		setup();
 		_clazz = iClass;
 	}
@@ -238,7 +250,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 			throw new IllegalStateException("Cannot execute a flat copy of a dirty record");
 
 		final ODocument cloned = new ODocument();
-		cloned.fill(_database, _recordId, _version, _source, false);
+		cloned.fill(_recordId, _version, _source, false);
 		return cloned;
 	}
 
@@ -250,7 +262,6 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	public ORecord<?> placeholder() {
 		final ODocument cloned = new ODocument();
 		cloned._source = null;
-		cloned._database = _database;
 		cloned._recordId = _recordId.copy();
 		cloned._status = STATUS.NOT_LOADED;
 		cloned._dirty = false;
@@ -258,7 +269,6 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	}
 
 	public boolean detach() {
-		_database = null;
 		boolean fullyDetached = true;
 
 		if (_fieldValues != null) {
@@ -305,12 +315,9 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	 *          Ignore the cache or use it
 	 */
 	public ODocument load(final String iFetchPlan, boolean iIgnoreCache) {
-		if (_database == null)
-			throw new ODatabaseException("No database assigned to current record");
-
 		Object result = null;
 		try {
-			result = _database.load(this, iFetchPlan, iIgnoreCache);
+			result = getDatabase().load(this, iFetchPlan, iIgnoreCache);
 		} catch (Exception e) {
 			throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found", e);
 		}
@@ -459,9 +466,10 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
 		final OType t = fieldType(iFieldName);
 
-		if (_lazyLoad && value instanceof ORID && t != OType.LINK && _database != null) {
+		final ODatabaseRecord database = getDatabase();
+		if (_lazyLoad && value instanceof ORID && t != OType.LINK && database != null) {
 			// CREATE THE DOCUMENT OBJECT IN LAZY WAY
-			value = (RET) _database.load((ORID) value);
+			value = (RET) database.load((ORID) value);
 			_fieldValues.put(iFieldName, value);
 		}
 
@@ -761,19 +769,6 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 			return OEmptyIterator.INSTANCE;
 
 		return _fieldValues.entrySet().iterator();
-	}
-
-	@Override
-	public boolean setDatabase(final ODatabaseRecord iDatabase) {
-		if (super.setDatabase(iDatabase)) {
-			if (_fieldValues != null)
-				for (Object f : _fieldValues.values()) {
-					if (f instanceof ORecordElement)
-						((ORecordElement) f).setDatabase(iDatabase);
-				}
-			return true;
-		}
-		return false;
 	}
 
 	/**

@@ -26,7 +26,7 @@ import com.orientechnologies.orient.test.database.base.OrientTest;
 
 public class NativeAsynchQuerySpeedTest extends SpeedTestMonoThread implements OCommandResultListener {
 	private ODatabaseDocumentTx	database;
-	protected int						resultCount	= 0;
+	protected int								resultCount	= 0;
 
 	public NativeAsynchQuerySpeedTest() {
 		super(1);

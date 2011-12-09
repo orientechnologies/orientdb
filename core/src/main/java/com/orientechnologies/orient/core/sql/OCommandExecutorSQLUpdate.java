@@ -27,6 +27,7 @@ import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -63,9 +64,10 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 
 	@SuppressWarnings("unchecked")
 	public OCommandExecutorSQLUpdate parse(final OCommandRequestText iRequest) {
-		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_UPDATE);
+		final ODatabaseRecord database = getDatabase();
+		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_UPDATE);
 
-		init(iRequest.getDatabase(), iRequest.getText());
+		init(iRequest.getText());
 
 		setEntries.clear();
 		query = null;
@@ -131,7 +133,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 				queryArgs.put(i - parameterCounter, parameters.get(i));
 		}
 
-		database.query(query, queryArgs);
+		getDatabase().query(query, queryArgs);
 		return recordCount;
 	}
 
@@ -455,6 +457,6 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 	private Object getFieldValueCountingParameters(String fieldValue) {
 		if (fieldValue.trim().equals("?"))
 			parameterCounter++;
-		return OSQLHelper.parseValue(database, this, fieldValue);
+		return OSQLHelper.parseValue(this, fieldValue);
 	}
 }

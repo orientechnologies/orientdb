@@ -45,8 +45,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 	public static final ORecordSerializerSchemaAware2CSV	INSTANCE	= new ORecordSerializerSchemaAware2CSV();
 
 	@Override
-	public ORecordSchemaAware<?> newObject(ODatabaseRecord iDatabase, String iClassName) {
-		return new ODocument(iDatabase, iClassName);
+	public ORecordSchemaAware<?> newObject(String iClassName) {
+		return new ODocument(iClassName);
 	}
 
 	@Override
@@ -296,7 +296,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 	}
 
 	@Override
-	protected ORecordInternal<?> fromString(final ODatabaseRecord iDatabase, String iContent, final ORecordInternal<?> iRecord) {
+	public ORecordInternal<?> fromString(String iContent, final ORecordInternal<?> iRecord) {
 		iContent = iContent.trim();
 
 		if (iContent.length() == 0)
@@ -322,6 +322,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 		OClass linkedClass;
 		OType linkedType;
 		OProperty prop;
+
+		final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
 
 		// UNMARSHALL ALL THE FIELDS
 		for (int i = 0; i < fields.size(); ++i) {
@@ -372,7 +374,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 										if (classSeparatorPos > -1) {
 											String className = value.substring(1, classSeparatorPos);
 											if (className != null)
-												linkedClass = iDatabase.getMetadata().getSchema().getClass(className);
+												linkedClass = database.getMetadata().getSchema().getClass(className);
 										}
 									} else if (value.charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN) {
 										linkedType = OType.EMBEDDED;

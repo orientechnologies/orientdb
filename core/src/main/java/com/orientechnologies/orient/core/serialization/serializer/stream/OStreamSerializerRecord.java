@@ -18,7 +18,6 @@ package com.orientechnologies.orient.core.serialization.serializer.stream;
 import java.io.IOException;
 
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -36,12 +35,12 @@ public class OStreamSerializerRecord implements OStreamSerializer {
 	/**
 	 * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
 	 */
-	public Object fromStream(final ODatabaseRecord iDatabase, final byte[] iStream) throws IOException {
+	public Object fromStream(final byte[] iStream) throws IOException {
 		if (iStream == null || iStream.length == 0)
 			// NULL VALUE
 			return null;
 
-		final ORecordInternal<?> obj = Orient.instance().getRecordFactoryManager().newInstance(iDatabase);
+		final ORecordInternal<?> obj = Orient.instance().getRecordFactoryManager().newInstance();
 
 		final ORID rid = new ORecordId().fromStream(iStream);
 
@@ -49,7 +48,7 @@ public class OStreamSerializerRecord implements OStreamSerializer {
 		return obj;
 	}
 
-	public byte[] toStream(final ODatabaseRecord iDatabase, final Object iObject) throws IOException {
+	public byte[] toStream(final Object iObject) throws IOException {
 		if (iObject == null)
 			return null;
 

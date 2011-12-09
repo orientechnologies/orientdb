@@ -18,7 +18,6 @@ package com.orientechnologies.orient.core.sql;
 import java.util.Locale;
 
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 
 /**
  * SQL abstract Command Executor implementation.
@@ -38,9 +37,9 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 	public static final String	INDEX_PREFIX		= "INDEX:";
 
 	@Override
-	public OCommandExecutorSQLAbstract init(final ODatabaseRecord iDatabase, String iText) {
+	public OCommandExecutorSQLAbstract init(String iText) {
 		iText = iText.trim();
 		textUpperCase = iText.toUpperCase(Locale.ENGLISH);
-		return (OCommandExecutorSQLAbstract) super.init(iDatabase, iText);
+		return (OCommandExecutorSQLAbstract) super.init(iText);
 	}
 }

@@ -204,7 +204,7 @@ public class ODatabaseRaw implements ODatabase {
 		OFetchHelper.checkFetchPlanValid(iFetchPlan);
 
 		try {
-			return storage.readRecord(databaseOwner, iRid, iFetchPlan, null);
+			return storage.readRecord(iRid, iFetchPlan, null);
 
 		} catch (Throwable t) {
 			if (iRid.isTemporary())

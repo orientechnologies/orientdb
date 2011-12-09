@@ -45,9 +45,9 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLPermiss
 	private String							value;
 
 	public OCommandExecutorSQLAlterProperty parse(final OCommandRequestText iRequest) {
-		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_UPDATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_UPDATE);
 
-		init(iRequest.getDatabase(), iRequest.getText());
+		init(iRequest.getText());
 
 		StringBuilder word = new StringBuilder();
 
@@ -107,7 +107,7 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLPermiss
 		if (attribute == null)
 			throw new OCommandExecutionException("Cannot execute the command because it has not yet been parsed");
 
-		final OClassImpl sourceClass = (OClassImpl) database.getMetadata().getSchema().getClass(className);
+		final OClassImpl sourceClass = (OClassImpl) getDatabase().getMetadata().getSchema().getClass(className);
 		if (sourceClass == null)
 			throw new OCommandExecutionException("Source class '" + className + "' not found");
 

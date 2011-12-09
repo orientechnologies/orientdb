@@ -25,7 +25,6 @@ import java.util.Map.Entry;
 
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandToParse;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -84,7 +83,7 @@ public class OSQLHelper {
 	 *          Value to convert.
 	 * @return The value converted if recognized, otherwise VALUE_NOT_PARSED
 	 */
-	public static Object parseValue(final ODatabaseRecord iDatabase, String iValue) {
+	public static Object parseValue(String iValue) {
 		if (iValue == null)
 			return null;
 
@@ -103,7 +102,7 @@ public class OSQLHelper {
 
 			final List<Object> coll = new ArrayList<Object>();
 			for (String item : items) {
-				coll.add(parseValue(iDatabase, item));
+				coll.add(parseValue(item));
 			}
 			fieldValue = coll;
 
@@ -120,7 +119,7 @@ public class OSQLHelper {
 				if (parts == null || parts.size() != 2)
 					throw new OCommandSQLParsingException("Map found but entries are not defined as <key>:<value>");
 
-				map.put(parseValue(iDatabase, parts.get(0)), parseValue(iDatabase, parts.get(1)));
+				map.put(parseValue(parts.get(0)), parseValue(parts.get(1)));
 			}
 			fieldValue = map;
 		} else if (iValue.charAt(0) == ORID.PREFIX)
@@ -175,8 +174,7 @@ public class OSQLHelper {
 		return null;
 	}
 
-	public static Object parseValue(final OSQLFilter iSQLFilter, final ODatabaseRecord iDatabase, final OCommandToParse iCommand,
-			final String iWord) {
+	public static Object parseValue(final OSQLFilter iSQLFilter, final OCommandToParse iCommand, final String iWord) {
 		if (iWord.charAt(0) == OStringSerializerHelper.PARAMETER_POSITIONAL
 				|| iWord.charAt(0) == OStringSerializerHelper.PARAMETER_NAMED) {
 			if (iSQLFilter != null)
@@ -184,20 +182,20 @@ public class OSQLHelper {
 			else
 				return new OSQLFilterItemParameter(iWord);
 		} else
-			return parseValue(iDatabase, iCommand, iWord);
+			return parseValue(iCommand, iWord);
 	}
 
-	public static Object parseValue(final ODatabaseRecord iDatabase, final OCommandToParse iCommand, final String iWord) {
+	public static Object parseValue(final OCommandToParse iCommand, final String iWord) {
 		if (iWord.equals("*"))
 			return "*";
 
 		// TRY TO PARSE AS RAW VALUE
-		final Object v = parseValue(iDatabase, iWord);
+		final Object v = parseValue(iWord);
 		if (v != VALUE_NOT_PARSED)
 			return v;
 
 		// TRY TO PARSE AS FUNCTION
-		final Object func = OSQLHelper.getFunction(iDatabase, iCommand, iWord);
+		final Object func = OSQLHelper.getFunction(iCommand, iWord);
 		if (func != null)
 			return func;
 
@@ -205,7 +203,7 @@ public class OSQLHelper {
 		return new OSQLFilterItemField(iCommand, iWord);
 	}
 
-	public static Object getFunction(final ODatabaseRecord database, final OCommandToParse iCommand, final String iWord) {
+	public static Object getFunction(final OCommandToParse iCommand, final String iWord) {
 		final int separator = iWord.indexOf('.');
 		final int beginParenthesis = iWord.indexOf(OStringSerializerHelper.EMBEDDED_BEGIN);
 		if (beginParenthesis > -1 && (separator == -1 || separator > beginParenthesis)) {
