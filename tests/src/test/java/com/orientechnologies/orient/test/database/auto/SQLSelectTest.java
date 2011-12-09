@@ -1042,11 +1042,17 @@ public class SQLSelectTest {
 		OGraphDatabase db1 = new OGraphDatabase(url);
 		db1 = db1.open("admin", "admin");
 
-		OClass oc = db1.createVertexType("vertexA");
-		oc.createProperty("name", OType.STRING);
+		OClass oc = db1.getVertexType("vertexA");
+		if (oc == null)
+			oc = db1.createVertexType("vertexA");
+		if (!oc.existsProperty("name"))
+			oc.createProperty("name", OType.STRING);
 		oc.createIndex("vertexA_name_idx", OClass.INDEX_TYPE.UNIQUE, "name");
 
-		OClass ocb = db1.createVertexType("vertexB");
+		OClass ocb = db1.getVertexType("vertexB");
+		if (ocb == null)
+			ocb = db1.createVertexType("vertexB");
+
 		ocb.createProperty("name", OType.STRING);
 		ocb.createProperty("map", OType.EMBEDDEDMAP);
 		ocb.createIndex("vertexB_name_idx", OClass.INDEX_TYPE.UNIQUE, "name");

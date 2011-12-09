@@ -164,7 +164,6 @@ public class GraphDatabaseTest {
 		database.open("admin", "admin");
 
 		try {
-
 			database.createVertexType("newV").createProperty("f_int", OType.INTEGER).createIndex(OClass.INDEX_TYPE.UNIQUE);
 			database.getMetadata().getSchema().save();
 
@@ -192,6 +191,35 @@ public class GraphDatabaseTest {
 		}
 	}
 
+	public void test() throws IOException {
+		database.open("admin", "admin");
+
+		try {
+			OClass oc = database.createVertexType("vertexA");
+			oc.createProperty("name", OType.STRING);
+			oc.createIndex("vertexA_name_idx", OClass.INDEX_TYPE.UNIQUE, "name");
+
+			// FIRST: create a couple of records
+			ODocument docA = database.createVertex("vertexA");
+			docA.field("name", "myKey");
+			database.save(docA);
+
+			ODocument docB = database.createVertex("vertexA");
+			docA.field("name", "anotherKey");
+			database.save(docB);
+
+			database.begin();
+			database.delete(docB);
+			database.delete(docA);
+			ODocument docKey = database.createVertex("vertexA");
+			docKey.field("name", "myKey");
+			database.save(docKey);
+			database.commit();
+			
+		} finally {
+			database.close();
+		}
+	}
 	//
 	// @Test
 	// public void testTxDictionary() {

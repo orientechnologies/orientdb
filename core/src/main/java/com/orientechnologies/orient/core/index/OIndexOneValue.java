@@ -27,10 +27,15 @@ import com.orientechnologies.common.collection.OMVRBTree;
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 
 /**
  * Abstract Index implementation that allows only one value for a key.
@@ -96,9 +101,24 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 	public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
 		// CHECK IF ALREADY EXIST
 		final OIdentifiable indexedRID = get(iKey);
-		if (indexedRID != null && !indexedRID.getIdentity().equals(iRecord.getIdentity()))
+		if (indexedRID != null && !indexedRID.getIdentity().equals(iRecord.getIdentity())) {
+			// CHECK IF IN THE SAME TX THE ENTRY WAS DELETED
+			final OTransactionIndexChanges indexChanges = ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction()
+					.getIndexChanges(getName());
+			if (indexChanges != null) {
+				final OTransactionIndexChangesPerKey keyChanges = indexChanges.getChangesPerKey(iKey);
+				if (keyChanges != null) {
+					for (OTransactionIndexEntry entry : keyChanges.entries) {
+						if (entry.operation == OPERATION.REMOVE)
+							// WAS DELETED, OK!
+							return;
+					}
+				}
+			}
+
 			OLogManager.instance().exception("Found duplicated key '%s' previously assigned to the record %s", null,
 					OIndexException.class, iKey, indexedRID);
+		}
 	}
 
 	public OIndexOneValue create(final String iName, final OIndexDefinition iIndexDefinition, final ODatabaseRecord iDatabase,
