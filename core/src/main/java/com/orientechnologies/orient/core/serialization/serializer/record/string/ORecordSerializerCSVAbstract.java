@@ -456,7 +456,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 						fieldTypeToString(iOutput, iDatabase, iLinkedType, o.getValue());
 					}
 				}
-
+				iLinkedType = null;
 				items++;
 			}
 		}
