@@ -186,7 +186,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 						if (iLinkedType == null)
 							if (!mapValue.isEmpty()) {
 								linkedType = getType(mapValue);
-								if (linkedType == OType.LINK && !(map instanceof ORecordLazyMap)) {
+								if (isConvertToLinkedMap(map, linkedType)) {
 									// CONVERT IT TO A LAZY MAP
 									map = new ORecordLazyMap(iSourceDocument, ODocument.RECORD_TYPE);
 									((ORecordElement) map).setInternalStatus(STATUS.UNMARSHALLING);
@@ -216,6 +216,16 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			((ORecordElement) map).setInternalStatus(STATUS.LOADED);
 
 		return map;
+	}
+
+	protected boolean isConvertToLinkedMap(Map map, final OType linkedType) {
+		boolean convert = (linkedType == OType.LINK && !(map instanceof ORecordLazyMap));
+		if (convert) {
+			for (Object value : map.values())
+				if (!(value instanceof OIdentifiable))
+					return false;
+		}
+		return convert;
 	}
 
 	public void fieldToStream(final ODocument iRecord, final ODatabaseComplex<?> iDatabase, final StringBuilder iOutput,
@@ -451,12 +461,13 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 						fieldTypeToString(iOutput, iDatabase, OType.EMBEDDEDMAP, o.getValue());
 					} else {
 						// EMBEDDED LITERALS
-						if (iLinkedType == null && o.getValue() != null)
-							iLinkedType = OType.getTypeByClass(o.getValue().getClass());
-						fieldTypeToString(iOutput, iDatabase, iLinkedType, o.getValue());
+						if (iLinkedType == null && o.getValue() != null) {
+							fieldTypeToString(iOutput, iDatabase, OType.getTypeByClass(o.getValue().getClass()), o.getValue());
+						} else {
+							fieldTypeToString(iOutput, iDatabase, iLinkedType, o.getValue());
+						}
 					}
 				}
-
 				items++;
 			}
 		}

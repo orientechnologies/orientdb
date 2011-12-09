@@ -268,4 +268,16 @@ public class JSONTest {
 		ODocument doc2 = database.load(doc.getIdentity());
 		Assert.assertEquals(doc, doc2);
 	}
+
+	public void testJsonToStream() {
+		String doc1Json = "{Key1:{\"%Field1\":[{},{},{},{},{}],\"%Field2\":false,\"%Field3\":\"Value1\"}}";
+		ODocument doc1 = new ODocument().fromJSON(doc1Json);
+		String doc1String = new String(doc1.toStream());
+		Assert.assertEquals(doc1Json, "{" + doc1String + "}");
+
+		String doc2Json = "{Key1:{\"%Field1\":[{},{},{},{},{}],\"%Field2\":false,\"%Field3\":\"Value1\"}}";
+		ODocument doc2 = new ODocument().fromJSON(doc2Json);
+		String doc2String = new String(doc2.toStream());
+		Assert.assertEquals(doc2Json, "{" + doc2String + "}");
+	}
 }
