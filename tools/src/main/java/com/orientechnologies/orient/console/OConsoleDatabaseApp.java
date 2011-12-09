@@ -34,6 +34,7 @@ import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
@@ -211,12 +212,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 			out.println("OK");
 		}
-	}
-
-	public void test() {
-		ODocument doc = currentDatabase.load(new ORecordId(2, 0l));
-		doc.field("prova", "stocazzochettesefrega");
-		currentDatabase.save(doc);
 	}
 
 	@ConsoleCommand(description = "Create a new database")
