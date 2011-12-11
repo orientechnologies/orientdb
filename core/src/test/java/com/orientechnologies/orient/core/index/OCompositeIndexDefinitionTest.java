@@ -121,7 +121,7 @@ public class OCompositeIndexDefinitionTest {
 	@Test
 	public void testEmptyIndexReload() {
 		final ODatabaseDocumentTx database = new ODatabaseDocumentTx("memory:compositetestone");
-		database.create();
+    database.create();
 
 		final OCompositeIndexDefinition emptyCompositeIndex = new OCompositeIndexDefinition("testClass");
 
@@ -129,7 +129,7 @@ public class OCompositeIndexDefinitionTest {
 		emptyCompositeIndex.addIndex(new OPropertyIndexDefinition("testClass", "fTwo", OType.STRING));
 
 		final ODocument docToStore = emptyCompositeIndex.toStream();
-		docToStore.save();
+		database.save(docToStore);
 
 		final ODocument docToLoad = database.load(docToStore.getIdentity());
 
@@ -167,7 +167,7 @@ public class OCompositeIndexDefinitionTest {
 		Assert.assertEquals(emptyCompositeIndex, emptyCompositeIndexTwo);
 
 		final ODocument docToStore = emptyCompositeIndex.toStream();
-		docToStore.save();
+		database.save(docToStore);
 
 		final ODocument docToLoad = database.load(docToStore.getIdentity());
 
