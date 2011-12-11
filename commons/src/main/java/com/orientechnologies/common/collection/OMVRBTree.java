@@ -1792,12 +1792,12 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 				return e;
 			}
 
-			final public void update(final T iValue) {
+			final public T update(final T iValue) {
 				if (lastReturned == null)
 					throw new IllegalStateException();
 				if (m.modCount != expectedModCount)
 					throw new ConcurrentModificationException();
-				lastReturned.entry.setValue((V) iValue);
+				return (T) lastReturned.entry.setValue((V) iValue);
 			}
 
 			final void removeAscending() {

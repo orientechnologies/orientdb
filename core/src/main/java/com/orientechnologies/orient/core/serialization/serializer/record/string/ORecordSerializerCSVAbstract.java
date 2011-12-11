@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.annotation.OAfterSerialization;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
@@ -285,7 +286,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 						final OIdentifiable item = it.next();
 
-						linkToStream(buffer, iRecord, item);
+						final OIdentifiable newRid = linkToStream(buffer, iRecord, item);
+						if (newRid != null)
+							((OLazyIterator<OIdentifiable>) it).update(newRid);
 					}
 
 					coll.convertRecords2Links();
@@ -705,6 +708,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					database.save((ORecordInternal<?>) record);
 
 				rid = record.getIdentity();
+				resultRid = rid;
 			}
 		} else {
 			if (!(iLinked instanceof ORecordInternal<?>)) {

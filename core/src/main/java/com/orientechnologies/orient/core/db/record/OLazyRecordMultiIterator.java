@@ -75,12 +75,13 @@ public class OLazyRecordMultiIterator implements OLazyIterator<OIdentifiable> {
 		return again;
 	}
 
-	public void update(final OIdentifiable iValue) {
+	public OIdentifiable update(final OIdentifiable iValue) {
 		final Iterator<OIdentifiable> underlying = getCurrentIterator();
 		if (underlying instanceof OLazyIterator) {
-			((OLazyRecordIterator) underlying).update(iValue);
-			if (sourceRecord != null)
+			final OIdentifiable old = ((OLazyIterator<OIdentifiable>) underlying).update(iValue);
+			if (sourceRecord != null && !old.equals(iValue))
 				sourceRecord.setDirty();
+			return old;
 		} else
 			throw new UnsupportedOperationException("Underlying iterator not supports lazy updates (Interface OLazyIterator");
 	}

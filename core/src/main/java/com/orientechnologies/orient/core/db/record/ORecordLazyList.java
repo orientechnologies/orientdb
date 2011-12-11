@@ -19,6 +19,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+import com.orientechnologies.common.collection.OLazyIterator;
+import com.orientechnologies.common.collection.OLazyIteratorListWrapper;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -85,19 +87,23 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	 */
 	public Iterator<OIdentifiable> rawIterator() {
 		lazyLoad(false);
-		final Iterator<OIdentifiable> subIterator = new Iterator<OIdentifiable>() {
-			private int	pos	= 0;
+		final Iterator<OIdentifiable> subIterator = new OLazyIterator<OIdentifiable>() {
+			private int	pos	= -1;
 
 			public boolean hasNext() {
-				return pos < size();
+				return pos < size() - 1;
 			}
 
 			public OIdentifiable next() {
-				return ORecordLazyList.this.rawGet(pos++);
+				return ORecordLazyList.this.rawGet(++pos);
 			}
 
 			public void remove() {
 				ORecordLazyList.this.remove(pos);
+			}
+
+			public OIdentifiable update(final OIdentifiable iValue) {
+				return ORecordLazyList.this.set(pos, iValue);
 			}
 		};
 		return new OLazyRecordIterator(sourceRecord, subIterator, false);
@@ -109,9 +115,10 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	}
 
 	@Override
-	public Iterator<OIdentifiable> iterator() {
+	public OLazyIterator<OIdentifiable> iterator() {
 		lazyLoad(false);
-		return new OLazyRecordIterator(sourceRecord, super.iterator(), autoConvertToRecord);
+		return new OLazyRecordIterator(sourceRecord, new OLazyIteratorListWrapper<OIdentifiable>(super.listIterator()),
+				autoConvertToRecord);
 	}
 
 	@Override

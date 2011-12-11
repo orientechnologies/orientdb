@@ -65,6 +65,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
 	@Override
 	public OMVRBTreePersistent<OIdentifiable, OIdentifiable> load() {
+		newItems = null;
 		super.load();
 		if (root != null)
 			setSize(((OMVRBTreeRIDEntryProvider) ((OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable>) root).getProvider())
@@ -266,6 +267,9 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 	}
 
 	public OMVRBTreePersistent<OIdentifiable, OIdentifiable> save() {
+		if (((OMVRBTreeRIDProvider) dataProvider).isDirty())
+			((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
+
 		if (saveAllNewItems())
 			updateSize();
 		return this;

@@ -99,13 +99,14 @@ abstract class AbstractEntryIterator<K, V, T> implements OLazyIterator<T> {
 		return e;
 	}
 
-	public void update(final T iValue) {
+	@SuppressWarnings("unchecked")
+	public T update(final T iValue) {
 		if (lastReturned == null)
 			throw new IllegalStateException();
 		if (tree.modCount != expectedModCount)
 			throw new ConcurrentModificationException();
 		tree.pageIndex = pageIndex;
-		next.setValue((V) iValue);
+		return (T) next.setValue((V) iValue);
 	}
 
 	public void remove() {

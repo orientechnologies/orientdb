@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.type.tree;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Set;
 
 import com.orientechnologies.common.collection.OLazyIterator;

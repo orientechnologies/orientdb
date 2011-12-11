@@ -15,14 +15,35 @@
  */
 package com.orientechnologies.common.collection;
 
-import java.util.Iterator;
+import java.util.ListIterator;
 
 /**
- * Generic interface for lazy iterators allowing the update of current value.
+ * Lazy iterator implementation based on List Iterator.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public interface OLazyIterator<T> extends Iterator<T> {
-	public T update(T iValue);
+public class OLazyIteratorListWrapper<T> implements OLazyIterator<T> {
+	private ListIterator<T>	underlying;
+
+	public OLazyIteratorListWrapper(ListIterator<T> iUnderlying) {
+		underlying = iUnderlying;
+	}
+
+	public boolean hasNext() {
+		return underlying.hasNext();
+	}
+
+	public T next() {
+		return underlying.next();
+	}
+
+	public void remove() {
+		underlying.remove();
+	}
+
+	public T update(T e) {
+		underlying.set(e);
+		return null;
+	}
 }

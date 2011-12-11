@@ -67,11 +67,13 @@ public class OLazyRecordIterator implements OLazyIterator<OIdentifiable> {
 		return underlying.hasNext();
 	}
 
-	public void update(final OIdentifiable iValue) {
+	@SuppressWarnings("unchecked")
+	public OIdentifiable update(final OIdentifiable iValue) {
 		if (underlying instanceof OLazyIterator) {
-			((OLazyRecordIterator) underlying).update(iValue);
-			if (sourceRecord != null)
+			final OIdentifiable old = ((OLazyIterator<OIdentifiable>) underlying).update(iValue);
+			if (sourceRecord != null && !old.equals(iValue))
 				sourceRecord.setDirty();
+			return old;
 		} else
 			throw new UnsupportedOperationException("Underlying iterator not supports lazy updates (Interface OLazyIterator");
 	}
