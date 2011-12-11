@@ -89,7 +89,7 @@ public class OPropertyIndexDefinitionTest {
         propertyIndex = new OPropertyIndexDefinition("tesClass", "fOne", OType.INTEGER);
 
         final ODocument docToStore = propertyIndex.toStream();
-        docToStore.save();
+        database.save(docToStore);
 
         final ODocument docToLoad = database.load(docToStore.getIdentity());
 
