@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -1021,10 +1022,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 		final ODatabaseRecord database = getDatabase();
 
-		if (rootCondition == null)
-			((OStorageEmbedded) database.getStorage()).browse(clusterIds, null, null, this, (ORecordInternal<?>) database.newInstance(),
+		if (rootCondition == null){
+      final ORID beginRange;
+      if(request instanceof OSQLSynchQuery)
+        beginRange = ((OSQLSynchQuery)request).getNextPageRID();
+      else
+        beginRange = null;
+
+			((OStorageEmbedded) database.getStorage()).browse(clusterIds, beginRange, null, this, (ORecordInternal<?>) database.newInstance(),
 					false);
-		else
+    }	else
 			((OStorageEmbedded) database.getStorage()).browse(clusterIds, rootCondition.getBeginRidRange(),
 					rootCondition.getEndRidRange(), this, (ORecordInternal<?>) database.newInstance(), false);
 	}
