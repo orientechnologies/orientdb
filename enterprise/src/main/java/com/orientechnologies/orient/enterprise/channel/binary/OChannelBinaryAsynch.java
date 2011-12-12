@@ -76,6 +76,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 				try {
 					wait(1000);
 				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
 				}
 			}
 		} while (true);

@@ -78,6 +78,7 @@ public class TcpServer {
 			System.err.println("Unable to read data from an open socket.");
 			System.err.println(ioe.toString());
 		} catch (InterruptedException ie) {
+			Thread.currentThread().interrupt();
 		} // Thread sleep interrupted
 		finally {
 			try {

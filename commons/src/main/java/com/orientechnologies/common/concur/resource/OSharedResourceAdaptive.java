@@ -21,6 +21,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.common.concur.lock.OLockException;
 
 /**
  * Adaptive class to handle shared resources. It's configurable specifying if it's running in a concurrent environment and allow o
@@ -63,6 +64,7 @@ public class OSharedResourceAdaptive {
 						// OK
 						return;
 				} catch (InterruptedException e) {
+					throw new OLockException("Thread interrupted while waiting for resource '" + this + "'");
 				}
 				throw new OTimeoutException("Timeout on acquiring exclusive lock against resource: " + this);
 			} else
@@ -77,6 +79,7 @@ public class OSharedResourceAdaptive {
 						// OK
 						return;
 				} catch (InterruptedException e) {
+					throw new OLockException("Thread interrupted while waiting for resource '" + this + "'");
 				}
 				throw new OTimeoutException("Timeout on acquiring shared lock against resource: " + this);
 			} else

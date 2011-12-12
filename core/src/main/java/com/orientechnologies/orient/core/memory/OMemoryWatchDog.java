@@ -126,6 +126,7 @@ public class OMemoryWatchDog extends Thread {
 			try {
 				Thread.sleep(iDelayTime);
 			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
 			}
 	}
 

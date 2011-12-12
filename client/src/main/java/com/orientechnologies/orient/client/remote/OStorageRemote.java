@@ -1358,8 +1358,9 @@ public class OStorageRemote extends OStorageAbstract {
 						final long startToWait = System.currentTimeMillis();
 						try {
 							networkPool.wait(5000);
-						} catch (InterruptedException e) {
 							OProfiler.getInstance().updateCounter("network.connectionPool.timeout", +1);
+						} catch (InterruptedException e) {
+							break;
 						}
 
 						final long elapsed = OProfiler.getInstance().stopChrono("network.connectionPool.waitingTime", startToWait);

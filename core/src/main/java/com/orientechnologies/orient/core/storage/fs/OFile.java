@@ -364,6 +364,7 @@ public abstract class OFile {
 				try {
 					Thread.sleep(OPEN_DELAY_RETRY);
 				} catch (InterruptedException e1) {
+					Thread.currentThread().interrupt();
 				}
 			}
 

@@ -2,6 +2,7 @@ package com.orientechnologies.common.synch;
 
 import java.util.LinkedHashMap;
 
+import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 
 /**
@@ -39,6 +40,7 @@ public class OSynchEventAdapter<RESOURCE_TYPE, RESPONSE_TYPE> {
 			try {
 				iResource.wait(iTimeout);
 			} catch (InterruptedException e) {
+				throw new OLockException("Thread interrupted while waiting for resource '" + iResource + "'");
 			}
 		}
 

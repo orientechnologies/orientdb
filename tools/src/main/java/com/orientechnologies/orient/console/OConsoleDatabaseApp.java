@@ -1194,6 +1194,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		try {
 			Thread.sleep(Long.parseLong(iTime));
 		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
 		}
 	}
 
