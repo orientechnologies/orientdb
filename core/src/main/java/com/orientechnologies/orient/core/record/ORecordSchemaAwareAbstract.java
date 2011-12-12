@@ -19,7 +19,7 @@ import java.text.ParseException;
 import java.util.Collection;
 import java.util.Date;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OValidationException;
@@ -64,8 +64,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	 *           if the document breaks some validation constraints defined in the schema
 	 */
 	public void validate() throws OValidationException {
-		final ODatabaseRecord database = getDatabase();
-		if (database != null && !database.isValidationEnabled())
+		if (ODatabaseRecordThreadLocal.INSTANCE.check() && !getDatabase().isValidationEnabled())
 			return;
 
 		checkForLoading();
@@ -296,7 +295,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	}
 
 	protected void checkForLoading() {
-		if (_status == ORecordElement.STATUS.NOT_LOADED && getDatabase() != null)
+		if (_status == ORecordElement.STATUS.NOT_LOADED && ODatabaseRecordThreadLocal.INSTANCE.check())
 			reload(null, true);
 	}
 }

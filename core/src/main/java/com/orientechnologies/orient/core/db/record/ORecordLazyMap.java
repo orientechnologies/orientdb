@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.db.record;
 import java.util.Collection;
 import java.util.Iterator;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -34,20 +35,17 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 @SuppressWarnings({ "serial", "unchecked" })
 public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecordLazyMultiValue {
-	private ODatabaseRecord																	database;
 	final private byte																			recordType;
 	private ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE	status							= MULTIVALUE_CONTENT_TYPE.EMPTY;
 	private boolean																					autoConvertToRecord	= true;
 
 	public ORecordLazyMap(final ORecord<?> iSourceRecord) {
 		super(iSourceRecord);
-		this.database = iSourceRecord.getDatabase();
 		this.recordType = ODocument.RECORD_TYPE;
 	}
 
 	public ORecordLazyMap(final ORecord<?> iSourceRecord, final byte iRecordType) {
 		super(iSourceRecord);
-		this.database = iSourceRecord.getDatabase();
 		this.recordType = iRecordType;
 	}
 
@@ -113,7 +111,7 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
 	}
 
 	public void convertLinks2Records() {
-		if (status == MULTIVALUE_CONTENT_TYPE.ALL_RECORDS || !autoConvertToRecord || database == null)
+		if (status == MULTIVALUE_CONTENT_TYPE.ALL_RECORDS || !autoConvertToRecord)
 			// PRECONDITIONS
 			return;
 
@@ -124,7 +122,7 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
 	}
 
 	public boolean convertRecords2Links() {
-		if (status == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || database == null)
+		if (status == MULTIVALUE_CONTENT_TYPE.ALL_RIDS)
 			// PRECONDITIONS
 			return true;
 
@@ -140,14 +138,14 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
 	}
 
 	private boolean convertRecord2Link(final Object iKey) {
-		if (status == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || database == null)
+		if (status == MULTIVALUE_CONTENT_TYPE.ALL_RIDS)
 			return true;
 
 		final Object value = super.get(iKey);
 		if (value != null)
 			if (value instanceof ORecord<?> && !((ORecord<?>) value).getIdentity().isNew()) {
 				if (((ORecord<?>) value).isDirty())
-					database.save((ORecordInternal<?>) value);
+					ODatabaseRecordThreadLocal.INSTANCE.get().save((ORecordInternal<?>) value);
 
 				// OVERWRITE
 				super.put(iKey, ((ORecord<?>) value).getIdentity());
@@ -168,7 +166,7 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
 	 *          Position of the item to convert
 	 */
 	private void convertLink2Record(final Object iKey) {
-		if (status == MULTIVALUE_CONTENT_TYPE.ALL_RECORDS || database == null)
+		if (status == MULTIVALUE_CONTENT_TYPE.ALL_RECORDS)
 			return;
 
 		final Object value;
@@ -182,9 +180,8 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
 			final ORID rid = (ORID) value;
 
 			try {
-				final ORecord<?> record = database.load(rid);
 				// OVERWRITE IT
-				super.put(iKey, record);
+				super.put(iKey, rid.getRecord());
 			} catch (ORecordNotFoundException e) {
 				// IGNORE THIS
 			}

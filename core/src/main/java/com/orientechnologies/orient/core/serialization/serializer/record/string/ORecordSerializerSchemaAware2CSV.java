@@ -230,8 +230,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
 			iOutput.append(fieldName);
 			iOutput.append(FIELD_VALUE_SEPARATOR);
-			fieldToStream((ODocument) iRecord, iRecord.getDatabase(), iOutput, iObjHandler, type, linkedClass, linkedType, fieldName,
-					fieldValue, iMarshalledRecords, true);
+			fieldToStream((ODocument) iRecord, iOutput, iObjHandler, type, linkedClass, linkedType, fieldName, fieldValue,
+					iMarshalledRecords, true);
 
 			i++;
 		}

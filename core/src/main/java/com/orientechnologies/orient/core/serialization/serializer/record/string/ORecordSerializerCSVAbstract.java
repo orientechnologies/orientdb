@@ -220,7 +220,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		return map;
 	}
 
-	protected boolean isConvertToLinkedMap(Map map, final OType linkedType) {
+	protected boolean isConvertToLinkedMap(Map<?, ?> map, final OType linkedType) {
 		boolean convert = (linkedType == OType.LINK && !(map instanceof ORecordLazyMap));
 		if (convert) {
 			for (Object value : map.values())
@@ -230,9 +230,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		return convert;
 	}
 
-	public void fieldToStream(final ODocument iRecord, final ODatabaseComplex<?> iDatabase, final StringBuilder iOutput,
-			final OUserObject2RecordHandler iObjHandler, final OType iType, final OClass iLinkedClass, final OType iLinkedType,
-			final String iName, final Object iValue, final Set<Integer> iMarshalledRecords, final boolean iSaveOnlyDirty) {
+	public void fieldToStream(final ODocument iRecord, final StringBuilder iOutput, final OUserObject2RecordHandler iObjHandler,
+			final OType iType, final OClass iLinkedClass, final OType iLinkedType, final String iName, final Object iValue,
+			final Set<Integer> iMarshalledRecords, final boolean iSaveOnlyDirty) {
 		if (iValue == null)
 			return;
 
@@ -381,19 +381,20 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			break;
 
 		case EMBEDDEDLIST:
-			embeddedCollectionToStream(iDatabase, iObjHandler, iOutput, iLinkedClass, iLinkedType, iValue, iMarshalledRecords,
-					iSaveOnlyDirty);
+			embeddedCollectionToStream(ODatabaseRecordThreadLocal.INSTANCE.get(), iObjHandler, iOutput, iLinkedClass, iLinkedType,
+					iValue, iMarshalledRecords, iSaveOnlyDirty);
 			OProfiler.getInstance().stopChrono("serializer.rec.str.embedList2string", timer);
 			break;
 
 		case EMBEDDEDSET:
-			embeddedCollectionToStream(iDatabase, iObjHandler, iOutput, iLinkedClass, iLinkedType, iValue, iMarshalledRecords,
-					iSaveOnlyDirty);
+			embeddedCollectionToStream(ODatabaseRecordThreadLocal.INSTANCE.get(), iObjHandler, iOutput, iLinkedClass, iLinkedType,
+					iValue, iMarshalledRecords, iSaveOnlyDirty);
 			OProfiler.getInstance().stopChrono("serializer.rec.str.embedSet2string", timer);
 			break;
 
 		case EMBEDDEDMAP: {
-			embeddedMapToStream(iDatabase, iObjHandler, iOutput, iLinkedClass, iLinkedType, iValue, iMarshalledRecords, iSaveOnlyDirty);
+			embeddedMapToStream(ODatabaseRecordThreadLocal.INSTANCE.get(), iObjHandler, iOutput, iLinkedClass, iLinkedType, iValue,
+					iMarshalledRecords, iSaveOnlyDirty);
 			OProfiler.getInstance().stopChrono("serializer.rec.str.embedMap2string", timer);
 			break;
 		}

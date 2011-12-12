@@ -88,7 +88,7 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 				return false;
 
 			// TRANSFORM THE ORID IN ODOCUMENT
-			iTarget = new ODocument(iRecord.getDatabase(), (ORID) iTarget);
+			iTarget = new ODocument((ORID) iTarget);
 		} else if (iTarget instanceof ODocument) {
 			if (iEvaluatedRecords.contains(((ODocument) iTarget).getIdentity()))
 				// ALREADY EVALUATED
@@ -197,13 +197,13 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 		return String.format("%s(%d,%d,%s)", keyword, startDeepLevel, endDeepLevel, Arrays.toString(cfgFields));
 	}
 
-  @Override
-  public ORID getBeginRidRange(Object iLeft, Object iRight) {
-    return null;
-  }
+	@Override
+	public ORID getBeginRidRange(Object iLeft, Object iRight) {
+		return null;
+	}
 
-  @Override
-  public ORID getEndRidRange(Object iLeft, Object iRight) {
-    return null;
-  }
+	@Override
+	public ORID getEndRidRange(Object iLeft, Object iRight) {
+		return null;
+	}
 }

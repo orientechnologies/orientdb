@@ -466,10 +466,9 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
 		final OType t = fieldType(iFieldName);
 
-		final ODatabaseRecord database = getDatabase();
-		if (_lazyLoad && value instanceof ORID && t != OType.LINK && database != null) {
+		if (_lazyLoad && value instanceof ORID && t != OType.LINK && ODatabaseRecordThreadLocal.INSTANCE.check()) {
 			// CREATE THE DOCUMENT OBJECT IN LAZY WAY
-			value = (RET) database.load((ORID) value);
+			value = (RET) getDatabase().load((ORID) value);
 			_fieldValues.put(iFieldName, value);
 		}
 

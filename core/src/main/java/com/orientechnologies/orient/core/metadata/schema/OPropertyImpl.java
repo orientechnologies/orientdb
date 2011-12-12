@@ -76,7 +76,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	}
 
 	public OPropertyImpl(final OClassImpl iOwner) {
-		document = new ODocument(iOwner.getDocument().getDatabase());
+		document = new ODocument();
 		owner = iOwner;
 	}
 
