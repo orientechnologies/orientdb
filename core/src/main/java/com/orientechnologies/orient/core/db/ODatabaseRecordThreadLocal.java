@@ -29,4 +29,8 @@ public class ODatabaseRecordThreadLocal extends ThreadLocal<ODatabaseRecord> {
 					"Database instance is not set in current thread. Assure to set it with: ODatabaseRecordThreadLocal.INSTANCE.set(db);");
 		return db;
 	}
+
+	public boolean check() {
+		return super.get() != null;
+	}
 }

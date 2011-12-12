@@ -127,7 +127,7 @@ public class Account {
 	public void toStream(final ODocument iDocument) {
 		if (thumbnail != null) {
 			// WRITE THE PHOTO IN AN EXTERNAL RECORD AS PURE BINARY
-			ORecordBytes externalPhoto = new ORecordBytes(iDocument.getDatabase(), thumbnail);
+			ORecordBytes externalPhoto = new ORecordBytes(thumbnail);
 			iDocument.field("externalPhoto", externalPhoto);
 		}
 	}
