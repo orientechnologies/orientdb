@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.cache;
 import java.util.Collection;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -30,8 +31,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
  */
 public class OLevel2RecordCache extends OAbstractRecordCache {
 
-	final private OStorage	storage;
-	private STRATEGY				strategy;
+	private STRATEGY	strategy;
 
 	public enum STRATEGY {
 		POP_RECORD, COPY_RECORD
@@ -39,7 +39,6 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
 
 	public OLevel2RecordCache(final OStorage iStorage) {
 		super("storage." + iStorage.getName(), OGlobalConfiguration.CACHE_LEVEL2_SIZE.getValueAsInteger());
-		storage = iStorage;
 		setStrategy(OGlobalConfiguration.CACHE_LEVEL2_STRATEGY.getValueAsInteger());
 	}
 
@@ -97,7 +96,7 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
 					// TRY TO UPDATE AN OLD RECORD, DISCARD IT
 					return;
 
-				if ((iRecord.getDatabase() == null || iRecord.getDatabase().isClosed())) {
+				if ((!ODatabaseRecordThreadLocal.INSTANCE.check() || iRecord.getDatabase().isClosed())) {
 					// DB CLOSED: MAKE THE RECORD INSTANCE AS REUSABLE AFTER A DETACH
 					iRecord.detach();
 					entries.put(iRecord.getIdentity(), iRecord);
