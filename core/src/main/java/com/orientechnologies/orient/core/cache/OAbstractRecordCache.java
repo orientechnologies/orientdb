@@ -219,13 +219,14 @@ public abstract class OAbstractRecordCache extends OSharedResourceAbstract {
 
 	public void startup() {
 		watchDogListener = Orient.instance().getMemoryWatchDog().addListener(new Listener() {
-			/**
-			 * Auto reduce cache size of 50%
-			 */
-			public void memoryUsageLow(TYPE iType, final long usedMemory, final long maxMemory) {
-				if (iType == TYPE.JVM) {
-					acquireExclusiveLock();
-					try {
+			public void memoryUsageLow(final long iFreeMemory, final long iFreeMemoryPercentage) {
+				acquireExclusiveLock();
+				try {
+					if (iFreeMemoryPercentage < 10) {
+						OLogManager.instance().debug(this, "Free memory is low (%d%%): clearing %d resources", iFreeMemoryPercentage,
+								entries.size());
+						entries.clear();
+					} else {
 						final int oldSize = entries.size();
 						if (oldSize == 0)
 							// UNACTIVE
@@ -234,30 +235,13 @@ public abstract class OAbstractRecordCache extends OSharedResourceAbstract {
 						final int threshold = (int) (oldSize * 0.9f);
 
 						entries.removeEldestItems(threshold);
-
-						OLogManager.instance().debug(this, "Low memory: auto reduce the record cache size from %d to %d", oldSize, threshold);
-					} catch (Exception e) {
-						OLogManager.instance().error(this, "Error while freeing resources", e);
-					} finally {
-						releaseExclusiveLock();
+						OLogManager.instance().debug(this, "Low memory (%d%%): auto reduce the record cache size from %d to %d",
+								iFreeMemoryPercentage, oldSize, threshold);
 					}
-				}
-			}
-
-			/**
-			 * Free the entire cache
-			 */
-			public void memoryUsageCritical(TYPE iType, final long usedMemory, final long maxMemory) {
-				if (iType == TYPE.JVM) {
-					acquireExclusiveLock();
-					try {
-						OLogManager.instance().debug(this, "Clearing %d resources", entries.size());
-						entries.clear();
-					} catch (Exception e) {
-						OLogManager.instance().error(this, "Error while freeing resources", e);
-					} finally {
-						releaseExclusiveLock();
-					}
+				} catch (Exception e) {
+					OLogManager.instance().error(this, "Error while freeing resources", e);
+				} finally {
+					releaseExclusiveLock();
 				}
 			}
 		});

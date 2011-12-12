@@ -24,7 +24,6 @@ import java.util.logging.FileHandler;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 
 /**
@@ -40,12 +39,9 @@ public enum OGlobalConfiguration {
 			Boolean.class, Boolean.TRUE),
 
 	// MEMORY
+	@Deprecated
 	MEMORY_OPTIMIZE_THRESHOLD("memory.optimizeThreshold", "Threshold for heap memory at which optimization of memory usage starts. ",
-			Float.class, 0.70, new OConfigurationChangeCallback() {
-				public void change(final Object iCurrentValue, final Object iNewValue) {
-					OMemoryWatchDog.setPercentageUsageThreshold(((Number) iNewValue).floatValue());
-				}
-			}),
+			Float.class, 0.70),
 
 	// STORAGE
 	STORAGE_KEEP_OPEN(

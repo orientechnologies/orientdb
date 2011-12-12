@@ -70,7 +70,7 @@ public class Orient extends OSharedResourceAbstract {
 			// ACTIVATE RECORDING OF THE PROFILER
 			OProfiler.getInstance().startRecording();
 
-		memoryWatchDog = new OMemoryWatchDog(OGlobalConfiguration.MEMORY_OPTIMIZE_THRESHOLD.getValueAsFloat());
+		memoryWatchDog = new OMemoryWatchDog();
 
 		active = true;
 	}
