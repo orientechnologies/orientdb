@@ -106,7 +106,7 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
 	};
 
 	public boolean onTrigger(final TYPE iType, final ORecord<?> iRecord) {
-		if (ODatabaseRecordThreadLocal.INSTANCE.check() && ODatabaseRecordThreadLocal.INSTANCE.get().getStatus() != STATUS.OPEN)
+		if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && ODatabaseRecordThreadLocal.INSTANCE.get().getStatus() != STATUS.OPEN)
 			return false;
 
 		if (!(iRecord instanceof ODocument))

@@ -29,7 +29,10 @@ public class ODistributedEngine extends OEngineAbstract {
 	public static final String														NAME						= "remote";
 	private static final Map<String, ODistributedStorage>	sharedStorages	= new ConcurrentHashMap<String, ODistributedStorage>();
 
-	public ODistributedEngine() {
+	private final OReplicator															replicator;
+
+	public ODistributedEngine(final OReplicator iReplicator) {
+		replicator = iReplicator;
 	}
 
 	public OStorage createStorage(final String iURL, final Map<String, String> iConfiguration) {
@@ -37,7 +40,7 @@ public class ODistributedEngine extends OEngineAbstract {
 			synchronized (sharedStorages) {
 				ODistributedStorage sharedStorage = sharedStorages.get(iURL);
 				if (sharedStorage == null) {
-					sharedStorage = new ODistributedStorage(iURL, "rw");
+					sharedStorage = new ODistributedStorage(iURL, "rw", replicator.getConflictResolver());
 					sharedStorages.put(iURL, sharedStorage);
 				}
 

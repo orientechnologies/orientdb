@@ -114,9 +114,8 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	 *          <li>FULLTEXT: Indexes single word for full text search</li>
 	 *          </ul>
 	 * @return
-	 * @deprecated Use {@link OClass#createIndex(String, OClass.INDEX_TYPE, String...)} instead.
+	 * @see {@link OClass#createIndex(String, OClass.INDEX_TYPE, String...)} instead.
 	 */
-	@Deprecated
 	public OIndex<?> createIndex(final OClass.INDEX_TYPE iType) {
 		return owner.createIndex(getFullName(), iType, name);
 	}

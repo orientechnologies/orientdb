@@ -558,8 +558,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			fetchDocument(iFetchPlan, fieldValue, fieldName, iCurrentLevel, iMaxFetch, json, indentLevel, includeType, includeId,
 					includeVer, includeClazz, attribSameRow, keepTypes, parsedRecords);
 		} else if (fieldValue instanceof Collection<?>) {
-			fetchCollection(iRootRecord.getDatabase(), iFetchPlan, fieldValue, fieldName, iCurrentLevel, iMaxFetch, json, indentLevel,
-					includeType, includeId, includeVer, includeClazz, attribSameRow, keepTypes, parsedRecords);
+			fetchCollection(iFetchPlan, fieldValue, fieldName, iCurrentLevel, iMaxFetch, json, indentLevel, includeType, includeId,
+					includeVer, includeClazz, attribSameRow, keepTypes, parsedRecords);
 		} else if (fieldValue.getClass().isArray()) {
 			fetchArray(iFetchPlan, fieldValue, fieldName, iCurrentLevel, iMaxFetch, json, indentLevel, includeType, includeId,
 					includeVer, includeClazz, attribSameRow, keepTypes, parsedRecords);
@@ -622,10 +622,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void fetchCollection(final ODatabaseRecord iDatabase, final Map<String, Integer> iFetchPlan, final Object fieldValue,
-			final String fieldName, final int iCurrentLevel, final int iMaxFetch, final OJSONWriter json, final int indentLevel,
-			final boolean includeType, final boolean includeId, final boolean includeVer, final boolean includeClazz,
-			final boolean attribSameRow, final boolean keepTypes, final Map<ORID, Integer> parsedRecords) throws IOException {
+	private void fetchCollection(final Map<String, Integer> iFetchPlan, final Object fieldValue, final String fieldName,
+			final int iCurrentLevel, final int iMaxFetch, final OJSONWriter json, final int indentLevel, final boolean includeType,
+			final boolean includeId, final boolean includeVer, final boolean includeClazz, final boolean attribSameRow,
+			final boolean keepTypes, final Map<ORID, Integer> parsedRecords) throws IOException {
 		final Collection<ODocument> linked = (Collection<ODocument>) fieldValue;
 		json.beginCollection(indentLevel + 1, true, fieldName);
 		for (OIdentifiable d : linked) {
@@ -633,9 +633,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			final Integer fieldDepthLevel = parsedRecords.get(d.getIdentity());
 			if (fieldDepthLevel != null && fieldDepthLevel.intValue() == iCurrentLevel) {
 				parsedRecords.remove(d.getIdentity());
-				if (d instanceof ORecordId) {
-					d = iDatabase.load((ORecordId) d);
-				}
+				d = d.getRecord();
+
 				if (!(d instanceof ODocument)) {
 					json.writeValue(indentLevel + 1, false, OJSONWriter.encode(d));
 				} else {

@@ -376,13 +376,14 @@ public class OStorageRemote extends OStorageAbstract {
 
 					final ORawBuffer buffer = new ORawBuffer(network.readBytes(), network.readInt(), network.readByte());
 
-					final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
+					final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
 					ORecordInternal<?> record;
 					while (network.readByte() == 2) {
 						record = (ORecordInternal<?>) readIdentifiable(network);
 
-						// PUT IN THE CLIENT LOCAL CACHE
-						database.getLevel1Cache().updateRecord(record);
+						if (database != null)
+							// PUT IN THE CLIENT LOCAL CACHE
+							database.getLevel1Cache().updateRecord(record);
 					}
 					return buffer;
 				} finally {

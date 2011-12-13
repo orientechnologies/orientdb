@@ -42,9 +42,9 @@ public class OOperationLog extends OSingleFileSegment {
 	private static final int		DEF_START_SIZE	= 262144;
 
 	private static final int		OFFSET_SERIAL		= 0;
-	private static final int		OFFSET_OPERAT		= 8;
-	private static final int		OFFSET_RID			= 9;
-	private static final int		RECORD_SIZE			= 19;
+	private static final int		OFFSET_OPERAT		= OFFSET_SERIAL + OBinaryProtocol.SIZE_LONG;
+	private static final int		OFFSET_RID			= OFFSET_OPERAT + OBinaryProtocol.SIZE_BYTE;
+	private static final int		RECORD_SIZE			= OFFSET_RID + ORecordId.PERSISTENT_SIZE;
 
 	private long								serial					= 0;
 	private final String				nodeId;

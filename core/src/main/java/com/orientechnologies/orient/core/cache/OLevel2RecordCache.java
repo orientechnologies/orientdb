@@ -96,7 +96,7 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
 					// TRY TO UPDATE AN OLD RECORD, DISCARD IT
 					return;
 
-				if ((!ODatabaseRecordThreadLocal.INSTANCE.check() || iRecord.getDatabase().isClosed())) {
+				if ((!ODatabaseRecordThreadLocal.INSTANCE.isDefined() || iRecord.getDatabase().isClosed())) {
 					// DB CLOSED: MAKE THE RECORD INSTANCE AS REUSABLE AFTER A DETACH
 					iRecord.detach();
 					entries.put(iRecord.getIdentity(), iRecord);

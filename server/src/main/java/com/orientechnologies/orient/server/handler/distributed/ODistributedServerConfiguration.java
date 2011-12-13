@@ -16,6 +16,8 @@
 package com.orientechnologies.orient.server.handler.distributed;
 
 import java.net.InetAddress;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.crypto.SecretKey;
 
@@ -45,6 +47,7 @@ public class ODistributedServerConfiguration {
 	public int									networkTimeoutNode;								// IN
 	public int									networkHeartbeatDelay;							// IN
 	public int									serverUpdateDelay;									// IN
+	public Map<String, String>	replicationConflictResolverConfig;
 
 	public static final String	CHECKSUM					= "ChEcKsUm1976";
 
@@ -67,8 +70,18 @@ public class ODistributedServerConfiguration {
 			serverUpdateDelay = 0;
 			byte[] tempSecurityKey = null;
 
+			replicationConflictResolverConfig = new HashMap<String, String>();
+			replicationConflictResolverConfig.put("strategy",
+					"com.orientechnologies.orient.server.replication.conflict.ODefaultDistributedConflictResolver");
+			replicationConflictResolverConfig.put("ignoreIfSameContent", "true");
+			replicationConflictResolverConfig.put("ignoreIfMergeOk", "false");
+			replicationConflictResolverConfig.put("latestAlwaysWin", "false");
+
 			if (iParams != null)
 				for (OServerParameterConfiguration param : iParams) {
+					if (param.name == null)
+						continue;
+
 					if ("name".equalsIgnoreCase(param.name))
 						name = param.value;
 					else if ("security.algorithm".equalsIgnoreCase(param.name))
@@ -89,8 +102,12 @@ public class ODistributedServerConfiguration {
 						networkHeartbeatDelay = Integer.parseInt(param.value);
 					else if ("server.update.delay".equalsIgnoreCase(param.name))
 						serverUpdateDelay = Integer.parseInt(param.value);
+					else if (param.name.startsWith("replication.conflictResolver."))
+						// COLLECT IN A SEPARATE MAP TO PASS TO THE CONFLICT RESOLVER STRATEGY IMPL
+						replicationConflictResolverConfig.put(param.name.substring("replication.conflictResolver.".length()), param.value);
 				}
 
+			// CHECK THE CONFIGURATION
 			if (OServerMain.server().getUser(REPLICATOR_USER) == null)
 				// CREATE REPLICATOR USER
 				OServerMain.server().addUser(REPLICATOR_USER, null, "database.passthrough");

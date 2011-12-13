@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.server.network.protocol.distributed.ODistributedRequesterThreadLocal;
 
@@ -48,6 +49,10 @@ public class OReplicatorRecordHook implements ORecordHook, ODatabaseLifecycleLis
 	public boolean onTrigger(final TYPE iType, final ORecord<?> iRecord) {
 		if (ODistributedRequesterThreadLocal.INSTANCE.get())
 			// REPLICATED RECORD, AVOID TO PROPAGATE IT AGAIN
+			return false;
+
+		if (iRecord instanceof ODocument && replicator.isIgnoredDocumentClass(((ODocument) iRecord).getClassName()))
+			// AVOID TO REPLICATE THE CONFLICT
 			return false;
 
 		try {

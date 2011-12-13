@@ -53,8 +53,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 	}
 
 	public StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat) {
-		return toString(iRecord, iOutput, iFormat, ODatabaseRecordThreadLocal.INSTANCE.get(), OSerializationThreadLocal.INSTANCE.get(),
-				false);
+		return toString(iRecord, iOutput, iFormat, null, OSerializationThreadLocal.INSTANCE.get(), false);
 	}
 
 	public ORecordInternal<?> fromString(final String iSource) {

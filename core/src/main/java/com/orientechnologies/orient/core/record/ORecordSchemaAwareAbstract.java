@@ -64,7 +64,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	 *           if the document breaks some validation constraints defined in the schema
 	 */
 	public void validate() throws OValidationException {
-		if (ODatabaseRecordThreadLocal.INSTANCE.check() && !getDatabase().isValidationEnabled())
+		if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && !getDatabase().isValidationEnabled())
 			return;
 
 		checkForLoading();
@@ -295,7 +295,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	}
 
 	protected void checkForLoading() {
-		if (_status == ORecordElement.STATUS.NOT_LOADED && ODatabaseRecordThreadLocal.INSTANCE.check())
+		if (_status == ORecordElement.STATUS.NOT_LOADED && ODatabaseRecordThreadLocal.INSTANCE.isDefined())
 			reload(null, true);
 	}
 }

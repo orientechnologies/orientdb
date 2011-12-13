@@ -28,14 +28,19 @@ import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.SYNCH_TYPE;
+import com.orientechnologies.orient.server.replication.conflict.ODistributedConflictResolver;
 
 /**
  * Distributed version of remote storage
  */
 public class ODistributedStorage extends OStorageRemote {
 
-	public ODistributedStorage(final String iURL, final String iMode) throws IOException {
+	private final ODistributedConflictResolver	conflictResolver;
+
+	public ODistributedStorage(final String iURL, final String iMode, final ODistributedConflictResolver iConflictResolver)
+			throws IOException {
 		super(iURL, iMode);
+		conflictResolver = iConflictResolver;
 	}
 
 	public void distributeChange(final ODistributedDatabaseInfo databaseEntry, final OTransactionRecordEntry iRequest,
@@ -99,7 +104,7 @@ public class ODistributedStorage extends OStorageRemote {
 				}
 				return;
 			} catch (OConcurrentModificationException e) {
-				logIntegrityError(iRequest.status, iRequestType, iRecord);
+				conflictResolver.handleUpdateConflict(iRequest.status, iRequestType, iRecord, e.getRecordVersion(), e.getDatabaseVersion());
 				return;
 			} catch (OException e) {
 				// PASS THROUGH
@@ -117,20 +122,17 @@ public class ODistributedStorage extends OStorageRemote {
 		switch (iOperation) {
 		case OTransactionRecordEntry.CREATED:
 			if (iResponse != iRecord.getIdentity().getClusterPosition())
-				logIntegrityError(OTransactionRecordEntry.CREATED, iRequestType, iRecord);
+				conflictResolver.handleCreateConflict(OTransactionRecordEntry.CREATED, iRequestType, iRecord, iResponse);
 			break;
 		case OTransactionRecordEntry.UPDATED:
 			if ((int) iResponse != iRecord.getVersion())
-				logIntegrityError(OTransactionRecordEntry.UPDATED, iRequestType, iRecord);
+				conflictResolver.handleUpdateConflict(OTransactionRecordEntry.UPDATED, iRequestType, iRecord, iRecord.getVersion(),
+						(int) iResponse);
 			break;
 		case OTransactionRecordEntry.DELETED:
 			if ((int) iResponse == 0)
-				logIntegrityError(OTransactionRecordEntry.DELETED, iRequestType, iRecord);
+				conflictResolver.handleDeleteConflict(OTransactionRecordEntry.DELETED, iRequestType, iRecord);
 			break;
 		}
-	}
-
-	protected void logIntegrityError(final byte iOperation, SYNCH_TYPE iRequestType, final ORecordInternal<?> iRecord) {
-		OLogManager.instance().warn(this, "-> %s (%s mode) CONFLICT record %s...", this, iRequestType, iRecord.getIdentity());
 	}
 }

@@ -30,7 +30,11 @@ public class ODatabaseRecordThreadLocal extends ThreadLocal<ODatabaseRecord> {
 		return db;
 	}
 
-	public boolean check() {
+	public ODatabaseRecord getIfDefined() {
+		return super.get();
+	}
+
+	public boolean isDefined() {
 		return super.get() != null;
 	}
 }

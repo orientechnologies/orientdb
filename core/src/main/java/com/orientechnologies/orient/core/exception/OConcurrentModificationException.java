@@ -16,16 +16,62 @@
 package com.orientechnologies.orient.core.exception;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 
+/**
+ * Exception thrown when MVCC is enabled and a record can't be updated or deleted because versions don't match.
+ * 
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * 
+ */
 public class OConcurrentModificationException extends ONeedRetryException {
 
-	private static final long	serialVersionUID	= 2347493191705052402L;
+	private static final String	MESSAGE_RECORD_VERSION	= "your=v";
 
-	public OConcurrentModificationException(String message, Throwable cause) {
-		super(message, cause);
+	private static final String	MESSAGE_DB_VERSION			= "db=v";
+
+	private static final long		serialVersionUID				= 1L;
+
+	private final ORID					rid;
+	private final int						databaseVersion;
+	private final int						recordVersion;
+
+	/**
+	 * Rebuilds the original exception from the message.
+	 */
+	public OConcurrentModificationException(final String message) {
+		super(message);
+		int beginPos = message.indexOf(ORID.PREFIX);
+		int endPos = message.indexOf(' ', beginPos);
+		rid = new ORecordId(message.substring(beginPos, endPos));
+
+		beginPos = message.indexOf(MESSAGE_DB_VERSION, endPos) + MESSAGE_DB_VERSION.length();
+		endPos = message.indexOf(' ', beginPos);
+		databaseVersion = Integer.parseInt(message.substring(beginPos, endPos));
+
+		beginPos = message.indexOf(MESSAGE_RECORD_VERSION, endPos) + MESSAGE_RECORD_VERSION.length();
+		endPos = message.indexOf(')', beginPos);
+		recordVersion = Integer.parseInt(message.substring(beginPos, endPos));
 	}
 
-	public OConcurrentModificationException(String message) {
+	public OConcurrentModificationException(final String message, final ORID iRID, final int iDatabaseVersion,
+			final int iRecordVersion) {
 		super(message);
+		rid = iRID;
+		databaseVersion = iDatabaseVersion;
+		recordVersion = iRecordVersion;
+	}
+
+	public int getDatabaseVersion() {
+		return databaseVersion;
+	}
+
+	public int getRecordVersion() {
+		return recordVersion;
+	}
+
+	public ORID getRid() {
+		return rid;
 	}
 }

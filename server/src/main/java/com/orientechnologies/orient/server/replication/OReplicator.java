@@ -19,7 +19,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -32,6 +34,7 @@ import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerConfiguration;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.SYNCH_TYPE;
+import com.orientechnologies.orient.server.replication.conflict.ODistributedConflictResolver;
 
 /**
  * Replicates requests across network remote server nodes.
@@ -56,20 +59,31 @@ public class OReplicator {
 	 * <code>{ "demo" : [ { "192.168.0.10:2425", "synch" } ] } </code>
 	 * </p>
 	 */
-	public final static String						DIRECTORY_NAME	= "${ORIENTDB_HOME}/replication";
-	private ODocument											clusterConfiguration;
-	private OReplicatorRecordHook					trigger;
-	private volatile STATUS								status					= STATUS.ONLINE;
-	private Map<String, ODistributedNode>	nodes						= new HashMap<String, ODistributedNode>();
-	private OServerUserConfiguration			replicatorUser;
-	private ODistributedServerManager			manager;
-	private Map<String, OOperationLog>		logs						= new HashMap<String, OOperationLog>();
+	public final static String									DIRECTORY_NAME					= "${ORIENTDB_HOME}/replication";
+	private ODocument														clusterConfiguration;
+	private OReplicatorRecordHook								trigger;
+	private volatile STATUS											status									= STATUS.ONLINE;
+	private Map<String, ODistributedNode>				nodes										= new HashMap<String, ODistributedNode>();
+	private OServerUserConfiguration						replicatorUser;
+	private ODistributedServerManager						manager;
+	private Map<String, OOperationLog>					logs										= new HashMap<String, OOperationLog>();
+	private final Set<String>										ignoredClusters					= new HashSet<String>();
+	private final Set<String>										ignoredDocumentClasses	= new HashSet<String>();
+	private final ODistributedConflictResolver	conflictResolver;
 
 	public OReplicator(final ODistributedServerManager iManager) throws IOException {
 		manager = iManager;
 		trigger = new OReplicatorRecordHook(this);
 		replicatorUser = OServerMain.server().getConfiguration().getUser(ODistributedServerConfiguration.REPLICATOR_USER);
-		Orient.instance().registerEngine(new ODistributedEngine());
+		Orient.instance().registerEngine(new ODistributedEngine(this));
+
+		final String conflictResolvertStrategy = iManager.getConfig().replicationConflictResolverConfig.get("strategy");
+		try {
+			conflictResolver = (ODistributedConflictResolver) Class.forName(conflictResolvertStrategy).newInstance();
+			conflictResolver.config(this, iManager.getConfig().replicationConflictResolverConfig);
+		} catch (Exception e) {
+			throw new ODistributedException("Cannot create the configured replication conflict resolver: " + conflictResolvertStrategy);
+		}
 	}
 
 	public void shutdown() {
@@ -116,7 +130,7 @@ public class OReplicator {
 						continue;
 
 					if (!nodes.containsKey(nodeId)) {
-						final ODistributedNode dNode = new ODistributedNode(manager, nodeId);
+						final ODistributedNode dNode = new ODistributedNode(this, nodeId);
 						nodes.put(nodeId, dNode);
 
 						try {
@@ -206,5 +220,37 @@ public class OReplicator {
 		}
 
 		return doc;
+	}
+
+	public boolean isIgnoredDocumentClass(final String ignoredDocumentClass) {
+		return ignoredDocumentClasses.contains(ignoredDocumentClass);
+	}
+
+	public void addIgnoredDocumentClass(final String ignoredDocumentClass) {
+		ignoredDocumentClasses.add(ignoredDocumentClass);
+	}
+
+	public void removeIgnoreDocumentClasses(final String ignoredDocumentClass) {
+		ignoredDocumentClasses.remove(ignoredDocumentClass);
+	}
+
+	public boolean isIgnoredCluster(final String ignoredCluster) {
+		return ignoredClusters.contains(ignoredCluster);
+	}
+
+	public void addIgnoredCluster(final String ignoredCluster) {
+		ignoredClusters.add(ignoredCluster);
+	}
+
+	public void removeIgnoreCluster(final String ignoredCluster) {
+		ignoredClusters.remove(ignoredCluster);
+	}
+
+	public ODistributedConflictResolver getConflictResolver() {
+		return conflictResolver;
+	}
+
+	public ODistributedServerManager getManager() {
+		return manager;
 	}
 }

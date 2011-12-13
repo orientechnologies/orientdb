@@ -298,7 +298,7 @@ public class OStorageMemory extends OStorageEmbedded {
 									"Cannot update record "
 											+ iRid
 											+ " because the version is not the latest. Probably you are updating an old record or it has been modified by another user (db=v"
-											+ ppos.version + " your=v" + iVersion + ")");
+											+ ppos.version + " your=v" + iVersion + ")", iRid, ppos.version, iVersion);
 
 						++ppos.version;
 					} else
@@ -343,7 +343,7 @@ public class OStorageMemory extends OStorageEmbedded {
 							"Cannot delete record "
 									+ iRid
 									+ " because the version is not the latest. Probably you are deleting an old record or it has been modified by another user (db=v"
-									+ ppos.version + " your=v" + iVersion + ")");
+									+ ppos.version + " your=v" + iVersion + ")", iRid, ppos.version, iVersion);
 
 				cluster.removePhysicalPosition(iRid.clusterPosition, null);
 				data.deleteRecord(ppos.dataPosition);

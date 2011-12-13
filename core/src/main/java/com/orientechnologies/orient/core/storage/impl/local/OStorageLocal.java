@@ -1127,6 +1127,9 @@ public class OStorageLocal extends OStorageEmbedded {
 
 	protected int updateRecord(final OCluster iClusterSegment, final ORecordId iRid, final byte[] iContent, final int iVersion,
 			final byte iRecordType) {
+		if (iClusterSegment == null)
+			throw new OStorageException("Cluster not defined for record: " + iRid);
+
 		final long timer = OProfiler.getInstance().startChrono();
 
 		lock.acquireExclusiveLock();
@@ -1168,7 +1171,7 @@ public class OStorageLocal extends OStorageEmbedded {
 											+ " in storage '"
 											+ name
 											+ "' because the version is not the latest. Probably you are updating an old record or it has been modified by another user (db=v"
-											+ ppos.version + " your=v" + iVersion + ")");
+											+ ppos.version + " your=v" + iVersion + ")", iRid, ppos.version, iVersion);
 
 						++ppos.version;
 						iClusterSegment.updateVersion(iRid.clusterPosition, ppos.version);
@@ -1239,7 +1242,7 @@ public class OStorageLocal extends OStorageEmbedded {
 									+ " in storage '"
 									+ name
 									+ "' because the version is not the latest. Probably you are deleting an old record or it has been modified by another user (db=v"
-									+ ppos.version + " your=v" + iVersion + ")");
+									+ ppos.version + " your=v" + iVersion + ")", iRid, ppos.version, iVersion);
 
 				iClusterSegment.removePhysicalPosition(iRid.clusterPosition, ppos);
 

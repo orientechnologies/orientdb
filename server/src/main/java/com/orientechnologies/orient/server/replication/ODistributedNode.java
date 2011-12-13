@@ -23,11 +23,9 @@ import java.util.Map;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
-import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.SYNCH_TYPE;
 
 /**
@@ -41,7 +39,8 @@ public class ODistributedNode implements OCommandOutputListener {
 		ONLINE, SYNCHRONIZING
 	}
 
-	private String																id;
+	private final OReplicator											replicator;
+	private final String													id;
 	public String																	networkAddress;
 	public int																		networkPort;
 	public Date																		connectedOn;
@@ -49,7 +48,8 @@ public class ODistributedNode implements OCommandOutputListener {
 	private STATUS																status;
 	private OOperationLog													log;
 
-	public ODistributedNode(final ODistributedServerManager iNode, final String iId) throws IOException {
+	public ODistributedNode(final OReplicator iReplicator, final String iId) throws IOException {
+		replicator = iReplicator;
 		id = iId;
 
 		final String[] parts = iId.split(":");
@@ -66,7 +66,7 @@ public class ODistributedNode implements OCommandOutputListener {
 					iDatabase.databaseName, networkAddress, networkPort);
 
 			try {
-				iDatabase.storage = new ODistributedStorage(id + "/" + iDatabase.databaseName, "rw");
+				iDatabase.storage = new ODistributedStorage(id + "/" + iDatabase.databaseName, "rw", replicator.getConflictResolver());
 				iDatabase.storage.open(iDatabase.userName, iDatabase.userPassword, null);
 
 				iDatabase.sessionId = iDatabase.storage.getSessionId();
@@ -83,8 +83,6 @@ public class ODistributedNode implements OCommandOutputListener {
 
 	public void sendRequest(final long iOperationId, final OTransactionRecordEntry iRequest, final SYNCH_TYPE iRequestType)
 			throws IOException {
-		logChange(iRequest);
-
 		final ODistributedDatabaseInfo databaseEntry = databases.get(iRequest.getRecord().getDatabase().getName());
 		if (databaseEntry == null)
 			return;
@@ -126,16 +124,6 @@ public class ODistributedNode implements OCommandOutputListener {
 			if (iException instanceof RuntimeException)
 				throw (RuntimeException) iException;
 		}
-	}
-
-	/**
-	 * Logs operation to disk.
-	 * 
-	 * @param iRequest
-	 * @throws IOException
-	 */
-	protected long logChange(final OTransactionRecordEntry iRequest) throws IOException {
-		return log.addLog(iRequest.status, (ORecordId) iRequest.getRecord().getIdentity());
 	}
 
 	public void shareDatabase(final ODatabaseRecord iDatabase, final String iRemoteServerName, final String iDbUser,
