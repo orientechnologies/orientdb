@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -248,10 +249,36 @@ public abstract class OStringSerializerHelper {
 				}
 			}
 
-			if (c == '\\' && !encodeMode)
-				encodeMode = true;
-			else
+			if (c == '\\' && !encodeMode) {
+				// ESCAPE CHARS
+				final char nextChar = buffer[i + 1];
+				if (nextChar == 'u') {
+					i = OStringParser.readUnicode(buffer, i + 2, iBuffer);
+					continue;
+				} else if (nextChar == 'n') {
+					iBuffer.append("\n");
+					i++;
+					continue;
+				} else if (nextChar == 'r') {
+					iBuffer.append("\r");
+					i++;
+					continue;
+				} else if (nextChar == 't') {
+					iBuffer.append("\t");
+					i++;
+					continue;
+				} else if (nextChar == 'f') {
+					iBuffer.append("\f");
+					i++;
+					continue;
+				} else
+					encodeMode = true;
+			} else
 				encodeMode = false;
+
+			if (c != '\\' && encodeMode) {
+				encodeMode = false;
+			}
 
 			iBuffer.append(c);
 		}

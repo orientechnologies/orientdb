@@ -324,4 +324,15 @@ public class OStringParser {
 		buffer.append((char) Integer.parseInt(buff.toString(), 16));
 		return position - 1;
 	}
+
+	public static int readUnicode(char[] iText, int position, StringBuilder buffer) {
+		// DECODE UNICODE CHAR
+		final StringBuilder buff = new StringBuilder();
+		final int lastPos = position + 4;
+		for (; position < lastPos; ++position)
+			buff.append(iText[position]);
+
+		buffer.append((char) Integer.parseInt(buff.toString(), 16));
+		return position - 1;
+	}
 }
