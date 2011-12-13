@@ -63,7 +63,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 	}
 
 	public OMVRBTreeRIDProvider(final OStorage iStorage, final String iClusterName) {
-		super(new ODocument(getDatabase(), "ORIDs"), iStorage, iClusterName);
+		super(new ODocument(getDatabase()), iStorage, iClusterName);
 		((ODocument) record).field("pageSize", pageSize);
 	}
 
@@ -179,6 +179,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 
 	public ODocument toDocument() {
 		// SERIALIZE AS LINK TO THE TREE STRUCTURE
+		((ODocument) record).setClassName("ORIDs");
 		return ((ODocument) record).field("root", root != null ? root : null);
 	}
 
