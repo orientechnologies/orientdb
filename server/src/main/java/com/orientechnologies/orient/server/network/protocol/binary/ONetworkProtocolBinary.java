@@ -283,6 +283,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		case OChannelBinaryProtocol.REQUEST_DB_RELOAD: {
 			data.commandInfo = "Reload database information";
 
+			checkDatabase();
+
 			channel.acquireExclusiveLock();
 			try {
 				sendOk(lastClientTxId);
@@ -375,6 +377,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		case OChannelBinaryProtocol.REQUEST_DB_SIZE: {
 			data.commandInfo = "Database size";
 
+			checkDatabase();
+
 			channel.acquireExclusiveLock();
 			try {
 				sendOk(lastClientTxId);
@@ -388,6 +392,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		case OChannelBinaryProtocol.REQUEST_DB_COUNTRECORDS: {
 			data.commandInfo = "Database count records";
 
+			checkDatabase();
+
 			channel.acquireExclusiveLock();
 			try {
 				sendOk(lastClientTxId);
@@ -400,6 +406,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 		case OChannelBinaryProtocol.REQUEST_DATACLUSTER_COUNT: {
 			data.commandInfo = "Count cluster elements";
+
+			checkDatabase();
 
 			int[] clusterIds = new int[channel.readShort()];
 			for (int i = 0; i < clusterIds.length; ++i)
@@ -420,6 +428,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		case OChannelBinaryProtocol.REQUEST_DATACLUSTER_DATARANGE: {
 			data.commandInfo = "Get the begin/end range of data in cluster";
 
+			checkDatabase();
+
 			long[] pos = connection.database.getStorage().getClusterDataRange(channel.readShort());
 
 			channel.acquireExclusiveLock();
@@ -435,6 +445,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 		case OChannelBinaryProtocol.REQUEST_DATACLUSTER_ADD: {
 			data.commandInfo = "Add cluster";
+
+			checkDatabase();
 
 			final String type = channel.readString();
 			final String name = channel.readString();
@@ -470,6 +482,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 		case OChannelBinaryProtocol.REQUEST_DATACLUSTER_REMOVE: {
 			data.commandInfo = "Remove cluster";
+
+			checkDatabase();
 
 			final int id = channel.readShort();
 
@@ -571,6 +585,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		case OChannelBinaryProtocol.REQUEST_RECORD_CREATE: {
 			data.commandInfo = "Create record";
 
+			checkDatabase();
+
 			final ORecordId rid = new ORecordId(channel.readShort(), ORID.CLUSTER_POS_INVALID);
 			final byte[] buffer = channel.readBytes();
 			final byte recordType = channel.readByte();
@@ -596,6 +612,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		case OChannelBinaryProtocol.REQUEST_RECORD_UPDATE: {
 			data.commandInfo = "Update record";
 
+			checkDatabase();
+
 			final ORecordId rid = channel.readRID();
 			final byte[] buffer = channel.readBytes();
 			final int version = channel.readInt();
@@ -616,6 +634,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		case OChannelBinaryProtocol.REQUEST_RECORD_DELETE: {
 			data.commandInfo = "Delete record";
 
+			checkDatabase();
+
 			final ORID rid = channel.readRID();
 			final int version = channel.readInt();
 
@@ -634,6 +654,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		case OChannelBinaryProtocol.REQUEST_COUNT: {
 			data.commandInfo = "Count cluster records";
 
+			checkDatabase();
+
 			final String clusterName = channel.readString();
 			final long size = connection.database.countClusterElements(clusterName);
 
@@ -649,6 +671,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 		case OChannelBinaryProtocol.REQUEST_COMMAND: {
 			data.commandInfo = "Execute remote command";
+
+			checkDatabase();
 
 			final boolean asynch = channel.readByte() == 'a';
 
@@ -769,6 +793,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		case OChannelBinaryProtocol.REQUEST_TX_COMMIT: {
 			data.commandInfo = "Transaction commit";
 
+			checkDatabase();
+
 			final OTransactionOptimisticProxy tx = new OTransactionOptimisticProxy(
 					(ODatabaseRecordTx) connection.database.getUnderlying(), channel);
 
@@ -880,8 +906,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		if (record != null) {
 			record.setVersion(version);
 			record.delete();
-		return 1;
-	}
+			return 1;
+		}
 		return 0;
 	}
 
@@ -1129,6 +1155,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		}
 
 		connection.rawDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) iDatabase.getUnderlying()).getUnderlying());
+	}
+
+	protected void checkDatabase() {
+		if (connection.database == null)
+			throw new OSecurityAccessException("You need to authenticate before to execute the requested operation");
 	}
 
 	protected void checkStorageExistence(final String iDatabaseName) {
