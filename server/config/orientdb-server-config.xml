@@ -8,6 +8,10 @@
 				<parameter name="network.multicast.address" value="235.1.1.1" />
 				<parameter name="network.multicast.port" value="2424" />
 				<parameter name="network.multicast.heartbeat" value="10" />
+				<parameter name="replication.conflictResolver.strategy" value="com.orientechnologies.orient.server.replication.conflict.ODistributedConflictDefault" />
+				<parameter name="replication.conflictResolver.default.ignoreIfSameContent" value="true" />
+				<parameter name="replication.conflictResolver.default.ignoreIfMergeOk" value="false" />
+				<parameter name="replication.conflictResolver.default.latestAlwaysWin" value="false" />
 			</parameters>
 		</handler>
 		<!-- AUTOMATIC BACKUP, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
