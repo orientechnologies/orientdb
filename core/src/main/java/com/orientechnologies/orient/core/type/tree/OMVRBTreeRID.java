@@ -321,17 +321,21 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
 	public boolean saveAllNewItems() {
 		if (hasNewItems()) {
-			for (ORecord<?> record : newItems.keySet()) {
+			for (Iterator<ORecord<?>> it = newItems.keySet().iterator(); it.hasNext();) {
+				final ORecord<?> record = it.next();
+
 				if (record.getIdentity().isNew())
 					record.save();
 
-				// NEW ITEM OR NOT CONTENT IN STREAMED BUFFER
-				super.put(record.getIdentity(), null);
+				if (!record.getIdentity().isNew()) {
+					// INSERT ONLY PERSISTENT RIDS
+					super.put(record.getIdentity(), null);
+					it.remove();
+				}
 			}
 
-			if (newItems != null)
-				newItems.clear();
-			newItems = null;
+			if (newItems.size() == 0)
+				newItems = null;
 		}
 		return true;
 	}
@@ -396,5 +400,9 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 			}
 		}
 		return false;
+	}
+
+	public IdentityHashMap<ORecord<?>, Object> getTemporaryEntries() {
+		return newItems;
 	}
 }

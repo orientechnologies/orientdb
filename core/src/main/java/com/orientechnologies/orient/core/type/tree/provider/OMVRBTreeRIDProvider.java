@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.core.type.tree.provider;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.IdentityHashMap;
 import java.util.StringTokenizer;
 
 import com.orientechnologies.common.collection.OMVRBTree;
@@ -25,6 +28,7 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -85,6 +89,8 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 				if (isEmbeddedStreaming()) {
 					// SERIALIZE AS AN EMBEDDED STRING
 					buffer.append(OStringSerializerHelper.COLLECTION_BEGIN);
+
+					// PERSISTENT RIDS
 					boolean first = true;
 					for (OIdentifiable rid : tree.keySet()) {
 						if (!first)
@@ -94,6 +100,19 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 
 						rid.getIdentity().toString(buffer);
 					}
+
+					// TEMPORARY RIDS
+					final IdentityHashMap<ORecord<?>, Object> tempRIDs = tree.getTemporaryEntries();
+					if (tempRIDs != null && !tempRIDs.isEmpty())
+						for (ORecord<?> rec : tempRIDs.keySet()) {
+							if (!first)
+								buffer.append(OStringSerializerHelper.COLLECTION_SEPARATOR);
+							else
+								first = false;
+
+							rec.getIdentity().toString(buffer);
+						}
+
 					buffer.append(OStringSerializerHelper.COLLECTION_END);
 				} else {
 					buffer.append(OStringSerializerHelper.EMBEDDED_BEGIN);
@@ -179,13 +198,22 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 
 	public ODocument toDocument() {
 		// SERIALIZE AS LINK TO THE TREE STRUCTURE
-		((ODocument) record).setClassName("ORIDs");
-		return ((ODocument) record).field("root", root != null ? root : null);
+		final ODocument doc = (ODocument) record;
+		doc.setClassName("ORIDs");
+		doc.field("root", root != null ? root : null);
+		if (tree.getTemporaryEntries() != null && tree.getTemporaryEntries().size() > 0)
+			doc.field("tempEntries", new ArrayList<ORecord<?>>(tree.getTemporaryEntries().keySet()));
+
+		return doc;
 	}
 
 	public void fromDocument(final ODocument iDocument) {
 		pageSize = (Integer) iDocument.field("pageSize");
 		root = iDocument.field("root", OType.LINK);
+		final Collection<OIdentifiable> tempEntries = iDocument.field("tempEntries");
+		if (tempEntries != null && !tempEntries.isEmpty())
+			for (OIdentifiable entry : tempEntries)
+				tree.put(entry, null);
 	}
 
 	public boolean isEmbeddedStreaming() {
