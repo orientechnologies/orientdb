@@ -64,22 +64,22 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
 public class OServer {
-	protected ReentrantReadWriteLock													lock				= new ReentrantReadWriteLock();
+	protected ReentrantReadWriteLock													lock					= new ReentrantReadWriteLock();
 
-	protected volatile boolean																running			= true;
+	protected volatile boolean																running				= true;
 	protected OServerConfigurationLoaderXml										configurationLoader;
 	protected OServerConfiguration														configuration;
 	protected OContextConfiguration														contextConfiguration;
 	protected OServerShutdownHook															shutdownHook;
-	protected List<OServerHandler>														handlers		= new ArrayList<OServerHandler>();
-	protected Map<String, Class<? extends ONetworkProtocol>>	protocols		= new HashMap<String, Class<? extends ONetworkProtocol>>();
-	protected List<OServerNetworkListener>										listeners		= new ArrayList<OServerNetworkListener>();
+	protected List<OServerHandler>														handlers			= new ArrayList<OServerHandler>();
+	protected Map<String, Class<? extends ONetworkProtocol>>	protocols			= new HashMap<String, Class<? extends ONetworkProtocol>>();
+	protected List<OServerNetworkListener>										listeners			= new ArrayList<OServerNetworkListener>();
 	protected static ThreadGroup															threadGroup;
 
 	private OrientServer																			managedServer;
-	private ObjectName																				onProfiler	= new ObjectName("OrientDB:type=Profiler");
-	private ObjectName																				onServer		= new ObjectName("OrientDB:type=Server");
-  private final CountDownLatch                              startupLatch = new CountDownLatch(1);
+	private ObjectName																				onProfiler		= new ObjectName("OrientDB:type=Profiler");
+	private ObjectName																				onServer			= new ObjectName("OrientDB:type=Server");
+	private final CountDownLatch															startupLatch	= new CountDownLatch(1);
 
 	public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
 			InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
@@ -135,10 +135,10 @@ public class OServer {
 			ClassNotFoundException, IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException {
 		OLogManager.instance().info(this, "OrientDB Server v" + OConstants.getVersion() + " is starting up...");
 
-		loadConfiguration(iConfiguration);
-
 		Orient.instance();
 		Orient.instance().removeShutdownHook();
+
+		loadConfiguration(iConfiguration);
 
 		// REGISTER PROTOCOLS
 		for (OServerNetworkProtocolConfiguration p : configuration.network.protocols)
@@ -152,7 +152,7 @@ public class OServer {
 		registerHandlers();
 
 		OLogManager.instance().info(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " is active.");
-    startupLatch.countDown();
+		startupLatch.countDown();
 	}
 
 	public void shutdown() {
@@ -335,11 +335,11 @@ public class OServer {
 
 	@SuppressWarnings("unchecked")
 	public <RET extends OServerHandler> RET getHandler(final Class<RET> iHandlerClass) {
-    try {
-       startupLatch.await();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
+		try {
+			startupLatch.await();
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		}
 
 		for (OServerHandler h : handlers)
 			if (h.getClass().equals(iHandlerClass))
