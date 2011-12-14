@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
 import com.orientechnologies.orient.core.id.ORID;
@@ -94,7 +95,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	private OServerUserConfiguration	serverUser;
 
 	public ONetworkProtocolBinary() {
-		super(Orient.getThreadGroup(), "IO-Binary");
+		super(Orient.getThreadGroup(), "OrientDB BinaryNetworkProtocolListener");
 	}
 
 	public ONetworkProtocolBinary(final String iThreadName) {
@@ -798,7 +799,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			final OTransactionOptimisticProxy tx = new OTransactionOptimisticProxy(
 					(ODatabaseRecordTx) connection.database.getUnderlying(), channel);
 
-			connection.database.begin(tx);
+			try {
+				connection.database.begin(tx);
+			} catch (OTransactionException e) {
+				// TX ABORTED BY THE CLIENT
+				return;
+			}
+
 			try {
 				connection.database.commit();
 				channel.acquireExclusiveLock();

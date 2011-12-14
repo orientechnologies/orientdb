@@ -53,7 +53,8 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 		try {
 			setUsingLog(channel.readByte() == 1);
 
-			while (channel.readByte() == 1) {
+			byte lastTxStatus;
+			for (lastTxStatus = channel.readByte(); lastTxStatus == 1; lastTxStatus = channel.readByte()) {
 				final byte recordStatus = channel.readByte();
 
 				final ORecordId rid = channel.readRID();
@@ -87,8 +88,12 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
 				// PUT IN TEMPORARY LIST TO GET FETCHED AFTER ALL FOR CACHE
 				recordEntries.put((ORecordId) entry.getRecord().getIdentity(), entry);
-
 			}
+
+			if (lastTxStatus == -1)
+				// ABORT TX
+				throw new OTransactionException("Transaction aborted by the client");
+
 			remoteIndexEntries = new ODocument(channel.readBytes());
 
 			// UNMARSHALL ALL THE RECORD AT THE END TO BE SURE ALL THE RECORD ARE LOADED IN LOCAL TX

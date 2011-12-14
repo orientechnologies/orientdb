@@ -53,6 +53,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -1468,6 +1469,22 @@ public class OStorageRemote extends OStorageAbstract {
 			// JUMP LOADED OBJECTS
 			return;
 
+		// SERIALIZE THE RECORD IF NEEDED. THIS IS DONE HERE TO CATCH EXCEPTION AND SEND A -1 AS ERROR TO THE SERVER TO SIGNAL THE ABORT
+		// OF TX COMMIT
+		byte[] stream = null;
+		try {
+			switch (txEntry.status) {
+			case OTransactionRecordEntry.CREATED:
+			case OTransactionRecordEntry.UPDATED:
+				stream = txEntry.getRecord().toStream();
+				break;
+			}
+		} catch (Exception e) {
+			// ABORT TX COMMIT
+			iNetwork.writeByte((byte) -1);
+			throw new OTransactionException("Error on transaction commit", e);
+		}
+
 		iNetwork.writeByte((byte) 1);
 		iNetwork.writeByte(txEntry.status);
 		iNetwork.writeShort((short) txEntry.getRecord().getIdentity().getClusterId());
@@ -1477,12 +1494,12 @@ public class OStorageRemote extends OStorageAbstract {
 		switch (txEntry.status) {
 		case OTransactionRecordEntry.CREATED:
 			iNetwork.writeString(txEntry.clusterName);
-			iNetwork.writeBytes(txEntry.getRecord().toStream());
+			iNetwork.writeBytes(stream);
 			break;
 
 		case OTransactionRecordEntry.UPDATED:
 			iNetwork.writeInt(txEntry.getRecord().getVersion());
-			iNetwork.writeBytes(txEntry.getRecord().toStream());
+			iNetwork.writeBytes(stream);
 			break;
 
 		case OTransactionRecordEntry.DELETED:
