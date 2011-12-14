@@ -24,6 +24,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
+import com.orientechnologies.orient.core.Orient;
 
 /**
  * This memory warning system will call the listener when we exceed the percentage of available memory specified. There should only
@@ -34,7 +35,6 @@ public class OMemoryWatchDog extends Thread {
 	private int													alertTimes		= 0;
 	protected ReferenceQueue<Object>		monitorQueue	= new ReferenceQueue<Object>();
 	protected SoftReference<Object>			monitorRef		= new SoftReference<Object>(new Object(), monitorQueue);
-	private static OMemoryWatchDog			instance;
 
 	public interface Listener {
 		/**
@@ -56,10 +56,7 @@ public class OMemoryWatchDog extends Thread {
 	 * @param iThreshold
 	 */
 	public OMemoryWatchDog() {
-		super("OrientDB-MemoryWatchDog");
-
-		if (instance != null)
-			throw new IllegalStateException("The Memory watch dog is already running");
+		super(Orient.getThreadGroup(), "OrientDB MemoryWatchDog");
 
 		OProfiler.getInstance().registerHookValue("memory.alerts", new OProfilerHookValue() {
 			public Object getValue() {
@@ -128,9 +125,5 @@ public class OMemoryWatchDog extends Thread {
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
 			}
-	}
-
-	public static OMemoryWatchDog instance() {
-		return instance;
 	}
 }
