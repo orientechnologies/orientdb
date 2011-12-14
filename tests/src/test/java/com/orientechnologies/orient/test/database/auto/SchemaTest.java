@@ -51,6 +51,10 @@ public class SchemaTest {
 		if (database.getMetadata().getSchema().existsClass("Account"))
 			return;
 
+		OClass rids = database.getMetadata().getSchema().getClass("ORIDs");
+		if (rids == null)
+			database.getMetadata().getSchema().createClass("ORIDs");
+
 		database.addCluster("csv", OStorage.CLUSTER_TYPE.PHYSICAL);
 		database.addCluster("flat", OStorage.CLUSTER_TYPE.PHYSICAL);
 		database.addCluster("binary", OStorage.CLUSTER_TYPE.PHYSICAL);

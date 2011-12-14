@@ -413,4 +413,43 @@ public class TransactionConsistencyTest {
 
 		db.close();
 	}
+//
+//	@SuppressWarnings("unchecked")
+//	@Test
+//	public void loadRecordTest() {
+//		ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+//		db.open("admin", "admin");
+//
+//		try {
+//			db.begin();
+//
+//			ODocument kim = new ODocument(db, "Profile").field("name", "Kim").field("surname", "Bauer");
+//			ODocument teri = new ODocument(db, "Profile").field("name", "Teri").field("surname", "Bauer");
+//			ODocument jack = new ODocument(db, "Profile").field("name", "Jack").field("surname", "Bauer");
+//			ODocument chloe = new ODocument(db, "Profile").field("name", "Chloe").field("surname", "O'Brien");
+//
+//			((HashSet<ODocument>) jack.field("following", new HashSet<ODocument>()).field("following")).add(kim);
+//			((HashSet<ODocument>) kim.field("following", new HashSet<ODocument>()).field("following")).add(teri);
+//			((HashSet<ODocument>) teri.field("following", new HashSet<ODocument>()).field("following")).add(jack);
+//			((HashSet<ODocument>) teri.field("following")).add(kim);
+//			((HashSet<ODocument>) chloe.field("following", new HashSet<ODocument>()).field("following")).add(jack);
+//			((HashSet<ODocument>) chloe.field("following")).add(teri);
+//			((HashSet<ODocument>) chloe.field("following")).add(kim);
+//
+//			jack.save();
+//			kim.save();
+//			teri.save();
+//			chloe.save();
+//
+//			db.commit();
+//
+//			db.close();
+//			db.open("admin", "admin");
+//
+//			ODocument loadedChloe = db.load(chloe.getIdentity());
+//			System.out.println(loadedChloe);
+//		} finally {
+//			db.close();
+//		}
+//	}
 }
