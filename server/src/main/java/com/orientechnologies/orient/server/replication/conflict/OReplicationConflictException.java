@@ -13,21 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.exception;
+package com.orientechnologies.orient.server.replication.conflict;
 
-import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 
 /**
- * Exception thrown when MVCC is enabled and a record can't be updated or deleted because versions don't match.
+ * Exception thrown when the two servers are not aligned.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OConcurrentModificationException extends ONeedRetryException {
+public class OReplicationConflictException extends OException {
 
 	private static final String	MESSAGE_RECORD_VERSION	= "your=v";
+
 	private static final String	MESSAGE_DB_VERSION			= "db=v";
 
 	private static final long		serialVersionUID				= 1L;
@@ -39,7 +40,7 @@ public class OConcurrentModificationException extends ONeedRetryException {
 	/**
 	 * Rebuilds the original exception from the message.
 	 */
-	public OConcurrentModificationException(final String message) {
+	public OReplicationConflictException(final String message) {
 		super(message);
 		int beginPos = message.indexOf(ORID.PREFIX);
 		int endPos = message.indexOf(' ', beginPos);
@@ -54,8 +55,7 @@ public class OConcurrentModificationException extends ONeedRetryException {
 		recordVersion = Integer.parseInt(message.substring(beginPos, endPos));
 	}
 
-	public OConcurrentModificationException(final String message, final ORID iRID, final int iDatabaseVersion,
-			final int iRecordVersion) {
+	public OReplicationConflictException(final String message, final ORID iRID, final int iDatabaseVersion, final int iRecordVersion) {
 		super(message);
 		rid = iRID;
 		databaseVersion = iDatabaseVersion;

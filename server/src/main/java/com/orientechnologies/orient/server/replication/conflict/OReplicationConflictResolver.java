@@ -27,7 +27,7 @@ import com.orientechnologies.orient.server.replication.OReplicator;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public interface ODistributedConflictResolver {
+public interface OReplicationConflictResolver {
 
 	public abstract void config(final OReplicator iReplicator, Map<String, String> iConfig);
 

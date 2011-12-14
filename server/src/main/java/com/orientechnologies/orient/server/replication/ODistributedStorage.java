@@ -28,16 +28,16 @@ import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.SYNCH_TYPE;
-import com.orientechnologies.orient.server.replication.conflict.ODistributedConflictResolver;
+import com.orientechnologies.orient.server.replication.conflict.OReplicationConflictResolver;
 
 /**
  * Distributed version of remote storage
  */
 public class ODistributedStorage extends OStorageRemote {
 
-	private final ODistributedConflictResolver	conflictResolver;
+	private final OReplicationConflictResolver	conflictResolver;
 
-	public ODistributedStorage(final String iURL, final String iMode, final ODistributedConflictResolver iConflictResolver)
+	public ODistributedStorage(final String iURL, final String iMode, final OReplicationConflictResolver iConflictResolver)
 			throws IOException {
 		super(iURL, iMode);
 		conflictResolver = iConflictResolver;

@@ -34,7 +34,7 @@ import com.orientechnologies.orient.server.replication.OReplicator;
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class ODefaultDistributedConflictResolver implements ODistributedConflictResolver {
+public class ODefaultReplicationConflictResolver implements OReplicationConflictResolver {
 
 	public static final String	DISTRIBUTED_CONFLICT_CLASS	= "ODistributedConflict";
 	private OReplicator					replicator;

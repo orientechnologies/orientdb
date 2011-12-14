@@ -29,6 +29,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.replication.conflict.ODefaultReplicationConflictResolver;
 
 /**
  * Handles the configuration of a distributed server node.
@@ -71,8 +72,7 @@ public class ODistributedServerConfiguration {
 			byte[] tempSecurityKey = null;
 
 			replicationConflictResolverConfig = new HashMap<String, String>();
-			replicationConflictResolverConfig.put("strategy",
-					"com.orientechnologies.orient.server.replication.conflict.ODefaultDistributedConflictResolver");
+			replicationConflictResolverConfig.put("strategy", ODefaultReplicationConflictResolver.class.getCanonicalName());
 			replicationConflictResolverConfig.put("ignoreIfSameContent", "true");
 			replicationConflictResolverConfig.put("ignoreIfMergeOk", "false");
 			replicationConflictResolverConfig.put("latestAlwaysWin", "false");

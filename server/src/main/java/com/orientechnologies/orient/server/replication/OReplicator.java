@@ -34,7 +34,7 @@ import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerConfiguration;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.SYNCH_TYPE;
-import com.orientechnologies.orient.server.replication.conflict.ODistributedConflictResolver;
+import com.orientechnologies.orient.server.replication.conflict.OReplicationConflictResolver;
 
 /**
  * Replicates requests across network remote server nodes.
@@ -69,7 +69,7 @@ public class OReplicator {
 	private Map<String, OOperationLog>					logs										= new HashMap<String, OOperationLog>();
 	private final Set<String>										ignoredClusters					= new HashSet<String>();
 	private final Set<String>										ignoredDocumentClasses	= new HashSet<String>();
-	private final ODistributedConflictResolver	conflictResolver;
+	private final OReplicationConflictResolver	conflictResolver;
 
 	public OReplicator(final ODistributedServerManager iManager) throws IOException {
 		manager = iManager;
@@ -79,7 +79,7 @@ public class OReplicator {
 
 		final String conflictResolvertStrategy = iManager.getConfig().replicationConflictResolverConfig.get("strategy");
 		try {
-			conflictResolver = (ODistributedConflictResolver) Class.forName(conflictResolvertStrategy).newInstance();
+			conflictResolver = (OReplicationConflictResolver) Class.forName(conflictResolvertStrategy).newInstance();
 			conflictResolver.config(this, iManager.getConfig().replicationConflictResolverConfig);
 		} catch (Exception e) {
 			throw new ODistributedException("Cannot create the configured replication conflict resolver: " + conflictResolvertStrategy);
@@ -246,7 +246,7 @@ public class OReplicator {
 		ignoredClusters.remove(ignoredCluster);
 	}
 
-	public ODistributedConflictResolver getConflictResolver() {
+	public OReplicationConflictResolver getConflictResolver() {
 		return conflictResolver;
 	}
 
