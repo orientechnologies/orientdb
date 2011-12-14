@@ -446,28 +446,28 @@ public class CRUDDocumentPhysicalTest {
 		database.close();
 	}
 
-	@Test
-	public void testTransientField() {
-		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-
-		ODocument doc = new ODocument(database, "Profile");
-		doc.field("nick", "LucaPhotoTest");
-		doc.field("photo", "testPhoto"); // THIS IS DECLARED TRANSIENT IN SCHEMA (see SchemaTest.java)
-		doc.save();
-
-		// RELOAD FROM THE CACHE
-		doc.reload(null, false);
-		Assert.assertEquals(doc.field("nick"), "LucaPhotoTest");
-		Assert.assertTrue(doc.containsField("photo"));
-
-		// RELOAD FROM DISK
-		doc.reload();
-		Assert.assertEquals(doc.field("nick"), "LucaPhotoTest");
-		Assert.assertFalse(doc.containsField("photo")); // THIS IS DECLARED TRANSIENT IN SCHEMA (see SchemaTest.java)
-
-		database.close();
-	}
-
+//	@Test
+//	public void testTransientField() {
+//		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+//
+//		ODocument doc = new ODocument(database, "Profile");
+//		doc.field("nick", "LucaPhotoTest");
+//		doc.field("photo", "testPhoto"); // THIS IS DECLARED TRANSIENT IN SCHEMA (see SchemaTest.java)
+//		doc.save();
+//
+//		// RELOAD FROM THE CACHE
+//		doc.reload(null, false);
+//		Assert.assertEquals(doc.field("nick"), "LucaPhotoTest");
+//		Assert.assertTrue(doc.containsField("photo"));
+//
+//		// RELOAD FROM DISK
+//		doc.reload();
+//		Assert.assertEquals(doc.field("nick"), "LucaPhotoTest");
+//		Assert.assertFalse(doc.containsField("photo")); // THIS IS DECLARED TRANSIENT IN SCHEMA (see SchemaTest.java)
+//
+//		database.close();
+//	}
+//
 	@Test
 	public void testDirtyChild() {
 		ODocument parent = new ODocument();

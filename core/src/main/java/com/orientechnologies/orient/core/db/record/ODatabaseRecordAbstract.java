@@ -453,6 +453,11 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				record = getLevel1Cache().findRecord(iRid);
 
 			if (record != null) {
+				if (iRecord != null) {
+					iRecord.fromStream(record.toStream());
+					record = iRecord;
+				}
+				
 				OFetchHelper.checkFetchPlanValid(iFetchPlan);
 				callbackHooks(TYPE.BEFORE_READ, record);
 
