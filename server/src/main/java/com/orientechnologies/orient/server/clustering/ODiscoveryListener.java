@@ -37,7 +37,7 @@ public class ODiscoveryListener extends OSoftThread {
 	private MulticastSocket						socket;
 
 	public ODiscoveryListener(final ODistributedServerManager iManager, final OServerNetworkListener iNetworkListener) {
-		super(Orient.getThreadGroup(), "IO-Cluster-DiscoveryListener");
+		super(Orient.getThreadGroup(), "OrientDB Distributed-DiscoveryListener");
 
 		manager = iManager;
 		binaryNetworkListener = iNetworkListener;

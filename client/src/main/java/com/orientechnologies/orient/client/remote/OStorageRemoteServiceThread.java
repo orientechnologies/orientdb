@@ -18,6 +18,7 @@ package com.orientechnologies.orient.client.remote;
 import java.io.IOException;
 
 import com.orientechnologies.common.thread.OSoftThread;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -33,7 +34,7 @@ public class OStorageRemoteServiceThread extends OSoftThread {
 	private OChannelBinaryClient				network;
 
 	public OStorageRemoteServiceThread(final OStorageRemoteThread iStorageRemote, final OChannelBinaryClient iFirstChannel) {
-		super("ClientService");
+		super(Orient.getThreadGroup(), "OrientDB AsynchRemoteStorageService");
 		storage = iStorageRemote;
 		network = iFirstChannel;
 		start();

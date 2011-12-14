@@ -43,7 +43,7 @@ public class ODiscoverySignaler extends OPollerThread {
 	private TimerTask									runningTask;
 
 	public ODiscoverySignaler(final ODistributedServerManager iManager, final OServerNetworkListener iNetworkListener) {
-		super(iManager.getConfig().networkMulticastHeartbeat * 1000, Orient.getThreadGroup(), "IO-Cluster-DiscoverySignaler");
+		super(iManager.getConfig().networkMulticastHeartbeat * 1000, Orient.getThreadGroup(), "OrientDB Distributed-DiscoverySignaler");
 
 		manager = iManager;
 

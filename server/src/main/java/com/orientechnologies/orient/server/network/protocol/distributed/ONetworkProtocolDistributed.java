@@ -45,7 +45,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 	private ODistributedServerManager	manager;
 
 	public ONetworkProtocolDistributed() {
-		super("Distributed-DB");
+		super("OrientDB DistributedBinaryNetworkProtocolListener");
 
 		manager = OServerMain.server().getHandler(ODistributedServerManager.class);
 		if (manager == null)
@@ -89,8 +89,8 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 						channel.writeByte((byte) 0);
 						channel.flush();
 
-						OLogManager.instance().warn(this, "Current node remains the Leader of the cluster because it has lower network address",
-								leaderAddress);
+						OLogManager.instance().warn(this,
+								"Current node remains the Leader of the cluster because it has lower network address", leaderAddress);
 						return;
 					}
 				}
