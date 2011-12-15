@@ -22,7 +22,6 @@ import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.orient.core.db.record.ODetachable;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
@@ -45,8 +44,8 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerial
 		this(new OMVRBTreeRID());
 	}
 
-	public OMVRBTreeRIDSet(final ORID iRID) {
-		this(new OMVRBTreeRID(iRID));
+	public OMVRBTreeRIDSet(final OIdentifiable iRecord) {
+		this(new OMVRBTreeRID((ODocument) iRecord.getRecord()));
 	}
 
 	public OMVRBTreeRIDSet(final String iClusterName) {
@@ -55,6 +54,10 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerial
 
 	public OMVRBTreeRIDSet(final ORecord<?> iOwner) {
 		this((OMVRBTreeRID) new OMVRBTreeRID().setOwner(iOwner));
+	}
+
+	public OMVRBTreeRIDSet(final ORecord<?> iOwner, Collection<OIdentifiable> iInitValues) {
+		this((OMVRBTreeRID) new OMVRBTreeRID(iInitValues).setOwner(iOwner));
 	}
 
 	public OMVRBTreeRIDSet(final OMVRBTreeRID iProvider) {

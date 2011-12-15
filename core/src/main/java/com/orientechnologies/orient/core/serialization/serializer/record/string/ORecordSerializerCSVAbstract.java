@@ -308,8 +308,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 			if (!(iValue instanceof OMVRBTreeRIDSet)) {
 				// FIRST TIME: CONVERT THE ENTIRE COLLECTION
-				coll = new OMVRBTreeRIDSet(iRecord);
-				coll.addAll((Collection<? extends OIdentifiable>) iValue);
+				coll = new OMVRBTreeRIDSet(iRecord, (Collection<OIdentifiable>) iValue);
 				((Collection<? extends OIdentifiable>) iValue).clear();
 
 				iRecord.field(iName, coll);

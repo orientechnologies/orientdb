@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.record.OLazyRecordIterator;
 import com.orientechnologies.orient.core.db.record.OLazyRecordMultiIterator;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDEntryProvider;
@@ -45,17 +46,22 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 	private static final Object									NEWMAP_VALUE				= new Object();
 	private static final long										serialVersionUID		= 1L;
 
+	public OMVRBTreeRID(Collection<OIdentifiable> iInitValues) {
+		this();
+		((OMVRBTreeRIDProvider) dataProvider).fill(iInitValues);
+	}
+
 	public OMVRBTreeRID() {
 		this(new OMVRBTreeRIDProvider(null, ODatabaseRecordThreadLocal.INSTANCE.get().getDefaultClusterId()));
 	}
 
-	public OMVRBTreeRID(final ORID iRID) {
-		this(new OMVRBTreeRIDProvider(null, iRID.getClusterId(), iRID));
+	public OMVRBTreeRID(final ODocument iRecord) {
+		this(new OMVRBTreeRIDProvider(((OIdentifiable) iRecord.field("root")).getIdentity()));
 		load();
 	}
 
 	public OMVRBTreeRID(final String iClusterName) {
-		this(new OMVRBTreeRIDProvider(null, iClusterName));
+		this(new OMVRBTreeRIDProvider(iClusterName));
 	}
 
 	public OMVRBTreeRID(final OMVRBTreeProvider<OIdentifiable, OIdentifiable> iProvider) {

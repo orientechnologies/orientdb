@@ -92,9 +92,9 @@ public class OMVRBTreeRIDEntryProvider extends OMVRBTreeEntryDataProviderAbstrac
 	}
 
 	public boolean setValueAt(int iIndex, final OIdentifiable iValue) {
-		if( iValue == null )
+		if (iValue == null)
 			return false;
-		
+
 		try {
 			itemToStream(iValue, iIndex);
 		} catch (IOException e) {
@@ -193,6 +193,9 @@ public class OMVRBTreeRIDEntryProvider extends OMVRBTreeEntryDataProviderAbstrac
 	}
 
 	public byte[] toStream() throws OSerializationException {
+		if (stream == null)
+			stream = new OMemoryStream();
+
 		try {
 			stream.jump(OFFSET_TREESIZE).set(treeSize);
 			stream.jump(OFFSET_NODESIZE).set(size);
