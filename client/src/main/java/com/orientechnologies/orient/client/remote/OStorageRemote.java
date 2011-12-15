@@ -708,7 +708,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 						// ASYNCH: READ ONE RECORD AT TIME
 						while ((status = network.readByte()) > 0) {
-							final ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) readIdentifiable(network);
+							final ORecordInternal<?> record = (ORecordInternal<?>) readIdentifiable(network);
 							if (record == null)
 								break;
 

@@ -32,7 +32,9 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
@@ -87,11 +89,12 @@ public class OSQLFilter extends OCommandToParse {
 		}
 	}
 
-	public boolean evaluate(final ORecordSchemaAware<?> iRecord) {
+	public boolean evaluate(final ORecord<?> iRecord) {
 		if (targetClasses != null) {
 			final OClass cls = targetClasses.keySet().iterator().next();
 			// CHECK IF IT'S PART OF THE REQUESTED CLASS
-			if (iRecord.getSchemaClass() == null || !iRecord.getSchemaClass().isSubClassOf(cls))
+			if (iRecord instanceof ODocument && ((ODocument) iRecord).getSchemaClass() == null
+					|| !((ODocument) iRecord).getSchemaClass().isSubClassOf(cls))
 				// EXCLUDE IT
 				return false;
 		}
@@ -99,7 +102,7 @@ public class OSQLFilter extends OCommandToParse {
 		if (rootCondition == null)
 			return true;
 
-		return (Boolean) rootCondition.evaluate(iRecord);
+		return (Boolean) rootCondition.evaluate((ORecordSchemaAware<?>) iRecord);
 	}
 
 	private boolean extractTargets() {

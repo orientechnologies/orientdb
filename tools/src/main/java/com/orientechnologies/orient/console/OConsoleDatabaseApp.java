@@ -1328,7 +1328,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		try {
 			Object value = null;
 
-			if (iRecord instanceof ODocument)
+			if (iRecord instanceof ORecordBytes) {
+				format.append("|%-70s");
+				vargs.add("<binary> (size=" + ((ORecordBytes) iRecord).toStream().length + " bytes)");
+			} else if (iRecord instanceof ODocument)
 				((ODocument) iRecord).setLazyLoad(false);
 
 			for (String colName : iColumns) {

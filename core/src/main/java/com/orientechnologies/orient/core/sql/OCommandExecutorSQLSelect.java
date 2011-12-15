@@ -905,7 +905,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	}
 
 	protected boolean filter(final ORecordInternal<?> iRecord) {
-		return compiledFilter.evaluate((ORecordSchemaAware<?>) iRecord);
+		return compiledFilter.evaluate(iRecord);
 	}
 
 	protected int parseProjections() {
@@ -1022,16 +1022,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 		final ODatabaseRecord database = getDatabase();
 
-		if (rootCondition == null){
-      final ORID beginRange;
-      if(request instanceof OSQLSynchQuery)
-        beginRange = ((OSQLSynchQuery)request).getNextPageRID();
-      else
-        beginRange = null;
+		if (rootCondition == null) {
+			final ORID beginRange;
+			if (request instanceof OSQLSynchQuery)
+				beginRange = ((OSQLSynchQuery) request).getNextPageRID();
+			else
+				beginRange = null;
 
-			((OStorageEmbedded) database.getStorage()).browse(clusterIds, beginRange, null, this, (ORecordInternal<?>) database.newInstance(),
-					false);
-    }	else
+			((OStorageEmbedded) database.getStorage()).browse(clusterIds, beginRange, null, this,
+					(ORecordInternal<?>) database.newInstance(), false);
+		} else
 			((OStorageEmbedded) database.getStorage()).browse(clusterIds, rootCondition.getBeginRidRange(),
 					rootCondition.getEndRidRange(), this, (ORecordInternal<?>) database.newInstance(), false);
 	}
