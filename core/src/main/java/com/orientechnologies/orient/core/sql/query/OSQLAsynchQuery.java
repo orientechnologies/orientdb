@@ -19,8 +19,9 @@ import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 
 /**
- * SQL asynchronous query. When executed the caller does not wait the the execution, rather the listener will be called foreach item
- * found in the query. OSQLAsynchQuery has been built on top of this.
+ * SQL asynchronous query. When executed the caller does not wait the the execution, rather the listener will be called for each
+ * item found in the query. OSQLAsynchQuery has been built on top of this. NOTE: if you're working with remote databases don't
+ * execute any remote call inside the callback function because the network channel is locked until the query command has finished.
  * 
  * @author Luca Garulli
  * 
