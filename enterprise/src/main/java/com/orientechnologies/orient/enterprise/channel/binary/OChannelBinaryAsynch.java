@@ -17,7 +17,6 @@ package com.orientechnologies.orient.enterprise.channel.binary;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -29,10 +28,9 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
  * 
  */
 public class OChannelBinaryAsynch extends OChannelBinary {
-	private final int						DEFAULT_TIMEOUT	= 10000;
-	private final ReentrantLock	lockRead				= new ReentrantLock();
-	private final ReentrantLock	lockWrite				= new ReentrantLock();
-	private boolean							channelRead			= false;
+	private final ReentrantLock	lockRead		= new ReentrantLock();
+	private final ReentrantLock	lockWrite		= new ReentrantLock();
+	private boolean							channelRead	= false;
 	private byte								currentStatus;
 	private int									currentTxId;
 
@@ -50,21 +48,9 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 	}
 
 	public void beginResponse(final int iRequesterId) throws IOException {
-		beginResponse(iRequesterId, DEFAULT_TIMEOUT);
-	}
-
-	public void beginResponse(final int iRequesterId, int iTimeout) throws IOException {
 		// WAIT FOR THE RESPONSE
 		do {
-			if (iTimeout == -1)
-				iTimeout = DEFAULT_TIMEOUT;
-
-			try {
-				if (!lockRead.tryLock(iTimeout, TimeUnit.MILLISECONDS))
-					throw new IOException("Timeout on reading network response");
-			} catch (InterruptedException e) {
-				throw new IOException("Error on reading network response", e);
-			}
+			lockRead.lock();
 
 			if (!channelRead) {
 				channelRead = true;
