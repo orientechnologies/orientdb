@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.Orient;
  * be one instance of this object created, since the usage threshold can only be set to one number.
  */
 public class OMemoryWatchDog extends Thread {
-	private final Set<Listener>				listeners			= new HashSet<Listener>();
+	private final Set<Listener>				listeners			= new HashSet<Listener>(128);
 	private int												alertTimes		= 0;
 	protected ReferenceQueue<Object>	monitorQueue	= new ReferenceQueue<Object>();
 	protected SoftReference<Object>		monitorRef		= new SoftReference<Object>(new Object(), monitorQueue);

@@ -23,11 +23,13 @@ import java.util.StringTokenizer;
 
 import com.orientechnologies.common.collection.OMVRBTree;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.memory.OMemoryWatchDog.Listener;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -52,6 +54,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 	private boolean							embeddedStreaming	= true;								// KEEP THE STREAMING MODE
 	private final StringBuilder	buffer						= new StringBuilder();
 	private boolean							marshalling				= false;
+	private Listener						watchDog;
 
 	public OMVRBTreeRIDProvider(final OStorage iStorage, final int iClusterId, final ORID iRID) {
 		this(iStorage, getDatabase().getClusterNameById(iClusterId));
@@ -78,6 +81,12 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 
 	public OMVRBTreeRIDEntryProvider createEntry() {
 		return new OMVRBTreeRIDEntryProvider(this);
+	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		if (watchDog != null)
+			Orient.instance().getMemoryWatchDog().removeListener(watchDog);
 	}
 
 	public OStringBuilderSerializable toStream(final StringBuilder iBuffer) throws OSerializationException {
@@ -168,7 +177,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 					tree.put(rid, rid);
 				}
 			} else {
-				embeddedStreaming = false;
+				setEmbeddedStreaming(false);
 				value = firstChar == OStringSerializerHelper.EMBEDDED_BEGIN ? value.substring(1, value.length() - 1) : value.toString();
 				fromStream(value.getBytes());
 				tree.load();
@@ -223,10 +232,26 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 			if (binaryThreshold > 0 && size > binaryThreshold && tree != null) {
 				// CHANGE TO EXTERNAL BINARY
 				tree.setDirtyOwner();
-				embeddedStreaming = false;
+				setEmbeddedStreaming(false);
 			}
 		}
 		return embeddedStreaming;
+	}
+
+	protected void setEmbeddedStreaming(final boolean iValue) {
+		if (embeddedStreaming != iValue) {
+			embeddedStreaming = iValue;
+
+			if (!iValue) {
+				// INSTALL WATCHDOG TO CONTROL TREE SIZE IN MEMORY
+				watchDog = new Listener() {
+					public void memoryUsageLow(final long iFreeMemory, final long iFreeMemoryPercentage) {
+						tree.setOptimization(iFreeMemoryPercentage < 10 ? 2 : 1);
+					}
+				};
+			}
+			Orient.instance().getMemoryWatchDog().addListener(watchDog);
+		}
 	}
 
 	@Override

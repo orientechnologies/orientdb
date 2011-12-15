@@ -23,13 +23,11 @@ import java.util.Iterator;
 import java.util.Set;
 
 import com.orientechnologies.common.collection.OLazyIterator;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OLazyRecordIterator;
 import com.orientechnologies.orient.core.db.record.OLazyRecordMultiIterator;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog.Listener;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
@@ -43,7 +41,6 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
 public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiable> {
 	private IdentityHashMap<ORecord<?>, Object>	newItems;
 	private boolean															autoConvertToRecord	= true;
-	private Listener														watchDog;
 
 	private static final Object									NEWMAP_VALUE				= new Object();
 	private static final long										serialVersionUID		= 1L;
@@ -64,12 +61,6 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 	public OMVRBTreeRID(final OMVRBTreeProvider<OIdentifiable, OIdentifiable> iProvider) {
 		super(iProvider);
 		((OMVRBTreeRIDProvider) dataProvider).setTree(this);
-		watchDog = new Listener() {
-			public void memoryUsageLow(final long iFreeMemory, final long iFreeMemoryPercentage) {
-				setOptimization(iFreeMemoryPercentage < 10 ? 2 : 1);
-			}
-		};
-		Orient.instance().getMemoryWatchDog().addListener(watchDog);
 	}
 
 	/**
@@ -85,12 +76,6 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 			((OMVRBTreeRIDProvider) dataProvider).fill(iSource.keySet());
 		else
 			load();
-	}
-
-	@Override
-	protected void finalize() throws Throwable {
-		if (watchDog != null)
-			Orient.instance().getMemoryWatchDog().removeListener(watchDog);
 	}
 
 	@Override
@@ -336,21 +321,27 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
 	public boolean saveAllNewItems() {
 		if (hasNewItems()) {
+			IdentityHashMap<ORecord<?>, Object> temp = null;
 			for (Iterator<ORecord<?>> it = newItems.keySet().iterator(); it.hasNext();) {
 				final ORecord<?> record = it.next();
 
 				if (record.getIdentity().isNew())
 					record.save();
 
-				if (!record.getIdentity().isNew()) {
+				if (record.getIdentity().isNew()) {
+					// MAYBE IN TX
+					if (temp == null)
+						temp = new IdentityHashMap<ORecord<?>, Object>();
+					temp.put(record, NEWMAP_VALUE);
+
+				} else
 					// INSERT ONLY PERSISTENT RIDS
 					super.put(record.getIdentity(), null);
-					it.remove();
-				}
 			}
 
-			if (newItems.size() == 0)
-				newItems = null;
+			if (newItems != null)
+				newItems.clear();
+			newItems = temp;
 		}
 		return true;
 	}
