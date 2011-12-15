@@ -44,7 +44,6 @@ import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -76,9 +75,10 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.impl.local.ODataHoleInfo;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.enterprise.command.OCommandExecutorScript;
@@ -322,7 +322,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		checkCurrentDatabase();
 
 		if (!(currentDatabase.getStorage() instanceof OStorageLocal)) {
-			out.println("Error: cannot show holes in remote databases: connect as local");
+			out.println("Error: cannot show holes in databases different by local");
 			return;
 		}
 
@@ -513,8 +513,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 		iQueryText = "select " + iQueryText;
 
-		currentResultSet.clear();
-
 		final List<String> columns = new ArrayList<String>();
 		final int limit;
 		if (iQueryText.contains("limit")) {
@@ -524,16 +522,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		}
 
 		long start = System.currentTimeMillis();
-		currentDatabase.query(new OSQLAsynchQuery<ODocument>(iQueryText, limit, new OCommandResultListener() {
-			public boolean result(final Object iRecord) {
-				final OIdentifiable record = (OIdentifiable) iRecord;
+		currentResultSet = currentDatabase.query(new OSQLSynchQuery<ODocument>(iQueryText, limit).setFetchPlan("*:1"));
 
-				dumpRecordInTable(currentResultSet.size(), record, columns);
-				currentResultSet.add(record);
-				return true;
-			}
-
-		}).setFetchPlan("*:1"));
+		int i = 0;
+		for (OIdentifiable record : currentResultSet) {
+			dumpRecordInTable(i++, record, columns);
+		}
 
 		if (currentResultSet.size() > 0 && (limit == -1 || currentResultSet.size() < limit))
 			printHeaderLine(columns);
@@ -879,18 +873,22 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			String clusterType = null;
 			long totalElements = 0;
 			long count;
-			long size;
+			long size = 0;
 			long totalSize = 0;
 			for (String clusterName : currentDatabase.getClusterNames()) {
 				try {
 					clusterId = currentDatabase.getClusterIdByName(clusterName);
 					clusterType = currentDatabase.getClusterType(clusterName);
 					count = currentDatabase.countClusterElements(clusterName);
-					size = currentDatabase.getClusterRecordSizeByName(clusterName);
-					totalElements += count;
-					totalSize += size;
-					out.printf(" %-45s|%6d| %-20s|%10d |%10s |\n", clusterName, clusterId, clusterType, count,
-							OFileUtils.getSizeAsString(size));
+					if (currentDatabase.getStorage() instanceof OStorageEmbedded) {
+						size = currentDatabase.getClusterRecordSizeByName(clusterName);
+						totalElements += count;
+						totalSize += size;
+						out.printf(" %-45s|%6d| %-20s|%10d |%10s |\n", clusterName, clusterId, clusterType, count,
+								OFileUtils.getSizeAsString(size));
+					} else {
+						out.printf(" %-45s|%6d| %-20s|%10d |%10s |\n", clusterName, clusterId, clusterType, count, "Not supported");
+					}
 				} catch (Exception e) {
 				}
 			}
