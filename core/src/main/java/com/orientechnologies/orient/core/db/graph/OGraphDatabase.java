@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 
 /**
  * Super light GraphDB implementation on top of the underlying Document. The generated vertexes and edges are compatible with those
@@ -747,6 +748,8 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	}
 
 	public void checkForGraphSchema() {
+		getMetadata().getSchema().getOrCreateClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
+
 		vertexBaseClass = getMetadata().getSchema().getClass(VERTEX_CLASS_NAME);
 		edgeBaseClass = getMetadata().getSchema().getClass(EDGE_CLASS_NAME);
 
