@@ -17,9 +17,11 @@ package com.orientechnologies.orient.core.sql;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -111,7 +113,7 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLPermis
 
 		final ODatabaseRecord database = getDatabase();
 
-		final List<ORID> result = new ArrayList<ORID>();
+		final Set<ORID> result = new HashSet<ORID>();
 		if (classList == null || classList.equals("")) {
 			for (String clusterName : database.getClusterNames()) {
 				browseCluster(clusterName, result);
@@ -127,10 +129,10 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLPermis
 			}
 		}
 
-		return result;
+		return new ArrayList<ORID>(result);
 	}
 
-	private void browseCluster(final String iClusterName, final List<ORID> ids) {
+	private void browseCluster(final String iClusterName, final Set<ORID> ids) {
 		final ODatabaseRecord database = getDatabase();
 		for (ORecordInternal<?> record : database.browseCluster(iClusterName)) {
 			if (record instanceof ODocument) {
@@ -146,7 +148,7 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLPermis
 		}
 	}
 
-	private void browseClass(final String iClassName, final List<ORID> ids) {
+	private void browseClass(final String iClassName, final Set<ORID> ids) {
 		final ODatabaseRecord database = getDatabase();
 		final OClass clazz = database.getMetadata().getSchema().getClass(iClassName);
 
@@ -158,7 +160,7 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLPermis
 		}
 	}
 
-	private void checkObject(final List<ORID> ids, final Object value, final ODocument iRootObject) {
+	private void checkObject(final Set<ORID> ids, final Object value, final ODocument iRootObject) {
 		if (value instanceof OIdentifiable) {
 			checkDocument(ids, (OIdentifiable) value, iRootObject);
 		} else if (value instanceof Collection<?>) {
@@ -168,13 +170,13 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLPermis
 		}
 	}
 
-	private void checkDocument(final List<ORID> ids, final OIdentifiable value, final ODocument iRootObject) {
+	private void checkDocument(final Set<ORID> ids, final OIdentifiable value, final ODocument iRootObject) {
 		if (value.getIdentity().equals(recordId)) {
 			ids.add(iRootObject.getIdentity());
 		}
 	}
 
-	private void checkCollection(final List<ORID> ids, final Collection<?> values, final ODocument iRootObject) {
+	private void checkCollection(final Set<ORID> ids, final Collection<?> values, final ODocument iRootObject) {
 		final Iterator<?> it;
 		if (values instanceof OLazyObjectList) {
 			((OLazyObjectList<?>) values).setConvertToRecord(false);
@@ -194,7 +196,7 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLPermis
 		}
 	}
 
-	private void checkMap(final List<ORID> ids, final Map<?, ?> values, final ODocument iRootObject) {
+	private void checkMap(final Set<ORID> ids, final Map<?, ?> values, final ODocument iRootObject) {
 		final Iterator<?> it;
 		if (values instanceof OLazyObjectMap) {
 			((OLazyObjectMap<?>) values).setConvertToRecord(false);
