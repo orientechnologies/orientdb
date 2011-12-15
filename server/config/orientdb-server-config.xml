@@ -8,7 +8,7 @@
 				<parameter name="network.multicast.address" value="235.1.1.1" />
 				<parameter name="network.multicast.port" value="2424" />
 				<parameter name="network.multicast.heartbeat" value="10" />
-				<parameter name="replication.conflictResolver.strategy" value="com.orientechnologies.orient.server.replication.conflict.ODefaultDistributedConflictResolver" />
+				<parameter name="replication.conflictResolver.strategy" value="com.orientechnologies.orient.server.replication.conflict.ODefaultReplicationConflictResolver" />
 				<parameter name="replication.conflictResolver.ignoreIfSameContent" value="true" />
 				<parameter name="replication.conflictResolver.ignoreIfMergeOk" value="false" />
 				<parameter name="replication.conflictResolver.latestAlwaysWin" value="false" />
