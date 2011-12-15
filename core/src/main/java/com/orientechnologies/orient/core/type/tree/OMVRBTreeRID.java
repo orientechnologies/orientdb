@@ -72,6 +72,21 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 		Orient.instance().getMemoryWatchDog().addListener(watchDog);
 	}
 
+	/**
+	 * Copy constructor
+	 * 
+	 * @param iSource
+	 *          Source object
+	 */
+	public OMVRBTreeRID(final OMVRBTreeRID iSource) {
+		super(new OMVRBTreeRIDProvider((OMVRBTreeRIDProvider) iSource.getProvider()));
+		((OMVRBTreeRIDProvider) dataProvider).setTree(this);
+		if (((OMVRBTreeRIDProvider) iSource.getProvider()).isEmbeddedStreaming())
+			((OMVRBTreeRIDProvider) dataProvider).fill(iSource.keySet());
+		else
+			load();
+	}
+
 	@Override
 	protected void finalize() throws Throwable {
 		if (watchDog != null)

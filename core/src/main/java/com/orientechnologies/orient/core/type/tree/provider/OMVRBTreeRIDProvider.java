@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.type.tree.provider;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.IdentityHashMap;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 import com.orientechnologies.common.collection.OMVRBTree;
@@ -54,12 +55,8 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 
 	public OMVRBTreeRIDProvider(final OStorage iStorage, final int iClusterId, final ORID iRID) {
 		this(iStorage, getDatabase().getClusterNameById(iClusterId));
-		record.setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
-	}
-
-	public OMVRBTreeRIDProvider(final OStorage iStorage, final String iClusterName, final ORID iRID) {
-		this(iStorage, iClusterName);
-		record.setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
+		if (iRID != null)
+			record.setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
 	}
 
 	public OMVRBTreeRIDProvider(final OStorage iStorage, final int iClusterId) {
@@ -69,6 +66,10 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 	public OMVRBTreeRIDProvider(final OStorage iStorage, final String iClusterName) {
 		super(new ODocument(getDatabase()), iStorage, iClusterName);
 		((ODocument) record).field("pageSize", pageSize);
+	}
+
+	public OMVRBTreeRIDProvider(final OMVRBTreeRIDProvider iSource) {
+		this(null, iSource.getClusterId(), iSource.getRoot());
 	}
 
 	public OMVRBTreeRIDEntryProvider getEntry(final ORID iRid) {
@@ -217,9 +218,9 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 	}
 
 	public boolean isEmbeddedStreaming() {
-		if (embeddedStreaming) {
+		if (embeddedStreaming && !marshalling) {
 			final int binaryThreshold = OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger();
-			if (binaryThreshold > 0 && size > binaryThreshold) {
+			if (binaryThreshold > 0 && size > binaryThreshold && tree != null) {
 				// CHANGE TO EXTERNAL BINARY
 				tree.setDirtyOwner();
 				embeddedStreaming = false;
@@ -238,5 +239,21 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 			isChanged = true;
 		}
 		return isChanged ? setDirty() : false;
+	}
+
+	/**
+	 * Fill entries in one shot without calling the early save (because marshalling=true)
+	 * 
+	 * @param keySet
+	 */
+	public void fill(final Set<OIdentifiable> keySet) {
+		try {
+			marshalling = true;
+			for (OIdentifiable rid : keySet) {
+				tree.put(rid, null);
+			}
+		} finally {
+			marshalling = false;
+		}
 	}
 }

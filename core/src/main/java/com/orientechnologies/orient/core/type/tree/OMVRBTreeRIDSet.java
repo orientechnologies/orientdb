@@ -61,6 +61,16 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerial
 		tree = iProvider;
 	}
 
+	/**
+	 * Copy constructor
+	 * 
+	 * @param iSource
+	 *          Source object
+	 */
+	public OMVRBTreeRIDSet(final OMVRBTreeRIDSet iSource) {
+		tree = new OMVRBTreeRID(iSource.tree);
+	}
+
 	public int size() {
 		return tree.size();
 	}
@@ -139,9 +149,7 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerial
 	}
 
 	public OMVRBTreeRIDSet copy() {
-		final OMVRBTreeRIDSet clone = new OMVRBTreeRIDSet(new OMVRBTreeRID(new OMVRBTreeRIDProvider(null, tree.getProvider()
-				.getClusterId())));
-		clone.addAll(this);
+		final OMVRBTreeRIDSet clone = new OMVRBTreeRIDSet(this);
 		return clone;
 	}
 
