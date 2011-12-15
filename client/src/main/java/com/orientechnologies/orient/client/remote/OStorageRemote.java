@@ -1018,7 +1018,7 @@ public class OStorageRemote extends OStorageAbstract {
 				}
 
 				try {
-					beginResponse(network);
+					beginResponse(network, 1000);
 					return network.readShort();
 				} finally {
 					endResponse(network);
@@ -1421,7 +1421,14 @@ public class OStorageRemote extends OStorageAbstract {
 	 * Starts listening the response.
 	 */
 	protected void beginResponse(final OChannelBinaryClient iNetwork) throws IOException {
-		iNetwork.beginResponse(getSessionId());
+		beginResponse(iNetwork, -1);
+	}
+
+	/**
+	 * Starts listening the response.
+	 */
+	protected void beginResponse(final OChannelBinaryClient iNetwork, final int iTimeout) throws IOException {
+		iNetwork.beginResponse(getSessionId(), iTimeout);
 
 		if (debug)
 			System.out.println("-> res: " + getSessionId());

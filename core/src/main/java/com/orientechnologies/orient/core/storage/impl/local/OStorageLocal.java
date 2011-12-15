@@ -847,8 +847,11 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			checkClusterSegmentIndexRange(iClusterId);
 
-			return clusters[iClusterId];
+			final OCluster cluster = clusters[iClusterId];
+			if (cluster == null)
+				throw new IllegalArgumentException("Cluster " + iClusterId + " is null");
 
+			return cluster;
 		} finally {
 			lock.releaseSharedLock();
 		}
