@@ -82,12 +82,12 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 	public OMVRBTreeRIDEntryProvider createEntry() {
 		return new OMVRBTreeRIDEntryProvider(this);
 	}
-
-	@Override
-	protected void finalize() throws Throwable {
-		if (watchDog != null)
-			Orient.instance().getMemoryWatchDog().removeListener(watchDog);
-	}
+//
+//	@Override
+//	protected void finalize() throws Throwable {
+//		if (watchDog != null)
+//			Orient.instance().getMemoryWatchDog().removeListener(watchDog);
+//	}
 
 	public OStringBuilderSerializable toStream(final StringBuilder iBuffer) throws OSerializationException {
 		final long timer = OProfiler.getInstance().startChrono();
@@ -170,7 +170,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 					.toString();
 
 			if (firstChar == OStringSerializerHelper.COLLECTION_BEGIN || firstChar == OStringSerializerHelper.LINK) {
-				embeddedStreaming = true;
+				setEmbeddedStreaming( true);
 				final StringTokenizer tokenizer = new StringTokenizer(value, ",");
 				while (tokenizer.hasMoreElements()) {
 					final ORecordId rid = new ORecordId(tokenizer.nextToken());
@@ -241,16 +241,16 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 	protected void setEmbeddedStreaming(final boolean iValue) {
 		if (embeddedStreaming != iValue) {
 			embeddedStreaming = iValue;
-
-			if (!iValue) {
-				// INSTALL WATCHDOG TO CONTROL TREE SIZE IN MEMORY
-				watchDog = new Listener() {
-					public void memoryUsageLow(final long iFreeMemory, final long iFreeMemoryPercentage) {
-						tree.setOptimization(iFreeMemoryPercentage < 10 ? 2 : 1);
-					}
-				};
-			}
-			Orient.instance().getMemoryWatchDog().addListener(watchDog);
+//
+//			if (!iValue) {
+//				// INSTALL WATCHDOG TO CONTROL TREE SIZE IN MEMORY
+//				watchDog = new Listener() {
+//					public void memoryUsageLow(final long iFreeMemory, final long iFreeMemoryPercentage) {
+//						tree.setOptimization(iFreeMemoryPercentage < 10 ? 2 : 1);
+//					}
+//				};
+//			}
+//			Orient.instance().getMemoryWatchDog().addListener(watchDog);
 		}
 	}
 
