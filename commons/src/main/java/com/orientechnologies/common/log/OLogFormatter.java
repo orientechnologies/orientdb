@@ -11,6 +11,11 @@ public class OLogFormatter extends Formatter {
 
 	private static final DateFormat	dateFormat	= new SimpleDateFormat("yyyy-MM-dd hh:mm:ss:SSS");
 
+	/**
+	 * The end-of-line character for this platform.
+	 */
+	private static final String			EOL					= System.getProperty("line.separator");
+
 	@Override
 	public String format(final LogRecord record) {
 		if (record.getThrown() == null) {
@@ -24,10 +29,10 @@ public class OLogFormatter extends Formatter {
 		Throwable current = record.getThrown();
 
 		while (current != null) {
-			buffer.append("\n" + current.getMessage());
+			buffer.append(EOL).append(current.getMessage());
 
 			for (StackTraceElement stackTraceElement : record.getThrown().getStackTrace()) {
-				buffer.append("\n-> ");
+				buffer.append(EOL).append("-> ");
 				buffer.append(stackTraceElement.toString());
 			}
 			current = current.getCause();
@@ -43,7 +48,7 @@ public class OLogFormatter extends Formatter {
 		String iRequester = getSourceClassSimpleName(iRecord.getSourceClassName());
 
 		final StringBuilder buffer = new StringBuilder();
-		buffer.append('\n');
+		buffer.append(EOL);
 		synchronized (dateFormat) {
 			buffer.append(dateFormat.format(new Date()));
 		}
