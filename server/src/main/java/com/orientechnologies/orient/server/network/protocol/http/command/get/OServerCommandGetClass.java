@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
@@ -50,7 +51,7 @@ public class OServerCommandGetClass extends OServerCommandAuthenticatedDbAbstrac
 
 			final int limit = urlParts.length > 3 ? Integer.parseInt(urlParts[3]) : 20;
 
-			final List<ORecord<?>> response = new ArrayList<ORecord<?>>();
+			final List<OIdentifiable> response = new ArrayList<OIdentifiable>();
 			for (ORecord<?> rec : db.browseClass(urlParts[2])) {
 				if (limit > 0 && response.size() >= limit)
 					break;

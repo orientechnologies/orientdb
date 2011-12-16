@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -47,7 +48,7 @@ public class OServerCommandGetCluster extends OServerCommandAuthenticatedDbAbstr
 
 			final int limit = urlParts.length > 3 ? Integer.parseInt(urlParts[3]) : 20;
 
-			final List<ORecord<?>> response = new ArrayList<ORecord<?>>();
+			final List<OIdentifiable> response = new ArrayList<OIdentifiable>();
 			for (ORecord<?> rec : db.browseCluster(urlParts[2])) {
 				if (limit > 0 && response.size() >= limit)
 					break;

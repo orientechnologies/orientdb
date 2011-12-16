@@ -20,7 +20,7 @@ import java.util.List;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -60,7 +60,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
 		}
 
 		if (response instanceof List<?>)
-			sendRecordsContent(iRequest, (List<ORecord<?>>) response);
+			sendRecordsContent(iRequest, (List<OIdentifiable>) response);
 		else if (response == null || response instanceof Integer)
 			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, response);
 		else

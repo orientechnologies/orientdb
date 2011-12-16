@@ -23,6 +23,7 @@ import java.util.List;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -142,11 +143,11 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 		return parts;
 	}
 
-	protected void sendRecordsContent(final OHttpRequest iRequest, final List<ORecord<?>> iRecords) throws IOException {
+	protected void sendRecordsContent(final OHttpRequest iRequest, final List<OIdentifiable> iRecords) throws IOException {
 		sendRecordsContent(iRequest, iRecords, null);
 	}
 
-	protected void sendRecordsContent(final OHttpRequest iRequest, final List<ORecord<?>> iRecords, final String iFetchPlan)
+	protected void sendRecordsContent(final OHttpRequest iRequest, final List<OIdentifiable> iRecords, final String iFetchPlan)
 			throws IOException {
 		final StringWriter buffer = new StringWriter();
 		final OJSONWriter json = new OJSONWriter(buffer, JSON_FORMAT);
@@ -154,7 +155,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 
 		// WRITE ENTITY SCHEMA IF ANY
 		if (iRecords != null && iRecords.size() > 0) {
-			ORecord<?> first = iRecords.get(0);
+			ORecord<?> first = iRecords.get(0).getRecord();
 			if (first != null && first instanceof ODocument) {
 				ODatabaseRecord db = ((ODocument) first).getDatabase();
 
@@ -170,10 +171,10 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 		if (iRecords != null) {
 			int counter = 0;
 			String objectJson;
-			for (ORecord<?> rec : iRecords) {
+			for (OIdentifiable rec : iRecords) {
 				if (rec != null)
 					try {
-						objectJson = rec.toJSON(format);
+						objectJson = rec.getRecord().toJSON(format);
 
 						if (counter++ > 0)
 							buffer.append(", ");
