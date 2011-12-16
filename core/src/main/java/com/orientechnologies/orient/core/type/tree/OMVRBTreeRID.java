@@ -366,7 +366,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 						newEntries = null;
 
 					// PUT THE ITEM INTO THE TREE
-					internalPut(record, null);
+					internalPut(record.getIdentity(), null);
 				}
 			}
 
