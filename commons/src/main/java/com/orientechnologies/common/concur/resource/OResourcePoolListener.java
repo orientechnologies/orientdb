@@ -17,7 +17,17 @@ package com.orientechnologies.common.concur.resource;
 
 public interface OResourcePoolListener<K, V> {
 
+	/**
+	 * Creates a new resource to be used and to be pooled when the client finishes with it.
+	 * 
+	 * @return The new resource
+	 */
 	public V createNewResource(K iKey, Object... iAdditionalArgs);
 
-	public V reuseResource(K iKey, Object[] iAdditionalArgs, V iValue);
+	/**
+	 * Reuses the pooled resource.
+	 * 
+	 * @return true if can be reused, otherwise false. In this case the resource will be removed from the pool
+	 */
+	public boolean reuseResource(K iKey, Object[] iAdditionalArgs, V iValue);
 }

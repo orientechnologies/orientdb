@@ -91,9 +91,9 @@ public class OGremlinHelper {
 			}
 
 			@Override
-			public ScriptEngine reuseResource(Object iKey, Object[] iAdditionalArgs, ScriptEngine iReusedEngine) {
+			public boolean reuseResource(Object iKey, Object[] iAdditionalArgs, ScriptEngine iReusedEngine) {
 				iReusedEngine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
-				return iReusedEngine;
+				return true;
 			}
 		});
 
@@ -106,8 +106,8 @@ public class OGremlinHelper {
 			}
 
 			@Override
-			public OrientGraph reuseResource(final String iKey, final Object[] iAdditionalArgs, final OrientGraph iReusedGraph) {
-				return iReusedGraph;
+			public boolean reuseResource(final String iKey, final Object[] iAdditionalArgs, final OrientGraph iReusedGraph) {
+				return true;
 			}
 		});
 	}

@@ -26,6 +26,7 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
@@ -124,6 +125,7 @@ public class DbCreationTest {
 
 		ODatabaseDocumentTx db = new ODatabaseDocumentTx(u);
 
+		ODatabaseHelper.deleteDatabase(db);
 		ODatabaseHelper.createDatabase(db, u);
 		db.open("admin", "admin");
 		db.close();
@@ -145,6 +147,7 @@ public class DbCreationTest {
 
 		ODatabaseDocumentTx db = new ODatabaseDocumentTx(u);
 
+		ODatabaseHelper.deleteDatabase(db);
 		ODatabaseHelper.createDatabase(db, u);
 
 		db = ODatabaseDocumentPool.global().acquire(u, "admin", "admin");
@@ -152,4 +155,28 @@ public class DbCreationTest {
 
 		ODatabaseHelper.deleteDatabase(db);
 	}
+
+	@Test
+	public void testCreateAndConnectionPool() throws IOException {
+		ODatabaseDocument db = new ODatabaseDocumentTx(url);
+		ODatabaseHelper.deleteDatabase(db);
+		ODatabaseHelper.createDatabase(db, url);
+		db.close();
+		// Get connection from pool
+		db = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+		db.close();
+
+		// Destroy db in the back of the pool
+		db = new ODatabaseDocumentTx(url);
+		ODatabaseHelper.deleteDatabase(db);
+
+		// Re-create it so that the db exists for the pool
+		db = new ODatabaseDocumentTx(url);
+		ODatabaseHelper.createDatabase(db, url);
+		db.close();
+
+		db = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+		db.close();
+	}
+
 }

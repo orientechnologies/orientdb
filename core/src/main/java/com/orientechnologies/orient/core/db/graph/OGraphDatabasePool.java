@@ -43,18 +43,16 @@ public class OGraphDatabasePool extends ODatabasePoolBase<OGraphDatabase> {
 							return db;
 						}
 
-						public OGraphDatabase reuseResource(final String iKey, final Object[] iAdditionalArgs, final OGraphDatabase iValue) {
+						public boolean reuseResource(final String iKey, final Object[] iAdditionalArgs, final OGraphDatabase iValue) {
 							ODatabaseRecordThreadLocal.INSTANCE.set(iValue);
 
 							((OGraphDatabasePooled) iValue).reuse(owner, iAdditionalArgs);
 
-							if (iValue.getStorage().isClosed())
-								// STORAGE HAS BEEN CLOSED: REOPEN IT
-								iValue.getStorage().open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1], null);
-							else
+							if (!iValue.getStorage().isClosed()) {
 								iValue.getMetadata().getSecurity().authenticate((String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
-
-							return iValue;
+								return true;
+							}
+							return false;
 						}
 					};
 				}

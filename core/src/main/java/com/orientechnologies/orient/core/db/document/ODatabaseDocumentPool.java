@@ -43,19 +43,21 @@ public class ODatabaseDocumentPool extends ODatabasePoolBase<ODatabaseDocumentTx
 							return db;
 						}
 
-						public ODatabaseDocumentTx reuseResource(final String iKey, final Object[] iAdditionalArgs,
-								final ODatabaseDocumentTx iValue) {
+						public boolean reuseResource(final String iKey, final Object[] iAdditionalArgs, final ODatabaseDocumentTx iValue) {
 							ODatabaseRecordThreadLocal.INSTANCE.set(iValue);
 
-							((ODatabaseDocumentTxPooled) iValue).reuse(owner, iAdditionalArgs);
-							if (iValue.getStorage().isClosed())
-								// STORAGE HAS BEEN CLOSED: REOPEN IT
-								iValue.getStorage().open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1], null);
-							else if (!iValue.getUser().checkPassword((String) iAdditionalArgs[1]))
-								throw new OSecurityAccessException(iValue.getName(), "User or password not valid for database: '"
-										+ iValue.getName() + "'");
+							if (!((ODatabaseDocumentTxPooled) iValue).isClosed()) {
+								((ODatabaseDocumentTxPooled) iValue).reuse(owner, iAdditionalArgs);
+								if (iValue.getStorage().isClosed())
+									// STORAGE HAS BEEN CLOSED: REOPEN IT
+									iValue.getStorage().open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1], null);
+								else if (!iValue.getUser().checkPassword((String) iAdditionalArgs[1]))
+									throw new OSecurityAccessException(iValue.getName(), "User or password not valid for database: '"
+											+ iValue.getName() + "'");
 
-							return iValue;
+								return true;
+							}
+							return false;
 						}
 					};
 				}
