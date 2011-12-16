@@ -38,7 +38,18 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  * +-----------+-----------+--------+------------+----------+-----------+---------------------+<br>
  * | 4 bytes . | 4 bytes . | 1 byte | 10 bytes ..| 10 bytes | 10 bytes .| 10 * MAX_SIZE bytes |<br>
  * +-----------+-----------+--------+------------+----------+-----------+---------------------+<br>
- * = 39 bytes + 10 * MAX_SIZE bytes
+ * = 39 bytes + 10 * PAGE-SIZE bytes<br/>
+ * Where:
+ * <ul>
+ * <li><b>TREE SIZE</b> as signed integer (4 bytes) containing the size of the tree. Only the root node has this value updated, so to know the size of the collection you need to load the root node and get this field. other nodes can contain not updated values because upon rotation of pieces of the tree (made during tree rebalancing) the root can change and the old root will have the "old" size as dirty.</li>
+ * <li><b>NODE SIZE</b> as signed integer (4 bytes) containing number of entries in this node. It's always <= to the page-size defined at the tree level and equals for all the nodes. By default page-size is 16 items</li>
+ * <li><b>COLOR</b> as 1 byte containing 1=Black, 0=Red. To know more about the meaning of this look at [http://en.wikipedia.org/wiki/Red%E2%80%93black_tree Red-Black Trees]</li>
+ * <li><b>PARENT RID</b> as [Concepts#RecordID RID] (10 bytes) of the parent node record</li>
+ * <li><b>LEFT RID</b> as [Concepts#RecordID RID] (10 bytes) of the left node record</li>
+ * <li><b>RIGHT RID</b> as [Concepts#RecordID RID] (10 bytes) of the right node record</li>
+ * <li><b>RID LIST</b> as the list of [Concepts#RecordID RIDs] containing the references to the records. This is pre-allocated to the configured page-size. Since each [Concepts#RecordID RID] takes 10 bytes, a page-size of 16 means 16 x 10bytes = 160bytes</li>
+ * </ul>
+ * The size of the tree-node on disk (and memory) is fixed to avoid fragmentation. To compute it: 39 bytes + 10 * PAGE-SIZE bytes. For a page-size = 16 you'll have 39 + 160 = 199 bytes.
  * </code>
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com) *
