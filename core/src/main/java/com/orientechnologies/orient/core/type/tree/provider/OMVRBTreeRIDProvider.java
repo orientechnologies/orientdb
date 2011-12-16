@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeEntryPersistent;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreePersistent;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRID;
 
@@ -111,11 +112,19 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 	public OStringBuilderSerializable toStream(final StringBuilder iBuffer) throws OSerializationException {
 		final long timer = OProfiler.getInstance().startChrono();
 
+		if (buffer.length() > 0 && getDatabase().getTransaction().isActive() && buffer.indexOf("-") > -1) {
+			// IN TRANSACTION: UNMARSHALL THE BUFFER TO AVOID TO STORE TEMP RIDS
+			lazyUnmarshall();
+			buffer.setLength(0);
+		}
+
+		tree.saveAllNewEntries();
+
 		if (buffer.length() == 0)
 			// MARSHALL IT
 			try {
-				marshalling = true;
 				if (isEmbeddedStreaming()) {
+					marshalling = true;
 					// SERIALIZE AS AN EMBEDDED STRING
 					buffer.append(OStringSerializerHelper.COLLECTION_BEGIN);
 
@@ -144,6 +153,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 
 					buffer.append(OStringSerializerHelper.COLLECTION_END);
 				} else {
+					marshalling = true;
 					buffer.append(OStringSerializerHelper.EMBEDDED_BEGIN);
 					buffer.append(new String(toDocument().toStream()));
 					buffer.append(OStringSerializerHelper.EMBEDDED_END);
@@ -176,7 +186,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 	}
 
 	public void lazyUnmarshall() {
-		if (size > 0 || marshalling || buffer.length() == 0)
+		if (getSize() > 0 || marshalling || buffer.length() == 0)
 			// ALREADY UNMARSHALLED
 			return;
 
@@ -219,6 +229,33 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 	}
 
 	@Override
+	public int getSize() {
+		if (embeddedStreaming)
+			return size;
+		else {
+			final OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable> r = (OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable>) tree
+					.getRoot();
+			return r == null ? 0 : (((OMVRBTreeRIDEntryProvider) r.getProvider()).getTreeSize());
+		}
+	}
+
+	@Override
+	public boolean setSize(final int iSize) {
+		if (embeddedStreaming)
+			super.setSize(iSize);
+		else {
+			final OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable> r = (OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable>) tree
+					.getRoot();
+			if (r != null) {
+				if (((OMVRBTreeRIDEntryProvider) r.getProvider()).setTreeSize(iSize))
+					r.markDirty();
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
 	public boolean setDirty() {
 		if (!marshalling) {
 			if (buffer != null)
@@ -229,6 +266,8 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 	}
 
 	public ODocument toDocument() {
+		tree.saveAllNewEntries();
+
 		// SERIALIZE AS LINK TO THE TREE STRUCTURE
 		final ODocument doc = (ODocument) record;
 		doc.setClassName(PERSISTENT_CLASS_NAME);
@@ -251,7 +290,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 	public boolean isEmbeddedStreaming() {
 		if (embeddedStreaming && !marshalling) {
 			final int binaryThreshold = OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger();
-			if (binaryThreshold > 0 && size > binaryThreshold && tree != null) {
+			if (binaryThreshold > 0 && getSize() > binaryThreshold && tree != null) {
 				// CHANGE TO EXTERNAL BINARY
 				tree.setDirtyOwner();
 				setEmbeddedStreaming(false);
@@ -263,6 +302,10 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 	protected void setEmbeddedStreaming(final boolean iValue) {
 		if (embeddedStreaming != iValue) {
 			embeddedStreaming = iValue;
+
+			if (!iValue)
+				// ASSURE TO SAVE THE SIZE IN THE ROOT NODE
+				setSize(size);
 			//
 			// if (!iValue) {
 			// // INSTALL WATCHDOG TO CONTROL TREE SIZE IN MEMORY
@@ -280,21 +323,5 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 	public boolean updateConfig() {
 		pageSize = OGlobalConfiguration.MVRBTREE_RID_NODE_PAGE_SIZE.getValueAsInteger();
 		return false;
-	}
-
-	/**
-	 * Fill entries in one shot without calling the early save (because marshalling=true)
-	 * 
-	 * @param iValues
-	 */
-	public void fill(final Collection<OIdentifiable> iValues) {
-		try {
-			marshalling = true;
-			for (OIdentifiable rid : iValues) {
-				tree.put(rid, null);
-			}
-		} finally {
-			marshalling = false;
-		}
 	}
 }

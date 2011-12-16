@@ -172,9 +172,9 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 		return dataProvider.getSize();
 	}
 
-	protected void setSize(int iSize) {
-		dataProvider.setSize(iSize);
-		markDirty();
+	protected void setSize(final int iSize) {
+		if (dataProvider.setSize(iSize))
+			markDirty();
 	}
 
 	public int getDefaultPageSize() {
@@ -194,7 +194,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 				}
 				super.clear();
 				markDirty();
-				save();
 			}
 			entryPoints.clear();
 			cache.clear();
@@ -379,9 +378,9 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		try {
-			for (Entry<? extends K, ? extends V> entry : map.entrySet()) {
+			for (Entry<? extends K, ? extends V> entry : map.entrySet())
 				internalPut(entry.getKey(), entry.getValue());
-			}
+
 			commitChanges();
 
 		} finally {
@@ -628,7 +627,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 		return buffer.toString();
 	}
 
-	private V internalPut(final K key, final V value) throws OLowMemoryException {
+	protected V internalPut(final K key, final V value) throws OLowMemoryException {
 		ORecordInternal<?> rec;
 
 		if (key instanceof ORecordInternal<?>) {

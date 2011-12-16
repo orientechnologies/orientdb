@@ -737,7 +737,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			}
 
 			modCount++;
-			setSize(size() + 1);
+			setSizeDelta(+1);
 
 		} finally {
 			checkTreeStructure(parentNode);
@@ -2366,7 +2366,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 * @return
 	 */
 	OMVRBTreeEntry<K, V> deleteEntry(OMVRBTreeEntry<K, V> p) {
-		setSize(size() - 1);
+		setSizeDelta(-1);
 		modCount++;
 		if (pageIndex > -1) {
 			// DELETE INSIDE THE NODE
@@ -2800,5 +2800,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	}
 
 	protected void searchNodeCallback() {
+	}
+
+	protected void setSizeDelta(final int iDelta) {
+		setSize(size() + iDelta);
 	}
 }

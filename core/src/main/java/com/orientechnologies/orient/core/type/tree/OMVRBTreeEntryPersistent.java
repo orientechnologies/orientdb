@@ -627,7 +627,7 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 			markDirty();
 	}
 
-	protected void markDirty() {
+	public void markDirty() {
 		pTree.signalNodeChanged(this);
 	}
 

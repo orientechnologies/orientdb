@@ -147,7 +147,6 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerial
 	}
 
 	public ODocument toDocument() {
-		tree.save();
 		return ((OMVRBTreeRIDProvider) tree.getProvider()).toDocument();
 	}
 
@@ -167,7 +166,6 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerial
 	}
 
 	public OStringBuilderSerializable toStream(StringBuilder iOutput) throws OSerializationException {
-		tree.save();
 		((OMVRBTreeRIDProvider) tree.getProvider()).toStream(iOutput);
 		return this;
 	}

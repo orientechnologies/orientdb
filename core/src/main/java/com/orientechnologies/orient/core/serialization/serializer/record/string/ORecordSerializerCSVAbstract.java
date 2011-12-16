@@ -82,7 +82,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			final String value = iValue.startsWith("[") ? iValue.substring(1, iValue.length() - 1) : iValue;
 
 			return iType == OType.LINKLIST ? new ORecordLazyList(iSourceRecord).setStreamedContent(new StringBuilder(value))
-					: new OMVRBTreeRIDSet(iSourceRecord).fromStream(new StringBuilder(value));
+					: new OMVRBTreeRIDSet(iSourceRecord).fromStream(new StringBuilder(iValue));
 		}
 
 		case LINKMAP: {

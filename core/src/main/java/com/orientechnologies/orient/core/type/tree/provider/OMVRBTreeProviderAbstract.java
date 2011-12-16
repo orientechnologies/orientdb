@@ -79,8 +79,11 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
 	}
 
 	public boolean setSize(final int iSize) {
-		size = iSize;
-		return setDirty();
+		if (iSize != size) {
+			size = iSize;
+			return setDirty();
+		}
+		return false;
 	}
 
 	public boolean setRoot(final ORID iRid) {

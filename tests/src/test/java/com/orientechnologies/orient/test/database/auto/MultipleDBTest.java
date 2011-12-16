@@ -219,8 +219,7 @@ public class MultipleDBTest {
 					} finally {
 						try {
 							ODatabaseHelper.deleteDatabase(tx);
-						} catch (IOException e) {
-							e.printStackTrace();
+						} catch (Exception e) {
 						}
 					}
 				}
