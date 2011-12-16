@@ -39,6 +39,7 @@ public abstract class ONativeSynchQuery<CTX extends OQueryContextNative> extends
 
 	@Override
 	public List<ODocument> run(final Object... iArgs) {
+		result.clear();
 		super.run();
 		return result;
 	}

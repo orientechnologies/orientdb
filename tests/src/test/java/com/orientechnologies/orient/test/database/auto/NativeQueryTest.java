@@ -43,14 +43,18 @@ public class NativeQueryTest {
 		database.open("admin", "admin");
 
 		@SuppressWarnings("serial")
-		List<ODocument> result = new ONativeSynchQuery<OQueryContextNative>(database, "Profile", new OQueryContextNative()) {
+		ONativeSynchQuery<OQueryContextNative> q = (ONativeSynchQuery<OQueryContextNative>) new ONativeSynchQuery<OQueryContextNative>(
+				database, "Profile", new OQueryContextNative()) {
 
 			@Override
 			public boolean filter(OQueryContextNative iRecord) {
 				return iRecord.field("location").field("city").field("name").eq("Rome").and().field("name").like("G%").go();
 			};
 
-		}.setLimit(20).execute();
+		}.setLimit(20);
+
+		List<ODocument> result = (List<ODocument>) q.execute();
+		int firstResultSize = result.size();
 
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
@@ -61,6 +65,9 @@ public class NativeQueryTest {
 			Assert.assertEquals(((ODocument) ((ODocument) record.field("location")).field("city")).field("name"), "Rome");
 			Assert.assertTrue(record.field("name").toString().startsWith("G"));
 		}
+
+		result = (List<ODocument>) q.execute();
+		Assert.assertEquals(result.size(), firstResultSize);
 
 		database.close();
 	}
