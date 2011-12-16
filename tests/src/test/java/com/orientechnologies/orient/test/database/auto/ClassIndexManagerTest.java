@@ -1,5 +1,17 @@
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -10,12 +22,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 
 @Test(groups = {"index"})
@@ -507,7 +513,7 @@ public class ClassIndexManagerTest {
 
     @Test
     public void testNoClassIndexesUpdate() {
-        final ODocument doc = new ODocument(database, "classclassIndexManagerTestClassTwo");
+		final ODocument doc = new ODocument(database, "classIndexManagerTestClassTwo");
         doc.field("prop1", "a");
         doc.save();
 

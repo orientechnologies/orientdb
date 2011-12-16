@@ -79,7 +79,7 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLPermissionA
 		if (oClass == null)
 			return null;
 
-		for (final OIndex oIndex : oClass.getClassIndexes()) {
+		for (final OIndex<?> oIndex : oClass.getClassIndexes()) {
 			database.getMetadata().getIndexManager().dropIndex(oIndex.getName());
 		}
 
@@ -87,10 +87,11 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLPermissionA
 
 		((OSchemaProxy) database.getMetadata().getSchema()).dropClassInternal(className);
 		((OSchemaProxy) database.getMetadata().getSchema()).saveInternal();
+		((OSchemaProxy) database.getMetadata().getSchema()).reload();
 
 		deleteDefaultCluster(clusterId);
 
-		return null;
+		return true;
 	}
 
 	protected void deleteDefaultCluster(int clusterId) {

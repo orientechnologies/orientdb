@@ -324,6 +324,9 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 	}
 
 	public void dropClassInternal(final String iClassName) {
+		if (iClassName == null)
+			throw new IllegalArgumentException("Class name is null");
+
 		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_DELETE);
 
 		final String key = iClassName.toLowerCase();
