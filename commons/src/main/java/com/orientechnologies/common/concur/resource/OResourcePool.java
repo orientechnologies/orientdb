@@ -46,14 +46,21 @@ public class OResourcePool<K, V> {
 			throw new OLockException("Cannot acquire lock on requested resource: " + iKey, e);
 		}
 
-		// Then, actually take one if available...
-		V res = resources.poll();
-		if (res != null) {
-			if (listener.reuseResource(iKey, iAdditionalArgs, res))
-				return res;
-		}
+		V res;
+		do {
+			// POP A RESOURCE
+			res = resources.poll();
+			if (res != null) {
+				// TRY TO REUSE IT
+				if (listener.reuseResource(iKey, iAdditionalArgs, res))
+					// OK: REUSE IT
+					return res;
 
-		// ...or create one if none available
+				// UNABLE TO REUSE IT: THE RESOURE WILL BE DISCARDED AND TRY WITH THE NEXT ONE, IF ANY
+			}
+		} while (!resources.isEmpty());
+
+		// NO AVAILABLE RESOURCES: CREATE A NEW ONE
 		try {
 			res = listener.createNewResource(iKey, iAdditionalArgs);
 			return res;
