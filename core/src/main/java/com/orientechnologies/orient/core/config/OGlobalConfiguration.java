@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.config;
 
+import java.io.PrintStream;
 import java.lang.management.OperatingSystemMXBean;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -24,6 +25,7 @@ import java.util.logging.FileHandler;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 
 /**
@@ -34,6 +36,9 @@ import com.orientechnologies.orient.core.storage.fs.OMMapManager;
  */
 public enum OGlobalConfiguration {
 	// ENVIRONMENT
+	ENVIRONMENT_DUMP_CFG_AT_STARTUP("environment.dumpCfgAtStartup", "Dumps the configuration at application startup", Boolean.class,
+			Boolean.FALSE),
+
 	ENVIRONMENT_CONCURRENT("environment.concurrent",
 			"Specifies if running in multi-thread environment. Setting this to false turns off the internal lock management",
 			Boolean.class, Boolean.TRUE),
@@ -282,6 +287,8 @@ public enum OGlobalConfiguration {
 	static {
 		readConfiguration();
 		autoConfig();
+		if (ENVIRONMENT_DUMP_CFG_AT_STARTUP.getValueAsBoolean())
+			dumpConfiguration(System.out);
 	}
 
 	OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
@@ -332,17 +339,17 @@ public enum OGlobalConfiguration {
 
 	public int getValueAsInteger() {
 		final Object v = value != null ? value : defValue;
-		return v instanceof Number ? ((Number) v).intValue() : Integer.parseInt(v.toString());
+		return (int) (v instanceof Number ? ((Number) v).intValue() : OFileUtils.getSizeAsNumber(v.toString()));
 	}
 
 	public long getValueAsLong() {
 		final Object v = value != null ? value : defValue;
-		return v instanceof Number ? ((Number) v).longValue() : Long.parseLong(v.toString());
+		return v instanceof Number ? ((Number) v).longValue() : OFileUtils.getSizeAsNumber(v.toString());
 	}
 
 	public float getValueAsFloat() {
 		final Object v = value != null ? value : defValue;
-		return v instanceof Float ? ((Float) v).floatValue() : Float.parseFloat(v.toString());
+		return v instanceof Float ? ((Float) v).floatValue() : OFileUtils.getSizeAsNumber(v.toString());
 	}
 
 	public String getKey() {
@@ -355,6 +362,27 @@ public enum OGlobalConfiguration {
 
 	public String getDescription() {
 		return description;
+	}
+
+	public static void dumpConfiguration(final PrintStream out) {
+		out.print("OrientDB ");
+		out.print(OConstants.getVersion());
+		out.println(" configuration dump:");
+
+		String lastSection = "";
+		for (OGlobalConfiguration v : values()) {
+			final String section = v.key.substring(0, v.key.indexOf('.'));
+
+			if (!lastSection.equals(section)) {
+				out.print("- ");
+				out.println(section.toUpperCase());
+				lastSection = section;
+			}
+			out.print("  + ");
+			out.print(v.key);
+			out.print(" = ");
+			out.println(v.getValue());
+		}
 	}
 
 	/**
@@ -422,6 +450,5 @@ public enum OGlobalConfiguration {
 		} else {
 			// 32 BIT, USE THE DEFAULT CONFIGURATION
 		}
-
 	}
 }

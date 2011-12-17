@@ -9,6 +9,7 @@ public class OFileUtils {
 	private static final int	GIGABYTE	= 1073741824;
 	private static final long	TERABYTE	= 1099511627776L;
 
+	@SuppressWarnings("unchecked")
 	public static long getSizeAsNumber(final Object iSize) {
 		if (iSize == null)
 			throw new IllegalArgumentException("Size is null");
@@ -27,36 +28,43 @@ public class OFileUtils {
 		}
 
 		if (number)
-			return Long.parseLong(size);
+			return string2number(size).longValue();
 		else {
 			size = size.toUpperCase(Locale.ENGLISH);
 			int pos = size.indexOf("KB");
 			if (pos > -1)
-				return Long.parseLong(size.substring(0, pos)) * KILOBYTE;
+				return (long) (string2number(size.substring(0, pos)).floatValue() * KILOBYTE);
 
 			pos = size.indexOf("MB");
 			if (pos > -1)
-				return Long.parseLong(size.substring(0, pos)) * MEGABYTE;
+				return (long) (string2number(size.substring(0, pos)).floatValue() * MEGABYTE);
 
 			pos = size.indexOf("GB");
 			if (pos > -1)
-				return Long.parseLong(size.substring(0, pos)) * GIGABYTE;
+				return (long) (string2number(size.substring(0, pos)).floatValue() * GIGABYTE);
 
 			pos = size.indexOf("TB");
 			if (pos > -1)
-				return Long.parseLong(size.substring(0, pos)) * TERABYTE;
+				return (long) (string2number(size.substring(0, pos)).floatValue() * TERABYTE);
 
 			pos = size.indexOf('B');
 			if (pos > -1)
-				return Long.parseLong(size.substring(0, pos));
+				return (long) string2number(size.substring(0, pos)).floatValue();
 
 			pos = size.indexOf('%');
 			if (pos > -1)
-				return -1 * Long.parseLong(size.substring(0, pos));
+				return (long) (-1 * string2number(size.substring(0, pos)).floatValue());
 
 			// RE-THROW THE EXCEPTION
 			throw new IllegalArgumentException("Size " + size + " has a unrecognizable format");
 		}
+	}
+
+	public static Number string2number(final String iText) {
+		if (iText.indexOf('.') > -1)
+			return Double.parseDouble(iText);
+		else
+			return Long.parseLong(iText);
 	}
 
 	public static String getSizeAsString(final long iSize) {
