@@ -45,6 +45,7 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 	}
 
 	public ORecordBytes(final ODatabaseRecord iDatabase) {
+		setup();
 		ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
 	}
 
