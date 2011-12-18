@@ -133,13 +133,12 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
 		assertFalse(conn.isClosed());
 
 		Statement stmt = conn.createStatement();
-		ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM item");
+		ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item");
 
 		rs.next();
 		ResultSetMetaData metaData = rs.getMetaData();
+		
 		assertEquals(5, metaData.getColumnCount());
-
-		assertEquals(Types.VARCHAR, metaData.getColumnType(1));
 		
 		assertEquals("intKey", metaData.getColumnName(2));
 		
@@ -149,7 +148,10 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
 		assertEquals("length", metaData.getColumnName(4));
 		
 		assertEquals("date", metaData.getColumnName(5));
-	
+		
+		assertEquals(Types.VARCHAR, metaData.getColumnType(1));
+		assertEquals(String.class.getName(), metaData.getColumnClassName(1));
+
 	}
 
 	

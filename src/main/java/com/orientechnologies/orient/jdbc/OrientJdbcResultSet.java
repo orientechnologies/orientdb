@@ -78,8 +78,9 @@ public class OrientJdbcResultSet implements ResultSet {
 		return absolute(++cursor);
 	}
 
+	//TODO
 	public boolean previous() throws SQLException {
-		return absolute(++cursor);
+		return absolute(--cursor);
 	}
 
 	public void afterLast() throws SQLException {

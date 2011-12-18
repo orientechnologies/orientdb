@@ -28,9 +28,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("boxing")
 public class OrientJdbcMetaData implements ResultSetMetaData {
-	
-	private final  static Map<OType, Integer> oTypesSqlTypes = new HashMap<OType, Integer>();
-	
+
+	private final static Map<OType, Integer> oTypesSqlTypes = new HashMap<OType, Integer>();
+
 	static {
 		oTypesSqlTypes.put(OType.STRING, Types.VARCHAR);
 		oTypesSqlTypes.put(OType.INTEGER, Types.INTEGER);
@@ -40,7 +40,7 @@ public class OrientJdbcMetaData implements ResultSetMetaData {
 		oTypesSqlTypes.put(OType.LONG, Types.BIGINT);
 		oTypesSqlTypes.put(OType.DOUBLE, Types.DECIMAL);
 	}
-	
+
 	private OrientJdbcResultSet resultSet;
 	private final OrientJdbcConnection connection;
 
@@ -49,21 +49,29 @@ public class OrientJdbcMetaData implements ResultSetMetaData {
 		resultSet = iResultSet;
 	}
 
-	
 	public int getColumnCount() throws SQLException {
 		ODocument document = resultSet.getDocument();
-		
+
 		return document.fields();
 	}
 
 	public String getCatalogName(int column) throws SQLException {
 
-		return null;
+		return "";
 	}
 
 	public String getColumnClassName(int column) throws SQLException {
 
-		return null;
+		String columnName = getColumnName(column);
+		String className = resultSet.getDocument().getClassName();
+		OClass theClass = connection.getDatabase().getMetadata().getSchema().getClass(className);
+
+		if (theClass != null) {
+			OProperty property = theClass.getProperty(columnName);
+
+			if (property != null) return property.getType().getJavaTypes()[0].getName();
+		}
+		return OType.STRING.getJavaTypes()[0].getName();
 	}
 
 	public int getColumnDisplaySize(int column) throws SQLException {
@@ -73,22 +81,25 @@ public class OrientJdbcMetaData implements ResultSetMetaData {
 
 	public String getColumnLabel(int column) throws SQLException {
 
-		return null;
+		return getColumnName(column);
 	}
 
 	public String getColumnName(int column) throws SQLException {
-		return resultSet.getDocument().fieldNames()[column-1];
+		return resultSet.getDocument().fieldNames()[column - 1];
 	}
 
 	public int getColumnType(int column) throws SQLException {
-		String columnName = getColumnClassName(column);
+		String columnName = getColumnName(column);
 		String className = resultSet.getDocument().getClassName();
-		System.out.println("class:: " + className);
 		OClass theClass = connection.getDatabase().getMetadata().getSchema().getClass(className);
+
+		if (theClass != null) {
+			OProperty property = theClass.getProperty(columnName);
+
+			if (property != null) return oTypesSqlTypes.get(property.getType());
+		}
 		
-		OProperty property = theClass.getProperty(columnName);
 		
-		if(property != null) return oTypesSqlTypes.get(property.getType());
 		return oTypesSqlTypes.get(OType.STRING);
 	}
 
@@ -109,12 +120,12 @@ public class OrientJdbcMetaData implements ResultSetMetaData {
 
 	public String getSchemaName(int column) throws SQLException {
 
-		return null;
+		return connection.getDatabase().getName();
 	}
 
 	public String getTableName(int column) throws SQLException {
 
-		return null;
+		return "";
 	}
 
 	public boolean isAutoIncrement(int column) throws SQLException {

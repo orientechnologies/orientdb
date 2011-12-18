@@ -19,7 +19,7 @@
 	</organization>
 	<properties>
 		<jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
-		<orient.version>1.0rc7-SNAPSHOT</orient.version>
+		<orient.version>1.0rc7</orient.version>
 	</properties>
 	<repositories>
 		<repository>

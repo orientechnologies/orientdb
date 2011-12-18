@@ -81,7 +81,7 @@ public class OrientJdbcStatement implements Statement {
 			if (rawResult instanceof List<?>) documents = (List<ODocument>) rawResult;
 			else throw new SQLException("unable to create a valid resultSet: is query a SELECT?");
 
-			resultSet = new OrientJdbcResultSet(connection,this, documents);
+			resultSet = new OrientJdbcResultSet(connection, this, documents);
 			return resultSet;
 
 		} catch (OQueryParsingException e) {
@@ -97,7 +97,7 @@ public class OrientJdbcStatement implements Statement {
 			rawResult = database.command(query).execute();
 			if (rawResult instanceof List<?>) documents = (List<ODocument>) rawResult;
 
-			resultSet = new OrientJdbcResultSet(connection,this, documents);
+			resultSet = new OrientJdbcResultSet(connection, this, documents);
 			return resultSet;
 
 		} catch (OQueryParsingException e) {
@@ -237,9 +237,9 @@ public class OrientJdbcStatement implements Statement {
 
 	public int getUpdateCount() throws SQLException {
 		if (isClosed()) throw new SQLException("Statement already closed");
-		
+
 		return -1;
-	
+
 	}
 
 	public SQLWarning getWarnings() throws SQLException {
