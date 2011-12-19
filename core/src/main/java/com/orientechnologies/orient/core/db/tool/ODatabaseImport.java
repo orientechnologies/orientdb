@@ -282,7 +282,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
 					// ASSIGN OTHER CLUSTER IDS
 					for (int i : OStringSerializerHelper.splitIntArray(classClusterIds)) {
-						cls.addClusterIds(i);
+						cls.addClusterId(i);
 					}
 				}
 

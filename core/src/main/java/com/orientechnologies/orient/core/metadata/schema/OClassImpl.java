@@ -436,7 +436,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		return polymorphicClusterIds;
 	}
 
-	public OClass addClusterIds(final int iId) {
+	public OClass addClusterId(final int iId) {
 		for (int currId : clusterIds)
 			if (currId == iId)
 				return this;
@@ -445,6 +445,29 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		clusterIds[clusterIds.length - 1] = iId;
 		Arrays.sort(clusterIds);
 		setDirty();
+		return this;
+	}
+
+	public OClass removeClusterId(final int iId) {
+		boolean found = false;
+		for (int clusterId : clusterIds) {
+			if (clusterId == iId) {
+				found = true;
+				break;
+			}
+		}
+
+		if (found) {
+			final int[] newClusterIds = new int[clusterIds.length - 1];
+			for (int i = 0, k = 0; i < clusterIds.length; ++i) {
+				if (clusterIds[i] == iId)
+					// JUMP IT
+					continue;
+
+				newClusterIds[k] = clusterIds[i];
+				k++;
+			}
+		}
 		return this;
 	}
 
