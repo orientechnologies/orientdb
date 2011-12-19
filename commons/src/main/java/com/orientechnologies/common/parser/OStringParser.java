@@ -335,4 +335,20 @@ public class OStringParser {
 		buffer.append((char) Integer.parseInt(buff.toString(), 16));
 		return position - 1;
 	}
+
+	public static String replaceAll(String iText, String iToReplace, String iReplacement) {
+		if (iText == null || iText.length() <= 0 || iToReplace == null || iToReplace.length() <= 0)
+			return iText;
+		int pos = iText.indexOf(iToReplace);
+		int lastAppend = 0;
+		final StringBuffer buffer = new StringBuffer();
+		while (pos > -1) {
+			buffer.append(iText.substring(lastAppend, pos));
+			buffer.append(iReplacement);
+			lastAppend = pos + iToReplace.length();
+			pos = iText.indexOf(iToReplace, lastAppend);
+		}
+		buffer.append(iText.substring(lastAppend));
+		return buffer.toString();
+	}
 }

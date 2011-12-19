@@ -20,6 +20,7 @@ import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 @Test(groups = "internal")
@@ -31,6 +32,27 @@ public class StringsTest {
 				new char[] { ',' }, 0, -1, true, ' ', '\n', '\r', '\t');
 		Assert.assertEquals(pieces.size(), 2);
 		Assert.assertTrue(pieces.get(1).contains("this is mine"));
+	}
+
+	public void replaceAll() {
+		String test1 = "test string number 1";
+		String test2 = "test \\string\\ \"number\" \\2\\ \\\\ \"\"\"\" test String number 2 test string number 2";
+		Assert.assertEquals(OStringParser.replaceAll(test1, "", ""), test1);
+		Assert.assertEquals(OStringParser.replaceAll(test1, "1", "10"), test1 + "0");
+		Assert.assertEquals(OStringParser.replaceAll(test1, "string", "number"), "test number number 1");
+		Assert.assertEquals(OStringParser.replaceAll(test1, "string", "test"), "test test number 1");
+		Assert.assertEquals(OStringParser.replaceAll(test1, "test", "string"), "string string number 1");
+		Assert.assertEquals(OStringParser.replaceAll(test2, "", ""), test2);
+		Assert.assertEquals(OStringParser.replaceAll(test2, "\\", ""),
+				"test string \"number\" 2  \"\"\"\" test String number 2 test string number 2");
+		Assert.assertEquals(OStringParser.replaceAll(test2, "\"", "'"),
+				"test \\string\\ 'number' \\2\\ \\\\ '''' test String number 2 test string number 2");
+		Assert.assertEquals(OStringParser.replaceAll(test2, "\\\\", "replacement"),
+				"test \\string\\ \"number\" \\2\\ replacement \"\"\"\" test String number 2 test string number 2");
+		String subsequentReplaceTest = OStringParser.replaceAll(test2, "\\", "");
+		subsequentReplaceTest = OStringParser.replaceAll(subsequentReplaceTest, "\"", "");
+		subsequentReplaceTest = OStringParser.replaceAll(subsequentReplaceTest, "test string number 2", "text replacement 1");
+		Assert.assertEquals(subsequentReplaceTest, "text replacement 1   test String number 2 text replacement 1");
 	}
 
 }

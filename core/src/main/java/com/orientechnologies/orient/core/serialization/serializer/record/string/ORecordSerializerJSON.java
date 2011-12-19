@@ -315,7 +315,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 		if (iType != null)
 			switch (iType) {
 			case STRING:
-				return iFieldValueAsString;
+				return decodeJSON(iFieldValueAsString);
 
 			case LINK:
 				final int pos = iFieldValueAsString.indexOf('@');
@@ -350,6 +350,13 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				return OStringSerializerHelper.fieldTypeFromStream(iRecord, iType, iFieldValue);
 			}
 
+		return iFieldValueAsString;
+	}
+
+	private String decodeJSON(String iFieldValueAsString) {
+		iFieldValueAsString = OStringParser.replaceAll(iFieldValueAsString, "\\\\", "\\");
+		iFieldValueAsString = OStringParser.replaceAll(iFieldValueAsString, "\\\"", "\"");
+		iFieldValueAsString = OStringParser.replaceAll(iFieldValueAsString, "\\/", "/");
 		return iFieldValueAsString;
 	}
 
