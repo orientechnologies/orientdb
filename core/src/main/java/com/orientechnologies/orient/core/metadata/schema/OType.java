@@ -245,10 +245,15 @@ public enum OType {
 
 		final Class<? extends Object> iType = iObject.getClass();
 
-		if (iType.isPrimitive() || Number.class.isAssignableFrom(iType) || String.class.isAssignableFrom(iType)
-				|| Boolean.class.isAssignableFrom(iType) || Date.class.isAssignableFrom(iType)
-				|| (iType.isArray() && (iType.equals(byte[].class) || iType.equals(char[].class))))
+		if (iType.isPrimitive()
+				|| Number.class.isAssignableFrom(iType)
+				|| String.class.isAssignableFrom(iType)
+				|| Boolean.class.isAssignableFrom(iType)
+				|| Date.class.isAssignableFrom(iType)
+				|| (iType.isArray() && (iType.equals(byte[].class) || iType.equals(char[].class) || iType.equals(Number[].class) || iType
+						.equals(String[].class))))
 			return true;
+
 		return false;
 	}
 
