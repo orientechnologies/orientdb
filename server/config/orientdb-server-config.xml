@@ -3,6 +3,7 @@
 	<handlers>
 		<handler class="com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager">
 			<parameters>
+				<parameter name="enabled" value="false" />
 				<parameter name="name" value="default" />
 				<parameter name="security.algorithm" value="Blowfish" />
 				<parameter name="network.multicast.address" value="235.1.1.1" />
