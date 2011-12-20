@@ -57,7 +57,7 @@ import com.orientechnologies.orient.server.replication.OReplicator;
  */
 public class ODistributedServerManager extends OServerHandlerAbstract {
 	public enum STATUS {
-		OFFLINE, STARTING, LEADER, PEER
+		OFFLINE, STARTING, LEADER, PEER, DISABLED
 	}
 
 	public String															id;
@@ -71,10 +71,13 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 	private OLeaderNode												leader;
 	private OPeerNode													peer;
-	private STATUS														status			= STATUS.OFFLINE;
+	protected STATUS													status			= STATUS.OFFLINE;
 
 	@Override
 	public void startup() {
+		if (status == STATUS.DISABLED)
+			return;
+
 		status = STATUS.STARTING;
 		sendPresence();
 		try {
@@ -167,6 +170,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 		try {
 			config = new ODistributedServerConfiguration(iServer, this, iParams);
+			if (status == STATUS.DISABLED)
+				return;
 
 			distributedNetworkListener = server.getListenerByProtocol(ONetworkProtocolDistributed.class);
 			if (distributedNetworkListener == null)

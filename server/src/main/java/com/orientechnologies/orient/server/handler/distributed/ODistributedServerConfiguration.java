@@ -29,6 +29,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager.STATUS;
 import com.orientechnologies.orient.server.replication.conflict.ODefaultReplicationConflictResolver;
 
 /**
@@ -82,7 +83,10 @@ public class ODistributedServerConfiguration {
 					if (param.name == null)
 						continue;
 
-					if ("name".equalsIgnoreCase(param.name))
+					if ("enabled".equalsIgnoreCase(param.name)) {
+						if (!Boolean.parseBoolean(param.value))
+							iManager.status = STATUS.DISABLED;
+					} else if ("name".equalsIgnoreCase(param.name))
 						name = param.value;
 					else if ("security.algorithm".equalsIgnoreCase(param.name))
 						securityAlgorithm = param.value;
