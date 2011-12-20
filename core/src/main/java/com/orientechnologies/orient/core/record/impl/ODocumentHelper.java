@@ -68,6 +68,7 @@ public class ODocumentHelper {
 	public static final String	ATTRIBUTE_TYPE		= "@type";
 	public static final String	ATTRIBUTE_SIZE		= "@size";
 	public static final String	ATTRIBUTE_FIELDS	= "@fields";
+	public static final String	ATTRIBUTE_RAW			= "@raw";
 
 	public static void sort(List<OIdentifiable> ioResultSet, List<OPair<String, String>> iOrderCriteria) {
 		Collections.sort(ioResultSet, new ODocumentComparator(iOrderCriteria));
@@ -380,6 +381,8 @@ public class ODocumentHelper {
 				return stream != null ? stream.length : 0;
 			} else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_FIELDS))
 				return ((ODocument) iCurrent.getRecord()).fieldNames();
+			else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RAW))
+				return new String(((ORecordInternal<?>) iCurrent.getRecord()).toStream());
 
 			throw new IllegalArgumentException("Document attribute '" + iFieldName + "' not supported");
 		} else

@@ -305,4 +305,21 @@ public class SQLSelectProjectionsTest {
 			database.close();
 		}
 	}
+
+	public void queryProjectionOrigin() {
+		database.open("admin", "admin");
+
+		try {
+			List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select @raw FROM V")).execute();
+			Assert.assertTrue(result.size() != 0);
+
+			for (ODocument d : result) {
+				Assert.assertTrue(d.fieldNames().length <= 1);
+				Assert.assertNotNull(d.field("raw"));
+			}
+
+		} finally {
+			database.close();
+		}
+	}
 }
