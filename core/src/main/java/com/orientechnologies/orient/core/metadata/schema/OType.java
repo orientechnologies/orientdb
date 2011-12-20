@@ -250,8 +250,10 @@ public enum OType {
 				|| String.class.isAssignableFrom(iType)
 				|| Boolean.class.isAssignableFrom(iType)
 				|| Date.class.isAssignableFrom(iType)
-				|| (iType.isArray() && (iType.equals(byte[].class) || iType.equals(char[].class) || iType.equals(Number[].class) || iType
-						.equals(String[].class))))
+				|| (iType.isArray() && (iType.equals(byte[].class) || iType.equals(char[].class) || iType.equals(int[].class)
+						|| iType.equals(long[].class) || iType.equals(double[].class) || iType.equals(float[].class)
+						|| iType.equals(short[].class) || iType.equals(Integer[].class) || iType.equals(String[].class)
+						|| iType.equals(Long[].class) || iType.equals(Short[].class) || iType.equals(Double[].class))))
 			return true;
 
 		return false;
