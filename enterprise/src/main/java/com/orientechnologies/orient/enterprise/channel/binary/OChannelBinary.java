@@ -281,10 +281,11 @@ public abstract class OChannelBinary extends OChannel {
 
 	@Override
 	public void close() {
+		boolean lockAcquired = false;
 		try {
 			acquireExclusiveLock();
+			lockAcquired = true;
 		} catch (OTimeoutException e1) {
-			return;
 		}
 
 		try {
@@ -303,7 +304,8 @@ public abstract class OChannelBinary extends OChannel {
 			super.close();
 
 		} finally {
-			releaseExclusiveLock();
+			if (lockAcquired)
+				releaseExclusiveLock();
 		}
 	}
 
