@@ -35,6 +35,7 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -50,7 +51,9 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -393,6 +396,207 @@ public class OStorageLocal extends OStorageEmbedded {
 		}
 	}
 
+	public void check(final OCommandOutputListener iListener) {
+		int errors = 0;
+		int warnings = 0;
+
+		lock.acquireSharedLock();
+		try {
+
+			long totalRecors = 0;
+			final long start = System.currentTimeMillis();
+
+			iListener.onMessage("\nChecking database '" + getName() + "'...\n");
+
+			iListener.onMessage("\n- Checking cluster coherence...\n");
+
+			final OPhysicalPosition ppos = new OPhysicalPosition();
+
+			// BROWSE ALL THE CLUSTERS
+			for (OCluster c : clusters) {
+				if (!(c instanceof OClusterLocal))
+					continue;
+
+				iListener.onMessage(" +- Checking cluster '" + c.getName() + "' (id=" + c.getId() + ")...\n");
+
+				// BROWSE ALL THE RECORDS
+				for (final OClusterPositionIterator it = c.absoluteIterator(); it.hasNext();) {
+					final Long pos = it.next();
+					totalRecors++;
+					try {
+						c.getPhysicalPosition(pos, ppos);
+
+						if (ppos.dataSegmentId >= dataSegments.length) {
+							OLogManager.instance().warn(this, "[OStorageLocal.check] Found wrong data segment %d", ppos.dataSegmentId);
+							warnings++;
+						}
+
+						if (ppos.recordSize < 0) {
+							OLogManager.instance().warn(this, "[OStorageLocal.check] Found wrong record size %d", ppos.recordSize);
+							warnings++;
+						}
+
+						if (ppos.recordSize >= 1000000) {
+							OLogManager.instance().warn(this, "[OStorageLocal.check] Found suspected big record size %d. Is it corrupted?",
+									ppos.recordSize);
+							warnings++;
+						}
+
+						if (ppos.dataChunkPosition > dataSegments[ppos.dataSegmentId].getFilledUpTo()) {
+							OLogManager.instance().warn(this,
+									"[OStorageLocal.check] Found wrong pointer to data chunk %d out of data segment size (%d)",
+									ppos.dataChunkPosition, dataSegments[ppos.dataSegmentId].getFilledUpTo());
+							warnings++;
+						}
+
+						if (ppos.version < -1) {
+							OLogManager.instance().warn(this, "[OStorageLocal.check] Found wrong record version %d", ppos.version);
+							warnings++;
+						} else if (ppos.version == -1) {
+							// CHECK IF THE HOLE EXISTS
+							boolean found = false;
+							int tot = ((OClusterLocal) c).holeSegment.getHoles();
+							for (int i = 0; i < tot; ++i) {
+								final long recycledPosition = ((OClusterLocal) c).holeSegment.getEntryPosition(i) / OClusterLocal.RECORD_SIZE;
+								if (recycledPosition == pos) {
+									// FOUND
+									found = true;
+									break;
+								}
+							}
+
+							if (!found) {
+								OLogManager.instance()
+										.warn(this, "[OStorageLocal.check] Cannot find hole for deleted record %d:%d", c.getId(), pos);
+								warnings++;
+							}
+						}
+
+					} catch (IOException e) {
+						OLogManager.instance().warn(this, "[OStorageLocal.check] Error while reading record #%d:%d", e, c.getId(), pos);
+						warnings++;
+					}
+				}
+
+				final int tot = ((OClusterLocal) c).holeSegment.getHoles();
+				if (tot > 0) {
+					iListener.onMessage("  +- Checking " + tot + " hole(s)...\n");
+					// CHECK HOLES
+					for (int i = 0; i < tot; ++i) {
+						long recycledPosition = -1;
+						try {
+							recycledPosition = ((OClusterLocal) c).holeSegment.getEntryPosition(i) / OClusterLocal.RECORD_SIZE;
+							c.getPhysicalPosition(recycledPosition, ppos);
+
+							if (ppos.version != -1) {
+								OLogManager.instance().warn(this,
+										"[OStorageLocal.check] Found wrong hole %d/%d for deleted record %d:%d. The record seems good", i, tot - 1,
+										c.getId(), recycledPosition);
+								warnings++;
+							}
+						} catch (Exception e) {
+							OLogManager.instance().warn(this,
+									"[OStorageLocal.check] Found wrong hole %d/%d for deleted record %d:%d. The record not exists", i, tot - 1,
+									c.getId(), recycledPosition);
+							warnings++;
+						}
+					}
+				}
+			}
+
+			int totalChunks = 0;
+			iListener.onMessage("\n- Checking data chunks integrity...\n");
+			for (ODataLocal d : dataSegments) {
+				int pos = 0;
+				while (pos < d.getFilledUpTo()) {
+					totalChunks++;
+					int recordSize = Integer.MIN_VALUE;
+					try {
+						recordSize = d.getRecordSize(pos);
+						final ORecordId rid = d.getRecordRid(pos);
+
+						if (recordSize < 0) {
+							// HOLE: CHECK HOLE PRESENCE
+							boolean found = false;
+							for (ODataHoleInfo hole : getHolesList()) {
+								if (hole.dataOffset == pos) {
+									found = true;
+									break;
+								}
+							}
+
+							if (!found) {
+								OLogManager.instance().warn(this, "[OStorageLocal.check] Cannot find hole for deleted chunk %d", pos);
+								warnings++;
+							}
+
+							if (rid.isValid()) {
+								OLogManager
+										.instance()
+										.warn(
+												this,
+												"[OStorageLocal.check] Deleted chunk at position %d (recordSize=%d) points to the valid RID %s instead of #-1:-1",
+												pos, recordSize, rid);
+								warnings++;
+							}
+
+							recordSize *= -1;
+							pos += recordSize;
+
+						} else {
+							final byte[] buffer = d.getRecord(pos);
+							if (buffer.length != recordSize) {
+								OLogManager.instance().warn(this, "[OStorageLocal.check] Wrong record size: found %d but record length is %d",
+										recordSize, buffer.length);
+								warnings++;
+							}
+
+							if (!rid.isValid()) {
+								OLogManager.instance().warn(this, "[OStorageLocal.check] Chunk at position %d points to invalid RID %s", pos, rid);
+								warnings++;
+							} else {
+								if (clusters[rid.clusterId] == null) {
+									OLogManager.instance().warn(this,
+											"[OStorageLocal.check] Found ghost chunk at position %d pointed from %s. The cluster %d not exists", pos,
+											rid, rid.clusterId);
+									warnings++;
+								} else {
+									clusters[rid.clusterId].getPhysicalPosition(rid.clusterPosition, ppos);
+
+									if (ppos.dataSegmentId != d.getId()) {
+										OLogManager.instance().warn(this,
+												"[OStorageLocal.check] Wrong record chunk data segment: found %d but current id is %d", ppos.dataSegmentId,
+												d.getId());
+										warnings++;
+									}
+
+									if (ppos.dataChunkPosition != pos) {
+										OLogManager.instance().warn(this,
+												"[OStorageLocal.check] Wrong chunk position: cluster record points to %d, but current chunk is at %d",
+												ppos.dataChunkPosition, pos);
+										warnings++;
+									}
+								}
+							}
+							pos += OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_SHORT + OBinaryProtocol.SIZE_LONG + recordSize;
+						}
+					} catch (Exception e) {
+						OLogManager.instance().warn(this, "[OStorageLocal.check] Found wrong chunk %d", pos);
+						errors++;
+						break;
+					}
+				}
+			}
+
+			iListener.onMessage("\nCheck of database completed in " + (System.currentTimeMillis() - start)
+					+ "ms:\n- Total records checked: " + totalRecors + "\n- Total chunks checked.: " + totalChunks
+					+ "\n- Warnings.............: " + warnings + "\n- Errors...............: " + errors + "\n");
+
+		} finally {
+			lock.releaseSharedLock();
+		}
+	}
+
 	public ODataLocal getDataSegment(final int iDataSegmentId) {
 		checkOpeness();
 
@@ -566,11 +770,6 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			return clusters[iClusterId] != null ? new long[] { clusters[iClusterId].getFirstEntryPosition(),
 					clusters[iClusterId].getLastEntryPosition() } : new long[0];
-
-		} catch (IOException e) {
-
-			OLogManager.instance().error(this, "Error on getting last entry position", e);
-			return null;
 
 		} finally {
 			lock.releaseSharedLock();
@@ -1108,8 +1307,8 @@ public class OStorageLocal extends OStorageEmbedded {
 					// DELETED
 					return null;
 
-				final ODataLocal data = getDataSegment(ppos.dataSegment);
-				return new ORawBuffer(data.getRecord(ppos.dataPosition), ppos.version, ppos.type);
+				final ODataLocal data = getDataSegment(ppos.dataSegmentId);
+				return new ORawBuffer(data.getRecord(ppos.dataChunkPosition), ppos.version, ppos.type);
 
 			} finally {
 				lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.SHARED);
@@ -1190,16 +1389,16 @@ public class OStorageLocal extends OStorageEmbedded {
 					iClusterSegment.updateRecordType(iRid.clusterPosition, iRecordType);
 
 				final long newDataSegmentOffset;
-				if (ppos.dataPosition == -1)
+				if (ppos.dataChunkPosition == -1)
 					// WAS EMPTY FIRST TIME, CREATE IT NOW
-					newDataSegmentOffset = getDataSegment(ppos.dataSegment).addRecord(iRid, iContent);
+					newDataSegmentOffset = getDataSegment(ppos.dataSegmentId).addRecord(iRid, iContent);
 				else
 					// UPDATE IT
-					newDataSegmentOffset = getDataSegment(ppos.dataSegment).setRecord(ppos.dataPosition, iRid, iContent);
+					newDataSegmentOffset = getDataSegment(ppos.dataSegmentId).setRecord(ppos.dataChunkPosition, iRid, iContent);
 
-				if (newDataSegmentOffset != ppos.dataPosition)
+				if (newDataSegmentOffset != ppos.dataChunkPosition)
 					// UPDATE DATA SEGMENT OFFSET WITH THE NEW PHYSICAL POSITION
-					iClusterSegment.setPhysicalPosition(iRid.clusterPosition, ppos.dataSegment, newDataSegmentOffset, iRecordType,
+					iClusterSegment.setPhysicalPosition(iRid.clusterPosition, ppos.dataSegmentId, newDataSegmentOffset, iRecordType,
 							ppos.version);
 
 				incrementVersion();
@@ -1249,8 +1448,8 @@ public class OStorageLocal extends OStorageEmbedded {
 
 				iClusterSegment.removePhysicalPosition(iRid.clusterPosition, ppos);
 
-				if (ppos.dataPosition > -1)
-					getDataSegment(ppos.dataSegment).deleteRecord(ppos.dataPosition);
+				if (ppos.dataChunkPosition > -1)
+					getDataSegment(ppos.dataSegmentId).deleteRecord(ppos.dataChunkPosition);
 
 				incrementVersion();
 

@@ -42,10 +42,10 @@ import com.orientechnologies.orient.core.storage.fs.OMMapManager;
  * </code><br/>
  */
 public class OClusterLocal extends OMultiFileSegment implements OCluster {
-	private static final String				DEF_EXTENSION		= ".ocl";
-	private static final int					RECORD_SIZE			= 15;
-	private static final int					DEF_SIZE				= 1000000;
+	public static final int						RECORD_SIZE			= 15;
 	public static final String				TYPE						= "PHYSICAL";
+	private static final String				DEF_EXTENSION		= ".ocl";
+	private static final int					DEF_SIZE				= 1000000;
 
 	private int												id;
 	private long											beginOffsetData	= -1;
@@ -143,7 +143,7 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 					getPhysicalPosition(i, ppos);
 
 					if (storage.checkForRecordValidity(ppos))
-						storage.getDataSegment(ppos.dataSegment).deleteRecord(ppos.dataPosition);
+						storage.getDataSegment(ppos.dataSegmentId).deleteRecord(ppos.dataChunkPosition);
 				}
 			}
 
@@ -184,8 +184,8 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 			final OFile file = files[(int) pos[0]];
 			long p = pos[1];
 
-			iPPosition.dataSegment = file.readShort(p);
-			iPPosition.dataPosition = file.readLong(p += OBinaryProtocol.SIZE_SHORT);
+			iPPosition.dataSegmentId = file.readShort(p);
+			iPPosition.dataChunkPosition = file.readLong(p += OBinaryProtocol.SIZE_SHORT);
 			iPPosition.type = file.readByte(p += OBinaryProtocol.SIZE_LONG);
 			iPPosition.version = file.readInt(p += OBinaryProtocol.SIZE_BYTE);
 			return iPPosition;
@@ -253,7 +253,8 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 
 			final long[] pos = getRelativePosition(iPosition);
 
-			files[(int) pos[0]].writeInt(pos[1] + OBinaryProtocol.SIZE_SHORT + OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_BYTE, iVersion);
+			files[(int) pos[0]].writeInt(pos[1] + OBinaryProtocol.SIZE_SHORT + OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_BYTE,
+					iVersion);
 
 		} finally {
 			releaseExclusiveLock();
@@ -291,8 +292,8 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 			long p = pos[1];
 
 			// SAVE THE OLD DATA AND RETRIEVE THEM TO THE CALLER
-			iPPosition.dataSegment = file.readShort(p);
-			iPPosition.dataPosition = file.readLong(p += OBinaryProtocol.SIZE_SHORT);
+			iPPosition.dataSegmentId = file.readShort(p);
+			iPPosition.dataChunkPosition = file.readLong(p += OBinaryProtocol.SIZE_SHORT);
 			iPPosition.type = file.readByte(p += OBinaryProtocol.SIZE_LONG);
 			iPPosition.version = file.readInt(p += OBinaryProtocol.SIZE_BYTE);
 
@@ -358,7 +359,7 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 		}
 	}
 
-	public long getFirstEntryPosition() throws IOException {
+	public long getFirstEntryPosition() {
 		acquireSharedLock();
 		try {
 
@@ -372,7 +373,7 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 	/**
 	 * Returns the endOffsetData value if it's not equals to the last one, otherwise the total entries.
 	 */
-	public long getLastEntryPosition() throws IOException {
+	public long getLastEntryPosition() {
 		acquireSharedLock();
 		try {
 
@@ -398,7 +399,7 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 		return id;
 	}
 
-	public OClusterPositionIterator absoluteIterator() throws IOException {
+	public OClusterPositionIterator absoluteIterator() {
 		return new OClusterPositionIterator(this);
 	}
 
@@ -442,8 +443,8 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 		while (it.hasNext()) {
 			Long position = it.next();
 			pos = getPhysicalPosition(position.longValue(), pos);
-			if (pos.dataPosition > -1)
-				size += storage.getDataSegment(pos.dataSegment).getRecordSize(pos.dataPosition);
+			if (pos.dataChunkPosition > -1)
+				size += storage.getDataSegment(pos.dataSegmentId).getRecordSize(pos.dataChunkPosition);
 		}
 		return size;
 	}

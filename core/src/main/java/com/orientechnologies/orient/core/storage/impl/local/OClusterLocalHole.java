@@ -110,7 +110,7 @@ public class OClusterLocalHole extends OSingleFileSegment {
 	 * @return the recycled position if found, otherwise -1 that usually means to request more space.
 	 * @throws IOException
 	 */
-	public long getEntryPosition(final long iPosition) throws IOException {
+	public long getEntryPosition(final int iPosition) throws IOException {
 		return file.readLong(iPosition * RECORD_SIZE);
 	}
 

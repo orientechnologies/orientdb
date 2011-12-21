@@ -37,7 +37,7 @@ public class OClusterMemory extends OSharedResourceAbstract implements OCluster 
 		this.name = name;
 	}
 
-	public OClusterPositionIterator absoluteIterator() throws IOException {
+	public OClusterPositionIterator absoluteIterator() {
 		return new OClusterPositionIterator(this);
 	}
 
@@ -239,7 +239,7 @@ public class OClusterMemory extends OSharedResourceAbstract implements OCluster 
 		try {
 
 			final OPhysicalPosition ppos = entries.get((int) iPosition);
-			ppos.dataPosition = iDataPosition;
+			ppos.dataChunkPosition = iDataPosition;
 
 		} finally {
 			releaseExclusiveLock();
@@ -252,8 +252,8 @@ public class OClusterMemory extends OSharedResourceAbstract implements OCluster 
 		try {
 
 			final OPhysicalPosition ppos = entries.get((int) iPosition);
-			ppos.dataSegment = iDataId;
-			ppos.dataPosition = iDataPosition;
+			ppos.dataSegmentId = iDataId;
+			ppos.dataChunkPosition = iDataPosition;
 			ppos.type = iRecordType;
 
 		} finally {

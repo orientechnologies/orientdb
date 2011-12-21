@@ -204,6 +204,21 @@ public class ODataLocal extends OMultiFileSegment {
 		}
 	}
 
+	public ORecordId getRecordRid(final long iPosition) throws IOException {
+		acquireSharedLock();
+		try {
+
+			final long[] pos = getRelativePosition(iPosition);
+			final OFile file = files[(int) pos[0]];
+
+			return new ORecordId(file.readShort(pos[1] + OBinaryProtocol.SIZE_INT), file.readLong(pos[1] + OBinaryProtocol.SIZE_INT
+					+ OBinaryProtocol.SIZE_SHORT));
+
+		} finally {
+			releaseSharedLock();
+		}
+	}
+
 	/**
 	 * Set the record content in file.
 	 * 
@@ -520,10 +535,10 @@ public class ODataLocal extends OMultiFileSegment {
 			final OCluster cluster = storage.getClusterById(clusterId);
 			final OPhysicalPosition ppos = cluster.getPhysicalPosition(clusterPosition, new OPhysicalPosition());
 
-			if (ppos.dataPosition != iSourcePosition)
+			if (ppos.dataChunkPosition != iSourcePosition)
 				OLogManager.instance().warn(this,
 						"Found corrupted record hole for rid %d:%d: data position is wrong: %d <-> %d. Auto fixed by writing position %d",
-						clusterId, clusterPosition, ppos.dataPosition, iSourcePosition, iDestinationPosition);
+						clusterId, clusterPosition, ppos.dataChunkPosition, iSourcePosition, iDestinationPosition);
 
 			cluster.setPhysicalPosition(clusterPosition, iDestinationPosition);
 		}

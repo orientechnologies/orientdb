@@ -158,7 +158,7 @@ public class OClusterLogical implements OCluster {
 	public void setPhysicalPosition(final long iPosition, final long iDataPosition) {
 		Long key = new Long(iPosition);
 		final OPhysicalPosition ppos = map.get(key);
-		ppos.dataPosition = iDataPosition;
+		ppos.dataChunkPosition = iDataPosition;
 		map.put(key, ppos);
 	}
 
@@ -169,8 +169,8 @@ public class OClusterLogical implements OCluster {
 			int iVersion) {
 		Long key = new Long(iPosition);
 		final OPhysicalPosition ppos = map.get(key);
-		ppos.dataSegment = iDataId;
-		ppos.dataPosition = iDataPosition;
+		ppos.dataSegmentId = iDataId;
+		ppos.dataChunkPosition = iDataPosition;
 		ppos.type = iRecordType;
 		map.put(key, ppos);
 	}
@@ -202,10 +202,10 @@ public class OClusterLogical implements OCluster {
 	public void removePhysicalPosition(final long iPosition, final OPhysicalPosition iPPosition) {
 		map.remove(iPosition);
 
-		if (total.dataPosition == iPosition) {
+		if (total.dataChunkPosition == iPosition) {
 			// LAST ONE: SEARCH THE HIGHER POSITION TO DISCOVER TOTAL MAXIMUM TOTAL RECORDS
 			// TODO
-			total.dataPosition--;
+			total.dataChunkPosition--;
 			map.put(new Long(-1), total);
 		}
 	}
@@ -216,7 +216,7 @@ public class OClusterLogical implements OCluster {
 	 * @throws IOException
 	 */
 	public long addPhysicalPosition(final int iDataSegmentId, final long iRecordPosition, final byte iRecordType) throws IOException {
-		final long pos = ++total.dataPosition;
+		final long pos = ++total.dataChunkPosition;
 		map.put(new Long(pos), new OPhysicalPosition(iDataSegmentId, iRecordPosition, iRecordType));
 
 		map.put(new Long(-1), total);
@@ -233,14 +233,14 @@ public class OClusterLogical implements OCluster {
 	}
 
 	public long getLastEntryPosition() {
-		return total.dataPosition;
+		return total.dataChunkPosition;
 	}
 
 	public int getId() {
 		return id;
 	}
 
-	public OClusterPositionIterator absoluteIterator() throws IOException {
+	public OClusterPositionIterator absoluteIterator() {
 		return new OClusterPositionIterator(this);
 	}
 

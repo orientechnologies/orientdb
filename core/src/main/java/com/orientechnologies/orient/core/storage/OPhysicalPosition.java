@@ -21,25 +21,25 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
 @SuppressWarnings("serial")
 public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysicalPosition> {
-	public int	dataSegment;	// ID OF DATA SEGMENT
-	public long	dataPosition; // OFFSET IN BYTES INSIDE THE DATA SEGMENT
-	public byte	type;				// RECORD TYPE
-	public int	version	= 0;	// RECORD VERSION
+	public int	dataSegmentId;				// ID OF DATA SEGMENT
+	public long	dataChunkPosition;	// POSITION OF CHUNK EXPRESSES AS OFFSET IN BYTES INSIDE THE DATA SEGMENT
+	public byte	type;							// RECORD TYPE
+	public int	version	= 0;				// RECORD VERSION
 
-	public int	recordSize;	// SIZE IN BYTES OF THE RECORD. USED ONLY IN MEMORY
+	public int	recordSize;				// SIZE IN BYTES OF THE RECORD. USED ONLY IN MEMORY
 
 	public OPhysicalPosition() {
 	}
 
 	public OPhysicalPosition(final int iDataSegment, final long iPosition, final byte iRecordType) {
-		dataSegment = iDataSegment;
-		dataPosition = iPosition;
+		dataSegmentId = iDataSegment;
+		dataChunkPosition = iPosition;
 		type = iRecordType;
 	}
 
 	public void copyTo(final OPhysicalPosition iDest) {
-		iDest.dataSegment = dataSegment;
-		iDest.dataPosition = dataPosition;
+		iDest.dataSegmentId = dataSegmentId;
+		iDest.dataChunkPosition = dataChunkPosition;
 		iDest.type = type;
 		iDest.version = version;
 		iDest.recordSize = recordSize;
@@ -51,17 +51,17 @@ public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysi
 
 	@Override
 	public String toString() {
-		return "dataSegment=" + dataSegment + ", recordPosition=" + dataPosition + ", type=" + type + ", recordSize=" + recordSize
+		return "dataSegment=" + dataSegmentId + ", recordPosition=" + dataChunkPosition + ", type=" + type + ", recordSize=" + recordSize
 				+ ", v=" + version;
 	}
 
 	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
 		int pos = 0;
 
-		dataSegment = OBinaryProtocol.bytes2int(iStream, pos);
+		dataSegmentId = OBinaryProtocol.bytes2int(iStream, pos);
 		pos += OBinaryProtocol.SIZE_INT;
 
-		dataPosition = OBinaryProtocol.bytes2long(iStream, pos);
+		dataChunkPosition = OBinaryProtocol.bytes2long(iStream, pos);
 		pos += OBinaryProtocol.SIZE_LONG;
 
 		type = iStream[pos];
@@ -76,14 +76,14 @@ public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysi
 	}
 
 	public byte[] toStream() throws OSerializationException {
-		byte[] buffer = new byte[OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_BYTE + OBinaryProtocol.SIZE_INT
-				+ OBinaryProtocol.SIZE_INT];
+		byte[] buffer = new byte[OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_BYTE
+				+ OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_INT];
 		int pos = 0;
 
-		OBinaryProtocol.int2bytes(dataSegment, buffer, pos);
+		OBinaryProtocol.int2bytes(dataSegmentId, buffer, pos);
 		pos += OBinaryProtocol.SIZE_INT;
 
-		OBinaryProtocol.long2bytes(dataPosition, buffer, pos);
+		OBinaryProtocol.long2bytes(dataChunkPosition, buffer, pos);
 		pos += OBinaryProtocol.SIZE_LONG;
 
 		buffer[pos] = type;
@@ -97,6 +97,6 @@ public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysi
 	}
 
 	public int compareTo(final OPhysicalPosition iOther) {
-		return (int) (dataPosition - iOther.dataPosition);
+		return (int) (dataChunkPosition - iOther.dataChunkPosition);
 	}
 }

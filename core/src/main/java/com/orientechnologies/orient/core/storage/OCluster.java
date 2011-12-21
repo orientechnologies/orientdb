@@ -91,9 +91,9 @@ public interface OCluster {
 
 	public long getEntries();
 
-	public long getFirstEntryPosition() throws IOException;
+	public long getFirstEntryPosition();
 
-	public long getLastEntryPosition() throws IOException;
+	public long getLastEntryPosition();
 
 	/**
 	 * Lets to an external actor to lock the cluster in shared mode. Useful for range queries to avoid atomic locking.
@@ -129,7 +129,7 @@ public interface OCluster {
 	 */
 	public long getRecordsSize() throws IOException;
 
-	public OClusterPositionIterator absoluteIterator() throws IOException;
+	public OClusterPositionIterator absoluteIterator();
 
 	/**
 	 * Creates an iterator setting a range.

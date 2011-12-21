@@ -81,6 +81,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.impl.local.ODataHoleInfo;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 import com.orientechnologies.orient.enterprise.command.OCommandExecutorScript;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
@@ -1006,6 +1007,25 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			out.println("Database '" + iDatabaseName + "' has been shared in '" + iMode + "' mode with the server '" + iRemoteName + "'");
 
 		} catch (Exception e) {
+			printError(e);
+		}
+	}
+
+	@ConsoleCommand(description = "Check database integrity")
+	public void checkDatabase() throws IOException {
+		checkCurrentDatabase();
+
+		if (currentDatabase.getStorage() instanceof OStorageRemote) {
+			out.println("Cannot check integrity of remote database. Connect to it using local mode.");
+			return;
+		} else if (currentDatabase.getStorage() instanceof OStorageMemory) {
+			out.println("Cannot check integrity of in-memory database.");
+			return;
+		}
+
+		try {
+			((OStorageLocal) currentDatabase.getStorage()).check(this);
+		} catch (ODatabaseImportException e) {
 			printError(e);
 		}
 	}

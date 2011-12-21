@@ -260,7 +260,7 @@ public class OStorageMemory extends OStorageEmbedded {
 				if (ppos == null)
 					return null;
 
-				return new ORawBuffer(data.readRecord(ppos.dataPosition), ppos.version, ppos.type);
+				return new ORawBuffer(data.readRecord(ppos.dataChunkPosition), ppos.version, ppos.type);
 
 			} finally {
 				lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.SHARED);
@@ -305,7 +305,7 @@ public class OStorageMemory extends OStorageEmbedded {
 						--ppos.version;
 				}
 
-				data.updateRecord(ppos.dataPosition, iContent);
+				data.updateRecord(ppos.dataChunkPosition, iContent);
 
 				return ppos.version;
 
@@ -346,7 +346,7 @@ public class OStorageMemory extends OStorageEmbedded {
 									+ ppos.version + " your=v" + iVersion + ")", iRid, ppos.version, iVersion);
 
 				cluster.removePhysicalPosition(iRid.clusterPosition, null);
-				data.deleteRecord(ppos.dataPosition);
+				data.deleteRecord(ppos.dataChunkPosition);
 
 				return true;
 
@@ -383,8 +383,6 @@ public class OStorageMemory extends OStorageEmbedded {
 
 			return new long[] { cluster.getFirstEntryPosition(), cluster.getLastEntryPosition() };
 
-		} catch (IOException e) {
-			throw new OStorageException("Error on getting last entry position in cluster: " + iClusterId, e);
 		} finally {
 			lock.releaseSharedLock();
 		}
@@ -592,13 +590,13 @@ public class OStorageMemory extends OStorageEmbedded {
 
 	@Override
 	public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
-		if (ppos.dataSegment > 0)
+		if (ppos.dataSegmentId > 0)
 			return false;
 
 		lock.acquireSharedLock();
 		try {
 
-			if (ppos.dataPosition >= data.count())
+			if (ppos.dataChunkPosition >= data.count())
 				return false;
 
 		} finally {
