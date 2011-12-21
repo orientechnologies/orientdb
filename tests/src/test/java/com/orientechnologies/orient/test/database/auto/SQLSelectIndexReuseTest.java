@@ -23,6 +23,7 @@ import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +61,9 @@ public class SQLSelectIndexReuseTest
     oClass.createProperty( "prop7", OType.STRING );
     oClass.createProperty( "fEmbeddedMap", OType.EMBEDDEDMAP, OType.INTEGER );
     oClass.createProperty( "fLinkMap", OType.LINKMAP );
+    oClass.createProperty( "fEmbeddedList", OType.EMBEDDEDLIST, OType.INTEGER );
+    oClass.createProperty( "fLinkList", OType.LINKLIST );
+    
 
 
     oClass.createIndex( "indexone", OClass.INDEX_TYPE.UNIQUE, "prop1", "prop2" );
@@ -72,6 +76,8 @@ public class SQLSelectIndexReuseTest
     oClass.createIndex( "sqlSelectIndexReuseTestEmbeddedMapByValue", OClass.INDEX_TYPE.NOTUNIQUE, "fEmbeddedMap by value" );
     oClass.createIndex( "sqlSelectIndexReuseTestLinkMapByKey", OClass.INDEX_TYPE.NOTUNIQUE, "fLinkMap" );
     oClass.createIndex( "sqlSelectIndexReuseTestLinkMapByValue", OClass.INDEX_TYPE.NOTUNIQUE, "fLinkMap by value" );
+    oClass.createIndex( "sqlSelectIndexReuseTestEmbeddedList", OClass.INDEX_TYPE.NOTUNIQUE, "fEmbeddedList" );
+    oClass.createIndex( "sqlSelectIndexReuseTestLinkList", OClass.INDEX_TYPE.NOTUNIQUE, "fLinkList" );
     
 
     schema.save();
@@ -113,7 +119,19 @@ public class SQLSelectIndexReuseTest
       linkMap.put( "key" + (i * 10 + 3), links[i] );
       linkMap.put( "key" + (i * 10 + 4), links[i] );
 
+      final List<Integer> embeddedList = new ArrayList<Integer>( 3 );
+      embeddedList.add( i * 3 );
+      embeddedList.add( i * 3 + 1);
+      embeddedList.add( i * 3 + 2);
 
+      final List<ORID> linkList = new ArrayList<ORID>( 2 );
+      if(i < 9) {
+        linkList.add( links[i] );
+        linkList.add( links[i + 1] );
+      } else
+        linkList.add( links[i] );
+        
+      
       for( int j = 0; j < 10; j++ ) {
         final ODocument document = new ODocument( database, "sqlSelectIndexReuseTestClass" );
         document.field( "prop1", i );
@@ -129,6 +147,9 @@ public class SQLSelectIndexReuseTest
 
         document.field( "fEmbeddedMap", embeddedMap );
         document.field( "fLinkMap", linkMap );
+
+        document.field( "fEmbeddedList", embeddedList );
+        document.field( "fLinkList", new ArrayList<ORID>( linkList ) );
 
         document.save();
       }
@@ -1979,6 +2000,47 @@ public class SQLSelectIndexReuseTest
     Assert.assertEquals( profiler.getCounter( "Query.compositeIndexUsage.2" ), oldCompositeIndexUsage2 );
   }
 
+
+  @Test
+  public void testEmbeddedMapBySpecificKeyIndexReuse()
+  {
+    long oldIndexUsage = profiler.getCounter( "Query.indexUsage" );
+    long oldCompositeIndexUsage = profiler.getCounter( "Query.compositeIndexUsage" );
+    long oldCompositeIndexUsage2 = profiler.getCounter( "Query.compositeIndexUsage.2" );
+
+    if ( oldIndexUsage == -1 ) {
+      oldIndexUsage = 0;
+    }
+    if ( oldCompositeIndexUsage == -1 ) {
+      oldCompositeIndexUsage = 0;
+    }
+    if ( oldCompositeIndexUsage2 == -1 ) {
+      oldCompositeIndexUsage2 = 0;
+    }
+
+    final List<ODocument> result = database.command(
+      new OSQLSynchQuery<ODocument>( "select * from sqlSelectIndexReuseTestClass where ( fEmbeddedMap containskey 'key12' ) and ( fEmbeddedMap['key12'] = 12 )" ) ).execute();
+
+    Assert.assertEquals( result.size(), 10 );
+
+    final ODocument document = new ODocument();
+
+    final Map<String, Integer> embeddedMap = new HashMap<String, Integer>();
+
+    embeddedMap.put( "key11", 11 );
+    embeddedMap.put( "key12", 12 );
+    embeddedMap.put( "key13", 13 );
+    embeddedMap.put( "key14", 11 );
+
+    document.field( "fEmbeddedMap", embeddedMap );
+
+    Assert.assertEquals( containsDocument( result, document ), 10 );
+
+    Assert.assertEquals( profiler.getCounter( "Query.indexUsage" ), oldIndexUsage + 1 );
+    Assert.assertEquals( profiler.getCounter( "Query.compositeIndexUsage" ), oldCompositeIndexUsage );
+    Assert.assertEquals( profiler.getCounter( "Query.compositeIndexUsage.2" ), oldCompositeIndexUsage2 );
+  }
+
   @Test
   public void testEmbeddedMapByValueIndexReuse()
   {
@@ -2134,6 +2196,130 @@ public class SQLSelectIndexReuseTest
 
     final List<ODocument> result = database.command(
       new OSQLSynchQuery<ODocument>( "select * from sqlSelectIndexReuseTestClass where fLinkMap containsvalue (ftosearch = 'ftosearch')" ) ).execute(ridToSearch);
+
+    Assert.assertEquals( result.size(), 100 );
+
+    Assert.assertEquals( profiler.getCounter( "Query.indexUsage" ), oldIndexUsage );
+    Assert.assertEquals( profiler.getCounter( "Query.compositeIndexUsage" ), oldCompositeIndexUsage );
+    Assert.assertEquals( profiler.getCounter( "Query.compositeIndexUsage.2" ), oldCompositeIndexUsage2 );
+  }
+
+  @Test
+  public void testEmbeddedListIndexReuse() {
+    long oldIndexUsage = profiler.getCounter( "Query.indexUsage" );
+    long oldCompositeIndexUsage = profiler.getCounter( "Query.compositeIndexUsage" );
+    long oldCompositeIndexUsage2 = profiler.getCounter( "Query.compositeIndexUsage.2" );
+
+    if ( oldIndexUsage == -1 ) {
+      oldIndexUsage = 0;
+    }
+    if ( oldCompositeIndexUsage == -1 ) {
+      oldCompositeIndexUsage = 0;
+    }
+    if ( oldCompositeIndexUsage2 == -1 ) {
+      oldCompositeIndexUsage2 = 0;
+    }
+
+    final List<ODocument> result = database.command(
+      new OSQLSynchQuery<ODocument>( "select * from sqlSelectIndexReuseTestClass where fEmbeddedList contains 7" ) ).execute();
+
+    final List<Integer> embeddedList = new ArrayList<Integer>( 3 );
+    embeddedList.add( 6 );
+    embeddedList.add( 7 );
+    embeddedList.add( 8 );
+
+    final ODocument document = new ODocument();
+    document.field( "fEmbeddedList", embeddedList );
+
+    Assert.assertEquals( containsDocument( result, document ), 10 );
+   
+    Assert.assertEquals( profiler.getCounter( "Query.indexUsage" ), oldIndexUsage + 1 );
+    Assert.assertEquals( profiler.getCounter( "Query.compositeIndexUsage" ), oldCompositeIndexUsage );
+    Assert.assertEquals( profiler.getCounter( "Query.compositeIndexUsage.2" ), oldCompositeIndexUsage2 );
+  }
+
+  @Test
+  public void testLinkListIndexReuse() {
+    long oldIndexUsage = profiler.getCounter( "Query.indexUsage" );
+    long oldCompositeIndexUsage = profiler.getCounter( "Query.compositeIndexUsage" );
+    long oldCompositeIndexUsage2 = profiler.getCounter( "Query.compositeIndexUsage.2" );
+
+    if ( oldIndexUsage == -1 ) {
+      oldIndexUsage = 0;
+    }
+    if ( oldCompositeIndexUsage == -1 ) {
+      oldCompositeIndexUsage = 0;
+    }
+    if ( oldCompositeIndexUsage2 == -1 ) {
+      oldCompositeIndexUsage2 = 0;
+    }
+
+    final int clusterId = database.getMetadata().getSchema().getClass( "sqlSelectIndexReuseTestClass" ).getClusterIds()[0];
+    final ORID ridToSearch = new ORecordId( clusterId, 1 );
+
+    final List<ODocument> result = database.command(
+      new OSQLSynchQuery<ODocument>( "select * from sqlSelectIndexReuseTestClass where fLinkList contains ?" ) ).execute(ridToSearch);
+
+    Assert.assertEquals( result.size(), 20 );
+
+    final List<ORID> linkListOne = new ArrayList<ORID>( 2 );
+    linkListOne.add( new ORecordId( clusterId, 0 ) );
+    linkListOne.add( new ORecordId( clusterId, 1 ) );
+
+    final List<ORID> linkListTwo = new ArrayList<ORID>( 2 );
+    linkListTwo.add( new ORecordId( clusterId, 1 ) );
+    linkListTwo.add( new ORecordId( clusterId, 2 ) );
+
+    int listOneCounter = 0;
+    int listTwoCounter = 0;
+
+    for(final ODocument doc : result) {
+      final List<OIdentifiable> linkList = doc.field( "fLinkList" );
+      
+      boolean isContainedInFirstList = true;
+      boolean isContainedInSecondList = true;
+
+      for(final OIdentifiable link : linkList) {
+        if(!linkListOne.contains( link.getIdentity() ))
+          isContainedInFirstList = false;
+
+        if(!linkListTwo.contains( link.getIdentity() ))
+          isContainedInSecondList = false;
+      }
+
+      if(isContainedInFirstList)
+        listOneCounter++;
+
+      if(isContainedInSecondList)
+        listTwoCounter++;
+    }
+
+    Assert.assertEquals( listOneCounter, 10 );
+    Assert.assertEquals( listTwoCounter, 10 );
+
+    Assert.assertEquals( profiler.getCounter( "Query.indexUsage" ), oldIndexUsage + 1 );
+    Assert.assertEquals( profiler.getCounter( "Query.compositeIndexUsage" ), oldCompositeIndexUsage );
+    Assert.assertEquals( profiler.getCounter( "Query.compositeIndexUsage.2" ), oldCompositeIndexUsage2 );
+  }
+
+  @Test
+  public void testLinkListConditionForValueIndexNotReused() {
+    long oldIndexUsage = profiler.getCounter( "Query.indexUsage" );
+    long oldCompositeIndexUsage = profiler.getCounter( "Query.compositeIndexUsage" );
+    long oldCompositeIndexUsage2 = profiler.getCounter( "Query.compositeIndexUsage.2" );
+
+    if ( oldIndexUsage == -1 ) {
+      oldIndexUsage = 0;
+    }
+    if ( oldCompositeIndexUsage == -1 ) {
+      oldCompositeIndexUsage = 0;
+    }
+    if ( oldCompositeIndexUsage2 == -1 ) {
+      oldCompositeIndexUsage2 = 0;
+    }
+
+    final List<ODocument> result = database.command(
+      new OSQLSynchQuery<ODocument>( "select * from sqlSelectIndexReuseTestClass where fLinkList contains (ftosearch = 'ftosearch')" ) ).execute();
 
     Assert.assertEquals( result.size(), 100 );
 

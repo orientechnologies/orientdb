@@ -555,6 +555,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
             continue;
           }
 
+          if(operator instanceof OQueryOperatorContains) {
+            fillSearchIndexResultSet(index.get(key));
+            return true;
+          }
+
 					if (operator instanceof OQueryOperatorMajor) {
 						final Collection<OIdentifiable> result;
 						if (fetchLimit > -1)

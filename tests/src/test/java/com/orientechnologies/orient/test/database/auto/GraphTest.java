@@ -81,6 +81,8 @@ public class GraphTest {
 
 		lucaNode = (OGraphVertex) result.get(0);
 
+		Assert.assertNotNull(lucaNode.getOutEdges("drives"));
+		Assert.assertFalse(lucaNode.getOutEdges("drives").isEmpty());
 		Assert.assertEquals(lucaNode.getOutEdgeCount(), 3);
 		Assert.assertEquals(lucaNode.getInEdgeCount(), 0);
 

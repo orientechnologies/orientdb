@@ -846,7 +846,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       }
 
       indexDefinition = new OPropertyMapIndexDefinition(name, propertyToIndex.getName(), indexType, indexBy);
-    } else if ( propertyToIndexType.equals( OType.EMBEDDEDLIST ) || propertyToIndexType.equals( OType.EMBEDDEDSET )) {
+    } else if ( propertyToIndexType.equals( OType.EMBEDDEDLIST ) || propertyToIndexType.equals( OType.EMBEDDEDSET ) ||
+      propertyToIndexType.equals( OType.LINKLIST ) || propertyToIndexType.equals( OType.LINKSET )) {
       if(propertyToIndexType.equals( OType.LINKLIST ) || propertyToIndexType.equals( OType.LINKSET ))
         indexType = OType.LINK;
       else 
