@@ -73,6 +73,9 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
 
 	@Override
 	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
+    if(!(iRight instanceof OSQLFilterCondition) && !(iLeft instanceof OSQLFilterCondition))
+      return OIndexReuseType.INDEX_METHOD;
+
 		return OIndexReuseType.NO_INDEX;
 	}
 

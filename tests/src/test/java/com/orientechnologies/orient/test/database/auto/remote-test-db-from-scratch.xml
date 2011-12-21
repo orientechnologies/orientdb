@@ -62,6 +62,7 @@
 			<class name="com.orientechnologies.orient.test.database.auto.PropertyIndexTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.CollectionIndexTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectCompositeIndexDirectSearchTest" />
+      <class name="com.orientechnologies.orient.test.database.auto.MapIndexTest"/>
 			<!-- <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetValuesTest"/> <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetValuesTest"/> 
 				<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetTest"/> <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetTest"/> 
 				<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetEntriesTest"/> <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetEntriesTest"/> -->

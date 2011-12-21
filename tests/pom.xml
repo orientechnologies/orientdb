@@ -47,6 +47,13 @@
 			<type>jar</type>
 			<scope>compile</scope>
 		</dependency>
+    <dependency>
+      <groupId>com.orientechnologies</groupId>
+      <artifactId>orient-commons</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
 	</dependencies>
 	<build>
 		<plugins>

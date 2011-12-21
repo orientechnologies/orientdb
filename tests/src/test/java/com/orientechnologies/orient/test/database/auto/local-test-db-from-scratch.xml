@@ -75,6 +75,7 @@
 			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetEntriesTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetEntriesTest" />
+      <class name="com.orientechnologies.orient.test.database.auto.MapIndexTest"/>
 		</classes>
 	</test>
 	<test name="Dictionary">

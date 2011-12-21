@@ -940,7 +940,7 @@ public class SQLSelectTest {
       Assert.assertTrue(resultset.size() <= 3);
 
       for (ODocument d : resultset) {
-        Assert.assertTrue(d.getIdentity().getClusterId() < 0 || (d.getIdentity().getClusterId() >= last.getClusterId())
+        Assert.assertTrue(d.getIdentity().getClusterId() >= last.getClusterId()
             && d.getIdentity().getClusterPosition() > last.getClusterPosition());
       }
 

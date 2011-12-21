@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -107,14 +108,17 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 			final String props = textUpperCase.substring(oldPos, pos).trim().substring(1);
 
 			List<String> propList = new ArrayList<String>();
-			List<OType> typeList = new ArrayList<OType>();
-			for (String propName : props.trim().split("\\s*,\\s*")) {
+			final List<OType> typeList = new ArrayList<OType>();
+			for (String propToIndex : props.trim().split("\\s*,\\s*")) {
+        checkMapIndexSpecifier( propToIndex, text, oldPos );
+        final String propName = propToIndex.split( "\\s+" )[0];
+
 				final OProperty property = oClass.getProperty(propName);
 
 				if (property == null)
-					throw new IllegalArgumentException("Property '" + propName + "' was not found in class '" + oClass.getName() + "'");
+					throw new IllegalArgumentException("Property '" + propToIndex + "' was not found in class '" + oClass.getName() + "'");
 
-				propList.add(property.getName());
+				propList.add(propToIndex);
 				typeList.add(property.getType());
 			}
 
@@ -202,4 +206,24 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 
 		return null;
 	}
+
+  private void checkMapIndexSpecifier(final String fieldName, final String text, final int pos) {
+    String[] fieldNameParts = fieldName.split( "\\s+" );
+    if(fieldNameParts.length == 1)
+      return;
+
+    if(fieldNameParts.length == 3) {
+      if("by".equals(fieldNameParts[1].toLowerCase())) {
+        try{
+          OPropertyMapIndexDefinition.INDEX_BY.valueOf( fieldNameParts[2].toUpperCase() );
+        } catch( IllegalArgumentException iae ) {
+          throw new OCommandSQLParsingException( "Illegal field name format, should be '<property> [by key|value]' but was '" + fieldName + "'", text, pos);
+        }
+        return;
+      }
+      throw new OCommandSQLParsingException( "Illegal field name format, should be '<property> [by key|value]' but was '" + fieldName + "'", text, pos);
+    }
+
+    throw new OCommandSQLParsingException( "Illegal field name format, should be '<property> [by key|value]' but was '" + fieldName + "'", text, pos);
+  }
 }

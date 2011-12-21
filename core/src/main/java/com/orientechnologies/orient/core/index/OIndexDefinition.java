@@ -56,9 +56,7 @@ public interface OIndexDefinition extends OIndexCallback {
 	public String toString();
 
 	/**
-	 * Calculates key value by passed in parameters. It reflects implementation of
-	 * {@link #getDocumentValueToIndex(com.orientechnologies.orient.core.record.impl.ODocument)} method but operates not on document
-	 * fields, but on passed in parameters.
+	 * Calculates key value by passed in parameters.
 	 * 
 	 * If it is impossible to calculate key value by given parameters <code>null</code> will be returned.
 	 * 
@@ -70,9 +68,7 @@ public interface OIndexDefinition extends OIndexCallback {
 	public Object createValue(List<?> params);
 
 	/**
-	 * Calculates key value by passed in parameters. It reflects implementation of
-	 * {@link #getDocumentValueToIndex(com.orientechnologies.orient.core.record.impl.ODocument)} method but operates not on document
-	 * fields, but on passed in parameters.
+	 * Calculates key value by passed in parameters.
 	 * 
 	 * If it is impossible to calculate key value by given parameters <code>null</code> will be returned.
 	 * 

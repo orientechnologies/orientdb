@@ -282,11 +282,4 @@ public class OCompositeIndexDefinition extends ODocumentWrapperNoClass implement
 			throw new OIndexException("Error during composite index deserialization", e);
 		}
 	}
-
-	/**
-	 * @return Current database instance.
-	 */
-	private ODatabaseRecord getDatabase() {
-		return ODatabaseRecordThreadLocal.INSTANCE.get();
-	}
 }

@@ -143,8 +143,4 @@ public class OSimpleKeyIndexDefinition extends ODocumentWrapperNoClass implement
 		}
 		return ddl.toString();
 	}
-
-	private ODatabaseRecord getDatabase() {
-		return ODatabaseRecordThreadLocal.INSTANCE.get();
-	}
 }

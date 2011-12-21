@@ -33,9 +33,9 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  * 
  */
 public class OPropertyIndexDefinition extends ODocumentWrapperNoClass implements OIndexDefinition {
-	private String	className;
-	private String	field;
-	private OType		keyType;
+	protected String	className;
+	protected String	field;
+	protected OType		keyType;
 
 	public OPropertyIndexDefinition(final String iClassName, final String iField, final OType iType) {
 		super(new ODocument());
@@ -97,9 +97,6 @@ public class OPropertyIndexDefinition extends ODocumentWrapperNoClass implements
 	}
 
 	public Object createValue(final List<?> params) {
-		if (params.get(0) instanceof Collection)
-			return createValue(params.get(0));
-
 		return OType.convert(params.get(0), keyType.getDefaultJavaType());
 	}
 
@@ -107,17 +104,7 @@ public class OPropertyIndexDefinition extends ODocumentWrapperNoClass implements
 	 * {@inheritDoc}
 	 */
 	public Object createValue(final Object... params) {
-		if (params.length == 1 && params[0] instanceof Collection) {
-			final Collection multiValueCollection = (Collection) params[0];
-			final List<Object> values = new ArrayList<Object>(multiValueCollection.size());
-			for (final Object item : multiValueCollection)
-				if (item instanceof List)
-					values.add(createValue((List) item));
-				else
-					values.add(createValue(item));
-			return values;
-		}
-		return createValue(Arrays.asList(params));
+		return OType.convert( params[0], keyType.getDefaultJavaType() );
 	}
 
 	public int getParamCount() {
@@ -128,52 +115,57 @@ public class OPropertyIndexDefinition extends ODocumentWrapperNoClass implements
 		return new OType[] { keyType };
 	}
 
-	private ODatabaseRecord getDatabase() {
-		return ODatabaseRecordThreadLocal.INSTANCE.get();
-	}
-
 	@Override
-	protected void fromStream() {
-		className = document.field("className");
-		field = document.field("field");
-
-		final String keyTypeStr = document.field("keyType");
-		keyType = OType.valueOf(keyTypeStr);
+	protected final void fromStream() {
+    serializeFromStream();
 	}
 
-	@Override
-	public ODocument toStream() {
-		document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+  @Override
+  public final ODocument toStream() {
+    document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
-		try {
-			document.field("className", className);
-			document.field("field", field);
-			document.field("keyType", keyType.toString());
-		} finally {
-			document.setInternalStatus(ORecordElement.STATUS.LOADED);
-		}
+    try {
+      serializeToStream();
+    } finally {
+      document.setInternalStatus(ORecordElement.STATUS.LOADED);
+    }
 
-		return document;
-	}
+    return document;
+  }
 
-	/**
+  protected void serializeToStream() {
+    document.field("className", className);
+    document.field("field", field);
+    document.field("keyType", keyType.toString());
+  }
+
+  protected void serializeFromStream() {
+    className = document.field("className");
+    field = document.field("field");
+
+    final String keyTypeStr = document.field("keyType");
+    keyType = OType.valueOf(keyTypeStr);
+  }
+
+
+  /**
 	 * {@inheritDoc}
 	 * 
 	 * @param indexName
 	 * @param indexType
 	 */
 	public String toCreateIndexDDL(final String indexName, final String indexType) {
-		final StringBuilder ddl = new StringBuilder("create index ");
+    final StringBuilder ddl = new StringBuilder("create index ");
 
-		final String shortName = className + "." + field;
-		if (indexName.equalsIgnoreCase(shortName)) {
-			ddl.append(shortName).append(" ");
-		} else {
-			ddl.append(indexName).append(" on ");
-			ddl.append(className).append(" ( ").append(field).append(" ) ");
-		}
-		ddl.append(indexType);
+    final String shortName = className + "." + field;
+    if (indexName.equalsIgnoreCase(shortName)) {
+      ddl.append(shortName).append(" ");
+    } else {
+      ddl.append(indexName).append(" on ");
+      ddl.append(className).append(" ( ").append(field).append(" ) ");
+    }
+    ddl.append(indexType);
 
-		return ddl.toString();
+    return ddl.toString();
 	}
 }

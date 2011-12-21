@@ -52,7 +52,7 @@ public class OQueryOperatorContainsKey extends OQueryOperatorEqualityNotNulls {
 
 	@Override
 	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
-		return OIndexReuseType.NO_INDEX;
+    return OIndexReuseType.INDEX_METHOD;
 	}
 
 

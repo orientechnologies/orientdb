@@ -15,6 +15,7 @@ import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
+import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -42,6 +43,8 @@ public class SQLCreateIndexTest {
 		final OClass oClass = schema.createClass("sqlCreateIndexTestClass");
 		oClass.createProperty("prop1", EXPECTED_PROP1_TYPE);
 		oClass.createProperty("prop2", EXPECTED_PROP2_TYPE);
+    oClass.createProperty( "prop3", OType.EMBEDDEDMAP, OType.INTEGER );
+    oClass.createProperty( "prop4", OType.LINKMAP);
 
 		schema.save();
 		database.close();
@@ -118,6 +121,194 @@ public class SQLCreateIndexTest {
 		Assert.assertEquals(indexDefinition.getTypes(), new OType[] { EXPECTED_PROP1_TYPE, EXPECTED_PROP2_TYPE });
 		Assert.assertEquals(index.getType(), "UNIQUE");
 	}
+
+  @Test
+  public void testCreateEmbeddedMapIndex() throws Exception {
+    database.command(new OCommandSQL("CREATE INDEX sqlCreateIndexEmbeddedMapIndex ON sqlCreateIndexTestClass (prop3) UNIQUE"))
+      .execute();
+    database.getMetadata().getIndexManager().reload();
+
+    final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
+      .getClassIndex("sqlCreateIndexEmbeddedMapIndex");
+
+    Assert.assertNotNull(index);
+
+    final OIndexDefinition indexDefinition = index.getDefinition();
+
+    Assert.assertTrue(indexDefinition instanceof OPropertyMapIndexDefinition);
+    Assert.assertEquals(indexDefinition.getFields(), Arrays.asList("prop3"));
+    Assert.assertEquals(indexDefinition.getTypes(), new OType[] { OType.STRING });
+    Assert.assertEquals(index.getType(), "UNIQUE");
+    Assert.assertEquals( ((OPropertyMapIndexDefinition)indexDefinition).getIndexBy(), OPropertyMapIndexDefinition.INDEX_BY.KEY );
+  }
+
+  @Test
+  public void testCreateEmbeddedMapWrongSpecifierIndexOne() throws Exception
+  {
+    try {
+      database.command( new OCommandSQL( "CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by ttt) UNIQUE" ) )
+        .execute();
+      Assert.fail();
+    } catch( OCommandSQLParsingException e ) {
+      Assert
+        .assertTrue( e
+          .getMessage()
+          .contains(
+            "Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'PROP3 BY TTT'\n"
+              + "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by ttt) UNIQUE\n"
+              + "--------------------------------------------------------------------------------------------^" ) );
+    }
+    final OIndex<?> index = database.getMetadata().getSchema().getClass( "sqlCreateIndexTestClass" )
+      .getClassIndex( "sqlCreateIndexEmbeddedMapWrongSpecifierIndex" );
+
+    Assert.assertNull( index, "Index created while wrong query was executed" );
+  }
+
+  @Test
+  public void testCreateEmbeddedMapWrongSpecifierIndexTwo() throws Exception
+  {
+    try {
+      database.command( new OCommandSQL( "CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 b value) UNIQUE" ) )
+        .execute();
+      Assert.fail();
+    } catch( OCommandSQLParsingException e ) {
+      Assert
+        .assertTrue( e
+          .getMessage()
+          .contains(
+            "Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'PROP3 B VALUE'\n"
+              + "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 b value) UNIQUE\n"
+              + "--------------------------------------------------------------------------------------------^" ) );
+    }
+    final OIndex<?> index = database.getMetadata().getSchema().getClass( "sqlCreateIndexTestClass" )
+      .getClassIndex( "sqlCreateIndexEmbeddedMapWrongSpecifierIndex" );
+
+    Assert.assertNull( index, "Index created while wrong query was executed" );
+  }
+
+  @Test
+  public void testCreateEmbeddedMapWrongSpecifierIndexThree() throws Exception
+  {
+    try {
+      database.command( new OCommandSQL( "CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by value t) UNIQUE" ) )
+        .execute();
+      Assert.fail();
+    } catch( OCommandSQLParsingException e ) {
+      Assert
+        .assertTrue( e
+          .getMessage()
+          .contains(
+            "Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'PROP3 BY VALUE T'\n"
+              + "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by value t) UNIQUE\n"
+              + "--------------------------------------------------------------------------------------------^" ) );
+    }
+    final OIndex<?> index = database.getMetadata().getSchema().getClass( "sqlCreateIndexTestClass" )
+      .getClassIndex( "sqlCreateIndexEmbeddedMapWrongSpecifierIndex" );
+
+    Assert.assertNull( index, "Index created while wrong query was executed" );
+  }
+
+
+  @Test
+  public void testCreateEmbeddedMapByKeyIndex() throws Exception {
+    database.command(new OCommandSQL("CREATE INDEX sqlCreateIndexEmbeddedMapByKeyIndex ON sqlCreateIndexTestClass (prop3 by key) UNIQUE"))
+      .execute();
+    database.getMetadata().getIndexManager().reload();
+
+    final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
+      .getClassIndex("sqlCreateIndexEmbeddedMapByKeyIndex");
+
+    Assert.assertNotNull(index);
+
+    final OIndexDefinition indexDefinition = index.getDefinition();
+
+    Assert.assertTrue(indexDefinition instanceof OPropertyMapIndexDefinition);
+    Assert.assertEquals(indexDefinition.getFields(), Arrays.asList("prop3"));
+    Assert.assertEquals(indexDefinition.getTypes(), new OType[] { OType.STRING });
+    Assert.assertEquals(index.getType(), "UNIQUE");
+    Assert.assertEquals( ((OPropertyMapIndexDefinition)indexDefinition).getIndexBy(), OPropertyMapIndexDefinition.INDEX_BY.KEY );
+  }
+
+  @Test
+  public void testCreateEmbeddedMapByValueIndex() throws Exception {
+    database.command(new OCommandSQL("CREATE INDEX sqlCreateIndexEmbeddedMapByValueIndex ON sqlCreateIndexTestClass (prop3 by value) UNIQUE"))
+      .execute();
+    database.getMetadata().getIndexManager().reload();
+
+    final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
+      .getClassIndex("sqlCreateIndexEmbeddedMapByValueIndex");
+
+    Assert.assertNotNull(index);
+
+    final OIndexDefinition indexDefinition = index.getDefinition();
+
+    Assert.assertTrue(indexDefinition instanceof OPropertyMapIndexDefinition);
+    Assert.assertEquals(indexDefinition.getFields(), Arrays.asList("prop3"));
+    Assert.assertEquals(indexDefinition.getTypes(), new OType[] { OType.INTEGER });
+    Assert.assertEquals(index.getType(), "UNIQUE");
+    Assert.assertEquals( ((OPropertyMapIndexDefinition)indexDefinition).getIndexBy(), OPropertyMapIndexDefinition.INDEX_BY.VALUE );
+  }
+
+  @Test
+  public void testCreateLinkMapIndex() throws Exception {
+    database.command(new OCommandSQL("CREATE INDEX sqlCreateIndexLinkMapIndex ON sqlCreateIndexTestClass (prop4) UNIQUE"))
+      .execute();
+    database.getMetadata().getIndexManager().reload();
+
+    final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
+      .getClassIndex("sqlCreateIndexLinkMapIndex");
+
+    Assert.assertNotNull(index);
+
+    final OIndexDefinition indexDefinition = index.getDefinition();
+
+    Assert.assertTrue(indexDefinition instanceof OPropertyMapIndexDefinition);
+    Assert.assertEquals(indexDefinition.getFields(), Arrays.asList("prop4"));
+    Assert.assertEquals(indexDefinition.getTypes(), new OType[] { OType.STRING });
+    Assert.assertEquals(index.getType(), "UNIQUE");
+    Assert.assertEquals( ((OPropertyMapIndexDefinition)indexDefinition).getIndexBy(), OPropertyMapIndexDefinition.INDEX_BY.KEY );
+  }
+
+  @Test
+  public void testCreateLinkMapByKeyIndex() throws Exception {
+    database.command(new OCommandSQL("CREATE INDEX sqlCreateIndexLinkMapByKeyIndex ON sqlCreateIndexTestClass (prop4 by key) UNIQUE"))
+      .execute();
+    database.getMetadata().getIndexManager().reload();
+
+    final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
+      .getClassIndex("sqlCreateIndexLinkMapByKeyIndex");
+
+    Assert.assertNotNull(index);
+
+    final OIndexDefinition indexDefinition = index.getDefinition();
+
+    Assert.assertTrue(indexDefinition instanceof OPropertyMapIndexDefinition);
+    Assert.assertEquals(indexDefinition.getFields(), Arrays.asList("prop4"));
+    Assert.assertEquals(indexDefinition.getTypes(), new OType[] { OType.STRING });
+    Assert.assertEquals(index.getType(), "UNIQUE");
+    Assert.assertEquals( ((OPropertyMapIndexDefinition)indexDefinition).getIndexBy(), OPropertyMapIndexDefinition.INDEX_BY.KEY );
+  }
+
+  @Test
+  public void testCreateLinkMapByValueIndex() throws Exception {
+    database.command(new OCommandSQL("CREATE INDEX sqlCreateIndexLinkMapByValueIndex ON sqlCreateIndexTestClass (prop4 by value) UNIQUE"))
+      .execute();
+    database.getMetadata().getIndexManager().reload();
+
+    final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
+      .getClassIndex("sqlCreateIndexLinkMapByValueIndex");
+
+    Assert.assertNotNull(index);
+
+    final OIndexDefinition indexDefinition = index.getDefinition();
+
+    Assert.assertTrue(indexDefinition instanceof OPropertyMapIndexDefinition);
+    Assert.assertEquals(indexDefinition.getFields(), Arrays.asList("prop4"));
+    Assert.assertEquals(indexDefinition.getTypes(), new OType[] { OType.LINK });
+    Assert.assertEquals(index.getType(), "UNIQUE");
+    Assert.assertEquals( ((OPropertyMapIndexDefinition)indexDefinition).getIndexBy(), OPropertyMapIndexDefinition.INDEX_BY.VALUE );
+  }
+
 
 	@Test
 	public void testCreateCompositeIndexWithTypes() throws Exception {

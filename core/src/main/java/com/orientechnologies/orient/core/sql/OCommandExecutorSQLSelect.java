@@ -44,9 +44,11 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
 import com.orientechnologies.orient.core.index.OIndexFullText;
 import com.orientechnologies.orient.core.index.OIndexNotUnique;
 import com.orientechnologies.orient.core.index.OIndexUnique;
+import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -61,17 +63,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsText;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNotEquals;
+import com.orientechnologies.orient.core.sql.operator.*;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
@@ -476,11 +468,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				final boolean indexCanBeUsedInEqualityOperators = (internalIndex instanceof OIndexUnique || internalIndex instanceof OIndexNotUnique);
 
 				if (indexDefinition.getParamCount() == 1) {
-					if (indexCanBeUsedInEqualityOperators && operator instanceof OQueryOperatorBetween) {
+       		if (indexCanBeUsedInEqualityOperators && operator instanceof OQueryOperatorBetween) {
 						final Object[] betweenKeys = (Object[]) keyParams.get(0);
 
-						final Object keyOne = indexDefinition.createValue(Collections.singletonList(OSQLHelper.getValue(betweenKeys[0])));
-						final Object keyTwo = indexDefinition.createValue(Collections.singletonList(OSQLHelper.getValue(betweenKeys[2])));
+						final Object keyOne = indexDefinition.createValue( Collections.singletonList( OSQLHelper.getValue( betweenKeys[0] ) ) );
+						final Object keyTwo = indexDefinition.createValue( Collections.singletonList( OSQLHelper.getValue( betweenKeys[2] ) ) );
 
 						if (keyOne == null || keyTwo == null)
 							continue;
@@ -501,7 +493,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 						boolean containsNotCompatibleKey = false;
 						for (final Object keyValue : inParams) {
-							final Object key = indexDefinition.createValue(OSQLHelper.getValue(keyValue));
+							final Object key = indexDefinition.createValue( OSQLHelper.getValue( keyValue ) );
 							if (key == null) {
 								containsNotCompatibleKey = true;
 								break;
@@ -523,7 +515,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 						return true;
 					}
 
-					final Object key = indexDefinition.createValue(keyParams);
+					final Object key;
+          if(indexDefinition instanceof OIndexDefinitionMultiValue)
+            key = ((OIndexDefinitionMultiValue)indexDefinition).createSingleValue( keyParams.get( 0 ) );
+          else 
+            key = indexDefinition.createValue( keyParams );
 
 					if (key == null)
 						continue;
@@ -540,6 +536,24 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 						fillSearchIndexResultSet(index.get(key));
 						return true;
 					}
+
+          if(operator instanceof OQueryOperatorContainsKey) {
+            if((index.getDefinition() instanceof OPropertyMapIndexDefinition) &&
+              ((OPropertyMapIndexDefinition) index.getDefinition()).getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.KEY) {
+              fillSearchIndexResultSet(index.get(key));
+              return true;
+            }
+            continue;
+          }
+
+          if(operator instanceof OQueryOperatorContainsValue) {
+            if((index.getDefinition() instanceof OPropertyMapIndexDefinition) &&
+              ((OPropertyMapIndexDefinition) index.getDefinition()).getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.VALUE) {
+              fillSearchIndexResultSet(index.get(key));
+              return true;
+            }
+            continue;
+          }
 
 					if (operator instanceof OQueryOperatorMajor) {
 						final Collection<OIdentifiable> result;
@@ -609,12 +623,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 						betweenKeyTwoParams.addAll(keyParams.subList(0, keyParams.size() - 1));
 						betweenKeyTwoParams.add(betweenKeyTwo);
 
-						final Object keyOne = indexDefinition.createValue(betweenKeyOneParams);
+						final Object keyOne = indexDefinition.createValue( betweenKeyOneParams );
 
 						if (keyOne == null)
 							continue;
 
-						final Object keyTwo = indexDefinition.createValue(betweenKeyTwoParams);
+						final Object keyTwo = indexDefinition.createValue( betweenKeyTwoParams );
 
 						if (keyTwo == null)
 							continue;
@@ -639,12 +653,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 						// in case of composite keys several items can be returned in case of we perform search
 						// using part of composite key stored in index.
 
-						final Object keyOne = indexDefinition.createValue(keyParams);
+						final Object keyOne = indexDefinition.createValue( keyParams );
 
 						if (keyOne == null)
 							continue;
 
-						final Object keyTwo = indexDefinition.createValue(keyParams);
+						final Object keyTwo = indexDefinition.createValue( keyParams );
 
 						final Collection<OIdentifiable> result;
 						if (fetchLimit > -1)
@@ -667,12 +681,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 						// index that contains keys with values field1=1 and field2=2 and which right included boundary
 						// is the biggest composite key in the index that contains key with value field1=1.
 
-						final Object keyOne = indexDefinition.createValue(keyParams);
+						final Object keyOne = indexDefinition.createValue( keyParams );
 
 						if (keyOne == null)
 							continue;
 
-						final Object keyTwo = indexDefinition.createValue(keyParams.subList(0, keyParams.size() - 1));
+						final Object keyTwo = indexDefinition.createValue( keyParams.subList( 0, keyParams.size() - 1 ) );
 
 						if (keyTwo == null)
 							continue;
@@ -698,12 +712,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 						// index that contains keys with values field1=1 and field2=2 and which right included boundary
 						// is the biggest composite key in the index that contains key with value field1=1.
 
-						final Object keyOne = indexDefinition.createValue(keyParams);
+						final Object keyOne = indexDefinition.createValue( keyParams );
 
 						if (keyOne == null)
 							continue;
 
-						final Object keyTwo = indexDefinition.createValue(keyParams.subList(0, keyParams.size() - 1));
+						final Object keyTwo = indexDefinition.createValue( keyParams.subList( 0, keyParams.size() - 1 ) );
 
 						if (keyTwo == null)
 							continue;
@@ -729,12 +743,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 						// index that contains key with value field1=1 and which right not included boundary
 						// is the biggest composite key in the index that contains key with values field1=1 and field2=2.
 
-						final Object keyOne = indexDefinition.createValue(keyParams.subList(0, keyParams.size() - 1));
+						final Object keyOne = indexDefinition.createValue( keyParams.subList( 0, keyParams.size() - 1 ) );
 
 						if (keyOne == null)
 							continue;
 
-						final Object keyTwo = indexDefinition.createValue(keyParams);
+						final Object keyTwo = indexDefinition.createValue( keyParams );
 
 						if (keyTwo == null)
 							continue;
@@ -760,12 +774,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 						// index that contains key with value field1=1 and which right not included boundary
 						// is the biggest composite key in the index that contains key with value field1=1 and field2=2.
 
-						final Object keyOne = indexDefinition.createValue(keyParams.subList(0, keyParams.size() - 1));
+						final Object keyOne = indexDefinition.createValue( keyParams.subList( 0, keyParams.size() - 1 ) );
 
 						if (keyOne == null)
 							continue;
 
-						final Object keyTwo = indexDefinition.createValue(keyParams);
+						final Object keyTwo = indexDefinition.createValue( keyParams );
 
 						if (keyTwo == null)
 							continue;
@@ -1282,13 +1296,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				for (Object o : values) {
 					keyParams.add(OSQLHelper.getValue(o));
 				}
-				return indexDefinition.createValue(keyParams);
+				return indexDefinition.createValue( keyParams );
 			} else {
 				value = OSQLHelper.getValue(value);
 				if (value instanceof OCompositeKey) {
 					return value;
 				} else {
-					return indexDefinition.createValue(value);
+					return indexDefinition.createValue( value );
 				}
 			}
 		} else {
