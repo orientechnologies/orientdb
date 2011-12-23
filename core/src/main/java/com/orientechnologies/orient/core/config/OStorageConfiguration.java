@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.config;
 
 import java.io.IOException;
-import java.text.DateFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -100,13 +99,13 @@ public class OStorageConfiguration implements OSerializableStream {
 		return localeInstance;
 	}
 
-	public DateFormat getDateFormatInstance() {
+	public SimpleDateFormat getDateFormatInstance() {
 		SimpleDateFormat dateFormatInstance = new SimpleDateFormat(dateFormat);
 		dateFormatInstance.setLenient(false);
 		return dateFormatInstance;
 	}
 
-	public DateFormat getDateTimeFormatInstance() {
+	public SimpleDateFormat getDateTimeFormatInstance() {
 		SimpleDateFormat dateTimeFormatInstance = new SimpleDateFormat(dateTimeFormat);
 		dateTimeFormatInstance.setLenient(false);
 		return dateTimeFormatInstance;
