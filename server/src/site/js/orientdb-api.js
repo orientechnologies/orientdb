@@ -484,6 +484,58 @@ function ODatabase(databasePath) {
 		});
 		return this.getCommandResult();
 	}
+	
+
+		ODatabase.prototype.createProperty = function(iClassName, iPropertyName) {
+		if (this.databaseInfo == null) {
+			this.open();
+		}
+		$.ajax({
+			type : "POST",
+			url : urlPrefix + 'property/' + this.encodedDatabaseName + '/'
+					+ iClassName + '/' + iPropertyName + this.urlSuffix,
+			context : this,
+			async : false,
+			success : function(msg) {
+				this.setErrorMessage(null);
+				this.handleResponse(msg);
+			},
+			error : function(msg) {
+				this.handleResponse(null);
+				this.setErrorMessage('Command error: ' + msg.responseText);
+			}
+		});
+		return this.getCommandResult();
+	}
+	
+	ODatabase.prototype.createProperties = function(iClassName,iPropertiesJson) {
+		if (this.databaseInfo == null) {
+			this.open();
+		}
+		var jsonData;
+		if (typeof iPropertiesJson == 'object' ){
+			jsonData = $toJSON(iPropertiesJson)
+		} else {
+			jsonData = iPropertiesJson;
+		}
+		$.ajax({
+			type : "POST",
+			url : urlPrefix + 'property/' + this.encodedDatabaseName + '/'
+					+ iClassName + this.urlSuffix,
+			context : this,
+			data : jsonData,
+			async : false,
+			success : function(msg) {
+				this.setErrorMessage(null);
+				this.handleResponse(msg);
+			},
+			error : function(msg) {
+				this.handleResponse(null);
+				this.setErrorMessage('Command error: ' + msg.responseText);
+			}
+		});
+		return this.getCommandResult();
+	}
 
 	ODatabase.prototype.browseCluster = function(iClassName) {
 		if (this.databaseInfo == null) {
