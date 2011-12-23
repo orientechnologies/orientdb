@@ -130,7 +130,17 @@ public class ODatabaseRaw implements ODatabase {
 		return (DB) this;
 	}
 
+	/**
+	 * Deprecated, use #drop() instead.
+	 * 
+	 * @see #drop()
+	 */
+	@Deprecated
 	public void delete() {
+		drop();
+	}
+
+	public void drop() {
 		final List<ODatabaseListener> tmpListeners = new ArrayList<ODatabaseListener>(listeners);
 		close();
 

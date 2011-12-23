@@ -68,6 +68,10 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 		underlying.delete();
 	}
 
+	public void drop() {
+		underlying.drop();
+	}
+
 	public STATUS getStatus() {
 		return underlying.getStatus();
 	}
