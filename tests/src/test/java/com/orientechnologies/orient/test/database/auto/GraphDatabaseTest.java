@@ -124,6 +124,9 @@ public class GraphDatabaseTest {
 			database.createEdge(tom, maserati).field("label", "drives").save();
 			database.createEdge(tom, porsche).field("label", "owns").save();
 
+			Assert.assertNotNull(database.getOutEdges(tom, "drives"));
+			Assert.assertFalse(database.getOutEdges(tom, "drives").isEmpty());
+
 			List<OGraphElement> result = database.query(new OSQLSynchQuery<OGraphElement>(
 					"select out[in.@class = 'GraphCar'].in from V where name = 'Tom'"));
 			Assert.assertEquals(result.size(), 1);
@@ -142,7 +145,7 @@ public class GraphDatabaseTest {
 
 	@Test
 	public void testDictionary() {
-		database.open("admin", "admin");
+		database.open("admin", "admin");	
 
 		try {
 			ODocument rootNode = database.createVertex().field("id", 54254454);
@@ -215,7 +218,7 @@ public class GraphDatabaseTest {
 			docKey.field("name", "myKey");
 			database.save(docKey);
 			database.commit();
-			
+
 		} finally {
 			database.close();
 		}
