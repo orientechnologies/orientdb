@@ -189,8 +189,8 @@ public class OStorageLocal extends OStorageEmbedded {
 					} catch (FileNotFoundException e) {
 						OLogManager.instance().warn(
 								this,
-								"Error on loading cluster '" + clusters[i].getName() + "' (" + i + "). It will be excluded from current database '"
-										+ getName() + "'.");
+								"Error on loading cluster '" + clusters[i].getName() + "' (" + i
+										+ "): file not found. It will be excluded from current database '" + getName() + "'.");
 
 						clusterMap.remove(clusters[i].getName());
 						clusters[i] = null;
@@ -1529,7 +1529,11 @@ public class OStorageLocal extends OStorageEmbedded {
 
 				final OStoragePhysicalClusterConfiguration config = new OStoragePhysicalClusterConfiguration(configuration, iClusterName,
 						clusterPos);
-				configuration.clusters.add(config);
+
+				if (clusterPos >= configuration.clusters.size())
+					configuration.clusters.add(config);
+				else
+					configuration.clusters.set(clusterPos, config);
 
 				cluster = new OClusterLocal(this, config);
 			} else
