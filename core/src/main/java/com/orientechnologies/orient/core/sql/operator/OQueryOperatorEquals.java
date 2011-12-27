@@ -65,9 +65,6 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
 			return OIndexReuseType.NO_INDEX;
 		if (iRight == null || iLeft == null)
 			return OIndexReuseType.NO_INDEX;
-		if (iLeft instanceof OSQLFilterItemField && ((OSQLFilterItemField) iLeft).hasChainOperators()
-				|| iRight instanceof OSQLFilterItemField && ((OSQLFilterItemField) iRight).hasChainOperators())
-			return OIndexReuseType.NO_INDEX;
 
 		return OIndexReuseType.INDEX_METHOD;
 	}

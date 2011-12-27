@@ -1970,12 +1970,6 @@ public class SQLSelectIndexReuseTest
     if ( oldIndexUsage == -1 ) {
       oldIndexUsage = 0;
     }
-    if ( oldCompositeIndexUsage == -1 ) {
-      oldCompositeIndexUsage = 0;
-    }
-    if ( oldCompositeIndexUsage2 == -1 ) {
-      oldCompositeIndexUsage2 = 0;
-    }
 
     final List<ODocument> result = database.command(
       new OSQLSynchQuery<ODocument>( "select * from sqlSelectIndexReuseTestClass where fEmbeddedMap containskey 'key12'" ) ).execute();
@@ -2011,12 +2005,6 @@ public class SQLSelectIndexReuseTest
     if ( oldIndexUsage == -1 ) {
       oldIndexUsage = 0;
     }
-    if ( oldCompositeIndexUsage == -1 ) {
-      oldCompositeIndexUsage = 0;
-    }
-    if ( oldCompositeIndexUsage2 == -1 ) {
-      oldCompositeIndexUsage2 = 0;
-    }
 
     final List<ODocument> result = database.command(
       new OSQLSynchQuery<ODocument>( "select * from sqlSelectIndexReuseTestClass where ( fEmbeddedMap containskey 'key12' ) and ( fEmbeddedMap['key12'] = 12 )" ) ).execute();
@@ -2051,12 +2039,6 @@ public class SQLSelectIndexReuseTest
     if ( oldIndexUsage == -1 ) {
       oldIndexUsage = 0;
     }
-    if ( oldCompositeIndexUsage == -1 ) {
-      oldCompositeIndexUsage = 0;
-    }
-    if ( oldCompositeIndexUsage2 == -1 ) {
-      oldCompositeIndexUsage2 = 0;
-    }
 
     final List<ODocument> result = database.command(
       new OSQLSynchQuery<ODocument>( "select * from sqlSelectIndexReuseTestClass where fEmbeddedMap containsvalue 11" ) ).execute();
@@ -2090,12 +2072,6 @@ public class SQLSelectIndexReuseTest
 
     if ( oldIndexUsage == -1 ) {
       oldIndexUsage = 0;
-    }
-    if ( oldCompositeIndexUsage == -1 ) {
-      oldCompositeIndexUsage = 0;
-    }
-    if ( oldCompositeIndexUsage2 == -1 ) {
-      oldCompositeIndexUsage2 = 0;
     }
 
     final List<ODocument> result = database.command(
@@ -2137,12 +2113,6 @@ public class SQLSelectIndexReuseTest
     if ( oldIndexUsage == -1 ) {
       oldIndexUsage = 0;
     }
-    if ( oldCompositeIndexUsage == -1 ) {
-      oldCompositeIndexUsage = 0;
-    }
-    if ( oldCompositeIndexUsage2 == -1 ) {
-      oldCompositeIndexUsage2 = 0;
-    }
 
     final int clusterId = database.getMetadata().getSchema().getClass( "sqlSelectIndexReuseTestClass" ).getClusterIds()[0];
     final ORID ridToSearch = new ORecordId( clusterId, 2 );
@@ -2181,16 +2151,6 @@ public class SQLSelectIndexReuseTest
     long oldCompositeIndexUsage = profiler.getCounter( "Query.compositeIndexUsage" );
     long oldCompositeIndexUsage2 = profiler.getCounter( "Query.compositeIndexUsage.2" );
 
-    if ( oldIndexUsage == -1 ) {
-      oldIndexUsage = 0;
-    }
-    if ( oldCompositeIndexUsage == -1 ) {
-      oldCompositeIndexUsage = 0;
-    }
-    if ( oldCompositeIndexUsage2 == -1 ) {
-      oldCompositeIndexUsage2 = 0;
-    }
-
     final int clusterId = database.getMetadata().getSchema().getClass( "sqlSelectIndexReuseTestClass" ).getClusterIds()[0];
     final ORID ridToSearch = new ORecordId( clusterId, 2 );
 
@@ -2212,12 +2172,6 @@ public class SQLSelectIndexReuseTest
 
     if ( oldIndexUsage == -1 ) {
       oldIndexUsage = 0;
-    }
-    if ( oldCompositeIndexUsage == -1 ) {
-      oldCompositeIndexUsage = 0;
-    }
-    if ( oldCompositeIndexUsage2 == -1 ) {
-      oldCompositeIndexUsage2 = 0;
     }
 
     final List<ODocument> result = database.command(
@@ -2246,12 +2200,6 @@ public class SQLSelectIndexReuseTest
 
     if ( oldIndexUsage == -1 ) {
       oldIndexUsage = 0;
-    }
-    if ( oldCompositeIndexUsage == -1 ) {
-      oldCompositeIndexUsage = 0;
-    }
-    if ( oldCompositeIndexUsage2 == -1 ) {
-      oldCompositeIndexUsage2 = 0;
     }
 
     final int clusterId = database.getMetadata().getSchema().getClass( "sqlSelectIndexReuseTestClass" ).getClusterIds()[0];

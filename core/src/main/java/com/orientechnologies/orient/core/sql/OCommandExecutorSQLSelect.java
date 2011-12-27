@@ -15,16 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 import com.orientechnologies.common.collection.OCompositeKey;
@@ -112,10 +103,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	private static final class OIndexSearchResult {
 		private final Map<String, Object>	fieldValuePairs	= new HashMap<String, Object>();
 		private final OQueryOperator			lastOperator;
-		private final String							lastField;
+		private final OSQLFilterItemField.FieldChain lastField;
 		private final Object							lastValue;
 
-		private OIndexSearchResult(final OQueryOperator lastOperator, final String field, final Object value) {
+		private OIndexSearchResult(final OQueryOperator lastOperator, final OSQLFilterItemField.FieldChain field, final Object value) {
 			this.lastOperator = lastOperator;
 			lastField = field;
 			lastValue = value;
@@ -133,19 +124,19 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			final OQueryOperator operator;
 			final OIndexSearchResult result;
 
-			if (!(searchResult.lastOperator instanceof OQueryOperatorEquals)) {
-				operator = searchResult.lastOperator;
-				result = new OIndexSearchResult(operator, searchResult.lastField, searchResult.lastValue);
-				result.fieldValuePairs.putAll(searchResult.fieldValuePairs);
-				result.fieldValuePairs.putAll(fieldValuePairs);
-				result.fieldValuePairs.put(lastField, lastValue);
-			} else {
-				result = new OIndexSearchResult(this.lastOperator, lastField, lastValue);
-				result.fieldValuePairs.putAll(searchResult.fieldValuePairs);
-				result.fieldValuePairs.putAll(fieldValuePairs);
-				result.fieldValuePairs.put(searchResult.lastField, searchResult.lastValue);
-			}
-			return result;
+            if (searchResult.lastOperator instanceof OQueryOperatorEquals) {
+                result = new OIndexSearchResult(this.lastOperator, lastField, lastValue);
+                result.fieldValuePairs.putAll(searchResult.fieldValuePairs);
+                result.fieldValuePairs.putAll(fieldValuePairs);
+                result.fieldValuePairs.put(searchResult.lastField.getItemName(0), searchResult.lastValue);
+            } else {
+                operator = searchResult.lastOperator;
+                result = new OIndexSearchResult(operator, searchResult.lastField, searchResult.lastValue);
+                result.fieldValuePairs.putAll(searchResult.fieldValuePairs);
+                result.fieldValuePairs.putAll(fieldValuePairs);
+                result.fieldValuePairs.put(lastField.getItemName(0), lastValue);
+            }
+            return result;
 		}
 
 		/**
@@ -154,13 +145,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		 * @return <code>true</code> if two query subsets can be merged.
 		 */
 		private boolean canBeMerged(final OIndexSearchResult searchResult) {
+            if (lastField.isLong() || searchResult.lastField.isLong()) {
+                return false;
+            }
 			return (lastOperator instanceof OQueryOperatorEquals) || (searchResult.lastOperator instanceof OQueryOperatorEquals);
 		}
 
 		private List<String> fields() {
 			final List<String> result = new ArrayList<String>(fieldValuePairs.size() + 1);
 			result.addAll(fieldValuePairs.keySet());
-			result.add(lastField);
+			result.add(lastField.getItemName(0));
 			return result;
 		}
 
@@ -431,9 +425,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 		// go through all variants to choose which one can be used for index search.
 		for (final OIndexSearchResult searchResult : indexSearchResults) {
-			final List<String> searchResultFields = searchResult.fields();
+			final int searchResultFieldsCount = searchResult.fields().size();
 
-			final List<OIndex> involvedIndexes = new ArrayList<OIndex>(iSchemaClass.getInvolvedIndexes(searchResultFields));
+			final List<OIndex<?>> involvedIndexes = getInvolvedIndexes(iSchemaClass, searchResult);
 			Collections.sort(involvedIndexes, new Comparator<OIndex>() {
 				public int compare(final OIndex indexOne, final OIndex indexTwo) {
 					return indexOne.getDefinition().getParamCount() - indexTwo.getDefinition().getParamCount();
@@ -448,15 +442,15 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				// we need to test that last field in query subset and field in index that has the same position
 				// are equals.
 				if (!(operator instanceof OQueryOperatorEquals)) {
-					final String lastFiled = searchResult.lastField;
+					final String lastFiled = searchResult.lastField.getItemName(0);
 					final String relatedIndexField = indexDefinition.getFields().get(searchResult.fieldValuePairs.size());
 					if (!lastFiled.equals(relatedIndexField))
 						continue;
 				}
 
-				final List<Object> keyParams = new ArrayList<Object>(searchResultFields.size());
+				final List<Object> keyParams = new ArrayList<Object>(searchResultFieldsCount);
 				// We get only subset contained in processed sub query.
-				for (final String fieldName : indexDefinition.getFields().subList(0, searchResultFields.size())) {
+				for (final String fieldName : indexDefinition.getFields().subList(0, searchResultFieldsCount)) {
 					final Object fieldValue = searchResult.fieldValuePairs.get(fieldName);
 					if (fieldValue != null)
 						keyParams.add(fieldValue);
@@ -809,7 +803,22 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		return false;
 	}
 
-	private OIndexSearchResult analyzeQueryBranch(final OClass iSchemaClass, final OSQLFilterCondition iCondition,
+    private List<OIndex<?>> getInvolvedIndexes(OClass iSchemaClass, OIndexSearchResult searchResultFields) {
+	    final Set<OIndex<?>> involvedIndexes = iSchemaClass.getInvolvedIndexes(searchResultFields.fields());
+
+	    final List<OIndex<?>> result = new ArrayList<OIndex<?>>(involvedIndexes.size());
+        for (OIndex<?> involvedIndex : involvedIndexes) {
+            if (searchResultFields.lastField.isLong()) {
+                result.addAll( OIndexProxy.createdProxy(involvedIndex, searchResultFields.lastField, getDatabase()) );
+            } else {
+                result.add(involvedIndex);
+            }
+        }
+
+        return result;
+    }
+
+    private OIndexSearchResult analyzeQueryBranch(final OClass iSchemaClass, final OSQLFilterCondition iCondition,
 			final List<OIndexSearchResult> iIndexSearchResults) {
 		if (iCondition == null)
 			return null;
@@ -847,7 +856,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			if (result == null)
 				return null;
 
-			if (iSchemaClass.areIndexed(result.fields()))
+            if (checkIndexExistence(iSchemaClass, result))
 				iIndexSearchResults.add(result);
 
 			return result;
@@ -874,13 +883,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 		final OSQLFilterItemField item = (OSQLFilterItemField) iItem;
 
-		if (item.hasChainOperators())
+		if (item.hasChainOperators() && !item.isFieldChain())
 			return null;
 
 		final Object origValue = iCondition.getLeft() == iItem ? iCondition.getRight() : iCondition.getLeft();
 
 		if (iCondition.getOperator() instanceof OQueryOperatorBetween || iCondition.getOperator() instanceof OQueryOperatorIn) {
-			return new OIndexSearchResult(iCondition.getOperator(), item.getRoot(), origValue);
+			return new OIndexSearchResult(iCondition.getOperator(), item.getFieldChain(), origValue);
 		}
 
 		final Object value = OSQLHelper.getValue(origValue);
@@ -888,7 +897,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		if (value == null)
 			return null;
 
-		return new OIndexSearchResult(iCondition.getOperator(), item.getRoot(), value);
+		return new OIndexSearchResult(iCondition.getOperator(), item.getFieldChain(), value);
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -1376,7 +1385,27 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		return null;
 	}
 
-	/**
+    private boolean checkIndexExistence(OClass iSchemaClass, OIndexSearchResult result) {
+        if (!iSchemaClass.areIndexed(result.fields())) {
+            return false;
+        }
+
+        if (result.lastField.isLong()) {
+            final int fieldCount = result.lastField.getItemCount();
+            OClass oClass = iSchemaClass.getProperty(result.lastField.getItemName(0)).getLinkedClass();
+
+            for (int i = 1; i < fieldCount; i++) {
+                if (!oClass.areIndexed(result.lastField.getItemName(i))) {
+                    return false;
+                }
+
+                oClass = oClass.getProperty(result.lastField.getItemName(i)).getLinkedClass();
+            }
+        }
+        return true;
+    }
+
+    /**
 	 * Optimizes the contidion tree.
 	 */
 	private void optimize() {

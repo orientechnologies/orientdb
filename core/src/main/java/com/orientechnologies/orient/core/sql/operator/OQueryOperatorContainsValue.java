@@ -17,7 +17,11 @@ package com.orientechnologies.orient.core.sql.operator;
 
 import java.util.Map;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -51,9 +55,11 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
 
 			if (condition != null) {
 				// CHECK AGAINST A CONDITION
-				for (final Object o : map.values())
+				for (Object o : map.values()) {
+                    o = loadIfNeed(o);
 					if ((Boolean) condition.evaluate((ORecordSchemaAware<?>) o))
 						return true;
+                }
 			} else
 				return map.containsValue(iRight);
 
@@ -62,16 +68,30 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
 
 			if (condition != null)
 				// CHECK AGAINST A CONDITION
-				for (final Object o : map.values())
-					if ((Boolean) condition.evaluate((ORecordSchemaAware<?>) o))
+				for (Object o : map.values()) {
+                    o = loadIfNeed(o);
+                    if ((Boolean) condition.evaluate((ORecordSchemaAware<?>) o))
 						return true;
 					else
 						return map.containsValue(iLeft);
+                }
 		}
 		return false;
 	}
 
-	@Override
+    private Object loadIfNeed(Object o) {
+        final ORecord<?> record = (ORecord) o;
+        if (record.getRecord().getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+            try {
+                o = record.<ORecord>load();
+            } catch (ORecordNotFoundException e) {
+                throw new OException("Error during loading record with id : " + record.getIdentity());
+            }
+        }
+        return o;
+    }
+
+    @Override
 	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
     if(!(iRight instanceof OSQLFilterCondition) && !(iLeft instanceof OSQLFilterCondition))
       return OIndexReuseType.INDEX_METHOD;
