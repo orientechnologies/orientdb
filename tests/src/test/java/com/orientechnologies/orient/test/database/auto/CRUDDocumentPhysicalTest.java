@@ -446,28 +446,28 @@ public class CRUDDocumentPhysicalTest {
 		database.close();
 	}
 
-//	@Test
-//	public void testTransientField() {
-//		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-//
-//		ODocument doc = new ODocument(database, "Profile");
-//		doc.field("nick", "LucaPhotoTest");
-//		doc.field("photo", "testPhoto"); // THIS IS DECLARED TRANSIENT IN SCHEMA (see SchemaTest.java)
-//		doc.save();
-//
-//		// RELOAD FROM THE CACHE
-//		doc.reload(null, false);
-//		Assert.assertEquals(doc.field("nick"), "LucaPhotoTest");
-//		Assert.assertTrue(doc.containsField("photo"));
-//
-//		// RELOAD FROM DISK
-//		doc.reload();
-//		Assert.assertEquals(doc.field("nick"), "LucaPhotoTest");
-//		Assert.assertFalse(doc.containsField("photo")); // THIS IS DECLARED TRANSIENT IN SCHEMA (see SchemaTest.java)
-//
-//		database.close();
-//	}
-//
+	// @Test
+	// public void testTransientField() {
+	// database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+	//
+	// ODocument doc = new ODocument(database, "Profile");
+	// doc.field("nick", "LucaPhotoTest");
+	// doc.field("photo", "testPhoto"); // THIS IS DECLARED TRANSIENT IN SCHEMA (see SchemaTest.java)
+	// doc.save();
+	//
+	// // RELOAD FROM THE CACHE
+	// doc.reload(null, false);
+	// Assert.assertEquals(doc.field("nick"), "LucaPhotoTest");
+	// Assert.assertTrue(doc.containsField("photo"));
+	//
+	// // RELOAD FROM DISK
+	// doc.reload();
+	// Assert.assertEquals(doc.field("nick"), "LucaPhotoTest");
+	// Assert.assertFalse(doc.containsField("photo")); // THIS IS DECLARED TRANSIENT IN SCHEMA (see SchemaTest.java)
+	//
+	// database.close();
+	// }
+	//
 	@Test
 	public void testDirtyChild() {
 		ODocument parent = new ODocument();
@@ -638,4 +638,34 @@ public class CRUDDocumentPhysicalTest {
 
 		database.close();
 	}
+
+	@Test
+	public void nonPolymorphicQuery() {
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+		final ORecordAbstract<Object> newAccount = new ODocument(database, "Account").field("name", "testInheritanceName").save();
+
+		List<ODocument> superClassResult = database
+				.query(new OSQLSynchQuery<ODocument>("select from Account where @class = 'Account'"));
+		List<ODocument> subClassResult = database.query(new OSQLSynchQuery<ODocument>("select from Company where @class = 'Company'"));
+
+		Assert.assertTrue(superClassResult.size() != 0);
+		Assert.assertTrue(subClassResult.size() != 0);
+
+		// VERIFY ALL THE SUBCLASS RESULT ARE NOT CONTAINED IN SUPERCLASS RESULT
+		for (ODocument d : subClassResult) {
+			Assert.assertFalse(superClassResult.contains(d));
+		}
+
+		HashSet<ODocument> browsed = new HashSet<ODocument>();
+		for (ODocument d : database.browseClass("Account")) {
+			Assert.assertFalse(browsed.contains(d));
+			browsed.add(d);
+		}
+
+		newAccount.delete();
+
+		database.close();
+	}
+
 }
