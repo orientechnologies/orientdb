@@ -45,24 +45,28 @@ public class ORole extends ODocumentWrapper {
 	}
 
 	// CRUD OPERATIONS
-	public final static int			PERMISSION_NONE					= 0;
-	public final static int			PERMISSION_CREATE				= 1;
-	public final static int			PERMISSION_READ					= 2;
-	public final static int			PERMISSION_UPDATE				= 4;
-	public final static int			PERMISSION_DELETE				= 8;
-	public final static int			PERMISSION_ALL					= PERMISSION_CREATE + PERMISSION_READ + PERMISSION_UPDATE + PERMISSION_DELETE;
+	public final static int			PERMISSION_NONE								= 0;
+	public final static int			PERMISSION_CREATE							= 1;
+	public final static int			PERMISSION_READ								= 2;
+	public final static int			PERMISSION_UPDATE							= 4;
+	public final static int			PERMISSION_DELETE							= 8;
+	public static final int			PERMISSION_CHANGE_LABEL				= 16;
+	public final static int			PERMISSION_ALL								= PERMISSION_CREATE + PERMISSION_READ + PERMISSION_UPDATE
+																																+ PERMISSION_DELETE;
+	public final static int			PERMISSION_EVERY							= PERMISSION_ALL + PERMISSION_CHANGE_LABEL;
 
-	public final static String	PERMISSION_CREATE_TEXT	= "Create";
-	public final static String	PERMISSION_READ_TEXT		= "Read";
-	public final static String	PERMISSION_UPDATE_TEXT	= "Update";
-	public final static String	PERMISSION_DELETE_TEXT	= "Delete";
+	public final static String	PERMISSION_CREATE_TEXT				= "Create";
+	public final static String	PERMISSION_READ_TEXT					= "Read";
+	public final static String	PERMISSION_UPDATE_TEXT				= "Update";
+	public final static String	PERMISSION_DELETE_TEXT				= "Delete";
+	public final static String	PERMISSION_CHANGE_LABEL_TEXT	= "Change label";
 
-	protected final static byte	STREAM_DENY							= 0;
-	protected final static byte	STREAM_ALLOW						= 1;
+	protected final static byte	STREAM_DENY										= 0;
+	protected final static byte	STREAM_ALLOW									= 1;
 
-	protected ALLOW_MODES				mode										= ALLOW_MODES.DENY_ALL_BUT;
+	protected ALLOW_MODES				mode													= ALLOW_MODES.DENY_ALL_BUT;
 	protected ORole							parentRole;
-	protected Map<String, Byte>	rules										= new LinkedHashMap<String, Byte>();
+	protected Map<String, Byte>	rules													= new LinkedHashMap<String, Byte>();
 
 	/**
 	 * Constructor used in unmarshalling.
@@ -218,16 +222,37 @@ public class ORole extends ODocumentWrapper {
 	 * @return String representation of the permission
 	 */
 	public static String permissionToString(final int iPermission) {
-		switch (iPermission) {
-		case PERMISSION_CREATE:
-			return PERMISSION_CREATE_TEXT;
-		case PERMISSION_READ:
-			return PERMISSION_READ_TEXT;
-		case PERMISSION_UPDATE:
-			return PERMISSION_UPDATE_TEXT;
-		case PERMISSION_DELETE:
-			return PERMISSION_DELETE_TEXT;
+		StringBuilder returnValue = new StringBuilder();
+		if ((iPermission & PERMISSION_CREATE) == PERMISSION_CREATE) {
+			returnValue.append(PERMISSION_CREATE_TEXT);
 		}
-		return "Unknown permission: " + iPermission;
+
+		if ((iPermission & PERMISSION_READ) == PERMISSION_READ) {
+			if (returnValue.length() > 0)
+				returnValue.append(", ");
+			returnValue.append(PERMISSION_READ_TEXT);
+		}
+		if ((iPermission & PERMISSION_UPDATE) == PERMISSION_UPDATE) {
+			if (returnValue.length() > 0)
+				returnValue.append(", ");
+			returnValue.append(PERMISSION_UPDATE_TEXT);
+		}
+		if ((iPermission & PERMISSION_DELETE) == PERMISSION_DELETE) {
+			if (returnValue.length() > 0)
+				returnValue.append(", ");
+			returnValue.append(PERMISSION_DELETE_TEXT);
+		}
+		if ((iPermission & PERMISSION_CHANGE_LABEL) == PERMISSION_CHANGE_LABEL) {
+			if (returnValue.length() > 0)
+				returnValue.append(", ");
+			returnValue.append(PERMISSION_CHANGE_LABEL_TEXT);
+		}
+		if ((iPermission & ~PERMISSION_EVERY) != 0) {
+			if (returnValue.length() > 0)
+				returnValue.append(", ");
+			returnValue.append("Unknown other value(s) " + String.valueOf(iPermission & ~PERMISSION_EVERY));
+		}
+
+		return returnValue.toString();
 	}
 }

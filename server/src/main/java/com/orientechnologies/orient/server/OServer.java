@@ -118,6 +118,7 @@ public class OServer {
 
 	public void startup(final File iConfigurationFile) throws InstantiationException, IllegalAccessException, ClassNotFoundException,
 			IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException {
+		// Startup function split to allow pre-activation changes
 		startup(loadConfigurationFromFile(iConfigurationFile));
 	}
 
@@ -127,19 +128,22 @@ public class OServer {
 		configurationLoader = new OServerConfigurationLoaderXml(OServerConfiguration.class, iConfiguration);
 		configuration = configurationLoader.load();
 
+		// Startup function split to allow pre-activation changes
 		startup(configuration);
 	}
 
-	@SuppressWarnings("unchecked")
-	public void startup(final OServerConfiguration iConfiguration) throws InstantiationException, IllegalAccessException,
-			ClassNotFoundException, IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException {
+	public void startup(final OServerConfiguration iConfiguration) throws IllegalArgumentException, SecurityException,
+			InvocationTargetException, NoSuchMethodException {
 		OLogManager.instance().info(this, "OrientDB Server v" + OConstants.getVersion() + " is starting up...");
 
 		Orient.instance();
 		Orient.instance().removeShutdownHook();
 
 		loadConfiguration(iConfiguration);
+	}
 
+	@SuppressWarnings("unchecked")
+	public void activate() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 		// REGISTER PROTOCOLS
 		for (OServerNetworkProtocolConfiguration p : configuration.network.protocols)
 			protocols.put(p.name, (Class<? extends ONetworkProtocol>) Class.forName(p.implementation));

@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.server;
 
 public class OServerMain {
-	private static OServer	server;
+	protected static OServer	server;
 
 	public static OServer create() throws Exception {
 		server = new OServer();
@@ -29,5 +29,6 @@ public class OServerMain {
 
 	public static void main(final String[] args) throws Exception {
 		OServerMain.create().startup();
+		server().activate();
 	}
 }
