@@ -45,28 +45,22 @@ public class ORole extends ODocumentWrapper {
 	}
 
 	// CRUD OPERATIONS
-	public final static int			PERMISSION_NONE								= 0;
-	public final static int			PERMISSION_CREATE							= 1;
-	public final static int			PERMISSION_READ								= 2;
-	public final static int			PERMISSION_UPDATE							= 4;
-	public final static int			PERMISSION_DELETE							= 8;
-	public static final int			PERMISSION_CHANGE_LABEL				= 16;
-	public final static int			PERMISSION_ALL								= PERMISSION_CREATE + PERMISSION_READ + PERMISSION_UPDATE
-																																+ PERMISSION_DELETE;
-	public final static int			PERMISSION_EVERY							= PERMISSION_ALL + PERMISSION_CHANGE_LABEL;
+	public final static int							PERMISSION_NONE		= 0;
+	public final static int							PERMISSION_CREATE	= registerPermissionBit(0, "Create");
+	public final static int							PERMISSION_READ		= registerPermissionBit(1, "Read");
+	public final static int							PERMISSION_UPDATE	= registerPermissionBit(2, "Update");
+	public final static int							PERMISSION_DELETE	= registerPermissionBit(3, "Delete");
+	public final static int							PERMISSION_ALL		= PERMISSION_CREATE + PERMISSION_READ + PERMISSION_UPDATE
+																														+ PERMISSION_DELETE;
 
-	public final static String	PERMISSION_CREATE_TEXT				= "Create";
-	public final static String	PERMISSION_READ_TEXT					= "Read";
-	public final static String	PERMISSION_UPDATE_TEXT				= "Update";
-	public final static String	PERMISSION_DELETE_TEXT				= "Delete";
-	public final static String	PERMISSION_CHANGE_LABEL_TEXT	= "Change label";
+	protected final static byte					STREAM_DENY				= 0;
+	protected final static byte					STREAM_ALLOW			= 1;
 
-	protected final static byte	STREAM_DENY										= 0;
-	protected final static byte	STREAM_ALLOW									= 1;
+	private static Map<Integer, String>	PERMISSION_BIT_NAMES;
 
-	protected ALLOW_MODES				mode													= ALLOW_MODES.DENY_ALL_BUT;
-	protected ORole							parentRole;
-	protected Map<String, Byte>	rules													= new LinkedHashMap<String, Byte>();
+	protected ALLOW_MODES								mode							= ALLOW_MODES.DENY_ALL_BUT;
+	protected ORole											parentRole;
+	protected Map<String, Byte>					rules							= new LinkedHashMap<String, Byte>();
 
 	/**
 	 * Constructor used in unmarshalling.
@@ -222,37 +216,38 @@ public class ORole extends ODocumentWrapper {
 	 * @return String representation of the permission
 	 */
 	public static String permissionToString(final int iPermission) {
-		StringBuilder returnValue = new StringBuilder();
-		if ((iPermission & PERMISSION_CREATE) == PERMISSION_CREATE) {
-			returnValue.append(PERMISSION_CREATE_TEXT);
+		int permission = iPermission;
+		final StringBuilder returnValue = new StringBuilder();
+		for (Entry<Integer, String> p : PERMISSION_BIT_NAMES.entrySet()) {
+			if ((permission & p.getKey()) == p.getKey()) {
+				if (returnValue.length() > 0)
+					returnValue.append(", ");
+				returnValue.append(p.getValue());
+				permission &= ~p.getKey();
+			}
 		}
-
-		if ((iPermission & PERMISSION_READ) == PERMISSION_READ) {
+		if (permission != 0) {
 			if (returnValue.length() > 0)
 				returnValue.append(", ");
-			returnValue.append(PERMISSION_READ_TEXT);
-		}
-		if ((iPermission & PERMISSION_UPDATE) == PERMISSION_UPDATE) {
-			if (returnValue.length() > 0)
-				returnValue.append(", ");
-			returnValue.append(PERMISSION_UPDATE_TEXT);
-		}
-		if ((iPermission & PERMISSION_DELETE) == PERMISSION_DELETE) {
-			if (returnValue.length() > 0)
-				returnValue.append(", ");
-			returnValue.append(PERMISSION_DELETE_TEXT);
-		}
-		if ((iPermission & PERMISSION_CHANGE_LABEL) == PERMISSION_CHANGE_LABEL) {
-			if (returnValue.length() > 0)
-				returnValue.append(", ");
-			returnValue.append(PERMISSION_CHANGE_LABEL_TEXT);
-		}
-		if ((iPermission & ~PERMISSION_EVERY) != 0) {
-			if (returnValue.length() > 0)
-				returnValue.append(", ");
-			returnValue.append("Unknown other value(s) " + String.valueOf(iPermission & ~PERMISSION_EVERY));
+			returnValue.append("Unknown 0x");
+			returnValue.append(Integer.toHexString(permission));
 		}
 
 		return returnValue.toString();
+	}
+
+	public static int registerPermissionBit(final int iBitNo, final String iName) {
+		if (iBitNo < 0 || iBitNo > 31)
+			throw new IndexOutOfBoundsException("Permission bit number must be positive and less than 32");
+
+		final int value = 1 << iBitNo;
+		if (PERMISSION_BIT_NAMES == null)
+			PERMISSION_BIT_NAMES = new HashMap<Integer, String>();
+
+		if (PERMISSION_BIT_NAMES.containsKey(value))
+			throw new IndexOutOfBoundsException("Permission bit number " + String.valueOf(iBitNo) + " already in use");
+
+		PERMISSION_BIT_NAMES.put(value, iName);
+		return value;
 	}
 }
