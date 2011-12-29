@@ -485,15 +485,24 @@ function ODatabase(databasePath) {
 		return this.getCommandResult();
 	}
 	
-
-		ODatabase.prototype.createProperty = function(iClassName, iPropertyName) {
+	ODatabase.prototype.createProperty = function(iClassName, iPropertyName, iPropertyType, iLinkedType) {
 		if (this.databaseInfo == null) {
 			this.open();
+		}
+		if (iPropertyType == null || iPropertyType == '') {
+			iPropertyType = '';
+		} else {
+			iPropertyType = '/' + iPropertyType;
+		}
+		if (iLinkedType == null || iLinkedType == '') {
+			iLinkedType = '';
+		} else {
+			iLinkedType = '/' + iLinkedType;
 		}
 		$.ajax({
 			type : "POST",
 			url : urlPrefix + 'property/' + this.encodedDatabaseName + '/'
-					+ iClassName + '/' + iPropertyName + this.urlSuffix,
+					+ iClassName + '/' + iPropertyName + iPropertyType + iLinkedType + this.urlSuffix,
 			context : this,
 			async : false,
 			success : function(msg) {

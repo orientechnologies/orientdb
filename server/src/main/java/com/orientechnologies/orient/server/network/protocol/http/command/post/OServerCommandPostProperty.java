@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestException;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
@@ -53,7 +54,8 @@ public class OServerCommandPostProperty extends OServerCommandAuthenticatedDbAbs
 	@SuppressWarnings("unused")
 	protected boolean addSingleProperty(final OHttpRequest iRequest, final ODatabaseDocumentTx db) throws InterruptedException,
 			IOException {
-		String[] urlParts = checkSyntax(iRequest.url, 4, "Syntax error: property/<database>/<class-name>/<property-name>");
+		String[] urlParts = checkSyntax(iRequest.url, 4,
+				"Syntax error: property/<database>/<class-name>/<property-name>/[<property-type>]/[<link-type>]");
 
 		iRequest.data.commandInfo = "Create property";
 		iRequest.data.commandDetail = urlParts[2] + "." + urlParts[3];
@@ -63,7 +65,55 @@ public class OServerCommandPostProperty extends OServerCommandAuthenticatedDbAbs
 
 		final OClass cls = db.getMetadata().getSchema().getClass(urlParts[2]);
 
-		final OProperty prop = cls.createProperty(urlParts[3], OType.STRING);
+		final String propertyName = urlParts[3];
+
+		final OType propertyType = urlParts.length > 4 ? OType.valueOf(urlParts[4]) : OType.STRING;
+
+		switch (propertyType) {
+		case LINKLIST:
+		case LINKMAP:
+		case LINKSET: {
+			if (urlParts.length < 6) {
+				throw new OHttpRequestException("Syntax error: property named " + propertyName + " is declared as " + propertyType
+						+ " but linked type is not declared: property/<database>/<class-name>/<property-name>/<property-type>/<link-type>");
+			}
+			final OType linkType = OType.valueOf(urlParts[5]);
+			final OClass linkClass = db.getMetadata().getSchema().getClass(urlParts[5]);
+			if (linkType != null && linkClass != null) {
+				throw new IllegalArgumentException(
+						"linked type declared as "
+								+ urlParts[5]
+								+ " can be either a Type or a Class, use the JSON document usage instead. See 'http://code.google.com/p/orient/w/edit/OrientDB_REST'");
+			} else if (linkType != null) {
+				final OProperty prop = cls.createProperty(propertyName, propertyType, linkType);
+			} else if (linkClass != null) {
+				final OProperty prop = cls.createProperty(propertyName, propertyType, linkClass);
+			} else {
+				throw new IllegalArgumentException("property named " + propertyName + " is declared as " + propertyType
+						+ " but linked type is not declared");
+			}
+		}
+			break;
+		case LINK: {
+			if (urlParts.length < 6) {
+				throw new OHttpRequestException("Syntax error: property named " + propertyName + " is declared as " + propertyType
+						+ " but linked type is not declared: property/<database>/<class-name>/<property-name>/<property-type>/<link-type>");
+			}
+			final String linkClass = urlParts[5];
+			if (linkClass != null) {
+				final OProperty prop = cls.createProperty(propertyName, propertyType, db.getMetadata().getSchema().getClass(linkClass));
+			} else {
+				throw new IllegalArgumentException("property named " + propertyName + " is declared as " + propertyType
+						+ " but linked Class is not declared");
+			}
+
+		}
+			break;
+
+		default:
+			final OProperty prop = cls.createProperty(propertyName, propertyType);
+			break;
+		}
 
 		sendTextContent(iRequest, OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, null,
 				OHttpUtils.CONTENT_TEXT_PLAIN, cls.properties().size());

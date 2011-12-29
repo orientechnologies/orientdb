@@ -23,6 +23,9 @@
 		databaseInfo = database.open('admin', 'admin');
 		queryResult = database.createClass('TestClass');
 		queryResult = database.createProperty('TestClass','testField');
+		queryResult = database.createProperty('TestClass','testField2','BOOLEAN');
+		queryResult = database.createProperty('TestClass','testField3','LINK','Person');
+		queryResult = database.createProperty('TestClass','testField4','LINKMAP','Person');
 		queryResult = database.createProperties('TestClass','{"testBooleanField" : {"propertyType" : "BOOLEAN"}, "testDateField" : {"propertyType" : "DATE"}, "testStringField" : {"propertyType" : "STRING"}, "testLinkField" :  {"propertyType" : "LINK","linkedClass" : "Person"}, "testLinkMapField" :  {"propertyType" : "LINKMAP","linkedClass" : "Person"}, "testLinkTypeMapField" :  {"propertyType" : "LINKMAP","linkedType" : "DATE"}}');
 		classInfo('TestClass');
 	}
