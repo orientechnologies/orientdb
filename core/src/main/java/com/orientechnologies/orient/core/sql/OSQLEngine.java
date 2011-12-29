@@ -65,7 +65,7 @@ import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorPlus;
 public class OSQLEngine {
 	private Map<String, OSQLFunction>																	inlineFunctions				= new HashMap<String, OSQLFunction>();
 	private Map<String, Class<? extends OSQLFunction>>								aggregationFunctions	= new HashMap<String, Class<? extends OSQLFunction>>();
-	private Map<String, Class<? extends OCommandExecutorSQLAbstract>>	commands							= new HashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
+	protected Map<String, Class<? extends OCommandExecutorSQLAbstract>>	commands						= new HashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
 	public static OQueryOperator[]																		RECORD_OPERATORS			= { new OQueryOperatorAnd(),
 			new OQueryOperatorOr(), new OQueryOperatorNotEquals(), new OQueryOperatorNot(), new OQueryOperatorEquals(),
 			new OQueryOperatorMinorEquals(), new OQueryOperatorMinor(), new OQueryOperatorMajorEquals(), new OQueryOperatorContainsAll(),
@@ -75,7 +75,7 @@ public class OSQLEngine {
 			new OQueryOperatorPlus(), new OQueryOperatorMinus(), new OQueryOperatorMultiply(), new OQueryOperatorDivide(),
 			new OQueryOperatorMod()																														};
 
-	private static final OSQLEngine																		INSTANCE							= new OSQLEngine();
+	protected static OSQLEngine																				INSTANCE							= new OSQLEngine();
 
 	protected OSQLEngine() {
 		// COMMANDS

@@ -65,7 +65,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
 	protected List<WeakReference<ORecordElement>>	_owners						= null;
 
-	private static final String[]									EMPTY_STRINGS			= new String[] {};
+	protected static final String[]									EMPTY_STRINGS		= new String[] {};
 
 	/**
 	 * Internal constructor used on unmarshalling.

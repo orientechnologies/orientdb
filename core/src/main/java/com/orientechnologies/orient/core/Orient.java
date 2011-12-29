@@ -326,4 +326,8 @@ public class Orient extends OSharedResourceAbstract {
 		return listeners;
 	}
 
+	public void setRecordFactoryManager(ORecordFactoryManager iRecordFactoryManager) {
+		recordFactoryManager = iRecordFactoryManager;
+	}
+
 }
