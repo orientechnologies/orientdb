@@ -15,8 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.query;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -34,9 +33,9 @@ import com.orientechnologies.orient.core.serialization.OMemoryStream;
  */
 @SuppressWarnings({ "unchecked", "serial" })
 public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> implements OCommandResultListener {
-  protected ORID nextPageRID;
-
-	protected final List<T>	result	= new ArrayList<T>();
+  private ORID nextPageRID;
+	private final List<T>	result	= new ArrayList<T>();
+  private Map<Object, Object> previousQueryParams = new HashMap<Object, Object>();
 
 	public OSQLSynchQuery() {
 		resultListener = this;
@@ -68,16 +67,38 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
     	result.clear();
 		}
 
-		super.run(iArgs);
+    final Map<Object, Object> queryParams;
+    queryParams = fetchQueryParams(iArgs);
+    resetNextRIDIfParametersWereChanged(queryParams);
 
+    super.run(iArgs);
+    
     if(!result.isEmpty()) {
+      previousQueryParams = new HashMap<Object, Object>(queryParams);
       final ORID lastRid = ((OIdentifiable)result.get(result.size() - 1)).getIdentity();
       nextPageRID = new ORecordId(lastRid.next());
     }
+
 		return result;
 	}
 
-	public Object getResult() {
+  private void resetNextRIDIfParametersWereChanged(final Map<Object, Object> queryParams) {
+    if (!queryParams.equals(previousQueryParams))
+      nextPageRID = null;
+  }
+
+  private Map<Object, Object> fetchQueryParams(Object... iArgs) {
+    if (iArgs.length > 0) {
+      return convertToParameters(iArgs);
+    }
+
+    Map<Object, Object> queryParams = getParameters();
+    if (queryParams == null)
+      queryParams = new HashMap<Object, Object>();
+    return queryParams;
+  }
+
+  public Object getResult() {
 		return result;
 	}
 
@@ -86,6 +107,9 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
     final OMemoryStream buffer =  super.queryToStream();
 
     buffer.set(nextPageRID != null ? nextPageRID.toString() : "");
+
+    final byte[] queryParams = serializeQueryParameters(previousQueryParams);
+    buffer.set(queryParams);
 
     return buffer;
   }
@@ -99,6 +123,10 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
       nextPageRID = null;
     else
       nextPageRID = new ORecordId(rid);
+
+    final byte[] serializedPrevParams = buffer.getAsByteArray();
+    previousQueryParams = deserializeQueryParameters(serializedPrevParams);
+
   }
 
   /**
@@ -106,5 +134,9 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
    */
   public ORID getNextPageRID() {
     return nextPageRID;
+  }
+
+  public void resetPagination() {
+    nextPageRID = null;
   }
 }

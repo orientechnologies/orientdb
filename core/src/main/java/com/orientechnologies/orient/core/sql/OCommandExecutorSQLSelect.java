@@ -1045,26 +1045,44 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		return endPos;
 	}
 
-	private void scanEntireClusters(final int[] clusterIds) {
-		final OSQLFilterCondition rootCondition = compiledFilter.getRootCondition();
+  private void scanEntireClusters(final int[] clusterIds) {
+    final OSQLFilterCondition rootCondition = compiledFilter.getRootCondition();
 
-		final ODatabaseRecord database = getDatabase();
+    final ODatabaseRecord database = getDatabase();
+    final ORID beginRange;
+    final ORID endRange;
 
-		if (rootCondition == null) {
-			final ORID beginRange;
-			if (request instanceof OSQLSynchQuery)
-				beginRange = ((OSQLSynchQuery) request).getNextPageRID();
-			else
-				beginRange = null;
+    if (rootCondition == null) {
+      if (request instanceof OSQLSynchQuery)
+        beginRange = ((OSQLSynchQuery) request).getNextPageRID();
+      else
+        beginRange = null;
+      endRange = null;
+    } else {
+      final ORID conditionBeginRange = rootCondition.getBeginRidRange();
+      final ORID conditionEndRange = rootCondition.getEndRidRange();
+      final ORID nextPageRid;
 
-			((OStorageEmbedded) database.getStorage()).browse(clusterIds, beginRange, null, this,
-					(ORecordInternal<?>) database.newInstance(), false);
-		} else
-			((OStorageEmbedded) database.getStorage()).browse(clusterIds, rootCondition.getBeginRidRange(),
-					rootCondition.getEndRidRange(), this, (ORecordInternal<?>) database.newInstance(), false);
-	}
+      if (request instanceof OSQLSynchQuery)
+        nextPageRid = ((OSQLSynchQuery) request).getNextPageRID();
+      else
+        nextPageRid = null;
 
-	private void applyOrderBy() {
+      if(conditionBeginRange != null && nextPageRid != null)
+        beginRange = conditionBeginRange.compareTo(nextPageRid) > 0 ? conditionBeginRange : nextPageRid;
+      else if(conditionBeginRange != null)
+        beginRange = conditionBeginRange;
+      else
+        beginRange = nextPageRid;
+
+      endRange = conditionEndRange;
+    }
+
+    ((OStorageEmbedded) database.getStorage()).browse(clusterIds, beginRange,
+            endRange, this, (ORecordInternal<?>) database.newInstance(), false);
+  }
+
+  private void applyOrderBy() {
 		if (orderedFields == null)
 			return;
 
