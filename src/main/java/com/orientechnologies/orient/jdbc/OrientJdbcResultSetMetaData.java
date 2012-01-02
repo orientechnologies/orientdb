@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("boxing")
-public class OrientJdbcMetaData implements ResultSetMetaData {
+public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
 
 	private final static Map<OType, Integer> oTypesSqlTypes = new HashMap<OType, Integer>();
 
@@ -44,7 +44,7 @@ public class OrientJdbcMetaData implements ResultSetMetaData {
 	private OrientJdbcResultSet resultSet;
 	private final OrientJdbcConnection connection;
 
-	public OrientJdbcMetaData(OrientJdbcConnection connection, OrientJdbcResultSet iResultSet) {
+	public OrientJdbcResultSetMetaData(OrientJdbcConnection connection, OrientJdbcResultSet iResultSet) {
 		this.connection = connection;
 		resultSet = iResultSet;
 	}

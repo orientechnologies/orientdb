@@ -140,7 +140,7 @@ public class OrientJdbcResultSet implements ResultSet {
 	}
 
 	public ResultSetMetaData getMetaData() throws SQLException {
-		return new OrientJdbcMetaData(connection, this);
+		return new OrientJdbcResultSetMetaData(connection, this);
 	}
 
 	public void deleteRow() throws SQLException {

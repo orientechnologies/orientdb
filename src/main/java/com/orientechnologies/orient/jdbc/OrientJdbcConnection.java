@@ -136,8 +136,7 @@ public class OrientJdbcConnection implements Connection {
 	}
 
 	public String getCatalog() throws SQLException {
-
-		return null;
+		return database.getName();
 	}
 
 	public Properties getClientInfo() throws SQLException {
@@ -226,11 +225,11 @@ public class OrientJdbcConnection implements Connection {
 	}
 
 	public void setClientInfo(Properties properties) throws SQLClientInfoException {
-
+		// noop
 	}
 
 	public void setClientInfo(String name, String value) throws SQLClientInfoException {
-
+		// noop
 	}
 
 	public void setHoldability(int holdability) throws SQLException {
@@ -257,12 +256,12 @@ public class OrientJdbcConnection implements Connection {
 
 	public boolean isWrapperFor(Class<?> iface) throws SQLException {
 
-		return false;
+		throw new SQLFeatureNotSupportedException();
 	}
 
 	public <T> T unwrap(Class<T> iface) throws SQLException {
 
-		return null;
+		throw new SQLFeatureNotSupportedException();
 	}
 
 	public String getUrl() {
