@@ -34,55 +34,48 @@ public class OrientDbCreationHelper {
 
 		db.create();
 
-		OSchema schema = db.getMetadata().getSchema();
+		OSchema schema = db.getMetadata()
+			.getSchema();
 
 		// item
 		OClass item = schema.createClass("Item");
 
-		item.createProperty("stringKey", OType.STRING);
-		item.createIndex("stringKey", INDEX_TYPE.UNIQUE, "stringKey");
-
-		item.createProperty("intKey", OType.INTEGER);
-		item.createIndex("intKey", INDEX_TYPE.UNIQUE, "intKey");
-
-		item.createProperty("date", OType.DATE);
-		item.createIndex("date", INDEX_TYPE.NOTUNIQUE, "date");
-
-		item.createProperty("time", OType.DATETIME);
-		item.createIndex("time", INDEX_TYPE.NOTUNIQUE, "time");
-
+		item.createProperty("stringKey", OType.STRING)
+			.createIndex(INDEX_TYPE.UNIQUE);
+		item.createProperty("intKey", OType.INTEGER)
+			.createIndex(INDEX_TYPE.UNIQUE);
+		item.createProperty("date", OType.DATE)
+			.createIndex(INDEX_TYPE.NOTUNIQUE);
+		item.createProperty("time", OType.DATETIME)
+			.createIndex(INDEX_TYPE.NOTUNIQUE);
 		item.createProperty("text", OType.STRING);
-
-		item.createProperty("length", OType.LONG);
-
-		item.createProperty("published", OType.BOOLEAN);
-		item.createIndex("published", INDEX_TYPE.NOTUNIQUE, "published");
-
-		item.createProperty("title", OType.STRING);
-
-		item.createProperty("author", OType.STRING);
-		item.createIndex("author", INDEX_TYPE.NOTUNIQUE, "author");
-
+		item.createProperty("length", OType.LONG)
+			.createIndex(INDEX_TYPE.NOTUNIQUE);
+		item.createProperty("published", OType.BOOLEAN)
+			.createIndex(INDEX_TYPE.NOTUNIQUE);
+		item.createProperty("title", OType.STRING)
+			.createIndex(INDEX_TYPE.NOTUNIQUE);
+		item.createProperty("author", OType.STRING)
+			.createIndex(INDEX_TYPE.NOTUNIQUE);
 		item.createProperty("tags", OType.EMBEDDEDLIST);
 
 		// class Article
 		OClass article = schema.createClass("Article");
 
-		article.createProperty("uuid", OType.INTEGER);
-		article.createIndex("uuid", INDEX_TYPE.UNIQUE, "uuid");
-
-		article.createProperty("date", OType.DATE);
-		article.createIndex("date", INDEX_TYPE.NOTUNIQUE, "date");
-
+		article.createProperty("uuid", OType.INTEGER)
+			.createIndex(INDEX_TYPE.UNIQUE);
+		article.createProperty("date", OType.DATE)
+			.createIndex(INDEX_TYPE.NOTUNIQUE);
 		article.createProperty("title", OType.STRING);
 		article.createProperty("content", OType.STRING);
 
 		// author
 		OClass author = schema.createClass("Author");
 
-		author.createProperty("uuid", OType.INTEGER);
-		author.createIndex("uuid", INDEX_TYPE.UNIQUE, "uuid");
-		author.createProperty("name", OType.STRING).setMin("3");
+		author.createProperty("uuid", OType.INTEGER)
+			.createIndex(INDEX_TYPE.UNIQUE);
+		author.createProperty("name", OType.STRING)
+			.setMin("3");
 		author.createProperty("articles", OType.LINKLIST, article);
 
 		// link article-->author
@@ -95,7 +88,8 @@ public class OrientDbCreationHelper {
 	}
 
 	public static ODocument createItem(int id, ODocument doc) {
-		String itemKey = Integer.valueOf(id).toString();
+		String itemKey = Integer.valueOf(id)
+			.toString();
 
 		doc.setClassName("Item");
 		doc.field("stringKey", itemKey);

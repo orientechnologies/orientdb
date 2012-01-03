@@ -1,3 +1,19 @@
+/*
+ * Copyright 1999-2010 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 2011 TXT e-solutions SpA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.orientechnologies.orient.jdbc;
 
 import java.io.InputStream;
@@ -22,13 +38,18 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
+/**
+ * TODO Add authors
+ * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci@gmail.com)
+ *
+ */
 public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements PreparedStatement {
 
 	private final String sql;
@@ -45,12 +66,16 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
 		query = new OCommandSQL(sql);
 		try {
 
+			/*
 			rawResult = database.command(query).execute(params.values().toArray(new String[] {}));
 
 			if (rawResult instanceof List<?>) documents = (List<ODocument>) rawResult;
 			else throw new SQLException("unable to create a valid resultSet: is query a SELECT?");
+			*/
+			
+			documents = database.query(new OSQLSynchQuery<ODocument>(sql),params.values().toArray(new Object[] {}));
 
-			resultSet = new OrientJdbcResultSet(connection,this, documents);
+			resultSet = new OrientJdbcResultSet(this, documents, resultSetType, resultSetConcurrency, resultSetHoldability);
 			return resultSet;
 
 		} catch (OQueryParsingException e) {
