@@ -103,7 +103,7 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
 	}
 
 	@Test
-	public void shoulNavigateResultSetByMetadata() throws Exception {
+	public void shouldNavigateResultSetByMetadata() throws Exception {
 		assertFalse(conn.isClosed());
 
 		Statement stmt = conn.createStatement();
@@ -129,7 +129,7 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
 
 
 	@Test
-	public void shoulMapOrientTypesToJavaSQL() throws Exception {
+	public void shouldMapOrientTypesToJavaSQL() throws Exception {
 		assertFalse(conn.isClosed());
 
 		Statement stmt = conn.createStatement();
@@ -140,17 +140,17 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
 		
 		assertEquals(5, metaData.getColumnCount());
 		
-		assertEquals("intKey", metaData.getColumnName(2));
+		assertEquals(Types.INTEGER, metaData.getColumnType(2));
 		
-		assertEquals("text", metaData.getColumnName(3));
+		assertEquals(Types.VARCHAR, metaData.getColumnType(3));
 		assertTrue(rs.getObject(3) instanceof String);
 		
-		assertEquals("length", metaData.getColumnName(4));
+		assertEquals(Types.BIGINT, metaData.getColumnType(4));
 		
-		assertEquals("date", metaData.getColumnName(5));
+		assertEquals(Types.TIMESTAMP, metaData.getColumnType(5));
 		
-		assertEquals(Types.VARCHAR, metaData.getColumnType(1));
 		assertEquals(String.class.getName(), metaData.getColumnClassName(1));
+		assertEquals(Types.VARCHAR, metaData.getColumnType(1));
 
 	}
 
