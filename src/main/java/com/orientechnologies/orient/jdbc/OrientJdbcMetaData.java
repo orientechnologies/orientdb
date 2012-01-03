@@ -19,12 +19,15 @@ package com.orientechnologies.orient.jdbc;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.ListIterator;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -113,13 +116,17 @@ public class OrientJdbcMetaData implements ResultSetMetaData {
 	public int getColumnType(int column) throws SQLException {
 		ODocument currentRecord = this.resultSet.unwrap(ODocument.class);
 		String fieldName = currentRecord.fieldNames()[column - 1];
-		OType type = currentRecord.fieldType(fieldName);
-		if (type == null) {
+		//The OClass is not available so attempting to retrieve the OType from the schema class
+		//results in a NullPointerException
+		//OClass oclass = currentRecord.getSchemaClass();
+		OType otype = currentRecord.fieldType(fieldName);
+				
+		if (otype == null) {
 			Object value = currentRecord.field(fieldName);
 			if (value == null)
-				return Types.NULL;
-			//1. Check if the type is another record or a collection of records
-			if (value instanceof ORecordBytes)
+				return Types.NULL;			
+			//Check if the type is a binary record or a collection of binary records
+			else if (value instanceof ORecordBytes)
 				return Types.BINARY;
 			else if (value instanceof ORecordLazyList) {
 				ORecordLazyList list = (ORecordLazyList) value;
@@ -135,9 +142,9 @@ public class OrientJdbcMetaData implements ResultSetMetaData {
 				if (!stop)
 					return Types.BLOB;
 			}
-			return Types.JAVA_OBJECT;
+			return this.getSQLTypeFromJavaClass(value);
 		}
-		else if (type == OType.EMBEDDED || type == OType.LINK) {
+		else if (otype == OType.EMBEDDED || otype == OType.LINK) {
 			Object value = currentRecord.field(fieldName);
 			if (value == null)
 				return Types.NULL;
@@ -146,9 +153,9 @@ public class OrientJdbcMetaData implements ResultSetMetaData {
 				return Types.BINARY;
 			else
 				//the default type
-				return oTypesSqlTypes.get(type);
+				return oTypesSqlTypes.get(otype);
 		}
-		else if (type == OType.EMBEDDEDLIST || type == OType.LINKLIST) {
+		else if (otype == OType.EMBEDDEDLIST || otype == OType.LINKLIST) {
 			Object value = currentRecord.field(fieldName);
 			if (value == null)
 				return Types.NULL;
@@ -164,14 +171,39 @@ public class OrientJdbcMetaData implements ResultSetMetaData {
 						stop = true;
 				}
 				if (stop)
-					return oTypesSqlTypes.get(type);
+					return oTypesSqlTypes.get(otype);
 				else
 					return Types.BLOB;
 			} else
 				return Types.JAVA_OBJECT;
 		}	
 		else
-			return oTypesSqlTypes.get(type);
+			return oTypesSqlTypes.get(otype);
+	}
+	
+	private int getSQLTypeFromJavaClass (Object value) {
+		//START inferencing the OType from the Java class
+		if (value instanceof Boolean)	
+			return oTypesSqlTypes.get(OType.BOOLEAN);
+		else if (value instanceof Byte)
+			return oTypesSqlTypes.get(OType.BYTE);
+		else if (value instanceof Date)
+			return oTypesSqlTypes.get(OType.DATETIME);
+		else if (value instanceof Double)
+			return oTypesSqlTypes.get(OType.DOUBLE);
+		else if (value instanceof Float)
+			return oTypesSqlTypes.get(OType.FLOAT);
+		else if (value instanceof Integer)
+			return oTypesSqlTypes.get(OType.INTEGER);
+		else if (value instanceof Long)
+			return oTypesSqlTypes.get(OType.LONG);
+		else if (value instanceof Short)
+			return oTypesSqlTypes.get(OType.SHORT);
+		else if (value instanceof String)
+			return oTypesSqlTypes.get(OType.STRING);
+		else
+			return Types.JAVA_OBJECT;
+		//STOP inferencing the OType from the Java class
 	}
 	
 	public String getColumnTypeName(int column) throws SQLException {
