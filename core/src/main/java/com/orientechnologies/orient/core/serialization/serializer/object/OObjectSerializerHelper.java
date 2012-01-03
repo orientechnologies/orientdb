@@ -840,7 +840,7 @@ public class OObjectSerializerHelper {
 	}
 
 	private static List<Field> getClassFields(final Class<?> iClass) {
-		if (iClass.getPackage().getName().startsWith("java.lang"))
+		if (iClass.getName().startsWith("java.lang"))
 			return null;
 
 		synchronized (classes) {
