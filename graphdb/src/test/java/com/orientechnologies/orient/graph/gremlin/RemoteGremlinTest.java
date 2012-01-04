@@ -32,6 +32,7 @@ public class RemoteGremlinTest {
 	@BeforeClass
 	public void setUp() throws Exception {
 		server.startup(new File(getClass().getResource("db-config.xml").getFile()));
+    server.activate();
 	}
 
 	@AfterClass

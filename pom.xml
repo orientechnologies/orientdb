@@ -220,7 +220,7 @@
 
     <distributionManagement>
         <repository>
-            <id>local</id>
+            <id>local-repository</id>
             <url>file://${project.build.directory}/staging</url>
             <uniqueVersion>false</uniqueVersion>
         </repository>
