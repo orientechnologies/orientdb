@@ -1,5 +1,6 @@
 /*
  * Copyright 1999-2010 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 2011 TXT e-solutions SpA
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +38,11 @@ import java.util.Properties;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
+/**
+ * TODO Add authors name
+ * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci@gmail.com)
+ *
+ */
 public class OrientJdbcConnection implements Connection {
 
 	private final String dbUrl;

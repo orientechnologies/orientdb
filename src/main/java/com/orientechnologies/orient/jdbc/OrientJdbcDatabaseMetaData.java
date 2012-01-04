@@ -1,5 +1,6 @@
 /*
  * Copyright 1999-2010 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 2011 TXT e-solutions SpA
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +24,13 @@ import java.sql.SQLException;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 
+/**
+ * TODO Add authors
+ * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci@gmail.com)
+ *
+ */
 public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
-	private Connection			connection;
+	private Connection connection;
 	private ODatabaseRecord	database;
 
 	public OrientJdbcDatabaseMetaData(OrientJdbcConnection iConnection, ODatabaseRecord iDatabase) {

@@ -39,49 +39,29 @@ public class OrientDbCreationHelper {
 		// item
 		OClass item = schema.createClass("Item");
 
-		item.createProperty("stringKey", OType.STRING);
-		item.createIndex("stringKey", INDEX_TYPE.UNIQUE, "stringKey");
-
-		item.createProperty("intKey", OType.INTEGER);
-		item.createIndex("intKey", INDEX_TYPE.UNIQUE, "intKey");
-
-		item.createProperty("date", OType.DATE);
-		item.createIndex("date", INDEX_TYPE.NOTUNIQUE, "date");
-
-		item.createProperty("time", OType.DATETIME);
-		item.createIndex("time", INDEX_TYPE.NOTUNIQUE, "time");
-
+		item.createProperty("stringKey", OType.STRING).createIndex(INDEX_TYPE.UNIQUE);
+		item.createProperty("intKey", OType.INTEGER).createIndex(INDEX_TYPE.UNIQUE);
+		item.createProperty("date", OType.DATE).createIndex(INDEX_TYPE.NOTUNIQUE);
+		item.createProperty("time", OType.DATETIME).createIndex(INDEX_TYPE.NOTUNIQUE);
 		item.createProperty("text", OType.STRING);
-
-		item.createProperty("length", OType.LONG);
-
-		item.createProperty("published", OType.BOOLEAN);
-		item.createIndex("published", INDEX_TYPE.NOTUNIQUE, "published");
-
-		item.createProperty("title", OType.STRING);
-
-		item.createProperty("author", OType.STRING);
-		item.createIndex("author", INDEX_TYPE.NOTUNIQUE, "author");
-
+		item.createProperty("length", OType.LONG).createIndex(INDEX_TYPE.NOTUNIQUE);
+		item.createProperty("published", OType.BOOLEAN).createIndex(INDEX_TYPE.NOTUNIQUE);
+		item.createProperty("title", OType.STRING).createIndex(INDEX_TYPE.NOTUNIQUE);
+		item.createProperty("author", OType.STRING).createIndex(INDEX_TYPE.NOTUNIQUE);
 		item.createProperty("tags", OType.EMBEDDEDLIST);
 
 		// class Article
 		OClass article = schema.createClass("Article");
 
-		article.createProperty("uuid", OType.INTEGER);
-		article.createIndex("uuid", INDEX_TYPE.UNIQUE, "uuid");
-
-		article.createProperty("date", OType.DATE);
-		article.createIndex("date", INDEX_TYPE.NOTUNIQUE, "date");
-
+		article.createProperty("uuid", OType.INTEGER).createIndex(INDEX_TYPE.UNIQUE);
+		article.createProperty("date", OType.DATE).createIndex(INDEX_TYPE.NOTUNIQUE);
 		article.createProperty("title", OType.STRING);
 		article.createProperty("content", OType.STRING);
 
 		// author
 		OClass author = schema.createClass("Author");
 
-		author.createProperty("uuid", OType.INTEGER);
-		author.createIndex("uuid", INDEX_TYPE.UNIQUE, "uuid");
+		author.createProperty("uuid", OType.INTEGER).createIndex(INDEX_TYPE.UNIQUE);
 		author.createProperty("name", OType.STRING).setMin("3");
 		author.createProperty("articles", OType.LINKLIST, article);
 
@@ -101,7 +81,13 @@ public class OrientDbCreationHelper {
 		doc.field("stringKey", itemKey);
 		doc.field("intKey", id);
 		String contents =
-				"OrientDB is a deeply scalable Document-Graph DBMS with the flexibility of the Document databases and the power to manage links of the Graph databases. It can work in schema-less mode, schema-full or a mix of both. Supports advanced features such as ACID Transactions, Fast Indexes, Native and SQL queries. It imports and exports documents in JSON. Graphs of hundreads of linked documents can be retrieved all in memory in few milliseconds without executing costly JOIN such as the Relational DBMSs do. OrientDB uses a new indexing algorithm called MVRB-Tree, derived from the Red-Black Tree and from the B+Tree with benefits of both: fast insertion and ultra fast lookup. The transactional engine can run in distributed systems supporting up to 9.223.372.036 Billions of records for the maximum capacity of 19.807.040.628.566.084 Terabytes of data distributed on multiple disks in multiple nodes. OrientDB is FREE for any use. Open Source License Apache 2.0. ";
+				"OrientDB is a deeply scalable Document-Graph DBMS with the flexibility of the Document databases and the power to manage links of the Graph databases. "
+						+ "It can work in schema-less mode, schema-full or a mix of both. Supports advanced features such as ACID Transactions, Fast Indexes, Native and SQL queries."
+						+ " It imports and exports documents in JSON."
+						+ " Graphs of hundreads of linked documents can be retrieved all in memory in few milliseconds without executing costly JOIN such as the Relational DBMSs do. "
+						+ "OrientDB uses a new indexing algorithm called MVRB-Tree, derived from the Red-Black Tree and from the B+Tree with benefits of both: fast insertion and ultra fast lookup. "
+						+ "The transactional engine can run in distributed systems supporting up to 9.223.372.036 Billions of records for the maximum capacity of 19.807.040.628.566.084 Terabytes of data distributed on multiple disks in multiple nodes. "
+						+ "OrientDB is FREE for any use. Open Source License Apache 2.0. ";
 		doc.field("text", contents);
 		doc.field("title", "orientDB");
 		doc.field("length", contents.length());
