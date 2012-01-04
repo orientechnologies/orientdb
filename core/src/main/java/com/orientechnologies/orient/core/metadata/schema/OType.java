@@ -66,7 +66,7 @@ public enum OType {
 	},
 	EMBEDDEDMAP("EmbeddedMap", 12, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
 	},
-	LINK("Link", 13, true, 8, new Class<?>[] { Object.class, ORecordId.class }, new Class<?>[] { ORID.class }) {
+	LINK("Link", 13, true, 8, new Class<?>[] { Object.class, ORecordId.class }, new Class<?>[] { ORecord.class, ORID.class  }) {
 	},
 	LINKLIST("LinkList", 14, false, 8, new Class<?>[] { List.class }, new Class<?>[] { List.class }) {
 	},
@@ -153,9 +153,6 @@ public enum OType {
 
 			priority++;
 		} while (comparedAtLeastOnce);
-
-		if (ORecord.class.isAssignableFrom(iClass))
-			return OType.LINK;
 
 		return null;
 	}
