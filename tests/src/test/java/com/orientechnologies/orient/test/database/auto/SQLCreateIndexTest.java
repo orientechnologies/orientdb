@@ -2,6 +2,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.util.Arrays;
 
+import com.orientechnologies.orient.core.index.*;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -11,11 +12,6 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
-import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -45,6 +41,9 @@ public class SQLCreateIndexTest {
 		oClass.createProperty("prop2", EXPECTED_PROP2_TYPE);
     oClass.createProperty( "prop3", OType.EMBEDDEDMAP, OType.INTEGER );
     oClass.createProperty( "prop4", OType.LINKMAP);
+    oClass.createProperty( "prop5", OType.EMBEDDEDLIST, OType.INTEGER);
+    oClass.createProperty( "prop6", OType.EMBEDDEDLIST);
+    oClass.createProperty( "prop7", OType.EMBEDDEDMAP);
 
 		schema.save();
 		database.close();
@@ -141,6 +140,27 @@ public class SQLCreateIndexTest {
     Assert.assertEquals(index.getType(), "UNIQUE");
     Assert.assertEquals( ((OPropertyMapIndexDefinition)indexDefinition).getIndexBy(), OPropertyMapIndexDefinition.INDEX_BY.KEY );
   }
+
+  @Test
+  public void testOldStileCreateEmbeddedMapIndex() throws Exception {
+    database.command(new OCommandSQL("CREATE INDEX sqlCreateIndexTestClass.prop3 UNIQUE"))
+            .execute();
+    database.getMetadata().getIndexManager().reload();
+
+    final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
+            .getClassIndex("sqlCreateIndexTestClass.prop3");
+
+    Assert.assertNotNull(index);
+
+    final OIndexDefinition indexDefinition = index.getDefinition();
+
+    Assert.assertTrue(indexDefinition instanceof OPropertyMapIndexDefinition);
+    Assert.assertEquals(indexDefinition.getFields(), Arrays.asList("prop3"));
+    Assert.assertEquals(indexDefinition.getTypes(), new OType[] { OType.STRING });
+    Assert.assertEquals(index.getType(), "UNIQUE");
+    Assert.assertEquals( ((OPropertyMapIndexDefinition)indexDefinition).getIndexBy(), OPropertyMapIndexDefinition.INDEX_BY.KEY );
+  }
+
 
   @Test
   public void testCreateEmbeddedMapWrongSpecifierIndexOne() throws Exception
@@ -309,6 +329,80 @@ public class SQLCreateIndexTest {
     Assert.assertEquals( ((OPropertyMapIndexDefinition)indexDefinition).getIndexBy(), OPropertyMapIndexDefinition.INDEX_BY.VALUE );
   }
 
+  @Test
+  public void testCreateEmbeddedListIndex() throws Exception {
+    database.command(new OCommandSQL("CREATE INDEX sqlCreateIndexEmbeddedListIndex ON sqlCreateIndexTestClass (prop5) NOTUNIQUE"))
+            .execute();
+    database.getMetadata().getIndexManager().reload();
+
+    final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
+            .getClassIndex("sqlCreateIndexEmbeddedListIndex");
+
+    Assert.assertNotNull(index);
+
+    final OIndexDefinition indexDefinition = index.getDefinition();
+
+    Assert.assertTrue(indexDefinition instanceof OPropertyListIndexDefinition);
+    Assert.assertEquals(indexDefinition.getFields(), Arrays.asList("prop5"));
+    Assert.assertEquals(indexDefinition.getTypes(), new OType[] { OType.INTEGER });
+    Assert.assertEquals(index.getType(), "NOTUNIQUE");
+  }
+
+  @Test
+  public void testCreateOldStileEmbeddedListIndex() throws Exception {
+    database.command(new OCommandSQL("CREATE INDEX sqlCreateIndexTestClass.prop5 NOTUNIQUE"))
+            .execute();
+    database.getMetadata().getIndexManager().reload();
+
+    final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
+            .getClassIndex("sqlCreateIndexTestClass.prop5");
+
+    Assert.assertNotNull(index);
+
+    final OIndexDefinition indexDefinition = index.getDefinition();
+
+    Assert.assertTrue(indexDefinition instanceof OPropertyListIndexDefinition);
+    Assert.assertEquals(indexDefinition.getFields(), Arrays.asList("prop5"));
+    Assert.assertEquals(indexDefinition.getTypes(), new OType[] { OType.INTEGER });
+    Assert.assertEquals(index.getType(), "NOTUNIQUE");
+  }
+
+
+  @Test
+  public void testCreateEmbeddedListWithoutLinkedTypeIndex() throws Exception {
+    try {
+      database.command( new OCommandSQL( "CREATE INDEX sqlCreateIndexEmbeddedListWithoutLinkedTypeIndex ON sqlCreateIndexTestClass (prop6) UNIQUE" ) )
+              .execute();
+      Assert.fail();
+    } catch( OIndexException e ) {
+      Assert
+              .assertEquals( e
+                      .getMessage(), "Linked type was not provided. " +
+                              "You should provide linked type for embedded collections that are going to be indexed.");
+    }
+    final OIndex<?> index = database.getMetadata().getSchema().getClass( "sqlCreateIndexTestClass" )
+            .getClassIndex( "sqlCreateIndexEmbeddedListWithoutLinkedTypeIndex" );
+
+    Assert.assertNull( index, "Index created while wrong query was executed" );
+  }
+
+  @Test
+  public void testCreateEmbeddedMapWithoutLinkedTypeIndex() throws Exception {
+    try {
+      database.command( new OCommandSQL( "CREATE INDEX sqlCreateIndexEmbeddedMapWithoutLinkedTypeIndex ON sqlCreateIndexTestClass (prop7 by value) UNIQUE" ) )
+              .execute();
+      Assert.fail();
+    } catch( OIndexException e ) {
+      Assert
+              .assertEquals( e
+                      .getMessage(), "Linked type was not provided. " +
+                              "You should provide linked type for embedded collections that are going to be indexed.");
+    }
+    final OIndex<?> index = database.getMetadata().getSchema().getClass( "sqlCreateIndexTestClass" )
+            .getClassIndex( "sqlCreateIndexEmbeddedMapWithoutLinkedTypeIndex" );
+
+    Assert.assertNull( index, "Index created while wrong query was executed" );
+  }
 
 	@Test
 	public void testCreateCompositeIndexWithTypes() throws Exception {

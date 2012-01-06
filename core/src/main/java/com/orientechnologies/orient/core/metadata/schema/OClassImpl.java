@@ -832,7 +832,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     final OProperty propertyToIndex = properties.get(fieldName.toLowerCase());
     final OType propertyToIndexType = propertyToIndex.getType();
     final OType indexType;
-    
+
     if( propertyToIndexType == OType.EMBEDDEDMAP || propertyToIndexType == OType.LINKMAP) {
       final OPropertyMapIndexDefinition.INDEX_BY indexBy = extractMapIndexSpecifier( field );
 
@@ -841,8 +841,13 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       else {
         if ( propertyToIndexType == OType.LINKMAP)
           indexType = OType.LINK;
-        else
+        else {
           indexType = propertyToIndex.getLinkedType();
+          if(indexType == null)
+            throw new OIndexException("Linked type was not provided." +
+                    " You should provide linked type for embedded collections that are going to be indexed.");
+        }
+          
       }
 
       indexDefinition = new OPropertyMapIndexDefinition(name, propertyToIndex.getName(), indexType, indexBy);
@@ -850,8 +855,13 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       propertyToIndexType.equals( OType.LINKLIST ) || propertyToIndexType.equals( OType.LINKSET )) {
       if(propertyToIndexType.equals( OType.LINKLIST ) || propertyToIndexType.equals( OType.LINKSET ))
         indexType = OType.LINK;
-      else 
+      else  {
         indexType = propertyToIndex.getLinkedType();
+        if(indexType == null)
+          throw new OIndexException("Linked type was not provided." +
+                  " You should provide linked type for embedded collections that are going to be indexed.");
+      }
+
       
       indexDefinition = new OPropertyListIndexDefinition(name, propertyToIndex.getName(), indexType);
     } else 
