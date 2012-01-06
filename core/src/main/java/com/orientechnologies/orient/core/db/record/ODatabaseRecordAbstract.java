@@ -248,6 +248,14 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	/**
 	 * Delete the record without checking the version.
 	 */
+	public ODatabaseRecord delete(final ORID iRecord) {
+		executeDeleteRecord(iRecord, -1);
+		return this;
+	}
+
+	/**
+	 * Delete the record without checking the version.
+	 */
 	public ODatabaseRecord delete(final ORecordInternal<?> iRecord) {
 		executeDeleteRecord(iRecord, -1);
 		return this;
@@ -716,23 +724,27 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	 * Callback the registeted hooks if any.
 	 * 
 	 * @param iType
-	 * @param iRecord
+	 * @param id
 	 *          Record received in the callback
 	 * @return True if the input record is changed, otherwise false
 	 */
-	public boolean callbackHooks(final TYPE iType, final OIdentifiable iRecord) {
-		if (!OHookThreadLocal.INSTANCE.push(iRecord))
+	public boolean callbackHooks(final TYPE iType, final OIdentifiable id) {
+		if (!OHookThreadLocal.INSTANCE.push(id))
+			return false;
+
+		final ORecord<?> rec = id.getRecord();
+		if (rec == null)
 			return false;
 
 		try {
 			boolean recordChanged = false;
 			for (ORecordHook hook : hooks)
-				if (hook.onTrigger(iType, (ORecord<?>) iRecord))
+				if (hook.onTrigger(iType, rec))
 					recordChanged = true;
 			return recordChanged;
 
 		} finally {
-			OHookThreadLocal.INSTANCE.pop(iRecord);
+			OHookThreadLocal.INSTANCE.pop(id);
 		}
 	}
 

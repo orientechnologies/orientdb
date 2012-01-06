@@ -180,6 +180,15 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	public ODatabaseComplex<T> delete(T iObject);
 
 	/**
+	 * Deletes the entity with the received RID from the database.
+	 * 
+	 * @param iRID
+	 *          The RecordID to delete.
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
+	public ODatabaseComplex<T> delete(ORID iRID);
+
+	/**
 	 * Return active transaction. Cannot be null. If no transaction is active, then a OTransactionNoTx instance is returned.
 	 * 
 	 * @return OTransaction implementation

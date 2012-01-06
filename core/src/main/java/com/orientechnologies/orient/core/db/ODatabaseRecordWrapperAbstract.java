@@ -172,6 +172,11 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 		return (RET) underlying.newInstance();
 	}
 
+	public ODatabaseComplex<ORecordInternal<?>> delete(final ORID iRid) {
+		underlying.delete(iRid);
+		return this;
+	}
+
 	public ODatabaseComplex<ORecordInternal<?>> delete(final ORecordInternal<?> iRecord) {
 		underlying.delete(iRecord);
 		return this;
