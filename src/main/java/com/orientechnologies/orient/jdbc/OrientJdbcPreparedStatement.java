@@ -158,7 +158,7 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
 	}
 
 	public void clearParameters() throws SQLException {
-
+		params.clear();
 	}
 
 	public void setObject(int parameterIndex, Object x, int targetSqlType) throws SQLException {

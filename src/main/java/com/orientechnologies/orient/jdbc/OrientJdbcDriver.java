@@ -24,8 +24,8 @@ import com.orientechnologies.common.log.OLogManager;
 
 public class OrientJdbcDriver implements java.sql.Driver {
 
-	private static final int MAJOR_VERSION = 0;
-	private static final int MINOR_VERSION = 1;
+	public static final int MAJOR_VERSION = 1;
+	public static final int MINOR_VERSION = 0;
 
 	static {
 		try {
@@ -49,7 +49,7 @@ public class OrientJdbcDriver implements java.sql.Driver {
 	}
 
 	public boolean jdbcCompliant() {
-		return true;
+		return false;
 	}
 
 	public int getMajorVersion() {
@@ -59,4 +59,11 @@ public class OrientJdbcDriver implements java.sql.Driver {
 	public int getMinorVersion() {
 		return MINOR_VERSION;
 	}
+	
+    public static String getVersion()
+    {
+        return "OrientDB 1.0 JDBC Driver";
+    }
+
+
 }

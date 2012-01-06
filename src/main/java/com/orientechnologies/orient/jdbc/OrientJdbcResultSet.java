@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2010 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 1999-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  * Copyright 2011-2012 CELI srl
  * Copyright 2011-2012 TXT e-solutions SpA
  *
@@ -573,33 +573,27 @@ public class OrientJdbcResultSet implements ResultSet {
 	}
 
 	public Time getTime(int columnIndex, Calendar cal) throws SQLException {
-		// TODO apply the same logic of getDate(int,Calendar)
-		return null;
+		return new Time(getDate(columnIndex, cal).getTime());
 	}
 
 	public Time getTime(String columnLabel, Calendar cal) throws SQLException {
-		// TODO apply the same logic of getDate(String,Calendar)
-		return null;
+		return new Time(getDate(columnLabel, cal).getTime());
 	}
 
 	public Timestamp getTimestamp(int columnIndex) throws SQLException {
-
-		return null;
+		return new Timestamp(getDate(columnIndex).getTime());
 	}
 
 	public Timestamp getTimestamp(String columnLabel) throws SQLException {
-
-		return null;
+		return new Timestamp(getDate(columnLabel).getTime());
 	}
 
 	public Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException {
-
-		return null;
+		return new Timestamp(getDate(columnIndex, cal).getTime());
 	}
 
 	public Timestamp getTimestamp(String columnLabel, Calendar cal) throws SQLException {
-
-		return null;
+		return new Timestamp(getDate(columnLabel, cal).getTime());
 	}
 
 	public int getType() throws SQLException {

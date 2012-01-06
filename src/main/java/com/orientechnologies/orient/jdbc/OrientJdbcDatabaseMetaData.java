@@ -1,6 +1,7 @@
 /*
- * Copyright 1999-2010 Luca Garulli (l.garulli--at--orientechnologies.com)
- * Copyright 2011 TXT e-solutions SpA
+ * Copyright 1999-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 2011-2012 CELI srl
+ * Copyright 2011-2012 TXT e-solutions SpA
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,20 +23,22 @@ import java.sql.ResultSet;
 import java.sql.RowIdLifetime;
 import java.sql.SQLException;
 
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 
 /**
- * TODO Add authors
+ * @author Roberto Franchini (CELI srl - franchin--at--celi.it)
  * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci@gmail.com)
- *
+ * 
  */
 public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 	private Connection connection;
-	private ODatabaseRecord	database;
+	private ODatabaseRecord database;
 
 	public OrientJdbcDatabaseMetaData(OrientJdbcConnection iConnection, ODatabaseRecord iDatabase) {
 		connection = iConnection;
 		database = iDatabase;
+		
 	}
 
 	public boolean allProceduresAreCallable() throws SQLException {
@@ -73,14 +76,12 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 		return false;
 	}
 
-	public ResultSet getAttributes(String catalog, String schemaPattern, String typeNamePattern, String attributeNamePattern)
-			throws SQLException {
+	public ResultSet getAttributes(String catalog, String schemaPattern, String typeNamePattern, String attributeNamePattern) throws SQLException {
 
 		return null;
 	}
 
-	public ResultSet getBestRowIdentifier(String catalog, String schema, String table, int scope, boolean nullable)
-			throws SQLException {
+	public ResultSet getBestRowIdentifier(String catalog, String schema, String table, int scope, boolean nullable) throws SQLException {
 
 		return null;
 	}
@@ -110,8 +111,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 		return null;
 	}
 
-	public ResultSet getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern)
-			throws SQLException {
+	public ResultSet getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern) throws SQLException {
 
 		return null;
 	}
@@ -120,30 +120,29 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 		return connection;
 	}
 
-	public ResultSet getCrossReference(String parentCatalog, String parentSchema, String parentTable, String foreignCatalog,
-			String foreignSchema, String foreignTable) throws SQLException {
+	public ResultSet getCrossReference(String parentCatalog, String parentSchema, String parentTable, String foreignCatalog, String foreignSchema, String foreignTable) throws SQLException {
 
 		return null;
 	}
 
 	public int getDatabaseMajorVersion() throws SQLException {
 
-		return 0;
+		return Integer.valueOf(OConstants.ORIENT_VERSION.split("\\.")[0]);
 	}
 
 	public int getDatabaseMinorVersion() throws SQLException {
 
-		return 0;
+		return Integer.valueOf(OConstants.ORIENT_VERSION.split("\\.")[1].substring(0, 1));
 	}
 
 	public String getDatabaseProductName() throws SQLException {
 
-		return null;
+		return "OrientDB";
 	}
 
 	public String getDatabaseProductVersion() throws SQLException {
 
-		return null;
+		return OConstants.getVersion();
 	}
 
 	public int getDefaultTransactionIsolation() throws SQLException {
@@ -153,22 +152,22 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
 	public int getDriverMajorVersion() {
 
-		return 0;
+		return OrientJdbcDriver.MAJOR_VERSION;
 	}
 
 	public int getDriverMinorVersion() {
 
-		return 0;
+		return OrientJdbcDriver.MINOR_VERSION;
 	}
 
 	public String getDriverName() throws SQLException {
 
-		return null;
+		return "OrientDB JDBC Driver";
 	}
 
 	public String getDriverVersion() throws SQLException {
 
-		return null;
+		return OrientJdbcDriver.getVersion();
 	}
 
 	public ResultSet getExportedKeys(String catalog, String schema, String table) throws SQLException {
@@ -181,8 +180,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 		return null;
 	}
 
-	public ResultSet getFunctionColumns(String catalog, String schemaPattern, String functionNamePattern, String columnNamePattern)
-			throws SQLException {
+	public ResultSet getFunctionColumns(String catalog, String schemaPattern, String functionNamePattern, String columnNamePattern) throws SQLException {
 
 		return null;
 	}
@@ -202,8 +200,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 		return null;
 	}
 
-	public ResultSet getIndexInfo(String catalog, String schema, String table, boolean unique, boolean approximate)
-			throws SQLException {
+	public ResultSet getIndexInfo(String catalog, String schema, String table, boolean unique, boolean approximate) throws SQLException {
 
 		return null;
 	}
@@ -328,8 +325,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 		return null;
 	}
 
-	public ResultSet getProcedureColumns(String catalog, String schemaPattern, String procedureNamePattern, String columnNamePattern)
-			throws SQLException {
+	public ResultSet getProcedureColumns(String catalog, String schemaPattern, String procedureNamePattern, String columnNamePattern) throws SQLException {
 
 		return null;
 	}
@@ -436,12 +432,12 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
 	public String getURL() throws SQLException {
 
-		return null;
+		return database.getURL();
 	}
 
 	public String getUserName() throws SQLException {
 
-		return null;
+		return database.getUser().getName();
 	}
 
 	public ResultSet getVersionColumns(String catalog, String schema, String table) throws SQLException {
