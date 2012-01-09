@@ -67,10 +67,6 @@ public abstract class OAbstractRecordCache extends OSharedResourceAbstract {
 			entries.clear();
 	}
 
-	public ORecordInternal<?> findRecord(final ORID iRid) {
-		return null;
-	}
-
 	public ORecordInternal<?> freeRecord(final ORID iRID) {
 		if (!enabled)
 			// PRECONDITIONS

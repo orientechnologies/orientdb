@@ -50,6 +50,7 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
 		setExcludedCluster(database.getClusterIdByName(OStorage.CLUSTER_INDEX_NAME));
 
 		level2cache = (OLevel2RecordCache) database.getLevel2Cache();
+		enabled = OGlobalConfiguration.CACHE_LEVEL1_ENABLED.getValueAsBoolean();
 	}
 
 	public void updateRecord(final ORecordInternal<?> iRecord) {
