@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Collection;
 import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -36,8 +35,6 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
 	public static final String	CONFIG_NAME							= "name";
 	public static final String	INDEX_DEFINITION				= "indexDefinition";
 	public static final String	INDEX_DEFINITION_CLASS	= "indexDefinitionClass";
-
-	public void checkEntry(final OIdentifiable iRecord, final Object iKey);
 
 	public void flush();
 

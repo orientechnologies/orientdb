@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -41,8 +42,18 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
 	}
 
 	@Override
-	public OIdentifiable get(final Object iKey) {
+	public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
+		// CHECK IF ALREADY EXISTS IN TX
+		final OIdentifiable previousRecord = get(iKey);
+		if (previousRecord != null && !previousRecord.equals(iRecord))
+			OLogManager.instance().exception("Found duplicated key '%s' previously assigned to the record %s", null,
+					OIndexException.class, iKey, previousRecord);
 
+		super.checkEntry(iRecord, iKey);
+	}
+
+	@Override
+	public OIdentifiable get(final Object iKey) {
 		final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
 
 		OIdentifiable result;
@@ -59,7 +70,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
 			if (value != null) {
 				for (final OTransactionIndexEntry entry : value.entries) {
 					if (entry.operation == OPERATION.REMOVE) {
-						if (entry.value == null) {
+						if (entry.value == null || entry.value.equals(result)) {
 							// REMOVE THE ENTIRE KEY, SO RESULT SET IS EMPTY
 							result = null;
 						}

@@ -47,7 +47,7 @@ public interface OIndex<T> {
 	 * @param iClusterIdsToIndex
 	 * @param iProgressListener
 	 */
-	public OIndex<?> create(String iName, final OIndexDefinition iIndexDefinition, final ODatabaseRecord iDatabase,
+	public OIndex<T> create(String iName, final OIndexDefinition iIndexDefinition, final ODatabaseRecord iDatabase,
 			final String iClusterIndexName, final int[] iClusterIdsToIndex, final OProgressListener iProgressListener);
 
 	public void unload();
@@ -123,8 +123,8 @@ public interface OIndex<T> {
 	 */
 	public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive);
 
-  public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive,
-                                                    Object iRangeTo, boolean iToInclusive, int maxValuesToFetch);
+	public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo,
+			boolean iToInclusive, int maxValuesToFetch);
 
 	/**
 	 * Returns a set of records with keys greater than passed parameter.
@@ -138,7 +138,7 @@ public interface OIndex<T> {
 	 */
 	public abstract Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive);
 
-  public abstract Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive, int maxValuesToFetch);
+	public abstract Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive, int maxValuesToFetch);
 
 	/**
 	 * Returns a set of records with keys less than passed parameter.
@@ -152,7 +152,7 @@ public interface OIndex<T> {
 	 */
 	public abstract Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive);
 
-  public abstract Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive, int maxValuesToFetch);
+	public abstract Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive, int maxValuesToFetch);
 
 	/**
 	 * Returns a set of documents that contains fields ("key", "rid") where "key" - index key, "rid" - record id of records with keys
@@ -168,7 +168,6 @@ public interface OIndex<T> {
 	public abstract Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive);
 
 	public abstract Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive, int maxEntriesToFetch);
-
 
 	/**
 	 * Returns a set of documents that contains fields ("key", "rid") where "key" - index key, "rid" - record id of records with keys
@@ -197,15 +196,16 @@ public interface OIndex<T> {
 	 * @see #getEntriesBetween(Object, Object)
 	 * @return
 	 */
-	public abstract Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo,
-                                                          final boolean iInclusive);
+	public abstract Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive);
 
-	public abstract Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo,
-                                                          final boolean iInclusive, final int maxEntriesToFetch);
+	public abstract Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive,
+			final int maxEntriesToFetch);
 
 	public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo);
 
 	public long getSize();
+
+	public void checkEntry(final OIdentifiable iRecord, final Object iKey);
 
 	public OIndex<T> lazySave();
 
@@ -247,7 +247,7 @@ public interface OIndex<T> {
 	 */
 	public Collection<OIdentifiable> getValues(Collection<?> iKeys);
 
-  public Collection<OIdentifiable> getValues(Collection<?> iKeys, int maxValuesToFetch );
+	public Collection<OIdentifiable> getValues(Collection<?> iKeys, int maxValuesToFetch);
 
 	/**
 	 * Returns a set of documents with keys in specific set
@@ -261,7 +261,6 @@ public interface OIndex<T> {
 
 	public Collection<ODocument> getEntries(Collection<?> iKeys, int maxEntriesToFetch);
 
-  public OIndexDefinition getDefinition();
+	public OIndexDefinition getDefinition();
 
 }
-

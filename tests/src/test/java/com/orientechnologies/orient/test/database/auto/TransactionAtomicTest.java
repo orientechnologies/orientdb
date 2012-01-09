@@ -27,6 +27,9 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 
@@ -126,6 +129,48 @@ public class TransactionAtomicTest {
 		});
 
 		db.commit();
+
+		db.close();
+	}
+
+	@Test
+	public void testTransactionWithDuplicateUniqueIndexValues() {
+		ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+		db.open("admin", "admin");
+
+		if (!db.getMetadata().getSchema().existsClass("Fruit")) {
+			OClass fruitClass = db.getMetadata().getSchema().createClass("Fruit");
+			fruitClass.createProperty("name", OType.STRING);
+			fruitClass.createProperty("color", OType.STRING);
+
+			db.getMetadata().getSchema().getClass("Fruit").getProperty("color").createIndex(OClass.INDEX_TYPE.UNIQUE);
+		}
+
+		Assert.assertEquals(db.countClusterElements("Fruit"), 0);
+
+		try {
+			db.begin();
+
+			ODocument apple = new ODocument(db, "Fruit").field("name", "Apple").field("color", "Red");
+			ODocument orange = new ODocument(db, "Fruit").field("name", "Orange").field("color", "Orange");
+			ODocument banana = new ODocument(db, "Fruit").field("name", "Banana").field("color", "Yellow");
+			ODocument kumquat = new ODocument(db, "Fruit").field("name", "Kumquat").field("color", "Orange");
+
+			apple.save();
+			orange.save();
+			banana.save();
+			kumquat.save();
+
+			db.commit();
+			Assert.assertTrue(false);
+
+		} catch (OIndexException e) {
+			Assert.assertTrue(true);
+			db.rollback();
+
+		}
+
+		Assert.assertEquals(db.countClusterElements("Fruit"), 0);
 
 		db.close();
 	}

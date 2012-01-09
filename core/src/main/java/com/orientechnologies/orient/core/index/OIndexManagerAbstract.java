@@ -393,6 +393,8 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 	private OIndex<?> wrapInTransactional(final OIndex<?> index) {
 		if (index instanceof OIndexMultiValues)
 			return new OIndexTxAwareMultiValue(getDatabase(), (OIndex<Collection<OIdentifiable>>) getIndexInstance(index));
+		else if (index instanceof OIndexDictionary)
+			return new OIndexTxAwareDictionary(getDatabase(), (OIndex<OIdentifiable>) getIndexInstance(index));
 		else if (index instanceof OIndexOneValue)
 			return new OIndexTxAwareOneValue(getDatabase(), (OIndex<OIdentifiable>) getIndexInstance(index));
 		return index;

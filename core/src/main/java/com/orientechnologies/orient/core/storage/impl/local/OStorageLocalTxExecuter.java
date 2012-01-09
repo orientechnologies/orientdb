@@ -61,11 +61,10 @@ public class OStorageLocalTxExecuter {
 		iRid.clusterPosition = -1;
 
 		try {
+			iRid.clusterPosition = storage.createRecord(iClusterSegment, iContent, iRecordType);
+			
 			// SAVE INTO THE LOG THE POSITION OF THE RECORD JUST CREATED. IF TX FAILS AT THIS POINT A GHOST RECORD IS CREATED UNTIL DEFRAG
 			txSegment.addLog(OTxSegment.OPERATION_CREATE, iTxId, iRid.clusterId, iRid.clusterPosition, iRecordType, 0, null);
-
-			iRid.clusterPosition = storage.createRecord(iClusterSegment, iContent, iRecordType);
-
 		} catch (IOException e) {
 
 			OLogManager.instance().error(this, "Error on creating entry in log segment: " + iClusterSegment, e,

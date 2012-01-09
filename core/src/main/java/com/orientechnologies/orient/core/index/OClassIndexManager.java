@@ -229,9 +229,9 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 			final Object key = index.getDefinition().getDocumentValueToIndex(iRecord);
 			if (key instanceof Collection) {
 				for (final Object keyItem : (Collection<?>) key)
-					index.getInternal().checkEntry(iRecord, keyItem);
+					index.checkEntry(iRecord, keyItem);
 			} else
-				index.getInternal().checkEntry(iRecord, key);
+				index.checkEntry(iRecord, key);
 		}
 
 	}

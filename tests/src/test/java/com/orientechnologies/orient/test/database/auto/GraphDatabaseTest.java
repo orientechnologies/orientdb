@@ -194,7 +194,7 @@ public class GraphDatabaseTest {
 		}
 	}
 
-	public void test() throws IOException {
+	public void testNotDuplicatedIndexTxChanges() throws IOException {
 		database.open("admin", "admin");
 
 		try {
