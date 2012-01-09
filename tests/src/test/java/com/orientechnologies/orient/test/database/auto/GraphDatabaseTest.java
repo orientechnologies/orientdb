@@ -145,7 +145,7 @@ public class GraphDatabaseTest {
 
 	@Test
 	public void testDictionary() {
-		database.open("admin", "admin");	
+		database.open("admin", "admin");
 
 		try {
 			ODocument rootNode = database.createVertex().field("id", 54254454);
@@ -223,6 +223,22 @@ public class GraphDatabaseTest {
 			database.close();
 		}
 	}
+
+	public void testAutoEdge() throws IOException {
+		database.open("admin", "admin");
+
+		try {
+			ODocument docA = database.createVertex();
+			docA.field("name", "selfEdgeTest");
+			database.createEdge(docA, docA).save();
+
+			docA.reload();
+
+		} finally {
+			database.close();
+		}
+	}
+
 	//
 	// @Test
 	// public void testTxDictionary() {
