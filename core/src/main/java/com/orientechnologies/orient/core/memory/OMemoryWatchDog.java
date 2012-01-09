@@ -81,8 +81,9 @@ public class OMemoryWatchDog extends Thread {
 				long freeMemory = Runtime.getRuntime().freeMemory();
 				int freeMemoryPer = (int) (freeMemory * 100 / maxMemory);
 
-				OLogManager.instance().debug(this, "Free memory is low %s of %s (%d%%), calling listeners to free memory...",
-						OFileUtils.getSizeAsString(freeMemory), OFileUtils.getSizeAsString(maxMemory), freeMemoryPer);
+				if (OLogManager.instance().isDebugEnabled())
+					OLogManager.instance().debug(this, "Free memory is low %s of %s (%d%%), calling listeners to free memory...",
+							OFileUtils.getSizeAsString(freeMemory), OFileUtils.getSizeAsString(maxMemory), freeMemoryPer);
 
 				final long timer = OProfiler.getInstance().startChrono();
 
