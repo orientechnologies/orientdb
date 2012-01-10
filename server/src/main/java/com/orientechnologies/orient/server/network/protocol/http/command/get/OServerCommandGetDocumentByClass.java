@@ -53,7 +53,7 @@ public class OServerCommandGetDocumentByClass extends OServerCommandAuthenticate
 		}
 
 		if (rec == null)
-			sendTextContent(iRequest, 404, "Not Found", null, OHttpUtils.CONTENT_JSON, "Record with id '" + urlParts[2]
+			sendTextContent(iRequest, OHttpUtils.STATUS_NOTFOUND_CODE, "Not Found", null, OHttpUtils.CONTENT_JSON, "Record with id '" + urlParts[2]
 					+ "' was not found.");
 		else
 			sendRecordContent(iRequest, rec, fetchPlan);

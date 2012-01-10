@@ -80,7 +80,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 
 		final String sessId = iRequest.sessionId != null ? iRequest.sessionId : "-";
 
-		writeLine(iRequest, "Set-Cookie: OSESSIONID=" + sessId + "; Path=/; HttpOnly");
+		writeLine(iRequest, "Set-Cookie: " + OHttpUtils.OSESSIONID + "=" + sessId + "; Path=/; HttpOnly");
 
 		final byte[] binaryContent = empty ? null : OBinaryProtocol.string2bytes(content);
 
