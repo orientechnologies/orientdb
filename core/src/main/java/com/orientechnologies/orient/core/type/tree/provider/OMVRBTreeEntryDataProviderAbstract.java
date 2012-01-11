@@ -159,13 +159,14 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
 		record.fromStream(toStream());
 		if (record.getIdentity().isValid())
 			// UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
-			record.setVersion(iSt.updateRecord((ORecordId) record.getIdentity(), record.toStream(), -1, record.getRecordType(), null));
+			record.setVersion(iSt.updateRecord((ORecordId) record.getIdentity(), record.toStream(), -1, record.getRecordType(), (byte) 0,
+					null));
 		else {
 			// CREATE IT
 			if (record.getIdentity().getClusterId() == ORID.CLUSTER_ID_INVALID)
 				((ORecordId) record.getIdentity()).clusterId = treeDataProvider.clusterId;
 			record.setIdentity(record.getIdentity().getClusterId(),
-					iSt.createRecord((ORecordId) record.getIdentity(), record.toStream(), record.getRecordType(), null));
+					iSt.createRecord((ORecordId) record.getIdentity(), record.toStream(), record.getRecordType(), (byte) 0, null));
 		}
 		record.unsetDirty();
 	}
@@ -182,7 +183,7 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
 	}
 
 	protected void delete(final OStorage iSt) {
-		iSt.deleteRecord((ORecordId) record.getIdentity(), record.getVersion(), null);
+		iSt.deleteRecord((ORecordId) record.getIdentity(), record.getVersion(), (byte) 0, null);
 	}
 
 	public void clear() {

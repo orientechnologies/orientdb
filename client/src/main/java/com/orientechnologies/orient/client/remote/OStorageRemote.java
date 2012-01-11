@@ -300,7 +300,7 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 	}
 
-	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType,
+	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType, int iMode,
 			final ORecordCallback<Long> iCallback) {
 		checkConnection();
 
@@ -311,36 +311,39 @@ public class OStorageRemote extends OStorageAbstract {
 					network.writeShort((short) iRid.clusterId);
 					network.writeBytes(iContent);
 					network.writeByte(iRecordType);
+					network.writeByte((byte) iMode);
 
 				} finally {
 					endRequest(network);
 				}
 
-				if (iCallback == null)
-					try {
-						beginResponse(network);
-						iRid.clusterPosition = network.readLong();
-						return iRid.clusterPosition;
-					} finally {
-						endResponse(network);
-					}
-				else {
-					Callable<Object> response = new Callable<Object>() {
-						public Object call() throws Exception {
-							final Long result;
-
+				if (iMode == 0) {
+					if (iCallback == null)
+						try {
 							beginResponse(network);
-							try {
-								result = network.readLong();
-							} finally {
-								endResponse(network);
-							}
-							iCallback.call(result);
-							return null;
+							iRid.clusterPosition = network.readLong();
+							return iRid.clusterPosition;
+						} finally {
+							endResponse(network);
 						}
+					else {
+						Callable<Object> response = new Callable<Object>() {
+							public Object call() throws Exception {
+								final Long result;
 
-					};
-					asynchExecutor.submit(new FutureTask<Object>(response));
+								beginResponse(network);
+								try {
+									result = network.readLong();
+								} finally {
+									endResponse(network);
+								}
+								iCallback.call(result);
+								return null;
+							}
+
+						};
+						asynchExecutor.submit(new FutureTask<Object>(response));
+					}
 				}
 
 			} catch (OException e) {
@@ -405,7 +408,7 @@ public class OStorageRemote extends OStorageAbstract {
 		} while (true);
 	}
 
-	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType,
+	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType, final int iMode,
 			final ORecordCallback<Integer> iCallback) {
 		checkConnection();
 
@@ -417,36 +420,39 @@ public class OStorageRemote extends OStorageAbstract {
 					network.writeBytes(iContent);
 					network.writeInt(iVersion);
 					network.writeByte(iRecordType);
+					network.writeByte((byte) iMode);
 
 				} finally {
 					endRequest(network);
 				}
 
-				if (iCallback == null)
-					try {
-						beginResponse(network);
-						return network.readInt();
-					} finally {
-						endResponse(network);
-					}
-				else {
-					Callable<Object> response = new Callable<Object>() {
-						public Object call() throws Exception {
-							int result;
-
+				if (iMode == 0) {
+					if (iCallback == null)
+						try {
 							beginResponse(network);
-							try {
-								result = network.readInt();
-							} finally {
-								endResponse(network);
+							return network.readInt();
+						} finally {
+							endResponse(network);
+						}
+					else {
+						Callable<Object> response = new Callable<Object>() {
+							public Object call() throws Exception {
+								int result;
+
+								beginResponse(network);
+								try {
+									result = network.readInt();
+								} finally {
+									endResponse(network);
+								}
+
+								iCallback.call(result);
+								return null;
 							}
 
-							iCallback.call(result);
-							return null;
-						}
-
-					};
-					asynchExecutor.submit(new FutureTask<Object>(response));
+						};
+						asynchExecutor.submit(new FutureTask<Object>(response));
+					}
 				}
 			} catch (OException e) {
 				// PASS THROUGH
@@ -458,7 +464,7 @@ public class OStorageRemote extends OStorageAbstract {
 		} while (true);
 	}
 
-	public boolean deleteRecord(final ORecordId iRid, final int iVersion, final ORecordCallback<Boolean> iCallback) {
+	public boolean deleteRecord(final ORecordId iRid, final int iVersion, final int iMode, final ORecordCallback<Boolean> iCallback) {
 		checkConnection();
 
 		do {
@@ -468,10 +474,14 @@ public class OStorageRemote extends OStorageAbstract {
 
 					network.writeRID(iRid);
 					network.writeInt(iVersion);
+					network.writeByte((byte) iMode);
 
 				} finally {
 					endRequest(network);
 				}
+
+				if (iMode == 1)
+					return false;
 
 				if (iCallback == null)
 					try {
@@ -1188,8 +1198,11 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	protected void sendClientInfo(OChannelBinaryClient network) throws IOException {
-		network.writeString(DRIVER_NAME).writeString(OConstants.ORIENT_VERSION)
-				.writeShort((short) OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION).writeString(clientId);
+		if (network.getSrvProtocolVersion() >= 7) {
+			// @COMPATIBILITY 1.0rc8
+			network.writeString(DRIVER_NAME).writeString(OConstants.ORIENT_VERSION)
+					.writeShort((short) OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION).writeString(clientId);
+		}
 	}
 
 	/**
@@ -1269,11 +1282,7 @@ public class OStorageRemote extends OStorageAbstract {
 			final String remoteHost = server.substring(0, sepPos);
 			final int remotePort = Integer.parseInt(server.substring(sepPos + 1));
 
-			final OChannelBinaryClient network = new OChannelBinaryClient(remoteHost, remotePort, clientConfiguration);
-
-			OChannelBinaryProtocol.checkProtocolVersion(network);
-
-			return network;
+			return new OChannelBinaryClient(remoteHost, remotePort, clientConfiguration);
 		}
 
 		final StringBuilder buffer = new StringBuilder();
@@ -1539,22 +1548,23 @@ public class OStorageRemote extends OStorageAbstract {
 				networkPool.add(firstChannel);
 				serviceThread = new OStorageRemoteServiceThread(new OStorageRemoteThread(this, Integer.MIN_VALUE), firstChannel);
 
-				// CREATE THE MINIMUM POOL
-				for (int i = 1; i < minPool; ++i)
-					networkPool.add(createNetworkConnection());
 			}
 
+			// CREATE THE MINIMUM POOL
+			for (int i = networkPool.size(); i < minPool; ++i)
+				networkPool.add(createNetworkConnection());
 		}
 	}
 
 	private void readDatabaseInformation(final OChannelBinaryClient network) throws IOException {
-		short tot = network.readShort();
+		// @COMPATIBILITY 1.0rc8
+		int tot = network.getSrvProtocolVersion() >= 7 ? network.readShort() : network.readInt();
 		String clusterName;
 		clustersIds.clear();
 		clustersTypes.clear();
 		for (int i = 0; i < tot; ++i) {
 			clusterName = network.readString().toLowerCase();
-			clustersIds.put(clusterName, (int) network.readShort());
+			clustersIds.put(clusterName, network.getSrvProtocolVersion() >= 7 ? (int) network.readShort() : network.readInt());
 			clustersTypes.put(clusterName, network.readString());
 		}
 

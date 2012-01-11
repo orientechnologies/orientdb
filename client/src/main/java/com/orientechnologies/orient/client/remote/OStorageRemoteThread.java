@@ -132,9 +132,10 @@ public class OStorageRemoteThread implements OStorage {
 		return delegate.getClusterNames();
 	}
 
-	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType, ORecordCallback<Long> iCallback) {
+	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType, final int iMode,
+			ORecordCallback<Long> iCallback) {
 		delegate.setSessionId(sessionId);
-		return delegate.createRecord(iRid, iContent, iRecordType, null);
+		return delegate.createRecord(iRid, iContent, iRecordType, iMode, null);
 	}
 
 	public ORawBuffer readRecord(final ORecordId iRid, final String iFetchPlan, ORecordCallback<ORawBuffer> iCallback) {
@@ -142,25 +143,25 @@ public class OStorageRemoteThread implements OStorage {
 		return delegate.readRecord(iRid, iFetchPlan, null);
 	}
 
-	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType,
+	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType, final int iMode,
 			ORecordCallback<Integer> iCallback) {
 		delegate.setSessionId(sessionId);
-		return delegate.updateRecord(iRid, iContent, iVersion, iRecordType, null);
+		return delegate.updateRecord(iRid, iContent, iVersion, iRecordType, iMode, null);
 	}
 
-	public String toString() {
+	public boolean deleteRecord(final ORecordId iRid, final int iVersion, final int iMode, ORecordCallback<Boolean> iCallback) {
 		delegate.setSessionId(sessionId);
-		return delegate.toString();
-	}
-
-	public boolean deleteRecord(final ORecordId iRid, final int iVersion, ORecordCallback<Boolean> iCallback) {
-		delegate.setSessionId(sessionId);
-		return delegate.deleteRecord(iRid, iVersion, null);
+		return delegate.deleteRecord(iRid, iVersion, iMode, null);
 	}
 
 	public long count(final int iClusterId) {
 		delegate.setSessionId(sessionId);
 		return delegate.count(iClusterId);
+	}
+
+	public String toString() {
+		delegate.setSessionId(sessionId);
+		return delegate.toString();
 	}
 
 	public long[] getClusterDataRange(final int iClusterId) {

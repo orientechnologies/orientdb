@@ -216,7 +216,8 @@ public class OStorageMemory extends OStorageEmbedded {
 		return addDataSegment(iSegmentName);
 	}
 
-	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType, ORecordCallback<Long> iCallback) {
+	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType, final int iMode,
+			ORecordCallback<Long> iCallback) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		lock.acquireSharedLock();
@@ -274,7 +275,7 @@ public class OStorageMemory extends OStorageEmbedded {
 		}
 	}
 
-	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType,
+	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType, final int iMode,
 			ORecordCallback<Integer> iCallback) {
 		final long timer = OProfiler.getInstance().startChrono();
 
@@ -321,7 +322,7 @@ public class OStorageMemory extends OStorageEmbedded {
 		}
 	}
 
-	public boolean deleteRecord(final ORecordId iRid, final int iVersion, ORecordCallback<Boolean> iCallback) {
+	public boolean deleteRecord(final ORecordId iRid, final int iVersion, final int iMode, ORecordCallback<Boolean> iCallback) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		final OCluster cluster = getClusterById(iRid.clusterId);
@@ -629,13 +630,13 @@ public class OStorageMemory extends OStorageEmbedded {
 						// RECORD CHANGED: RE-STREAM IT
 						stream = txEntry.getRecord().toStream();
 
-					createRecord(rid, stream, txEntry.getRecord().getRecordType(), null);
+					createRecord(rid, stream, txEntry.getRecord().getRecordType(), 0, null);
 
 					iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_CREATE, txEntry.getRecord());
 
 				} else {
 					txEntry.getRecord().setVersion(
-							updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), null));
+							updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), 0, null));
 				}
 			}
 			break;
@@ -648,13 +649,13 @@ public class OStorageMemory extends OStorageEmbedded {
 				stream = txEntry.getRecord().toStream();
 
 			txEntry.getRecord().setVersion(
-					updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), null));
+					updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), 0, null));
 			iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, txEntry.getRecord());
 			break;
 
 		case ORecordOperation.DELETED:
 			iTx.getDatabase().callbackHooks(ORecordHook.TYPE.BEFORE_DELETE, txEntry.getRecord());
-			deleteRecord(rid, txEntry.getRecord().getVersion(), null);
+			deleteRecord(rid, txEntry.getRecord().getVersion(), 0, null);
 			iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_DELETE, txEntry.getRecord());
 			break;
 		}

@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.tx;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
@@ -78,11 +79,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 		return database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, false);
 	}
 
-	public void deleteRecord(final ORecordInternal<?> iRecord) {
+	public void deleteRecord(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {
 		addRecord(iRecord, ORecordOperation.DELETED, null);
 	}
 
-	public void saveRecord(final ORecordInternal<?> iRecord, final String iClusterName) {
+	public void saveRecord(final ORecordInternal<?> iRecord, final String iClusterName, final OPERATION_MODE iMode) {
 		addRecord(iRecord, iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED, iClusterName);
 	}
 
@@ -94,10 +95,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 			switch (iStatus) {
 			case ORecordOperation.CREATED:
 			case ORecordOperation.UPDATED:
-				database.executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iRecord.getRecordType());
+				database
+						.executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iRecord.getRecordType(), OPERATION_MODE.SYNCHRONOUS);
 				break;
 			case ORecordOperation.DELETED:
-				database.executeDeleteRecord(iRecord, iRecord.getVersion());
+				database.executeDeleteRecord(iRecord, iRecord.getVersion(), OPERATION_MODE.SYNCHRONOUS);
 				break;
 			}
 		} else {

@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.enterprise.channel.binary;
 
-import java.io.IOException;
 
 /**
  * The range of the requests is 1-79.
@@ -71,21 +70,4 @@ public class OChannelBinaryProtocol {
 	public static final short	RECORD_NULL										= -2;
 	public static final short	RECORD_RID										= -3;
 	public static final int		CURRENT_PROTOCOL_VERSION			= 7;	// SENT AS SHORT AS FIRST PACKET AFTER SOCKET CONNECTION
-
-	public static void checkProtocolVersion(final OChannelBinary iNetwork) throws IOException {
-		// SEND PROTOCOL VERSION
-		final short srvProtocolVersion;
-		try {
-			srvProtocolVersion = iNetwork.readShort();
-		} catch (IOException e) {
-			throw new ONetworkProtocolException("Cannot read data from remote server " + iNetwork.socket.getRemoteSocketAddress() + ": "
-					+ e);
-		}
-
-		if (srvProtocolVersion != OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION) {
-			iNetwork.close();
-			throw new ONetworkProtocolException("Binary protocol is incompatible with the Server connected: client="
-					+ OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION + ", server=" + srvProtocolVersion);
-		}
-	}
 }

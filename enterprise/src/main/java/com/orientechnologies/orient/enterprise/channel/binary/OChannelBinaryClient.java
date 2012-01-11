@@ -28,7 +28,8 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 public class OChannelBinaryClient extends OChannelBinaryAsynch {
-	final protected int	timeout;	// IN MS
+	final protected int	timeout;						// IN MS
+	final private short	srvProtocolVersion;
 
 	public OChannelBinaryClient(final String remoteHost, final int remotePort, final OContextConfiguration iConfig)
 			throws IOException {
@@ -47,6 +48,20 @@ public class OChannelBinaryClient extends OChannelBinaryAsynch {
 
 		in = new DataInputStream(inStream);
 		out = new DataOutputStream(outStream);
+
+		try {
+			srvProtocolVersion = in.readShort();
+		} catch (IOException e) {
+			throw new ONetworkProtocolException("Cannot read protocol version from remote server " + socket.getRemoteSocketAddress()
+					+ ": " + e);
+		}
+		
+		if (srvProtocolVersion != OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION) {
+			close();
+			throw new ONetworkProtocolException("Binary protocol is incompatible with the Server connected: client="
+					+ OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION + ", server=" + srvProtocolVersion);
+		}
+
 	}
 
 	public void reconnect() throws IOException {
@@ -70,5 +85,9 @@ public class OChannelBinaryClient extends OChannelBinaryAsynch {
 		}
 
 		return false;
+	}
+
+	public short getSrvProtocolVersion() {
+		return srvProtocolVersion;
 	}
 }

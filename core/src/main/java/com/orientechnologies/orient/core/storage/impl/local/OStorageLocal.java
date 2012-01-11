@@ -793,7 +793,8 @@ public class OStorageLocal extends OStorageEmbedded {
 		}
 	}
 
-	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType, ORecordCallback<Long> iCallback) {
+	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType, final int iMode,
+			ORecordCallback<Long> iCallback) {
 		checkOpeness();
 
 		iRid.clusterPosition = createRecord(getClusterById(iRid.clusterId), iContent, iRecordType);
@@ -805,13 +806,13 @@ public class OStorageLocal extends OStorageEmbedded {
 		return readRecord(getClusterById(iRid.clusterId), iRid, true);
 	}
 
-	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType,
+	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType, final int iMode,
 			ORecordCallback<Integer> iCallback) {
 		checkOpeness();
 		return updateRecord(getClusterById(iRid.clusterId), iRid, iContent, iVersion, iRecordType);
 	}
 
-	public boolean deleteRecord(final ORecordId iRid, final int iVersion, ORecordCallback<Boolean> iCallback) {
+	public boolean deleteRecord(final ORecordId iRid, final int iVersion, final int iMode, ORecordCallback<Boolean> iCallback) {
 		checkOpeness();
 		return deleteRecord(getClusterById(iRid.clusterId), iRid, iVersion);
 	}

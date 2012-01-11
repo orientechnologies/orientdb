@@ -48,6 +48,9 @@ import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
  * @param <T>
  */
 public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObject2RecordHandler {
+	public enum OPERATION_MODE {
+		SYNCHRONOUS, ASYNCHRONOUS
+	}
 
 	/**
 	 * Creates a new entity instance.

@@ -205,20 +205,36 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 	}
 
 	@Override
+	public ODatabaseRecord save(final ORecordInternal<?> iContent, final OPERATION_MODE iMode) {
+		return save(iContent, (String) null, iMode);
+	}
+
+	@Override
 	public ODatabaseRecord save(final ORecordInternal<?> iContent) {
-		return save(iContent, null);
+		return save(iContent, (String) null, OPERATION_MODE.SYNCHRONOUS);
 	}
 
 	@Override
 	public ODatabaseRecord save(final ORecordInternal<?> iContent, final String iClusterName) {
+		return save(iContent, iClusterName, OPERATION_MODE.SYNCHRONOUS);
+	}
+
+	@Override
+	public ODatabaseRecord save(final ORecordInternal<?> iContent, final String iClusterName, final OPERATION_MODE iMode) {
 		setCurrentDatabaseinThreadLocal();
-		currentTx.saveRecord(iContent, iClusterName);
+		currentTx.saveRecord(iContent, iClusterName, iMode);
 		return this;
 	}
 
 	@Override
 	public ODatabaseRecord delete(final ORecordInternal<?> iRecord) {
-		currentTx.deleteRecord(iRecord);
+		currentTx.deleteRecord(iRecord, OPERATION_MODE.SYNCHRONOUS);
+		return this;
+	}
+
+	@Override
+	public ODatabaseRecord delete(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {
+		currentTx.deleteRecord(iRecord, iMode);
 		return this;
 	}
 

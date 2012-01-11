@@ -77,8 +77,6 @@ public class ORemotePeer {
 
 		channel = new OChannelBinaryClient(networkAddress, networkPort, configuration);
 
-		OChannelBinaryProtocol.checkProtocolVersion(channel);
-
 		OLogManager.instance().warn(this, "Cluster '%s': received joining request from peer node %s:%d. Checking authorizations...",
 				iClusterName, networkAddress, networkPort);
 

@@ -84,7 +84,7 @@ public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLPermis
 		for (String rec : records) {
 			try {
 				final ORecordId rid = new ORecordId(rec);
-				database.getStorage().deleteRecord(rid, -1, null);
+				database.getStorage().deleteRecord(rid, -1, 0, null);
 			} catch (Throwable e) {
 				throw new OCommandExecutionException("Error on executing command", e);
 			}

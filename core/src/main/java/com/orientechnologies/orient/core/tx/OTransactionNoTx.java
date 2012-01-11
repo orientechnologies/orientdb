@@ -19,9 +19,10 @@ import java.util.Collection;
 import java.util.List;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -62,9 +63,9 @@ public class OTransactionNoTx extends OTransactionAbstract {
 	/**
 	 * Update the record.
 	 */
-	public void saveRecord(final ORecordInternal<?> iRecord, final String iClusterName) {
+	public void saveRecord(final ORecordInternal<?> iRecord, final String iClusterName, final OPERATION_MODE iMode) {
 		try {
-			database.executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iRecord.getRecordType());
+			database.executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iRecord.getRecordType(), iMode);
 		} catch (Exception e) {
 			// REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
 			final ORecordId rid = (ORecordId) iRecord.getIdentity();
@@ -78,11 +79,11 @@ public class OTransactionNoTx extends OTransactionAbstract {
 	}
 
 	/**
-	 * Delete the record.
+	 * Deletes the record.
 	 */
-	public void deleteRecord(final ORecordInternal<?> iRecord) {
+	public void deleteRecord(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {
 		try {
-			database.executeDeleteRecord(iRecord, iRecord.getVersion());
+			database.executeDeleteRecord(iRecord, iRecord.getVersion(), iMode);
 		} catch (Exception e) {
 			// REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
 			final ORecordId rid = (ORecordId) iRecord.getIdentity();

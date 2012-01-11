@@ -396,5 +396,4 @@ public abstract class OChannelBinary extends OChannel {
 	public int getMaxChunkSize() {
 		return maxChunkSize;
 	}
-
 }

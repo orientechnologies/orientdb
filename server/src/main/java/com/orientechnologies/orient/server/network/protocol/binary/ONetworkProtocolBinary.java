@@ -595,15 +595,18 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			final ORecordId rid = new ORecordId(channel.readShort(), ORID.CLUSTER_POS_INVALID);
 			final byte[] buffer = channel.readBytes();
 			final byte recordType = channel.readByte();
+			final byte mode = channel.readByte();
 
 			final long clusterPosition = createRecord(rid, buffer, recordType);
 
-			channel.acquireExclusiveLock();
-			try {
-				sendOk(lastClientTxId);
-				channel.writeLong(clusterPosition);
-			} finally {
-				channel.releaseExclusiveLock();
+			if (mode == 0) {
+				channel.acquireExclusiveLock();
+				try {
+					sendOk(lastClientTxId);
+					channel.writeLong(clusterPosition);
+				} finally {
+					channel.releaseExclusiveLock();
+				}
 			}
 			break;
 		}
@@ -623,15 +626,18 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			final byte[] buffer = channel.readBytes();
 			final int version = channel.readInt();
 			final byte recordType = channel.readByte();
+			final byte mode = channel.readByte();
 
 			final int newVersion = updateRecord(rid, buffer, version, recordType);
 
-			channel.acquireExclusiveLock();
-			try {
-				sendOk(lastClientTxId);
-				channel.writeInt(newVersion);
-			} finally {
-				channel.releaseExclusiveLock();
+			if (mode == 0) {
+				channel.acquireExclusiveLock();
+				try {
+					sendOk(lastClientTxId);
+					channel.writeInt(newVersion);
+				} finally {
+					channel.releaseExclusiveLock();
+				}
 			}
 			break;
 		}
@@ -643,15 +649,18 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			final ORID rid = channel.readRID();
 			final int version = channel.readInt();
+			final byte mode = channel.readByte();
 
 			final int result = deleteRecord(rid, version);
 
-			channel.acquireExclusiveLock();
-			try {
-				sendOk(lastClientTxId);
-				channel.writeByte((byte) result); // TODO: REMOV SINCE IT'S NOT MORE NECESSARY
-			} finally {
-				channel.releaseExclusiveLock();
+			if (mode == 0) {
+				channel.acquireExclusiveLock();
+				try {
+					sendOk(lastClientTxId);
+					channel.writeByte((byte) result);
+				} finally {
+					channel.releaseExclusiveLock();
+				}
 			}
 			break;
 		}

@@ -230,18 +230,34 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	}
 
 	/**
-	 * Update the record without checking the version.
+	 * Updates the record without checking the version.
 	 */
 	public ODatabaseRecord save(final ORecordInternal<?> iContent) {
-		executeSaveRecord(iContent, null, iContent.getVersion(), iContent.getRecordType());
+		executeSaveRecord(iContent, null, iContent.getVersion(), iContent.getRecordType(), OPERATION_MODE.SYNCHRONOUS);
 		return this;
 	}
 
 	/**
-	 * Update the record in the requested cluster without checking the version.
+	 * Updates the record without checking the version.
+	 */
+	public ODatabaseRecord save(final ORecordInternal<?> iContent, final OPERATION_MODE iMode) {
+		executeSaveRecord(iContent, null, iContent.getVersion(), iContent.getRecordType(), iMode);
+		return this;
+	}
+
+	/**
+	 * Updates the record in the requested cluster without checking the version.
 	 */
 	public ODatabaseRecord save(final ORecordInternal<?> iContent, final String iClusterName) {
-		executeSaveRecord(iContent, iClusterName, iContent.getVersion(), iContent.getRecordType());
+		executeSaveRecord(iContent, iClusterName, iContent.getVersion(), iContent.getRecordType(), OPERATION_MODE.SYNCHRONOUS);
+		return this;
+	}
+
+	/**
+	 * Updates the record in the requested cluster without checking the version.
+	 */
+	public ODatabaseRecord save(final ORecordInternal<?> iContent, final String iClusterName, final OPERATION_MODE iMode) {
+		executeSaveRecord(iContent, iClusterName, iContent.getVersion(), iContent.getRecordType(), iMode);
 		return this;
 	}
 
@@ -249,7 +265,15 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	 * Delete the record without checking the version.
 	 */
 	public ODatabaseRecord delete(final ORID iRecord) {
-		executeDeleteRecord(iRecord, -1);
+		executeDeleteRecord(iRecord, -1, OPERATION_MODE.SYNCHRONOUS);
+		return this;
+	}
+
+	/**
+	 * Delete the record without checking the version.
+	 */
+	public ODatabaseRecord delete(final ORID iRecord, final OPERATION_MODE iMode) {
+		executeDeleteRecord(iRecord, -1, iMode);
 		return this;
 	}
 
@@ -257,7 +281,15 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	 * Delete the record without checking the version.
 	 */
 	public ODatabaseRecord delete(final ORecordInternal<?> iRecord) {
-		executeDeleteRecord(iRecord, -1);
+		executeDeleteRecord(iRecord, -1, OPERATION_MODE.SYNCHRONOUS);
+		return this;
+	}
+
+	/**
+	 * Delete the record without checking the version.
+	 */
+	public ODatabaseRecord delete(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {
+		executeDeleteRecord(iRecord, -1, iMode);
 		return this;
 	}
 
@@ -514,7 +546,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		return null;
 	}
 
-	public void executeSaveRecord(final ORecordInternal<?> iRecord, String iClusterName, final int iVersion, final byte iRecordType) {
+	public void executeSaveRecord(final ORecordInternal<?> iRecord, String iClusterName, final int iVersion, final byte iRecordType,
+			final OPERATION_MODE iMode) {
 		checkOpeness();
 
 		if (!iRecord.isDirty())
@@ -575,7 +608,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			final int realVersion = iVersion == -1 || !mvcc ? -1 : iRecord.getVersion();
 
 			// SAVE IT
-			final long result = underlying.save(rid, stream, realVersion, iRecord.getRecordType());
+			final long result = underlying.save(rid, stream, realVersion, iRecord.getRecordType(), iMode.ordinal());
 
 			if (isNew) {
 				// UPDATE INFORMATION: CLUSTER ID+POSITION
@@ -605,7 +638,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		}
 	}
 
-	public void executeDeleteRecord(final OIdentifiable iRecord, final int iVersion) {
+	public void executeDeleteRecord(final OIdentifiable iRecord, final int iVersion, final OPERATION_MODE iMode) {
 		checkOpeness();
 		final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
@@ -623,7 +656,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		try {
 			callbackHooks(TYPE.BEFORE_DELETE, iRecord);
 
-			underlying.delete(rid, iVersion);
+			underlying.delete(rid, iVersion, (byte) iMode.ordinal());
 
 			callbackHooks(TYPE.AFTER_DELETE, iRecord);
 

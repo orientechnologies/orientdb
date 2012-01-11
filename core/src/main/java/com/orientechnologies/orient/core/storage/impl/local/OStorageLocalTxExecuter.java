@@ -62,7 +62,7 @@ public class OStorageLocalTxExecuter {
 
 		try {
 			iRid.clusterPosition = storage.createRecord(iClusterSegment, iContent, iRecordType);
-			
+
 			// SAVE INTO THE LOG THE POSITION OF THE RECORD JUST CREATED. IF TX FAILS AT THIS POINT A GHOST RECORD IS CREATED UNTIL DEFRAG
 			txSegment.addLog(OTxSegment.OPERATION_CREATE, iTxId, iRid.clusterId, iRid.clusterPosition, iRecordType, 0, null);
 		} catch (IOException e) {
@@ -196,7 +196,8 @@ public class OStorageLocalTxExecuter {
 				if (iUseLog)
 					rid.clusterPosition = createRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getRecordType());
 				else
-					rid.clusterPosition = iTx.getDatabase().getStorage().createRecord(rid, stream, txEntry.getRecord().getRecordType(), null);
+					rid.clusterPosition = iTx.getDatabase().getStorage()
+							.createRecord(rid, stream, txEntry.getRecord().getRecordType(), (byte) 0, null);
 
 				iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_CREATE, txEntry.getRecord());
 			} else {
@@ -206,9 +207,12 @@ public class OStorageLocalTxExecuter {
 									updateRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord()
 											.getRecordType()));
 				else
-					txEntry.getRecord().setVersion(
-							iTx.getDatabase().getStorage()
-									.updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), null));
+					txEntry.getRecord()
+							.setVersion(
+									iTx.getDatabase()
+											.getStorage()
+											.updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), (byte) 0,
+													null));
 			}
 			break;
 		}
@@ -226,7 +230,7 @@ public class OStorageLocalTxExecuter {
 			else
 				txEntry.getRecord().setVersion(
 						iTx.getDatabase().getStorage()
-								.updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), null));
+								.updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), (byte) 0, null));
 
 			iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, txEntry.getRecord());
 			break;
@@ -238,7 +242,7 @@ public class OStorageLocalTxExecuter {
 			if (iUseLog)
 				deleteRecord(iTx.getId(), cluster, rid.clusterPosition, txEntry.getRecord().getVersion());
 			else
-				iTx.getDatabase().getStorage().deleteRecord(rid, txEntry.getRecord().getVersion(), null);
+				iTx.getDatabase().getStorage().deleteRecord(rid, txEntry.getRecord().getVersion(), (byte) 0, null);
 
 			iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_DELETE, txEntry.getRecord());
 		}

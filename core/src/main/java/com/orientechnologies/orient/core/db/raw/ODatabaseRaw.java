@@ -225,18 +225,18 @@ public class ODatabaseRaw implements ODatabase {
 		}
 	}
 
-	public long save(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType) {
+	public long save(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType, final int iMode) {
 		// CHECK IF RECORD TYPE IS SUPPORTED
 		Orient.instance().getRecordFactoryManager().getRecordTypeClass(iRecordType);
 
 		try {
 			if (iRid.clusterPosition < 0) {
 				// CREATE
-				return storage.createRecord(iRid, iContent, iRecordType, null);
+				return storage.createRecord(iRid, iContent, iRecordType, iMode, null);
 
 			} else {
 				// UPDATE
-				return storage.updateRecord(iRid, iContent, iVersion, iRecordType, null);
+				return storage.updateRecord(iRid, iContent, iVersion, iRecordType, iMode, null);
 			}
 		} catch (OException e) {
 			// PASS THROUGH
@@ -246,9 +246,9 @@ public class ODatabaseRaw implements ODatabase {
 		}
 	}
 
-	public void delete(final ORecordId iRid, final int iVersion) {
+	public void delete(final ORecordId iRid, final int iVersion, final int iMode) {
 		try {
-			if (!storage.deleteRecord(iRid, iVersion, null))
+			if (!storage.deleteRecord(iRid, iVersion, iMode, null))
 				throw new ORecordNotFoundException("The record with id " + iRid + " was not found");
 
 		} catch (OException e) {
