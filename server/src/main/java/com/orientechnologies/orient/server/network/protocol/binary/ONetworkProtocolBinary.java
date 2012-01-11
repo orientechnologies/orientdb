@@ -968,11 +968,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	}
 
 	private void sendDatabaseInformation() throws IOException {
-		channel.writeInt(connection.database.getClusterNames().size());
+		channel.writeShort((short) connection.database.getClusterNames().size());
 		for (OCluster c : (connection.database.getStorage()).getClusterInstances()) {
 			if (c != null) {
 				channel.writeString(c.getName());
-				channel.writeInt(c.getId());
+				channel.writeShort((short) c.getId());
 				channel.writeString(c.getType());
 			}
 		}

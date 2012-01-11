@@ -1548,13 +1548,13 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	private void readDatabaseInformation(final OChannelBinaryClient network) throws IOException {
-		int tot = network.readInt();
+		short tot = network.readShort();
 		String clusterName;
 		clustersIds.clear();
 		clustersTypes.clear();
 		for (int i = 0; i < tot; ++i) {
 			clusterName = network.readString().toLowerCase();
-			clustersIds.put(clusterName, network.readInt());
+			clustersIds.put(clusterName, (int) network.readShort());
 			clustersTypes.put(clusterName, network.readString());
 		}
 
