@@ -38,6 +38,6 @@ goto setArgs
 
 :doneSetArgs
 
-call %JAVA% -client -Dorientdb.build.number=@BUILD@ -cp "%ORIENTDB_HOME%\lib\*" com.orientechnologies.orient.graph.console.OGremlinConsole %CMD_LINE_ARGS%
+call %JAVA% -client -Dorientdb.build.number=@BUILD@ -cp "%ORIENTDB_HOME%\lib\*;" com.orientechnologies.orient.graph.console.OGremlinConsole %CMD_LINE_ARGS%
 
 :end
