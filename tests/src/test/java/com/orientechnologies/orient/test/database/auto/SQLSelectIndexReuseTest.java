@@ -1,10 +1,5 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.common.profiler.OProfilerMBean;
-import com.orientechnologies.orient.client.remote.OStorageRemote;
-import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -15,30 +10,23 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
-import javax.management.JMX;
-import javax.management.MBeanServerConnection;
-import javax.management.ObjectName;
-import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXServiceURL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Test(groups = {"index"})
-public class SQLSelectIndexReuseTest
+public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest
 {
-  private final ODatabaseDocumentTx database;
-  private JMXConnector jmxConnector;
-  private OProfilerMBean profiler;
-
   @Parameters(value = "url")
   public SQLSelectIndexReuseTest( final String iURL )
   {
-    database = new ODatabaseDocumentTx( iURL );
+	super(iURL);
   }
 
 
@@ -154,25 +142,6 @@ public class SQLSelectIndexReuseTest
         document.save();
       }
     }
-    profiler = getProfilerInstance();
-    database.close();
-
-    if ( !profiler.isRecording() ) {
-      profiler.startRecording();
-    }
-  }
-
-  @BeforeMethod
-  public void beforeMethod()
-  {
-    if ( database.isClosed() ) {
-      database.open( "admin", "admin" );
-    }
-  }
-
-  @AfterMethod
-  public void afterMethod()
-  {
     database.close();
   }
 
@@ -188,7 +157,6 @@ public class SQLSelectIndexReuseTest
     database.getLevel2Cache().clear();
 
     database.close();
-    closeJMXConnector();
   }
 
   @Test
@@ -2090,7 +2058,8 @@ public class SQLSelectIndexReuseTest
     linkMap.put( "key14", new ORecordId( clusterId, 1 ) );
 
     for(final ODocument doc : result ) {
-      final Map<String, OIdentifiable> resultLinkMap = (Map<String, OIdentifiable>) doc.field( "fLinkMap");
+			@SuppressWarnings("unchecked")
+			final Map<String, OIdentifiable> resultLinkMap = (Map<String, OIdentifiable>) doc.field( "fLinkMap");
       
       for(Map.Entry<String, OIdentifiable> mapEntry : resultLinkMap.entrySet() ) {
         final ORID link = (linkMap.get( mapEntry.getKey() )).getIdentity();
@@ -2131,6 +2100,7 @@ public class SQLSelectIndexReuseTest
     linkMap.put( "key24", new ORecordId( clusterId, 2 ) );
 
     for(final ODocument doc : result ) {
+			@SuppressWarnings("unchecked")
       final Map<String, OIdentifiable> resultLinkMap = (Map<String, OIdentifiable>) doc.field( "fLinkMap");
 
       for(Map.Entry<String, OIdentifiable> mapEntry : resultLinkMap.entrySet() ) {
@@ -2327,48 +2297,20 @@ public class SQLSelectIndexReuseTest
     Assert.assertEquals( profiler.getCounter( "Query.indexUsage" ), oldIndexUsage );
   }
 
-  private int containsDocument( final List<ODocument> docList, final ODocument document )
-  {
-    int count = 0;
-    for( final ODocument docItem : docList ) {
-      boolean containsAllFields = true;
-      for( final String fieldName : document.fieldNames() ) {
-        if ( !document.<Object>field( fieldName ).equals( docItem.<Object>field( fieldName ) ) ) {
-          containsAllFields = false;
-          break;
-        }
-      }
-      if ( containsAllFields ) {
-        count++;
-      }
-    }
-    return count;
-  }
-
-  private boolean isRemoteStorage()
-  {
-    return database.getStorage() instanceof OStorageRemote ||
-      database.getStorage() instanceof OStorageRemoteThread;
-  }
-
-  private void closeJMXConnector() throws Exception
-  {
-    if ( isRemoteStorage() ) {
-      jmxConnector.close();
-    }
-  }
-
-  private OProfilerMBean getProfilerInstance() throws Exception
-  {
-    if ( isRemoteStorage() ) {
-      final JMXServiceURL url = new JMXServiceURL( "service:jmx:rmi:///jndi/rmi://localhost:4321/jmxrmi" );
-      jmxConnector = JMXConnectorFactory.connect( url, null );
-      final MBeanServerConnection mbsc = jmxConnector.getMBeanServerConnection();
-      final ObjectName onProfiler = new ObjectName( "OrientDB:type=Profiler" );
-      return JMX.newMBeanProxy( mbsc, onProfiler, OProfilerMBean.class, false );
-    } else {
-      return OProfiler.getInstance();
-    }
-  }
-
+	private int containsDocument(final List<ODocument> docList, final ODocument document) {
+		int count = 0;
+		for (final ODocument docItem : docList) {
+			boolean containsAllFields = true;
+			for (final String fieldName : document.fieldNames()) {
+				if (!document.<Object>field(fieldName).equals(docItem.<Object>field(fieldName))) {
+					containsAllFields = false;
+					break;
+				}
+			}
+			if (containsAllFields) {
+				count++;
+			}
+		}
+		return count;
+	}
 }

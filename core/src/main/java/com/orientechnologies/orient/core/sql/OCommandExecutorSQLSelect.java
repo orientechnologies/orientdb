@@ -442,7 +442,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				// we need to test that last field in query subset and field in index that has the same position
 				// are equals.
 				if (!(operator instanceof OQueryOperatorEquals)) {
-					final String lastFiled = searchResult.lastField.getItemName(0);
+					final String lastFiled = searchResult.lastField.getItemName(searchResult.lastField.getItemCount() - 1);
 					final String relatedIndexField = indexDefinition.getFields().get(searchResult.fieldValuePairs.size());
 					if (!lastFiled.equals(relatedIndexField))
 						continue;

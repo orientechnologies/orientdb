@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -19,6 +20,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.index.OIndexNotUnique;
+import com.orientechnologies.orient.core.index.OIndexOneValue;
 import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -26,6 +28,20 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 
 /**
+ * <p>
+ * There are some cases when we need to create index for some class by traversed property.
+ * Unfortunately, such functionality is not supported yet. But we can do that by creating index for each element
+ * of {@link OSQLFilterItemField.FieldChain} (which define "way" to our property), and then process operations
+ * consequently using previously created indexes.
+ * </p>
+ * <p>
+ * This class provides possibility to find optimal chain of indexes and then use it just like it was index
+ * for traversed property.
+ * </p>
+ * <p>
+ * IMPORTANT: this class is only for internal usage!
+ * </p>
+ *
  * @author Artem Orobets
  */
 public class OIndexProxy<T> implements OIndex<T> {
@@ -36,17 +52,19 @@ public class OIndexProxy<T> implements OIndex<T> {
 
 	/**
 	 * Create proxies that support maximum number of different operations.
-	 * 
+	 * In case when several different indexes which support different operations (e.g. indexes of {@code UNIQUE}
+	 * and {@code FULLTEXT} types) are possible, the creates the only one index of each type.
+	 *
 	 * @param index
-	 *          - the index which proxies created for
+	 * 			- the index which proxies created for
 	 * @param longChain
-	 *          - property chain from the query, which should be evaluated
+	 * 			- property chain from the query, which should be evaluated
 	 * @param database
-	 *          - current database instance
-	 * @return - proxies needed to process query.
+	 * 			- current database instance
+	 * @return proxies needed to process query.
 	 */
 	public static <T> Collection<OIndexProxy<T>> createdProxy(OIndex<T> index, OSQLFilterItemField.FieldChain longChain,
-			ODatabaseComplex<?> database) {
+															  ODatabaseComplex database) {
 		Collection<OIndexProxy<T>> proxies = new ArrayList<OIndexProxy<T>>();
 
 		for (List<OIndex<?>> indexChain : getIndexesForChain(index, longChain, database)) {
@@ -68,7 +86,12 @@ public class OIndexProxy<T> implements OIndex<T> {
 	public T get(Object iKey) {
 		final Object result = lastIndex.get(iKey);
 
-		return applyTailIndexes(result, -1);
+		final Collection<T> resultSet = applyTailIndexes(result, -1);
+		if (getInternal() instanceof OIndexOneValue && resultSet.size() == 1) {
+			return resultSet.iterator().next();
+		} else {
+			return (T) resultSet;
+		}
 	}
 
 	/**
@@ -93,8 +116,8 @@ public class OIndexProxy<T> implements OIndex<T> {
 	 * {@inheritDoc}
 	 */
 	public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo,
-			boolean iToInclusive, int maxValuesToFetch) {
-		final Object result = lastIndex.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, maxValuesToFetch);
+													  boolean iToInclusive, int maxValuesToFetch) {
+		final Object result = lastIndex.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive);
 
 		return (Collection<OIdentifiable>) applyTailIndexes(result, maxValuesToFetch);
 	}
@@ -112,7 +135,7 @@ public class OIndexProxy<T> implements OIndex<T> {
 	 * {@inheritDoc}
 	 */
 	public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive, int maxValuesToFetch) {
-		final Object result = lastIndex.getValuesMajor(fromKey, isInclusive, maxValuesToFetch);
+		final Object result = lastIndex.getValuesMajor(fromKey, isInclusive);
 
 		return (Collection<OIdentifiable>) applyTailIndexes(result, maxValuesToFetch);
 	}
@@ -130,7 +153,7 @@ public class OIndexProxy<T> implements OIndex<T> {
 	 * {@inheritDoc}
 	 */
 	public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive, int maxValuesToFetch) {
-		final Object result = lastIndex.getValuesMinor(toKey, isInclusive, maxValuesToFetch);
+		final Object result = lastIndex.getValuesMinor(toKey, isInclusive);
 
 		return (Collection<OIdentifiable>) applyTailIndexes(result, maxValuesToFetch);
 	}
@@ -148,7 +171,7 @@ public class OIndexProxy<T> implements OIndex<T> {
 	 * {@inheritDoc}
 	 */
 	public Collection<OIdentifiable> getValues(Collection<?> iKeys, int maxValuesToFetch) {
-		final Object result = lastIndex.getValues(iKeys, maxValuesToFetch);
+		final Object result = lastIndex.getValues(iKeys);
 
 		return (Collection<OIdentifiable>) applyTailIndexes(result, maxValuesToFetch);
 	}
@@ -168,38 +191,35 @@ public class OIndexProxy<T> implements OIndex<T> {
 		return indexChain.get(indexChain.size() - 1).getDefinition();
 	}
 
-	private T applyTailIndexes(final Object result, int maxValuesToFetch) {
-		final Set<Comparable> keys = prepareKeys(indexChain.size() - 1, result, maxValuesToFetch);
-
-		Set<Comparable> currentKeys = keys;
+	private Collection<T> applyTailIndexes(final Object result, int maxValuesToFetch) {
+		final OIndex<?> previousIndex = indexChain.get(indexChain.size() - 2);
+		Set<Comparable> currentKeys = prepareKeys(previousIndex, result);
 		for (int j = indexChain.size() - 2; j > 0; j--) {
 			Set<Comparable> newKeys = new TreeSet<Comparable>();
 
+			final OIndex<?> currentIndex = indexChain.get(j);
 			for (Comparable currentKey : currentKeys) {
-				final OIndex<?> currentIndex = indexChain.get(j);
 				final Object currentResult = currentIndex.get(currentKey);
 
 				final Set<Comparable> preparedKeys;
-				preparedKeys = prepareKeys(j, currentResult, maxValuesToFetch);
+				preparedKeys = prepareKeys(indexChain.get(j - 1), currentResult);
 				newKeys.addAll(preparedKeys);
-
-				maxValuesToFetch -= preparedKeys.size();
 			}
+
+			updateStatistic(currentIndex);
+
 			currentKeys = newKeys;
 		}
 
 		return applyMainIndex(currentKeys, maxValuesToFetch);
 	}
 
-	private Set<Comparable> convertResult(Object result, Class<?> targetType, int maxValuesToFetch) {
+	private Set<Comparable> convertResult(Object result, Class<?> targetType) {
 		final Set<Comparable> newKeys;
 		if (result instanceof Set) {
 			newKeys = new TreeSet<Comparable>();
 			for (Object o : ((Set) result)) {
 				newKeys.add((Comparable) OType.convert(o, targetType));
-				if (maxValuesToFetch != -1 && newKeys.size() >= maxValuesToFetch) {
-					break;
-				}
 			}
 			return newKeys;
 		} else {
@@ -207,37 +227,43 @@ public class OIndexProxy<T> implements OIndex<T> {
 		}
 	}
 
-	private Set<Comparable> prepareKeys(int forIndex, Object result, int maxValuesToFetch) {
-		final OIndex<?> previousIndex = indexChain.get(forIndex - 1);
-		final Class<?> targetType = previousIndex.getKeyTypes()[0].getDefaultJavaType();
+	/**
+	 * Make type conversion of keys for specific index.
+	 *
+	 * @param index
+	 * 			- index for which keys prepared for.
+	 * @param keys
+	 * 			- which should be prepared.
+	 * @return keys converted to necessary type.
+	 */
+	private Set<Comparable> prepareKeys(OIndex<?> index, Object keys) {
+		final Class<?> targetType = index.getKeyTypes()[0].getDefaultJavaType();
 
-		return convertResult(result, targetType, maxValuesToFetch);
+		return convertResult(keys, targetType);
 	}
 
-	private T applyMainIndex(Collection<Comparable> currentKeys, int maxValuesToFetch) {
-		if (currentKeys.size() > 1) {
-			Collection<T> resultSet = new TreeSet<T>();
-			for (Comparable key : currentKeys) {
-				final T result = index.get(index.getDefinition().createValue(key));
-				if (result instanceof Set) {
-					for (T o : (Set<T>) result) {
-						resultSet.add(o);
-						if (maxValuesToFetch != -1 && resultSet.size() >= maxValuesToFetch) {
-							break;
-						}
+	private Collection<T> applyMainIndex(Iterable<Comparable> currentKeys, int maxValuesToFetch) {
+		Collection<T> resultSet = new TreeSet<T>();
+		for (Comparable key : currentKeys) {
+			final T result = index.get(index.getDefinition().createValue(key));
+			if (result instanceof Set) {
+				for (T o : (Set<T>) result) {
+					resultSet.add(o);
+					if (maxValuesToFetch != -1 && resultSet.size() >= maxValuesToFetch) {
+						break;
 					}
-				} else {
-					resultSet.add(result);
 				}
-				if (maxValuesToFetch != -1 && resultSet.size() >= maxValuesToFetch) {
-					break;
-				}
+			} else {
+				resultSet.add(result);
 			}
-			return (T) resultSet;
-		} else {
-			final Comparable key = currentKeys.iterator().next();
-			return index.get(index.getDefinition().createValue(key));
+			if (maxValuesToFetch != -1 && resultSet.size() >= maxValuesToFetch) {
+				break;
+			}
 		}
+
+		updateStatistic(index);
+
+		return resultSet;
 	}
 
 	private static Iterable<List<OIndex<?>>> getIndexesForChain(OIndex<?> index, OSQLFilterItemField.FieldChain fieldChain,
@@ -307,6 +333,22 @@ public class OIndexProxy<T> implements OIndex<T> {
 			}
 		}
 		return bestIndex;
+	}
+
+	/**
+	 * Register statistic information about usage of index in {@link OProfiler}.
+	 *
+	 * @param index which usage is registering.
+	 */
+	private void updateStatistic(OIndex<?> index) {
+		if (OProfiler.getInstance().isRecording()) {
+			OProfiler.getInstance().updateCounter("Query.indexUsage", 1);
+			final int paramCount = index.getDefinition().getParamCount();
+			if (paramCount > 1) {
+				OProfiler.getInstance().updateCounter("Query.compositeIndexUsage", 1);
+				OProfiler.getInstance().updateCounter("Query.compositeIndexUsage." + paramCount, 1);
+			}
+		}
 	}
 
 	public void checkEntry(final OIdentifiable iRecord, final Object iKey) {

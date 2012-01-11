@@ -74,6 +74,8 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     }
 
     /**
+     * Creates {@code FieldChain} in case when filter item can have such representation.
+     *
      * @return {@code FieldChain} representation of this filter item.
      * @throws IllegalStateException if this filter item can't be represented as {@code FieldChain}.
      */
@@ -85,6 +87,10 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
         return new FieldChain();
     }
 
+    /**
+     * Represents filter item as chain of fields.
+     * Provide interface to work with this chain like with sequence of field names.
+     */
     public class FieldChain {
         private FieldChain() {
         }
