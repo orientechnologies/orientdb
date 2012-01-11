@@ -25,6 +25,7 @@ import java.util.Map.Entry;
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -38,8 +39,8 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 
 public abstract class OTransactionRealAbstract extends OTransactionAbstract {
-	protected Map<ORID, OTransactionRecordEntry>		allEntries				= new LinkedHashMap<ORID, OTransactionRecordEntry>();
-	protected Map<ORID, OTransactionRecordEntry>		recordEntries			= new LinkedHashMap<ORID, OTransactionRecordEntry>();
+	protected Map<ORID, ORecordOperation>						allEntries				= new LinkedHashMap<ORID, ORecordOperation>();
+	protected Map<ORID, ORecordOperation>						recordEntries			= new LinkedHashMap<ORID, ORecordOperation>();
 	protected Map<String, OTransactionIndexChanges>	indexEntries			= new LinkedHashMap<String, OTransactionIndexChanges>();
 	protected int																		id;
 	protected int																		newObjectCounter	= -2;
@@ -68,16 +69,16 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 		recordEntries.clear();
 	}
 
-	public Collection<OTransactionRecordEntry> getCurrentRecordEntries() {
+	public Collection<ORecordOperation> getCurrentRecordEntries() {
 		return recordEntries.values();
 	}
 
-	public Collection<OTransactionRecordEntry> getAllRecordEntries() {
+	public Collection<ORecordOperation> getAllRecordEntries() {
 		return allEntries.values();
 	}
 
-	public OTransactionRecordEntry getRecordEntry(final ORID rid) {
-		OTransactionRecordEntry e = recordEntries.get(rid);
+	public ORecordOperation getRecordEntry(final ORID rid) {
+		ORecordOperation e = recordEntries.get(rid);
 		if (e != null)
 			return e;
 
@@ -89,26 +90,26 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 	}
 
 	public ORecordInternal<?> getRecord(final ORID rid) {
-		final OTransactionRecordEntry e = getRecordEntry(rid);
-		if (e != null && e.status != OTransactionRecordEntry.DELETED)
-			return e.record;
+		final ORecordOperation e = getRecordEntry(rid);
+		if (e != null && e.type != ORecordOperation.DELETED)
+			return e.getRecord();
 		return null;
 	}
 
 	/**
 	 * Called by class iterator.
 	 */
-	public List<OTransactionRecordEntry> getRecordEntriesByClass(final String iClassName) {
-		final List<OTransactionRecordEntry> result = new ArrayList<OTransactionRecordEntry>();
+	public List<ORecordOperation> getRecordEntriesByClass(final String iClassName) {
+		final List<ORecordOperation> result = new ArrayList<ORecordOperation>();
 
 		if (iClassName == null || iClassName.length() == 0)
 			// RETURN ALL THE RECORDS
-			for (OTransactionRecordEntry entry : recordEntries.values()) {
+			for (ORecordOperation entry : recordEntries.values()) {
 				result.add(entry);
 			}
 		else
 			// FILTER RECORDS BY CLASSNAME
-			for (OTransactionRecordEntry entry : recordEntries.values()) {
+			for (ORecordOperation entry : recordEntries.values()) {
 				if (entry.getRecord() != null && entry.getRecord() instanceof ODocument
 						&& iClassName.equals(((ODocument) entry.getRecord()).getClassName()))
 					result.add(entry);
@@ -120,17 +121,17 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 	/**
 	 * Called by cluster iterator.
 	 */
-	public List<OTransactionRecordEntry> getRecordEntriesByClusterIds(final int[] iIds) {
-		final List<OTransactionRecordEntry> result = new ArrayList<OTransactionRecordEntry>();
+	public List<ORecordOperation> getRecordEntriesByClusterIds(final int[] iIds) {
+		final List<ORecordOperation> result = new ArrayList<ORecordOperation>();
 
 		if (iIds == null)
 			// RETURN ALL THE RECORDS
-			for (OTransactionRecordEntry entry : recordEntries.values()) {
+			for (ORecordOperation entry : recordEntries.values()) {
 				result.add(entry);
 			}
 		else
 			// FILTER RECORDS BY ID
-			for (OTransactionRecordEntry entry : recordEntries.values()) {
+			for (ORecordOperation entry : recordEntries.values()) {
 				for (int id : iIds) {
 					if (entry.getRecord() != null && entry.getRecord().getIdentity().getClusterId() == id) {
 						result.add(entry);

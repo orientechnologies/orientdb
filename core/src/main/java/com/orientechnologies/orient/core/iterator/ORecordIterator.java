@@ -19,11 +19,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 
 /**
  * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator cannot change
@@ -48,7 +48,7 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 	protected long													firstClusterPosition;
 	protected long													lastClusterPosition;
 	protected long													totalAvailableRecords;
-	protected List<OTransactionRecordEntry>	txEntries;
+	protected List<ORecordOperation>	txEntries;
 	protected int														currentTxEntryPosition	= -1;
 
 	public ORecordIterator(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase) {

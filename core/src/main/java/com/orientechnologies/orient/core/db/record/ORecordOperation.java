@@ -13,25 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.tx;
+package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
-public class OTransactionRecordEntry {
+/**
+ * Contains the information about a database operation.
+ * 
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * 
+ */
+public class ORecordOperation {
 
-	public static final byte			LOADED	= 0;
-	public static final byte			UPDATED	= 1;
-	public static final byte			DELETED	= 2;
-	public static final byte			CREATED	= 3;
+	public static final byte	LOADED	= 0;
+	public static final byte	UPDATED	= 1;
+	public static final byte	DELETED	= 2;
+	public static final byte	CREATED	= 3;
 
-	public byte										status;
-	protected ORecordInternal<?>	record;
-	public String									clusterName;
+	public byte								type;
+	public OIdentifiable			record;
+	public String							clusterName;
 
-	public OTransactionRecordEntry(final ORecordInternal<?> iRecord, final byte iStatus, final String iClusterName) {
+	public ORecordOperation() {
+	}
+
+	public ORecordOperation(final ORecordInternal<?> iRecord, final byte iStatus, final String iClusterName) {
 		// CLONE RECORD AND CONTENT
-		this.setRecord(iRecord);
-		this.status = iStatus;
+		this.record = iRecord;
+		this.type = iStatus;
 		this.clusterName = iClusterName;
 	}
 
@@ -42,29 +51,21 @@ public class OTransactionRecordEntry {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (!(obj instanceof OTransactionRecordEntry))
+		if (!(obj instanceof ORecordOperation))
 			return false;
 
-		return record.equals(((OTransactionRecordEntry) obj).record);
+		return record.equals(((ORecordOperation) obj).record);
 	}
 
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
-		builder.append("OTransactionEntry [record=").append(record).append(", status=").append(status).append(", clusterName=")
+		builder.append("OTransactionEntry [record=").append(record).append(", status=").append(type).append(", clusterName=")
 				.append(clusterName).append("]");
 		return builder.toString();
 	}
 
-	/**
-	 * Save the record but after having freed previous record content.
-	 */
-	public void setRecord(final ORecordInternal<?> iRecord) {
-		// SAVES THE RECORD
-		this.record = iRecord;
-	}
-
 	public ORecordInternal<?> getRecord() {
-		return record;
+		return (ORecordInternal<?>) (record != null ? record.getRecord() : null);
 	}
 }

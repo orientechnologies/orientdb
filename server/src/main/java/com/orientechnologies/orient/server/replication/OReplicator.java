@@ -26,9 +26,9 @@ import java.util.Set;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerConfiguration;
@@ -66,7 +66,7 @@ public class OReplicator {
 	private Map<String, ODistributedNode>				nodes										= new HashMap<String, ODistributedNode>();
 	private OServerUserConfiguration						replicatorUser;
 	private ODistributedServerManager						manager;
-	private Map<String, OOperationLog>					logs										= new HashMap<String, OOperationLog>();
+	private Map<String, OOperationLog>					localLogs								= new HashMap<String, OOperationLog>();
 	private final Set<String>										ignoredClusters					= new HashSet<String>();
 	private final Set<String>										ignoredDocumentClasses	= new HashSet<String>();
 	private final OReplicationConflictResolver	conflictResolver;
@@ -104,8 +104,8 @@ public class OReplicator {
 		// OPEN CONNECTIONS AGAINST OTHER SERVERS
 		for (String dbName : clusterConfiguration.fieldNames()) {
 
-			if (!logs.containsKey(dbName))
-				logs.put(dbName, new OOperationLog(manager.getId(), dbName));
+			if (!localLogs.containsKey(dbName))
+				localLogs.put(dbName, new OOperationLog(manager.getId(), dbName));
 
 			final ODocument db = clusterConfiguration.field(dbName);
 			final Collection<ODocument> dbNodes = db.field("nodes");
@@ -163,7 +163,7 @@ public class OReplicator {
 	 * 
 	 * @throws IOException
 	 */
-	public void distributeRequest(final OTransactionRecordEntry iTransactionEntry) throws IOException {
+	public void distributeRequest(final ORecordOperation iTransactionEntry) throws IOException {
 		synchronized (this) {
 
 			if (nodes.isEmpty())
@@ -172,11 +172,12 @@ public class OReplicator {
 			final String dbName = iTransactionEntry.getRecord().getDatabase().getName();
 
 			// LOG THE OPERATION
-			final long opId = logs.get(dbName).addLog(iTransactionEntry.status, (ORecordId) iTransactionEntry.getRecord().getIdentity());
+			final long opId = localLogs.get(dbName).appendLocalLog(iTransactionEntry.type,
+					(ORecordId) iTransactionEntry.getRecord().getIdentity());
 
 			// GET THE NODES INVOLVED IN THE UPDATE
 			for (ODistributedNode node : nodes.values()) {
-				final ODistributedDatabaseInfo dbEntry = node.getDatabases().get(dbName);
+				final ODistributedDatabaseInfo dbEntry = node.getDatabase(dbName);
 				if (dbEntry != null)
 					node.sendRequest(opId, iTransactionEntry, dbEntry.synchType);
 			}
@@ -254,6 +255,10 @@ public class OReplicator {
 
 	public OReplicationConflictResolver getConflictResolver() {
 		return conflictResolver;
+	}
+
+	public ODistributedNode getNode(final String iNodeId) {
+		return nodes.get(iNodeId);
 	}
 
 	public ODistributedServerManager getManager() {

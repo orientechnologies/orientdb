@@ -17,11 +17,11 @@ package com.orientechnologies.orient.core.iterator;
 
 import java.util.NoSuchElementException;
 
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 
 /**
  * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator cannot change
@@ -65,13 +65,13 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 
 		if (txEntries != null)
 			// ADJUST TOTAL ELEMENT BASED ON CURRENT TRANSACTION'S ENTRIES
-			for (OTransactionRecordEntry entry : txEntries) {
-				switch (entry.status) {
-				case OTransactionRecordEntry.CREATED:
+			for (ORecordOperation entry : txEntries) {
+				switch (entry.type) {
+				case ORecordOperation.CREATED:
 					totalAvailableRecords++;
 					break;
 
-				case OTransactionRecordEntry.DELETED:
+				case ORecordOperation.DELETED:
 					totalAvailableRecords--;
 					break;
 				}

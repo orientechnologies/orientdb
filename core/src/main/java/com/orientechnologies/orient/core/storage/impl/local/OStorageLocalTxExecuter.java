@@ -21,6 +21,7 @@ import java.util.List;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -29,7 +30,6 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
-import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.core.tx.OTxListener;
 
 public class OStorageLocalTxExecuter {
@@ -133,16 +133,16 @@ public class OStorageLocalTxExecuter {
 	public void commitAllPendingRecords(final OTransaction iTx) throws IOException {
 		// COPY ALL THE ENTRIES IN SEPARATE COLLECTION SINCE DURING THE COMMIT PHASE SOME NEW ENTRIES COULD BE CREATED AND
 		// CONCURRENT-EXCEPTION MAY OCCURS
-		final List<OTransactionRecordEntry> tmpEntries = new ArrayList<OTransactionRecordEntry>();
+		final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
 
 		while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
-			for (OTransactionRecordEntry txEntry : iTx.getCurrentRecordEntries())
+			for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
 				tmpEntries.add(txEntry);
 
 			iTx.clearRecordEntries();
 
 			if (!tmpEntries.isEmpty()) {
-				for (OTransactionRecordEntry txEntry : tmpEntries)
+				for (ORecordOperation txEntry : tmpEntries)
 					// COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
 					commitEntry(iTx, txEntry, iTx.isUsingLog());
 			}
@@ -157,9 +157,9 @@ public class OStorageLocalTxExecuter {
 		txSegment.clearLogEntries(iTx.getId());
 	}
 
-	private void commitEntry(final OTransaction iTx, final OTransactionRecordEntry txEntry, final boolean iUseLog) throws IOException {
+	private void commitEntry(final OTransaction iTx, final ORecordOperation txEntry, final boolean iUseLog) throws IOException {
 
-		if (txEntry.status != OTransactionRecordEntry.DELETED && !txEntry.getRecord().isDirty())
+		if (txEntry.type != ORecordOperation.DELETED && !txEntry.getRecord().isDirty())
 			return;
 
 		final ORecordId rid = (ORecordId) txEntry.getRecord().getIdentity();
@@ -178,11 +178,11 @@ public class OStorageLocalTxExecuter {
 		if (txEntry.getRecord() instanceof OTxListener)
 			((OTxListener) txEntry.getRecord()).onEvent(txEntry, OTxListener.EVENT.BEFORE_COMMIT);
 
-		switch (txEntry.status) {
-		case OTransactionRecordEntry.LOADED:
+		switch (txEntry.type) {
+		case ORecordOperation.LOADED:
 			break;
 
-		case OTransactionRecordEntry.CREATED: {
+		case ORecordOperation.CREATED: {
 			// CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
 			byte[] stream = txEntry.getRecord().toStream();
 
@@ -213,7 +213,7 @@ public class OStorageLocalTxExecuter {
 			break;
 		}
 
-		case OTransactionRecordEntry.UPDATED: {
+		case ORecordOperation.UPDATED: {
 			byte[] stream = txEntry.getRecord().toStream();
 
 			if (iTx.getDatabase().callbackHooks(ORecordHook.TYPE.BEFORE_UPDATE, txEntry.getRecord()))
@@ -232,7 +232,7 @@ public class OStorageLocalTxExecuter {
 			break;
 		}
 
-		case OTransactionRecordEntry.DELETED: {
+		case ORecordOperation.DELETED: {
 			iTx.getDatabase().callbackHooks(ORecordHook.TYPE.BEFORE_DELETE, txEntry.getRecord());
 
 			if (iUseLog)

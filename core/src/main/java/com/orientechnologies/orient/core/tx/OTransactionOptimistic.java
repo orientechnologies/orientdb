@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -56,12 +57,12 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
 		// REMOVE ALL THE ENTRIES AND INVALIDATE THE DOCUMENTS TO AVOID TO BE RE-USED DIRTY AT USER-LEVEL. IN THIS WAY RE-LOADING MUST
 		// EXECUTED
-		for (OTransactionRecordEntry v : recordEntries.values())
+		for (ORecordOperation v : recordEntries.values())
 			v.getRecord().unload();
 
-		for (OTransactionRecordEntry v : allEntries.values())
+		for (ORecordOperation v : allEntries.values())
 			v.getRecord().unload();
-				
+
 		indexEntries.clear();
 	}
 
@@ -78,12 +79,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 	}
 
 	public void deleteRecord(final ORecordInternal<?> iRecord) {
-		addRecord(iRecord, OTransactionRecordEntry.DELETED, null);
+		addRecord(iRecord, ORecordOperation.DELETED, null);
 	}
 
 	public void saveRecord(final ORecordInternal<?> iRecord, final String iClusterName) {
-		addRecord(iRecord, iRecord.getIdentity().isValid() ? OTransactionRecordEntry.UPDATED : OTransactionRecordEntry.CREATED,
-				iClusterName);
+		addRecord(iRecord, iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED, iClusterName);
 	}
 
 	private void addRecord(final ORecordInternal<?> iRecord, final byte iStatus, final String iClusterName) {
@@ -92,11 +92,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 		if ((status == OTransaction.TXSTATUS.COMMITTING) && database.getStorage() instanceof OStorageEmbedded) {
 			// I'M COMMITTING OR IT'S AN INDEX: BYPASS LOCAL BUFFER
 			switch (iStatus) {
-			case OTransactionRecordEntry.CREATED:
-			case OTransactionRecordEntry.UPDATED:
+			case ORecordOperation.CREATED:
+			case ORecordOperation.UPDATED:
 				database.executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iRecord.getRecordType());
 				break;
-			case OTransactionRecordEntry.DELETED:
+			case ORecordOperation.DELETED:
 				database.executeDeleteRecord(iRecord, iRecord.getVersion());
 				break;
 			}
@@ -123,40 +123,40 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 				// REMOVE FROM THE DB'S CACHE
 				database.getLevel1Cache().freeRecord(rid);
 
-			OTransactionRecordEntry txEntry = getRecordEntry(rid);
+			ORecordOperation txEntry = getRecordEntry(rid);
 
 			if (txEntry == null) {
 				// NEW ENTRY: JUST REGISTER IT
-				txEntry = new OTransactionRecordEntry(iRecord, iStatus, iClusterName);
+				txEntry = new ORecordOperation(iRecord, iStatus, iClusterName);
 
 				recordEntries.put(rid, txEntry);
 			} else {
 				// UPDATE PREVIOUS STATUS
-				txEntry.setRecord(iRecord);
+				txEntry.record = iRecord;
 
-				switch (txEntry.status) {
-				case OTransactionRecordEntry.LOADED:
+				switch (txEntry.type) {
+				case ORecordOperation.LOADED:
 					switch (iStatus) {
-					case OTransactionRecordEntry.UPDATED:
-						txEntry.status = OTransactionRecordEntry.UPDATED;
+					case ORecordOperation.UPDATED:
+						txEntry.type = ORecordOperation.UPDATED;
 						break;
-					case OTransactionRecordEntry.DELETED:
-						txEntry.status = OTransactionRecordEntry.DELETED;
-						break;
-					}
-					break;
-				case OTransactionRecordEntry.UPDATED:
-					switch (iStatus) {
-					case OTransactionRecordEntry.DELETED:
-						txEntry.status = OTransactionRecordEntry.DELETED;
+					case ORecordOperation.DELETED:
+						txEntry.type = ORecordOperation.DELETED;
 						break;
 					}
 					break;
-				case OTransactionRecordEntry.DELETED:
-					break;
-				case OTransactionRecordEntry.CREATED:
+				case ORecordOperation.UPDATED:
 					switch (iStatus) {
-					case OTransactionRecordEntry.DELETED:
+					case ORecordOperation.DELETED:
+						txEntry.type = ORecordOperation.DELETED;
+						break;
+					}
+					break;
+				case ORecordOperation.DELETED:
+					break;
+				case ORecordOperation.CREATED:
+					switch (iStatus) {
+					case ORecordOperation.DELETED:
 						recordEntries.remove(rid);
 						break;
 					}

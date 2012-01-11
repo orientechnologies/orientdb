@@ -21,6 +21,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -45,17 +46,17 @@ public abstract class OTransactionAbstract implements OTransaction {
 	}
 
 	public static void updateCacheFromEntries(final OStorage iStorage, final OTransaction iTx,
-			final Iterable<? extends OTransactionRecordEntry> iEntries, final boolean iUpdateStrategy) throws IOException {
+			final Iterable<? extends ORecordOperation> iEntries, final boolean iUpdateStrategy) throws IOException {
 		final OLevel1RecordCache dbCache = (OLevel1RecordCache) iTx.getDatabase().getLevel1Cache();
 
-		for (OTransactionRecordEntry txEntry : iEntries) {
+		for (ORecordOperation txEntry : iEntries) {
 			if (!iUpdateStrategy)
 				// ALWAYS REMOVE THE RECORD FROM CACHE
 				dbCache.deleteRecord(txEntry.getRecord().getIdentity());
-			else if (txEntry.status == OTransactionRecordEntry.DELETED)
+			else if (txEntry.type == ORecordOperation.DELETED)
 				// DELETION
 				dbCache.deleteRecord(txEntry.getRecord().getIdentity());
-			else if (txEntry.status == OTransactionRecordEntry.UPDATED || txEntry.status == OTransactionRecordEntry.CREATED)
+			else if (txEntry.type == ORecordOperation.UPDATED || txEntry.type == ORecordOperation.CREATED)
 				// UDPATE OR CREATE
 				dbCache.updateRecord(txEntry.getRecord());
 		}

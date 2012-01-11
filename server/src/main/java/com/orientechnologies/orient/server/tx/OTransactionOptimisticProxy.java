@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -30,7 +31,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
-import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 public class OTransactionOptimisticProxy extends OTransactionOptimistic {
@@ -60,10 +60,10 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 				final ORecordId rid = channel.readRID();
 
 				final OTransactionEntryProxy entry = new OTransactionEntryProxy(channel.readByte());
-				entry.status = recordStatus;
+				entry.type = recordStatus;
 
-				switch (entry.status) {
-				case OTransactionRecordEntry.CREATED:
+				switch (entry.type) {
+				case ORecordOperation.CREATED:
 					entry.clusterName = channel.readString();
 					entry.getRecord().fill(rid, 0, channel.readBytes(), true);
 
@@ -71,19 +71,19 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 					createdRecords.put(rid.copy(), entry.getRecord());
 					break;
 
-				case OTransactionRecordEntry.UPDATED:
+				case ORecordOperation.UPDATED:
 					entry.getRecord().fill(rid, channel.readInt(), channel.readBytes(), true);
 
 					// SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW VERSIONS TO SEND BACK TO THE REQUESTER
 					updatedRecords.put(rid, entry.getRecord());
 					break;
 
-				case OTransactionRecordEntry.DELETED:
+				case ORecordOperation.DELETED:
 					entry.getRecord().fill(rid, channel.readInt(), null, false);
 					break;
 
 				default:
-					throw new OTransactionException("Unrecognized tx command: " + entry.status);
+					throw new OTransactionException("Unrecognized tx command: " + entry.type);
 				}
 
 				// PUT IN TEMPORARY LIST TO GET FETCHED AFTER ALL FOR CACHE

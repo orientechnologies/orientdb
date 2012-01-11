@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.replication;
 import java.io.IOException;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.impl.local.OSingleFileSegment;
@@ -46,7 +47,7 @@ public class OOperationLog extends OSingleFileSegment {
 	private static final int		OFFSET_RID			= OFFSET_OPERAT + OBinaryProtocol.SIZE_BYTE;
 	private static final int		RECORD_SIZE			= OFFSET_RID + ORecordId.PERSISTENT_SIZE;
 
-	private long								serial					= 0;
+	private long								serial;
 	private final String				nodeId;
 	private final boolean				synchEnabled;
 
@@ -61,12 +62,14 @@ public class OOperationLog extends OSingleFileSegment {
 			open();
 		else
 			create(DEF_START_SIZE);
+
+		serial = getLastOperationId() + 1;
 	}
 
 	/**
-	 * Appends a log entry
+	 * Appends a log entry to the log file managed locally.
 	 */
-	public long addLog(final byte iOperation, final ORecordId iRID) throws IOException {
+	public long appendLocalLog(final byte iOperation, final ORecordId iRID) throws IOException {
 
 		acquireExclusiveLock();
 		try {
@@ -94,6 +97,35 @@ public class OOperationLog extends OSingleFileSegment {
 		}
 	}
 
+	/**
+	 * Appends a log entry.
+	 */
+	public void appendLog(final long iSerial, final byte iOperation, final ORecordId iRID) throws IOException {
+
+		acquireExclusiveLock();
+		try {
+			int offset = file.allocateSpace(file.getFilledUpTo() + RECORD_SIZE);
+
+			file.writeLong(offset, iSerial);
+			offset += OBinaryProtocol.SIZE_LONG;
+
+			file.writeByte(offset, iOperation);
+			offset += OBinaryProtocol.SIZE_BYTE;
+
+			file.writeShort(offset, (short) iRID.clusterId);
+			offset += OBinaryProtocol.SIZE_SHORT;
+
+			file.writeLong(offset, iRID.clusterPosition);
+			offset += OBinaryProtocol.SIZE_LONG;
+
+			if (synchEnabled)
+				file.synch();
+
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
 	public String getNodeId() {
 		return nodeId;
 	}
@@ -105,6 +137,14 @@ public class OOperationLog extends OSingleFileSegment {
 				return i;
 		}
 		return -1;
+	}
+
+	public ORecordOperation getEntry(final int iPosition, final ORecordOperation iEntry) throws IOException {
+		final int pos = iPosition * RECORD_SIZE;
+
+		iEntry.type = file.readByte(pos + OFFSET_OPERAT);
+		iEntry.record = new ORecordId(file.readShort(pos + OFFSET_OPERAT));
+		return iEntry;
 	}
 
 	public long getLastOperationId() throws IOException {

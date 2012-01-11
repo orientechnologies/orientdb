@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.tx;
 
 import java.util.List;
 
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -53,17 +54,17 @@ public interface OTransaction {
 
 	public TXSTATUS getStatus();
 
-	public Iterable<? extends OTransactionRecordEntry> getCurrentRecordEntries();
+	public Iterable<? extends ORecordOperation> getCurrentRecordEntries();
 
-	public Iterable<? extends OTransactionRecordEntry> getAllRecordEntries();
+	public Iterable<? extends ORecordOperation> getAllRecordEntries();
 
-	public List<OTransactionRecordEntry> getRecordEntriesByClass(String iClassName);
+	public List<ORecordOperation> getRecordEntriesByClass(String iClassName);
 
-	public List<OTransactionRecordEntry> getRecordEntriesByClusterIds(int[] iIds);
+	public List<ORecordOperation> getRecordEntriesByClusterIds(int[] iIds);
 
 	public ORecordInternal<?> getRecord(ORID iRid);
 
-	public OTransactionRecordEntry getRecordEntry(ORID rid);
+	public ORecordOperation getRecordEntry(ORID rid);
 
 	public List<String> getInvolvedIndexes();
 

@@ -21,11 +21,11 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.server.network.protocol.distributed.ODistributedRequesterThreadLocal;
 
 /**
@@ -58,17 +58,17 @@ public class OReplicatorRecordHook implements ORecordHook, ODatabaseLifecycleLis
 		try {
 			switch (iType) {
 			case AFTER_CREATE:
-				replicator.distributeRequest(new OTransactionRecordEntry((ORecordInternal<?>) iRecord, OTransactionRecordEntry.CREATED,
+				replicator.distributeRequest(new ORecordOperation((ORecordInternal<?>) iRecord, ORecordOperation.CREATED,
 						null));
 				break;
 
 			case AFTER_UPDATE:
-				replicator.distributeRequest(new OTransactionRecordEntry((ORecordInternal<?>) iRecord, OTransactionRecordEntry.UPDATED,
+				replicator.distributeRequest(new ORecordOperation((ORecordInternal<?>) iRecord, ORecordOperation.UPDATED,
 						null));
 				break;
 
 			case AFTER_DELETE:
-				replicator.distributeRequest(new OTransactionRecordEntry((ORecordInternal<?>) iRecord, OTransactionRecordEntry.DELETED,
+				replicator.distributeRequest(new ORecordOperation((ORecordInternal<?>) iRecord, ORecordOperation.DELETED,
 						null));
 				break;
 			}

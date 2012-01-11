@@ -18,9 +18,9 @@ package com.orientechnologies.orient.server.tx;
 import java.io.IOException;
 
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 
-public class OTransactionEntryProxy extends OTransactionRecordEntry {
+public class OTransactionEntryProxy extends ORecordOperation {
 
 	public OTransactionEntryProxy(final byte iRecordType) throws IOException {
 		super(Orient.instance().getRecordFactoryManager().newInstance(iRecordType), (byte) 0, null);

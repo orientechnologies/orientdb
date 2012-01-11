@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.List;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -94,19 +95,19 @@ public class OTransactionNoTx extends OTransactionAbstract {
 		}
 	}
 
-	public Collection<OTransactionRecordEntry> getCurrentRecordEntries() {
+	public Collection<ORecordOperation> getCurrentRecordEntries() {
 		return null;
 	}
 
-	public Collection<OTransactionRecordEntry> getAllRecordEntries() {
+	public Collection<ORecordOperation> getAllRecordEntries() {
 		return null;
 	}
 
-	public List<OTransactionRecordEntry> getRecordEntriesByClass(String iClassName) {
+	public List<ORecordOperation> getRecordEntriesByClass(String iClassName) {
 		return null;
 	}
 
-	public List<OTransactionRecordEntry> getRecordEntriesByClusterIds(int[] iIds) {
+	public List<ORecordOperation> getRecordEntriesByClusterIds(int[] iIds) {
 		return null;
 	}
 
@@ -121,7 +122,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
 		return null;
 	}
 
-	public OTransactionRecordEntry getRecordEntry(final ORID rid) {
+	public ORecordOperation getRecordEntry(final ORID rid) {
 		return null;
 	}
 
