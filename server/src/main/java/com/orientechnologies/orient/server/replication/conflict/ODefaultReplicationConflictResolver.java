@@ -83,7 +83,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
 	public void handleUpdateConflict(final byte iOperation, SYNCH_TYPE iRequestType, final ORecordInternal<?> iRecord,
 			final int iCurrentVersion, final int iOtherVersion) {
 		OLogManager.instance().warn(this, "-> %s (%s mode) CONFLICT record %s (current=v%d, other=v%d)...", this, iRequestType,
-				iRecord.getIdentity(), iOtherVersion, iCurrentVersion);
+				iRecord.getIdentity(), iCurrentVersion, iOtherVersion);
 
 		final ODocument doc = createConflictDocument(iOperation, iRecord);
 		doc.field("currentVersion", iCurrentVersion);
