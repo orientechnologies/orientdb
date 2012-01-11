@@ -21,19 +21,21 @@ import java.util.Arrays;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
-import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryInputStream;
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
+import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo;
 import com.orientechnologies.orient.server.replication.ODistributedNode;
+import com.orientechnologies.orient.server.replication.ODistributedStorage;
 
 /**
  * Extends binary protocol to include cluster commands.
@@ -145,15 +147,15 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			try {
 
 				switch (operationType) {
-				case OTransactionRecordEntry.CREATED:
+				case ORecordOperation.CREATED:
 					result = createRecord(rid, buffer, recordType);
 					break;
 
-				case OTransactionRecordEntry.UPDATED:
+				case ORecordOperation.UPDATED:
 					result = updateRecord(rid, buffer, version, recordType);
 					break;
 
-				case OTransactionRecordEntry.DELETED:
+				case ORecordOperation.DELETED:
 					result = deleteRecord(rid, version);
 					break;
 
@@ -163,6 +165,12 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			} finally {
 				ODistributedRequesterThreadLocal.INSTANCE.set(false);
 			}
+
+			// LOGS THE CHANGE
+			final ODistributedNode node = manager.getReplicator().getNode(
+					data.clientId.substring(ODistributedStorage.DNODE_PREFIX.length()));
+			final ODistributedDatabaseInfo db = node.getDatabase(connection.database.getName());
+			db.log.appendLog(operationId, operationType, rid);
 
 			channel.acquireExclusiveLock();
 			try {
@@ -283,6 +291,10 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 	@Override
 	public void onMessage(String iText) {
+	}
+
+	public String getType() {
+		return "distributed";
 	}
 
 	protected void checkConnected() {

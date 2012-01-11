@@ -35,6 +35,8 @@ public abstract class ONetworkProtocol extends OSoftThread {
 	public abstract void config(OServer iServer, Socket iSocket, OClientConnection iConnection, OContextConfiguration iConfiguration)
 			throws IOException;
 
+	public abstract String getType();
+
 	public abstract OChannel getChannel();
 
 	public void registerCommand(final Object iServerCommandInstance) {

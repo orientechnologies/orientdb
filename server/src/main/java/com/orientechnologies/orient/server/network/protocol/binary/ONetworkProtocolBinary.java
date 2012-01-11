@@ -221,6 +221,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		case OChannelBinaryProtocol.REQUEST_CONNECT: {
 			data.commandInfo = "Connect";
 
+			readConnectionData();
+
 			serverLogin(channel.readString(), channel.readString(), "connect");
 
 			channel.acquireExclusiveLock();
@@ -251,7 +253,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		case OChannelBinaryProtocol.REQUEST_DB_OPEN: {
 			data.commandInfo = "Open database";
 
-			String dbURL = channel.readString();
+			readConnectionData();
+
+			final String dbURL = channel.readString();
 
 			user = channel.readString();
 			passwd = channel.readString();
@@ -908,6 +912,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		}
 	}
 
+	protected void readConnectionData() throws IOException {
+		data.driverName = channel.readString();
+		data.driverVersion = channel.readString();
+		data.protocolVersion = channel.readShort();
+		data.clientId = channel.readString();
+	}
+
 	protected int deleteRecord(final ORID rid, final int version) {
 		final ORecordInternal<?> record = connection.database.load(rid);
 		if (record != null) {
@@ -1194,5 +1205,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 	private void handleConnectionError(Throwable e) {
 		OServerHandlerHelper.invokeHandlerCallbackOnClientError(connection, e);
+	}
+
+	public String getType() {
+		return "binary";
 	}
 }

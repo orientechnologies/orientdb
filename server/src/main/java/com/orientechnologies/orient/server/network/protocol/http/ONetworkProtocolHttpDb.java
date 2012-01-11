@@ -104,4 +104,9 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 
 		super.config(server, iSocket, iConnection, iConfiguration);
 	}
+
+	public String getType() {
+		return "http";
+	}
+
 }
