@@ -25,6 +25,7 @@ import java.sql.SQLException;
 
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 
 /**
  * @author Roberto Franchini (CELI srl - franchin--at--celi.it)
@@ -32,13 +33,14 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
  * 
  */
 public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
-	private Connection connection;
-	private ODatabaseRecord database;
+	private final Connection connection;
+	private final ODatabaseRecord database;
+	private final OMetadata metadata;
 
 	public OrientJdbcDatabaseMetaData(OrientJdbcConnection iConnection, ODatabaseRecord iDatabase) {
 		connection = iConnection;
 		database = iDatabase;
-		
+		metadata = database.getMetadata();
 	}
 
 	public boolean allProceduresAreCallable() throws SQLException {
@@ -382,6 +384,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
 	public String getStringFunctions() throws SQLException {
 
+		
 		return null;
 	}
 
@@ -416,12 +419,12 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 	}
 
 	public String getTimeDateFunctions() throws SQLException {
-
+		
 		return null;
 	}
 
 	public ResultSet getTypeInfo() throws SQLException {
-
+		
 		return null;
 	}
 

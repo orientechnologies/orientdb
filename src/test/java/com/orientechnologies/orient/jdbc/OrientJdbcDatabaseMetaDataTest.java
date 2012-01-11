@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.jdbc;
 
 import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.junit.Test;
@@ -27,6 +28,8 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
 		assertEquals(1, metaData.getDriverMajorVersion());
 		assertEquals(0, metaData.getDriverMinorVersion());
 
+		
+		ResultSet catalogs = metaData.getCatalogs();
 	}
 
 }

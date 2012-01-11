@@ -271,22 +271,24 @@ public class OrientJdbcResultSet implements ResultSet {
 		return getBoolean(fieldNames[getFieldIndex(columnIndex)]);
 	}
 
+	@SuppressWarnings("boxing")
 	public boolean getBoolean(String columnLabel) throws SQLException {
 		try {
-			return document.field(columnLabel, OType.BOOLEAN);
+			return (Boolean) document.field(columnLabel, OType.BOOLEAN);
 		} catch (Exception e) {
 			throw new SQLException("An error occured during the retrieval of the boolean value at column '" + columnLabel + "'", e);
 		}
 
 	}
 
+	@SuppressWarnings("boxing")
 	public byte getByte(int columnIndex) throws SQLException {
 		return getByte(fieldNames[getFieldIndex(columnIndex)]);
 	}
 
 	public byte getByte(String columnLabel) throws SQLException {
 		try {
-			return document.field(columnLabel, OType.BYTE);
+			return (Byte) document.field(columnLabel, OType.BYTE);
 		} catch (Exception e) {
 			throw new SQLException("An error occured during the retrieval of the byte value at column '" + columnLabel + "'", e);
 		}
@@ -535,9 +537,10 @@ public class OrientJdbcResultSet implements ResultSet {
 		return getShort(fieldNames[getFieldIndex(columnIndex)]);
 	}
 
+	@SuppressWarnings("boxing")
 	public short getShort(String columnLabel) throws SQLException {
 		try {
-			return document.field(columnLabel, OType.SHORT);
+			return (Short) document.field(columnLabel, OType.SHORT);
 		} catch (Exception e) {
 			throw new SQLException("An error occured during the retrieval of the short value at column '" + columnLabel + "'", e);
 		}
