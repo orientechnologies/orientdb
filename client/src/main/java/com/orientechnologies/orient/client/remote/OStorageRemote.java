@@ -317,33 +317,34 @@ public class OStorageRemote extends OStorageAbstract {
 					endRequest(network);
 				}
 
-				if (iMode == 0) {
-					if (iCallback == null)
-						try {
-							beginResponse(network);
-							iRid.clusterPosition = network.readLong();
-							return iRid.clusterPosition;
-						} finally {
-							endResponse(network);
-						}
-					else {
-						Callable<Object> response = new Callable<Object>() {
-							public Object call() throws Exception {
-								final Long result;
+				if (iMode == 1)
+					return -1;
 
-								beginResponse(network);
-								try {
-									result = network.readLong();
-								} finally {
-									endResponse(network);
-								}
-								iCallback.call(result);
-								return null;
-							}
-
-						};
-						asynchExecutor.submit(new FutureTask<Object>(response));
+				if (iCallback == null)
+					try {
+						beginResponse(network);
+						iRid.clusterPosition = network.readLong();
+						return iRid.clusterPosition;
+					} finally {
+						endResponse(network);
 					}
+				else {
+					Callable<Object> response = new Callable<Object>() {
+						public Object call() throws Exception {
+							final Long result;
+
+							beginResponse(network);
+							try {
+								result = network.readLong();
+							} finally {
+								endResponse(network);
+							}
+							iCallback.call(result);
+							return null;
+						}
+
+					};
+					asynchExecutor.submit(new FutureTask<Object>(response));
 				}
 
 			} catch (OException e) {
@@ -426,33 +427,34 @@ public class OStorageRemote extends OStorageAbstract {
 					endRequest(network);
 				}
 
-				if (iMode == 0) {
-					if (iCallback == null)
-						try {
+				if (iMode == 1)
+					return iVersion;
+
+				if (iCallback == null)
+					try {
+						beginResponse(network);
+						return network.readInt();
+					} finally {
+						endResponse(network);
+					}
+				else {
+					Callable<Object> response = new Callable<Object>() {
+						public Object call() throws Exception {
+							int result;
+
 							beginResponse(network);
-							return network.readInt();
-						} finally {
-							endResponse(network);
-						}
-					else {
-						Callable<Object> response = new Callable<Object>() {
-							public Object call() throws Exception {
-								int result;
-
-								beginResponse(network);
-								try {
-									result = network.readInt();
-								} finally {
-									endResponse(network);
-								}
-
-								iCallback.call(result);
-								return null;
+							try {
+								result = network.readInt();
+							} finally {
+								endResponse(network);
 							}
 
-						};
-						asynchExecutor.submit(new FutureTask<Object>(response));
-					}
+							iCallback.call(result);
+							return null;
+						}
+
+					};
+					asynchExecutor.submit(new FutureTask<Object>(response));
 				}
 			} catch (OException e) {
 				// PASS THROUGH

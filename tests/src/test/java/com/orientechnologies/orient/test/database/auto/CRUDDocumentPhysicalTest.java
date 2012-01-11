@@ -27,6 +27,7 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -668,4 +669,42 @@ public class CRUDDocumentPhysicalTest {
 		database.close();
 	}
 
+	@Test(dependsOnMethods = "cleanAll")
+	public void asynchInsertion() {
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+		startRecordNumber = database.countClusterElements("Account");
+
+		for (long i = startRecordNumber; i < startRecordNumber + TOT_RECORDS; ++i) {
+			record.reset();
+			record.setClassName("Account");
+
+			record.field("id", i);
+			record.field("name", "Asynch insertion test");
+			record.field("location", "Italy");
+			record.field("salary", (i + 300));
+
+			database.save(record, OPERATION_MODE.ASYNCHRONOUS);
+		}
+
+		// WAIT UNTIL ALL RECORD ARE INSERTED. USE A NEW DATABASE CONNECTION TO AVOID TO ENQUEUE THE COUNT ITSELF
+		final ODatabaseDocumentTx db = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+		long tot;
+		while ((tot = db.countClusterElements("Account")) < startRecordNumber + TOT_RECORDS) {
+			System.out.println("Asynchronous insertion: found " + tot + " records but waiting till " + (startRecordNumber + TOT_RECORDS)
+					+ " is reached");
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+			}
+		}
+		db.close();
+
+		for (ODocument d : database.browseClass("Account")) {
+			if (d.field("name").equals("Asynch insertion test"))
+				d.delete();
+		}
+
+		database.close();
+	}
 }

@@ -136,7 +136,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 					// CLASS FOUND: FORCE THE STORING IN THE CLUSTER CONFIGURED
 					String clusterName = getClusterNameById(doc.getSchemaClass().getDefaultClusterId());
 
-					super.save(doc, clusterName);
+					super.save(doc, clusterName, iMode);
 					return this;
 				}
 			} else {
