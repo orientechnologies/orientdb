@@ -294,22 +294,34 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 							iType = OType.INTEGER;
 					}
 				}
-			} else if (iFieldValueAsString.length() >= 4 && iFieldValueAsString.charAt(0) == ORID.PREFIX
-					&& iFieldValueAsString.contains(":"))
-				iType = OType.LINK;
-			else if (iFieldValueAsString.startsWith("{") && iFieldValueAsString.endsWith("}"))
+			} else if (iFieldValueAsString.startsWith("{") && iFieldValueAsString.endsWith("}"))
 				iType = OType.EMBEDDED;
 			else {
-				if (iFieldValueAsString.length() == DEF_DATE_FORMAT.length())
-					// TRY TO PARSE AS DATE
-					try {
-						synchronized (dateFormat) {
-							return dateFormat.parseObject(iFieldValueAsString);
+				if (iFieldValueAsString.length() >= 4 && iFieldValueAsString.charAt(0) == ORID.PREFIX && iFieldValueAsString.contains(":")) {
+					// IS IT A LINK?
+					final List<String> parts = OStringSerializerHelper.split(iFieldValueAsString, 1, -1, ':');
+					if (parts.size() == 2)
+						try {
+							Short.parseShort(parts.get(0));
+							Long.parseLong(parts.get(1));
+							// YES, IT'S A LINK
+							iType = OType.LINK;
+						} catch (Exception e) {
 						}
-					} catch (Exception e) {
-					}
+				}
 
-				iType = OType.STRING;
+				if (iType == null) {
+					if (iFieldValueAsString.length() == DEF_DATE_FORMAT.length())
+						// TRY TO PARSE AS DATE
+						try {
+							synchronized (dateFormat) {
+								return dateFormat.parseObject(iFieldValueAsString);
+							}
+						} catch (Exception e) {
+						}
+
+					iType = OType.STRING;
+				}
 			}
 
 		if (iType != null)

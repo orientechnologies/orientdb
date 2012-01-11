@@ -41,6 +41,12 @@ public class JSONTest {
 	}
 
 	@Test
+	public void testAlmostLink() {
+		ODocument doc = new ODocument();
+		doc.fromJSON("{'title': '#330: Dollar Coins Are Done':}");
+	}
+
+	@Test
 	public void testNullity() {
 		ODocument newDoc = new ODocument();
 

@@ -307,7 +307,7 @@ public abstract class OStringSerializerHelper {
 
 	public static List<String> split(final String iSource, final int iStartPosition, final int iEndPosition,
 			final char iRecordSeparator, final char... iJumpCharacters) {
-		return (List<String>) split(new ArrayList<String>(), iSource, 0, iSource.length(), iRecordSeparator, iJumpCharacters);
+		return (List<String>) split(new ArrayList<String>(), iSource, iStartPosition, iSource.length(), iRecordSeparator, iJumpCharacters);
 	}
 
 	public static Collection<String> split(final Collection<String> iParts, final String iSource, final int iStartPosition,
