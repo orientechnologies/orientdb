@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.clustering;
+package com.orientechnologies.orient.server.clustering.leader;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -30,7 +30,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 
 /**
- * Contains all the information about a cluster node.
+ * Contains all the information about a cluster node managed by the Leader.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 

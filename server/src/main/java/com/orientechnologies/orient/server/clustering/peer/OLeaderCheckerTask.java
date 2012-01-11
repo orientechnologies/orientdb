@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.clustering;
+package com.orientechnologies.orient.server.clustering.peer;
 
 import java.util.TimerTask;
 
 import com.orientechnologies.common.log.OLogManager;
 
 /**
- * Checks the heartbeat sent by the leader node. If too much time is gone it tries to became the new leader.
+ * Checks the heart-beat sent by the leader node. If too much time is gone it tries to became the new leader.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 

@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.clustering;
+package com.orientechnologies.orient.server.clustering.leader;
 
 import java.util.List;
 import java.util.TimerTask;
+
 
 /**
  * Checks that active nodes are up and running

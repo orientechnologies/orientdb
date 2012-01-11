@@ -18,13 +18,14 @@ package com.orientechnologies.orient.server.replication;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.SYNCH_TYPE;
 
@@ -46,7 +47,6 @@ public class ODistributedNode implements OCommandOutputListener {
 	public Date																		connectedOn;
 	private Map<String, ODistributedDatabaseInfo>	databases	= new HashMap<String, ODistributedDatabaseInfo>();
 	private STATUS																status;
-	private OOperationLog													log;
 
 	public ODistributedNode(final OReplicator iReplicator, final String iId) throws IOException {
 		replicator = iReplicator;
@@ -72,6 +72,8 @@ public class ODistributedNode implements OCommandOutputListener {
 				iDatabase.sessionId = iDatabase.storage.getSessionId();
 
 				databases.put(iDatabase.databaseName, iDatabase);
+
+				synchronizeDelta(iDatabase);
 
 			} catch (Exception e) {
 				databases.remove(iDatabase.databaseName);
@@ -101,6 +103,9 @@ public class ODistributedNode implements OCommandOutputListener {
 
 	protected void handleError(final OTransactionRecordEntry iRequest, final SYNCH_TYPE iRequestType, final Exception iException)
 			throws RuntimeException {
+
+		final Set<ODistributedDatabaseInfo> currentDbList = new HashSet<ODistributedDatabaseInfo>(databases.values());
+
 		disconnect();
 
 		// ERROR
@@ -108,7 +113,7 @@ public class ODistributedNode implements OCommandOutputListener {
 
 		// RECONNECT ALL DATABASES
 		try {
-			for (ODistributedDatabaseInfo dbEntry : databases.values()) {
+			for (ODistributedDatabaseInfo dbEntry : currentDbList) {
 				connectDatabase(dbEntry);
 			}
 		} catch (IOException e) {
@@ -116,8 +121,6 @@ public class ODistributedNode implements OCommandOutputListener {
 			OLogManager.instance()
 					.warn(this, "Remote server node %s:%d is down, remove it from replication", networkAddress, networkPort);
 		}
-
-		disconnect();
 
 		if (iRequestType == SYNCH_TYPE.SYNCH) {
 			// SYNCHRONOUS CASE: RE-THROW THE EXCEPTION NOW TO BEING PROPAGATED UP TO THE CLIENT
@@ -186,19 +189,18 @@ public class ODistributedNode implements OCommandOutputListener {
 		return id;
 	}
 
-	private void synchronizeDelta(final ODocument iNodes) throws IOException {
-		if (log.isEmpty())
+	private void synchronizeDelta(final ODistributedDatabaseInfo iDatabase) throws IOException {
+		if (iDatabase.log.isEmpty())
 			return;
 
-		OLogManager.instance().info(this, "Started realignment of remote node '%s' after a reconnection. Found %d updates", id,
-				log.totalEntries());
+		OLogManager.instance().info(this, "Started synchronization of database '%s' against remote node '%s'", iDatabase.databaseName,
+				id);
 
 		status = STATUS.SYNCHRONIZING;
-
 		final long time = System.currentTimeMillis();
 
-		OLogManager.instance().info(this, "Realignment of remote node '%s' completed in %d ms", id, System.currentTimeMillis() - time);
-
+		OLogManager.instance().info(this, "Synchronization of database '%s' against remote node '%s' completed in %dms",
+				iDatabase.databaseName, id, (System.currentTimeMillis() - time));
 		status = STATUS.ONLINE;
 	}
 
@@ -211,14 +213,14 @@ public class ODistributedNode implements OCommandOutputListener {
 			if (db.storage != null)
 				db.storage.close();
 		}
-		databases.values().clear();
+		databases.clear();
 	}
 
 	public Map<String, ODistributedDatabaseInfo> getDatabases() {
 		return databases;
 	}
 
-	public long getOperationId() throws IOException {
-		return log.getLastOperationId();
+	public long getLastOperationId(final String iDatabaseName) throws IOException {
+		return databases.get(iDatabaseName).log.getLastOperationId();
 	}
 }

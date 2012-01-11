@@ -23,6 +23,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
@@ -105,6 +106,9 @@ public class ODistributedStorage extends OStorageRemote {
 				return;
 			} catch (OConcurrentModificationException e) {
 				conflictResolver.handleUpdateConflict(iRequest.status, iRequestType, iRecord, e.getRecordVersion(), e.getDatabaseVersion());
+				return;
+			} catch (ODatabaseException e) {
+				conflictResolver.handleUpdateConflict(iRequest.status, iRequestType, iRecord, iRecord.getVersion(), -1);
 				return;
 			} catch (OException e) {
 				// PASS THROUGH

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.clustering;
+package com.orientechnologies.orient.server.clustering.leader;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -144,7 +144,7 @@ public class OLeaderNode {
 		iNode.disconnect();
 
 		// ERROR
-		OLogManager.instance().warn(this, "Remote server node %s:%d seems down, retrying to connect...", iNode.networkAddress,
+		OLogManager.instance().warn(this, "Peer node %s:%d seems down, retrying to connect...", iNode.networkAddress,
 				iNode.networkPort);
 
 		// RETRY TO CONNECT

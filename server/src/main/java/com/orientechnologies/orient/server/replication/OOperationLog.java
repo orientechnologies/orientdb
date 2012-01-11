@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.impl.local.OSingleFileSegment;
 
 /**
- * Write all the operation in cluster.<br/>
+ * Write all the operation during server cluster.<br/>
  * Uses the classic IO API and NOT the MMAP to avoid the buffer is not buffered by OS.<br/>
  * <br/>
  * Record structure:<br/>
@@ -94,12 +94,17 @@ public class OOperationLog extends OSingleFileSegment {
 		}
 	}
 
-	private boolean eof(final long iOffset) {
-		return iOffset < file.getFilledUpTo();
-	}
-
 	public String getNodeId() {
 		return nodeId;
+	}
+
+	public int findOperationId(long iOperationId) throws IOException {
+		for (int i = totalEntries() - 1; i > -1; --i) {
+			final long serial = file.readLong(i * RECORD_SIZE);
+			if (serial == iOperationId)
+				return i;
+		}
+		return -1;
 	}
 
 	public long getLastOperationId() throws IOException {

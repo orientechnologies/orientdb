@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.clustering;
+package com.orientechnologies.orient.server.clustering.peer;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.server.clustering.leader.ODiscoveryListener;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
 
 /**
- * Peer node.
+ * Peer node. In a clustered configuration there is only one leader and 0-N peer nodes.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 

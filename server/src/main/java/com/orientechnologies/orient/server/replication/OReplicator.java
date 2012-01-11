@@ -195,6 +195,12 @@ public class OReplicator {
 		status = iOnline;
 	}
 
+	/**
+	 * Returns the database configuration to send to the leader node. Example:
+	 * 
+	 * 
+	 * @return
+	 */
 	public ODocument getDatabaseConfiguration() {
 		final ODocument doc = new ODocument();
 		for (String dbName : OServerMain.server().getAvailableStorageNames().keySet()) {
@@ -210,7 +216,7 @@ public class OReplicator {
 						final ODistributedNode node = nodes.get(nodeId);
 						if (node != null) {
 							try {
-								dbCfg.field(nodeId, node.getOperationId());
+								dbCfg.field(nodeId, node.getLastOperationId(dbName));
 							} catch (IOException e) {
 							}
 						}
