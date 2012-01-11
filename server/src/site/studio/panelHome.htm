@@ -21,15 +21,13 @@
 						<td><input id="server" size="50" value="" class="ui-widget help" /></td>
 					</tr>
 					<tr>
-						<td align="right" class="ui-widget help">Database:</td>
+						<td align="right" class="help">Database:</td>
 						<td><table>
 								<tr>
 									<td id="databaseCell"></td>
-									<td>
-										<button id="createDatabase" onclick="javascript:createDatabase()" class="ui-button-text-icon">
-											Create new database <img border="0" alt="Create new database" src="images/add.png" align="top" />
-										</button>
-									</td>
+									<td><a id="createDatabase" onclick="javascript:createDatabase()" href="#"> Create new database <img border="0" alt="Create new database"
+											src="images/add.png" align="top" />
+									</a></td>
 								</tr>
 							</table></td>
 					</tr>
@@ -184,15 +182,13 @@
 		return false;
 	});
 
-	$('#createDatabase').click(
-			function() {
-				controller.loadFragment("panelCreateDatabase.htm", null, null,
-						'panel');
-				return false;
-			});
-
 	$('#server').change(formatServerURL);
 	$('#server').val(document.location.href);
 	formatServerURL();
 	listDatabases($('#server').val());
+
+	function createDatabase() {
+		controller.loadFragment("panelCreateDatabase.htm", null, null, 'panel');
+		return false;
+	}
 </script>
