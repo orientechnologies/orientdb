@@ -94,8 +94,34 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 	 */
 	@Override
 	public ODatabaseDocumentTx save(final ORecordInternal<?> iRecord) {
+		return save(iRecord, OPERATION_MODE.SYNCHRONOUS);
+	}
+
+	/**
+	 * Saves a document to the database. Behavior depends by the current running transaction if any. If no transaction is running then
+	 * changes apply immediately. If an Optimistic transaction is running then the record will be changed at commit time. The current
+	 * transaction will continue to see the record as modified, while others not. If a Pessimistic transaction is running, then an
+	 * exclusive lock is acquired against the record. Current transaction will continue to see the record as modified, while others
+	 * cannot access to it since it's locked.
+	 * 
+	 * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
+	 * {@link OConcurrentModificationException} exception is thrown.Before to save the document it must be valid following the
+	 * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
+	 * {@link ODocument#validate()} is called.
+	 * 
+	 * @param iRecord
+	 *          Record to save.
+	 * @see #setMVCC(boolean), {@link #isMVCC()}
+	 * @throws OConcurrentModificationException
+	 *           if the version of the document is different by the version contained in the database.
+	 * @throws OValidationException
+	 *           if the document breaks some validation constraints defined in the schema
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
+	@Override
+	public ODatabaseDocumentTx save(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {
 		if (!(iRecord instanceof ODocument))
-			return (ODatabaseDocumentTx) super.save(iRecord);
+			return (ODatabaseDocumentTx) super.save(iRecord, iMode);
 
 		final ODocument doc = (ODocument) iRecord;
 		doc.validate();
@@ -119,7 +145,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 					checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_UPDATE, doc.getClassName());
 			}
 
-			super.save(doc);
+			super.save(doc, iMode);
 
 		} catch (OException e) {
 			// PASS THROUGH
@@ -155,9 +181,39 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	@Override
-	public ODatabaseDocumentTx save(final ORecordInternal<?> iContent, String iClusterName) {
+	public ODatabaseDocumentTx save(final ORecordInternal<?> iRecord, final String iClusterName) {
+		return save(iRecord, iClusterName, OPERATION_MODE.SYNCHRONOUS);
+	}
+
+	/**
+	 * Saves a document specifying a cluster where to store the record. Behavior depends by the current running transaction if any. If
+	 * no transaction is running then changes apply immediately. If an Optimistic transaction is running then the record will be
+	 * changed at commit time. The current transaction will continue to see the record as modified, while others not. If a Pessimistic
+	 * transaction is running, then an exclusive lock is acquired against the record. Current transaction will continue to see the
+	 * record as modified, while others cannot access to it since it's locked.
+	 * 
+	 * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
+	 * {@link OConcurrentModificationException} exception is thrown. Before to save the document it must be valid following the
+	 * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
+	 * {@link ODocument#validate()} is called.
+	 * 
+	 * @param iRecord
+	 *          Record to save
+	 * @param iClusterName
+	 *          Cluster name where to save the record
+	 * @param iMode
+	 *          Mode of save: synchronous (default) or asynchronous
+	 * @see #setMVCC(boolean), {@link #isMVCC()}, ORecordSchemaAware#validate()
+	 * @throws OConcurrentModificationException
+	 *           if the version of the document is different by the version contained in the database.
+	 * @throws OValidationException
+	 *           if the document breaks some validation constraints defined in the schema
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
+	@Override
+	public ODatabaseDocumentTx save(final ORecordInternal<?> iContent, String iClusterName, final OPERATION_MODE iMode) {
 		if (!(iContent instanceof ODocument))
-			return (ODatabaseDocumentTx) super.save(iContent, iClusterName);
+			return (ODatabaseDocumentTx) super.save(iContent, iClusterName, iMode);
 
 		final ODocument doc = (ODocument) iContent;
 
@@ -197,7 +253,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
 		doc.validate();
 
-		super.save(doc, iClusterName);
+		super.save(doc, iClusterName, iMode);
 		return this;
 	}
 

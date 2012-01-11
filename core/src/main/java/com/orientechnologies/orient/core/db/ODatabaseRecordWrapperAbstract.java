@@ -219,13 +219,24 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 		underlying.reload(iRecord, iFetchPlan, iIgnoreCache);
 	}
 
+	public ODatabaseComplex<ORecordInternal<?>> save(final ORecordInternal<?> iRecord) {
+		underlying.save(iRecord);
+		return this;
+	}
+
 	public ODatabaseComplex<ORecordInternal<?>> save(final ORecordInternal<?> iRecord, final String iClusterName) {
 		underlying.save(iRecord, iClusterName);
 		return this;
 	}
 
-	public ODatabaseComplex<ORecordInternal<?>> save(final ORecordInternal<?> iRecord) {
-		underlying.save(iRecord);
+	public ODatabaseComplex<ORecordInternal<?>> save(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {
+		underlying.save(iRecord, iMode);
+		return this;
+	}
+
+	public ODatabaseComplex<ORecordInternal<?>> save(final ORecordInternal<?> iRecord, final String iClusterName,
+			final OPERATION_MODE iMode) {
+		underlying.save(iRecord, iClusterName, iMode);
 		return this;
 	}
 

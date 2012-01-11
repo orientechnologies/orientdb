@@ -26,10 +26,10 @@ import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.dictionary.ODictionaryWrapper;
 import com.orientechnologies.orient.core.entity.OEntityManager;
@@ -194,13 +194,38 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 	}
 
 	/**
-	 * Saves an object to the database. First checks if the object is new or not. In case it's new a new ODocument is created and
-	 * bound to the object, otherwise the ODocument is retrieved and updated. The object is introspected using the Java Reflection to
-	 * extract the field values. <br/>
+	 * Saves an object to the databasein synchronous mode . First checks if the object is new or not. In case it's new a new ODocument
+	 * is created and bound to the object, otherwise the ODocument is retrieved and updated. The object is introspected using the Java
+	 * Reflection to extract the field values. <br/>
 	 * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
 	 */
 	public ODatabaseObject save(final Object iContent) {
-		return save(iContent, null);
+		return save(iContent, (String) null, OPERATION_MODE.SYNCHRONOUS);
+	}
+
+	/**
+	 * Saves an object to the database specifying the mode. First checks if the object is new or not. In case it's new a new ODocument
+	 * is created and bound to the object, otherwise the ODocument is retrieved and updated. The object is introspected using the Java
+	 * Reflection to extract the field values. <br/>
+	 * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
+	 */
+	public ODatabaseObject save(final Object iContent, OPERATION_MODE iMode) {
+		return save(iContent, null, iMode);
+	}
+
+	/**
+	 * Saves an object in synchronous mode to the database forcing a record cluster where to store it. First checks if the object is
+	 * new or not. In case it's new a new ODocument is created and bound to the object, otherwise the ODocument is retrieved and
+	 * updated. The object is introspected using the Java Reflection to extract the field values. <br/>
+	 * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
+	 * 
+	 * Before to use the specified cluster a check is made to know if is allowed and figures in the configured and the record is valid
+	 * following the constraints declared in the schema.
+	 * 
+	 * @see ORecordSchemaAware#validate()
+	 */
+	public ODatabaseObject save(final Object iPojo, final String iClusterName) {
+		return save(iPojo, iClusterName, OPERATION_MODE.SYNCHRONOUS);
 	}
 
 	/**
@@ -214,7 +239,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 	 * 
 	 * @see ORecordSchemaAware#validate()
 	 */
-	public ODatabaseObject save(final Object iPojo, final String iClusterName) {
+	public ODatabaseObject save(final Object iPojo, final String iClusterName, OPERATION_MODE iMode) {
 		checkOpeness();
 
 		if (iPojo == null)
@@ -238,7 +263,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 
 					pojo2Stream(iPojo, record);
 
-					underlying.save(record, iClusterName);
+					underlying.save(record, iClusterName, iMode);
 
 					// RE-REGISTER FOR NEW RECORDS SINCE THE ID HAS CHANGED
 					registerUserObject(iPojo, record);

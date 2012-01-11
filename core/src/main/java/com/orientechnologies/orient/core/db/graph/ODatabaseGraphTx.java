@@ -171,12 +171,22 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 	}
 
 	public ODatabaseComplex<OGraphElement> save(final OGraphElement iObject) {
-		iObject.getDocument().save();
+		underlying.save(iObject.getDocument());
+		return this;
+	}
+
+	public ODatabaseComplex<OGraphElement> save(final OGraphElement iObject, final OPERATION_MODE iMode) {
+		underlying.save(iObject.getDocument(), iMode);
 		return this;
 	}
 
 	public ODatabaseComplex<OGraphElement> save(final OGraphElement iObject, final String iClusterName) {
-		iObject.getDocument().save(iClusterName);
+		underlying.save(iObject.getDocument(), iClusterName);
+		return this;
+	}
+
+	public ODatabaseComplex<OGraphElement> save(final OGraphElement iObject, final String iClusterName, final OPERATION_MODE iMode) {
+		underlying.save(iObject.getDocument(), iClusterName, iMode);
 		return this;
 	}
 
