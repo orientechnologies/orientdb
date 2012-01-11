@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -44,7 +45,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
-import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 
 /**
  * Object Database instance. It's a wrapper to the class ODatabaseDocumentTx but handle the conversion between ODocument instances
@@ -300,20 +300,20 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 			if (getTransaction().getAllRecordEntries() != null) {
 				// UPDATE ID & VERSION FOR ALL THE RECORDS
 				Object pojo = null;
-				for (OTransactionRecordEntry entry : getTransaction().getAllRecordEntries()) {
+				for (ORecordOperation entry : getTransaction().getAllRecordEntries()) {
 					pojo = records2Objects.get(entry.getRecord());
 
 					if (pojo != null)
-						switch (entry.status) {
-						case OTransactionRecordEntry.CREATED:
+						switch (entry.type) {
+						case ORecordOperation.CREATED:
 							rid2Records.put(entry.getRecord().getIdentity(), (ODocument) entry.getRecord());
 							OObjectSerializerHelper.setObjectID(entry.getRecord().getIdentity(), pojo);
 
-						case OTransactionRecordEntry.UPDATED:
+						case ORecordOperation.UPDATED:
 							OObjectSerializerHelper.setObjectVersion(entry.getRecord().getVersion(), pojo);
 							break;
 
-						case OTransactionRecordEntry.DELETED:
+						case ORecordOperation.DELETED:
 							OObjectSerializerHelper.setObjectID(null, pojo);
 							OObjectSerializerHelper.setObjectVersion(null, pojo);
 
@@ -333,11 +333,11 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 	public ODatabasePojoAbstract<Object> rollback() {
 		try {
 			// COPY ALL TX ENTRIES
-			final List<OTransactionRecordEntry> newEntries;
+			final List<ORecordOperation> newEntries;
 			if (getTransaction().getCurrentRecordEntries() != null) {
-				newEntries = new ArrayList<OTransactionRecordEntry>();
-				for (OTransactionRecordEntry entry : getTransaction().getCurrentRecordEntries())
-					if (entry.status == OTransactionRecordEntry.CREATED)
+				newEntries = new ArrayList<ORecordOperation>();
+				for (ORecordOperation entry : getTransaction().getCurrentRecordEntries())
+					if (entry.type == ORecordOperation.CREATED)
 						newEntries.add(entry);
 			} else
 				newEntries = null;
@@ -347,7 +347,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 
 			if (newEntries != null) {
 				Object pojo = null;
-				for (OTransactionRecordEntry entry : newEntries) {
+				for (ORecordOperation entry : newEntries) {
 					pojo = records2Objects.get(entry.getRecord());
 
 					OObjectSerializerHelper.setObjectID(null, pojo);
@@ -356,7 +356,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 			}
 
 			if (getTransaction().getCurrentRecordEntries() != null)
-				for (OTransactionRecordEntry recordEntry : getTransaction().getCurrentRecordEntries()) {
+				for (ORecordOperation recordEntry : getTransaction().getCurrentRecordEntries()) {
 					rid2Records.remove(recordEntry.getRecord().getIdentity());
 					final Object pojo = records2Objects.remove(recordEntry.getRecord());
 					if (pojo != null)
@@ -364,7 +364,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 				}
 
 			if (getTransaction().getAllRecordEntries() != null)
-				for (OTransactionRecordEntry recordEntry : getTransaction().getAllRecordEntries()) {
+				for (ORecordOperation recordEntry : getTransaction().getAllRecordEntries()) {
 					rid2Records.remove(recordEntry.getRecord().getIdentity());
 					final Object pojo = records2Objects.remove(recordEntry.getRecord());
 					if (pojo != null)
