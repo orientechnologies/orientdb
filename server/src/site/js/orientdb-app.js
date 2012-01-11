@@ -97,7 +97,7 @@ function fillStaticTable(iTable, iColumns, iData) {
 
 	var line = "";
 	for (col in iColumns) {
-		line += '<td><b>' + iColumns[col] + '</b></td>';
+		line += '<td style=\'font-size: 8pt;\'><b>' + iColumns[col] + '</b></td>';
 	}
 	$(iTable).append('<tr>' + line + '</tr>');
 
@@ -110,7 +110,7 @@ function fillStaticTable(iTable, iColumns, iData) {
 			if (i++ >= iColumns.length)
 				break;
 
-			line += '<td>' + values[col] + '</td>';
+			line += '<td style=\'font-size: 8pt;\'>' + values[col] + '</td>';
 		}
 		$(iTable).append('<tr>' + line + '</tr>');
 	}

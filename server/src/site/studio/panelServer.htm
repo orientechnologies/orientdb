@@ -26,7 +26,8 @@
 					<td valign="top" class="help">Below all the active connections. Keep in mind that HTTP connections are stateless, so no database is retained
 						and usually after a short timeout (seconds) they are killed. Binary connections, instead, remain in life until the connection client closes it.
 						Binary connections are used by the <a href="http://code.google.com/p/orient/wiki/ConsoleCommands">Orient Console</a> tool and by any Orient Java
-						applications that uses the native <a href="http://code.google.com/p/orient/wiki/JavaAPI">Java API</a>.</td>
+						applications that uses the native <a href="http://code.google.com/p/orient/wiki/JavaAPI">Java API</a>.
+					</td>
 				</tr>
 				<tr>
 					<td valign="top">
@@ -71,26 +72,22 @@
 				<tr>
 					<td valign="top"><b>Hook Values</b>
 						<table id="serverProfilerHooks" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
-						</table>
-					</td>
+						</table></td>
 				</tr>
 				<tr>
 					<td valign="top"><b>Counters</b>
 						<table id="serverProfilerCounters" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
-						</table>
-					</td>
+						</table></td>
 				</tr>
 				<tr>
 					<td valign="top"><b>Statistics</b>
 						<table id="serverProfilerStats" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
-						</table>
-					</td>
+						</table></td>
 				</tr>
 				<tr>
 					<td valign="top"><b>Chronos</b>
 						<table id="serverProfilerChronos" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
-						</table>
-					</td>
+						</table></td>
 				</tr>
 			</table>
 		</div>
@@ -111,12 +108,13 @@
 
 	function writeServerInfo(server) {
 		fillStaticTable($('#serverConnections'),
-				[ 'Id', 'Remote Client', 'Database', 'User', 'Protocol',
-						'Total requests', 'Command info', 'Command detail',
-						'Last Command When', 'Last command info',
-						'Last command detail', 'Last execution time',
-						'Total working time', 'Connected since' ],
-				server['connections']);
+				[ 'Connection Id', 'Remote Client', 'Database', 'Protocol',
+						'Protocol V.', 'Driver Name', 'Driver V.', 'Client Id',
+						'User', 'Total requests', 'Command info',
+						'Command detail', 'Last command On',
+						'Last command info', 'Last command detail',
+						'Last execution time', 'Total working time',
+						'Connected since' ], server['connections']);
 		fillStaticTable($('#serverDbs'), [ 'Database', 'User', 'Status',
 				'Storage' ], server['dbs']);
 		fillStaticTable($('#serverStorages'), [ 'Name', 'Type', 'Path',
