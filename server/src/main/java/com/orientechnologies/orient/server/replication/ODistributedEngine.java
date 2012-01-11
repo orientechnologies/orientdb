@@ -40,7 +40,7 @@ public class ODistributedEngine extends OEngineAbstract {
 			synchronized (sharedStorages) {
 				ODistributedStorage sharedStorage = sharedStorages.get(iURL);
 				if (sharedStorage == null) {
-					sharedStorage = new ODistributedStorage(iURL, "rw", replicator.getConflictResolver());
+					sharedStorage = new ODistributedStorage(null, iURL, "rw", replicator.getConflictResolver());
 					sharedStorages.put(iURL, sharedStorage);
 				}
 

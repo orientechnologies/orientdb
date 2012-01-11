@@ -25,8 +25,8 @@ import java.util.Set;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.SYNCH_TYPE;
 
 /**
@@ -66,7 +66,8 @@ public class ODistributedNode implements OCommandOutputListener {
 					iDatabase.databaseName, networkAddress, networkPort);
 
 			try {
-				iDatabase.storage = new ODistributedStorage(id + "/" + iDatabase.databaseName, "rw", replicator.getConflictResolver());
+				iDatabase.storage = new ODistributedStorage(replicator.getManager().getId(), id + "/" + iDatabase.databaseName, "rw",
+						replicator.getConflictResolver());
 				iDatabase.storage.open(iDatabase.userName, iDatabase.userPassword, null);
 
 				iDatabase.sessionId = iDatabase.storage.getSessionId();
@@ -83,7 +84,7 @@ public class ODistributedNode implements OCommandOutputListener {
 		}
 	}
 
-	public void sendRequest(final long iOperationId, final OTransactionRecordEntry iRequest, final SYNCH_TYPE iRequestType)
+	public void sendRequest(final long iOperationId, final ORecordOperation iRequest, final SYNCH_TYPE iRequestType)
 			throws IOException {
 		final ODistributedDatabaseInfo databaseEntry = databases.get(iRequest.getRecord().getDatabase().getName());
 		if (databaseEntry == null)
@@ -101,7 +102,7 @@ public class ODistributedNode implements OCommandOutputListener {
 		}
 	}
 
-	protected void handleError(final OTransactionRecordEntry iRequest, final SYNCH_TYPE iRequestType, final Exception iException)
+	protected void handleError(final ORecordOperation iRequest, final SYNCH_TYPE iRequestType, final Exception iException)
 			throws RuntimeException {
 
 		final Set<ODistributedDatabaseInfo> currentDbList = new HashSet<ODistributedDatabaseInfo>(databases.values());
@@ -199,6 +200,11 @@ public class ODistributedNode implements OCommandOutputListener {
 		status = STATUS.SYNCHRONIZING;
 		final long time = System.currentTimeMillis();
 
+		final ORecordOperation txEntry = new ORecordOperation();
+
+		int pos = iDatabase.log.findOperationId(-1);
+		replicator.distributeRequest(txEntry);
+
 		OLogManager.instance().info(this, "Synchronization of database '%s' against remote node '%s' completed in %dms",
 				iDatabase.databaseName, id, (System.currentTimeMillis() - time));
 		status = STATUS.ONLINE;
@@ -208,6 +214,9 @@ public class ODistributedNode implements OCommandOutputListener {
 		return networkAddress + ":" + networkPort;
 	}
 
+	/**
+	 * Closes all the opened databases.
+	 */
 	public void disconnect() {
 		for (ODistributedDatabaseInfo db : databases.values()) {
 			if (db.storage != null)
@@ -216,8 +225,8 @@ public class ODistributedNode implements OCommandOutputListener {
 		databases.clear();
 	}
 
-	public Map<String, ODistributedDatabaseInfo> getDatabases() {
-		return databases;
+	public ODistributedDatabaseInfo getDatabase(final String iDatabaseName) {
+		return databases.get(iDatabaseName);
 	}
 
 	public long getLastOperationId(final String iDatabaseName) throws IOException {

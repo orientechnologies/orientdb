@@ -36,7 +36,7 @@ public class OEngineRemote extends OEngineAbstract {
 			synchronized (sharedStorages) {
 				OStorageRemote sharedStorage = sharedStorages.get(iURL);
 				if (sharedStorage == null) {
-					sharedStorage = new OStorageRemote(iURL, "rw");
+					sharedStorage = new OStorageRemote(null, iURL, "rw");
 					sharedStorages.put(iURL, sharedStorage);
 				}
 

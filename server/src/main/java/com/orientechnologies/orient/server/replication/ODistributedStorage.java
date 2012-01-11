@@ -22,10 +22,10 @@ import java.util.concurrent.FutureTask;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.SYNCH_TYPE;
@@ -36,27 +36,28 @@ import com.orientechnologies.orient.server.replication.conflict.OReplicationConf
  */
 public class ODistributedStorage extends OStorageRemote {
 
+	public static final String									DNODE_PREFIX	= "dnode=";
 	private final OReplicationConflictResolver	conflictResolver;
 
-	public ODistributedStorage(final String iURL, final String iMode, final OReplicationConflictResolver iConflictResolver)
-			throws IOException {
-		super(iURL, iMode);
+	public ODistributedStorage(final String iNodeId, final String iURL, final String iMode,
+			final OReplicationConflictResolver iConflictResolver) throws IOException {
+		super(DNODE_PREFIX + iNodeId, iURL, iMode);
 		conflictResolver = iConflictResolver;
 	}
 
-	public void distributeChange(final ODistributedDatabaseInfo databaseEntry, final OTransactionRecordEntry iRequest,
+	public void distributeChange(final ODistributedDatabaseInfo databaseEntry, final ORecordOperation iRequest,
 			final SYNCH_TYPE iRequestType, final ORecordInternal<?> iRecord) {
 
 		if (OLogManager.instance().isWarnEnabled()) {
 			String operation = "?";
-			switch (iRequest.status) {
-			case OTransactionRecordEntry.CREATED:
+			switch (iRequest.type) {
+			case ORecordOperation.CREATED:
 				operation = "CREATE";
 				break;
-			case OTransactionRecordEntry.UPDATED:
+			case ORecordOperation.UPDATED:
 				operation = "UPDATE";
 				break;
-			case OTransactionRecordEntry.DELETED:
+			case ORecordOperation.DELETED:
 				operation = "DELETE";
 				break;
 			}
@@ -70,7 +71,7 @@ public class ODistributedStorage extends OStorageRemote {
 			try {
 				final OChannelBinaryClient network = beginRequest(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_RECORD_CHANGE);
 				try {
-					network.writeByte(iRequest.status);
+					network.writeByte(iRequest.type);
 					network.writeLong(0); // OPERATION ID
 					network.writeRID(iRecord.getIdentity());
 					network.writeBytes(iRecord.toStream());
@@ -84,7 +85,7 @@ public class ODistributedStorage extends OStorageRemote {
 				if (iRequestType == SYNCH_TYPE.SYNCH)
 					try {
 						beginResponse(network);
-						handleRemoteResponse(iRequest.status, iRequestType, iRecord, network.readLong());
+						handleRemoteResponse(iRequest.type, iRequestType, iRecord, network.readLong());
 					} finally {
 						endResponse(network);
 					}
@@ -93,7 +94,7 @@ public class ODistributedStorage extends OStorageRemote {
 						public Object call() throws Exception {
 							beginResponse(network);
 							try {
-								handleRemoteResponse(iRequest.status, iRequestType, iRecord, network.readLong());
+								handleRemoteResponse(iRequest.type, iRequestType, iRecord, network.readLong());
 							} finally {
 								endResponse(network);
 							}
@@ -105,10 +106,10 @@ public class ODistributedStorage extends OStorageRemote {
 				}
 				return;
 			} catch (OConcurrentModificationException e) {
-				conflictResolver.handleUpdateConflict(iRequest.status, iRequestType, iRecord, e.getRecordVersion(), e.getDatabaseVersion());
+				conflictResolver.handleUpdateConflict(iRequest.type, iRequestType, iRecord, e.getRecordVersion(), e.getDatabaseVersion());
 				return;
 			} catch (ODatabaseException e) {
-				conflictResolver.handleUpdateConflict(iRequest.status, iRequestType, iRecord, iRecord.getVersion(), -1);
+				conflictResolver.handleUpdateConflict(iRequest.type, iRequestType, iRecord, iRecord.getVersion(), -1);
 				return;
 			} catch (OException e) {
 				// PASS THROUGH
@@ -124,18 +125,18 @@ public class ODistributedStorage extends OStorageRemote {
 			final long iResponse) {
 
 		switch (iOperation) {
-		case OTransactionRecordEntry.CREATED:
+		case ORecordOperation.CREATED:
 			if (iResponse != iRecord.getIdentity().getClusterPosition())
-				conflictResolver.handleCreateConflict(OTransactionRecordEntry.CREATED, iRequestType, iRecord, iResponse);
+				conflictResolver.handleCreateConflict(ORecordOperation.CREATED, iRequestType, iRecord, iResponse);
 			break;
-		case OTransactionRecordEntry.UPDATED:
+		case ORecordOperation.UPDATED:
 			if ((int) iResponse != iRecord.getVersion())
-				conflictResolver.handleUpdateConflict(OTransactionRecordEntry.UPDATED, iRequestType, iRecord, iRecord.getVersion(),
+				conflictResolver.handleUpdateConflict(ORecordOperation.UPDATED, iRequestType, iRecord, iRecord.getVersion(),
 						(int) iResponse);
 			break;
-		case OTransactionRecordEntry.DELETED:
+		case ORecordOperation.DELETED:
 			if ((int) iResponse == 0)
-				conflictResolver.handleDeleteConflict(OTransactionRecordEntry.DELETED, iRequestType, iRecord);
+				conflictResolver.handleDeleteConflict(ORecordOperation.DELETED, iRequestType, iRecord);
 			break;
 		}
 	}

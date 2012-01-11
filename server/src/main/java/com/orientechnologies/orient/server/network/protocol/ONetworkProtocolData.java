@@ -32,4 +32,8 @@ public class ONetworkProtocolData {
 	public long		totalCommandExecutionTime	= 0;
 	public String	serverInfo								= null;
 	public String	caller										= null;
+	public String	driverName								= null;
+	public String	driverVersion							= null;
+	public short	protocolVersion						= -1;
+	public String	clientId								= null;
 }

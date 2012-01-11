@@ -187,32 +187,36 @@ public abstract class OChannelBinary extends OChannel {
 		return new ORecordId(readShort(), readLong());
 	}
 
-	public void writeByte(final byte iContent) throws IOException {
+	public OChannelBinary writeByte(final byte iContent) throws IOException {
 		if (debug)
 			OLogManager.instance().debug(this, "Writing byte (1 byte): %d", iContent);
 
 		out.write(iContent);
+		return this;
 	}
 
-	public void writeInt(final int iContent) throws IOException {
+	public OChannelBinary writeInt(final int iContent) throws IOException {
 		if (debug)
 			OLogManager.instance().debug(this, "Writing int (4 bytes): %d", iContent);
 
 		out.writeInt(iContent);
+		return this;
 	}
 
-	public void writeLong(final long iContent) throws IOException {
+	public OChannelBinary writeLong(final long iContent) throws IOException {
 		if (debug)
 			OLogManager.instance().debug(this, "Writing long (8 bytes): %d", iContent);
 
 		out.writeLong(iContent);
+		return this;
 	}
 
-	public void writeShort(final short iContent) throws IOException {
+	public OChannelBinary writeShort(final short iContent) throws IOException {
 		if (debug)
 			OLogManager.instance().debug(this, "Writing long (2 bytes): %d", iContent);
 
 		out.writeShort(iContent);
+		return this;
 	}
 
 	public OChannelBinary writeString(final String iContent) throws IOException {

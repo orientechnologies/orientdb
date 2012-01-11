@@ -71,12 +71,15 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedServerAb
 				}
 
 				json.beginObject(2);
-				writeField(json, 2, "id", c.id);
-				writeField(json, 2, "id", c.id);
+				writeField(json, 2, "connectionId", c.id);
 				writeField(json, 2, "remoteAddress", c.protocol.getChannel() != null ? c.protocol.getChannel().toString() : "Disconnected");
 				writeField(json, 2, "db", c.database != null ? c.database.getName() : "-");
+				writeField(json, 2, "protocol", c.protocol.getType());
+				writeField(json, 2, "protocolVersion", c.protocol.getData().protocolVersion);
+				writeField(json, 2, "driverName", c.protocol.getData().driverName);
+				writeField(json, 2, "driverVersion", c.protocol.getData().driverVersion);
+				writeField(json, 2, "clientId", c.protocol.getData().clientId);
 				writeField(json, 2, "user", c.database != null && c.database.getUser() != null ? c.database.getUser().getName() : "-");
-				writeField(json, 2, "protocol", c.protocol.getName());
 				writeField(json, 2, "totalRequests", c.protocol.getData().totalRequests);
 				writeField(json, 2, "commandInfo", c.protocol.getData().commandInfo);
 				writeField(json, 2, "commandDetail", c.protocol.getData().commandDetail);
@@ -135,7 +138,7 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedServerAb
 				json.endObject(3);
 			}
 			json.endCollection(2, false);
-			
+
 			json.beginCollection(2, true, "counters");
 			for (String c : OProfiler.getInstance().getCounters()) {
 				json.beginObject(3);

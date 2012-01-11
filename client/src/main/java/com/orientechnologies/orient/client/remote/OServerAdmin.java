@@ -54,7 +54,7 @@ public class OServerAdmin {
 		if (!iURL.contains("/"))
 			iURL += "/";
 
-		storage = new OStorageRemote(iURL, "");
+		storage = new OStorageRemote(null, iURL, "");
 	}
 
 	/**
@@ -81,6 +81,9 @@ public class OServerAdmin {
 
 		try {
 			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONNECT);
+
+			storage.sendClientInfo(network);
+
 			try {
 				network.writeString(iUserName);
 				network.writeString(iUserPassword);
