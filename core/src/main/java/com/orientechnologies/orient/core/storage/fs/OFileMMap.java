@@ -46,8 +46,7 @@ import com.orientechnologies.orient.core.storage.fs.OMMapManager.OPERATION_TYPE;
 public class OFileMMap extends OFile {
 	protected MappedByteBuffer									headerBuffer;
 	protected int																bufferBeginOffset	= -1;
-	protected int																bufferSize				= 0;
-	protected List<ByteBuffer>									bufferPool				= new ArrayList<ByteBuffer>(10);
+	protected static List<ByteBuffer>						bufferPool				= new ArrayList<ByteBuffer>(10);
 
 	private static int													BYTEBUFFER_POOLABLE_SIZE;
 	private static OMMapManager.ALLOC_STRATEGY	strategy;
@@ -404,7 +403,7 @@ public class OFileMMap extends OFile {
 
 		final ByteBuffer buffer;
 
-		synchronized (this) {
+		synchronized (bufferPool) {
 			if (bufferPool.isEmpty()) {
 				buffer = ByteBuffer.allocateDirect(BYTEBUFFER_POOLABLE_SIZE);
 				OProfiler.getInstance().updateStat("MMap.pooledBufferSize", BYTEBUFFER_POOLABLE_SIZE);
@@ -428,7 +427,7 @@ public class OFileMMap extends OFile {
 		iBuffer.rewind();
 
 		// PUSH INTO THE POOL
-		synchronized (this) {
+		synchronized (bufferPool) {
 			bufferPool.add(iBuffer);
 			OProfiler.getInstance().updateCounter("MMap.pooledBuffers", +1);
 		}
