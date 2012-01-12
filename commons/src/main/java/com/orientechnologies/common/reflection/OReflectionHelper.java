@@ -32,22 +32,30 @@ public class OReflectionHelper {
 		ArrayList<File> directories = new ArrayList<File>();
 		try {
 			// Ask for all resources for the path
-			Enumeration<URL> resources = iClassLoader.getResources(iPackageName.replace('.', '/'));
-			while (resources.hasMoreElements()) {
-				URL res = resources.nextElement();
-				if (res.getProtocol().equalsIgnoreCase("jar")) {
-					JarURLConnection conn = (JarURLConnection) res.openConnection();
-					JarFile jar = conn.getJarFile();
-					for (JarEntry e : Collections.list(jar.entries())) {
+			final String packageUrl = iPackageName.replace('.', '/');
+			Enumeration<URL> resources = iClassLoader.getResources(packageUrl);
+			if (!resources.hasMoreElements()) {
+				resources = iClassLoader.getResources(packageUrl + CLASS_EXTENSION);
+				if (resources.hasMoreElements()) {
+					throw new IllegalArgumentException(iPackageName + " does not appear to be a valid package but a class");
+				}
+			} else {
+				while (resources.hasMoreElements()) {
+					URL res = resources.nextElement();
+					if (res.getProtocol().equalsIgnoreCase("jar")) {
+						JarURLConnection conn = (JarURLConnection) res.openConnection();
+						JarFile jar = conn.getJarFile();
+						for (JarEntry e : Collections.list(jar.entries())) {
 
-						if (e.getName().startsWith(iPackageName.replace('.', '/')) && e.getName().endsWith(CLASS_EXTENSION)
-								&& !e.getName().contains("$")) {
-							String className = e.getName().replace("/", ".").substring(0, e.getName().length() - 6);
-							classes.add(Class.forName(className));
+							if (e.getName().startsWith(iPackageName.replace('.', '/')) && e.getName().endsWith(CLASS_EXTENSION)
+									&& !e.getName().contains("$")) {
+								String className = e.getName().replace("/", ".").substring(0, e.getName().length() - 6);
+								classes.add(Class.forName(className));
+							}
 						}
-					}
-				} else
-					directories.add(new File(URLDecoder.decode(res.getPath(), "UTF-8")));
+					} else
+						directories.add(new File(URLDecoder.decode(res.getPath(), "UTF-8")));
+				}
 			}
 		} catch (NullPointerException x) {
 			throw new ClassNotFoundException(iPackageName + " does not appear to be " + "a valid package (Null pointer exception)");
