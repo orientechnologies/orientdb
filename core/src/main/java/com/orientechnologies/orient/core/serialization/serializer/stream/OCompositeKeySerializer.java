@@ -23,7 +23,7 @@ public class OCompositeKeySerializer implements OStreamSerializer {
 			outputStream.set(OStreamSerializerLiteral.INSTANCE.toStream(comparable));
 		}
 
-		return outputStream.getInternalBuffer();
+		return outputStream.toByteArray();
 	}
 
 	public Object fromStream(final byte[] iStream) throws IOException {
