@@ -25,6 +25,7 @@ import java.util.List;
 
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.fs.OMMapManager.OPERATION_TYPE;
@@ -381,26 +382,37 @@ public class OFileMMap extends OFile {
 	}
 
 	/**
-	 * Acquire a byte buffer to use in read/write operations. If the requested size is minor-equals to BYTEBUFFER_POOLABLE_SIZE bytes,
-	 * then is returned from the bufferPool if any. Buffer bigger than BYTEBUFFER_POOLABLE_SIZE bytes.
+	 * Acquires a byte buffer to use in read/write operations. If the requested size is minor-equals to BYTEBUFFER_POOLABLE_SIZE
+	 * bytes, then is returned from the bufferPool if any. Buffer bigger than BYTEBUFFER_POOLABLE_SIZE bytes.
 	 * 
 	 * @param iSize
 	 *          The requested size
 	 * @return A buffer in the pool if any and if size is compatible, otherwise a new one
 	 */
 	protected ByteBuffer acquireByteBuffer(final int iSize) {
-		if (iSize > BYTEBUFFER_POOLABLE_SIZE)
-			// CREATE A BUFFER AT THE FLY. IT WILL BE DISCARDED WHEN FINISHED
-			return ByteBuffer.allocateDirect(iSize);
+		if (iSize > BYTEBUFFER_POOLABLE_SIZE) {
+			try {
+				OProfiler.getInstance().updateStat("MMap.extraBufferSize", iSize);
+				// CREATE A BUFFER AT THE FLY. IT WILL BE DISCARDED WHEN FINISHED
+				return ByteBuffer.allocate(iSize);
+			} catch (OutOfMemoryError e) {
+				// LOG THE EXCEPTION AND RE-THROW IT
+				OLogManager.instance().error(this, "Error on allocating direct buffer of size %d bytes", e, iSize);
+				throw e;
+			}
+		}
 
 		final ByteBuffer buffer;
 
 		synchronized (this) {
-			if (bufferPool.isEmpty())
-				buffer = ByteBuffer.allocate(BYTEBUFFER_POOLABLE_SIZE);
-			else
+			if (bufferPool.isEmpty()) {
+				buffer = ByteBuffer.allocateDirect(BYTEBUFFER_POOLABLE_SIZE);
+				OProfiler.getInstance().updateStat("MMap.pooledBufferSize", BYTEBUFFER_POOLABLE_SIZE);
+			} else {
 				// POP THE FIRST AVAILABLE
 				buffer = bufferPool.remove(0);
+				OProfiler.getInstance().updateCounter("MMap.pooledBuffers", -1);
+			}
 		}
 
 		buffer.limit(iSize);
@@ -410,7 +422,7 @@ public class OFileMMap extends OFile {
 
 	protected synchronized void releaseByteBuffer(final ByteBuffer iBuffer) {
 		if (iBuffer.limit() > BYTEBUFFER_POOLABLE_SIZE)
-			// DISCARD: IT'S TOO BIG TO KEEP IN MEMORY
+			// DISCARD: IT'S TOO BIG TO KEEP IT IN MEMORY
 			return;
 
 		iBuffer.rewind();
@@ -418,6 +430,7 @@ public class OFileMMap extends OFile {
 		// PUSH INTO THE POOL
 		synchronized (this) {
 			bufferPool.add(iBuffer);
+			OProfiler.getInstance().updateCounter("MMap.pooledBuffers", +1);
 		}
 	}
 }
