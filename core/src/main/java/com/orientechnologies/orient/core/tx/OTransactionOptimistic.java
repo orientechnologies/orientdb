@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
@@ -90,7 +91,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 	private void addRecord(final ORecordInternal<?> iRecord, final byte iStatus, final String iClusterName) {
 		checkTransaction();
 
-		if ((status == OTransaction.TXSTATUS.COMMITTING) && database.getStorage() instanceof OStorageEmbedded) {
+		if ((status == OTransaction.TXSTATUS.COMMITTING || OStorage.CLUSTER_INDEX_NAME.equals(iClusterName))
+				&& database.getStorage() instanceof OStorageEmbedded) {
 			// I'M COMMITTING OR IT'S AN INDEX: BYPASS LOCAL BUFFER
 			switch (iStatus) {
 			case ORecordOperation.CREATED:
