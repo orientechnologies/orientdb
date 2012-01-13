@@ -2,6 +2,8 @@ package com.orientechnologies.common.util;
 
 import java.lang.reflect.Array;
 
+import com.orientechnologies.common.log.OLogManager;
+
 @SuppressWarnings("unchecked")
 public class OArrays {
 	public static <T> T[] copyOf(final T[] iSource, final int iNewSize) {
@@ -33,9 +35,15 @@ public class OArrays {
 		final int newLength = iEnd - iBegin;
 		if (newLength < 0)
 			throw new IllegalArgumentException(iBegin + " > " + iEnd);
-		final byte[] copy = new byte[newLength];
-		System.arraycopy(iSource, iBegin, copy, 0, Math.min(iSource.length - iBegin, newLength));
-		return copy;
+
+		try {
+			final byte[] copy = new byte[newLength];
+			System.arraycopy(iSource, iBegin, copy, 0, Math.min(iSource.length - iBegin, newLength));
+			return copy;
+		} catch (OutOfMemoryError e) {
+			OLogManager.instance().error(null, "Error on copying buffer of size %d bytes", e, newLength);
+			throw e;
+		}
 	}
 
 	public static int[] copyOf(final int[] iSource, final int iNewSize) {
