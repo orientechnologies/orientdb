@@ -54,7 +54,8 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 	}
 
 	public OMVRBTreeRID() {
-		this(new OMVRBTreeRIDProvider(null, ODatabaseRecordThreadLocal.INSTANCE.get().getClusterIdByName(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME)));
+		this(new OMVRBTreeRIDProvider(null, ODatabaseRecordThreadLocal.INSTANCE.get().getClusterIdByName(
+				OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME)));
 	}
 
 	public OMVRBTreeRID(final ODocument iRecord) {
@@ -301,7 +302,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
 	@Override
 	public int commitChanges() {
-		if (!((OMVRBTreeRIDProvider) getProvider()).isEmbeddedStreaming()){
+		if (!((OMVRBTreeRIDProvider) getProvider()).isEmbeddedStreaming()) {
 			saveAllNewEntries();
 			return super.commitChanges();
 		}
@@ -363,9 +364,11 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
 				if (!record.getIdentity().isNew()) {
 					// SAVED CORRECTLY (=NO IN TX): MOVE IT INTO THE PERSISTENT TREE
-					newEntries.remove(record);
-					if (newEntries.size() == 0)
-						newEntries = null;
+					if (newEntries != null) {
+						newEntries.remove(record);
+						if (newEntries.size() == 0)
+							newEntries = null;
+					}
 
 					// PUT THE ITEM INTO THE TREE
 					internalPut(record.getIdentity(), null);
@@ -373,7 +376,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 			}
 
 			// SAVE ALL AT THE END
-			commitChanges();
+			super.commitChanges();
 
 			if (newEntries != null)
 				// SOMETHING IS TEMPORARY YET
