@@ -237,20 +237,21 @@ public class ODataLocal extends OMultiFileSegment {
 			final OFile file = files[(int) pos[0]];
 
 			final int recordSize = file.readInt(pos[1]);
+			final int contentLength = iContent != null ? iContent.length : 0;
 
-			if (iContent.length == recordSize) {
+			if (contentLength == recordSize) {
 				// USE THE OLD SPACE SINCE SIZE ISN'T CHANGED
 				file.write(pos[1] + RECORD_FIX_SIZE, iContent);
 
 				OProfiler.getInstance().updateCounter(PROFILER_UPDATE_REUSED_ALL, +1);
 				return iPosition;
-			} else if (recordSize - iContent.length > RECORD_FIX_SIZE + 50) {
+			} else if (recordSize - contentLength > RECORD_FIX_SIZE + 50) {
 				// USE THE OLD SPACE BUT UPDATE THE CURRENT SIZE. IT'S PREFEREABLE TO USE THE SAME INSTEAD FINDING A BEST SUITED FOR IT TO
 				// AVOID CHANGES TO REF FILE AS WELL.
 				writeRecord(pos, iRid.clusterId, iRid.clusterPosition, iContent);
 
 				// CREATE A HOLE WITH THE DIFFERENCE OF SPACE
-				handleHole(iPosition + RECORD_FIX_SIZE + iContent.length, recordSize - iContent.length - RECORD_FIX_SIZE);
+				handleHole(iPosition + RECORD_FIX_SIZE + contentLength, recordSize - contentLength - RECORD_FIX_SIZE);
 
 				OProfiler.getInstance().updateCounter(PROFILER_UPDATE_REUSED_PARTIAL, +1);
 			} else {
@@ -258,7 +259,7 @@ public class ODataLocal extends OMultiFileSegment {
 				handleHole(iPosition, recordSize);
 
 				// USE A NEW SPACE
-				pos = getFreeSpace(iContent.length + RECORD_FIX_SIZE);
+				pos = getFreeSpace(contentLength + RECORD_FIX_SIZE);
 				writeRecord(pos, iRid.clusterId, iRid.clusterPosition, iContent);
 
 				OProfiler.getInstance().updateCounter(PROFILER_UPDATE_NOT_REUSED, +1);
@@ -554,7 +555,7 @@ public class ODataLocal extends OMultiFileSegment {
 			final byte[] iContent) throws IOException {
 		final OFile file = files[(int) iFilePosition[0]];
 
-		file.writeInt(iFilePosition[1], iContent.length);
+		file.writeInt(iFilePosition[1], iContent != null ? iContent.length : 0);
 		file.writeShort(iFilePosition[1] + OBinaryProtocol.SIZE_INT, (short) iClusterSegment);
 		// TestSimulateError.onDataLocalWriteRecord(this, iFilePosition, iClusterSegment, iClusterPosition, iContent);
 		file.writeLong(iFilePosition[1] + OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_SHORT, iClusterPosition);
