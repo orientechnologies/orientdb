@@ -301,8 +301,10 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
 	@Override
 	public int commitChanges() {
-		if (!((OMVRBTreeRIDProvider) getProvider()).isEmbeddedStreaming())
+		if (!((OMVRBTreeRIDProvider) getProvider()).isEmbeddedStreaming()){
+			saveAllNewEntries();
 			return super.commitChanges();
+		}
 		return 0;
 	}
 
