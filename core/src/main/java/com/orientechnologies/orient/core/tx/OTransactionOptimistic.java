@@ -54,8 +54,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 		// ROLLBACK AT STORAGE LEVEL DONE IN THE COMMIT PHASE ONLY
 		// database.getStorage().rollback(this);
 
-		// INVALIDATE THE CACHE
-		database.getLevel1Cache().invalidate();
+		// CLEAR THE CACHE MOVING GOOD RECORDS TO LEVEL-2 CACHE
+		database.getLevel1Cache().clear();
 
 		// REMOVE ALL THE ENTRIES AND INVALIDATE THE DOCUMENTS TO AVOID TO BE RE-USED DIRTY AT USER-LEVEL. IN THIS WAY RE-LOADING MUST
 		// EXECUTED

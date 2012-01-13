@@ -29,7 +29,9 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
 @Test
 public class GraphDatabaseTest {
@@ -262,4 +264,44 @@ public class GraphDatabaseTest {
 	// database.close();
 	// }
 	// }
+
+	/**
+	 * @author bill@tobecker.com
+	 */
+	public void testTxField() {
+		database.open("admin", "admin");
+
+		if (database.getVertexType("PublicCert") == null)
+			database.createVertexType("PublicCert");
+
+		// Step 1
+		// create a public cert with some field set
+		ODocument publicCert = (ODocument) database.createVertex("PublicCert").field("address", "drevil@myco.mn.us").save();
+
+		// Step 2
+		// update the public cert field in transaction
+		database.begin(TXTYPE.OPTIMISTIC);
+		publicCert.field("address", "newaddress@myco.mn.us").save();
+		database.commit();
+
+		// Step 3
+		// try transaction with a rollback
+		database.begin(TXTYPE.OPTIMISTIC);
+		ODocument publicCertNew = (ODocument) database.createVertex("PublicCert").field("address", "iagor@myco.mn.us").save();
+		database.rollback();
+
+		// Step 4
+		// just show what is there
+		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select * from PublicCert"));
+
+		for (ODocument d : result) {
+			System.out.println("(-1) Vertex: " + d);
+		}
+
+		// Step 5
+		// try deleting all the stuff
+		database.command(new OCommandSQL("delete from PublicCert")).execute();
+
+		database.close();
+	}
 }

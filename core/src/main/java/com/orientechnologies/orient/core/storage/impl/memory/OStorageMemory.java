@@ -660,6 +660,8 @@ public class OStorageMemory extends OStorageEmbedded {
 			break;
 		}
 
+		txEntry.getRecord().unsetDirty();
+
 		if (txEntry.getRecord() instanceof OTxListener)
 			((OTxListener) txEntry.getRecord()).onEvent(txEntry, OTxListener.EVENT.AFTER_COMMIT);
 	}
