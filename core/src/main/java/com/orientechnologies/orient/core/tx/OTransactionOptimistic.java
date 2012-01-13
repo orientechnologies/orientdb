@@ -101,7 +101,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 						.executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iRecord.getRecordType(), OPERATION_MODE.SYNCHRONOUS);
 				break;
 			case ORecordOperation.DELETED:
-				database.executeDeleteRecord(iRecord, iRecord.getVersion(), OPERATION_MODE.SYNCHRONOUS);
+				database.executeDeleteRecord(iRecord, iRecord.getVersion(), false, OPERATION_MODE.SYNCHRONOUS);
 				break;
 			}
 		} else {

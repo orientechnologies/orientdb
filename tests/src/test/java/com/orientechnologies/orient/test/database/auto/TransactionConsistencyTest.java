@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Vector;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -451,5 +452,56 @@ public class TransactionConsistencyTest {
 		} finally {
 			db.close();
 		}
+	}
+
+	@Test
+	public void testTransactionPopulateDelete() {
+		ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+		db.open("admin", "admin");
+
+		if (!db.getMetadata().getSchema().existsClass("MyFruit")) {
+			OClass fruitClass = db.getMetadata().getSchema().createClass("MyFruit");
+			fruitClass.createProperty("name", OType.STRING);
+			fruitClass.createProperty("color", OType.STRING);
+			fruitClass.createProperty("flavor", OType.STRING);
+
+			db.getMetadata().getSchema().getClass("MyFruit").getProperty("name").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+			db.getMetadata().getSchema().getClass("MyFruit").getProperty("color").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+			db.getMetadata().getSchema().getClass("MyFruit").getProperty("flavor").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+		}
+		db.close();
+
+		db = new ODatabaseDocumentTx(url);
+		db.open("admin", "admin");
+		int chunkSize = 500;
+		for (int initialValue = 0; initialValue < 10; initialValue++) {
+			System.out.println("initialValue = " + initialValue);
+			Assert.assertEquals(db.countClusterElements("Fruit"), 0);
+
+			// do insert
+			Vector<ODocument> v = new Vector<ODocument>();
+			db.begin();
+			for (int i = initialValue * chunkSize; i < (initialValue * chunkSize) + chunkSize; i++) {
+				ODocument d = new ODocument(db, "MyFruit").field("name", "" + i).field("color", "FOO").field("flavor", "BAR" + i);
+				d.save();
+				v.addElement(d);
+
+			}
+			System.out.println("populate commit");
+			db.commit();
+
+			// do delete
+			db.begin();
+			System.out.println("vector size = " + v.size());
+			for (int i = 0; i < v.size(); i++) {
+				db.delete((ODocument) v.elementAt(i));
+			}
+			System.out.println("delete commit");
+			db.commit();
+
+			Assert.assertEquals(db.countClusterElements("Fruit"), 0);
+		}
+
+		db.close();
 	}
 }

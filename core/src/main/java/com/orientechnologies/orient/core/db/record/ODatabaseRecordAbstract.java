@@ -262,34 +262,34 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	}
 
 	/**
-	 * Delete the record without checking the version.
+	 * Deletes the record without checking the version.
 	 */
 	public ODatabaseRecord delete(final ORID iRecord) {
-		executeDeleteRecord(iRecord, -1, OPERATION_MODE.SYNCHRONOUS);
+		executeDeleteRecord(iRecord, -1, true, OPERATION_MODE.SYNCHRONOUS);
 		return this;
 	}
 
 	/**
-	 * Delete the record without checking the version.
+	 * Deletes the record without checking the version.
 	 */
 	public ODatabaseRecord delete(final ORID iRecord, final OPERATION_MODE iMode) {
-		executeDeleteRecord(iRecord, -1, iMode);
+		executeDeleteRecord(iRecord, -1, true, iMode);
 		return this;
 	}
 
 	/**
-	 * Delete the record without checking the version.
+	 * Deletes the record without checking the version.
 	 */
 	public ODatabaseRecord delete(final ORecordInternal<?> iRecord) {
-		executeDeleteRecord(iRecord, -1, OPERATION_MODE.SYNCHRONOUS);
+		executeDeleteRecord(iRecord, -1, true, OPERATION_MODE.SYNCHRONOUS);
 		return this;
 	}
 
 	/**
-	 * Delete the record without checking the version.
+	 * Deletes the record without checking the version.
 	 */
 	public ODatabaseRecord delete(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {
-		executeDeleteRecord(iRecord, -1, iMode);
+		executeDeleteRecord(iRecord, -1, true, iMode);
 		return this;
 	}
 
@@ -638,7 +638,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		}
 	}
 
-	public void executeDeleteRecord(final OIdentifiable iRecord, final int iVersion, final OPERATION_MODE iMode) {
+	public void executeDeleteRecord(final OIdentifiable iRecord, final int iVersion, final boolean iRequired,
+			final OPERATION_MODE iMode) {
 		checkOpeness();
 		final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
@@ -656,7 +657,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		try {
 			callbackHooks(TYPE.BEFORE_DELETE, iRecord);
 
-			underlying.delete(rid, iVersion, (byte) iMode.ordinal());
+			underlying.delete(rid, iVersion, iRequired, (byte) iMode.ordinal());
 
 			callbackHooks(TYPE.AFTER_DELETE, iRecord);
 

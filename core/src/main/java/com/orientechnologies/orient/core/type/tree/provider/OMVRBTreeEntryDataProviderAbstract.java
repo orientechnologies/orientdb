@@ -173,7 +173,7 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
 
 	public void delete() {
 		if (treeDataProvider.storage == null)
-			delete(OMVRBTreeProviderAbstract.getDatabase());
+			delete((ODatabaseRecord) null);
 		else
 			delete(treeDataProvider.storage);
 	}

@@ -246,9 +246,9 @@ public class ODatabaseRaw implements ODatabase {
 		}
 	}
 
-	public void delete(final ORecordId iRid, final int iVersion, final int iMode) {
+	public void delete(final ORecordId iRid, final int iVersion, final boolean iRequired, final int iMode) {
 		try {
-			if (!storage.deleteRecord(iRid, iVersion, iMode, null))
+			if (!storage.deleteRecord(iRid, iVersion, iMode, null) && iRequired)
 				throw new ORecordNotFoundException("The record with id " + iRid + " was not found");
 
 		} catch (OException e) {
