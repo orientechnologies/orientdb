@@ -54,7 +54,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 	}
 
 	public OMVRBTreeRID() {
-		this(new OMVRBTreeRIDProvider(null, ODatabaseRecordThreadLocal.INSTANCE.get().getDefaultClusterId()));
+		this(new OMVRBTreeRIDProvider(null, ODatabaseRecordThreadLocal.INSTANCE.get().getClusterIdByName(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME)));
 	}
 
 	public OMVRBTreeRID(final ODocument iRecord) {
@@ -417,9 +417,14 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
 	@Override
 	protected void setRoot(final OMVRBTreeEntry<OIdentifiable, OIdentifiable> iRoot) {
-		final int size = size();
+		int size = 0;
+		if (iRoot != null)
+			size = size();
+
 		super.setRoot(iRoot);
-		setSize(size);
+
+		if (iRoot != null)
+			setSize(size);
 	}
 
 	/**

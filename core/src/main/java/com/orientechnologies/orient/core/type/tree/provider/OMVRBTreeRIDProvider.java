@@ -247,7 +247,8 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 			final OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable> r = (OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable>) tree
 					.getRoot();
 			if (r != null) {
-				if (((OMVRBTreeRIDEntryProvider) r.getProvider()).setTreeSize(iSize))
+				final OMVRBTreeRIDEntryProvider provider = (OMVRBTreeRIDEntryProvider) r.getProvider();
+				if (provider != null && provider.setTreeSize(iSize))
 					r.markDirty();
 				return true;
 			}
