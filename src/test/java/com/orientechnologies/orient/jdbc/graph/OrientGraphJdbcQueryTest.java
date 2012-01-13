@@ -39,6 +39,8 @@ import java.util.Collection;
 
 import junit.framework.Assert;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -52,6 +54,17 @@ import static org.junit.Assert.fail;
  * 
  */
 public class OrientGraphJdbcQueryTest extends OrientGraphJdbcBaseTest {
+
+	@Before
+	public void setup() {
+		new File("./working/").mkdir();
+
+	}
+
+	@After
+	public void clean() {
+		
+	}
 
 	@Test
 	public void testQuery() {
