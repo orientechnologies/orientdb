@@ -20,17 +20,26 @@ import java.lang.reflect.Method;
 import java.nio.MappedByteBuffer;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 
 public class OMMapBufferEntry implements Comparable<OMMapBufferEntry> {
-	static Class<?>		sunClass	= null;
-	OFileMMap					file;
-	MappedByteBuffer	buffer;
-	long							beginOffset;
-	int								size;
-	long							counter;
-	boolean						pin;
+	private static final int	FORCE_DELAY;
+	private static final int	FORCE_RETRY;
+
+	static Class<?>						sunClass	= null;
+	OFileMMap									file;
+	MappedByteBuffer					buffer;
+	long											beginOffset;
+	int												size;
+	long											counter;
+	boolean										pin;
 
 	static {
+		FORCE_DELAY = OGlobalConfiguration.FILE_MMAP_FORCE_DELAY.getValueAsInteger();
+		FORCE_RETRY = OGlobalConfiguration.FILE_MMAP_FORCE_RETRY.getValueAsInteger();
+
 		// GET SUN JDK METHOD TO CLEAN MMAP BUFFERS
 		try {
 			// sunClass = Class.forName("sun.nio.ch.DirectBuffer");
@@ -45,7 +54,38 @@ public class OMMapBufferEntry implements Comparable<OMMapBufferEntry> {
 		this.beginOffset = beginOffset;
 		this.size = size;
 		this.counter = 0;
-		pin = false;
+		this.pin = false;
+	}
+
+	/**
+	 * Flushes the memory mapped buffer to disk.
+	 * 
+	 * @return
+	 */
+	public boolean flush() {
+		final long timer = OProfiler.getInstance().startChrono();
+
+		// FORCE THE WRITE OF THE BUFFER
+		boolean forceSucceed = false;
+		for (int i = 0; i < FORCE_RETRY; ++i) {
+			try {
+				buffer.force();
+				forceSucceed = true;
+				break;
+			} catch (Exception e) {
+				OLogManager.instance().debug(this, "Cannot write memory buffer to disk. Retrying (" + (i + 1) + "/" + FORCE_RETRY + ")...");
+				OMemoryWatchDog.freeMemory(FORCE_DELAY);
+			}
+		}
+
+		if (!forceSucceed)
+			OLogManager.instance().debug(this, "Cannot commit memory buffer to disk after %d retries", FORCE_RETRY);
+		else
+			OProfiler.getInstance().updateCounter("OMMapManager.pagesCommitted", 1);
+
+		OProfiler.getInstance().stopChrono("OMMapManager.commitPages", timer);
+
+		return forceSucceed;
 	}
 
 	@Override

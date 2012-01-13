@@ -29,7 +29,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 
 public class OMMapManager {
 	public enum OPERATION_TYPE {
@@ -45,8 +44,6 @@ public class OMMapManager {
 	}
 
 	private static final long															MIN_MEMORY				= 50000000;
-	private static final int															FORCE_DELAY;
-	private static final int															FORCE_RETRY;
 	private static OVERLAP_STRATEGY												overlapStrategy;
 	private static ALLOC_STRATEGY													lastStrategy;
 	private static int																		blockSize;
@@ -58,8 +55,6 @@ public class OMMapManager {
 
 	static {
 		blockSize = OGlobalConfiguration.FILE_MMAP_BLOCK_SIZE.getValueAsInteger();
-		FORCE_DELAY = OGlobalConfiguration.FILE_MMAP_FORCE_DELAY.getValueAsInteger();
-		FORCE_RETRY = OGlobalConfiguration.FILE_MMAP_FORCE_RETRY.getValueAsInteger();
 		maxMemory = OGlobalConfiguration.FILE_MMAP_MAX_MEMORY.getValueAsLong();
 		setOverlapStrategy(OGlobalConfiguration.FILE_MMAP_OVERLAP_STRATEGY.getValueAsInteger());
 
@@ -280,7 +275,7 @@ public class OMMapManager {
 	 * Frees the mmap entry from the memory
 	 */
 	private static boolean removeEntry(final Iterator<OMMapBufferEntry> it, final OMMapBufferEntry entry) {
-		if (commitBuffer(entry)) {
+		if (entry.flush()) {
 			// COMMITTED: REMOVE IT
 			it.remove();
 			final List<OMMapBufferEntry> file = bufferPoolPerFile.get(entry.file);
@@ -442,33 +437,6 @@ public class OMMapManager {
 		return mid;
 	}
 
-	protected static boolean commitBuffer(final OMMapBufferEntry iEntry) {
-		final long timer = OProfiler.getInstance().startChrono();
-
-		// FORCE THE WRITE OF THE BUFFER
-		boolean forceSucceed = false;
-		for (int i = 0; i < FORCE_RETRY; ++i) {
-			try {
-				iEntry.buffer.force();
-				forceSucceed = true;
-				break;
-			} catch (Exception e) {
-				OLogManager.instance().debug(iEntry,
-						"Cannot write memory buffer to disk. Retrying (" + (i + 1) + "/" + FORCE_RETRY + ")...");
-				OMemoryWatchDog.freeMemory(FORCE_DELAY);
-			}
-		}
-
-		if (!forceSucceed)
-			OLogManager.instance().debug(iEntry, "Cannot commit memory buffer to disk after %d retries", FORCE_RETRY);
-		else
-			OProfiler.getInstance().updateCounter("OMMapManager.pagesCommitted", 1);
-
-		OProfiler.getInstance().stopChrono("OMMapManager.commitPages", timer);
-
-		return forceSucceed;
-	}
-
 	private static boolean allocIfOverlaps(final long iBeginOffset, final int iSize, final List<OMMapBufferEntry> fileEntries,
 			final int p) {
 		if (overlapStrategy == OVERLAP_STRATEGY.OVERLAP)
@@ -492,7 +460,7 @@ public class OMMapManager {
 			// READ NOT IN BUFFER POOL: RETURN NULL TO LET TO THE CALLER TO EXECUTE A DIRECT READ WITHOUT MMAP
 			OProfiler.getInstance().updateCounter("OMMapManager.overlappedPageUsingChannel", 1);
 			if (overlapStrategy == OVERLAP_STRATEGY.NO_OVERLAP_FLUSH_AND_USE_CHANNEL)
-				commitBuffer(entry);
+				entry.flush();
 			return false;
 		}
 
