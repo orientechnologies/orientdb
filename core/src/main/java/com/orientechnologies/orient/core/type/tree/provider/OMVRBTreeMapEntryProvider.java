@@ -93,7 +93,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
 
 	public boolean setValueAt(int iIndex, final V iValue) {
 		values[iIndex] = iValue;
-		serializedValues[iIndex] = -1;
+		serializedValues[iIndex] = 0;
 		return setDirty();
 	}
 
@@ -127,31 +127,34 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
 		}
 
 		// FREE RESOURCES
-		serializedKeys[size - 1] = 0;
-		serializedValues[size - 1] = 0;
-		keys[size - 1] = null;
-		values[size - 1] = null;
 		size--;
+		serializedKeys[size] = 0;
+		serializedValues[size] = 0;
+		keys[size] = null;
+		values[size] = null;
 		return setDirty();
 	}
 
-	public boolean copyDataFrom(final OMVRBTreeEntryDataProvider<K, V> iFrom, int iStartPosition) {
-		OMVRBTreeMapEntryProvider<K, V> parent = (OMVRBTreeMapEntryProvider<K, V>) iFrom;
+	/**
+	 * @TODO Optimize by copying only real data and not the entire source buffer.
+	 */
+	public boolean copyDataFrom(final OMVRBTreeEntryDataProvider<K, V> iFrom, final int iStartPosition) {
+		final OMVRBTreeMapEntryProvider<K, V> parent = (OMVRBTreeMapEntryProvider<K, V>) iFrom;
 		size = iFrom.getSize() - iStartPosition;
-		System.arraycopy(parent.keys, iStartPosition, keys, 0, size);
-		System.arraycopy(parent.values, iStartPosition, values, 0, size);
 		System.arraycopy(parent.serializedKeys, iStartPosition, serializedKeys, 0, size);
 		System.arraycopy(parent.serializedValues, iStartPosition, serializedValues, 0, size);
+		System.arraycopy(parent.keys, iStartPosition, keys, 0, size);
+		System.arraycopy(parent.values, iStartPosition, values, 0, size);
 		stream.setSource(parent.stream.copy());
 		return setDirty();
 	}
 
 	public boolean truncate(final int iNewSize) {
 		// TRUNCATE PARENT
-		Arrays.fill(keys, iNewSize, size, null);
-		Arrays.fill(values, iNewSize, size, null);
 		Arrays.fill(serializedKeys, iNewSize, pageSize, 0);
 		Arrays.fill(serializedValues, iNewSize, pageSize, 0);
+		Arrays.fill(keys, iNewSize, size, null);
+		Arrays.fill(values, iNewSize, size, null);
 		size = iNewSize;
 		return setDirty();
 	}
@@ -173,6 +176,8 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
 		System.arraycopy(source.values, 0, values, 0, source.values.length);
 
 		size = source.size;
+		stream.setSource(source.stream.copy());
+		
 		return setDirty();
 	}
 
