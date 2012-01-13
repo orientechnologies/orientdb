@@ -176,7 +176,7 @@ public enum OGlobalConfiguration {
 
 	FILE_MMAP_MAX_MEMORY(
 			"file.mmap.maxMemory",
-			"Max memory allocatable by memory mapping manager. Note that on 32bit operating systems, the limit is 2Gb but will vary between operating systems.",
+			"Max memory allocatable by memory mapping manager. Note that on 32bit operating systems, the limit is 2Gb but will vary between operating systems",
 			Long.class, 134217728, new OConfigurationChangeCallback() {
 				public void change(final Object iCurrentValue, final Object iNewValue) {
 					OMMapManager.setMaxMemory(OFileUtils.getSizeAsNumber(iNewValue));
