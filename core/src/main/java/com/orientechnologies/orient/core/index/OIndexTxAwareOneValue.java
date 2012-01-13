@@ -46,8 +46,8 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
 		// CHECK IF ALREADY EXISTS IN TX
 		final OIdentifiable previousRecord = get(iKey);
 		if (previousRecord != null && !previousRecord.equals(iRecord))
-			OLogManager.instance().exception("Found duplicated key '%s' previously assigned to the record %s", null,
-					OIndexException.class, iKey, previousRecord);
+			OLogManager.instance().exception("Found duplicated key '%s' in index '%s' previously assigned to the record %s", null,
+					OIndexException.class, iKey, getName(), previousRecord);
 
 		super.checkEntry(iRecord, iKey);
 	}
