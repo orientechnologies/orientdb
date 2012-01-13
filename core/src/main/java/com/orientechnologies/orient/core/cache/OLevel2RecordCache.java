@@ -62,6 +62,10 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
 				if (record.getIdentity().getClusterId() == excludedCluster)
 					continue;
 
+				if (!record.getIdentity().isValid())
+					// INVALID RECORD
+					continue;
+
 				if (record.isPinned()) {
 					final ORecordInternal<?> prevEntry = entries.get(record.getIdentity());
 					if (prevEntry != null && prevEntry.getVersion() >= record.getVersion())
@@ -86,6 +90,10 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
 			return;
 
 		if (iRecord.getIdentity().getClusterId() == excludedCluster)
+			return;
+
+		if (!iRecord.getIdentity().isValid())
+			// INVALID RECORD
 			return;
 
 		acquireExclusiveLock();

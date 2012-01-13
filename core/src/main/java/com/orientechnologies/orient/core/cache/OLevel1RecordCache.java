@@ -59,6 +59,10 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
 				// EXCLUDED CLUSTER
 				return;
 
+			if (!iRecord.getIdentity().isValid())
+				// INVALID RECORD
+				return;
+
 			acquireExclusiveLock();
 			try {
 				if (entries.get(iRecord.getIdentity()) != iRecord)
