@@ -33,7 +33,7 @@ import java.util.List;
 public class OQueryOperatorAnd extends OQueryOperator {
 
 	public OQueryOperatorAnd() {
-		super("AND", 4, true);
+		super("AND", 4, false);
 	}
 
 	@Override

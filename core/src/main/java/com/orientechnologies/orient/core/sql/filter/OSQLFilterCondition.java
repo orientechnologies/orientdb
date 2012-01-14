@@ -241,7 +241,7 @@ public class OSQLFilterCondition {
 			return f.execute(iRecord, null);
 		}
 
-		final Iterable multiValue = OMultiValue.getMultiValueIterable(iValue);
+		final Iterable<?> multiValue = OMultiValue.getMultiValueIterable(iValue);
 
 		if (multiValue != null) {
 			// MULTI VALUE: RETURN A COPY

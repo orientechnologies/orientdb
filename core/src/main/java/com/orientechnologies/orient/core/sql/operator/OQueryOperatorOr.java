@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 public class OQueryOperatorOr extends OQueryOperator {
 
 	public OQueryOperatorOr() {
-		super("OR", 3, true);
+		super("OR", 3, false);
 	}
 
 	@Override

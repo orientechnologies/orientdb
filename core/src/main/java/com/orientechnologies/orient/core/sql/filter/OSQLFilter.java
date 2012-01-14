@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNot;
 
 /**
  * Parsed query. It's built once a query is parsed.
@@ -217,9 +218,18 @@ public class OSQLFilter extends OCommandToParse {
 			return null;
 
 		// EXTRACT ITEMS
-		final Object left = extractConditionItem(1);
-		final OQueryOperator oper = extractConditionOperator();
-		final Object right = oper != null ? extractConditionItem(oper.expectedRightWords) : null;
+		Object left = extractConditionItem(true, 1);
+		final OQueryOperator oper;
+		final Object right;
+
+		if (left instanceof OQueryOperator && ((OQueryOperator) left).isUnary()) {
+			oper = (OQueryOperator) left;
+			left = extractConditionItem(false, 1);
+			right = null;
+		} else {
+			oper = extractConditionOperator();
+			right = oper != null ? extractConditionItem(false, oper.expectedRightWords) : null;
+		}
 
 		// CREATE THE CONDITION OBJECT
 		return new OSQLFilterCondition(left, oper, right);
@@ -258,7 +268,7 @@ public class OSQLFilter extends OCommandToParse {
 		throw new OQueryParsingException("Unknown operator " + word, text, currentPos);
 	}
 
-	private Object extractConditionItem(final int iExpectedWords) {
+	private Object extractConditionItem(final boolean iAllowOperator, final int iExpectedWords) {
 		final Object[] result = new Object[iExpectedWords];
 
 		for (int i = 0; i < iExpectedWords; ++i) {
@@ -288,7 +298,7 @@ public class OSQLFilter extends OCommandToParse {
 
 				if (stringItems.get(0).charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN) {
 
-					List<List<Object>> coll = new ArrayList<List<Object>>();
+					final List<List<Object>> coll = new ArrayList<List<Object>>();
 					for (String stringItem : stringItems) {
 						final List<String> stringSubItems = new ArrayList<String>();
 						OStringSerializerHelper.getCollection(stringItem, 0, stringSubItems);
@@ -315,13 +325,17 @@ public class OSQLFilter extends OCommandToParse {
 			} else {
 
 				if (words[0].equals("NOT")) {
-					// GET THE NEXT VALUE
-					String[] nextWord = nextValue(true);
-					if (nextWord != null && nextWord.length == 2) {
-						words[1] = words[1] + " " + nextWord[1];
+					if (iAllowOperator)
+						return new OQueryOperatorNot();
+					else {
+						// GET THE NEXT VALUE
+						final String[] nextWord = nextValue(true);
+						if (nextWord != null && nextWord.length == 2) {
+							words[1] = words[1] + " " + nextWord[1];
 
-						if (words[1].endsWith(")"))
-							words[1] = words[1].substring(0, words[1].length() - 1);
+							if (words[1].endsWith(")"))
+								words[1] = words[1].substring(0, words[1].length() - 1);
+						}
 					}
 				}
 

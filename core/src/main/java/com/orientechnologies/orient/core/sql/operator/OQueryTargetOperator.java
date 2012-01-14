@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
  */
 public abstract class OQueryTargetOperator extends OQueryOperator {
 	protected OQueryTargetOperator(final String iKeyword, final int iPrecedence, final boolean iLogical) {
-		super(iKeyword, iPrecedence, iLogical);
+		super(iKeyword, iPrecedence, false);
 	}
 
 	public abstract Collection<OIdentifiable> filterRecords(final ODatabaseComplex<?> iRecord, final List<String> iTargetClasses,

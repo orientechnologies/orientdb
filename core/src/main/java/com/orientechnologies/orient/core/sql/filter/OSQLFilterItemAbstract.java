@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 /**
@@ -151,10 +152,10 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 								if (OMultiValue.isMultiValue(ioResult)) {
 									final List<Object> newColl = new ArrayList<Object>();
 									for (Object o : OMultiValue.getMultiValueIterable(ioResult)) {
-										if (o instanceof ODocument)
+										if (o instanceof OIdentifiable)
 											try {
-												final ODocument doc = (ODocument) o;
-												final Object v = doc.rawField(op.value.get(0));
+												final OIdentifiable doc = (OIdentifiable) o;
+												final Object v = ODocumentHelper.getIdentifiableValue(doc, op.value.get(0));
 
 												if (v != null)
 													if (OMultiValue.isMultiValue(v))

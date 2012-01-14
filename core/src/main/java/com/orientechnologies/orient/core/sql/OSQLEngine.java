@@ -63,19 +63,19 @@ import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMultipl
 import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorPlus;
 
 public class OSQLEngine {
-	private Map<String, OSQLFunction>																	inlineFunctions				= new HashMap<String, OSQLFunction>();
-	private Map<String, Class<? extends OSQLFunction>>								aggregationFunctions	= new HashMap<String, Class<? extends OSQLFunction>>();
-	protected Map<String, Class<? extends OCommandExecutorSQLAbstract>>	commands						= new HashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
-	public static OQueryOperator[]																		RECORD_OPERATORS			= { new OQueryOperatorAnd(),
+	private Map<String, OSQLFunction>																		inlineFunctions				= new HashMap<String, OSQLFunction>();
+	private Map<String, Class<? extends OSQLFunction>>									aggregationFunctions	= new HashMap<String, Class<? extends OSQLFunction>>();
+	protected Map<String, Class<? extends OCommandExecutorSQLAbstract>>	commands							= new HashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
+	public static OQueryOperator[]																			RECORD_OPERATORS			= { new OQueryOperatorAnd(),
 			new OQueryOperatorOr(), new OQueryOperatorNotEquals(), new OQueryOperatorNot(), new OQueryOperatorEquals(),
 			new OQueryOperatorMinorEquals(), new OQueryOperatorMinor(), new OQueryOperatorMajorEquals(), new OQueryOperatorContainsAll(),
 			new OQueryOperatorMajor(), new OQueryOperatorLike(), new OQueryOperatorMatches(), new OQueryOperatorIs(),
 			new OQueryOperatorIn(), new OQueryOperatorContainsKey(), new OQueryOperatorContainsValue(), new OQueryOperatorContainsText(),
 			new OQueryOperatorContains(), new OQueryOperatorContainsText(), new OQueryOperatorTraverse(), new OQueryOperatorBetween(),
 			new OQueryOperatorPlus(), new OQueryOperatorMinus(), new OQueryOperatorMultiply(), new OQueryOperatorDivide(),
-			new OQueryOperatorMod()																														};
+			new OQueryOperatorMod()																															};
 
-	protected static OSQLEngine																				INSTANCE							= new OSQLEngine();
+	protected static OSQLEngine																					INSTANCE							= new OSQLEngine();
 
 	protected OSQLEngine() {
 		// COMMANDS

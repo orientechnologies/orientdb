@@ -29,12 +29,12 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAll;
 public abstract class OQueryOperatorEquality extends OQueryOperator {
 
 	protected OQueryOperatorEquality(final String iKeyword, final int iPrecedence, final boolean iLogical) {
-		super(iKeyword, iPrecedence, iLogical);
+		super(iKeyword, iPrecedence, false);
 	}
 
 	protected OQueryOperatorEquality(final String iKeyword, final int iPrecedence, final boolean iLogical,
 			final int iExpectedRightWords) {
-		super(iKeyword, iPrecedence, iLogical, iExpectedRightWords);
+		super(iKeyword, iPrecedence, false, iExpectedRightWords);
 	}
 
 	protected abstract boolean evaluateExpression(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition,

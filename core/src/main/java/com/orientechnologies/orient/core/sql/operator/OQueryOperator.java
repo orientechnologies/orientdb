@@ -28,19 +28,22 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
  * 
  */
 public abstract class OQueryOperator {
-	public final String	keyword;
-	public final int		precedence;
-	public final int		expectedRightWords;
+	public final String		keyword;
+	public final int			precedence;
+	public final int			expectedRightWords;
+	public final boolean	unary;
 
-	protected OQueryOperator(final String iKeyword, final int iPrecedence, final boolean iLogical) {
+	protected OQueryOperator(final String iKeyword, final int iPrecedence, final boolean iUnary) {
 		keyword = iKeyword;
 		precedence = iPrecedence;
+		unary = iUnary;
 		expectedRightWords = 1;
 	}
 
-	protected OQueryOperator(final String iKeyword, final int iPrecedence, final boolean iLogical, final int iExpectedRightWords) {
+	protected OQueryOperator(final String iKeyword, final int iPrecedence, final boolean iUnary, final int iExpectedRightWords) {
 		keyword = iKeyword;
 		precedence = iPrecedence;
+		unary = iUnary;
 		expectedRightWords = iExpectedRightWords;
 	}
 
@@ -66,9 +69,13 @@ public abstract class OQueryOperator {
 
 	public String getSyntax() {
 		return "<left> " + keyword + " <right>";
-  }
+	}
 
-  public abstract ORID getBeginRidRange(final Object iLeft, final Object iRight);
+	public abstract ORID getBeginRidRange(final Object iLeft, final Object iRight);
 
-  public abstract ORID getEndRidRange(final Object iLeft, final Object iRight);
+	public abstract ORID getEndRidRange(final Object iLeft, final Object iRight);
+
+	public boolean isUnary() {
+		return unary;
+	}
 }
