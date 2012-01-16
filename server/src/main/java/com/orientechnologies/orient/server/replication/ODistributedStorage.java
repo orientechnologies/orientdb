@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.replication;
 
 import java.io.IOException;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
@@ -25,7 +26,9 @@ import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.SYNCH_TYPE;
@@ -37,12 +40,64 @@ import com.orientechnologies.orient.server.replication.conflict.OReplicationConf
 public class ODistributedStorage extends OStorageRemote {
 
 	public static final String									DNODE_PREFIX	= "dnode=";
+	private final OReplicator										replicator;
 	private final OReplicationConflictResolver	conflictResolver;
 
-	public ODistributedStorage(final String iNodeId, final String iURL, final String iMode,
+	public ODistributedStorage(final OReplicator iReplicator, final String iNodeId, final String iURL, final String iMode,
 			final OReplicationConflictResolver iConflictResolver) throws IOException {
 		super(DNODE_PREFIX + iNodeId, iURL, iMode);
+		replicator = iReplicator;
 		conflictResolver = iConflictResolver;
+	}
+
+	public void synchronize(final Set<ODocument> iDbCfg) {
+		checkConnection();
+
+		final long time = System.currentTimeMillis();
+
+		OLogManager.instance().info(this, "Starting synchronization of database '%s'. Storing delta of updates...", getName());
+
+		try {
+			final OChannelBinaryClient network = beginRequest(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_SYNCHRONIZE);
+
+			for (ODocument node : iDbCfg) {
+				final String nodeId = (String) node.field("node");
+				try {
+					network.writeBytes(node.toStream());
+				} finally {
+					endRequest(network);
+				}
+
+				beginResponse(network);
+				try {
+					int ops = 0;
+					final ORecordOperation opLog = new ORecordOperation();
+					while (network.readByte() == 1) {
+						opLog.fromStream(network.readBytes());
+						ops++;
+
+						OLogManager.instance().info(this, "%d: received record %s", ops, opLog.record);
+
+						replicator.getOperationLog(nodeId, getName()).appendLog(opLog.serial, opLog.type,
+								(ORecordId) opLog.record.getIdentity());
+					}
+
+					if (OLogManager.instance().isInfoEnabled())
+						OLogManager.instance().info(this,
+								"Synchronization of database '%s' completed: received %d operations from remote node. Total time: %dms", getName(),
+								ops, (System.currentTimeMillis() - time));
+
+				} finally {
+					endResponse(network);
+				}
+			}
+
+		} catch (OException e) {
+			// PASS THROUGH
+			throw e;
+		} catch (Exception e) {
+			handleException("Error on synchronization of database '" + getName() + "'", e);
+		}
 	}
 
 	public void distributeChange(final ODistributedDatabaseInfo databaseEntry, final ORecordOperation iRequest,

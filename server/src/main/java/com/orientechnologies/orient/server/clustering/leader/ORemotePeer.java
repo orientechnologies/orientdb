@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 
 /**
@@ -63,7 +62,7 @@ public class ORemotePeer {
 	}
 
 	/**
-	 * Connects the current node versus a remote node.
+	 * Connects the current leader to a remote node peer.
 	 * 
 	 * @param iTimeout
 	 * @param iClusterName
@@ -129,14 +128,12 @@ public class ORemotePeer {
 	}
 
 	/**
-	 * Return the clustered configuration for the requested databases.
+	 * Returns the clustered configuration for the requested databases.
 	 */
 	protected ODocument updateClusteredDatabaseConfiguration(final ODocument iConfiguration, final ODocument databases)
 			throws UnknownHostException {
 		iConfiguration.reset();
 		for (String dbName : databases.fieldNames()) {
-			final ODocument dbCfg = databases.field(dbName);
-
 			// TODO: GET THE CONFIGURED SYNCH MODE
 			leader.addServerInConfiguration(dbName, id, "synch");
 

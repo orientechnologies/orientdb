@@ -66,15 +66,17 @@ public class ODistributedNode implements OCommandOutputListener {
 					iDatabase.databaseName, networkAddress, networkPort);
 
 			try {
-				iDatabase.storage = new ODistributedStorage(replicator.getManager().getId(), id + "/" + iDatabase.databaseName, "rw",
-						replicator.getConflictResolver());
+				iDatabase.storage = new ODistributedStorage(replicator, replicator.getManager().getId(), id + "/" + iDatabase.databaseName,
+						"rw", replicator.getConflictResolver());
 				iDatabase.storage.open(iDatabase.userName, iDatabase.userPassword, null);
 
 				iDatabase.sessionId = iDatabase.storage.getSessionId();
 
 				databases.put(iDatabase.databaseName, iDatabase);
 
-				synchronizeDelta(iDatabase);
+				status = STATUS.SYNCHRONIZING;
+				iDatabase.storage.synchronize(replicator.getDatabaseConfiguration(iDatabase.databaseName));
+				status = STATUS.ONLINE;
 
 			} catch (Exception e) {
 				databases.remove(iDatabase.databaseName);
@@ -188,26 +190,6 @@ public class ODistributedNode implements OCommandOutputListener {
 	@Override
 	public String toString() {
 		return id;
-	}
-
-	private void synchronizeDelta(final ODistributedDatabaseInfo iDatabase) throws IOException {
-		if (iDatabase.log.isEmpty())
-			return;
-
-		OLogManager.instance().info(this, "Started synchronization of database '%s' against remote node '%s'", iDatabase.databaseName,
-				id);
-
-		status = STATUS.SYNCHRONIZING;
-		final long time = System.currentTimeMillis();
-
-		final ORecordOperation txEntry = new ORecordOperation();
-
-		int pos = iDatabase.log.findOperationId(-1);
-		replicator.distributeRequest(txEntry);
-
-		OLogManager.instance().info(this, "Synchronization of database '%s' against remote node '%s' completed in %dms",
-				iDatabase.databaseName, id, (System.currentTimeMillis() - time));
-		status = STATUS.ONLINE;
 	}
 
 	public String getName() {

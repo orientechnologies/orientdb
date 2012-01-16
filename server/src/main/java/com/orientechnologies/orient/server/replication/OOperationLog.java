@@ -131,6 +131,10 @@ public class OOperationLog extends OSingleFileSegment {
 	}
 
 	public int findOperationId(long iOperationId) throws IOException {
+		if (iOperationId == -1)
+			// SYNCH THE ENTIRE FILE
+			return totalEntries() - 1;
+
 		for (int i = totalEntries() - 1; i > -1; --i) {
 			final long serial = file.readLong(i * RECORD_SIZE);
 			if (serial == iOperationId)

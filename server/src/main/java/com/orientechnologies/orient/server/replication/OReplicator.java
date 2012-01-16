@@ -104,8 +104,11 @@ public class OReplicator {
 		// OPEN CONNECTIONS AGAINST OTHER SERVERS
 		for (String dbName : clusterConfiguration.fieldNames()) {
 
-			if (!localLogs.containsKey(dbName))
+			if (!localLogs.containsKey(dbName)) {
+				// INITIALIZING OPERATION LOG
 				localLogs.put(dbName, new OOperationLog(manager.getId(), dbName));
+				OLogManager.instance().info(this, "Initialized cluster operation log for database '%s'", dbName);
+			}
 
 			final ODocument db = clusterConfiguration.field(dbName);
 			final Collection<ODocument> dbNodes = db.field("nodes");
@@ -159,7 +162,7 @@ public class OReplicator {
 
 	/**
 	 * Distributes the request to all the configured nodes. Each node has the responsibility to bring the message early (synch-mode)
-	 * or using an asynchronous queue.
+	 * or using an asynchronous queue. The current server node is what has received the request from the client.
 	 * 
 	 * @throws IOException
 	 */
@@ -199,34 +202,63 @@ public class OReplicator {
 	/**
 	 * Returns the database configuration to send to the leader node. Example:
 	 * 
+	 * <code>
+	 * <br/>
+	 * { <br/>
+	 * &nbsp;  'demo': {'10.10.10.10:2480' : 21212, '10.10.10.20:2480' : 32133}, <br/>
+	 * &nbsp;  'test':  {'10.10.10.10:2480' : 1333, '10.10.10.20:2480' : 78} <br/>
+	 * }
+	 * </code>
 	 * 
 	 * @return
 	 */
 	public ODocument getDatabaseConfiguration() {
 		final ODocument doc = new ODocument();
-		for (String dbName : OServerMain.server().getAvailableStorageNames().keySet()) {
-			final ODocument dbCfg = new ODocument().addOwner(doc);
-			doc.field(dbName, dbCfg);
+		for (String dbName : OServerMain.server().getAvailableStorageNames().keySet())
+			doc.field(dbName, getDatabaseConfiguration(dbName));
 
-			final File dbDir = new File(OSystemVariableResolver.resolveSystemVariables(DIRECTORY_NAME + "/" + dbName));
-			if (dbDir.exists() && dbDir.isDirectory()) {
-				for (File f : dbDir.listFiles()) {
-					if (f.isFile() && f.getName().endsWith(OOperationLog.EXTENSION)) {
-						final String nodeId = f.getName().substring(0, f.getName().indexOf('.')).replace('_', '.').replace('-', ':');
+		return doc;
+	}
 
-						final ODistributedNode node = nodes.get(nodeId);
-						if (node != null) {
-							try {
-								dbCfg.field(nodeId, node.getLastOperationId(dbName));
-							} catch (IOException e) {
-							}
+	/**
+	 * Returns the database configuration to send to the leader node. Example:
+	 * 
+	 * <code>
+	 * <br/>
+	 * { <br/>
+	 * &nbsp;  'demo': [ { 'node': '10.10.10.10:2480', 'lastOperation': 21212 }, { 'node': '10.10.10.20:2480', 'lastOperation':  32133} ], <br/>
+	 * &nbsp;  'test': [ { 'node': '10.10.10.10:2480', 'lastOperation': 1333 },  { 'node': '10.10.10.20:2480', 'lastOperation':  78} ] <br/>
+	 * }
+	 * </code>
+	 * 
+	 * @return
+	 */
+	public Set<ODocument> getDatabaseConfiguration(final String dbName) {
+		final Set<ODocument> set = new HashSet<ODocument>();
+
+		final File dbDir = new File(OSystemVariableResolver.resolveSystemVariables(DIRECTORY_NAME + "/" + dbName));
+		if (dbDir.exists() && dbDir.isDirectory()) {
+			for (File f : dbDir.listFiles()) {
+				if (f.isFile() && f.getName().endsWith(OOperationLog.EXTENSION)) {
+					final String nodeId = f.getName().substring(0, f.getName().indexOf('.')).replace('_', '.').replace('-', ':');
+
+					final ODistributedNode node = nodes.get(nodeId);
+					if (node != null) {
+
+						final ODocument nodeCfg = new ODocument();
+						set.add(nodeCfg);
+
+						try {
+							nodeCfg.field("node", nodeId);
+							nodeCfg.field("lastOperation", node.getLastOperationId(dbName));
+						} catch (IOException e) {
 						}
 					}
 				}
 			}
 		}
 
-		return doc;
+		return set;
 	}
 
 	public boolean isIgnoredDocumentClass(final String ignoredDocumentClass) {
@@ -259,6 +291,22 @@ public class OReplicator {
 
 	public ODistributedNode getNode(final String iNodeId) {
 		return nodes.get(iNodeId);
+	}
+
+	/**
+	 * Returns the operation log by node and db name
+	 * 
+	 * @param iNodeId
+	 *          Node id
+	 * @param iDatabaseName
+	 *          Database's name
+	 * @return OOperationLog instance
+	 */
+	public OOperationLog getOperationLog(final String iNodeId, final String iDatabaseName) {
+		if (manager.getId().equals(iNodeId))
+			return localLogs.get(iDatabaseName);
+
+		return nodes.get(iNodeId).getDatabase(iDatabaseName).log;
 	}
 
 	public ODistributedServerManager getManager() {

@@ -36,6 +36,7 @@ import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProto
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo;
 import com.orientechnologies.orient.server.replication.ODistributedNode;
 import com.orientechnologies.orient.server.replication.ODistributedStorage;
+import com.orientechnologies.orient.server.replication.OOperationLog;
 
 /**
  * Extends binary protocol to include cluster commands.
@@ -60,6 +61,41 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 		// DISTRIBUTED SERVER REQUESTS
 		switch (lastRequestType) {
+
+		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_SYNCHRONIZE: {
+			data.commandInfo = "Synchronization between nodes";
+			final ODocument nodeCfg = new ODocument(channel.readBytes());
+
+			final ORecordOperation op = new ORecordOperation();
+
+			final String node = nodeCfg.field("node");
+			final long lastOpId = (Long) nodeCfg.field("lastOperation");
+
+			final String dbName = connection.database.getName();
+			OLogManager.instance().info(this,
+					"Received synchronization request for database '%s' reading operation logs after %d for node %s", dbName, lastOpId, node);
+
+			// channel.
+			final OOperationLog opLog = manager.getReplicator().getOperationLog(node, dbName);
+			int position = opLog.findOperationId(lastOpId);
+			int sent = 0;
+
+			sendOk(lastClientTxId);
+
+			for (int i = position - 1; i >= 0; --i) {
+				channel.writeByte((byte) 1);
+				opLog.getEntry(i, op);
+
+				channel.writeBytes(op.toStream());
+				sent++;
+
+				OLogManager.instance().info(this, "%d: operation %d with RID %s", sent, op.serial, op.record.getIdentity());
+			}
+			channel.writeByte((byte) 0);
+
+			break;
+		}
+
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_LEADER_CONNECT: {
 			data.commandInfo = "Clustered connection from leader";
 			final ODocument doc = new ODocument().fromStream(channel.readBytes());
