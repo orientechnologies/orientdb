@@ -384,7 +384,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 
 		final ODocument diploma3 = database.newInstance("lpirtDiploma");
 		diploma3.field("GPA", 4.);
-		diploma3.field("thesis", "College student shouldn’t have to take a required core curriculum, and many core "
+		diploma3.field("thesis", "College student shouldn't have to take a required core curriculum, and many core "
 				+ "courses are graded too stiffly.");
 
 		final ODocument student3 = database.newInstance("lpirtStudent");
