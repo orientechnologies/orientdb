@@ -26,6 +26,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache.STRATEGY;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -503,5 +504,64 @@ public class TransactionConsistencyTest {
 		}
 
 		db.close();
+	}
+
+	@Test
+	public void testConsistencyOnDelete() {
+		OGraphDatabase db = new OGraphDatabase(url);
+		db.open("admin", "admin");
+
+		if (db.getVertexType("Foo") == null)
+			db.createVertexType("Foo");
+
+		try {
+			// Step 1
+			// Create several foo's
+			db.createVertex("Foo").field("address", "test1").save();
+			db.createVertex("Foo").field("address", "test2").save();
+			db.createVertex("Foo").field("address", "test3").save();
+
+			// just show what is there
+			List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select * from Foo"));
+
+			for (ODocument d : result) {
+				System.out.println("Vertex: " + d);
+			}
+
+			// remove those foos in a transaction
+			// Step 2
+			db.begin(TXTYPE.OPTIMISTIC);
+
+			// Step 3a
+			result = db.query(new OSQLSynchQuery<ODocument>("select * from Foo where address = 'test1'"));
+			Assert.assertEquals(1, result.size());
+			// Step 4a
+			db.removeVertex(result.get(0));
+
+			// Step 3b
+			result = db.query(new OSQLSynchQuery<ODocument>("select * from Foo where address = 'test2'"));
+			Assert.assertEquals(1, result.size());
+			// Step 4b
+			db.removeVertex(result.get(0));
+
+			// Step 3c
+			result = db.query(new OSQLSynchQuery<ODocument>("select * from Foo where address = 'test3'"));
+			Assert.assertEquals(1, result.size());
+			// Step 4c
+			db.removeVertex(result.get(0));
+
+			// Step 6
+			db.commit();
+
+			// just show what is there
+			result = db.query(new OSQLSynchQuery<ODocument>("select * from Foo"));
+
+			for (ODocument d : result) {
+				System.out.println("Vertex: " + d);
+			}
+
+		} finally {
+			db.close();
+		}
 	}
 }

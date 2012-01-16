@@ -49,33 +49,33 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
 		return parameters;
 	}
 
-	@SuppressWarnings("unchecked")
 	protected void setParameters(final Object... iArgs) {
-    if(iArgs.length > 0)
-      parameters = convertToParameters(iArgs);
+		if (iArgs.length > 0)
+			parameters = convertToParameters(iArgs);
 	}
 
-  protected Map<Object, Object> convertToParameters(final Object... iArgs) {
-    final Map<Object, Object> params;
+	@SuppressWarnings("unchecked")
+	protected Map<Object, Object> convertToParameters(final Object... iArgs) {
+		final Map<Object, Object> params;
 
-    if (iArgs.length == 1 && iArgs[0] instanceof Map) {
-      params = (Map<Object, Object>) iArgs[0];
-    } else {
-      params = new HashMap<Object, Object>(iArgs.length);
-      for (int i = 0; i < iArgs.length; ++i) {
-        Object par = iArgs[i];
+		if (iArgs.length == 1 && iArgs[0] instanceof Map) {
+			params = (Map<Object, Object>) iArgs[0];
+		} else {
+			params = new HashMap<Object, Object>(iArgs.length);
+			for (int i = 0; i < iArgs.length; ++i) {
+				Object par = iArgs[i];
 
-        if (par instanceof OIdentifiable && ((OIdentifiable) par).getIdentity().isValid())
-          // USE THE RID ONLY
-          par = ((OIdentifiable) par).getIdentity();
+				if (par instanceof OIdentifiable && ((OIdentifiable) par).getIdentity().isValid())
+					// USE THE RID ONLY
+					par = ((OIdentifiable) par).getIdentity();
 
-        params.put(i, par);
-      }
-    }
-    return params;
-  }
+				params.put(i, par);
+			}
+		}
+		return params;
+	}
 
-  public OProgressListener getProgressListener() {
+	public OProgressListener getProgressListener() {
 		return progressListener;
 	}
 

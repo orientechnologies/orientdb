@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 public class OTransactionOptimisticProxy extends OTransactionOptimistic {
@@ -111,7 +112,9 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 	@Override
 	public ORecordInternal<?> getRecord(final ORID rid) {
 		ORecordInternal<?> record = super.getRecord(rid);
-		if (record == null && rid.isNew())
+		if (record == OTransactionRealAbstract.DELETED_RECORD)
+			return null;
+		else if (record == null && rid.isNew())
 			// SEARCH BETWEEN CREATED RECORDS
 			record = (ORecordInternal<?>) createdRecords.get(rid);
 

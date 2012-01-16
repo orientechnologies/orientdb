@@ -58,6 +58,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecord {
@@ -494,6 +495,10 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 			// SEARCH IN LOCAL TX
 			ORecordInternal<?> record = getTransaction().getRecord(iRid);
+			if (record == OTransactionRealAbstract.DELETED_RECORD)
+				// DELETED IN TX
+				return null;
+
 			if (record == null && !iIgnoreCache)
 				// SEARCH INTO THE CACHE
 				record = getLevel1Cache().findRecord(iRid);

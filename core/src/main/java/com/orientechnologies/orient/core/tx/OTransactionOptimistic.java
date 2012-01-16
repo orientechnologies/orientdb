@@ -72,6 +72,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 		checkTransaction();
 
 		final ORecordInternal<?> txRecord = getRecord(iRid);
+		if (txRecord == OTransactionRealAbstract.DELETED_RECORD)
+			// DELETED IN TX
+			return null;
 
 		if (txRecord != null)
 			return txRecord;

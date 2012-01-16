@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
@@ -44,6 +45,11 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 	protected Map<String, OTransactionIndexChanges>	indexEntries			= new LinkedHashMap<String, OTransactionIndexChanges>();
 	protected int																		id;
 	protected int																		newObjectCounter	= -2;
+
+	/**
+	 * USE THIS AS RESPONSE TO REPORT A DELETED RECORD IN TX
+	 */
+	public static final ORecordFlat									DELETED_RECORD		= new ORecordFlat();
 
 	protected OTransactionRealAbstract(ODatabaseRecordTx iDatabase, int iId) {
 		super(iDatabase);
@@ -91,8 +97,11 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 
 	public ORecordInternal<?> getRecord(final ORID rid) {
 		final ORecordOperation e = getRecordEntry(rid);
-		if (e != null && e.type != ORecordOperation.DELETED)
-			return e.getRecord();
+		if (e != null)
+			if (e.type == ORecordOperation.DELETED)
+				return DELETED_RECORD;
+			else
+				return e.getRecord();
 		return null;
 	}
 
