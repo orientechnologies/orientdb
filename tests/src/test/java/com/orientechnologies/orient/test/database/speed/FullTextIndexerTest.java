@@ -65,8 +65,6 @@ public class FullTextIndexerTest {
 									+ " to complications from kidney failure at the age of 62, just two months after Commodore"
 									+ " declared bankruptcy.");
 			document.save();
-
-//			index.indexDocument(document);
 		}
 
 		long lap = System.currentTimeMillis();
