@@ -148,9 +148,9 @@ public class MultipleDBTest {
 
 		for (int i = 0; i < dbs; i++) {
 
-			sem.acquire();
 			final String dbUrl = baseUrl + i;
 
+			sem.acquire();
 			Thread t = new Thread(new Runnable() {
 
 				public void run() {
@@ -159,6 +159,7 @@ public class MultipleDBTest {
 
 					try {
 						ODatabaseHelper.deleteDatabase(tx);
+						System.out.println("Thread " + this + "  is creating database " + dbUrl);
 						ODatabaseHelper.createDatabase(tx, dbUrl);
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -212,13 +213,15 @@ public class MultipleDBTest {
 						System.out.println(time);
 						times.add(time);
 
-						tx.close();
-
-						sem.release();
-						activeDBs.decrementAndGet();
 					} finally {
 						try {
+							tx.close();
+
+							System.out.println("Thread " + this + "  is dropping database " + dbUrl);
 							ODatabaseHelper.deleteDatabase(tx);
+
+							sem.release();
+							activeDBs.decrementAndGet();
 						} catch (Exception e) {
 						}
 					}
@@ -239,5 +242,4 @@ public class MultipleDBTest {
 
 		System.out.println("Test testDocumentMultipleDBsThreaded ended");
 	}
-
 }

@@ -196,7 +196,7 @@ public class ODocumentHelper {
 		if (fieldNameLength == 0)
 			return null;
 
-		ODocument currentRecord = iRecord;
+		OIdentifiable currentRecord = iRecord;
 		Object value = null;
 
 		int beginPos = 0;
@@ -226,9 +226,8 @@ public class ODocumentHelper {
 
 				if (value == null)
 					return null;
-
-				if (value instanceof ODocument)
-					currentRecord = (ODocument) value;
+				else if (value instanceof OIdentifiable)
+					currentRecord = (OIdentifiable) value;
 
 				final int end = iFieldName.indexOf(']', nextSeparatorPos);
 				if (end == -1)
@@ -237,16 +236,19 @@ public class ODocumentHelper {
 				final String index = OStringSerializerHelper.getStringContent(iFieldName.substring(nextSeparatorPos + 1, end));
 				nextSeparatorPos = end;
 
-				if (value instanceof ODocument) {
+				if (value instanceof OIdentifiable) {
+					final ORecord<?> record = currentRecord != null && currentRecord instanceof OIdentifiable ? ((OIdentifiable) currentRecord)
+							.getRecord() : null;
+
 					final List<String> indexParts = OStringSerializerHelper.smartSplit(index, ',');
 					if (indexParts.size() == 1)
 						// SINGLE VALUE
-						value = currentRecord.field(index);
+						value = ((ODocument) record).field(index);
 					else {
 						// MULTI VALUE
 						final Object[] values = new Object[indexParts.size()];
 						for (int i = 0; i < indexParts.size(); ++i) {
-							values[i] = currentRecord.field(indexParts.get(i));
+							values[i] = ((ODocument) record).field(indexParts.get(i));
 						}
 						value = values;
 					}
@@ -346,8 +348,8 @@ public class ODocumentHelper {
 				}
 			}
 
-			if (value instanceof ODocument)
-				currentRecord = (ODocument) value;
+			if (value instanceof OIdentifiable)
+				currentRecord = (OIdentifiable) value;
 
 			beginPos = ++nextSeparatorPos;
 		} while (nextSeparatorPos < fieldNameLength && value != null);

@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test(groups = "sql-select")
+@SuppressWarnings("unchecked")
 public class SQLSelectTest {
 	private ODatabaseDocument	database;
 	private ODocument					record;
@@ -1312,6 +1313,25 @@ public class SQLSelectTest {
 						|| ((Collection<OIdentifiable>) d.field("addresses")).isEmpty()
 						|| !((ODocument) ((Collection<OIdentifiable>) d.field("addresses")).iterator().next().getRecord()).getSchemaClass()
 								.getName().equals("Address"));
+			}
+
+		} finally {
+			database.close();
+		}
+	}
+
+	@Test
+	public void testSquareBracketsOnCondition() {
+		database.open("admin", "admin");
+
+		try {
+			List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
+					"select from Account where addresses[@class='Address'][city.country.name] = 'Washington'"));
+			Assert.assertFalse(result.isEmpty());
+			for (ODocument d : result) {
+				Assert.assertNotNull(d.field("addresses"));
+				Assert.assertEquals(((ODocument) ((Collection<OIdentifiable>) d.field("addresses")).iterator().next().getRecord())
+						.getSchemaClass().getName(), "Address");
 			}
 
 		} finally {
