@@ -1,8 +1,11 @@
 package com.orientechnologies.orient.graph.gremlin;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import junit.framework.Assert;
 
 import org.testng.annotations.Test;
 
@@ -68,4 +71,32 @@ public class LocalGremlinTest {
 		db.close();
 	}
 
+	@Test
+	public void testMultipleExpressions() {
+		OGraphDatabase db = new OGraphDatabase("local:target/databases/tinkerpop");
+		db.open("admin", "admin");
+
+		List<OIdentifiable> result = db.command(new OCommandSQL("SELECT gremlin('m = []; m << 1; m;') FROM #6:1")).execute();
+
+		Assert.assertEquals(1, result.size());
+		Assert.assertEquals(1, ((Collection) ((ODocument) result.get(0)).field("gremlin")).iterator().next());
+
+		db.close();
+	}
+
+	@Test
+	public void testMultipleExpressionsSideEffects() {
+		OGraphDatabase db = new OGraphDatabase("local:target/databases/tinkerpop");
+		db.open("admin", "admin");
+
+		List<OIdentifiable> result = db.command(
+				new OCommandSQL(
+						"SELECT gremlin('m = []; current.out.sideEffect({ m << it.id }).out.out.sideEffect({ m << it.id })') FROM #6:1"))
+				.execute();
+
+		Assert.assertEquals(1, result.size());
+		System.out.println("Query result: " + result);
+
+		db.close();
+	}
 }
