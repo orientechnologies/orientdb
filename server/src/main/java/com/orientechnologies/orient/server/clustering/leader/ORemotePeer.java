@@ -102,9 +102,9 @@ public class ORemotePeer {
 					.instance()
 					.warn(
 							this,
-							"Error: remote server node %s:%d has refused the connection because it's the new Leader of Cluster %s. Switching to be a Peer Node...",
+							" Cluster <%s>: remote server node %s:%d has refused the connection because it's the new Leader. Switching to be a Peer Node...",
 							networkAddress, networkPort, leader.getManager().getConfig().name);
-			leader.getManager().becomePeer();
+			leader.getManager().becomePeer(null);
 			return false;
 		}
 

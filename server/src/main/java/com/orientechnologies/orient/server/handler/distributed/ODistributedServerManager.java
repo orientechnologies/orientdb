@@ -25,7 +25,9 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 import com.orientechnologies.orient.server.OClientConnection;
+import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.clustering.ODiscoverySignaler;
 import com.orientechnologies.orient.server.clustering.leader.ODiscoveryListener;
@@ -107,7 +109,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		discoverySignaler = new ODiscoverySignaler(this, distributedNetworkListener);
 	}
 
-	public void becomePeer() {
+	public void becomePeer(final ONetworkProtocolDistributed iNetworkConnection) {
 		synchronized (this) {
 
 			if (discoverySignaler != null) {
@@ -121,7 +123,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 			}
 
 			if (peer == null)
-				peer = new OPeerNode(this);
+				peer = new OPeerNode(this, iNetworkConnection);
 		}
 	}
 
@@ -260,5 +262,33 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 	public OReplicator getReplicator() {
 		return replicator;
+	}
+
+	public void sendClusterConfigurationToClients(final String iDatabaseName, final ODocument config) {
+		for (OClientConnection c : OClientConnectionManager.instance().getConnections()) {
+			if (c != null && c.database != null && iDatabaseName.equals(c.database.getName())
+					&& c.protocol.getChannel() instanceof OChannelBinary) {
+				OChannelBinary ch = (OChannelBinary) c.protocol.getChannel();
+
+				OLogManager.instance().info(this,
+						"Cluster <%s>: pushing distributed configuration for database '%s' to the connected client %s...", getConfig().name,
+						iDatabaseName, ch.socket.getRemoteSocketAddress());
+
+				ch.acquireExclusiveLock();
+
+				try {
+					ch.writeByte(OChannelBinaryProtocol.PUSH_DATA);
+					ch.writeInt(Integer.MIN_VALUE);
+					ch.writeByte(OChannelDistributedProtocol.PUSH_DISTRIBUTED_CONFIG);
+
+					ch.writeBytes(config.toStream());
+
+				} catch (IOException e) {
+					e.printStackTrace();
+				} finally {
+					ch.releaseExclusiveLock();
+				}
+			}
+		}
 	}
 }

@@ -33,7 +33,6 @@ import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo;
-import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.SYNCH_TYPE;
 import com.orientechnologies.orient.server.replication.ODistributedNode;
 import com.orientechnologies.orient.server.replication.ODistributedStorage;
 import com.orientechnologies.orient.server.replication.ODistributedSynchronizationException;
@@ -79,7 +78,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 			final String dbName = connection.database.getName();
 			OLogManager.instance().info(this, "<-> DB %s: received synchronization request from node %s reading operation logs after %d",
-					dbName, node, lastOpId);
+					dbName, clientId, lastOpId);
 
 			// channel.
 			final OOperationLog opLog = manager.getReplicator().getOperationLog(node, dbName);
@@ -148,21 +147,14 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 				}
 
 				channel.writeByte((byte) 1);
-				manager.becomePeer();
-
-				// SEND AVAILABLE DATABASES
-				doc.reset();
-				doc.field("availableDatabases", manager.getReplicator().getDatabaseConfiguration());
-				channel.writeBytes(doc.toStream());
-				channel.flush();
-
-				manager.getPeer().updateHeartBeatTime();
-
-				manager.getReplicator().updateConfiguration(new ODocument(channel.readBytes()));
+				manager.becomePeer(this);
 
 			} finally {
 				channel.releaseExclusiveLock();
 			}
+
+			manager.getPeer().updateConfigurationToLeader();
+
 			break;
 		}
 
@@ -252,8 +244,6 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			final ODistributedDatabaseInfo db = node.shareDatabase(connection.database, remoteServerEngine, manager.getReplicator()
 					.getReplicatorUser().name, manager.getReplicator().getReplicatorUser().password);
 
-			node.startDatabaseReplication(db);
-
 			channel.acquireExclusiveLock();
 			try {
 				sendOk(lastClientTxId);
@@ -261,7 +251,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 				channel.releaseExclusiveLock();
 			}
 
-			manager.getPeer().updateConfigurationToLeader(dbUrl, remoteServerName);
+			manager.getPeer().updateConfigurationToLeader();
 
 			break;
 		}
@@ -308,8 +298,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 				manager.getPeer().updateHeartBeatTime();
 			}
 
-			// START CROSS REPLICATION
-			manager.getReplicator().startReplication(dbName, clientId, SYNCH_TYPE.SYNCH.toString());
+			manager.getPeer().updateConfigurationToLeader();
 
 			break;
 		}
@@ -318,10 +307,14 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			checkConnected();
 			data.commandInfo = "Update db configuration from server node leader";
 
-			manager.getReplicator().updateConfiguration(new ODocument().fromStream(channel.readBytes()));
+			final ODocument cfg = new ODocument().fromStream(channel.readBytes());
+			manager.getReplicator().updateConfiguration(cfg);
 
 			OLogManager.instance().warn(this, "Cluster <%s>: changed distributed server configuration:\n%s", manager.getConfig().name,
-					manager.getReplicator().getClusterConfiguration().toJSON(""));
+					cfg.toJSON(""));
+
+			for (String dbName : cfg.fieldNames())
+				manager.sendClusterConfigurationToClients(dbName, cfg);
 
 			channel.acquireExclusiveLock();
 			try {

@@ -37,7 +37,7 @@ import com.orientechnologies.orient.server.handler.distributed.ODistributedServe
  * <p>
  * clusterDbConfigurations attribute handles the database configuration in JSON format, EXAMPLE:<br/>
  * <code>
- * { "name" : "demo", "nodes" : [ { "id" : "192.168.0.20:2424", "mode" : "synch" }, { "id" : "192.168.0.10:2424", "mode" : "asynch" } ] }
+ * { "demo": [ { "id" : "192.168.0.20:2424", "mode" : "synch" }, { "id" : "192.168.0.10:2424", "mode" : "asynch" } ] }
  * </code
  * </p>
  * 
@@ -256,36 +256,7 @@ public class OLeaderNode {
 				}
 			}
 
-		// // UPDATE ALL THE CLIENTS
-		// OChannelBinary ch;
-		// for (OClientConnection c : OClientConnectionManager.instance().getConnections()) {
-		// if (c.protocol.getChannel() instanceof OChannelBinary) {
-		// ch = (OChannelBinary) c.protocol.getChannel();
-		//
-		// OLogManager.instance().info(this, "Sending distributed configuration for database '%s' to the connected client %s...",
-		// iDatabaseName, ch.socket.getRemoteSocketAddress());
-		//
-		// try {
-		// ch.acquireExclusiveLock();
-		//
-		// try {
-		// ch.writeByte(OChannelBinaryProtocol.PUSH_DATA);
-		// ch.writeInt(Integer.MIN_VALUE);
-		// ch.writeByte(OChannelDistributedProtocol.PUSH_DISTRIBUTED_CONFIG);
-		//
-		// ch.writeBytes(config.toStream());
-		//
-		// } catch (IOException e) {
-		// e.printStackTrace();
-		// } finally {
-		// ch.releaseExclusiveLock();
-		// }
-		// } catch (InterruptedException e1) {
-		// OLogManager.instance().warn(this, "[broadcastClusterConfiguration] Timeout on sending configuration to remote node %s",
-		// ch.socket.getRemoteSocketAddress());
-		// }
-		// }
-		// }
+		manager.sendClusterConfigurationToClients(iDatabaseName, config);
 	}
 
 	public ODistributedServerManager getManager() {

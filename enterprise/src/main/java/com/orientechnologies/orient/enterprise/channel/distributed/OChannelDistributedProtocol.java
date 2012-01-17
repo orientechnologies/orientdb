@@ -35,4 +35,5 @@ public class OChannelDistributedProtocol extends OChannelBinaryProtocol {
 	public static final byte	REQUEST_DISTRIBUTED_SYNCHRONIZE				= 88;
 
 	public static final byte	PUSH_DISTRIBUTED_CONFIG								= 100;
+	public static final byte	PUSH_LEADER_AVAILABLE_DBS							= 101;
 }

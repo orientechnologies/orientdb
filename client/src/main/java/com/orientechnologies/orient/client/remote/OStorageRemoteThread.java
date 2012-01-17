@@ -17,7 +17,6 @@ package com.orientechnologies.orient.client.remote;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -37,6 +36,7 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
+import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
 
 /**
  * Wrapper of OStorageRemote that maintains the sessionId. It's bound to the ODatabase and allow to use the shared OStorageRemote.
@@ -283,7 +283,7 @@ public class OStorageRemoteThread implements OStorage {
 		return delegate.isPermanentRequester();
 	}
 
-	public void updateClusterConfiguration(final byte[] iContent) {
+	public void updateClusterConfiguration(final ODocument iContent) {
 		delegate.setSessionId(sessionId);
 		delegate.updateClusterConfiguration(iContent);
 	}
@@ -337,18 +337,6 @@ public class OStorageRemoteThread implements OStorage {
 		return delegate.getClusterConfiguration();
 	}
 
-	public List<ORemoteServerEventListener> getRemoteServerEventListeners() {
-		return delegate.getRemoteServerEventListeners();
-	}
-
-	public void addRemoteServerEventListener(final ORemoteServerEventListener iListener) {
-		delegate.addRemoteServerEventListener(iListener);
-	}
-
-	public void removeRemoteServerEventListener(final ORemoteServerEventListener iListener) {
-		delegate.removeRemoteServerEventListener(iListener);
-	}
-
 	public void closeChannel(final OChannelBinaryClient network) {
 		delegate.closeChannel(network);
 	}
@@ -359,5 +347,17 @@ public class OStorageRemoteThread implements OStorage {
 
 	public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
 		return delegate.callInLock(iCallable, iExclusiveLock);
+	}
+
+	public ORemoteServerEventListener getRemoteServerEventListener() {
+		return delegate.getAsynchEventListener();
+	}
+
+	public void setRemoteServerEventListener(final ORemoteServerEventListener iListener) {
+		delegate.setAsynchEventListener(iListener);
+	}
+
+	public void removeRemoteServerEventListener() {
+		delegate.removeRemoteServerEventListener();
 	}
 }

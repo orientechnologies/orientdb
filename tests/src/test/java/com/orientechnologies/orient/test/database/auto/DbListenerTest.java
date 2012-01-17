@@ -22,13 +22,14 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
-import com.orientechnologies.orient.client.remote.ORemoteServerEventListener;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
+import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 
 /**
  * Tests the right calls of all the db's listener API.
@@ -53,6 +54,7 @@ public class DbListenerTest {
 
 	protected int									onRecordPulled								= 0;
 	protected int									onClusterConfigurationChange	= 0;
+	protected int									onAvailableDatabaseChange			= 0;
 
 	public class DbListener implements ODatabaseListener {
 		public void onAfterTxCommit(ODatabase iDatabase) {
@@ -178,17 +180,25 @@ public class DbListenerTest {
 
 		database.open("admin", "admin");
 
-		((OStorageRemoteThread) database.getStorage()).addRemoteServerEventListener(new ORemoteServerEventListener() {
+		((OStorageRemoteThread) database.getStorage()).setRemoteServerEventListener(new ORemoteServerEventListener() {
 
-			public void onRecordPulled(ORecord<?> iRecord) {
-				onRecordPulled++;
-			}
+			public void onRequest(byte iRequestCode, Object iObject) {
+				switch (iRequestCode) {
+				case OChannelBinaryProtocol.REQUEST_PUSH_RECORD:
+					onRecordPulled++;
+					break;
 
-			public void onClusterConfigurationChange(byte[] clusterConfig) {
-				onClusterConfigurationChange++;
+				case OChannelDistributedProtocol.PUSH_DISTRIBUTED_CONFIG:
+					onClusterConfigurationChange++;
+					break;
+
+				case OChannelDistributedProtocol.PUSH_LEADER_AVAILABLE_DBS:
+					onAvailableDatabaseChange++;
+					break;
+				}
 			}
 		});
-		
+
 		database.close();
 	}
 }

@@ -76,11 +76,11 @@ public class ODistributedNode {
 					networkAddress, networkPort);
 
 			try {
-				iDatabase.storage = new ODistributedStorage(replicator, replicator.getManager().getId(), id + "/" + iDatabase.databaseName,
-						"rw", replicator.getConflictResolver());
+				if (iDatabase.storage == null)
+					iDatabase.storage = new ODistributedStorage(replicator, replicator.getManager().getId(), id + "/"
+							+ iDatabase.databaseName, "rw", replicator.getConflictResolver());
+				
 				iDatabase.storage.open(iDatabase.userName, iDatabase.userPassword, null);
-
-				iDatabase.sessionId = iDatabase.storage.getSessionId();
 
 				databases.put(iDatabase.databaseName, iDatabase);
 
@@ -140,6 +140,8 @@ public class ODistributedNode {
 		OLogManager.instance().info(this, "<-> DB %s: sharing completed (%dms)", db.databaseName, System.currentTimeMillis() - time);
 
 		status = STATUS.ONLINE;
+
+		startDatabaseReplication(db);
 
 		return db;
 	}

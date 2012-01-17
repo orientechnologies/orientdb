@@ -15,10 +15,17 @@
  */
 package com.orientechnologies.orient.server.clustering.peer;
 
+import java.io.IOException;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
+import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 import com.orientechnologies.orient.server.clustering.leader.ODiscoveryListener;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.network.protocol.distributed.ONetworkProtocolDistributed;
 
 /**
  * Peer node. In a clustered configuration there is only one leader and 0-N peer nodes.
@@ -31,9 +38,12 @@ public class OPeerNode {
 	private ODiscoveryListener							discoveryListener;
 	private OLeaderCheckerTask							leaderCheckerTask;
 	private long														lastHeartBeat;
+	private ONetworkProtocolDistributed			leaderConnection;
 
-	public OPeerNode(final ODistributedServerManager iManager) {
+	public OPeerNode(final ODistributedServerManager iManager, final ONetworkProtocolDistributed iNetworkConnection) {
 		manager = iManager;
+		leaderConnection = iNetworkConnection;
+
 		OLogManager.instance().info(this, "Cluster <%s> joined", iManager.getConfig().name);
 
 		// FIRST TIME: SCHEDULE THE HEARTBEAT CHECKER
@@ -68,7 +78,28 @@ public class OPeerNode {
 		return manager;
 	}
 
-	public void updateConfigurationToLeader(String dbUrl, String remoteServerName) {
-		// TODO Auto-generated method stub
+	public void updateConfigurationToLeader() throws IOException {
+		if (manager.isLeader())
+			return;
+
+		final ODocument doc = new ODocument();
+		doc.field("availableDatabases", manager.getReplicator().getDatabaseConfiguration());
+
+		final OChannelBinaryServer channel = ((OChannelBinaryServer) leaderConnection.getChannel());
+
+		channel.acquireExclusiveLock();
+		try {
+			channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
+			channel.writeInt(Integer.MIN_VALUE);
+			channel.writeByte(OChannelDistributedProtocol.PUSH_LEADER_AVAILABLE_DBS);
+
+			channel.writeBytes(doc.toStream());
+			channel.flush();
+
+			manager.getReplicator().updateConfiguration(new ODocument(channel.readBytes()));
+		} finally {
+			channel.releaseExclusiveLock();
+		}
+
 	}
 }

@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.client.remote;
+package com.orientechnologies.orient.enterprise.channel.binary;
 
 import java.io.IOException;
 
 import com.orientechnologies.common.thread.OSoftThread;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 
 /**
@@ -29,13 +28,16 @@ import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistr
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class OStorageRemoteServiceThread extends OSoftThread {
-	private final OStorageRemoteThread	storage;
+public class OAsynchChannelServiceThread extends OSoftThread {
 	private OChannelBinaryClient				network;
+	private int													sessionId;
+	private ORemoteServerEventListener	remoteServerEventListener;
 
-	public OStorageRemoteServiceThread(final OStorageRemoteThread iStorageRemote, final OChannelBinaryClient iFirstChannel) {
-		super(Orient.getThreadGroup(), "OrientDB AsynchRemoteStorageService");
-		storage = iStorageRemote;
+	public OAsynchChannelServiceThread(final ORemoteServerEventListener iRemoteServerEventListener,
+			final OChannelBinaryClient iFirstChannel) {
+		super(Orient.getThreadGroup(), "OrientDB AsynchChannelService");
+		sessionId = Integer.MIN_VALUE;
+		remoteServerEventListener = iRemoteServerEventListener;
 		network = iFirstChannel;
 		start();
 	}
@@ -44,37 +46,33 @@ public class OStorageRemoteServiceThread extends OSoftThread {
 	protected void execute() throws Exception {
 		try {
 			try {
-				storage.beginResponse(network);
+				network.beginResponse(sessionId);
 			} catch (IOException ioe) {
 				// EXCEPTION RECEIVED (THE SOCKET HAS BEEN CLOSED?) ASSURE TO UNLOCK THE READ AND EXIT THIS THREAD
 				sendShutdown();
-				storage.closeChannel(network);
-				storage.handleException("Network connection lost", ioe);
+				network.close();
 				return;
 			}
 
 			final byte request = network.readByte();
 
+			Object obj = null;
+
 			switch (request) {
 			case OChannelBinaryProtocol.REQUEST_PUSH_RECORD:
-				final ORecordInternal<?> record = (ORecordInternal<?>) OStorageRemote.readIdentifiable(network);
-
-				for (ORemoteServerEventListener listener : storage.getRemoteServerEventListeners())
-					listener.onRecordPulled(record);
-
-				// ASYNCHRONOUS PUSH INTO THE LEVEL2 CACHE
-				storage.getLevel2Cache().updateRecord(record);
+				obj = (ORecordInternal<?>) OChannelBinaryProtocol.readIdentifiable(network);
 				break;
 
 			case OChannelDistributedProtocol.PUSH_DISTRIBUTED_CONFIG:
-				final byte[] clusterConfig = network.readBytes();
+				obj = new ODocument().fromStream(network.readBytes());
+				break;
 
-				for (ORemoteServerEventListener listener : storage.getRemoteServerEventListeners())
-					listener.onClusterConfigurationChange(clusterConfig);
-
-				storage.updateClusterConfiguration(clusterConfig);
+			case OChannelDistributedProtocol.PUSH_LEADER_AVAILABLE_DBS:
+				obj = new ODocument().fromStream(network.readBytes());
 				break;
 			}
+
+			remoteServerEventListener.onRequest(request, obj);
 
 			network.endResponse();
 

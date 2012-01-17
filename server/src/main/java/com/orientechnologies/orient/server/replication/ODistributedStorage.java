@@ -50,6 +50,7 @@ public class ODistributedStorage extends OStorageRemote implements OCommandOutpu
 	public ODistributedStorage(final OReplicator iReplicator, final String iNodeId, final String iURL, final String iMode,
 			final OReplicationConflictResolver iConflictResolver) throws IOException {
 		super(DNODE_PREFIX + iNodeId, iURL, iMode);
+		setAsynchEventListener(new ODistributedRemoteAsynchEventListener(iReplicator.getManager(), getAsynchEventListener()));
 		replicator = iReplicator;
 		conflictResolver = iConflictResolver;
 	}

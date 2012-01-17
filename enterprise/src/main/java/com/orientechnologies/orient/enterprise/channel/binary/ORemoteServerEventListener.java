@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.client.remote;
-
-import com.orientechnologies.orient.core.record.ORecord;
+package com.orientechnologies.orient.enterprise.channel.binary;
 
 /**
  * Listener Interface to get called when asynchronous events are received from the remote server.
@@ -24,7 +22,5 @@ import com.orientechnologies.orient.core.record.ORecord;
  * 
  */
 public interface ORemoteServerEventListener {
-	public void onRecordPulled(final ORecord<?> iRecord);
-
-	public void onClusterConfigurationChange(final byte[] clusterConfig);
+	public void onRequest(final byte iRequestCode, Object obj);
 }
