@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -35,7 +34,7 @@ import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ODistributedNode implements OCommandOutputListener {
+public class ODistributedNode {
 	public enum STATUS {
 		ONLINE, SYNCHRONIZING
 	}
@@ -57,13 +56,24 @@ public class ODistributedNode implements OCommandOutputListener {
 		networkPort = Integer.parseInt(parts[1]);
 	}
 
-	public void connectDatabase(final ODistributedDatabaseInfo iDatabase) throws IOException {
+	protected ODistributedDatabaseInfo createDatabaseEntry(final String dbName, SYNCH_TYPE iSynchType, final String iUserName,
+			final String iUserPasswd) throws IOException {
+		final ODistributedDatabaseInfo dbInfo = new ODistributedDatabaseInfo();
+		dbInfo.databaseName = dbName;
+		dbInfo.userName = iUserName;
+		dbInfo.userPassword = iUserPasswd;
+		dbInfo.synchType = iSynchType;
+		dbInfo.log = new OOperationLog(id, dbName);
+		return dbInfo;
+	}
+
+	public void startDatabaseReplication(final ODistributedDatabaseInfo iDatabase) throws IOException {
 		synchronized (this) {
 			// REMOVE ANY OTHER PREVIOUS ENTRY
 			databases.remove(iDatabase.databaseName);
 
-			OLogManager.instance().warn(this, "Starting replication for database '%s' against distributed node %s:%d...",
-					iDatabase.databaseName, networkAddress, networkPort);
+			OLogManager.instance().warn(this, "<-> DB %s: starting replication against distributed node %s:%d", iDatabase.databaseName,
+					networkAddress, networkPort);
 
 			try {
 				iDatabase.storage = new ODistributedStorage(replicator, replicator.getManager().getId(), id + "/" + iDatabase.databaseName,
@@ -80,8 +90,8 @@ public class ODistributedNode implements OCommandOutputListener {
 
 			} catch (Exception e) {
 				databases.remove(iDatabase.databaseName);
-				OLogManager.instance().warn(this,
-						"Database '" + iDatabase.databaseName + "' is not present on remote server. Removing database from shared list.", e);
+				OLogManager.instance().warn(this, "<> DB %s: cannot find database on remote server. Removing it from shared list.", e,
+						iDatabase.databaseName);
 			}
 		}
 	}
@@ -104,87 +114,34 @@ public class ODistributedNode implements OCommandOutputListener {
 		}
 	}
 
-	protected void handleError(final ORecordOperation iRequest, final SYNCH_TYPE iRequestType, final Exception iException)
-			throws RuntimeException {
+	public ODistributedDatabaseInfo shareDatabase(final ODatabaseRecord iDb, final String iRemoteEngine, String iUserName,
+			String iUserPasswd) throws IOException, InterruptedException {
+		ODistributedDatabaseInfo db = getDatabase(iDb.getName());
 
-		final Set<ODistributedDatabaseInfo> currentDbList = new HashSet<ODistributedDatabaseInfo>(databases.values());
+		if (db != null)
+			throw new ODistributedSynchronizationException("Database '" + iDb.getName() + "' is already shared on remote server node '"
+					+ id + "'");
 
-		disconnect();
+		db = createDatabaseEntry(iDb.getName(), SYNCH_TYPE.SYNCH, iUserName, iUserPasswd);
 
-		// ERROR
-		OLogManager.instance().warn(this, "Remote server node %s:%d seems down, retrying to connect...", networkAddress, networkPort);
-
-		// RECONNECT ALL DATABASES
-		try {
-			for (ODistributedDatabaseInfo dbEntry : currentDbList) {
-				connectDatabase(dbEntry);
-			}
-		} catch (IOException e) {
-			// IO ERROR: THE NODE SEEMED ALWAYS MORE DOWN: START TO COLLECT DATA FOR IT WAITING FOR A FUTURE RE-CONNECTION
-			OLogManager.instance()
-					.warn(this, "Remote server node %s:%d is down, remove it from replication", networkAddress, networkPort);
-		}
-
-		if (iRequestType == SYNCH_TYPE.SYNCH) {
-			// SYNCHRONOUS CASE: RE-THROW THE EXCEPTION NOW TO BEING PROPAGATED UP TO THE CLIENT
-			if (iException instanceof RuntimeException)
-				throw (RuntimeException) iException;
-		}
-	}
-
-	public void shareDatabase(final ODatabaseRecord iDatabase, final String iRemoteServerName, final String iDbUser,
-			final String iDbPasswd, final String iEngineName, final boolean iSynchronousMode) throws IOException, InterruptedException {
 		if (status != STATUS.ONLINE)
-			throw new ODistributedSynchronizationException("Cannot share database '" + iDatabase.getName() + "' on remote server node '"
-					+ iRemoteServerName + "' because is disconnected");
+			throw new ODistributedSynchronizationException("Cannot share database '" + db.databaseName + "' on remote server node '" + id
+					+ "' because is disconnected");
 
-		// final String dbName = iDatabase.getName();
-		// final ODistributedDatabaseInfo databaseEntry;
-		//
-		// channel.beginRequest();
-		// try {
-		// status = STATUS.SYNCHRONIZING;
-		//
-		// OLogManager.instance().info(this, "Sharing database '" + dbName + "' to remote server " + iRemoteServerName + "...");
-		//
-		// // EXECUTE THE REQUEST ON THE REMOTE SERVER NODE
-		// channel.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_RECEIVER);
-		// channel.writeInt(clientTxId);
-		// channel.writeString(dbName);
-		// channel.writeString(iDbUser);
-		// channel.writeString(iDbPasswd);
-		// channel.writeString(iEngineName);
-		// } finally {
-		// channel.endRequest();
-		// }
-		//
-		// OLogManager.instance().info(this, "Exporting database '%s' via streaming to remote server node: %s...", iDatabase.getName(),
-		// iRemoteServerName);
-		//
-		// // START THE EXPORT GIVING AS OUTPUTSTREAM THE CHANNEL TO STREAM THE EXPORT
-		// new ODatabaseExport(iDatabase, new OChannelBinaryOutputStream(channel), this).exportDatabase();
-		//
-		// OLogManager.instance().info(this, "Database exported correctly");
-		//
-		// databaseEntry = new ODistributedDatabaseInfo();
-		// databaseEntry.databaseName = dbName;
-		// databaseEntry.userName = iDbUser;
-		// databaseEntry.userPassword = iDbPasswd;
-		//
-		// channel.beginResponse(clientTxId);
-		// try {
-		// databaseEntry.sessionId = channel.readInt();
-		//
-		// databases.put(dbName, databaseEntry);
-		// } finally {
-		// channel.endResponse();
-		// }
+		OLogManager.instance().info(this,
+				"<-> DB %s: sharing database exporting to the remote server %s via streaming across the network...", db.databaseName, id);
+
+		final long time = System.currentTimeMillis();
+
+		db.storage = new ODistributedStorage(replicator, replicator.getManager().getId(), id, "rw", replicator.getConflictResolver());
+		db.storage.share(iDb, db.databaseName, db.userName, db.userPassword, iRemoteEngine);
+		db.sessionId = db.storage.getSessionId();
+
+		OLogManager.instance().info(this, "<-> DB %s: sharing completed (%dms)", db.databaseName, System.currentTimeMillis() - time);
 
 		status = STATUS.ONLINE;
-	}
 
-	@Override
-	public void onMessage(final String iText) {
+		return db;
 	}
 
 	@Override
@@ -213,5 +170,32 @@ public class ODistributedNode implements OCommandOutputListener {
 
 	public long getLastOperationId(final String iDatabaseName) throws IOException {
 		return databases.get(iDatabaseName).log.getLastOperationId();
+	}
+
+	protected void handleError(final ORecordOperation iRequest, final SYNCH_TYPE iRequestType, final Exception iException)
+			throws RuntimeException {
+
+		final Set<ODistributedDatabaseInfo> currentDbList = new HashSet<ODistributedDatabaseInfo>(databases.values());
+
+		disconnect();
+
+		// ERROR
+		OLogManager.instance().warn(this, "<-> NODE %s:%d seems down, retrying to connect...", networkAddress, networkPort);
+
+		// RECONNECT ALL DATABASES
+		try {
+			for (ODistributedDatabaseInfo dbEntry : currentDbList) {
+				startDatabaseReplication(dbEntry);
+			}
+		} catch (IOException e) {
+			// IO ERROR: THE NODE SEEMED ALWAYS MORE DOWN: START TO COLLECT DATA FOR IT WAITING FOR A FUTURE RE-CONNECTION
+			OLogManager.instance().warn(this, "<-> NODE %s:%d is down, remove it from replication", networkAddress, networkPort);
+		}
+
+		if (iRequestType == SYNCH_TYPE.SYNCH) {
+			// SYNCHRONOUS CASE: RE-THROW THE EXCEPTION NOW TO BEING PROPAGATED UP TO THE CLIENT
+			if (iException instanceof RuntimeException)
+				throw (RuntimeException) iException;
+		}
 	}
 }

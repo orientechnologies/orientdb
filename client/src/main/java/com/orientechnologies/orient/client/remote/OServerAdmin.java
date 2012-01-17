@@ -267,12 +267,13 @@ public class OServerAdmin {
 	 * @param iDatabaseUserName
 	 * @param iDatabaseUserPassword
 	 * @param iRemoteName
+	 * @param iRemoteEngine
 	 * @param iSynchronousMode
 	 * @return The instance itself. Useful to execute method in chain
 	 * @throws IOException
 	 */
 	public synchronized OServerAdmin shareDatabase(final String iDatabaseName, final String iDatabaseUserName,
-			final String iDatabaseUserPassword, final String iRemoteName, final boolean iSynchronousMode) throws IOException {
+			final String iDatabaseUserPassword, final String iRemoteName, final String iRemoteEngine) throws IOException {
 		storage.checkConnection();
 
 		try {
@@ -283,15 +284,14 @@ public class OServerAdmin {
 				network.writeString(iDatabaseUserName);
 				network.writeString(iDatabaseUserPassword);
 				network.writeString(iRemoteName);
-				network.writeByte((byte) (iSynchronousMode ? 1 : 0));
+				network.writeString(iRemoteEngine);
 			} finally {
 				storage.endRequest(network);
 			}
 
 			storage.getResponse(network);
 
-			OLogManager.instance().debug(this, "Database '%s' has been shared in mode '%s' with the server '%s'", iDatabaseName,
-					iSynchronousMode, iRemoteName);
+			OLogManager.instance().debug(this, "Database '%s' has been shared with the server '%s'", iDatabaseName, iRemoteName);
 
 		} catch (Exception e) {
 			OLogManager.instance().exception("Cannot share the database: " + iDatabaseName, e, OStorageException.class);

@@ -23,13 +23,17 @@ import java.util.concurrent.FutureTask;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryOutputStream;
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.SYNCH_TYPE;
 import com.orientechnologies.orient.server.replication.conflict.OReplicationConflictResolver;
@@ -37,7 +41,7 @@ import com.orientechnologies.orient.server.replication.conflict.OReplicationConf
 /**
  * Distributed version of remote storage
  */
-public class ODistributedStorage extends OStorageRemote {
+public class ODistributedStorage extends OStorageRemote implements OCommandOutputListener {
 
 	public static final String									DNODE_PREFIX	= "dnode=";
 	private final OReplicator										replicator;
@@ -55,7 +59,7 @@ public class ODistributedStorage extends OStorageRemote {
 
 		final long time = System.currentTimeMillis();
 
-		OLogManager.instance().info(this, "Starting synchronization of database '%s'. Storing delta of updates...", getName());
+		OLogManager.instance().info(this, "<-> DB %s: synchronization started. Storing delta of updates...", name);
 
 		try {
 			final OChannelBinaryClient network = beginRequest(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_SYNCHRONIZE);
@@ -76,7 +80,7 @@ public class ODistributedStorage extends OStorageRemote {
 						opLog.fromStream(network.readBytes());
 						ops++;
 
-						OLogManager.instance().info(this, "%d: received record %s", ops, opLog.record);
+						OLogManager.instance().info(this, "<< DB %s: (%d) received record %s", name, ops, opLog.record);
 
 						replicator.getOperationLog(nodeId, getName()).appendLog(opLog.serial, opLog.type,
 								(ORecordId) opLog.record.getIdentity());
@@ -84,8 +88,8 @@ public class ODistributedStorage extends OStorageRemote {
 
 					if (OLogManager.instance().isInfoEnabled())
 						OLogManager.instance().info(this,
-								"Synchronization of database '%s' completed: received %d operations from remote node. Total time: %dms", getName(),
-								ops, (System.currentTimeMillis() - time));
+								"<-> DB %s: synchronization completed. Received %d operations from remote node (%dms)", getName(), ops,
+								(System.currentTimeMillis() - time));
 
 				} finally {
 					endResponse(network);
@@ -96,7 +100,7 @@ public class ODistributedStorage extends OStorageRemote {
 			// PASS THROUGH
 			throw e;
 		} catch (Exception e) {
-			handleException("Error on synchronization of database '" + getName() + "'", e);
+			handleException("<-> DB " + getName() + ": error on synchronization", e);
 		}
 	}
 
@@ -117,7 +121,8 @@ public class ODistributedStorage extends OStorageRemote {
 				break;
 			}
 
-			OLogManager.instance().warn(this, "-> %s (%s mode) %s record %s...", this, iRequestType, operation, iRecord.getIdentity());
+			OLogManager.instance()
+					.warn(this, ">> DB %s: (%s mode) %s record %s...", name, iRequestType, operation, iRecord.getIdentity());
 		}
 
 		checkConnection();
@@ -170,10 +175,37 @@ public class ODistributedStorage extends OStorageRemote {
 				// PASS THROUGH
 				throw e;
 			} catch (Exception e) {
-				handleException("Error on distribute record: " + iRecord.getIdentity(), e);
+				handleException("<-> DB " + getName() + ": error on distribute record: " + iRecord.getIdentity(), e);
 
 			}
 		} while (true);
+	}
+
+	public void share(final ODatabaseRecord iDatabase, final String dbName, final String iDbUser, final String iDbPasswd,
+			final String iEngineName) throws IOException {
+		checkConnection();
+
+		final OChannelBinaryClient network = beginRequest(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_RECEIVER);
+
+		try {
+			network.writeString(dbName);
+			network.writeString(iDbUser);
+			network.writeString(iDbPasswd);
+			network.writeString(iEngineName);
+
+			// START THE EXPORT GIVING AS OUTPUTSTREAM THE CHANNEL TO STREAM THE EXPORT
+			new ODatabaseExport(iDatabase, new OChannelBinaryOutputStream(network), this).exportDatabase();
+
+		} finally {
+			endRequest(network);
+		}
+
+		try {
+			beginResponse(network);
+			setSessionId(network.readInt());
+		} finally {
+			endResponse(network);
+		}
 	}
 
 	private void handleRemoteResponse(final byte iOperation, final SYNCH_TYPE iRequestType, final ORecordInternal<?> iRecord,
@@ -194,5 +226,9 @@ public class ODistributedStorage extends OStorageRemote {
 				conflictResolver.handleDeleteConflict(ORecordOperation.DELETED, iRequestType, iRecord);
 			break;
 		}
+	}
+
+	@Override
+	public void onMessage(String iText) {
 	}
 }

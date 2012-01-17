@@ -53,7 +53,7 @@ public class OLeaderNode {
 
 	public OLeaderNode(final ODistributedServerManager iManager) {
 		this.manager = iManager;
-		OLogManager.instance().warn(this, "Cluster '%s': current node is the new Leader Node", iManager.getConfig().name);
+		OLogManager.instance().warn(this, "Cluster <%s>: current node is the new Leader Node", iManager.getConfig().name);
 
 		for (String db : OServerMain.server().getAvailableStorageNames().keySet()) {
 			try {
@@ -133,8 +133,8 @@ public class OLeaderNode {
 			}
 		}
 
-		OLogManager.instance().error(this, "Cannot connect to distributed server node using addresses %s:%d and %s:%d", lastException,
-				iServerAddresses[0], iServerPort, iServerAddresses[1], iServerPort);
+		OLogManager.instance().error(this, "Cluster <%s>: cannot connect to distributed server node using addresses %s:%d and %s:%d",
+				manager.getConfig().name, lastException, iServerAddresses[0], iServerPort, iServerAddresses[1], iServerPort);
 	}
 
 	/**
@@ -144,8 +144,8 @@ public class OLeaderNode {
 		iNode.disconnect();
 
 		// ERROR
-		OLogManager.instance().warn(this, "Peer node %s:%d seems down, retrying to connect...", iNode.networkAddress,
-				iNode.networkPort);
+		OLogManager.instance()
+				.warn(this, "Peer node %s:%d seems down, retrying to connect...", iNode.networkAddress, iNode.networkPort);
 
 		// RETRY TO CONNECT
 		try {
@@ -311,7 +311,7 @@ public class OLeaderNode {
 			}
 		}
 
-		OLogManager.instance().warn(this, "Removed server node %s:%d from distributed cluster '%s'", iNode.networkAddress,
-				iNode.networkPort, manager.getConfig().name);
+		OLogManager.instance().warn(this, "Cluster <%s>: removed server node %s:%d", manager.getConfig().name, iNode.networkAddress,
+				iNode.networkPort);
 	}
 }

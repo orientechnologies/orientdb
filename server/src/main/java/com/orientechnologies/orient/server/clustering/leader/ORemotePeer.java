@@ -76,7 +76,7 @@ public class ORemotePeer {
 
 		channel = new OChannelBinaryClient(networkAddress, networkPort, configuration);
 
-		OLogManager.instance().warn(this, "Cluster '%s': received joining request from peer node %s:%d. Checking authorizations...",
+		OLogManager.instance().warn(this, "Cluster <%s>: received joining request from peer node %s:%d. Checking authorizations...",
 				iClusterName, networkAddress, networkPort);
 
 		clientTxId = serialClientId.decrementAndGet();
@@ -102,7 +102,7 @@ public class ORemotePeer {
 					.instance()
 					.warn(
 							this,
-							"Error: remote server node %s:%d has refused the connection because it's the new Leader of cluster '%s'. Switching to be a Peer Node...",
+							"Error: remote server node %s:%d has refused the connection because it's the new Leader of Cluster %s. Switching to be a Peer Node...",
 							networkAddress, networkPort, leader.getManager().getConfig().name);
 			leader.getManager().becomePeer();
 			return false;
@@ -119,7 +119,7 @@ public class ORemotePeer {
 		channel.writeBytes(doc.toStream());
 		channel.flush();
 
-		OLogManager.instance().info(this, "Cluster '%s': joined peer node %s:%d", iClusterName, networkAddress, networkPort);
+		OLogManager.instance().info(this, "Cluster <%s>: joined peer node %s:%d", iClusterName, networkAddress, networkPort);
 
 		leader.getManager().getReplicator().updateConfiguration(doc);
 

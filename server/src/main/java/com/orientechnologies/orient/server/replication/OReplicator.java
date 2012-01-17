@@ -92,7 +92,7 @@ public class OReplicator {
 	}
 
 	/**
-	 * Updates the distributed configuration and reconnect to new servers.
+	 * Updates the distributed configuration and connects to new servers if needed.
 	 * 
 	 * @param iDocument
 	 *          Configuration as JSON document
@@ -104,59 +104,42 @@ public class OReplicator {
 		// OPEN CONNECTIONS AGAINST OTHER SERVERS
 		for (String dbName : clusterConfiguration.fieldNames()) {
 
-			if (!localLogs.containsKey(dbName)) {
-				// INITIALIZING OPERATION LOG
-				localLogs.put(dbName, new OOperationLog(manager.getId(), dbName));
-				OLogManager.instance().info(this, "Initialized cluster operation log for database '%s'", dbName);
-			}
-
 			final ODocument db = clusterConfiguration.field(dbName);
 			final Collection<ODocument> dbNodes = db.field("nodes");
 
-			boolean currentNodeInvolved = false;
-
-			// CHECK IF CURRENT NODE IS INVOLVED
-			for (ODocument node : dbNodes) {
-				final String nodeId = node.field("id");
-				if (manager.itsMe(nodeId)) {
-					currentNodeInvolved = true;
-					break;
-				}
-			}
-
-			if (currentNodeInvolved)
-				for (ODocument node : dbNodes) {
-					final String nodeId = node.field("id");
-
-					if (manager.itsMe(nodeId))
-						// DON'T OPEN A CONNECTION TO MYSELF
-						continue;
-
-					if (!nodes.containsKey(nodeId)) {
-						final ODistributedNode dNode = new ODistributedNode(this, nodeId);
-						nodes.put(nodeId, dNode);
-
-						try {
-							final ODistributedDatabaseInfo dbInfo = new ODistributedDatabaseInfo();
-							dbInfo.databaseName = dbName;
-							dbInfo.userName = replicatorUser.name;
-							dbInfo.userPassword = replicatorUser.password;
-							dbInfo.synchType = SYNCH_TYPE.valueOf(node.field("mode").toString().toUpperCase());
-							dbInfo.log = new OOperationLog(nodeId, dbName);
-
-							dNode.connectDatabase(dbInfo);
-						} catch (IOException e) {
-							// REMOVE THE NODE
-							removeDistributedNode(nodeId, e);
-						}
-					}
-				}
+			for (ODocument node : dbNodes)
+				startReplication(dbName, (String) node.field("id"), node.field("mode").toString());
 		}
 	}
 
+	public void startReplication(final String dbName, final String nodeId, final String mode) throws IOException {
+		if (manager.itsMe(nodeId))
+			// DON'T OPEN A CONNECTION TO MYSELF
+			return;
+
+		// GET THE NODE
+		ODistributedNode dNode = nodes.get(nodeId);
+		if (dNode == null) {
+			// CREATE IT
+			dNode = new ODistributedNode(this, nodeId);
+			nodes.put(nodeId, dNode);
+		}
+
+		if (dNode.getDatabase(dbName) != null)
+			// ALREADY CONNECTED
+			return;
+
+		if (!localLogs.containsKey(dbName))
+			// INITIALIZING OPERATION LOG
+			localLogs.put(dbName, new OOperationLog(manager.getId(), dbName));
+
+		dNode.startDatabaseReplication(dNode.createDatabaseEntry(dbName, SYNCH_TYPE.valueOf(mode.toUpperCase()), replicatorUser.name,
+				replicatorUser.password));
+	}
+
 	protected void removeDistributedNode(final String iNodeId, final IOException iCause) {
-		OLogManager.instance().warn(this, "[OReplicator] Error connecting distributed node '%s'. Remove it from the available nodes",
-				iCause, iNodeId);
+		OLogManager.instance().warn(this, "<-> NODE %s: error connecting distributed node. Remove it from the available nodes", iCause,
+				iNodeId);
 		nodes.remove(iNodeId);
 	}
 
@@ -175,8 +158,12 @@ public class OReplicator {
 			final String dbName = iTransactionEntry.getRecord().getDatabase().getName();
 
 			// LOG THE OPERATION
-			final long opId = localLogs.get(dbName).appendLocalLog(iTransactionEntry.type,
-					(ORecordId) iTransactionEntry.getRecord().getIdentity());
+			final OOperationLog log = localLogs.get(dbName);
+			if (log == null)
+				// DB NOT REPLICATED: IGNORE IT
+				return;
+
+			final long opId = log.appendLocalLog(iTransactionEntry.type, (ORecordId) iTransactionEntry.getRecord().getIdentity());
 
 			// GET THE NODES INVOLVED IN THE UPDATE
 			for (ODistributedNode node : nodes.values()) {
@@ -311,5 +298,9 @@ public class OReplicator {
 
 	public ODistributedServerManager getManager() {
 		return manager;
+	}
+
+	public OServerUserConfiguration getReplicatorUser() {
+		return replicatorUser;
 	}
 }

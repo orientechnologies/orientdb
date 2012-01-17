@@ -34,7 +34,7 @@ public class OPeerNode {
 
 	public OPeerNode(final ODistributedServerManager iManager) {
 		manager = iManager;
-		OLogManager.instance().info(this, "Cluster '%s' joined", iManager.getConfig().name);
+		OLogManager.instance().info(this, "Cluster <%s> joined", iManager.getConfig().name);
 
 		// FIRST TIME: SCHEDULE THE HEARTBEAT CHECKER
 		leaderCheckerTask = new OLeaderCheckerTask(this);
@@ -68,7 +68,7 @@ public class OPeerNode {
 		return manager;
 	}
 
-	public void updateConfigurationToLeader(String dbUrl, String remoteServerName, boolean synchronousMode) {
+	public void updateConfigurationToLeader(String dbUrl, String remoteServerName) {
 		// TODO Auto-generated method stub
 	}
 }

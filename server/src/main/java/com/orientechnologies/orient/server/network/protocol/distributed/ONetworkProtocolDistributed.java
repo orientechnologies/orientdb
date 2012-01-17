@@ -27,15 +27,16 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryInputStream;
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo;
+import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.SYNCH_TYPE;
 import com.orientechnologies.orient.server.replication.ODistributedNode;
 import com.orientechnologies.orient.server.replication.ODistributedStorage;
+import com.orientechnologies.orient.server.replication.ODistributedSynchronizationException;
 import com.orientechnologies.orient.server.replication.OOperationLog;
 
 /**
@@ -46,6 +47,7 @@ import com.orientechnologies.orient.server.replication.OOperationLog;
  */
 public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implements OCommandOutputListener {
 	private ODistributedServerManager	manager;
+	private String										clientId;
 
 	public ONetworkProtocolDistributed() {
 		super("OrientDB DistributedBinaryNetworkProtocolListener");
@@ -58,6 +60,10 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 	@Override
 	protected void parseCommand() throws IOException, InterruptedException {
+
+		if (clientId == null && data.clientId != null)
+			// ASSIGN CLIENT-ID ONCE
+			clientId = data.clientId.substring(ODistributedStorage.DNODE_PREFIX.length());
 
 		// DISTRIBUTED SERVER REQUESTS
 		switch (lastRequestType) {
@@ -72,25 +78,33 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			final long lastOpId = (Long) nodeCfg.field("lastOperation");
 
 			final String dbName = connection.database.getName();
-			OLogManager.instance().info(this,
-					"Received synchronization request for database '%s' reading operation logs after %d for node %s", dbName, lastOpId, node);
+			OLogManager.instance().info(this, "<-> DB %s: received synchronization request from node %s reading operation logs after %d",
+					dbName, node, lastOpId);
 
 			// channel.
 			final OOperationLog opLog = manager.getReplicator().getOperationLog(node, dbName);
-			int position = opLog.findOperationId(lastOpId);
-			int sent = 0;
 
 			sendOk(lastClientTxId);
 
-			for (int i = position - 1; i >= 0; --i) {
-				channel.writeByte((byte) 1);
-				opLog.getEntry(i, op);
+			if (opLog != null) {
+				// SEND LOG DELTA
+				int position = opLog.findOperationId(lastOpId);
+				int sent = 0;
 
-				channel.writeBytes(op.toStream());
-				sent++;
+				sendOk(lastClientTxId);
 
-				OLogManager.instance().info(this, "%d: operation %d with RID %s", sent, op.serial, op.record.getIdentity());
+				for (int i = position - 1; i >= 0; --i) {
+					channel.writeByte((byte) 1);
+					opLog.getEntry(i, op);
+
+					channel.writeBytes(op.toStream());
+					sent++;
+
+					OLogManager.instance().info(this, ">> %s: (%d) operation %d with RID %s", dbName, sent, op.serial,
+							op.record.getIdentity());
+				}
 			}
+
 			channel.writeByte((byte) 0);
 
 			break;
@@ -203,8 +217,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			}
 
 			// LOGS THE CHANGE
-			final ODistributedNode node = manager.getReplicator().getNode(
-					data.clientId.substring(ODistributedStorage.DNODE_PREFIX.length()));
+			final ODistributedNode node = manager.getReplicator().getNode(clientId);
 			final ODistributedDatabaseInfo db = node.getDatabase(connection.database.getName());
 			db.log.appendLog(operationId, operationType, rid);
 
@@ -225,17 +238,21 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			final String dbUser = channel.readString();
 			final String dbPassword = channel.readString();
 			final String remoteServerName = channel.readString();
-			final boolean synchronousMode = channel.readByte() == 1;
+			final String remoteServerEngine = channel.readString();
 
 			checkServerAccess("database.share");
 
 			openDatabase(dbUrl, dbUser, dbPassword);
 
-			final String engineName = connection.database.getStorage() instanceof OStorageLocal ? "local" : "memory";
+			final ODistributedNode node = manager.getReplicator().getNode(remoteServerName);
+			if (node == null)
+				throw new ODistributedSynchronizationException("Cannot find remote node '" + remoteServerName
+						+ "'. Assure the remote server and port are correct. Example '192.168.0.10:2425'");
 
-			final ODistributedNode remoteServerNode = null;// manager.getPeerNode(remoteServerName);
+			final ODistributedDatabaseInfo db = node.shareDatabase(connection.database, remoteServerEngine, manager.getReplicator()
+					.getReplicatorUser().name, manager.getReplicator().getReplicatorUser().password);
 
-			remoteServerNode.shareDatabase(connection.database, remoteServerName, dbUser, dbPassword, engineName, synchronousMode);
+			node.startDatabaseReplication(db);
 
 			channel.acquireExclusiveLock();
 			try {
@@ -244,7 +261,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 				channel.releaseExclusiveLock();
 			}
 
-			manager.getPeer().updateConfigurationToLeader(dbUrl, remoteServerName, synchronousMode);
+			manager.getPeer().updateConfigurationToLeader(dbUrl, remoteServerName);
 
 			break;
 		}
@@ -259,12 +276,12 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			final String engineName = channel.readString();
 
 			try {
-				OLogManager.instance().info(this, "Received database '%s' to share on local server node", dbName);
+				OLogManager.instance().info(this, "<-> DB %s: importing database...", dbName);
 
 				connection.database = getDatabaseInstance(dbName, engineName);
 
 				if (connection.database.exists()) {
-					OLogManager.instance().info(this, "Deleting existent database '%s'", connection.database.getName());
+					OLogManager.instance().info(this, "<-> DB %s: deleting existent database...", connection.database.getName());
 					connection.database.delete();
 				}
 
@@ -273,13 +290,13 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 				if (connection.database.isClosed())
 					connection.database.open(dbUser, dbPasswd);
 
-				OLogManager.instance().info(this, "Importing database '%s' via streaming from remote server node...", dbName);
+				OLogManager.instance().info(this, "<-> DB %s: reading database content via streaming from remote server node...", dbName);
 
 				channel.acquireExclusiveLock();
 				try {
 					new ODatabaseImport(connection.database, new OChannelBinaryInputStream(channel), this).importDatabase();
 
-					OLogManager.instance().info(this, "Database imported correctly", dbName);
+					OLogManager.instance().info(this, "<-> DB %s: database imported correctly", dbName);
 
 					sendOk(lastClientTxId);
 					channel.writeInt(connection.id);
@@ -290,6 +307,10 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			} finally {
 				manager.getPeer().updateHeartBeatTime();
 			}
+
+			// START CROSS REPLICATION
+			manager.getReplicator().startReplication(dbName, clientId, SYNCH_TYPE.SYNCH.toString());
+
 			break;
 		}
 
@@ -299,7 +320,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 			manager.getReplicator().updateConfiguration(new ODocument().fromStream(channel.readBytes()));
 
-			OLogManager.instance().warn(this, "Changed distributed server configuration:\n%s",
+			OLogManager.instance().warn(this, "Cluster <%s>: changed distributed server configuration:\n%s", manager.getConfig().name,
 					manager.getReplicator().getClusterConfiguration().toJSON(""));
 
 			channel.acquireExclusiveLock();
