@@ -26,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -65,7 +66,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
 	protected List<WeakReference<ORecordElement>>	_owners						= null;
 
-	protected static final String[]									EMPTY_STRINGS		= new String[] {};
+	protected static final String[]								EMPTY_STRINGS			= new String[] {};
 
 	/**
 	 * Internal constructor used on unmarshalling.
@@ -480,6 +481,12 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 				newValue = OStringSerializerHelper.getBinaryContent(value);
 			else if ((t == OType.DATE || t == OType.DATE) && value instanceof Long)
 				newValue = (RET) new Date(((Long) value).longValue());
+			else if ((t == OType.EMBEDDEDSET || t == OType.LINKSET) && value instanceof List)
+				// CONVERT LIST TO SET
+				newValue = (RET) ODocumentHelper.convertField(this, iFieldName, Set.class, value);
+			else if ((t == OType.EMBEDDEDLIST || t == OType.LINKLIST) && value instanceof Set)
+				// CONVERT SET TO LIST
+				newValue = (RET) ODocumentHelper.convertField(this, iFieldName, List.class, value);
 
 			if (newValue != null) {
 				// VALUE CHANGED: SET THE NEW ONE
