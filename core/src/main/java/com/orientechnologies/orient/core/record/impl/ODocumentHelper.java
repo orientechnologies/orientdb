@@ -387,11 +387,11 @@ public class ODocumentHelper {
 				return new String(((ORecordInternal<?>) iCurrent.getRecord()).toStream());
 
 			throw new IllegalArgumentException("Document attribute '" + iFieldName + "' not supported");
-		} else
-			// RETURN A FIELD
-			((ODocument) iCurrent.getRecord()).checkForFields();
+		}
 
-		return ((ODocument) iCurrent.getRecord())._fieldValues.get(iFieldName);
+    final ODocument doc = ((ODocument) iCurrent.getRecord());
+    doc.checkForFields();
+		return doc._fieldValues.get(iFieldName);
 	}
 
 	public static Object evaluateFunction(final Object currentValue, String iFunction) {
