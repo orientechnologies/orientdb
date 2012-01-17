@@ -271,13 +271,14 @@ public class OFileMMap extends OFile {
 	}
 
 	/**
-	 * Synchronize buffered changes to the file.
+	 * Synchronizes buffered changes to the file.
 	 * 
 	 * @see OFileMMapSecure
 	 */
 	@Override
 	public void synch() {
 		headerBuffer.force();
+		OMMapManager.flushFile(this);
 	}
 
 	@Override

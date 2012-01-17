@@ -34,7 +34,7 @@ public class OMMapBufferEntry implements Comparable<OMMapBufferEntry> {
 	long											beginOffset;
 	int												size;
 	long											counter;
-	boolean										pin;
+	volatile boolean					dirty;
 
 	static {
 		FORCE_DELAY = OGlobalConfiguration.FILE_MMAP_FORCE_DELAY.getValueAsInteger();
@@ -54,23 +54,25 @@ public class OMMapBufferEntry implements Comparable<OMMapBufferEntry> {
 		this.beginOffset = beginOffset;
 		this.size = size;
 		this.counter = 0;
-		this.pin = false;
+		this.dirty = false;
 	}
 
 	/**
-	 * Flushes the memory mapped buffer to disk.
+	 * Flushes the memory mapped buffer to disk only if it's dirty.
 	 * 
-	 * @return
+	 * @return true if the buffer has been successfully flushed, otherwise false.
 	 */
 	public boolean flush() {
+		if (!dirty)
+			return true;
+
 		final long timer = OProfiler.getInstance().startChrono();
 
 		// FORCE THE WRITE OF THE BUFFER
-		boolean forceSucceed = false;
 		for (int i = 0; i < FORCE_RETRY; ++i) {
 			try {
 				buffer.force();
-				forceSucceed = true;
+				dirty = false;
 				break;
 			} catch (Exception e) {
 				OLogManager.instance().debug(this, "Cannot write memory buffer to disk. Retrying (" + (i + 1) + "/" + FORCE_RETRY + ")...");
@@ -78,14 +80,14 @@ public class OMMapBufferEntry implements Comparable<OMMapBufferEntry> {
 			}
 		}
 
-		if (!forceSucceed)
+		if (dirty)
 			OLogManager.instance().debug(this, "Cannot commit memory buffer to disk after %d retries", FORCE_RETRY);
 		else
 			OProfiler.getInstance().updateCounter("OMMapManager.pagesCommitted", 1);
 
 		OProfiler.getInstance().stopChrono("OMMapManager.commitPages", timer);
 
-		return forceSucceed;
+		return !dirty;
 	}
 
 	@Override
@@ -100,6 +102,8 @@ public class OMMapBufferEntry implements Comparable<OMMapBufferEntry> {
 	 * Force closing of file is it's opened yet.
 	 */
 	public void close() {
+		flush();
+
 		if (file != null) {
 			if (!file.isClosed()) {
 				try {
@@ -131,5 +135,13 @@ public class OMMapBufferEntry implements Comparable<OMMapBufferEntry> {
 
 	public boolean isValid() {
 		return buffer != null;
+	}
+
+	public boolean isDirty() {
+		return dirty;
+	}
+
+	public void setDirty() {
+		this.dirty = true;
 	}
 }
