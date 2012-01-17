@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 public class FullTextIndexTest {
 	private static final int		TOT		= 1000;
 	private ODatabaseDocumentTx	database;
-	private static final String	TEXT	= "Jay Glenn Miner (May 31, 1932 – June 20, 1994), was a famous integrated circuit designer, known primarily for his "
+	private static final String	TEXT	= "Jay Glenn Miner (May 31, 1932 to June 20, 1994), was a famous integrated circuit designer, known primarily for his "
 																				+ "work in multimedia chips and as the 'father of the Amiga'[1]. He received a BS in EECS from "
 																				+ "UC Berkeley in 1959. Miner started in the electronics industry with a number of designs in the "
 																				+ "medical world, including a remote-control pacemaker. He moved to Atari in the late 1970s. One of "
@@ -123,108 +123,106 @@ public class FullTextIndexTest {
 		database.close();
 	}
 
-    @Test(dependsOnMethods = "testFullTextInsertion")
-    public void testDeleteDocument() {
-        database.open("admin", "admin");
+	@Test(dependsOnMethods = "testFullTextInsertion")
+	public void testDeleteDocument() {
+		database.open("admin", "admin");
 
-        StringBuilder text = new StringBuilder();
-        Random random = new Random(1000);
+		StringBuilder text = new StringBuilder();
+		Random random = new Random(1000);
 
-        ODocument doc = new ODocument(database);
+		ODocument doc = new ODocument(database);
 
-        doc.setClassName("Whiz");
-        doc.field("id", 2000);
-        doc.field("date", new Date());
+		doc.setClassName("Whiz");
+		doc.field("id", 2000);
+		doc.field("date", new Date());
 
-        for (int w = 0; w < 10; ++w) {
-            if (w > 0)
-                text.append(' ');
-            text.append(words[random.nextInt(words.length - 1)]);
-        }
+		for (int w = 0; w < 10; ++w) {
+			if (w > 0)
+				text.append(' ');
+			text.append(words[random.nextInt(words.length - 1)]);
+		}
 
-        doc.field("text", text.toString());
+		doc.field("text", text.toString());
 
-        doc.save();
+		doc.save();
 
-        Set<ODocument> allDocs = new HashSet<ODocument>();
-        for (int i = 0; i < words.length - 1; ++i) {
-            List<ODocument> docs = database.query(new OSQLSynchQuery<Object>("SELECT FROM Whiz WHERE text containstext \"" + words[i]
-                    + "\""));
-            allDocs.addAll(docs);
-        }
+		Set<ODocument> allDocs = new HashSet<ODocument>();
+		for (int i = 0; i < words.length - 1; ++i) {
+			List<ODocument> docs = database.query(new OSQLSynchQuery<Object>("SELECT FROM Whiz WHERE text containstext \"" + words[i]
+					+ "\""));
+			allDocs.addAll(docs);
+		}
 
-        Assert.assertEquals(allDocs.size(), TOT + 1);
+		Assert.assertEquals(allDocs.size(), TOT + 1);
 
-        doc.delete();
+		doc.delete();
 
-        allDocs.clear();
+		allDocs.clear();
 
-        for (int i = 0; i < words.length - 1; ++i) {
-            List<ODocument> docs = database.query(new OSQLSynchQuery<Object>("SELECT FROM Whiz WHERE text containstext \"" + words[i]
-                    + "\""));
-            allDocs.addAll(docs);
-        }
+		for (int i = 0; i < words.length - 1; ++i) {
+			List<ODocument> docs = database.query(new OSQLSynchQuery<Object>("SELECT FROM Whiz WHERE text containstext \"" + words[i]
+					+ "\""));
+			allDocs.addAll(docs);
+		}
 
-        Assert.assertEquals(allDocs.size(), TOT);
+		Assert.assertEquals(allDocs.size(), TOT);
 
-        database.close();
-    }
+		database.close();
+	}
 
-    @Test(dependsOnMethods = "testFullTextInsertion")
-    public void testUpdateDocument() {
-        database.open("admin", "admin");
+	@Test(dependsOnMethods = "testFullTextInsertion")
+	public void testUpdateDocument() {
+		database.open("admin", "admin");
 
-        StringBuilder text = new StringBuilder();
-        Random random = new Random(1000);
+		StringBuilder text = new StringBuilder();
+		Random random = new Random(1000);
 
-        ODocument doc = new ODocument(database);
+		ODocument doc = new ODocument(database);
 
-        doc.setClassName("Whiz");
-        doc.field("id", 2000);
-        doc.field("date", new Date());
+		doc.setClassName("Whiz");
+		doc.field("id", 2000);
+		doc.field("date", new Date());
 
-        for (int w = 0; w < 10; ++w) {
-            if (w > 0)
-                text.append(' ');
-            text.append(words[random.nextInt(words.length - 1)]);
-        }
+		for (int w = 0; w < 10; ++w) {
+			if (w > 0)
+				text.append(' ');
+			text.append(words[random.nextInt(words.length - 1)]);
+		}
 
-        doc.field("text", text.toString());
+		doc.field("text", text.toString());
 
-        doc.save();
+		doc.save();
 
-        Set<ODocument> allDocs = new HashSet<ODocument>();
-        for (int i = 0; i < words.length - 1; ++i) {
-            List<ODocument> docs = database.query(new OSQLSynchQuery<Object>("SELECT FROM Whiz WHERE text containstext \"" + words[i]
-                    + "\""));
-            allDocs.addAll(docs);
-        }
+		Set<ODocument> allDocs = new HashSet<ODocument>();
+		for (int i = 0; i < words.length - 1; ++i) {
+			List<ODocument> docs = database.query(new OSQLSynchQuery<Object>("SELECT FROM Whiz WHERE text containstext \"" + words[i]
+					+ "\""));
+			allDocs.addAll(docs);
+		}
 
-        Assert.assertEquals(allDocs.size(), TOT + 1);
+		Assert.assertEquals(allDocs.size(), TOT + 1);
 
+		text.setLength(0);
+		for (int w = 0; w < 10; ++w) {
+			if (w > 0)
+				text.append(' ');
+			text.append(words[random.nextInt(words.length - 1)]);
+		}
 
-        text.setLength(0);
-        for (int w = 0; w < 10; ++w) {
-            if (w > 0)
-                text.append(' ');
-            text.append(words[random.nextInt(words.length - 1)]);
-        }
+		doc.field("text", text.toString());
+		doc.save();
 
-        doc.field("text", text.toString());
-        doc.save();
+		allDocs.clear();
 
+		for (int i = 0; i < words.length - 1; ++i) {
+			List<ODocument> docs = database.query(new OSQLSynchQuery<Object>("SELECT FROM Whiz WHERE text containstext \"" + words[i]
+					+ "\""));
+			allDocs.addAll(docs);
+		}
 
-        allDocs.clear();
+		Assert.assertEquals(allDocs.size(), TOT + 1);
 
-        for (int i = 0; i < words.length - 1; ++i) {
-            List<ODocument> docs = database.query(new OSQLSynchQuery<Object>("SELECT FROM Whiz WHERE text containstext \"" + words[i]
-                    + "\""));
-            allDocs.addAll(docs);
-        }
-
-        Assert.assertEquals(allDocs.size(), TOT + 1);
-
-        database.close();
-    }
+		database.close();
+	}
 
 }
