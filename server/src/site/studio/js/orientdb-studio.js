@@ -52,6 +52,37 @@ function formatServerURL() {
 	$('#rawServer').html($('#server').val() + "/");
 }
 
+function getRequestParams(s) {
+    if (s == null) {
+        s = document.location.search;
+        if (s == null || s == '') {
+            s = document.location.hash;
+        }
+    }
+    if (s.match(/^\?/) || s.match(/^#/)) {
+        s = s.substring(1);
+    }
+    var strParams = s.split('&');
+    var params = {};
+    var i = 0;
+    for (i in strParams) {
+        var name = strParams[i];
+        var value = true;
+        var pos = name.indexOf('=');
+        if (pos>0) {
+            value = decodeURIComponent(name.substring(pos+1));
+            name = name.substring(0, pos);
+        }
+        params[name] = value;
+    }
+    return params;
+};
+
+function getRequestParam(name, string) {
+    var params = getRequestParams(string);
+    return params[name] || "";
+}
+
 jQuery(document).ready(function() {
 	jQuery(document).ajaxError(function(event, request, settings, err) {
 		jQuery("#output").val("Error: " + request.responseText);

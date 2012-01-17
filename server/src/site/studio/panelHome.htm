@@ -34,10 +34,16 @@
 					<tr>
 						<td align="right" class="ui-widget help">User:</td>
 						<td><input id="user" size="25" value="" class="ui-widget help" /></td>
+                        <script type="text/javascript">
+                                $('#user').val(getRequestParam('user'));
+                        </script>
 					</tr>
 					<tr>
 						<td align="right" class="ui-widget help">Password:</td>
 						<td><input id="password" type="password" size="25" value="" class="ui-widget help" /></td>
+                        <script type="text/javascript">
+                                $('#password').val(getRequestParam('password'));
+                        </script>
 					</tr>
 					<tr>
 						<td align="center" colspan="2" class="ui-widget help">
@@ -115,19 +121,24 @@
 			var listDatabaseServer = new ODatabase(serverUrl);
 			var response = listDatabaseServer.listDatabases();
 			var databases = response['databases'];
-
+            var databaseSelected = getRequestParam('database');
 			if (databases != null && databases != 'undefined') {
 				input = '<select id="database" class="ui-widget help">';
 				for (database in databases) {
+                    var selected = '';
+                    if (database == (databaseSelected)){
+                        selected = 'selected';
+                    }
 					input = input
 							+ '<option value="' + databases[database] + '" >'
-							+ databases[database] + '</option>';
+							+ databases[database] + selected + '</option>';
 				}
 				input = input + '<select/>';
 			}
 		} catch (e) {
 		}
 		$('#databaseCell').html(input);
+        $('#database').val(getRequestParam('database'));
 	}
 
 	function connect() {
@@ -182,10 +193,22 @@
 		return false;
 	});
 
+	$('#createDatabase').click(
+			function() {
+				controller.loadFragment("panelCreateDatabase.htm", null, null,
+						'panel');
+				return false;
+			});
+
 	$('#server').change(formatServerURL);
 	$('#server').val(document.location.href);
 	formatServerURL();
 	listDatabases($('#server').val());
+    
+    //autologin
+    if (getRequestParam('user') != '' && getRequestParam('password') != '' && getRequestParam('database') != null){
+      $('#signin').submit();
+    }
 
 	function createDatabase() {
 		controller.loadFragment("panelCreateDatabase.htm", null, null, 'panel');
