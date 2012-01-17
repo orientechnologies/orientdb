@@ -58,18 +58,15 @@ public class OReplicatorRecordHook implements ORecordHook, ODatabaseLifecycleLis
 		try {
 			switch (iType) {
 			case AFTER_CREATE:
-				replicator.distributeRequest(new ORecordOperation((ORecordInternal<?>) iRecord, ORecordOperation.CREATED,
-						null));
+				replicator.distributeRequest(new ORecordOperation((ORecordInternal<?>) iRecord, ORecordOperation.CREATED));
 				break;
 
 			case AFTER_UPDATE:
-				replicator.distributeRequest(new ORecordOperation((ORecordInternal<?>) iRecord, ORecordOperation.UPDATED,
-						null));
+				replicator.distributeRequest(new ORecordOperation((ORecordInternal<?>) iRecord, ORecordOperation.UPDATED));
 				break;
 
 			case AFTER_DELETE:
-				replicator.distributeRequest(new ORecordOperation((ORecordInternal<?>) iRecord, ORecordOperation.DELETED,
-						null));
+				replicator.distributeRequest(new ORecordOperation((ORecordInternal<?>) iRecord, ORecordOperation.DELETED));
 				break;
 			}
 		} catch (IOException e) {

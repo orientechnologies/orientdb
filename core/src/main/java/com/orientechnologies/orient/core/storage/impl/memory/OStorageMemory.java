@@ -610,7 +610,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
 		final ORecordId rid = (ORecordId) txEntry.getRecord().getIdentity();
 
-		final OCluster cluster = txEntry.clusterName != null ? getClusterByName(txEntry.clusterName) : getClusterById(rid.clusterId);
+		final OCluster cluster = getClusterById(rid.clusterId);
 		rid.clusterId = cluster.getId();
 
 		if (txEntry.getRecord() instanceof OTxListener)

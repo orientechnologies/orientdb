@@ -65,7 +65,6 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
 				switch (entry.type) {
 				case ORecordOperation.CREATED:
-					entry.clusterName = channel.readString();
 					entry.getRecord().fill(rid, 0, channel.readBytes(), true);
 
 					// SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW RID TO SEND BACK TO THE REQUESTER

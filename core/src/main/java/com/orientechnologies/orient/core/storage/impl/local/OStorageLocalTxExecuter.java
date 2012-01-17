@@ -164,8 +164,7 @@ public class OStorageLocalTxExecuter {
 
 		final ORecordId rid = (ORecordId) txEntry.getRecord().getIdentity();
 
-		final OCluster cluster = txEntry.clusterName != null ? storage.getClusterByName(txEntry.clusterName) : storage
-				.getClusterById(rid.clusterId);
+		final OCluster cluster = storage.getClusterById(rid.clusterId);
 
 		if (cluster.getName().equals(OStorage.CLUSTER_INDEX_NAME))
 			// AVOID TO COMMIT INDEX STUFF

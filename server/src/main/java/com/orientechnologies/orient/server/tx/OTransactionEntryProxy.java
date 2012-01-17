@@ -23,6 +23,6 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 public class OTransactionEntryProxy extends ORecordOperation {
 
 	public OTransactionEntryProxy(final byte iRecordType) throws IOException {
-		super(Orient.instance().getRecordFactoryManager().newInstance(iRecordType), (byte) 0, null);
+		super(Orient.instance().getRecordFactoryManager().newInstance(iRecordType), (byte) 0);
 	}
 }

@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
@@ -696,13 +695,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				final ORecord<?> record = rid.getRecord();
 
 				if (database.getTransaction().isActive()) {
-					final ORecordOperation recordEntry = database.getTransaction().getRecordEntry(rid);
-					if (recordEntry != null)
-						// GET THE CLUSTER SPECIFIED
-						database.save((ORecordInternal<?>) record, recordEntry.clusterName);
-					else
-						// USE THE DEFAULT CLUSTER
-						database.save((ORecordInternal<?>) record);
+					// USE THE DEFAULT CLUSTER
+					database.save((ORecordInternal<?>) record);
 
 				} else
 					database.save((ORecordInternal<?>) record);

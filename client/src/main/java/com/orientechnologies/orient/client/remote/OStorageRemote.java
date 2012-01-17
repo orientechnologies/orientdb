@@ -1516,7 +1516,6 @@ public class OStorageRemote extends OStorageAbstract {
 
 		switch (txEntry.type) {
 		case ORecordOperation.CREATED:
-			iNetwork.writeString(txEntry.clusterName);
 			iNetwork.writeBytes(stream);
 			break;
 

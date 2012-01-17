@@ -40,16 +40,14 @@ public class ORecordOperation implements OSerializableStream {
 	public long								serial;
 	public byte								type;
 	public OIdentifiable			record;
-	public String							clusterName;
 
 	public ORecordOperation() {
 	}
 
-	public ORecordOperation(final ORecordInternal<?> iRecord, final byte iStatus, final String iClusterName) {
+	public ORecordOperation(final ORecordInternal<?> iRecord, final byte iStatus) {
 		// CLONE RECORD AND CONTENT
 		this.record = iRecord;
 		this.type = iStatus;
-		this.clusterName = iClusterName;
 	}
 
 	@Override
@@ -68,8 +66,23 @@ public class ORecordOperation implements OSerializableStream {
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
-		builder.append("OTransactionEntry [record=").append(record).append(", status=").append(type).append(", clusterName=")
-				.append(clusterName).append("]");
+		builder.append("ORecordOperation [record=").append(record).append(", type=");
+
+		switch (type) {
+		case CREATED:
+			builder.append("CREATE");
+			break;
+		case UPDATED:
+			builder.append("UPDATE");
+			break;
+		case DELETED:
+			builder.append("DELETE");
+			break;
+		case LOADED:
+			builder.append("LOADED");
+			break;
+		}
+		builder.append("]");
 		return builder.toString();
 	}
 
@@ -86,11 +99,6 @@ public class ORecordOperation implements OSerializableStream {
 
 			switch (type) {
 			case CREATED:
-				stream.set(((ORecordInternal<?>) record.getRecord()).getRecordType());
-				stream.set(((ORecordInternal<?>) record.getRecord()).toStream());
-				stream.set(clusterName);
-				break;
-
 			case UPDATED:
 				stream.set(((ORecordInternal<?>) record.getRecord()).getRecordType());
 				stream.set(((ORecordInternal<?>) record.getRecord()).toStream());
@@ -113,11 +121,6 @@ public class ORecordOperation implements OSerializableStream {
 
 			switch (type) {
 			case CREATED:
-				record = Orient.instance().getRecordFactoryManager().newInstance(stream.getAsByte());
-				((ORecordInternal<?>) record).fill(rid, 0, stream.getAsByteArray(), true);
-				clusterName = stream.getAsString();
-				break;
-
 			case UPDATED:
 				record = Orient.instance().getRecordFactoryManager().newInstance(stream.getAsByte());
 				((ORecordInternal<?>) record).fill(rid, 0, stream.getAsByteArray(), true);
