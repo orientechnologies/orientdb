@@ -564,4 +564,39 @@ public class TransactionConsistencyTest {
 			db.close();
 		}
 	}
+
+	@Test
+	public void deletesWithinTransactionArentWorking() throws IOException {
+		OGraphDatabase db = new OGraphDatabase(url);
+		db.open("admin", "admin");
+
+		try {
+			if (db.getVertexType("Foo") == null)
+				db.createVertexType("Foo");
+			if (db.getVertexType("Bar") == null)
+				db.createVertexType("Bar");
+			if (db.getVertexType("Sees") == null)
+				db.createEdgeType("Sees");
+
+			// Commenting out the transaction will result in the test succeeding.
+			db.begin(TXTYPE.OPTIMISTIC);
+			ODocument foo = (ODocument) db.createVertex("Foo").field("prop", "test1").save();
+
+			// Comment out these two lines and the test will succeed. The issue appears to be related to an edge
+			// connecting a deleted vertex during a transaction
+			ODocument bar = (ODocument) db.createVertex("Bar").field("prop", "test1").save();
+			ODocument sees = db.createEdge(foo, bar, "Sees");
+			db.commit();
+
+			List<ODocument> foos = db.query(new OSQLSynchQuery("select * from Foo"));
+			Assert.assertEquals(foos.size(), 1);
+
+			db.begin(TXTYPE.OPTIMISTIC);
+			db.removeVertex(foos.get(0));
+			db.commit();
+
+		} finally {
+			db.close();
+		}
+	}
 }

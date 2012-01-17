@@ -375,8 +375,9 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 				}
 			}
 
-			// SAVE ALL AT THE END
-			super.commitChanges();
+			if (!((OMVRBTreeRIDProvider) dataProvider).isEmbeddedStreaming())
+				// SAVE ALL AT THE END
+				super.commitChanges();
 
 			if (newEntries != null)
 				// SOMETHING IS TEMPORARY YET

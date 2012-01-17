@@ -82,6 +82,9 @@ public class OTransactionNoTx extends OTransactionAbstract {
 	 * Deletes the record.
 	 */
 	public void deleteRecord(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {
+		if (!iRecord.getIdentity().isPersistent())
+			return;
+
 		try {
 			database.executeDeleteRecord(iRecord, iRecord.getVersion(), true, iMode);
 		} catch (Exception e) {

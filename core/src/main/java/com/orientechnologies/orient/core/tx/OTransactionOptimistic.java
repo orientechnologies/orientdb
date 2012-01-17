@@ -84,6 +84,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 	}
 
 	public void deleteRecord(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {
+		if (!iRecord.getIdentity().isValid())
+			return;
+
 		addRecord(iRecord, ORecordOperation.DELETED, null);
 	}
 
@@ -134,7 +137,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
 			if (txEntry == null) {
 				// NEW ENTRY: JUST REGISTER IT
-				txEntry = new ORecordOperation(iRecord, iStatus, iClusterName);
+				txEntry = new ORecordOperation(iRecord, iStatus);
 
 				recordEntries.put(rid, txEntry);
 			} else {
