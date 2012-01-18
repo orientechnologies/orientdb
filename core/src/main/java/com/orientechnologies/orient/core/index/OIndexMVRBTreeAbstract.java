@@ -490,7 +490,15 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 
 	@Override
 	public String toString() {
-		return name + " (" + (type != null ? type : "?") + ")" + (map != null ? " " + map : "");
+		if (tryAcquireExclusiveLock())
+			try {
+
+				return name + " (" + (type != null ? type : "?") + ")" + (map != null ? " " + map : "");
+
+			} finally {
+				releaseExclusiveLock();
+			}
+		return "!Locked resource";
 	}
 
 	public OIndexInternal<T> getInternal() {

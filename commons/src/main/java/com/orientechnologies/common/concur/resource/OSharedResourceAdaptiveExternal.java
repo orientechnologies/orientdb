@@ -31,9 +31,17 @@ public class OSharedResourceAdaptiveExternal extends OSharedResourceAdaptive imp
 		super.acquireExclusiveLock();
 	}
 
+	public boolean tryAcquireExclusiveLock() {
+		return super.tryAcquireExclusiveLock();
+	}
+
 	@Override
 	public void acquireSharedLock() {
 		super.acquireSharedLock();
+	}
+
+	public boolean tryAcquireSharedLock() {
+		return super.tryAcquireSharedLock();
 	}
 
 	@Override

@@ -71,6 +71,10 @@ public class OSharedResourceAdaptive {
 				lock.writeLock().lock();
 	}
 
+	protected boolean tryAcquireExclusiveLock() {
+		return concurrent || lock.writeLock().tryLock();
+	}
+
 	protected void acquireSharedLock() {
 		if (concurrent)
 			if (timeout > 0) {
@@ -84,6 +88,10 @@ public class OSharedResourceAdaptive {
 				throw new OTimeoutException("Timeout on acquiring shared lock against resource: " + this);
 			} else
 				lock.readLock().lock();
+	}
+
+	protected boolean tryAcquireSharedLock() {
+		return concurrent || lock.readLock().tryLock();
 	}
 
 	protected void releaseExclusiveLock() {
