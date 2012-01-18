@@ -162,9 +162,9 @@ public class OFileClassic extends OFile {
 	protected void setFilledUpTo(final int iValue) throws IOException {
 		if (iValue != filledUpTo) {
 			filledUpTo = iValue;
-			final ByteBuffer buffer = getWriteBuffer(FILLEDUPTO_OFFSET);
+			final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_INT);
 			buffer.putInt(filledUpTo);
-			writeBuffer(buffer, 0);
+			writeBuffer(buffer, FILLEDUPTO_OFFSET);
 			setHeaderDirty();
 		}
 	}
@@ -173,9 +173,9 @@ public class OFileClassic extends OFile {
 	protected void setSize(final int iSize) throws IOException {
 		if (iSize != size) {
 			size = iSize;
-			final ByteBuffer buffer = getWriteBuffer(SIZE_OFFSET);
+			final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_INT);
 			buffer.putInt(size);
-			writeBuffer(buffer, 0);
+			writeBuffer(buffer, SIZE_OFFSET);
 			setHeaderDirty();
 		}
 	}
