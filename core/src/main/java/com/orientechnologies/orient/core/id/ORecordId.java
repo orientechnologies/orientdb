@@ -280,7 +280,7 @@ public class ORecordId implements ORID {
 		final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
 		if (db == null)
 			throw new ODatabaseException(
-					"No database found in current thread local space. If you manually control database over threads assure to set the current database before to use it by calling: ODatabaseRecordThreadLocal.INSTANCE.set(db);");
+					"No database found in current thread local space. If you manually control databases over threads assure to set the current database before to use it by calling: ODatabaseRecordThreadLocal.INSTANCE.set(db);");
 
 		return db.load(this);
 	}
