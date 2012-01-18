@@ -127,7 +127,7 @@ public class TransactionAtomicTest {
 			public void onOpen(ODatabase iDatabase) {
 			}
 
-			public boolean onCorruptionRepairDatabase(ODatabase iDatabase, final String iReason) {
+			public boolean onCorruptionRepairDatabase(ODatabase iDatabase, final String iReason, String iWhatWillbeFixed) {
 				return true;
 			}
 		});

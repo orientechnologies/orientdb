@@ -698,7 +698,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 	public void onBeforeTxRollback(final ODatabase iDatabase) {
 	}
 
-	public boolean onCorruptionRepairDatabase(final ODatabase iDatabase, final String iReason) {
+	public boolean onCorruptionRepairDatabase(final ODatabase iDatabase, final String iReason, String iWhatWillbeFixed) {
 		return false;
 	}
 

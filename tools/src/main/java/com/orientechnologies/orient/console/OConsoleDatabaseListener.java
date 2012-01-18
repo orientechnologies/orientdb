@@ -37,9 +37,9 @@ public class OConsoleDatabaseListener implements ODatabaseListener {
 	public void onClose(ODatabase iDatabase) {
 	}
 
-	public boolean onCorruptionRepairDatabase(ODatabase iDatabase, final String iReason) {
-		final String answer = console
-				.ask("\nDatabase seems corrupted. The cause is " + iReason + ".\nDo you want to repair it (Y/n)? ");
+	public boolean onCorruptionRepairDatabase(ODatabase iDatabase, final String iProblem, String iWhatWillbeFixed) {
+		final String answer = console.ask("\nDatabase seems corrupted:\n> " + iProblem + "\nAuto-repair will execute this action:\n> "
+				+ iWhatWillbeFixed + "\n\nDo you want to repair it (Y/n)? ");
 		return answer.length() == 0 || answer.equalsIgnoreCase("Y") || answer.equalsIgnoreCase("Yes");
 	}
 }

@@ -94,7 +94,7 @@ public class DbListenerTest {
 			onOpen++;
 		}
 
-		public boolean onCorruptionRepairDatabase(ODatabase iDatabase, final String iReason) {
+		public boolean onCorruptionRepairDatabase(ODatabase iDatabase, final String iReason, String iWhatWillbeFixed) {
 			onCorruption++;
 			return true;
 		}
