@@ -74,9 +74,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	protected boolean													lastSearchFound			= false;
 	protected int															lastSearchIndex			= -1;
 
-/**
-	 * Indicates search behaviour in case of {@link OCompositeKey) keys that have less amount of internal keys are used, whether
-	 * lowest or highest partially matched key should be used. Such keys is allowed to use only in
+	/**
+	 * Indicates search behavior in case of {@link OCompositeKey} keys that have less amount of internal keys are used, whether lowest
+	 * or highest partially matched key should be used. Such keys is allowed to use only in
 	 * 
 	 * @link OMVRBTree#subMap(K, boolean, K, boolean)}, {@link OMVRBTree#tailMap(K, boolean, K, boolean)} and
 	 *       {@link OMVRBTree#headMap(K, boolean, K, boolean)} .

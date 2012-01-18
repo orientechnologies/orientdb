@@ -17,6 +17,7 @@ package com.orientechnologies.common.collection;
 
 import java.util.Arrays;
 
+@SuppressWarnings("unchecked")
 public class OMVRBTreeEntryMemory<K, V> extends OMVRBTreeEntry<K, V> {
 
 	protected int													size	= 1;
@@ -57,7 +58,6 @@ public class OMVRBTreeEntryMemory<K, V> extends OMVRBTreeEntry<K, V> {
 	 * 
 	 * @param iParent
 	 * @param iPosition
-	 * @param iLeft
 	 */
 	protected OMVRBTreeEntryMemory(final OMVRBTreeEntryMemory<K, V> iParent, final int iPosition) {
 		super(iParent.getTree());
@@ -218,7 +218,7 @@ public class OMVRBTreeEntryMemory<K, V> extends OMVRBTreeEntry<K, V> {
 	}
 
 	protected void copyFrom(final OMVRBTreeEntry<K, V> iSource) {
-		OMVRBTreeEntryMemory<K, V> source = (OMVRBTreeEntryMemory) iSource;
+		OMVRBTreeEntryMemory<K, V> source = (OMVRBTreeEntryMemory<K, V>) iSource;
 		keys = (K[]) new Object[source.keys.length];
 		for (int i = 0; i < source.keys.length; ++i)
 			keys[i] = source.keys[i];

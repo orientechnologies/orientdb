@@ -61,7 +61,7 @@ public class OMultiValue {
 	 * 
 	 * @param iObject
 	 *          Multi-value object (array, collection or map)
-	 * @return
+	 * @return the size of the multi value object
 	 */
 	public static int getSize(final Object iObject) {
 		if (iObject == null)
@@ -203,7 +203,7 @@ public class OMultiValue {
 	 * 
 	 * @param iObject
 	 *          Multi-value object (array, collection or map)
-	 * @return
+	 * @return a stringified version of the multi-value object.
 	 */
 	public static String toString(final Object iObject) {
 		final StringBuilder sb = new StringBuilder();
