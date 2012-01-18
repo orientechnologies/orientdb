@@ -118,12 +118,7 @@ public class OReplicator {
 			return;
 
 		// GET THE NODE
-		ODistributedNode dNode = nodes.get(nodeId);
-		if (dNode == null) {
-			// CREATE IT
-			dNode = new ODistributedNode(this, nodeId);
-			nodes.put(nodeId, dNode);
-		}
+		final ODistributedNode dNode = getOrCreateDistributedNode(nodeId);
 
 		if (dNode.getDatabase(dbName) != null)
 			// ALREADY CONNECTED
@@ -167,9 +162,11 @@ public class OReplicator {
 
 			// GET THE NODES INVOLVED IN THE UPDATE
 			for (ODistributedNode node : nodes.values()) {
-				final ODistributedDatabaseInfo dbEntry = node.getDatabase(dbName);
-				if (dbEntry != null)
-					node.sendRequest(opId, iTransactionEntry, dbEntry.synchType);
+				if (node.getStatus() == ODistributedNode.STATUS.ONLINE) {
+					final ODistributedDatabaseInfo dbEntry = node.getDatabase(dbName);
+					if (dbEntry != null)
+						node.sendRequest(opId, iTransactionEntry, dbEntry.synchType);
+				}
 			}
 		}
 	}
@@ -192,35 +189,32 @@ public class OReplicator {
 	 * <code>
 	 * <br/>
 	 * { <br/>
-	 * &nbsp;  'demo': {'10.10.10.10:2480' : 21212, '10.10.10.20:2480' : 32133}, <br/>
-	 * &nbsp;  'test':  {'10.10.10.10:2480' : 1333, '10.10.10.20:2480' : 78} <br/>
+	 * &nbsp;  'demo': [ { 'node': '10.10.10.10:2480', 'firstLog': 312, 'lastLog': 21212 }, { 'node': '10.10.10.20:2480', 'lastLog':  32133} ], <br/>
+	 * &nbsp;  'test': [ { 'node': '10.10.10.10:2480', 'firstLog': 1333,  'lastLog': 3223  },  { 'node': '10.10.10.20:2480', 'lastLog':  78} ] <br/>
 	 * }
 	 * </code>
 	 * 
 	 * @return
 	 */
-	public ODocument getDatabaseConfiguration() {
+	public ODocument getLocalDatabaseConfiguration() {
 		final ODocument doc = new ODocument();
 		for (String dbName : OServerMain.server().getAvailableStorageNames().keySet())
-			doc.field(dbName, getDatabaseConfiguration(dbName));
+			doc.field(dbName, getLocalDatabaseConfiguration(dbName));
 
 		return doc;
 	}
 
 	/**
-	 * Returns the database configuration to send to the leader node. Example:
+	 * Returns the previous replication configuration for a database to send to the leader node. Example:
 	 * 
 	 * <code>
 	 * <br/>
-	 * { <br/>
-	 * &nbsp;  'demo': [ { 'node': '10.10.10.10:2480', 'lastOperation': 21212 }, { 'node': '10.10.10.20:2480', 'lastOperation':  32133} ], <br/>
-	 * &nbsp;  'test': [ { 'node': '10.10.10.10:2480', 'lastOperation': 1333 },  { 'node': '10.10.10.20:2480', 'lastOperation':  78} ] <br/>
-	 * }
+	 * [ { 'node': '10.10.10.10:2480', 'firstLog': 0, 'lastLog': 21212 }, { 'node': '10.10.10.20:2480', 'firstLog': 2323, 'lastLog': 32133} ]
 	 * </code>
 	 * 
 	 * @return
 	 */
-	public Set<ODocument> getDatabaseConfiguration(final String dbName) {
+	public Set<ODocument> getLocalDatabaseConfiguration(final String dbName) {
 		final Set<ODocument> set = new HashSet<ODocument>();
 
 		final File dbDir = new File(OSystemVariableResolver.resolveSystemVariables(DIRECTORY_NAME + "/" + dbName));
@@ -230,14 +224,17 @@ public class OReplicator {
 					final String nodeId = f.getName().substring(0, f.getName().indexOf('.')).replace('_', '.').replace('-', ':');
 
 					final ODistributedNode node = nodes.get(nodeId);
-					if (node != null) {
+					if (node != null && node.getDatabase(dbName) != null) {
 
 						final ODocument nodeCfg = new ODocument();
 						set.add(nodeCfg);
 
 						try {
+							final long[] logRange = node.getLogRange(dbName);
+
 							nodeCfg.field("node", nodeId);
-							nodeCfg.field("lastOperation", node.getLastOperationId(dbName));
+							nodeCfg.field("firstLog", logRange[0]);
+							nodeCfg.field("lastLog", logRange[1]);
 						} catch (IOException e) {
 						}
 					}
@@ -274,6 +271,16 @@ public class OReplicator {
 
 	public OReplicationConflictResolver getConflictResolver() {
 		return conflictResolver;
+	}
+
+	public ODistributedNode getOrCreateDistributedNode(final String nodeId) throws IOException {
+		ODistributedNode dNode = nodes.get(nodeId);
+		if (dNode == null) {
+			// CREATE IT
+			dNode = new ODistributedNode(this, nodeId);
+			nodes.put(nodeId, dNode);
+		}
+		return dNode;
 	}
 
 	public ODistributedNode getNode(final String iNodeId) {

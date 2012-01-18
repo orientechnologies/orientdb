@@ -151,6 +151,13 @@ public class OOperationLog extends OSingleFileSegment {
 		return iEntry;
 	}
 
+	public long getFirstOperationId() throws IOException {
+		if (isEmpty())
+			return -1;
+
+		return file.readLong(0);
+	}
+
 	public long getLastOperationId() throws IOException {
 		if (isEmpty())
 			return -1;

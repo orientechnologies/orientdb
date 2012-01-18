@@ -15,7 +15,6 @@
 package com.orientechnologies.orient.server.clustering.leader;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -25,8 +24,10 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.enterprise.channel.binary.OAsynchChannelServiceThread;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
+import com.orientechnologies.orient.server.replication.ODistributedRemoteAsynchEventListener;
 
 /**
  * Contains all the information about a cluster node managed by the Leader.
@@ -39,17 +40,18 @@ public class ORemotePeer {
 		DISCONNECTED, CONNECTING, CONNECTED, UNREACHABLE, SYNCHRONIZING
 	}
 
-	private String								id;
-	public String									networkAddress;
-	public int										networkPort;
-	public Date										joinedOn;
-	private OLeaderNode						leader;
-	private OChannelBinaryClient	channel;
-	private OContextConfiguration	configuration;
-	private volatile STATUS				status					= STATUS.DISCONNECTED;
-	private int										clientTxId;
-	private int										sessionId;
-	private static AtomicInteger	serialClientId	= new AtomicInteger(-1);
+	private String											id;
+	public String												networkAddress;
+	public int													networkPort;
+	public Date													joinedOn;
+	private OLeaderNode									leader;
+	private OChannelBinaryClient				channel;
+	private OContextConfiguration				configuration;
+	private volatile STATUS							status					= STATUS.DISCONNECTED;
+	private int													clientTxId;
+	private int													sessionId;
+	private OAsynchChannelServiceThread	serviceThread;
+	private static AtomicInteger				serialClientId	= new AtomicInteger(-1);
 
 	public ORemotePeer(final OLeaderNode iNode, final String iServerAddress, final int iServerPort) {
 		leader = iNode;
@@ -75,6 +77,8 @@ public class ORemotePeer {
 		configuration.setValue(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT, iTimeout);
 
 		channel = new OChannelBinaryClient(networkAddress, networkPort, configuration);
+		serviceThread = new OAsynchChannelServiceThread(new ODistributedRemoteAsynchEventListener(leader.getManager(), null, id),
+				channel);
 
 		OLogManager.instance().warn(this, "Cluster <%s>: received joining request from peer node %s:%d. Checking authorizations...",
 				iClusterName, networkAddress, networkPort);
@@ -102,45 +106,24 @@ public class ORemotePeer {
 					.instance()
 					.warn(
 							this,
-							" Cluster <%s>: remote server node %s:%d has refused the connection because it's the new Leader. Switching to be a Peer Node...",
-							networkAddress, networkPort, leader.getManager().getConfig().name);
+							"Cluster <%s>: remote server node %s:%d has refused the connection because it's the new Leader. Switching to be a Peer Node...",
+							leader.getManager().getConfig().name, networkAddress, networkPort);
 			leader.getManager().becomePeer(null);
 			return false;
 		}
 
-		// RECEIVE AVAILABLE DATABASES
-		doc.reset();
-		doc.fromStream(channel.readBytes());
-
-		final ODocument databases = doc.field("availableDatabases");
-
-		// SEND UPDATED CLUSTER CONFIGURATION TO THE REMOTE PEER NODE
-		updateClusteredDatabaseConfiguration(doc, databases);
-		channel.writeBytes(doc.toStream());
-		channel.flush();
-
 		OLogManager.instance().info(this, "Cluster <%s>: joined peer node %s:%d", iClusterName, networkAddress, networkPort);
 
-		leader.getManager().getReplicator().updateConfiguration(doc);
+		// READ PEER DATABASES
+		final ODocument cfg = new ODocument().fromStream(channel.readBytes());
+		final ODocument answer = leader.updatePeerDatabases(id, cfg);
+
+		// SEND BACK THE LIST OF NODES HANDLING ITS DATABASE
+		channel.writeBytes(answer.toStream());
+		channel.flush();
 
 		status = STATUS.CONNECTED;
 		return true;
-	}
-
-	/**
-	 * Returns the clustered configuration for the requested databases.
-	 */
-	protected ODocument updateClusteredDatabaseConfiguration(final ODocument iConfiguration, final ODocument databases)
-			throws UnknownHostException {
-		iConfiguration.reset();
-		for (String dbName : databases.fieldNames()) {
-			// TODO: GET THE CONFIGURED SYNCH MODE
-			leader.addServerInConfiguration(dbName, id, "synch");
-
-			// ANSWER WITH THE SERVER LIST THAT OWN THE REQUESTED DATABASES
-			iConfiguration.field(dbName, leader.getClusteredConfigurationForDatabase(dbName));
-		}
-		return iConfiguration;
 	}
 
 	public void sendConfiguration(final ODocument iConfiguration) {
@@ -241,6 +224,8 @@ public class ORemotePeer {
 		if (channel != null)
 			channel.close();
 		channel = null;
+		if (serviceThread != null)
+			serviceThread.shutdown();
 	}
 
 	@Override

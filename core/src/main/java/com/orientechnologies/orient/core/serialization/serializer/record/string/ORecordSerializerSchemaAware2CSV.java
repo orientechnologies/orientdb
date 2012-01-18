@@ -151,7 +151,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 				}
 
 				if (fieldValue instanceof Collection<?> || fieldValue.getClass().isArray()) {
-					int size = OMultiValue.getSize(fieldValue);
+					final int size = OMultiValue.getSize(fieldValue);
 
 					Boolean autoConvertLinks = null;
 					if (fieldValue instanceof ORecordLazyMultiValue) {
@@ -188,7 +188,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 									linkedType = OType.EMBEDDED;
 							} else {
 								// EMBEDDED COLLECTION
-								if (firstValue instanceof ODocument && ((ODocument) firstValue).hasOwners())
+								if (firstValue instanceof ODocument
+										&& ((((ODocument) firstValue).hasOwners()) || type == OType.EMBEDDEDSET || type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDMAP))
 									linkedType = OType.EMBEDDED;
 								else if (firstValue instanceof Enum<?>)
 									linkedType = OType.STRING;

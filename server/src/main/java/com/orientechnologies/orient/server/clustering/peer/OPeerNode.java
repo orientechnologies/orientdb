@@ -83,7 +83,7 @@ public class OPeerNode {
 			return;
 
 		final ODocument doc = new ODocument();
-		doc.field("availableDatabases", manager.getReplicator().getDatabaseConfiguration());
+		doc.field("availableDatabases", manager.getReplicator().getLocalDatabaseConfiguration());
 
 		final OChannelBinaryServer channel = ((OChannelBinaryServer) leaderConnection.getChannel());
 

@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.network.protocol.distributed;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Arrays;
+import java.util.Collection;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -69,41 +70,52 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_SYNCHRONIZE: {
 			data.commandInfo = "Synchronization between nodes";
-			final ODocument nodeCfg = new ODocument(channel.readBytes());
-
-			final ORecordOperation op = new ORecordOperation();
-
-			final String node = nodeCfg.field("node");
-			final long lastOpId = (Long) nodeCfg.field("lastOperation");
-
-			final String dbName = connection.database.getName();
-			OLogManager.instance().info(this, "<-> DB %s: received synchronization request from node %s reading operation logs after %d",
-					dbName, clientId, lastOpId);
-
-			// channel.
-			final OOperationLog opLog = manager.getReplicator().getOperationLog(node, dbName);
+			final ODocument cfg = new ODocument(channel.readBytes());
 
 			sendOk(lastClientTxId);
 
-			if (opLog != null) {
-				// SEND LOG DELTA
-				int position = opLog.findOperationId(lastOpId);
-				int sent = 0;
+			final ORecordOperation op = new ORecordOperation();
 
-				sendOk(lastClientTxId);
+			// BROWSE ALL THE NODES
+			Collection<ODocument> nodes = cfg.field("nodes");
+			for (ODocument nodeCfg : nodes) {
+				final String node = nodeCfg.field("node");
+				final long lastLog = (Long) nodeCfg.field("lastLog");
 
-				for (int i = position - 1; i >= 0; --i) {
+				final String dbName = connection.database.getName();
+				OLogManager.instance().info(this,
+						"<-> DB %s: received synchronization request from node %s reading operation logs after %d", dbName, clientId, lastLog);
+
+				// channel.
+				final OOperationLog opLog = manager.getReplicator().getOperationLog(node, dbName);
+
+				if (opLog != null) {
+					// SEND NODE LOGS
 					channel.writeByte((byte) 1);
-					opLog.getEntry(i, op);
+					channel.writeString(node);
 
-					channel.writeBytes(op.toStream());
-					sent++;
+					// SEND LOG DELTA
+					int position = opLog.findOperationId(lastLog);
+					int sent = 0;
 
-					OLogManager.instance().info(this, ">> %s: (%d) operation %d with RID %s", dbName, sent, op.serial,
-							op.record.getIdentity());
+					sendOk(lastClientTxId);
+
+					for (int i = position - 1; i >= 0; --i) {
+						channel.writeByte((byte) 1);
+						opLog.getEntry(i, op);
+
+						channel.writeBytes(op.toStream());
+						sent++;
+
+						OLogManager.instance().info(this, ">> %s: (%d) operation %d with RID %s", dbName, sent, op.serial,
+								op.record.getIdentity());
+					}
+
+					// END OF OPERATIONS PER NODE
+					channel.writeByte((byte) 0);
 				}
 			}
-
+			// END OF NODES
 			channel.writeByte((byte) 0);
 
 			break;
@@ -120,6 +132,8 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 				throw new OSecurityException("Invalid combination of cluster name and key received");
 
 			// final long leaderNodeRunningSince = doc.field("leaderNodeRunningSince");
+
+			boolean remainTheLeader = false;
 
 			channel.acquireExclusiveLock();
 			try {
@@ -139,21 +153,31 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 						// THIS NODE IS OLDER: WIN! REFUSE THE CONNECTION
 						channel.writeByte((byte) 0);
 						channel.flush();
+						remainTheLeader = true;
 
 						OLogManager.instance().warn(this,
 								"Current node remains the Leader of the cluster because it has lower network address", leaderAddress);
-						return;
 					}
 				}
 
-				channel.writeByte((byte) 1);
-				manager.becomePeer(this);
+				if (!remainTheLeader) {
+					// OK TO BE A PEER
+					manager.becomePeer(this);
+
+					channel.writeByte((byte) 1);
+					channel.writeBytes(manager.getReplicator().getLocalDatabaseConfiguration().toStream());
+					channel.flush();
+
+					manager.getReplicator().updateConfiguration(new ODocument(channel.readBytes()));
+				}
 
 			} finally {
 				channel.releaseExclusiveLock();
 			}
 
-			manager.getPeer().updateConfigurationToLeader();
+			if (remainTheLeader)
+				// ABORT THE CONNECTION & THREAD
+				shutdown();
 
 			break;
 		}
@@ -236,10 +260,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 			openDatabase(dbUrl, dbUser, dbPassword);
 
-			final ODistributedNode node = manager.getReplicator().getNode(remoteServerName);
-			if (node == null)
-				throw new ODistributedSynchronizationException("Cannot find remote node '" + remoteServerName
-						+ "'. Assure the remote server and port are correct. Example '192.168.0.10:2425'");
+			final ODistributedNode node = manager.getReplicator().getOrCreateDistributedNode(remoteServerName);
 
 			final ODistributedDatabaseInfo db = node.shareDatabase(connection.database, remoteServerEngine, manager.getReplicator()
 					.getReplicatorUser().name, manager.getReplicator().getReplicatorUser().password);
@@ -290,6 +311,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 					sendOk(lastClientTxId);
 					channel.writeInt(connection.id);
+					channel.flush();
 				} finally {
 					channel.releaseExclusiveLock();
 				}

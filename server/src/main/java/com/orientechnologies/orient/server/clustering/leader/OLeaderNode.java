@@ -37,7 +37,7 @@ import com.orientechnologies.orient.server.handler.distributed.ODistributedServe
  * <p>
  * clusterDbConfigurations attribute handles the database configuration in JSON format, EXAMPLE:<br/>
  * <code>
- * { "demo": [ { "id" : "192.168.0.20:2424", "mode" : "synch" }, { "id" : "192.168.0.10:2424", "mode" : "asynch" } ] }
+ * { "name" : "demo", "nodes" : [ { "id" : "192.168.0.20:2424", "mode" : "synch" }, { "id" : "192.168.0.10:2424", "mode" : "asynch" } ] }
  * </code
  * </p>
  * 
@@ -180,6 +180,21 @@ public class OLeaderNode {
 		}
 	}
 
+	public ODocument updatePeerDatabases(final String iNodeId, final ODocument iConfiguration) throws UnknownHostException {
+		// RECEIVE AVAILABLE DATABASES
+		ODocument answer = new ODocument();
+
+		for (String dbName : iConfiguration.fieldNames()) {
+			// UPDATE LEADER'S CONFIGURATION
+			manager.getLeader().addServerInConfiguration(dbName, iNodeId, "synch");
+
+			// ANSWER WITH THE SERVER LIST THAT OWN THE REQUESTED DATABASES
+			answer.field(dbName, manager.getLeader().getClusteredConfigurationForDatabase(dbName));
+		}
+
+		return answer;
+	}
+
 	/**
 	 * Returns the Peer Nodes that own a database.
 	 * 
@@ -232,12 +247,12 @@ public class OLeaderNode {
 		node.field("id", iNodeId);
 		node.field("mode", iReplicationMode);
 
-		broadcastClusterConfiguration(iDatabaseName);
+		broadcastClusterConfigurationToPeers(iDatabaseName);
 
 		return node;
 	}
 
-	public void broadcastClusterConfiguration(final String iDatabaseName) {
+	public void broadcastClusterConfigurationToPeers(final String iDatabaseName) {
 		if (getPeerNodeList() == null && OClientConnectionManager.instance().getConnections().size() == 0)
 			return;
 

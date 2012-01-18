@@ -72,7 +72,8 @@ public class OAsynchChannelServiceThread extends OSoftThread {
 				break;
 			}
 
-			remoteServerEventListener.onRequest(request, obj);
+			if (remoteServerEventListener != null)
+				remoteServerEventListener.onRequest(request, obj);
 
 			network.endResponse();
 

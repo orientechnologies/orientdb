@@ -21,4 +21,8 @@ public class OStorageRemoteAsynchEventListener implements ORemoteServerEventList
 		else if (iRequestCode == OChannelDistributedProtocol.PUSH_DISTRIBUTED_CONFIG)
 			storage.updateClusterConfiguration((ODocument) obj);
 	}
+
+	public OStorageRemote getStorage() {
+		return storage;
+	}
 }

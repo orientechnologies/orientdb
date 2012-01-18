@@ -45,7 +45,7 @@ public class ODistributedNode {
 	public int																		networkPort;
 	public Date																		connectedOn;
 	private Map<String, ODistributedDatabaseInfo>	databases	= new HashMap<String, ODistributedDatabaseInfo>();
-	private STATUS																status;
+	private STATUS																status		= STATUS.ONLINE;
 
 	public ODistributedNode(final OReplicator iReplicator, final String iId) throws IOException {
 		replicator = iReplicator;
@@ -70,25 +70,28 @@ public class ODistributedNode {
 	public void startDatabaseReplication(final ODistributedDatabaseInfo iDatabase) throws IOException {
 		synchronized (this) {
 			// REMOVE ANY OTHER PREVIOUS ENTRY
-			databases.remove(iDatabase.databaseName);
+			final ODistributedDatabaseInfo oldDbInfo = databases.remove(iDatabase.databaseName);
+			if (oldDbInfo != null)
+				oldDbInfo.close();
 
 			OLogManager.instance().warn(this, "<-> DB %s: starting replication against distributed node %s:%d", iDatabase.databaseName,
 					networkAddress, networkPort);
 
 			try {
+				databases.put(iDatabase.databaseName, iDatabase);
+
 				if (iDatabase.storage == null)
 					iDatabase.storage = new ODistributedStorage(replicator, replicator.getManager().getId(), id + "/"
 							+ iDatabase.databaseName, "rw", replicator.getConflictResolver());
-				
+
 				iDatabase.storage.open(iDatabase.userName, iDatabase.userPassword, null);
 
-				databases.put(iDatabase.databaseName, iDatabase);
-
 				status = STATUS.SYNCHRONIZING;
-				iDatabase.storage.synchronize(replicator.getDatabaseConfiguration(iDatabase.databaseName));
+				iDatabase.storage.synchronize(replicator.getLocalDatabaseConfiguration(iDatabase.databaseName));
 				status = STATUS.ONLINE;
 
 			} catch (Exception e) {
+				iDatabase.close();
 				databases.remove(iDatabase.databaseName);
 				OLogManager.instance().warn(this, "<> DB %s: cannot find database on remote server. Removing it from shared list.", e,
 						iDatabase.databaseName);
@@ -127,6 +130,8 @@ public class ODistributedNode {
 		if (status != STATUS.ONLINE)
 			throw new ODistributedSynchronizationException("Cannot share database '" + db.databaseName + "' on remote server node '" + id
 					+ "' because is disconnected");
+
+		status = STATUS.SYNCHRONIZING;
 
 		OLogManager.instance().info(this,
 				"<-> DB %s: sharing database exporting to the remote server %s via streaming across the network...", db.databaseName, id);
@@ -170,8 +175,9 @@ public class ODistributedNode {
 		return databases.get(iDatabaseName);
 	}
 
-	public long getLastOperationId(final String iDatabaseName) throws IOException {
-		return databases.get(iDatabaseName).log.getLastOperationId();
+	public long[] getLogRange(final String iDatabaseName) throws IOException {
+		return new long[] { databases.get(iDatabaseName).log.getFirstOperationId(),
+				databases.get(iDatabaseName).log.getLastOperationId() };
 	}
 
 	protected void handleError(final ORecordOperation iRequest, final SYNCH_TYPE iRequestType, final Exception iException)
@@ -199,5 +205,9 @@ public class ODistributedNode {
 			if (iException instanceof RuntimeException)
 				throw (RuntimeException) iException;
 		}
+	}
+
+	public com.orientechnologies.orient.server.replication.ODistributedNode.STATUS getStatus() {
+		return status;
 	}
 }

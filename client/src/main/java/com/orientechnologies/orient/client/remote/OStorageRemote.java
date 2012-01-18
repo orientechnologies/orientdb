@@ -1215,7 +1215,7 @@ public class OStorageRemote extends OStorageAbstract {
 		int dbPos = url.indexOf('/');
 		if (dbPos == -1) {
 			// SHORT FORM
-			addHost(getDefaultHost());
+			addHost(url);
 			name = url;
 		} else {
 			name = url.substring(dbPos + 1);
