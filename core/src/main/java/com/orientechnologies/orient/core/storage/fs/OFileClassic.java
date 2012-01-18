@@ -138,6 +138,10 @@ public class OFileClassic extends OFile {
 	 */
 	@Override
 	public void synch() throws IOException {
+		flushHeader();
+	}
+
+	protected void flushHeader() throws IOException {
 		if (headerDirty || dirty) {
 			headerDirty = dirty = false;
 			channel.force(false);
@@ -146,8 +150,8 @@ public class OFileClassic extends OFile {
 
 	@Override
 	protected void init() throws IOException {
-		size = readData(0, OBinaryProtocol.SIZE_INT).getInt();
-		filledUpTo = readData(OBinaryProtocol.SIZE_INT, OBinaryProtocol.SIZE_INT).getInt();
+		size = readData(SIZE_OFFSET, OBinaryProtocol.SIZE_INT).getInt();
+		filledUpTo = readData(FILLEDUPTO_OFFSET, OBinaryProtocol.SIZE_INT).getInt();
 	}
 
 	@Override

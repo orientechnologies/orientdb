@@ -115,6 +115,8 @@ public abstract class OFile {
 
 	protected abstract void setFilledUpTo(int iHow) throws IOException;
 
+	protected abstract void flushHeader() throws IOException;
+
 	public boolean open() throws IOException {
 		if (!osFile.exists() || osFile.length() == 0)
 			throw new FileNotFoundException("File: " + osFile.getAbsolutePath());
@@ -158,6 +160,7 @@ public abstract class OFile {
 		openChannel(iStartSize);
 
 		setFilledUpTo(0);
+		setSize(maxSize > 0 && iStartSize > maxSize ? maxSize : iStartSize);
 		setSoftlyClosed(!failCheck);
 	}
 
@@ -384,7 +387,6 @@ public abstract class OFile {
 
 		if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean())
 			lock();
-		size = maxSize > 0 && iNewSize > maxSize ? maxSize : iNewSize;
 	}
 
 	public int getMaxSize() {

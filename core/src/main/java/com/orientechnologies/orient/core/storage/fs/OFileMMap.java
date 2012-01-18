@@ -271,11 +271,7 @@ public class OFileMMap extends OFile {
 	 */
 	@Override
 	public void synch() {
-		if (headerDirty) {
-			headerBuffer.force();
-			headerDirty = false;
-		}
-
+		flushHeader();
 		OMMapManager.flushFile(this);
 	}
 
@@ -316,7 +312,7 @@ public class OFileMMap extends OFile {
 
 		headerBuffer.put(SOFTLY_CLOSED_OFFSET, (byte) (iValue ? 1 : 0));
 		setHeaderDirty();
-		synch();
+		flushHeader();
 	}
 
 	MappedByteBuffer map(final long iBeginOffset, final int iSize) throws IOException {
@@ -398,8 +394,7 @@ public class OFileMMap extends OFile {
 		if (iHow != filledUpTo) {
 			filledUpTo = iHow;
 			headerBuffer.putInt(FILLEDUPTO_OFFSET, filledUpTo);
-			if (!headerDirty)
-				headerDirty = true;
+			setHeaderDirty();
 		}
 	}
 
@@ -409,8 +404,14 @@ public class OFileMMap extends OFile {
 			checkSize(iSize);
 			size = iSize;
 			headerBuffer.putInt(SIZE_OFFSET, size);
-			if (!headerDirty)
-				headerDirty = true;
+			setHeaderDirty();
+		}
+	}
+
+	protected void flushHeader() {
+		if (headerDirty) {
+			headerBuffer.force();
+			headerDirty = false;
 		}
 	}
 }
