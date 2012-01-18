@@ -27,6 +27,9 @@ import java.util.NoSuchElementException;
  */
 public class OIterableObject implements Iterable<Object> {
 
+	private Object	object;
+	private int			length;
+
 	public OIterableObject(Object o) {
 		object = o;
 		length = Array.getLength(o);
@@ -40,9 +43,6 @@ public class OIterableObject implements Iterable<Object> {
 	public Iterator<Object> iterator() {
 		return new ObjIterator();
 	}
-
-	private Object	object;
-	private int			length;
 
 	private class ObjIterator implements Iterator<Object> {
 
