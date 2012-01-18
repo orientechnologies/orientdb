@@ -448,7 +448,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 			return null;
 
 		// OPTIMIZATION
-		if (iFieldName.charAt(0) != '@' && iFieldName.indexOf('.') == -1 && iFieldName.indexOf('[') == -1)
+		if (iFieldName.charAt(0) != '@' && OStringSerializerHelper.indexOf(iFieldName, 0, '.', '[') == -1)
 			return (RET) _fieldValues.get(iFieldName);
 
 		// NOT FOUND, PARSE THE FIELD NAME

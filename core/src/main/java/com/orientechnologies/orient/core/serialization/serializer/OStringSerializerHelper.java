@@ -307,7 +307,8 @@ public abstract class OStringSerializerHelper {
 
 	public static List<String> split(final String iSource, final int iStartPosition, final int iEndPosition,
 			final char iRecordSeparator, final char... iJumpCharacters) {
-		return (List<String>) split(new ArrayList<String>(), iSource, iStartPosition, iSource.length(), iRecordSeparator, iJumpCharacters);
+		return (List<String>) split(new ArrayList<String>(), iSource, iStartPosition, iSource.length(), iRecordSeparator,
+				iJumpCharacters);
 	}
 
 	public static Collection<String> split(final Collection<String> iParts, final String iSource, final int iStartPosition,
@@ -690,5 +691,21 @@ public abstract class OStringSerializerHelper {
 				return false;
 		}
 		return true;
+	}
+
+	public static int indexOf(final String iSource, final int iBegin, char... iChars) {
+		if (iChars.length == 1)
+			// ONE CHAR: USE JAVA INDEXOF
+			return iSource.indexOf(iChars[0], iBegin);
+
+		final int len = iSource.length();
+		for (int i = iBegin; i < len; ++i) {
+			for (int k = 0; k < iChars.length; ++k) {
+				final char c = iSource.charAt(i);
+				if (c == iChars[k])
+					return i;
+			}
+		}
+		return -1;
 	}
 }
