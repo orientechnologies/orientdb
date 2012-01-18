@@ -86,7 +86,7 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
 
 			final int requiredSpace = buffer.length + OBinaryProtocol.SIZE_INT;
 			if (segment.getFile().getFileSize() < requiredSpace)
-				segment.getFile().changeSize(requiredSpace);
+				segment.getFile().setSize(requiredSpace);
 
 			segment.getFile().allocateSpace(buffer.length + OBinaryProtocol.SIZE_INT);
 			segment.getFile().writeInt(0, buffer.length);

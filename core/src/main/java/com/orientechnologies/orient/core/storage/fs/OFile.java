@@ -79,19 +79,11 @@ public abstract class OFile {
 		init(iFileName, iMode);
 	}
 
-	protected abstract void init() throws IOException;
-
-	protected abstract void setFilledUpTo(int iHow) throws IOException;
-
-	protected abstract void setSize(int iSize) throws IOException;
+	public abstract void setSize(int iSize) throws IOException;
 
 	public abstract void writeHeaderLong(int iPosition, long iValue) throws IOException;
 
 	public abstract long readHeaderLong(int iPosition) throws IOException;
-
-	protected abstract void setSoftlyClosed(boolean b) throws IOException;
-
-	protected abstract boolean isSoftlyClosed() throws IOException;
 
 	public abstract void synch() throws IOException;
 
@@ -115,6 +107,14 @@ public abstract class OFile {
 
 	public abstract void write(long iOffset, byte[] iSourceBuffer) throws IOException;
 
+	protected abstract void setSoftlyClosed(boolean b) throws IOException;
+
+	protected abstract boolean isSoftlyClosed() throws IOException;
+
+	protected abstract void init() throws IOException;
+
+	protected abstract void setFilledUpTo(int iHow) throws IOException;
+
 	public boolean open() throws IOException {
 		if (!osFile.exists() || osFile.length() == 0)
 			throw new FileNotFoundException("File: " + osFile.getAbsolutePath());
@@ -131,8 +131,8 @@ public abstract class OFile {
 					.instance()
 					.warn(
 							this,
-							"Invalid OFile.filledUp value (%d). Reset the file size %d to the os file size: %d. Probably the file was not closed correctly last time",
-							filledUpTo, size, fileSize);
+							"Invalid filledUp value (%d) for file %s. Resetting the file size %d to the os file size: %d. Probably the file was not closed correctly last time",
+							filledUpTo, getOsFile().getAbsolutePath(), size, fileSize);
 			setSize(fileSize);
 		}
 
@@ -223,8 +223,7 @@ public abstract class OFile {
 		}
 	}
 
-	public void changeSize(final int iSize) {
-
+	protected void checkSize(final int iSize) throws IOException {
 		if (OLogManager.instance().isDebugEnabled())
 			OLogManager.instance().debug(this, "Changing file size to " + iSize + " bytes. " + toString());
 
@@ -288,7 +287,7 @@ public abstract class OFile {
 					newFileSize = maxSize;
 			}
 
-			changeSize(newFileSize);
+			setSize(newFileSize);
 		}
 
 		// THERE IS SPACE IN FILE: RETURN THE UPPER BOUND OFFSET AND UPDATE THE FILLED THRESHOLD

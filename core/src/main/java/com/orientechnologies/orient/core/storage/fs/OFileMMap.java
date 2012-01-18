@@ -264,12 +264,6 @@ public class OFileMMap extends OFile {
 		}
 	}
 
-	@Override
-	public void changeSize(final int iSize) {
-		super.changeSize(iSize);
-		setSize(iSize);
-	}
-
 	/**
 	 * Synchronizes buffered changes to the file.
 	 * 
@@ -407,8 +401,9 @@ public class OFileMMap extends OFile {
 	}
 
 	@Override
-	public void setSize(int iSize) {
+	public void setSize(int iSize) throws IOException {
 		if (iSize != size) {
+			checkSize(iSize);
 			size = iSize;
 			headerBuffer.putInt(SIZE_OFFSET, size);
 			if (!headerDirty)

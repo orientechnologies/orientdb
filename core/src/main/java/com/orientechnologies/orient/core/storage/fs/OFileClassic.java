@@ -124,19 +124,6 @@ public class OFileClassic extends OFile {
 		}
 	}
 
-	@Override
-	public void changeSize(final int iSize) {
-		super.changeSize(iSize);
-		try {
-			synch();
-			channel.close();
-			openChannel(iSize);
-
-		} catch (IOException e) {
-			OLogManager.instance().error(this, "Error on changing the file size to " + iSize + " bytes", e, OIOException.class);
-		}
-	}
-
 	/**
 	 * Synchronizes the buffered changes to disk.
 	 * 
@@ -170,13 +157,25 @@ public class OFileClassic extends OFile {
 	}
 
 	@Override
-	protected void setSize(final int iSize) throws IOException {
+	public void setSize(final int iSize) throws IOException {
 		if (iSize != size) {
+			super.checkSize(iSize);
+
 			size = iSize;
 			final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_INT);
 			buffer.putInt(size);
 			writeBuffer(buffer, SIZE_OFFSET);
 			setHeaderDirty();
+
+			try {
+				synch();
+				channel.close();
+				openChannel(iSize);
+
+			} catch (IOException e) {
+				OLogManager.instance().error(this, "Error on changing the file size to " + iSize + " bytes", e, OIOException.class);
+			}
+
 		}
 	}
 
