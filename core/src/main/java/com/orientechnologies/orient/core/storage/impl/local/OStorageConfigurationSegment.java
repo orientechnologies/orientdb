@@ -37,7 +37,6 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
 				fileTemplate.fileType, fileTemplate.maxSize, fileTemplate.fileIncrementSize));
 	}
 
-	@Override
 	public void close() throws IOException {
 		segment.close();
 	}
@@ -84,15 +83,15 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
 
 			final byte[] buffer = toStream();
 
-			final int requiredSpace = buffer.length + OBinaryProtocol.SIZE_INT;
-			if (segment.getFile().getFileSize() < requiredSpace)
-				segment.getFile().setSize(requiredSpace);
-
 			segment.getFile().allocateSpace(buffer.length + OBinaryProtocol.SIZE_INT);
 			segment.getFile().writeInt(0, buffer.length);
 			segment.getFile().write(OBinaryProtocol.SIZE_INT, buffer);
 		} catch (Exception e) {
 			throw new OSerializationException("Error on update storage configuration", e);
 		}
+	}
+
+	public void synch() throws IOException {
+		segment.getFile().synch();
 	}
 }

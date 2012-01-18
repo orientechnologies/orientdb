@@ -77,8 +77,6 @@ public class OStorageLocal extends OStorageEmbedded {
 	private final OStorageVariableParser	variableParser;
 	private int														defaultClusterId		= -1;
 
-	private OStorageConfigurationSegment	configurationSegment;
-
 	private static String[]								ALL_FILE_EXTENSIONS	= { "ocf", ".och", ".ocl", ".oda", ".odh", ".otx" };
 	private final String									PROFILER_CREATE_RECORD;
 	private final String									PROFILER_READ_RECORD;
@@ -301,7 +299,8 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			txManager.close();
 
-			configuration.close();
+			if (configuration != null)
+				configuration.close();
 
 			level2Cache.shutdown();
 
@@ -940,6 +939,9 @@ public class OStorageLocal extends OStorageEmbedded {
 				if (data != null)
 					data.synch();
 
+			if (configuration != null)
+				configuration.synch();
+
 		} catch (IOException e) {
 			throw new OStorageException("Error on synch storage '" + name + "'", e);
 
@@ -1092,10 +1094,6 @@ public class OStorageLocal extends OStorageEmbedded {
 		} finally {
 			lock.releaseSharedLock();
 		}
-	}
-
-	public OStorageConfigurationSegment getConfigurationSegment() {
-		return configurationSegment;
 	}
 
 	public String getStoragePath() {

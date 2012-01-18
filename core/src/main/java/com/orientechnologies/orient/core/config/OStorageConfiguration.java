@@ -354,10 +354,13 @@ public class OStorageConfiguration implements OSerializableStream {
 		iBuffer.append(iValue != null ? iValue.toString() : ' ');
 	}
 
-	public void close() throws IOException {
-	}
-
 	public void create() throws IOException {
 		storage.createRecord(CONFIG_RID, new byte[] { 0, 0, 0, 0 }, ORecordBytes.RECORD_TYPE, (byte) 0, null);
+	}
+
+	public void synch() throws IOException {
+	}
+
+	public void close() throws IOException {
 	}
 }
