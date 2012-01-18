@@ -720,8 +720,10 @@ public class OStorageLocal extends OStorageEmbedded {
 			clusters[iClusterId] = null;
 
 			// UPDATE CONFIGURATION
-			configuration.clusters.set(iClusterId, null);
-			configuration.update();
+			if (iClusterId < configuration.clusters.size()) {
+				configuration.clusters.set(iClusterId, null);
+				configuration.update();
+			}
 
 			return true;
 		} catch (Exception e) {
