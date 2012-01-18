@@ -100,8 +100,8 @@ public class ORemotePeer {
 		channel.readStatus();
 		clientTxId = channel.readInt();
 
-		final boolean connected = channel.readByte() == 1;
-		if (!connected) {
+		final boolean connectedAsPeer = channel.readByte() == 1;
+		if (!connectedAsPeer) {
 			OLogManager
 					.instance()
 					.warn(
@@ -225,7 +225,7 @@ public class ORemotePeer {
 			channel.close();
 		channel = null;
 		if (serviceThread != null)
-			serviceThread.shutdown();
+			serviceThread.sendShutdown();
 	}
 
 	@Override

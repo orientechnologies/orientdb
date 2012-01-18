@@ -119,12 +119,10 @@ public class OLeaderNode {
 					node = new ORemotePeer(this, serverAddress, iServerPort);
 
 				try {
-					if (!node.connect(manager.getConfig().networkTimeoutNode, manager.getConfig().name, manager.getConfig().securityKey))
-						// LEADERSHIP NOT ACCEPTED
-						return;
+					if (node.connect(manager.getConfig().networkTimeoutNode, manager.getConfig().name, manager.getConfig().securityKey))
+						// CONNECTION OK: ADD IT IN THE NODE LIST
+						nodes.put(key, node);
 
-					// CONNECTION OK: ADD IT IN THE NODE LIST
-					nodes.put(key, node);
 					return;
 
 				} catch (Exception e) {

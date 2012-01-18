@@ -36,7 +36,6 @@ import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProto
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo;
 import com.orientechnologies.orient.server.replication.ODistributedNode;
 import com.orientechnologies.orient.server.replication.ODistributedStorage;
-import com.orientechnologies.orient.server.replication.ODistributedSynchronizationException;
 import com.orientechnologies.orient.server.replication.OOperationLog;
 
 /**
@@ -141,9 +140,12 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 				channel.writeInt(connection.id);
 
 				if (manager.isLeader()) {
-					OLogManager.instance().warn(this,
-							"Received remote connection from the leader node %s, but current node is itself leader: split network problem?",
-							leaderAddress);
+					OLogManager
+							.instance()
+							.warn(
+									this,
+									"Received remote connection from the leader node %s, but current node is itself leader: split network problem or high network latency?",
+									leaderAddress);
 
 					// CHECK WHAT LEADER WINS
 					final String myUid = InetAddress.getLocalHost().getHostAddress() + ":" + channel.socket.getLocalPort();
@@ -162,13 +164,15 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 				if (!remainTheLeader) {
 					// OK TO BE A PEER
-					manager.becomePeer(this);
-
 					channel.writeByte((byte) 1);
+					channel.flush();
+
 					channel.writeBytes(manager.getReplicator().getLocalDatabaseConfiguration().toStream());
 					channel.flush();
 
 					manager.getReplicator().updateConfiguration(new ODocument(channel.readBytes()));
+
+					manager.becomePeer(this);
 				}
 
 			} finally {
