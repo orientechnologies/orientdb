@@ -27,6 +27,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Scanner;
 import java.util.Set;
 
 import com.orientechnologies.common.console.TTYConsoleReader;
@@ -169,6 +170,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			currentDatabase = new ODatabaseDocumentTx(iURL);
 			if (currentDatabase == null)
 				throw new OException("Database " + iURL + " not found");
+
+			currentDatabase.registerListener(new OConsoleDatabaseListener(this));
 			currentDatabase.open(iUserName, iUserPassword);
 
 			currentDatabaseName = currentDatabase.getName();
@@ -1430,7 +1433,15 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		out.println();
 	}
 
-	public void onMessage(String iText) {
+	public String ask(final String iText) {
+		out.print(iText);
+		final Scanner scanner = new Scanner(in);
+		final String answer = scanner.nextLine();
+		scanner.close();
+		return answer;
+	}
+
+	public void onMessage(final String iText) {
 		out.print(iText);
 	}
 

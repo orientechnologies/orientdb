@@ -168,25 +168,10 @@ public class OSecurityShared extends OSharedResourceAbstract implements OSecurit
 		acquireExclusiveLock();
 		try {
 
-			final ODatabaseRecord database = getDatabase();
-
-			if (!database.getMetadata().getSchema().getClasses().isEmpty())
+			if (!getDatabase().getMetadata().getSchema().getClasses().isEmpty())
 				throw new OSecurityException("Default users and roles already installed");
 
-			// CREATE ROLE AND USER SCHEMA CLASSES
-			final OClass roleClass = database.getMetadata().getSchema().createClass("ORole");
-			roleClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
-			roleClass.createProperty("mode", OType.BYTE);
-			roleClass.createProperty("rules", OType.EMBEDDEDMAP, OType.BYTE);
-
-			final OClass userClass = database.getMetadata().getSchema().createClass("OUser");
-			userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
-			userClass.createProperty("password", OType.STRING).setMandatory(true).setNotNull(true);
-			userClass.createProperty("roles", OType.LINKSET, roleClass);
-
-			// CREATE ROLES AND USERS
-			final ORole adminRole = createRole(ORole.ADMIN, ORole.ALLOW_MODES.ALLOW_ALL_BUT);
-			final OUser adminUser = createUser(OUser.ADMIN, OUser.ADMIN, new String[] { adminRole.getName() });
+			final OUser adminUser = createMetadata();
 
 			final ORole readerRole = createRole("reader", ORole.ALLOW_MODES.DENY_ALL_BUT);
 			readerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
@@ -220,6 +205,57 @@ public class OSecurityShared extends OSharedResourceAbstract implements OSecurit
 		} finally {
 			releaseExclusiveLock();
 		}
+	}
+
+	/**
+	 * Repairs the security structure if broken by creating the ADMIN role and user with default password.
+	 * 
+	 * @return
+	 */
+	public OUser repair() {
+		acquireExclusiveLock();
+		try {
+
+			return createMetadata();
+
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
+	protected OUser createMetadata() {
+		final ODatabaseRecord database = getDatabase();
+
+		OClass roleClass = database.getMetadata().getSchema().getClass("ORole");
+		if (roleClass == null)
+			roleClass = database.getMetadata().getSchema().createClass("ORole");
+		if (!roleClass.existsProperty("name"))
+			roleClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
+		if (!roleClass.existsProperty("mode"))
+			roleClass.createProperty("mode", OType.BYTE);
+		if (!roleClass.existsProperty("rules"))
+			roleClass.createProperty("rules", OType.EMBEDDEDMAP, OType.BYTE);
+
+		OClass userClass = database.getMetadata().getSchema().getClass("OUser");
+		if (userClass == null)
+			userClass = database.getMetadata().getSchema().createClass("OUser");
+		if (!userClass.existsProperty("name"))
+			userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
+		if (!userClass.existsProperty("password"))
+			userClass.createProperty("password", OType.STRING).setMandatory(true).setNotNull(true);
+		if (!userClass.existsProperty("roles"))
+			userClass.createProperty("roles", OType.LINKSET, roleClass);
+
+		// CREATE ROLES AND USERS
+		ORole adminRole = getRole(ORole.ADMIN);
+		if (adminRole == null)
+			adminRole = createRole(ORole.ADMIN, ORole.ALLOW_MODES.ALLOW_ALL_BUT);
+
+		OUser adminUser = getUser(OUser.ADMIN);
+		if (adminUser == null)
+			adminUser = createUser(OUser.ADMIN, OUser.ADMIN, new String[] { adminRole.getName() });
+
+		return adminUser;
 	}
 
 	public void close() {

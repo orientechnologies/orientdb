@@ -40,4 +40,15 @@ public interface ODatabaseListener {
 	public void onAfterTxCommit(final ODatabase iDatabase);
 
 	public void onClose(final ODatabase iDatabase);
+
+	/**
+	 * Callback to decide if repair the database upon corruption.
+	 * 
+	 * @param iDatabase
+	 *          Target database
+	 * @param iReason
+	 *          Reason of corruption
+	 * @return true if repair must be done, otherwise false
+	 */
+	public boolean onCorruptionRepairDatabase(final ODatabase iDatabase, final String iReason);
 }

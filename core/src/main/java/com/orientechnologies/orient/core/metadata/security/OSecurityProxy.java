@@ -28,8 +28,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli
  * 
  */
-public class OSecurityProxy extends OProxedResource<OSecurityShared> implements OSecurity {
-	public OSecurityProxy(final OSecurityShared iDelegate, final ODatabaseRecord iDatabase) {
+public class OSecurityProxy extends OProxedResource<OSecurity> implements OSecurity {
+	public OSecurityProxy(final OSecurity iDelegate, final ODatabaseRecord iDatabase) {
 		super(iDelegate, iDatabase);
 	}
 
@@ -79,5 +79,9 @@ public class OSecurityProxy extends OProxedResource<OSecurityShared> implements 
 
 	public String toString() {
 		return delegate.toString();
+	}
+
+	public OUser repair() {
+		return delegate.repair();
 	}
 }

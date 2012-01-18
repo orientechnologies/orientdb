@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
@@ -108,6 +109,18 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 			if (getStorage() instanceof OStorageEmbedded) {
 				user = getMetadata().getSecurity().authenticate(iUserName, iUserPassword);
+				final Set<ORole> roles = user.getRoles();
+				if (roles == null || roles.isEmpty() || roles.iterator().next() == null) {
+					// SEEMS CORRUPTED: INSTALL DEFAULT ROLE
+					for (ODatabaseListener l : underlying.getListeners()) {
+						if (l.onCorruptionRepairDatabase(this, "security metadata are corrupted: current user '" + user.getName()
+								+ "' has no roles defined")) {
+							user = null;
+							user = metadata.getSecurity().repair();
+							break;
+						}
+					}
+				}
 				registerHook(new OUserTrigger());
 				registerHook(new OClassIndexManager());
 			} else

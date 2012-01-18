@@ -68,4 +68,8 @@ public class OSecurityNull implements OSecurity {
 
 	public void close() {
 	}
+
+	public OUser repair() {
+		return null;
+	}
 }

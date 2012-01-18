@@ -46,5 +46,7 @@ public interface OSecurity {
 
 	public List<ODocument> getRoles();
 
+	public OUser repair();
+
 	public void close();
 }

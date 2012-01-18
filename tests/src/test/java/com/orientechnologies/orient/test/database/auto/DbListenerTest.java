@@ -51,6 +51,7 @@ public class DbListenerTest {
 	protected int									onCreate											= 0;
 	protected int									onDelete											= 0;
 	protected int									onOpen												= 0;
+	protected int									onCorruption									= 0;
 
 	protected int									onRecordPulled								= 0;
 	protected int									onClusterConfigurationChange	= 0;
@@ -91,6 +92,11 @@ public class DbListenerTest {
 
 		public void onOpen(ODatabase iDatabase) {
 			onOpen++;
+		}
+
+		public boolean onCorruptionRepairDatabase(ODatabase iDatabase, final String iReason) {
+			onCorruption++;
+			return true;
 		}
 	}
 
