@@ -83,7 +83,11 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
 
 			final byte[] buffer = toStream();
 
-			segment.getFile().allocateSpace(buffer.length + OBinaryProtocol.SIZE_INT);
+			final int len = buffer.length + OBinaryProtocol.SIZE_INT;
+
+			if (len > segment.getFile().getFilledUpTo())
+				segment.getFile().allocateSpace(len - segment.getFile().getFilledUpTo());
+			
 			segment.getFile().writeInt(0, buffer.length);
 			segment.getFile().write(OBinaryProtocol.SIZE_INT, buffer);
 		} catch (Exception e) {
