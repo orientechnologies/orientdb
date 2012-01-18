@@ -281,8 +281,10 @@ public class OFileMMap extends OFile {
 
 	@Override
 	public void writeHeaderLong(final int iPosition, final long iValue) {
-		if (headerBuffer != null)
+		if (headerBuffer != null) {
 			headerBuffer.putLong(HEADER_DATA_OFFSET + iPosition, iValue);
+			setHeaderDirty();
+		}
 	}
 
 	@Override
@@ -313,6 +315,7 @@ public class OFileMMap extends OFile {
 			return;
 
 		headerBuffer.put(SOFTLY_CLOSED_OFFSET, (byte) (iValue ? 1 : 0));
+		setHeaderDirty();
 		synch();
 	}
 
@@ -401,7 +404,7 @@ public class OFileMMap extends OFile {
 	}
 
 	@Override
-	public void setSize(int iSize) throws IOException {
+	public void setSize(final int iSize) throws IOException {
 		if (iSize != size) {
 			checkSize(iSize);
 			size = iSize;

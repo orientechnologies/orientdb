@@ -87,33 +87,37 @@ public class OFileClassic extends OFile {
 	public void writeInt(long iOffset, final int iValue) throws IOException {
 		setDirty();
 		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_INT);
-		ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_INT);
+		final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_INT);
 		buffer.putInt(iValue);
 		writeBuffer(buffer, iOffset);
+		setDirty();
 	}
 
 	@Override
 	public void writeLong(long iOffset, final long iValue) throws IOException {
 		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_LONG);
-		ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_LONG);
+		final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_LONG);
 		buffer.putLong(iValue);
 		writeBuffer(buffer, iOffset);
+		setDirty();
 	}
 
 	@Override
 	public void writeShort(long iOffset, final short iValue) throws IOException {
 		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_INT);
-		ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_SHORT);
+		final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_SHORT);
 		buffer.putShort(iValue);
 		writeBuffer(buffer, iOffset);
+		setDirty();
 	}
 
 	@Override
 	public void writeByte(long iOffset, final byte iValue) throws IOException {
 		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_BYTE);
-		ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_BYTE);
+		final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_BYTE);
 		buffer.put(iValue);
 		writeBuffer(buffer, iOffset);
+		setDirty();
 	}
 
 	@Override
@@ -121,6 +125,7 @@ public class OFileClassic extends OFile {
 		if (iSourceBuffer != null) {
 			iOffset = checkRegions(iOffset, iSourceBuffer.length);
 			channel.write(ByteBuffer.wrap(iSourceBuffer), iOffset);
+			setDirty();
 		}
 	}
 

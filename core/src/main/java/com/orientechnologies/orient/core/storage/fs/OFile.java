@@ -62,7 +62,7 @@ public abstract class OFile {
 
 	protected static final int	HEADER_SIZE							= 1024;
 	protected static final int	HEADER_DATA_OFFSET			= 128;
-	protected static final int	DEFAULT_SIZE						= 15000000;
+	protected static final int	DEFAULT_SIZE						= 1024000;
 	protected static final int	DEFAULT_INCREMENT_SIZE	= -50;										// NEGATIVE NUMBER MEANS AS PERCENT OF CURRENT SIZE
 
 	private static final int		OPEN_RETRY_MAX					= 10;
@@ -272,6 +272,11 @@ public abstract class OFile {
 
 			// MAKE ROOM
 			int newFileSize = size;
+
+			if (newFileSize == 0)
+				// PROBABLY HAS BEEN LOST WITH HARD KILLS
+				newFileSize = DEFAULT_SIZE;
+
 			// GET THE STEP SIZE IN BYTES
 			int stepSizeInBytes = incrementSize > 0 ? incrementSize : -1 * size / 100 * incrementSize;
 
