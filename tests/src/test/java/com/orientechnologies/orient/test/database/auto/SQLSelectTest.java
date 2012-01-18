@@ -194,7 +194,7 @@ public class SQLSelectTest {
 		tags.add("nice");
 
 		ODocument doc = new ODocument(database, "Profile");
-		doc.field("tags", tags);
+		doc.field("tags", tags, OType.EMBEDDEDSET);
 
 		doc.save();
 
@@ -202,6 +202,13 @@ public class SQLSelectTest {
 
 		Assert.assertEquals(resultset.size(), 1);
 		Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
+
+		resultset = database.query(new OSQLSynchQuery<ODocument>("select from Profile where tags[0-1]  CONTAINSALL ['smart','nice']"));
+
+		Assert.assertEquals(resultset.size(), 1);
+		Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
+
+		//doc.delete();
 
 		database.close();
 	}
