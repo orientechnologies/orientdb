@@ -61,7 +61,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 	@Override
 	protected void parseCommand() throws IOException, InterruptedException {
 
-		if (clientId == null && data.clientId != null)
+		if (clientId == null && data.clientId != null && data.clientId.startsWith(ODistributedStorage.DNODE_PREFIX))
 			// ASSIGN CLIENT-ID ONCE
 			clientId = data.clientId.substring(ODistributedStorage.DNODE_PREFIX.length());
 
