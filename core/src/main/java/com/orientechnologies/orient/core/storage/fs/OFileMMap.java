@@ -267,7 +267,7 @@ public class OFileMMap extends OFile {
 	@Override
 	public void changeSize(final int iSize) {
 		super.changeSize(iSize);
-		size = iSize;
+		setSize(iSize);
 	}
 
 	/**
@@ -277,56 +277,12 @@ public class OFileMMap extends OFile {
 	 */
 	@Override
 	public void synch() {
-		headerBuffer.force();
+		if (headerDirty) {
+			headerBuffer.force();
+			headerDirty = false;
+		}
+
 		OMMapManager.flushFile(this);
-	}
-
-	@Override
-	protected void readHeader() {
-		headerBuffer.rewind();
-		size = headerBuffer.getInt();
-		filledUpTo = headerBuffer.getInt();
-		// for (int i = 0; i < securityCode.length; ++i)
-		// securityCode[i] = buffer.get();
-		//
-		// StringBuilder check = new StringBuilder();
-		// check.append('X');
-		// check.append('3');
-		// check.append('O');
-		// check.append('!');
-		// check.append(fileSize);
-		// check.append(filledUpTo);
-		// check.append('-');
-		// check.append('p');
-		// check.append('R');
-		// check.append('<');
-		//
-		// OIntegrityFileManager.instance().check(check.toString(),
-		// securityCode);
-	}
-
-	@Override
-	protected void writeHeader() {
-		headerBuffer.rewind();
-		headerBuffer.putInt(size);
-		headerBuffer.putInt(filledUpTo);
-		//
-		// StringBuilder check = new StringBuilder();
-		// check.append('X');
-		// check.append('3');
-		// check.append('O');
-		// check.append('!');
-		// check.append(fileSize);
-		// check.append(filledUpTo);
-		// check.append('-');
-		// check.append('p');
-		// check.append('R');
-		// check.append('<');
-		//
-		// securityCode =
-		// OIntegrityFileManager.instance().digest(check.toString());
-		// for (int i = 0; i < securityCode.length; ++i)
-		// buffer.put(securityCode[i]);
 	}
 
 	@Override
@@ -431,6 +387,32 @@ public class OFileMMap extends OFile {
 		synchronized (bufferPool) {
 			bufferPool.add(iBuffer);
 			OProfiler.getInstance().updateCounter("MMap.pooledBuffers", +1);
+		}
+	}
+
+	@Override
+	protected void init() {
+		size = headerBuffer.getInt(SIZE_OFFSET);
+		filledUpTo = headerBuffer.getInt(FILLEDUPTO_OFFSET);
+	}
+
+	@Override
+	protected void setFilledUpTo(final int iHow) {
+		if (iHow != filledUpTo) {
+			filledUpTo = iHow;
+			headerBuffer.putInt(FILLEDUPTO_OFFSET, filledUpTo);
+			if (!headerDirty)
+				headerDirty = true;
+		}
+	}
+
+	@Override
+	public void setSize(int iSize) {
+		if (iSize != size) {
+			size = iSize;
+			headerBuffer.putInt(SIZE_OFFSET, size);
+			if (!headerDirty)
+				headerDirty = true;
 		}
 	}
 }

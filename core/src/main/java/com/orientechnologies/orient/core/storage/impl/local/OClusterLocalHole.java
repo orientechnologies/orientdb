@@ -79,7 +79,7 @@ public class OClusterLocalHole extends OSingleFileSegment {
 	}
 
 	/**
-	 * Return and remove the recycled position if any.
+	 * Returns and remove the recycled position if any.
 	 * 
 	 * @return the recycled position if found, otherwise -1 that usually means to request more space.
 	 * @throws IOException
@@ -105,7 +105,7 @@ public class OClusterLocalHole extends OSingleFileSegment {
 	}
 
 	/**
-	 * Return the recycled position if any.
+	 * Returns the recycled position if any.
 	 * 
 	 * @return the recycled position if found, otherwise -1 that usually means to request more space.
 	 * @throws IOException
@@ -115,7 +115,7 @@ public class OClusterLocalHole extends OSingleFileSegment {
 	}
 
 	/**
-	 * Remove a hole. Called on transaction recover to invalidate a delete for a record. Try to shrink the file if the invalidated
+	 * Removes a hole. Called on transaction recover to invalidate a delete for a record. Try to shrink the file if the invalidated
 	 * entry is not in the middle of valid entries.
 	 * 
 	 * @param iPosition
@@ -162,7 +162,7 @@ public class OClusterLocalHole extends OSingleFileSegment {
 	}
 
 	/**
-	 * Compute the number of holes. Note that not all the holes could be valid.
+	 * Computes the number of holes. Note that not all the holes could be valid.
 	 * 
 	 * @return
 	 */
