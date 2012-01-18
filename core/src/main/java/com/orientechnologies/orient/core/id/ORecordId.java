@@ -21,6 +21,7 @@ import java.io.OutputStream;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -276,6 +277,11 @@ public class ORecordId implements ORID {
 	}
 
 	public ORecord<?> getRecord() {
-		return ODatabaseRecordThreadLocal.INSTANCE.get().load(this);
+		final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+		if (db == null)
+			throw new ODatabaseException(
+					"No database found in current thread local space. If you manually control database over threads assure to set the current database before to use it by calling: ODatabaseRecordThreadLocal.INSTANCE.set(db);");
+
+		return db.load(this);
 	}
 }
