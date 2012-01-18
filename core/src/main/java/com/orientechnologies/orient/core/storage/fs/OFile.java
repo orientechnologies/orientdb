@@ -273,13 +273,18 @@ public abstract class OFile {
 
 			// MAKE ROOM
 			int newFileSize = size;
+			// GET THE STEP SIZE IN BYTES
 			int stepSizeInBytes = incrementSize > 0 ? incrementSize : -1 * size / 100 * incrementSize;
 
 			// FIND THE BEST SIZE TO ALLOCATE (BASED ON INCREMENT-SIZE)
 			while (newFileSize - filledUpTo <= iSize) {
-				if (stepSizeInBytes > 0 && (maxSize == 0 || newFileSize + stepSizeInBytes < maxSize))
-					newFileSize += stepSizeInBytes;
-				else
+				newFileSize += stepSizeInBytes;
+
+				if (newFileSize == 0)
+					// EMPTY FILE: ALLOCATE REQUESTED SIZE ONLY
+					newFileSize = iSize;
+				if (newFileSize > maxSize && maxSize > 0)
+					// TOO BIG: ROUND TO THE MAXIMUM FILE SIZE
 					newFileSize = maxSize;
 			}
 
