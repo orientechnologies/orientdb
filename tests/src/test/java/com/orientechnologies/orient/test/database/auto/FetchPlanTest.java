@@ -15,18 +15,17 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.List;
 
 @Test(groups = "query", sequential = true)
 public class FetchPlanTest {
@@ -51,7 +50,7 @@ public class FetchPlanTest {
 		for (ODocument d : resultset) {
 			linked = ((ORID) d.field("location", ORID.class));
 			if (linked != null)
-				Assert.assertFalse(database.getLevel1Cache().existsRecord(linked));
+				Assert.assertNull(database.getLevel1Cache().findRecord(linked));
 		}
 
 		database.close();

@@ -15,18 +15,19 @@
  */
 package com.orientechnologies.orient.core.config;
 
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.cache.ODefaultCache;
+import com.orientechnologies.orient.core.storage.fs.OMMapManager;
+
 import java.io.PrintStream;
 import java.lang.management.OperatingSystemMXBean;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
-
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -59,13 +60,11 @@ public enum OGlobalConfiguration {
 
 	// CACHE
 	CACHE_LEVEL1_ENABLED("cache.level1.enabled", "Use the level-1 cache", Boolean.class, true),
-
 	CACHE_LEVEL1_SIZE("cache.level1.size", "Size of the cache that keeps the record in memory", Integer.class, -1),
 
 	CACHE_LEVEL2_ENABLED("cache.level2.enabled", "Use the level-2 cache", Boolean.class, true),
-
 	CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keeps the record in memory", Integer.class, -1),
-
+  CACHE_LEVEL2_IMPL("cache.level2.impl", "Actual implementation of secondary cache", String.class, ODefaultCache.class.getCanonicalName()),
 	CACHE_LEVEL2_STRATEGY("cache.level2.strategy",
 			"Strategy to use when a database requests a record: 0 = pop the record, 1 = copy the record", Integer.class, 0,
 			new OConfigurationChangeCallback() {

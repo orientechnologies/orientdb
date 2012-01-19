@@ -15,13 +15,6 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -61,6 +54,8 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 
+import java.util.*;
+
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecord {
 
@@ -86,7 +81,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		databaseOwner = this;
 
 		recordType = iRecordType;
-		level1Cache = new OLevel1RecordCache(this);
+		level1Cache = new OLevel1RecordCache();
 
 		mvcc = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
 		validation = OGlobalConfiguration.DB_VALIDATION.getValueAsBoolean();
