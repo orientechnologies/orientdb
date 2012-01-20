@@ -23,6 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Profiling utility class. Handles chronos (times), statistics and counters. By default it's used as Singleton but you can create
@@ -40,6 +42,9 @@ public class OProfiler implements OProfilerMBean {
 	private Map<String, OProfilerEntry>			stats;
 	private Map<String, OProfilerHookValue>	hooks;
 	private Date														lastReset;
+
+	private volatile Timer									timer;
+	private volatile boolean								autoDumpReset;
 
 	protected static final OProfiler				instance	= new OProfiler();
 
@@ -395,7 +400,7 @@ public class OProfiler implements OProfilerMBean {
 		lastReset = new Date();
 	}
 
-	private synchronized long updateEntry(Map<String, OProfilerEntry> iValues, final String iName, final long iValue) {
+	private synchronized long updateEntry(final Map<String, OProfilerEntry> iValues, final String iName, final long iValue) {
 		if (recording < 0)
 			return iValue;
 
@@ -451,5 +456,31 @@ public class OProfiler implements OProfilerMBean {
 			iBuffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
 			return iBuffer.toString();
 		}
+	}
+
+	public void setAutoDump(final int iSeconds) {
+		if (timer != null) {
+			timer.cancel();
+			timer = null;
+		}
+
+		if (iSeconds > 0) {
+			final int ms = iSeconds * 1000;
+
+			timer = new Timer(true);
+			timer.scheduleAtFixedRate(new TimerTask() {
+
+				@Override
+				public void run() {
+					System.out.println(OProfiler.getInstance().dump());
+					if (autoDumpReset)
+						reset();
+				}
+			}, ms, ms);
+		}
+	}
+
+	public void setAutoDumpReset(final boolean iNewValue) {
+		autoDumpReset = iNewValue;
 	}
 }
