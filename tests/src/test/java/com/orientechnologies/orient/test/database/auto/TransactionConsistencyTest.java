@@ -438,12 +438,26 @@ public class TransactionConsistencyTest {
 			((HashSet<ODocument>) chloe.field("following")).add(teri);
 			((HashSet<ODocument>) chloe.field("following")).add(kim);
 
+			int profileClusterId = db.getClusterIdByName("Profile");
+
 			jack.save();
+			Assert.assertEquals(jack.getIdentity().getClusterId(), profileClusterId);
+
 			kim.save();
+			Assert.assertEquals(kim.getIdentity().getClusterId(), profileClusterId);
+
 			teri.save();
+			Assert.assertEquals(teri.getIdentity().getClusterId(), profileClusterId);
+
 			chloe.save();
+			Assert.assertEquals(chloe.getIdentity().getClusterId(), profileClusterId);
 
 			db.commit();
+
+			Assert.assertEquals(jack.getIdentity().getClusterId(), profileClusterId);
+			Assert.assertEquals(kim.getIdentity().getClusterId(), profileClusterId);
+			Assert.assertEquals(teri.getIdentity().getClusterId(), profileClusterId);
+			Assert.assertEquals(chloe.getIdentity().getClusterId(), profileClusterId);
 
 			db.close();
 			db.open("admin", "admin");
