@@ -97,6 +97,8 @@ public class CRUDDocumentPhysicalTest {
 
 		base64 = OBase64Utils.encodeBytes(binary);
 
+		final int accountClusterId = database.getClusterIdByName("Account");
+
 		for (long i = startRecordNumber; i < startRecordNumber + TOT_RECORDS; ++i) {
 			record.reset();
 
@@ -111,6 +113,7 @@ public class CRUDDocumentPhysicalTest {
 			record.field("value", (byte) 10);
 
 			record.save("Account");
+			Assert.assertEquals(record.getIdentity().getClusterId(), accountClusterId);
 		}
 
 		database.close();
@@ -205,6 +208,8 @@ public class CRUDDocumentPhysicalTest {
 		vDoc.setClassName("Profile");
 		vDoc.field("nick", "JayM1").field("name", "Jay").field("surname", "Miner");
 		vDoc.save();
+
+		Assert.assertEquals(vDoc.getIdentity().getClusterId(), vDoc.getSchemaClass().getDefaultClusterId());
 
 		vDoc = database.load(vDoc.getIdentity());
 		vDoc.field("nick", "JayM2");
