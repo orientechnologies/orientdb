@@ -440,7 +440,16 @@ public class ODatabaseRaw implements ODatabase {
 
 	@Override
 	public String toString() {
-		return "OrientDB[" + (getStorage() != null ? getStorage().getURL() : "?") + "]";
+		final StringBuilder buffer = new StringBuilder();
+		buffer.append("OrientDB[");
+		buffer.append(url != null ? url : "?");
+		buffer.append(']');
+		if (getStorage() != null) {
+			buffer.append(" (users: ");
+			buffer.append(getStorage().getUsers());
+			buffer.append(')');
+		}
+		return buffer.toString();
 	}
 
 	public Object get(final ATTRIBUTES iAttribute) {
