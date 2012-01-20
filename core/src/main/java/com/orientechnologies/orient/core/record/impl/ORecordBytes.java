@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -27,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
+import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerRaw;
 
@@ -97,8 +97,16 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 		_recordFormat = ORecordSerializerFactory.instance().getFormat(ORecordSerializerRaw.NAME);
 	}
 
+	/**
+	 * Reads the input stream in memory. This is less efficient than {@link #fromInputStream(InputStream, int)} because allocation is
+	 * made multiple times. If you already know the input size use {@link #fromInputStream(InputStream, int)}.
+	 * 
+	 * @param in
+	 *          Input Stream, use buffered input stream wrapper to speed up reading
+	 * @throws IOException
+	 */
 	public void fromInputStream(final InputStream in) throws IOException {
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		final OMemoryStream out = new OMemoryStream();
 		try {
 			while (in.available() > 0) {
 				out.write(in.read());
@@ -107,6 +115,28 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 			_source = out.toByteArray();
 		} finally {
 			out.close();
+		}
+		_size = _source.length;
+	}
+
+	/**
+	 * Reads the input stream in memory specifying the total bytes to read. This is more efficient than
+	 * {@link #fromInputStream(InputStream)} because allocation is made once. If input stream contains less bytes than total size
+	 * parameter, the rest of content will be empty (filled to 0)
+	 * 
+	 * @param in
+	 *          Input Stream, use buffered input stream wrapper to speed up reading
+	 * @param iTotalSize
+	 *          Total size to read
+	 * @throws IOException
+	 */
+	public void fromInputStream(final InputStream in, final int iTotalSize) throws IOException {
+		_source = new byte[iTotalSize];
+		for (int i = 0; i < iTotalSize; ++i) {
+			if (in.available() == 0)
+				break;
+
+			_source[i] = (byte) in.read();
 		}
 		_size = _source.length;
 	}
