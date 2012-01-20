@@ -217,9 +217,17 @@
   </target>
 	
 	<target name="test" depends="install">
-    <subant target="test">
-        <property name="global.lib"  value="../${db.release}/lib"/>
-        <property name="orient.path" value="${db.release}"/>
+		<subant target="test">
+			<property name="global.lib"  value="../${db.release}/lib"/>
+			<property name="orient.path" value="${db.release}"/>
+		  	<fileset dir="tests"        includes="build.xml" />
+	    </subant>
+	</target>
+	
+	<target name="test-remote" depends="install">
+		<subant target="test-remote">
+			<property name="global.lib"  value="../${db.release}/lib"/>
+			<property name="orient.path" value="${db.release}"/>
 		  	<fileset dir="tests"        includes="build.xml" />
 	    </subant>
 	</target>

@@ -8,8 +8,14 @@
 	<import file="../_base/base-build.xml" />
 
 	<taskdef resource="testngtasks" classpath="lib/testng.jar" />
-
+	
 	<target name="test">
+		<subant target="test-memory"/>
+		<subant target="test-local"/>
+		<subant target="test-remote"/>
+	</target>
+	
+	<target name="test-init">
 		<copy todir="${project.build}">
 			<fileset dir="src/test/java">
 				<include name="**/*.xml" />
@@ -22,9 +28,10 @@
 			<replacefilter token="@PATH@" value="${orient.path}/databases/demo" />
 			<replacefilter token="@URL@" value="local:${orient.path}/databases/demo" />
 		</replace>
-		
+	</target>
+	
+	<target name="test-memory" depends="test-init">		
 		<echo>EXECUTING TESTS USING MEMORY DATABASE: memory:demo</echo>
-
 		<testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
 			<classpath>
 				<pathelement location="${project.build}" />
@@ -34,9 +41,10 @@
 			</classpath>
 			<xmlfileset dir="${project.build}/com/orientechnologies/orient/test/database/auto" includes="memory-test-db-from-scratch.xml" />
 		</testng>
-		
+	</target>
+	
+	<target name="test-local" depends="test-init">		
 		<echo>EXECUTING TESTS USING LOCAL DATABASE: local:${orient.path}/databases/demo</echo>
-
 		<testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
 			<classpath>
 				<pathelement location="${project.build}" />
@@ -46,9 +54,9 @@
 			</classpath>
 			<xmlfileset dir="${project.build}/com/orientechnologies/orient/test/database/auto" includes="local-test-db-from-scratch.xml" />
 		</testng>
+	</target>
 
-		<echo>OK</echo>
-
+	<target name="test-remote" depends="test-init">		
 		<echo>STARTING REMOTE ORIENTDB SERVER INSTANCE...</echo>
 
 		<exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
@@ -61,11 +69,8 @@
 			<arg value="./server.sh" />
 		</exec>
 
-		<echo>OK</echo>
-
 		<echo>WAITING FOR SERVER STARTUP...</echo>
 		<sleep seconds="5" />
-		<echo>OK</echo>
 
 		<echo>EXECUTING TESTS USING REMOTE DATABASE: remote:localhost/demo</echo>
 
@@ -79,11 +84,7 @@
 			<xmlfileset dir="${project.build}/com/orientechnologies/orient/test/database/auto" includes="remote-test-db-from-scratch.xml" />
 		</testng>
 
-		<echo>OK</echo>
-		
-		
 		<echo>SHUTDOWNING THE SERVER...</echo>
-		<echo>OK</echo>
 
 		<exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
 			<arg value="/c shutdown.bat" />
@@ -92,7 +93,6 @@
 		<exec dir="../${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
 			<arg value="./shutdown.sh" />
 		</exec>
-
 	</target>
 
 	<target name="stress-test">
