@@ -25,6 +25,7 @@ import java.net.Socket;
 import java.net.SocketException;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -50,6 +51,7 @@ public class OServerNetworkListener extends Thread {
 	public OServerNetworkListener(final OServer iServer, final String iHostName, final String iHostPortRange,
 			final String iProtocolName, final Class<? extends ONetworkProtocol> iProtocol,
 			final OServerParameterConfiguration[] iParameters, final OServerCommandConfiguration[] iCommands) {
+		super(Orient.getThreadGroup(), "OrientDB NetworkListener " + iHostName + ":" + iHostPortRange);
 		server = iServer;
 
 		if (iProtocol == null)
@@ -117,8 +119,8 @@ public class OServerNetworkListener extends Thread {
 			}
 		}
 
-		OLogManager.instance().error(this, "Unable to listen for connections using the configured ports '%s' on host '%s'", iHostPortRange,
-				iHostName);
+		OLogManager.instance().error(this, "Unable to listen for connections using the configured ports '%s' on host '%s'",
+				iHostPortRange, iHostName);
 		System.exit(1);
 	}
 
