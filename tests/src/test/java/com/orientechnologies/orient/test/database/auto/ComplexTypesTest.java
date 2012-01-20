@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -43,6 +45,30 @@ public class ComplexTypesTest {
 	@Parameters(value = "url")
 	public ComplexTypesTest(final String iURL) {
 		url = iURL;
+	}
+
+	@Test
+	public void testBigDecimal() {
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+		ODocument newDoc = new ODocument();
+		newDoc.field("integer", new BigInteger("10"));
+		newDoc.field("decimal_integer", new BigDecimal(10));
+		newDoc.field("decimal_float", new BigDecimal("10.34"));
+		database.save(newDoc);
+
+		final ORID rid = newDoc.getIdentity();
+
+		database.close();
+
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+		ODocument loadedDoc = database.load(rid);
+		Assert.assertEquals(loadedDoc.field("integer"), 10);
+		Assert.assertEquals(loadedDoc.field("decimal_integer"), new BigDecimal(10));
+		Assert.assertEquals(loadedDoc.field("decimal_float"), new BigDecimal("10.34"));
+
+		database.close();
 	}
 
 	@Test

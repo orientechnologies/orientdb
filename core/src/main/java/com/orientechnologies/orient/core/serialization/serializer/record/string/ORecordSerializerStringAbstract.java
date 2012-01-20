@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Set;
@@ -110,6 +111,11 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 
 		case FLOAT:
 			if (iValue instanceof Float)
+				return iValue;
+			return convertValue((String) iValue, iType);
+
+		case DECIMAL:
+			if (iValue instanceof BigDecimal)
 				return iValue;
 			return convertValue((String) iValue, iType);
 
@@ -210,6 +216,11 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 		case FLOAT:
 			simpleValueToStream(iBuffer, iType, iValue);
 			OProfiler.getInstance().stopChrono("serializer.rec.str.float2string", timer);
+			break;
+
+		case DECIMAL:
+			simpleValueToStream(iBuffer, iType, iValue);
+			OProfiler.getInstance().stopChrono("serializer.rec.str.decimal2string", timer);
 			break;
 
 		case LONG:
@@ -343,6 +354,8 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 								continue;
 						} else if (c == 'f')
 							return OType.FLOAT;
+						else if (c == 'c')
+							return OType.DECIMAL;
 						else if (c == 'l')
 							return OType.LONG;
 						else if (c == 'd')
@@ -426,6 +439,8 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 
 						if (c == 'f')
 							return new Float(v);
+						else if (c == 'c')
+							return new BigDecimal(v);
 						else if (c == 'l')
 							return new Long(v);
 						else if (c == 'd')
@@ -468,6 +483,11 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 		case FLOAT:
 			iBuffer.append(String.valueOf(iValue));
 			iBuffer.append('f');
+			break;
+
+		case DECIMAL:
+			iBuffer.append(String.valueOf(iValue));
+			iBuffer.append('c');
 			break;
 
 		case LONG:

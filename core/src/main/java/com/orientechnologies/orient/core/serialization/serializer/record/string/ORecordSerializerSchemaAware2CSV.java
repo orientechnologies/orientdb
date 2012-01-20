@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -136,7 +138,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 						type = OType.DATETIME;
 					else if (fieldValue instanceof String)
 						type = OType.STRING;
-					else if (fieldValue instanceof Integer)
+					else if (fieldValue instanceof Integer || fieldValue instanceof BigInteger)
 						type = OType.INTEGER;
 					else if (fieldValue instanceof Long)
 						type = OType.LONG;
@@ -148,6 +150,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 						type = OType.BYTE;
 					else if (fieldValue instanceof Double)
 						type = OType.DOUBLE;
+					else if (fieldValue instanceof BigDecimal)
+						type = OType.DECIMAL;
 				}
 
 				if (fieldValue instanceof Collection<?> || fieldValue.getClass().isArray()) {

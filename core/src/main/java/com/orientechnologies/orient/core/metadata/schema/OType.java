@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import java.lang.reflect.Array;
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.Date;
@@ -40,65 +41,62 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  * 
  */
 public enum OType {
-	BOOLEAN("Boolean", 0, true, 1, new Class<?>[] { Boolean.class, Boolean.TYPE }, new Class<?>[] { Boolean.class, Number.class }) {
+	BOOLEAN("Boolean", 0, new Class<?>[] { Boolean.class, Boolean.TYPE }, new Class<?>[] { Boolean.class, Number.class }) {
 	},
-	INTEGER("Integer", 1, true, 4, new Class<?>[] { Integer.class, Integer.TYPE }, new Class<?>[] { Integer.class, Number.class }) {
+	INTEGER("Integer", 1, new Class<?>[] { Integer.class, Integer.TYPE }, new Class<?>[] { Integer.class, Number.class }) {
 	},
-	SHORT("Short", 2, true, 2, new Class<?>[] { Short.class, Short.TYPE }, new Class<?>[] { Short.class, Number.class }) {
+	SHORT("Short", 2, new Class<?>[] { Short.class, Short.TYPE }, new Class<?>[] { Short.class, Number.class }) {
 	},
-	LONG("Long", 3, true, 8, new Class<?>[] { Long.class, Long.TYPE }, new Class<?>[] { Long.class, Number.class, }) {
+	LONG("Long", 3, new Class<?>[] { Long.class, Long.TYPE }, new Class<?>[] { Long.class, Number.class, }) {
 	},
-	FLOAT("Float", 4, true, 4, new Class<?>[] { Float.class, Float.TYPE }, new Class<?>[] { Float.class, Number.class }) {
+	FLOAT("Float", 4, new Class<?>[] { Float.class, Float.TYPE }, new Class<?>[] { Float.class, Number.class }) {
 	},
-	DOUBLE("Double", 5, true, 8, new Class<?>[] { Double.class, Double.TYPE }, new Class<?>[] { Double.class, Number.class }) {
+	DOUBLE("Double", 5, new Class<?>[] { Double.class, Double.TYPE }, new Class<?>[] { Double.class, Number.class }) {
 	},
-	DATETIME("Datetime", 6, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Number.class }) {
+	DATETIME("Datetime", 6, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Number.class }) {
 	},
-	STRING("String", 7, false, 8, new Class<?>[] { String.class }, new Class<?>[] { String.class }) {
+	STRING("String", 7, new Class<?>[] { String.class }, new Class<?>[] { String.class }) {
 	},
-	BINARY("Binary", 8, false, 8, new Class<?>[] { Array.class }, new Class<?>[] { Array.class }) {
+	BINARY("Binary", 8, new Class<?>[] { Array.class }, new Class<?>[] { Array.class }) {
 	},
-	EMBEDDED("Embedded", 9, false, 8, new Class<?>[] { Object.class }, new Class<?>[] { OSerializableStream.class }) {
+	EMBEDDED("Embedded", 9, new Class<?>[] { Object.class }, new Class<?>[] { OSerializableStream.class }) {
 	},
-	EMBEDDEDLIST("EmbeddedList", 10, false, 8, new Class<?>[] { List.class }, new Class<?>[] { List.class }) {
+	EMBEDDEDLIST("EmbeddedList", 10, new Class<?>[] { List.class }, new Class<?>[] { List.class }) {
 	},
-	EMBEDDEDSET("EmbeddedSet", 11, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Set.class }) {
+	EMBEDDEDSET("EmbeddedSet", 11, new Class<?>[] { Set.class }, new Class<?>[] { Set.class }) {
 	},
-	EMBEDDEDMAP("EmbeddedMap", 12, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
+	EMBEDDEDMAP("EmbeddedMap", 12, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
 	},
-	LINK("Link", 13, true, 8, new Class<?>[] { Object.class, ORecordId.class }, new Class<?>[] { ORecord.class, ORID.class  }) {
+	LINK("Link", 13, new Class<?>[] { Object.class, ORecordId.class }, new Class<?>[] { ORecord.class, ORID.class }) {
 	},
-	LINKLIST("LinkList", 14, false, 8, new Class<?>[] { List.class }, new Class<?>[] { List.class }) {
+	LINKLIST("LinkList", 14, new Class<?>[] { List.class }, new Class<?>[] { List.class }) {
 	},
-	LINKSET("LinkSet", 15, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Set.class }) {
+	LINKSET("LinkSet", 15, new Class<?>[] { Set.class }, new Class<?>[] { Set.class }) {
 	},
-	LINKMAP("LinkMap", 16, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
+	LINKMAP("LinkMap", 16, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
 	},
-	BYTE("Byte", 17, true, 1, new Class<?>[] { Byte.class, Byte.TYPE }, new Class<?>[] { Byte.class, Number.class }) {
+	BYTE("Byte", 17, new Class<?>[] { Byte.class, Byte.TYPE }, new Class<?>[] { Byte.class, Number.class }) {
 	},
-	TRANSIENT("Transient", 18, true, 0, new Class<?>[] {}, new Class<?>[] {}) {
+	TRANSIENT("Transient", 18, new Class<?>[] {}, new Class<?>[] {}) {
 	},
-	DATE("Date", 19, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Number.class }) {
+	DATE("Date", 19, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Number.class }) {
 	},
-	CUSTOM("Custom", 20, false, 8, new Class<?>[] { OSerializableStream.class }, new Class<?>[] { OSerializableStream.class }) {
+	CUSTOM("Custom", 20, new Class<?>[] { OSerializableStream.class }, new Class<?>[] { OSerializableStream.class }) {
+	},
+	DECIMAL("Decimal", 21, new Class<?>[] { BigDecimal.class }, new Class<?>[] { BigDecimal.class, Number.class }) {
 	};
 
 	protected static final OType[]	TYPES	= new OType[] { STRING, BOOLEAN, BYTE, INTEGER, SHORT, LONG, FLOAT, DOUBLE, DATE, DATETIME,
-			BINARY, EMBEDDEDLIST, EMBEDDEDSET, EMBEDDEDMAP, LINK, LINKLIST, LINKSET, LINKMAP, EMBEDDED, CUSTOM, TRANSIENT };
+			BINARY, EMBEDDEDLIST, EMBEDDEDSET, EMBEDDEDMAP, LINK, LINKLIST, LINKSET, LINKMAP, EMBEDDED, CUSTOM, TRANSIENT, DECIMAL };
 
 	protected String								name;
 	protected int										id;
-	protected boolean								fixedSize;
-	protected int										size;
 	protected Class<?>[]						javaTypes;
 	protected Class<?>[]						allowAssignmentFrom;
 
-	private OType(final String iName, final int iId, final boolean iFixedSize, final int iSize, final Class<?>[] iJavaTypes,
-			final Class<?>[] iAllowAssignmentBy) {
+	private OType(final String iName, final int iId, final Class<?>[] iJavaTypes, final Class<?>[] iAllowAssignmentBy) {
 		name = iName;
 		id = iId;
-		fixedSize = iFixedSize;
-		size = iSize;
 		javaTypes = iJavaTypes;
 		allowAssignmentFrom = iAllowAssignmentBy;
 	}
@@ -326,6 +324,14 @@ public enum OType {
 					return Float.parseFloat((String) iValue);
 				else
 					return ((Number) iValue).floatValue();
+
+			} else if (iTargetClass.equals(BigDecimal.class)) {
+				if (iValue instanceof BigDecimal)
+					return iValue;
+				else if (iValue instanceof String)
+					return new BigDecimal((String) iValue);
+				else if (iValue instanceof Number)
+					return new BigDecimal(iValue.toString());
 
 			} else if (iTargetClass.equals(Double.TYPE) || iTargetClass.equals(Double.class)) {
 				if (iValue instanceof Double)
