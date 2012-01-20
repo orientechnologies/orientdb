@@ -15,12 +15,14 @@
  */
 package com.orientechnologies.orient.core.cache;
 
+import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.storage.ORecordLockManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,6 +39,7 @@ public class ODefaultCache implements OCache {
   private static final int DEFAULT_LIMIT = 1000;
 
   private final OSharedResourceExternal lock = new OSharedResourceExternal();
+  private final ORecordLockManager lockManager = new ORecordLockManager(0);
   private final AtomicBoolean enabled = new AtomicBoolean(false);
 
   private final OLinkedHashMapCache cache;
@@ -76,8 +79,10 @@ public class ODefaultCache implements OCache {
     if (!isEnabled()) return null;
     try {
       lock.acquireSharedLock();
+      lockManager.acquireLock(Thread.currentThread(), id, OLockManager.LOCK.SHARED);
       return cache.get(id);
     } finally {
+      lockManager.releaseLock(Thread.currentThread(), id, OLockManager.LOCK.SHARED);
       lock.releaseSharedLock();
     }
   }
@@ -86,8 +91,10 @@ public class ODefaultCache implements OCache {
     if (!isEnabled()) return null;
     try {
       lock.acquireExclusiveLock();
+      lockManager.acquireLock(Thread.currentThread(), record.getIdentity(), OLockManager.LOCK.EXCLUSIVE);
       return cache.put(record.getIdentity(), record);
     } finally {
+      lockManager.releaseLock(Thread.currentThread(), record.getIdentity(), OLockManager.LOCK.EXCLUSIVE);
       lock.releaseExclusiveLock();
     }
   }
@@ -96,8 +103,10 @@ public class ODefaultCache implements OCache {
     if (!isEnabled()) return null;
     try {
       lock.acquireExclusiveLock();
+      lockManager.acquireLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
       return cache.remove(id);
     } finally {
+      lockManager.releaseLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
       lock.releaseExclusiveLock();
     }
   }
@@ -143,6 +152,13 @@ public class ODefaultCache implements OCache {
     }
   }
 
+  public void lock(ORID id) {
+    lockManager.acquireLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
+  }
+
+  public void unlock(ORID id) {
+    lockManager.releaseLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
+  }
 
   /**
    * Cache of records.

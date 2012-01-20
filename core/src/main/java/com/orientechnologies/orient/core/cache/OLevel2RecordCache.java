@@ -33,8 +33,6 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.CACH
 public class OLevel2RecordCache extends OAbstractRecordCache {
 
   private STRATEGY strategy;
-  private final Lock lock = new ReentrantLock(  );
-
 
   public enum STRATEGY {
     POP_RECORD, COPY_RECORD
@@ -61,7 +59,7 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
       return;
 
     if (fresh.isPinned()) {
-      lock.lock();
+      underlying.lock(fresh.getIdentity());
       try {
         final ORecordInternal<?> current = underlying.get(fresh.getIdentity());
         if (current != null && current.getVersion() >= fresh.getVersion())
@@ -73,7 +71,7 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
         } else
           underlying.put((ORecordInternal<?>) fresh.flatCopy());
       } finally {
-        lock.unlock();
+        underlying.unlock(fresh.getIdentity());
       }
     } else
       underlying.remove(fresh.getIdentity());
@@ -97,7 +95,7 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
       return null;
 
     final ORecordInternal<?> record;
-    lock.lock();
+    underlying.lock(iRID);
     try {
       record = underlying.remove(iRID);
 
@@ -108,7 +106,7 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
         // PUT BACK A CLONE (THIS UPDATE ALSO THE LRU)
         underlying.put((ORecordInternal<?>) record.flatCopy());
     } finally {
-      lock.unlock();
+      underlying.unlock(iRID);
     }
 
     return record;
