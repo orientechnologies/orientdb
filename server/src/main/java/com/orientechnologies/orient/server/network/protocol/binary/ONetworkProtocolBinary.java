@@ -129,10 +129,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			if (lastClientTxId > -1)
 				connection = OClientConnectionManager.instance().getConnection(lastClientTxId);
 			else {
-				if (connection == null) {
-					sendShutdown();
-					return;
-				} else
+//				if (connection == null) {
+//					sendShutdown();
+//					return;
+//				} else
 					connection = OClientConnectionManager.instance().connect(connection.protocol.getChannel().socket, this);
 			}
 
@@ -373,6 +373,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			OLogManager.instance().info(this, "Dropped database '%s", connection.database.getURL());
 
 			connection.database.delete();
+			connection.close();
+
+			if (OClientConnectionManager.instance().disconnect(connection.id))
+				sendShutdown();
 
 			channel.acquireExclusiveLock();
 			try {

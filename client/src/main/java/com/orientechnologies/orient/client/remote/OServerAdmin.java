@@ -247,6 +247,8 @@ public class OServerAdmin {
 			OLogManager.instance().exception("Cannot delete the remote storage: " + storage.getName(), e, OStorageException.class);
 			storage.close(true);
 		}
+		
+		storage.setSessionId(-1);
 
 		for (OStorage s : Orient.instance().getStorages()) {
 			if (s.getURL().startsWith(getURL())) {
