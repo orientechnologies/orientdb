@@ -34,6 +34,7 @@ import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
@@ -65,8 +66,10 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedServerAb
 
 			final OClientConnection[] conns = OServerMain.server().getManagedServer().getConnections();
 			for (OClientConnection c : conns) {
+				final ONetworkProtocolData data = c.data;
+
 				synchronized (dateTimeFormat) {
-					lastCommandOn = dateTimeFormat.format(new Date(c.protocol.getData().lastCommandReceived));
+					lastCommandOn = dateTimeFormat.format(new Date(data.lastCommandReceived));
 					connectedOn = dateTimeFormat.format(new Date(c.since));
 				}
 
@@ -75,19 +78,19 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedServerAb
 				writeField(json, 2, "remoteAddress", c.protocol.getChannel() != null ? c.protocol.getChannel().toString() : "Disconnected");
 				writeField(json, 2, "db", c.database != null ? c.database.getName() : "-");
 				writeField(json, 2, "protocol", c.protocol.getType());
-				writeField(json, 2, "protocolVersion", c.protocol.getData().protocolVersion);
-				writeField(json, 2, "driverName", c.protocol.getData().driverName);
-				writeField(json, 2, "driverVersion", c.protocol.getData().driverVersion);
-				writeField(json, 2, "clientId", c.protocol.getData().clientId);
+				writeField(json, 2, "protocolVersion", data.protocolVersion);
+				writeField(json, 2, "driverName", data.driverName);
+				writeField(json, 2, "driverVersion", data.driverVersion);
+				writeField(json, 2, "clientId", data.clientId);
 				writeField(json, 2, "user", c.database != null && c.database.getUser() != null ? c.database.getUser().getName() : "-");
-				writeField(json, 2, "totalRequests", c.protocol.getData().totalRequests);
-				writeField(json, 2, "commandInfo", c.protocol.getData().commandInfo);
-				writeField(json, 2, "commandDetail", c.protocol.getData().commandDetail);
+				writeField(json, 2, "totalRequests", data.totalRequests);
+				writeField(json, 2, "commandInfo", data.commandInfo);
+				writeField(json, 2, "commandDetail", data.commandDetail);
 				writeField(json, 2, "lastCommandOn", lastCommandOn);
-				writeField(json, 2, "lastCommandInfo", c.protocol.getData().lastCommandInfo);
-				writeField(json, 2, "lastCommandDetail", c.protocol.getData().lastCommandDetail);
-				writeField(json, 2, "lastExecutionTime", c.protocol.getData().lastCommandExecutionTime);
-				writeField(json, 2, "totalWorkingTime", c.protocol.getData().totalCommandExecutionTime);
+				writeField(json, 2, "lastCommandInfo", data.lastCommandInfo);
+				writeField(json, 2, "lastCommandDetail", data.lastCommandDetail);
+				writeField(json, 2, "lastExecutionTime", data.lastCommandExecutionTime);
+				writeField(json, 2, "totalWorkingTime", data.totalCommandExecutionTime);
 				writeField(json, 2, "connectedOn", connectedOn);
 				json.endObject(2);
 			}

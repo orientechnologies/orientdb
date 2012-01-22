@@ -62,7 +62,7 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 			final OContextConfiguration iConfiguration) throws IOException {
 		server = iServer;
 		setName("HTTP-DB");
-		data.serverInfo = ORIENT_SERVER_DB;
+		iConnection.data.serverInfo = ORIENT_SERVER_DB;
 
 		registerCommand(new OServerCommandGetConnect());
 		registerCommand(new OServerCommandGetDisconnect());

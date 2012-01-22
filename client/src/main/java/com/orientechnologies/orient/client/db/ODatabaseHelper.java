@@ -44,11 +44,16 @@ public class ODatabaseHelper {
 		deleteDatabase(database, "server");
 	}
 
-	public static void deleteDatabase(final ODatabase database, String iDirectory) throws IOException {
+	@Deprecated
+	public static void deleteDatabase(final ODatabase database, final String iDirectory) throws IOException {
+		dropDatabase(database, iDirectory);
+	}
+
+	public static void dropDatabase(final ODatabase database, final String iDirectory) throws IOException {
 		if (database.getURL().startsWith("remote:")) {
 			new OServerAdmin(database.getURL()).connect("root", getServerRootPassword(iDirectory)).dropDatabase();
 		} else {
-			database.delete();
+			database.drop();
 		}
 	}
 

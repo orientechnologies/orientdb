@@ -16,6 +16,8 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
+import com.orientechnologies.orient.client.remote.OStorageRemote;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.id.ORID;
@@ -65,15 +67,15 @@ public class MultipleDBTest {
 					}
 
 					try {
-						System.out.println("(" + dbUrl + ") " + "Created");
+						System.out.println("(" + getDbId(tx) + ") " + "Created");
 
 						if (tx.isClosed()) {
 							tx.open("admin", "admin");
 						}
 						tx.getEntityManager().registerEntityClass(DummyObject.class);
 
-						// System.out.println("(" + dbUrl + ") " + "Registered: " + DummyObject.class);
-						// System.out.println("(" + dbUrl + ") " + "Calling: " + operations + " operations");
+						// System.out.println("(" +getDbId( tx ) + ") " + "Registered: " + DummyObject.class);
+						// System.out.println("(" +getDbId( tx ) + ") " + "Calling: " + operations + " operations");
 						long start = System.currentTimeMillis();
 						for (int j = 0; j < operations_write; j++) {
 							DummyObject dummy = new DummyObject("name" + j);
@@ -82,12 +84,12 @@ public class MultipleDBTest {
 							Assert.assertEquals(((ORID) dummy.getId()).getClusterPosition(), j);
 
 							if ((j + 1) % 20000 == 0) {
-								System.out.println("(" + dbUrl + ") " + "Operations (WRITE) executed: " + (j + 1));
+								System.out.println("(" + getDbId(tx) + ") " + "Operations (WRITE) executed: " + (j + 1));
 							}
 						}
 						long end = System.currentTimeMillis();
 
-						String time = "(" + dbUrl + ") " + "Executed operations (WRITE) in: " + (end - start) + " ms";
+						String time = "(" + getDbId(tx) + ") " + "Executed operations (WRITE) in: " + (end - start) + " ms";
 						System.out.println(time);
 						times.add(time);
 
@@ -97,12 +99,12 @@ public class MultipleDBTest {
 							Assert.assertEquals(l.size(), operations_write);
 
 							if ((j + 1) % 20000 == 0) {
-								System.out.println("(" + dbUrl + ") " + "Operations (READ) executed: " + j + 1);
+								System.out.println("(" + getDbId(tx) + ") " + "Operations (READ) executed: " + j + 1);
 							}
 						}
 						end = System.currentTimeMillis();
 
-						time = "(" + dbUrl + ") " + "Executed operations (READ) in: " + (end - start) + " ms";
+						time = "(" + getDbId(tx) + ") " + "Executed operations (READ) in: " + (end - start) + " ms";
 						System.out.println(time);
 						times.add(time);
 
@@ -112,7 +114,11 @@ public class MultipleDBTest {
 						activeDBs.decrementAndGet();
 					} finally {
 						try {
+							System.out.println("(" + getDbId(tx) + ") " + "Dropping");
+							System.out.flush();
 							ODatabaseHelper.deleteDatabase(tx);
+							System.out.println("(" + getDbId(tx) + ") " + "Dropped");
+							System.out.flush();
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
@@ -166,15 +172,15 @@ public class MultipleDBTest {
 					}
 
 					try {
-						System.out.println("(" + dbUrl + ") " + "Created");
+						System.out.println("(" + getDbId(tx) + ") " + "Created");
 
 						if (tx.isClosed()) {
 							tx.open("admin", "admin");
 						}
 						// tx.getEntityManager().registerEntityClass(DummyObject.class);
 
-						// System.out.println("(" + dbUrl + ") " + "Registered: " + DummyObject.class);
-						// System.out.println("(" + dbUrl + ") " + "Calling: " + operations + " operations");
+						// System.out.println("(" +getDbId( tx ) + ") " + "Registered: " + DummyObject.class);
+						// System.out.println("(" +getDbId( tx ) + ") " + "Calling: " + operations + " operations");
 						long start = System.currentTimeMillis();
 						for (int j = 0; j < operations_write; j++) {
 							// DummyObject dummy = new DummyObject("name" + j);
@@ -189,12 +195,12 @@ public class MultipleDBTest {
 							// Assert.assertEquals(dummy.getId().toString(), "#5:" + j);
 
 							if ((j + 1) % 20000 == 0) {
-								System.out.println("(" + dbUrl + ") " + "Operations (WRITE) executed: " + (j + 1));
+								System.out.println("(" + getDbId(tx) + ") " + "Operations (WRITE) executed: " + (j + 1));
 							}
 						}
 						long end = System.currentTimeMillis();
 
-						String time = "(" + dbUrl + ") " + "Executed operations (WRITE) in: " + (end - start) + " ms";
+						String time = "(" + getDbId(tx) + ") " + "Executed operations (WRITE) in: " + (end - start) + " ms";
 						System.out.println(time);
 						times.add(time);
 
@@ -204,12 +210,12 @@ public class MultipleDBTest {
 							Assert.assertEquals(l.size(), operations_write);
 
 							if ((j + 1) % 20000 == 0) {
-								System.out.println("(" + dbUrl + ") " + "Operations (READ) executed: " + j + 1);
+								System.out.println("(" + getDbId(tx) + ") " + "Operations (READ) executed: " + j + 1);
 							}
 						}
 						end = System.currentTimeMillis();
 
-						time = "(" + dbUrl + ") " + "Executed operations (READ) in: " + (end - start) + " ms";
+						time = "(" + getDbId(tx) + ") " + "Executed operations (READ) in: " + (end - start) + " ms";
 						System.out.println(time);
 						times.add(time);
 
@@ -242,4 +248,12 @@ public class MultipleDBTest {
 
 		System.out.println("Test testDocumentMultipleDBsThreaded ended");
 	}
+
+	private String getDbId(ODatabase tx) {
+		if (tx.getStorage() instanceof OStorageRemote)
+			return tx.getURL() + " - sessionId: " + ((OStorageRemote) tx.getStorage()).getSessionId();
+		else
+			return tx.getURL();
+	}
+
 }

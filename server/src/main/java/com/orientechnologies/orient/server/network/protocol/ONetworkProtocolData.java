@@ -35,5 +35,5 @@ public class ONetworkProtocolData {
 	public String	driverName								= null;
 	public String	driverVersion							= null;
 	public short	protocolVersion						= -1;
-	public String	clientId								= null;
+	public String	clientId									= null;
 }

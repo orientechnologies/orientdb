@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
-import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
 public class OrientServer implements OrientServerMBean {
 	protected List<OStorage>	storages;
@@ -40,14 +39,6 @@ public class OrientServer implements OrientServerMBean {
 		final Collection<OClientConnection> conns = OClientConnectionManager.instance().getConnections();
 		final OClientConnection[] output = new OClientConnection[conns.size()];
 		conns.toArray(output);
-		return output;
-	}
-
-	@Override
-	public ONetworkProtocol[] getProtocols() {
-		final Collection<ONetworkProtocol> handlers = OClientConnectionManager.instance().getHandlers();
-		final ONetworkProtocol[] output = new ONetworkProtocol[handlers.size()];
-		handlers.toArray(output);
 		return output;
 	}
 }

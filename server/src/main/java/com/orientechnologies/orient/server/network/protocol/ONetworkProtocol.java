@@ -25,8 +25,7 @@ import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 
 public abstract class ONetworkProtocol extends OSoftThread {
-	protected ONetworkProtocolData	data	= new ONetworkProtocolData();
-	protected OServer								server;
+	protected OServer	server;
 
 	public ONetworkProtocol(ThreadGroup group, String name) {
 		super(group, name);
@@ -40,10 +39,6 @@ public abstract class ONetworkProtocol extends OSoftThread {
 	public abstract OChannel getChannel();
 
 	public void registerCommand(final Object iServerCommandInstance) {
-	}
-
-	public ONetworkProtocolData getData() {
-		return data;
 	}
 
 	public OServer getServer() {

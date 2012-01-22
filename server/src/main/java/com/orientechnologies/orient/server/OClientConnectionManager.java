@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
@@ -33,7 +34,6 @@ import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProto
 
 public class OClientConnectionManager extends OSharedResourceAbstract {
 	protected Map<Integer, OClientConnection>			connections				= new HashMap<Integer, OClientConnection>();
-	protected Map<Integer, ONetworkProtocol>			handlers					= new HashMap<Integer, ONetworkProtocol>();
 	protected int																	connectionSerial	= 0;
 
 	private static final OClientConnectionManager	instance					= new OClientConnectionManager();
@@ -50,7 +50,7 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
 	 * @throws IOException
 	 */
 	public OClientConnection connect(final Socket iSocket, final ONetworkProtocol iProtocol) throws IOException {
-		OProfiler.getInstance().updateCounter("OServer.threads.actives", +1);
+		OProfiler.getInstance().updateCounter("OServer.connections.actives", +1);
 
 		final OClientConnection connection;
 
@@ -59,7 +59,6 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
 			connection = new OClientConnection(++connectionSerial, iProtocol);
 
 			connections.put(connection.id, connection);
-			handlers.put(connection.id, connection.protocol);
 
 		} finally {
 			releaseExclusiveLock();
@@ -79,16 +78,43 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
 		}
 	}
 
-	public void disconnect(final int iChannelId) {
-		OProfiler.getInstance().updateCounter("OServer.threads.actives", -1);
+	/**
+	 * Disconnects a client connections
+	 * 
+	 * @param iChannelId
+	 * @return true if was last one, otherwise false
+	 */
+	public boolean disconnect(final int iChannelId) {
+		OProfiler.getInstance().updateCounter("OServer.connections.actives", -1);
 
 		acquireExclusiveLock();
 		try {
-			final OClientConnection conn = connections.remove(iChannelId);
-			if (conn == null)
-				return;
+			final OClientConnection connection = connections.remove(iChannelId);
 
-			handlers.remove(iChannelId);
+			if (connection != null) {
+				// CHECK IF THERE ARE OTHER CONNECTIONS
+				for (Entry<Integer, OClientConnection> entry : connections.entrySet()) {
+					if (entry.getValue().getProtocol().equals(connection.getProtocol()))
+						return false;
+				}
+				return true;
+			}
+
+		} finally {
+			releaseExclusiveLock();
+		}
+		return false;
+	}
+
+	public void disconnect(final OClientConnection connection) {
+		OProfiler.getInstance().updateCounter("OServer.connections.actives", -1);
+
+		acquireExclusiveLock();
+		try {
+			for (Entry<Integer, OClientConnection> entry : new HashMap<Integer, OClientConnection>(connections).entrySet()) {
+				if (entry.getValue().equals(connection))
+					connections.remove(entry.getKey());
+			}
 
 		} finally {
 			releaseExclusiveLock();
@@ -103,15 +129,6 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
 		acquireSharedLock();
 		try {
 			return new ArrayList<OClientConnection>(connections.values());
-		} finally {
-			releaseSharedLock();
-		}
-	}
-
-	public List<ONetworkProtocol> getHandlers() {
-		acquireSharedLock();
-		try {
-			return new ArrayList<ONetworkProtocol>(handlers.values());
 		} finally {
 			releaseSharedLock();
 		}

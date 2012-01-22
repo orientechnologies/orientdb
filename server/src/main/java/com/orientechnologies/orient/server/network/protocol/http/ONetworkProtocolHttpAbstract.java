@@ -79,9 +79,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		channel = new OChannelTextServer(iSocket, iConfiguration);
 		connection = iConnection;
 
-		request = new OHttpRequest(this, channel, data, iConfiguration);
+		request = new OHttpRequest(this, channel, connection.data, iConfiguration);
 
-		data.caller = channel.toString();
+		connection.data.caller = channel.toString();
 
 		start();
 	}
@@ -89,9 +89,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	public void service() throws ONetworkProtocolException, IOException {
 		OProfiler.getInstance().updateCounter("Server.requests", +1);
 
-		++data.totalRequests;
-		data.commandInfo = null;
-		data.commandDetail = null;
+		++connection.data.totalRequests;
+		connection.data.commandInfo = null;
+		connection.data.commandDetail = null;
 
 		long begin = System.currentTimeMillis();
 
@@ -148,11 +148,11 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			}
 		} while (isChain);
 
-		data.lastCommandInfo = data.commandInfo;
-		data.lastCommandDetail = data.commandDetail;
+		connection.data.lastCommandInfo = connection.data.commandInfo;
+		connection.data.lastCommandDetail = connection.data.commandDetail;
 
-		data.lastCommandExecutionTime = System.currentTimeMillis() - begin;
-		data.totalCommandExecutionTime += data.lastCommandExecutionTime;
+		connection.data.lastCommandExecutionTime = System.currentTimeMillis() - begin;
+		connection.data.totalCommandExecutionTime += connection.data.lastCommandExecutionTime;
 	}
 
 	protected void handleError(Exception e) {
@@ -276,7 +276,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		writeLine("Pragma: no-cache");
 		writeLine("Date: " + new Date());
 		writeLine("Content-Type: " + iContentType + "; charset=" + responseCharSet);
-		writeLine("Server: " + data.serverInfo);
+		writeLine("Server: " + connection.data.serverInfo);
 		writeLine("Connection: Keep-Alive");
 	}
 
@@ -335,7 +335,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 						iRequest.ifMatch = line.substring(OHttpUtils.HEADER_IF_MATCH.length());
 
 					else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_X_FORWARDED_FOR))
-						getData().caller = line.substring(OHttpUtils.HEADER_X_FORWARDED_FOR.length());
+						connection.data.caller = line.substring(OHttpUtils.HEADER_X_FORWARDED_FOR.length());
 
 				}
 
@@ -388,12 +388,12 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			return;
 		}
 
-		data.commandInfo = "Listening";
-		data.commandDetail = null;
+		connection.data.commandInfo = "Listening";
+		connection.data.commandDetail = null;
 
 		try {
 			channel.socket.setSoTimeout(socketTimeout);
-			data.lastCommandReceived = -1;
+			connection.data.lastCommandReceived = -1;
 
 			char c = (char) channel.inStream.read();
 
@@ -403,7 +403,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			}
 
 			channel.socket.setSoTimeout(socketTimeout);
-			data.lastCommandReceived = OProfiler.getInstance().startChrono();
+			connection.data.lastCommandReceived = OProfiler.getInstance().startChrono();
 
 			requestContent.setLength(0);
 			request.isMultipart = false;
@@ -468,8 +468,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
 			readAllContent(request);
 		} finally {
-			if (data.lastCommandReceived > -1)
-				OProfiler.getInstance().stopChrono("ONetworkProtocolHttp.execute", data.lastCommandReceived);
+			if (connection.data.lastCommandReceived > -1)
+				OProfiler.getInstance().stopChrono("ONetworkProtocolHttp.execute", connection.data.lastCommandReceived);
 		}
 	}
 

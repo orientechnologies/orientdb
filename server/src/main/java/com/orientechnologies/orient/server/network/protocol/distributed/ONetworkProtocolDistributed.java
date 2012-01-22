@@ -60,15 +60,16 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 	@Override
 	protected void parseCommand() throws IOException, InterruptedException {
 
-		if (clientId == null && data.clientId != null && data.clientId.startsWith(ODistributedStorage.DNODE_PREFIX))
+		if (clientId == null && connection != null && connection.data.clientId != null
+				&& connection.data.clientId.startsWith(ODistributedStorage.DNODE_PREFIX))
 			// ASSIGN CLIENT-ID ONCE
-			clientId = data.clientId.substring(ODistributedStorage.DNODE_PREFIX.length());
+			clientId = connection.data.clientId.substring(ODistributedStorage.DNODE_PREFIX.length());
 
 		// DISTRIBUTED SERVER REQUESTS
 		switch (lastRequestType) {
 
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_SYNCHRONIZE: {
-			data.commandInfo = "Synchronization between nodes";
+			connection.data.commandInfo = "Synchronization between nodes";
 			final ODocument cfg = new ODocument(channel.readBytes());
 
 			sendOk(lastClientTxId);
@@ -121,7 +122,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 		}
 
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_LEADER_CONNECT: {
-			data.commandInfo = "Clustered connection from leader";
+			connection.data.commandInfo = "Clustered connection from leader";
 			final ODocument doc = new ODocument().fromStream(channel.readBytes());
 			final String clusterName = doc.field("clusterName");
 			final byte[] encodedSecurityKey = doc.field("clusterKey");
@@ -188,7 +189,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_HEARTBEAT:
 			checkConnected();
-			data.commandInfo = "Cluster Heartbeat";
+			connection.data.commandInfo = "Cluster Heartbeat";
 			manager.updateHeartBeatTime();
 
 			channel.acquireExclusiveLock();
@@ -200,7 +201,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			break;
 
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_RECORD_CHANGE: {
-			data.commandInfo = "Distributed record change";
+			connection.data.commandInfo = "Distributed record change";
 
 			final byte operationType = channel.readByte();
 			final long operationId = channel.readLong(); // USE THIS FOR LOGGING
@@ -252,7 +253,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 		}
 
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_SENDER: {
-			data.commandInfo = "Share the database to a remote server";
+			connection.data.commandInfo = "Share the database to a remote server";
 
 			final String dbUrl = channel.readString();
 			final String dbUser = channel.readString();
@@ -283,7 +284,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_RECEIVER: {
 			checkConnected();
-			data.commandInfo = "Received a shared database from a remote server to install";
+			connection.data.commandInfo = "Received a shared database from a remote server to install";
 
 			final String dbName = channel.readString();
 			final String dbUser = channel.readString();
@@ -331,7 +332,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_CONFIG: {
 			checkConnected();
-			data.commandInfo = "Update db configuration from server node leader";
+			connection.data.commandInfo = "Update db configuration from server node leader";
 
 			final ODocument cfg = new ODocument().fromStream(channel.readBytes());
 			manager.getReplicator().updateConfiguration(cfg);
