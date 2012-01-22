@@ -44,7 +44,7 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedServerAb
 	private final static DateFormat	dateTimeFormat	= new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 
 	public OServerCommandGetServer() {
-		super("info-server");
+		super("server.info");
 	}
 
 	@Override

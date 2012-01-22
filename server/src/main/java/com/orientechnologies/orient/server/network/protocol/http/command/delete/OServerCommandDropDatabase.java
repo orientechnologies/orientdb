@@ -18,16 +18,20 @@ package com.orientechnologies.orient.server.network.protocol.http.command.delete
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
-public class OServerCommandDeleteDatabase extends OServerCommandAuthenticatedDbAbstract {
+public class OServerCommandDropDatabase extends OServerCommandAuthenticatedServerAbstract {
 	private static final String[]	NAMES	= { "DELETE|database/*" };
+
+	public OServerCommandDropDatabase() {
+		super("database.drop");
+	}
 
 	@Override
 	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: database/<database>");
 
-		iRequest.data.commandInfo = "Delete database";
+		iRequest.data.commandInfo = "Drop database";
 		iRequest.data.commandDetail = urlParts[1];
 
 		ODatabaseDocumentTx db = null;
@@ -36,7 +40,7 @@ public class OServerCommandDeleteDatabase extends OServerCommandAuthenticatedDbA
 			if (!OSharedDocumentDatabase.getDatabasePools().containsKey(urlParts[1]))
 				throw new IllegalArgumentException("Invalid database '" + urlParts[1] + "'");
 
-			throw new UnsupportedOperationException("Delete database");
+			throw new UnsupportedOperationException("Drop database");
 
 		} finally {
 			if (db != null)

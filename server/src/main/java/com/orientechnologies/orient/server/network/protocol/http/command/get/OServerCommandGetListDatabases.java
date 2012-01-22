@@ -26,7 +26,7 @@ public class OServerCommandGetListDatabases extends OServerCommandAuthenticatedS
 	private static final String[]	NAMES	= { "GET|listDatabases" };
 
 	public OServerCommandGetListDatabases() {
-		super("info-server");
+		super("server.listDatabases");
 	}
 
 	@Override

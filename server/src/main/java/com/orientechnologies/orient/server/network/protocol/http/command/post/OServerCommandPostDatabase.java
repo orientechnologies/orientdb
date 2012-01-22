@@ -54,7 +54,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
 	private static final String[]	NAMES	= { "POST|database/*" };
 
 	public OServerCommandPostDatabase() {
-		super("info-server");
+		super("database.create");
 	}
 
 	@Override
