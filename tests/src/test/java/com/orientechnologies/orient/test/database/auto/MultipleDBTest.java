@@ -165,7 +165,8 @@ public class MultipleDBTest {
 
 					try {
 						ODatabaseHelper.deleteDatabase(tx);
-						System.out.println("Thread " + this + "  is creating database " + dbUrl);
+						System.out.println("Thread " + this + " is creating database " + dbUrl);
+						System.out.flush();
 						ODatabaseHelper.createDatabase(tx, dbUrl);
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -173,6 +174,7 @@ public class MultipleDBTest {
 
 					try {
 						System.out.println("(" + getDbId(tx) + ") " + "Created");
+						System.out.flush();
 
 						if (tx.isClosed()) {
 							tx.open("admin", "admin");
@@ -196,12 +198,15 @@ public class MultipleDBTest {
 
 							if ((j + 1) % 20000 == 0) {
 								System.out.println("(" + getDbId(tx) + ") " + "Operations (WRITE) executed: " + (j + 1));
+								System.out.flush();
 							}
 						}
 						long end = System.currentTimeMillis();
 
 						String time = "(" + getDbId(tx) + ") " + "Executed operations (WRITE) in: " + (end - start) + " ms";
 						System.out.println(time);
+						System.out.flush();
+
 						times.add(time);
 
 						start = System.currentTimeMillis();
@@ -211,12 +216,15 @@ public class MultipleDBTest {
 
 							if ((j + 1) % 20000 == 0) {
 								System.out.println("(" + getDbId(tx) + ") " + "Operations (READ) executed: " + j + 1);
+								System.out.flush();
 							}
 						}
 						end = System.currentTimeMillis();
 
 						time = "(" + getDbId(tx) + ") " + "Executed operations (READ) in: " + (end - start) + " ms";
 						System.out.println(time);
+						System.out.flush();
+
 						times.add(time);
 
 					} finally {
@@ -224,6 +232,7 @@ public class MultipleDBTest {
 							tx.close();
 
 							System.out.println("Thread " + this + "  is dropping database " + dbUrl);
+							System.out.flush();
 							ODatabaseHelper.deleteDatabase(tx);
 
 							sem.release();
@@ -247,6 +256,7 @@ public class MultipleDBTest {
 		// }
 
 		System.out.println("Test testDocumentMultipleDBsThreaded ended");
+		System.out.flush();
 	}
 
 	private String getDbId(ODatabase tx) {

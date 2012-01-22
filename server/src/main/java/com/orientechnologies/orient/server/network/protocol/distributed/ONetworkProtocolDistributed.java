@@ -154,31 +154,27 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 					if (leaderAddress.compareTo(myUid) > 0) {
 						// BY CONVENTION THE LOWER VALUE WINS AND REMAIN LEADER
 						// THIS NODE IS OLDER: WIN! REFUSE THE CONNECTION
-						channel.writeByte((byte) 0);
-						channel.flush();
 						remainTheLeader = true;
-
 						OLogManager.instance().warn(this,
 								"Current node remains the Leader of the cluster because it has lower network address", leaderAddress);
 					}
 				}
 
+				channel.writeByte((byte) (remainTheLeader ? 0 : 1));
+
 				if (!remainTheLeader) {
 					// OK TO BE A PEER
-					channel.writeByte((byte) 1);
-					channel.flush();
-
-					channel.writeBytes(manager.getReplicator().getLocalDatabaseConfiguration().toStream());
-					channel.flush();
-
-					manager.getReplicator().updateConfiguration(new ODocument(channel.readBytes()));
-
-					manager.becomePeer(this);
+					final ODocument localCfg = manager.getReplicator().getLocalDatabaseConfiguration();
+					channel.writeBytes(localCfg.toStream());
 				}
-
 			} finally {
 				channel.releaseExclusiveLock();
+				channel.flush();
 			}
+
+			manager.getReplicator().updateConfiguration(new ODocument(channel.readBytes()));
+
+			manager.becomePeer(this);
 
 			if (remainTheLeader)
 				// ABORT THE CONNECTION & THREAD

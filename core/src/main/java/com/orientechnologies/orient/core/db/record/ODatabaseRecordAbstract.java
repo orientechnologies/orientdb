@@ -104,17 +104,18 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 			if (getStorage() instanceof OStorageEmbedded) {
 				user = getMetadata().getSecurity().authenticate(iUserName, iUserPassword);
-				final Set<ORole> roles = user.getRoles();
-				if (roles == null || roles.isEmpty() || roles.iterator().next() == null) {
-					// SEEMS CORRUPTED: INSTALL DEFAULT ROLE
-					for (ODatabaseListener l : underlying.getListeners()) {
-						if (l
-								.onCorruptionRepairDatabase(this, "Security metadata is broken: current user '" + user.getName()
-										+ "' has no roles defined",
-										"The 'admin' user will be reinstalled with default role ('admin') and password 'admin'")) {
-							user = null;
-							user = metadata.getSecurity().repair();
-							break;
+				if (user != null) {
+					final Set<ORole> roles = user.getRoles();
+					if (roles == null || roles.isEmpty() || roles.iterator().next() == null) {
+						// SEEMS CORRUPTED: INSTALL DEFAULT ROLE
+						for (ODatabaseListener l : underlying.getListeners()) {
+							if (l.onCorruptionRepairDatabase(this, "Security metadata is broken: current user '" + user.getName()
+									+ "' has no roles defined",
+									"The 'admin' user will be reinstalled with default role ('admin') and password 'admin'")) {
+								user = null;
+								user = metadata.getSecurity().repair();
+								break;
+							}
 						}
 					}
 				}

@@ -114,6 +114,7 @@ public class ODiscoverySignaler extends OPollerThread {
 
 	@Override
 	public void shutdown() {
+		super.shutdown();
 		if (runningTask != null)
 			runningTask.cancel();
 
@@ -124,6 +125,5 @@ public class ODiscoverySignaler extends OPollerThread {
 		}
 		socket = null;
 		dgram = null;
-		super.shutdown();
 	}
 }

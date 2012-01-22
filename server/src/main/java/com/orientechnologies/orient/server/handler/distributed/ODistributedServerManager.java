@@ -132,6 +132,9 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	 * 
 	 */
 	public void becameLeader() {
+		if (id.equals("192.168.1.100:2425"))
+			return;
+
 		synchronized (this) {
 
 			if (peer != null) {

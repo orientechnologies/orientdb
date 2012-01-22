@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.crypto.SecretKey;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -48,10 +49,8 @@ public class ORemotePeer {
 	private OChannelBinaryClient				channel;
 	private OContextConfiguration				configuration;
 	private volatile STATUS							status					= STATUS.DISCONNECTED;
-	private int													clientTxId;
 	private int													sessionId;
 	private OAsynchChannelServiceThread	serviceThread;
-	private static AtomicInteger				serialClientId	= new AtomicInteger(-1);
 
 	public ORemotePeer(final OLeaderNode iNode, final String iServerAddress, final int iServerPort) {
 		leader = iNode;
@@ -77,17 +76,17 @@ public class ORemotePeer {
 		configuration.setValue(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT, iTimeout);
 
 		channel = new OChannelBinaryClient(networkAddress, networkPort, configuration);
-		serviceThread = new OAsynchChannelServiceThread(new ODistributedRemoteAsynchEventListener(leader.getManager(), null, id),
-				channel);
+//		serviceThread = new OAsynchChannelServiceThread(new ODistributedRemoteAsynchEventListener(leader.getManager(), null, id),
+//				channel);
 
 		OLogManager.instance().warn(this, "Cluster <%s>: received joining request from peer node %s:%d. Checking authorizations...",
 				iClusterName, networkAddress, networkPort);
 
-		clientTxId = serialClientId.decrementAndGet();
+		sessionId = OStorageRemoteThread.getNextConnectionId();
 
 		// CONNECT TO THE SERVER
 		channel.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_LEADER_CONNECT);
-		channel.writeInt(clientTxId);
+		channel.writeInt(sessionId);
 
 		final ODocument doc = new ODocument();
 		doc.field("clusterName", iClusterName);
@@ -97,28 +96,34 @@ public class ORemotePeer {
 		channel.writeBytes(doc.toStream());
 		channel.flush();
 
-		channel.readStatus();
-		clientTxId = channel.readInt();
+		final ODocument cfg;
 
-		final boolean connectedAsPeer = channel.readByte() == 1;
-		if (!connectedAsPeer) {
-			OLogManager
-					.instance()
-					.warn(
-							this,
-							"Cluster <%s>: remote server node %s:%d has refused the connection because it's the new Leader. Switching to be a Peer Node...",
-							leader.getManager().getConfig().name, networkAddress, networkPort);
-			leader.getManager().becomePeer(null);
-			return false;
+		beginResponse(sessionId);
+		try {
+			sessionId = channel.readInt();
+
+			final byte connectedAsPeer = channel.readByte();
+			if (connectedAsPeer == 0) {
+				OLogManager
+						.instance()
+						.warn(
+								this,
+								"Cluster <%s>: remote server node %s:%d has refused the connection because it's the new Leader. Switching to be a Peer Node...",
+								leader.getManager().getConfig().name, networkAddress, networkPort);
+				leader.getManager().becomePeer(null);
+				return false;
+			}
+
+			OLogManager.instance().info(this, "Cluster <%s>: joined peer node %s:%d", iClusterName, networkAddress, networkPort);
+
+			// READ PEER DATABASES
+			cfg = new ODocument().fromStream(channel.readBytes());
+		} finally {
+			endResponse();
 		}
 
-		OLogManager.instance().info(this, "Cluster <%s>: joined peer node %s:%d", iClusterName, networkAddress, networkPort);
-
-		// READ PEER DATABASES
-		final ODocument cfg = new ODocument().fromStream(channel.readBytes());
-		final ODocument answer = leader.updatePeerDatabases(id, cfg);
-
 		// SEND BACK THE LIST OF NODES HANDLING ITS DATABASE
+		final ODocument answer = leader.updatePeerDatabases(id, cfg);
 		channel.writeBytes(answer.toStream());
 		channel.flush();
 
@@ -130,9 +135,8 @@ public class ORemotePeer {
 		OLogManager.instance().info(this, "Sending distributed configuration to server node %s:%d...", networkAddress, networkPort);
 
 		try {
+			channel.beginRequest();
 			try {
-				channel.beginRequest();
-
 				channel.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_CONFIG);
 				channel.writeInt(sessionId);
 				channel.writeBytes(iConfiguration.toStream());
@@ -167,13 +171,13 @@ public class ORemotePeer {
 			channel.beginRequest();
 			try {
 				channel.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_HEARTBEAT);
-				channel.writeInt(clientTxId);
+				channel.writeInt(sessionId);
 			} finally {
 				channel.endRequest();
 			}
 
 			try {
-				channel.beginResponse(clientTxId);
+				channel.beginResponse(sessionId);
 			} finally {
 				channel.endResponse();
 			}
@@ -192,7 +196,7 @@ public class ORemotePeer {
 
 	public void beginResponse() throws IOException {
 		if (channel != null)
-			channel.beginResponse(clientTxId);
+			channel.beginResponse(sessionId);
 	}
 
 	public void endResponse() {

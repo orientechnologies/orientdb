@@ -360,4 +360,8 @@ public class OStorageRemoteThread implements OStorage {
 	public void removeRemoteServerEventListener() {
 		delegate.removeRemoteServerEventListener();
 	}
+
+	public static int getNextConnectionId() {
+		return sessionSerialId.decrementAndGet();
+	}
 }
