@@ -79,8 +79,8 @@ public class ODefaultCache implements OCache {
   public ORecordInternal<?> get(ORID id) {
     if (!isEnabled()) return null;
     try {
-      lockManager.acquireLock(Thread.currentThread(), id, OLockManager.LOCK.SHARED);
       lock.acquireSharedLock();
+      lockManager.acquireLock(Thread.currentThread(), id, OLockManager.LOCK.SHARED);
       return cache.get(id);
     } finally {
       lockManager.releaseLock(Thread.currentThread(), id, OLockManager.LOCK.SHARED);
@@ -91,8 +91,8 @@ public class ODefaultCache implements OCache {
   public ORecordInternal<?> put(ORecordInternal<?> record) {
     if (!isEnabled()) return null;
     try {
-      lockManager.acquireLock(Thread.currentThread(), record.getIdentity(), OLockManager.LOCK.EXCLUSIVE);
       lock.acquireExclusiveLock();
+      lockManager.acquireLock(Thread.currentThread(), record.getIdentity(), OLockManager.LOCK.EXCLUSIVE);
       return cache.put(record.getIdentity(), record);
     } finally {
       lockManager.releaseLock(Thread.currentThread(), record.getIdentity(), OLockManager.LOCK.EXCLUSIVE);
@@ -103,8 +103,8 @@ public class ODefaultCache implements OCache {
   public ORecordInternal<?> remove(ORID id) {
     if (!isEnabled()) return null;
     try {
-      lockManager.acquireLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
       lock.acquireExclusiveLock();
+      lockManager.acquireLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
       return cache.remove(id);
     } finally {
       lockManager.releaseLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
@@ -115,8 +115,8 @@ public class ODefaultCache implements OCache {
   public void clear() {
     if (!isEnabled()) return;
     try {
-      groupLock.acquireExclusiveLock();
       lock.acquireExclusiveLock();
+      groupLock.acquireExclusiveLock();
       cache.clear();
     } finally {
       groupLock.releaseExclusiveLock();
@@ -126,8 +126,8 @@ public class ODefaultCache implements OCache {
 
   public int size() {
     try {
-      groupLock.acquireSharedLock();
       lock.acquireSharedLock();
+      groupLock.acquireSharedLock();
       return cache.size();
     } finally {
       groupLock.releaseSharedLock();
@@ -141,8 +141,8 @@ public class ODefaultCache implements OCache {
 
   public Collection<ORID> keys() {
     try {
-      groupLock.acquireSharedLock();
       lock.acquireSharedLock();
+      groupLock.acquireSharedLock();
       return new ArrayList<ORID>(cache.keySet());
     } finally {
       groupLock.releaseSharedLock();
@@ -152,8 +152,8 @@ public class ODefaultCache implements OCache {
 
   private void removeEldest(int threshold) {
     try {
-      groupLock.acquireExclusiveLock();
       lock.acquireExclusiveLock();
+      groupLock.acquireExclusiveLock();
       cache.removeEldest(threshold);
     } finally {
       groupLock.releaseExclusiveLock();
