@@ -162,13 +162,23 @@ public class ODefaultCache implements OCache {
   }
 
   public void lock(ORID id) {
-    lockManager.acquireLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
-    groupLock.acquireExclusiveLock();
+    try {
+      lock.acquireExclusiveLock();
+      lockManager.acquireLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
+      groupLock.acquireExclusiveLock();
+    } finally {
+      lock.releaseExclusiveLock();
+    }
   }
 
   public void unlock(ORID id) {
-    lockManager.releaseLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
-    groupLock.releaseExclusiveLock();
+    try {
+      lock.acquireExclusiveLock();
+      lockManager.releaseLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
+      groupLock.releaseExclusiveLock();
+    } finally {
+      lock.releaseExclusiveLock();
+    }
   }
 
   /**
