@@ -9,10 +9,7 @@
 
 	<taskdef resource="testngtasks" classpath="lib/testng.jar" />
 	
-	<target name="test">
-		<subant target="test-memory"/>
-		<subant target="test-local"/>
-		<subant target="test-remote"/>
+	<target name="test" depends="test-memory, test-local, test-remote">
 	</target>
 	
 	<target name="test-init">
