@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -27,11 +25,6 @@ public class OServerCommandGetListDatabases extends OServerCommandAuthenticatedS
 
 	public OServerCommandGetListDatabases() {
 		super("server.listDatabases");
-	}
-
-	@Override
-	public boolean beforeExecute(OHttpRequest iRequest) throws IOException {
-		return true;
 	}
 
 	@Override
