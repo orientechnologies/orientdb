@@ -84,6 +84,11 @@ public class SchemaTest {
 		whiz.createProperty("text", OType.STRING).setMandatory(true).setMin("1").setMax("140").createIndex(OClass.INDEX_TYPE.FULLTEXT);
 		whiz.createProperty("replyTo", OType.LINK, account);
 
+		OClass strictTest = database.getMetadata().getSchema().createClass("StrictTest");
+		strictTest.setStrictMode(true);
+		strictTest.createProperty("id", OType.INTEGER).isMandatory();
+		strictTest.createProperty("name", OType.STRING);
+
 		database.close();
 	}
 

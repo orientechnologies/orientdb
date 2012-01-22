@@ -63,7 +63,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	protected OSchemaShared									owner;
 	protected String												name;
 	protected Class<?>											javaClass;
-	protected int														fixedSize		= 0;
 	protected final Map<String, OProperty>	properties	= new HashMap<String, OProperty>();
 
 	protected int[]													clusterIds;
@@ -73,6 +72,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	protected List<OClass>									baseClasses;
 	protected float													overSize		= 0f;
 	protected String												shortName;
+	protected boolean												strictMode	= false;														// @SINCE v1.0rc8
 
 	/**
 	 * Constructor used in unmarshalling.
@@ -280,10 +280,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		return addProperty(iPropertyName, iType, iLinkedType, null);
 	}
 
-	public int fixedSize() {
-		return fixedSize;
-	}
-
 	public boolean existsProperty(final String iPropertyName) {
 		return properties.containsKey(iPropertyName.toLowerCase());
 	}
@@ -360,6 +356,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		name = document.field("name");
 		shortName = document.field("shortName");
 		defaultClusterId = (Integer) document.field("defaultClusterId");
+		if (document.containsField("strictMode"))
+			strictMode = (Boolean) document.field("strictMode");
 
 		if (document.field("overSize") != null)
 			overSize = (Float) document.field("overSize");
@@ -398,6 +396,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 			document.field("defaultClusterId", defaultClusterId);
 			document.field("clusterIds", clusterIds);
 			document.field("overSize", overSize);
+			document.field("strictMode", strictMode);
 
 			final Set<ODocument> props = new HashSet<ODocument>();
 			for (final OProperty p : properties.values()) {
@@ -536,6 +535,23 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		this.overSize = overSize;
 	}
 
+	public boolean isStrictMode() {
+		return strictMode;
+	}
+
+	public OClass setStrictMode(final boolean iStrict) {
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		final String cmd = String.format("alter class %s strictmode %s", name, iStrict);
+		getDatabase().command(new OCommandSQL(cmd)).execute();
+		setStrictModeInternal(iStrict);
+		return this;
+	}
+
+	public void setStrictModeInternal(final boolean iStrict) {
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		this.strictMode = iStrict;
+	}
+
 	@Override
 	public String toString() {
 		return name;
@@ -657,6 +673,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 			return getSuperClass();
 		case OVERSIZE:
 			return getOverSize();
+		case STRICTMODE:
+			return isStrictMode();
 		}
 
 		throw new IllegalArgumentException("Cannot find attribute '" + iAttribute + "'");
@@ -681,6 +699,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		case OVERSIZE:
 			setOverSizeInternal(Float.parseFloat(stringValue.replace(',', '.')));
 			break;
+		case STRICTMODE:
+			setStrictModeInternal(Boolean.parseBoolean(stringValue));
+			break;
 		}
 
 		saveInternal();
@@ -704,6 +725,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 			break;
 		case OVERSIZE:
 			setOverSize(Float.parseFloat(stringValue));
+			break;
+		case STRICTMODE:
+			setStrictMode(Boolean.parseBoolean(stringValue));
 			break;
 		}
 		return this;
@@ -957,8 +981,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		Arrays.sort(polymorphicClusterIds);
 	}
 
-	private void setClusterIds(final int[] iClusterIds) {
+	private OClass setClusterIds(final int[] iClusterIds) {
 		clusterIds = iClusterIds;
 		Arrays.sort(clusterIds);
+		return this;
 	}
 }
