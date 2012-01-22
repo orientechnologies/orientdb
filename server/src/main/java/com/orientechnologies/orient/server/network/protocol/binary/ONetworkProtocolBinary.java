@@ -128,13 +128,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			if (lastClientTxId > -1)
 				connection = OClientConnectionManager.instance().getConnection(lastClientTxId);
-			else {
-//				if (connection == null) {
-//					sendShutdown();
-//					return;
-//				} else
-					connection = OClientConnectionManager.instance().connect(connection.protocol.getChannel().socket, this);
-			}
+			else
+				connection = OClientConnectionManager.instance().connect(connection.protocol.getChannel().socket, this);
 
 			if (connection != null) {
 				ODatabaseRecordThreadLocal.INSTANCE.set(connection.database);
