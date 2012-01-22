@@ -39,7 +39,6 @@ public class ODefaultCache implements OCache {
   private static final int DEFAULT_LIMIT = 1000;
 
   private final OSharedResourceExternal lock = new OSharedResourceExternal();
-  private final OSharedResourceExternal groupLock = new OSharedResourceExternal();
   private final ORecordLockManager lockManager = new ORecordLockManager(0);
   private final AtomicBoolean enabled = new AtomicBoolean(false);
 
@@ -116,10 +115,8 @@ public class ODefaultCache implements OCache {
     if (!isEnabled()) return;
     try {
       lock.acquireExclusiveLock();
-      groupLock.acquireExclusiveLock();
       cache.clear();
     } finally {
-      groupLock.releaseExclusiveLock();
       lock.releaseExclusiveLock();
     }
   }
@@ -127,10 +124,8 @@ public class ODefaultCache implements OCache {
   public int size() {
     try {
       lock.acquireSharedLock();
-      groupLock.acquireSharedLock();
       return cache.size();
     } finally {
-      groupLock.releaseSharedLock();
       lock.releaseSharedLock();
     }
   }
@@ -142,10 +137,8 @@ public class ODefaultCache implements OCache {
   public Collection<ORID> keys() {
     try {
       lock.acquireSharedLock();
-      groupLock.acquireSharedLock();
       return new ArrayList<ORID>(cache.keySet());
     } finally {
-      groupLock.releaseSharedLock();
       lock.releaseSharedLock();
     }
   }
@@ -153,32 +146,18 @@ public class ODefaultCache implements OCache {
   private void removeEldest(int threshold) {
     try {
       lock.acquireExclusiveLock();
-      groupLock.acquireExclusiveLock();
       cache.removeEldest(threshold);
     } finally {
-      groupLock.releaseExclusiveLock();
       lock.releaseExclusiveLock();
     }
   }
 
   public void lock(ORID id) {
-    try {
-      lock.acquireExclusiveLock();
-      lockManager.acquireLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
-      groupLock.acquireExclusiveLock();
-    } finally {
-      lock.releaseExclusiveLock();
-    }
+    lockManager.acquireLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
   }
 
   public void unlock(ORID id) {
-    try {
-      lock.acquireExclusiveLock();
-      lockManager.releaseLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
-      groupLock.releaseExclusiveLock();
-    } finally {
-      lock.releaseExclusiveLock();
-    }
+    lockManager.releaseLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
   }
 
   /**
