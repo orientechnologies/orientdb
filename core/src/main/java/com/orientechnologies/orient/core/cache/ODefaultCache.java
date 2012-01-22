@@ -39,6 +39,7 @@ public class ODefaultCache implements OCache {
   private static final int DEFAULT_LIMIT = 1000;
 
   private final OSharedResourceExternal lock = new OSharedResourceExternal();
+  private final OSharedResourceExternal groupLock = new OSharedResourceExternal();
   private final ORecordLockManager lockManager = new ORecordLockManager(0);
   private final AtomicBoolean enabled = new AtomicBoolean(false);
 
@@ -49,7 +50,7 @@ public class ODefaultCache implements OCache {
 
   public ODefaultCache(int initialLimit) {
     limit = initialLimit > 0 ? initialLimit : DEFAULT_LIMIT;
-    cache = new OLinkedHashMapCache(limit, 0.75f);
+    cache = new OLinkedHashMapCache(limit, 0.75f, limit);
   }
 
   public void startup() {
@@ -78,8 +79,8 @@ public class ODefaultCache implements OCache {
   public ORecordInternal<?> get(ORID id) {
     if (!isEnabled()) return null;
     try {
-      lock.acquireSharedLock();
       lockManager.acquireLock(Thread.currentThread(), id, OLockManager.LOCK.SHARED);
+      lock.acquireSharedLock();
       return cache.get(id);
     } finally {
       lockManager.releaseLock(Thread.currentThread(), id, OLockManager.LOCK.SHARED);
@@ -90,8 +91,8 @@ public class ODefaultCache implements OCache {
   public ORecordInternal<?> put(ORecordInternal<?> record) {
     if (!isEnabled()) return null;
     try {
-      lock.acquireExclusiveLock();
       lockManager.acquireLock(Thread.currentThread(), record.getIdentity(), OLockManager.LOCK.EXCLUSIVE);
+      lock.acquireExclusiveLock();
       return cache.put(record.getIdentity(), record);
     } finally {
       lockManager.releaseLock(Thread.currentThread(), record.getIdentity(), OLockManager.LOCK.EXCLUSIVE);
@@ -102,8 +103,8 @@ public class ODefaultCache implements OCache {
   public ORecordInternal<?> remove(ORID id) {
     if (!isEnabled()) return null;
     try {
-      lock.acquireExclusiveLock();
       lockManager.acquireLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
+      lock.acquireExclusiveLock();
       return cache.remove(id);
     } finally {
       lockManager.releaseLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
@@ -114,18 +115,22 @@ public class ODefaultCache implements OCache {
   public void clear() {
     if (!isEnabled()) return;
     try {
+      groupLock.acquireExclusiveLock();
       lock.acquireExclusiveLock();
       cache.clear();
     } finally {
+      groupLock.releaseExclusiveLock();
       lock.releaseExclusiveLock();
     }
   }
 
   public int size() {
     try {
+      groupLock.acquireSharedLock();
       lock.acquireSharedLock();
       return cache.size();
     } finally {
+      groupLock.releaseSharedLock();
       lock.releaseSharedLock();
     }
   }
@@ -136,39 +141,48 @@ public class ODefaultCache implements OCache {
 
   public Collection<ORID> keys() {
     try {
+      groupLock.acquireSharedLock();
       lock.acquireSharedLock();
       return new ArrayList<ORID>(cache.keySet());
     } finally {
+      groupLock.releaseSharedLock();
       lock.releaseSharedLock();
     }
   }
 
   private void removeEldest(int threshold) {
     try {
+      groupLock.acquireExclusiveLock();
       lock.acquireExclusiveLock();
       cache.removeEldest(threshold);
     } finally {
+      groupLock.releaseExclusiveLock();
       lock.releaseExclusiveLock();
     }
   }
 
   public void lock(ORID id) {
     lockManager.acquireLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
+    groupLock.acquireExclusiveLock();
   }
 
   public void unlock(ORID id) {
     lockManager.releaseLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
+    groupLock.releaseExclusiveLock();
   }
 
   /**
-   * Cache of records.
+   * Implementation of {@link LinkedHashMap} that will remove eldest entries if
+   * size limit will be exceeded.
    *
    * @author Luca Garulli
    */
-  class OLinkedHashMapCache extends LinkedHashMap<ORID, ORecordInternal<?>> {
+   static final class OLinkedHashMapCache extends LinkedHashMap<ORID, ORecordInternal<?>> {
+    private final int limit;
 
-    public OLinkedHashMapCache(int initialCapacity, float loadFactor) {
+    public OLinkedHashMapCache(int initialCapacity, float loadFactor, int limit) {
       super(initialCapacity, loadFactor, true);
+      this.limit = limit;
     }
 
     @Override
@@ -176,7 +190,7 @@ public class ODefaultCache implements OCache {
       return size() - limit > 0;
     }
 
-    protected void removeEldest(int amount) {
+    void removeEldest(int amount) {
       final ORID[] victims = new ORID[amount];
 
       int skip = size() - amount;
@@ -192,6 +206,7 @@ public class ODefaultCache implements OCache {
     }
   }
 
+
   class OLowMemoryListener implements OMemoryWatchDog.Listener {
     public void memoryUsageLow(long freeMemory, long freeMemoryPercentage) {
       try {
@@ -203,7 +218,7 @@ public class ODefaultCache implements OCache {
           if (oldSize == 0) return;
 
           final int newSize = (int) (oldSize * 0.9f);
-          ODefaultCache.this.removeEldest(oldSize - newSize);
+          removeEldest(oldSize - newSize);
           OLogManager.instance().debug(this, "Low memory (%d%%): reducing cached records number from %d to %d",
             freeMemoryPercentage, oldSize, newSize);
         }

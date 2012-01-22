@@ -68,7 +68,7 @@ public class ODefaultCacheCleanUpTest {
 
 
   private ODefaultCache.OLinkedHashMapCache filledCacheBackend() {
-    ODefaultCache.OLinkedHashMapCache cache = new ODefaultCache(100).new OLinkedHashMapCache(100, 0.75f);
+    ODefaultCache.OLinkedHashMapCache cache = new ODefaultCache.OLinkedHashMapCache(100, 0.75f, 100);
     for (int i = 100; i > 0; i--) {
       ODocument entry = new ODocument(new ORecordId(i, i));
       cache.put(entry.getIdentity(), entry);
