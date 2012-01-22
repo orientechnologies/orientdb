@@ -90,7 +90,17 @@ public class CRUDDocumentValidationTest {
 		record.save();
 	}
 
-	@Test(dependsOnMethods = "validationEmbeddedType")
+
+	@Test(dependsOnMethods = "validationEmbeddedType", expectedExceptions = OValidationException.class)
+	public void validationStrictClass() throws ParseException {
+		ODocument doc = new ODocument("StrictTest");
+		doc.field("id", 122112);
+		doc.field("antani", "122112");
+		doc.save();
+	}
+
+
+	@Test(dependsOnMethods = "validationStrictClass")
 	public void closeDb() {
 		database.close();
 	}
