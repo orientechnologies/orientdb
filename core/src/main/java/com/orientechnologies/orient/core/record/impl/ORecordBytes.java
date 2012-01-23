@@ -49,7 +49,7 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 		ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
 	}
 
-	public ORecordBytes(final ODatabaseRecord iDatabase, byte[] iSource) {
+	public ORecordBytes(final ODatabaseRecord iDatabase, final byte[] iSource) {
 		this(iSource);
 		ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
 	}
@@ -103,9 +103,10 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 	 * 
 	 * @param in
 	 *          Input Stream, use buffered input stream wrapper to speed up reading
+	 * @return Buffer read from the stream. It's also the internal buffer size in bytes
 	 * @throws IOException
 	 */
-	public void fromInputStream(final InputStream in) throws IOException {
+	public int fromInputStream(final InputStream in) throws IOException {
 		final OMemoryStream out = new OMemoryStream();
 		try {
 			while (in.available() > 0) {
@@ -117,28 +118,27 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 			out.close();
 		}
 		_size = _source.length;
+		return _size;
 	}
 
 	/**
-	 * Reads the input stream in memory specifying the total bytes to read. This is more efficient than
-	 * {@link #fromInputStream(InputStream)} because allocation is made once. If input stream contains less bytes than total size
+	 * Reads the input stream in memory specifying the maximum bytes to read. This is more efficient than
+	 * {@link #fromInputStream(InputStream)} because allocation is made only once. If input stream contains less bytes than total size
 	 * parameter, the rest of content will be empty (filled to 0)
 	 * 
 	 * @param in
 	 *          Input Stream, use buffered input stream wrapper to speed up reading
-	 * @param iTotalSize
-	 *          Total size to read
+	 * @param iMaxSize
+	 *          Maximin size to read
+	 * @return Buffer read from the stream. It's also the internal buffer size in bytes
 	 * @throws IOException
 	 */
-	public void fromInputStream(final InputStream in, final int iTotalSize) throws IOException {
-		_source = new byte[iTotalSize];
-		for (int i = 0; i < iTotalSize; ++i) {
-			if (in.available() == 0)
-				break;
-
-			_source[i] = (byte) in.read();
-		}
-		_size = _source.length;
+	public int fromInputStream(final InputStream in, final int iMaxSize) throws IOException {
+		final int bufferSize = Math.min(in.available(), iMaxSize);
+		_source = new byte[bufferSize];
+		in.read(_source);
+		_size = bufferSize;
+		return _size;
 	}
 
 	public void toOutputStream(final OutputStream out) throws IOException {
