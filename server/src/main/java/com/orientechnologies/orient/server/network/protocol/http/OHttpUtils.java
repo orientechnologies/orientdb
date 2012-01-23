@@ -17,9 +17,9 @@ package com.orientechnologies.orient.server.network.protocol.http;
 
 /**
  * Contains HTTP utilities static methods and constants.
- * 
+ *
  * @author Luca Garulli
- * 
+ *
  */
 public class OHttpUtils {
 
@@ -73,6 +73,8 @@ public class OHttpUtils {
 	public static final String	STATUS_CONFLICT_DESCRIPTION					= "Conflict";
 	public static final int			STATUS_INTERNALERROR								= 500;
 	public static final String	STATUS_ERROR_DESCRIPTION						= "Internal Server Error";
+    public static final int			STATUS_FORBIDDEN_CODE								= 403;
+	public static final String	STATUS_FORBIDDEN_DESCRIPTION						= "Forbidden";
 
 	public static String[] getParts(String iURI) {
 		if (iURI == null || iURI.length() == 0)
