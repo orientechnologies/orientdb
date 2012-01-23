@@ -29,6 +29,8 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Default implementation of generic {@link OCache} interface that uses plain {@link LinkedHashMap} to store records
@@ -39,6 +41,8 @@ public class ODefaultCache implements OCache {
   private static final int DEFAULT_LIMIT = 1000;
 
   private final OSharedResourceExternal lock = new OSharedResourceExternal();
+  private final Lock locksLock = new ReentrantLock();
+  private final OSharedResourceExternal groupLock = new OSharedResourceExternal();
   private final ORecordLockManager lockManager = new ORecordLockManager(0);
   private final AtomicBoolean enabled = new AtomicBoolean(false);
 
@@ -78,55 +82,49 @@ public class ODefaultCache implements OCache {
   public ORecordInternal<?> get(ORID id) {
     if (!isEnabled()) return null;
     try {
-      lock.acquireSharedLock();
-      lockManager.acquireLock(Thread.currentThread(), id, OLockManager.LOCK.SHARED);
+      acquireSharedRecordLock(id);
       return cache.get(id);
     } finally {
-      lockManager.releaseLock(Thread.currentThread(), id, OLockManager.LOCK.SHARED);
-      lock.releaseSharedLock();
+      releaseSharedRecordLock(id);
     }
   }
 
   public ORecordInternal<?> put(ORecordInternal<?> record) {
     if (!isEnabled()) return null;
     try {
-      lock.acquireExclusiveLock();
-      lockManager.acquireLock(Thread.currentThread(), record.getIdentity(), OLockManager.LOCK.EXCLUSIVE);
+      acquireExclusiveRecordLock(record.getIdentity());
       return cache.put(record.getIdentity(), record);
     } finally {
-      lockManager.releaseLock(Thread.currentThread(), record.getIdentity(), OLockManager.LOCK.EXCLUSIVE);
-      lock.releaseExclusiveLock();
+      releaseExclusiveRecordLock(record.getIdentity());
     }
   }
 
   public ORecordInternal<?> remove(ORID id) {
     if (!isEnabled()) return null;
     try {
-      lock.acquireExclusiveLock();
-      lockManager.acquireLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
+      acquireExclusiveRecordLock(id);
       return cache.remove(id);
     } finally {
-      lockManager.releaseLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
-      lock.releaseExclusiveLock();
+      releaseExclusiveRecordLock(id);
     }
   }
 
   public void clear() {
     if (!isEnabled()) return;
     try {
-      lock.acquireExclusiveLock();
+      acquireExclusiveGroupLock();
       cache.clear();
     } finally {
-      lock.releaseExclusiveLock();
+      releaseExclusiveGroupLock();
     }
   }
 
   public int size() {
     try {
-      lock.acquireSharedLock();
+      acquireSharedGroupLock();
       return cache.size();
     } finally {
-      lock.releaseSharedLock();
+      releaseSharedGroupLock();
     }
   }
 
@@ -136,31 +134,98 @@ public class ODefaultCache implements OCache {
 
   public Collection<ORID> keys() {
     try {
-      lock.acquireSharedLock();
+      acquireSharedGroupLock();
       return new ArrayList<ORID>(cache.keySet());
     } finally {
-      lock.releaseSharedLock();
+      releaseSharedGroupLock();
     }
   }
 
   private void removeEldest(int threshold) {
     try {
-      lock.acquireExclusiveLock();
+      acquireExclusiveGroupLock();
       cache.removeEldest(threshold);
     } finally {
-      lock.releaseExclusiveLock();
+      releaseExclusiveGroupLock();
     }
   }
 
   public void lock(ORID id) {
-    lockManager.acquireLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
+    locksLock.lock();
+    try {
+      lockManager.acquireLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
+      groupLock.acquireExclusiveLock();
+    } finally {
+      locksLock.unlock();
+    }
   }
 
   public void unlock(ORID id) {
     lockManager.releaseLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
+    groupLock.releaseExclusiveLock();
   }
 
-  /**
+	private void acquireSharedGroupLock() {
+		locksLock.lock();
+		try {
+			lock.acquireSharedLock();
+			groupLock.acquireSharedLock();
+		} finally {
+			locksLock.unlock();
+		}
+	}
+
+	private void releaseSharedGroupLock() {
+		lock.releaseSharedLock();
+		groupLock.releaseSharedLock();
+	}
+
+	private void acquireExclusiveGroupLock() {
+		locksLock.lock();
+		try {
+			lock.acquireExclusiveLock();
+			groupLock.acquireExclusiveLock();
+		} finally {
+			locksLock.unlock();
+		}
+	}
+
+	private void releaseExclusiveGroupLock() {
+		groupLock.releaseExclusiveLock();
+		lock.releaseExclusiveLock();
+	}
+
+	private void acquireSharedRecordLock(ORID id) {
+		locksLock.lock();
+		try {
+			lock.acquireSharedLock();
+			lockManager.acquireLock(Thread.currentThread(), id, OLockManager.LOCK.SHARED);
+		} finally {
+			locksLock.unlock();
+		}
+	}
+
+	private void releaseSharedRecordLock(ORID id) {
+		lockManager.releaseLock(Thread.currentThread(), id, OLockManager.LOCK.SHARED);
+		lock.releaseSharedLock();
+	}
+
+	private void acquireExclusiveRecordLock(ORID id) {
+		locksLock.lock();
+		try {
+			lock.acquireExclusiveLock();
+			lockManager.acquireLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
+		} finally {
+			locksLock.unlock();
+		}
+	}
+
+	private void releaseExclusiveRecordLock(ORID id) {
+		lockManager.releaseLock(Thread.currentThread(), id, OLockManager.LOCK.EXCLUSIVE);
+		lock.releaseExclusiveLock();
+	}
+
+	/**
    * Implementation of {@link LinkedHashMap} that will remove eldest entries if
    * size limit will be exceeded.
    *
