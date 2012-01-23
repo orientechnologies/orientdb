@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -208,7 +209,7 @@ public class SQLSelectTest {
 		Assert.assertEquals(resultset.size(), 1);
 		Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
 
-		//doc.delete();
+		// doc.delete();
 
 		database.close();
 	}
@@ -1340,6 +1341,29 @@ public class SQLSelectTest {
 				Assert.assertEquals(((ODocument) ((Collection<OIdentifiable>) d.field("addresses")).iterator().next().getRecord())
 						.getSchemaClass().getName(), "Address");
 			}
+
+		} finally {
+			database.close();
+		}
+	}
+
+	@Test
+	public void testParamsWithoutSpaces() {
+		database.open("admin", "admin");
+
+		try {
+			OSchema schema = database.getMetadata().getSchema();
+			OClass test = schema.createClass("test");
+			test.createProperty("f1", OType.STRING);
+			test.createProperty("f2", OType.STRING);
+
+			ODocument document = new ODocument(test);
+			document.field("f1", "a").field("f2", "a");
+			database.save(document);
+
+			Map<String, Object> parameters = new HashMap<String, Object>();
+			parameters.put("p1", "a");
+			System.out.println(database.query(new OSQLSynchQuery<ODocument>("select from test where (f1 = :p1)"), parameters));
 
 		} finally {
 			database.close();

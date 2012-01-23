@@ -286,7 +286,9 @@ public class OSQLFilter extends OCommandToParse {
 
 				if (!jumpWhiteSpaces() || text.charAt(currentPos) == ')')
 					braces--;
-				currentPos++;
+
+				if (currentPos > -1)
+					currentPos++;
 
 				result[i] = subCondition;
 			} else if (words[0].charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN) {
@@ -337,6 +339,12 @@ public class OSQLFilter extends OCommandToParse {
 								words[1] = words[1].substring(0, words[1].length() - 1);
 						}
 					}
+				}
+
+				if (words[1].endsWith(")")) {
+					final int openParenthesis = words[1].indexOf('(');
+					if (openParenthesis == -1)
+						words[1] = words[1].substring(0, words[1].length() - 1);
 				}
 
 				result[i] = OSQLHelper.parseValue(this, this, words[1]);
