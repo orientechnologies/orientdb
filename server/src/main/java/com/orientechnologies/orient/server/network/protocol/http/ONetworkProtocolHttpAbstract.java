@@ -437,8 +437,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 						request.content = URLDecoder.decode(request.content, "UTF-8").trim();
 
 					if (OLogManager.instance().isDebugEnabled())
-						OLogManager.instance().debug(this,
-								"[ONetworkProtocolHttpAbstract.execute] Requested: " + request.method + " " + request.url);
+						OLogManager.instance().debug(this, "[ONetworkProtocolHttpAbstract.execute] Requested: %s %s", request.method,
+								request.url);
 
 					service();
 					return;
