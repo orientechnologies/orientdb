@@ -477,16 +477,11 @@ public class OSQLFilter extends OCommandToParse {
 		if (parameterItems == null || iArgs == null || iArgs.size() == 0)
 			return;
 
-		if (iArgs.size() < parameterItems.size())
-			throw new OCommandExecutionException("Cannot execute because " + (parameterItems.size() - iArgs.size())
-					+ " parameter(s) are unbounded");
-
-		String paramName;
 		for (Entry<Object, Object> entry : iArgs.entrySet()) {
 			if (entry.getKey() instanceof Integer)
 				parameterItems.get(((Integer) entry.getKey())).setValue(entry.setValue(entry.getValue()));
 			else {
-				paramName = entry.getKey().toString();
+				String paramName = entry.getKey().toString();
 				for (OSQLFilterItemParameter value : parameterItems) {
 					if (value.getName().equalsIgnoreCase(paramName)) {
 						value.setValue(entry.getValue());
