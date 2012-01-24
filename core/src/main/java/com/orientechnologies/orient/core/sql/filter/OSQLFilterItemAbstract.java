@@ -125,10 +125,10 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 						ioResult = ioResult != null ? ioResult.toString().length() : 0;
 
 					else if (operator == OSQLFilterFieldOperator.TOUPPERCASE.id)
-						ioResult = ioResult != null ? ioResult.toString().toUpperCase() : 0;
+						ioResult = ioResult != null ? ioResult.toString().toUpperCase() : null;
 
 					else if (operator == OSQLFilterFieldOperator.TOLOWERCASE.id)
-						ioResult = ioResult != null ? ioResult.toString().toLowerCase() : 0;
+						ioResult = ioResult != null ? ioResult.toString().toLowerCase() : null;
 
 					else if (operator == OSQLFilterFieldOperator.TRIM.id)
 						ioResult = ioResult != null ? ioResult.toString().trim() : null;
@@ -143,10 +143,8 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 									OLogManager.instance().error(this, "Error on reading rid with value '%s'", null, ioResult);
 									ioResult = null;
 								}
-							} else if (ioResult instanceof ORID)
-								ioResult = new ODocument(ODatabaseRecordThreadLocal.INSTANCE.get(), (ORID) ioResult);
-							else if (ioResult instanceof ORecord<?>)
-								ioResult = (ODocument) ioResult;
+							} else if (ioResult instanceof OIdentifiable)
+								ioResult = ((OIdentifiable) ioResult).getRecord();
 
 							if (ioResult != null) {
 								if (OMultiValue.isMultiValue(ioResult)) {
@@ -288,7 +286,8 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 			for (OPair<Integer, List<String>> op : operationsChain) {
 				buffer.append('.');
 				buffer.append(OSQLFilterFieldOperator.getById(op.getKey()));
-				buffer.append(op.getValue());
+				if (op.getValue() != null)
+					buffer.append(op.getValue());
 			}
 		}
 		return buffer.toString();

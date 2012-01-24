@@ -148,9 +148,12 @@ public class OMetadata {
 	 * Closes internal objects
 	 */
 	public void close() {
-		indexManager.flush();
-		schema.close();
-		security.close();
+		if (indexManager != null)
+			indexManager.flush();
+		if (schema != null)
+			schema.close();
+		if (security != null)
+			security.close();
 	}
 
 	protected ODatabaseRecord getDatabase() {
