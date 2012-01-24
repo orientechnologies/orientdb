@@ -527,7 +527,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				}
 			} else {
 				if (linkedType == null) {
-					final char begin = value.charAt(0);
+					final char begin = item.charAt(0);
 
 					// AUTO-DETERMINE LINKED TYPE
 					if (begin == OStringSerializerHelper.LINK)
