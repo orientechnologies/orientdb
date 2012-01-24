@@ -32,6 +32,7 @@ import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseFactory;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
@@ -251,6 +252,9 @@ public class Orient extends OSharedResourceAbstract {
 				return;
 
 			OLogManager.instance().debug(this, "Orient Engine is shutting down...");
+
+			// CLOSE ALL DATABASES
+			ODatabaseFactory.shutdown();
 
 			// CLOSE ALL THE STORAGES
 			final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());

@@ -44,11 +44,13 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 
 	public <THISDB extends ODatabase> THISDB open(final String iUserName, final String iUserPassword) {
 		underlying.open(iUserName, iUserPassword);
+		ODatabaseFactory.register(databaseOwner);
 		return (THISDB) this;
 	}
 
 	public <THISDB extends ODatabase> THISDB create() {
 		underlying.create();
+		ODatabaseFactory.register(databaseOwner);
 		return (THISDB) this;
 	}
 
@@ -62,14 +64,17 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 
 	public void close() {
 		underlying.close();
+		ODatabaseFactory.unregister(databaseOwner);
 	}
 
 	public void delete() {
-		underlying.delete();
+		underlying.drop();
+		ODatabaseFactory.unregister(databaseOwner);
 	}
 
 	public void drop() {
 		underlying.drop();
+		ODatabaseFactory.unregister(databaseOwner);
 	}
 
 	public STATUS getStatus() {
