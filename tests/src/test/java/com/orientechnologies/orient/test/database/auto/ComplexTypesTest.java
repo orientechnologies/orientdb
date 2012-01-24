@@ -80,7 +80,7 @@ public class ComplexTypesTest {
 		final ArrayList<ODocument> list = new ArrayList<ODocument>();
 		newDoc.field("embeddedList", list, OType.EMBEDDEDLIST);
 		list.add(new ODocument().field("name", "Luca"));
-		list.add(new ODocument(database, "Account").field("name", "Marcus"));
+		list.add(new ODocument("Account").field("name", "Marcus"));
 
 		database.save(newDoc);
 		final ORID rid = newDoc.getIdentity();
@@ -112,7 +112,7 @@ public class ComplexTypesTest {
 		final ArrayList<ODocument> list = new ArrayList<ODocument>();
 		newDoc.field("linkedList", list, OType.LINKLIST);
 		list.add(new ODocument().field("name", "Luca"));
-		list.add(new ODocument(database, "Account").field("name", "Marcus"));
+		list.add(new ODocument("Account").field("name", "Marcus"));
 
 		database.save(newDoc);
 		final ORID rid = newDoc.getIdentity();
@@ -145,7 +145,7 @@ public class ComplexTypesTest {
 		final Set<ODocument> set = new HashSet<ODocument>();
 		newDoc.field("embeddedSet", set, OType.EMBEDDEDSET);
 		set.add(new ODocument().field("name", "Luca"));
-		set.add(new ODocument(database, "Account").field("name", "Marcus"));
+		set.add(new ODocument("Account").field("name", "Marcus"));
 
 		database.save(newDoc);
 		final ORID rid = newDoc.getIdentity();
@@ -185,7 +185,7 @@ public class ComplexTypesTest {
 		final Set<ODocument> set = new HashSet<ODocument>();
 		newDoc.field("linkedSet", set, OType.LINKSET);
 		set.add(new ODocument().field("name", "Luca"));
-		set.add(new ODocument(database, "Account").field("name", "Marcus"));
+		set.add(new ODocument("Account").field("name", "Marcus"));
 
 		database.save(newDoc);
 		final ORID rid = newDoc.getIdentity();
@@ -226,7 +226,7 @@ public class ComplexTypesTest {
 		newDoc.field("embeddedMap", map, OType.EMBEDDEDMAP);
 		map.put("Luca", new ODocument().field("name", "Luca"));
 		map.put("Marcus", new ODocument().field("name", "Marcus"));
-		map.put("Cesare", new ODocument(database, "Account").field("name", "Cesare"));
+		map.put("Cesare", new ODocument("Account").field("name", "Cesare"));
 
 		database.save(newDoc);
 		final ORID rid = newDoc.getIdentity();
@@ -290,7 +290,7 @@ public class ComplexTypesTest {
 		newDoc.field("linkedMap", map, OType.LINKMAP);
 		map.put("Luca", new ODocument().field("name", "Luca"));
 		map.put("Marcus", new ODocument().field("name", "Marcus"));
-		map.put("Cesare", new ODocument(database, "Account").field("name", "Cesare"));
+		map.put("Cesare", new ODocument("Account").field("name", "Cesare"));
 
 		database.save(newDoc);
 		final ORID rid = newDoc.getIdentity();

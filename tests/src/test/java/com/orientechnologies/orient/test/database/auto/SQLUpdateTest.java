@@ -115,7 +115,7 @@ public class SQLUpdateTest {
 	public void updateWithWildcardsOnSetAndWhere() {
 
 		database.open("admin", "admin");
-		ODocument doc = new ODocument(database, "Person");
+		ODocument doc = new ODocument("Person");
 		doc.field("name", "Raf");
 		doc.field("city", "Torino");
 		doc.field("gender", "fmale");

@@ -173,7 +173,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 		final ODocument result = new ODocument();
 
 		for (Entry<String, OTransactionIndexChanges> indexEntry : indexEntries.entrySet()) {
-			final ODocument indexDoc = new ODocument(database).addOwner(result);
+			final ODocument indexDoc = new ODocument().addOwner(result);
 			result.field(indexEntry.getKey(), indexDoc, OType.EMBEDDED);
 
 			if (indexEntry.getValue().cleared)

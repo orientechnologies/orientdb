@@ -39,7 +39,7 @@ public class BinaryTest {
 	public void testMixedCreateEmbedded() {
 		database.open("admin", "admin");
 
-		ODocument doc = new ODocument(database);
+		ODocument doc = new ODocument();
 		doc.field("binary", "Binary data".getBytes());
 
 		doc.save();
@@ -76,7 +76,7 @@ public class BinaryTest {
 	public void testMixedCreateExternal() {
 		database.open("admin", "admin");
 
-		ODocument doc = new ODocument(database);
+		ODocument doc = new ODocument();
 		doc.field("binary", new ORecordBytes(database, "Binary data".getBytes()));
 
 		doc.save();
@@ -89,7 +89,7 @@ public class BinaryTest {
 	public void testMixedReadExternal() {
 		database.open("admin", "admin");
 
-		ODocument doc = new ODocument(database, rid);
+		ODocument doc = new ODocument(rid);
 		doc.reload();
 
 		Assert.assertEquals("Binary data", new String(((ORecordBytes) doc.field("binary")).toStream()));

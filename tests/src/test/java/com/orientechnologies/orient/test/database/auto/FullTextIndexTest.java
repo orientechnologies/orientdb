@@ -80,7 +80,7 @@ public class FullTextIndexTest {
 	public void testFullTextInsertion() {
 		database.open("admin", "admin");
 
-		ODocument doc = new ODocument(database);
+		ODocument doc = new ODocument();
 
 		StringBuilder text = new StringBuilder();
 		Random random = new Random(1000);
@@ -130,7 +130,7 @@ public class FullTextIndexTest {
 		StringBuilder text = new StringBuilder();
 		Random random = new Random(1000);
 
-		ODocument doc = new ODocument(database);
+		ODocument doc = new ODocument();
 
 		doc.setClassName("Whiz");
 		doc.field("id", 2000);
@@ -177,7 +177,7 @@ public class FullTextIndexTest {
 		StringBuilder text = new StringBuilder();
 		Random random = new Random(1000);
 
-		ODocument doc = new ODocument(database);
+		ODocument doc = new ODocument();
 
 		doc.setClassName("Whiz");
 		doc.field("id", 2000);

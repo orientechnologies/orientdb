@@ -55,7 +55,7 @@ public class SecurityTest {
 		database.open("writer", "writer");
 
 		try {
-			new ODocument(database, "Profile").save("internal");
+			new ODocument("Profile").save("internal");
 			Assert.assertTrue(false);
 		} catch (OSecurityAccessException e) {
 			Assert.assertTrue(true);
@@ -71,8 +71,8 @@ public class SecurityTest {
 		database.open("reader", "reader");
 
 		try {
-			new ODocument(database, "Profile").fields("nick", "error", "password", "I don't know", "lastAccessOn", new Date(),
-					"registeredOn", new Date()).save();
+			new ODocument("Profile").fields("nick", "error", "password", "I don't know", "lastAccessOn", new Date(), "registeredOn",
+					new Date()).save();
 		} catch (OSecurityAccessException e) {
 			Assert.assertTrue(true);
 		} catch (ODatabaseException e) {

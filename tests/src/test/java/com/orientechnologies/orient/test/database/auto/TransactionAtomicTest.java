@@ -73,7 +73,7 @@ public class TransactionAtomicTest {
 		ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
 		db.open("admin", "admin");
 
-		ODocument doc = new ODocument(db, "Account");
+		ODocument doc = new ODocument("Account");
 		doc.field("version", 0);
 		doc.save();
 
@@ -158,10 +158,10 @@ public class TransactionAtomicTest {
 		try {
 			db.begin();
 
-			ODocument apple = new ODocument(db, "Fruit").field("name", "Apple").field("color", "Red");
-			ODocument orange = new ODocument(db, "Fruit").field("name", "Orange").field("color", "Orange");
-			ODocument banana = new ODocument(db, "Fruit").field("name", "Banana").field("color", "Yellow");
-			ODocument kumquat = new ODocument(db, "Fruit").field("name", "Kumquat").field("color", "Orange");
+			ODocument apple = new ODocument("Fruit").field("name", "Apple").field("color", "Red");
+			ODocument orange = new ODocument("Fruit").field("name", "Orange").field("color", "Orange");
+			ODocument banana = new ODocument("Fruit").field("name", "Banana").field("color", "Yellow");
+			ODocument kumquat = new ODocument("Fruit").field("name", "Kumquat").field("color", "Orange");
 
 			apple.save();
 			Assert.assertEquals(apple.getIdentity().getClusterId(), fruitClass.getDefaultClusterId());

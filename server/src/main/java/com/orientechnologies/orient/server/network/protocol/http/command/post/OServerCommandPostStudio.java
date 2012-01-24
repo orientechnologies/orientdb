@@ -208,7 +208,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 			if (rid == null)
 				throw new IllegalArgumentException("Record ID not found in request");
 
-			ODocument doc = new ODocument(db, className, new ORecordId(rid));
+			ODocument doc = new ODocument(className, new ORecordId(rid));
 			doc = (ODocument) doc.load();
 
 			// BIND ALL CHANGED FIELDS
@@ -254,7 +254,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 		} else if ("add".equals(operation)) {
 			iRequest.data.commandInfo = "Studio create document";
 
-			final ODocument doc = new ODocument(db, className);
+			final ODocument doc = new ODocument(className);
 
 			// BIND ALL CHANGED FIELDS
 			for (Entry<String, String> f : fields.entrySet())
@@ -270,7 +270,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 			if (rid == null)
 				throw new IllegalArgumentException("Record ID not found in request");
 
-			final ODocument doc = new ODocument(db, new ORecordId(rid));
+			final ODocument doc = new ODocument(new ORecordId(rid));
 			doc.load();
 			doc.delete();
 			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid
@@ -314,7 +314,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 			iRequest.data.commandInfo = "Studio delete index";
 
 			try {
-				final OIndex index = cls.getClassIndex(className);
+				final OIndex<?> index = cls.getClassIndex(className);
 				if (index == null) {
 					sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Index '"
 							+ className + "' not found in class '" + rid + "'.");

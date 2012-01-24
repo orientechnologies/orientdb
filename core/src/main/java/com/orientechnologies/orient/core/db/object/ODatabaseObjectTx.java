@@ -453,7 +453,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 
 	public Object newInstance() {
 		checkOpeness();
-		return new ODocument(underlying);
+		return new ODocument();
 	}
 
 	public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final String iResource, final byte iOperation) {

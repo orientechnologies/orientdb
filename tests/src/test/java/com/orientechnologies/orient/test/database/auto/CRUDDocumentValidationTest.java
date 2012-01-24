@@ -43,7 +43,7 @@ public class CRUDDocumentValidationTest {
 		database.open("admin", "admin");
 		record = database.newInstance("Whiz");
 
-		account = new ODocument(database, "Account");
+		account = new ODocument("Account");
 		account.field("id", "1234567890");
 	}
 
@@ -90,7 +90,6 @@ public class CRUDDocumentValidationTest {
 		record.save();
 	}
 
-
 	@Test(dependsOnMethods = "validationEmbeddedType", expectedExceptions = OValidationException.class)
 	public void validationStrictClass() throws ParseException {
 		ODocument doc = new ODocument("StrictTest");
@@ -98,7 +97,6 @@ public class CRUDDocumentValidationTest {
 		doc.field("antani", "122112");
 		doc.save();
 	}
-
 
 	@Test(dependsOnMethods = "validationStrictClass")
 	public void closeDb() {

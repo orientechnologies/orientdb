@@ -155,35 +155,35 @@ public class SQLFindReferencesTest {
 	}
 
 	private void populateDatabase() {
-		ODocument car = new ODocument(database, CAR);
+		ODocument car = new ODocument(CAR);
 		car.field("plate", "JINF223S");
 
-		ODocument johnDoe = new ODocument(database, WORKER);
+		ODocument johnDoe = new ODocument(WORKER);
 		johnDoe.field("name", "John");
 		johnDoe.field("surname", "Doe");
 		johnDoe.field("car", car);
 		johnDoe.save();
 		johnDoeID = johnDoe.getIdentity().copy();
 
-		ODocument janeDoe = new ODocument(database, WORKER);
+		ODocument janeDoe = new ODocument(WORKER);
 		janeDoe.field("name", "Jane");
 		janeDoe.field("surname", "Doe");
 		janeDoe.save();
 		janeDoeID = janeDoe.getIdentity().copy();
 
-		ODocument chuckNorris = new ODocument(database, WORKER);
+		ODocument chuckNorris = new ODocument(WORKER);
 		chuckNorris.field("name", "Chuck");
 		chuckNorris.field("surname", "Norris");
 		chuckNorris.save();
 		chuckNorrisID = chuckNorris.getIdentity().copy();
 
-		ODocument jackBauer = new ODocument(database, WORKER);
+		ODocument jackBauer = new ODocument(WORKER);
 		jackBauer.field("name", "Jack");
 		jackBauer.field("surname", "Bauer");
 		jackBauer.save();
 		jackBauerID = jackBauer.getIdentity().copy();
 
-		ODocument ctu = new ODocument(database, WORKPLACE);
+		ODocument ctu = new ODocument(WORKPLACE);
 		ctu.field("name", "CTU");
 		ctu.field("boss", jackBauer);
 		List<ODocument> workplace1Workers = new ArrayList<ODocument>();
@@ -193,7 +193,7 @@ public class SQLFindReferencesTest {
 		ctu.save();
 		ctuID = ctu.getIdentity().copy();
 
-		ODocument fbi = new ODocument(database, WORKPLACE);
+		ODocument fbi = new ODocument(WORKPLACE);
 		fbi.field("name", "FBI");
 		fbi.field("boss", chuckNorris);
 		List<ODocument> workplace2Workers = new ArrayList<ODocument>();

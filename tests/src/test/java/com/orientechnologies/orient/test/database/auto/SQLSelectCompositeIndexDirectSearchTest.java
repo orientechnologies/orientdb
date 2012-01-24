@@ -44,7 +44,7 @@ public class SQLSelectCompositeIndexDirectSearchTest {
 
 		for (int i = 0; i < 10; i++) {
 			for (int j = 0; j < 10; j++) {
-				final ODocument document = new ODocument(database, "SQLSelectCompositeIndexDirectSearchTestClass");
+				final ODocument document = new ODocument("SQLSelectCompositeIndexDirectSearchTestClass");
 				document.field("prop1", i);
 				document.field("prop2", j);
 				document.save();

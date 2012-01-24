@@ -59,7 +59,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 	protected ReadWriteLock																			lock								= new ReentrantReadWriteLock();
 
 	public OIndexManagerAbstract(final ODatabaseRecord iDatabase) {
-		super(new ODocument(iDatabase));
+		super(new ODocument());
 	}
 
 	protected abstract OIndex<?> getIndexInstance(final OIndex<?> iIndex);

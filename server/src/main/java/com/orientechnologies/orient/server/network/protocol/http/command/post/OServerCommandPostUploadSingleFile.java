@@ -148,7 +148,7 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
 				if (fileDocument.contains("$file")) {
 					fileDocument = fileDocument.replace("$file", fileRID.toString());
 				}
-				ODocument doc = new ODocument(database);
+				ODocument doc = new ODocument();
 				doc.fromJSON(fileDocument);
 				doc.save();
 				writer.beginObject("updatedDocument");

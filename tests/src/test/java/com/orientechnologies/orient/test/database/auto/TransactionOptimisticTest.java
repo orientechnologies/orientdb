@@ -182,7 +182,7 @@ public class TransactionOptimisticTest {
 
 		db.begin(TXTYPE.OPTIMISTIC);
 		for (int g = 0; g < 1000; g++) {
-			ODocument doc = new ODocument(db, "Account");
+			ODocument doc = new ODocument("Account");
 			doc.fromJSON(json);
 			doc.field("nr", g);
 
@@ -203,9 +203,9 @@ public class TransactionOptimisticTest {
 
 		db.begin();
 
-		ODocument kim = new ODocument(db, "Profile").field("name", "Kim").field("surname", "Bauer");
-		ODocument teri = new ODocument(db, "Profile").field("name", "Teri").field("surname", "Bauer");
-		ODocument jack = new ODocument(db, "Profile").field("name", "Jack").field("surname", "Bauer");
+		ODocument kim = new ODocument("Profile").field("name", "Kim").field("surname", "Bauer");
+		ODocument teri = new ODocument("Profile").field("name", "Teri").field("surname", "Bauer");
+		ODocument jack = new ODocument("Profile").field("name", "Jack").field("surname", "Bauer");
 
 		((HashSet<ODocument>) jack.field("following", new HashSet<ODocument>()).field("following")).add(kim);
 		((HashSet<ODocument>) kim.field("following", new HashSet<ODocument>()).field("following")).add(teri);
@@ -252,9 +252,9 @@ public class TransactionOptimisticTest {
 	//
 	// db.begin();
 	//
-	// ODocument kim = new ODocument(db, "Profile").field("name", "Kim").field("surname", "Bauer");
-	// ODocument teri = new ODocument(db, "Profile").field("name", "Teri").field("surname", "Bauer");
-	// ODocument jack = new ODocument(db, "Profile").field("name", "Jack").field("surname", "Bauer");
+	// ODocument kim = new ODocument( "Profile").field("name", "Kim").field("surname", "Bauer");
+	// ODocument teri = new ODocument( "Profile").field("name", "Teri").field("surname", "Bauer");
+	// ODocument jack = new ODocument( "Profile").field("name", "Jack").field("surname", "Bauer");
 	//
 	// ((HashSet<ODocument>) jack.field("following", new HashSet<ODocument>()).field("following")).add(kim);
 	// ((HashSet<ODocument>) kim.field("following", new HashSet<ODocument>()).field("following")).add(teri);

@@ -37,9 +37,8 @@ public class DannySchemaTest {
 			master = db.getMetadata().getSchema().getClass("Master");
 
 			// CREATE NEW DOC
-			new ODocument(db, "Dependents").field("dependents",
-					new ODocument[] { new ODocument(db, "Master").field("mastertype", "Title").field("master", 4151788013272153098L) })
-					.save();
+			new ODocument("Dependents").field("dependents",
+					new ODocument[] { new ODocument("Master").field("mastertype", "Title").field("master", 4151788013272153098L) }).save();
 			db.close();
 
 			db.open("admin", "admin");

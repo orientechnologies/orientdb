@@ -40,7 +40,7 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
 		try {
 			db = getProfiledDatabaseInstance(iRequest);
 
-			doc = new ODocument(db).fromJSON(iRequest.content);
+			doc = new ODocument().fromJSON(iRequest.content);
 
 			// ASSURE TO MAKE THE RECORD ID INVALID
 			((ORecordId) doc.getIdentity()).clusterPosition = ORID.CLUSTER_POS_INVALID;

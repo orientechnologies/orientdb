@@ -54,18 +54,18 @@ public class OServerCommandPutIndex extends OServerCommandDocumentAbstract {
 				if (iRequest.content == null || iRequest.content.length() == 0)
 					throw new IllegalArgumentException("Index's entry value is null");
 
-				record = new ODocument(db).fromJSON(iRequest.content);
+				record = new ODocument().fromJSON(iRequest.content);
 			}
 
-            final OIndexDefinition indexDefinition = index.getDefinition();
-            final Object key;
-            if(indexDefinition != null)
-                key = indexDefinition.createValue(urlParts[3]);
-            else
-                key = urlParts[3];
+			final OIndexDefinition indexDefinition = index.getDefinition();
+			final Object key;
+			if (indexDefinition != null)
+				key = indexDefinition.createValue(urlParts[3]);
+			else
+				key = urlParts[3];
 
-            if(key == null)
-                throw new IllegalArgumentException("Invalid key value : " + urlParts[3]);
+			if (key == null)
+				throw new IllegalArgumentException("Invalid key value : " + urlParts[3]);
 
 			index.put(key, record);
 

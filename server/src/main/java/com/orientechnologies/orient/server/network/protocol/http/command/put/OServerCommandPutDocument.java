@@ -51,7 +51,7 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 				recordId = new ORecordId();
 
 			// UNMARSHALL DOCUMENT WITH REQUEST CONTENT
-			doc = new ODocument(db);
+			doc = new ODocument();
 			doc.fromJSON(iRequest.content);
 
 			if (!recordId.isValid())
@@ -62,10 +62,10 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 			if (!recordId.isValid())
 				throw new IllegalArgumentException("Invalid Record ID in request: " + recordId);
 
-            final ODocument currentDocument = db.load(recordId);
+			final ODocument currentDocument = db.load(recordId);
 
-            currentDocument.merge(doc, false, false);
-            currentDocument.setVersion(doc.getVersion());
+			currentDocument.merge(doc, false, false);
+			currentDocument.setVersion(doc.getVersion());
 
 			currentDocument.save();
 

@@ -84,7 +84,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	 * Constructor used in unmarshalling.
 	 */
 	protected OClassImpl(final OSchemaShared iOwner) {
-		document = new ODocument(getDatabase());
+		document = new ODocument();
 		owner = iOwner;
 	}
 

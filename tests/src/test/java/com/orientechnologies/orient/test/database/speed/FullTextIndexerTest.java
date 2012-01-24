@@ -22,7 +22,7 @@ public class FullTextIndexerTest {
 
 		long time = System.currentTimeMillis();
 
-		final ODocument document = new ODocument(database, "Employee");
+		final ODocument document = new ODocument("Employee");
 		for (int i = 0; i < DOCUMENTS; ++i) {
 			document.reset();
 			document.field("name", "Jay");

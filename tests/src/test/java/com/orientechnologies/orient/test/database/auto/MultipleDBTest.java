@@ -188,7 +188,7 @@ public class MultipleDBTest {
 							// DummyObject dummy = new DummyObject("name" + j);
 							// tx.save(dummy);
 
-							ODocument dummy = new ODocument(tx, "DummyObject");
+							ODocument dummy = new ODocument("DummyObject");
 							dummy.field("name", "name" + j);
 
 							tx.save(dummy);

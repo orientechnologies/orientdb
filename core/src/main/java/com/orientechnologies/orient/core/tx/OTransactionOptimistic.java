@@ -97,7 +97,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 	private void addRecord(final ORecordInternal<?> iRecord, final byte iStatus, final String iClusterName) {
 		checkTransaction();
 
-		if ((status == OTransaction.TXSTATUS.COMMITTING || OStorage.CLUSTER_INDEX_NAME.equals(iClusterName))
+		if ((status == OTransaction.TXSTATUS.COMMITTING )
 				&& database.getStorage() instanceof OStorageEmbedded) {
 			// I'M COMMITTING OR IT'S AN INDEX: BYPASS LOCAL BUFFER
 			switch (iStatus) {

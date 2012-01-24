@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -138,7 +137,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
 							if (ioResult instanceof String) {
 								try {
-									ioResult = new ODocument(ODatabaseRecordThreadLocal.INSTANCE.get(), new ORecordId((String) ioResult));
+									ioResult = new ODocument(new ORecordId((String) ioResult));
 								} catch (Exception e) {
 									OLogManager.instance().error(this, "Error on reading rid with value '%s'", null, ioResult);
 									ioResult = null;

@@ -44,12 +44,12 @@ public class DateTest {
 
 		final long begin = System.currentTimeMillis();
 
-		ODocument doc1 = new ODocument(database, "Order");
+		ODocument doc1 = new ODocument("Order");
 		doc1.field("context", "test");
 		doc1.field("date", new Date());
 		doc1.save();
 
-		ODocument doc2 = new ODocument(database, "Order");
+		ODocument doc2 = new ODocument("Order");
 		doc2.field("context", "test");
 		doc2.field("date", System.currentTimeMillis());
 		doc2.save();
@@ -75,7 +75,7 @@ public class DateTest {
 
 		String dateAsString = database.getStorage().getConfiguration().getDateFormatInstance().format(begin);
 
-		ODocument doc = new ODocument(database, "Order");
+		ODocument doc = new ODocument("Order");
 		doc.field("context", "testPrecision");
 		doc.field("date", new Date(), OType.DATE);
 		doc.save();

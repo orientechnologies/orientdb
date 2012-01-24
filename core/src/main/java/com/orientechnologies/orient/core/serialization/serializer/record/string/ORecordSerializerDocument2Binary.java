@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.util.Date;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -40,7 +39,7 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
 
 	protected ORecordSchemaAware<?> newObject(ODatabaseRecord iDatabase, String iClassName) throws InstantiationException,
 			IllegalAccessException {
-		return new ODocument(iDatabase);
+		return new ODocument();
 	}
 
 	public ORecordInternal<?> fromStream(ODatabaseRecord iDatabase, byte[] iSource) {

@@ -339,9 +339,9 @@ public class TransactionConsistencyTest {
 
 		db.begin();
 
-		ODocument kim = new ODocument(db, "Profile").field("name", "Kim").field("surname", "Bauer");
-		ODocument teri = new ODocument(db, "Profile").field("name", "Teri").field("surname", "Bauer");
-		ODocument jack = new ODocument(db, "Profile").field("name", "Jack").field("surname", "Bauer");
+		ODocument kim = new ODocument("Profile").field("name", "Kim").field("surname", "Bauer");
+		ODocument teri = new ODocument("Profile").field("name", "Teri").field("surname", "Bauer");
+		ODocument jack = new ODocument("Profile").field("name", "Jack").field("surname", "Bauer");
 
 		((HashSet<ODocument>) jack.field("following", new HashSet<ODocument>()).field("following")).add(kim);
 		((HashSet<ODocument>) kim.field("following", new HashSet<ODocument>()).field("following")).add(teri);
@@ -392,11 +392,11 @@ public class TransactionConsistencyTest {
 
 		db.begin();
 
-		ODocument kim = new ODocument(db, "MyProfile").field("name", "Kim").field("surname", "Bauer");
-		ODocument teri = new ODocument(db, "MyProfile").field("name", "Teri").field("surname", "Bauer");
-		ODocument jack = new ODocument(db, "MyProfile").field("name", "Jack").field("surname", "Bauer");
+		ODocument kim = new ODocument("MyProfile").field("name", "Kim").field("surname", "Bauer");
+		ODocument teri = new ODocument("MyProfile").field("name", "Teri").field("surname", "Bauer");
+		ODocument jack = new ODocument("MyProfile").field("name", "Jack").field("surname", "Bauer");
 
-		ODocument myedge = new ODocument(db, "MyEdge").field("in", kim).field("out", jack);
+		ODocument myedge = new ODocument("MyEdge").field("in", kim).field("out", jack);
 		myedge.save();
 		((HashSet<ODocument>) kim.field("out", new HashSet<ORID>()).field("out")).add(myedge);
 		((HashSet<ODocument>) jack.field("in", new HashSet<ORID>()).field("in")).add(myedge);
@@ -425,10 +425,10 @@ public class TransactionConsistencyTest {
 		try {
 			db.begin();
 
-			ODocument kim = new ODocument(db, "Profile").field("name", "Kim").field("surname", "Bauer");
-			ODocument teri = new ODocument(db, "Profile").field("name", "Teri").field("surname", "Bauer");
-			ODocument jack = new ODocument(db, "Profile").field("name", "Jack").field("surname", "Bauer");
-			ODocument chloe = new ODocument(db, "Profile").field("name", "Chloe").field("surname", "O'Brien");
+			ODocument kim = new ODocument("Profile").field("name", "Kim").field("surname", "Bauer");
+			ODocument teri = new ODocument("Profile").field("name", "Teri").field("surname", "Bauer");
+			ODocument jack = new ODocument("Profile").field("name", "Jack").field("surname", "Bauer");
+			ODocument chloe = new ODocument("Profile").field("name", "Chloe").field("surname", "O'Brien");
 
 			((HashSet<ODocument>) jack.field("following", new HashSet<ODocument>()).field("following")).add(kim);
 			((HashSet<ODocument>) kim.field("following", new HashSet<ODocument>()).field("following")).add(teri);
@@ -497,7 +497,7 @@ public class TransactionConsistencyTest {
 			Vector<ODocument> v = new Vector<ODocument>();
 			db.begin();
 			for (int i = initialValue * chunkSize; i < (initialValue * chunkSize) + chunkSize; i++) {
-				ODocument d = new ODocument(db, "MyFruit").field("name", "" + i).field("color", "FOO").field("flavor", "BAR" + i);
+				ODocument d = new ODocument("MyFruit").field("name", "" + i).field("color", "FOO").field("flavor", "BAR" + i);
 				d.save();
 				v.addElement(d);
 
@@ -613,4 +613,53 @@ public class TransactionConsistencyTest {
 			db.close();
 		}
 	}
+	//
+	// @SuppressWarnings("unchecked")
+	// @Test
+	// public void testTransactionPopulatePartialDelete() {
+	// System.out.println("************ testTransactionPopulatePartialDelete *******************");
+	// ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+	// db.open("admin", "admin");
+	//
+	// if (!db.getMetadata().getSchema().existsClass("MyFruit")) {
+	// OClass fruitClass = db.getMetadata().getSchema().createClass("MyFruit");
+	// fruitClass.createProperty("name", OType.STRING);
+	// fruitClass.createProperty("color", OType.STRING);
+	//
+	// db.getMetadata().getSchema().getClass("MyFruit").getProperty("name").createIndex(OClass.INDEX_TYPE.UNIQUE);
+	//
+	// db.getMetadata().getSchema().getClass("MyFruit").getProperty("color").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+	// }
+	//
+	// db.declareIntent(new OIntentMassiveInsert());
+	//
+	// int passCount = 10;
+	// int chunkSize = 1000;
+	// for (int pass = 0; pass < passCount; pass++) {
+	// System.out.println("pass = " + pass);
+	//
+	// // do insert
+	// Vector<ODocument> recordsToDelete = new Vector<ODocument>();
+	// db.begin();
+	// for (int i = 0; i < chunkSize; i++) {
+	// ODocument d = new ODocument( "MyFruit").field("name", "ABC" + pass + 'K' + i).field("color", "FOO" + pass);
+	// d.save();
+	// if (i < chunkSize / 2)
+	// recordsToDelete.addElement(d);
+	// }
+	// db.commit();
+	//
+	// // do delete
+	// db.begin();
+	// for (int i = 0; i < recordsToDelete.size(); i++) {
+	// db.delete((ODocument) recordsToDelete.elementAt(i));
+	// }
+	// db.commit();
+	// }
+	//
+	// db.declareIntent(null);
+	//
+	// db.close();
+	// System.out.println("************ end testTransactionPopulatePartialDelete *******************");
+	// }
 }

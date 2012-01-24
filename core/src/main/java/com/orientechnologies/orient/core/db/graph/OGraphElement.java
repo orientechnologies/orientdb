@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.db.graph;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordListener;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -34,12 +33,12 @@ public abstract class OGraphElement extends ODocumentWrapper implements ORecordL
 	protected ODatabaseGraphTx	database;
 
 	public OGraphElement(final ODatabaseGraphTx iDatabase, final ORID iRID) {
-		this(iDatabase, new ODocument((ODatabaseRecord) iDatabase.getUnderlying(), iRID));
+		this(iDatabase, new ODocument(iRID));
 		document.setTrackingChanges(false);
 	}
 
 	public OGraphElement(final ODatabaseGraphTx iDatabase, final String iClassName) {
-		this(iDatabase, new ODocument((ODatabaseRecord) iDatabase.getUnderlying(), iClassName));
+		this(iDatabase, new ODocument(iClassName));
 		document.setTrackingChanges(false);
 	}
 

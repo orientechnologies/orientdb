@@ -106,7 +106,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 		try {
 
 			name = iName;
-			configuration = new ODocument(iDatabase);
+			configuration = new ODocument();
 
 			indexDefinition = iIndexDefinition;
 

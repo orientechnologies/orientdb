@@ -238,8 +238,7 @@ public class JSONTest {
 		ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
 		database.open("admin", "admin");
 
-		ODocument doc = new ODocument(database)
-				.fromJSON("{name:{\"%Field\":[\"value1\",\"value2\"],\"%Field2\":{},\"%Field3\":\"value3\"}}");
+		ODocument doc = new ODocument().fromJSON("{name:{\"%Field\":[\"value1\",\"value2\"],\"%Field2\":{},\"%Field3\":\"value3\"}}");
 		doc.save();
 
 		ODocument doc2 = database.load(doc.getIdentity());
@@ -250,7 +249,7 @@ public class JSONTest {
 		ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
 		database.open("admin", "admin");
 
-		ODocument newDoc = new ODocument(database);
+		ODocument newDoc = new ODocument();
 
 		newDoc
 				.fromJSON("{\"@type\": \"d\",\"@class\": \"Track\",\"type\": \"LineString\",\"coordinates\": [ [ 100,  0 ],  [ 101, 1 ] ]}");
@@ -267,7 +266,7 @@ public class JSONTest {
 		ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
 		database.open("admin", "admin");
 
-		ODocument doc = new ODocument(database)
+		ODocument doc = new ODocument()
 				.fromJSON("{Field:{\"Key1\":[\"Value1\",\"Value2\"],\"Key2\":{\"%%dummy%%\":null},\"Key3\":\"Value3\"}}");
 		doc.save();
 

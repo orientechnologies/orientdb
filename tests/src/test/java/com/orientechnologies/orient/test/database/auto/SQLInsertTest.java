@@ -84,12 +84,13 @@ public class SQLInsertTest {
 
 		Assert.assertTrue(doc != null);
 
-		doc = (ODocument) new ODocument(database, doc.getIdentity()).load();
+		doc = (ODocument) new ODocument(doc.getIdentity()).load();
 
 		Assert.assertEquals(doc.field("equaledges"), "no");
 		Assert.assertEquals(doc.field("name"), "circle");
 		Assert.assertTrue(doc.field("properties") instanceof Map);
 
+		@SuppressWarnings("unchecked")
 		Map<Object, Object> entries = ((Map<Object, Object>) doc.field("properties"));
 		Assert.assertEquals(entries.size(), 2);
 

@@ -193,7 +193,7 @@ public class SQLSelectTest {
 		tags.add("smart");
 		tags.add("nice");
 
-		ODocument doc = new ODocument(database, "Profile");
+		ODocument doc = new ODocument("Profile");
 		doc.field("tags", tags, OType.EMBEDDEDSET);
 
 		doc.save();
@@ -221,7 +221,7 @@ public class SQLSelectTest {
 		tags.add("smart");
 		tags.add("nice");
 
-		ODocument doc = new ODocument(database, "Profile");
+		ODocument doc = new ODocument("Profile");
 		doc.field("tags", tags);
 
 		doc.save();
@@ -254,7 +254,7 @@ public class SQLSelectTest {
 		coll.add(new ODocument("name", "Luca", "surname", "Garulli"));
 		coll.add(new ODocument("name", "Jay", "surname", "Miner"));
 
-		ODocument doc = new ODocument(database, "Profile");
+		ODocument doc = new ODocument("Profile");
 		doc.field("coll", coll, OType.EMBEDDEDSET);
 
 		doc.save();
@@ -278,7 +278,7 @@ public class SQLSelectTest {
 		coll.add(new ODocument("name", "Luca", "surname", "Garulli"));
 		coll.add(new ODocument("name", "Jay", "surname", "Miner"));
 
-		ODocument doc = new ODocument(database, "Profile");
+		ODocument doc = new ODocument("Profile");
 		doc.field("coll", coll, OType.EMBEDDEDLIST);
 
 		doc.save();
@@ -302,7 +302,7 @@ public class SQLSelectTest {
 		customReferences.put("first", new ODocument("name", "Luca", "surname", "Garulli"));
 		customReferences.put("second", new ODocument("name", "Jay", "surname", "Miner"));
 
-		ODocument doc = new ODocument(database, "Profile");
+		ODocument doc = new ODocument("Profile");
 		doc.field("customReferences", customReferences, OType.EMBEDDEDMAP);
 
 		doc.save();
@@ -345,7 +345,7 @@ public class SQLSelectTest {
 		customReferences.put("first", new ODocument("name", "Luca", "surname", "Garulli"));
 		customReferences.put("second", new ODocument("name", "Jay", "surname", "Miner"));
 
-		ODocument doc = new ODocument(database, "Profile");
+		ODocument doc = new ODocument("Profile");
 		doc.field("customReferences", customReferences, OType.EMBEDDEDMAP);
 
 		doc.save();

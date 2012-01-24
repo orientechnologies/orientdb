@@ -43,12 +43,12 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
 	@Override
 	public ODocument newInstance() {
-		return new ODocument(this);
+		return new ODocument();
 	}
 
 	public ODocument newInstance(final String iClassName) {
 		checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, iClassName);
-		return new ODocument(this, iClassName);
+		return new ODocument(iClassName);
 	}
 
 	public ORecordIteratorClass<ODocument> browseClass(final String iClassName) {

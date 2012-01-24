@@ -186,7 +186,7 @@ public class SchemaTest {
 		Thread thread = new Thread(new Runnable() {
 
 			public void run() {
-				ODocument doc = new ODocument(database, "NewClass");
+				ODocument doc = new ODocument("NewClass");
 				database.save(doc);
 
 				doc.delete();
