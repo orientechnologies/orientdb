@@ -41,6 +41,9 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 		super(iSource);
 	}
 
+	/**
+	 * Creates a new ODocument.
+	 */
 	@Override
 	public ODocument newInstance() {
 		return new ODocument();

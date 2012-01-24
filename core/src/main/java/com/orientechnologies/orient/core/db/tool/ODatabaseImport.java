@@ -142,7 +142,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		listener.onMessage("\nDelete temporary records...");
 
 		final ORecordId rid = new ORecordId();
-		final ODocument doc = new ODocument(database, rid);
+		final ODocument doc = new ODocument(rid);
 		for (String recId : recordToDelete) {
 			doc.reset();
 			rid.fromString(recId);
@@ -172,7 +172,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		String key;
 		String value;
 
-		final ODocument doc = new ODocument(database);
+		final ODocument doc = new ODocument();
 
 		// FORCE RELOADING
 		database.getMetadata().getIndexManager().load();
@@ -565,7 +565,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 					// CREATE HOLES
 					int holes = (int) (record.getIdentity().getClusterPosition() - nextAvailablePos);
 
-					ODocument tempRecord = new ODocument(database);
+					ODocument tempRecord = new ODocument();
 					for (int i = 0; i < holes; ++i) {
 						tempRecord.reset();
 						((ODatabaseRecord) database.getUnderlying()).save(tempRecord, clusterName);

@@ -22,6 +22,7 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OValidationException;
@@ -186,6 +187,7 @@ public class SchemaTest {
 		Thread thread = new Thread(new Runnable() {
 
 			public void run() {
+				ODatabaseRecordThreadLocal.INSTANCE.set(database);
 				ODocument doc = new ODocument("NewClass");
 				database.save(doc);
 
