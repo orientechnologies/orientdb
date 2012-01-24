@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -44,13 +45,13 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 
 	public <THISDB extends ODatabase> THISDB open(final String iUserName, final String iUserPassword) {
 		underlying.open(iUserName, iUserPassword);
-		ODatabaseFactory.register(databaseOwner);
+		Orient.instance().getDatabaseFactory().register(databaseOwner);
 		return (THISDB) this;
 	}
 
 	public <THISDB extends ODatabase> THISDB create() {
 		underlying.create();
-		ODatabaseFactory.register(databaseOwner);
+		Orient.instance().getDatabaseFactory().register(databaseOwner);
 		return (THISDB) this;
 	}
 
@@ -64,17 +65,17 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 
 	public void close() {
 		underlying.close();
-		ODatabaseFactory.unregister(databaseOwner);
+		Orient.instance().getDatabaseFactory().unregister(databaseOwner);
 	}
 
 	public void delete() {
 		underlying.drop();
-		ODatabaseFactory.unregister(databaseOwner);
+		Orient.instance().getDatabaseFactory().unregister(databaseOwner);
 	}
 
 	public void drop() {
 		underlying.drop();
-		ODatabaseFactory.unregister(databaseOwner);
+		Orient.instance().getDatabaseFactory().unregister(databaseOwner);
 	}
 
 	public STATUS getStatus() {

@@ -23,27 +23,27 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 
 /**
- * Static factory to create high-level ODatabase instances.
+ * Factory to create high-level ODatabase instances. The global instance is managed by Orient class.
  * 
  * @author Luca Garulli
  * 
  */
 public class ODatabaseFactory {
-	final static WeakHashMap<ODatabaseComplex<?>, Thread>	instances	= new WeakHashMap<ODatabaseComplex<?>, Thread>();
+	final WeakHashMap<ODatabaseComplex<?>, Thread>	instances	= new WeakHashMap<ODatabaseComplex<?>, Thread>();
 
-	public static synchronized ODatabaseComplex<?> register(final ODatabaseComplex<?> db) {
+	public synchronized ODatabaseComplex<?> register(final ODatabaseComplex<?> db) {
 		instances.put(db, Thread.currentThread());
 		return db;
 	}
 
-	public static synchronized void unregister(final ODatabaseComplex<?> db) {
+	public synchronized void unregister(final ODatabaseComplex<?> db) {
 		instances.remove(db);
 	}
 
 	/**
 	 * Closes all open databases.
 	 */
-	public static synchronized void shutdown() {
+	public synchronized void shutdown() {
 		if (instances.size() > 0) {
 			OLogManager.instance().debug(null,
 					"Found %d databases opened during OrientDB shutdown. Assure to always close database instances after usage",
@@ -57,15 +57,15 @@ public class ODatabaseFactory {
 		}
 	}
 
-	public static ODatabaseDocumentTx createObjectDatabase(final String url) {
+	public ODatabaseDocumentTx createObjectDatabase(final String url) {
 		return new ODatabaseDocumentTx(url);
 	}
 
-	public static OGraphDatabase createGraphDatabase(final String url) {
+	public OGraphDatabase createGraphDatabase(final String url) {
 		return new OGraphDatabase(url);
 	}
 
-	public static ODatabaseDocumentTx createDocumentDatabase(final String url) {
+	public ODatabaseDocumentTx createDocumentDatabase(final String url) {
 		return new ODatabaseDocumentTx(url);
 	}
 }

@@ -54,6 +54,7 @@ public class Orient extends OSharedResourceAbstract {
 	protected Set<ODatabaseLifecycleListener>	dbLifecycleListeners	= new HashSet<ODatabaseLifecycleListener>();
 	protected final List<OOrientListener>			listeners							= new ArrayList<OOrientListener>();
 	protected ORecordFactoryManager						recordFactoryManager	= new ORecordFactoryManager();
+	protected ODatabaseFactory								databaseFactory				= new ODatabaseFactory();
 	protected volatile boolean								active								= false;
 
 	protected static final OrientShutdownHook	shutdownHook					= new OrientShutdownHook();
@@ -262,7 +263,7 @@ public class Orient extends OSharedResourceAbstract {
 			OGraphDatabasePool.global().close();
 
 			// CLOSE ALL DATABASES
-			ODatabaseFactory.shutdown();
+			databaseFactory.shutdown();
 
 			// CLOSE ALL THE STORAGES
 			final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
@@ -319,6 +320,10 @@ public class Orient extends OSharedResourceAbstract {
 
 	public ORecordFactoryManager getRecordFactoryManager() {
 		return recordFactoryManager;
+	}
+
+	public ODatabaseFactory getDatabaseFactory() {
+		return databaseFactory;
 	}
 
 	public void registerListener(final OOrientListener iListener) {
