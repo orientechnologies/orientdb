@@ -375,8 +375,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		}
 
 		if (OLogManager.instance().isDebugEnabled())
-			OLogManager.instance().debug(this,
-					"Error on parsing HTTP content from client " + channel.socket.getInetAddress().getHostAddress() + ":\n" + request);
+			OLogManager.instance().debug(this, "Error on parsing HTTP content from client %s:\n%s",
+					channel.socket.getInetAddress().getHostAddress(), request);
 
 		return;
 	}
