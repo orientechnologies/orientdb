@@ -50,7 +50,8 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
 	}
 
 	public void close() {
-		dbPool.close();
+		if (dbPool != null)
+			dbPool.close();
 	}
 
 	public int getMaxSize() {
