@@ -2389,8 +2389,11 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 * 
 	 * @param p
 	 *          Node to remove
+   *
+   * @return Node that was removed. Passed and removed nodes may be different in case node to remove contains two children.
+   *         In this case node successor will be found and removed but it's content will be copied to the node that was passed in method.
 	 */
-	protected void removeNode(OMVRBTreeEntry<K, V> p) {
+	protected OMVRBTreeEntry<K, V> removeNode(OMVRBTreeEntry<K, V> p) {
 		modCount++;
 		// If strictly internal, copy successor's element to p and then make p
 		// point to successor.
@@ -2435,6 +2438,8 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 				p.setParent(null);
 			}
 		}
+    
+    return p;
 	}
 
 	/** From CLR */

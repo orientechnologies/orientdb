@@ -1023,7 +1023,51 @@ public class IndexTest {
 
 		person = new ODocument("Person2");
 		person.field("firstName", "foo").field("lastName", "bar").field("age", 32).save();
+
+    db.close();
 	}
+
+  public void testConcurrentRemoveDelete() {
+    ODatabaseDocument db = new ODatabaseDocumentTx(database.getURL());
+    db.open("admin", "admin");
+
+    if ( !db.getMetadata().getSchema().existsClass( "MyFruit" ) ) {
+      OClass fruitClass = db.getMetadata().getSchema().createClass( "MyFruit" );
+      fruitClass.createProperty( "name", OType.STRING );
+      fruitClass.createProperty( "color", OType.STRING );
+
+      db.getMetadata().getSchema().getClass( "MyFruit" ).getProperty( "name" ).createIndex( OClass.INDEX_TYPE.UNIQUE );
+
+      db.getMetadata().getSchema().getClass( "MyFruit" ).getProperty( "color" ).createIndex( OClass.INDEX_TYPE.NOTUNIQUE );
+
+      db.getMetadata().getSchema().save();
+    }
+
+    final int passCount = 10;
+    final int chunkSize = 1000;
+    for( int pass = 0; pass < passCount; pass++ ) {
+      List<ODocument> recordsToDelete = new ArrayList<ODocument>(  );
+      db.begin();
+      for( int i = 0; i < chunkSize; i++ ) {
+        ODocument d = new ODocument( "MyFruit" ).field( "name", "ABC" + pass + 'K' + i ).field( "color", "FOO"
+          + pass );
+        d.save();
+        if ( i < chunkSize / 2 ) {
+          recordsToDelete.add( d );
+        }
+      }
+      db.commit();
+
+      // do delete
+      db.begin();
+      for(final ODocument recordToDelete : recordsToDelete ) {
+        db.delete(recordToDelete );
+      }
+      db.commit();
+    }
+
+    db.close();
+  }
 
 	/*
 	 * @Test(dependsOnMethods = "linkedIndexedProperty") public void testIndexRemovalLink() { List<ODocument> result =
