@@ -146,7 +146,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 
 			final ORID rid = (ORID) iConfig.field(CONFIG_MAP_RID, ORID.class);
 			if (rid == null)
-				return null;
+				throw new OIndexException("Error during deserialization of index definition: '" + CONFIG_MAP_RID + "' attribute is null");
 
 			configuration = iConfig;
 			name = configuration.field(OIndexInternal.CONFIG_NAME);
