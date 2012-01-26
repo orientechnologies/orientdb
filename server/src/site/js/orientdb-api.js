@@ -215,7 +215,7 @@ function ODatabase(databasePath) {
 		return this.getDatabaseInfo();
 	}
 
-	ODatabase.prototype.query = function(iQuery, iLimit, iFetchPlan) {
+	ODatabase.prototype.query = function(iQuery, iLimit, iFetchPlan, successCallback) {
 		if (this.databaseInfo == null) {
 			this.open();
 		}
@@ -243,6 +243,8 @@ function ODatabase(databasePath) {
 			success : function(msg) {
 				this.setErrorMessage(null);
 				this.handleResponse(msg);
+				if (successCallback)
+					successCallback();
 			},
 			error : function(msg) {
 				this.handleResponse(null);
@@ -285,7 +287,7 @@ function ODatabase(databasePath) {
 		return this.getCommandResult();
 	}
 
-	ODatabase.prototype.save = function(obj, errorCallback) {
+	ODatabase.prototype.save = function(obj, errorCallback, successCallback) {
 		if (this.databaseInfo == null) {
 			this.open();
 		}
@@ -310,11 +312,14 @@ function ODatabase(databasePath) {
 				this.setErrorMessage(null);
 				this.setCommandResponse(msg);
 				this.setCommandResult(msg);
+				if(successCallback)
+					successCallback();
 			},
 			error : function(msg) {
 				this.handleResponse(null);
 				this.setErrorMessage('Save error: ' + msg.responseText);
-				errorCallback();
+				if(errorCallback)
+					errorCallback(msg.responseText);
 			}
 		});
 		
@@ -687,8 +692,9 @@ function ODatabase(databasePath) {
 	}
 
 	ODatabase.prototype.handleResponse = function(iResponse) {
-		if (typeof iResponse != 'object')
-			iResponse = this.URLDecodeU(iResponse);
+		if (typeof iResponse != 'object'){
+			iResponse = this.UTF8Encode(iResponse);
+		}
 		this.setCommandResponse(iResponse);
 		if (iResponse != null)
 			this.setCommandResult(this.transformResponse(iResponse));
@@ -697,11 +703,17 @@ function ODatabase(databasePath) {
 	}
 
 	ODatabase.prototype.transformResponse = function(msg) {
-		if (this.getEvalResponse() && msg.length > 0 && typeof msg != 'object') {
-			if (this.getParseResponseLinks()) {
-				return this.parseConnections(jQuery.parseJSON(msg));
+		if (this.getEvalResponse()) {
+			var returnValue;
+			if (msg.length > 0 && typeof msg != 'object') {
+				returnValue = jQuery.parseJSON(msg)
 			} else {
-				return jQuery.parseJSON(msg);
+				returnValue = msg;
+			}
+			if (this.getParseResponseLinks()) {
+				return this.parseConnections(returnValue);
+			} else {
+				return returnValue;
 			}
 		} else {
 			return msg;
@@ -750,10 +762,10 @@ function ODatabase(databasePath) {
 				this.putObjectInLinksMap(value, linkMap);
 			} else {
 				if (field == '@rid' && value.length > 0
-						&& linkMap.hasOwnProperty("#" + value)
-						&& linkMap["#" + value] === null) {
+						&& linkMap.hasOwnProperty(value)
+						&& linkMap[value] === null) {
 					linkMap["foo"] = 2;
-					linkMap["#" + value] = obj;
+					linkMap[value] = obj;
 				}
 			}
 		}
@@ -766,7 +778,7 @@ function ODatabase(databasePath) {
 			if (typeof value == 'object') {
 				this.getObjectFromLinksMap(value, linkMap);
 			} else {
-				if (value.length > 0 && value.charAt(0) == '#'
+				if (field != '@rid' && value.length > 0 && value.charAt(0) == '#'
 						&& linkMap[value] != null) {
 					obj[field] = linkMap[value];
 				}
@@ -869,7 +881,27 @@ function ODatabase(databasePath) {
 	}
 
 	ODatabase.prototype.URLEncode = function(c) {
-		return encodeURIComponent(c);
+		var o = '';
+		var x = 0;
+		c = c.toString();
+		var r = /(^[a-zA-Z0-9_.]*)/;
+		while (x < c.length) {
+			var m = r.exec(c.substr(x));
+			if (m != null && m.length > 1 && m[1] != '') {
+				o += m[1];
+				x += m[1].length;
+			} else {
+				if (c[x] == ' ')
+					o += '+';
+				else {
+					var d = c.charCodeAt(x);
+					var h = d.toString(16);
+					o += '%' + (h.length < 2 ? '0' : '') + h.toUpperCase();
+				}
+				x++;
+			}
+		}
+		return o;
 	}
 
 	ODatabase.prototype.URLDecode = function(s) {
@@ -907,5 +939,61 @@ function ODatabase(databasePath) {
 
 		return utftext;
 	}
-
+	
+	ODatabase.prototype.UTF8Encode =  function (string) {
+		string = string.replace(/\r\n/g,"\n");
+		var utftext = "";
+ 
+		for (var n = 0; n < string.length; n++) {
+ 
+			var c = string.charCodeAt(n);
+ 
+			if (c < 128) {
+				utftext += String.fromCharCode(c);
+			}
+			else if((c > 127) && (c < 2048)) {
+				utftext += String.fromCharCode((c >> 6) | 192);
+				utftext += String.fromCharCode((c & 63) | 128);
+			}
+			else {
+				utftext += String.fromCharCode((c >> 12) | 224);
+				utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+				utftext += String.fromCharCode((c & 63) | 128);
+			}
+ 
+		}
+ 
+		return utftext;
+	}
+	
+	ODatabase.prototype.UTF8Decode = function (utftext) {
+		var string = "";
+		var i = 0;
+		var c = c1 = c2 = 0;
+ 
+		while ( i < utftext.length ) {
+ 
+			c = utftext.charCodeAt(i);
+ 
+			if (c < 128) {
+				string += String.fromCharCode(c);
+				i++;
+			}
+			else if((c > 191) && (c < 224)) {
+				c2 = utftext.charCodeAt(i+1);
+				string += String.fromCharCode(((c & 31) << 6) | (c2 & 63));
+				i += 2;
+			}
+			else {
+				c2 = utftext.charCodeAt(i+1);
+				c3 = utftext.charCodeAt(i+2);
+				string += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
+				i += 3;
+			}
+ 
+		}
+		
+		return string;
+		
+	}
 }
