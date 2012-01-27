@@ -88,8 +88,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	}
 
 	/**
-	 * Deprecated: use {@link #ODocument()} instead. ODocument instances always refer to the thread-local database and not
-	 * anymore to the passed database as parameter.
+	 * Deprecated: use {@link #ODocument()} instead. ODocument instances always refer to the thread-local database and not anymore to
+	 * the passed database as parameter.
 	 */
 	@Deprecated
 	public ODocument(final ODatabaseRecord iDatabase) {
@@ -279,6 +279,12 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 		return cloned;
 	}
 
+	/**
+	 * Detaches all the connected records. If new records are linked to the document the detaching can't be completed and false will
+	 * be returned.
+	 * 
+	 * @return true if the record has been detached, otherwise false
+	 */
 	public boolean detach() {
 		boolean fullyDetached = true;
 

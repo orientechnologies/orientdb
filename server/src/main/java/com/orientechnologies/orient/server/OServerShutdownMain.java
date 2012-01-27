@@ -71,11 +71,7 @@ public class OServerShutdownMain {
 				// LOAD SERVER HOST AND PORT FROM FILE
 				loadConfiguration();
 				for (OServerNetworkListenerConfiguration l : configuration.network.listeners) {
-					if (l.protocol.equals("distributed")) {
-						networkAddress = l.ipAddress;
-						networkPort = OServerNetworkListener.getPorts(l.portRange);
-						break;
-					} else if (l.protocol.equals("binary")) {
+					if (l.protocol.equals("distributed") || l.protocol.equals("binary")) {
 						networkAddress = l.ipAddress;
 						networkPort = OServerNetworkListener.getPorts(l.portRange);
 						break;
