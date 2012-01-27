@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsText
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsValue;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorInstanceof;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIs;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorLike;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
@@ -66,14 +67,17 @@ public class OSQLEngine {
 	private Map<String, OSQLFunction>																		inlineFunctions				= new HashMap<String, OSQLFunction>();
 	private Map<String, Class<? extends OSQLFunction>>									aggregationFunctions	= new HashMap<String, Class<? extends OSQLFunction>>();
 	protected Map<String, Class<? extends OCommandExecutorSQLAbstract>>	commands							= new HashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
-	public static OQueryOperator[]																			RECORD_OPERATORS			= { new OQueryOperatorAnd(),
-			new OQueryOperatorOr(), new OQueryOperatorNotEquals(), new OQueryOperatorNot(), new OQueryOperatorEquals(),
+
+	// WARNING: ORDER IS IMPORTANT TO AVOID SUB-STRING LIKE "IS" and AND "INSTANCEOF": INSTANCEOF MUST BE PLACED BEFORE! AND ALSO FOR
+	// PERFORMANCE (MOST USED BEFORE)
+	public static OQueryOperator[]																			RECORD_OPERATORS			= { new OQueryOperatorEquals(),
+			new OQueryOperatorAnd(), new OQueryOperatorOr(), new OQueryOperatorNotEquals(), new OQueryOperatorNot(),
 			new OQueryOperatorMinorEquals(), new OQueryOperatorMinor(), new OQueryOperatorMajorEquals(), new OQueryOperatorContainsAll(),
-			new OQueryOperatorMajor(), new OQueryOperatorLike(), new OQueryOperatorMatches(), new OQueryOperatorIs(),
-			new OQueryOperatorIn(), new OQueryOperatorContainsKey(), new OQueryOperatorContainsValue(), new OQueryOperatorContainsText(),
-			new OQueryOperatorContains(), new OQueryOperatorContainsText(), new OQueryOperatorTraverse(), new OQueryOperatorBetween(),
-			new OQueryOperatorPlus(), new OQueryOperatorMinus(), new OQueryOperatorMultiply(), new OQueryOperatorDivide(),
-			new OQueryOperatorMod()																															};
+			new OQueryOperatorMajor(), new OQueryOperatorLike(), new OQueryOperatorMatches(), new OQueryOperatorInstanceof(),
+			new OQueryOperatorIs(), new OQueryOperatorIn(), new OQueryOperatorContainsKey(), new OQueryOperatorContainsValue(),
+			new OQueryOperatorContainsText(), new OQueryOperatorContains(), new OQueryOperatorContainsText(),
+			new OQueryOperatorTraverse(), new OQueryOperatorBetween(), new OQueryOperatorPlus(), new OQueryOperatorMinus(),
+			new OQueryOperatorMultiply(), new OQueryOperatorDivide(), new OQueryOperatorMod()		};
 
 	protected static OSQLEngine																					INSTANCE							= new OSQLEngine();
 

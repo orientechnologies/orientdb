@@ -1369,4 +1369,25 @@ public class SQLSelectTest {
 			database.close();
 		}
 	}
+
+	@Test
+	public void queryInstanceOfOperator() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Account")).execute();
+
+		Assert.assertTrue(result.size() != 0);
+
+		List<ODocument> result2 = database.command(
+				new OSQLSynchQuery<ODocument>("select from Account where @this instanceof 'Account'")).execute();
+
+		Assert.assertEquals(result2.size(), result.size());
+
+		List<ODocument> result3 = database.command(
+				new OSQLSynchQuery<ODocument>("select from Account where @class instanceof 'Account'")).execute();
+
+		Assert.assertEquals(result3.size(), result.size());
+
+		database.close();
+	}
 }
