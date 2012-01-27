@@ -247,6 +247,7 @@ public class OSQLHelper {
 				if (f.getRoot().equals("?")) {
 					// POSITIONAL PARAMETER
 					iDocument.field(field.getKey(), iArgs.get(paramCounter++));
+					continue;
 				} else if (f.getRoot().startsWith(":")) {
 					// NAMED PARAMETER
 					iDocument.field(field.getKey(), iArgs.get(f.getRoot().substring(1)));
