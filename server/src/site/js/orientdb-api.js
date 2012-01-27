@@ -132,11 +132,7 @@ function ODatabase(databasePath) {
 		if( query == null )
 			return null;
 
-		var dbUser = query.result[0];
-		queryString = "select from HResource where dbUser = " + dbUser['@rid'];;
-		query = window.database.query(queryString, null, '*:-1');
 		return query.result[0];
-		
 	}
 	
 	ODatabase.prototype.getRemoveObjectCircleReferences = function() {
