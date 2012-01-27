@@ -33,7 +33,7 @@ public class OLeaderCheckerTask extends TimerTask {
 		this.peer = iPeerNode;
 
 		// COMPUTE THE HEARTBEAT THRESHOLD AS THE 30% MORE THAN THE HEARTBEAT TIME
-		heartBeatDelay = peer.getManager().getConfig().getNetworkHeartbeatDelay() * 13000000 / 100;
+		heartBeatDelay = peer.getManager().getConfig().getNetworkHeartbeatDelay() * 130 / 100;
 	}
 
 	@Override

@@ -69,15 +69,16 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	}
 
 	@Override
-	public void config(final OServer iServer, final Socket iSocket, final OClientConnection iConnection,
-			final OContextConfiguration iConfiguration) throws IOException {
+	public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfiguration) throws IOException {
+		// CREATE THE CLIENT CONNECTION
+		connection = OClientConnectionManager.instance().connect(iSocket, this);
+
 		server = iServer;
 		requestMaxContentLength = iConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_HTTP_MAX_CONTENT_LENGTH);
 		socketTimeout = iConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
 		responseCharSet = iConfiguration.getValueAsString(OGlobalConfiguration.NETWORK_HTTP_CONTENT_CHARSET);
 
 		channel = new OChannelTextServer(iSocket, iConfiguration);
-		connection = iConnection;
 
 		request = new OHttpRequest(this, channel, connection.data, iConfiguration);
 

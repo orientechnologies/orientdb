@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
+import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.exception.OException;
@@ -99,6 +100,9 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 			return;
 
 		for (Object resource : sharedResources.values()) {
+			if (resource instanceof OSharedResource)
+				((OSharedResource) resource).releaseExclusiveLock();
+
 			if (resource instanceof OCloseable)
 				((OCloseable) resource).close();
 		}

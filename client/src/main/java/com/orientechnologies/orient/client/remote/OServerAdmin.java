@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
-import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 
 /**
  * Remote administration class of OrientDB Server instances.
@@ -234,7 +233,7 @@ public class OServerAdmin {
 
 		try {
 
-			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_DELETE);
+			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_DROP);
 			try {
 				network.writeString(storage.getName());
 			} finally {
@@ -247,7 +246,7 @@ public class OServerAdmin {
 			OLogManager.instance().exception("Cannot delete the remote storage: " + storage.getName(), e, OStorageException.class);
 			storage.close(true);
 		}
-		
+
 		storage.setSessionId(-1);
 
 		for (OStorage s : Orient.instance().getStorages()) {
@@ -280,7 +279,7 @@ public class OServerAdmin {
 
 		try {
 
-			final OChannelBinaryClient network = storage.beginRequest(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_SENDER);
+			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_COPY);
 			try {
 				network.writeString(iDatabaseName);
 				network.writeString(iDatabaseUserName);

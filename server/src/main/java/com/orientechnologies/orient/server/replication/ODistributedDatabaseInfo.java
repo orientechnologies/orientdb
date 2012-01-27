@@ -27,13 +27,26 @@ public class ODistributedDatabaseInfo {
 		SYNCH, ASYNCH
 	}
 
-	public String								databaseName;
-	public String								userName;
-	public String								userPassword;
-	public int									sessionId;
-	public SYNCH_TYPE						synchType;
-	public ODistributedStorage	storage;
-	public OOperationLog				log;
+	public String						serverId;
+	public String						databaseName;
+	public String						userName;
+	public String						userPassword;
+	public SYNCH_TYPE				synchType;
+	public ONodeConnection	connection;
+	public OOperationLog		log;
+
+	public ODistributedDatabaseInfo(final String iServerid, final String dbName, final String iUserName, final String iUserPasswd,
+			final SYNCH_TYPE iSynchType) {
+		serverId = iServerid;
+		databaseName = dbName;
+		userName = iUserName;
+		userPassword = iUserPasswd;
+		synchType = iSynchType;
+	}
+
+	public void connected() throws IOException {
+		log = new OOperationLog(serverId, databaseName);
+	}
 
 	public void close() throws IOException {
 		if (log != null)

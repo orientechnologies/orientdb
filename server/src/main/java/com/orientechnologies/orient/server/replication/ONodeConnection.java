@@ -18,13 +18,15 @@ package com.orientechnologies.orient.server.replication;
 import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.client.remote.OStorageRemote;
-import com.orientechnologies.orient.client.remote.OStorageRemoteAsynchEventListener;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
@@ -34,53 +36,78 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.enterprise.channel.binary.OAsynchChannelServiceThread;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryOutputStream;
-import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
+import com.orientechnologies.orient.server.clustering.leader.ORemoteNodeAbstract;
+import com.orientechnologies.orient.server.handler.distributed.OClusterProtocol;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.SYNCH_TYPE;
 import com.orientechnologies.orient.server.replication.conflict.OReplicationConflictResolver;
 
 /**
  * Distributed version of remote storage
  */
-public class ODistributedStorage extends OStorageRemote implements OCommandOutputListener {
+public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutputListener {
 
-	public static final String									DNODE_PREFIX	= "dnode=";
 	private final OReplicator										replicator;
 	private final OReplicationConflictResolver	conflictResolver;
+	private final int														sessionId	= 0;
+	protected final ExecutorService							asynchExecutor;
 
-	public ODistributedStorage(final OReplicator iReplicator, final String iNodeId, final String iURL, final String iMode,
-			final OReplicationConflictResolver iConflictResolver) throws IOException {
-		super(DNODE_PREFIX + iNodeId, iURL, iMode);
+	public ONodeConnection(final OReplicator iReplicator, final String iNodeId, final OReplicationConflictResolver iConflictResolver)
+			throws IOException {
+		super(iNodeId.split(":")[0], Integer.parseInt(iNodeId.split(":")[1]));
+		channel = new OChannelBinaryClient(networkAddress, networkPort, new OContextConfiguration(),
+				OClusterProtocol.CURRENT_PROTOCOL_VERSION);
 
-		final OStorageRemoteAsynchEventListener wrapping = (OStorageRemoteAsynchEventListener) getAsynchEventListener();
+		OLogManager.instance().warn(this, "Cluster <%s>: connecting to node %s...", iReplicator.getManager().getConfig().name, iNodeId);
 
-		setAsynchEventListener(new ODistributedRemoteAsynchEventListener(iReplicator.getManager(), wrapping, wrapping.getStorage()
-				.getClientId()));
+		beginRequest(OClusterProtocol.REQUEST_NODE2NODE_CONNECT);
+		try {
+			// CONNECT TO THE SERVER
+			channel.writeString(iReplicator.getManager().getId());
+			channel.writeString(iReplicator.getReplicatorUser().name);
+			channel.writeString(iReplicator.getReplicatorUser().password);
+		} finally {
+			endRequest();
+		}
+
+		try {
+			beginResponse();
+		} finally {
+			endResponse();
+		}
+
+		serviceThread = new OAsynchChannelServiceThread(new ODistributedRemoteAsynchEventListener(iReplicator.getManager(),
+				new ODistributedRemoteAsynchEventListener(iReplicator.getManager(), null, iNodeId), iNodeId), channel,
+				"OrientDB <- Asynch Node/" + iNodeId);
+
 		replicator = iReplicator;
 		conflictResolver = iConflictResolver;
+		asynchExecutor = Executors.newSingleThreadExecutor();
 	}
 
-	public void synchronize(final Set<ODocument> iDbCfg) {
-		checkConnection();
+	public void synchronize(final String iDatabaseName, final Set<ODocument> iDbCfg) {
 
 		final long time = System.currentTimeMillis();
 
-		OLogManager.instance().info(this, "<-> DB %s: synchronization started. Storing delta of updates...", name);
+		OLogManager.instance().info(this, "<-> DB %s: synchronization started. Storing delta of updates...", iDatabaseName);
 
 		try {
-			final OChannelBinaryClient network = beginRequest(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_SYNCHRONIZE);
+			ODocument cfg = new ODocument().field("nodes", iDbCfg, OType.EMBEDDEDSET);
 
 			// SEND CURRENT CONFIGURATION FOR CURRENT DATABASE
-			ODocument cfg = new ODocument().field("nodes", iDbCfg, OType.EMBEDDEDSET);
+			final OChannelBinaryClient network = beginRequest(OClusterProtocol.REQUEST_NODE2NODE_REPLICATION_SYNCHRONIZE);
+
 			try {
+				network.writeString(iDatabaseName);
 				network.writeBytes(cfg.toStream());
 				network.flush();
 			} finally {
-				endRequest(network);
+				endRequest();
 			}
 
-			beginResponse(network);
+			beginResponse();
 			try {
 				int ops = 0;
 				final ORecordOperation opLog = new ORecordOperation();
@@ -91,26 +118,26 @@ public class ODistributedStorage extends OStorageRemote implements OCommandOutpu
 						opLog.fromStream(network.readBytes());
 						ops++;
 
-						OLogManager.instance().info(this, "<< DB %s: (%d) received record %s", name, ops, opLog.record);
+						OLogManager.instance().info(this, "<< DB %s: (%d) received record %s", iDatabaseName, ops, opLog.record);
 
-						replicator.getOperationLog(nodeId, getName()).appendLog(opLog.serial, opLog.type,
+						replicator.getOperationLog(nodeId, iDatabaseName).appendLog(opLog.serial, opLog.type,
 								(ORecordId) opLog.record.getIdentity());
 					}
 				}
 
 				if (OLogManager.instance().isInfoEnabled())
 					OLogManager.instance().info(this, "<-> DB %s: synchronization completed. Received %d operations from remote node (%dms)",
-							getName(), ops, (System.currentTimeMillis() - time));
+							iDatabaseName, ops, (System.currentTimeMillis() - time));
 
 			} finally {
-				endResponse(network);
+				endResponse();
 			}
 
 		} catch (OException e) {
 			// PASS THROUGH
 			throw e;
 		} catch (Exception e) {
-			handleException("<-> DB " + getName() + ": error on synchronization", e);
+			throw new OIOException("<-> DB " + iDatabaseName + ": error on synchronization", e);
 		}
 	}
 
@@ -131,16 +158,15 @@ public class ODistributedStorage extends OStorageRemote implements OCommandOutpu
 				break;
 			}
 
-			OLogManager.instance()
-					.warn(this, ">> DB %s: (%s mode) %s record %s...", name, iRequestType, operation, iRecord.getIdentity());
+			OLogManager.instance().warn(this, ">> DB %s: (%s mode) %s record %s...", databaseEntry.databaseName, iRequestType, operation,
+					iRecord.getIdentity());
 		}
-
-		checkConnection();
 
 		do {
 			try {
-				final OChannelBinaryClient network = beginRequest(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_RECORD_CHANGE);
+				final OChannelBinaryClient network = beginRequest(OClusterProtocol.REQUEST_NODE2NODE_REPLICATION_RECORD_CHANGE);
 				try {
+					network.writeString(databaseEntry.databaseName);
 					network.writeByte(iRequest.type);
 					network.writeLong(0); // OPERATION ID
 					network.writeRID(iRecord.getIdentity());
@@ -149,24 +175,24 @@ public class ODistributedStorage extends OStorageRemote implements OCommandOutpu
 					network.writeByte(iRecord.getRecordType());
 
 				} finally {
-					endRequest(network);
+					endRequest();
 				}
 
 				if (iRequestType == SYNCH_TYPE.SYNCH)
 					try {
-						beginResponse(network);
+						beginResponse();
 						handleRemoteResponse(iRequest.type, iRequestType, iRecord, network.readLong());
 					} finally {
-						endResponse(network);
+						endResponse();
 					}
 				else {
 					Callable<Object> response = new Callable<Object>() {
 						public Object call() throws Exception {
-							beginResponse(network);
+							beginResponse();
 							try {
 								handleRemoteResponse(iRequest.type, iRequestType, iRecord, network.readLong());
 							} finally {
-								endResponse(network);
+								endResponse();
 							}
 							return null;
 						}
@@ -185,17 +211,17 @@ public class ODistributedStorage extends OStorageRemote implements OCommandOutpu
 				// PASS THROUGH
 				throw e;
 			} catch (Exception e) {
-				handleException("<-> DB " + getName() + ": error on distribute record: " + iRecord.getIdentity(), e);
+				throw new OIOException("<-> DB " + databaseEntry.databaseName + ": error on distribute record: " + iRecord.getIdentity(), e);
 
 			}
 		} while (true);
 	}
 
-	public void share(final ODatabaseRecord iDatabase, final String dbName, final String iDbUser, final String iDbPasswd,
+	public void copy(final ODatabaseRecord iDatabase, final String dbName, final String iDbUser, final String iDbPasswd,
 			final String iEngineName) throws IOException {
-		createConnectionPool();
+		checkConnection();
 
-		final OChannelBinaryClient network = beginRequest(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_RECEIVER);
+		final OChannelBinaryClient network = beginRequest(OClusterProtocol.REQUEST_NODE2NODE_DB_COPY);
 
 		try {
 			network.writeString(dbName);
@@ -207,17 +233,16 @@ public class ODistributedStorage extends OStorageRemote implements OCommandOutpu
 			new ODatabaseExport(iDatabase, new OChannelBinaryOutputStream(network), this).exportDatabase();
 
 		} finally {
-			endRequest(network);
+			endRequest();
 		}
 
 		try {
-			beginResponse(network);
-			setSessionId(network.readInt());
+			beginResponse();
 		} finally {
-			endResponse(network);
+			endResponse();
 		}
-		
-		close();
+
+		disconnect();
 	}
 
 	private void handleRemoteResponse(final byte iOperation, final SYNCH_TYPE iRequestType, final ORecordInternal<?> iRecord,
@@ -240,7 +265,6 @@ public class ODistributedStorage extends OStorageRemote implements OCommandOutpu
 		}
 	}
 
-	@Override
-	public void onMessage(String iText) {
+	public void onMessage(final String iText) {
 	}
 }

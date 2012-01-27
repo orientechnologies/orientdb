@@ -652,38 +652,6 @@ public class OStorageRemote extends OStorageAbstract {
 		} while (true);
 	}
 
-	public long count(final String iClassName) {
-		checkConnection();
-
-		do {
-
-			try {
-				OChannelBinaryClient network = null;
-				try {
-
-					network = beginRequest(OChannelBinaryProtocol.REQUEST_COUNT);
-					network.writeString(iClassName);
-
-				} finally {
-					endRequest(network);
-				}
-
-				try {
-					beginResponse(network);
-					return network.readLong();
-				} finally {
-					endResponse(network);
-				}
-			} catch (OException e) {
-				// PASS THROUGH
-				throw e;
-			} catch (Exception e) {
-				handleException("Error on executing count on class: " + iClassName, e);
-
-			}
-		} while (true);
-	}
-
 	/**
 	 * Execute the command remotely and get the results back.
 	 */
@@ -1285,7 +1253,7 @@ public class OStorageRemote extends OStorageAbstract {
 			final String remoteHost = server.substring(0, sepPos);
 			final int remotePort = Integer.parseInt(server.substring(sepPos + 1));
 
-			return new OChannelBinaryClient(remoteHost, remotePort, clientConfiguration);
+			return new OChannelBinaryClient(remoteHost, remotePort, clientConfiguration, OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
 		}
 
 		final StringBuilder buffer = new StringBuilder();
@@ -1526,7 +1494,8 @@ public class OStorageRemote extends OStorageAbstract {
 				// ALWAYS CREATE AT LEAST ONE CONNECTION
 				final OChannelBinaryClient firstChannel = createNetworkConnection();
 				networkPool.add(firstChannel);
-				serviceThread = new OAsynchChannelServiceThread(asynchEventListener, firstChannel);
+				serviceThread = new OAsynchChannelServiceThread(asynchEventListener, firstChannel, "OrientDB <- Asynch Client ("
+						+ firstChannel.socket.getRemoteSocketAddress() + ")");
 
 			}
 

@@ -29,6 +29,6 @@ public class OChannelBinaryClientSynch extends OChannelBinaryClient {
 
 	public OChannelBinaryClientSynch(final String remoteHost, final int remotePort, final OContextConfiguration iConfig)
 			throws IOException {
-		super(remoteHost, remotePort, iConfig);
+		super(remoteHost, remotePort, iConfig, OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
 	}
 }

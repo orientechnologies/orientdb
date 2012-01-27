@@ -184,11 +184,6 @@ public class OStorageRemoteThread implements OStorage {
 		return delegate.count(iClusterIds);
 	}
 
-	public long count(final String iClassName) {
-		delegate.setSessionId(sessionId);
-		return delegate.count(iClassName);
-	}
-
 	public Object command(final OCommandRequestText iCommand) {
 		delegate.setSessionId(sessionId);
 		return delegate.command(iCommand);

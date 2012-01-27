@@ -37,7 +37,7 @@ public class OChannelBinaryProtocol {
 	public static final byte	REQUEST_DB_CREATE							= 4;
 	public static final byte	REQUEST_DB_CLOSE							= 5;
 	public static final byte	REQUEST_DB_EXIST							= 6;
-	public static final byte	REQUEST_DB_DELETE							= 7;
+	public static final byte	REQUEST_DB_DROP								= 7;
 	public static final byte	REQUEST_DB_SIZE								= 8;
 	public static final byte	REQUEST_DB_COUNTRECORDS				= 9;
 
@@ -45,6 +45,7 @@ public class OChannelBinaryProtocol {
 	public static final byte	REQUEST_DATACLUSTER_REMOVE		= 11;
 	public static final byte	REQUEST_DATACLUSTER_COUNT			= 12;
 	public static final byte	REQUEST_DATACLUSTER_DATARANGE	= 13;
+	public static final byte	REQUEST_DATACLUSTER_COPY			= 14;
 
 	public static final byte	REQUEST_DATASEGMENT_ADD				= 20;
 	public static final byte	REQUEST_DATASEGMENT_REMOVE		= 21;
@@ -53,8 +54,9 @@ public class OChannelBinaryProtocol {
 	public static final byte	REQUEST_RECORD_CREATE					= 31;
 	public static final byte	REQUEST_RECORD_UPDATE					= 32;
 	public static final byte	REQUEST_RECORD_DELETE					= 33;
+	public static final byte	REQUEST_RECORD_COPY						= 34;
 
-	public static final byte	REQUEST_COUNT									= 40;
+	public static final byte	REQUEST_COUNT									= 40; // DEPRECATED: USE REQUEST_DATACLUSTER_COUNT
 	public static final byte	REQUEST_COMMAND								= 41;
 
 	public static final byte	REQUEST_TX_COMMIT							= 60;
@@ -64,8 +66,10 @@ public class OChannelBinaryProtocol {
 	public static final byte	REQUEST_CONFIG_LIST						= 72;
 	public static final byte	REQUEST_DB_RELOAD							= 73; // SINCE 1.0rc4
 	public static final byte	REQUEST_DB_LIST								= 74; // SINCE 1.0rc6
+	public static final byte	REQUEST_DB_COPY								= 75; // SINCE 1.0rc8
 
 	public static final byte	REQUEST_PUSH_RECORD						= 79;
+	public static final byte	PUSH_NODE2CLIENT_DB_CONFIG		= 80;
 
 	// INCOMING
 	public static final byte	RESPONSE_STATUS_OK						= 0;

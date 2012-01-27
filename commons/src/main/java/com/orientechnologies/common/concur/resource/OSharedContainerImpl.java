@@ -22,7 +22,8 @@ import java.util.concurrent.Callable;
 import com.orientechnologies.common.exception.OException;
 
 /**
- * Shared container that works with callbacks like closures.
+ * Shared container that works with callbacks like closures. If the resource implements the {@link OSharedResource} interface then
+ * the resource is locked until is removed.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
@@ -36,7 +37,12 @@ public class OSharedContainerImpl implements OSharedContainer {
 	}
 
 	public synchronized <T> T removeResource(final String iName) {
-		return (T) sharedResources.remove(iName);
+		T resource = (T) sharedResources.remove(iName);
+
+		if (resource instanceof OSharedResource)
+			((OSharedResource) resource).releaseExclusiveLock();
+
+		return resource;
 	}
 
 	public synchronized <T> T getResource(final String iName, final Callable<T> iCallback) {
@@ -48,6 +54,10 @@ public class OSharedContainerImpl implements OSharedContainer {
 			} catch (Exception e) {
 				throw new OException("Error on creation of shared resource", e);
 			}
+
+			if (value instanceof OSharedResource)
+				((OSharedResource) value).acquireExclusiveLock();
+
 			sharedResources.put(iName, value);
 		}
 

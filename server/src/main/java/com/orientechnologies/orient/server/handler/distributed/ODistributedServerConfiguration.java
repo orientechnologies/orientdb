@@ -114,7 +114,7 @@ public class ODistributedServerConfiguration {
 			// CHECK THE CONFIGURATION
 			if (OServerMain.server().getUser(REPLICATOR_USER) == null)
 				// CREATE REPLICATOR USER
-				OServerMain.server().addUser(REPLICATOR_USER, null, "database.passthrough");
+				OServerMain.server().addUser(REPLICATOR_USER, null, "connect,database.passthrough");
 
 			if (tempSecurityKey == null) {
 				OLogManager.instance().info(this, "Generating Server security key and saving it in configuration...");

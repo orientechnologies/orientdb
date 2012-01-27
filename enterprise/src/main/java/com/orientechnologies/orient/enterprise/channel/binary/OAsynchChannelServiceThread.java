@@ -21,7 +21,6 @@ import com.orientechnologies.common.thread.OSoftThread;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 
 /**
  * Service thread that catches internal messages sent by the server
@@ -34,8 +33,8 @@ public class OAsynchChannelServiceThread extends OSoftThread {
 	private ORemoteServerEventListener	remoteServerEventListener;
 
 	public OAsynchChannelServiceThread(final ORemoteServerEventListener iRemoteServerEventListener,
-			final OChannelBinaryClient iFirstChannel) {
-		super(Orient.getThreadGroup(), "OrientDB AsynchChannelService");
+			final OChannelBinaryClient iFirstChannel, final String iThreadName) {
+		super(Orient.getThreadGroup(), iThreadName);
 		sessionId = Integer.MIN_VALUE;
 		remoteServerEventListener = iRemoteServerEventListener;
 		network = iFirstChannel;
@@ -47,35 +46,31 @@ public class OAsynchChannelServiceThread extends OSoftThread {
 		try {
 			try {
 				network.beginResponse(sessionId);
+				final byte request = network.readByte();
+
+				Object obj = null;
+
+				switch (request) {
+				case OChannelBinaryProtocol.REQUEST_PUSH_RECORD:
+					obj = (ORecordInternal<?>) OChannelBinaryProtocol.readIdentifiable(network);
+					break;
+
+				case OChannelBinaryProtocol.PUSH_NODE2CLIENT_DB_CONFIG:
+					obj = new ODocument().fromStream(network.readBytes());
+					break;
+				}
+
+				if (remoteServerEventListener != null)
+					remoteServerEventListener.onRequest(request, obj);
+
 			} catch (IOException ioe) {
 				// EXCEPTION RECEIVED (THE SOCKET HAS BEEN CLOSED?) ASSURE TO UNLOCK THE READ AND EXIT THIS THREAD
 				sendShutdown();
 				network.close();
-				return;
+
+			} finally {
+				network.endResponse();
 			}
-
-			final byte request = network.readByte();
-
-			Object obj = null;
-
-			switch (request) {
-			case OChannelBinaryProtocol.REQUEST_PUSH_RECORD:
-				obj = (ORecordInternal<?>) OChannelBinaryProtocol.readIdentifiable(network);
-				break;
-
-			case OChannelDistributedProtocol.PUSH_DISTRIBUTED_CONFIG:
-				obj = new ODocument().fromStream(network.readBytes());
-				break;
-
-			case OChannelDistributedProtocol.PUSH_LEADER_AVAILABLE_DBS:
-				obj = new ODocument().fromStream(network.readBytes());
-				break;
-			}
-
-			if (remoteServerEventListener != null)
-				remoteServerEventListener.onRequest(request, obj);
-
-			network.endResponse();
 
 		} catch (Exception e) {
 			// OLogManager.instance().error(this, "Error in service thread", e);

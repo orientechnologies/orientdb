@@ -21,7 +21,6 @@ import java.net.Socket;
 import com.orientechnologies.common.thread.OSoftThread;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
-import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 
 public abstract class ONetworkProtocol extends OSoftThread {
@@ -31,8 +30,7 @@ public abstract class ONetworkProtocol extends OSoftThread {
 		super(group, name);
 	}
 
-	public abstract void config(OServer iServer, Socket iSocket, OClientConnection iConnection, OContextConfiguration iConfiguration)
-			throws IOException;
+	public abstract void config(OServer iServer, Socket iSocket, OContextConfiguration iConfiguration) throws IOException;
 
 	public abstract String getType();
 

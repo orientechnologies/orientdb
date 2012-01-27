@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -377,10 +378,16 @@ public abstract class OChannelBinary extends OChannel {
 
 		if (c != null)
 			try {
+				final Exception e;
 				if (c.getParameterTypes().length > 1)
-					rootException = (RuntimeException) c.newInstance(iMessage, iPrevious);
+					e = (Exception) c.newInstance(iMessage, iPrevious);
 				else
-					rootException = (RuntimeException) c.newInstance(iMessage);
+					e = (Exception) c.newInstance(iMessage);
+
+				if (e instanceof RuntimeException)
+					rootException = (RuntimeException) e;
+				else
+					rootException = new OException(e);
 			} catch (InstantiationException e) {
 			} catch (IllegalAccessException e) {
 			} catch (InvocationTargetException e) {

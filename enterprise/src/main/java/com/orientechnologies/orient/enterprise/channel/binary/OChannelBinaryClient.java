@@ -31,8 +31,8 @@ public class OChannelBinaryClient extends OChannelBinaryAsynch {
 	final protected int	timeout;						// IN MS
 	final private short	srvProtocolVersion;
 
-	public OChannelBinaryClient(final String remoteHost, final int remotePort, final OContextConfiguration iConfig)
-			throws IOException {
+	public OChannelBinaryClient(final String remoteHost, final int remotePort, final OContextConfiguration iConfig,
+			final int iProtocolVersion) throws IOException {
 		super(new Socket(), iConfig);
 		timeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
 
@@ -41,7 +41,11 @@ public class OChannelBinaryClient extends OChannelBinaryAsynch {
 		socket.setKeepAlive(true);
 		socket.setSendBufferSize(socketBufferSize);
 		socket.setReceiveBufferSize(socketBufferSize);
-		socket.connect(new InetSocketAddress(remoteHost, remotePort), timeout);
+		try {
+			socket.connect(new InetSocketAddress(remoteHost, remotePort), timeout);
+		} catch (java.net.SocketTimeoutException e) {
+			throw new IOException("Cannot connect to host " + remoteHost + ":" + remotePort, e);
+		}
 
 		inStream = new BufferedInputStream(socket.getInputStream(), socketBufferSize);
 		outStream = new BufferedOutputStream(socket.getOutputStream(), socketBufferSize);
@@ -55,8 +59,8 @@ public class OChannelBinaryClient extends OChannelBinaryAsynch {
 			throw new ONetworkProtocolException("Cannot read protocol version from remote server " + socket.getRemoteSocketAddress()
 					+ ": " + e);
 		}
-		
-		if (srvProtocolVersion != OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION) {
+
+		if (srvProtocolVersion != iProtocolVersion) {
 			close();
 			throw new ONetworkProtocolException("Binary protocol is incompatible with the Server connected: client="
 					+ OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION + ", server=" + srvProtocolVersion);

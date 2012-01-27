@@ -51,7 +51,7 @@ public class OServerNetworkListener extends Thread {
 	public OServerNetworkListener(final OServer iServer, final String iHostName, final String iHostPortRange,
 			final String iProtocolName, final Class<? extends ONetworkProtocol> iProtocol,
 			final OServerParameterConfiguration[] iParameters, final OServerCommandConfiguration[] iCommands) {
-		super(Orient.getThreadGroup(), "OrientDB NetworkListener " + iHostName + ":" + iHostPortRange);
+		super(Orient.getThreadGroup(), "OrientDB " + iProtocol.getSimpleName() + " (" + iHostName + ":" + iHostPortRange + ")");
 		server = iServer;
 
 		if (iProtocol == null)
@@ -146,11 +146,8 @@ public class OServerNetworkListener extends Thread {
 					// CREATE A NEW PROTOCOL INSTANCE
 					protocol = protocolType.newInstance();
 
-					// CREATE THE CLIENT CONNECTION
-					connection = OClientConnectionManager.instance().connect(socket, protocol);
-
 					// CONFIGURE THE PROTOCOL FOR THE INCOMING CONNECTION
-					protocol.config(server, socket, connection, configuration);
+					protocol.config(server, socket, configuration);
 
 					if (commands != null)
 						// REGISTER ADDITIONAL COMMANDS

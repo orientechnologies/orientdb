@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
 
@@ -245,31 +244,9 @@ public class OLeaderNode {
 		node.field("id", iNodeId);
 		node.field("mode", iReplicationMode);
 
-		broadcastClusterConfigurationToPeers(iDatabaseName);
+		manager.sendClusterConfigurationToClients(iDatabaseName, getClusteredConfigurationForDatabase(iDatabaseName));
 
 		return node;
-	}
-
-	public void broadcastClusterConfigurationToPeers(final String iDatabaseName) {
-		if (getPeerNodeList() == null && OClientConnectionManager.instance().getConnections().size() == 0)
-			return;
-
-		// GET UPDATED CONFIGURATION
-		final ODocument config = getClusteredConfigurationForDatabase(iDatabaseName);
-
-		OLogManager.instance().info(this,
-				"Broadcasting distributed configuration for database '%s' to the connected servers and clients: %s", iDatabaseName,
-				config.toJSON("attribSameRow"));
-
-		// UPDATE ALL THE NODES
-		if (getPeerNodeList() != null)
-			for (ORemotePeer node : getPeerNodeList()) {
-				if (node.getStatus() == ORemotePeer.STATUS.CONNECTED) {
-					node.sendConfiguration(config);
-				}
-			}
-
-		manager.sendClusterConfigurationToClients(iDatabaseName, config);
 	}
 
 	public ODistributedServerManager getManager() {

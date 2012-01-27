@@ -22,10 +22,10 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
-import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
+import com.orientechnologies.orient.server.clustering.OClusterNetworkProtocol;
 import com.orientechnologies.orient.server.clustering.leader.ODiscoveryListener;
+import com.orientechnologies.orient.server.handler.distributed.OClusterProtocol;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.network.protocol.distributed.ONetworkProtocolDistributed;
 
 /**
  * Peer node. In a clustered configuration there is only one leader and 0-N peer nodes.
@@ -38,11 +38,11 @@ public class OPeerNode {
 	private ODiscoveryListener							discoveryListener;
 	private OLeaderCheckerTask							leaderCheckerTask;
 	private long														lastHeartBeat;
-	private ONetworkProtocolDistributed			leaderConnection;
+	private OClusterNetworkProtocol					leaderConnection;
 
-	public OPeerNode(final ODistributedServerManager iManager, final ONetworkProtocolDistributed iNetworkConnection) {
+	public OPeerNode(final ODistributedServerManager iManager, final OClusterNetworkProtocol iConnection) {
 		manager = iManager;
-		leaderConnection = iNetworkConnection;
+		leaderConnection = iConnection;
 
 		OLogManager.instance().info(this, "Cluster <%s> joined as peer node", iManager.getConfig().name);
 
@@ -91,15 +91,15 @@ public class OPeerNode {
 		try {
 			channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
 			channel.writeInt(Integer.MIN_VALUE);
-			channel.writeByte(OChannelDistributedProtocol.PUSH_LEADER_AVAILABLE_DBS);
+			channel.writeByte(OClusterProtocol.PUSH_LEADER_AVAILABLE_DBS);
 
 			channel.writeBytes(doc.toStream());
 			channel.flush();
-
-			manager.getReplicator().updateConfiguration(new ODocument(channel.readBytes()));
 		} finally {
 			channel.releaseExclusiveLock();
 		}
+
+		manager.getReplicator().updateConfiguration(new ODocument(channel.readBytes()));
 
 	}
 }
