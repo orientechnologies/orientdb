@@ -75,6 +75,10 @@ public class OServerShutdownMain {
 						networkAddress = l.ipAddress;
 						networkPort = OServerNetworkListener.getPorts(l.portRange);
 						break;
+					} else if (l.protocol.equals("binary")) {
+						networkAddress = l.ipAddress;
+						networkPort = OServerNetworkListener.getPorts(l.portRange);
+						break;
 					}
 				}
 			} else {
