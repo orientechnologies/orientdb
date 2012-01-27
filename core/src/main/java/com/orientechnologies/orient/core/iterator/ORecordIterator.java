@@ -48,7 +48,7 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 	protected long													firstClusterPosition;
 	protected long													lastClusterPosition;
 	protected long													totalAvailableRecords;
-	protected List<ORecordOperation>	txEntries;
+	protected List<ORecordOperation>				txEntries;
 	protected int														currentTxEntryPosition	= -1;
 
 	public ORecordIterator(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase) {
