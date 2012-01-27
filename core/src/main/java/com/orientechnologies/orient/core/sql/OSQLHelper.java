@@ -244,14 +244,17 @@ public class OSQLHelper {
 		for (Entry<String, Object> field : iFields.entrySet()) {
 			if (field.getValue() instanceof OSQLFilterItemField) {
 				final OSQLFilterItemField f = (OSQLFilterItemField) field.getValue();
-				if (f.getRoot().equals("?"))
+				if (f.getRoot().equals("?")) {
 					// POSITIONAL PARAMETER
 					iDocument.field(field.getKey(), iArgs.get(paramCounter++));
-				else if (f.getRoot().startsWith(":"))
+				} else if (f.getRoot().startsWith(":")) {
 					// NAMED PARAMETER
 					iDocument.field(field.getKey(), iArgs.get(f.getRoot().substring(1)));
-			} else
-				iDocument.field(field.getKey(), OSQLHelper.getValue(field.getValue(), iDocument));
+					continue;
+				}
+			}
+
+			iDocument.field(field.getKey(), OSQLHelper.getValue(field.getValue(), iDocument));
 		}
 
 	}
