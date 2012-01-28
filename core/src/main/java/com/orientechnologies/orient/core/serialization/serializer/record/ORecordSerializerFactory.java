@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2010 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 1999-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,12 @@ import java.util.Map;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 
+/**
+ * Factory of record serialized.
+ * 
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * 
+ */
 public class ORecordSerializerFactory {
 	private static final ORecordSerializerFactory	instance				= new ORecordSerializerFactory();
 
@@ -31,9 +37,21 @@ public class ORecordSerializerFactory {
 	public ORecordSerializerFactory() {
 		defaultRecordFormat = new ORecordSerializerRaw();
 
-		implementations.put(ORecordSerializerSchemaAware2CSV.NAME, new ORecordSerializerSchemaAware2CSV());
-		implementations.put(ORecordSerializerJSON.NAME, new ORecordSerializerJSON());
-		implementations.put(ORecordSerializerRaw.NAME, defaultRecordFormat);
+		register(ORecordSerializerSchemaAware2CSV.NAME, new ORecordSerializerSchemaAware2CSV());
+		register(ORecordSerializerJSON.NAME, new ORecordSerializerJSON());
+		register(ORecordSerializerRaw.NAME, defaultRecordFormat);
+	}
+
+	/**
+	 * Registers record serializer implementation.
+	 * 
+	 * @param iName
+	 *          Name to register, use JSON to overwrite default JSON serializer
+	 * @param iInstance
+	 *          Serializer implementation
+	 */
+	public void register(final String iName, final ORecordSerializer iInstance) {
+		implementations.put(iName, iInstance);
 	}
 
 	public Collection<ORecordSerializer> getFormats() {
