@@ -20,6 +20,8 @@ import java.util.NoSuchElementException;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -34,9 +36,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @param <T>
  *          Record Type
  */
-public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends ORecordIterator<REC> {
+public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OIdentifiableIterator<REC> {
 	protected int[]	clusterIds;
 	protected int		currentClusterIdx;
+	protected ORID	beginRange;
+	protected ORID	endRange;
 
 	public ORecordIteratorClusters(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
 			final int[] iClusterIds) {
@@ -49,24 +53,12 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends ORe
 		super(iDatabase, iLowLevelDatabase);
 	}
 
-	protected void config() {
-		currentClusterIdx = 0; // START FROM THE FIRST CLUSTER
-
+	public ORecordIteratorClusters<REC> setRange(final ORID iBegin, final ORID iEnd) {
+		beginRange = iBegin;
+		endRange = iEnd;
 		updateClusterRange();
 		current.clusterPosition = firstClusterPosition - 1;
-
-		totalAvailableRecords = database.countClusterElements(clusterIds);
-
-		txEntries = database.getTransaction().getRecordEntriesByClusterIds(clusterIds);
-
-		if (txEntries != null)
-			// ADJUST TOTAL ELEMENT BASED ON CURRENT TRANSACTION'S ENTRIES
-			for (ORecordOperation entry : txEntries) {
-				if (entry.getRecord().getIdentity().isTemporary())
-					totalAvailableRecords++;
-				else if (entry.type == ORecordOperation.DELETED)
-					totalAvailableRecords--;
-			}
+		return this;
 	}
 
 	@Override
@@ -168,7 +160,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends ORe
 		throw new NoSuchElementException();
 	}
 
-	protected boolean include(final ODocument iDocument) {
+	protected boolean include(final ORecord<?> iRecord) {
 		return true;
 	}
 
@@ -195,7 +187,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends ORe
 				if (record != null)
 					// FOUND
 					if (record instanceof ODocument)
-						if (include((ODocument) record))
+						if (include(record))
 							return (REC) record;
 			}
 
@@ -224,7 +216,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends ORe
 	 * @return The object itself
 	 */
 	@Override
-	public ORecordIterator<REC> begin() {
+	public ORecordIteratorClusters<REC> begin() {
 		currentClusterIdx = 0;
 		current.clusterPosition = -1;
 		return this;
@@ -236,7 +228,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends ORe
 	 * @return The object itself
 	 */
 	@Override
-	public ORecordIterator<REC> last() {
+	public ORecordIteratorClusters<REC> last() {
 		currentClusterIdx = clusterIds.length - 1;
 		current.clusterPosition = liveUpdated ? database.countClusterElements(clusterIds[currentClusterIdx]) : lastClusterPosition + 1;
 		return this;
@@ -251,7 +243,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends ORe
 	 * @see #isLiveUpdated()
 	 */
 	@Override
-	public ORecordIterator<REC> setLiveUpdated(boolean iLiveUpdated) {
+	public ORecordIteratorClusters<REC> setLiveUpdated(boolean iLiveUpdated) {
 		super.setLiveUpdated(iLiveUpdated);
 
 		// SET THE UPPER LIMIT TO -1 IF IT'S ENABLED
@@ -296,8 +288,30 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends ORe
 
 	protected void updateClusterRange() {
 		current.clusterId = clusterIds[currentClusterIdx];
-		long[] range = database.getStorage().getClusterDataRange(current.clusterId);
-		firstClusterPosition = range[0];
-		lastClusterPosition = range[1];
+		final long[] range = database.getStorage().getClusterDataRange(current.clusterId);
+		firstClusterPosition = beginRange != null && beginRange.getClusterId() == current.clusterId ? beginRange.getClusterPosition()
+				: range[0];
+		lastClusterPosition = endRange != null && endRange.getClusterId() == current.clusterId ? endRange.getClusterPosition()
+				: range[1];
+	}
+
+	protected void config() {
+		currentClusterIdx = 0; // START FROM THE FIRST CLUSTER
+
+		updateClusterRange();
+		current.clusterPosition = firstClusterPosition - 1;
+
+		totalAvailableRecords = database.countClusterElements(clusterIds);
+
+		txEntries = database.getTransaction().getRecordEntriesByClusterIds(clusterIds);
+
+		if (txEntries != null)
+			// ADJUST TOTAL ELEMENT BASED ON CURRENT TRANSACTION'S ENTRIES
+			for (ORecordOperation entry : txEntries) {
+				if (entry.getRecord().getIdentity().isTemporary())
+					totalAvailableRecords++;
+				else if (entry.type == ORecordOperation.DELETED)
+					totalAvailableRecords--;
+			}
 	}
 }

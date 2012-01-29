@@ -17,9 +17,9 @@ package com.orientechnologies.orient.core.iterator;
 
 import java.util.NoSuchElementException;
 
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * @param <T>
  *          Record Type
  */
-public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORecordIterator<REC> {
+public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIdentifiableIterator<REC> {
 	protected long	rangeFrom;
 	protected long	rangeTo;
 
@@ -51,13 +51,13 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 		rangeFrom = iRangeFrom > -1 ? iRangeFrom - 1 : iRangeFrom;
 		rangeTo = iRangeTo;
 
-		long[] range = database.getStorage().getClusterDataRange(current.clusterId);
+		final long[] range = database.getStorage().getClusterDataRange(current.clusterId);
 		firstClusterPosition = range[0];
 
-    if(rangeTo > -1)
-		  lastClusterPosition = Math.min(rangeTo, range[1]);
-    else
-      lastClusterPosition = range[1];
+		if (rangeTo > -1)
+			lastClusterPosition = Math.min(rangeTo, range[1]);
+		else
+			lastClusterPosition = range[1];
 
 		totalAvailableRecords = database.countClusterElements(current.clusterId);
 
@@ -166,8 +166,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	}
 
 	public ORecordInternal<?> current() {
-		final ORecordInternal<?> record = getRecord();
-		return readCurrentRecord(record, 0);
+		return readCurrentRecord(getRecord(), 0);
 	}
 
 	/**
@@ -176,7 +175,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	 * @return The object itself
 	 */
 	@Override
-	public ORecordIterator<REC> begin() {
+	public ORecordIteratorCluster<REC> begin() {
 		current.clusterPosition = getRangeFrom();
 		return this;
 	}
@@ -187,7 +186,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	 * @return The object itself
 	 */
 	@Override
-	public ORecordIterator<REC> last() {
+	public ORecordIteratorCluster<REC> last() {
 		current.clusterPosition = getRangeTo();
 		return this;
 	}
@@ -241,7 +240,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	 * @see #isLiveUpdated()
 	 */
 	@Override
-	public ORecordIterator<REC> setLiveUpdated(boolean iLiveUpdated) {
+	public ORecordIteratorCluster<REC> setLiveUpdated(boolean iLiveUpdated) {
 		super.setLiveUpdated(iLiveUpdated);
 
 		// SET THE RANGE LIMITS

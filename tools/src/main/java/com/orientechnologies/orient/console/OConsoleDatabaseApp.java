@@ -62,7 +62,8 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.intent.OIntentMassiveRead;
-import com.orientechnologies.orient.core.iterator.ORecordIterator;
+import com.orientechnologies.orient.core.iterator.OIdentifiableIterator;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -583,7 +584,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			new OServerAdmin(dbURL).connect(currentDatabaseUserName, currentDatabaseUserPassword).dropDatabase();
 		} else {
 			// LOCAL CONNECTION
-			currentDatabase.delete();
+			currentDatabase.drop();
 			currentDatabase = null;
 		}
 
@@ -605,7 +606,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		} else {
 			// LOCAL CONNECTION
 			currentDatabase = new ODatabaseDocumentTx(iDatabaseURL);
-			currentDatabase.delete();
+			currentDatabase.drop();
 			currentDatabase = null;
 		}
 
@@ -658,7 +659,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 		final int limit = Integer.parseInt((String) properties.get("limit"));
 
-		ORecordIterator<?> it = currentDatabase.browseClass(iClassName);
+		OIdentifiableIterator<?> it = currentDatabase.browseClass(iClassName);
 
 		browseRecords(columns, limit, it);
 	}
@@ -674,7 +675,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 		final int limit = Integer.parseInt((String) properties.get("limit"));
 
-		ORecordIterator<?> it = currentDatabase.browseCluster(iClusterName);
+		final ORecordIteratorCluster<?> it = currentDatabase.browseCluster(iClusterName);
 
 		browseRecords(columns, limit, it);
 	}
@@ -1454,9 +1455,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		}
 	}
 
-	private void browseRecords(final List<String> columns, final int limit, ORecordIterator<?> it) {
+	private void browseRecords(final List<String> columns, final int limit, OIdentifiableIterator<?> it) {
 		while (it.hasNext()) {
-			currentRecord = it.next();
+			currentRecord = (ORecordInternal<?>) ((OIdentifiable) it.next()).getRecord();
 
 			try {
 				if (currentRecord instanceof ORecordSchemaAwareAbstract<?>)

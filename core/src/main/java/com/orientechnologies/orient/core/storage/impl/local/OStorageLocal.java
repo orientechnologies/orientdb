@@ -1335,7 +1335,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
 		final long timer = OProfiler.getInstance().startChrono();
 
-		lock.acquireExclusiveLock();
+		lock.acquireSharedLock();
 
 		try {
 			lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
@@ -1414,7 +1414,7 @@ public class OStorageLocal extends OStorageEmbedded {
 			OLogManager.instance().error(this, "Error on updating record " + iRid + " (cluster: " + iClusterSegment + ")", e);
 
 		} finally {
-			lock.releaseExclusiveLock();
+			lock.releaseSharedLock();
 
 			OProfiler.getInstance().stopChrono(PROFILER_UPDATE_RECORD, timer);
 		}
@@ -1447,10 +1447,10 @@ public class OStorageLocal extends OStorageEmbedded {
 									+ "' because the version is not the latest. Probably you are deleting an old record or it has been modified by another user (db=v"
 									+ ppos.version + " your=v" + iVersion + ")", iRid, ppos.version, iVersion);
 
-				iClusterSegment.removePhysicalPosition(iRid.clusterPosition, ppos);
-
 				if (ppos.dataChunkPosition > -1)
 					getDataSegment(ppos.dataSegmentId).deleteRecord(ppos.dataChunkPosition);
+
+				iClusterSegment.removePhysicalPosition(iRid.clusterPosition, ppos);
 
 				incrementVersion();
 

@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.iterator.ORecordIterator;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -135,7 +135,7 @@ public class CRUDDocumentPhysicalTest {
 		// BROWSE IN THE OPPOSITE ORDER
 		byte[] binary;
 		int i = 0;
-		ORecordIterator<ODocument> it = database.browseCluster("Account");
+		ORecordIteratorCluster<ODocument> it = database.browseCluster("Account");
 		for (it.last(); it.hasPrevious();) {
 			ODocument rec = it.previous();
 

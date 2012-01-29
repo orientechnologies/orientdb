@@ -17,7 +17,9 @@ package com.orientechnologies.orient.core.iterator;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -39,7 +41,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 	public ORecordIteratorClass(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
 			final String iClassName, final boolean iPolymorphic) {
 		super(iDatabase, iLowLevelDatabase);
-		
+
 		targetClass = database.getMetadata().getSchema().getClass(iClassName);
 		if (targetClass == null)
 			throw new IllegalArgumentException("Class '" + iClassName + "' was not found in database schema");
@@ -50,9 +52,23 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 		config();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	protected boolean include(final ODocument doc) {
-		return targetClass.isSuperClassOf(doc.getSchemaClass());
+	public REC next() {
+		OIdentifiable id = super.next();
+		return (REC) id.getRecord();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public REC previous() {
+		OIdentifiable id = super.previous();
+		return (REC) id.getRecord();
+	}
+
+	@Override
+	protected boolean include(final ORecord<?> record) {
+		return record instanceof ODocument && targetClass.isSuperClassOf(((ODocument) record).getSchemaClass());
 	}
 
 	public boolean isPolymorphic() {

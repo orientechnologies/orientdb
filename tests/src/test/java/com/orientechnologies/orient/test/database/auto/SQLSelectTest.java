@@ -173,19 +173,6 @@ public class SQLSelectTest {
 	}
 
 	@Test
-	public void queryLogicalCluster() throws ParseException {
-		database.open("admin", "admin");
-
-		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:Order")).execute();
-
-		for (int i = 0; i < result.size(); ++i) {
-			record = result.get(i);
-		}
-
-		database.close();
-	}
-
-	@Test
 	public void queryContainsInEmbeddedSet() {
 		database.open("admin", "admin");
 
@@ -371,14 +358,15 @@ public class SQLSelectTest {
 	public void queryCollectionContainsLowerCaseSubStringIgnoreCase() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>(
-						"select * from cluster:animaltype where races contains (name.toLowerCase().subString(0,1) = 'e')")).execute();
+		List<ODocument> result = database
+				.command(
+						new OSQLSynchQuery<ODocument>(
+								"select * from cluster:animal where races contains (name.toLowerCase().subString(0,1) = 'e')")).execute();
 
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
 
-			Assert.assertTrue(record.getClassName().equalsIgnoreCase("animaltype"));
+			Assert.assertTrue(record.getClassName().equalsIgnoreCase("animal"));
 			Assert.assertNotNull(record.field("races"));
 
 			Collection<ODocument> races = record.field("races");

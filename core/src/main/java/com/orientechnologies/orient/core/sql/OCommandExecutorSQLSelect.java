@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,13 +36,13 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -50,6 +51,8 @@ import com.orientechnologies.orient.core.index.OIndexFullText;
 import com.orientechnologies.orient.core.index.OIndexNotUnique;
 import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorClusters;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -104,6 +107,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 	private OSQLAsynchQuery<ORecordSchemaAware<?>>	request;
 	private OSQLFilter															compiledFilter;
+	private Iterable<? extends OIdentifiable>				target;
 	private Map<String, Object>											projections						= null;
 	private List<OPair<String, String>>							orderedFields;
 	private List<OIdentifiable>											tempResult;
@@ -264,9 +268,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		else if (compiledFilter.getTargetIndex() != null)
 			searchInIndex();
 		else if (compiledFilter.getTargetRecords() != null)
-			searchInRecords();
+			target = compiledFilter.getTargetRecords();
 		else
 			throw new OQueryParsingException("No source found in query: specify class, clusters or single records");
+
+		executeSearch();
 
 		applyFlatten();
 		applyProjections();
@@ -283,6 +289,26 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			return ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getResult();
 
 		return null;
+	}
+
+	private void executeSearch() {
+		if (target == null)
+			// SEARCH WITHOUT USING TARGET (USUALLY WHEN INDEXES ARE INVOLVED)
+			return;
+
+		// BROWSE ALL THE RECORDS
+		for (OIdentifiable id : target) {
+			final ORecordInternal<?> record = (ORecordInternal<?>) id.getRecord();
+
+			if (record != null && record.getRecordType() != ODocument.RECORD_TYPE)
+				// WRONG RECORD TYPE: JUMP IT
+				continue;
+
+			if (filter(record))
+				if (!addResult(record))
+					// END OF EXECUTION
+					break;
+		}
 	}
 
 	public boolean foreach(final ORecordInternal<?> iRecord) {
@@ -1069,39 +1095,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	}
 
 	private void scanEntireClusters(final int[] clusterIds) {
-		final OSQLFilterCondition rootCondition = compiledFilter.getRootCondition();
-
 		final ODatabaseRecord database = getDatabase();
-		final ORID beginRange;
-		final ORID endRange;
+		final ORID[] range = getRange();
 
-		if (rootCondition == null) {
-			if (request instanceof OSQLSynchQuery)
-				beginRange = ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getNextPageRID();
-			else
-				beginRange = null;
-			endRange = null;
-		} else {
-			final ORID conditionBeginRange = rootCondition.getBeginRidRange();
-			final ORID conditionEndRange = rootCondition.getEndRidRange();
-			final ORID nextPageRid;
-
-			if (request instanceof OSQLSynchQuery)
-				nextPageRid = ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getNextPageRID();
-			else
-				nextPageRid = null;
-
-			if (conditionBeginRange != null && nextPageRid != null)
-				beginRange = conditionBeginRange.compareTo(nextPageRid) > 0 ? conditionBeginRange : nextPageRid;
-			else if (conditionBeginRange != null)
-				beginRange = conditionBeginRange;
-			else
-				beginRange = nextPageRid;
-
-			endRange = conditionEndRange;
-		}
-
-		((OStorageEmbedded) database.getStorage()).browse(clusterIds, beginRange, endRange, this,
+		((OStorageEmbedded) database.getStorage()).browse(clusterIds, range[0], range[1], this,
 				(ORecordInternal<?>) database.newInstance(), false);
 	}
 
@@ -1185,57 +1182,59 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	}
 
 	private void searchInClasses() {
-		final int[] clusterIds;
 		final OClass cls = compiledFilter.getTargetClasses().keySet().iterator().next();
 
 		final ODatabaseRecord database = getDatabase();
-		database.checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, cls.getName());
-
-		clusterIds = cls.getPolymorphicClusterIds();
-
-		// CHECK PERMISSION TO ACCESS TO ALL THE CONFIGURED CLUSTERS
-		for (final int clusterId : clusterIds)
-			database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, database.getClusterNameById(clusterId));
+		database.checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, cls.getName().toLowerCase());
 
 		if (searchForIndexes(cls))
 			OProfiler.getInstance().updateCounter("Query.indexUsage", 1);
-		else
+		else {
 			// NO INDEXES: SCAN THE ENTIRE CLUSTER
-			scanEntireClusters(clusterIds);
+			final ORID[] range = getRange();
+			target = new ORecordIteratorClass<ORecordInternal<?>>(database, (ODatabaseRecordAbstract) database, cls.getName(), true)
+					.setRange(range[0], range[1]);
+		}
 	}
 
 	private void searchInClusters() {
-		final int[] clusterIds;
-		String firstCluster = compiledFilter.getTargetClusters().keySet().iterator().next();
-
-		if (firstCluster == null || firstCluster.length() == 0)
-			throw new OCommandExecutionException("No cluster or schema class selected in query");
-
 		final ODatabaseRecord database = getDatabase();
 
-		if (Character.isDigit(firstCluster.charAt(0)))
-			// GET THE CLUSTER NUMBER
-			clusterIds = OStringSerializerHelper.splitIntArray(firstCluster);
-		else
-			// GET THE CLUSTER NUMBER BY THE CLASS NAME
-			clusterIds = new int[] { database.getClusterIdByName(firstCluster.toLowerCase()) };
+		final Set<Integer> clusterIds = new HashSet<Integer>();
+		for (String clusterName : compiledFilter.getTargetClusters().keySet()) {
+			if (clusterName == null || clusterName.length() == 0)
+				throw new OCommandExecutionException("No cluster or schema class selected in query");
 
-		database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, firstCluster.toLowerCase());
+			database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, clusterName.toLowerCase());
 
-		scanEntireClusters(clusterIds);
-	}
+			if (Character.isDigit(clusterName.charAt(0))) {
+				// GET THE CLUSTER NUMBER
+				for (int clusterId : OStringSerializerHelper.splitIntArray(clusterName)) {
+					if (clusterId == -1)
+						throw new OCommandExecutionException("Cluster '" + clusterName + "' not found");
 
-	private void searchInRecords() {
-		ORecordId rid = new ORecordId();
-		ORecordInternal<?> record;
-		final ODatabaseRecord database = getDatabase();
-		for (String rec : compiledFilter.getTargetRecords()) {
-			rid.fromString(rec);
-			record = database.load(rid);
-			final boolean continueResultParsing = foreach(record);
-			if (!continueResultParsing)
-				break;
+					clusterIds.add(clusterId);
+				}
+			} else {
+				// GET THE CLUSTER NUMBER BY THE CLASS NAME
+				final int clusterId = database.getClusterIdByName(clusterName.toLowerCase());
+				if (clusterId == -1)
+					throw new OCommandExecutionException("Cluster '" + clusterName + "' not found");
+
+				clusterIds.add(clusterId);
+			}
 		}
+
+		// CREATE CLUSTER AS ARRAY OF INT
+		final int[] clIds = new int[clusterIds.size()];
+		int i = 0;
+		for (int c : clusterIds)
+			clIds[i++] = c;
+
+		final ORID[] range = getRange();
+
+		target = new ORecordIteratorClusters<ORecordInternal<?>>(database, (ODatabaseRecordAbstract) database, clIds).setRange(
+				range[0], range[1]);
 	}
 
 	private void searchInIndex() {
@@ -1499,5 +1498,39 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 					compiledFilter.setRootCondition(null);
 			}
 		}
+	}
+
+	private ORID[] getRange() {
+		final ORID beginRange;
+		final ORID endRange;
+
+		final OSQLFilterCondition rootCondition = compiledFilter.getRootCondition();
+		if (rootCondition == null) {
+			if (request instanceof OSQLSynchQuery)
+				beginRange = ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getNextPageRID();
+			else
+				beginRange = null;
+			endRange = null;
+		} else {
+			final ORID conditionBeginRange = rootCondition.getBeginRidRange();
+			final ORID conditionEndRange = rootCondition.getEndRidRange();
+			final ORID nextPageRid;
+
+			if (request instanceof OSQLSynchQuery)
+				nextPageRid = ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getNextPageRID();
+			else
+				nextPageRid = null;
+
+			if (conditionBeginRange != null && nextPageRid != null)
+				beginRange = conditionBeginRange.compareTo(nextPageRid) > 0 ? conditionBeginRange : nextPageRid;
+			else if (conditionBeginRange != null)
+				beginRange = conditionBeginRange;
+			else
+				beginRange = nextPageRid;
+
+			endRange = conditionEndRange;
+		}
+
+		return new ORID[] { beginRange, endRange };
 	}
 }

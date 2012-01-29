@@ -28,8 +28,10 @@ import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -50,7 +52,7 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNot;
  */
 public class OSQLFilter extends OCommandToParse {
 	protected ODatabaseRecord								database;
-	protected List<String>									targetRecords;
+	protected List<OIdentifiable>						targetRecords;
 	protected Map<String, String>						targetClusters;
 	protected Map<OClass, String>						targetClasses;
 	protected String												targetIndex;
@@ -112,7 +114,7 @@ public class OSQLFilter extends OCommandToParse {
 		if (currentPos == -1)
 			throw new OQueryParsingException("No query target found", text, 0);
 
-		targetRecords = new ArrayList<String>();
+		targetRecords = new ArrayList<OIdentifiable>();
 
 		final char c = text.charAt(currentPos);
 
@@ -121,11 +123,16 @@ public class OSQLFilter extends OCommandToParse {
 			final StringBuilder word = new StringBuilder();
 			currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
 
-			targetRecords.add(word.toString());
+			targetRecords.add(new ORecordId(word.toString()));
 
 		} else if (c == OStringSerializerHelper.COLLECTION_BEGIN) {
 			// COLLECTION OF RIDS
-			currentPos = OStringSerializerHelper.getCollection(text, currentPos, targetRecords);
+			final List<String> rids = new ArrayList<String>();
+			currentPos = OStringSerializerHelper.getCollection(text, currentPos, rids);
+
+			for (String rid : rids)
+				targetRecords.add(new ORecordId(rid));
+
 			if (currentPos > -1)
 				currentPos++;
 		} else {
@@ -370,7 +377,7 @@ public class OSQLFilter extends OCommandToParse {
 		return targetClasses;
 	}
 
-	public List<String> getTargetRecords() {
+	public List<OIdentifiable> getTargetRecords() {
 		return targetRecords;
 	}
 

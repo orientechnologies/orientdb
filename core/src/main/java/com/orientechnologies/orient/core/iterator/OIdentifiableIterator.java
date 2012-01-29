@@ -19,9 +19,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
@@ -34,7 +35,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * @param <T>
  *          Record Type
  */
-public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements Iterator<REC>, Iterable<REC> {
+public abstract class OIdentifiableIterator<REC extends OIdentifiable> implements Iterator<REC>, Iterable<REC> {
 	protected final ODatabaseRecord					database;
 	protected final ODatabaseRecordAbstract	lowLevelDatabase;
 
@@ -42,7 +43,7 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 	protected long													limit										= -1;
 	protected long													browsedRecords					= 0;
 	protected String												fetchPlan;
-	private ORecordInternal<?>							reusedRecord						= null;						// DEFAULT = NOT REUSE IT
+	protected ORecordInternal<?>						reusedRecord						= null;						// DEFAULT = NOT REUSE IT
 	protected Boolean												directionForward;
 	protected final ORecordId								current									= new ORecordId();
 	protected long													firstClusterPosition;
@@ -51,7 +52,7 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 	protected List<ORecordOperation>				txEntries;
 	protected int														currentTxEntryPosition	= -1;
 
-	public ORecordIterator(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase) {
+	public OIdentifiableIterator(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase) {
 		database = iDatabase;
 		lowLevelDatabase = iLowLevelDatabase;
 
@@ -60,14 +61,13 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 
 	public abstract boolean hasPrevious();
 
-	public abstract REC previous();
+	public abstract OIdentifiable previous();
 
-	public abstract ORecordIterator<REC> begin();
+	public abstract OIdentifiableIterator<REC> begin();
 
-	public abstract ORecordIterator<REC> last();
+	public abstract OIdentifiableIterator<REC> last();
 
-	@SuppressWarnings("unchecked")
-	protected REC getTransactionEntry() {
+	protected ORecordInternal<?> getTransactionEntry() {
 		final long physicalRecordTobrowse = current.clusterPosition > -2 && lastClusterPosition > -1 ? lastClusterPosition
 				- current.clusterPosition : 0;
 
@@ -77,7 +77,7 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 			if (currentTxEntryPosition >= txEntries.size())
 				throw new NoSuchElementException();
 			else
-				return (REC) txEntries.get(currentTxEntryPosition).getRecord();
+				return txEntries.get(currentTxEntryPosition).getRecord();
 		}
 		return null;
 	}
@@ -111,7 +111,7 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 	 * @param reuseSameRecord
 	 * @return @see #isReuseSameRecord()
 	 */
-	public ORecordIterator<REC> setReuseSameRecord(final boolean reuseSameRecord) {
+	public OIdentifiableIterator<REC> setReuseSameRecord(final boolean reuseSameRecord) {
 		reusedRecord = (ORecordInternal<?>) (reuseSameRecord ? database.newInstance() : null);
 		return this;
 	}
@@ -162,7 +162,7 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 	 *          The current limit on browsing record. -1 means no limits (default).
 	 * @see #getLimit()
 	 */
-	public ORecordIterator<REC> setLimit(long limit) {
+	public OIdentifiableIterator<REC> setLimit(long limit) {
 		this.limit = limit;
 		return this;
 	}
@@ -185,7 +185,7 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 	 *          True to activate it, otherwise false (default)
 	 * @see #isLiveUpdated()
 	 */
-	public ORecordIterator<REC> setLiveUpdated(boolean liveUpdated) {
+	public OIdentifiableIterator<REC> setLiveUpdated(boolean liveUpdated) {
 		this.liveUpdated = liveUpdated;
 		return this;
 	}

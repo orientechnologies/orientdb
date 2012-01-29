@@ -101,14 +101,14 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 						// STOP
 						break;
 
-				final OCluster cluster = getClusterById(clusterId);
-
 				final long beginClusterPosition = iBeginRange != null && iBeginRange.getClusterId() == clusterId ? iBeginRange
 						.getClusterPosition() : 0;
 				final long endClusterPosition = iEndRange != null && iEndRange.getClusterId() == clusterId ? iEndRange.getClusterPosition()
 						: -1;
 
-				ioRecord = browseCluster(iListener, ioRecord, cluster, beginClusterPosition, endClusterPosition, iLockEntireCluster);
+				ioRecord = browseCluster(iListener, ioRecord, getClusterById(clusterId), beginClusterPosition, endClusterPosition,
+						iLockEntireCluster);
+				
 				if (ioRecord == null)
 					// BREAK: LIMIT REACHED
 					break;

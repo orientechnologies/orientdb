@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.text.ParseException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -27,8 +28,9 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
-@Test(groups = { "crud", "record-vobject" }, sequential = true)
+@Test(groups = { "crud", "record-vobject" })
 @SuppressWarnings("unchecked")
 public class CRUDDocumentLogicalTest {
 
@@ -47,7 +49,12 @@ public class CRUDDocumentLogicalTest {
 		database.open("admin", "admin");
 
 		if (!database.getMetadata().getSchema().existsClass("Animal"))
-			database.getMetadata().getSchema().createClass("Animal");
+			database.getMetadata().getSchema()
+					.createClass("Animal", database.addLogicalCluster("animal", database.getDefaultClusterId()));
+
+		if (!database.getMetadata().getSchema().existsClass("AnimalRace"))
+			database.getMetadata().getSchema()
+					.createClass("AnimalRace", database.addLogicalCluster("animalrace", database.getDefaultClusterId()));
 
 		startRecordNumber = database.countClass("Animal");
 
@@ -119,6 +126,19 @@ public class CRUDDocumentLogicalTest {
 	}
 
 	@Test(dependsOnMethods = "testUpdate")
+	public void queryLogicalCluster() throws ParseException {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:Animal")).execute();
+
+		for (int i = 0; i < result.size(); ++i) {
+			record = result.get(i);
+		}
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "queryLogicalCluster")
 	public void delete() {
 		database.open("admin", "admin");
 
