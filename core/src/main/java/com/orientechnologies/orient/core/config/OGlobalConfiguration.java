@@ -59,14 +59,20 @@ public enum OGlobalConfiguration {
 			Integer.class, 5000),
 
 	// CACHE
-	CACHE_LEVEL1_ENABLED("cache.level1.enabled", "Use the level-1 cache", Boolean.class, true), CACHE_LEVEL1_SIZE(
-			"cache.level1.size", "Size of the cache that keeps the record in memory", Integer.class, -1),
+	CACHE_LEVEL1_ENABLED("cache.level1.enabled", "Use the level-1 cache", Boolean.class, true),
 
-	CACHE_LEVEL2_ENABLED("cache.level2.enabled", "Use the level-2 cache", Boolean.class, true), CACHE_LEVEL2_SIZE(
-			"cache.level2.size", "Size of the cache that keeps the record in memory", Integer.class, -1), CACHE_LEVEL2_IMPL(
-			"cache.level2.impl", "Actual implementation of secondary cache", String.class, ODefaultCache.class.getCanonicalName()), CACHE_LEVEL2_STRATEGY(
-			"cache.level2.strategy", "Strategy to use when a database requests a record: 0 = pop the record, 1 = copy the record",
-			Integer.class, 0, new OConfigurationChangeCallback() {
+	CACHE_LEVEL1_SIZE("cache.level1.size", "Size of the cache that keeps the record in memory", Integer.class, -1),
+
+	CACHE_LEVEL2_ENABLED("cache.level2.enabled", "Use the level-2 cache", Boolean.class, true),
+
+	CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keeps the record in memory", Integer.class, -1),
+
+	CACHE_LEVEL2_IMPL("cache.level2.impl", "Actual implementation of secondary cache", String.class, ODefaultCache.class
+			.getCanonicalName()),
+
+	CACHE_LEVEL2_STRATEGY("cache.level2.strategy",
+			"Strategy to use when a database requests a record: 0 = pop the record, 1 = copy the record", Integer.class, 0,
+			new OConfigurationChangeCallback() {
 				public void change(final Object iCurrentValue, final Object iNewValue) {
 					// UPDATE ALL THE OPENED STORAGES SETTING THE NEW STRATEGY
 					// for (OStorage s : com.orientechnologies.orient.core.Orient.instance().getStorages()) {
@@ -239,8 +245,9 @@ public enum OGlobalConfiguration {
 				}
 			}),
 
-	PROFILER_AUTODUMP_INTERVAL("profiler.autoDump.interval", "Dumps the profiler values at regular intervals. Time is expressed in seconds",
-			Integer.class, 0, new OConfigurationChangeCallback() {
+	PROFILER_AUTODUMP_INTERVAL("profiler.autoDump.interval",
+			"Dumps the profiler values at regular intervals. Time is expressed in seconds", Integer.class, 0,
+			new OConfigurationChangeCallback() {
 				public void change(final Object iCurrentValue, final Object iNewValue) {
 					OProfiler.getInstance().setAutoDump((Integer) iNewValue);
 				}
