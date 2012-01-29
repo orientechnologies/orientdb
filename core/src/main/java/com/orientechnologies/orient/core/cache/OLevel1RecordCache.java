@@ -66,8 +66,13 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
         !record.getIdentity().isValid())
       return;
 
-    if (underlying.get(record.getIdentity()) != record)
-      underlying.put(record);
+    underlying.lock(record.getIdentity());
+    try {
+      if (underlying.get(record.getIdentity()) != record)
+        underlying.put(record);
+    } finally {
+      underlying.unlock(record.getIdentity());
+    }
 
     secondary.get().updateRecord(record);
   }
@@ -83,13 +88,19 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
     if (!isEnabled())
       return null;
 
-    ORecordInternal<?> record = underlying.get(rid);
+    ORecordInternal<?> record;
+    underlying.lock(rid);
+    try {
+      record = underlying.get(rid);
 
-    if (record == null) {
-      record = secondary.get().retrieveRecord(rid);
+      if (record == null) {
+        record = secondary.get().retrieveRecord(rid);
 
-      if (record != null)
-        underlying.put(record);
+        if (record != null)
+          underlying.put(record);
+      }
+    } finally {
+      underlying.unlock(rid);
     }
 
     OProfiler.getInstance().updateCounter(record != null ? CACHE_HIT : CACHE_MISS, 1L);
