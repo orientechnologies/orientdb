@@ -75,8 +75,8 @@
 			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetEntriesTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetEntriesTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.MapIndexTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.SQLSelectByLinkedPropertyIndexReuseTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.MapIndexTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectByLinkedPropertyIndexReuseTest" />
 		</classes>
 	</test>
 	<test name="Dictionary">
@@ -120,28 +120,17 @@
 	<test name="sql-commands">
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.SQLCommandsTest" />
-		</classes>
-	</test>
-	<test name="sql-insert">
-		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.SQLInsertTest" />
-		</classes>
-	</test>
-	<test name="sql-select">
-		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectProjectionsTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.SQLFunctionsTest" />
-		</classes>
-	</test>
-	<test name="sql-update">
-		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.SQLUpdateTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.SQLDeleteTest" />
 		</classes>
 	</test>
-	<test name="sql-delete">
+	<test name="other-commands">
 		<classes>
-			<class name="com.orientechnologies.orient.test.database.auto.SQLDeleteTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.TraverseTest" />
 		</classes>
 	</test>
 	<test name="misc">
