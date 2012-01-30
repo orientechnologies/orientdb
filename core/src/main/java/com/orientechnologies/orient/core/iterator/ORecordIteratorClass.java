@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.iterator;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -55,15 +54,13 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 	@SuppressWarnings("unchecked")
 	@Override
 	public REC next() {
-		OIdentifiable id = super.next();
-		return (REC) id.getRecord();
+		return (REC) super.next().getRecord();
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public REC previous() {
-		OIdentifiable id = super.previous();
-		return (REC) id.getRecord();
+		return (REC) super.previous().getRecord();
 	}
 
 	@Override

@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.core.sql.functions.misc;
 
 import com.orientechnologies.orient.core.command.OCommandExecutor;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMathAbstract;
 
 /**
@@ -35,7 +35,7 @@ public class OSQLFunctionCount extends OSQLFunctionMathAbstract {
 		super(NAME, 1, 1);
 	}
 
-	public Object execute(ORecord<?> iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
+	public Object execute(OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
 		if (iParameters[0] != null)
 			total++;
 

@@ -15,25 +15,14 @@
  */
 package com.orientechnologies.orient.core.storage;
 
-import java.io.IOException;
-
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Interface for embedded storage.
@@ -47,7 +36,6 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 
 	public OStorageEmbedded(final String iName, final String iFilePath, final String iMode) {
 		super(iName, iFilePath, iMode);
-
 		lockManager = new ORecordLockManager(OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT.getValueAsInteger());
 	}
 
@@ -56,7 +44,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 	public abstract OCluster getClusterByName(final String iClusterName);
 
 	/**
-	 * Execute the command request and return the result back.
+	 * Executes the command request and return the result back.
 	 */
 	public Object command(final OCommandRequestText iCommand) {
 		final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
@@ -73,107 +61,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 	}
 
 	/**
-	 * Browse N clusters. The entire operation use a shared lock on the storage and lock the cluster from the external avoiding atomic
-	 * lock at every record read.
-	 * 
-	 * @param iClusterId
-	 *          Array of cluster ids
-	 * @param iListener
-	 *          The listener to call for each record found
-	 * @param ioRecord
-	 */
-	public void browse(final int[] iClusterId, final ORID iBeginRange, final ORID iEndRange, final ORecordBrowsingListener iListener,
-			ORecordInternal<?> ioRecord, final boolean iLockEntireCluster) {
-		checkOpeness();
-
-		final long timer = OProfiler.getInstance().startChrono();
-
-		try {
-
-			for (int clusterId : iClusterId) {
-				if (iBeginRange != null)
-					if (clusterId < iBeginRange.getClusterId())
-						// JUMP THIS
-						continue;
-
-				if (iEndRange != null)
-					if (clusterId > iEndRange.getClusterId())
-						// STOP
-						break;
-
-				final long beginClusterPosition = iBeginRange != null && iBeginRange.getClusterId() == clusterId ? iBeginRange
-						.getClusterPosition() : 0;
-				final long endClusterPosition = iEndRange != null && iEndRange.getClusterId() == clusterId ? iEndRange.getClusterPosition()
-						: -1;
-
-				ioRecord = browseCluster(iListener, ioRecord, getClusterById(clusterId), beginClusterPosition, endClusterPosition,
-						iLockEntireCluster);
-				
-				if (ioRecord == null)
-					// BREAK: LIMIT REACHED
-					break;
-			}
-		} catch (IOException e) {
-
-			OLogManager.instance().error(this, "Error on browsing elements of cluster: " + iClusterId, e);
-
-		} finally {
-			OProfiler.getInstance().stopChrono("OStorageLocal.foreach", timer);
-		}
-	}
-
-	public ORecordInternal<?> browseCluster(final ORecordBrowsingListener iListener, ORecordInternal<?> ioRecord,
-			final OCluster cluster, final long iBeginRange, final long iEndRange, final boolean iLockEntireCluster) throws IOException {
-		ORecordInternal<?> record;
-
-		if (iLockEntireCluster)
-			// LOCK THE ENTIRE CLUSTER AVOIDING TO LOCK EVERY SINGLE RECORD
-			cluster.lock();
-
-		try {
-			final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
-			ORecordIteratorCluster<ORecordInternal<?>> iterator = new ORecordIteratorCluster<ORecordInternal<?>>(db,
-					(ODatabaseRecordAbstract) db, cluster.getId(), iBeginRange, iEndRange);
-
-			// BROWSE ALL THE RECORDS
-			while (iterator.hasNext()) {
-				record = iterator.next();
-
-				if (record != null && record.getRecordType() != ODocument.RECORD_TYPE)
-					// WRONG RECORD TYPE: JUMP IT
-					continue;
-
-				ORecordInternal<?> recordToCheck = null;
-				try {
-
-					// GET THE CACHED RECORD
-					recordToCheck = record;
-
-					if (!iListener.foreach(recordToCheck)) {
-						// LISTENER HAS INTERRUPTED THE EXECUTION: RETURN NULL TO TELL TO THE CALLER TO STOP ITERATION
-						ioRecord = null;
-						break;
-					}
-				} catch (OCommandExecutionException e) {
-					// PASS THROUGH
-					throw e;
-				} catch (Exception e) {
-					OLogManager.instance().exception("Error on loading record %s. Cause: %s", e, OStorageException.class,
-							recordToCheck != null ? recordToCheck.getIdentity() : null, e);
-				}
-			}
-		} finally {
-
-			if (iLockEntireCluster)
-				// UNLOCK THE ENTIRE CLUSTER
-				cluster.unlock();
-		}
-
-		return ioRecord;
-	}
-
-	/**
-	 * Check if the storage is open. If it's closed an exception is raised.
+	 * Checks if the storage is open. If it's closed an exception is raised.
 	 */
 	protected void checkOpeness() {
 		if (status != STATUS.OPEN)

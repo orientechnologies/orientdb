@@ -651,10 +651,12 @@ public class CRUDDocumentPhysicalTest {
 
 		final ORecordAbstract<Object> newAccount = new ODocument("Account").field("name", "testInheritanceName").save();
 
+		List<ODocument> allResult = database.query(new OSQLSynchQuery<ODocument>("select from Account"));
 		List<ODocument> superClassResult = database
 				.query(new OSQLSynchQuery<ODocument>("select from Account where @class = 'Account'"));
 		List<ODocument> subClassResult = database.query(new OSQLSynchQuery<ODocument>("select from Company where @class = 'Company'"));
 
+		Assert.assertTrue(allResult.size() != 0);
 		Assert.assertTrue(superClassResult.size() != 0);
 		Assert.assertTrue(subClassResult.size() != 0);
 

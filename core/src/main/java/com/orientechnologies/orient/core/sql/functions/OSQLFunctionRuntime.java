@@ -55,23 +55,23 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
 	/**
 	 * Execute a function.
 	 * 
-	 * @param iRecord
+	 * @param o
 	 *          Current record
 	 * @param iRequester
 	 * @return
 	 */
-	public Object execute(final ORecordSchemaAware<?> iRecord, final OCommandExecutor iRequester) {
+	public Object execute(final OIdentifiable o, final OCommandExecutor iRequester) {
 		// RESOLVE VALUES USING THE CURRENT RECORD
 		for (int i = 0; i < configuredParameters.length; ++i) {
 			if (configuredParameters[i] instanceof OSQLFilterItemField)
-				runtimeParameters[i] = ((OSQLFilterItemField) configuredParameters[i]).getValue(iRecord);
+				runtimeParameters[i] = ((OSQLFilterItemField) configuredParameters[i]).getValue(o);
 			else if (configuredParameters[i] instanceof OSQLFunctionRuntime)
-				runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i]).execute(iRecord, iRequester);
+				runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i]).execute(o, iRequester);
 		}
 
-		final Object functionResult = function.execute(iRecord, runtimeParameters, iRequester);
+		final Object functionResult = function.execute(o, runtimeParameters, iRequester);
 
-		return transformValue(iRecord, functionResult);
+		return transformValue(o, functionResult);
 	}
 
 	public Object getResult() {

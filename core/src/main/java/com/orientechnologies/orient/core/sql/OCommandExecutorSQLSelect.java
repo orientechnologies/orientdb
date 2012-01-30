@@ -19,8 +19,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -36,13 +34,11 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -51,18 +47,14 @@ import com.orientechnologies.orient.core.index.OIndexFullText;
 import com.orientechnologies.orient.core.index.OIndexNotUnique;
 import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
-import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
-import com.orientechnologies.orient.core.iterator.ORecordIteratorClusters;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
@@ -80,11 +72,6 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNotEquals;
-import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 /**
@@ -95,120 +82,26 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
  * @author Luca Garulli
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract implements ORecordBrowsingListener {
-	private static final String											KEYWORD_AS						= " AS ";
-	public static final String											KEYWORD_SELECT				= "SELECT";
-	public static final String											KEYWORD_ASC						= "ASC";
-	public static final String											KEYWORD_DESC					= "DESC";
-	public static final String											KEYWORD_ORDER					= "ORDER";
-	public static final String											KEYWORD_BY						= "BY";
-	public static final String											KEYWORD_ORDER_BY			= "ORDER BY";
-	private static final String											KEYWORD_FROM_2FIND		= " " + KEYWORD_FROM + " ";
+public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstract {
+	private static final String					KEYWORD_AS						= " AS ";
+	public static final String					KEYWORD_SELECT				= "SELECT";
+	public static final String					KEYWORD_ASC						= "ASC";
+	public static final String					KEYWORD_DESC					= "DESC";
+	public static final String					KEYWORD_ORDER					= "ORDER";
+	public static final String					KEYWORD_BY						= "BY";
+	public static final String					KEYWORD_ORDER_BY			= "ORDER BY";
 
-	private OSQLAsynchQuery<ORecordSchemaAware<?>>	request;
-	private OSQLFilter															compiledFilter;
-	private Iterable<? extends OIdentifiable>				target;
-	private Map<String, Object>											projections						= null;
-	private List<OPair<String, String>>							orderedFields;
-	private List<OIdentifiable>											tempResult;
-	private int																			resultCount;
-	private Object																	flattenTarget;
-	private boolean																	anyFunctionAggregates	= false;
-	private int																			fetchLimit						= -1;
-
-	/**
-	 * Presents query subset in form of field1 = "field1 value" AND field2 = "field2 value" ... AND fieldN anyOpetator "fieldN value"
-	 * 
-	 * Where pairs (field1, value1) ... (fieldn-1, valuen-1) are stored in {@link #fieldValuePairs} map but last pair is stored in
-	 * {@link #lastField} {@link #lastValue} properties and their operator will be stored in {@link #lastOperator} property.
-	 * 
-	 * Such data structure is used because from composite index point of view any "field and value" pairs can be reordered to match
-	 * keys order that is used in index in case all fields and values are related to each other using equals operator, but position of
-	 * field - value pair that uses non equals operator cannot be changed. Actually only one non-equals operator can be used for
-	 * composite index search and filed - value pair that uses this index should always be placed at last position.
-	 */
-	private static final class OIndexSearchResult {
-		private final Map<String, Object>							fieldValuePairs	= new HashMap<String, Object>();
-		private final OQueryOperator									lastOperator;
-		private final OSQLFilterItemField.FieldChain	lastField;
-		private final Object													lastValue;
-
-		private OIndexSearchResult(final OQueryOperator lastOperator, final OSQLFilterItemField.FieldChain field, final Object value) {
-			this.lastOperator = lastOperator;
-			lastField = field;
-			lastValue = value;
-		}
-
-		/**
-		 * Combines two queries subset into one. This operation will be valid only if {@link #canBeMerged(OIndexSearchResult)} method
-		 * will return <code>true</code> for the same passed in parameter.
-		 * 
-		 * @param searchResult
-		 *          Query subset to merge.
-		 * @return New instance that presents merged query.
-		 */
-		private OIndexSearchResult merge(final OIndexSearchResult searchResult) {
-			final OQueryOperator operator;
-			final OIndexSearchResult result;
-
-			if (searchResult.lastOperator instanceof OQueryOperatorEquals) {
-				result = new OIndexSearchResult(this.lastOperator, lastField, lastValue);
-				result.fieldValuePairs.putAll(searchResult.fieldValuePairs);
-				result.fieldValuePairs.putAll(fieldValuePairs);
-				result.fieldValuePairs.put(searchResult.lastField.getItemName(0), searchResult.lastValue);
-			} else {
-				operator = searchResult.lastOperator;
-				result = new OIndexSearchResult(operator, searchResult.lastField, searchResult.lastValue);
-				result.fieldValuePairs.putAll(searchResult.fieldValuePairs);
-				result.fieldValuePairs.putAll(fieldValuePairs);
-				result.fieldValuePairs.put(lastField.getItemName(0), lastValue);
-			}
-			return result;
-		}
-
-		/**
-		 * @param searchResult
-		 *          Query subset is going to be merged with given one.
-		 * @return <code>true</code> if two query subsets can be merged.
-		 */
-		private boolean canBeMerged(final OIndexSearchResult searchResult) {
-			if (lastField.isLong() || searchResult.lastField.isLong()) {
-				return false;
-			}
-			return (lastOperator instanceof OQueryOperatorEquals) || (searchResult.lastOperator instanceof OQueryOperatorEquals);
-		}
-
-		private List<String> fields() {
-			final List<String> result = new ArrayList<String>(fieldValuePairs.size() + 1);
-			result.addAll(fieldValuePairs.keySet());
-			result.add(lastField.getItemName(0));
-			return result;
-		}
-
-		private int getFieldCount() {
-			return fieldValuePairs.size() + 1;
-		}
-	}
+	private Map<String, Object>					projections						= null;
+	private List<OPair<String, String>>	orderedFields;
+	private Object											flattenTarget;
+	private boolean											anyFunctionAggregates	= false;
+	private int													fetchLimit						= -1;
 
 	/**
 	 * Compile the filter conditions only the first time.
 	 */
 	public OCommandExecutorSQLSelect parse(final OCommandRequestText iRequest) {
-		final ODatabaseRecord database = getDatabase();
-		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
-
-		init(iRequest.getText());
-
-		if (iRequest instanceof OSQLSynchQuery) {
-			request = (OSQLSynchQuery<ORecordSchemaAware<?>>) iRequest;
-		} else if (iRequest instanceof OSQLAsynchQuery)
-			request = (OSQLAsynchQuery<ORecordSchemaAware<?>>) iRequest;
-		else {
-			// BUILD A QUERY OBJECT FROM THE COMMAND REQUEST
-			request = new OSQLSynchQuery<ORecordSchemaAware<?>>(iRequest.getText());
-			if (iRequest.getResultListener() != null)
-				request.setResultListener(iRequest.getResultListener());
-		}
+		super.parse(iRequest);
 
 		final int pos = parseProjections();
 		if (pos == -1)
@@ -254,23 +147,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	}
 
 	public Object execute(final Map<Object, Object> iArgs) {
-		parameters = iArgs;
-
-		// TODO: SUPPORT MULTIPLE CLASSES LIKE A SQL JOIN
-		compiledFilter.bindParameters(iArgs);
-
 		fetchLimit = getQueryFetchLimit();
 
-		if (compiledFilter.getTargetClasses() != null)
-			searchInClasses();
-		else if (compiledFilter.getTargetClusters() != null)
-			searchInClusters();
-		else if (compiledFilter.getTargetIndex() != null)
-			searchInIndex();
-		else if (compiledFilter.getTargetRecords() != null)
-			target = compiledFilter.getTargetRecords();
-		else
-			throw new OQueryParsingException("No source found in query: specify class, clusters or single records");
+		if (!assignTarget(iArgs)) {
+			if (compiledFilter.getTargetIndex() != null)
+				searchInIndex();
+			else
+				throw new OQueryParsingException("No source found in query: specify class, cluster(s), index or single record(s)");
+		}
 
 		executeSearch();
 
@@ -279,44 +163,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		applyOrderBy();
 		applyLimit();
 
-		if (tempResult != null) {
-			for (OIdentifiable d : tempResult)
-				if (d != null)
-					request.getResultListener().result(d);
-		}
-
-		if (request instanceof OSQLSynchQuery)
-			return ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getResult();
-
-		return null;
-	}
-
-	private void executeSearch() {
-		if (target == null)
-			// SEARCH WITHOUT USING TARGET (USUALLY WHEN INDEXES ARE INVOLVED)
-			return;
-
-		// BROWSE ALL THE RECORDS
-		for (OIdentifiable id : target) {
-			final ORecordInternal<?> record = (ORecordInternal<?>) id.getRecord();
-
-			if (record != null && record.getRecordType() != ODocument.RECORD_TYPE)
-				// WRONG RECORD TYPE: JUMP IT
-				continue;
-
-			if (filter(record))
-				if (!addResult(record))
-					// END OF EXECUTION
-					break;
-		}
-	}
-
-	public boolean foreach(final ORecordInternal<?> iRecord) {
-		if (iRecord != null)
-			if (filter(iRecord))
-				return addResult(iRecord);
-
-		return true;
+		return handleResult();
 	}
 
 	protected boolean addResult(final OIdentifiable iRecord) {
@@ -432,32 +279,21 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			currentPos -= KEYWORD_LIMIT.length();
 	}
 
-	/**
-	 * Parses the limit keyword if found.
-	 * 
-	 * @param word
-	 *          StringBuilder to parse
-	 * @return
-	 * @return the limit found as integer, or -1 if no limit is found. -1 means no limits.
-	 * @throws OCommandSQLParsingException
-	 *           if no valid limit has been found
-	 */
-	protected int parseLimit(final StringBuilder word) throws OCommandSQLParsingException {
-		if (!word.toString().equals(KEYWORD_LIMIT))
-			return -1;
+	@Override
+	protected void searchInClasses() {
+		final OClass cls = compiledFilter.getTargetClasses().keySet().iterator().next();
 
-		currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
-		try {
-			limit = Integer.parseInt(word.toString());
-		} catch (Exception e) {
-			throw new OCommandSQLParsingException("Invalid LIMIT value setted to '" + word
-					+ "' but it should be a valid integer. Example: LIMIT 10", text, currentPos);
-		}
-		return limit;
+		if (searchForIndexes(cls))
+			OProfiler.getInstance().updateCounter("Query.indexUsage", 1);
+		else
+			super.searchInClasses();
 	}
 
 	@SuppressWarnings("rawtypes")
 	private boolean searchForIndexes(final OClass iSchemaClass) {
+		final ODatabaseRecord database = getDatabase();
+		database.checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, iSchemaClass.getName().toLowerCase());
+
 		// Create set that is sorted by amount of fields in OIndexSearchResult items
 		// so the most specific restrictions will be processed first.
 		final List<OIndexSearchResult> indexSearchResults = new ArrayList<OIndexSearchResult>();
@@ -981,10 +817,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		}
 	}
 
-	protected boolean filter(final ORecordInternal<?> iRecord) {
-		return compiledFilter.evaluate(iRecord);
-	}
-
 	protected int parseProjections() {
 		int currentPos = 0;
 		final StringBuilder word = new StringBuilder();
@@ -1094,14 +926,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		return endPos;
 	}
 
-	private void scanEntireClusters(final int[] clusterIds) {
-		final ODatabaseRecord database = getDatabase();
-		final ORID[] range = getRange();
-
-		((OStorageEmbedded) database.getStorage()).browse(clusterIds, range[0], range[1], this,
-				(ORecordInternal<?>) database.newInstance(), false);
-	}
-
 	private void applyOrderBy() {
 		if (orderedFields == null)
 			return;
@@ -1179,62 +1003,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 		// INVOKE THE LISTENER
 		return iRecord;
-	}
-
-	private void searchInClasses() {
-		final OClass cls = compiledFilter.getTargetClasses().keySet().iterator().next();
-
-		final ODatabaseRecord database = getDatabase();
-		database.checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, cls.getName().toLowerCase());
-
-		if (searchForIndexes(cls))
-			OProfiler.getInstance().updateCounter("Query.indexUsage", 1);
-		else {
-			// NO INDEXES: SCAN THE ENTIRE CLUSTER
-			final ORID[] range = getRange();
-			target = new ORecordIteratorClass<ORecordInternal<?>>(database, (ODatabaseRecordAbstract) database, cls.getName(), true)
-					.setRange(range[0], range[1]);
-		}
-	}
-
-	private void searchInClusters() {
-		final ODatabaseRecord database = getDatabase();
-
-		final Set<Integer> clusterIds = new HashSet<Integer>();
-		for (String clusterName : compiledFilter.getTargetClusters().keySet()) {
-			if (clusterName == null || clusterName.length() == 0)
-				throw new OCommandExecutionException("No cluster or schema class selected in query");
-
-			database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, clusterName.toLowerCase());
-
-			if (Character.isDigit(clusterName.charAt(0))) {
-				// GET THE CLUSTER NUMBER
-				for (int clusterId : OStringSerializerHelper.splitIntArray(clusterName)) {
-					if (clusterId == -1)
-						throw new OCommandExecutionException("Cluster '" + clusterName + "' not found");
-
-					clusterIds.add(clusterId);
-				}
-			} else {
-				// GET THE CLUSTER NUMBER BY THE CLASS NAME
-				final int clusterId = database.getClusterIdByName(clusterName.toLowerCase());
-				if (clusterId == -1)
-					throw new OCommandExecutionException("Cluster '" + clusterName + "' not found");
-
-				clusterIds.add(clusterId);
-			}
-		}
-
-		// CREATE CLUSTER AS ARRAY OF INT
-		final int[] clIds = new int[clusterIds.size()];
-		int i = 0;
-		for (int c : clusterIds)
-			clIds[i++] = c;
-
-		final ORID[] range = getRange();
-
-		target = new ORecordIteratorClusters<ORecordInternal<?>>(database, (ODatabaseRecordAbstract) database, clIds).setRange(
-				range[0], range[1]);
 	}
 
 	private void searchInIndex() {
@@ -1401,30 +1169,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		}
 	}
 
-	private void applyLimit() {
-		if (tempResult != null && limit > 0) {
-			final List<OIdentifiable> newList = new ArrayList<OIdentifiable>();
-
-			// APPLY LIMIT
-			final int tot = Math.min(limit, tempResult.size());
-			for (int i = 0; i < tot; ++i)
-				newList.add(tempResult.get(i));
-
-			tempResult.clear();
-			tempResult = newList;
-		}
-	}
-
-	public List<OIdentifiable> getResult() {
-		if (tempResult != null)
-			return tempResult;
-
-		if (request instanceof OSQLSynchQuery)
-			return (List<OIdentifiable>) ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getResult();
-
-		return null;
-	}
-
 	private boolean checkIndexExistence(OClass iSchemaClass, OIndexSearchResult result) {
 		if (!iSchemaClass.areIndexed(result.fields())) {
 			return false;
@@ -1445,92 +1189,4 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		return true;
 	}
 
-	/**
-	 * Optimizes the contidion tree.
-	 */
-	private void optimize() {
-		if (compiledFilter == null)
-			return;
-
-		optimizeBranch(null, compiledFilter.getRootCondition());
-	}
-
-	private void optimizeBranch(final OSQLFilterCondition iParentCondition, OSQLFilterCondition iCondition) {
-		if (iCondition == null)
-			return;
-
-		final Object left = iCondition.getLeft();
-
-		if (left instanceof OSQLFilterCondition)
-			// ANALYSE LEFT RECURSIVELY
-			optimizeBranch(iCondition, (OSQLFilterCondition) left);
-
-		final Object right = iCondition.getRight();
-
-		if (right instanceof OSQLFilterCondition)
-			// ANALYSE RIGHT RECURSIVELY
-			optimizeBranch(iCondition, (OSQLFilterCondition) right);
-
-		final OQueryOperator oper = iCondition.getOperator();
-
-		Object result = null;
-
-		if (left instanceof OSQLFilterItemField && right instanceof OSQLFilterItemField) {
-			if (((OSQLFilterItemField) left).getRoot().equals(((OSQLFilterItemField) right).getRoot())) {
-				if (oper instanceof OQueryOperatorEquals)
-					result = Boolean.TRUE;
-				else if (oper instanceof OQueryOperatorNotEquals)
-					result = Boolean.FALSE;
-			}
-		}
-
-		if (result != null) {
-			if (iParentCondition != null)
-				if (iCondition == iParentCondition.getLeft())
-					// REPLACE LEFT
-					iCondition.setLeft(result);
-				else
-					// REPLACE RIGHT
-					iCondition.setRight(result);
-			else {
-				// REPLACE ROOT CONDITION
-				if (result instanceof Boolean && ((Boolean) result))
-					compiledFilter.setRootCondition(null);
-			}
-		}
-	}
-
-	private ORID[] getRange() {
-		final ORID beginRange;
-		final ORID endRange;
-
-		final OSQLFilterCondition rootCondition = compiledFilter.getRootCondition();
-		if (rootCondition == null) {
-			if (request instanceof OSQLSynchQuery)
-				beginRange = ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getNextPageRID();
-			else
-				beginRange = null;
-			endRange = null;
-		} else {
-			final ORID conditionBeginRange = rootCondition.getBeginRidRange();
-			final ORID conditionEndRange = rootCondition.getEndRidRange();
-			final ORID nextPageRid;
-
-			if (request instanceof OSQLSynchQuery)
-				nextPageRid = ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getNextPageRID();
-			else
-				nextPageRid = null;
-
-			if (conditionBeginRange != null && nextPageRid != null)
-				beginRange = conditionBeginRange.compareTo(nextPageRid) > 0 ? conditionBeginRange : nextPageRid;
-			else if (conditionBeginRange != null)
-				beginRange = conditionBeginRange;
-			else
-				beginRange = nextPageRid;
-
-			endRange = conditionEndRange;
-		}
-
-		return new ORID[] { beginRange, endRange };
-	}
 }

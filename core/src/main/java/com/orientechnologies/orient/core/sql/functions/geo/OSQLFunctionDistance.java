@@ -16,8 +16,8 @@
 package com.orientechnologies.orient.core.sql.functions.geo;
 
 import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
@@ -35,7 +35,7 @@ public class OSQLFunctionDistance extends OSQLFunctionAbstract {
 		super(NAME, 4, 5);
 	}
 
-	public Object execute(ORecord<?> iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
+	public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
 		try {
 			double distance;
 

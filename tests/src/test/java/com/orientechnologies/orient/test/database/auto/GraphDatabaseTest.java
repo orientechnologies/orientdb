@@ -17,6 +17,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -304,4 +305,55 @@ public class GraphDatabaseTest {
 
 		database.close();
 	}
+//
+//	@Test
+//	public void testSomething() throws Exception {
+//		database.open("admin", "admin");
+//
+//		if (database.getVertexType("Foo") != null)
+//			database.createVertexType("Foo");
+//		if (database.getVertexType("Bletch") != null)
+//			database.createVertexType("Bletch");
+//		if (database.getVertexType("Bar") != null)
+//			database.createEdgeType("Bar");
+//
+//		try {
+//			// Step 1
+//			// Create a foo
+//			ODocument foo1 = (ODocument) database.createVertex("Foo").field("address", "testing").save();
+//
+//			// Step 2 create a bunch of foos and connect them to THE foo
+//			for (int i = 0; i < 18; ++i) {
+//				database.begin(TXTYPE.OPTIMISTIC);
+//
+//				try {
+//					ODocument foo = (ODocument) database.createVertex("Bletch").field("address", "test" + i).save();
+//
+//					database.createEdge(foo.getIdentity(), foo1.getIdentity(), "Bar").save();
+//					database.commit();
+//				} catch (Exception e) {
+//					e.printStackTrace();
+//					database.rollback();
+//				}
+//			}
+//
+//			// just show what is there
+//			List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select * from Foo"));
+//
+//			// Step 3
+//			for (ODocument d : result) {
+//				System.out.println("Vertex: " + d);
+//
+//				// Step 4
+//				Set<OIdentifiable> result1 = database.getInEdges(d);
+//
+//				for (OIdentifiable e : result1) {
+//					System.out.println("In Edge: " + e);
+//				}
+//			}
+//
+//		} finally {
+//			database.close();
+//		}
+//	}
 }

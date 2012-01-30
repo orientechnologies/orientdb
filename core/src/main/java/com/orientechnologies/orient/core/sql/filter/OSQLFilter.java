@@ -114,8 +114,6 @@ public class OSQLFilter extends OCommandToParse {
 		if (currentPos == -1)
 			throw new OQueryParsingException("No query target found", text, 0);
 
-		targetRecords = new ArrayList<OIdentifiable>();
-
 		final char c = text.charAt(currentPos);
 
 		if (c == '#' || Character.isDigit(c)) {
@@ -123,6 +121,7 @@ public class OSQLFilter extends OCommandToParse {
 			final StringBuilder word = new StringBuilder();
 			currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
 
+			targetRecords = new ArrayList<OIdentifiable>();
 			targetRecords.add(new ORecordId(word.toString()));
 
 		} else if (c == OStringSerializerHelper.COLLECTION_BEGIN) {
@@ -130,6 +129,7 @@ public class OSQLFilter extends OCommandToParse {
 			final List<String> rids = new ArrayList<String>();
 			currentPos = OStringSerializerHelper.getCollection(text, currentPos, rids);
 
+			targetRecords = new ArrayList<OIdentifiable>();
 			for (String rid : rids)
 				targetRecords.add(new ORecordId(rid));
 

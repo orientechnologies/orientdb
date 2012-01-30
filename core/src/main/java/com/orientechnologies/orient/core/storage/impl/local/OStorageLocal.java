@@ -580,7 +580,7 @@ public class OStorageLocal extends OStorageEmbedded {
 							pos += OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_SHORT + OBinaryProtocol.SIZE_LONG + recordSize;
 						}
 					} catch (Exception e) {
-						OLogManager.instance().warn(this, "[OStorageLocal.check] Found wrong chunk %d", pos);
+						OLogManager.instance().warn(this, "[OStorageLocal.check] Found wrong chunk %d, cause: ", e, pos, e.toString());
 						errors++;
 						break;
 					}

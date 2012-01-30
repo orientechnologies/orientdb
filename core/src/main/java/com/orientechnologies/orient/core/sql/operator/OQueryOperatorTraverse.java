@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -59,7 +60,7 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 	}
 
 	@Override
-	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+	protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
 		final OSQLFilterCondition condition;
 		final Object target;
@@ -77,7 +78,7 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 	}
 
 	@SuppressWarnings("unchecked")
-	private boolean traverse(final ORecordInternal<?> iRecord, final OSQLFilterCondition iRootCondition,
+	private boolean traverse(final OIdentifiable iRecord, final OSQLFilterCondition iRootCondition,
 			final OSQLFilterCondition iCondition, Object iTarget, final int iLevel, final Set<ORID> iEvaluatedRecords) {
 		if (endDeepLevel > -1 && iLevel > endDeepLevel)
 			return false;

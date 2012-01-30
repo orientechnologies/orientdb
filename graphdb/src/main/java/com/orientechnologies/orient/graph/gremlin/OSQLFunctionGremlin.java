@@ -24,8 +24,9 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 
 import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.tinkerpop.blueprints.pgm.impls.orientdb.OrientEdge;
@@ -48,12 +49,12 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 		super(NAME, 1, 1);
 	}
 
-	public Object execute(final ORecord<?> iCurrentRecord, final Object[] iParameters, final OCommandExecutor iRequester) {
+	public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, final OCommandExecutor iRequester) {
 		if (!(iCurrentRecord instanceof ODocument))
 			// NOT DOCUMENT OR GRAPHDB? IGNORE IT
 			return null;
 
-		final OGraphDatabase db = OGremlinHelper.getGraphDatabase(iCurrentRecord.getDatabase());
+		final OGraphDatabase db = OGremlinHelper.getGraphDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
 
 		if (result == null)
 			result = new ArrayList<Object>();

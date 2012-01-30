@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.core.sql.functions;
 
 import com.orientechnologies.orient.core.command.OCommandExecutor;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
  * Interface that defines a SQL Function. Functions can be state-less if registered as instance, or state-full when registered as
@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.record.ORecord;
  */
 public interface OSQLFunction {
 
-	public Object execute(ORecord<?> iCurrentRecord, Object[] iFuncParams, OCommandExecutor iRequester);
+	public Object execute(OIdentifiable o, Object[] iFuncParams, OCommandExecutor iRequester);
 
 	public boolean aggregateResults(Object[] configuredParameters);
 

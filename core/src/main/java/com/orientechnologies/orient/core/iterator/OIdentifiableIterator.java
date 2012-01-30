@@ -67,6 +67,10 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
 	public abstract OIdentifiableIterator<REC> last();
 
+	public ORecordInternal<?> current() {
+		return readCurrentRecord(getRecord(), 0);
+	}
+
 	protected ORecordInternal<?> getTransactionEntry() {
 		final long physicalRecordTobrowse = current.clusterPosition > -2 && lastClusterPosition > -1 ? lastClusterPosition
 				- current.clusterPosition : 0;
@@ -196,5 +200,30 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 			directionForward = iForward;
 		else if (directionForward != iForward)
 			throw new OIterationException("Iterator cannot change direction while browsing");
+	}
+
+	/**
+	 * Read the current record and increment the counter if the record was found.
+	 * 
+	 * @param iRecord
+	 * @return
+	 */
+	protected ORecordInternal<?> readCurrentRecord(ORecordInternal<?> iRecord, final int iMovement) {
+		if (limit > -1 && browsedRecords >= limit)
+			// LIMIT REACHED
+			return null;
+
+		current.clusterPosition += iMovement;
+
+		if (iRecord != null) {
+			iRecord.setIdentity(current);
+			iRecord = lowLevelDatabase.load(iRecord, fetchPlan);
+		} else
+			iRecord = lowLevelDatabase.load(current, fetchPlan);
+
+		if (iRecord != null)
+			browsedRecords++;
+
+		return iRecord;
 	}
 }

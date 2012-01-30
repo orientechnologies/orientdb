@@ -19,7 +19,7 @@ import java.util.Collection;
 import java.util.HashSet;
 
 import com.orientechnologies.orient.core.command.OCommandExecutor;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
  * This operator can work as aggregate or inline. If only one argument is passed than aggregates, otherwise executes, and returns,
@@ -35,7 +35,7 @@ public class OSQLFunctionDifference extends OSQLFunctionCollAbstract {
 		super(NAME, 1, -1);
 	}
 
-	public Object execute(ORecord<?> iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
+	public Object execute(OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
 		if (iParameters[0] == null)
 			return null;
 

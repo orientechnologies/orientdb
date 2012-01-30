@@ -462,7 +462,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 	}
 
 	/**
-	 * Convert an array of parameters: if a POJO is used, then replace it with its record id.
+	 * Converts an array of parameters: if a POJO is used, then replace it with its record id.
 	 * 
 	 * @param iArgs
 	 *          Array of parameters as Object

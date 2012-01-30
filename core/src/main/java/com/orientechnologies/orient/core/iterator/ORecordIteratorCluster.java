@@ -257,29 +257,4 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
 
 		return this;
 	}
-
-	/**
-	 * Read the current record and increment the counter if the record was found.
-	 * 
-	 * @param iRecord
-	 * @return
-	 */
-	private ORecordInternal<?> readCurrentRecord(ORecordInternal<?> iRecord, final int iMovement) {
-		if (limit > -1 && browsedRecords >= limit)
-			// LIMIT REACHED
-			return null;
-
-		current.clusterPosition += iMovement;
-
-		if (iRecord != null) {
-			iRecord.setIdentity(current);
-			iRecord = lowLevelDatabase.load(iRecord, fetchPlan);
-		} else
-			iRecord = lowLevelDatabase.load(current, fetchPlan);
-
-		if (iRecord != null)
-			browsedRecords++;
-
-		return iRecord;
-	}
 }

@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Iterator to browse multiple clusters forward and backward. Once browsed in a direction, the iterator cannot change it. This
@@ -37,10 +36,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  *          Record Type
  */
 public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OIdentifiableIterator<REC> {
-	protected int[]	clusterIds;
-	protected int		currentClusterIdx;
-	protected ORID	beginRange;
-	protected ORID	endRange;
+	protected int[]				clusterIds;
+	protected int					currentClusterIdx;
+	protected ORecord<?>	currentRecord;
+	protected ORID				beginRange;
+	protected ORID				endRange;
 
 	public ORecordIteratorClusters(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
 			final int[] iClusterIds) {
@@ -73,12 +73,20 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
 			return false;
 
 		if (liveUpdated)
-			return current.clusterPosition > database.getStorage().getClusterDataRange(current.clusterId)[0];
+			firstClusterPosition = database.getStorage().getClusterDataRange(current.clusterId)[0];
+
+		ORecordInternal<?> record = getRecord();
 
 		// ITERATE UNTIL THE PREVIOUS GOOD RECORD
 		while (currentClusterIdx > -1) {
-			if (current.clusterPosition > firstClusterPosition)
-				return true;
+			while (current.clusterPosition > firstClusterPosition) {
+				currentRecord = readCurrentRecord(record, -1);
+
+				if (currentRecord != null)
+					if (include(currentRecord))
+						// FOUND
+						return true;
+			}
 
 			// CLUSTER EXHAUSTED, TRY WITH THE PREVIOUS ONE
 			currentClusterIdx--;
@@ -86,8 +94,11 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
 			current.clusterPosition = lastClusterPosition + 1;
 		}
 
-		// CHECK IN TX IF ANY
-		return txEntries != null && txEntries.size() - (currentTxEntryPosition + 1) > 0;
+		if (txEntries != null && txEntries.size() - (currentTxEntryPosition + 1) > 0)
+			return true;
+
+		currentRecord = null;
+		return false;
 	}
 
 	public boolean hasNext() {
@@ -104,13 +115,23 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
 		if (liveUpdated)
 			lastClusterPosition = database.getStorage().getClusterDataRange(current.clusterId)[1];
 
+		ORecordInternal<?> record = getRecord();
+
 		// ITERATE UNTIL THE NEXT GOOD RECORD
 		while (currentClusterIdx < clusterIds.length) {
-			final long recordsToBrowse = current.clusterPosition > -2 && lastClusterPosition > -1 ? lastClusterPosition
+			long recordsToBrowse = current.clusterPosition > -2 && lastClusterPosition > -1 ? lastClusterPosition
 					- current.clusterPosition : 0;
 
-			if (recordsToBrowse > 0)
-				return true;
+			while (recordsToBrowse > 0) {
+				currentRecord = readCurrentRecord(record, +1);
+
+				if (currentRecord != null)
+					if (include(currentRecord))
+						// FOUND
+						return true;
+
+				recordsToBrowse--;
+			}
 
 			// CLUSTER EXHAUSTED, TRY WITH THE NEXT ONE
 			currentClusterIdx++;
@@ -121,7 +142,58 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
 		}
 
 		// CHECK IN TX IF ANY
-		return txEntries != null && txEntries.size() - (currentTxEntryPosition + 1) > 0;
+		if (txEntries != null && txEntries.size() - (currentTxEntryPosition + 1) > 0)
+			return true;
+
+		currentRecord = null;
+		return false;
+	}
+
+	/**
+	 * Return the element at the current position and move forward the cursor to the next position available.
+	 * 
+	 * @return the next record found, otherwise the NoSuchElementException exception is thrown when no more records are found.
+	 */
+	@SuppressWarnings("unchecked")
+	public REC next() {
+		checkDirection(true);
+
+		if (currentRecord != null)
+			try {
+				// RETURN LAST LOADED RECORD
+				return (REC) currentRecord;
+			} finally {
+				currentRecord = null;
+			}
+
+		ORecordInternal<?> record = getRecord();
+
+		// MOVE FORWARD IN THE CURRENT CLUSTER
+		while (hasNext()) {
+			if (currentRecord != null)
+				try {
+					// RETURN LAST LOADED RECORD
+					return (REC) currentRecord;
+				} finally {
+					currentRecord = null;
+				}
+
+			record = getTransactionEntry();
+			if (record == null)
+				record = readCurrentRecord(null, +1);
+
+			if (record != null)
+				// FOUND
+				if (include(record))
+					return (REC) record;
+		}
+
+		record = getTransactionEntry();
+		if (record != null)
+			return (REC) record;
+
+		throw new NoSuchElementException("Direction: forward, last position was: " + current + ", range: " + beginRange + "-"
+				+ endRange);
 	}
 
 	/**
@@ -134,80 +206,45 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
 	public REC previous() {
 		checkDirection(false);
 
-		ORecordInternal<?> record = getRecord();
-
-		// ITERATE UNTIL THE PREVIOUS GOOD RECORD
-		while (currentClusterIdx > -1) {
-
-			// MOVE BACKWARD IN THE CURRENT CLUSTER
-			while (hasPrevious()) {
-				if (record == null)
-					record = readCurrentRecord(null, -1);
-
-				if (record != null)
-					// FOUND
-					if (record instanceof ODocument)
-						if (include((ODocument) record))
-							return (REC) record;
+		if (currentRecord != null)
+			try {
+				// RETURN LAST LOADED RECORD
+				return (REC) currentRecord;
+			} finally {
+				currentRecord = null;
 			}
-
-			// CLUSTER EXHAUSTED, TRY WITH THE PREVIOUS ONE
-			currentClusterIdx--;
-			updateClusterRange();
-			current.clusterPosition = lastClusterPosition + 1;
-		}
-
-		throw new NoSuchElementException();
-	}
-
-	protected boolean include(final ORecord<?> iRecord) {
-		return true;
-	}
-
-	/**
-	 * Return the element at the current position and move forward the cursor to the next position available.
-	 * 
-	 * @return the next record found, otherwise the NoSuchElementException exception is thrown when no more records are found.
-	 */
-	@SuppressWarnings("unchecked")
-	public REC next() {
-		checkDirection(true);
 
 		ORecordInternal<?> record = getRecord();
 
-		// ITERATE UNTIL THE NEXT GOOD RECORD
-		while (currentClusterIdx < clusterIds.length) {
+		// MOVE BACKWARD IN THE CURRENT CLUSTER
+		while (hasPrevious()) {
+			if (currentRecord != null)
+				try {
+					// RETURN LAST LOADED RECORD
+					return (REC) currentRecord;
+				} finally {
+					currentRecord = null;
+				}
 
-			// MOVE FORWARD IN THE CURRENT CLUSTER
-			while (hasNext()) {
-				record = getTransactionEntry();
-				if (record == null)
-					record = readCurrentRecord(null, +1);
+			if (record == null)
+				record = readCurrentRecord(null, -1);
 
-				if (record != null)
-					// FOUND
-					if (record instanceof ODocument)
-						if (include(record))
-							return (REC) record;
-			}
-
-			// CLUSTER EXHAUSTED, TRY WITH THE NEXT ONE
-			currentClusterIdx++;
-			if (currentClusterIdx >= clusterIds.length)
-				break;
-			updateClusterRange();
-			current.clusterPosition = firstClusterPosition - 1;
+			if (record != null)
+				// FOUND
+				if (include(record))
+					return (REC) record;
 		}
 
 		record = getTransactionEntry();
 		if (record != null)
 			return (REC) record;
 
-		throw new NoSuchElementException();
+		throw new NoSuchElementException("Direction: backward, last position was: " + current + ", range: " + beginRange + "-"
+				+ endRange);
 	}
 
-	public ORecordInternal<?> current() {
-		return readCurrentRecord(getRecord(), 0);
+	protected boolean include(final ORecord<?> iRecord) {
+		return true;
 	}
 
 	/**
@@ -257,33 +294,6 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
 		}
 
 		return this;
-	}
-
-	/**
-	 * Read the current record and increment the counter if the record was found.
-	 * 
-	 * @param iRecord
-	 * @return
-	 */
-	private ORecordInternal<?> readCurrentRecord(ORecordInternal<?> iRecord, final int iMovement) {
-		if (limit > -1 && browsedRecords >= limit)
-			// LIMIT REACHED
-			return null;
-
-		current.clusterPosition += iMovement;
-
-		if (iRecord != null) {
-			iRecord.setIdentity(current);
-			iRecord = lowLevelDatabase.load(iRecord, fetchPlan);
-		} else
-			iRecord = lowLevelDatabase.load(current, fetchPlan);
-
-		if (iRecord != null) {
-			browsedRecords++;
-			return iRecord;
-		}
-
-		return null;
 	}
 
 	protected void updateClusterRange() {

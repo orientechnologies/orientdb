@@ -29,6 +29,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -289,7 +290,7 @@ public class SQLFunctionsTest {
 				return "bigger(<first>, <second>)";
 			}
 
-			public Object execute(ORecord<?> iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
+			public Object execute(OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
 				if (iParameters[0] == null || iParameters[1] == null)
 					// CHECK BOTH EXPECTED PARAMETERS
 					return null;

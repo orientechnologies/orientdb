@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1008,6 +1007,8 @@ public class SQLSelectTest {
 			}
 
 			last = resultset.get(resultset.size() - 1).getIdentity();
+
+			System.out.printf("\nIterating page %d, last record is %s", iterationCount, last);
 
 			iterationCount++;
 			resultset = database.query(query);

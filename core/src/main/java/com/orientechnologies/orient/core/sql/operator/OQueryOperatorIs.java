@@ -15,8 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -34,7 +34,7 @@ public class OQueryOperatorIs extends OQueryOperatorEquality {
 	}
 
 	@Override
-	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+	protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
 		if (OSQLHelper.NOT_NULL.equals(iRight))
 			return iLeft != null;
@@ -48,7 +48,7 @@ public class OQueryOperatorIs extends OQueryOperatorEquality {
 			return iLeft == iRight;
 	}
 
-	protected boolean evaluateDefined(final ORecordInternal<?> iRecord, final String iFieldName) {
+	protected boolean evaluateDefined(final OIdentifiable iRecord, final String iFieldName) {
 		if (iRecord instanceof ODocument) {
 			return ((ODocument) iRecord).containsField(iFieldName);
 		}
@@ -60,14 +60,14 @@ public class OQueryOperatorIs extends OQueryOperatorEquality {
 		return OIndexReuseType.NO_INDEX;
 	}
 
-  @Override
-  public ORID getBeginRidRange(Object iLeft, Object iRight) {
-    return null;
-  }
+	@Override
+	public ORID getBeginRidRange(Object iLeft, Object iRight) {
+		return null;
+	}
 
-  @Override
-  public ORID getEndRidRange(Object iLeft, Object iRight) {
-    return null;
-  }
+	@Override
+	public ORID getEndRidRange(Object iLeft, Object iRight) {
+		return null;
+	}
 
 }

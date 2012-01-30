@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.core.sql.functions.math;
 
 import com.orientechnologies.orient.core.command.OCommandExecutor;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
  * Compute the maximum value for a field. Uses the context to save the last maximum number. When different Number class are used,
@@ -35,7 +35,7 @@ public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
 	}
 
 	@SuppressWarnings("unchecked")
-	public Object execute(ORecord<?> iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
+	public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
 		if (iParameters[0] == null || !(iParameters[0] instanceof Comparable<?>))
 			// PRECONDITIONS
 			return null;

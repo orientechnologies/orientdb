@@ -15,14 +15,9 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
-import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
-
-import java.util.List;
 
 /**
  * AND operator.
@@ -37,7 +32,7 @@ public class OQueryOperatorAnd extends OQueryOperator {
 	}
 
 	@Override
-	public Object evaluateRecord(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+	public Object evaluateRecord(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
 		if (iLeft == null)
 			return false;
@@ -51,53 +46,53 @@ public class OQueryOperatorAnd extends OQueryOperator {
 		return OIndexReuseType.INDEX_INTERSECTION;
 	}
 
-  @Override
-  public ORID getBeginRidRange(final Object iLeft, final Object iRight) {
-    final ORID leftRange;
-    final ORID rightRange;
+	@Override
+	public ORID getBeginRidRange(final Object iLeft, final Object iRight) {
+		final ORID leftRange;
+		final ORID rightRange;
 
-    if(iLeft instanceof OSQLFilterCondition)
-      leftRange = ((OSQLFilterCondition) iLeft).getBeginRidRange();
-    else
-      leftRange = null;
+		if (iLeft instanceof OSQLFilterCondition)
+			leftRange = ((OSQLFilterCondition) iLeft).getBeginRidRange();
+		else
+			leftRange = null;
 
-    if(iRight instanceof OSQLFilterCondition)
-      rightRange = ((OSQLFilterCondition) iRight).getBeginRidRange();
-    else
-      rightRange = null;
+		if (iRight instanceof OSQLFilterCondition)
+			rightRange = ((OSQLFilterCondition) iRight).getBeginRidRange();
+		else
+			rightRange = null;
 
-    if(leftRange == null && rightRange == null)
-      return null;
-    else if(leftRange == null)
-      return rightRange;
-    else if(rightRange == null)
-      return leftRange;
-    else
-      return leftRange.compareTo(rightRange) <= 0 ? rightRange : leftRange;
-  }
+		if (leftRange == null && rightRange == null)
+			return null;
+		else if (leftRange == null)
+			return rightRange;
+		else if (rightRange == null)
+			return leftRange;
+		else
+			return leftRange.compareTo(rightRange) <= 0 ? rightRange : leftRange;
+	}
 
-  @Override
-  public ORID getEndRidRange(final Object iLeft, final Object iRight) {
-    final ORID leftRange;
-    final ORID rightRange;
+	@Override
+	public ORID getEndRidRange(final Object iLeft, final Object iRight) {
+		final ORID leftRange;
+		final ORID rightRange;
 
-    if(iLeft instanceof OSQLFilterCondition)
-      leftRange = ((OSQLFilterCondition) iLeft).getEndRidRange();
-    else
-      leftRange = null;
+		if (iLeft instanceof OSQLFilterCondition)
+			leftRange = ((OSQLFilterCondition) iLeft).getEndRidRange();
+		else
+			leftRange = null;
 
-    if(iRight instanceof OSQLFilterCondition)
-      rightRange = ((OSQLFilterCondition) iRight).getEndRidRange();
-    else
-      rightRange = null;
+		if (iRight instanceof OSQLFilterCondition)
+			rightRange = ((OSQLFilterCondition) iRight).getEndRidRange();
+		else
+			rightRange = null;
 
-    if(leftRange == null && rightRange == null)
-      return null;
-    else if(leftRange == null)
-      return rightRange;
-    else if(rightRange == null)
-      return leftRange;
-    else
-      return leftRange.compareTo(rightRange) >= 0 ? rightRange : leftRange;
-  }
+		if (leftRange == null && rightRange == null)
+			return null;
+		else if (leftRange == null)
+			return rightRange;
+		else if (rightRange == null)
+			return leftRange;
+		else
+			return leftRange.compareTo(rightRange) >= 0 ? rightRange : leftRange;
+	}
 }

@@ -22,13 +22,14 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
 @SuppressWarnings("serial")
 public abstract class ONativeQuery<CTX extends OQueryContextNative> extends OQueryAbstract<ODocument> {
-	protected String	cluster;
+	protected String	className;
+	protected boolean	polymorphic	= true;
 	protected CTX			queryRecord;
 
 	public abstract boolean filter(CTX iRecord);
 
 	protected ONativeQuery(final String iCluster) {
-		cluster = iCluster;
+		className = iCluster;
 	}
 
 	public byte[] toStream() throws OSerializationException {
@@ -37,6 +38,14 @@ public abstract class ONativeQuery<CTX extends OQueryContextNative> extends OQue
 
 	public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
 		throw new OSerializationException("Native queries cannot be deserialized");
+	}
+
+	public boolean isPolymorphic() {
+		return polymorphic;
+	}
+
+	public void setPolymorphic(boolean polymorphic) {
+		this.polymorphic = polymorphic;
 	}
 
 }
