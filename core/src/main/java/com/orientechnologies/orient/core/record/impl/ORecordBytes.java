@@ -71,6 +71,12 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 		return this;
 	}
 
+	public boolean detach() {
+		_source = null;
+		_status = ORecordElement.STATUS.NOT_LOADED;
+		return true;
+	}
+
 	public ORecordBytes copy() {
 		return (ORecordBytes) copyTo(new ORecordBytes());
 	}
