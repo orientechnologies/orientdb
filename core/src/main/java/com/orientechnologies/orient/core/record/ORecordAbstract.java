@@ -353,4 +353,9 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	public <RET extends ORecord<T>> RET flatCopy() {
 		return (RET) copy();
 	}
+
+	protected void checkForLoading() {
+		if (_status == ORecordElement.STATUS.NOT_LOADED && ODatabaseRecordThreadLocal.INSTANCE.isDefined())
+			reload(null, true);
+	}
 }

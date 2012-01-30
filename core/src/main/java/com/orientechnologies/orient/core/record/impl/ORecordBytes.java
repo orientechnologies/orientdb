@@ -72,9 +72,12 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 	}
 
 	public boolean detach() {
-		_source = null;
-		_status = ORecordElement.STATUS.NOT_LOADED;
-		return true;
+		if (!_dirty) {
+			_source = null;
+			_status = ORecordElement.STATUS.NOT_LOADED;
+			return true;
+		}
+		return false;
 	}
 
 	public ORecordBytes copy() {
@@ -148,6 +151,8 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 	}
 
 	public void toOutputStream(final OutputStream out) throws IOException {
+		checkForLoading();
+
 		if (_source.length > 0) {
 			ByteArrayInputStream in = new ByteArrayInputStream(_source);
 			while (in.available() > 0) {

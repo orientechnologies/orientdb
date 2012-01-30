@@ -299,9 +299,4 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 						+ max + " requested");
 		}
 	}
-
-	protected void checkForLoading() {
-		if (_status == ORecordElement.STATUS.NOT_LOADED && ODatabaseRecordThreadLocal.INSTANCE.isDefined())
-			reload(null, true);
-	}
 }
