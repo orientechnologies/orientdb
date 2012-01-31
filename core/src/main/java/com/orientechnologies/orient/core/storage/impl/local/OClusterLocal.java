@@ -455,20 +455,20 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 		acquireExclusiveLock();
 		try {
 			for (int i = 0; i < files.length; i++) {
-				final File osFile = files[i].getOsFile();
-				if (osFile.getName().startsWith(name)) {
+				final String osFileName = files[i].getName();
+				if (osFileName.startsWith(name)) {
 					final File newFile = new File(storage.getStoragePath() + "/" + iNewName
-							+ osFile.getName().substring(osFile.getName().lastIndexOf(name) + name.length()));
+							+ osFileName.substring(osFileName.lastIndexOf(name) + name.length()));
 					for (OStorageFileConfiguration conf : config.infoFiles) {
 						if (conf.parent.name.equals(name))
 							conf.parent.name = iNewName;
-						if (conf.path.endsWith(osFile.getName()))
-							conf.path = new String(conf.path.replace(osFile.getName(), newFile.getName()));
+						if (conf.path.endsWith(osFileName))
+							conf.path = new String(conf.path.replace(osFileName, newFile.getName()));
 					}
-					boolean renamed = osFile.renameTo(newFile);
+					boolean renamed = files[i].renameTo(newFile);
 					while (!renamed) {
 						OMemoryWatchDog.freeMemory(100);
-						renamed = osFile.renameTo(newFile);
+						renamed = files[i].renameTo(newFile);
 					}
 				}
 			}

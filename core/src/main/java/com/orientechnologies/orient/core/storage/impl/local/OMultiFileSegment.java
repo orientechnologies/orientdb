@@ -86,10 +86,8 @@ public class OMultiFileSegment extends OSegment {
 		for (OFile file : files)
 			if (!file.open()) {
 				// LAST TIME THE FILE WAS NOT CLOSED IN SOFT WAY
-				OLogManager.instance().warn(
-						this,
-						"Segment file " + OFileUtils.getPath(file.getOsFile().getName())
-								+ " was not closed correctly last time. Checking segments...");
+				OLogManager.instance().warn(this,
+						"Segment file " + OFileUtils.getPath(file.getName()) + " was not closed correctly last time. Checking segments...");
 				OLogManager.instance().warn(this, "OK");
 			}
 	}
@@ -305,7 +303,7 @@ public class OMultiFileSegment extends OSegment {
 		config.infoFiles = newConfigFiles;
 
 		// CREATE A NEW ENTRY FOR THE NEW FILE
-		String fileNameToStore = storage.getVariableParser().convertPathToRelative(OFileUtils.getPath(file.getOsFile().getPath()));
+		String fileNameToStore = storage.getVariableParser().convertPathToRelative(OFileUtils.getPath(file.getPath()));
 
 		final OStorageSegmentConfiguration template = config.root.fileTemplate;
 

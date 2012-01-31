@@ -167,7 +167,7 @@ public class ODataLocal extends OMultiFileSegment {
 			if (pos[1] + RECORD_FIX_SIZE + recordSize > file.getFilledUpTo())
 				throw new OStorageException(
 						"Error on reading record from file '"
-								+ file.getOsFile().getName()
+								+ file.getName()
 								+ "', position "
 								+ iPosition
 								+ ", size "

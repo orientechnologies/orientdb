@@ -600,4 +600,20 @@ public abstract class OAbstractFile implements OFile {
 		if (!headerDirty)
 			headerDirty = true;
 	}
+
+	public String getName() {
+		return osFile.getName();
+	}
+
+	public String getPath() {
+		return osFile.getPath();
+	}
+
+	public String getAbsolutePath() {
+		return osFile.getAbsolutePath();
+	}
+
+	public boolean renameTo(final File newFile) {
+		return osFile.renameTo(newFile);
+	}
 }

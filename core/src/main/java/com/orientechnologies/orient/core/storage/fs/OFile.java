@@ -116,6 +116,14 @@ public interface OFile {
 	 */
 	public abstract void shrink(final int iSize) throws IOException;
 
+	public abstract String getName();
+
+	public abstract String getPath();
+
+	public abstract String getAbsolutePath();
+
+	public abstract boolean renameTo(File newFile);
+
 	public abstract int allocateSpace(final int iSize) throws IOException;
 
 	public abstract int getFreeSpace();
@@ -127,8 +135,6 @@ public interface OFile {
 	public abstract boolean canOversize(final int iRecordSize);
 
 	public abstract String toString();
-
-	public abstract File getOsFile();
 
 	public abstract int getMaxSize();
 

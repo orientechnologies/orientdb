@@ -149,14 +149,14 @@ public class OClusterLocalHole extends OSingleFileSegment {
 	}
 
 	public void rename(String iOldName, String iNewName) {
-		final File osFile = file.getOsFile();
-		if (osFile.getName().startsWith(iOldName)) {
+		final String osFileName = file.getName();
+		if (osFileName.startsWith(iOldName)) {
 			final File newFile = new File(storage.getStoragePath() + "/" + iNewName
-					+ osFile.getName().substring(osFile.getName().lastIndexOf(iOldName) + iOldName.length()));
-			boolean renamed = osFile.renameTo(newFile);
+					+ osFileName.substring(osFileName.lastIndexOf(iOldName) + iOldName.length()));
+			boolean renamed = file.renameTo(newFile);
 			while (!renamed) {
 				OMemoryWatchDog.freeMemory(100);
-				renamed = osFile.renameTo(newFile);
+				renamed = file.renameTo(newFile);
 			}
 		}
 	}
