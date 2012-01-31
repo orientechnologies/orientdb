@@ -36,11 +36,9 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
@@ -515,9 +513,6 @@ public class OStorageMemory extends OStorageEmbedded {
 	}
 
 	public void synch() {
-	}
-
-	public void browse(final int[] iClusterId, final ORecordBrowsingListener iListener, final ORecord<?> iRecord) {
 	}
 
 	public boolean exists() {
