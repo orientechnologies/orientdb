@@ -71,15 +71,6 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 		return this;
 	}
 
-	@Override
-	public ORecordBytes unload() {
-		if (!_dirty) {
-			_source = null;
-			_status = ORecordElement.STATUS.NOT_LOADED;
-		}
-		return this;
-	}
-
 	public ORecordBytes copy() {
 		return (ORecordBytes) copyTo(new ORecordBytes());
 	}
