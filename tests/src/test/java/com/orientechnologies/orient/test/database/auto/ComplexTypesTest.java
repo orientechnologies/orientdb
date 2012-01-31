@@ -64,7 +64,7 @@ public class ComplexTypesTest {
 		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
 		ODocument loadedDoc = database.load(rid);
-		Assert.assertEquals(loadedDoc.field("integer"), 10);
+		Assert.assertEquals(((Number) loadedDoc.field("integer")).intValue(), 10);
 		Assert.assertEquals(loadedDoc.field("decimal_integer"), new BigDecimal(10));
 		Assert.assertEquals(loadedDoc.field("decimal_float"), new BigDecimal("10.34"));
 

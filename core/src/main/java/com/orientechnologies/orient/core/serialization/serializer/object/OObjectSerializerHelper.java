@@ -179,7 +179,7 @@ public class OObjectSerializerHelper {
 		}
 	}
 
-	public static void setFieldValue(final Object iPojo, final String iProperty, Object iValue) {
+	public static void setFieldValue(final Object iPojo, final String iProperty, final Object iValue) {
 		final Class<?> c = iPojo.getClass();
 		final String className = c.getName();
 
