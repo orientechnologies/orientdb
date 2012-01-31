@@ -60,20 +60,19 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
 				if (current != null && current.getVersion() >= fresh.getVersion())
 					return;
 
-				if (databaseClosed(fresh)) {
+				if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && !ODatabaseRecordThreadLocal.INSTANCE.get().isClosed())
+					// CACHE A COPY
+					underlying.put((ORecordInternal<?>) fresh.flatCopy());
+				else {
+					// CACHE THE DETACHED RECORD
 					fresh.detach();
 					underlying.put(fresh);
-				} else
-					underlying.put((ORecordInternal<?>) fresh.flatCopy());
+				}
 			} finally {
 				underlying.unlock(fresh.getIdentity());
 			}
 		} else
 			underlying.remove(fresh.getIdentity());
-	}
-
-	private boolean databaseClosed(final ORecordInternal<?> record) {
-		return !ODatabaseRecordThreadLocal.INSTANCE.isDefined() || record.getDatabase().isClosed();
 	}
 
 	/**

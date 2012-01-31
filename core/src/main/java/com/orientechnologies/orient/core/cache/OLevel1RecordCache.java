@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
 /**
- * Per database primary cache of documents
+ * Level1 cache. it's one to one with record database instances.
  * 
  * @author Luca Garulli
  */
@@ -54,7 +54,7 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
 	}
 
 	/**
-	 * Push record to cache. Identifier of record used as access key
+	 * Pushes record to cache. Identifier of record used as access key
 	 * 
 	 * @param record
 	 *          record that should be cached
@@ -75,7 +75,7 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
 	}
 
 	/**
-	 * Look up for record in cache by it's identifier. Optionally look up in secondary cache and update primary with found record
+	 * Looks up for record in cache by it's identifier. Optionally look up in secondary cache and update primary with found record
 	 * 
 	 * @param rid
 	 *          unique identifier of record
@@ -106,7 +106,7 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
 	}
 
 	/**
-	 * Remove record with specified identifier from both primary and secondary caches
+	 * Removes record with specified identifier from both primary and secondary caches
 	 * 
 	 * @param rid
 	 *          unique identifier of record
@@ -131,11 +131,13 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
 		if (secondary == null)
 			return;
 
-		for (ORID rid : underlying.keys()) {
+		for (ORID rid : underlying.keys())
 			secondary.updateRecord(underlying.get(rid));
-		}
 	}
 
+	/**
+	 * Invalidates the cache emptying all the records.
+	 */
 	public void invalidate() {
 		underlying.clear();
 	}
