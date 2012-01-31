@@ -33,11 +33,13 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
  * = 1024 bytes<br/>
  * <br/>
  */
-public class OFileClassic extends OFile {
-	protected ByteBuffer	internalWriteBuffer	= ByteBuffer.allocate(OBinaryProtocol.SIZE_LONG);
+public class OFileClassic extends OAbstractFile {
+	public final static String	NAME								= "classic";
+	protected ByteBuffer				internalWriteBuffer	= ByteBuffer.allocate(OBinaryProtocol.SIZE_LONG);
 
-	public OFileClassic(String iFileName, String iMode) throws IOException {
-		super(iFileName, iMode);
+	public OFileClassic init(String iFileName, String iMode) {
+		super.init(iFileName, iMode);
+		return this;
 	}
 
 	@Override

@@ -43,7 +43,8 @@ import com.orientechnologies.orient.core.storage.fs.OMMapManager.OPERATION_TYPE;
  * = 1024 bytes<br/>
  * <br/>
  */
-public class OFileMMap extends OFile {
+public class OFileMMap extends OAbstractFile {
+	public final static String									NAME							= "mmap";
 	protected MappedByteBuffer									headerBuffer;
 	protected int																bufferBeginOffset	= -1;
 	protected static List<ByteBuffer>						bufferPool				= new ArrayList<ByteBuffer>(10);
@@ -51,10 +52,12 @@ public class OFileMMap extends OFile {
 	private static int													BYTEBUFFER_POOLABLE_SIZE;
 	private static OMMapManager.ALLOC_STRATEGY	strategy;
 
-	public OFileMMap(String iFileName, String iMode) throws IOException {
-		super(iFileName, iMode);
+	@Override
+	public OFileMMap init(String iFileName, String iMode) {
+		super.init(iFileName, iMode);
 		BYTEBUFFER_POOLABLE_SIZE = OGlobalConfiguration.FILE_MMAP_BUFFER_SIZE.getValueAsInteger();
 		strategy = OMMapManager.ALLOC_STRATEGY.values()[OGlobalConfiguration.FILE_MMAP_STRATEGY.getValueAsInteger()];
+		return this;
 	}
 
 	@Override

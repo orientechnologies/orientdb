@@ -34,7 +34,7 @@ public class OSingleFileSegment extends OSharedResourceAdaptive {
 
 	public OSingleFileSegment(final String iPath, final String iType) throws IOException {
 		super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
-		file = OFileFactory.create(iType, OSystemVariableResolver.resolveSystemVariables(iPath), "rw");
+		file = OFileFactory.instance().create(iType, OSystemVariableResolver.resolveSystemVariables(iPath), "rw");
 	}
 
 	public OSingleFileSegment(final OStorageLocal iStorage, final OStorageFileConfiguration iConfig) throws IOException {
@@ -47,7 +47,7 @@ public class OSingleFileSegment extends OSharedResourceAdaptive {
 
 		config = iConfig;
 		storage = iStorage;
-		file = OFileFactory.create(iType, iStorage.getVariableParser().resolveVariables(iConfig.path), iStorage.getMode());
+		file = OFileFactory.instance().create(iType, iStorage.getVariableParser().resolveVariables(iConfig.path), iStorage.getMode());
 		file.setMaxSize((int) OFileUtils.getSizeAsNumber(iConfig.maxSize));
 		file.setIncrementSize((int) OFileUtils.getSizeAsNumber(iConfig.incrementSize));
 	}

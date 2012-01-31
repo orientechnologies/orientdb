@@ -26,6 +26,6 @@ import com.orientechnologies.orient.core.storage.fs.OFileMMap;
 public class OMMapFileTest extends OFileAbstractTest {
 	@Override
 	protected OFile getFileImpl() throws IOException {
-		return new OFileMMap(FILE_NAME, "rw");
+		return new OFileMMap().init(FILE_NAME, "rw");
 	}
 }

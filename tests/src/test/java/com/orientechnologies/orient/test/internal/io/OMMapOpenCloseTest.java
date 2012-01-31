@@ -41,7 +41,7 @@ public class OMMapOpenCloseTest extends SpeedTestMonoThread {
 	public void init() throws IOException {
 		System.out.println("Testing opening and closing of a " + START_SIZE / 1000000 + "MB files for " + NUMS + " times...");
 
-		file = new OFileMMap(FILE_NAME, "rw");
+		file = new OFileMMap().init(FILE_NAME, "rw");
 
 		// DELETE THE TEST FILE EVERY TIME
 		File f = new File(FILE_NAME);

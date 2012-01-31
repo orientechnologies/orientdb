@@ -17,24 +17,42 @@ package com.orientechnologies.orient.core.storage.fs;
 
 import java.io.IOException;
 
-public class OFileFactory {
-	public static final String	MMAP		= "mmap";
-	public static final String	CLASSIC	= "classic";
+import com.orientechnologies.common.factory.ODynamicFactory;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 
-	public enum TYPE {
-		MMAP, CLASSIC,
+/**
+ * OFile factory. To register 3rd party implementations use: OFileFactory.instance().register(<name>, <class>);
+ * 
+ * @author Luca
+ * 
+ */
+public class OFileFactory extends ODynamicFactory<String, Class<? extends OFile>> {
+	public static final String					MMAP			= "mmap";
+	public static final String					CLASSIC		= "classic";
+
+	protected static final OFileFactory	instance	= new OFileFactory();
+
+	public OFileFactory() {
+		register(MMAP, OFileMMap.class);
+		register(CLASSIC, OFileClassic.class);
 	}
 
-	public static OFile create(final TYPE iType, final String iFileName, final String iOpenMode) throws IOException {
-		return create(iType.toString(), iFileName, iOpenMode);
+	public OFile create(final String iType, final String iFileName, final String iOpenMode) throws IOException {
+		final Class<? extends OFile> fileClass = registry.get(iType);
+
+		if (fileClass == null)
+			throw new OConfigurationException("File type '" + iType + "' is not configured");
+
+		try {
+			final OFile f = fileClass.newInstance();
+			f.init(iFileName, iOpenMode);
+			return f;
+		} catch (final Exception e) {
+			throw new OConfigurationException("Cannot create file of type '" + iType + "'", e);
+		}
 	}
 
-	public static OFile create(final String iType, final String iFileName, final String iOpenMode) throws IOException {
-		if (iType.equals(MMAP))
-			return new OFileMMap(iFileName, iOpenMode);
-		else if (iType.equals(CLASSIC))
-			return new OFileClassic(iFileName, iOpenMode);
-
-		throw new IllegalArgumentException("Type " + iType + " not supported");
+	public static OFileFactory instance() {
+		return instance;
 	}
 }

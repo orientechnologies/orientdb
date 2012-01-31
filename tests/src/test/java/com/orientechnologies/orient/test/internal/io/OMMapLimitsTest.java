@@ -43,7 +43,7 @@ public class OMMapLimitsTest extends SpeedTestMonoThread {
 			if (f.exists())
 				f.delete();
 
-			files[i] = new OFileMMap(FILE_NAME + i, "rw");
+			files[i] = new OFileMMap().init(FILE_NAME + i, "rw");
 			files[i].create(START_SIZE);
 
 			System.out.println("Created file mmap " + (i + 1) + "/" + NUMS + ". Total: " + (((float) (i + 1) * START_SIZE) / 1000000000)
