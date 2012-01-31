@@ -71,13 +71,13 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 		return this;
 	}
 
-	public boolean detach() {
+	@Override
+	public ORecordBytes unload() {
 		if (!_dirty) {
 			_source = null;
 			_status = ORecordElement.STATUS.NOT_LOADED;
-			return true;
 		}
-		return false;
+		return this;
 	}
 
 	public ORecordBytes copy() {
