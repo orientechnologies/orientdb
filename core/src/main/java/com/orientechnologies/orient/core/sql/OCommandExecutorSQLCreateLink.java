@@ -45,7 +45,7 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermissionAbstract {
+public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
 	public static final String	KEYWORD_CREATE	= "CREATE";
 	public static final String	KEYWORD_LINK		= "LINK";
 	private static final String	KEYWORD_FROM		= "FROM";
@@ -70,17 +70,17 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 		int oldPos = 0;
 		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found. Use " + getSyntax(), text, oldPos);
 
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_LINK))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_LINK + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_LINK + " not found. Use " + getSyntax(), text, oldPos);
 
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found. Use " + getSyntax(), text, oldPos);
 
 		if (!word.toString().equalsIgnoreCase(KEYWORD_FROM)) {
 			// GET THE LINK NAME
@@ -98,7 +98,7 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 			pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 
 			if (pos == -1)
-				throw new OCommandSQLParsingException("Link type missed", text, oldPos);
+				throw new OCommandSQLParsingException("Link type missed. Use " + getSyntax(), text, oldPos);
 
 			linkType = OType.valueOf(word.toString().toUpperCase(Locale.ENGLISH));
 
@@ -107,15 +107,15 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 		}
 
 		if (pos == -1 || !word.toString().equals(KEYWORD_FROM))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found. Use " + getSyntax(), text, oldPos);
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected <class>.<property>", text, pos);
+			throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, pos);
 
 		String[] parts = word.toString().split("\\.");
 		if (parts.length != 2)
-			throw new OCommandSQLParsingException("Expected <class>.<property>", text, pos);
+			throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, pos);
 
 		sourceClassName = parts[0];
 		if (sourceClassName == null)
@@ -124,15 +124,15 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_TO))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_TO + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_TO + " not found. Use " + getSyntax(), text, oldPos);
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected <class>.<property>", text, pos);
+			throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, pos);
 
 		parts = word.toString().split("\\.");
 		if (parts.length != 2)
-			throw new OCommandSQLParsingException("Expected <class>.<property>", text, pos);
+			throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, pos);
 
 		destClassName = parts[0];
 		if (destClassName == null)
@@ -144,7 +144,7 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 			return this;
 
 		if (!word.toString().equalsIgnoreCase("INVERSE"))
-			throw new OCommandSQLParsingException("Missed 'INVERSE'", text, pos);
+			throw new OCommandSQLParsingException("Missed 'INVERSE'. Use " + getSyntax(), text, pos);
 
 		inverse = true;
 
@@ -317,5 +317,10 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 		}
 
 		return total;
+	}
+
+	@Override
+	public String getSyntax() {
+		return "CREATE LINK <link-name> [TYPE <link-type>] FROM <source-class>.<source-property> TO <destination-class>.<destination-property> [INVERSE]";
 	}
 }

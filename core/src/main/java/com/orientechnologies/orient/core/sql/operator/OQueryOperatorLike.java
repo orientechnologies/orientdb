@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.sql.operator;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.query.OQueryHelper;
@@ -35,7 +36,7 @@ public class OQueryOperatorLike extends OQueryOperatorEqualityNotNulls {
 
 	@Override
 	protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-			final Object iRight) {
+			final Object iRight, OCommandContext iContext) {
 		if (OMultiValue.isMultiValue(iLeft) || OMultiValue.isMultiValue(iRight))
 			return false;
 

@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLPermissionAbstract {
+public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract {
 	public static final String	KEYWORD_CREATE	= "CREATE";
 	public static final String	KEYWORD_CLASS		= "CLASS";
 	public static final String	KEYWORD_EXTENDS	= "EXTENDS";
@@ -54,12 +54,12 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLPermissio
 		int oldPos = 0;
 		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found. Use " + getSyntax(), text, oldPos);
 
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_CLASS))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found. Use " + getSyntax(), text, oldPos);
 
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
@@ -79,7 +79,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLPermissio
 				pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
 				if (pos == -1)
 					throw new OCommandSQLParsingException("Syntax error after EXTENDS for class " + className
-							+ ". Expected the super-class name", text, oldPos);
+							+ ". Expected the super-class name. Use " + getSyntax(), text, oldPos);
 
 				if (!database.getMetadata().getSchema().existsClass(word.toString()))
 					throw new OCommandSQLParsingException("Super-class " + word + " not exists", text, oldPos);
@@ -90,7 +90,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLPermissio
 				pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
 				if (pos == -1)
 					throw new OCommandSQLParsingException("Syntax error after CLUSTER for class " + className
-							+ ". Expected the cluster id or name", text, oldPos);
+							+ ". Expected the cluster id or name. Use " + getSyntax(), text, oldPos);
 
 				final String[] clusterIdsAsStrings = word.toString().split(",");
 				if (clusterIdsAsStrings.length > 0) {
@@ -137,5 +137,10 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLPermissio
 				superClass, clusterIds);
 		sourceClass.saveInternal();
 		return database.getMetadata().getSchema().getClasses().size();
+	}
+
+	@Override
+	public String getSyntax() {
+		return "CREATE CLASS <class> [EXTENDS <super-class>] [CLUSTER <clusterId>*]";
 	}
 }

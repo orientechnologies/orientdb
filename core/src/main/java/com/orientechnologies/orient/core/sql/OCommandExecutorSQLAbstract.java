@@ -42,4 +42,6 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 		textUpperCase = iText.toUpperCase(Locale.ENGLISH);
 		return (OCommandExecutorSQLAbstract) super.init(iText);
 	}
+
+	public abstract String getSyntax();
 }

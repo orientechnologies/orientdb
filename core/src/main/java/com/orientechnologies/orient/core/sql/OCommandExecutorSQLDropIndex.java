@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLDropIndex extends OCommandExecutorSQLPermissionAbstract {
+public class OCommandExecutorSQLDropIndex extends OCommandExecutorSQLAbstract {
 	public static final String	KEYWORD_DROP	= "DROP";
 	public static final String	KEYWORD_INDEX	= "INDEX";
 
@@ -45,17 +45,17 @@ public class OCommandExecutorSQLDropIndex extends OCommandExecutorSQLPermissionA
 		int oldPos = 0;
 		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_DROP))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), text, oldPos);
 
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_INDEX))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_INDEX + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_INDEX + " not found. Use " + getSyntax(), text, oldPos);
 
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected index name", text, oldPos);
+			throw new OCommandSQLParsingException("Expected index name. Use " + getSyntax(), text, oldPos);
 
 		name = word.toString();
 
@@ -71,5 +71,10 @@ public class OCommandExecutorSQLDropIndex extends OCommandExecutorSQLPermissionA
 
 		getDatabase().getMetadata().getIndexManager().dropIndex(name);
 		return null;
+	}
+
+	@Override
+	public String getSyntax() {
+		return "DROP INDEX <index-name>|<class>.<property>";
 	}
 }

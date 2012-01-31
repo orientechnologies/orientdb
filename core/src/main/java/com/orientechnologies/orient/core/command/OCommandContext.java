@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql.filter;
-
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+package com.orientechnologies.orient.core.command;
 
 /**
- * Represent a value inside a query condition.
+ * Basic interface for commands. Manages the context variables during execution.
  * 
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public interface OSQLFilterItem {
+public interface OCommandContext {
+	public Object getVariable(final String iName);
 
-	public Object getValue(OIdentifiable iRecord, OCommandContext iContetx);
-
+	public void setVariable(final String iName, final Object iValue);
 }

@@ -61,15 +61,16 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 
 		int pos = OSQLHelper.nextWord(text, textUpperCase, 0, word, true);
 		if (pos == -1 || !word.toString().equals(OCommandExecutorSQLInsert.KEYWORD_INSERT))
-			throw new OCommandSQLParsingException("Keyword " + OCommandExecutorSQLInsert.KEYWORD_INSERT + " not found", text, 0);
+			throw new OCommandSQLParsingException("Keyword " + OCommandExecutorSQLInsert.KEYWORD_INSERT + " not found. Use "
+					+ getSyntax(), text, 0);
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_INTO))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_INTO + " not found", text, 0);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_INTO + " not found. Use " + getSyntax(), text, 0);
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Invalid subject name. Expected cluster, class or index", text, pos);
+			throw new OCommandSQLParsingException("Invalid subject name. Expected cluster, class or index. Use " + getSyntax(), text, pos);
 
 		String subjectName = word.toString();
 
@@ -95,16 +96,16 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 
 		final int beginFields = OStringParser.jumpWhiteSpaces(text, pos);
 		if (beginFields == -1 || text.charAt(beginFields) != '(')
-			throw new OCommandSQLParsingException("Set of fields is missed. Example: (name, surname)", text, pos);
+			throw new OCommandSQLParsingException("Set of fields is missed. Example: (name, surname). Use " + getSyntax(), text, pos);
 
 		final int endFields = text.indexOf(')', beginFields + 1);
 		if (endFields == -1)
-			throw new OCommandSQLParsingException("Missed closed brace", text, beginFields);
+			throw new OCommandSQLParsingException("Missed closed brace. Use " + getSyntax(), text, beginFields);
 
 		final ArrayList<String> fieldNames = new ArrayList<String>();
 		OStringSerializerHelper.getParameters(text, beginFields, endFields, fieldNames);
 		if (fieldNames.size() == 0)
-			throw new OCommandSQLParsingException("Set of fields is empty. Example: (name, surname)", text, endFields);
+			throw new OCommandSQLParsingException("Set of fields is empty. Example: (name, surname). Use " + getSyntax(), text, endFields);
 
 		// REMOVE QUOTATION MARKS IF ANY
 		for (int i = 0; i < fieldNames.size(); ++i)
@@ -112,20 +113,22 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, endFields + 1, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_VALUES))
-			throw new OCommandSQLParsingException("Missed VALUES keyword", text, endFields);
+			throw new OCommandSQLParsingException("Missed VALUES keyword. Use " + getSyntax(), text, endFields);
 
 		final int beginValues = OStringParser.jumpWhiteSpaces(text, pos);
 		if (pos == -1 || text.charAt(beginValues) != '(')
-			throw new OCommandSQLParsingException("Set of values is missed. Example: ('Bill', 'Stuart', 300)", text, pos);
+			throw new OCommandSQLParsingException("Set of values is missed. Example: ('Bill', 'Stuart', 300). Use " + getSyntax(), text,
+					pos);
 
 		final int endValues = text.lastIndexOf(')');
 		if (endValues == -1)
-			throw new OCommandSQLParsingException("Missed closed brace", text, beginValues);
+			throw new OCommandSQLParsingException("Missed closed brace. Use " + getSyntax(), text, beginValues);
 
 		final List<String> values = OStringSerializerHelper.smartSplit(text, new char[] { ',' }, beginValues + 1, endValues - 1, true);
 
 		if (values.size() == 0)
-			throw new OCommandSQLParsingException("Set of values is empty. Example: ('Bill', 'Stuart', 300)", text, beginValues);
+			throw new OCommandSQLParsingException("Set of values is empty. Example: ('Bill', 'Stuart', 300). Use " + getSyntax(), text,
+					beginValues);
 
 		if (values.size() != fieldNames.size())
 			throw new OCommandSQLParsingException("Fields not match with values", text, beginValues);
@@ -133,7 +136,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 		// TRANSFORM FIELD VALUES
 		final Object[] fieldValues = new Object[values.size()];
 		for (int i = 0; i < values.size(); ++i)
-			fieldValues[i] = OSQLHelper.parseValue(this, OStringSerializerHelper.decode(values.get(i).trim()));
+			fieldValues[i] = OSQLHelper.parseValue(this, OStringSerializerHelper.decode(values.get(i).trim()), context);
 
 		fields = new LinkedHashMap<String, Object>();
 		for (int i = 0; i < fieldNames.size(); ++i)
@@ -169,5 +172,10 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 				doc.save();
 			return doc;
 		}
+	}
+
+	@Override
+	public String getSyntax() {
+		return "INSERT INTO <Class>|cluster:<cluster>|index:<index> (<field>[,]*) VALUES (<expression>[,]*)";
 	}
 }

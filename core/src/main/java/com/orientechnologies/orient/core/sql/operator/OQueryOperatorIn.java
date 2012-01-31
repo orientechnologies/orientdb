@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
@@ -44,7 +45,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 	@Override
 	@SuppressWarnings("unchecked")
 	protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-			final Object iRight) {
+			final Object iRight, OCommandContext iContext) {
 		if (iLeft instanceof Collection<?>) {
 			final Collection<Object> sourceCollection = (Collection<Object>) iLeft;
 
@@ -113,8 +114,8 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
     for(final Object rid : ridCollection) {
       if(rid instanceof ORID)
         rids.add((ORID)rid);
-      else if(rid instanceof OSQLFilterItemParameter && ((OSQLFilterItemParameter) rid).getValue(null) instanceof ORID)
-        rids.add((ORID)((OSQLFilterItemParameter) rid).getValue(null));
+      else if(rid instanceof OSQLFilterItemParameter && ((OSQLFilterItemParameter) rid).getValue(null, null) instanceof ORID)
+        rids.add((ORID)((OSQLFilterItemParameter) rid).getValue(null, null));
     }
 
     return Collections.min(rids);
@@ -140,8 +141,8 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
     for(final Object rid : ridCollection) {
       if(rid instanceof ORID)
         rids.add((ORID)rid);
-      else if(rid instanceof OSQLFilterItemParameter && ((OSQLFilterItemParameter) rid).getValue(null) instanceof ORID)
-        rids.add((ORID)((OSQLFilterItemParameter) rid).getValue(null));
+      else if(rid instanceof OSQLFilterItemParameter && ((OSQLFilterItemParameter) rid).getValue(null, null) instanceof ORID)
+        rids.add((ORID)((OSQLFilterItemParameter) rid).getValue(null, null));
     }
 
     return Collections.max(rids);

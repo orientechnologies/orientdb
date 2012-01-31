@@ -15,15 +15,27 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.common.parser.OStringParser;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAll;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAny;
 
 /**
  * Executes a TRAVERSE crossing records. Returns a List<OIdentifiable> containing all the traversed records that match the WHERE
@@ -49,6 +61,23 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLExtractAbstr
 
 	private Set<String>					fields;
 
+	public class OTraverseContext implements OCommandContext {
+		public int				traversedRecords	= 0;
+		public Set<ORID>	evaluatedRecords	= new HashSet<ORID>();
+		private int				depth;
+
+		public Object getVariable(final String iName) {
+			if ("depth".equalsIgnoreCase(iName))
+				return depth;
+			return null;
+		}
+
+		public void setVariable(final String iName, final Object iValue) {
+			if ("depth".equalsIgnoreCase(iName))
+				throw new OCommandExecutionException("Cannot change read-only 'depth' variable. Current value is: " + depth);
+		}
+	}
+
 	/**
 	 * Compile the filter conditions only the first time.
 	 */
@@ -57,14 +86,17 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLExtractAbstr
 
 		final int pos = parseFields();
 		if (pos == -1)
-			return this;
+			throw new OCommandSQLParsingException("Traverse must have the field list. Use " + getSyntax());
 
 		int endPosition = text.length();
 		int endP = textUpperCase.indexOf(" " + OCommandExecutorSQLTraverse.KEYWORD_LIMIT, currentPos);
 		if (endP > -1 && endP < endPosition)
 			endPosition = endP;
 
-		compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(text.substring(pos, endPosition));
+		compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(text.substring(pos, endPosition), context);
+
+		if (compiledFilter.getRootCondition() == null)
+			throw new OCommandSQLParsingException("Traverse must have the WHERE clause. Use " + getSyntax());
 
 		optimize();
 
@@ -96,11 +128,86 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLExtractAbstr
 		if (!assignTarget(iArgs))
 			throw new OQueryParsingException("No source found in query: specify class, cluster(s) or single record(s)");
 
-		executeSearch();
+		executeTraverse();
 
 		applyLimit();
 
 		return handleResult();
+	}
+
+	protected void executeTraverse() {
+		if (target == null)
+			throw new OCommandExecutionException("Traverse error: target not specified");
+
+		context = new OTraverseContext();
+		// BROWSE ALL THE RECORDS
+		for (OIdentifiable id : target) {
+			traverse(id, compiledFilter.getRootCondition());
+		}
+	}
+
+	private void traverse(Object iTarget, final OSQLFilterCondition iCondition) {
+		if (!(iTarget instanceof OIdentifiable))
+			// JUMP IT BECAUSE IT ISN'T A RECORD
+			return;
+
+		((OTraverseContext) context).traversedRecords++;
+
+		if (((OTraverseContext) context).evaluatedRecords.contains(((OIdentifiable) iTarget).getIdentity()))
+			// ALREADY EVALUATED
+			return;
+
+		final ORecord<?> record = ((OIdentifiable) iTarget).getRecord();
+		if (!(record instanceof ODocument))
+			// JUMP IT BECAUSE NOT ODOCUMENT
+			return;
+
+		final ODocument target = (ODocument) record;
+
+		if (target.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
+			try {
+				target.load();
+			} catch (final ORecordNotFoundException e) {
+				// INVALID RID
+				return;
+			}
+
+		// ADD IT AS EVALUATED RECORD
+		((OTraverseContext) context).evaluatedRecords.add(record.getIdentity());
+
+		final Object conditionResult = iCondition.evaluate(target, context);
+		if (conditionResult != Boolean.TRUE)
+			return;
+
+		// MATCH
+		addResult(target);
+
+		// TRAVERSE THE DOCUMENT ITSELF
+		for (final String cfgField : fields) {
+			if ("*".equals(cfgField) || OSQLFilterItemFieldAll.FULL_NAME.equals(cfgField)
+					|| OSQLFilterItemFieldAny.FULL_NAME.equals(cfgField)) {
+				// ALL FIELDS
+				for (final String fieldName : target.fieldNames())
+					traverseField(target.rawField(fieldName), iCondition);
+			} else
+				traverseField(target.rawField(cfgField), iCondition);
+		}
+	}
+
+	protected void traverseField(final Object iFieldValue, final OSQLFilterCondition iCondition) {
+
+		if (iFieldValue instanceof Collection<?>) {
+			final Collection<Object> collection = (Collection<Object>) iFieldValue;
+			for (final Object o : collection) {
+				traverse(o, iCondition);
+			}
+		} else if (iFieldValue instanceof Map<?, ?>) {
+
+			final Map<Object, Object> map = (Map<Object, Object>) iFieldValue;
+			for (final Object o : map.values()) {
+				traverse(o, iCondition);
+			}
+		}
 	}
 
 	protected int parseFields() {
@@ -124,11 +231,14 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLExtractAbstr
 			for (String field : items)
 				fields.add(field.trim());
 		} else
-			throw new OQueryParsingException(
-					"Missed field list to cross in TRAVERSE. Use TRAVERSE <field> FROM <target> [WHERE <filter>]", text, currentPos);
+			throw new OQueryParsingException("Missed field list to cross in TRAVERSE. Use " + getSyntax(), text, currentPos);
 
 		currentPos = fromPosition + KEYWORD_FROM.length() + 1;
 
 		return currentPos;
+	}
+
+	public String getSyntax() {
+		return "TRAVERSE <field>* FROM <target> [WHERE <filter>]";
 	}
 }

@@ -44,7 +44,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissionAbstract {
+public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract {
 	public static final String	KEYWORD_CREATE	= "CREATE";
 	public static final String	KEYWORD_INDEX		= "INDEX";
 	public static final String	KEYWORD_ON			= "ON";
@@ -65,17 +65,17 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 		int oldPos = 0;
 		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found. Use " + getSyntax(), text, oldPos);
 
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_INDEX))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_INDEX + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_INDEX + " not found. Use " + getSyntax(), text, oldPos);
 
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected index name", text, oldPos);
+			throw new OCommandSQLParsingException("Expected index name. Use " + getSyntax(), text, oldPos);
 
 		indexName = word.toString();
 
@@ -83,17 +83,17 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Index type requested", text, oldPos + 1);
+			throw new OCommandSQLParsingException("Index type requested. Use " + getSyntax(), text, oldPos + 1);
 
 		if (word.toString().equals(KEYWORD_ON)) {
 			if (indexName.contains(".")) {
-				throw new OCommandSQLParsingException("Index name cannot contain '.' character", text, namePos);
+				throw new OCommandSQLParsingException("Index name cannot contain '.' character. Use " + getSyntax(), text, namePos);
 			}
 
 			oldPos = pos;
 			pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 			if (pos == -1)
-				throw new OCommandSQLParsingException("Expected class name", text, oldPos);
+				throw new OCommandSQLParsingException("Expected class name. Use " + getSyntax(), text, oldPos);
 			oldPos = pos;
 			oClass = findClass(word.toString());
 
@@ -102,7 +102,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 
 			pos = textUpperCase.indexOf(")");
 			if (pos == -1) {
-				throw new OCommandSQLParsingException("No right bracket found", text, oldPos);
+				throw new OCommandSQLParsingException("No right bracket found. Use " + getSyntax(), text, oldPos);
 			}
 
 			final String props = textUpperCase.substring(oldPos, pos).trim().substring(1);
@@ -110,8 +110,8 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 			List<String> propList = new ArrayList<String>();
 			final List<OType> typeList = new ArrayList<OType>();
 			for (String propToIndex : props.trim().split("\\s*,\\s*")) {
-        checkMapIndexSpecifier( propToIndex, text, oldPos );
-        final String propName = propToIndex.split( "\\s+" )[0];
+				checkMapIndexSpecifier(propToIndex, text, oldPos);
+				final String propName = propToIndex.split("\\s+")[0];
 
 				final OProperty property = oClass.getProperty(propName);
 
@@ -128,7 +128,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 			oldPos = pos + 1;
 			pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 			if (pos == -1)
-				throw new OCommandSQLParsingException("Index type requested", text, oldPos + 1);
+				throw new OCommandSQLParsingException("Index type requested. Use " + getSyntax(), text, oldPos + 1);
 
 			keyTypes = new OType[propList.size()];
 			typeList.toArray(keyTypes);
@@ -207,23 +207,31 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 		return null;
 	}
 
-  private void checkMapIndexSpecifier(final String fieldName, final String text, final int pos) {
-    String[] fieldNameParts = fieldName.split( "\\s+" );
-    if(fieldNameParts.length == 1)
-      return;
+	private void checkMapIndexSpecifier(final String fieldName, final String text, final int pos) {
+		String[] fieldNameParts = fieldName.split("\\s+");
+		if (fieldNameParts.length == 1)
+			return;
 
-    if(fieldNameParts.length == 3) {
-      if("by".equals(fieldNameParts[1].toLowerCase())) {
-        try{
-          OPropertyMapIndexDefinition.INDEX_BY.valueOf( fieldNameParts[2].toUpperCase() );
-        } catch( IllegalArgumentException iae ) {
-          throw new OCommandSQLParsingException( "Illegal field name format, should be '<property> [by key|value]' but was '" + fieldName + "'", text, pos);
-        }
-        return;
-      }
-      throw new OCommandSQLParsingException( "Illegal field name format, should be '<property> [by key|value]' but was '" + fieldName + "'", text, pos);
-    }
+		if (fieldNameParts.length == 3) {
+			if ("by".equals(fieldNameParts[1].toLowerCase())) {
+				try {
+					OPropertyMapIndexDefinition.INDEX_BY.valueOf(fieldNameParts[2].toUpperCase());
+				} catch (IllegalArgumentException iae) {
+					throw new OCommandSQLParsingException("Illegal field name format, should be '<property> [by key|value]' but was '"
+							+ fieldName + "'", text, pos);
+				}
+				return;
+			}
+			throw new OCommandSQLParsingException("Illegal field name format, should be '<property> [by key|value]' but was '"
+					+ fieldName + "'", text, pos);
+		}
 
-    throw new OCommandSQLParsingException( "Illegal field name format, should be '<property> [by key|value]' but was '" + fieldName + "'", text, pos);
-  }
+		throw new OCommandSQLParsingException("Illegal field name format, should be '<property> [by key|value]' but was '" + fieldName
+				+ "'", text, pos);
+	}
+
+	@Override
+	public String getSyntax() {
+		return "CREATE INDEX <name> [ON <class-name> (prop-names)] <type> [<key-type>]";
+	}
 }

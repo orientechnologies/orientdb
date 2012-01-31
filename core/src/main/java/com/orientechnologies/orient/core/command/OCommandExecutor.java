@@ -53,19 +53,6 @@ public interface OCommandExecutor {
 	public Object execute(final Map<Object, Object> iArgs);
 
 	/**
-	 * Execute the requested command after parsing it.
-	 * 
-	 * @param iRequest
-	 *          Command request implementation.
-	 * @param iArgs
-	 *          Optional variable arguments to pass to the command.
-	 * 
-	 * @see #execute(Object...)
-	 * @return
-	 */
-	public Object execute(OCommandRequestText iRequest, final Map<Object, Object> iArgs);
-
-	/**
 	 * Set the listener invoked while the command is executing.
 	 * 
 	 * @param progressListener
@@ -77,4 +64,6 @@ public interface OCommandExecutor {
 	public <RET extends OCommandExecutor> RET setLimit(int iLimit);
 
 	public Map<Object, Object> getParameters();
+
+	public OCommandContext getContext();
 }

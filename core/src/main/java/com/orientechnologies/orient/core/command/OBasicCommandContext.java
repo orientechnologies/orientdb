@@ -13,19 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql.filter;
+package com.orientechnologies.orient.core.command;
 
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * Represent a value inside a query condition.
+ * Basic implementation of OCommandContext interface that stores variables in a map.
  * 
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public interface OSQLFilterItem {
+public class OBasicCommandContext implements OCommandContext {
+	private Map<String, Object>	variables;
 
-	public Object getValue(OIdentifiable iRecord, OCommandContext iContetx);
+	public Object getVariable(final String iName) {
+		return variables != null ? variables.get(iName) : null;
+	}
 
+	public void setVariable(final String iName, final Object iValue) {
+		if (variables == null)
+			variables = new HashMap<String, Object>();
+		variables.put(iName, iValue);
+	}
 }

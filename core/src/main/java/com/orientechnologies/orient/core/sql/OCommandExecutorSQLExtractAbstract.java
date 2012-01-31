@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -45,7 +44,6 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNotEquals;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
 
 /**
  * Executes a TRAVERSE crossing records. Returns a List<OIdentifiable> containing all the traversed records that match the WHERE
@@ -66,7 +64,7 @@ import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
  * @author Luca Garulli
  */
 @SuppressWarnings("unchecked")
-public abstract class OCommandExecutorSQLExtractAbstract extends OCommandExecutorSQLAbstract implements ORecordBrowsingListener {
+public abstract class OCommandExecutorSQLExtractAbstract extends OCommandExecutorSQLAbstract {
 	protected static final String											KEYWORD_FROM_2FIND	= " " + KEYWORD_FROM + " ";
 
 	protected OSQLAsynchQuery<ORecordSchemaAware<?>>	request;
@@ -146,34 +144,6 @@ public abstract class OCommandExecutorSQLExtractAbstract extends OCommandExecuto
 		return null;
 	}
 
-	protected void executeSearch() {
-		if (target == null)
-			// SEARCH WITHOUT USING TARGET (USUALLY WHEN INDEXES ARE INVOLVED)
-			return;
-
-		// BROWSE ALL THE RECORDS
-		for (OIdentifiable id : target) {
-			final ORecordInternal<?> record = (ORecordInternal<?>) id.getRecord();
-
-			if (record != null && record.getRecordType() != ODocument.RECORD_TYPE)
-				// WRONG RECORD TYPE: JUMP IT
-				continue;
-
-			if (filter(record))
-				if (!addResult(record))
-					// END OF EXECUTION
-					break;
-		}
-	}
-
-	public boolean foreach(final ORecordInternal<?> iRecord) {
-		if (iRecord != null)
-			if (filter(iRecord))
-				return addResult(iRecord);
-
-		return true;
-	}
-
 	protected boolean addResult(final OIdentifiable iRecord) {
 		resultCount++;
 
@@ -216,7 +186,7 @@ public abstract class OCommandExecutorSQLExtractAbstract extends OCommandExecuto
 	}
 
 	protected boolean filter(final ORecordInternal<?> iRecord) {
-		return compiledFilter.evaluate(iRecord);
+		return compiledFilter.evaluate(iRecord, context);
 	}
 
 	protected void searchInClasses() {

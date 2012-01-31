@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
  * @author Luca Garulli
  * 
  */
-public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLPermissionAbstract {
+public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLAbstract {
 	public static final String	KEYWORD_TRUNCATE	= "TRUNCATE";
 	public static final String	KEYWORD_CLUSTER		= "CLUSTER";
 	private String							clusterName;
@@ -48,17 +48,17 @@ public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLPermi
 		int oldPos = 0;
 		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_TRUNCATE))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_TRUNCATE + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_TRUNCATE + " not found. Use " + getSyntax(), text, oldPos);
 
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_CLUSTER))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found. Use " + getSyntax(), text, oldPos);
 
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, text, oldPos, word, true);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected cluster name", text, oldPos);
+			throw new OCommandSQLParsingException("Expected cluster name. Use " + getSyntax(), text, oldPos);
 
 		clusterName = word.toString();
 
@@ -85,5 +85,10 @@ public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLPermi
 		}
 
 		return recs;
+	}
+
+	@Override
+	public String getSyntax() {
+		return "TRUNCATE CLUSTER <cluster-name>";
 	}
 }

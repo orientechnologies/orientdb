@@ -116,7 +116,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 		if (endP > -1 && endP < endPosition)
 			endPosition = endP;
 
-		compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(text.substring(pos, endPosition));
+		compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(text.substring(pos, endPosition), context);
 
 		optimize();
 
@@ -153,7 +153,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 			if (compiledFilter.getTargetIndex() != null)
 				searchInIndex();
 			else
-				throw new OQueryParsingException("No source found in query: specify class, cluster(s), index or single record(s)");
+				throw new OQueryParsingException("No source found in query: specify class, cluster(s), index or single record(s). Use "
+						+ getSyntax());
 		}
 
 		executeSearch();
@@ -164,6 +165,26 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 		applyLimit();
 
 		return handleResult();
+	}
+
+	protected void executeSearch() {
+		if (target == null)
+			// SEARCH WITHOUT USING TARGET (USUALLY WHEN INDEXES ARE INVOLVED)
+			return;
+
+		// BROWSE ALL THE RECORDS
+		for (OIdentifiable id : target) {
+			final ORecordInternal<?> record = (ORecordInternal<?>) id.getRecord();
+
+			if (record != null && record.getRecordType() != ODocument.RECORD_TYPE)
+				// WRONG RECORD TYPE: JUMP IT
+				continue;
+
+			if (filter(record))
+				if (!addResult(record))
+					// END OF EXECUTION
+					break;
+		}
 	}
 
 	protected boolean addResult(final OIdentifiable iRecord) {
@@ -875,7 +896,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 					List<String> pars = OStringSerializerHelper.getParameters(projection);
 					if (pars.size() != 1)
 						throw new OCommandSQLParsingException("FLATTEN operator expects the field name as parameter. Example FLATTEN( out )");
-					flattenTarget = OSQLHelper.parseValue(this, pars.get(0).trim());
+					flattenTarget = OSQLHelper.parseValue(this, pars.get(0).trim(), context);
 
 					// BY PASS THIS AS PROJECTION BUT TREAT IT AS SPECIAL
 					projections = null;
@@ -887,7 +908,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 					continue;
 				}
 
-				projectionValue = OSQLHelper.parseValue(this, projection);
+				projectionValue = OSQLHelper.parseValue(this, projection, context);
 				projections.put(fieldName, projectionValue);
 
 				if (!anyFunctionAggregates && projectionValue instanceof OSQLFunctionRuntime
@@ -946,7 +967,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 		if (tempResult != null)
 			for (OIdentifiable id : tempResult) {
 				if (flattenTarget instanceof OSQLFilterItem)
-					fieldValue = ((OSQLFilterItem) flattenTarget).getValue((ORecordInternal<?>) id.getRecord());
+					fieldValue = ((OSQLFilterItem) flattenTarget).getValue((ORecordInternal<?>) id.getRecord(), context);
 				else if (flattenTarget instanceof OSQLFunctionRuntime)
 					fieldValue = ((OSQLFunctionRuntime) flattenTarget).getResult();
 				else
@@ -979,7 +1000,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 					doc.copy(result);
 					value = null;
 				} else if (projection.getValue() instanceof OSQLFilterItemField)
-					value = ((OSQLFilterItemField) projection.getValue()).getValue(doc);
+					value = ((OSQLFilterItemField) projection.getValue()).getValue(doc, null);
 				else if (projection.getValue() instanceof OSQLFunctionRuntime) {
 					final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection.getValue();
 					canExcludeResult = f.filterResult();
@@ -1155,7 +1176,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 			final ODocument result = new ODocument().setOrdered(true);
 			for (Entry<String, Object> projection : projections.entrySet()) {
 				if (projection.getValue() instanceof OSQLFilterItemField)
-					value = ((OSQLFilterItemField) projection.getValue()).getValue(result);
+					value = ((OSQLFilterItemField) projection.getValue()).getValue(result, null);
 				else if (projection.getValue() instanceof OSQLFunctionRuntime) {
 					final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection.getValue();
 					value = f.getResult();
@@ -1189,4 +1210,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 		return true;
 	}
 
+	@Override
+	public String getSyntax() {
+		return "SELECT [<Projections>] FROM <Target> [WHERE <Condition>*] [ORDER BY <Fields>* [ASC|DESC]*] [LIMIT <MaxRecords>]";
+	}
 }

@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLPermissionAbstract {
+public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLAbstract {
 	public static final String	KEYWORD_REBUILD	= "REBUILD";
 	public static final String	KEYWORD_INDEX		= "INDEX";
 
@@ -47,12 +47,12 @@ public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLPermissi
 		int oldPos = 0;
 		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_REBUILD))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_REBUILD + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_REBUILD + " not found. Use " + getSyntax(), text, oldPos);
 
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_INDEX))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_INDEX + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_INDEX + " not found. Use " + getSyntax(), text, oldPos);
 
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
@@ -92,5 +92,10 @@ public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLPermissi
 
 			return idx.rebuild();
 		}
+	}
+
+	@Override
+	public String getSyntax() {
+		return "REBUILD INDEX <index-name>";
 	}
 }

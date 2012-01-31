@@ -49,7 +49,7 @@ public class OCommandExecutorSQLRevoke extends OCommandExecutorSQLPermissionAbst
 		int oldPos = 0;
 		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_REVOKE))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_REVOKE + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_REVOKE + " not found. Use " + getSyntax(), text, oldPos);
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		if (pos == -1)
@@ -59,7 +59,7 @@ public class OCommandExecutorSQLRevoke extends OCommandExecutorSQLPermissionAbst
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_ON))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_ON + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_ON + " not found. Use " + getSyntax(), text, oldPos);
 
 		pos = OSQLHelper.nextWord(text, text, pos, word, true);
 		if (pos == -1)
@@ -69,7 +69,7 @@ public class OCommandExecutorSQLRevoke extends OCommandExecutorSQLPermissionAbst
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_FROM))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found. Use " + getSyntax(), text, oldPos);
 
 		pos = OSQLHelper.nextWord(text, text, pos, word, true);
 		if (pos == -1)
@@ -93,5 +93,9 @@ public class OCommandExecutorSQLRevoke extends OCommandExecutorSQLPermissionAbst
 		role.save();
 
 		return role;
+	}
+
+	public String getSyntax() {
+		return "REVOKE <permission> ON <resource> FROM <role>";
 	}
 }

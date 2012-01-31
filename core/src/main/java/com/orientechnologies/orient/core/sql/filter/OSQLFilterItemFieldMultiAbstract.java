@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.sql.filter;
 
 import java.util.List;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -36,7 +37,7 @@ public abstract class OSQLFilterItemFieldMultiAbstract extends OSQLFilterItemAbs
 		names = iNames;
 	}
 
-	public Object getValue(final OIdentifiable iRecord) {
+	public Object getValue(final OIdentifiable iRecord, OCommandContext iContetx) {
 		if (names.size() == 1)
 			return transformValue(iRecord, ODocumentHelper.getIdentifiableValue(iRecord, names.get(0)));
 

@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.sql.operator;
 import java.util.Map;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -41,7 +42,7 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
 	@Override
 	@SuppressWarnings("unchecked")
 	protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-			final Object iRight) {
+			final Object iRight, OCommandContext iContext) {
 		final OSQLFilterCondition condition;
 		if (iCondition.getLeft() instanceof OSQLFilterCondition)
 			condition = (OSQLFilterCondition) iCondition.getLeft();
@@ -56,10 +57,10 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
 			if (condition != null) {
 				// CHECK AGAINST A CONDITION
 				for (Object o : map.values()) {
-                    o = loadIfNeed(o);
-					if ((Boolean) condition.evaluate((ORecordSchemaAware<?>) o))
+					o = loadIfNeed(o);
+					if ((Boolean) condition.evaluate((ORecordSchemaAware<?>) o, iContext))
 						return true;
-                }
+				}
 			} else
 				return map.containsValue(iRight);
 
@@ -69,43 +70,44 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
 			if (condition != null)
 				// CHECK AGAINST A CONDITION
 				for (Object o : map.values()) {
-                    o = loadIfNeed(o);
-                    if ((Boolean) condition.evaluate((ORecordSchemaAware<?>) o))
+					o = loadIfNeed(o);
+					if ((Boolean) condition.evaluate((ORecordSchemaAware<?>) o, iContext))
 						return true;
 					else
 						return map.containsValue(iLeft);
-                }
+				}
 		}
 		return false;
 	}
 
-    private Object loadIfNeed(Object o) {
-        final ORecord<?> record = (ORecord) o;
-        if (record.getRecord().getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
-            try {
-                o = record.<ORecord>load();
-            } catch (ORecordNotFoundException e) {
-                throw new OException("Error during loading record with id : " + record.getIdentity());
-            }
-        }
-        return o;
-    }
+	@SuppressWarnings("unchecked")
+	private Object loadIfNeed(Object o) {
+		final ORecord<?> record = (ORecord<?>) o;
+		if (record.getRecord().getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+			try {
+				o = record.<ORecord> load();
+			} catch (ORecordNotFoundException e) {
+				throw new OException("Error during loading record with id : " + record.getIdentity());
+			}
+		}
+		return o;
+	}
 
-    @Override
+	@Override
 	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
-    if(!(iRight instanceof OSQLFilterCondition) && !(iLeft instanceof OSQLFilterCondition))
-      return OIndexReuseType.INDEX_METHOD;
+		if (!(iRight instanceof OSQLFilterCondition) && !(iLeft instanceof OSQLFilterCondition))
+			return OIndexReuseType.INDEX_METHOD;
 
 		return OIndexReuseType.NO_INDEX;
 	}
 
-  @Override
-  public ORID getBeginRidRange(Object iLeft, Object iRight) {
-    return null;
-  }
+	@Override
+	public ORID getBeginRidRange(Object iLeft, Object iRight) {
+		return null;
+	}
 
-  @Override
-  public ORID getEndRidRange(Object iLeft, Object iRight) {
-    return null;
-  }
+	@Override
+	public ORID getEndRidRange(Object iLeft, Object iRight) {
+		return null;
+	}
 }

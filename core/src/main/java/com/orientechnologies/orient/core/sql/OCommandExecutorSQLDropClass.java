@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.storage.OCluster;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLPermissionAbstract {
+public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract {
 	public static final String	KEYWORD_DROP	= "DROP";
 	public static final String	KEYWORD_CLASS	= "CLASS";
 
@@ -50,19 +50,19 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLPermissionA
 		int oldPos = 0;
 		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_DROP))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), text, oldPos);
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_CLASS))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found. Use " + getSyntax(), text, oldPos);
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected <class>", text, pos);
+			throw new OCommandSQLParsingException("Expected <class>. Use " + getSyntax(), text, pos);
 
 		className = word.toString();
 		if (className == null)
-			throw new OCommandSQLParsingException("Class is null", text, pos);
+			throw new OCommandSQLParsingException("Class is null. Use " + getSyntax(), text, pos);
 
 		return this;
 	}
@@ -113,5 +113,10 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLPermissionA
 			}
 		}
 		return true;
+	}
+
+	@Override
+	public String getSyntax() {
+		return "DROP CLASS <class>";
 	}
 }

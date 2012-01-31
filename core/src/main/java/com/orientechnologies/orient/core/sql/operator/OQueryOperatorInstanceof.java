@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -39,7 +40,7 @@ public class OQueryOperatorInstanceof extends OQueryOperatorEqualityNotNulls {
 
 	@Override
 	protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-			final Object iRight) {
+			final Object iRight, OCommandContext iContext) {
 
 		final OSchema schema = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema();
 

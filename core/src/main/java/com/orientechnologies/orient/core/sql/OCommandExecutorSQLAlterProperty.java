@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLPermissionAbstract {
+public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstract {
 	public static final String	KEYWORD_ALTER			= "ALTER";
 	public static final String	KEYWORD_PROPERTY	= "PROPERTY";
 
@@ -54,21 +54,21 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLPermiss
 		int oldPos = 0;
 		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_ALTER))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found. Use " + getSyntax(), text, oldPos);
 
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found. Use " + getSyntax(), text, oldPos);
 
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected <class>.<property>", text, oldPos);
+			throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, oldPos);
 
 		String[] parts = word.toString().split("\\.");
 		if (parts.length != 2)
-			throw new OCommandSQLParsingException("Expected <class>.<property>", text, oldPos);
+			throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, oldPos);
 
 		className = parts[0];
 		if (className == null)
@@ -78,7 +78,7 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLPermiss
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Missing property attribute to change", text, oldPos);
+			throw new OCommandSQLParsingException("Missing property attribute to change. Use " + getSyntax(), text, oldPos);
 
 		final String attributeAsString = word.toString();
 
@@ -92,7 +92,8 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLPermiss
 		value = text.substring(pos + 1).trim();
 
 		if (value.length() == 0)
-			throw new OCommandSQLParsingException("Missing property value to change for attribute '" + attribute + "'", text, oldPos);
+			throw new OCommandSQLParsingException("Missing property value to change for attribute '" + attribute + "'. Use "
+					+ getSyntax(), text, oldPos);
 
 		if (value.equalsIgnoreCase("null"))
 			value = null;
@@ -117,5 +118,9 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLPermiss
 
 		prop.setInternalAndSave(attribute, value);
 		return null;
+	}
+
+	public String getSyntax() {
+		return "ALTER PROPERTY <class>.<property> <attribute-name> <attribute-value>";
 	}
 }

@@ -25,6 +25,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.parser.OStringParser;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -61,8 +62,10 @@ public class OSQLFilter extends OCommandToParse {
 	protected List<String>									recordTransformed;
 	protected List<OSQLFilterItemParameter>	parameterItems;
 	protected int														braces;
+	private OCommandContext									context;
 
-	public OSQLFilter(final String iText) {
+	public OSQLFilter(final String iText, final OCommandContext iContext) {
+		context = iContext;
 		try {
 			database = ODatabaseRecordThreadLocal.INSTANCE.get();
 			text = iText.trim();
@@ -92,7 +95,7 @@ public class OSQLFilter extends OCommandToParse {
 		}
 	}
 
-	public boolean evaluate(final ORecord<?> iRecord) {
+	public boolean evaluate(final ORecord<?> iRecord, final OCommandContext iContext) {
 		if (targetClasses != null) {
 			final OClass cls = targetClasses.keySet().iterator().next();
 			// CHECK IF IT'S PART OF THE REQUESTED CLASS
@@ -105,7 +108,7 @@ public class OSQLFilter extends OCommandToParse {
 		if (rootCondition == null)
 			return true;
 
-		return (Boolean) rootCondition.evaluate((ORecordSchemaAware<?>) iRecord);
+		return (Boolean) rootCondition.evaluate((ORecordSchemaAware<?>) iRecord, iContext);
 	}
 
 	private boolean extractTargets() {
@@ -354,7 +357,7 @@ public class OSQLFilter extends OCommandToParse {
 						words[1] = words[1].substring(0, words[1].length() - 1);
 				}
 
-				result[i] = OSQLHelper.parseValue(this, this, words[1]);
+				result[i] = OSQLHelper.parseValue(this, this, words[1], context);
 			}
 		}
 
@@ -364,7 +367,7 @@ public class OSQLFilter extends OCommandToParse {
 	private List<Object> convertCollectionItems(List<String> stringItems) {
 		List<Object> coll = new ArrayList<Object>();
 		for (String s : stringItems) {
-			coll.add(OSQLHelper.parseValue(this, this, s));
+			coll.add(OSQLHelper.parseValue(this, this, s, context));
 		}
 		return coll;
 	}
@@ -442,8 +445,8 @@ public class OSQLFilter extends OCommandToParse {
 				}
 			} else if (c == ' ' && openBraces == 0) {
 				break;
-			} else if (!Character.isLetter(c) && !Character.isDigit(c) && c != '.' && c != ':' && c != '-' && c != '_' && c != '+'
-					&& c != '@' && openBraces == 0 && openBraket == 0) {
+			} else if (!Character.isLetter(c) && !Character.isDigit(c) && c != '.' && c != '$' && c != ':' && c != '-' && c != '_'
+					&& c != '+' && c != '@' && openBraces == 0 && openBraket == 0) {
 				if (iAdvanceWhenNotFound)
 					currentPos++;
 				break;

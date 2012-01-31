@@ -51,4 +51,8 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract {
 	public Object execute(final Map<Object, Object> iArgs) {
 		return delegate.execute(iArgs);
 	}
+
+	public String getSyntax() {
+		return delegate.getSyntax();
+	}
 }

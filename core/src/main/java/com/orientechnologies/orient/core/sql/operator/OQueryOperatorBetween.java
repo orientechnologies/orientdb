@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.sql.operator;
 import java.util.Iterator;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -40,7 +41,7 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
 	@Override
 	@SuppressWarnings("unchecked")
 	protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-			final Object iRight) {
+			final Object iRight, OCommandContext iContext) {
     validate(iRight);
 
     final Iterator<?> valueIterator = OMultiValue.getMultiValueIterator(iRight);

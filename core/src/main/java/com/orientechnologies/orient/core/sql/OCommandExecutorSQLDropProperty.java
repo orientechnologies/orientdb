@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLPermissionAbstract {
+public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract {
 	public static final String	KEYWORD_DROP			= "DROP";
 	public static final String	KEYWORD_PROPERTY	= "PROPERTY";
 
@@ -54,19 +54,19 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLPermissi
 		int oldPos = 0;
 		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_DROP))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), text, oldPos);
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found. Use " + getSyntax(), text, oldPos);
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected <class>.<property>", text, pos);
+			throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, pos);
 
 		String[] parts = word.toString().split("\\.");
 		if (parts.length != 2)
-			throw new OCommandSQLParsingException("Expected <class>.<property>", text, pos);
+			throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, pos);
 
 		className = parts[0];
 		if (className == null)
@@ -145,5 +145,10 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLPermissi
 		}
 
 		return result;
+	}
+
+	@Override
+	public String getSyntax() {
+		return "DROP PROPERTY <class>.<property>";
 	}
 }

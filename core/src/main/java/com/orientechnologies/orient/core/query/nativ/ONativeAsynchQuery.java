@@ -27,12 +27,10 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
 @SuppressWarnings("serial")
-public abstract class ONativeAsynchQuery<CTX extends OQueryContextNative> extends ONativeQuery<CTX> implements
-		ORecordBrowsingListener {
+public abstract class ONativeAsynchQuery<CTX extends OQueryContextNative> extends ONativeQuery<CTX> {
 	protected OCommandResultListener	resultListener;
 	protected int											resultCount	= 0;
 	protected ORecordInternal<?>			record;

@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLPermissionAbstract {
+public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract {
 	public static final String	KEYWORD_ALTER	= "ALTER";
 	public static final String	KEYWORD_CLASS	= "CLASS";
 
@@ -125,5 +125,9 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLPermission
 				return false;
 		}
 		return true;
+	}
+
+	public String getSyntax() {
+		return "ALTER CLASS <class> <attribute-name> <attribute-value>";
 	}
 }

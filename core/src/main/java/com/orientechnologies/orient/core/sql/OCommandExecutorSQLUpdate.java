@@ -77,11 +77,12 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 
 		int pos = OSQLHelper.nextWord(text, textUpperCase, 0, word, true);
 		if (pos == -1 || !word.toString().equals(OCommandExecutorSQLUpdate.KEYWORD_UPDATE))
-			throw new OCommandSQLParsingException("Keyword " + OCommandExecutorSQLUpdate.KEYWORD_UPDATE + " not found", text, 0);
+			throw new OCommandSQLParsingException("Keyword " + OCommandExecutorSQLUpdate.KEYWORD_UPDATE + " not found. Use "
+					+ getSyntax(), text, 0);
 
 		int newPos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		if (newPos == -1)
-			throw new OCommandSQLParsingException("Invalid target", text, pos);
+			throw new OCommandSQLParsingException("Invalid target. Use " + getSyntax(), text, pos);
 
 		pos = newPos;
 
@@ -92,7 +93,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 				|| (!word.toString().equals(KEYWORD_SET) && !word.toString().equals(KEYWORD_ADD) && !word.toString().equals(KEYWORD_PUT) && !word
 						.toString().equals(KEYWORD_REMOVE)))
 			throw new OCommandSQLParsingException("Expected keyword " + KEYWORD_SET + "," + KEYWORD_ADD + "," + KEYWORD_PUT + " or "
-					+ KEYWORD_REMOVE, text, pos);
+					+ KEYWORD_REMOVE + ". Use " + getSyntax(), text, pos);
 
 		pos = newPos;
 
@@ -185,7 +186,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 			v = entry.getValue();
 
 			if (v instanceof OSQLFilterItem)
-				v = ((OSQLFilterItem) v).getValue(record);
+				v = ((OSQLFilterItem) v).getValue(record, context);
 			else if (v instanceof OSQLFunctionRuntime)
 				v = ((OSQLFunctionRuntime) v).execute(record, this);
 
@@ -218,7 +219,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 				pair = entry.getValue();
 
 				if (pair.getValue() instanceof OSQLFilterItem)
-					pair.setValue(((OSQLFilterItem) pair.getValue()).getValue(record));
+					pair.setValue(((OSQLFilterItem) pair.getValue()).getValue(record, null));
 				else if (pair.getValue() instanceof OSQLFunctionRuntime)
 					v = ((OSQLFunctionRuntime) pair.getValue()).execute(record, this);
 
@@ -309,7 +310,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 		while (pos != -1 && (setEntries.size() == 0 || word.toString().equals(",")) && !word.toString().equals(KEYWORD_WHERE)) {
 			newPos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
 			if (newPos == -1)
-				throw new OCommandSQLParsingException("Field name expected", text, pos);
+				throw new OCommandSQLParsingException("Field name expected. Use " + getSyntax(), text, pos);
 			pos = newPos;
 
 			fieldName = word.toString();
@@ -317,12 +318,12 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 			newPos = OStringParser.jumpWhiteSpaces(text, pos);
 
 			if (newPos == -1 || text.charAt(newPos) != '=')
-				throw new OCommandSQLParsingException("Character '=' was expected", text, pos);
+				throw new OCommandSQLParsingException("Character '=' was expected. Use " + getSyntax(), text, pos);
 
 			pos = newPos;
 			newPos = OSQLHelper.nextWord(text, textUpperCase, pos + 1, word, false, " =><");
 			if (pos == -1)
-				throw new OCommandSQLParsingException("Value expected", text, pos);
+				throw new OCommandSQLParsingException("Value expected. Use " + getSyntax(), text, pos);
 
 			fieldValue = word.toString();
 
@@ -339,8 +340,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 		}
 
 		if (addEntries.size() == 0)
-			throw new OCommandSQLParsingException("Entries to add <field> = <value> are missed. Example: name = 'Bill', salary = 300.2",
-					text, pos);
+			throw new OCommandSQLParsingException(
+					"Entries to add <field> = <value> are missed. Example: name = 'Bill', salary = 300.2. Use " + getSyntax(), text, pos);
 
 		return pos;
 	}
@@ -354,7 +355,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 		while (pos != -1 && (setEntries.size() == 0 || word.toString().equals(",")) && !word.toString().equals(KEYWORD_WHERE)) {
 			newPos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
 			if (newPos == -1)
-				throw new OCommandSQLParsingException("Field name expected", text, pos);
+				throw new OCommandSQLParsingException("Field name expected. Use " + getSyntax(), text, pos);
 			pos = newPos;
 
 			fieldName = word.toString();
@@ -362,12 +363,12 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 			newPos = OStringParser.jumpWhiteSpaces(text, pos);
 
 			if (newPos == -1 || text.charAt(newPos) != '=')
-				throw new OCommandSQLParsingException("Character '=' was expected", text, pos);
+				throw new OCommandSQLParsingException("Character '=' was expected. Use " + getSyntax(), text, pos);
 
 			pos = newPos;
 			newPos = OSQLHelper.nextWord(text, textUpperCase, pos + 1, word, false, " =><,");
 			if (pos == -1)
-				throw new OCommandSQLParsingException("Key expected", text, pos);
+				throw new OCommandSQLParsingException("Key expected. Use " + getSyntax(), text, pos);
 
 			fieldKey = word.toString();
 
@@ -379,14 +380,14 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 
 				newPos = OStringParser.jumpWhiteSpaces(text, pos);
 				if (newPos == -1 || text.charAt(pos) != ',')
-					throw new OCommandSQLParsingException("',' expected", text, pos);
+					throw new OCommandSQLParsingException("',' expected. Use " + getSyntax(), text, pos);
 
 				pos = newPos;
 			}
 
 			newPos = OSQLHelper.nextWord(text, textUpperCase, pos + 1, word, false, " =><,");
 			if (pos == -1)
-				throw new OCommandSQLParsingException("Value expected", text, pos);
+				throw new OCommandSQLParsingException("Value expected. Use " + getSyntax(), text, pos);
 
 			fieldValue = word.toString();
 
@@ -404,8 +405,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 		}
 
 		if (putEntries.size() == 0)
-			throw new OCommandSQLParsingException("Entries to put <field> = <key>, <value> are missed. Example: name = 'Bill', 30", text,
-					pos);
+			throw new OCommandSQLParsingException("Entries to put <field> = <key>, <value> are missed. Example: name = 'Bill', 30. Use "
+					+ getSyntax(), text, pos);
 
 		return pos;
 	}
@@ -419,7 +420,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 		while (pos != -1 && (removeEntries.size() == 0 || word.toString().equals(",")) && !word.toString().equals(KEYWORD_WHERE)) {
 			newPos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
 			if (newPos == -1)
-				throw new OCommandSQLParsingException("Field name expected", text, pos);
+				throw new OCommandSQLParsingException("Field name expected. Use " + getSyntax(), text, pos);
 
 			fieldName = word.toString();
 
@@ -428,7 +429,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 			if (pos > -1 && text.charAt(pos) == '=') {
 				pos = OSQLHelper.nextWord(text, textUpperCase, pos + 1, word, false, " =><,");
 				if (pos == -1)
-					throw new OCommandSQLParsingException("Value expected", text, pos);
+					throw new OCommandSQLParsingException("Value expected. Use " + getSyntax(), text, pos);
 
 				fieldValue = word.toString();
 
@@ -450,13 +451,18 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 		}
 
 		if (removeEntries.size() == 0)
-			throw new OCommandSQLParsingException("Field(s) to remove are missed. Example: name, salary", text, pos);
+			throw new OCommandSQLParsingException("Field(s) to remove are missed. Example: name, salary. Use " + getSyntax(), text, pos);
 		return pos;
 	}
 
 	private Object getFieldValueCountingParameters(String fieldValue) {
 		if (fieldValue.trim().equals("?"))
 			parameterCounter++;
-		return OSQLHelper.parseValue(this, fieldValue);
+		return OSQLHelper.parseValue(this, fieldValue, context);
+	}
+
+	@Override
+	public String getSyntax() {
+		return "UPDATE <class>|cluster:<cluster>> [SET|ADD|PUT|REMOVE] [[,] <field-name> = <field-value>]* [WHERE <conditions>]";
 	}
 }

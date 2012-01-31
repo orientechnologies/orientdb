@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -61,9 +62,9 @@ public class OSQLFilterCondition {
 		this.right = iRight;
 	}
 
-	public Object evaluate(final OIdentifiable o) {
-		Object l = evaluate(o, left);
-		Object r = evaluate(o, right);
+	public Object evaluate(final OIdentifiable o, final OCommandContext iContext) {
+		Object l = evaluate(o, left, iContext);
+		Object r = evaluate(o, right, iContext);
 
 		final Object[] convertedValues = checkForConversion(o, l, r);
 		if (convertedValues != null) {
@@ -80,7 +81,7 @@ public class OSQLFilterCondition {
 			return l;
 		}
 
-		return operator.evaluateRecord(o, this, l, r);
+		return operator.evaluateRecord(o, this, l, r, iContext);
 	}
 
 	public ORID getBeginRidRange() {
@@ -219,7 +220,7 @@ public class OSQLFilterCondition {
 		}
 	}
 
-	protected Object evaluate(OIdentifiable o, final Object iValue) {
+	protected Object evaluate(OIdentifiable o, final Object iValue, final OCommandContext iContext) {
 		if (o.getRecord().getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
 			try {
 				o = o.getRecord().load();
@@ -229,11 +230,11 @@ public class OSQLFilterCondition {
 		}
 
 		if (iValue instanceof OSQLFilterItem)
-			return ((OSQLFilterItem) iValue).getValue(o);
+			return ((OSQLFilterItem) iValue).getValue(o, iContext);
 
 		if (iValue instanceof OSQLFilterCondition)
 			// NESTED CONDITION: EVALUATE IT RECURSIVELY
-			return ((OSQLFilterCondition) iValue).evaluate(o);
+			return ((OSQLFilterCondition) iValue).evaluate(o, iContext);
 
 		if (iValue instanceof OSQLFunctionRuntime) {
 			// STATELESS FUNCTION: EXECUTE IT
@@ -249,7 +250,7 @@ public class OSQLFilterCondition {
 
 			for (final Object value : multiValue) {
 				if (value instanceof OSQLFilterItem)
-					result.add(((OSQLFilterItem) value).getValue(o));
+					result.add(((OSQLFilterItem) value).getValue(o, null));
 				else
 					result.add(value);
 			}

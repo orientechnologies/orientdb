@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -34,7 +35,7 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 	@Override
 	@SuppressWarnings("unchecked")
 	protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-			final Object iRight) {
+			final Object iRight, OCommandContext iContext) {
 		final OSQLFilterCondition condition;
 		if (iCondition.getLeft() instanceof OSQLFilterCondition)
 			condition = (OSQLFilterCondition) iCondition.getLeft();
@@ -50,7 +51,7 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 			if (condition != null) {
 				// CHECK AGAINST A CONDITION
 				for (final Object o : iterable) {
-					if ((Boolean) condition.evaluate((OIdentifiable) o) == Boolean.TRUE)
+					if ((Boolean) condition.evaluate((OIdentifiable) o, iContext) == Boolean.TRUE)
 						return true;
 				}
 			} else {
@@ -67,7 +68,7 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 
 			if (condition != null) {
 				for (final OIdentifiable o : iterable) {
-					if ((Boolean) condition.evaluate(o) == Boolean.TRUE)
+					if ((Boolean) condition.evaluate(o, iContext) == Boolean.TRUE)
 						return true;
 				}
 			} else {

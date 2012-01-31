@@ -37,7 +37,7 @@ import com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLPermissionAbstract {
+public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract {
 	public static final String	KEYWORD_ALTER		= "ALTER";
 	public static final String	KEYWORD_CLUSTER	= "CLUSTER";
 
@@ -57,17 +57,17 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLPermissi
 		int oldPos = 0;
 		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_ALTER))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found. Use " + getSyntax(), text, oldPos);
 
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_CLUSTER))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found. Use " + getSyntax(), text, oldPos);
 
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected <cluster-name>", text, oldPos);
+			throw new OCommandSQLParsingException("Expected <cluster-name>. Use " + getSyntax(), text, oldPos);
 
 		clusterName = word.toString();
 
@@ -79,7 +79,7 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLPermissi
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Missing cluster attribute to change", text, oldPos);
+			throw new OCommandSQLParsingException("Missing cluster attribute to change. Use " + getSyntax(), text, oldPos);
 
 		final String attributeAsString = word.toString();
 
@@ -93,7 +93,8 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLPermissi
 		value = text.substring(pos + 1).trim();
 
 		if (value.length() == 0)
-			throw new OCommandSQLParsingException("Missing property value to change for attribute '" + attribute + "'", text, oldPos);
+			throw new OCommandSQLParsingException("Missing property value to change for attribute '" + attribute + "'. Use "
+					+ getSyntax(), text, oldPos);
 
 		if (value.equalsIgnoreCase("null"))
 			value = null;
@@ -135,6 +136,9 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLPermissi
 		} else {
 			return database.getStorage().getClusterById(database.getStorage().getClusterIdByName(clusterName));
 		}
+	}
 
+	public String getSyntax() {
+		return "ALTER CLUSTER <cluster-name>|<cluster-id> <attribute-name> <attribute-value>";
 	}
 }

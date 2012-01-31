@@ -50,7 +50,7 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLPermissionAbstract {
+public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLAbstract {
 	public static final String	KEYWORD_FIND				= "FIND";
 	public static final String	KEYWORD_REFERENCES	= "REFERENCES";
 
@@ -67,21 +67,21 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLPermis
 		int oldPos = 0;
 		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_FIND))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_FIND + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_FIND + " not found. Use " + getSyntax(), text, oldPos);
 
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_REFERENCES))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_REFERENCES + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_REFERENCES + " not found. Use " + getSyntax(), text, oldPos);
 
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected <recordId>", text, oldPos);
+			throw new OCommandSQLParsingException("Expected <recordId>. Use " + getSyntax(), text, oldPos);
 
 		final String recordIdString = word.toString();
 		if (recordIdString == null || recordIdString.equals(""))
-			throw new OCommandSQLParsingException("Record to search cannot be null", text, pos);
+			throw new OCommandSQLParsingException("Record to search cannot be null. Use " + getSyntax(), text, pos);
 		try {
 			recordId = new ORecordId(recordIdString);
 			if (!recordId.isValid())
@@ -96,7 +96,7 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLPermis
 			// GET THE CLUSTER LIST TO SEARCH, IF NULL WILL SEARCH ENTIRE DATABASE
 			classList = word.toString().trim();
 			if (!classList.startsWith("[") || !classList.endsWith("]")) {
-				throw new OCommandSQLParsingException("Class list must be contained in []", text, pos);
+				throw new OCommandSQLParsingException("Class list must be contained in []. Use " + getSyntax(), text, pos);
 			}
 			classList = classList.substring(1, classList.length() - 1);
 		}
@@ -209,5 +209,10 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLPermis
 		while (it.hasNext()) {
 			checkObject(ids, it.next(), iRootObject);
 		}
+	}
+
+	@Override
+	public String getSyntax() {
+		return "FIND REFERENCES <rid> [class-list]";
 	}
 }

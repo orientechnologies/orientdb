@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLPermissionAbstract {
+public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstract {
 	public static final String	KEYWORD_CREATE		= "CREATE";
 	public static final String	KEYWORD_PROPERTY	= "PROPERTY";
 
@@ -126,5 +126,10 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLPermis
 		sourceClass.saveInternal();
 
 		return sourceClass.properties().size();
+	}
+
+	@Override
+	public String getSyntax() {
+		return "CREATE PROPERTY <class>.<property> <type> [<linked-type>|<linked-class>]";
 	}
 }

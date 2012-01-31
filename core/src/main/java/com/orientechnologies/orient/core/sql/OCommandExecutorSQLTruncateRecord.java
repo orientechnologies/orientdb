@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  * @author Luca Garulli
  * 
  */
-public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLPermissionAbstract {
+public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLAbstract {
 	public static final String	KEYWORD_TRUNCATE	= "TRUNCATE";
 	public static final String	KEYWORD_RECORD		= "RECORD";
 	private Set<String>					records						= new HashSet<String>();
@@ -49,17 +49,17 @@ public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLPermis
 		int oldPos = 0;
 		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_TRUNCATE))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_TRUNCATE + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_TRUNCATE + " not found. Use " + getSyntax(), text, oldPos);
 
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_RECORD))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_RECORD + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_RECORD + " not found. Use " + getSyntax(), text, oldPos);
 
 		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, text, oldPos, word, true);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected one or more records", text, oldPos);
+			throw new OCommandSQLParsingException("Expected one or more records. Use " + getSyntax(), text, oldPos);
 
 		if (word.charAt(0) == '[')
 			// COLLECTION
@@ -69,7 +69,7 @@ public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLPermis
 		}
 
 		if (records.isEmpty())
-			throw new OCommandSQLParsingException("Missed record(s)", text, oldPos);
+			throw new OCommandSQLParsingException("Missed record(s). Use " + getSyntax(), text, oldPos);
 		return this;
 	}
 
@@ -91,5 +91,10 @@ public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLPermis
 		}
 
 		return records.size();
+	}
+
+	@Override
+	public String getSyntax() {
+		return "TRUNCATE RECORD <rid>*";
 	}
 }

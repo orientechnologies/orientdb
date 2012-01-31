@@ -47,7 +47,7 @@ public class OCommandExecutorSQLGrant extends OCommandExecutorSQLPermissionAbstr
 		int oldPos = 0;
 		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_GRANT))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_GRANT + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_GRANT + " not found. Use " + getSyntax(), text, oldPos);
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		if (pos == -1)
@@ -57,7 +57,7 @@ public class OCommandExecutorSQLGrant extends OCommandExecutorSQLPermissionAbstr
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_ON))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_ON + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_ON + " not found. Use " + getSyntax(), text, oldPos);
 
 		pos = OSQLHelper.nextWord(text, text, pos, word, true);
 		if (pos == -1)
@@ -67,7 +67,7 @@ public class OCommandExecutorSQLGrant extends OCommandExecutorSQLPermissionAbstr
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_TO))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_TO + " not found", text, oldPos);
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_TO + " not found. Use " + getSyntax(), text, oldPos);
 
 		pos = OSQLHelper.nextWord(text, text, pos, word, true);
 		if (pos == -1)
@@ -91,5 +91,9 @@ public class OCommandExecutorSQLGrant extends OCommandExecutorSQLPermissionAbstr
 		role.save();
 
 		return role;
+	}
+
+	public String getSyntax() {
+		return "GRANT <permission> ON <resource> TO <role>";
 	}
 }

@@ -32,18 +32,11 @@ public abstract class OCommandExecutorAbstract extends OCommandToParse implement
 	protected OProgressListener		progressListener;
 	protected int									limit	= -1;
 	protected Map<Object, Object>	parameters;
+	protected OCommandContext			context;
 
 	public OCommandExecutorAbstract init(final String iText) {
 		text = iText;
 		return this;
-	}
-
-	/**
-	 * Parse every time the request and execute it.
-	 */
-	public Object execute(final OCommandRequestText iRequest, final Map<Object, Object> iArgs) {
-		parse(iRequest);
-		return execute(iArgs);
 	}
 
 	@Override
@@ -71,6 +64,10 @@ public abstract class OCommandExecutorAbstract extends OCommandToParse implement
 
 	public Map<Object, Object> getParameters() {
 		return parameters;
+	}
+
+	public OCommandContext getContext() {
+		return context;
 	}
 
 	public ODatabaseRecord getDatabase() {

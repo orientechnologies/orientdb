@@ -25,6 +25,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test
@@ -32,6 +33,7 @@ public class TraverseTest {
 	private OGraphDatabase	database;
 	private ODocument				tomCruise;
 	private ODocument				megRyan;
+	private ODocument				nicoleKidman;
 
 	@Parameters(value = "url")
 	public TraverseTest(String iURL) {
@@ -47,15 +49,19 @@ public class TraverseTest {
 
 		tomCruise = database.createVertex("Actor").field("name", "Tom Cruise");
 		megRyan = database.createVertex("Actor").field("name", "Meg Ryan");
+		nicoleKidman = database.createVertex("Actor").field("name", "Nicol Kidman");
 
-		ODocument topGun = database.createVertex("Movie").field("name", "Top Gun");
-		ODocument missionImpossible = database.createVertex("Movie").field("name", "Mission: Impossible");
-		ODocument youHaveGotMail = database.createVertex("Movie").field("name", "You've Got Mail");
+		ODocument topGun = database.createVertex("Movie").field("name", "Top Gun").field("year", 1986);
+		ODocument missionImpossible = database.createVertex("Movie").field("name", "Mission: Impossible").field("year", 1996);
+		ODocument youHaveGotMail = database.createVertex("Movie").field("name", "You've Got Mail").field("year", 1998);
 
-		database.createEdge(tomCruise, topGun);
-		database.createEdge(megRyan, topGun);
-		database.createEdge(tomCruise, missionImpossible);
-		database.createEdge(megRyan, youHaveGotMail);
+		database.createEdge(tomCruise, topGun).field("actorIn");
+		database.createEdge(megRyan, topGun).field("actorIn");
+		database.createEdge(tomCruise, missionImpossible).field("actorIn");
+		database.createEdge(megRyan, youHaveGotMail).field("actorIn");
+
+		database.createEdge(tomCruise, megRyan).field("friend", true);
+		database.createEdge(tomCruise, nicoleKidman).field("married", true).field("year", 1990);
 
 		tomCruise.save();
 	}
@@ -65,15 +71,33 @@ public class TraverseTest {
 		database.close();
 	}
 
+	@Test(expectedExceptions = OCommandSQLParsingException.class)
+	public void traverseOutFromActorNoWhere() {
+		database.command(new OSQLSynchQuery<ODocument>("traverse out from " + tomCruise.getIdentity())).execute();
+	}
+
 	@Test
-	public void traverseFromActor() {
-		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("traverse out from " + tomCruise.getIdentity()))
-				.execute();
+	public void traverseOutFromActor1Depth() {
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>("traverse out from " + tomCruise.getIdentity() + " where $depth <= 1")).execute();
 
 		Assert.assertTrue(result.size() != 0);
 
 		for (ODocument d : result) {
-
 		}
+	}
+
+	@Test
+	public void traverseDept02() {
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("traverse any() from Movie where $depth < 2"))
+				.execute();
+
+	}
+
+	@Test
+	public void traverseDept12() {
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>("traverse any() from Movie where $depth between 1 and 2")).execute();
+
 	}
 }

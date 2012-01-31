@@ -22,12 +22,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAny;
@@ -61,7 +61,7 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 
 	@Override
 	protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-			final Object iRight) {
+			final Object iRight, final OCommandContext iContext) {
 		final OSQLFilterCondition condition;
 		final Object target;
 
@@ -74,12 +74,12 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 		}
 
 		final Set<ORID> evaluatedRecords = new HashSet<ORID>();
-		return traverse(iRecord, iCondition, condition, target, 0, evaluatedRecords);
+		return traverse(target, condition, 0, evaluatedRecords, iContext);
 	}
 
 	@SuppressWarnings("unchecked")
-	private boolean traverse(final OIdentifiable iRecord, final OSQLFilterCondition iRootCondition,
-			final OSQLFilterCondition iCondition, Object iTarget, final int iLevel, final Set<ORID> iEvaluatedRecords) {
+	private boolean traverse(Object iTarget, final OSQLFilterCondition iCondition, final int iLevel,
+			final Set<ORID> iEvaluatedRecords, final OCommandContext iContext) {
 		if (endDeepLevel > -1 && iLevel > endDeepLevel)
 			return false;
 
@@ -109,7 +109,7 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 					return false;
 				}
 
-			if (iLevel >= startDeepLevel && (Boolean) iCondition.evaluate(target) == Boolean.TRUE)
+			if (iLevel >= startDeepLevel && (Boolean) iCondition.evaluate(target, iContext) == Boolean.TRUE)
 				return true;
 
 			// TRAVERSE THE DOCUMENT ITSELF
@@ -117,16 +117,16 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 				if (cfgField.equalsIgnoreCase(OSQLFilterItemFieldAny.FULL_NAME)) {
 					// ANY
 					for (final String fieldName : target.fieldNames())
-						if (traverse(iRecord, iRootCondition, iCondition, target.rawField(fieldName), iLevel + 1, iEvaluatedRecords))
+						if (traverse(target.rawField(fieldName), iCondition, iLevel + 1, iEvaluatedRecords, iContext))
 							return true;
 				} else if (cfgField.equalsIgnoreCase(OSQLFilterItemFieldAny.FULL_NAME)) {
 					// ALL
 					for (final String fieldName : target.fieldNames())
-						if (!traverse(iRecord, iRootCondition, iCondition, target.rawField(fieldName), iLevel + 1, iEvaluatedRecords))
+						if (!traverse(target.rawField(fieldName), iCondition, iLevel + 1, iEvaluatedRecords, iContext))
 							return false;
 					return true;
 				} else {
-					if (traverse(iRecord, iRootCondition, iCondition, target.rawField(cfgField), iLevel + 1, iEvaluatedRecords))
+					if (traverse(target.rawField(cfgField), iCondition, iLevel + 1, iEvaluatedRecords, iContext))
 						return true;
 				}
 			}
@@ -135,21 +135,21 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 
 			final OQueryRuntimeValueMulti multi = (OQueryRuntimeValueMulti) iTarget;
 			for (final Object o : multi.values) {
-				if (traverse(iRecord, iRootCondition, iCondition, o, iLevel + 1, iEvaluatedRecords) == Boolean.TRUE)
+				if (traverse(o, iCondition, iLevel + 1, iEvaluatedRecords, iContext) == Boolean.TRUE)
 					return true;
 			}
 		} else if (iTarget instanceof Collection<?>) {
 
 			final Collection<Object> collection = (Collection<Object>) iTarget;
 			for (final Object o : collection) {
-				if (traverse(iRecord, iRootCondition, iCondition, o, iLevel + 1, iEvaluatedRecords) == Boolean.TRUE)
+				if (traverse(o, iCondition, iLevel + 1, iEvaluatedRecords, iContext) == Boolean.TRUE)
 					return true;
 			}
 		} else if (iTarget instanceof Map<?, ?>) {
 
 			final Map<Object, Object> map = (Map<Object, Object>) iTarget;
 			for (final Object o : map.values()) {
-				if (traverse(iRecord, iRootCondition, iCondition, o, iLevel + 1, iEvaluatedRecords) == Boolean.TRUE)
+				if (traverse(o, iCondition, iLevel + 1, iEvaluatedRecords, iContext) == Boolean.TRUE)
 					return true;
 			}
 		}
