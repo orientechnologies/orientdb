@@ -206,6 +206,11 @@ public class OServer {
 			lock.writeLock().unlock();
 		}
 
+		try {
+			Orient.instance().shutdown();
+		} catch (Exception e) {
+		}
+
 		OLogManager.instance().info(this, "OrientDB Server shutdown complete");
 		System.out.println();
 	}
