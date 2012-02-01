@@ -15,12 +15,12 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -94,9 +94,6 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLExtractAbstr
 			endPosition = endP;
 
 		compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(text.substring(pos, endPosition), context);
-
-		if (compiledFilter.getRootCondition() == null)
-			throw new OCommandSQLParsingException("Traverse must have the WHERE clause. Use " + getSyntax());
 
 		optimize();
 
@@ -175,39 +172,42 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLExtractAbstr
 		// ADD IT AS EVALUATED RECORD
 		((OTraverseContext) context).evaluatedRecords.add(record.getIdentity());
 
-		final Object conditionResult = iCondition.evaluate(target, context);
-		if (conditionResult != Boolean.TRUE)
-			return;
+		if (iCondition != null) {
+			final Object conditionResult = iCondition.evaluate(target, context);
+			if (conditionResult != Boolean.TRUE)
+				return;
+		}
 
 		// MATCH
 		addResult(target);
 
-		// TRAVERSE THE DOCUMENT ITSELF
-		for (final String cfgField : fields) {
-			if ("*".equals(cfgField) || OSQLFilterItemFieldAll.FULL_NAME.equals(cfgField)
-					|| OSQLFilterItemFieldAny.FULL_NAME.equals(cfgField)) {
-				// ALL FIELDS
-				for (final String fieldName : target.fieldNames())
-					traverseField(target.rawField(fieldName), iCondition);
-			} else
-				traverseField(target.rawField(cfgField), iCondition);
+		((OTraverseContext) context).depth++;
+		try {
+			// TRAVERSE THE DOCUMENT ITSELF
+			for (final String cfgField : fields) {
+				if ("*".equals(cfgField) || OSQLFilterItemFieldAll.FULL_NAME.equals(cfgField)
+						|| OSQLFilterItemFieldAny.FULL_NAME.equals(cfgField)) {
+					// ALL FIELDS
+					for (final String fieldName : target.fieldNames())
+						traverseField(target.rawField(fieldName), iCondition);
+				} else
+					traverseField(target.rawField(cfgField), iCondition);
+			}
+		} finally {
+			((OTraverseContext) context).depth--;
 		}
 	}
 
 	protected void traverseField(final Object iFieldValue, final OSQLFilterCondition iCondition) {
+		if (iFieldValue == null)
+			return;
 
-		if (iFieldValue instanceof Collection<?>) {
-			final Collection<Object> collection = (Collection<Object>) iFieldValue;
-			for (final Object o : collection) {
+		if (OMultiValue.isMultiValue(iFieldValue))
+			for (Object o : OMultiValue.getMultiValueIterable(iFieldValue)) {
 				traverse(o, iCondition);
 			}
-		} else if (iFieldValue instanceof Map<?, ?>) {
-
-			final Map<Object, Object> map = (Map<Object, Object>) iFieldValue;
-			for (final Object o : map.values()) {
-				traverse(o, iCondition);
-			}
-		}
+		else if (iFieldValue instanceof OIdentifiable)
+			traverse(iFieldValue, iCondition);
 	}
 
 	protected int parseFields() {

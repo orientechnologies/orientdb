@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNot;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 /**
  * Parsed query. It's built once a query is parsed.
@@ -52,17 +53,17 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNot;
  * 
  */
 public class OSQLFilter extends OCommandToParse {
-	protected ODatabaseRecord								database;
-	protected List<OIdentifiable>						targetRecords;
-	protected Map<String, String>						targetClusters;
-	protected Map<OClass, String>						targetClasses;
-	protected String												targetIndex;
-	protected Set<OProperty>								properties	= new HashSet<OProperty>();
-	protected OSQLFilterCondition						rootCondition;
-	protected List<String>									recordTransformed;
-	protected List<OSQLFilterItemParameter>	parameterItems;
-	protected int														braces;
-	private OCommandContext									context;
+	protected ODatabaseRecord										database;
+	protected Iterable<? extends OIdentifiable>	targetRecords;
+	protected Map<String, String>								targetClusters;
+	protected Map<OClass, String>								targetClasses;
+	protected String														targetIndex;
+	protected Set<OProperty>										properties	= new HashSet<OProperty>();
+	protected OSQLFilterCondition								rootCondition;
+	protected List<String>											recordTransformed;
+	protected List<OSQLFilterItemParameter>			parameterItems;
+	protected int																braces;
+	private OCommandContext											context;
 
 	public OSQLFilter(final String iText, final OCommandContext iContext) {
 		context = iContext;
@@ -125,8 +126,13 @@ public class OSQLFilter extends OCommandToParse {
 			currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
 
 			targetRecords = new ArrayList<OIdentifiable>();
-			targetRecords.add(new ORecordId(word.toString()));
+			((List<OIdentifiable>) targetRecords).add(new ORecordId(word.toString()));
 
+		} else if (c == '(') {
+			// SUB QUERY
+			final ArrayList<String> queries = new ArrayList<String>();
+			currentPos = OStringSerializerHelper.getParameters(text, currentPos, -1, queries);
+			targetRecords = new OSQLSynchQuery(queries.get(0));
 		} else if (c == OStringSerializerHelper.COLLECTION_BEGIN) {
 			// COLLECTION OF RIDS
 			final List<String> rids = new ArrayList<String>();
@@ -134,7 +140,7 @@ public class OSQLFilter extends OCommandToParse {
 
 			targetRecords = new ArrayList<OIdentifiable>();
 			for (String rid : rids)
-				targetRecords.add(new ORecordId(rid));
+				((List<OIdentifiable>) targetRecords).add(new ORecordId(rid));
 
 			if (currentPos > -1)
 				currentPos++;
@@ -380,7 +386,7 @@ public class OSQLFilter extends OCommandToParse {
 		return targetClasses;
 	}
 
-	public List<OIdentifiable> getTargetRecords() {
+	public Iterable<? extends OIdentifiable> getTargetRecords() {
 		return targetRecords;
 	}
 

@@ -20,29 +20,35 @@ import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test
+@SuppressWarnings("unused")
 public class TraverseTest {
-	private OGraphDatabase	database;
-	private ODocument				tomCruise;
-	private ODocument				megRyan;
-	private ODocument				nicoleKidman;
+	private static final int	TOTAL_ELEMENTS	= 12;
+	private OGraphDatabase		database;
+	private ODocument					tomCruise;
+	private ODocument					megRyan;
+	private ODocument					nicoleKidman;
 
 	@Parameters(value = "url")
-	public TraverseTest(String iURL) {
+	public TraverseTest(@Optional(value = "memory:test") String iURL) {
 		database = new OGraphDatabase(iURL);
 	}
 
 	@BeforeClass
 	public void init() {
-		database.open("admin", "admin");
+		if ("memory:test".equals(database.getURL()))
+			database.create();
+		else
+			database.open("admin", "admin");
 
 		database.createVertexType("Movie");
 		database.createVertexType("Actor");
@@ -71,33 +77,116 @@ public class TraverseTest {
 		database.close();
 	}
 
-	@Test(expectedExceptions = OCommandSQLParsingException.class)
-	public void traverseOutFromActorNoWhere() {
+	public void traverseAllFromActorNoWhere() {
+		List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("traverse * from " + tomCruise.getIdentity()))
+				.execute();
+		Assert.assertEquals(result1.size(), TOTAL_ELEMENTS);
+	}
+
+	public void traverseOutFromOneActorNoWhere() {
 		database.command(new OSQLSynchQuery<ODocument>("traverse out from " + tomCruise.getIdentity())).execute();
 	}
 
 	@Test
 	public void traverseOutFromActor1Depth() {
-		List<ODocument> result = database.command(
+		List<ODocument> result1 = database.command(
 				new OSQLSynchQuery<ODocument>("traverse out from " + tomCruise.getIdentity() + " where $depth <= 1")).execute();
 
-		Assert.assertTrue(result.size() != 0);
+		Assert.assertTrue(result1.size() != 0);
 
-		for (ODocument d : result) {
+		for (ODocument d : result1) {
 		}
 	}
 
 	@Test
 	public void traverseDept02() {
-		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("traverse any() from Movie where $depth < 2"))
+		List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("traverse any() from Movie where $depth < 2"))
 				.execute();
 
 	}
 
 	@Test
-	public void traverseDept12() {
-		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>("traverse any() from Movie where $depth between 1 and 2")).execute();
-
+	public void traverseMoviesOnly() {
+		List<ODocument> result1 = database.command(
+				new OSQLSynchQuery<ODocument>("select from ( traverse any() from Movie ) where @class = 'Movie'")).execute();
+		Assert.assertTrue(result1.size() > 0);
+		for (ODocument d : result1) {
+			Assert.assertEquals(d.getClassName(), "Movie");
+		}
 	}
+
+	@Test
+	public void traverseMoviesOnlyDepth() {
+		List<ODocument> result1 = database.command(
+				new OSQLSynchQuery<ODocument>("select from ( traverse * from " + tomCruise.getIdentity()
+						+ " where $depth <= 1 ) where @class = 'Movie'")).execute();
+		Assert.assertTrue(result1.isEmpty());
+
+		List<ODocument> result2 = database.command(
+				new OSQLSynchQuery<ODocument>("select from ( traverse * from " + tomCruise.getIdentity()
+						+ " where $depth <= 2 ) where @class = 'Movie'")).execute();
+		Assert.assertTrue(result2.size() > 0);
+		for (ODocument d : result2) {
+			Assert.assertEquals(d.getClassName(), "Movie");
+		}
+
+		List<ODocument> result3 = database.command(
+				new OSQLSynchQuery<ODocument>("select from ( traverse * from " + tomCruise.getIdentity() + " ) where @class = 'Movie'"))
+				.execute();
+		Assert.assertTrue(result3.size() > 0);
+		Assert.assertTrue(result3.size() > result2.size());
+		for (ODocument d : result3) {
+			Assert.assertEquals(d.getClassName(), "Movie");
+		}
+	}
+
+	@Test
+	public void traverseSelect() {
+		List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("traverse * from ( select from Movie )")).execute();
+		Assert.assertEquals(result1.size(), TOTAL_ELEMENTS);
+	}
+
+	@Test
+	public void traverseSelectAndTraverseNested() {
+		List<ODocument> result1 = database.command(
+				new OSQLSynchQuery<ODocument>("traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
+						+ " where $depth <= 2 ) where @class = 'Movie' )")).execute();
+		Assert.assertEquals(result1.size(), TOTAL_ELEMENTS);
+	}
+
+	@Test
+	public void traverseIterating() {
+		int cycles = 0;
+		for (OIdentifiable id : new OSQLSynchQuery<ODocument>("traverse * from Movie where $depth < 2")) {
+			cycles++;
+		}
+		Assert.assertTrue(cycles > 0);
+	}
+
+	@Test
+	public void traverseSelectIterable() {
+		int cycles = 0;
+		for (OIdentifiable id : new OSQLSynchQuery<ODocument>("select from ( traverse * from Movie where $depth < 2 )")) {
+			cycles++;
+		}
+		Assert.assertTrue(cycles > 0);
+	}
+
+	@Test
+	public void traverseSelectNoInfluence() {
+		List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("traverse any() from Movie where $depth < 2"))
+				.execute();
+		List<ODocument> result2 = database.command(
+				new OSQLSynchQuery<ODocument>("select from ( traverse any() from Movie where $depth < 2 )")).execute();
+		List<ODocument> result3 = database.command(
+				new OSQLSynchQuery<ODocument>("select from ( traverse any() from Movie where $depth < 2 ) where true")).execute();
+		List<ODocument> result4 = database.command(
+				new OSQLSynchQuery<ODocument>("select from ( traverse any() from Movie where $depth < 2 and ( true = true ) ) where true"))
+				.execute();
+
+		Assert.assertEquals(result1, result2);
+		Assert.assertEquals(result1, result3);
+		Assert.assertEquals(result1, result4);
+	}
+
 }
