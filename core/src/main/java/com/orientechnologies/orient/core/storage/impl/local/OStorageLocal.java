@@ -720,10 +720,7 @@ public class OStorageLocal extends OStorageEmbedded {
 			clusters[iClusterId] = null;
 
 			// UPDATE CONFIGURATION
-			if (iClusterId < configuration.clusters.size()) {
-				configuration.clusters.set(iClusterId, null);
-				configuration.update();
-			}
+			configuration.dropCluster(iClusterId);
 
 			return true;
 		} catch (Exception e) {
@@ -1531,10 +1528,7 @@ public class OStorageLocal extends OStorageEmbedded {
 				final OStoragePhysicalClusterConfiguration config = new OStoragePhysicalClusterConfiguration(configuration, iClusterName,
 						clusterPos);
 
-				if (clusterPos >= configuration.clusters.size())
-					configuration.clusters.add(config);
-				else
-					configuration.clusters.set(clusterPos, config);
+				configuration.setCluster(config);
 
 				cluster = new OClusterLocal(this, config);
 			} else
@@ -1565,7 +1559,7 @@ public class OStorageLocal extends OStorageEmbedded {
 				final OStorageLogicalClusterConfiguration config = new OStorageLogicalClusterConfiguration(iClusterName, clusters.length,
 						iPhysicalCluster, null);
 
-				configuration.clusters.add(config);
+				configuration.setCluster(config);
 
 				cluster = new OClusterLogical(this, clusters.length, iClusterName, iPhysicalCluster);
 				config.map = cluster.getRID();
@@ -1592,7 +1586,7 @@ public class OStorageLocal extends OStorageEmbedded {
 			if (iClusterName != null) {
 				final OStorageMemoryClusterConfiguration config = new OStorageMemoryClusterConfiguration(iClusterName, clusters.length);
 
-				configuration.clusters.add(config);
+				configuration.setCluster(config);
 
 				cluster = new OClusterMemory(clusters.length, iClusterName);
 			} else

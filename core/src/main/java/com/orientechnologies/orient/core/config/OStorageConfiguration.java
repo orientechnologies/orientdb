@@ -363,4 +363,17 @@ public class OStorageConfiguration implements OSerializableStream {
 
 	public void close() throws IOException {
 	}
+
+	public void setCluster(final OStorageClusterConfiguration config) {
+		while (config.getId() >= clusters.size())
+			clusters.add(null);
+		clusters.set(config.getId(), config);
+	}
+
+	public void dropCluster(final int iClusterId) {
+		if (iClusterId < clusters.size()) {
+			clusters.set(iClusterId, null);
+			update();
+		}
+	}
 }

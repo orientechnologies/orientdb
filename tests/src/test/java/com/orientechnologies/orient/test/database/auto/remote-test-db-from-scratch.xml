@@ -30,7 +30,6 @@
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.ComplexTypesTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.CRUDFlatPhysicalTest" />
-			<class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentLogicalTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentPhysicalTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.CRUDObjectPhysicalTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.CRUDObjectInheritanceTest" />
@@ -104,11 +103,11 @@
 	</test>
 	<test name="sql-commands">
 		<classes>
-			<!-- class name="com.orientechnologies.orient.test.database.auto.SQLCommandsTest" /-->
+			<!-- class name="com.orientechnologies.orient.test.database.auto.SQLCommandsTest" / -->
 			<class name="com.orientechnologies.orient.test.database.auto.SQLInsertTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectProjectionsTest" />
-			<!-- class name="com.orientechnologies.orient.test.database.auto.SQLFunctionsTest" /-->
+			<!-- class name="com.orientechnologies.orient.test.database.auto.SQLFunctionsTest" / -->
 			<class name="com.orientechnologies.orient.test.database.auto.SQLUpdateTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.SQLDeleteTest" />
 		</classes>

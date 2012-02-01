@@ -258,6 +258,7 @@ public class OClusterLogical implements OCluster {
 	}
 
 	public void synch() {
+		map.commitChanges();
 	}
 
 	public void lock() {

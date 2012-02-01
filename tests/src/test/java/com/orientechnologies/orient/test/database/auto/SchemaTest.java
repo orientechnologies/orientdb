@@ -90,6 +90,13 @@ public class SchemaTest {
 		strictTest.createProperty("id", OType.INTEGER).isMandatory();
 		strictTest.createProperty("name", OType.STRING);
 
+		OClass animalRace = database.getMetadata().getSchema().createClass("AnimalRace");
+		animalRace.createProperty("name", OType.STRING);
+
+		OClass animal = database.getMetadata().getSchema().createClass("Animal");
+		animal.createProperty("races", OType.LINKSET, animalRace);
+		animal.createProperty("name", OType.STRING);
+
 		database.close();
 	}
 

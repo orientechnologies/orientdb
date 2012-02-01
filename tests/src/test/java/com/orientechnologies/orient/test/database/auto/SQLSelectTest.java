@@ -360,12 +360,12 @@ public class SQLSelectTest {
 		List<ODocument> result = database
 				.command(
 						new OSQLSynchQuery<ODocument>(
-								"select * from cluster:animal where races contains (name.toLowerCase().subString(0,1) = 'e')")).execute();
+								"select * from cluster:profile where races contains (name.toLowerCase().subString(0,1) = 'e')")).execute();
 
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
 
-			Assert.assertTrue(record.getClassName().equalsIgnoreCase("animal"));
+			Assert.assertTrue(record.getClassName().equalsIgnoreCase("profile"));
 			Assert.assertNotNull(record.field("races"));
 
 			Collection<ODocument> races = record.field("races");
