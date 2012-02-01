@@ -137,7 +137,6 @@ public class OServer {
 		OLogManager.instance().info(this, "OrientDB Server v" + OConstants.getVersion() + " is starting up...");
 
 		Orient.instance();
-		Orient.instance().removeShutdownHook();
 
 		loadConfiguration(iConfiguration);
 	}
@@ -165,6 +164,8 @@ public class OServer {
 
 		running = false;
 
+		shutdownHook.cancel();
+
 		OLogManager.instance().info(this, "OrientDB Server is shutdowning...");
 
 		try {
@@ -173,7 +174,10 @@ public class OServer {
 			// SHUTDOWN LISTENERS
 			for (OServerNetworkListener l : listeners) {
 				OLogManager.instance().info(this, "Shutdowning connection listener '" + l + "'...");
-				l.shutdown();
+				try {
+					l.shutdown();
+				} catch (Throwable e) {
+				}
 			}
 
 			// SHUTDOWN HANDLERS
@@ -185,16 +189,18 @@ public class OServer {
 				}
 			}
 
-			// PROTOCOL HANDLERS
-			protocols.clear();
 			try {
-				MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-				mBeanServer.unregisterMBean(onProfiler);
-				mBeanServer.unregisterMBean(onServer);
-			} catch (Exception e) {
-				OLogManager.instance().error(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " unregisterMBean error.", e);
+				// PROTOCOL HANDLERS
+				protocols.clear();
+				try {
+					MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+					mBeanServer.unregisterMBean(onProfiler);
+					mBeanServer.unregisterMBean(onServer);
+				} catch (Exception e) {
+					OLogManager.instance().error(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " unregisterMBean error.", e);
+				}
+			} catch (Throwable t) {
 			}
-			Orient.instance().shutdown();
 
 		} finally {
 			lock.writeLock().unlock();

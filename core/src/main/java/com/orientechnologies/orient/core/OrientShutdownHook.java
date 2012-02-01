@@ -27,4 +27,11 @@ public class OrientShutdownHook extends Thread {
 	public void run() {
 		Orient.instance().shutdown();
 	}
+
+	public void cancel() {
+		try {
+			Runtime.getRuntime().removeShutdownHook(this);
+		} catch (IllegalStateException e) {
+		}
+	}
 }

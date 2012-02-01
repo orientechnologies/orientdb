@@ -255,6 +255,8 @@ public class Orient extends OSharedResourceAbstract {
 			if (!active)
 				return;
 
+			shutdownHook.cancel();
+
 			OLogManager.instance().debug(this, "Orient Engine is shutting down...");
 
 			// CLOSE ALL THE GLOBAL DATABASE POOLS
