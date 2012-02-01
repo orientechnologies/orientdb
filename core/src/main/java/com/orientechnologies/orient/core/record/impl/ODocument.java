@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODetachable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -967,6 +968,14 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
 	public void setLazyLoad(final boolean iLazyLoad) {
 		this._lazyLoad = iLazyLoad;
+
+		if (_fieldValues != null) {
+			// PROPAGATE LAZINESS TO THE FIELDS
+			for (Entry<String, Object> field : _fieldValues.entrySet()) {
+				if (field.getValue() instanceof ORecordLazyMultiValue)
+					((ORecordLazyMultiValue) field.getValue()).setAutoConvertToRecord(false);
+			}
+		}
 	}
 
 	public boolean isTrackingChanges() {
