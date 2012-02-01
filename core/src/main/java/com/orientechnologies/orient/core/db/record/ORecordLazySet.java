@@ -25,7 +25,6 @@ import java.util.Set;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -55,7 +54,7 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 		delegate = new ORecordLazyList().setListener(this);
 	}
 
-	public ORecordLazySet(final ORecordInternal<?> iSourceRecord) {
+	public ORecordLazySet(final ODocument iSourceRecord) {
 		delegate = new ORecordLazyList(iSourceRecord).setListener(this);
 	}
 
