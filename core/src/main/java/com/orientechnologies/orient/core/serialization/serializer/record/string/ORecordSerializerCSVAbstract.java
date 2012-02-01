@@ -92,7 +92,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			String value = iValue.substring(1, iValue.length() - 1);
 
 			@SuppressWarnings("rawtypes")
-			final Map map = new ORecordLazyMap(iSourceRecord, ODocument.RECORD_TYPE);
+			final Map map = new ORecordLazyMap((ODocument) iSourceRecord, ODocument.RECORD_TYPE);
 
 			if (value.length() == 0)
 				return map;

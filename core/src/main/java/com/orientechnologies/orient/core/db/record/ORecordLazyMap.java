@@ -39,19 +39,24 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
 	private ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE	status							= MULTIVALUE_CONTENT_TYPE.EMPTY;
 	private boolean																					autoConvertToRecord	= true;
 
-	public ORecordLazyMap(final ORecord<?> iSourceRecord) {
+	public ORecordLazyMap(final ODocument iSourceRecord) {
 		super(iSourceRecord);
 		this.recordType = ODocument.RECORD_TYPE;
 	}
 
-	public ORecordLazyMap(final ORecord<?> iSourceRecord, final byte iRecordType) {
+	public ORecordLazyMap(final ODocument iSourceRecord, final byte iRecordType) {
 		super(iSourceRecord);
 		this.recordType = iRecordType;
+
+		if (iSourceRecord != null) {
+			if (!iSourceRecord.isLazyLoad())
+				// SET AS NON-LAZY LOAD THE COLLECTION TOO
+				autoConvertToRecord = false;
+		}
 	}
 
 	@Override
 	public boolean containsValue(final Object o) {
-		// convertLinks2Records();
 		return super.containsValue(o);
 	}
 
