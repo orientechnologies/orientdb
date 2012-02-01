@@ -45,29 +45,27 @@ import com.orientechnologies.orient.core.annotation.OVersion;
 import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
-import com.orientechnologies.orient.core.db.object.OLazyObjectList;
 import com.orientechnologies.orient.core.db.object.OLazyObjectMap;
-import com.orientechnologies.orient.core.db.object.OLazyObjectSet;
 import com.orientechnologies.orient.core.db.object.OObjectNotDetachedException;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
+import com.orientechnologies.orient.core.fetch.object.OObjectFetchContext;
+import com.orientechnologies.orient.core.fetch.object.OObjectFetchListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 @SuppressWarnings("unchecked")
 /**
@@ -291,118 +289,10 @@ public class OObjectSerializerHelper {
 
 		}
 
+		final OFetchListener listener = new OObjectFetchListener();
+		final OFetchContext context = new OObjectFetchContext(iFetchPlan, iLazyLoading, iEntityManager, iObj2RecHandler);
 		// BIND LINKS FOLLOWING THE FETCHING PLAN
-		final Map<String, Integer> fetchPlan = OFetchHelper.buildFetchPlan(iFetchPlan);
-		OFetchHelper.fetch(iRecord, iPojo, fieldNames, fetchPlan, null, 0, -1, new OFetchListener() {
-			/***
-			 * Doesn't matter size.
-			 */
-			public int size() {
-				return 0;
-			}
-
-			public Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName, final Object iLinked) {
-				final Class<?> type;
-				if (iLinked != null && iLinked instanceof ODocument && (!"ORIDs".equals(((ODocument) iLinked).getClassName())))
-					// GET TYPE BY DOCUMENT'S CLASS. THIS WORKS VERY WELL FOR SUB-TYPES
-					type = getFieldType((ODocument) iLinked, iEntityManager);
-				else
-					// DETERMINE TYPE BY REFLECTION
-					type = getFieldType(iUserObject, iFieldName);
-
-				if (type == null)
-					throw new OSerializationException(
-							"Linked type of field '"
-									+ iRoot.getClassName()
-									+ "."
-									+ iFieldName
-									+ "' is unknown. Probably needs to be registered with <db>.getEntityManager().registerEntityClasses(<package>) or <db>.getEntityManager().registerEntityClass(<class>) or the package cannot be loaded correctly due to a classpath problem. In this case register the single classes one by one.");
-
-				Object fieldValue = null;
-				Class<?> fieldClass;
-				boolean propagate = false;
-
-				if (Set.class.isAssignableFrom(type)) {
-					final Collection<?> set;
-					if (iLinked instanceof Collection)
-						set = (Collection<Object>) iLinked;
-					else
-						set = new OMVRBTreeRIDSet().fromDocument((ODocument) iLinked);
-
-					final Set<Object> target;
-					if (iLazyLoading)
-						target = new OLazyObjectSet<Object>(iRoot, (Collection<Object>) set).setFetchPlan(iFetchPlan);
-					else {
-						target = new HashSet();
-						if (set != null && !set.isEmpty())
-							for (Object o : set) {
-								if (o instanceof OIdentifiable)
-									target.add(iObj2RecHandler.getUserObjectByRecord((ORecordInternal<?>) ((OIdentifiable) o).getRecord(), iFetchPlan));
-								else
-									target.add(o);
-							}
-					}
-					fieldValue = target;
-
-				} else if (Collection.class.isAssignableFrom(type)) {
-
-					final Collection<ODocument> list = (Collection<ODocument>) iLinked;
-					final List<Object> target;
-					if (iLazyLoading)
-						target = new OLazyObjectList<Object>(iRoot, list).setFetchPlan(iFetchPlan);
-					else {
-						target = new ArrayList();
-						if (list != null && !list.isEmpty())
-							for (Object o : list) {
-								if (o instanceof OIdentifiable)
-									target.add(iObj2RecHandler.getUserObjectByRecord((ORecordInternal<?>) ((OIdentifiable) o).getRecord(), iFetchPlan));
-								else
-									target.add(o);
-							}
-					}
-					fieldValue = target;
-
-				} else if (Map.class.isAssignableFrom(type)) {
-
-					final Map<Object, Object> map = (Map<Object, Object>) iLinked;
-					final Map<Object, Object> target;
-					if (iLazyLoading)
-						target = new OLazyObjectMap<Object>(iRoot, map).setFetchPlan(iFetchPlan);
-					else {
-						target = new HashMap();
-						if (map != null && !map.isEmpty())
-							for (Map.Entry<Object, Object> o : map.entrySet()) {
-								final Object k = o.getKey() instanceof OIdentifiable ? iObj2RecHandler.getUserObjectByRecord(
-										(ORecordInternal<?>) ((OIdentifiable) o.getKey()).getRecord(), iFetchPlan) : o.getKey();
-								final Object v = o.getValue() instanceof OIdentifiable ? iObj2RecHandler.getUserObjectByRecord(
-										(ORecordInternal<?>) ((OIdentifiable) o.getValue()).getRecord(), iFetchPlan) : o.getValue();
-								target.put(k, v);
-							}
-					}
-					fieldValue = target;
-
-				} else if (type.isEnum()) {
-
-					String enumName = ((ODocument) iLinked).field(iFieldName);
-					Class<Enum> enumClass = (Class<Enum>) type;
-					fieldValue = Enum.valueOf(enumClass, enumName);
-
-				} else {
-
-					fieldClass = iEntityManager.getEntityClass(type.getSimpleName());
-					if (fieldClass != null) {
-						// RECOGNIZED TYPE
-						propagate = !iObj2RecHandler.existsUserObjectByRID(((ODocument) iLinked).getIdentity());
-
-						fieldValue = iObj2RecHandler.getUserObjectByRecord((ODocument) iLinked, iFetchPlan);
-					}
-				}
-
-				setFieldValue(iUserObject, iFieldName, unserializeFieldValue(iPojo, iFieldName, fieldValue));
-
-				return propagate ? fieldValue : null;
-			}
-		});
+		OFetchHelper.fetch(iRecord, iPojo, OFetchHelper.buildFetchPlan(iFetchPlan), listener, context);
 
 		// CALL AFTER UNMARSHALLING
 		invokeCallback(iPojo, iRecord, OAfterDeserialization.class);

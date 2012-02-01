@@ -58,7 +58,8 @@ public class OObjectIteratorCluster<T> implements Iterator<T>, Iterable<T> {
 		return fetchPlan;
 	}
 
-	public void setFetchPlan(String fetchPlan) {
+	public OObjectIteratorCluster<T> setFetchPlan(String fetchPlan) {
 		this.fetchPlan = fetchPlan;
+		return this;
 	}
 }

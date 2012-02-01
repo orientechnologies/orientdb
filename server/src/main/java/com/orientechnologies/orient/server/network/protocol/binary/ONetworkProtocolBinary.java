@@ -36,8 +36,11 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
+import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchContext;
+import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -702,27 +705,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
 							if (fetchPlan != null && iRecord instanceof ODocument) {
 								final ODocument doc = (ODocument) iRecord;
-								OFetchHelper.fetch(doc, iRecord, doc.fieldNames(), fetchPlan, null, 0, -1, new OFetchListener() {
-									@Override
-									public int size() {
-										return recordsToSend.size();
-									}
-
-									// ADD TO THE SET OF OBJECT TO
-									// SEND
-									@Override
-									public Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName,
-											final Object iLinked) {
-										if (iLinked instanceof ODocument)
-											return recordsToSend.add((ODocument) iLinked) ? iLinked : null;
-										else if (iLinked instanceof Collection<?>)
-											return recordsToSend.addAll((Collection<? extends ODocument>) iLinked) ? iLinked : null;
-										else if (iLinked instanceof Map<?, ?>)
-											return recordsToSend.addAll(((Map<String, ? extends ODocument>) iLinked).values()) ? iLinked : null;
-										else
-											throw new IllegalArgumentException("Unrecognized type while fetching records: " + iLinked);
-									}
-								});
+								final OFetchListener listener = new ORemoteFetchListener(recordsToSend);
+								final OFetchContext context = new ORemoteFetchContext();
+								OFetchHelper.fetch(doc, iRecord, fetchPlan, listener, context);
 							}
 
 						} catch (IOException e) {
@@ -930,28 +915,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
 							final Set<ODocument> recordsToSend = new HashSet<ODocument>();
 							final ODocument doc = (ODocument) record;
-							OFetchHelper.fetch(doc, doc, doc.fieldNames(), fetchPlan, null, 0, -1, new OFetchListener() {
-								@Override
-								public int size() {
-									return recordsToSend.size();
-								}
-
-								// ADD TO THE SET OF OBJECTS TO SEND
-								@Override
-								public Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName,
-										final Object iLinked) {
-									if (iLinked instanceof ODocument) {
-										if (((ODocument) iLinked).getIdentity().isValid())
-											return recordsToSend.add((ODocument) iLinked) ? iLinked : null;
-										return null;
-									} else if (iLinked instanceof Collection<?>)
-										return recordsToSend.addAll((Collection<? extends ODocument>) iLinked) ? iLinked : null;
-									else if (iLinked instanceof Map<?, ?>)
-										return recordsToSend.addAll(((Map<String, ? extends ODocument>) iLinked).values()) ? iLinked : null;
-									else
-										throw new IllegalArgumentException("Unrecognized type while fetching records: " + iLinked);
-								}
-							});
+							final OFetchListener listener = new ORemoteFetchListener(recordsToSend);
+							final OFetchContext context = new ORemoteFetchContext();
+							OFetchHelper.fetch(doc, doc, fetchPlan, listener, context);
 
 							// SEND RECORDS TO LOAD IN CLIENT CACHE
 							for (ODocument d : recordsToSend) {

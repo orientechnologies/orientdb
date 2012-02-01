@@ -158,7 +158,7 @@ public class CRUDObjectPhysicalTest {
 
 		int i = 0;
 		Account a;
-		for (Object o : database.browseCluster("Account")) {
+		for (Object o : database.browseCluster("Account").setFetchPlan("*:1")) {
 			a = (Account) o;
 
 			if (i % 2 == 0)
@@ -181,6 +181,7 @@ public class CRUDObjectPhysicalTest {
 		int i = 0;
 		Account a;
 		for (OObjectIteratorCluster<Account> iterator = database.browseCluster("Account"); iterator.hasNext();) {
+			iterator.setFetchPlan("*:1");
 			a = iterator.next();
 
 			if (i % 2 == 0)
@@ -218,7 +219,7 @@ public class CRUDObjectPhysicalTest {
 	public void browseLinked() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
 
-		for (Profile obj : database.browseClass(Profile.class)) {
+		for (Profile obj : database.browseClass(Profile.class).setFetchPlan("*:1")) {
 			if (obj.getNick().equals("Neo")) {
 				Assert.assertEquals(obj.getFollowers().size(), 0);
 				Assert.assertEquals(obj.getFollowings().size(), 2);
@@ -236,7 +237,7 @@ public class CRUDObjectPhysicalTest {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
 
 		database.setLazyLoading(false);
-		for (Profile obj : database.browseClass(Profile.class)) {
+		for (Profile obj : database.browseClass(Profile.class).setFetchPlan("*:-1")) {
 			Assert.assertFalse(obj.getFollowings() instanceof OLazyObjectSet);
 			Assert.assertFalse(obj.getFollowers() instanceof OLazyObjectSet);
 			if (obj.getNick().equals("Neo")) {

@@ -15,7 +15,9 @@
  */
 package com.orientechnologies.orient.core.fetch;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OFetchException;
+import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 
 /**
  * Listener interface used while fetching records.
@@ -32,7 +34,19 @@ public interface OFetchListener {
 	 * @param iLinked
 	 * @return null if the fetching must stop, otherwise the current field value
 	 */
-	public Object fetchLinked(ODocument iRoot, Object iUserObject, String iFieldName, Object iLinked);
+	public Object fetchLinked(final ORecordSchemaAware<?> iRoot, final Object iUserObject, final String iFieldName,
+			final ORecordSchemaAware<?> iLinked, final OFetchContext iContext) throws OFetchException;
 
-	public int size();
+	public void parseLinked(final ORecordSchemaAware<?> iRootRecord, final OIdentifiable iLinked, final Object iUserObject,
+			final String iFieldName, final OFetchContext iContext) throws OFetchException;
+
+	public Object fetchLinkedMapEntry(final ORecordSchemaAware<?> iRoot, final Object iUserObject, final String iFieldName,
+			final String iKey, final ORecordSchemaAware<?> iLinked, final OFetchContext iContext) throws OFetchException;
+
+	public Object fetchLinkedCollectionValue(final ORecordSchemaAware<?> iRoot, final Object iUserObject, final String iFieldName,
+			final ORecordSchemaAware<?> iLinked, final OFetchContext iContext) throws OFetchException;
+
+	public void processStandardField(final ORecordSchemaAware<?> iRecord, final Object iFieldValue, final String iFieldName,
+			final OFetchContext iContext) throws OFetchException;
+
 }

@@ -635,7 +635,10 @@ public class ODocumentHelper {
 								return false;
 						}
 					}
+				} else if (myFieldValue instanceof ODocument && otherFieldValue instanceof ODocument) {
+					return hasSameContentOf((ODocument) myFieldValue, (ODocument) otherFieldValue);
 				} else {
+
 					if (!myFieldValue.equals(otherFieldValue))
 						return false;
 				}

@@ -69,6 +69,10 @@ public class Account {
 		return addresses;
 	}
 
+	public void setAddresses(List<Address> addresses) {
+		this.addresses = addresses;
+	}
+
 	public int getId() {
 		return id;
 	}

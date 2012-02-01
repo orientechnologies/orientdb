@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -130,6 +131,55 @@ public class JSONTest {
 
 		d = ((Map<String, ODocument>) loadedDoc.field("map")).get("Cesare");
 		Assert.assertEquals(d.field("name"), "Cesare");
+	}
+
+	@Test
+	public void testMultiLevelTypes() {
+		ODocument newDoc = new ODocument();
+		newDoc.field("long", 100000000000l);
+		newDoc.field("date", new Date());
+		newDoc.field("byte", (byte) 12);
+		ODocument firstLevelDoc = new ODocument();
+		firstLevelDoc.field("long", 200000000000l);
+		firstLevelDoc.field("date", new Date());
+		firstLevelDoc.field("byte", (byte) 13);
+		ODocument secondLevelDoc = new ODocument();
+		secondLevelDoc.field("long", 300000000000l);
+		secondLevelDoc.field("date", new Date());
+		secondLevelDoc.field("byte", (byte) 14);
+		ODocument thirdLevelDoc = new ODocument();
+		thirdLevelDoc.field("long", 400000000000l);
+		thirdLevelDoc.field("date", new Date());
+		thirdLevelDoc.field("byte", (byte) 15);
+		newDoc.field("doc", firstLevelDoc);
+		firstLevelDoc.field("doc", secondLevelDoc);
+		secondLevelDoc.field("doc", thirdLevelDoc);
+
+		String json = newDoc.toJSON();
+		ODocument loadedDoc = new ODocument().fromJSON(json);
+
+		Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
+		Assert.assertTrue(loadedDoc.field("long") instanceof Long);
+		Assert.assertTrue(loadedDoc.field("date") instanceof Date);
+		Assert.assertTrue(loadedDoc.field("byte") instanceof Byte);
+		Assert.assertTrue(loadedDoc.field("doc") instanceof ODocument);
+		ODocument firstDoc = loadedDoc.field("doc");
+		Assert.assertTrue(firstLevelDoc.hasSameContentOf(firstDoc));
+		Assert.assertTrue(firstDoc.field("long") instanceof Long);
+		Assert.assertTrue(firstDoc.field("date") instanceof Date);
+		Assert.assertTrue(firstDoc.field("byte") instanceof Byte);
+		Assert.assertTrue(firstDoc.field("doc") instanceof ODocument);
+		ODocument secondDoc = firstDoc.field("doc");
+		Assert.assertTrue(secondLevelDoc.hasSameContentOf(secondDoc));
+		Assert.assertTrue(secondDoc.field("long") instanceof Long);
+		Assert.assertTrue(secondDoc.field("date") instanceof Date);
+		Assert.assertTrue(secondDoc.field("byte") instanceof Byte);
+		Assert.assertTrue(secondDoc.field("doc") instanceof ODocument);
+		ODocument thirdDoc = secondDoc.field("doc");
+		Assert.assertTrue(thirdLevelDoc.hasSameContentOf(thirdDoc));
+		Assert.assertTrue(thirdDoc.field("long") instanceof Long);
+		Assert.assertTrue(thirdDoc.field("date") instanceof Date);
+		Assert.assertTrue(thirdDoc.field("byte") instanceof Byte);
 	}
 
 	@Test
