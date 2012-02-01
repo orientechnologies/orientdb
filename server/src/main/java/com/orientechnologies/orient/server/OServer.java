@@ -169,16 +169,12 @@ public class OServer {
 		OLogManager.instance().info(this, "OrientDB Server is shutdowning...");
 
 		try {
-			lock.writeLock().lock();
+			Orient.instance().shutdown();
+		} catch (Exception e) {
+		}
 
-			// SHUTDOWN LISTENERS
-			for (OServerNetworkListener l : listeners) {
-				OLogManager.instance().info(this, "Shutdowning connection listener '" + l + "'...");
-				try {
-					l.shutdown();
-				} catch (Throwable e) {
-				}
-			}
+		try {
+			lock.writeLock().lock();
 
 			// SHUTDOWN HANDLERS
 			for (OServerHandler h : handlers) {
@@ -202,13 +198,17 @@ public class OServer {
 			} catch (Throwable t) {
 			}
 
+			// SHUTDOWN LISTENERS
+			for (OServerNetworkListener l : listeners) {
+				OLogManager.instance().info(this, "Shutdowning connection listener '" + l + "'...");
+				try {
+					l.shutdown();
+				} catch (Throwable e) {
+				}
+			}
+
 		} finally {
 			lock.writeLock().unlock();
-		}
-
-		try {
-			Orient.instance().shutdown();
-		} catch (Exception e) {
 		}
 
 		OLogManager.instance().info(this, "OrientDB Server shutdown complete");
