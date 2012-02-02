@@ -45,8 +45,8 @@ public class OObjectFetchListener implements OFetchListener {
 	public void parseLinked(final ORecordSchemaAware<?> iRootRecord, final OIdentifiable iLinked, final Object iUserObject,
 			final String iFieldName, final OFetchContext iContext) throws OFetchException {
 		final Class<?> type = OObjectSerializerHelper.getFieldType(iUserObject, iFieldName);
-		if (Set.class.isAssignableFrom(type) || Collection.class.isAssignableFrom(type) || Map.class.isAssignableFrom(type)
-				|| type.isArray()) {
+		if (type == null || Set.class.isAssignableFrom(type) || Collection.class.isAssignableFrom(type)
+				|| Map.class.isAssignableFrom(type) || type.isArray()) {
 			return;
 		} else if (iLinked instanceof ORecordSchemaAware
 				&& !(((OObjectFetchContext) iContext).getObj2RecHandler().existsUserObjectByRID(iLinked.getIdentity()))) {

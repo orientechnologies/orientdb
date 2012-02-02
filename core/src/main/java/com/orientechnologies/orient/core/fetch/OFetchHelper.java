@@ -298,9 +298,9 @@ public class OFetchHelper {
 				iContext.onAfterStandardField(fieldValue, fieldName, iUserObject);
 			} else {
 				try {
-					if (!(fieldValue instanceof ODocument
-							&& (((ODocument) fieldValue).isEmbedded() || !((ODocument) fieldValue).getIdentity().isValid()) && iContext
-							.fetchEmbeddedDocuments()) && !iFetchPlan.containsKey(fieldPath) && depthLevel > -1 && iCurrentLevel > depthLevel) {
+					if (!(!(fieldValue instanceof ODocument) || (((ODocument) fieldValue).isEmbedded() || !((ODocument) fieldValue)
+							.getIdentity().isValid()) && iContext.fetchEmbeddedDocuments())
+							&& !iFetchPlan.containsKey(fieldPath) && depthLevel > -1 && iCurrentLevel > depthLevel) {
 						// MAX DEPTH REACHED: STOP TO FETCH THIS FIELD
 						continue;
 					}
@@ -329,13 +329,13 @@ public class OFetchHelper {
 		}
 		if (fieldValue == null) {
 			iListener.processStandardField(iRootRecord, null, fieldName, iContext);
-		} else if (fieldValue instanceof ODocument) {
-			if (((ODocument) fieldValue).getClassName() != null
+		} else if (fieldValue instanceof OIdentifiable) {
+			if (fieldValue instanceof ODocument && ((ODocument) fieldValue).getClassName() != null
 					&& ((ODocument) fieldValue).getClassName().equals(OMVRBTreeRIDSet.OCLASS_NAME)) {
 				fetchCollection(iRootRecord, iUserObject, iFetchPlan, fieldValue, fieldName, currentLevel, iLevelFromRoot, fieldDepthLevel,
 						parsedRecords, iFieldPathFromRoot, iListener, iContext);
 			} else {
-				fetchDocument(iRootRecord, iUserObject, iFetchPlan, (ODocument) fieldValue, fieldName, currentLevel, iLevelFromRoot,
+				fetchDocument(iRootRecord, iUserObject, iFetchPlan, (OIdentifiable) fieldValue, fieldName, currentLevel, iLevelFromRoot,
 						fieldDepthLevel, parsedRecords, iFieldPathFromRoot, iListener, iContext);
 			}
 		} else if (fieldValue instanceof Collection<?>) {
@@ -443,7 +443,7 @@ public class OFetchHelper {
 			final Map<String, Integer> iFetchPlan, final OIdentifiable fieldValue, final String fieldName, final int iCurrentLevel,
 			final int iLevelFromRoot, final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords,
 			final String iFieldPathFromRoot, final OFetchListener iListener, final OFetchContext iContext) throws IOException {
-		final Integer fieldDepthLevel = parsedRecords.get(((ODocument) fieldValue).getIdentity());
+		final Integer fieldDepthLevel = parsedRecords.get(fieldValue.getIdentity());
 		if (!fieldValue.getIdentity().isValid() || (fieldDepthLevel != null && fieldDepthLevel.intValue() == iLevelFromRoot)) {
 			removeParsedFromMap(parsedRecords, fieldValue);
 			final ODocument linked = (ODocument) fieldValue;
