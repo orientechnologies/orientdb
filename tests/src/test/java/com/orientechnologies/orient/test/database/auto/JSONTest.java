@@ -155,7 +155,7 @@ public class JSONTest {
 		firstLevelDoc.field("doc", secondLevelDoc);
 		secondLevelDoc.field("doc", thirdLevelDoc);
 
-		String json = newDoc.toJSON();
+		String json = newDoc.toJSON("rid,version,class,type,attribSameRow,fetchPlan:*:-1");
 		ODocument loadedDoc = new ODocument().fromJSON(json);
 
 		Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
