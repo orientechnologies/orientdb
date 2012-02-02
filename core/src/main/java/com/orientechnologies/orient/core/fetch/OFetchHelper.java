@@ -72,7 +72,7 @@ public class OFetchHelper {
 				final Map<ORID, Integer> parsedRecords = new HashMap<ORID, Integer>();
 				parsedRecords.put(iRootRecord.getIdentity(), 0);
 
-				processRecordRidMap(record, iFetchPlan, 0, 0, -1, parsedRecords, "");
+				processRecordRidMap(record, iFetchPlan, 0, 0, -1, parsedRecords, "", iContext);
 				processRecord(record, iUserObject, iFetchPlan, 0, 0, -1, parsedRecords, "", iListener, iContext);
 			}
 		} catch (Exception e) {
@@ -141,7 +141,7 @@ public class OFetchHelper {
 
 	public static void processRecordRidMap(final ORecordSchemaAware<?> record, Map<String, Integer> iFetchPlan,
 			final int iCurrentLevel, final int iLevelFromRoot, final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords,
-			final String iFieldPathFromRoot) throws IOException {
+			final String iFieldPathFromRoot, final OFetchContext iContext) throws IOException {
 		if (iFetchPlan == null)
 			return;
 
@@ -165,12 +165,14 @@ public class OFetchHelper {
 				continue;
 			} else {
 				try {
-					if (!iFetchPlan.containsKey(fieldPath) && depthLevel > -1 && iCurrentLevel >= depthLevel) {
+					if (!(fieldValue instanceof ODocument
+							&& (((ODocument) fieldValue).isEmbedded() || !((ODocument) fieldValue).getIdentity().isValid()) && iContext
+							.fetchEmbeddedDocuments()) && !iFetchPlan.containsKey(fieldPath) && depthLevel > -1 && iCurrentLevel >= depthLevel) {
 						// MAX DEPTH REACHED: STOP TO FETCH THIS FIELD
 						continue;
 					}
 					fetchRidMap(record, iFetchPlan, fieldValue, fieldName, iCurrentLevel, iLevelFromRoot + 1, iFieldDepthLevel,
-							parsedRecords, fieldPath);
+							parsedRecords, fieldPath, iContext);
 				} catch (Exception e) {
 					e.printStackTrace();
 					OLogManager.instance().error(null, "Fetching error on record %s", e, record.getIdentity());
@@ -181,69 +183,74 @@ public class OFetchHelper {
 
 	private static void fetchRidMap(final ORecordSchemaAware<?> iRootRecord, final Map<String, Integer> iFetchPlan,
 			final Object fieldValue, final String fieldName, final int iCurrentLevel, final int iLevelFromRoot,
-			final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords, final String iFieldPathFromRoot) throws IOException {
+			final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords, final String iFieldPathFromRoot,
+			final OFetchContext iContext) throws IOException {
 		if (fieldValue == null) {
 			return;
 		} else if (fieldValue instanceof ODocument) {
 			fetchDocumentRidMap(iFetchPlan, fieldValue, fieldName, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords,
-					iFieldPathFromRoot);
+					iFieldPathFromRoot, iContext);
 		} else if (fieldValue instanceof Collection<?>) {
 			fetchCollectionRidMap(iRootRecord.getDatabase(), iFetchPlan, fieldValue, fieldName, iCurrentLevel, iLevelFromRoot,
-					iFieldDepthLevel, parsedRecords, iFieldPathFromRoot);
+					iFieldDepthLevel, parsedRecords, iFieldPathFromRoot, iContext);
 		} else if (fieldValue.getClass().isArray()) {
 			fetchArrayRidMap(iFetchPlan, fieldValue, fieldName, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords,
-					iFieldPathFromRoot);
+					iFieldPathFromRoot, iContext);
 		} else if (fieldValue instanceof Map<?, ?>) {
 			fetchMapRidMap(iFetchPlan, fieldValue, fieldName, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords,
-					iFieldPathFromRoot);
+					iFieldPathFromRoot, iContext);
 		}
 	}
 
 	private static void fetchDocumentRidMap(Map<String, Integer> iFetchPlan, Object fieldValue, String fieldName,
 			final int iCurrentLevel, final int iLevelFromRoot, final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords,
-			final String iFieldPathFromRoot) throws IOException {
+			final String iFieldPathFromRoot, final OFetchContext iContext) throws IOException {
 		updateRidMap(iFetchPlan, (ODocument) fieldValue, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords,
-				iFieldPathFromRoot);
+				iFieldPathFromRoot, iContext);
 	}
 
 	@SuppressWarnings("unchecked")
 	private static void fetchCollectionRidMap(final ODatabaseRecord iDatabase, final Map<String, Integer> iFetchPlan,
 			final Object fieldValue, final String fieldName, final int iCurrentLevel, final int iLevelFromRoot,
-			final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords, final String iFieldPathFromRoot) throws IOException {
+			final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords, final String iFieldPathFromRoot,
+			final OFetchContext iContext) throws IOException {
 		final Collection<ODocument> linked = (Collection<ODocument>) fieldValue;
 		for (OIdentifiable d : linked) {
 			// GO RECURSIVELY
 			if (d instanceof ORecordId)
 				d = iDatabase.load((ORecordId) d);
 
-			updateRidMap(iFetchPlan, (ODocument) d, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords, iFieldPathFromRoot);
+			updateRidMap(iFetchPlan, (ODocument) d, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords, iFieldPathFromRoot,
+					iContext);
 		}
 	}
 
 	private static void fetchArrayRidMap(final Map<String, Integer> iFetchPlan, final Object fieldValue, final String fieldName,
 			final int iCurrentLevel, final int iLevelFromRoot, final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords,
-			final String iFieldPathFromRoot) throws IOException {
+			final String iFieldPathFromRoot, final OFetchContext iContext) throws IOException {
 		if (fieldValue instanceof ODocument[]) {
 			final ODocument[] linked = (ODocument[]) fieldValue;
 			for (ODocument d : linked)
 				// GO RECURSIVELY
-				updateRidMap(iFetchPlan, (ODocument) d, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords, iFieldPathFromRoot);
+				updateRidMap(iFetchPlan, (ODocument) d, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords, iFieldPathFromRoot,
+						iContext);
 		}
 	}
 
 	@SuppressWarnings("unchecked")
 	private static void fetchMapRidMap(Map<String, Integer> iFetchPlan, Object fieldValue, String fieldName, final int iCurrentLevel,
-			final int iLevelFromRoot, final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords, final String iFieldPathFromRoot)
-			throws IOException {
+			final int iLevelFromRoot, final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords,
+			final String iFieldPathFromRoot, final OFetchContext iContext) throws IOException {
 		final Map<String, ODocument> linked = (Map<String, ODocument>) fieldValue;
 		for (ODocument d : (linked).values())
 			// GO RECURSIVELY
-			updateRidMap(iFetchPlan, (ODocument) d, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords, iFieldPathFromRoot);
+			updateRidMap(iFetchPlan, (ODocument) d, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords, iFieldPathFromRoot,
+					iContext);
 	}
 
 	private static void updateRidMap(final Map<String, Integer> iFetchPlan, final ODocument fieldValue, final int iCurrentLevel,
-			final int iLevelFromRoot, final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords, final String iFieldPathFromRoot)
-			throws IOException {
+			final int iLevelFromRoot, final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords,
+			final String iFieldPathFromRoot, final OFetchContext iContext) throws IOException {
 		final Integer fetchedLevel = parsedRecords.get(fieldValue.getIdentity());
 		int currentLevel = iCurrentLevel + 1;
 		int fieldDepthLevel = iFieldDepthLevel;
@@ -253,11 +260,12 @@ public class OFetchHelper {
 		}
 		if (fetchedLevel == null) {
 			parsedRecords.put(fieldValue.getIdentity(), iLevelFromRoot);
-			processRecordRidMap(fieldValue, iFetchPlan, currentLevel, iLevelFromRoot, fieldDepthLevel, parsedRecords, iFieldPathFromRoot);
+			processRecordRidMap(fieldValue, iFetchPlan, currentLevel, iLevelFromRoot, fieldDepthLevel, parsedRecords, iFieldPathFromRoot,
+					iContext);
 		} else if ((!fieldValue.getIdentity().isValid() && fetchedLevel < iLevelFromRoot) || fetchedLevel > iLevelFromRoot) {
 			parsedRecords.put(fieldValue.getIdentity(), iLevelFromRoot);
 			processRecordRidMap((ODocument) fieldValue, iFetchPlan, currentLevel, iLevelFromRoot, fieldDepthLevel, parsedRecords,
-					iFieldPathFromRoot);
+					iFieldPathFromRoot, iContext);
 		}
 	}
 
@@ -290,7 +298,9 @@ public class OFetchHelper {
 				iContext.onAfterStandardField(fieldValue, fieldName, iUserObject);
 			} else {
 				try {
-					if (!iFetchPlan.containsKey(fieldPath) && depthLevel > -1 && iCurrentLevel > depthLevel) {
+					if (!(fieldValue instanceof ODocument
+							&& (((ODocument) fieldValue).isEmbedded() || !((ODocument) fieldValue).getIdentity().isValid()) && iContext
+							.fetchEmbeddedDocuments()) && !iFetchPlan.containsKey(fieldPath) && depthLevel > -1 && iCurrentLevel > depthLevel) {
 						// MAX DEPTH REACHED: STOP TO FETCH THIS FIELD
 						continue;
 					}

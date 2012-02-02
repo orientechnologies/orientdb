@@ -171,7 +171,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	}
 
 	public String toJSON() {
-		return toJSON("rid,version,class,type,attribSameRow,fetchPlan:*:0");
+		return toJSON("rid,version,class,type,attribSameRow,alwaysFetchEmbedded,fetchPlan:*:0");
 	}
 
 	public String toJSON(final String iFormat) {

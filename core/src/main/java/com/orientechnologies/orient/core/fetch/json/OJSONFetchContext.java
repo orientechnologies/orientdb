@@ -43,13 +43,15 @@ public class OJSONFetchContext implements OFetchContext {
 	protected final boolean								includeVer;
 	protected final boolean								includeClazz;
 	protected final boolean								attribSameRow;
+	protected final boolean								alwaysFetchEmbeddedDocuments;
 	protected final boolean								keepTypes;
 	protected final Stack<StringBuilder>	typesStack						= new Stack<StringBuilder>();
 	protected boolean											insideCollection			= false;
 	protected int													collectionDepthLevel	= 0;
 
 	public OJSONFetchContext(final OJSONWriter iJsonWriter, boolean iIncludeType, final boolean iIncludeId,
-			final boolean iIncludeVer, final boolean iIncludeClazz, final boolean iAttribSameRow, final boolean iKeepTypes) {
+			final boolean iIncludeVer, final boolean iIncludeClazz, final boolean iAttribSameRow, final boolean iKeepTypes,
+			final boolean iAlwaysFetchEmbeddedDocuments) {
 		jsonWriter = iJsonWriter;
 		includeType = iIncludeType;
 		includeClazz = iIncludeClazz;
@@ -57,6 +59,7 @@ public class OJSONFetchContext implements OFetchContext {
 		includeVer = iIncludeVer;
 		attribSameRow = iAttribSameRow;
 		keepTypes = iKeepTypes;
+		alwaysFetchEmbeddedDocuments = iAlwaysFetchEmbeddedDocuments;
 	}
 
 	public void onBeforeFetch(final ORecordSchemaAware<?> iRootRecord) {
@@ -223,4 +226,7 @@ public class OJSONFetchContext implements OFetchContext {
 		}
 	}
 
+	public boolean fetchEmbeddedDocuments() {
+		return alwaysFetchEmbeddedDocuments;
+	}
 }

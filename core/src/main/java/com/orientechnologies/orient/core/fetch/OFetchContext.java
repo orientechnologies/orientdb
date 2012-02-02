@@ -59,4 +59,6 @@ public interface OFetchContext {
 	public void onBeforeStandardField(final Object iFieldValue, final String iFieldName, final Object iUserObject);
 
 	public void onAfterStandardField(final Object iFieldValue, final String iFieldName, final Object iUserObject);
+
+	public boolean fetchEmbeddedDocuments();
 }

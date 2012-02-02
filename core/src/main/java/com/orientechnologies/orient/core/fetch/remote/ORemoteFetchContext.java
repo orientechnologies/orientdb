@@ -70,4 +70,7 @@ public class ORemoteFetchContext implements OFetchContext {
 			throws OFetchException {
 	}
 
+	public boolean fetchEmbeddedDocuments() {
+		return false;
+	}
 }

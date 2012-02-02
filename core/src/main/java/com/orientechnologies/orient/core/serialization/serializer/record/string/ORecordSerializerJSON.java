@@ -381,6 +381,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			boolean includeId;
 			boolean includeClazz;
 			boolean attribSameRow;
+			boolean alwaysFetchEmbeddedDocuments;
 			int indentLevel;
 			String fetchPlan = null;
 			boolean keepTypes;
@@ -394,12 +395,14 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				indentLevel = 0;
 				fetchPlan = "";
 				keepTypes = true;
+				alwaysFetchEmbeddedDocuments = true;
 			} else {
 				includeType = false;
 				includeVer = false;
 				includeId = false;
 				includeClazz = false;
 				attribSameRow = false;
+				alwaysFetchEmbeddedDocuments = false;
 				indentLevel = 0;
 				keepTypes = true;
 
@@ -421,11 +424,13 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 						fetchPlan = f.substring(f.indexOf(':') + 1);
 					else if (f.startsWith("keepTypes"))
 						keepTypes = true;
+					else if (f.startsWith("alwaysFetchEmbedded"))
+						alwaysFetchEmbeddedDocuments = true;
 			}
 
 			json.beginObject(indentLevel);
 			OJSONFetchContext context = new OJSONFetchContext(json, includeType, includeId, includeVer, includeClazz, attribSameRow,
-					keepTypes);
+					keepTypes, alwaysFetchEmbeddedDocuments);
 
 			context.writeSignature(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, iRecord);
 

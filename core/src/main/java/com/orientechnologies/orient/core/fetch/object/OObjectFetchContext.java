@@ -138,4 +138,8 @@ public class OObjectFetchContext implements OFetchContext {
 	public String getFetchPlan() {
 		return fetchPlan;
 	}
+
+	public boolean fetchEmbeddedDocuments() {
+		return true;
+	}
 }
