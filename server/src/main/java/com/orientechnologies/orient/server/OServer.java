@@ -170,7 +170,7 @@ public class OServer {
 
 		try {
 			Orient.instance().shutdown();
-		} catch (Exception e) {
+		} catch (Throwable e) {
 		}
 
 		try {
