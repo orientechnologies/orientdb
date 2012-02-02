@@ -140,29 +140,39 @@ public class SQLSelectTest {
 	public void querySchemaAndLike() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:profile where name like 'G%'"))
+		List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:profile where name like 'G%'"))
 				.execute();
 
-		for (int i = 0; i < result.size(); ++i) {
-			record = result.get(i);
+		for (int i = 0; i < result1.size(); ++i) {
+			record = result1.get(i);
 
 			Assert.assertTrue(record.getClassName().equalsIgnoreCase("profile"));
 			Assert.assertTrue(record.field("name").toString().startsWith("G"));
 		}
 
-		result = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:profile where name like '%G%'")).execute();
+		List<ODocument> result2 = database.command(
+				new OSQLSynchQuery<ODocument>("select * from cluster:profile where name like '%epp%'")).execute();
 
-		for (int i = 0; i < result.size(); ++i) {
-			record = result.get(i);
+		Assert.assertEquals(result1, result2);
+
+		List<ODocument> result3 = database.command(
+				new OSQLSynchQuery<ODocument>("select * from cluster:profile where name like 'Gius%pe'")).execute();
+
+		Assert.assertEquals(result1, result3);
+
+		result1 = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:profile where name like '%G%'")).execute();
+
+		for (int i = 0; i < result1.size(); ++i) {
+			record = result1.get(i);
 
 			Assert.assertTrue(record.getClassName().equalsIgnoreCase("profile"));
 			Assert.assertTrue(record.field("name").toString().contains("G"));
 		}
 
-		result = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:profile where name like ?")).execute("%G%");
+		result1 = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:profile where name like ?")).execute("%G%");
 
-		for (int i = 0; i < result.size(); ++i) {
-			record = result.get(i);
+		for (int i = 0; i < result1.size(); ++i) {
+			record = result1.get(i);
 
 			Assert.assertTrue(record.getClassName().equalsIgnoreCase("profile"));
 			Assert.assertTrue(record.field("name").toString().contains("G"));
@@ -357,10 +367,9 @@ public class SQLSelectTest {
 	public void queryCollectionContainsLowerCaseSubStringIgnoreCase() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database
-				.command(
-						new OSQLSynchQuery<ODocument>(
-								"select * from cluster:profile where races contains (name.toLowerCase().subString(0,1) = 'e')")).execute();
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>(
+						"select * from cluster:profile where races contains (name.toLowerCase().subString(0,1) = 'e')")).execute();
 
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);

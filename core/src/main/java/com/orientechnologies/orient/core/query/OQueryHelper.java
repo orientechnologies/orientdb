@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.query;
 
 public class OQueryHelper {
 	protected static final String	WILDCARD_ANYCHAR	= "?";
-	protected static final String	WILDCARD_ANY		= "%";
+	protected static final String	WILDCARD_ANY			= "%";
 
 	public static boolean like(final String currentValue, String iValue) {
 		if (currentValue == null || currentValue.length() == 0 || iValue == null || iValue.length() == 0)
@@ -50,6 +50,13 @@ public class OQueryHelper {
 			// XXXXX%
 			iValue = iValue.substring(0, iValue.length() - WILDCARD_ANY.length());
 			return value.startsWith(iValue);
+
+		} else {
+			final int pos = iValue.indexOf(WILDCARD_ANY);
+			if (pos > -1) {
+				// XX%XXX
+				return value.startsWith(iValue.substring(0, pos)) && value.endsWith(iValue.substring(pos + 1));
+			}
 		}
 
 		return false;
