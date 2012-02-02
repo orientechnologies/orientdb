@@ -130,9 +130,9 @@ public class OSQLFilter extends OCommandToParse {
 
 		} else if (c == '(') {
 			// SUB QUERY
-			final ArrayList<String> queries = new ArrayList<String>();
-			currentPos = OStringSerializerHelper.getParameters(text, currentPos, -1, queries);
-			targetRecords = new OSQLSynchQuery(queries.get(0));
+			final StringBuilder sub = new StringBuilder();
+			currentPos = OStringSerializerHelper.getEmbedded(text, currentPos, -1, sub);
+			targetRecords = new OSQLSynchQuery(sub.toString());
 		} else if (c == OStringSerializerHelper.COLLECTION_BEGIN) {
 			// COLLECTION OF RIDS
 			final List<String> rids = new ArrayList<String>();

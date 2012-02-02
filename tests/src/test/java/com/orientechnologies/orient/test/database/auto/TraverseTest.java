@@ -116,6 +116,17 @@ public class TraverseTest {
 	}
 
 	@Test
+	public void traversePerClassFields() {
+		List<ODocument> result1 = database.command(
+				new OSQLSynchQuery<ODocument>("select from ( traverse V.out, E.in from " + tomCruise.getIdentity() + ") where @class = 'Movie'"))
+				.execute();
+		Assert.assertTrue(result1.size() > 0);
+		for (ODocument d : result1) {
+			Assert.assertEquals(d.getClassName(), "Movie");
+		}
+	}
+
+	@Test
 	public void traverseMoviesOnlyDepth() {
 		List<ODocument> result1 = database.command(
 				new OSQLSynchQuery<ODocument>("select from ( traverse * from " + tomCruise.getIdentity()

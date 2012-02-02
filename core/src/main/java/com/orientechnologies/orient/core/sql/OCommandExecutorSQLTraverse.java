@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -184,14 +185,31 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLExtractAbstr
 		((OTraverseContext) context).depth++;
 		try {
 			// TRAVERSE THE DOCUMENT ITSELF
-			for (final String cfgField : fields) {
+			for (String cfgField : fields) {
 				if ("*".equals(cfgField) || OSQLFilterItemFieldAll.FULL_NAME.equals(cfgField)
 						|| OSQLFilterItemFieldAny.FULL_NAME.equals(cfgField)) {
 					// ALL FIELDS
 					for (final String fieldName : target.fieldNames())
 						traverseField(target.rawField(fieldName), iCondition);
-				} else
+				} else {
+					final int pos = cfgField.indexOf('.');
+					if (pos > -1) {
+						// FOUND <CLASS>.<FIELD>
+						final OClass cls = target.getSchemaClass();
+						if (cls == null)
+							// JUMP IT BECAUSE NO SCHEMA
+							continue;
+
+						final String className = cfgField.substring(0, pos);
+						if (!cls.isSubClassOf(className))
+							// JUMP IT BECAUSE IT'S NOT A INSTANCEOF THE CLASS
+							continue;
+
+						cfgField = cfgField.substring(pos + 1);
+					}
+
 					traverseField(target.rawField(cfgField), iCondition);
+				}
 			}
 		} finally {
 			((OTraverseContext) context).depth--;
