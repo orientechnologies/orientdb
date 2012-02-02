@@ -93,68 +93,19 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 
 		switch (iType) {
 		case STRING:
-			if (iValue instanceof String) {
-				final String s = OStringSerializerHelper.getStringContent(iValue);
-				return OStringSerializerHelper.decode(s);
-			}
-			return iValue.toString();
-
 		case INTEGER:
-			if (iValue instanceof Integer)
-				return iValue;
-			return new Integer(iValue.toString());
-
 		case BOOLEAN:
-			if (iValue instanceof Boolean)
-				return iValue;
-			return new Boolean(iValue.toString());
-
 		case FLOAT:
-			if (iValue instanceof Float)
-				return iValue;
-			return convertValue((String) iValue, iType);
-
 		case DECIMAL:
-			if (iValue instanceof BigDecimal)
-				return iValue;
-			return convertValue((String) iValue, iType);
-
 		case LONG:
-			if (iValue instanceof Long)
-				return iValue;
-			return convertValue((String) iValue, iType);
-
 		case DOUBLE:
-			if (iValue instanceof Double)
-				return iValue;
-			return convertValue((String) iValue, iType);
-
 		case SHORT:
-			if (iValue instanceof Short)
-				return iValue;
-			return convertValue((String) iValue, iType);
-
 		case BYTE:
-			if (iValue instanceof Byte)
-				return iValue;
-			return convertValue((String) iValue, iType);
-
 		case BINARY:
-			return OStringSerializerHelper.getBinaryContent(iValue);
-
 		case DATE:
 		case DATETIME:
-			if (iValue instanceof Date)
-				return iValue;
-			return convertValue((String) iValue, iType);
-
 		case LINK:
-			if (iValue instanceof ORID)
-				return iValue.toString();
-			else if (iValue instanceof String)
-				return new ORecordId((String) iValue);
-			else
-				return ((ORecord<?>) iValue).getIdentity().toString();
+      return simpleValueFromStream( iValue, iType );
 
 		case EMBEDDED:
 		case CUSTOM:
@@ -461,6 +412,76 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 		else
 			return new Float(iValue);
 	}
+
+  public static Object simpleValueFromStream(final Object iValue,  final OType iType) {
+    switch (iType) {
+      case STRING:
+        if (iValue instanceof String) {
+          final String s = OStringSerializerHelper.getStringContent(iValue);
+          return OStringSerializerHelper.decode(s);
+        }
+        return iValue.toString();
+
+      case INTEGER:
+        if (iValue instanceof Integer)
+          return iValue;
+        return new Integer(iValue.toString());
+
+      case BOOLEAN:
+        if (iValue instanceof Boolean)
+          return iValue;
+        return new Boolean(iValue.toString());
+
+      case FLOAT:
+        if (iValue instanceof Float)
+          return iValue;
+        return convertValue((String) iValue, iType);
+
+      case DECIMAL:
+        if (iValue instanceof BigDecimal)
+          return iValue;
+        return convertValue((String) iValue, iType);
+
+      case LONG:
+        if (iValue instanceof Long)
+          return iValue;
+        return convertValue((String) iValue, iType);
+
+      case DOUBLE:
+        if (iValue instanceof Double)
+          return iValue;
+        return convertValue((String) iValue, iType);
+
+      case SHORT:
+        if (iValue instanceof Short)
+          return iValue;
+        return convertValue((String) iValue, iType);
+
+      case BYTE:
+        if (iValue instanceof Byte)
+          return iValue;
+        return convertValue((String) iValue, iType);
+
+      case BINARY:
+        return OStringSerializerHelper.getBinaryContent(iValue);
+
+      case DATE:
+      case DATETIME:
+        if (iValue instanceof Date)
+          return iValue;
+        return convertValue((String) iValue, iType);
+
+      case LINK:
+        if (iValue instanceof ORID)
+          return iValue.toString();
+        else if (iValue instanceof String)
+          return new ORecordId((String) iValue);
+        else
+          return ((ORecord<?>) iValue).getIdentity().toString();
+    }
+
+    throw new IllegalArgumentException("Type " + iType + " is not simple type.");
+  }
 
 	public static void simpleValueToStream(final StringBuilder iBuffer, final OType iType, final Object iValue) {
 		if (iValue == null || iType == null)
