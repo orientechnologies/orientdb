@@ -5,8 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import junit.framework.Assert;
-
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
