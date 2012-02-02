@@ -41,7 +41,7 @@ VERSION 1.0rc8 - (February, 2nd 2012)
 - SQL: new NOT and INSTANCEOF operators
 - Index works also against MAP types
 - Supported JPA @Embedded annotation
-- many bug fixed, 34 issues in total
+- many bug fixed, 54 issues in total
 
 Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.0rc8
 
