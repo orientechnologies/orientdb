@@ -23,6 +23,7 @@ import java.util.Map.Entry;
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -141,8 +142,13 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
 				for (final Entry<Object, Object> paramEntry : parameters.entrySet())
 					if (paramEntry.getValue() instanceof OCompositeKey)
 						compositeKeyParams.put(paramEntry.getKey(), OCompositeKeySerializer.INSTANCE.toStream(paramEntry.getValue()));
-					else
-						params.put(paramEntry.getKey(), paramEntry.getValue());
+					else if(paramEntry.getValue() instanceof String) {
+            final StringBuilder builder = new StringBuilder(  );
+            ORecordSerializerStringAbstract.simpleValueToStream( builder, OType.STRING, paramEntry.getValue() );
+            params.put(paramEntry.getKey(), builder.toString());
+          }
+          else
+            params.put(paramEntry.getKey(), paramEntry.getValue());
 
 				buffer.set(!params.isEmpty());
 				if (!params.isEmpty()) {

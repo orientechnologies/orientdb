@@ -1061,12 +1061,34 @@ public class IndexTest {
       // do delete
       db.begin();
       for(final ODocument recordToDelete : recordsToDelete ) {
-        db.delete(recordToDelete );
+        Assert.assertNotNull( db.delete( recordToDelete ) );
       }
       db.commit();
     }
 
+
     db.close();
+  }
+
+  public void testIndexParamsAutoConversion() {
+    ODatabaseDocument db = new ODatabaseDocumentTx(database.getURL());
+    db.open("admin", "admin");
+
+    if ( !db.getMetadata().getSchema().existsClass( "IndexTestTerm" ) ) {
+      final OClass termClass = db.getMetadata().getSchema().createClass( "IndexTestTerm" );
+      termClass.createProperty( "label", OType.STRING );
+      termClass.createIndex( "idxTerm", INDEX_TYPE.UNIQUE, "label" );
+
+      db.getMetadata().getSchema().save();
+    }
+
+    final ODocument doc = new ODocument( "IndexTestTerm" );
+    doc.field( "label", "42" );
+    doc.save();
+
+    final ORecordId result =(ORecordId)db.getMetadata().getIndexManager().getIndex( "idxTerm" ).get( "42" );
+    Assert.assertNotNull( result );
+    Assert.assertEquals( result.getIdentity(), doc.getIdentity() );
   }
 
 	/*
