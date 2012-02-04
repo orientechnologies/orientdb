@@ -5,6 +5,15 @@
 				<table style="width: 100%;" cellpadding="0" cellspacing="0">
 					<tr>
 						<td valign="top">
+							<table cellpadding="0" cellspacing="0">
+								<tr>
+									<td align="left">History <select id="savedQueries"></select></td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+					<tr>
+						<td valign="top">
 							<table style="width: 100%;" cellpadding="0" cellspacing="0">
 								<tr>
 									<td style="border: 1px solid gray; width: 90%;"><textarea id="queryText" title="value">
@@ -96,11 +105,23 @@
 		startTimer();
 
 		var code = queryEditor.getCode();
-		queryEditor.setCode(jQuery.trim(code));
-		controller.parameter('queryRequest', queryEditor.getCode());
+		code = jQuery.trim(code);
+		queryEditor.setCode(code);
+		controller.parameter('queryRequest', code);
 
 		queryResult = orientServer.query(code + "/" + $('#limit').val());
 		controller.parameter('queryResponse', queryResult);
+
+		var savedQueries = controller.parameter('savedQueries');
+		if (savedQueries == null) {
+			savedQueries = [];
+			controller.parameter('savedQueries', savedQueries);
+		}
+
+		if ($.inArray(code, savedQueries) == -1) {
+			savedQueries.unshift(code);
+			refreshSavedQueries();
+		}
 
 		if (queryResult == null) {
 			jQuery("#output").text(orientServer.getErrorMessage());
@@ -109,9 +130,23 @@
 		}
 	}
 
+	function refreshSavedQueries() {
+		var savedQueries = controller.parameter('savedQueries');
+		var options = '';
+		for (q in savedQueries) {
+			options += '<option value="' + savedQueries[q] + '">'
+					+ savedQueries[q] + '</option>';
+		}
+		$("#savedQueries").html(options);
+	}
+
 	function clearResultset() {
 		jQuery("#queryResultTable").jqGrid('clearGridData');
 	}
+
+	$("#savedQueries").change(function() {
+		queryEditor.setCode($(this).val());
+	});
 
 	var previous = controller.parameter('queryRequest');
 	if (previous != null)
@@ -120,6 +155,8 @@
 	previous = controller.parameter('queryResponse');
 	if (previous != null)
 		queryResponse(previous);
+
+	refreshSavedQueries();
 
 	queryEditor = CodeMirror.fromTextArea('queryText', {
 		width : "920px",
