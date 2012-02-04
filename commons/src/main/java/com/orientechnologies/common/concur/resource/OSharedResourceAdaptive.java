@@ -64,9 +64,9 @@ public class OSharedResourceAdaptive {
 						// OK
 						return;
 				} catch (InterruptedException e) {
-					throw new OLockException("Thread interrupted while waiting for resource '" + this + "'");
+					throw new OLockException("Thread interrupted while waiting for resource of class '" + getClass() + "'");
 				}
-				throw new OTimeoutException("Timeout on acquiring exclusive lock against resource: " + this);
+				throw new OTimeoutException("Timeout on acquiring exclusive lock against resource of class: " + getClass());
 			} else
 				lock.writeLock().lock();
 	}
@@ -83,9 +83,9 @@ public class OSharedResourceAdaptive {
 						// OK
 						return;
 				} catch (InterruptedException e) {
-					throw new OLockException("Thread interrupted while waiting for resource '" + this + "'");
+					throw new OLockException("Thread interrupted while waiting for resource of class '" + getClass() + "'");
 				}
-				throw new OTimeoutException("Timeout on acquiring shared lock against resource: " + this);
+				throw new OTimeoutException("Timeout on acquiring shared lock against resource of class : " + getClass());
 			} else
 				lock.readLock().lock();
 	}
