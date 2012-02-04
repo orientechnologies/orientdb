@@ -132,6 +132,27 @@
 				}
 			});
 
+	// SET SAVED VALUES
+	var previous = controller.parameter('rawMethod');
+	if (previous != null)
+		$('#rawMethod').val(previous);
+	previous = controller.parameter('rawOperation');
+	if (previous != null)
+		$('#rawOperation').val(previous);
+	previous = controller.parameter('rawDatabase');
+	if (previous != null)
+		$('#rawDatabase').val(previous);
+	else
+		$("#rawDatabase").val($("#header-database").val());
+	previous = controller.parameter('rawArgs');
+	if (previous != null)
+		$('#rawArgs').val(previous);
+	previous = controller.parameter('rawOutput');
+	if (previous != null) {
+		rawEditor.setCode(previous);
+		rawEditor.reindent();
+	}
+
 	function executeRawCommand() {
 		startTimer();
 
@@ -150,6 +171,7 @@
 			success : function(msg) {
 				rawEditor.setCode(msg);
 				rawEditor.reindent();
+				controller.parameter('rawOutput', msg);
 				jQuery("#output").val(
 						"Raw command executed in " + stopTimer() + " sec.");
 			},
@@ -161,5 +183,11 @@
 				jQuery("#output").val("Command response: " + msg);
 			}
 		});
+
+		// SAVE VALUES IN SESSION
+		controller.parameter('rawMethod', $('#rawMethod').val());
+		controller.parameter('rawOperation', $('#rawOperation').val());
+		controller.parameter('rawDatabase', $('#rawDatabase').val());
+		controller.parameter('rawArgs', $('#rawArgs').val());
 	}
 </script>
