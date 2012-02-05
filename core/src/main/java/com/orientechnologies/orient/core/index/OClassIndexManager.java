@@ -40,7 +40,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 	public boolean onRecordBeforeCreate(ODocument iRecord) {
 		iRecord = checkForLoading(iRecord);
 
-		checkIndexedProperties(iRecord);
+		checkIndexedPropertiesOnCreation(iRecord);
 		return false;
 	}
 
@@ -68,7 +68,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 	public boolean onRecordBeforeUpdate(ODocument iRecord) {
 		iRecord = checkForLoading(iRecord);
 
-		checkIndexedProperties(iRecord);
+		checkIndexedPropertiesOnUpdate(iRecord);
 		return false;
 	}
 
@@ -219,7 +219,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 		}
 	}
 
-	private void checkIndexedProperties(final ODocument iRecord) {
+	private void checkIndexedPropertiesOnCreation(final ODocument iRecord) {
 		final OClass cls = iRecord.getSchemaClass();
 		if (cls == null)
 			return;
@@ -236,6 +236,33 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
 	}
 
+  private void checkIndexedPropertiesOnUpdate(final ODocument iRecord) {
+    final OClass cls = iRecord.getSchemaClass();
+    if (cls == null)
+      return;
+
+    final Set<String> dirtyFields = new HashSet<String>(Arrays.asList(iRecord.getDirtyFields()));
+    if(dirtyFields.isEmpty())
+      return;
+    
+    final Collection<OIndex<?>> indexes = cls.getIndexes();
+    for (final OIndex<?> index : indexes) {
+      final OIndexDefinition indexDefinition = index.getDefinition();
+      final List<String> indexFields = indexDefinition.getFields();
+      for(final String indexField : indexFields) {
+        if(dirtyFields.contains(indexField))  {
+          final Object key = index.getDefinition().getDocumentValueToIndex(iRecord);
+          if (key instanceof Collection) {
+            for (final Object keyItem : (Collection<?>) key)
+              index.checkEntry(iRecord, keyItem);
+          } else
+            index.checkEntry(iRecord, key);
+          break;
+        }
+      }
+    }
+  }
+  
 	private ODocument checkForLoading(final ODocument iRecord) {
 		if (iRecord.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
 			try {
