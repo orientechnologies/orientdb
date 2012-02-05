@@ -2,8 +2,8 @@ package com.orientechnologies.orient.test.database.speed;
 
 import java.util.Set;
 
-import junit.framework.Assert;
 
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
