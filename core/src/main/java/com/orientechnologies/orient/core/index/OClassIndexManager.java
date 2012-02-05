@@ -152,7 +152,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 			// FORCE LOADING OF CLASS+FIELDS TO USE IT AFTER ON onRecordAfterDelete METHOD
 			iDocument.reload();
 		return false;
-	};
+	}
 
 	@Override
 	public void onRecordAfterDelete(final ODocument iRecord) {
