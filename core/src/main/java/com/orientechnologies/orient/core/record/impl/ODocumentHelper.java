@@ -365,9 +365,6 @@ public class ODocumentHelper {
 			else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_TYPE))
 				return Orient.instance().getRecordFactoryManager()
 						.getRecordTypeName(((ORecordInternal<?>) iCurrent.getRecord()).getRecordType());
-			else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_TYPE))
-				return Orient.instance().getRecordFactoryManager()
-						.getRecordTypeName(((ORecordInternal<?>) iCurrent.getRecord()).getRecordType());
 			else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_SIZE)) {
 				final byte[] stream = ((ORecordInternal<?>) iCurrent.getRecord()).toStream();
 				return stream != null ? stream.length : 0;

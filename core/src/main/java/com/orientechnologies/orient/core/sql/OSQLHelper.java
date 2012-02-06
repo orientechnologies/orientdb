@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerCSVAbstract;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
@@ -123,7 +124,12 @@ public class OSQLHelper {
 
 				map.put(parseValue(parts.get(0), iContext), parseValue(parts.get(1), iContext));
 			}
-			fieldValue = map;
+
+			if (map.containsKey(ODocumentHelper.ATTRIBUTE_TYPE))
+				// IT'S A DOCUMENT
+				fieldValue = new ODocument(map);
+			else
+				fieldValue = map;
 		} else if (iValue.charAt(0) == ORID.PREFIX)
 			// RID
 			fieldValue = new ORecordId(iValue.trim());
@@ -262,6 +268,10 @@ public class OSQLHelper {
 				}
 			}
 
+			if (field.getValue() instanceof ODocument && !((ODocument) field.getValue()).getIdentity().isValid())
+				// EMBEDDED DOCUMENT
+				((ODocument) field.getValue()).addOwner(iDocument);
+			
 			iDocument.field(field.getKey(), OSQLHelper.getValue(field.getValue(), iDocument));
 		}
 
