@@ -15,38 +15,25 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.db.object.OLazyObjectList;
-import com.orientechnologies.orient.core.db.object.OLazyObjectMap;
-import com.orientechnologies.orient.core.db.object.OLazyObjectSet;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 /**
- * SQL CREATE INDEX command: Create a new index against a property.
+ * FIND REFERENCES command: Finds references to records in all or part of database
  * 
- * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * @author Luca Molino
  * 
  */
 @SuppressWarnings("unchecked")
@@ -54,8 +41,9 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLAbstra
 	public static final String	KEYWORD_FIND				= "FIND";
 	public static final String	KEYWORD_REFERENCES	= "REFERENCES";
 
-	private ORID								recordId;
+	private Set<ORID>						recordIds						= new HashSet<ORID>();
 	private String							classList;
+	private StringBuilder				subQuery;
 
 	public OCommandExecutorSQLFindReferences parse(final OCommandRequestText iRequest) {
 		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
@@ -74,20 +62,31 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLAbstra
 		if (pos == -1 || !word.toString().equals(KEYWORD_REFERENCES))
 			throw new OCommandSQLParsingException("Keyword " + KEYWORD_REFERENCES + " not found. Use " + getSyntax(), text, oldPos);
 
-		oldPos = pos;
-		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
+		pos = OStringParser.jumpWhiteSpaces(text, pos);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected <recordId>. Use " + getSyntax(), text, oldPos);
+			throw new OCommandSQLParsingException("Expected <target>. Use " + getSyntax(), text, oldPos);
 
-		final String recordIdString = word.toString();
-		if (recordIdString == null || recordIdString.equals(""))
-			throw new OCommandSQLParsingException("Record to search cannot be null. Use " + getSyntax(), text, pos);
-		try {
-			recordId = new ORecordId(recordIdString);
-			if (!recordId.isValid())
-				throw new OCommandSQLParsingException("Record ID " + recordIdString + " is not valid", text, pos);
-		} catch (IllegalArgumentException iae) {
-			throw new OCommandSQLParsingException("Error reading record Id", text, pos, iae);
+		oldPos = pos;
+		if (text.charAt(pos) == '(') {
+			subQuery = new StringBuilder();
+			pos = OStringSerializerHelper.getEmbedded(text, oldPos, -1, subQuery);
+		} else {
+			pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
+			if (pos == -1)
+				throw new OCommandSQLParsingException("Expected <recordId>. Use " + getSyntax(), text, oldPos);
+
+			final String recordIdString = word.toString();
+			if (recordIdString == null || recordIdString.equals(""))
+				throw new OCommandSQLParsingException("Record to search cannot be null. Use " + getSyntax(), text, pos);
+			try {
+				final ORecordId rid = new ORecordId(recordIdString);
+				if (!rid.isValid())
+					throw new OCommandSQLParsingException("Record ID " + recordIdString + " is not valid", text, pos);
+				recordIds.add(rid);
+
+			} catch (IllegalArgumentException iae) {
+				throw new OCommandSQLParsingException("Error reading record Id", text, pos, iae);
+			}
 		}
 
 		oldPos = pos;
@@ -108,111 +107,20 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLAbstra
 	 * Execute the FIND REFERENCES.
 	 */
 	public Object execute(final Map<Object, Object> iArgs) {
-		if (recordId == null)
+		if (recordIds.isEmpty() && subQuery == null)
 			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-		final ODatabaseRecord database = getDatabase();
-
-		final Set<ORID> result = new HashSet<ORID>();
-		if (classList == null || classList.equals("")) {
-			for (String clusterName : database.getClusterNames()) {
-				browseCluster(clusterName, result);
-			}
-		} else {
-			List<String> classes = OStringSerializerHelper.smartSplit(classList, ',');
-			for (String clazz : classes) {
-				if (clazz.startsWith("CLUSTER:")) {
-					browseCluster(clazz.substring(clazz.indexOf("CLUSTER:") + "CLUSTER:".length()), result);
-				} else {
-					browseClass(clazz, result);
-				}
-			}
+		if (subQuery != null) {
+			final List<OIdentifiable> result = new OCommandSQL(subQuery.toString()).execute();
+			for (OIdentifiable id : result)
+				recordIds.add(id.getIdentity());
 		}
 
-		return new ArrayList<ORID>(result);
-	}
-
-	private void browseCluster(final String iClusterName, final Set<ORID> ids) {
-		final ODatabaseRecord database = getDatabase();
-		for (ORecordInternal<?> record : database.browseCluster(iClusterName)) {
-			if (record instanceof ODocument) {
-				try {
-					for (String fieldName : ((ODocument) record).fieldNames()) {
-						Object value = ((ODocument) record).field(fieldName);
-						checkObject(ids, value, (ODocument) record);
-					}
-				} catch (Exception e) {
-					OLogManager.instance().error(this, "Error reading record " + record.getIdentity(), e);
-				}
-			}
-		}
-	}
-
-	private void browseClass(final String iClassName, final Set<ORID> ids) {
-		final ODatabaseRecord database = getDatabase();
-		final OClass clazz = database.getMetadata().getSchema().getClass(iClassName);
-
-		if (clazz == null)
-			throw new OCommandExecutionException("Class '" + iClassName + "' was not found");
-
-		for (int i : clazz.getClusterIds()) {
-			browseCluster(database.getClusterNameById(i), ids);
-		}
-	}
-
-	private void checkObject(final Set<ORID> ids, final Object value, final ODocument iRootObject) {
-		if (value instanceof OIdentifiable) {
-			checkDocument(ids, (OIdentifiable) value, iRootObject);
-		} else if (value instanceof Collection<?>) {
-			checkCollection(ids, (Collection<?>) value, iRootObject);
-		} else if (value instanceof Map<?, ?>) {
-			checkMap(ids, (Map<?, ?>) value, iRootObject);
-		}
-	}
-
-	private void checkDocument(final Set<ORID> ids, final OIdentifiable value, final ODocument iRootObject) {
-		if (value.getIdentity().equals(recordId)) {
-			ids.add(iRootObject.getIdentity());
-		}
-	}
-
-	private void checkCollection(final Set<ORID> ids, final Collection<?> values, final ODocument iRootObject) {
-		final Iterator<?> it;
-		if (values instanceof OLazyObjectList) {
-			((OLazyObjectList<?>) values).setConvertToRecord(false);
-			it = ((OLazyObjectList<?>) values).listIterator();
-		} else if (values instanceof OLazyObjectSet) {
-			((OLazyObjectSet<?>) values).setConvertToRecord(false);
-			it = ((OLazyObjectSet<?>) values).iterator();
-		} else if (values instanceof ORecordLazyList) {
-			it = ((ORecordLazyList) values).rawIterator();
-		} else if (values instanceof OMVRBTreeRIDSet) {
-			it = ((OMVRBTreeRIDSet) values).iterator();
-		} else {
-			it = values.iterator();
-		}
-		while (it.hasNext()) {
-			checkObject(ids, it.next(), iRootObject);
-		}
-	}
-
-	private void checkMap(final Set<ORID> ids, final Map<?, ?> values, final ODocument iRootObject) {
-		final Iterator<?> it;
-		if (values instanceof OLazyObjectMap) {
-			((OLazyObjectMap<?>) values).setConvertToRecord(false);
-			it = ((OLazyObjectMap<?>) values).values().iterator();
-		} else if (values instanceof ORecordLazyMap) {
-			it = ((ORecordLazyMap) values).rawIterator();
-		} else {
-			it = values.values().iterator();
-		}
-		while (it.hasNext()) {
-			checkObject(ids, it.next(), iRootObject);
-		}
+		return OFindReferenceHelper.findReferences(recordIds, classList);
 	}
 
 	@Override
 	public String getSyntax() {
-		return "FIND REFERENCES <rid> [class-list]";
+		return "FIND REFERENCES <rid|<sub-query>> [class-list]";
 	}
 }

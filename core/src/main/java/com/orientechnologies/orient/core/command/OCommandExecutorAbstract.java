@@ -70,7 +70,7 @@ public abstract class OCommandExecutorAbstract extends OCommandToParse implement
 		return context;
 	}
 
-	public ODatabaseRecord getDatabase() {
+	public static ODatabaseRecord getDatabase() {
 		return ODatabaseRecordThreadLocal.INSTANCE.get();
 	}
 }

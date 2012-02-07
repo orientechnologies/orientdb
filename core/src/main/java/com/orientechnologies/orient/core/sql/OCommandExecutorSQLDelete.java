@@ -147,10 +147,13 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 	 */
 	public boolean result(final Object iRecord) {
 		final ORecordAbstract<?> record = (ORecordAbstract<?>) iRecord;
-		record.delete();
 
-		recordCount++;
-		return true;
+		if (record.getIdentity().isValid()) {
+			record.delete();
+			recordCount++;
+			return true;
+		}
+		return false;
 	}
 
 	public String getSyntax() {

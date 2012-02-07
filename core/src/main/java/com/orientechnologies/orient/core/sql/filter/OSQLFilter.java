@@ -40,11 +40,11 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNot;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 /**
  * Parsed query. It's built once a query is parsed.
@@ -132,7 +132,7 @@ public class OSQLFilter extends OCommandToParse {
 			// SUB QUERY
 			final StringBuilder sub = new StringBuilder();
 			currentPos = OStringSerializerHelper.getEmbedded(text, currentPos, -1, sub);
-			targetRecords = new OSQLSynchQuery(sub.toString());
+			targetRecords = new OCommandSQL(sub.toString()).execute();
 		} else if (c == OStringSerializerHelper.COLLECTION_BEGIN) {
 			// COLLECTION OF RIDS
 			final List<String> rids = new ArrayList<String>();
