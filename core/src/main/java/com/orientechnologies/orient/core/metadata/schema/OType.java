@@ -366,7 +366,8 @@ public enum OType {
 								.parse((String) iValue);
 					}
 				}
-			}
+			} else if (iTargetClass.equals(String.class))
+				return iValue.toString();
 		} catch (Exception e) {
 			OLogManager.instance().debug(OType.class, "Error in conversion of value '%s' to type '%s'", iValue, iTargetClass);
 		}
