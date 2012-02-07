@@ -386,7 +386,6 @@ function ODatabase(databasePath) {
 			data : content,
 			success : function(msg) {
 				this.setErrorMessage(null);
-				this.handleResponse(msg);
 			},
 			error : function(msg) {
 				this.handleResponse(null);
