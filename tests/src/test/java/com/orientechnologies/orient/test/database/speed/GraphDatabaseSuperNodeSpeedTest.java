@@ -2,7 +2,6 @@ package com.orientechnologies.orient.test.database.speed;
 
 import java.util.Set;
 
-
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -56,10 +55,9 @@ public class GraphDatabaseSuperNodeSpeedTest {
 				begin = System.currentTimeMillis();
 			}
 		}
-		database.declareIntent(null);
 
 		long now = System.currentTimeMillis();
-		System.out.printf("\nInsertion completed in %dms. DB edges %d, DB vertices %d", now - begin, database.countEdges(),
+		System.out.printf("\nInsertion completed in %dms. DB edges %d, DB vertices %d", now - insertBegin, database.countEdges(),
 				database.countVertexes());
 
 		int i = 1;
@@ -72,6 +70,7 @@ public class GraphDatabaseSuperNodeSpeedTest {
 			}
 			i++;
 		}
+		database.declareIntent(null);
 
 	}
 }
