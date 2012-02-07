@@ -280,44 +280,53 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 
 		if (parent != null) {
 			// DISCONNECT RECURSIVELY THE PARENT NODE
-			if (parent.left == this) {
-				parent.left = null;
-			} else if (parent.right == this) {
-				parent.right = null;
-			} else
-				OLogManager.instance().warn(this,
-						"Node " + rid + " has the parent (" + parent + ") unlinked to itself. It links to " + parent);
+			if (canDisconnectFrom(parent)) {
+				if (parent.left == this) {
+					parent.left = null;
+				} else if (parent.right == this) {
+					parent.right = null;
+				} else
+					OLogManager.instance().warn(this,
+							"Node " + rid + " has the parent (" + parent + ") unlinked to itself. It links to " + parent);
 
-			totalDisconnected += parent.disconnect(iForceDirty, iLevel + 1);
-
-			parent = null;
+				totalDisconnected += parent.disconnect(iForceDirty, iLevel + 1);
+				parent = null;
+			}
 		}
 
 		if (left != null) {
 			// DISCONNECT RECURSIVELY THE LEFT NODE
-			if (left.parent == this)
-				left.parent = null;
-			else
-				OLogManager.instance().warn(this,
-						"Node " + rid + " has the left (" + left + ") unlinked to itself. It links to " + left.parent);
+			if (canDisconnectFrom(left)) {
+				if (left.parent == this)
+						left.parent = null;
+				else
+					OLogManager.instance().warn(this,
+							"Node " + rid + " has the left (" + left + ") unlinked to itself. It links to " + left.parent);
 
-			totalDisconnected += left.disconnect(iForceDirty, iLevel + 1);
-			left = null;
+				totalDisconnected += left.disconnect(iForceDirty, iLevel + 1);
+				left = null;
+			}
 		}
 
 		if (right != null) {
 			// DISCONNECT RECURSIVELY THE RIGHT NODE
-			if (right.parent == this)
-				right.parent = null;
-			else
-				OLogManager.instance().warn(this,
-						"Node " + rid + " has the right (" + right + ") unlinked to itself. It links to " + right.parent);
+			if (canDisconnectFrom(right)) {
+				if (right.parent == this)
+						right.parent = null;
+				else
+					OLogManager.instance().warn(this,
+							"Node " + rid + " has the right (" + right + ") unlinked to itself. It links to " + right.parent);
 
-			totalDisconnected += right.disconnect(iForceDirty, iLevel + 1);
-			right = null;
+				totalDisconnected += right.disconnect(iForceDirty, iLevel + 1);
+				right = null;
+			}
 		}
 
 		return totalDisconnected;
+	}
+
+	private boolean canDisconnectFrom(OMVRBTreeEntryPersistent<K, V> entry) {
+		return dataProvider == null || !dataProvider.getIdentity().isNew() && !entry.dataProvider.getIdentity().isNew();
 	}
 
 	protected void clear() {
