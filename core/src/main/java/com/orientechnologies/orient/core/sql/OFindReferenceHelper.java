@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -51,7 +52,7 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
  */
 public class OFindReferenceHelper {
 
-	public static List<ODocument> findReferences(Set<ORID> iRecordIds, final String classList) {
+	public static List<ODocument> findReferences(final Set<ORID> iRecordIds, final String classList) {
 		final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
 		final Map<ORID, Set<ORID>> map = new HashMap<ORID, Set<ORID>>();
@@ -64,7 +65,7 @@ public class OFindReferenceHelper {
 				browseCluster(db, iRecordIds, map, clusterName);
 			}
 		} else {
-			List<String> classes = OStringSerializerHelper.smartSplit(classList, ',');
+			final List<String> classes = OStringSerializerHelper.smartSplit(classList, ',');
 			for (String clazz : classes) {
 				if (clazz.startsWith("CLUSTER:")) {
 					browseCluster(db, iRecordIds, map, clazz.substring(clazz.indexOf("CLUSTER:") + "CLUSTER:".length()));
@@ -115,9 +116,9 @@ public class OFindReferenceHelper {
 	}
 
 	private static void checkObject(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final Object value,
-			final ODocument iRootObject) {
+			final ORecord<?> iRootObject) {
 		if (value instanceof OIdentifiable) {
-			checkDocument(iSourceRIDs, map, (OIdentifiable) value, iRootObject);
+			checkRecord(iSourceRIDs, map, (OIdentifiable) value, iRootObject);
 		} else if (value instanceof Collection<?>) {
 			checkCollection(iSourceRIDs, map, (Collection<?>) value, iRootObject);
 		} else if (value instanceof Map<?, ?>) {
@@ -126,7 +127,7 @@ public class OFindReferenceHelper {
 	}
 
 	private static void checkCollection(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final Collection<?> values,
-			final ODocument iRootObject) {
+			final ORecord<?> iRootObject) {
 		final Iterator<?> it;
 		if (values instanceof OLazyObjectList) {
 			((OLazyObjectList<?>) values).setConvertToRecord(false);
@@ -147,7 +148,7 @@ public class OFindReferenceHelper {
 	}
 
 	private static void checkMap(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final Map<?, ?> values,
-			final ODocument iRootObject) {
+			final ORecord<?> iRootObject) {
 		final Iterator<?> it;
 		if (values instanceof OLazyObjectMap) {
 			((OLazyObjectMap<?>) values).setConvertToRecord(false);
@@ -162,11 +163,9 @@ public class OFindReferenceHelper {
 		}
 	}
 
-	private static void checkDocument(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final OIdentifiable value,
-			final ODocument iRootObject) {
-		for (ORID recordId : iSourceRIDs)
-			if (value.getIdentity().equals(recordId)) {
-				map.get(recordId).add(iRootObject.getIdentity());
-			}
+	private static void checkRecord(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final OIdentifiable value,
+			final ORecord<?> iRootObject) {
+		if (iSourceRIDs.contains(value.getIdentity()))
+			map.get(value.getIdentity()).add(iRootObject.getIdentity());
 	}
 }
