@@ -144,6 +144,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 		properties.put("limit", "20");
 		properties.put("debug", "false");
+		properties.put("maxBinaryDisplay", "160");
 
 		OCommandManager.instance().registerExecutor(OCommandScript.class, OCommandExecutorScript.class);
 	}
@@ -712,7 +713,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		if (buffer == null)
 			throw new OException("The record has been deleted");
 
-		out.println("Raw record content (size=" + buffer.buffer.length + "):\n\n" + new String(buffer.buffer));
+		String content;
+		if (Integer.parseInt(properties.get("maxBinaryDisplay")) < buffer.buffer.length)
+			content = new String(Arrays.copyOf(buffer.buffer, Integer.parseInt(properties.get("maxBinaryDisplay"))));
+		else
+			content = new String(buffer.buffer);
+
+		out.println("Raw record content. The size is " + buffer.buffer.length + " bytes, while settings force to print first "
+				+ content.length() + " bytes:\n\n" + new String(content));
 	}
 
 	@ConsoleCommand(aliases = { "status" }, description = "Display information about the database")
@@ -870,9 +878,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	public void clusters() {
 		if (currentDatabaseName != null) {
 			out.println("\nCLUSTERS:");
-			out.println("----------------------------------------------+------+---------------------+-----------+-----------+");
-			out.println(" NAME                                         |  ID  | TYPE                | RECORDS   | SIZE      |");
-			out.println("----------------------------------------------+------+---------------------+-----------+-----------+");
+			out.println("----------------------------------------------+------+---------------------+-----------+--------------+");
+			out.println(" NAME                                         |  ID  | TYPE                | RECORDS   | SIZE         |");
+			out.println("----------------------------------------------+------+---------------------+-----------+--------------+");
 
 			int clusterId;
 			String clusterType = null;
@@ -897,10 +905,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 				} catch (Exception e) {
 				}
 			}
-			out.println("----------------------------------------------+------+---------------------+-----------+-----------+");
+			out.println("----------------------------------------------+------+---------------------+-----------+--------------+");
 			out.printf(" TOTAL                                                                 %15d | %9s |\n", totalElements,
 					OFileUtils.getSizeAsString(totalSize));
-			out.println("--------------------------------------------------------------------------------------- -----------+");
+			out.println("---------------------------------------------------------------------------------------+--------------+");
 		} else
 			out.println("No database selected yet.");
 	}
@@ -1118,7 +1126,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		out.println("+---------------------+----------------------+");
 		out.printf("| %-30s| %-30s |\n", "NAME", "VALUE");
 		out.println("+---------------------+----------------------+");
-		for (Entry<String, Object> p : properties.entrySet()) {
+		for (Entry<String, String> p : properties.entrySet()) {
 			out.printf("| %-30s= %-30s |\n", p.getKey(), p.getValue());
 		}
 		out.println("+---------------------+----------------------+");
@@ -1421,8 +1429,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			out.println("--------------------------------------------------");
 			out.printf("Flat - record id: %s   v.%d\n", rec.getIdentity().toString(), rec.getVersion());
 			out.println("--------------------------------------------------");
-			byte[] value = rec.toStream();
-			for (int i = 0; i < Array.getLength(value); ++i) {
+
+			final byte[] value = rec.toStream();
+			final int max = Math.min(Integer.parseInt(properties.get("maxBinaryDisplay")), Array.getLength(value));
+			for (int i = 0; i < max; ++i) {
 				out.printf("%03d", Array.getByte(value, i));
 			}
 

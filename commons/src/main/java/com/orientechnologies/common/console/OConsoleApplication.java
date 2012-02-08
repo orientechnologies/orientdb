@@ -44,7 +44,7 @@ public class OConsoleApplication {
 	protected String[]						helpCommands			= { "help", "?" };
 	protected String[]						exitCommands			= { "exit", "bye", "quit" };
 
-	protected Map<String, Object>	properties				= new HashMap<String, Object>();
+	protected Map<String, String>	properties				= new HashMap<String, String>();
 
 	// protected OConsoleReader reader = new TTYConsoleReader();
 	protected OConsoleReader			reader						= new DefaultConsoleReader();
