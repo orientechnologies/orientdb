@@ -37,7 +37,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 public class OJSONFetchContext implements OFetchContext {
 
 	protected final OJSONWriter						jsonWriter;
-	protected int													indentLevel						= 0;
+	protected int													indentLevel			= 0;
 	protected final boolean								includeType;
 	protected final boolean								includeId;
 	protected final boolean								includeVer;
@@ -45,9 +45,8 @@ public class OJSONFetchContext implements OFetchContext {
 	protected final boolean								attribSameRow;
 	protected final boolean								alwaysFetchEmbeddedDocuments;
 	protected final boolean								keepTypes;
-	protected final Stack<StringBuilder>	typesStack						= new Stack<StringBuilder>();
-	protected boolean											insideCollection			= false;
-	protected int													collectionDepthLevel	= 0;
+	protected final Stack<StringBuilder>	typesStack			= new Stack<StringBuilder>();
+	protected final Stack<String>					collectionStack	= new Stack<String>();
 
 	public OJSONFetchContext(final OJSONWriter iJsonWriter, boolean iIncludeType, final boolean iIncludeId,
 			final boolean iIncludeVer, final boolean iIncludeClazz, final boolean iAttribSameRow, final boolean iKeepTypes,
@@ -64,9 +63,6 @@ public class OJSONFetchContext implements OFetchContext {
 
 	public void onBeforeFetch(final ORecordSchemaAware<?> iRootRecord) {
 		typesStack.add(new StringBuilder());
-		if (insideCollection)
-			collectionDepthLevel++;
-		insideCollection = false;
 	}
 
 	public void onAfterFetch(final ORecordSchemaAware<?> iRootRecord) {
@@ -77,10 +73,6 @@ public class OJSONFetchContext implements OFetchContext {
 			} catch (IOException e) {
 				throw new OFetchException("Error writing field types", e);
 			}
-		if (collectionDepthLevel > 0) {
-			insideCollection = true;
-			collectionDepthLevel--;
-		}
 	}
 
 	public void onBeforeStandardField(final Object iFieldValue, final String iFieldName, final Object iUserObject) {
@@ -119,7 +111,7 @@ public class OJSONFetchContext implements OFetchContext {
 		indentLevel++;
 		try {
 			jsonWriter.beginCollection(indentLevel, true, iFieldName);
-			insideCollection = true;
+			collectionStack.add(iFieldName);
 		} catch (IOException e) {
 			throw new OFetchException("Error writing collection field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
 		}
@@ -128,7 +120,7 @@ public class OJSONFetchContext implements OFetchContext {
 	public void onAfterCollection(final ORecordSchemaAware<?> iRootRecord, final String iFieldName, final Object iUserObject) {
 		try {
 			jsonWriter.endCollection(indentLevel, false);
-			insideCollection = false;
+			collectionStack.pop();
 		} catch (IOException e) {
 			throw new OFetchException("Error writing collection field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
 		}
@@ -156,7 +148,12 @@ public class OJSONFetchContext implements OFetchContext {
 	public void onBeforeDocument(final ORecordSchemaAware<?> iRootRecord, final String iFieldName, final Object iUserObject) {
 		indentLevel++;
 		try {
-			jsonWriter.beginObject(indentLevel, true, insideCollection ? null : iFieldName);
+			final String fieldName;
+			if (!collectionStack.isEmpty() && collectionStack.peek().equals(iFieldName))
+				fieldName = null;
+			else
+				fieldName = iFieldName;
+			jsonWriter.beginObject(indentLevel, true, fieldName);
 			writeSignature(jsonWriter, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, iRootRecord);
 		} catch (IOException e) {
 			throw new OFetchException("Error writing link field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
@@ -173,7 +170,7 @@ public class OJSONFetchContext implements OFetchContext {
 	}
 
 	public void writeLinkedValue(final OIdentifiable iRecord, final String iFieldName) throws IOException {
-		if (insideCollection) {
+		if (!collectionStack.isEmpty() && collectionStack.peek().equals(iFieldName)) {
 			jsonWriter.writeValue(indentLevel, true, OJSONWriter.encode(iRecord.getIdentity()));
 		} else {
 			jsonWriter.writeAttribute(indentLevel, true, iFieldName, OJSONWriter.encode(iRecord.getIdentity()));
