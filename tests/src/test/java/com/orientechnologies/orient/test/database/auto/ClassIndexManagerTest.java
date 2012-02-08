@@ -1,8 +1,12 @@
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -51,6 +55,16 @@ public class ClassIndexManagerTest {
 
 		oClass.createProperty("prop3", OType.BOOLEAN);
 
+		final OProperty propFour = oClass.createProperty("prop4", OType.EMBEDDEDLIST, OType.STRING);
+		propFour.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+		oClass.createProperty("prop5", OType.EMBEDDEDMAP, OType.STRING);
+		oClass.createIndex("classIndexManagerTestIndexByKey", OClass.INDEX_TYPE.NOTUNIQUE, "prop5");
+		oClass.createIndex("classIndexManagerTestIndexByValue", OClass.INDEX_TYPE.NOTUNIQUE, "prop5 by value");
+
+		final OProperty propSix = oClass.createProperty("prop6", OType.EMBEDDEDSET, OType.STRING);
+		propSix.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
 		oClass.createIndex("classIndexManagerComposite", OClass.INDEX_TYPE.UNIQUE, "prop1", "prop2");
 
 		final OClass oClassTwo = schema.createClass("classIndexManagerTestClassTwo");
@@ -88,7 +102,6 @@ public class ClassIndexManagerTest {
 		database.close();
 	}
 
-	@Test
 	public void testPropertiesCheckUniqueIndexDubKeysCreate() {
 		final ODocument docOne = new ODocument("classIndexManagerTestClass");
 		final ODocument docTwo = new ODocument("classIndexManagerTestClass");
@@ -106,7 +119,6 @@ public class ClassIndexManagerTest {
 		Assert.assertTrue(exceptionThrown);
 	}
 
-	@Test
 	public void testPropertiesCheckUniqueIndexInParentDubKeysCreate() {
 		final ODocument docOne = new ODocument("classIndexManagerTestClass");
 		final ODocument docTwo = new ODocument("classIndexManagerTestClass");
@@ -124,7 +136,6 @@ public class ClassIndexManagerTest {
 		Assert.assertTrue(exceptionThrown);
 	}
 
-	@Test
 	public void testPropertiesCheckUniqueIndexDubKeysUpdate() {
 		final ODocument docOne = new ODocument("classIndexManagerTestClass");
 		final ODocument docTwo = new ODocument("classIndexManagerTestClass");
@@ -145,7 +156,6 @@ public class ClassIndexManagerTest {
 		Assert.assertTrue(exceptionThrown);
 	}
 
-	@Test
 	public void testPropertiesCheckNonUniqueIndexDubKeys() {
 		final ODocument docOne = new ODocument("classIndexManagerTestClass");
 		docOne.field("prop2", 1);
@@ -156,7 +166,6 @@ public class ClassIndexManagerTest {
 		docTwo.save();
 	}
 
-	@Test
 	public void testPropertiesCheckUniqueNullKeys() {
 		final ODocument docOne = new ODocument("classIndexManagerTestClass");
 		docOne.field("prop3", "a");
@@ -167,7 +176,6 @@ public class ClassIndexManagerTest {
 		docTwo.save();
 	}
 
-	@Test
 	public void testCreateDocumentWithoutClass() {
 		final Collection<? extends OIndex<?>> beforeIndexes = database.getMetadata().getIndexManager().getIndexes();
 		final Map<String, Long> indexSizeMap = new HashMap<String, Long>();
@@ -188,7 +196,6 @@ public class ClassIndexManagerTest {
 			Assert.assertEquals(index.getSize(), indexSizeMap.get(index.getName()).longValue());
 	}
 
-	@Test
 	public void testUpdateDocumentWithoutClass() {
 		final Collection<? extends OIndex<?>> beforeIndexes = database.getMetadata().getIndexManager().getIndexes();
 		final Map<String, Long> indexSizeMap = new HashMap<String, Long>();
@@ -212,7 +219,6 @@ public class ClassIndexManagerTest {
 			Assert.assertEquals(index.getSize(), indexSizeMap.get(index.getName()).longValue());
 	}
 
-	@Test
 	public void testDeleteDocumentWithoutClass() {
 		final ODocument docOne = new ODocument();
 		docOne.field("prop1", "a");
@@ -221,7 +227,6 @@ public class ClassIndexManagerTest {
 		docOne.delete();
 	}
 
-	@Test
 	public void testDeleteModifiedDocumentWithoutClass() {
 		final ODocument docOne = new ODocument();
 		docOne.field("prop1", "a");
@@ -232,7 +237,6 @@ public class ClassIndexManagerTest {
 		docOne.delete();
 	}
 
-	@Test
 	public void testDocumentUpdateWithoutDirtyFields() {
 		final ODocument docOne = new ODocument("classIndexManagerTestClass");
 		docOne.field("prop1", "a");
@@ -242,7 +246,6 @@ public class ClassIndexManagerTest {
 		docOne.save();
 	}
 
-	@Test
 	public void testCreateDocumentIndexRecordAdded() {
 		final ODocument doc = new ODocument("classIndexManagerTestClass");
 		doc.field("prop0", "x");
@@ -270,7 +273,6 @@ public class ClassIndexManagerTest {
 		Assert.assertEquals(propZeroIndex.getSize(), 1);
 	}
 
-	@Test
 	public void testUpdateDocumentIndexRecordRemoved() {
 		final ODocument doc = new ODocument("classIndexManagerTestClass");
 		doc.field("prop0", "x");
@@ -300,7 +302,6 @@ public class ClassIndexManagerTest {
 		Assert.assertEquals(propZeroIndex.getSize(), 0);
 	}
 
-	@Test
 	public void testUpdateDocumentNullKeyIndexRecordRemoved() {
 		final ODocument doc = new ODocument("classIndexManagerTestClass");
 
@@ -331,7 +332,6 @@ public class ClassIndexManagerTest {
 		Assert.assertEquals(propZeroIndex.getSize(), 0);
 	}
 
-	@Test
 	public void testUpdateDocumentIndexRecordUpdated() {
 		final ODocument doc = new ODocument("classIndexManagerTestClass");
 		doc.field("prop0", "x");
@@ -366,7 +366,6 @@ public class ClassIndexManagerTest {
 		Assert.assertNotNull(compositeIndex.get(compositeIndexDefinition.createValue("a", 2)));
 	}
 
-	@Test
 	public void testUpdateDocumentIndexRecordUpdatedFromNullField() {
 		final ODocument doc = new ODocument("classIndexManagerTestClass");
 		doc.field("prop1", "a");
@@ -394,7 +393,296 @@ public class ClassIndexManagerTest {
 		Assert.assertNotNull(compositeIndex.get(compositeIndexDefinition.createValue("a", 2)));
 	}
 
-	@Test
+	public void testListUpdate() {
+		final OSchema schema = database.getMetadata().getSchema();
+		final OClass oClass = schema.getClass("classIndexManagerTestClass");
+
+		final OIndex<?> propFourIndex = oClass.getClassIndex("classIndexManagerTestClass.prop4");
+
+		Assert.assertEquals(propFourIndex.getSize(), 0);
+
+		final ODocument doc = new ODocument("classIndexManagerTestClass");
+
+		final List<String> listProperty = new ArrayList<String>();
+		listProperty.add("value1");
+		listProperty.add("value2");
+
+		doc.field("prop4", listProperty);
+		doc.save();
+
+		Assert.assertEquals(propFourIndex.getSize(), 2);
+		Assert.assertNotNull(propFourIndex.get("value1"));
+		Assert.assertNotNull(propFourIndex.get("value2"));
+
+		List<String> trackedList = doc.field("prop4");
+		trackedList.set(0, "value3");
+
+		trackedList.add("value4");
+		trackedList.add("value4");
+		trackedList.add("value4");
+		trackedList.remove("value4");
+		trackedList.remove("value2");
+		trackedList.add("value5");
+
+		doc.save();
+
+		Assert.assertEquals(propFourIndex.getSize(), 3);
+		Assert.assertNotNull(propFourIndex.get("value3"));
+		Assert.assertNotNull(propFourIndex.get("value4"));
+		Assert.assertNotNull(propFourIndex.get("value5"));
+	}
+
+
+	public void testMapUpdate() {
+		final OSchema schema = database.getMetadata().getSchema();
+		final OClass oClass = schema.getClass("classIndexManagerTestClass");
+
+		final OIndex<?> propFiveIndexKey = oClass.getClassIndex("classIndexManagerTestIndexByKey");
+		final OIndex<?> propFiveIndexValue = oClass.getClassIndex("classIndexManagerTestIndexByValue");
+
+		Assert.assertEquals(propFiveIndexKey.getSize(), 0);
+
+		final ODocument doc = new ODocument("classIndexManagerTestClass");
+
+		final Map<String, String> mapProperty = new HashMap<String, String>();
+		mapProperty.put("key1", "value1");
+		mapProperty.put("key2", "value2");
+
+		doc.field("prop5", mapProperty);
+		doc.save();
+
+		Assert.assertEquals(propFiveIndexKey.getSize(), 2);
+		Assert.assertNotNull(propFiveIndexKey.get("key1"));
+		Assert.assertNotNull(propFiveIndexKey.get("key2"));
+
+		Map<String, String> trackedMap = doc.field("prop5");
+		trackedMap.put("key3", "value3");
+		trackedMap.put("key4", "value4");
+		trackedMap.remove("key1");
+		trackedMap.put("key1", "value5");
+		trackedMap.remove("key2");
+		trackedMap.put("key6", "value6");
+		trackedMap.put("key7", "value6");
+		trackedMap.put("key8", "value6");
+		trackedMap.put("key4", "value7");
+
+		trackedMap.remove("key8");
+
+
+		doc.save();
+
+		Assert.assertEquals(propFiveIndexKey.getSize(), 5);
+		Assert.assertNotNull(propFiveIndexKey.get("key1"));
+		Assert.assertNotNull(propFiveIndexKey.get("key3"));
+		Assert.assertNotNull(propFiveIndexKey.get("key4"));
+		Assert.assertNotNull(propFiveIndexKey.get("key6"));
+		Assert.assertNotNull(propFiveIndexKey.get("key7"));
+
+		Assert.assertEquals(propFiveIndexValue.getSize(), 4);
+		Assert.assertNotNull(propFiveIndexValue.get("value5"));
+		Assert.assertNotNull(propFiveIndexValue.get("value3"));
+		Assert.assertNotNull(propFiveIndexValue.get("value7"));
+		Assert.assertNotNull(propFiveIndexValue.get("value6"));
+
+	}
+
+	public void testSetUpdate() {
+		final OSchema schema = database.getMetadata().getSchema();
+		final OClass oClass = schema.getClass("classIndexManagerTestClass");
+
+		final OIndex<?> propSixIndex = oClass.getClassIndex("classIndexManagerTestClass.prop6");
+
+		Assert.assertEquals(propSixIndex.getSize(), 0);
+
+		final ODocument doc = new ODocument("classIndexManagerTestClass");
+
+		final Set<String> setProperty = new HashSet<String>();
+		setProperty.add("value1");
+		setProperty.add("value2");
+
+		doc.field("prop6", setProperty);
+		doc.save();
+
+		Assert.assertEquals(propSixIndex.getSize(), 2);
+		Assert.assertNotNull(propSixIndex.get("value1"));
+		Assert.assertNotNull(propSixIndex.get("value2"));
+
+		Set<String> trackedSet = doc.field("prop6");
+
+		trackedSet.add("value4");
+		trackedSet.add("value4");
+		trackedSet.add("value4");
+		trackedSet.remove("value4");
+		trackedSet.remove("value2");
+		trackedSet.add("value5");
+
+		doc.save();
+
+		Assert.assertEquals(propSixIndex.getSize(), 2);
+		Assert.assertNotNull(propSixIndex.get("value1"));
+		Assert.assertNotNull(propSixIndex.get("value5"));
+	}
+
+	public void testListDelete() {
+		final OSchema schema = database.getMetadata().getSchema();
+		final OClass oClass = schema.getClass("classIndexManagerTestClass");
+
+		final OIndex<?> propFourIndex = oClass.getClassIndex("classIndexManagerTestClass.prop4");
+
+		Assert.assertEquals(propFourIndex.getSize(), 0);
+
+		final ODocument doc = new ODocument("classIndexManagerTestClass");
+
+		final List<String> listProperty = new ArrayList<String>();
+		listProperty.add("value1");
+		listProperty.add("value2");
+
+		doc.field("prop4", listProperty);
+		doc.save();
+
+		Assert.assertEquals(propFourIndex.getSize(), 2);
+		Assert.assertNotNull(propFourIndex.get("value1"));
+		Assert.assertNotNull(propFourIndex.get("value2"));
+
+		List<String> trackedList = doc.field("prop4");
+		trackedList.set(0, "value3");
+
+		trackedList.add("value4");
+		trackedList.add("value4");
+		trackedList.add("value4");
+		trackedList.remove("value4");
+		trackedList.remove("value2");
+		trackedList.add("value5");
+
+		doc.save();
+
+		Assert.assertEquals(propFourIndex.getSize(), 3);
+		Assert.assertNotNull(propFourIndex.get("value3"));
+		Assert.assertNotNull(propFourIndex.get("value4"));
+		Assert.assertNotNull(propFourIndex.get("value5"));
+
+		trackedList = doc.field("prop4");
+		trackedList.remove("value3");
+		trackedList.remove("value4");
+		trackedList.add("value8");
+
+		doc.delete();
+
+		Assert.assertEquals(propFourIndex.getSize(), 0);
+	}
+
+
+	public void testMapDelete() {
+		final OSchema schema = database.getMetadata().getSchema();
+		final OClass oClass = schema.getClass("classIndexManagerTestClass");
+
+		final OIndex<?> propFiveIndexKey = oClass.getClassIndex("classIndexManagerTestIndexByKey");
+		final OIndex<?> propFiveIndexValue = oClass.getClassIndex("classIndexManagerTestIndexByValue");
+
+		Assert.assertEquals(propFiveIndexKey.getSize(), 0);
+
+		final ODocument doc = new ODocument("classIndexManagerTestClass");
+
+		final Map<String, String> mapProperty = new HashMap<String, String>();
+		mapProperty.put("key1", "value1");
+		mapProperty.put("key2", "value2");
+
+		doc.field("prop5", mapProperty);
+		doc.save();
+
+		Assert.assertEquals(propFiveIndexKey.getSize(), 2);
+		Assert.assertNotNull(propFiveIndexKey.get("key1"));
+		Assert.assertNotNull(propFiveIndexKey.get("key2"));
+
+		Map<String, String> trackedMap = doc.field("prop5");
+		trackedMap.put("key3", "value3");
+		trackedMap.put("key4", "value4");
+		trackedMap.remove("key1");
+		trackedMap.put("key1", "value5");
+		trackedMap.remove("key2");
+		trackedMap.put("key6", "value6");
+		trackedMap.put("key7", "value6");
+		trackedMap.put("key8", "value6");
+		trackedMap.put("key4", "value7");
+
+		trackedMap.remove("key8");
+
+
+		doc.save();
+
+		Assert.assertEquals(propFiveIndexKey.getSize(), 5);
+		Assert.assertNotNull(propFiveIndexKey.get("key1"));
+		Assert.assertNotNull(propFiveIndexKey.get("key3"));
+		Assert.assertNotNull(propFiveIndexKey.get("key4"));
+		Assert.assertNotNull(propFiveIndexKey.get("key6"));
+		Assert.assertNotNull(propFiveIndexKey.get("key7"));
+
+		Assert.assertEquals(propFiveIndexValue.getSize(), 4);
+		Assert.assertNotNull(propFiveIndexValue.get("value5"));
+		Assert.assertNotNull(propFiveIndexValue.get("value3"));
+		Assert.assertNotNull(propFiveIndexValue.get("value7"));
+		Assert.assertNotNull(propFiveIndexValue.get("value6"));
+
+		trackedMap = doc.field("prop5");
+
+		trackedMap.remove("key1");
+		trackedMap.remove("key3");
+		trackedMap.remove("key4");
+		trackedMap.put("key6", "value10");
+		trackedMap.put("key11", "value11");
+
+		doc.delete();
+
+		Assert.assertEquals(propFiveIndexKey.getSize(), 0);
+		Assert.assertEquals(propFiveIndexValue.getSize(), 0);
+	}
+
+	public void testSetDelete() {
+		final OSchema schema = database.getMetadata().getSchema();
+		final OClass oClass = schema.getClass("classIndexManagerTestClass");
+
+		final OIndex<?> propSixIndex = oClass.getClassIndex("classIndexManagerTestClass.prop6");
+
+		Assert.assertEquals(propSixIndex.getSize(), 0);
+
+		final ODocument doc = new ODocument("classIndexManagerTestClass");
+
+		final Set<String> setProperty = new HashSet<String>();
+		setProperty.add("value1");
+		setProperty.add("value2");
+
+		doc.field("prop6", setProperty);
+		doc.save();
+
+		Assert.assertEquals(propSixIndex.getSize(), 2);
+		Assert.assertNotNull(propSixIndex.get("value1"));
+		Assert.assertNotNull(propSixIndex.get("value2"));
+
+		Set<String> trackedSet = doc.field("prop6");
+
+		trackedSet.add("value4");
+		trackedSet.add("value4");
+		trackedSet.add("value4");
+		trackedSet.remove("value4");
+		trackedSet.remove("value2");
+		trackedSet.add("value5");
+
+		doc.save();
+
+		Assert.assertEquals(propSixIndex.getSize(), 2);
+		Assert.assertNotNull(propSixIndex.get("value1"));
+		Assert.assertNotNull(propSixIndex.get("value5"));
+
+		trackedSet = doc.field("prop6");
+		trackedSet.remove("value1");
+		trackedSet.add("value6");
+
+		doc.delete();
+
+		Assert.assertEquals(propSixIndex.getSize(), 0);
+	}
+
+
 	public void testDeleteDocumentIndexRecordDeleted() {
 		final ODocument doc = new ODocument("classIndexManagerTestClass");
 		doc.field("prop0", "x");
@@ -422,7 +710,6 @@ public class ClassIndexManagerTest {
 		Assert.assertEquals(compositeIndex.getSize(), 0);
 	}
 
-	@Test
 	public void testDeleteUpdatedDocumentIndexRecordDeleted() {
 		final ODocument doc = new ODocument("classIndexManagerTestClass");
 		doc.field("prop0", "x");
@@ -453,7 +740,6 @@ public class ClassIndexManagerTest {
 		Assert.assertEquals(compositeIndex.getSize(), 0);
 	}
 
-	@Test
 	public void testDeleteUpdatedDocumentNullFieldIndexRecordDeleted() {
 		final ODocument doc = new ODocument("classIndexManagerTestClass");
 		doc.field("prop1", "a");
@@ -476,7 +762,6 @@ public class ClassIndexManagerTest {
 		Assert.assertEquals(compositeIndex.getSize(), 0);
 	}
 
-	@Test
 	public void testDeleteUpdatedDocumentOrigNullFieldIndexRecordDeleted() {
 		final ODocument doc = new ODocument("classIndexManagerTestClass");
 		doc.field("prop1", "a");
@@ -501,7 +786,6 @@ public class ClassIndexManagerTest {
 		Assert.assertEquals(compositeIndex.getSize(), 0);
 	}
 
-	@Test
 	public void testNoClassIndexesUpdate() {
 		final ODocument doc = new ODocument("classIndexManagerTestClassTwo");
 		doc.field("prop1", "a");
@@ -519,7 +803,6 @@ public class ClassIndexManagerTest {
 		}
 	}
 
-	@Test
 	public void testNoClassIndexesDelete() {
 		final ODocument doc = new ODocument("classIndexManagerTestClassTwo");
 		doc.field("prop1", "a");

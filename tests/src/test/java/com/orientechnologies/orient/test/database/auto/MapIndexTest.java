@@ -13,6 +13,7 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -44,6 +45,12 @@ public class MapIndexTest {
 		collector.createIndex("mapIndexTestKey", OClass.INDEX_TYPE.NOTUNIQUE, "intMap");
 		collector.createIndex("mapIndexTestValue", OClass.INDEX_TYPE.NOTUNIQUE, "intMap by value");
 
+    final OClass movie = database.getMetadata().getSchema().createClass("MapIndexTestMovie");
+    movie.createProperty("title", OType.STRING);
+    movie.createProperty("thumbs", OType.EMBEDDEDMAP, OType.INTEGER);
+
+    movie.createIndex("indexForMap", OClass.INDEX_TYPE.NOTUNIQUE, "thumbs by key");
+
 		database.getMetadata().getSchema().save();
 		database.close();
 	}
@@ -52,6 +59,7 @@ public class MapIndexTest {
 	public void destroySchema() {
 		database.open("admin", "admin");
 		database.getMetadata().getSchema().dropClass("Mapper");
+		database.getMetadata().getSchema().dropClass("MapIndexTestMovie");
 		database.close();
 	}
 
@@ -63,10 +71,10 @@ public class MapIndexTest {
 	@AfterMethod
 	public void afterMethod() throws Exception {
 		database.command(new OCommandSQL("delete from Mapper")).execute();
+		database.command(new OCommandSQL("delete from MapIndexTestMovie")).execute();
 		database.close();
 	}
 
-	@Test
 	public void testIndexMap() {
 		final Mapper mapper = new Mapper();
 		Map<String, Integer> map = new HashMap<String, Integer>();
@@ -106,8 +114,7 @@ public class MapIndexTest {
 
 	}
 
-	@Test
-	public void testIndexMapUpdate() {
+	public void testIndexMapUpdateOne() {
 
 		final Mapper mapper = new Mapper();
 		Map<String, Integer> mapOne = new HashMap<String, Integer>();
@@ -154,7 +161,127 @@ public class MapIndexTest {
 		}
 	}
 
-	@Test
+	public void testIndexMapAddItem() {
+		final Mapper mapper = new Mapper();
+		Map<String, Integer> map = new HashMap<String, Integer>();
+
+		map.put("key1", 10);
+		map.put("key2", 20);
+
+		mapper.setIntMap(map);
+		database.save(mapper);
+
+		database.command(new OCommandSQL("UPDATE " + mapper.getId() + " put intMap = 'key3', 30")).execute();
+
+		final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
+
+		Assert.assertNotNull(resultByKey);
+		Assert.assertEquals(resultByKey.size(), 3);
+		for (ODocument d : resultByKey) {
+			Assert.assertTrue(d.containsField("key"));
+			Assert.assertTrue(d.containsField("rid"));
+
+			if (!d.field("key").equals("key1") && !d.field("key").equals("key2") && !d.field("key").equals("key3")) {
+				Assert.fail("Unknown key found: " + d.field("key"));
+			}
+		}
+
+		final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
+						.execute();
+
+		Assert.assertNotNull(resultByValue);
+		Assert.assertEquals(resultByValue.size(), 3);
+		for (ODocument d : resultByValue) {
+			Assert.assertTrue(d.containsField("key"));
+			Assert.assertTrue(d.containsField("rid"));
+
+			if (!d.field("key").equals(30) && !d.field("key").equals(20) && !d.field("key").equals(10)) {
+				Assert.fail("Unknown key found: " + d.field("key"));
+			}
+		}
+	}
+
+	public void testIndexMapUpdateItem() {
+		final Mapper mapper = new Mapper();
+		Map<String, Integer> map = new HashMap<String, Integer>();
+
+		map.put("key1", 10);
+		map.put("key2", 20);
+
+		mapper.setIntMap(map);
+		database.save(mapper);
+
+		database.command(new OCommandSQL("UPDATE " + mapper.getId() + " put intMap = 'key2', 40")).execute();
+
+		final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
+
+		Assert.assertNotNull(resultByKey);
+		Assert.assertEquals(resultByKey.size(), 2);
+		for (ODocument d : resultByKey) {
+			Assert.assertTrue(d.containsField("key"));
+			Assert.assertTrue(d.containsField("rid"));
+
+			if (!d.field("key").equals("key1") && !d.field("key").equals("key2")) {
+				Assert.fail("Unknown key found: " + d.field("key"));
+			}
+		}
+
+		final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
+						.execute();
+
+		Assert.assertNotNull(resultByValue);
+		Assert.assertEquals(resultByValue.size(), 2);
+		for (ODocument d : resultByValue) {
+			Assert.assertTrue(d.containsField("key"));
+			Assert.assertTrue(d.containsField("rid"));
+
+			if (!d.field("key").equals(10) && !d.field("key").equals(40)) {
+				Assert.fail("Unknown key found: " + d.field("key"));
+			}
+		}
+	}
+
+	public void testIndexMapRemoveItem() {
+		final Mapper mapper = new Mapper();
+		Map<String, Integer> map = new HashMap<String, Integer>();
+
+		map.put("key1", 10);
+		map.put("key2", 20);
+		map.put("key3", 30);
+
+		mapper.setIntMap(map);
+		database.save(mapper);
+
+		database.command(new OCommandSQL("UPDATE " + mapper.getId() + " remove intMap = 'key2'")).execute();
+
+		final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
+
+		Assert.assertNotNull(resultByKey);
+		Assert.assertEquals(resultByKey.size(), 2);
+		for (ODocument d : resultByKey) {
+			Assert.assertTrue(d.containsField("key"));
+			Assert.assertTrue(d.containsField("rid"));
+
+			if (!d.field("key").equals("key1") && !d.field("key").equals("key3")) {
+				Assert.fail("Unknown key found: " + d.field("key"));
+			}
+		}
+
+		final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
+						.execute();
+
+		Assert.assertNotNull(resultByValue);
+		Assert.assertEquals(resultByValue.size(), 2);
+		for (ODocument d : resultByValue) {
+			Assert.assertTrue(d.containsField("key"));
+			Assert.assertTrue(d.containsField("rid"));
+
+			if (!d.field("key").equals(10) && !d.field("key").equals(30)) {
+				Assert.fail("Unknown key found: " + d.field("key"));
+			}
+		}
+	}
+
 	public void testIndexMapRemove() {
 		final Mapper mapper = new Mapper();
 		Map<String, Integer> map = new HashMap<String, Integer>();
@@ -179,7 +306,6 @@ public class MapIndexTest {
 
 	}
 
-	@Test
 	public void testIndexMapSQL() {
 		final Mapper mapper = new Mapper();
 		Map<String, Integer> map = new HashMap<String, Integer>();

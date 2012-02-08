@@ -128,6 +128,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
 		final ODocument doc = (ODocument) iRecord;
 		doc.validate();
+		doc.convertAllMultiValuesToTrackedVersions();
 
 		try {
 			if (doc.getIdentity().isNew()) {
@@ -255,6 +256,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 		}
 
 		doc.validate();
+		doc.convertAllMultiValuesToTrackedVersions();
 
 		super.save(doc, iClusterName, iMode);
 		return this;

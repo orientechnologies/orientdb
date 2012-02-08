@@ -19,12 +19,17 @@ package com.orientechnologies.orient.core.index;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -32,7 +37,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Handles indexing when records change.
- * 
+ *
  * @author Andrey Lomakin, Artem Orobets
  */
 public class OClassIndexManager extends ODocumentHookAbstract {
@@ -87,55 +92,10 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
 			if (!dirtyFields.isEmpty()) {
 				for (final OIndex<?> index : indexes) {
-					final OIndexDefinition indexDefinition = index.getDefinition();
-					final List<String> indexFields = indexDefinition.getFields();
-
-					for (final String indexField : indexFields) {
-						if (dirtyFields.contains(indexField)) {
-							final List<Object> origValues = new ArrayList<Object>(indexFields.size());
-
-							for (final String field : indexFields) {
-								if (dirtyFields.contains(field))
-									origValues.add(iRecord.getOriginalValue(field));
-								else
-									origValues.add(iRecord.<Object> field(field));
-							}
-
-							final Object origValue = indexDefinition.createValue(origValues);
-							final Object newValue = indexDefinition.getDocumentValueToIndex(iRecord);
-
-							if ((origValue instanceof Collection) && (newValue instanceof Collection)) {
-								final Set<Object> valuesToRemove = new HashSet<Object>((Collection<?>) origValue);
-								final Set<Object> valuesToAdd = new HashSet<Object>((Collection<?>) newValue);
-
-								valuesToRemove.removeAll((Collection<?>) newValue);
-								valuesToAdd.removeAll((Collection<?>) origValue);
-
-								for (final Object valueToRemove : valuesToRemove)
-									if (valueToRemove != null)
-										index.remove(valueToRemove, iRecord);
-
-								for (final Object valueToAdd : valuesToAdd)
-									if (valueToAdd != null)
-										index.put(valueToAdd, iRecord);
-
-							} else {
-								if (origValue instanceof Collection) {
-									for (final Object origValueItem : (Collection<?>) origValue)
-										if (origValueItem != null)
-											index.remove(origValueItem, iRecord);
-								} else if (origValue != null)
-									index.remove(origValue, iRecord);
-
-								if (newValue instanceof Collection) {
-									for (final Object newValueItem : (Collection<?>) newValue)
-										index.put(newValueItem, iRecord.placeholder());
-								} else if (newValue != null)
-									index.put(newValue, iRecord.placeholder());
-							}
-							break;
-						}
-					}
+					if (index.getDefinition() instanceof OCompositeIndexDefinition)
+						processCompositeIndexUpdate(index, dirtyFields, iRecord);
+					else
+						processSingleIndexUpdate(index, dirtyFields, iRecord);
 				}
 			}
 		}
@@ -171,33 +131,15 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
 				while (indexIterator.hasNext()) {
 					final OIndex<?> index = indexIterator.next();
-					final OIndexDefinition indexDefinition = index.getDefinition();
 
-					final List<String> indexFields = indexDefinition.getFields();
-					for (final String indexField : indexFields) {
-						// REMOVE IT
-						if (dirtyFields.contains(indexField)) {
-							final List<Object> origValues = new ArrayList<Object>(indexFields.size());
+					final boolean result;
+					if (index.getDefinition() instanceof OCompositeIndexDefinition)
+						result = processCompositeIndexDelete(index, dirtyFields, iRecord);
+					else
+						result = processSingleIndexDelete(index, dirtyFields, iRecord);
 
-							for (final String field : indexFields) {
-								if (dirtyFields.contains(field))
-									origValues.add(iRecord.getOriginalValue(field));
-								else
-									origValues.add(iRecord.<Object> field(field));
-							}
-
-							final Object origValue = indexDefinition.createValue(origValues);
-							if (origValue instanceof Collection) {
-								for (final Object valueItem : (Collection<?>) origValue)
-									if (valueItem != null)
-										index.remove(valueItem, iRecord);
-							} else if (origValue != null)
-								index.remove(origValue, iRecord);
-
-							indexIterator.remove();
-							break;
-						}
-					}
+					if (result)
+						indexIterator.remove();
 				}
 			}
 
@@ -217,6 +159,168 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 			iRecord.setTrackingChanges(false);
 			iRecord.setTrackingChanges(true);
 		}
+	}
+
+	private void processCompositeIndexUpdate(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {
+		final OIndexDefinition indexDefinition = index.getDefinition();
+		final List<String> indexFields = indexDefinition.getFields();
+		for (final String indexField : indexFields) {
+			if (dirtyFields.contains(indexField)) {
+				final List<Object> origValues = new ArrayList<Object>(indexFields.size());
+
+				for (final String field : indexFields) {
+					if (dirtyFields.contains(field)) {
+						origValues.add(iRecord.getOriginalValue(field));
+					} else {
+						origValues.add(iRecord.<Object>field(field));
+					}
+				}
+
+				final Object origValue = indexDefinition.createValue(origValues);
+				final Object newValue = indexDefinition.getDocumentValueToIndex(iRecord);
+
+				if (origValue != null) {
+					index.remove(origValue, iRecord);
+				}
+
+				if (newValue != null) {
+					index.put(newValue, iRecord.placeholder());
+				}
+				return;
+			}
+		}
+	}
+
+	private void processSingleIndexUpdate(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {
+		final OIndexDefinition indexDefinition = index.getDefinition();
+		final List<String> indexFields = indexDefinition.getFields();
+
+		if (indexFields.isEmpty())
+			return;
+
+		final String indexField = indexFields.get(0);
+		if (!dirtyFields.contains(indexField))
+			return;
+
+		final OMultiValueChangeTimeLine<?, ?> multiValueChangeTimeLine = iRecord.getCollectionTimeLine(indexField);
+		if (multiValueChangeTimeLine != null) {
+			final OIndexDefinitionMultiValue indexDefinitionMultiValue = (OIndexDefinitionMultiValue) indexDefinition;
+			final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
+			final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
+
+			for (OMultiValueChangeEvent changeEvent : multiValueChangeTimeLine.getMultiValueChangeEvents()) {
+				indexDefinitionMultiValue.processChangeEvent(changeEvent, keysToAdd, keysToRemove);
+			}
+
+			for (final Object keyToRemove : keysToRemove.keySet())
+				index.remove(keyToRemove, iRecord);
+
+			for (final Object keyToAdd : keysToAdd.keySet())
+				index.put(keyToAdd, iRecord.placeholder());
+
+		} else {
+			final Object origValue = indexDefinition.createValue(iRecord.getOriginalValue(indexField));
+			final Object newValue = indexDefinition.getDocumentValueToIndex(iRecord);
+
+			if ((origValue instanceof Collection) && (newValue instanceof Collection)) {
+				final Set<Object> valuesToRemove = new HashSet<Object>((Collection<?>) origValue);
+				final Set<Object> valuesToAdd = new HashSet<Object>((Collection<?>) newValue);
+
+				valuesToRemove.removeAll((Collection<?>) newValue);
+				valuesToAdd.removeAll((Collection<?>) origValue);
+
+				for (final Object valueToRemove : valuesToRemove) {
+					if (valueToRemove != null) {
+						index.remove(valueToRemove, iRecord);
+					}
+				}
+
+				for (final Object valueToAdd : valuesToAdd) {
+					if (valueToAdd != null) {
+						index.put(valueToAdd, iRecord);
+					}
+				}
+			} else {
+				if (origValue instanceof Collection) {
+					for (final Object origValueItem : (Collection<?>) origValue) {
+						if (origValueItem != null) {
+							index.remove(origValueItem, iRecord);
+						}
+					}
+				} else if (origValue != null) {
+					index.remove(origValue, iRecord);
+				}
+
+				if (newValue instanceof Collection) {
+					for (final Object newValueItem : (Collection<?>) newValue) {
+						index.put(newValueItem, iRecord.placeholder());
+					}
+				} else if (newValue != null) {
+					index.put(newValue, iRecord.placeholder());
+				}
+			}
+		}
+	}
+
+	private boolean processCompositeIndexDelete(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {
+		final OIndexDefinition indexDefinition = index.getDefinition();
+
+		final List<String> indexFields = indexDefinition.getFields();
+		for (final String indexField : indexFields) {
+			// REMOVE IT
+			if (dirtyFields.contains(indexField)) {
+				final List<Object> origValues = new ArrayList<Object>(indexFields.size());
+
+				for (final String field : indexFields) {
+					if (dirtyFields.contains(field))
+						origValues.add(iRecord.getOriginalValue(field));
+					else
+						origValues.add(iRecord.<Object>field(field));
+				}
+
+				final Object origValue = indexDefinition.createValue(origValues);
+				if (origValue != null)
+					index.remove(origValue, iRecord);
+
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean processSingleIndexDelete(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {
+		final OIndexDefinition indexDefinition = index.getDefinition();
+
+		final List<String> indexFields = indexDefinition.getFields();
+		if (indexFields.isEmpty()) {
+			return false;
+		}
+
+		final String indexField = indexFields.iterator().next();
+		if (dirtyFields.contains(indexField)) {
+			final OMultiValueChangeTimeLine<?, ?> multiValueChangeTimeLine = iRecord.getCollectionTimeLine(indexField);
+
+			final Object origValue;
+			if (multiValueChangeTimeLine != null) {
+				final OTrackedMultiValue fieldValue = iRecord.field(indexField);
+				final Object restoredMultiValue = fieldValue.returnOriginalState(multiValueChangeTimeLine.getMultiValueChangeEvents());
+				origValue = indexDefinition.createValue(restoredMultiValue);
+			} else
+				origValue = indexDefinition.createValue(iRecord.getOriginalValue(indexField));
+
+
+			if (origValue instanceof Collection) {
+				for (final Object valueItem : (Collection<?>) origValue) {
+					if (valueItem != null) {
+						index.remove(valueItem, iRecord);
+					}
+				}
+			} else if (origValue != null) {
+				index.remove(origValue, iRecord);
+			}
+			return true;
+		}
+		return false;
 	}
 
 	private void checkIndexedPropertiesOnCreation(final ODocument iRecord) {

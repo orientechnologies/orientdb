@@ -86,9 +86,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	}
 
 	/**
-	 * Returns a iterator that just returns the elements without convertion.
-	 * 
-	 * @return
+	 * @return iterator that just returns the elements without convertion.
 	 */
 	public Iterator<OIdentifiable> rawIterator() {
 		lazyLoad(false);
@@ -210,7 +208,8 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 			final String rid = ((OIdentifiable) iElement).getIdentity().toString();
 			int pos = stream.indexOf(rid);
 			if (pos > -1) {
-				setDirty();
+				fireCollectionChangedEvent( new OMultiValueChangeEvent<Integer, OIdentifiable>( OMultiValueChangeEvent.OChangeType.REMOVE, pos, null, (OIdentifiable) iElement ) );
+        
 				// FOUND: REMOVE IT DIRECTLY FROM STREAM
 				if (pos > 0)
 					pos--;
@@ -233,6 +232,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
 	@Override
 	public void clear() {
+    lazyLoad(true);
 		super.clear();
 		contentType = MULTIVALUE_CONTENT_TYPE.EMPTY;
 		stream = null;
@@ -252,7 +252,13 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 		return (RET) this;
 	}
 
-	@Override
+  @Override
+  protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<Integer, OIdentifiable> event) {
+    if(!marshalling)
+      super.fireCollectionChangedEvent( event );
+  }
+
+  @Override
 	public Object[] toArray() {
 		convertLinks2Records();
 		return super.toArray();
@@ -340,6 +346,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	 * 
 	 * @param iIndex
 	 *          Position of the item to convert
+   * @return <code>true</code> if conversion was successful.
 	 */
 	private boolean convertRecord2Link(final int iIndex) {
 		if (contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS)
@@ -396,7 +403,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
 		final int tot = super.size();
 		for (int i = 0; i < tot; ++i)
-			copy.rawAdd(rawGet(i));
+			copy.add( rawGet( i ) );
 
 		return copy;
 	}
@@ -445,7 +452,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 			if (item.length() == 0)
 				continue;
 
-			super.rawAdd(new ORecordId(item));
+			super.add( new ORecordId( item ) );
 		}
 
 		modCount = currentModCount;

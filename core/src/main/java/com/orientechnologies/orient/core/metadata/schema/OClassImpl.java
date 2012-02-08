@@ -858,7 +858,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 				indexType = OType.STRING;
 			else {
 				if (propertyToIndexType == OType.LINKMAP)
-					indexType = OType.LINK;
+					throw new OIndexException( "LINK types indexing are not supported." );
 				else {
 					indexType = propertyToIndex.getLinkedType();
 					if (indexType == null)
@@ -872,7 +872,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		} else if (propertyToIndexType.equals(OType.EMBEDDEDLIST) || propertyToIndexType.equals(OType.EMBEDDEDSET)
 				|| propertyToIndexType.equals(OType.LINKLIST) || propertyToIndexType.equals(OType.LINKSET)) {
 			if (propertyToIndexType.equals(OType.LINKLIST) || propertyToIndexType.equals(OType.LINKSET))
-				indexType = OType.LINK;
+        throw new OIndexException( "LINK types indexing are not supported." );
 			else {
 				indexType = propertyToIndex.getLinkedType();
 				if (indexType == null)

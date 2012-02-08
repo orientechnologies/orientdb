@@ -53,7 +53,6 @@ public class ClassIndexTest
     oClass.createProperty( "fSeven", OType.STRING );
     oClass.createProperty( "fEmbeddedMap", OType.EMBEDDEDMAP, OType.INTEGER );
     oClass.createProperty( "fEmbeddedMapWithoutLinkedType", OType.EMBEDDEDMAP );
-    oClass.createProperty( "fLinkMap", OType.LINKMAP );
 
     oSuperClass.createProperty( "fNine", OType.INTEGER );
     oClass.setSuperClass( oSuperClass );
@@ -173,63 +172,6 @@ public class ClassIndexTest
     assertEquals(((OPropertyMapIndexDefinition)indexDefinition).getIndexBy(), OPropertyMapIndexDefinition.INDEX_BY.KEY );
   }
 
-  @Test
-  public void testCreateOnePropertyLinkedMapIndex()
-  {
-    final OIndex result = oClass.createIndex( "ClassIndexTestPropertyLinkedMap", OClass.INDEX_TYPE.UNIQUE, "fLinkMap" );
-
-    assertEquals( result.getName(), "ClassIndexTestPropertyLinkedMap" );
-    assertEquals( oClass.getClassIndex( "ClassIndexTestPropertyLinkedMap" ).getName(), result.getName() );
-    assertEquals(
-      database.getMetadata().getIndexManager().getClassIndex( "ClassIndexTestClass", "ClassIndexTestPropertyLinkedMap" ).getName(),
-      result.getName() );
-
-    final OIndexDefinition indexDefinition = result.getDefinition();
-
-    assertTrue( indexDefinition instanceof OPropertyMapIndexDefinition );
-    assertEquals( indexDefinition.getFields().get( 0 ), "fLinkMap" );
-    assertEquals( indexDefinition.getTypes()[0], OType.STRING );
-    assertEquals(((OPropertyMapIndexDefinition)indexDefinition).getIndexBy(), OPropertyMapIndexDefinition.INDEX_BY.KEY );
-  }
-
-  @Test
-  public void testCreateOnePropertyLinkMapByKeyIndex()
-  {
-    final OIndex result = oClass.createIndex( "ClassIndexTestPropertyLinkedMap", OClass.INDEX_TYPE.UNIQUE, "fLinkMap by key" );
-
-    assertEquals( result.getName(), "ClassIndexTestPropertyLinkedMap" );
-    assertEquals( oClass.getClassIndex( "ClassIndexTestPropertyLinkedMap" ).getName(), result.getName() );
-    assertEquals(
-      database.getMetadata().getIndexManager().getClassIndex( "ClassIndexTestClass", "ClassIndexTestPropertyLinkedMap" ).getName(),
-      result.getName() );
-
-    final OIndexDefinition indexDefinition = result.getDefinition();
-
-    assertTrue( indexDefinition instanceof OPropertyMapIndexDefinition );
-    assertEquals( indexDefinition.getFields().get( 0 ), "fLinkMap" );
-    assertEquals( indexDefinition.getTypes()[0], OType.STRING );
-    assertEquals(((OPropertyMapIndexDefinition)indexDefinition).getIndexBy(), OPropertyMapIndexDefinition.INDEX_BY.KEY );
-  }
-
-  @Test
-  public void testCreateOnePropertyLinkMapByValueIndex()
-  {
-    final OIndex result = oClass.createIndex( "ClassIndexTestPropertyLinkedMap", OClass.INDEX_TYPE.UNIQUE, "fLinkMap by value" );
-
-    assertEquals( result.getName(), "ClassIndexTestPropertyLinkedMap" );
-    assertEquals( oClass.getClassIndex( "ClassIndexTestPropertyLinkedMap" ).getName(), result.getName() );
-    assertEquals(
-      database.getMetadata().getIndexManager().getClassIndex( "ClassIndexTestClass", "ClassIndexTestPropertyLinkedMap" ).getName(),
-      result.getName() );
-
-    final OIndexDefinition indexDefinition = result.getDefinition();
-
-    assertTrue( indexDefinition instanceof OPropertyMapIndexDefinition );
-    assertEquals( indexDefinition.getFields().get( 0 ), "fLinkMap" );
-    assertEquals( indexDefinition.getTypes()[0], OType.LINK );
-    assertEquals(((OPropertyMapIndexDefinition)indexDefinition).getIndexBy(), OPropertyMapIndexDefinition.INDEX_BY.VALUE );
-  }
-
 
   @Test
   public void testCreateOnePropertyByKeyEmbeddedMapIndex()
@@ -317,8 +259,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testAreIndexedOneProperty()
   {
@@ -330,8 +271,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testAreIndexedDoesNotContainProperty()
   {
@@ -343,8 +283,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testAreIndexedTwoProperties()
   {
@@ -356,8 +295,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testAreIndexedThreeProperties()
   {
@@ -370,8 +308,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testAreIndexedPropertiesNotFirst()
   {
@@ -383,8 +320,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testAreIndexedPropertiesMoreThanNeeded()
   {
@@ -396,8 +332,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "createParentPropertyIndex", "testCreateOnePropertyEmbeddedMapIndex",
-    "testCreateOnePropertyByKeyEmbeddedMapIndex", "testCreateOnePropertyByValueEmbeddedMapIndex",
-    "testCreateOnePropertyLinkedMapIndex", "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByKeyEmbeddedMapIndex", "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testAreIndexedParentProperty()
   {
@@ -409,8 +344,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex"
-    , "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    , "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testAreIndexedParentChildProperty()
   {
@@ -422,8 +356,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testAreIndexedOnePropertyArrayParams()
   {
@@ -435,8 +368,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testAreIndexedDoesNotContainPropertyArrayParams()
   {
@@ -448,8 +380,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testAreIndexedTwoPropertiesArrayParams()
   {
@@ -461,8 +392,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testAreIndexedThreePropertiesArrayParams()
   {
@@ -475,8 +405,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testAreIndexedPropertiesNotFirstArrayParams()
   {
@@ -488,8 +417,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testAreIndexedPropertiesMoreThanNeededArrayParams()
   {
@@ -501,8 +429,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "createParentPropertyIndex", "testCreateOnePropertyEmbeddedMapIndex",
-    "testCreateOnePropertyByKeyEmbeddedMapIndex", "testCreateOnePropertyByValueEmbeddedMapIndex",
-    "testCreateOnePropertyLinkedMapIndex", "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByKeyEmbeddedMapIndex", "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testAreIndexedParentPropertyArrayParams()
   {
@@ -514,8 +441,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testAreIndexedParentChildPropertyArrayParams()
   {
@@ -527,8 +453,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testGetClassInvolvedIndexesOnePropertyArrayParams()
   {
@@ -544,8 +469,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testGetClassInvolvedIndexesTwoPropertiesArrayParams()
   {
@@ -559,8 +483,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testGetClassInvolvedIndexesThreePropertiesArrayParams()
   {
@@ -574,8 +497,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testGetClassInvolvedIndexesNotInvolvedPropertiesArrayParams()
   {
@@ -587,8 +509,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testGetClassInvolvedIndexesPropertiesMorThanNeededArrayParams()
   {
@@ -600,8 +521,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testGetInvolvedIndexesPropertiesMorThanNeeded()
   {
@@ -613,8 +533,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testGetClassInvolvedIndexesOneProperty()
   {
@@ -630,8 +549,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testGetClassInvolvedIndexesTwoProperties()
   {
@@ -645,8 +563,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testGetClassInvolvedIndexesThreeProperties()
   {
@@ -659,8 +576,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testGetClassInvolvedIndexesNotInvolvedProperties()
   {
@@ -672,8 +588,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testGetClassInvolvedIndexesPropertiesMorThanNeeded()
   {
@@ -685,8 +600,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testGetInvolvedIndexesOnePropertyArrayParams()
   {
@@ -702,8 +616,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testGetInvolvedIndexesTwoPropertiesArrayParams()
   {
@@ -717,8 +630,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testGetInvolvedIndexesThreePropertiesArrayParams()
   {
@@ -732,8 +644,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testGetInvolvedIndexesNotInvolvedPropertiesArrayParams()
   {
@@ -745,8 +656,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testGetParentInvolvedIndexesArrayParams()
   {
@@ -759,8 +669,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testGetParentChildInvolvedIndexesArrayParams()
   {
@@ -772,8 +681,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testGetInvolvedIndexesOneProperty()
   {
@@ -789,8 +697,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testGetInvolvedIndexesTwoProperties()
   {
@@ -804,8 +711,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testGetInvolvedIndexesThreeProperties()
   {
@@ -819,8 +725,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testGetInvolvedIndexesNotInvolvedProperties()
   {
@@ -832,8 +737,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testGetParentInvolvedIndexes()
   {
@@ -846,8 +750,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testGetParentChildInvolvedIndexes()
   {
@@ -859,8 +762,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "testCreateOnePropertyEmbeddedMapIndex", "testCreateOnePropertyByKeyEmbeddedMapIndex",
-    "testCreateOnePropertyByValueEmbeddedMapIndex", "testCreateOnePropertyLinkedMapIndex",
-    "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testGetClassIndexes()
   {
@@ -891,15 +793,7 @@ public class ClassIndexTest
       OPropertyMapIndexDefinition.INDEX_BY.VALUE );
     expectedIndexDefinitions.add( propertyMapByValueIndexDefinition );
 
-    final OPropertyMapIndexDefinition propertyLinkMapByKeyIndexDefinition = new OPropertyMapIndexDefinition( "ClassIndexTestClass", "fLinkMap", OType.STRING,
-      OPropertyMapIndexDefinition.INDEX_BY.KEY );
-    expectedIndexDefinitions.add( propertyLinkMapByKeyIndexDefinition );
-
-    final OPropertyMapIndexDefinition propertyLinkMapByValueIndexDefinition = new OPropertyMapIndexDefinition( "ClassIndexTestClass", "fLinkMap", OType.LINK,
-      OPropertyMapIndexDefinition.INDEX_BY.VALUE );
-    expectedIndexDefinitions.add( propertyLinkMapByValueIndexDefinition );
-
-    assertEquals( indexes.size(), 7);
+    assertEquals( indexes.size(), 6);
 
     for( final OIndex index : indexes ) {
       assertTrue( expectedIndexDefinitions.contains( index.getDefinition() ) );
@@ -910,8 +804,7 @@ public class ClassIndexTest
   @Test(dependsOnMethods = {
     "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
     "testCreateOnePropertyIndexTest", "createParentPropertyIndex", "testCreateOnePropertyEmbeddedMapIndex",
-    "testCreateOnePropertyByKeyEmbeddedMapIndex", "testCreateOnePropertyByValueEmbeddedMapIndex",
-    "testCreateOnePropertyLinkedMapIndex", "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex"
+    "testCreateOnePropertyByKeyEmbeddedMapIndex", "testCreateOnePropertyByValueEmbeddedMapIndex"
   })
   public void testGetIndexes()
   {
@@ -945,15 +838,7 @@ public class ClassIndexTest
       OPropertyMapIndexDefinition.INDEX_BY.VALUE );
     expectedIndexDefinitions.add( propertyMapByValueIndexDefinition );
 
-    final OPropertyMapIndexDefinition propertyLinkMapByKeyIndexDefinition = new OPropertyMapIndexDefinition( "ClassIndexTestClass", "fLinkMap", OType.STRING,
-      OPropertyMapIndexDefinition.INDEX_BY.KEY );
-    expectedIndexDefinitions.add( propertyLinkMapByKeyIndexDefinition );
-
-    final OPropertyMapIndexDefinition propertyLinkMapByValueIndexDefinition = new OPropertyMapIndexDefinition( "ClassIndexTestClass", "fLinkMap", OType.LINK,
-      OPropertyMapIndexDefinition.INDEX_BY.VALUE );
-    expectedIndexDefinitions.add( propertyLinkMapByValueIndexDefinition );
-
-    assertEquals( indexes.size(), 8 );
+    assertEquals( indexes.size(), 7 );
 
     for( final OIndex index : indexes ) {
       assertTrue( expectedIndexDefinitions.contains( index.getDefinition() ) );

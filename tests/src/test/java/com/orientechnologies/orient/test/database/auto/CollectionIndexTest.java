@@ -68,7 +68,6 @@ public class CollectionIndexTest {
 		database.close();
 	}
 
-	@Test
 	public void testIndexCollection() {
 		Collector collector = new Collector();
 		collector.setStringCollection(Arrays.asList("spam", "eggs"));
@@ -88,7 +87,6 @@ public class CollectionIndexTest {
 		}
 	}
 
-	@Test
 	public void testIndexCollectionUpdate() {
 		Collector collector = new Collector();
 		collector.setStringCollection(Arrays.asList("spam", "eggs"));
@@ -110,7 +108,48 @@ public class CollectionIndexTest {
 		}
 	}
 
-	@Test
+	public void testIndexCollectionUpdateAddItem() {
+		Collector collector = new Collector();
+		collector.setStringCollection(Arrays.asList("spam", "eggs"));
+		database.save(collector);
+
+		database.command(new OCommandSQL("UPDATE " + collector.getId() + " add stringCollection = 'cookies'")).execute();
+
+		List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:Collector.stringCollection")).execute();
+
+		Assert.assertNotNull(result);
+		Assert.assertEquals(result.size(), 3);
+		for (ODocument d : result) {
+			Assert.assertTrue(d.containsField("key"));
+			Assert.assertTrue(d.containsField("rid"));
+
+			if (!d.field("key").equals("spam") && !d.field("key").equals("eggs") && !d.field("key").equals("cookies")) {
+				Assert.fail("Unknown key found: " + d.field("key"));
+			}
+		}
+	}
+
+	public void testIndexCollectionUpdateRemoveItem() {
+		Collector collector = new Collector();
+		collector.setStringCollection(Arrays.asList("spam", "eggs"));
+		database.save(collector);
+
+		database.command(new OCommandSQL("UPDATE " + collector.getId() + " remove stringCollection = 'spam'")).execute();
+
+		List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:Collector.stringCollection")).execute();
+
+		Assert.assertNotNull(result);
+		Assert.assertEquals(result.size(), 1);
+		for (ODocument d : result) {
+			Assert.assertTrue(d.containsField("key"));
+			Assert.assertTrue(d.containsField("rid"));
+
+			if (!d.field("key").equals("eggs")) {
+				Assert.fail("Unknown key found: " + d.field("key"));
+			}
+		}
+	}
+
 	public void testIndexCollectionRemove() {
 		Collector collector = new Collector();
 		collector.setStringCollection(Arrays.asList("spam", "eggs"));
@@ -123,7 +162,6 @@ public class CollectionIndexTest {
 		Assert.assertEquals(result.size(), 0);
 	}
 
-	@Test
 	public void testIndexCollectionSQL() {
 		Collector collector = new Collector();
 		collector.setStringCollection(Arrays.asList("spam", "eggs"));

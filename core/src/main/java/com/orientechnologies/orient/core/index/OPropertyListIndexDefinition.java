@@ -18,6 +18,9 @@ package com.orientechnologies.orient.core.index;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
 /**
@@ -27,49 +30,64 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
  * {@link com.orientechnologies.orient.core.metadata.schema.OType#EMBEDDEDSET}
  * properties.
  */
-public class OPropertyListIndexDefinition extends OPropertyIndexDefinition implements OIndexDefinitionMultiValue
-{
+public class OPropertyListIndexDefinition extends OAbstractIndexDefinitionMultiValue implements OIndexDefinitionMultiValue {
 
-  public OPropertyListIndexDefinition( final String iClassName, final String iField, final OType iType )
-  {
-    super( iClassName, iField, iType );
-  }
+	public OPropertyListIndexDefinition(final String iClassName, final String iField, final OType iType) {
+		super(iClassName, iField, iType);
+	}
 
-  public OPropertyListIndexDefinition()
-  {
-  }
+	public OPropertyListIndexDefinition() {
+	}
 
-  @Override
-  public Object createValue( final List<?> params )
-  {
-    if(!(params.get( 0 ) instanceof Collection))
-      return null;
+	@Override
+	public Object createValue(final List<?> params) {
+		if (!(params.get(0) instanceof Collection))
+			return null;
 
-    final Collection multiValueCollection = (Collection) params.get(0);
-    final List<Object> values = new ArrayList<Object>( multiValueCollection.size() );
-    for( final Object item : multiValueCollection ) {
-      values.add( createSingleValue( item ) );
-    }
-    return values;
-  }
+		final Collection multiValueCollection = (Collection) params.get(0);
+		final List<Object> values = new ArrayList<Object>(multiValueCollection.size());
+		for (final Object item : multiValueCollection) {
+			values.add(createSingleValue(item));
+		}
+		return values;
+	}
 
-  @Override
-  public Object createValue( final Object... params )
-  {
-    if (!( params[0] instanceof Collection ) ) {
-      return null;
-    }
+	@Override
+	public Object createValue(final Object... params) {
+		if (!(params[0] instanceof Collection)) {
+			return null;
+		}
 
-    final Collection multiValueCollection = (Collection) params[0];
-    final List<Object> values = new ArrayList<Object>( multiValueCollection.size() );
-    for( final Object item : multiValueCollection ) {
-        values.add( createSingleValue( item ) );
-    }
-    return values;
-  }
+		final Collection multiValueCollection = (Collection) params[0];
+		final List<Object> values = new ArrayList<Object>(multiValueCollection.size());
+		for (final Object item : multiValueCollection) {
+			values.add(createSingleValue(item));
+		}
+		return values;
+	}
 
-  public Object createSingleValue( final Object param )
-  {
-    return OType.convert( param, keyType.getDefaultJavaType() );
-  }
+	public Object createSingleValue(final Object param) {
+		return OType.convert(param, keyType.getDefaultJavaType());
+	}
+
+	public void processChangeEvent(final OMultiValueChangeEvent changeEvent, final Map<Object, Integer> keysToAdd,
+																 final Map<Object, Integer> keysToRemove) {
+		switch (changeEvent.getChangeType()) {
+			case ADD: {
+				processAdd(createSingleValue(changeEvent.getValue()), keysToAdd, keysToRemove);
+				break;
+			}
+			case REMOVE: {
+				processRemoval(createSingleValue(changeEvent.getOldValue()), keysToAdd, keysToRemove);
+				break;
+			}
+			case UPDATE: {
+				processRemoval(createSingleValue(changeEvent.getOldValue()), keysToAdd, keysToRemove);
+				processAdd(createSingleValue(changeEvent.getValue()), keysToAdd, keysToRemove);
+				break;
+			}
+			default:
+				throw new IllegalArgumentException("Invalid change type : " + changeEvent.getChangeType());
+		}
+	}
 }

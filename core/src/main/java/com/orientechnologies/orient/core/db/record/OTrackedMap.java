@@ -16,8 +16,7 @@
 package com.orientechnologies.orient.core.db.record;
 
 import java.io.Serializable;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -30,10 +29,11 @@ import com.orientechnologies.orient.core.record.ORecord;
  * 
  */
 @SuppressWarnings("serial")
-public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordElement, Serializable {
+public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordElement, OTrackedMultiValue<Object, T>, Serializable {
 	final protected ORecord<?>		sourceRecord;
 	private STATUS								status				= STATUS.NOT_LOADED;
-	protected final static Object	ENTRY_REMOVAL	= new Object();
+  private Set<OMultiValueChangeListener<Object, T>> changeListeners =
+          Collections.newSetFromMap(new WeakHashMap<OMultiValueChangeListener<Object, T>, Boolean>());
 
 	public OTrackedMap(final ORecord<?> iRecord, final Map<Object, T> iOrigin) {
 		this(iRecord);
@@ -50,24 +50,47 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
 	@SuppressWarnings("unchecked")
 	@Override
 	public T put(final Object iKey, final T iValue) {
-		Object oldValue = super.get(iKey);
-		if (oldValue != null && oldValue == iValue)
-			return (T) oldValue;
+    boolean containsKey = containsKey( iKey );
+      
+    T oldValue = super.put(iKey, iValue);
 
-		setDirty();
-		return super.put(iKey, iValue);
+    if(containsKey && oldValue == iValue)
+      return oldValue;
+
+    if (containsKey)
+      fireCollectionChangedEvent( new OMultiValueChangeEvent<Object, T>( OMultiValueChangeEvent.OChangeType.UPDATE, iKey,iValue, oldValue ) );
+    else
+      fireCollectionChangedEvent( new OMultiValueChangeEvent<Object, T>( OMultiValueChangeEvent.OChangeType.ADD,iKey, iValue ) );
+
+    return oldValue;
 	}
 
 	@Override
 	public T remove(final Object iKey) {
-		setDirty();
-		return super.remove(iKey);
+    boolean containsKey = containsKey( iKey );
+		final T oldValue = super.remove(iKey);
+
+    if(containsKey)
+      fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>( OMultiValueChangeEvent.OChangeType.REMOVE, iKey, null, oldValue) );
+
+		return oldValue;
 	}
 
 	@Override
 	public void clear() {
-		setDirty();
+    final Map<Object, T> origValues;
+    if(changeListeners.isEmpty())
+      origValues = null;
+    else 
+      origValues = new HashMap<Object, T>( this );
+    
 		super.clear();
+    
+    if(origValues != null) {
+      for(Map.Entry<Object, T> entry : origValues.entrySet())
+        fireCollectionChangedEvent( new OMultiValueChangeEvent<Object, T>( OMultiValueChangeEvent.OChangeType.REMOVE, entry.getKey(), null, entry.getValue() ) );
+    } else
+      setDirty();
 	}
 
 	@Override
@@ -98,4 +121,50 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
 	public void setInternalStatus(final STATUS iStatus) {
 		status = iStatus;
 	}
+
+  public void addChangeListener( OMultiValueChangeListener<Object, T> changeListener ) {
+    changeListeners.add(changeListener);
+  }
+
+  public void removeRecordChangeListener(OMultiValueChangeListener<Object, T> changeListener) {
+    changeListeners.remove(changeListener);
+  }
+
+  public Map<Object, T> returnOriginalState( final List<OMultiValueChangeEvent<Object, T>> multiValueChangeEvents )
+  {
+    final Map<Object, T> reverted = new HashMap<Object, T>( this );
+
+    final ListIterator<OMultiValueChangeEvent<Object, T>> listIterator =
+      multiValueChangeEvents.listIterator( multiValueChangeEvents.size());
+
+    while (listIterator.hasPrevious()) {
+      final OMultiValueChangeEvent<Object, T> event = listIterator.previous();
+      switch (event.getChangeType()) {
+        case ADD:
+          reverted.remove( event.getKey() );
+          break;
+        case REMOVE:
+          reverted.put( event.getKey(), event.getOldValue() );
+          break;
+        case UPDATE:
+          reverted.put( event.getKey(), event.getOldValue() );
+          break;
+        default:
+          throw new IllegalArgumentException( "Invalid change type : " + event.getChangeType() );
+      }
+    }
+
+    return reverted;
+  }
+
+  protected void fireCollectionChangedEvent( final OMultiValueChangeEvent<Object, T> event) {
+    if (status == STATUS.UNMARSHALLING)
+      return;
+
+    setDirty();
+    for(final OMultiValueChangeListener<Object, T> changeListener : changeListeners) {
+      if(changeListener != null)
+        changeListener.onAfterRecordChanged( event );
+    }
+  }
 }

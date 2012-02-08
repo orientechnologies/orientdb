@@ -48,6 +48,9 @@ import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.db.object.OLazyObjectMap;
 import com.orientechnologies.orient.core.db.object.OObjectNotDetachedException;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -531,7 +534,7 @@ public class OObjectSerializerHelper {
 			}
 
 			fieldValue = typeToStream(fieldValue, schemaProperty != null ? schemaProperty.getType() : null, iEntityManager,
-					iObj2RecHandler, db, iSaveOnlyDirty);
+					iObj2RecHandler, db, iRecord, iSaveOnlyDirty);
 
 			iRecord.field(fieldName, fieldValue);
 		}
@@ -595,7 +598,7 @@ public class OObjectSerializerHelper {
 	}
 
 	private static Object typeToStream(Object iFieldValue, OType iType, final OEntityManager iEntityManager,
-			final OUserObject2RecordHandler iObj2RecHandler, final ODatabaseObjectTx db, final boolean iSaveOnlyDirty) {
+			final OUserObject2RecordHandler iObj2RecHandler, final ODatabaseObjectTx db,  final ODocument iRecord, final boolean iSaveOnlyDirty) {
 		if (iFieldValue == null)
 			return null;
 
@@ -604,13 +607,13 @@ public class OObjectSerializerHelper {
 
 			if (fieldClass.isArray()) {
 				// ARRAY
-				iFieldValue = multiValueToStream(Arrays.asList(iFieldValue), iType, iEntityManager, iObj2RecHandler, db, iSaveOnlyDirty);
+				iFieldValue = multiValueToStream(Arrays.asList(iFieldValue), iType, iEntityManager, iObj2RecHandler, db, iRecord, iSaveOnlyDirty);
 			} else if (Collection.class.isAssignableFrom(fieldClass)) {
 				// COLLECTION (LIST OR SET)
-				iFieldValue = multiValueToStream(iFieldValue, iType, iEntityManager, iObj2RecHandler, db, iSaveOnlyDirty);
+				iFieldValue = multiValueToStream(iFieldValue, iType, iEntityManager, iObj2RecHandler, db, iRecord,  iSaveOnlyDirty);
 			} else if (Map.class.isAssignableFrom(fieldClass)) {
 				// MAP
-				iFieldValue = multiValueToStream(iFieldValue, iType, iEntityManager, iObj2RecHandler, db, iSaveOnlyDirty);
+				iFieldValue = multiValueToStream(iFieldValue, iType, iEntityManager, iObj2RecHandler, db, iRecord, iSaveOnlyDirty);
 			} else if (fieldClass.isEnum()) {
 				// ENUM
 				iFieldValue = ((Enum<?>) iFieldValue).name();
@@ -643,7 +646,7 @@ public class OObjectSerializerHelper {
 	}
 
 	private static Object multiValueToStream(final Object iMultiValue, OType iType, final OEntityManager iEntityManager,
-			final OUserObject2RecordHandler iObj2RecHandler, final ODatabaseObjectTx db, final boolean iSaveOnlyDirty) {
+			final OUserObject2RecordHandler iObj2RecHandler, final ODatabaseObjectTx db, final ODocument iRecord, final boolean iSaveOnlyDirty) {
 		if (iMultiValue == null)
 			return null;
 
@@ -687,9 +690,15 @@ public class OObjectSerializerHelper {
 
 		// CREATE THE RETURN MULTI VALUE OBJECT BASED ON DISCOVERED TYPE
 		if (iType.equals(OType.EMBEDDEDSET) || iType.equals(OType.LINKSET)) {
-			result = new HashSet<Object>();
+      if(iRecord != null && iType.equals( OType.EMBEDDEDSET ))
+        result = new OTrackedSet<Object>( iRecord );
+      else
+			  result = new HashSet<Object>();
 		} else if (iType.equals(OType.EMBEDDEDLIST) || iType.equals(OType.LINKLIST)) {
-			result = new ArrayList<Object>();
+      if(iRecord != null && iType.equals( OType.EMBEDDEDLIST ))
+        result = new OTrackedList<Object>( iRecord );
+      else
+			  result = new ArrayList<Object>();
 		}
 		// } else if (iType.equals(OType.EMBEDDEDLIST) || iType.equals(OType.LINKLIST)) {
 		// result = new ArrayList<Object>();
@@ -707,21 +716,24 @@ public class OObjectSerializerHelper {
 
 		if (iMultiValue instanceof Set<?>) {
 			for (Object o : sourceValues) {
-				((Collection<Object>) result).add(typeToStream(o, linkedType, iEntityManager, iObj2RecHandler, db, iSaveOnlyDirty));
+				((Collection<Object>) result).add(typeToStream(o, linkedType, iEntityManager, iObj2RecHandler, db, null, iSaveOnlyDirty));
 			}
 		} else if (iMultiValue instanceof List<?>) {
 			for (int i = 0; i < sourceValues.size(); i++) {
 				((List<Object>) result).add(typeToStream(((List<?>) sourceValues).get(i), linkedType, iEntityManager, iObj2RecHandler, db,
-						iSaveOnlyDirty));
+						null, iSaveOnlyDirty));
 			}
 		} else {
 			if (iMultiValue instanceof OLazyObjectMap<?>) {
 				result = ((OLazyObjectMap<?>) iMultiValue).getUnderlying();
 			} else {
-				result = new HashMap<String, Object>();
+        if(iRecord != null && iType.equals( OType.EMBEDDEDMAP ))
+          result = new OTrackedMap<Object>( iRecord );
+        else
+				  result = new HashMap<String, Object>();
 				for (Entry<String, Object> entry : ((Map<String, Object>) iMultiValue).entrySet()) {
 					((Map<String, Object>) result).put(entry.getKey(),
-							typeToStream(entry.getValue(), linkedType, iEntityManager, iObj2RecHandler, db, iSaveOnlyDirty));
+							typeToStream(entry.getValue(), linkedType, iEntityManager, iObj2RecHandler, db, null, iSaveOnlyDirty));
 				}
 			}
 		}
