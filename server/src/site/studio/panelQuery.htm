@@ -108,9 +108,12 @@
 		code = jQuery.trim(code);
 		queryEditor.setCode(code);
 		controller.parameter('queryRequest', code);
+		var limit = $('#limit').val();
 
-		queryResult = orientServer.query(code + "/" + $('#limit').val());
+		queryResult = orientServer.query(code + "/" + limit);
 		controller.parameter('queryResponse', queryResult);
+
+		controller.parameter('queryLimit', limit);
 
 		var savedQueries = controller.parameter('savedQueries');
 		if (savedQueries == null) {
@@ -155,6 +158,10 @@
 	previous = controller.parameter('queryResponse');
 	if (previous != null)
 		queryResponse(previous);
+
+	previous = controller.parameter('queryLimit');
+	if (previous != null)
+		$("#limit").val(previous);
 
 	refreshSavedQueries();
 

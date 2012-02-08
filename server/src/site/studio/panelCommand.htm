@@ -129,6 +129,8 @@
 		commandEditor.setCode($(this).val());
 	});
 
+	refreshSavedCommands();
+
 	function refreshSavedCommands() {
 		var savedCommands = controller.parameter('savedCommands');
 		var options = '';
