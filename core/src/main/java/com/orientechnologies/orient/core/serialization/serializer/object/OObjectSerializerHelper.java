@@ -284,8 +284,39 @@ public class OObjectSerializerHelper {
 								}
 							}
 
-						}
+						} else {
+							// TRANSFORM THE MULTI-VALUE
+							if (fieldValue instanceof List) {
+								// LIST: TRANSFORM EACH SINGLE ITEM
+								final List<Object> list = (List<Object>) fieldValue;
+								Object v;
+								for (int i = 0; i < list.size(); ++i) {
+									v = list.get(i);
+									if (v != null)
+										list.set(i, unserializeFieldValue(null, null, v));
+								}
+							} else if (fieldValue instanceof Set) {
+								// SET: CREATE A TEMP SET TO WORK WITH ITEMS
+								final Set<Object> newColl = new HashSet<Object>();
+								final Set<Object> set = (Set<Object>) fieldValue;
+								for (Object v : set)
+									if (v != null)
+										newColl.add(unserializeFieldValue(null, null, v));
 
+								fieldValue = newColl;
+							} else if (fieldValue instanceof Map) {
+								// MAP: TRANSFORM EACH SINGLE ITEM
+								final Map<String, Object> map = (Map<String, Object>) fieldValue;
+								Object v;
+								for (Entry<String, ?> entry : map.entrySet()) {
+									v = entry.getValue();
+									if (v != null)
+										map.put(entry.getKey(), unserializeFieldValue(null, null, v));
+
+								}
+							}
+						}
+					
 					setFieldValue(iPojo, fieldName, unserializeFieldValue(iPojo, fieldName, fieldValue));
 				}
 			}
@@ -598,7 +629,8 @@ public class OObjectSerializerHelper {
 	}
 
 	private static Object typeToStream(Object iFieldValue, OType iType, final OEntityManager iEntityManager,
-			final OUserObject2RecordHandler iObj2RecHandler, final ODatabaseObjectTx db,  final ODocument iRecord, final boolean iSaveOnlyDirty) {
+			final OUserObject2RecordHandler iObj2RecHandler, final ODatabaseObjectTx db, final ODocument iRecord,
+			final boolean iSaveOnlyDirty) {
 		if (iFieldValue == null)
 			return null;
 
@@ -607,10 +639,11 @@ public class OObjectSerializerHelper {
 
 			if (fieldClass.isArray()) {
 				// ARRAY
-				iFieldValue = multiValueToStream(Arrays.asList(iFieldValue), iType, iEntityManager, iObj2RecHandler, db, iRecord, iSaveOnlyDirty);
+				iFieldValue = multiValueToStream(Arrays.asList(iFieldValue), iType, iEntityManager, iObj2RecHandler, db, iRecord,
+						iSaveOnlyDirty);
 			} else if (Collection.class.isAssignableFrom(fieldClass)) {
 				// COLLECTION (LIST OR SET)
-				iFieldValue = multiValueToStream(iFieldValue, iType, iEntityManager, iObj2RecHandler, db, iRecord,  iSaveOnlyDirty);
+				iFieldValue = multiValueToStream(iFieldValue, iType, iEntityManager, iObj2RecHandler, db, iRecord, iSaveOnlyDirty);
 			} else if (Map.class.isAssignableFrom(fieldClass)) {
 				// MAP
 				iFieldValue = multiValueToStream(iFieldValue, iType, iEntityManager, iObj2RecHandler, db, iRecord, iSaveOnlyDirty);
@@ -637,16 +670,22 @@ public class OObjectSerializerHelper {
 					// }
 					iObj2RecHandler.registerUserObject(pojo, linkedDocument);
 
-				} else
-					throw new OSerializationException("Linked type [" + iFieldValue.getClass() + ":" + iFieldValue
-							+ "] cannot be serialized because is not part of registered entities. To fix this error register this class");
+				} else {
+					final Object result = serializeFieldValue(null, null, iFieldValue);
+					if (iFieldValue == result)
+						throw new OSerializationException("Linked type [" + iFieldValue.getClass() + ":" + iFieldValue
+								+ "] cannot be serialized because is not part of registered entities. To fix this error register this class");
+
+					iFieldValue = result;
+				}
 			}
 		}
 		return iFieldValue;
 	}
 
 	private static Object multiValueToStream(final Object iMultiValue, OType iType, final OEntityManager iEntityManager,
-			final OUserObject2RecordHandler iObj2RecHandler, final ODatabaseObjectTx db, final ODocument iRecord, final boolean iSaveOnlyDirty) {
+			final OUserObject2RecordHandler iObj2RecHandler, final ODatabaseObjectTx db, final ODocument iRecord,
+			final boolean iSaveOnlyDirty) {
 		if (iMultiValue == null)
 			return null;
 
@@ -690,15 +729,15 @@ public class OObjectSerializerHelper {
 
 		// CREATE THE RETURN MULTI VALUE OBJECT BASED ON DISCOVERED TYPE
 		if (iType.equals(OType.EMBEDDEDSET) || iType.equals(OType.LINKSET)) {
-      if(iRecord != null && iType.equals( OType.EMBEDDEDSET ))
-        result = new OTrackedSet<Object>( iRecord );
-      else
-			  result = new HashSet<Object>();
+			if (iRecord != null && iType.equals(OType.EMBEDDEDSET))
+				result = new OTrackedSet<Object>(iRecord);
+			else
+				result = new HashSet<Object>();
 		} else if (iType.equals(OType.EMBEDDEDLIST) || iType.equals(OType.LINKLIST)) {
-      if(iRecord != null && iType.equals( OType.EMBEDDEDLIST ))
-        result = new OTrackedList<Object>( iRecord );
-      else
-			  result = new ArrayList<Object>();
+			if (iRecord != null && iType.equals(OType.EMBEDDEDLIST))
+				result = new OTrackedList<Object>(iRecord);
+			else
+				result = new ArrayList<Object>();
 		}
 		// } else if (iType.equals(OType.EMBEDDEDLIST) || iType.equals(OType.LINKLIST)) {
 		// result = new ArrayList<Object>();
@@ -727,10 +766,10 @@ public class OObjectSerializerHelper {
 			if (iMultiValue instanceof OLazyObjectMap<?>) {
 				result = ((OLazyObjectMap<?>) iMultiValue).getUnderlying();
 			} else {
-        if(iRecord != null && iType.equals( OType.EMBEDDEDMAP ))
-          result = new OTrackedMap<Object>( iRecord );
-        else
-				  result = new HashMap<String, Object>();
+				if (iRecord != null && iType.equals(OType.EMBEDDEDMAP))
+					result = new OTrackedMap<Object>(iRecord);
+				else
+					result = new HashMap<String, Object>();
 				for (Entry<String, Object> entry : ((Map<String, Object>) iMultiValue).entrySet()) {
 					((Map<String, Object>) result).put(entry.getKey(),
 							typeToStream(entry.getValue(), linkedType, iEntityManager, iObj2RecHandler, db, null, iSaveOnlyDirty));

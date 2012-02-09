@@ -16,12 +16,14 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -47,12 +49,14 @@ public class ObjectTreeTest {
 	protected int							unserialized;
 
 	public class CustomClass {
-		private String			name;
-		private CustomType	custom;
+		private String						name;
+		private CustomType				custom;
+		private List<CustomType>	customTypeList;
 
-		public CustomClass(String iName, CustomType iCustom) {
+		public CustomClass(String iName, CustomType iCustom, List<CustomType> iCustomTypeList) {
 			name = iName;
 			custom = iCustom;
+			customTypeList = iCustomTypeList;
 		}
 	}
 
@@ -65,7 +69,7 @@ public class ObjectTreeTest {
 	}
 
 	@Parameters(value = "url")
-	public ObjectTreeTest(String iURL) {
+	public ObjectTreeTest(@Optional(value = "memory:test") String iURL) {
 		url = iURL;
 	}
 
@@ -78,7 +82,11 @@ public class ObjectTreeTest {
 	public void open() {
 		database = new ODatabaseObjectTx(url);
 		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain");
-		database.open("admin", "admin");
+		if ("memory:test".equals(database.getURL())) {
+			database.create();
+		} else {
+			database.open("admin", "admin");
+		}
 	}
 
 	@Test
@@ -218,13 +226,16 @@ public class ObjectTreeTest {
 
 		database.getMetadata().getSchema().createClass("CustomClass");
 
-		CustomClass pojo = new CustomClass("test", new CustomType(100l));
+		List<CustomType> customTypesList = new ArrayList<CustomType>();
+		customTypesList.add(new CustomType(101L));
+
+		CustomClass pojo = new CustomClass("test", new CustomType(100L), customTypesList);
 		database.save(pojo);
-		Assert.assertEquals(serialized, 1);
+		Assert.assertEquals(serialized, 2);
 		Assert.assertEquals(unserialized, 0);
 
 		database.reload(pojo);
-		Assert.assertEquals(serialized, 1);
-		Assert.assertEquals(unserialized, 1);
+		Assert.assertEquals(serialized, 2);
+		Assert.assertEquals(unserialized, 2);
 	}
 }
