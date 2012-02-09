@@ -20,12 +20,17 @@ import java.util.Collection;
 import java.util.List;
 
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectPool;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerContext;
+import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelper;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.domain.business.Address;
 import com.orientechnologies.orient.test.domain.business.City;
@@ -38,12 +43,40 @@ public class ObjectTreeTest {
 	protected long						startRecordNumber;
 	private long							beginCities;
 	private String						url;
+	protected int							serialized;
+	protected int							unserialized;
+
+	public class CustomClass {
+		private String			name;
+		private CustomType	custom;
+
+		public CustomClass(String iName, CustomType iCustom) {
+			name = iName;
+			custom = iCustom;
+		}
+	}
+
+	public class CustomType {
+		public long	value;
+
+		public CustomType(Long iFieldValue) {
+			value = iFieldValue;
+		}
+	}
 
 	@Parameters(value = "url")
 	public ObjectTreeTest(String iURL) {
 		url = iURL;
+	}
 
-		database = new ODatabaseObjectTx(iURL);
+	@AfterClass
+	public void close() {
+		database.close();
+	}
+
+	@BeforeClass
+	public void open() {
+		database = new ODatabaseObjectTx(url);
 		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain");
 	}
 
@@ -164,8 +197,33 @@ public class ObjectTreeTest {
 		}
 	}
 
-	@Test(dependsOnMethods = "testQueryMultiCircular")
-	public void close() {
-		database.close();
+	@Test
+	public void testCustomTypes() {
+		database.getEntityManager().registerEntityClass(CustomClass.class);
+
+		OObjectSerializerContext serializerContext = new OObjectSerializerContext();
+		serializerContext.bind(new OObjectSerializer<CustomType, Long>() {
+
+			public Long serializeFieldValue(Object iPojo, String iFieldName, CustomType iFieldValue) {
+				serialized++;
+				return iFieldValue.value;
+			}
+
+			public CustomType unserializeFieldValue(Object iPojo, String iFieldName, Long iFieldValue) {
+				unserialized++;
+				return new CustomType(iFieldValue);
+			}
+
+		});
+		OObjectSerializerHelper.bindSerializerContext(null, serializerContext);
+
+		CustomClass pojo = new CustomClass("test", new CustomType(100l));
+		database.save(pojo);
+		Assert.assertEquals(serialized, 1);
+		Assert.assertEquals(unserialized, 0);
+
+		database.reload(pojo);
+		Assert.assertEquals(serialized, 1);
+		Assert.assertEquals(unserialized, 1);
 	}
 }

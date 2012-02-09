@@ -792,6 +792,9 @@ public class OObjectSerializerHelper {
 				if (Modifier.isStatic(fieldModifier) || Modifier.isNative(fieldModifier) || Modifier.isTransient(fieldModifier))
 					continue;
 
+				if (f.getName().equals("this$0"))
+					continue;
+
 				if (jpaTransientClass != null) {
 					Annotation ann = f.getAnnotation(jpaTransientClass);
 					if (ann != null)

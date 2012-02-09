@@ -35,14 +35,12 @@ public class OObjectSerializerContext implements OObjectSerializer<Object, Objec
 				final Type[] actualTypes = pt.getActualTypeArguments();
 				if (actualTypes[0] instanceof Class<?>) {
 					localSerializers.put((Class<?>) actualTypes[0], serializer);
-				}
-				else if (actualTypes[0] instanceof ParameterizedType) {
+				} else if (actualTypes[0] instanceof ParameterizedType) {
 					localSerializers.put((Class<?>) ((ParameterizedType) actualTypes[0]).getRawType(), serializer);
 				}
 				if (actualTypes[1] instanceof Class<?>) {
 					dbSerializers.put((Class<?>) actualTypes[1], serializer);
-				}
-				else if (actualTypes[1] instanceof ParameterizedType) {
+				} else if (actualTypes[1] instanceof ParameterizedType) {
 					dbSerializers.put((Class<?>) ((ParameterizedType) actualTypes[1]).getRawType(), serializer);
 				}
 			}
@@ -57,14 +55,12 @@ public class OObjectSerializerContext implements OObjectSerializer<Object, Objec
 				final Type[] actualTypes = pt.getActualTypeArguments();
 				if (actualTypes[0] instanceof Class<?>) {
 					localSerializers.remove((Class<?>) actualTypes[0]);
-				}
-				else if (actualTypes[0] instanceof ParameterizedType) {
+				} else if (actualTypes[0] instanceof ParameterizedType) {
 					localSerializers.remove((Class<?>) ((ParameterizedType) actualTypes[0]).getRawType());
 				}
 				if (actualTypes[1] instanceof Class<?>) {
 					dbSerializers.remove((Class<?>) actualTypes[1]);
-				}
-				else if (actualTypes[1] instanceof ParameterizedType) {
+				} else if (actualTypes[1] instanceof ParameterizedType) {
 					dbSerializers.remove((Class<?>) ((ParameterizedType) actualTypes[1]).getRawType());
 				}
 			}
