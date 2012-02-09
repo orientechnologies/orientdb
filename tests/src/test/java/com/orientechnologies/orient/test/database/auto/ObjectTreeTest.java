@@ -78,6 +78,7 @@ public class ObjectTreeTest {
 	public void open() {
 		database = new ODatabaseObjectTx(url);
 		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain");
+		database.open("admin", "admin");
 	}
 
 	@Test
@@ -94,8 +95,6 @@ public class ObjectTreeTest {
 
 	@Test
 	public void testPersonSaving() {
-		database.open("admin", "admin");
-
 		final long beginProfiles = database.countClusterElements("Profile");
 		beginCities = database.countClusterElements("City");
 
@@ -216,6 +215,8 @@ public class ObjectTreeTest {
 
 		});
 		OObjectSerializerHelper.bindSerializerContext(null, serializerContext);
+
+		database.getMetadata().getSchema().createClass("CustomClass");
 
 		CustomClass pojo = new CustomClass("test", new CustomType(100l));
 		database.save(pojo);
