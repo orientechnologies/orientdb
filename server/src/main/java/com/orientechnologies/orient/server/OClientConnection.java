@@ -23,7 +23,7 @@ import java.util.List;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 
@@ -81,8 +81,8 @@ public class OClientConnection {
 		return true;
 	}
 
-	public OChannelBinaryClient getChannel() {
-		return (OChannelBinaryClient) protocol.getChannel();
+	public OChannelBinary getChannel() {
+		return (OChannelBinary) protocol.getChannel();
 	}
 
 	public ONetworkProtocol getProtocol() {

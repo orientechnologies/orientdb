@@ -98,7 +98,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 	@Override
 	protected void onBeforeRequest() throws IOException {
 		if (clientTxId > -1)
-			connection = OClientConnectionManager.instance().getConnection(clientTxId);
+			connection = OClientConnectionManager.instance().getConnection(channel.socket, clientTxId);
 		else
 			connection = OClientConnectionManager.instance().connect(channel.socket, this);
 

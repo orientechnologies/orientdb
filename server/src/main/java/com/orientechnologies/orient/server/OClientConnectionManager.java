@@ -69,10 +69,14 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
 		return connection;
 	}
 
-	public OClientConnection getConnection(final int iChannelId) {
+	public OClientConnection getConnection(final Socket socket, final int iChannelId) {
 		acquireSharedLock();
 		try {
-			return connections.get(iChannelId);
+			final OClientConnection conn = connections.get(iChannelId);
+			if (conn != null && conn.getChannel().socket != socket)
+				throw new IllegalStateException("Requested sessionId " + iChannelId + " by connection " + socket
+						+ " while it's tied to connection " + conn.getChannel().socket);
+			return conn;
 		} finally {
 			releaseSharedLock();
 		}
