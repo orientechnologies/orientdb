@@ -520,7 +520,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 	}
 
 	private ORID importRecord() throws IOException, ParseException {
-		final String value = jsonReader.readString(OJSONReader.END_OBJECT, true);
+		String value = jsonReader.readString(OJSONReader.END_OBJECT, true);
+
+		// JUMP EMPTY RECORDS
+		while (!value.isEmpty() && value.charAt(0) != '{') {
+			value = value.substring(1);
+		}
 
 		record = ORecordSerializerJSON.INSTANCE.fromString(value, record);
 
