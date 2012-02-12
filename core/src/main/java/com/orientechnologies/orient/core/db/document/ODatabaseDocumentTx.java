@@ -320,4 +320,8 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 			getTransaction().close();
 		}
 	}
+
+	public String getType() {
+		return TYPE;
+	}
 }

@@ -31,6 +31,8 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -71,6 +73,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
 	protected String						user;
 	protected String						passwd;
+	private String							dbType;
 
 	public ONetworkProtocolBinary() {
 		super("OrientDB <- BinaryClient/?");
@@ -358,10 +361,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
 		final String dbURL = channel.readString();
 
+		dbType = ODatabaseDocument.TYPE;
+		if (connection.data.protocolVersion >= 8)
+			// READ DB-TYPE FROM THE CLIENT
+			dbType = channel.readString();
 		user = channel.readString();
 		passwd = channel.readString();
 
-		connection.database = openDatabase(dbURL, user, passwd);
+		connection.database = (ODatabaseDocumentTx) openDatabase(dbType, dbURL, user, passwd);
 		connection.rawDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
 
 		if (!(connection.database.getStorage() instanceof OStorageEmbedded) && !loadUserFromSchema(user, passwd)) {
@@ -441,7 +448,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
 		checkServerAccess("database.copy");
 
-		openDatabase(dbUrl, dbUser, dbPassword);
+		openDatabase(ODatabaseDocument.TYPE, dbUrl, dbUser, dbPassword);
 
 		final ODistributedServerManager manager = OServerMain.server().getHandler(ODistributedServerManager.class);
 		final ODistributedNode node = manager.getReplicator().getOrCreateDistributedNode(remoteServerName);
@@ -491,7 +498,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
 		checkServerAccess("database.delete");
 
-		connection.database = getDatabaseInstance(dbName, "local");
+		connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, "local");
 
 		OLogManager.instance().info(this, "Dropped database '%s", connection.database.getURL());
 
@@ -515,7 +522,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
 		checkServerAccess("database.exists");
 
-		connection.database = getDatabaseInstance(dbName, "local");
+		connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, "local");
 
 		beginResponse();
 		try {
@@ -530,11 +537,15 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 		setDataCommandInfo("Create database");
 
 		String dbName = channel.readString();
-		String storageMode = channel.readString();
+		String dbType = ODatabaseDocument.TYPE;
+		if (connection.data.protocolVersion >= 8)
+			// READ DB-TYPE FROM THE CLIENT
+			dbType = channel.readString();
+		String storageType = channel.readString();
 
 		checkServerAccess("database.create");
 		checkStorageExistence(dbName);
-		connection.database = getDatabaseInstance(dbName, storageMode);
+		connection.database = getDatabaseInstance(dbName, dbType, storageType);
 		createDatabase(connection.database, null, null);
 		connection.rawDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
 

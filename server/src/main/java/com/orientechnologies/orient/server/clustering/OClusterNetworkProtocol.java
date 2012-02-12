@@ -184,7 +184,8 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 
 			if (!databases.containsKey(dbName)) {
 				// OPEN THE DB FOR THE FIRST TIME
-				final ODatabaseDocumentTx db = openDatabase(dbName, serverUser.name, serverUser.password);
+				final ODatabaseDocumentTx db = (ODatabaseDocumentTx) openDatabase(ODatabaseDocumentTx.TYPE, dbName, serverUser.name,
+						serverUser.password);
 				databases.put(dbName, db);
 			}
 
@@ -302,12 +303,13 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			final String dbName = channel.readString();
 			final String dbUser = channel.readString();
 			final String dbPasswd = channel.readString();
-			final String engineName = channel.readString();
+			final String dbType = channel.readString();
+			final String engineType = channel.readString();
 
 			try {
 				OLogManager.instance().info(this, "<-> DB %s: importing database...", dbName);
 
-				ODatabaseDocumentTx database = getDatabaseInstance(dbName, engineName);
+				ODatabaseDocumentTx database = getDatabaseInstance(dbName, dbType, engineType);
 
 				if (database.exists()) {
 					OLogManager.instance().info(this, "<-> DB %s: deleting existent database...", database.getName());

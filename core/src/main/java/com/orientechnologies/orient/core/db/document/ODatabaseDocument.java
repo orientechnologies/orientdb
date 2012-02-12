@@ -28,6 +28,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public interface ODatabaseDocument extends ODatabaseRecord, ODatabaseSchemaAware<ORecordInternal<?>> {
 
+	final static String	TYPE	= "document";
+
 	/**
 	 * Browses all the records of the specified class and also all the subclasses. If you've a class Vehicle and Car that extends
 	 * Vehicle then a db.browseClass("Vehicle", true) will return all the instances of Vehicle and Car. The order of the returned

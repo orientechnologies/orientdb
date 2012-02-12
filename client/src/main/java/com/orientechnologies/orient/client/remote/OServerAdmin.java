@@ -142,14 +142,24 @@ public class OServerAdmin {
 	}
 
 	/**
+	 * Deprecated. Use the {@link #createDatabase(String, String)} instead.
+	 */
+	@Deprecated
+	public synchronized OServerAdmin createDatabase(final String iStorageMode) throws IOException {
+		return createDatabase("document", iStorageMode);
+	}
+
+	/**
 	 * Creates a database in a remote server.
 	 * 
+	 * @param iDatabaseType
+	 *          'document' or 'graph'
 	 * @param iStorageMode
-	 *          Storage mode. Null to use the default ("CSV")
+	 *          local or memory
 	 * @return The instance itself. Useful to execute method in chain
 	 * @throws IOException
 	 */
-	public synchronized OServerAdmin createDatabase(String iStorageMode) throws IOException {
+	public synchronized OServerAdmin createDatabase(final String iDatabaseType, String iStorageMode) throws IOException {
 		storage.checkConnection();
 
 		try {
@@ -162,6 +172,8 @@ public class OServerAdmin {
 				final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_CREATE);
 				try {
 					network.writeString(storage.getName());
+					if (network.getSrvProtocolVersion() >= 8)
+						network.writeString(iDatabaseType);
 					network.writeString(iStorageMode);
 				} finally {
 					storage.endRequest(network);

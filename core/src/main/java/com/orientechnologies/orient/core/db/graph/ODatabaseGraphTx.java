@@ -284,6 +284,10 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 		underlying.delete();
 	}
 
+	public String getType() {
+		return "oldgraph";
+	}
+
 	public long countClass(final String iClassName) {
 		return underlying.countClass(iClassName);
 	}

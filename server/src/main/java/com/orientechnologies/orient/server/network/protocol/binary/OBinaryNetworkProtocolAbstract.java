@@ -26,6 +26,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -276,20 +277,20 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 		return iDatabase;
 	}
 
-	protected ODatabaseDocumentTx getDatabaseInstance(final String iDbName, final String iStorageMode) {
+	protected ODatabaseDocumentTx getDatabaseInstance(final String iDbName, final String iDbType, final String iStorageType) {
 		final String path;
 
 		final OStorage stg = Orient.instance().getStorage(iDbName);
 		if (stg != null)
 			path = stg.getURL();
-		else if (iStorageMode.equals(OEngineLocal.NAME)) {
-			path = iStorageMode + ":${ORIENTDB_HOME}/databases/" + iDbName;
-		} else if (iStorageMode.equals(OEngineMemory.NAME)) {
-			path = iStorageMode + ":" + iDbName;
+		else if (iStorageType.equals(OEngineLocal.NAME)) {
+			path = iStorageType + ":${ORIENTDB_HOME}/databases/" + iDbName;
+		} else if (iStorageType.equals(OEngineMemory.NAME)) {
+			path = iStorageType + ":" + iDbName;
 		} else
-			throw new IllegalArgumentException("Cannot create database: storage mode '" + iStorageMode + "' is not supported.");
+			throw new IllegalArgumentException("Cannot create database: storage mode '" + iStorageType + "' is not supported.");
 
-		return new ODatabaseDocumentTx(path);
+		return Orient.instance().getDatabaseFactory().createDatabase(iDbType, path);
 	}
 
 	protected void checkServerAccess(final String iResource) {
@@ -310,10 +311,10 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 		return serverUser;
 	}
 
-	protected ODatabaseDocumentTx openDatabase(final String iDbUrl, final String iUser, final String iPassword) {
+	protected ODatabaseComplex<?> openDatabase(final String iDbType, final String iDbUrl, final String iUser, final String iPassword) {
 		final String path = OServerMain.server().getStoragePath(iDbUrl);
 
-		final ODatabaseDocumentTx database = new ODatabaseDocumentTx(path);
+		final ODatabaseComplex<?> database = Orient.instance().getDatabaseFactory().createDatabase(iDbType, path);
 
 		if (database.isClosed())
 			if (database.getStorage() instanceof OStorageMemory)

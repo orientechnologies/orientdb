@@ -57,6 +57,10 @@ public class ODatabaseFactory {
 		}
 	}
 
+	public ODatabaseDocumentTx createDatabase(final String iType, final String url) {
+		return new ODatabaseDocumentTx(url);
+	}
+
 	public ODatabaseDocumentTx createObjectDatabase(final String url) {
 		return new ODatabaseDocumentTx(url);
 	}

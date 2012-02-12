@@ -372,4 +372,6 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	public <DB extends ODatabaseComplex<?>> DB setMVCC(boolean iValue);
+
+	public String getType();
 }

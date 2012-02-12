@@ -40,7 +40,8 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
  * 
  */
 public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
-	private OTransaction	currentTx;
+	public static final String	TYPE	= "record";
+	private OTransaction				currentTx;
 
 	public ODatabaseRecordTx(final String iURL, final byte iRecordType) {
 		super(iURL, iRecordType);
@@ -313,6 +314,10 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 
 	public boolean existsUserObjectByRID(final ORID iRID) {
 		return true;
+	}
+
+	public String getType() {
+		return TYPE;
 	}
 
 	public void setDefaultTransactionMode() {

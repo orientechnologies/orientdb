@@ -56,6 +56,7 @@ import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 @SuppressWarnings("unchecked")
 public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements ODatabaseObject, OUserObject2RecordHandler {
 
+	public static final String		TYPE	= "object";
 	protected ODictionary<Object>	dictionary;
 	protected OEntityManager			entityManager;
 	protected boolean							saveOnlyDirty;
@@ -488,6 +489,10 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 
 	public void setLazyLoading(final boolean lazyLoading) {
 		this.lazyLoading = lazyLoading;
+	}
+
+	public String getType() {
+		return TYPE;
 	}
 
 	protected void init() {

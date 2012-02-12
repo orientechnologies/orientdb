@@ -45,6 +45,8 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
  * 
  */
 public class OGraphDatabase extends ODatabaseDocumentTx {
+	public static final String	TYPE										= "graph";
+
 	public static final String	VERTEX_CLASS_NAME				= "OGraphVertex";
 	public static final String	VERTEX_FIELD_IN					= "in";
 	public static final String	VERTEX_FIELD_IN_EDGES		= "inEdges";
@@ -749,6 +751,11 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 			}
 		}
 		return good;
+	}
+
+	@Override
+	public String getType() {
+		return TYPE;
 	}
 
 	public void checkForGraphSchema() {
