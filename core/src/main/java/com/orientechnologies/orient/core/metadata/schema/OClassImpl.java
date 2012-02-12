@@ -820,7 +820,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		}
 
 		final OIndex<?> index = getDatabase().getMetadata().getIndexManager()
-				.createIndex(iName, iType.toString(), indexDefinition, clusterIds, iProgressListener);
+				.createIndex(iName, iType.toString(), indexDefinition, polymorphicClusterIds, iProgressListener);
 		return index;
 	}
 
