@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Scanner;
 
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
+import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.util.OArrays;
 
@@ -137,7 +138,7 @@ public class OConsoleApplication {
 			// COMMENT: JUMP IT
 			return true;
 
-		final String[] commandWords = OStringParser.getWords(iCommand, wordSeparator);
+		String[] commandWords = OStringParser.getWords(iCommand, wordSeparator);
 
 		for (String cmd : helpCommands)
 			if (cmd.equals(commandWords[0])) {
@@ -150,16 +151,14 @@ public class OConsoleApplication {
 				return false;
 			}
 
-		String methodName;
-		ConsoleCommand ann;
 		Method lastMethodInvoked = null;
 		final StringBuilder lastCommandInvoked = new StringBuilder();
 
 		final String commandLowerCase = iCommand.toLowerCase();
 
 		for (Method m : getConsoleMethods()) {
-			methodName = m.getName();
-			ann = m.getAnnotation(ConsoleCommand.class);
+			final String methodName = m.getName();
+			final ConsoleCommand ann = m.getAnnotation(ConsoleCommand.class);
 
 			final StringBuilder commandName = new StringBuilder();
 			char ch;
@@ -201,6 +200,21 @@ public class OConsoleApplication {
 			if (ann != null && !ann.splitInWords()) {
 				methodArgs = new String[] { iCommand.substring(iCommand.indexOf(' ') + 1) };
 			} else {
+				if (m.getParameterTypes().length > commandWordCount - commandWords.length) {
+					// METHOD PARAMS AND USED PARAMS MISMATCH: CHECK FOR OPTIONALS
+					for (int paramNum = m.getParameterAnnotations().length - 1; paramNum > -1; paramNum--) {
+						final Annotation[] paramAnn = m.getParameterAnnotations()[paramNum];
+						if (paramAnn != null)
+							for (int annNum = paramAnn.length - 1; annNum > -1; annNum--) {
+								if (paramAnn[annNum] instanceof ConsoleParameter) {
+									final ConsoleParameter annotation = (ConsoleParameter) paramAnn[annNum];
+									if (annotation.optional())
+										commandWords = OArrays.copyOf(commandWords, commandWords.length + 1);
+									break;
+								}
+							}
+					}
+				}
 				methodArgs = OArrays.copyOfRange(commandWords, commandWordCount, commandWords.length);
 			}
 

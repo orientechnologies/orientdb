@@ -11,4 +11,6 @@ public @interface ConsoleParameter {
 	String name() default "";
 
 	String description() default "";
+
+	boolean optional() default false;
 }
