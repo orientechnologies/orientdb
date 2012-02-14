@@ -22,6 +22,8 @@ import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class OStreamSerializerAnyStreamable implements OStreamSerializer {
 	public static final OStreamSerializerAnyStreamable	INSTANCE	= new OStreamSerializerAnyStreamable();
@@ -42,10 +44,17 @@ public class OStreamSerializerAnyStreamable implements OStreamSerializer {
 		final String className = OBinaryProtocol.bytes2string(iStream, 4, classNameSize);
 
 		try {
-			Class<?> clazz = Class.forName(className);
-
-			// CREATE THE OBJECT BY INVOKING THE EMPTY CONSTRUCTOR
-			OSerializableStream stream = (OSerializableStream) clazz.newInstance();
+			final OSerializableStream stream;
+			// CHECK FOR ALIASES
+			if (className.equalsIgnoreCase("q"))
+				// QUERY
+				stream = new OSQLSynchQuery<Object>();
+			else if (className.equalsIgnoreCase("c"))
+				// SQL COMMAND
+				stream = new OCommandSQL();
+			else
+				// CREATE THE OBJECT BY INVOKING THE EMPTY CONSTRUCTOR
+				stream = (OSerializableStream) Class.forName(className).newInstance();
 
 			return stream.fromStream(OArrays.copyOfRange(iStream, 4 + classNameSize, iStream.length));
 
