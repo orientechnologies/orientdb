@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.core.serialization.serializer.object;
 
 public interface OObjectSerializer<LOCAL_TYPE, DB_TYPE> {
-	public Object serializeFieldValue(Object iPojo, String iFieldName, LOCAL_TYPE iFieldValue);
+	public Object serializeFieldValue(Class<?> iClass, LOCAL_TYPE iFieldValue);
 
-	public Object unserializeFieldValue(Object iPojo, String iFieldName, DB_TYPE iFieldValue);
+	public Object unserializeFieldValue(Class<?> iClass, DB_TYPE iFieldValue);
 }

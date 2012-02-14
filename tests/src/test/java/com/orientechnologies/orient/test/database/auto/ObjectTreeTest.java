@@ -211,12 +211,12 @@ public class ObjectTreeTest {
 		OObjectSerializerContext serializerContext = new OObjectSerializerContext();
 		serializerContext.bind(new OObjectSerializer<CustomType, Long>() {
 
-			public Long serializeFieldValue(Object iPojo, String iFieldName, CustomType iFieldValue) {
+			public Long serializeFieldValue(Class<?> itype, CustomType iFieldValue) {
 				serialized++;
 				return iFieldValue.value;
 			}
 
-			public CustomType unserializeFieldValue(Object iPojo, String iFieldName, Long iFieldValue) {
+			public CustomType unserializeFieldValue(Class<?> itype, Long iFieldValue) {
 				unserialized++;
 				return new CustomType(iFieldValue);
 			}

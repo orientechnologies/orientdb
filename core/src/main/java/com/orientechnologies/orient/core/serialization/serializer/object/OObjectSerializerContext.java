@@ -20,31 +20,20 @@ import java.lang.reflect.Type;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.orientechnologies.common.reflection.OReflectionHelper;
+
 // We need to suppress the raw types warnings of OObjectSerializer, because otherwise the compiler won't compile
 // the parameter iFieldValue (which is of type Object) to the defined type LOCAL_TYPE.
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class OObjectSerializerContext implements OObjectSerializer<Object, Object> {
-	final private Map<Class<?>, OObjectSerializer>	localSerializers	= new LinkedHashMap<Class<?>, OObjectSerializer>();
-	final private Map<Class<?>, OObjectSerializer>	dbSerializers			= new LinkedHashMap<Class<?>, OObjectSerializer>();
+	final private Map<Class<?>, OObjectSerializer>	customSerializers	= new LinkedHashMap<Class<?>, OObjectSerializer>();
 
 	public void bind(final OObjectSerializer serializer) {
-		final Type genericType = serializer.getClass().getGenericInterfaces()[0];
-		if (genericType != null && genericType instanceof ParameterizedType) {
-			final ParameterizedType pt = (ParameterizedType) genericType;
-			if (pt.getActualTypeArguments() != null && pt.getActualTypeArguments().length > 1) {
-				final Type[] actualTypes = pt.getActualTypeArguments();
-				if (actualTypes[0] instanceof Class<?>) {
-					localSerializers.put((Class<?>) actualTypes[0], serializer);
-				} else if (actualTypes[0] instanceof ParameterizedType) {
-					localSerializers.put((Class<?>) ((ParameterizedType) actualTypes[0]).getRawType(), serializer);
-				}
-				if (actualTypes[1] instanceof Class<?>) {
-					dbSerializers.put((Class<?>) actualTypes[1], serializer);
-				} else if (actualTypes[1] instanceof ParameterizedType) {
-					dbSerializers.put((Class<?>) ((ParameterizedType) actualTypes[1]).getRawType(), serializer);
-				}
-			}
-		}
+		final Type[] actualTypes = OReflectionHelper.getGenericTypes(serializer.getClass());
+		if (actualTypes[0] instanceof Class<?>)
+			customSerializers.put((Class<?>) actualTypes[0], serializer);
+		else if (actualTypes[0] instanceof ParameterizedType)
+			customSerializers.put((Class<?>) ((ParameterizedType) actualTypes[0]).getRawType(), serializer);
 	}
 
 	public void unbind(final OObjectSerializer serializer) {
@@ -54,23 +43,18 @@ public class OObjectSerializerContext implements OObjectSerializer<Object, Objec
 			if (pt.getActualTypeArguments() != null && pt.getActualTypeArguments().length > 1) {
 				final Type[] actualTypes = pt.getActualTypeArguments();
 				if (actualTypes[0] instanceof Class<?>) {
-					localSerializers.remove((Class<?>) actualTypes[0]);
+					customSerializers.remove((Class<?>) actualTypes[0]);
 				} else if (actualTypes[0] instanceof ParameterizedType) {
-					localSerializers.remove((Class<?>) ((ParameterizedType) actualTypes[0]).getRawType());
-				}
-				if (actualTypes[1] instanceof Class<?>) {
-					dbSerializers.remove((Class<?>) actualTypes[1]);
-				} else if (actualTypes[1] instanceof ParameterizedType) {
-					dbSerializers.remove((Class<?>) ((ParameterizedType) actualTypes[1]).getRawType());
+					customSerializers.remove((Class<?>) ((ParameterizedType) actualTypes[0]).getRawType());
 				}
 			}
 		}
 	}
 
-	public Object serializeFieldValue(final Object iPojo, final String iFieldName, Object iFieldValue) {
-		for (Class<?> type : localSerializers.keySet()) {
+	public Object serializeFieldValue(final Class<?> iClass, Object iFieldValue) {
+		for (Class<?> type : customSerializers.keySet()) {
 			if (type.isInstance(iFieldValue) || (iFieldValue == null && type == Void.class)) {
-				iFieldValue = localSerializers.get(type).serializeFieldValue(iPojo, iFieldName, iFieldValue);
+				iFieldValue = customSerializers.get(type).serializeFieldValue(iClass, iFieldValue);
 				break;
 			}
 		}
@@ -78,13 +62,13 @@ public class OObjectSerializerContext implements OObjectSerializer<Object, Objec
 		return iFieldValue;
 	}
 
-	public Object unserializeFieldValue(final Object iPojo, final String iFieldName, Object iFieldValue) {
-		for (Class<?> type : dbSerializers.keySet()) {
-			if (type.isInstance(iFieldValue) || (iFieldValue == null && type == Void.class)) {
-				iFieldValue = dbSerializers.get(type).unserializeFieldValue(iPojo, iFieldName, iFieldValue);
-				break;
+	public Object unserializeFieldValue(final Class<?> iClass, final Object iFieldValue) {
+		if (iClass != null)
+			for (Class<?> type : customSerializers.keySet()) {
+				if (type.isAssignableFrom(iClass) || type == Void.class) {
+					return customSerializers.get(type).unserializeFieldValue(iClass, iFieldValue);
+				}
 			}
-		}
 
 		return iFieldValue;
 	}

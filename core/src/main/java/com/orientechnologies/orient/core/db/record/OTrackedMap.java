@@ -16,7 +16,14 @@
 package com.orientechnologies.orient.core.db.record;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.WeakHashMap;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -30,13 +37,15 @@ import com.orientechnologies.orient.core.record.ORecord;
  */
 @SuppressWarnings("serial")
 public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordElement, OTrackedMultiValue<Object, T>, Serializable {
-	final protected ORecord<?>		sourceRecord;
-	private STATUS								status				= STATUS.NOT_LOADED;
-  private Set<OMultiValueChangeListener<Object, T>> changeListeners =
-          Collections.newSetFromMap(new WeakHashMap<OMultiValueChangeListener<Object, T>, Boolean>());
+	final protected ORecord<?>												sourceRecord;
+	private STATUS																		status					= STATUS.NOT_LOADED;
+	private Set<OMultiValueChangeListener<Object, T>>	changeListeners	= Collections
+																																				.newSetFromMap(new WeakHashMap<OMultiValueChangeListener<Object, T>, Boolean>());
+	protected Class<?>																genericClass;
 
-	public OTrackedMap(final ORecord<?> iRecord, final Map<Object, T> iOrigin) {
+	public OTrackedMap(final ORecord<?> iRecord, final Map<Object, T> iOrigin, final Class<?> cls) {
 		this(iRecord);
+		genericClass = cls;
 		if (iOrigin != null && !iOrigin.isEmpty())
 			putAll(iOrigin);
 	}
@@ -50,47 +59,50 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
 	@SuppressWarnings("unchecked")
 	@Override
 	public T put(final Object iKey, final T iValue) {
-    boolean containsKey = containsKey( iKey );
-      
-    T oldValue = super.put(iKey, iValue);
+		boolean containsKey = containsKey(iKey);
 
-    if(containsKey && oldValue == iValue)
-      return oldValue;
+		T oldValue = super.put(iKey, iValue);
 
-    if (containsKey)
-      fireCollectionChangedEvent( new OMultiValueChangeEvent<Object, T>( OMultiValueChangeEvent.OChangeType.UPDATE, iKey,iValue, oldValue ) );
-    else
-      fireCollectionChangedEvent( new OMultiValueChangeEvent<Object, T>( OMultiValueChangeEvent.OChangeType.ADD,iKey, iValue ) );
+		if (containsKey && oldValue == iValue)
+			return oldValue;
 
-    return oldValue;
+		if (containsKey)
+			fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.UPDATE, iKey, iValue,
+					oldValue));
+		else
+			fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.ADD, iKey, iValue));
+
+		return oldValue;
 	}
 
 	@Override
 	public T remove(final Object iKey) {
-    boolean containsKey = containsKey( iKey );
+		boolean containsKey = containsKey(iKey);
 		final T oldValue = super.remove(iKey);
 
-    if(containsKey)
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>( OMultiValueChangeEvent.OChangeType.REMOVE, iKey, null, oldValue) );
+		if (containsKey)
+			fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.REMOVE, iKey, null,
+					oldValue));
 
 		return oldValue;
 	}
 
 	@Override
 	public void clear() {
-    final Map<Object, T> origValues;
-    if(changeListeners.isEmpty())
-      origValues = null;
-    else 
-      origValues = new HashMap<Object, T>( this );
-    
+		final Map<Object, T> origValues;
+		if (changeListeners.isEmpty())
+			origValues = null;
+		else
+			origValues = new HashMap<Object, T>(this);
+
 		super.clear();
-    
-    if(origValues != null) {
-      for(Map.Entry<Object, T> entry : origValues.entrySet())
-        fireCollectionChangedEvent( new OMultiValueChangeEvent<Object, T>( OMultiValueChangeEvent.OChangeType.REMOVE, entry.getKey(), null, entry.getValue() ) );
-    } else
-      setDirty();
+
+		if (origValues != null) {
+			for (Map.Entry<Object, T> entry : origValues.entrySet())
+				fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.REMOVE, entry.getKey(),
+						null, entry.getValue()));
+		} else
+			setDirty();
 	}
 
 	@Override
@@ -122,49 +134,56 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
 		status = iStatus;
 	}
 
-  public void addChangeListener( OMultiValueChangeListener<Object, T> changeListener ) {
-    changeListeners.add(changeListener);
-  }
+	public void addChangeListener(OMultiValueChangeListener<Object, T> changeListener) {
+		changeListeners.add(changeListener);
+	}
 
-  public void removeRecordChangeListener(OMultiValueChangeListener<Object, T> changeListener) {
-    changeListeners.remove(changeListener);
-  }
+	public void removeRecordChangeListener(OMultiValueChangeListener<Object, T> changeListener) {
+		changeListeners.remove(changeListener);
+	}
 
-  public Map<Object, T> returnOriginalState( final List<OMultiValueChangeEvent<Object, T>> multiValueChangeEvents )
-  {
-    final Map<Object, T> reverted = new HashMap<Object, T>( this );
+	public Map<Object, T> returnOriginalState(final List<OMultiValueChangeEvent<Object, T>> multiValueChangeEvents) {
+		final Map<Object, T> reverted = new HashMap<Object, T>(this);
 
-    final ListIterator<OMultiValueChangeEvent<Object, T>> listIterator =
-      multiValueChangeEvents.listIterator( multiValueChangeEvents.size());
+		final ListIterator<OMultiValueChangeEvent<Object, T>> listIterator = multiValueChangeEvents.listIterator(multiValueChangeEvents
+				.size());
 
-    while (listIterator.hasPrevious()) {
-      final OMultiValueChangeEvent<Object, T> event = listIterator.previous();
-      switch (event.getChangeType()) {
-        case ADD:
-          reverted.remove( event.getKey() );
-          break;
-        case REMOVE:
-          reverted.put( event.getKey(), event.getOldValue() );
-          break;
-        case UPDATE:
-          reverted.put( event.getKey(), event.getOldValue() );
-          break;
-        default:
-          throw new IllegalArgumentException( "Invalid change type : " + event.getChangeType() );
-      }
-    }
+		while (listIterator.hasPrevious()) {
+			final OMultiValueChangeEvent<Object, T> event = listIterator.previous();
+			switch (event.getChangeType()) {
+			case ADD:
+				reverted.remove(event.getKey());
+				break;
+			case REMOVE:
+				reverted.put(event.getKey(), event.getOldValue());
+				break;
+			case UPDATE:
+				reverted.put(event.getKey(), event.getOldValue());
+				break;
+			default:
+				throw new IllegalArgumentException("Invalid change type : " + event.getChangeType());
+			}
+		}
 
-    return reverted;
-  }
+		return reverted;
+	}
 
-  protected void fireCollectionChangedEvent( final OMultiValueChangeEvent<Object, T> event) {
-    if (status == STATUS.UNMARSHALLING)
-      return;
+	protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<Object, T> event) {
+		if (status == STATUS.UNMARSHALLING)
+			return;
 
-    setDirty();
-    for(final OMultiValueChangeListener<Object, T> changeListener : changeListeners) {
-      if(changeListener != null)
-        changeListener.onAfterRecordChanged( event );
-    }
-  }
+		setDirty();
+		for (final OMultiValueChangeListener<Object, T> changeListener : changeListeners) {
+			if (changeListener != null)
+				changeListener.onAfterRecordChanged(event);
+		}
+	}
+
+	public Class<?> getGenericClass() {
+		return genericClass;
+	}
+
+	public void setGenericClass(Class<?> genericClass) {
+		this.genericClass = genericClass;
+	}
 }

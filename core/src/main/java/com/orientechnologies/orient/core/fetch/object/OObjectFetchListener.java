@@ -123,7 +123,7 @@ public class OObjectFetchListener implements OFetchListener {
 		}
 
 		OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName,
-				OObjectSerializerHelper.unserializeFieldValue(iUserObject, iFieldName, fieldValue));
+				OObjectSerializerHelper.unserializeFieldValue(OObjectSerializerHelper.getFieldType(iUserObject, iFieldName), fieldValue));
 
 		return fieldValue;
 	}

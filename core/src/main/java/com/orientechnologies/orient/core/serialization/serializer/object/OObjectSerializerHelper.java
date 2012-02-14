@@ -19,7 +19,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,6 +33,7 @@ import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.annotation.OAccess;
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 import com.orientechnologies.orient.core.annotation.OAfterSerialization;
@@ -50,6 +50,7 @@ import com.orientechnologies.orient.core.db.object.OObjectNotDetachedException;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -243,7 +244,7 @@ public class OObjectSerializerHelper {
 						|| (!(fieldValue instanceof Map<?, ?>) || ((Map<?, ?>) fieldValue).size() == 0 || !(((Map<?, ?>) fieldValue).values()
 								.iterator().next() instanceof ODocument))) {
 
-					final Class<?> genericTypeClass = getGenericMultivalueType(p);
+					final Class<?> genericTypeClass = OReflectionHelper.getGenericMultivalueType(p);
 
 					if (genericTypeClass != null)
 						if (genericTypeClass.isEnum()) {
@@ -259,6 +260,7 @@ public class OObjectSerializerHelper {
 										list.set(i, v);
 									}
 								}
+								continue;
 							} else if (fieldValue instanceof Set) {
 								// SET: CREATE A TEMP SET TO WORK WITH ITEMS
 								final Set<Object> newColl = new HashSet<Object>();
@@ -270,7 +272,8 @@ public class OObjectSerializerHelper {
 									}
 								}
 
-								fieldValue = newColl;
+								setFieldValue(iPojo, fieldName, newColl);
+								continue;
 							} else if (fieldValue instanceof Map) {
 								// MAP: TRANSFORM EACH SINGLE ITEM
 								final Map<String, Object> map = (Map<String, Object>) fieldValue;
@@ -282,6 +285,7 @@ public class OObjectSerializerHelper {
 										map.put(entry.getKey(), v);
 									}
 								}
+								continue;
 							}
 
 						} else {
@@ -293,17 +297,19 @@ public class OObjectSerializerHelper {
 								for (int i = 0; i < list.size(); ++i) {
 									v = list.get(i);
 									if (v != null)
-										list.set(i, unserializeFieldValue(null, null, v));
+										list.set(i, unserializeFieldValue(genericTypeClass, v));
 								}
+								continue;
 							} else if (fieldValue instanceof Set) {
 								// SET: CREATE A TEMP SET TO WORK WITH ITEMS
 								final Set<Object> newColl = new HashSet<Object>();
 								final Set<Object> set = (Set<Object>) fieldValue;
 								for (Object v : set)
 									if (v != null)
-										newColl.add(unserializeFieldValue(null, null, v));
+										newColl.add(unserializeFieldValue(genericTypeClass, v));
 
-								fieldValue = newColl;
+								setFieldValue(iPojo, fieldName, newColl);
+								continue;
 							} else if (fieldValue instanceof Map) {
 								// MAP: TRANSFORM EACH SINGLE ITEM
 								final Map<String, Object> map = (Map<String, Object>) fieldValue;
@@ -311,13 +317,16 @@ public class OObjectSerializerHelper {
 								for (Entry<String, ?> entry : map.entrySet()) {
 									v = entry.getValue();
 									if (v != null)
-										map.put(entry.getKey(), unserializeFieldValue(null, null, v));
+										map.put(entry.getKey(), unserializeFieldValue(genericTypeClass, v));
 
 								}
+								continue;
 							}
 						}
-					
-					setFieldValue(iPojo, fieldName, unserializeFieldValue(iPojo, fieldName, fieldValue));
+
+					final Type type = p.getGenericType();
+					setFieldValue(iPojo, fieldName,
+							unserializeFieldValue((Class<?>) (type != null && type instanceof Class<?> ? type : null), fieldValue));
 				}
 			}
 
@@ -543,7 +552,7 @@ public class OObjectSerializerHelper {
 			if (vField != null && fieldName.equals(vField.getName()))
 				continue;
 
-			fieldValue = serializeFieldValue(iPojo, fieldName, getFieldValue(iPojo, fieldName));
+			fieldValue = serializeFieldValue(getFieldType(iPojo, fieldName), getFieldValue(iPojo, fieldName));
 
 			schemaProperty = schemaClass != null ? schemaClass.getProperty(fieldName) : null;
 
@@ -582,50 +591,30 @@ public class OObjectSerializerHelper {
 		return iRecord;
 	}
 
-	public static Object serializeFieldValue(final Object iPojo, final String iFieldName, final Object iFieldValue) {
+	public static Object serializeFieldValue(final Class<?> type, final Object iFieldValue) {
 		for (Class<?> classContext : serializerContexts.keySet()) {
-			if (classContext != null && classContext.isInstance(iPojo)) {
-				return serializerContexts.get(classContext).serializeFieldValue(iPojo, iFieldName, iFieldValue);
+			if (classContext != null && classContext.isAssignableFrom(type)) {
+				return serializerContexts.get(classContext).serializeFieldValue(type, iFieldValue);
 			}
 		}
 
 		if (serializerContexts.get(null) != null)
-			return serializerContexts.get(null).serializeFieldValue(iPojo, iFieldName, iFieldValue);
+			return serializerContexts.get(null).serializeFieldValue(type, iFieldValue);
 
 		return iFieldValue;
 	}
 
-	public static Object unserializeFieldValue(final Object iPojo, final String iFieldName, Object iFieldValue) {
+	public static Object unserializeFieldValue(final Class<?> type, final Object iFieldValue) {
 		for (Class<?> classContext : serializerContexts.keySet()) {
-			if (classContext != null && classContext.isInstance(iPojo)) {
-				return serializerContexts.get(classContext).unserializeFieldValue(iPojo, iFieldName, iFieldValue);
+			if (classContext != null && classContext.isAssignableFrom(type)) {
+				return serializerContexts.get(classContext).unserializeFieldValue(type, iFieldValue);
 			}
 		}
 
 		if (serializerContexts.get(null) != null)
-			return serializerContexts.get(null).unserializeFieldValue(iPojo, iFieldName, iFieldValue);
+			return serializerContexts.get(null).unserializeFieldValue(type, iFieldValue);
 
 		return iFieldValue;
-	}
-
-	/**
-	 * Returns the generic class of multi-value objects.
-	 * 
-	 * @param p
-	 *          Field to examine
-	 * @return The Class<?> of generic type if any, otherwise null
-	 */
-	public static Class<?> getGenericMultivalueType(final Field p) {
-		final Type genericType = p.getGenericType();
-		if (genericType != null && genericType instanceof ParameterizedType) {
-			final ParameterizedType pt = (ParameterizedType) genericType;
-			if (pt.getActualTypeArguments() != null && pt.getActualTypeArguments().length > 0) {
-				if (pt.getActualTypeArguments()[0] instanceof Class<?>) {
-					return (Class<?>) pt.getActualTypeArguments()[0];
-				}
-			}
-		}
-		return null;
 	}
 
 	private static Object typeToStream(Object iFieldValue, OType iType, final OEntityManager iEntityManager,
@@ -671,7 +660,7 @@ public class OObjectSerializerHelper {
 					iObj2RecHandler.registerUserObject(pojo, linkedDocument);
 
 				} else {
-					final Object result = serializeFieldValue(null, null, iFieldValue);
+					final Object result = serializeFieldValue(null, iFieldValue);
 					if (iFieldValue == result)
 						throw new OSerializationException("Linked type [" + iFieldValue.getClass() + ":" + iFieldValue
 								+ "] cannot be serialized because is not part of registered entities. To fix this error register this class");
@@ -790,6 +779,23 @@ public class OObjectSerializerHelper {
 
 			return analyzeClass(iClass);
 		}
+	}
+
+	/**
+	 * Returns the declared generic types of a class.
+	 * 
+	 * @param iClass
+	 *          Class to examine
+	 * @return The array of Type if any, otherwise null
+	 */
+	public static Type[] getGenericTypes(final Object iObject) {
+		if (iObject instanceof OTrackedMultiValue) {
+			final Class<?> cls = ((OTrackedMultiValue<?, ?>) iObject).getGenericClass();
+			if (cls != null)
+				return new Type[] { cls };
+		}
+
+		return OReflectionHelper.getGenericTypes(iObject.getClass());
 	}
 
 	public static void invokeCallback(final Object iPojo, final ODocument iDocument, final Class<?> iAnnotation) {
@@ -982,4 +988,5 @@ public class OObjectSerializerHelper {
 			final OEntityManager iEntityManager) {
 		return embeddedFields.get(iPojoClass) != null && embeddedFields.get(iPojoClass).contains(iFieldName);
 	}
+
 }

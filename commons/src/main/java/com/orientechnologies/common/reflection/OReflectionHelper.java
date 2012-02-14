@@ -3,6 +3,9 @@ package com.orientechnologies.common.reflection;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -141,5 +144,42 @@ public class OReflectionHelper {
 		}
 
 		return classList;
+	}
+
+	/**
+	 * Returns the declared generic types of a class.
+	 * 
+	 * @param iClass
+	 *          Class to examine
+	 * @return The array of Type if any, otherwise null
+	 */
+	public static Type[] getGenericTypes(final Class<?> iClass) {
+		final Type genericType = iClass.getGenericInterfaces()[0];
+		if (genericType != null && genericType instanceof ParameterizedType) {
+			final ParameterizedType pt = (ParameterizedType) genericType;
+			if (pt.getActualTypeArguments() != null && pt.getActualTypeArguments().length > 1)
+				return pt.getActualTypeArguments();
+		}
+		return null;
+	}
+
+	/**
+	 * Returns the generic class of multi-value objects.
+	 * 
+	 * @param p
+	 *          Field to examine
+	 * @return The Class<?> of generic type if any, otherwise null
+	 */
+	public static Class<?> getGenericMultivalueType(final Field p) {
+		final Type genericType = p.getGenericType();
+		if (genericType != null && genericType instanceof ParameterizedType) {
+			final ParameterizedType pt = (ParameterizedType) genericType;
+			if (pt.getActualTypeArguments() != null && pt.getActualTypeArguments().length > 0) {
+				if (pt.getActualTypeArguments()[0] instanceof Class<?>) {
+					return (Class<?>) pt.getActualTypeArguments()[0];
+				}
+			}
+		}
+		return null;
 	}
 }

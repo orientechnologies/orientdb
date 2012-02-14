@@ -1257,11 +1257,11 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 							!(OType.EMBEDDEDLIST.equals(fieldType) || OType.EMBEDDEDMAP.equals(fieldType) || OType.EMBEDDEDSET.equals(fieldType)))
 				continue;
 			if (fieldValue instanceof List && !(fieldValue instanceof OTrackedMultiValue))
-				fieldsToUpdate.put(fieldEntry.getKey(), new OTrackedList(this, (List) fieldValue));
+				fieldsToUpdate.put(fieldEntry.getKey(), new OTrackedList(this, (List) fieldValue, null));
 			else if (fieldValue instanceof Set && !(fieldValue instanceof OTrackedMultiValue))
-				fieldsToUpdate.put(fieldEntry.getKey(), new OTrackedSet(this, (Set) fieldValue));
+				fieldsToUpdate.put(fieldEntry.getKey(), new OTrackedSet(this, (Set) fieldValue, null));
 			else if (fieldValue instanceof Map && !(fieldValue instanceof OTrackedMultiValue))
-				fieldsToUpdate.put(fieldEntry.getKey(), new OTrackedMap(this, (Map) fieldValue));
+				fieldsToUpdate.put(fieldEntry.getKey(), new OTrackedMap(this, (Map) fieldValue, null));
 		}
 
 		_fieldValues.putAll(fieldsToUpdate);

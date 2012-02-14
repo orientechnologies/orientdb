@@ -18,35 +18,41 @@ package com.orientechnologies.orient.core.db.record;
 import java.util.List;
 
 /**
- * Interface that indicates that collection will send notifications about operations that are performed on it
- * to the listeners.
- *
- * @param <K> Value that indicates position of item inside collection.
- * @param <V> Value that is hold by collection.
+ * Interface that indicates that collection will send notifications about operations that are performed on it to the listeners.
+ * 
+ * @param <K>
+ *          Value that indicates position of item inside collection.
+ * @param <V>
+ *          Value that is hold by collection.
  */
 public interface OTrackedMultiValue<K, V> {
 
 	/**
 	 * Add change listener.
-	 *
-	 * @param changeListener Change listener instance.
+	 * 
+	 * @param changeListener
+	 *          Change listener instance.
 	 */
 	public void addChangeListener(OMultiValueChangeListener<K, V> changeListener);
 
 	/**
 	 * Remove change listener.
-	 *
-	 * @param changeListener Change listener instance.
+	 * 
+	 * @param changeListener
+	 *          Change listener instance.
 	 */
 	public void removeRecordChangeListener(OMultiValueChangeListener<K, V> changeListener);
 
 	/**
-	 *
+	 * 
 	 * Reverts all operations that were performed on collection and return original collection state.
-	 *
-	 * @param changeEvents List of operations that were performed on collection.
-	 *
+	 * 
+	 * @param changeEvents
+	 *          List of operations that were performed on collection.
+	 * 
 	 * @return Original collection state.
 	 */
 	public Object returnOriginalState(List<OMultiValueChangeEvent<K, V>> changeEvents);
+
+	public Class<?> getGenericClass();
 }
