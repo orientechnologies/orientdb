@@ -43,7 +43,7 @@ public class OFetchHelper {
 
 	public static Map<String, Integer> buildFetchPlan(final String iFetchPlan) {
 		final Map<String, Integer> fetchPlan = new HashMap<String, Integer>();
-
+		fetchPlan.put(ROOT_FETCH, 0);
 		if (iFetchPlan != null) {
 			// CHECK IF THERE IS SOME FETCH-DEPTH
 			final List<String> planParts = OStringSerializerHelper.split(iFetchPlan, ' ');
@@ -54,12 +54,8 @@ public class OFetchHelper {
 					parts = OStringSerializerHelper.split(planPart, ':');
 					fetchPlan.put(parts.get(0), Integer.parseInt(parts.get(1)));
 				}
-			} else {
-				fetchPlan.put(ROOT_FETCH, 0);
 			}
-		} else
-			fetchPlan.put(ROOT_FETCH, 0);
-
+		}
 		return fetchPlan;
 	}
 
