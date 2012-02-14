@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -83,6 +84,11 @@ public abstract class OStringSerializerHelper {
 			if (iValue instanceof Boolean)
 				return iValue;
 			return new Boolean(getStringContent(iValue));
+
+		case DECIMAL:
+			if (iValue instanceof BigDecimal)
+				return iValue;
+			return new BigDecimal(getStringContent(iValue));
 
 		case FLOAT:
 			if (iValue instanceof Float)
