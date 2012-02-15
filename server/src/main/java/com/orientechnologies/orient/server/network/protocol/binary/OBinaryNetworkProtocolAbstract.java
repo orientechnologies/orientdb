@@ -189,7 +189,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 			}
 			channel.writeByte((byte) 0);
 
-			channel.clearInput();
+			//channel.clearInput();
 
 		} finally {
 			channel.releaseExclusiveLock();
