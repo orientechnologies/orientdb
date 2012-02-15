@@ -625,7 +625,9 @@ public class OStorageMemory extends OStorageEmbedded {
 						// RECORD CHANGED: RE-STREAM IT
 						stream = txEntry.getRecord().toStream();
 
+				  txEntry.getRecord().onBeforeIdentityChanged(rid);
 					createRecord(rid, stream, txEntry.getRecord().getRecordType(), 0, null);
+					txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
 
 					iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_CREATE, txEntry.getRecord());
 

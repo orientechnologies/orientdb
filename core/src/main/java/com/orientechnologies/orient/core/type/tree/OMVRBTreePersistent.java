@@ -305,8 +305,10 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 				for (final Iterator<OMVRBTreeEntryPersistent<K, V>> it = entryPoints.values().iterator(); it.hasNext();) {
 					final OMVRBTreeEntryPersistent<K, V> currentNode = it.next();
 
-					// JUMP THE FIRST (1 cannot never be the % of distance) THE LAST, ROOT AND LAST USED
-					if (currentNode != root && currentNode != lastSearchNode && it.hasNext())
+					//JUMP THE FIRST (1 cannot never be the % of distance) THE LAST, ROOT AND LAST USED
+					//RECORDS THAT WERE CREATED INSIDE OF TRANSACTION CAN'T BE REMOVED TILL COMMIT
+					if (currentNode != root && currentNode != lastSearchNode &&
+									!currentNode.dataProvider.getIdentity().isTemporary() && it.hasNext())
 						if (++currNode % distance != 0) {
 							// REMOVE THE NODE
 							entryPointsToRemove.add(currentNode);

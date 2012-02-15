@@ -22,6 +22,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.type.tree.provider.OIdentityChangedListener;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeEntryDataProvider;
 
 /**
@@ -71,7 +72,7 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeEntryDataPr
  * @param <K>
  * @param <V>
  */
-public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
+public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> implements OIdentityChangedListener {
 	protected OMVRBTreeEntryDataProvider<K, V>	dataProvider;
 	protected OMVRBTreePersistent<K, V>					pTree;
 
@@ -94,6 +95,8 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 		super(iTree);
 		pTree = iTree;
 		dataProvider = pTree.dataProvider.getEntry(iRecordId);
+		dataProvider.setIdentityChangedListener(this);
+
 		init();
 		parent = iParent;
 		// setParent(iParent);
@@ -108,6 +111,7 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 		super(iTree);
 		pTree = iTree;
 		dataProvider = pTree.dataProvider.createEntry();
+		dataProvider.setIdentityChangedListener(this);
 		dataProvider.insertAt(0, iKey, iValue);
 		init();
 		setParent(iParent);
@@ -129,6 +133,8 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 		pTree = (OMVRBTreePersistent<K, V>) tree;
 		OMVRBTreeEntryPersistent<K, V> pParent = (OMVRBTreeEntryPersistent<K, V>) iParent;
 		dataProvider = pTree.dataProvider.createEntry();
+		dataProvider.setIdentityChangedListener(this);
+
 		dataProvider.copyDataFrom(pParent.dataProvider, iPosition);
 		if (pParent.dataProvider.truncate(iPosition))
 			pParent.markDirty();
@@ -158,7 +164,6 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 			if (isNew) {
 				// TEMPORARY INCORRECT SAVE FOR GETTING AN ID. WILL BE SET DIRTY AGAIN JUST AFTER
 				left.dataProvider.save();
-				left.updateRefsAfterCreation();
 			} else
 				left.save();
 		}
@@ -166,7 +171,6 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 			if (isNew) {
 				// TEMPORARY INCORRECT SAVE FOR GETTING AN ID. WILL BE SET DIRTY AGAIN JUST AFTER
 				right.dataProvider.save();
-				right.updateRefsAfterCreation();
 			} else
 				right.save();
 		}
@@ -174,16 +178,11 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 			if (isNew) {
 				// TEMPORARY INCORRECT SAVE FOR GETTING AN ID. WILL BE SET DIRTY AGAIN JUST AFTER
 				parent.dataProvider.save();
-				parent.updateRefsAfterCreation();
 			} else
 				parent.save();
 		}
 
 		dataProvider.save();
-
-		// RE-ASSIGN RID
-		if (isNew)
-			updateRefsAfterCreation();
 
 		// if (parent != null)
 		// if (!parent.record.getIdentity().equals(parentRid))
@@ -199,35 +198,6 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 		}
 
 		return this;
-	}
-
-	protected void updateRefsAfterCreation() {
-		final ORID rid = dataProvider.getIdentity();
-
-		if (left != null) {
-			if (left.dataProvider.setParent(rid))
-				left.markDirty();
-		}
-
-		if (right != null) {
-			if (right.dataProvider.setParent(rid))
-				right.markDirty();
-		}
-
-		if (parent != null) {
-			if (parent.left == this) {
-				if (parent.dataProvider.setLeft(rid))
-					parent.markDirty();
-			} else if (parent.right == this) {
-				if (parent.dataProvider.setRight(rid))
-					parent.markDirty();
-			} else {
-				OLogManager.instance().error(this, "[save]: Tree inconsistent entries.");
-			}
-		} else if (pTree.getRoot() == this) {
-			if (pTree.dataProvider.setRoot(rid))
-				pTree.markDirty();
-		}
 	}
 
 	/**
@@ -249,6 +219,7 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 				((OMVRBTreeEntryPersistent<K, V>) getRight()).delete();
 
 			// DELETE MYSELF
+			dataProvider.removeIdentityChangedListener(this);
 			dataProvider.delete();
 			clear();
 		}
@@ -272,7 +243,8 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 
 		final ORID rid = dataProvider.getIdentity();
 
-		if ((!dataProvider.isEntryDirty() || iForceDirty) && !pTree.isNodeEntryPoint(this)) {
+		if ((!dataProvider.isEntryDirty() && !dataProvider.getIdentity().isTemporary() || iForceDirty) &&
+						!pTree.isNodeEntryPoint(this)) {
 			totalDisconnected = 1;
 			pTree.removeNodeFromMemory(this);
 			clear();
@@ -280,7 +252,7 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 
 		if (parent != null) {
 			// DISCONNECT RECURSIVELY THE PARENT NODE
-			if (canDisconnectFrom(parent)) {
+			if (canDisconnectFrom(parent) || iForceDirty) {
 				if (parent.left == this) {
 					parent.left = null;
 				} else if (parent.right == this) {
@@ -296,7 +268,7 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 
 		if (left != null) {
 			// DISCONNECT RECURSIVELY THE LEFT NODE
-			if (canDisconnectFrom(left)) {
+			if (canDisconnectFrom(left) || iForceDirty) {
 				if (left.parent == this)
 						left.parent = null;
 				else
@@ -310,7 +282,7 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 
 		if (right != null) {
 			// DISCONNECT RECURSIVELY THE RIGHT NODE
-			if (canDisconnectFrom(right)) {
+			if (canDisconnectFrom(right) || iForceDirty) {
 				if (right.parent == this)
 						right.parent = null;
 				else
@@ -333,6 +305,7 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 		// SPEED UP MEMORY CLAIM BY RESETTING INTERNAL FIELDS
 		pTree = null;
 		tree = null;
+		dataProvider.removeIdentityChangedListener(this);
 		dataProvider.clear();
 		dataProvider = null;
 	}
@@ -658,5 +631,32 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> {
 	@Override
 	public String toString() {
 		return dataProvider != null ? dataProvider.toString() : "entry cleared";
+	}
+
+	public void onIdentityChanged(ORID rid) {
+		if (left != null) {
+			if (left.dataProvider.setParent(rid))
+				left.markDirty();
+		}
+
+		if (right != null) {
+			if (right.dataProvider.setParent(rid))
+				right.markDirty();
+		}
+
+		if (parent != null) {
+			if (parent.left == this) {
+				if (parent.dataProvider.setLeft(rid))
+					parent.markDirty();
+			} else if (parent.right == this) {
+				if (parent.dataProvider.setRight(rid))
+					parent.markDirty();
+			} else {
+				OLogManager.instance().error(this, "[save]: Tree inconsistent entries.");
+			}
+		} else if (pTree.getRoot() == this) {
+			if (pTree.dataProvider.setRoot(rid))
+				pTree.markDirty();
+		}
 	}
 }

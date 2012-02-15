@@ -925,6 +925,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
 	@Override
 	public void onAfterIdentityChanged(final ORecord<?> iRecord) {
+		super.onAfterIdentityChanged(iRecord);
 		if (_owners != null) {
 			final List<WeakReference<ORecordElement>> temp = new ArrayList<WeakReference<ORecordElement>>(_owners);
 

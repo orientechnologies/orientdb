@@ -13,18 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.record;
+package com.orientechnologies.orient.core.type.tree.provider;
+
+import com.orientechnologies.orient.core.id.ORID;
 
 /**
- * Listener interface to catch all the record events.
- * 
- * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
+ * Listener that is called when identity of the {@link OMVRBTreeEntryDataProvider} was changed.
  */
-public interface ORecordListener {
-	public enum EVENT {
-		CLEAR, RESET, MARSHALL, UNMARSHALL, UNLOAD, IDENTITY_CHANGED
-	}
-
-	public void onEvent(ORecord<?> iDocument, EVENT iEvent);
+public interface OIdentityChangedListener {
+	public void onIdentityChanged(ORID rid);
 }

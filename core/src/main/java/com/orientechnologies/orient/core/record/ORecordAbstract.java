@@ -16,6 +16,9 @@
 package com.orientechnologies.orient.core.record;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
+import java.util.WeakHashMap;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -37,7 +40,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	protected boolean											_pinned		= true;
 	protected boolean											_dirty		= true;
 	protected ORecordElement.STATUS				_status		= ORecordElement.STATUS.LOADED;
-	protected transient ORecordListener		_listener	= null;
+	protected transient Set<ORecordListener> _listeners = null;
 
 	public ORecordAbstract() {
 	}
@@ -143,6 +146,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	}
 
 	public void onAfterIdentityChanged(final ORecord<?> iRecord) {
+		invokeListenerEvent(ORecordListener.EVENT.IDENTITY_CHANGED);
 	}
 
 	public boolean isDirty() {
@@ -319,7 +323,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		cloned._pinned = _pinned;
 		cloned._status = _status;
 		cloned._recordFormat = _recordFormat;
-		cloned._listener = null;
+		cloned._listeners = null;
 		cloned._dirty = false;
 		return cloned;
 	}
@@ -332,8 +336,11 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	 * @param iListener
 	 *          ODocumentListener implementation
 	 */
-	public void setListener(final ORecordListener iListener) {
-		_listener = iListener;
+	public void addListener(final ORecordListener iListener) {
+		if(_listeners == null)
+			_listeners = Collections.newSetFromMap(new WeakHashMap<ORecordListener, Boolean>());
+
+		_listeners.add(iListener);
 	}
 
 	/**
@@ -341,13 +348,19 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	 * 
 	 * @see ORecordListener
 	 */
-	public void removeListener() {
-		_listener = null;
+	public void removeListener(final ORecordListener listener) {
+		if(_listeners != null) {
+			_listeners.remove(listener);
+			if(_listeners.isEmpty())
+				_listeners = null;
+		}
 	}
 
 	protected void invokeListenerEvent(final ORecordListener.EVENT iEvent) {
-		if (_listener != null)
-			_listener.onEvent(this, iEvent);
+		if (_listeners != null)
+			for(final ORecordListener listener : _listeners)
+			 if(listener != null)
+				listener.onEvent(this, iEvent);
 	}
 
 	public <RET extends ORecord<T>> RET flatCopy() {

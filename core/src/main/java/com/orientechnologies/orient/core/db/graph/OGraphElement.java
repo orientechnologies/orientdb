@@ -96,6 +96,6 @@ public abstract class OGraphElement extends ODocumentWrapper implements ORecordL
 	}
 
 	private void init() {
-		document.setListener(this);
+		document.addListener(this);
 	}
 }

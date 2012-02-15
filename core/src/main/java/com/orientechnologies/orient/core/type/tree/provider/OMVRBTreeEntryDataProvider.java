@@ -103,6 +103,10 @@ public interface OMVRBTreeEntryDataProvider<K, V> {
 
 	public void delete();
 
+	public void setIdentityChangedListener(final OIdentityChangedListener listener);
+
+	public void removeIdentityChangedListener(final OIdentityChangedListener listener);
+
 	/** SPEED UP MEMORY CLAIM BY RESETTING INTERNAL FIELDS */
 	public void clear();
 

@@ -58,4 +58,8 @@ public interface ORecordInternal<T> extends ORecord<T>, OSerializableStream {
 	 * @see #copy()
 	 */
 	public <RET extends ORecord<T>> RET flatCopy();
+
+	public void addListener(final ORecordListener iListener);
+
+	public void removeListener(final ORecordListener listener);
 }

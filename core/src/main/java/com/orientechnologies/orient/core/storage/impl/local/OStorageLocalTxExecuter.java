@@ -198,6 +198,7 @@ public class OStorageLocalTxExecuter {
 					// RECORD CHANGED: RE-STREAM IT
 					stream = txEntry.getRecord().toStream();
 
+				txEntry.getRecord().onBeforeIdentityChanged(rid);
 				rid.clusterId = cluster.getId();
 
 				if (iUseLog)
@@ -206,6 +207,7 @@ public class OStorageLocalTxExecuter {
 					rid.clusterPosition = iTx.getDatabase().getStorage()
 							.createRecord(rid, stream, txEntry.getRecord().getRecordType(), (byte) 0, null);
 
+				txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
 				iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_CREATE, txEntry.getRecord());
 			} else {
 				if (iUseLog)
