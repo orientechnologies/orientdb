@@ -246,28 +246,32 @@ public class GraphDatabaseTest {
 	public void testEdgesIterationInTX() {
 		database.open("admin", "admin");
 
-		database.createVertexType("vertexAA");
-		database.createVertexType("vertexBB");
-		database.createEdgeType("edgeAB");
+		try {
+			database.createVertexType("vertexAA");
+			database.createVertexType("vertexBB");
+			database.createEdgeType("edgeAB");
 
 
-		ODocument vertexA = (ODocument) database.createVertex("vertexAA").field("address", "testing").save();
+			ODocument vertexA = (ODocument) database.createVertex("vertexAA").field("address", "testing").save();
 
-		for (int i = 0; i < 18; ++i) {
-			ODocument vertexB = (ODocument) database.createVertex("vertexBB").field("address", "test" + i).save();
-			database.begin(OTransaction.TXTYPE.OPTIMISTIC);
-			database.createEdge(vertexB.getIdentity(), vertexA.getIdentity(), "edgeAB").save();
-			database.commit();
-		}
-
-		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select * from vertexAA"));
-		for (ODocument d : result) {
-			Set<OIdentifiable> edges = database.getInEdges(d);
-			for (OIdentifiable e : edges) {
-				System.out.println("In Edge: " + e);
+			for (int i = 0; i < 18; ++i) {
+				ODocument vertexB = (ODocument) database.createVertex("vertexBB").field("address", "test" + i).save();
+				database.begin(OTransaction.TXTYPE.OPTIMISTIC);
+				database.createEdge(vertexB.getIdentity(), vertexA.getIdentity(), "edgeAB").save();
+				database.commit();
 			}
+
+			List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select * from vertexAA"));
+			for (ODocument d : result) {
+				Set<OIdentifiable> edges = database.getInEdges(d);
+				for (OIdentifiable e : edges) {
+					System.out.println("In Edge: " + e);
+				}
+			}
+		} finally {
+			database.close();
 		}
-		database.close();
+
 	}
 
 	//
