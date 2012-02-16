@@ -527,9 +527,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			value = value.substring(1);
 		}
 
-		record = ORecordSerializerJSON.INSTANCE.fromString(value, record);
-
+		record = null;
 		try {
+			record = ORecordSerializerJSON.INSTANCE.fromString(value, record);
+
 			if (schemaImported && record.getIdentity().toString().equals(database.getStorage().getConfiguration().schemaRecordId)) {
 				// JUMP THE SCHEMA
 				return null;
@@ -589,8 +590,13 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			if (!record.getIdentity().toString().equals(rid))
 				throw new OSchemaException("Imported record '" + record.getIdentity() + "' has rid different from the original: " + rid);
 		} catch (Exception t) {
-			System.err.println("Error importing record " + record.getIdentity() + ". Source line " + jsonReader.getLineNumber()
-					+ ", column " + jsonReader.getColumnNumber());
+			if (record != null)
+				System.err.println("Error importing record " + record.getIdentity() + ". Source line " + jsonReader.getLineNumber()
+						+ ", column " + jsonReader.getColumnNumber());
+			else
+				System.err.println("Error importing record. Source line " + jsonReader.getLineNumber() + ", column "
+						+ jsonReader.getColumnNumber());
+
 			throw t;
 		} finally {
 			jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
