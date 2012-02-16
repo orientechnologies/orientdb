@@ -112,6 +112,7 @@ public class OSQLFilter extends OCommandToParse {
 		return (Boolean) rootCondition.evaluate((ORecordSchemaAware<?>) iRecord, iContext);
 	}
 
+	@SuppressWarnings("unchecked")
 	private boolean extractTargets() {
 		jumpWhiteSpaces();
 
@@ -130,9 +131,17 @@ public class OSQLFilter extends OCommandToParse {
 
 		} else if (c == '(') {
 			// SUB QUERY
-			final StringBuilder sub = new StringBuilder();
-			currentPos = OStringSerializerHelper.getEmbedded(text, currentPos, -1, sub);
-			targetRecords = new OCommandSQL(sub.toString()).execute();
+			final StringBuilder subText = new StringBuilder();
+			currentPos = OStringSerializerHelper.getEmbedded(text, currentPos, -1, subText);
+			final OCommandSQL subCommand = new OCommandSQL(subText.toString());
+			targetRecords = (Iterable<? extends OIdentifiable>) subCommand.execute();
+			final OCommandContext subContext = subCommand.getContext();
+
+			// MERGE THE CONTEXTS
+			if (context != null)
+				context.merge(subContext);
+			else
+				context = subContext;
 		} else if (c == OStringSerializerHelper.COLLECTION_BEGIN) {
 			// COLLECTION OF RIDS
 			final List<String> rids = new ArrayList<String>();

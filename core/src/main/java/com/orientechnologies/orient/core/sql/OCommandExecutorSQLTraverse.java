@@ -22,14 +22,12 @@ import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.parser.OStringParser;
-import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -59,25 +57,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAny;
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLExtractAbstract {
 	public static final String	KEYWORD_TRAVERSE	= "TRAVERSE";
-
 	private Set<String>					fields;
-
-	public class OTraverseContext implements OCommandContext {
-		public int				traversedRecords	= 0;
-		public Set<ORID>	evaluatedRecords	= new HashSet<ORID>();
-		private int				depth;
-
-		public Object getVariable(final String iName) {
-			if ("depth".equalsIgnoreCase(iName))
-				return depth;
-			return null;
-		}
-
-		public void setVariable(final String iName, final Object iValue) {
-			if ("depth".equalsIgnoreCase(iName))
-				throw new OCommandExecutionException("Cannot change read-only 'depth' variable. Current value is: " + depth);
-		}
-	}
 
 	/**
 	 * Compile the filter conditions only the first time.
@@ -149,18 +129,16 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLExtractAbstr
 			// JUMP IT BECAUSE IT ISN'T A RECORD
 			return;
 
-		((OTraverseContext) context).traversedRecords++;
-
-		if (((OTraverseContext) context).evaluatedRecords.contains(((OIdentifiable) iTarget).getIdentity()))
-			// ALREADY EVALUATED
-			return;
-
 		final ORecord<?> record = ((OIdentifiable) iTarget).getRecord();
 		if (!(record instanceof ODocument))
 			// JUMP IT BECAUSE NOT ODOCUMENT
 			return;
 
 		final ODocument target = (ODocument) record;
+
+		if (((OTraverseContext) context).traversed.contains(target.getIdentity()))
+			// ALREADY EVALUATED, DON'T GO IN DEEP
+			return;
 
 		if (target.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
 			try {
@@ -169,9 +147,6 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLExtractAbstr
 				// INVALID RID
 				return;
 			}
-
-		// ADD IT AS EVALUATED RECORD
-		((OTraverseContext) context).evaluatedRecords.add(record.getIdentity());
 
 		if (iCondition != null) {
 			final Object conditionResult = iCondition.evaluate(target, context);
@@ -182,7 +157,10 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLExtractAbstr
 		// MATCH
 		addResult(target);
 
-		((OTraverseContext) context).depth++;
+		// UPDATE CONTEXT
+		((OTraverseContext) context).traversed.add(target.getIdentity());
+		((OTraverseContext) context).history.add(target.getIdentity());
+
 		try {
 			// TRAVERSE THE DOCUMENT ITSELF
 			for (String cfgField : fields) {
@@ -190,7 +168,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLExtractAbstr
 						|| OSQLFilterItemFieldAny.FULL_NAME.equals(cfgField)) {
 					// ALL FIELDS
 					for (final String fieldName : target.fieldNames())
-						traverseField(target.rawField(fieldName), iCondition);
+						traverseField(target, fieldName, iCondition);
 				} else {
 					final int pos = cfgField.indexOf('.');
 					if (pos > -1) {
@@ -208,24 +186,33 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLExtractAbstr
 						cfgField = cfgField.substring(pos + 1);
 					}
 
-					traverseField(target.rawField(cfgField), iCondition);
+					traverseField(target, cfgField, iCondition);
 				}
 			}
+
 		} finally {
-			((OTraverseContext) context).depth--;
+			((OTraverseContext) context).history.remove(((OTraverseContext) context).history.size() - 1);
 		}
 	}
 
-	protected void traverseField(final Object iFieldValue, final OSQLFilterCondition iCondition) {
-		if (iFieldValue == null)
+	protected void traverseField(final ODocument iDocument, final String iFieldName, final OSQLFilterCondition iCondition) {
+		final Object fieldValue = iDocument.rawField(iFieldName);
+		if (fieldValue == null)
 			return;
 
-		if (OMultiValue.isMultiValue(iFieldValue))
-			for (Object o : OMultiValue.getMultiValueIterable(iFieldValue)) {
-				traverse(o, iCondition);
-			}
-		else if (iFieldValue instanceof OIdentifiable)
-			traverse(iFieldValue, iCondition);
+		((OTraverseContext) context).path.add(iFieldName);
+		try {
+
+			if (OMultiValue.isMultiValue(fieldValue))
+				for (Object o : OMultiValue.getMultiValueIterable(fieldValue)) {
+					traverse(o, iCondition);
+				}
+			else if (fieldValue instanceof OIdentifiable)
+				traverse(fieldValue, iCondition);
+
+		} finally {
+			((OTraverseContext) context).path.remove(((OTraverseContext) context).path.size() - 1);
+		}
 	}
 
 	protected int parseFields() {

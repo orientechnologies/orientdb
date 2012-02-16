@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.sql;
 import java.util.Locale;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 
 /**
@@ -50,6 +51,11 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract {
 
 	public Object execute(final Map<Object, Object> iArgs) {
 		return delegate.execute(iArgs);
+	}
+
+	@Override
+	public OCommandContext getContext() {
+		return delegate.getContext();
 	}
 
 	public String getSyntax() {

@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.command;
 
+import java.util.Map;
+
 /**
  * Basic interface for commands. Manages the context variables during execution.
  * 
@@ -25,4 +27,8 @@ public interface OCommandContext {
 	public Object getVariable(final String iName);
 
 	public void setVariable(final String iName, final Object iValue);
+
+	public Map<String, Object> getVariables();
+
+	public void merge(OCommandContext context);
 }

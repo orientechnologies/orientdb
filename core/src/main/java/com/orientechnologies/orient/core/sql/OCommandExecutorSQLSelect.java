@@ -32,6 +32,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -115,6 +116,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 		endP = textUpperCase.indexOf(" " + OCommandExecutorSQLSelect.KEYWORD_LIMIT, currentPos);
 		if (endP > -1 && endP < endPosition)
 			endPosition = endP;
+
+		if (context == null)
+			context = new OBasicCommandContext();
 
 		compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(text.substring(pos, endPosition), context);
 
@@ -999,6 +1003,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 				if (projection.getValue().equals("*")) {
 					doc.copy(result);
 					value = null;
+				} else if (projection.getValue().toString().startsWith("$")) {
+					value = context != null ? context.getVariable(projection.getValue().toString().substring(1)) : null;
 				} else if (projection.getValue() instanceof OSQLFilterItemField)
 					value = ((OSQLFilterItemField) projection.getValue()).getValue(doc, null);
 				else if (projection.getValue() instanceof OSQLFunctionRuntime) {

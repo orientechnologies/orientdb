@@ -51,7 +51,9 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 		executor.setProgressListener(iCommand.getProgressListener());
 		executor.parse(iCommand);
 		try {
-			return executor.execute(iCommand.getParameters());
+			final Object result = executor.execute(iCommand.getParameters());
+			iCommand.setContext( executor.getContext() );
+			return result;
 		} catch (OException e) {
 			// PASS THROUGHT
 			throw e;

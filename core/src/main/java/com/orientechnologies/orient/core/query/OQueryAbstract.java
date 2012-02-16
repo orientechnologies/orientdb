@@ -46,4 +46,6 @@ public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAb
 	@Override
 	public void reset() {
 	}
+	
+	
 }
