@@ -80,6 +80,9 @@ public class TransactionConsistencyTest {
 		ORID vDocA_Rid = vDocA_db1.getIdentity().copy();
 		ORID vDocB_Rid = vDocB_db1.getIdentity().copy();
 
+		int vDocA_version = -1;
+		int vDocB_version = -1;
+
 		database2.begin(TXTYPE.OPTIMISTIC);
 		try {
 			// Get docA and update in db2 transaction context
@@ -97,6 +100,10 @@ public class TransactionConsistencyTest {
 				Assert.fail("Should not failed here...");
 			}
 			Assert.assertEquals(vDocA_db1.field(NAME), "docA_v3");
+			// Keep the last versions.
+			// Following updates should failed and reverted.
+			vDocA_version = vDocA_db1.getVersion();
+			vDocB_version = vDocB_db1.getVersion();
 
 			// Update docB in db2 transaction context -> should be rollbacked.
 			ODocument vDocB_db2 = database2.load(vDocB_Rid);
@@ -115,9 +122,14 @@ public class TransactionConsistencyTest {
 		database2.getStorage().close();
 		database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
 
+		ODocument vDocA_db2 = database2.load(vDocA_Rid);
+		Assert.assertEquals(vDocA_db2.field(NAME), "docA_v3");
+		Assert.assertEquals(vDocA_db2.getVersion(), vDocA_version);
+
 		// docB should be in the first state : "docB"
 		ODocument vDocB_db2 = database2.load(vDocB_Rid);
 		Assert.assertEquals(vDocB_db2.field(NAME), "docB");
+		Assert.assertEquals(vDocB_db2.getVersion(), vDocB_version);
 
 		database1.close();
 		database2.close();

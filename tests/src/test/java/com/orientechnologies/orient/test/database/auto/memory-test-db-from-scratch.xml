@@ -42,7 +42,7 @@
 			<class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentValidationTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.ObjectTreeTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.ObjectDetachingTest" />
-      <class name="com.orientechnologies.orient.test.database.auto.DocumentTrackingTest"/>
+			<class name="com.orientechnologies.orient.test.database.auto.DocumentTrackingTest" />
 		</classes>
 	</test>
 	<test name="Index">
@@ -130,6 +130,7 @@
 			<class name="com.orientechnologies.orient.test.database.auto.SQLFindReferencesTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.SQLCreateLinkTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.MultipleDBTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.ConcurrentTest" />
 		</classes>
 	</test>
 	<test name="DbTools">

@@ -316,7 +316,7 @@ public class OTxSegment extends OSingleFileSegment {
 
 		case OPERATION_UPDATE:
 			// REPLACE WITH THE OLD ONE
-			storage.updateRecord(cluster, iRid, iRecordContent, -3, iRecordType);
+			storage.updateRecord(cluster, iRid, iRecordContent, Integer.MIN_VALUE + iRecordVersion, iRecordType);
 			break;
 
 		case OPERATION_DELETE:
@@ -325,7 +325,7 @@ public class OTxSegment extends OSingleFileSegment {
 			cluster.updateBoundsAfterInsertion(iRid.clusterPosition);
 
 			// RESTORE OLD CONTENT
-			storage.updateRecord(cluster, iRid, iRecordContent, iRecordVersion, iRecordType);
+			storage.updateRecord(cluster, iRid, iRecordContent, Integer.MIN_VALUE + iRecordVersion, iRecordType);
 			break;
 		}
 	}
