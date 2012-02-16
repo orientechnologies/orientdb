@@ -480,7 +480,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		return total;
 	}
 
-	private long importRecords() throws ParseException, IOException {
+	private long importRecords() throws Exception {
 		long total = 0;
 
 		jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
@@ -519,7 +519,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		return total;
 	}
 
-	private ORID importRecord() throws IOException, ParseException {
+	private ORID importRecord() throws Exception {
 		String value = jsonReader.readString(OJSONReader.END_OBJECT, true);
 
 		// JUMP EMPTY RECORDS
@@ -588,6 +588,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
 			if (!record.getIdentity().toString().equals(rid))
 				throw new OSchemaException("Imported record '" + record.getIdentity() + "' has rid different from the original: " + rid);
+		} catch (Exception t) {
+			System.err.println("Error importing record " + record.getIdentity() + ". Source line " + jsonReader.getLineNumber()
+					+ ", column " + jsonReader.getColumnNumber());
+			throw t;
 		} finally {
 			jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
 		}
