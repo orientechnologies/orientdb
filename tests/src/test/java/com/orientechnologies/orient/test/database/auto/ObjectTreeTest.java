@@ -18,7 +18,11 @@ package com.orientechnologies.orient.test.database.auto;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -49,14 +53,21 @@ public class ObjectTreeTest {
 	protected int							unserialized;
 
 	public class CustomClass {
-		private String						name;
-		private CustomType				custom;
-		private List<CustomType>	customTypeList;
+		private String								name;
+		private Long									age;
+		private CustomType						custom;
+		private List<CustomType>			customTypeList;
+		private Set<CustomType>				customTypeSet;
+		private Map<Long, CustomType>	customTypeMap;
 
-		public CustomClass(String iName, CustomType iCustom, List<CustomType> iCustomTypeList) {
+		public CustomClass(String iName, Long iAge, CustomType iCustom, List<CustomType> iCustomTypeList,
+				Set<CustomType> iCustomTypeSet, Map<Long, CustomType> iCustomTypeMap) {
 			name = iName;
+			age = iAge;
 			custom = iCustom;
 			customTypeList = iCustomTypeList;
+			customTypeSet = iCustomTypeSet;
+			customTypeMap = iCustomTypeMap;
 		}
 	}
 
@@ -227,15 +238,24 @@ public class ObjectTreeTest {
 		database.getMetadata().getSchema().createClass("CustomClass");
 
 		List<CustomType> customTypesList = new ArrayList<CustomType>();
-		customTypesList.add(new CustomType(101L));
+		customTypesList.add(new CustomType(102L));
 
-		CustomClass pojo = new CustomClass("test", new CustomType(100L), customTypesList);
+		Set<CustomType> customTypeSet = new HashSet<CustomType>();
+		customTypeSet.add(new CustomType(103L));
+
+		Map<Long, CustomType> customTypeMap = new HashMap<Long, CustomType>();
+		customTypeMap.put(1L, new CustomType(104L));
+
+		CustomClass pojo = new CustomClass("test", 33L, new CustomType(101L), customTypesList, customTypeSet, customTypeMap);
+		// init counters
+		serialized = 0;
+		unserialized = 0;
 		database.save(pojo);
-		Assert.assertEquals(serialized, 2);
+		Assert.assertEquals(serialized, 4);
 		Assert.assertEquals(unserialized, 0);
 
 		database.reload(pojo);
-		Assert.assertEquals(serialized, 2);
-		Assert.assertEquals(unserialized, 2);
+		Assert.assertEquals(serialized, 4);
+		Assert.assertEquals(unserialized, 4);
 	}
 }

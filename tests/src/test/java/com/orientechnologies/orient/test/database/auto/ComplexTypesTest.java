@@ -27,6 +27,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -47,10 +49,19 @@ public class ComplexTypesTest {
 		url = iURL;
 	}
 
+	@BeforeMethod
+	public void init() {
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+	}
+
+	@AfterMethod
+	public void deinit() {
+		if (database != null)
+			database.close();
+	}
+
 	@Test
 	public void testBigDecimal() {
-		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-
 		ODocument newDoc = new ODocument();
 		newDoc.field("integer", new BigInteger("10"));
 		newDoc.field("decimal_integer", new BigDecimal(10));
@@ -67,14 +78,10 @@ public class ComplexTypesTest {
 		Assert.assertEquals(((Number) loadedDoc.field("integer")).intValue(), 10);
 		Assert.assertEquals(loadedDoc.field("decimal_integer"), new BigDecimal(10));
 		Assert.assertEquals(loadedDoc.field("decimal_float"), new BigDecimal("10.34"));
-
-		database.close();
 	}
 
 	@Test
 	public void testEmbeddedList() {
-		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-
 		ODocument newDoc = new ODocument();
 
 		final ArrayList<ODocument> list = new ArrayList<ODocument>();
@@ -99,14 +106,10 @@ public class ComplexTypesTest {
 		d = ((List<ODocument>) loadedDoc.field("embeddedList")).get(1);
 		Assert.assertEquals(d.getClassName(), "Account");
 		Assert.assertEquals(d.field("name"), "Marcus");
-
-		database.close();
 	}
 
 	@Test
 	public void testLinkList() {
-		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-
 		ODocument newDoc = new ODocument();
 
 		final ArrayList<ODocument> list = new ArrayList<ODocument>();
@@ -132,14 +135,10 @@ public class ComplexTypesTest {
 		d = ((List<ODocument>) loadedDoc.field("linkedList")).get(1);
 		Assert.assertEquals(d.getClassName(), "Account");
 		Assert.assertEquals(d.field("name"), "Marcus");
-
-		database.close();
 	}
 
 	@Test
 	public void testEmbeddedSet() {
-		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-
 		ODocument newDoc = new ODocument();
 
 		final Set<ODocument> set = new HashSet<ODocument>();
@@ -172,14 +171,10 @@ public class ComplexTypesTest {
 		}
 
 		Assert.assertEquals(tot, 2);
-
-		database.close();
 	}
 
 	@Test
 	public void testLinkSet() {
-		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-
 		ODocument newDoc = new ODocument();
 
 		final Set<ODocument> set = new HashSet<ODocument>();
@@ -212,14 +207,10 @@ public class ComplexTypesTest {
 		}
 
 		Assert.assertEquals(tot, 2);
-
-		database.close();
 	}
 
 	@Test
 	public void testEmbeddedMap() {
-		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-
 		ODocument newDoc = new ODocument();
 
 		final Map<String, ODocument> map = new HashMap<String, ODocument>();
@@ -249,14 +240,10 @@ public class ComplexTypesTest {
 		d = ((Map<String, ODocument>) loadedDoc.field("embeddedMap")).get("Cesare");
 		Assert.assertEquals(d.field("name"), "Cesare");
 		Assert.assertEquals(d.getClassName(), "Account");
-
-		database.close();
 	}
 
 	@Test
 	public void testEmptyEmbeddedMap() {
-		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-
 		ODocument newDoc = new ODocument();
 
 		final Map<String, ODocument> map = new HashMap<String, ODocument>();
@@ -276,14 +263,10 @@ public class ComplexTypesTest {
 
 		final Map<String, ODocument> loadedMap = loadedDoc.field("embeddedMap");
 		Assert.assertEquals(loadedMap.size(), 0);
-
-		database.close();
 	}
 
 	@Test
 	public void testLinkMap() {
-		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-
 		ODocument newDoc = new ODocument();
 
 		final Map<String, ODocument> map = new HashMap<String, ODocument>();
@@ -313,7 +296,5 @@ public class ComplexTypesTest {
 		d = ((Map<String, ODocument>) loadedDoc.field("linkedMap")).get("Cesare");
 		Assert.assertEquals(d.field("name"), "Cesare");
 		Assert.assertEquals(d.getClassName(), "Account");
-
-		database.close();
 	}
 }

@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -171,12 +172,16 @@ public class OReflectionHelper {
 	 * @return The Class<?> of generic type if any, otherwise null
 	 */
 	public static Class<?> getGenericMultivalueType(final Field p) {
-		final Type genericType = p.getGenericType();
-		if (genericType != null && genericType instanceof ParameterizedType) {
-			final ParameterizedType pt = (ParameterizedType) genericType;
-			if (pt.getActualTypeArguments() != null && pt.getActualTypeArguments().length > 0) {
-				if (pt.getActualTypeArguments()[0] instanceof Class<?>) {
-					return (Class<?>) pt.getActualTypeArguments()[0];
+		if (p.getType() instanceof Class<?>) {
+			final Type genericType = p.getGenericType();
+			if (genericType != null && genericType instanceof ParameterizedType) {
+				final ParameterizedType pt = (ParameterizedType) genericType;
+				if (pt.getActualTypeArguments() != null && pt.getActualTypeArguments().length > 0) {
+					if (((Class<?>) pt.getRawType()).isAssignableFrom(Map.class)) {
+						if (pt.getActualTypeArguments()[1] instanceof Class<?>)
+							return (Class<?>) pt.getActualTypeArguments()[1];
+					} else if (pt.getActualTypeArguments()[0] instanceof Class<?>)
+						return (Class<?>) pt.getActualTypeArguments()[0];
 				}
 			}
 		}
