@@ -36,21 +36,6 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	public ORecordSchemaAwareAbstract() {
 	}
 
-	@Override
-	public ORecordAbstract<T> save() {
-		if (_clazz != null)
-			return save(getDatabase().getClusterNameById(_clazz.getDefaultClusterId()));
-
-		validate();
-		return super.save();
-	}
-
-	@Override
-	public ORecordAbstract<T> save(final String iClusterName) {
-		validate();
-		return super.save(iClusterName);
-	}
-
 	/**
 	 * Validates the record following the declared constraints defined in schema such as mandatory, notNull, min, max, regexp, etc. If
 	 * the schema is not defined for the current class or there are not constraints then the validation is ignored.

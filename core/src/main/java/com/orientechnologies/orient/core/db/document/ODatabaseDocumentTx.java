@@ -215,11 +215,11 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	@Override
-	public ODatabaseDocumentTx save(final ORecordInternal<?> iContent, String iClusterName, final OPERATION_MODE iMode) {
-		if (!(iContent instanceof ODocument))
-			return (ODatabaseDocumentTx) super.save(iContent, iClusterName, iMode);
+	public ODatabaseDocumentTx save(final ORecordInternal<?> iRecord, String iClusterName, final OPERATION_MODE iMode) {
+		if (!(iRecord instanceof ODocument))
+			return (ODatabaseDocumentTx) super.save(iRecord, iClusterName, iMode);
 
-		final ODocument doc = (ODocument) iContent;
+		final ODocument doc = (ODocument) iRecord;
 
 		if (!doc.getIdentity().isValid()) {
 			if (doc.getClassName() != null)
@@ -272,23 +272,24 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 	 * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
 	 * {@link OConcurrentModificationException} exception is thrown.
 	 * 
-	 * @param iContent
+	 * @param iRecord
 	 * @see #setMVCC(boolean), {@link #isMVCC()}
 	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
-	public ODatabaseDocumentTx delete(final ODocument iContent) {
+	public ODatabaseDocumentTx delete(final ODocument iRecord) {
+		if (iRecord == null)
+			throw new ODatabaseException("Cannot delete null document");
+
 		// CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
-		if (iContent.getClassName() != null)
-			checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_DELETE, iContent.getClassName());
+		if (iRecord.getClassName() != null)
+			checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_DELETE, iRecord.getClassName());
 
 		try {
-			underlying.delete(iContent);
-
-			// ODocumentHelper.deleteCrossRefs(iContent.getIdentity(), iContent);
+			underlying.delete(iRecord);
 
 		} catch (Exception e) {
 			OLogManager.instance().exception("Error on deleting record %s of class '%s'", e, ODatabaseException.class,
-					iContent.getIdentity(), iContent.getClassName());
+					iRecord.getIdentity(), iRecord.getClassName());
 		}
 		return this;
 	}
