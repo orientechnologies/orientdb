@@ -77,6 +77,7 @@ public class OServerAdmin {
 	 */
 	public synchronized OServerAdmin connect(final String iUserName, final String iUserPassword) throws IOException {
 		storage.createConnectionPool();
+		storage.setSessionId(-1);
 
 		try {
 			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONNECT);
@@ -117,7 +118,7 @@ public class OServerAdmin {
 	 */
 	@SuppressWarnings("unchecked")
 	public synchronized Map<String, String> listDatabases() throws IOException {
-		storage.createConnectionPool();
+		storage.checkConnection();
 		final ODocument result = new ODocument();
 		try {
 			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_LIST);
