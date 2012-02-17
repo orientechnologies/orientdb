@@ -178,7 +178,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 
 		// BROWSE ALL THE RECORDS
 		for (OIdentifiable id : target) {
-			final ORecordInternal<?> record = (ORecordInternal<?>) id.getRecord();
+			final ORecordInternal<?> record = id.getRecord();
 
 			if (record != null && record.getRecordType() != ODocument.RECORD_TYPE)
 				// WRONG RECORD TYPE: JUMP IT
@@ -971,7 +971,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 		if (tempResult != null)
 			for (OIdentifiable id : tempResult) {
 				if (flattenTarget instanceof OSQLFilterItem)
-					fieldValue = ((OSQLFilterItem) flattenTarget).getValue((ORecordInternal<?>) id.getRecord(), context);
+					fieldValue = ((OSQLFilterItem) flattenTarget).getValue(id.getRecord(), context);
 				else if (flattenTarget instanceof OSQLFunctionRuntime)
 					fieldValue = ((OSQLFunctionRuntime) flattenTarget).getResult();
 				else
@@ -993,7 +993,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 	private OIdentifiable applyProjections(final OIdentifiable iRecord) {
 		if (projections != null) {
 			// APPLY PROJECTIONS
-			final ODocument doc = (ODocument) iRecord.getRecord();
+			final ODocument doc = iRecord.getRecord();
 			final ODocument result = new ODocument().setOrdered(true);
 
 			boolean canExcludeResult = false;

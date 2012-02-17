@@ -698,7 +698,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 				throw new OException("The record requested is not part of current result set (0"
 						+ (currentResultSet.size() > 0 ? "-" + (currentResultSet.size() - 1) : "") + ")");
 
-			currentRecord = (ORecordInternal<?>) currentResultSet.get(recNumber).getRecord();
+			currentRecord =currentResultSet.get(recNumber).getRecord();
 		}
 
 		dumpRecordDetails();
@@ -1468,7 +1468,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 	private void browseRecords(final List<String> columns, final int limit, OIdentifiableIterator<?> it) {
 		while (it.hasNext()) {
-			currentRecord = (ORecordInternal<?>) ((OIdentifiable) it.next()).getRecord();
+			currentRecord = ((OIdentifiable) it.next()).getRecord();
 
 			try {
 				if (currentRecord instanceof ORecordSchemaAwareAbstract<?>)
