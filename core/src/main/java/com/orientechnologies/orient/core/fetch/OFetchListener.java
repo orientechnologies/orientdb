@@ -34,19 +34,19 @@ public interface OFetchListener {
 	 * @param iLinked
 	 * @return null if the fetching must stop, otherwise the current field value
 	 */
-	public Object fetchLinked(final ORecordSchemaAware<?> iRoot, final Object iUserObject, final String iFieldName,
-			final ORecordSchemaAware<?> iLinked, final OFetchContext iContext) throws OFetchException;
+	public Object fetchLinked(final ORecordSchemaAware<?> iRoot, final Object iUserObject, final String iFieldName, final ORecordSchemaAware<?> iLinked, final OFetchContext iContext)
+			throws OFetchException;
 
-	public void parseLinked(final ORecordSchemaAware<?> iRootRecord, final OIdentifiable iLinked, final Object iUserObject,
-			final String iFieldName, final OFetchContext iContext) throws OFetchException;
+	public void parseLinked(final ORecordSchemaAware<?> iRootRecord, final OIdentifiable iLinked, final Object iUserObject, final String iFieldName, final OFetchContext iContext)
+			throws OFetchException;
 
-	public Object fetchLinkedMapEntry(final ORecordSchemaAware<?> iRoot, final Object iUserObject, final String iFieldName,
-			final String iKey, final ORecordSchemaAware<?> iLinked, final OFetchContext iContext) throws OFetchException;
-
-	public Object fetchLinkedCollectionValue(final ORecordSchemaAware<?> iRoot, final Object iUserObject, final String iFieldName,
-			final ORecordSchemaAware<?> iLinked, final OFetchContext iContext) throws OFetchException;
-
-	public void processStandardField(final ORecordSchemaAware<?> iRecord, final Object iFieldValue, final String iFieldName,
+	public Object fetchLinkedMapEntry(final ORecordSchemaAware<?> iRoot, final Object iUserObject, final String iFieldName, final String iKey, final ORecordSchemaAware<?> iLinked,
 			final OFetchContext iContext) throws OFetchException;
+
+	public Object fetchLinkedCollectionValue(final ORecordSchemaAware<?> iRoot, final Object iUserObject, final String iFieldName, final ORecordSchemaAware<?> iLinked,
+			final OFetchContext iContext) throws OFetchException;
+
+	public void processStandardField(final ORecordSchemaAware<?> iRecord, final Object iFieldValue, final String iFieldName, final OFetchContext iContext, final Object iUserObject)
+			throws OFetchException;
 
 }
