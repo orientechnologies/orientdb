@@ -52,11 +52,8 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
 
 	public OTrackedMap(final ORecord<?> iSourceRecord) {
 		this.sourceRecord = iSourceRecord;
-		if (iSourceRecord != null)
-			iSourceRecord.setDirty();
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public T put(final Object iKey, final T iValue) {
 		boolean containsKey = containsKey(iKey);
