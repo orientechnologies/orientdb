@@ -39,5 +39,5 @@ public interface OIdentifiable extends Comparable<OIdentifiable>, Comparator<OId
 	 * 
 	 * @return ORecord instance
 	 */
-	public ORecord<?> getRecord();
+	public <T extends ORecord<?>> T getRecord();
 }
