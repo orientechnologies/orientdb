@@ -758,9 +758,9 @@ public class OObjectSerializerHelper {
 				if (iRecord != null && iType.equals(OType.EMBEDDEDMAP))
 					result = new OTrackedMap<Object>(iRecord);
 				else
-					result = new HashMap<String, Object>();
-				for (Entry<String, Object> entry : ((Map<String, Object>) iMultiValue).entrySet()) {
-					((Map<String, Object>) result).put(entry.getKey(),
+					result = new HashMap<Object, Object>();
+				for (Entry<Object, Object> entry : ((Map<Object, Object>) iMultiValue).entrySet()) {
+					((Map<Object, Object>) result).put(entry.getKey(),
 							typeToStream(entry.getValue(), linkedType, iEntityManager, iObj2RecHandler, db, null, iSaveOnlyDirty));
 				}
 			}
