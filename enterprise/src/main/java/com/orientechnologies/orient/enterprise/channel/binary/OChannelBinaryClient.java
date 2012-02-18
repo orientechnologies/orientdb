@@ -60,7 +60,7 @@ public class OChannelBinaryClient extends OChannelBinaryAsynch {
 					+ ": " + e);
 		}
 
-		if (srvProtocolVersion != iProtocolVersion) {
+		if (Math.abs(srvProtocolVersion - iProtocolVersion) > 2) {
 			close();
 			throw new ONetworkProtocolException("Binary protocol is incompatible with the Server connected: client="
 					+ OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION + ", server=" + srvProtocolVersion);
