@@ -20,3 +20,43 @@ then you can include in your own projects
 	</dependency>
 
 </pre>
+
+*How to build a jar-with-dependencies*
+
+Do a 
+
+<pre>mvn assembly:assembly</pre>
+
+to obtain a jar with dependency included. 
+
+It is very usefull to include under applications such as DBvisualizer.
+
+*How can be used in my code?*
+
+First get a connection
+
+<pre>
+Properties info = new Properties();
+info.put("user", "admin");
+info.put("password", "admin");
+
+Connection	conn = (OrientJdbcConnection) DriverManager.getConnection("jdbc:orient:remote:localhost/test", info);
+</pre>
+
+Then execute a Statement and get the ResultSet
+
+<pre>
+Statement stmt = conn.createStatement();
+
+ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item");
+
+rs.next();
+
+rs.getString("stringKey");
+rs.getInt("intKey");
+
+rs.close();
+stmt.close();
+
+</pre>
+
