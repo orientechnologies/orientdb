@@ -237,6 +237,9 @@ public class OObjectSerializerHelper {
 				// BIND ONLY THE SPECIFIED FIELDS
 				fieldValue = iRecord.field(fieldName);
 
+				Object value = fieldValue;
+				Type type = null;
+
 				if (fieldValue == null
 						|| !(fieldValue instanceof ODocument)
 						|| (fieldValue instanceof Collection<?> && (((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue)
@@ -260,7 +263,8 @@ public class OObjectSerializerHelper {
 										list.set(i, v);
 									}
 								}
-								continue;
+								value = list;
+								type = List.class;
 							} else if (fieldValue instanceof Set) {
 								// SET: CREATE A TEMP SET TO WORK WITH ITEMS
 								final Set<Object> newColl = new HashSet<Object>();
@@ -272,8 +276,8 @@ public class OObjectSerializerHelper {
 									}
 								}
 
-								setFieldValue(iPojo, fieldName, newColl);
-								continue;
+								value = newColl;
+								type = Set.class;
 							} else if (fieldValue instanceof Map) {
 								// MAP: TRANSFORM EACH SINGLE ITEM
 								final Map<String, Object> map = (Map<String, Object>) fieldValue;
@@ -285,7 +289,8 @@ public class OObjectSerializerHelper {
 										map.put(entry.getKey(), v);
 									}
 								}
-								continue;
+								type = Map.class;
+								value = map;
 							}
 
 						} else {
@@ -299,7 +304,8 @@ public class OObjectSerializerHelper {
 									if (v != null)
 										list.set(i, unserializeFieldValue(genericTypeClass, v));
 								}
-								continue;
+								value = list;
+								type = List.class;
 							} else if (fieldValue instanceof Set) {
 								// SET: CREATE A TEMP SET TO WORK WITH ITEMS
 								final Set<Object> newColl = new HashSet<Object>();
@@ -308,8 +314,8 @@ public class OObjectSerializerHelper {
 									if (v != null)
 										newColl.add(unserializeFieldValue(genericTypeClass, v));
 
-								setFieldValue(iPojo, fieldName, newColl);
-								continue;
+								value = newColl;
+								type = Set.class;
 							} else if (fieldValue instanceof Map) {
 								// MAP: TRANSFORM EACH SINGLE ITEM
 								final Map<String, Object> map = (Map<String, Object>) fieldValue;
@@ -320,13 +326,17 @@ public class OObjectSerializerHelper {
 										map.put(entry.getKey(), unserializeFieldValue(genericTypeClass, v));
 
 								}
-								continue;
+								value = map;
+								type = Map.class;
 							}
 						}
 
-					final Type type = p.getGenericType();
-					setFieldValue(iPojo, fieldName,
-							unserializeFieldValue((Class<?>) (type != null && type instanceof Class<?> ? type : null), fieldValue));
+					if (type == null) {
+						type = p.getGenericType();
+						value = unserializeFieldValue((Class<?>) (type != null && type instanceof Class<?> ? type : null), fieldValue);
+					}
+
+					setFieldValue(iPojo, fieldName, value);
 				}
 			}
 
@@ -652,7 +662,8 @@ public class OObjectSerializerHelper {
 							iSaveOnlyDirty);
 
 					// if (linkedDocument.isDirty()) {
-					// // SAVE THE DOCUMENT AND GET UDPATE THE VERSION. CALL THE UNDERLYING SAVE() TO AVOID THE SERIALIZATION THREAD IS
+					// // SAVE THE DOCUMENT AND GET UDPATE THE VERSION. CALL THE
+					// UNDERLYING SAVE() TO AVOID THE SERIALIZATION THREAD IS
 					// CLEANED
 					// // AND GOES RECURSIVELY UP THE STACK IS EXHAUSTED
 					// db.getUnderlying().save(linkedDocument);
@@ -728,12 +739,15 @@ public class OObjectSerializerHelper {
 			else
 				result = new ArrayList<Object>();
 		}
-		// } else if (iType.equals(OType.EMBEDDEDLIST) || iType.equals(OType.LINKLIST)) {
+		// } else if (iType.equals(OType.EMBEDDEDLIST) ||
+		// iType.equals(OType.LINKLIST)) {
 		// result = new ArrayList<Object>();
-		// } else if (iType.equals(OType.EMBEDDEDMAP) || iType.equals(OType.LINKMAP)) {
+		// } else if (iType.equals(OType.EMBEDDEDMAP) ||
+		// iType.equals(OType.LINKMAP)) {
 		// result = new HashMap<String, Object>();
 		// } else
-		// throw new IllegalArgumentException("Type " + iType + " must be a collection");
+		// throw new IllegalArgumentException("Type " + iType +
+		// " must be a collection");
 
 		if (iType.equals(OType.LINKLIST) || iType.equals(OType.LINKSET) || iType.equals(OType.LINKMAP))
 			linkedType = OType.LINK;
@@ -950,7 +964,8 @@ public class OObjectSerializerHelper {
 			currentClass = currentClass.getSuperclass();
 
 			if (currentClass.equals(ODocument.class))
-				// POJO EXTENDS ODOCUMENT: SPECIAL CASE: AVOID TO CONSIDER ODOCUMENT FIELDS
+				// POJO EXTENDS ODOCUMENT: SPECIAL CASE: AVOID TO CONSIDER
+				// ODOCUMENT FIELDS
 				currentClass = Object.class;
 		}
 		return properties;
