@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
@@ -71,6 +72,11 @@ public class OrientJdbcResultSet implements ResultSet {
 		records = iRecords;
 		rowCount = iRecords.size();
 
+		if (rowCount > 0) {
+			document = records.get(0);
+			fieldNames = document.fieldNames();
+		}
+		ODatabaseRecordThreadLocal.INSTANCE.set(iOrientJdbcStatement.database);
 		if (type == TYPE_FORWARD_ONLY || type == TYPE_SCROLL_INSENSITIVE || type == TYPE_SCROLL_SENSITIVE) this.type = type;
 		else throw new SQLException("Bad ResultSet type: " + type + " instead of one of the following values: " + TYPE_FORWARD_ONLY + ", " + TYPE_SCROLL_INSENSITIVE + " or" + TYPE_SCROLL_SENSITIVE);
 
@@ -129,9 +135,10 @@ public class OrientJdbcResultSet implements ResultSet {
 		}
 
 		cursor = iRowNumber;
+		// ODatabaseRecordThreadLocal.INSTANCE.set(document.getDatabase());
 		document = records.get(cursor);
 
-		fieldNames = document.fieldNames();
+		// fieldNames = document.fieldNames();
 
 		return true;
 	}
@@ -347,6 +354,8 @@ public class OrientJdbcResultSet implements ResultSet {
 
 	public Date getDate(String columnLabel) throws SQLException {
 		try {
+			ODatabaseRecordThreadLocal.INSTANCE.set(statement.database);
+
 			java.util.Date date = document.field(columnLabel, OType.DATETIME);
 			return new Date(date.getTime());
 		} catch (Exception e) {

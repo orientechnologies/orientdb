@@ -22,18 +22,26 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.RowIdLifetime;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
- * @author Roberto Franchini (CELI srl - franchin--at--celi.it)
+ * @author Roberto Franchini (CELI srl - franchini--at--celi.it)
  * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci@gmail.com)
  * 
  */
 public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
-	private final Connection connection;
+	private final OrientJdbcConnection connection;
 	private final ODatabaseRecord database;
 	private final OMetadata metadata;
 
@@ -323,8 +331,36 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 	}
 
 	public ResultSet getPrimaryKeys(String catalog, String schema, String table) throws SQLException {
+		Set<OIndex<?>> classIndexes = metadata.getIndexManager().getClassIndexes(table);
 
-		return null;
+		Set<OIndex<?>> uniqueIndexes = new HashSet<OIndex<?>>();
+
+		for (OIndex<?> oIndex : classIndexes) {
+			if (oIndex.getType().equals(INDEX_TYPE.UNIQUE.name())) uniqueIndexes.add(oIndex);
+		}
+
+		List<ODocument> iRecords = new ArrayList<ODocument>();
+
+		for (OIndex<?> unique : uniqueIndexes) {
+			int keyFiledSeq = 1;
+			for (String keyFieldName : unique.getDefinition().getFields()) {
+				ODocument doc = new ODocument();
+				doc.field("TABLE_CAT", catalog);
+				doc.field("TABLE_SCHEM", schema);
+				doc.field("TABLE_NAME", table);
+				doc.field("COLUMN_NAME", keyFieldName);
+				doc.field("KEY_SEQ", Integer.valueOf(keyFiledSeq), OType.INTEGER);
+				doc.field("PK_NAME", unique.getName());
+				keyFiledSeq++;
+
+				iRecords.add(doc);
+			}
+
+		}
+		OrientJdbcStatement iOrientJdbcStatement = new OrientJdbcStatement(connection);
+
+		ResultSet result = new OrientJdbcResultSet(iOrientJdbcStatement, iRecords, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+		return result;
 	}
 
 	public ResultSet getProcedureColumns(String catalog, String schemaPattern, String procedureNamePattern, String columnNamePattern) throws SQLException {
@@ -384,7 +420,6 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
 	public String getStringFunctions() throws SQLException {
 
-		
 		return null;
 	}
 
@@ -410,7 +445,16 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
 	public ResultSet getTableTypes() throws SQLException {
 
-		return null;
+		OrientJdbcStatement iOrientJdbcStatement = new OrientJdbcStatement(connection);
+
+		List<ODocument> records = new ArrayList<ODocument>();
+		records.add(new ODocument().field("TABLE_TYPE", "TABLE"));
+
+		ResultSet result =  new OrientJdbcResultSet(iOrientJdbcStatement, records, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+
+		ResultSet proxy = OrientJdbcUtils.getProxy(ResultSet.class, result);
+
+		return proxy;
 	}
 
 	public ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern, String[] types) throws SQLException {
@@ -419,12 +463,12 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 	}
 
 	public String getTimeDateFunctions() throws SQLException {
-		
+
 		return null;
 	}
 
 	public ResultSet getTypeInfo() throws SQLException {
-		
+
 		return null;
 	}
 

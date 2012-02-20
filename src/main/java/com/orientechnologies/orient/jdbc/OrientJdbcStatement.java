@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -36,40 +37,39 @@ import static java.util.Collections.emptyList;
 
 /**
  * TODO Add authors
+ * 
  * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci@gmail.com)
- *
+ * 
  */
 public class OrientJdbcStatement implements Statement {
 
 	protected final OrientJdbcConnection connection;
 	protected final ODatabaseDocumentTx database;
 
-	//protected OCommandSQL query;
+	// protected OCommandSQL query;
 	protected OCommandRequest query;
 	protected List<ODocument> documents;
 	protected boolean closed;
 	protected Object rawResult;
 	protected OrientJdbcResultSet resultSet;
 	protected List<String> batches;
-	
+
 	protected int resultSetType;
 	protected int resultSetConcurrency;
 	protected int resultSetHoldability;
 
 	public OrientJdbcStatement(final OrientJdbcConnection iConnection) {
-		this(iConnection,ResultSet.TYPE_FORWARD_ONLY,ResultSet.CONCUR_READ_ONLY,
-				ResultSet.HOLD_CURSORS_OVER_COMMIT);
+		this(iConnection, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
 	}
 
 	/**
 	 * 
 	 * @param iConnection
-	 * @param resultSetType
+	 * @param resultSetTypee
 	 * @param resultSetConcurrency
 	 * @throws SQLException
 	 */
-	public OrientJdbcStatement(OrientJdbcConnection iConnection,
-			int resultSetType, int resultSetConcurrency) throws SQLException {
+	public OrientJdbcStatement(OrientJdbcConnection iConnection, int resultSetType, int resultSetConcurrency) throws SQLException {
 		this(iConnection, resultSetType, resultSetConcurrency, resultSetType);
 	}
 
@@ -79,11 +79,10 @@ public class OrientJdbcStatement implements Statement {
 	 * @param resultSetConcurrency
 	 * @param resultSetHoldability
 	 */
-	public OrientJdbcStatement(OrientJdbcConnection iConnection,
-			int resultSetType, int resultSetConcurrency,
-			int resultSetHoldability) {
+	public OrientJdbcStatement(OrientJdbcConnection iConnection, int resultSetType, int resultSetConcurrency, int resultSetHoldability) {
 		this.connection = iConnection;
 		this.database = iConnection.getDatabase();
+		ODatabaseRecordThreadLocal.INSTANCE.set(database);
 		documents = emptyList();
 		batches = new ArrayList<String>();
 		this.resultSetType = resultSetType;
@@ -113,18 +112,22 @@ public class OrientJdbcStatement implements Statement {
 
 	public ResultSet executeQuery(final String sql) throws SQLException {
 
-		//query = new OCommandSQL(sql);
+		// query = new OCommandSQL(sql);
 		OSQLSynchQuery<ODocument> queryTMP = new OSQLSynchQuery<ODocument>(sql);
 		query = queryTMP;
 		try {
-			
-			/*rawResult = database.command(query).execute();
 
-			if (rawResult instanceof List<?>) documents = (List<ODocument>) rawResult;
-			else throw new SQLException("unable to create a valid resultSet: is query a SELECT?");*/
-			
+			/*
+			 * rawResult = database.command(query).execute();
+			 * 
+			 * if (rawResult instanceof List<?>) documents = (List<ODocument>)
+			 * rawResult; else throw new
+			 * SQLException("unable to create a valid resultSet: is query a SELECT?"
+			 * );
+			 */
+
 			documents = database.query(queryTMP);
-			
+
 			resultSet = new OrientJdbcResultSet(this, documents, resultSetType, resultSetConcurrency, resultSetHoldability);
 			return resultSet;
 
@@ -135,22 +138,20 @@ public class OrientJdbcStatement implements Statement {
 	}
 
 	/*
-	private OrientJdbcResultSet executeCommand() throws SQLException {
-		try {
-
-			// documents = query.setDatabase(database).execute();
-			rawResult = database.command(query).execute();
-			if (rawResult instanceof List<?>) documents = (List<ODocument>) rawResult;
-
-			resultSet = new OrientJdbcResultSet(this, documents, resultSetType, resultSetConcurrency, resultSetHoldability);
-			return resultSet;
-
-		} catch (OQueryParsingException e) {
-			throw new SQLSyntaxErrorException("Error on parsing the query", e);
-		}
-
-	}
-	*/
+	 * private OrientJdbcResultSet executeCommand() throws SQLException { try {
+	 * 
+	 * // documents = query.setDatabase(database).execute(); rawResult =
+	 * database.command(query).execute(); if (rawResult instanceof List<?>)
+	 * documents = (List<ODocument>) rawResult;
+	 * 
+	 * resultSet = new OrientJdbcResultSet(this, documents, resultSetType,
+	 * resultSetConcurrency, resultSetHoldability); return resultSet;
+	 * 
+	 * } catch (OQueryParsingException e) { throw new
+	 * SQLSyntaxErrorException("Error on parsing the query", e); }
+	 * 
+	 * }
+	 */
 
 	public int executeUpdate(final String sql) throws SQLException {
 		query = new OCommandSQL(sql);
@@ -282,9 +283,9 @@ public class OrientJdbcStatement implements Statement {
 
 	public int getUpdateCount() throws SQLException {
 		if (isClosed()) throw new SQLException("Statement already closed");
-		
+
 		return -1;
-	
+
 	}
 
 	public SQLWarning getWarnings() throws SQLException {
@@ -335,28 +336,30 @@ public class OrientJdbcStatement implements Statement {
 	}
 
 	public boolean isWrapperFor(Class<?> iface) throws SQLException {
-		//TODO This should check is this instance is a wrapper for the given class
+		// TODO This should check is this instance is a wrapper for the given
+		// class
 		try {
-			//the following if-then structure makes sense if the query can be a subclass of OCommandSQL.
+			// the following if-then structure makes sense if the query can be a
+			// subclass of OCommandSQL.
 			if (this.query == null)
-				//if the query instance is null, we use the class OCommandSQL
-				return OCommandSQL.class.isAssignableFrom(iface);
-			else
-				return this.query.getClass().isAssignableFrom(iface);
+			// if the query instance is null, we use the class OCommandSQL
+			return OCommandSQL.class.isAssignableFrom(iface);
+			else return this.query.getClass().isAssignableFrom(iface);
 		} catch (NullPointerException e) {
-			throw new SQLException (e);
+			throw new SQLException(e);
 		}
-		//return false;
+		// return false;
 	}
 
 	public <T> T unwrap(Class<T> iface) throws SQLException {
-		//TODO This should return the actual query object: OCommandSQL, OQuery, etc...
+		// TODO This should return the actual query object: OCommandSQL, OQuery,
+		// etc...
 		try {
 			return iface.cast(query);
 		} catch (ClassCastException e) {
-			throw new SQLException (e);
+			throw new SQLException(e);
 		}
-		//return null;
+		// return null;
 	}
 
 }

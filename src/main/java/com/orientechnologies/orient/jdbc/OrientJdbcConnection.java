@@ -36,6 +36,7 @@ import java.sql.Struct;
 import java.util.Map;
 import java.util.Properties;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 /**
@@ -58,8 +59,10 @@ public class OrientJdbcConnection implements Connection {
 
 		String username = iInfo.getProperty("user", "admin");
 		String password = iInfo.getProperty("password", "admin");
-		database = new ODatabaseDocumentTx(dbUrl);
-		database.open(username, password);
+		
+		database = ODatabaseDocumentPool.global().acquire(dbUrl, username, password);
+//		database = new ODatabaseDocumentTx(dbUrl);
+//		database.open(username, password);
 	}
 
 	public void clearWarnings() throws SQLException {

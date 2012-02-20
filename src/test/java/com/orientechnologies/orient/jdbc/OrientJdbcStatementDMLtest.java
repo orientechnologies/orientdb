@@ -29,7 +29,7 @@ public class OrientJdbcStatementDMLtest extends OrientJdbcBaseTest {
 
 		Statement stmt = conn.createStatement();
 		int updated = stmt.executeUpdate("INSERT into Item (stringKey, intKey, text, length, date) values ('100','100','dummy text','10','" + date.toString() + "')");
-
+		
 		assertEquals(1, updated);
 
 		stmt = conn.createStatement();

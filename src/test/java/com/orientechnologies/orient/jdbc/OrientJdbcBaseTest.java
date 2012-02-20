@@ -7,10 +7,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static java.lang.Class.forName;
-import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.createDB;
+import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.createSchemaDB;
 import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.loadDB;
 
 public abstract class OrientJdbcBaseTest {
@@ -27,14 +28,25 @@ public abstract class OrientJdbcBaseTest {
 	public void prepareDatabase() throws Exception {
 		String dbUrl = "local:./working/db/test";
 		dbUrl = "memory:test";
-		ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
 
-		createDB(db);
+		ODatabaseDocumentPool.global().close();
+		
+		ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
+	
+		String username = "admin";
+		String password = "admin";
+
+		if (db.exists() ) db.delete();
+		db.create();
+		
+		createSchemaDB(db);
 		loadDB(db, 20);
+		
+		db.close();
 
 		Properties info = new Properties();
-		info.put("user", "admin");
-		info.put("password", "admin");
+		info.put("user", username);
+		info.put("password", password);
 
 		conn = (OrientJdbcConnection) DriverManager.getConnection("jdbc:orient:" + dbUrl, info);
 
@@ -42,7 +54,7 @@ public abstract class OrientJdbcBaseTest {
 
 	@After
 	public void closeConnection() throws Exception {
-		if (!conn.isClosed()) conn.close();
+		if (conn != null && !conn.isClosed()) conn.close();
 	}
 
 }

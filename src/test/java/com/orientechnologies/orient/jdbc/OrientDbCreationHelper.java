@@ -19,7 +19,8 @@ public class OrientDbCreationHelper {
 		db.declareIntent(new OIntentMassiveInsert());
 
 		for (int i = 1; i <= documents; i++) {
-			ODocument doc = new ODocument(db, "Item");
+			ODocument doc = new ODocument();
+			doc.setClassName("Item");
 			doc = createItem(i, doc);
 			db.save(doc, "Item");
 
@@ -29,10 +30,7 @@ public class OrientDbCreationHelper {
 
 	}
 
-	public static void createDB(ODatabaseDocumentTx db) {
-		if (db.exists()) db.delete();
-
-		db.create();
+	public static void createSchemaDB(ODatabaseDocumentTx db) {
 
 		OSchema schema = db.getMetadata().getSchema();
 

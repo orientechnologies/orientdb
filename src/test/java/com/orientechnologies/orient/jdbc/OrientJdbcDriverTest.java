@@ -44,6 +44,6 @@ public class OrientJdbcDriverTest {
 		assertTrue(conn.isClosed());
 	}
 
-	
+		
 	
 }
