@@ -222,7 +222,6 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 
 	@Override
 	public ODatabaseRecord save(final ORecordInternal<?> iContent, final String iClusterName, final OPERATION_MODE iMode) {
-		setCurrentDatabaseinThreadLocal();
 		currentTx.saveRecord(iContent, iClusterName, iMode);
 		return this;
 	}
