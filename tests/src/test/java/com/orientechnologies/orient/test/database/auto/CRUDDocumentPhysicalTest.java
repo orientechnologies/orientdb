@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -693,6 +694,28 @@ public class CRUDDocumentPhysicalTest {
 		}
 
 		newAccount.delete();
+
+		database.close();
+	}
+
+	@Test
+	public void testBrowseClassHasNextTwice() {
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+		ODocument doc1 = null;
+		for (Iterator<ODocument> itDoc = database.browseClass("Account"); itDoc.hasNext();) {
+			doc1 = itDoc.next();
+			break;
+		}
+
+		ODocument doc2 = null;
+		for (Iterator<ODocument> itDoc = database.browseClass("Account"); itDoc.hasNext();) {
+			itDoc.hasNext();
+			doc2 = itDoc.next();
+			break;
+		}
+
+		Assert.assertEquals(doc1, doc2);
 
 		database.close();
 	}
