@@ -64,6 +64,12 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 
 			final ODocument currentDocument = db.load(recordId);
 
+			if (currentDocument == null) {
+				sendTextContent(iRequest, OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, null,
+						OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + recordId + " was not found.");
+				return false;
+			}
+
 			currentDocument.merge(doc, false, false);
 			currentDocument.setVersion(doc.getVersion());
 
