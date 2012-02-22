@@ -732,7 +732,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	 * @param iOther
 	 *          Other ODocument instance to merge
 	 * @param iAddOnlyMode
-	 *          if true, the other document properties will be always added. If false, the missed propertie in the "other" document
+	 *          if true, the other document properties will be always added. If false, the missed properties in the "other" document
 	 *          will be removed by original too
 	 * @param iMergeSingleItemsOfMultiValueFields
 	 * 
@@ -760,8 +760,10 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 					final Collection<Object> otherColl = (Collection<Object>) iOther.get(f);
 
 					for (Object item : otherColl) {
-						if (!coll.contains(item))
-							coll.add(item);
+						if (coll.contains(item))
+							// REMOVE PREVIOUS ITEM BECAUSE THIS COULD BE UPDATED INSIDE OF IT
+							coll.remove(item);
+						coll.add(item);
 					}
 
 					// JUMP RAW REPLACE
