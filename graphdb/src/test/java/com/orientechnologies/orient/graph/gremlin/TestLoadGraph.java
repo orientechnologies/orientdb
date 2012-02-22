@@ -10,7 +10,7 @@ import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.tinkerpop.blueprints.pgm.impls.orientdb.OrientGraph;
-import com.tinkerpop.blueprints.pgm.util.graphml.GraphMLReader;
+import com.tinkerpop.blueprints.pgm.util.io.graphml.GraphMLReader;
 
 public class TestLoadGraph {
 	private static final String	INPUT_FILE	= "target/test-classes/graph-example-2.xml";
