@@ -180,7 +180,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 		for (OIdentifiable id : target) {
 			final ORecordInternal<?> record = id.getRecord();
 
-			if (record != null && record.getRecordType() != ODocument.RECORD_TYPE)
+			if (record == null || record.getRecordType() != ODocument.RECORD_TYPE)
 				// WRONG RECORD TYPE: JUMP IT
 				continue;
 
