@@ -65,6 +65,9 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
 	public boolean hasPrevious() {
 		checkDirection(false);
 
+		if (currentRecord != null)
+			return true;
+
 		if (limit > -1 && browsedRecords >= limit)
 			// LIMIT REACHED
 			return false;
@@ -103,6 +106,9 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
 
 	public boolean hasNext() {
 		checkDirection(true);
+
+		if (currentRecord != null)
+			return true;
 
 		if (limit > -1 && browsedRecords >= limit)
 			// LIMIT REACHED
