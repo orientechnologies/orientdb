@@ -26,12 +26,12 @@ if [ "$1" = "-e" ]; then
     done
   fi
 
-  eval $JAVA $JAVA_OPTIONS -cp $CP com.tinkerpop.gremlin.jsr223.ScriptExecutor $k
+  eval $JAVA $JAVA_OPTIONS -cp $CP com.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngine $k
 else
   if [ "$1" = "-v" ]; then
-    $JAVA $JAVA_OPTIONS -cp $CP com.tinkerpop.gremlin.Version
+    $JAVA $JAVA_OPTIONS -cp $CP  com.tinkerpop.gremlin.Version
   else
-    $JAVA $JAVA_OPTIONS -cp $CP com.tinkerpop.gremlin.console.Console
+    $JAVA $JAVA_OPTIONS -cp $CP com.tinkerpop.gremlin.groovy.console.Console
   fi
 fi
 

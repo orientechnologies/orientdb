@@ -34,7 +34,7 @@ if "%1" == "-v" goto version
 
 :console
 
-java %JAVA_OPTIONS% %JAVA_ARGS% -cp %CP% com.tinkerpop.gremlin.console.Console
+java %JAVA_OPTIONS% %JAVA_ARGS% -cp %CP% com.tinkerpop.gremlin.groovy.console.Console
 
 goto :eof
 
@@ -54,7 +54,7 @@ CALL :concat %%X %1 %2
 
 
 
-java %JAVA_OPTIONS% %JAVA_ARGS% -cp %CP% com.tinkerpop.gremlin.jsr223.ScriptExecutor %strg%
+java %JAVA_OPTIONS% %JAVA_ARGS% -cp %CP% com.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngine %strg%
 
 goto :eof
 
