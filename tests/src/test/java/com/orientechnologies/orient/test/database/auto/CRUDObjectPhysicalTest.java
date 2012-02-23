@@ -128,6 +128,34 @@ public class CRUDObjectPhysicalTest {
 		database.close();
 	}
 
+	@Test(dependsOnMethods = "testAutoCreateClass")
+	public void synchQueryCollectionsFetch() {
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+
+		database.getLevel1Cache().invalidate();
+		database.getLevel2Cache().clear();
+
+		// BROWSE ALL THE OBJECTS
+		int i = 0;
+		List<Account> result = database.query(new OSQLSynchQuery<Account>("select from Account").setFetchPlan("*:-1"));
+		for (Account a : result) {
+
+			Assert.assertEquals(a.getId(), i);
+			Assert.assertEquals(a.getName(), "Bill");
+			Assert.assertEquals(a.getSurname(), "Gates");
+			Assert.assertEquals(a.getSalary(), i + 300.1f);
+			Assert.assertEquals(a.getAddresses().size(), 1);
+			Assert.assertEquals(a.getAddresses().get(0).getCity().getName(), rome.getName());
+			Assert.assertEquals(a.getAddresses().get(0).getCity().getCountry().getName(), rome.getCountry().getName());
+
+			i++;
+		}
+
+		Assert.assertTrue(i == TOT_RECORDS);
+
+		database.close();
+	}
+
 	@Test(dependsOnMethods = "readAndBrowseDescendingAndCheckHoleUtilization")
 	public void mapEnumAndInternalObjects() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
