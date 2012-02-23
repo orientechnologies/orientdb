@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -189,7 +190,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 			}
 			channel.writeByte((byte) 0);
 
-			//channel.clearInput();
+			// channel.clearInput();
 
 		} finally {
 			channel.releaseExclusiveLock();
@@ -381,7 +382,8 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 
 		iDatabase.save(currentRecord);
 
-		if (currentRecord.getIdentity().toString().equals(iDatabase.getStorage().getConfiguration().indexMgrRecordId)) {
+		if (currentRecord.getIdentity().toString().equals(iDatabase.getStorage().getConfiguration().indexMgrRecordId)
+				&& !iDatabase.getStatus().equals(STATUS.IMPORTING)) {
 			// FORCE INDEX MANAGER UPDATE. THIS HAPPENS FOR DIRECT CHANGES FROM REMOTE LIKE IN GRAPH
 			iDatabase.getMetadata().getIndexManager().reload();
 		}
