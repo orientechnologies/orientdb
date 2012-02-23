@@ -175,7 +175,7 @@ public class ODefaultCache implements OCache {
 			return limit > 0 ? size() - limit > 0 : false;
 		}
 
-		void removeEldest(int amount) {
+		void removeEldest(final int amount) {
 			final ORID[] victims = new ORID[amount];
 
 			final int skip = size() - amount;
@@ -183,7 +183,7 @@ public class ODefaultCache implements OCache {
 			int selected = 0;
 
 			for (Map.Entry<ORID, ORecordInternal<?>> entry : entrySet()) {
-				if (entry.getValue().isDirty() || skipped++ < skip)
+				if (entry.getValue().isDirty() || entry.getValue().isPinned() == Boolean.TRUE || skipped++ < skip)
 					continue;
 				victims[selected++] = entry.getKey();
 			}
@@ -196,14 +196,14 @@ public class ODefaultCache implements OCache {
 	class OLowMemoryListener implements OMemoryWatchDog.Listener {
 		public void memoryUsageLow(final long freeMemory, final long freeMemoryPercentage) {
 			try {
+				final int oldSize = size();
+				if (oldSize == 0)
+					return;
+
 				if (freeMemoryPercentage < 10) {
 					OLogManager.instance().debug(this, "Low memory (%d%%): clearing %d cached records", freeMemoryPercentage, size());
-					clear();
+					removeEldest(oldSize);
 				} else {
-					final int oldSize = size();
-					if (oldSize == 0)
-						return;
-
 					final int newSize = (int) (oldSize * 0.9f);
 					removeEldest(oldSize - newSize);
 					OLogManager.instance().debug(this, "Low memory (%d%%): reducing cached records number from %d to %d",

@@ -53,7 +53,7 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
 				|| fresh.getIdentity().getClusterId() == excludedCluster)
 			return;
 
-		if (fresh.isPinned()) {
+		if (fresh.isPinned() == null || fresh.isPinned()) {
 			underlying.lock(fresh.getIdentity());
 			try {
 				final ORecordInternal<?> current = underlying.get(fresh.getIdentity());

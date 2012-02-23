@@ -32,15 +32,15 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<T> {
-	protected ORecordId										_recordId;
-	protected int													_version;
-	protected byte[]											_source;
-	protected int													_size;
-	protected transient ORecordSerializer	_recordFormat;
-	protected boolean											_pinned		= true;
-	protected boolean											_dirty		= true;
-	protected ORecordElement.STATUS				_status		= ORecordElement.STATUS.LOADED;
-	protected transient Set<ORecordListener> _listeners = null;
+	protected ORecordId												_recordId;
+	protected int															_version;
+	protected byte[]													_source;
+	protected int															_size;
+	protected transient ORecordSerializer			_recordFormat;
+	protected Boolean													_pinned			= null;
+	protected boolean													_dirty			= true;
+	protected ORecordElement.STATUS						_status			= ORecordElement.STATUS.LOADED;
+	protected transient Set<ORecordListener>	_listeners	= null;
 
 	public ORecordAbstract() {
 	}
@@ -153,19 +153,17 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		return _dirty;
 	}
 
-	public boolean isPinned() {
+	public Boolean isPinned() {
 		return _pinned;
 	}
 
 	public ORecordAbstract<T> pin() {
-		if (!_pinned)
-			_pinned = true;
+		_pinned = Boolean.TRUE;
 		return this;
 	}
 
 	public ORecordAbstract<T> unpin() {
-		if (_pinned)
-			_pinned = false;
+		_pinned = Boolean.FALSE;
 		return this;
 	}
 
@@ -337,7 +335,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	 *          ODocumentListener implementation
 	 */
 	public void addListener(final ORecordListener iListener) {
-		if(_listeners == null)
+		if (_listeners == null)
 			_listeners = Collections.newSetFromMap(new WeakHashMap<ORecordListener, Boolean>());
 
 		_listeners.add(iListener);
@@ -349,18 +347,18 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	 * @see ORecordListener
 	 */
 	public void removeListener(final ORecordListener listener) {
-		if(_listeners != null) {
+		if (_listeners != null) {
 			_listeners.remove(listener);
-			if(_listeners.isEmpty())
+			if (_listeners.isEmpty())
 				_listeners = null;
 		}
 	}
 
 	protected void invokeListenerEvent(final ORecordListener.EVENT iEvent) {
 		if (_listeners != null)
-			for(final ORecordListener listener : _listeners)
-			 if(listener != null)
-				listener.onEvent(this, iEvent);
+			for (final ORecordListener listener : _listeners)
+				if (listener != null)
+					listener.onEvent(this, iEvent);
 	}
 
 	public <RET extends ORecord<T>> RET flatCopy() {
