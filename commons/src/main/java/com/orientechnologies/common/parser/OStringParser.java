@@ -89,7 +89,7 @@ public class OStringParser {
 		for (int i = 0; i < iText.length(); ++i) {
 			c = iText.charAt(i);
 
-			if (openBraket == 0 && openGraph == 0 && !escape && c == '\\') {
+			if (openBraket == 0 && openGraph == 0 && !escape && c == '\\' && ((i + 1) < iText.length())) {
 				// ESCAPE CHARS
 				final char nextChar = iText.charAt(i + 1);
 
@@ -207,7 +207,7 @@ public class OStringParser {
 		for (int i = 0; i < iText.length(); i++) {
 			c = iText.charAt(i);
 
-			if (!escape && c == '\\') {
+			if (!escape && c == '\\' && ((i + 1) < iText.length())) {
 				if (iText.charAt(i + 1) == 'u') {
 					i = readUnicode(iText, i + 2, buffer);
 				} else {
