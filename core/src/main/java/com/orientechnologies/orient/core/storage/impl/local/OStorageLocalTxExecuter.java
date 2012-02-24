@@ -166,6 +166,8 @@ public class OStorageLocalTxExecuter {
 
 		final ORecordId rid = (ORecordId) txEntry.getRecord().getIdentity();
 
+		final boolean wasNew = rid.isNew();
+
 		if (rid.clusterId == ORID.CLUSTER_ID_INVALID && txEntry.getRecord() instanceof ODocument
 				&& ((ODocument) txEntry.getRecord()).getSchemaClass() != null) {
 			// TRY TO FIX CLUSTER ID TO THE DEFAULT CLUSTER ID DEFINED IN SCHEMA CLASS
@@ -193,14 +195,22 @@ public class OStorageLocalTxExecuter {
 			// CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
 			byte[] stream = txEntry.getRecord().toStream();
 
-			if (rid.isNew()) {
+			if (wasNew) {
 				if (iTx.getDatabase().callbackHooks(ORecordHook.TYPE.BEFORE_CREATE, txEntry.getRecord()))
 					// RECORD CHANGED: RE-STREAM IT
 					stream = txEntry.getRecord().toStream();
+			} else {
+				if (iTx.getDatabase().callbackHooks(ORecordHook.TYPE.BEFORE_UPDATE, txEntry.getRecord()))
+					// RECORD CHANGED: RE-STREAM IT
+					stream = txEntry.getRecord().toStream();
+			}
 
+			if (rid.isNew()) {
 				txEntry.getRecord().onBeforeIdentityChanged(rid);
 				rid.clusterId = cluster.getId();
+			}
 
+			if (rid.isNew()) {
 				if (iUseLog)
 					rid.clusterPosition = createRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getRecordType());
 				else
