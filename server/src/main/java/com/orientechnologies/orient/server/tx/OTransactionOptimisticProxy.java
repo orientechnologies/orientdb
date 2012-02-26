@@ -16,20 +16,25 @@
 package com.orientechnologies.orient.server.tx;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
+import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
@@ -38,7 +43,6 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 	private final Map<ORecordId, ORecord<?>>	createdRecords			= new HashMap<ORecordId, ORecord<?>>();
 	private final Map<ORecordId, ORecord<?>>	updatedRecords			= new HashMap<ORecordId, ORecord<?>>();
 	private final int													clientTxId;
-	private ODocument													remoteIndexEntries	= null;
 	private final OChannelBinary							channel;
 
 	public OTransactionOptimisticProxy(final ODatabaseRecordTx iDatabase, final OChannelBinary iChannel) throws IOException {
@@ -94,7 +98,8 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 				// ABORT TX
 				throw new OTransactionException("Transaction aborted by the client");
 
-			remoteIndexEntries = new ODocument(channel.readBytes());
+			final ODocument remoteIndexEntries = new ODocument(channel.readBytes());
+			fillIndexOperations(remoteIndexEntries);
 
 			// UNMARSHALL ALL THE RECORD AT THE END TO BE SURE ALL THE RECORD ARE LOADED IN LOCAL TX
 			for (ORecord<?> record : createdRecords.values())
@@ -120,10 +125,6 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 		return record;
 	}
 
-	@Override
-	public ODocument getIndexChanges() {
-		return remoteIndexEntries.merge(super.getIndexChanges(), true, true);
-	}
 
 	public Map<ORecordId, ORecord<?>> getCreatedRecords() {
 		return createdRecords;
@@ -143,6 +144,71 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 			for (Entry<String, Object> field : ((ODocument) iRecord)) {
 				if (field.getValue() instanceof ORecordLazyList)
 					((ORecordLazyList) field.getValue()).lazyLoad(true);
+			}
+		}
+	}
+
+	private void fillIndexOperations(final ODocument remoteIndexEntries) {
+		final Map<String, ODocument> indexChanges = remoteIndexEntries.field("indexChanges");
+		if(indexChanges == null)
+			return;
+
+		for (Entry<String, ODocument> indexEntry : indexChanges.entrySet()) {
+			OTransactionIndexChanges transactionIndexChanges = indexEntries.get(indexEntry.getKey());
+
+			if(transactionIndexChanges == null) {
+				transactionIndexChanges = new OTransactionIndexChanges();
+				indexEntries.put(indexEntry.getKey(), transactionIndexChanges);
+			}
+
+			final String indexName = indexEntry.getKey();
+			final ODocument indexDoc = indexEntry.getValue();
+			if(indexDoc == null)
+				continue;
+
+			final Boolean clearAll = (Boolean) indexDoc.field("clear");
+			if (clearAll != null && clearAll)
+				transactionIndexChanges.setCleared();
+			
+			final Collection<ODocument> entries = indexDoc.field("entries");
+			if(entries == null)
+				continue;
+
+			for (final ODocument entry : entries) {
+				final List<ODocument> operations = (List<ODocument>) entry.field("ops");
+				if (operations == null)
+					continue;
+
+				final String serializedKey = OStringSerializerHelper.decode((String) entry.field("k"));
+
+				final Object key;
+				if (serializedKey.startsWith("["))
+					key = new OCompositeKey((List<? extends Comparable<?>>) ORecordSerializerStringAbstract.fieldTypeFromStream(indexDoc,
+									OType.EMBEDDEDLIST, OStringSerializerHelper.decode(serializedKey)));
+				else
+					key = ORecordSerializerStringAbstract.getTypeValue(serializedKey);
+
+
+				for (final ODocument op : operations) {
+					final int operation = (Integer) op.rawField("o");
+					final OTransactionIndexChanges.OPERATION indexOperation =
+									OTransactionIndexChanges.OPERATION.values()[operation];
+					final OIdentifiable value = op.field("v", OType.LINK);
+
+					transactionIndexChanges.getChangesPerKey(key).add(value, indexOperation);
+
+					if (value == null)
+						continue;
+
+					final ORID rid = value.getIdentity();
+					List<OTransactionRecordIndexOperation> txIndexOperations = recordIndexOperations.get(rid);
+					if (txIndexOperations == null) {
+						txIndexOperations = new ArrayList<OTransactionRecordIndexOperation>();
+						recordIndexOperations.put(rid, txIndexOperations);
+					}
+
+					txIndexOperations.add(new OTransactionRecordIndexOperation(indexName, key,indexOperation ));
+				}
 			}
 		}
 	}

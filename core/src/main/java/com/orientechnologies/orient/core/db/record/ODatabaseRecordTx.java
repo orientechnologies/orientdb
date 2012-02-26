@@ -17,13 +17,16 @@ package com.orientechnologies.orient.core.db.record;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexMVRBTreeAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -46,6 +49,24 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 	public ODatabaseRecordTx(final String iURL, final byte iRecordType) {
 		super(iURL, iRecordType);
 		init();
+	}
+
+	@Override
+	public <DB extends ODatabase> DB open(String iUserName, String iUserPassword) {
+		final DB  db  = super.open(iUserName, iUserPassword);
+		if(getStorage() instanceof OStorageEmbedded)
+			currentTx.addRecordListener(new OClassIndexManager());
+
+		return db;
+	}
+
+	@Override
+	public <DB extends ODatabase> DB create() {
+		final DB db = super.create();
+		if(getStorage() instanceof OStorageEmbedded)
+			currentTx.addRecordListener(new OClassIndexManager());
+
+		return 	db;
 	}
 
 	public ODatabaseRecord begin() {
@@ -73,6 +94,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 
 		case OPTIMISTIC:
 			currentTx = new OTransactionOptimistic(this);
+			currentTx.addRecordListener(new OClassIndexManager());
 			break;
 
 		case PESSIMISTIC:
@@ -270,9 +292,13 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 						// COMMIT INDEX CHANGES
 						final ODocument indexEntries = currentTx.getIndexChanges();
 						if (indexEntries != null) {
-							for (Entry<String, Object> indexEntry : indexEntries) {
+							final Map<String, ODocument> indexChanges = indexEntries.field("indexChanges");
+							if(indexChanges == null)
+								return null;
+
+							for (Entry<String, ODocument> indexEntry : indexChanges.entrySet()) {
 								final OIndex<?> index = getMetadata().getIndexManager().getIndexInternal(indexEntry.getKey());
-								index.commit((ODocument) indexEntry.getValue());
+								index.commit(indexEntry.getValue());
 							}
 						}
 						return null;
@@ -322,5 +348,8 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 	public void setDefaultTransactionMode() {
 		if (!(currentTx instanceof OTransactionNoTx))
 			currentTx = new OTransactionNoTx(this);
+		
+		if(getStorage() instanceof OStorageEmbedded)
+			currentTx.addRecordListener(new OClassIndexManager());
 	}
 }

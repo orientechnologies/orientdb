@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.tx;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Collects the changes to an index for a certain key
@@ -28,9 +29,9 @@ public class OTransactionIndexChanges {
 
 	public static enum OPERATION {
 		PUT, REMOVE, CLEAR
-	};
+	}
 
-	public Map<Object, OTransactionIndexChangesPerKey>	changesPerKey	= new HashMap<Object, OTransactionIndexChangesPerKey>();
+	public Map<Object, OTransactionIndexChangesPerKey>	changesPerKey	= new TreeMap<Object, OTransactionIndexChangesPerKey>();
 	public boolean																			cleared				= false;
 
 	public OTransactionIndexChangesPerKey getChangesPerKey(final Object iKey) {

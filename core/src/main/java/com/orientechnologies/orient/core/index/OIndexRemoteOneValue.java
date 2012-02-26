@@ -25,6 +25,7 @@ import java.util.Map.Entry;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -45,7 +46,7 @@ public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
 		final OCommandRequest cmd = formatCommand(QUERY_GET, name);
 		final List<OIdentifiable> result = getDatabase().command(cmd).execute(iKey);
 		if (result != null && !result.isEmpty())
-			return ((OIdentifiable) ((ODocument) result.get(0).getRecord()).field("rid")).getIdentity();
+			return ((OIdentifiable) ((ODocument) result.get(0).getRecord()).field("rid", OType.LINK)).getIdentity();
 		return null;
 	}
 
@@ -54,8 +55,10 @@ public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
 		final Collection<ODocument> result = getDatabase().command(cmd).execute();
 
 		final Map<Object, OIdentifiable> map = new HashMap<Object, OIdentifiable>();
-		for (final ODocument d : result)
-			map.put(d.field("key"), (OIdentifiable) d.field("rid"));
+		for (final ODocument d : result) {
+			map.put(d.field("key"), (OIdentifiable) d.field("rid", OType.LINK));
+		}
+			
 
 		return map.entrySet().iterator();
 	}

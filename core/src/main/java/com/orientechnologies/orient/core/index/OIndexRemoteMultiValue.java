@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -55,7 +56,7 @@ public class OIndexRemoteMultiValue extends OIndexRemote<Collection<OIdentifiabl
 				map.put(d.field("key"), rids);
 			}
 
-			rids.add((OIdentifiable) d.field("rid"));
+			rids.add((OIdentifiable) d.field("rid", OType.LINK));
 		}
 
 		return map.entrySet().iterator();

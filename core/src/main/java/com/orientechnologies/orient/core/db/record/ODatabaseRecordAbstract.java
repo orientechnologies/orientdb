@@ -121,7 +121,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 					}
 				}
 				registerHook(new OUserTrigger());
-				registerHook(new OClassIndexManager());
 			} else
 				// CREATE DUMMY USER
 				user = new OUser(iUserName, OUser.encryptPassword(iUserPassword)).addRole(new ORole("passthrough", null,
@@ -151,7 +150,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 			if (getStorage() instanceof OStorageEmbedded) {
 				registerHook(new OUserTrigger());
-				registerHook(new OClassIndexManager());
 			}
 
 			// CREATE THE DEFAULT SCHEMA WITH DEFAULT USER

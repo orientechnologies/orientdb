@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
@@ -66,6 +65,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 			v.getRecord().unload();
 
 		indexEntries.clear();
+		recordIndexOperations.clear();
 	}
 
 	public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan) {
@@ -97,18 +97,24 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 	private void addRecord(final ORecordInternal<?> iRecord, final byte iStatus, final String iClusterName) {
 		checkTransaction();
 
+		invokeBeforeRecordListener(iStatus, iRecord);
+
 		if ((status == OTransaction.TXSTATUS.COMMITTING) && database.getStorage() instanceof OStorageEmbedded) {
 			// I'M COMMITTING OR IT'S AN INDEX: BYPASS LOCAL BUFFER
 			switch (iStatus) {
 			case ORecordOperation.CREATED:
 			case ORecordOperation.UPDATED:
+				ORID prevRid = new ORecordId(iRecord.getIdentity());
 				database
-						.executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iRecord.getRecordType(), OPERATION_MODE.SYNCHRONOUS);
+								.executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iRecord.getRecordType(), OPERATION_MODE.SYNCHRONOUS);
+				if(prevRid.isNew())
+					updateIndexIdentityAfterCommit(prevRid, iRecord.getIdentity());
 				break;
 			case ORecordOperation.DELETED:
 				database.executeDeleteRecord(iRecord, iRecord.getVersion(), false, OPERATION_MODE.SYNCHRONOUS);
 				break;
 			}
+			invokeAfterRecordListener(iStatus, iRecord);
 		} else {
 			final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
@@ -139,6 +145,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 				txEntry = new ORecordOperation(iRecord, iStatus);
 
 				recordEntries.put(rid, txEntry);
+				invokeAfterRecordListener(iStatus, iRecord);
 			} else {
 				// UPDATE PREVIOUS STATUS
 				txEntry.record = iRecord;
@@ -148,9 +155,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 					switch (iStatus) {
 					case ORecordOperation.UPDATED:
 						txEntry.type = ORecordOperation.UPDATED;
+						invokeAfterRecordListener(iStatus, iRecord);
 						break;
 					case ORecordOperation.DELETED:
 						txEntry.type = ORecordOperation.DELETED;
+						invokeAfterRecordListener(iStatus, iRecord);
 						break;
 					}
 					break;
@@ -158,6 +167,10 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 					switch (iStatus) {
 					case ORecordOperation.DELETED:
 						txEntry.type = ORecordOperation.DELETED;
+						invokeAfterRecordListener(iStatus, iRecord);
+						break;
+					case ORecordOperation.UPDATED:
+						invokeAfterRecordListener(iStatus, iRecord);
 						break;
 					}
 					break;
@@ -167,6 +180,10 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 					switch (iStatus) {
 					case ORecordOperation.DELETED:
 						recordEntries.remove(rid);
+						invokeAfterRecordListener(iStatus, iRecord);
+						break;
+					case ORecordOperation.UPDATED:
+						invokeAfterRecordListener(iStatus, iRecord);
 						break;
 					}
 					break;

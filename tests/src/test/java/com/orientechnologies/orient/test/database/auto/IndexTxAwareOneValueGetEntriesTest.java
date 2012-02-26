@@ -46,6 +46,7 @@ public class IndexTxAwareOneValueGetEntriesTest {
 
 	@Test
 	public void testPut() {
+		database.getMetadata().getIndexManager().reload();
 		database.begin();
 		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetEntriesTest");
 		Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
@@ -56,7 +57,7 @@ public class IndexTxAwareOneValueGetEntriesTest {
 		database.commit();
 
 		Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
-		final Collection<?> resultOne = ((OIndexTxAwareOneValue) index).getEntries(Arrays.asList(1, 2));
+		final Collection<?> resultOne = index.getEntries(Arrays.asList(1, 2));
 		Assert.assertEquals(resultOne.size(), 2);
 
 		database.begin();
@@ -64,18 +65,19 @@ public class IndexTxAwareOneValueGetEntriesTest {
 		index.put(3, new ORecordId(clusterId, 3));
 
 		Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
-		final Collection<?> resultTwo = ((OIndexTxAwareOneValue) index).getEntries(Arrays.asList(1, 2, 3));
+		final Collection<?> resultTwo = index.getEntries(Arrays.asList(1, 2, 3));
 		Assert.assertEquals(resultTwo.size(), 3);
 
 		database.rollback();
 
 		Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
-		final Collection<?> resultThree = ((OIndexTxAwareOneValue) index).getEntries(Arrays.asList(1, 2));
+		final Collection<?> resultThree = index.getEntries(Arrays.asList(1, 2));
 		Assert.assertEquals(resultThree.size(), 2);
 	}
 
 	@Test
 	public void testClear() {
+		database.getMetadata().getIndexManager().reload();
 		database.begin();
 		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetEntriesTest");
 		Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
@@ -86,7 +88,7 @@ public class IndexTxAwareOneValueGetEntriesTest {
 		database.commit();
 
 		Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
-		final Collection<?> resultOne = ((OIndexTxAwareOneValue) index).getEntries(Arrays.asList(1, 2));
+		final Collection<?> resultOne = index.getEntries(Arrays.asList(1, 2));
 		Assert.assertEquals(resultOne.size(), 2);
 
 		database.begin();
@@ -94,13 +96,13 @@ public class IndexTxAwareOneValueGetEntriesTest {
 		index.clear();
 
 		Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
-		final Collection<?> resultTwo = ((OIndexTxAwareOneValue) index).getEntries(Arrays.asList(1, 2));
+		final Collection<?> resultTwo = index.getEntries(Arrays.asList(1, 2));
 		Assert.assertEquals(resultTwo.size(), 0);
 
 		database.rollback();
 
 		Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
-		final Collection<?> resultThree = ((OIndexTxAwareOneValue) index).getEntries(Arrays.asList(1, 2));
+		final Collection<?> resultThree = index.getEntries(Arrays.asList(1, 2));
 		Assert.assertEquals(resultThree.size(), 2);
 	}
 
@@ -116,7 +118,7 @@ public class IndexTxAwareOneValueGetEntriesTest {
 		database.commit();
 
 		Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
-		final Collection<?> resultOne = ((OIndexTxAwareOneValue) index).getEntries(Arrays.asList(1, 2));
+		final Collection<?> resultOne = index.getEntries(Arrays.asList(1, 2));
 		Assert.assertEquals(resultOne.size(), 2);
 
 		database.begin();
@@ -125,18 +127,19 @@ public class IndexTxAwareOneValueGetEntriesTest {
 		index.put(2, new ORecordId(clusterId, 2));
 
 		Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
-		final Collection<?> resultTwo = ((OIndexTxAwareOneValue) index).getEntries(Arrays.asList(1, 2));
+		final Collection<?> resultTwo = index.getEntries(Arrays.asList(1, 2));
 		Assert.assertEquals(resultTwo.size(), 1);
 
 		database.rollback();
 
 		Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
-		final Collection<?> resultThree = ((OIndexTxAwareOneValue) index).getEntries(Arrays.asList(1, 2));
+		final Collection<?> resultThree = index.getEntries(Arrays.asList(1, 2));
 		Assert.assertEquals(resultThree.size(), 2);
 	}
 
 	@Test
 	public void testRemove() {
+		database.getMetadata().getIndexManager().reload();
 		database.begin();
 		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetEntriesTest");
 		Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
@@ -148,7 +151,7 @@ public class IndexTxAwareOneValueGetEntriesTest {
 		database.commit();
 
 		Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
-		final Collection<?> resultOne = ((OIndexTxAwareOneValue) index).getEntries(Arrays.asList(1, 2));
+		final Collection<?> resultOne = index.getEntries(Arrays.asList(1, 2));
 		Assert.assertEquals(resultOne.size(), 2);
 
 		database.begin();
@@ -156,18 +159,19 @@ public class IndexTxAwareOneValueGetEntriesTest {
 		index.remove(1);
 
 		Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
-		final Collection<?> resultTwo = ((OIndexTxAwareOneValue) index).getEntries(Arrays.asList(1, 2));
+		final Collection<?> resultTwo = index.getEntries(Arrays.asList(1, 2));
 		Assert.assertEquals(resultTwo.size(), 1);
 
 		database.rollback();
 
 		Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
-		final Collection<?> resultThree = ((OIndexTxAwareOneValue) index).getEntries(Arrays.asList(1, 2));
+		final Collection<?> resultThree = index.getEntries(Arrays.asList(1, 2));
 		Assert.assertEquals(resultThree.size(), 2);
 	}
 
 	@Test
 	public void testRemoveAndPut() {
+		database.getMetadata().getIndexManager().reload();
 		database.begin();
 		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetEntriesTest");
 		Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
@@ -179,7 +183,7 @@ public class IndexTxAwareOneValueGetEntriesTest {
 		database.commit();
 
 		Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
-		final Collection<?> resultOne = ((OIndexTxAwareOneValue) index).getEntries(Arrays.asList(1, 2));
+		final Collection<?> resultOne = index.getEntries(Arrays.asList(1, 2));
 		Assert.assertEquals(resultOne.size(), 2);
 
 		database.begin();
@@ -188,7 +192,7 @@ public class IndexTxAwareOneValueGetEntriesTest {
 		index.put(1, new ORecordId(clusterId, 1));
 
 		Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
-		final Collection<?> resultTwo = ((OIndexTxAwareOneValue) index).getEntries(Arrays.asList(1, 2));
+		final Collection<?> resultTwo = index.getEntries(Arrays.asList(1, 2));
 		Assert.assertEquals(resultTwo.size(), 2);
 
 		database.rollback();
@@ -196,6 +200,7 @@ public class IndexTxAwareOneValueGetEntriesTest {
 
 	@Test
 	public void testMultiPut() {
+		database.getMetadata().getIndexManager().reload();
 		database.begin();
 
 		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetEntriesTest");
@@ -207,15 +212,16 @@ public class IndexTxAwareOneValueGetEntriesTest {
 		index.put(2, new ORecordId(clusterId, 2));
 
 		Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
-		Assert.assertEquals(((OIndexTxAwareOneValue) index).getEntries(Arrays.asList(1, 2)).size(), 2);
+		Assert.assertEquals(index.getEntries(Arrays.asList(1, 2)).size(), 2);
 
 		database.commit();
 
-		Assert.assertEquals(((OIndexTxAwareOneValue) index).getEntries(Arrays.asList(1, 2)).size(), 2);
+		Assert.assertEquals(index.getEntries(Arrays.asList(1, 2)).size(), 2);
 	}
 
 	@Test
 	public void testPutAfterTransaction() {
+		database.getMetadata().getIndexManager().reload();
 		database.begin();
 
 		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetEntriesTest");
@@ -226,16 +232,17 @@ public class IndexTxAwareOneValueGetEntriesTest {
 		index.put(2, new ORecordId(clusterId, 2));
 
 		Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
-		Assert.assertEquals(((OIndexTxAwareOneValue) index).getEntries(Arrays.asList(1, 2)).size(), 2);
+		Assert.assertEquals(index.getEntries(Arrays.asList(1, 2)).size(), 2);
 		database.commit();
 
 		index.put(3, new ORecordId(clusterId, 3));
 
-		Assert.assertEquals(((OIndexTxAwareOneValue) index).getEntries(Arrays.asList(1, 2, 3)).size(), 3);
+		Assert.assertEquals(index.getEntries(Arrays.asList(1, 2, 3)).size(), 3);
 	}
 
 	@Test
 	public void testRemoveOneWithinTransaction() {
+		database.getMetadata().getIndexManager().reload();
 		database.begin();
 
 		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetEntriesTest");
@@ -248,15 +255,16 @@ public class IndexTxAwareOneValueGetEntriesTest {
 		index.remove(1);
 
 		Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
-		Assert.assertEquals(((OIndexTxAwareOneValue) index).getEntries(Arrays.asList(1, 2)).size(), 1);
+		Assert.assertEquals(index.getEntries(Arrays.asList(1, 2)).size(), 1);
 
 		database.commit();
 
-		Assert.assertEquals(((OIndexTxAwareOneValue) index).getEntries(Arrays.asList(1, 2)).size(), 1);
+		Assert.assertEquals(index.getEntries(Arrays.asList(1, 2)).size(), 1);
 	}
 
 	@Test
 	public void testRemoveAllWithinTransaction() {
+		database.getMetadata().getIndexManager().reload();
 		database.begin();
 
 		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetEntriesTest");
@@ -269,15 +277,16 @@ public class IndexTxAwareOneValueGetEntriesTest {
 		index.remove(1, null);
 
 		Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
-		Assert.assertEquals(((OIndexTxAwareOneValue) index).getEntries(Arrays.asList(1, 2)).size(), 1);
+		Assert.assertEquals(index.getEntries(Arrays.asList(1, 2)).size(), 1);
 
 		database.commit();
 
-		Assert.assertEquals(((OIndexTxAwareOneValue) index).getEntries(Arrays.asList(1, 2)).size(), 1);
+		Assert.assertEquals(index.getEntries(Arrays.asList(1, 2)).size(), 1);
 	}
 
 	@Test
 	public void testPutAfterRemove() {
+		database.getMetadata().getIndexManager().reload();
 		database.begin();
 
 		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetEntriesTest");
@@ -291,11 +300,11 @@ public class IndexTxAwareOneValueGetEntriesTest {
 		index.put(1, new ORecordId(clusterId, 1));
 
 		Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
-		Assert.assertEquals(((OIndexTxAwareOneValue) index).getEntries(Arrays.asList(1, 2)).size(), 2);
+		Assert.assertEquals(index.getEntries(Arrays.asList(1, 2)).size(), 2);
 
 		database.commit();
 
-		Assert.assertEquals(((OIndexTxAwareOneValue) index).getEntries(Arrays.asList(1, 2)).size(), 2);
+		Assert.assertEquals(index.getEntries(Arrays.asList(1, 2)).size(), 2);
 	}
 
 }

@@ -15,11 +15,7 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 import com.orientechnologies.common.collection.OCompositeKey;
@@ -43,6 +39,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 	protected Map<ORID, ORecordOperation>						allEntries				= new LinkedHashMap<ORID, ORecordOperation>();
 	protected Map<ORID, ORecordOperation>						recordEntries			= new LinkedHashMap<ORID, ORecordOperation>();
 	protected Map<String, OTransactionIndexChanges>	indexEntries			= new LinkedHashMap<String, OTransactionIndexChanges>();
+	protected Map<OIdentifiable, List<OTransactionRecordIndexOperation>> recordIndexOperations = new TreeMap<OIdentifiable, List<OTransactionRecordIndexOperation>>();
 	protected int																		id;
 	protected int																		newObjectCounter	= -2;
 
@@ -50,6 +47,21 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 	 * USE THIS AS RESPONSE TO REPORT A DELETED RECORD IN TX
 	 */
 	public static final ORecordFlat									DELETED_RECORD		= new ORecordFlat();
+
+	/**
+	 * Represents information for each index operation for each record in DB.
+	 */
+	public static final class OTransactionRecordIndexOperation {
+		public OTransactionRecordIndexOperation(String index, Object key, OPERATION operation) {
+			this.index = index;
+			this.key = key;
+			this.operation = operation;
+		}
+
+		public String index;
+		public Object key;
+		public OPERATION operation;
+	}
 
 	protected OTransactionRealAbstract(ODatabaseRecordTx iDatabase, int iId) {
 		super(iDatabase);
@@ -60,6 +72,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 		allEntries.clear();
 		recordEntries.clear();
 		indexEntries.clear();
+		recordIndexOperations.clear();
 		newObjectCounter = -2;
 		status = TXSTATUS.INVALID;
 
@@ -154,6 +167,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 
 	public void clearIndexEntries() {
 		indexEntries.clear();
+		recordIndexOperations.clear();
 	}
 
 	public List<String> getInvolvedIndexes() {
@@ -172,9 +186,11 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 
 		final ODocument result = new ODocument();
 
+		final Map<String, ODocument> indexChanges = new HashMap<String, ODocument>();
+		result.field("indexChanges", indexChanges, OType.EMBEDDEDMAP);
 		for (Entry<String, OTransactionIndexChanges> indexEntry : indexEntries.entrySet()) {
 			final ODocument indexDoc = new ODocument().addOwner(result);
-			result.field(indexEntry.getKey(), indexDoc, OType.EMBEDDED);
+			indexChanges.put(indexEntry.getKey(), indexDoc);
 
 			if (indexEntry.getValue().cleared)
 				indexDoc.field("clear", Boolean.TRUE);
@@ -221,6 +237,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 		}
 
 		indexEntries.clear();
+		recordIndexOperations.clear();
 
 		return result;
 	}
@@ -245,10 +262,43 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 			indexEntries.put(iIndexName, indexEntry);
 		}
 
-		if (iOperation == OPERATION.CLEAR)
+		if (iOperation == OPERATION.CLEAR) {
 			indexEntry.setCleared();
-		else
-			indexEntry.getChangesPerKey(iKey).add(iValue, iOperation);
+			return;
+		}
+
+		indexEntry.getChangesPerKey(iKey).add(iValue, iOperation);
+
+		if(iValue == null)
+			return;
+
+		List<OTransactionRecordIndexOperation> transactionIndexOperations = recordIndexOperations.get(iValue.getIdentity());
+		if(transactionIndexOperations == null) {
+			transactionIndexOperations = new ArrayList<OTransactionRecordIndexOperation>();
+			recordIndexOperations.put(iValue.getIdentity(), transactionIndexOperations);
+		}
+		
+		transactionIndexOperations.add(new OTransactionRecordIndexOperation(iIndexName, iKey, iOperation));
+	}
+
+	public void updateIndexIdentityAfterCommit(final ORID oldRid, final ORID newRid) {
+		List<OTransactionRecordIndexOperation> transactionIndexOperations = recordIndexOperations.get(oldRid);
+		if(transactionIndexOperations != null) {
+			for(final OTransactionRecordIndexOperation indexOperation : transactionIndexOperations) {
+				OTransactionIndexChanges indexEntryChanges = indexEntries.get(indexOperation.index);
+				if(indexEntryChanges == null)
+					continue;
+
+				OTransactionIndexChangesPerKey changesPerKey = indexEntryChanges.getChangesPerKey(indexOperation.key);
+
+				if(changesPerKey == null)
+					continue;
+
+				for(final OTransactionIndexEntry indexEntry : changesPerKey.entries)
+					if(indexEntry.value.getIdentity().equals(oldRid))
+						indexEntry.value = newRid;
+			}
+		}
 	}
 
 	protected void checkTransaction() {

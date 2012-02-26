@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.test.domain.whiz;
 
 import com.orientechnologies.orient.core.annotation.OId;
+import com.orientechnologies.orient.core.annotation.OVersion;
 
 import java.util.Collection;
 
@@ -12,6 +13,10 @@ import javax.persistence.Embedded;
 public class Collector {
 	@OId
 	private String							id;
+
+	@OVersion
+	private String version;
+
 	@Embedded
 	private Collection<String>	stringCollection;
 

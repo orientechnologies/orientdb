@@ -65,7 +65,10 @@ public class OTransactionNoTx extends OTransactionAbstract {
 	 */
 	public void saveRecord(final ORecordInternal<?> iRecord, final String iClusterName, final OPERATION_MODE iMode) {
 		try {
-			database.executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iRecord.getRecordType(), iMode);
+			final byte operation = iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED;
+			invokeBeforeRecordListener(operation,	iRecord);
+  		database.executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iRecord.getRecordType(), iMode);
+  		invokeAfterRecordListener(operation, iRecord);
 		} catch (Exception e) {
 			// REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
 			final ORecordId rid = (ORecordId) iRecord.getIdentity();
@@ -86,7 +89,9 @@ public class OTransactionNoTx extends OTransactionAbstract {
 			return;
 
 		try {
-			database.executeDeleteRecord(iRecord, iRecord.getVersion(), true, iMode);
+			invokeBeforeRecordListener(ORecordOperation.DELETED,	iRecord);
+  		database.executeDeleteRecord(iRecord, iRecord.getVersion(), true, iMode);
+  		invokeAfterRecordListener(ORecordOperation.DELETED, iRecord);
 		} catch (Exception e) {
 			// REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
 			final ORecordId rid = (ORecordId) iRecord.getIdentity();
@@ -175,5 +180,8 @@ public class OTransactionNoTx extends OTransactionAbstract {
 
 	public List<String> getInvolvedIndexes() {
 		return null;
+	}
+
+	public void updateIndexIdentityAfterCommit(ORID oldRid, ORID newRid) {
 	}
 }

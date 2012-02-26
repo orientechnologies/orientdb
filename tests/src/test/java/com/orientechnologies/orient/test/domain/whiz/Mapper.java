@@ -4,6 +4,7 @@ import javax.persistence.Embedded;
 import java.util.Collection;
 import java.util.Map;
 import com.orientechnologies.orient.core.annotation.OId;
+import com.orientechnologies.orient.core.annotation.OVersion;
 
 /**
  * @author LomakiA <a href="mailto:lomakin.andrey@gamil.com">Andrey Lomakin</a>
@@ -13,6 +14,9 @@ public class Mapper
 {
   @OId
   private String							id;
+
+	@OVersion
+	private String version;
 
   @Embedded
   private Map<String, Integer> intMap;

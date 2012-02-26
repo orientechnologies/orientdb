@@ -44,6 +44,7 @@ public class IndexTxAwareMultiValueGetTest {
 
 	@Test
 	public void testPut() {
+		database.getMetadata().getIndexManager().reload();
 		database.begin();
 		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetTest");
 		Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
@@ -75,6 +76,7 @@ public class IndexTxAwareMultiValueGetTest {
 
 	@Test
 	public void testClear() {
+		database.getMetadata().getIndexManager().reload();
 		database.begin();
 		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetTest");
 		Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
@@ -107,6 +109,7 @@ public class IndexTxAwareMultiValueGetTest {
 
 	@Test
 	public void testClearAndPut() {
+		database.getMetadata().getIndexManager().reload();
 		database.begin();
 		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetTest");
 		Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
@@ -140,6 +143,7 @@ public class IndexTxAwareMultiValueGetTest {
 
 	@Test
 	public void testRemove() {
+		database.getMetadata().getIndexManager().reload();
 		database.begin();
 		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetTest");
 		Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
@@ -172,6 +176,7 @@ public class IndexTxAwareMultiValueGetTest {
 
 	@Test
 	public void testRemoveOne() {
+		database.getMetadata().getIndexManager().reload();
 		database.begin();
 		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetTest");
 		Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
@@ -205,6 +210,7 @@ public class IndexTxAwareMultiValueGetTest {
 
 	@Test
 	public void testMultiPut() {
+		database.getMetadata().getIndexManager().reload();
 		database.begin();
 
 		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetTest");
@@ -223,6 +229,7 @@ public class IndexTxAwareMultiValueGetTest {
 
 	@Test
 	public void testPutAfterTransaction() {
+		database.getMetadata().getIndexManager().reload();
 		database.begin();
 
 		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetTest");
@@ -244,6 +251,7 @@ public class IndexTxAwareMultiValueGetTest {
 
 	@Test
 	public void testRemoveOneWithinTransaction() {
+		database.getMetadata().getIndexManager().reload();
 		database.begin();
 
 		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetTest");
@@ -265,6 +273,7 @@ public class IndexTxAwareMultiValueGetTest {
 
 	@Test
 	public void testRemoveAllWithinTransaction() {
+		database.getMetadata().getIndexManager().reload();
 		database.begin();
 
 		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetTest");
@@ -286,6 +295,7 @@ public class IndexTxAwareMultiValueGetTest {
 
 	@Test
 	public void testPutAfterRemove() {
+		database.getMetadata().getIndexManager().reload();
 		database.begin();
 
 		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetTest");
