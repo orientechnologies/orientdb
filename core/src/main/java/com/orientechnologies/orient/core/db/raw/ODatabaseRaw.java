@@ -428,6 +428,11 @@ public class ODatabaseRaw implements ODatabase {
 		if (status != STATUS.OPEN)
 			return;
 
+		if (currentIntent != null) {
+			currentIntent.end(this);
+			currentIntent = null;
+		}
+
 		callOnCloseListeners();
 		listeners.clear();
 
