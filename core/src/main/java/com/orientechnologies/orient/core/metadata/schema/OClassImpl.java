@@ -832,7 +832,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 			final OProperty propertyToIndex = properties.get(fieldName.toLowerCase());
 			final OType propertyType = propertyToIndex.getType();
 			if (propertyType.equals(OType.EMBEDDEDLIST) || propertyType.equals(OType.EMBEDDEDSET) || propertyType.equals(OType.LINKSET)
-					|| propertyType.equals(OType.LINKSET) || propertyType.equals(OType.EMBEDDEDMAP) || propertyType.equals(OType.LINKMAP))
+					|| propertyType.equals(OType.LINKLIST) || propertyType.equals(OType.EMBEDDEDMAP) || propertyType.equals(OType.LINKMAP))
 				throw new OIndexException("Collections are not supported in composite indexes");
 
 			final OPropertyIndexDefinition propertyIndex = new OPropertyIndexDefinition(name, propertyToIndex.getName(), propertyType);
@@ -858,7 +858,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 				indexType = OType.STRING;
 			else {
 				if (propertyToIndexType == OType.LINKMAP)
-					throw new OIndexException( "LINK types indexing are not supported." );
+					throw new OIndexException("LINK types indexing are not supported.");
 				else {
 					indexType = propertyToIndex.getLinkedType();
 					if (indexType == null)
@@ -872,7 +872,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		} else if (propertyToIndexType.equals(OType.EMBEDDEDLIST) || propertyToIndexType.equals(OType.EMBEDDEDSET)
 				|| propertyToIndexType.equals(OType.LINKLIST) || propertyToIndexType.equals(OType.LINKSET)) {
 			if (propertyToIndexType.equals(OType.LINKLIST) || propertyToIndexType.equals(OType.LINKSET))
-        throw new OIndexException( "LINK types indexing are not supported." );
+				throw new OIndexException("LINK types indexing are not supported.");
 			else {
 				indexType = propertyToIndex.getLinkedType();
 				if (indexType == null)
