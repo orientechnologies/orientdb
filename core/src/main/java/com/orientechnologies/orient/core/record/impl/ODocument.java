@@ -1207,9 +1207,6 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	}
 
 	private void addCollectionChangeListener(final String fieldName) {
-		if (_fieldValues == null)
-			return;
-
 		final Object fieldValue = _fieldValues.get(fieldName);
 		addCollectionChangeListener(fieldName, fieldValue);
 	}

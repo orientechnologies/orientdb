@@ -37,6 +37,9 @@ public class ODocumentComparator implements Comparator<OIdentifiable> {
 
 	@SuppressWarnings("unchecked")
 	public int compare(final OIdentifiable iDoc1, final OIdentifiable iDoc2) {
+		if (iDoc1 != null && iDoc1.equals(iDoc2))
+			return 0;
+
 		Object fieldValue1;
 		Object fieldValue2;
 
@@ -45,11 +48,11 @@ public class ODocumentComparator implements Comparator<OIdentifiable> {
 		for (OPair<String, String> field : orderCriteria) {
 			fieldValue1 = ((ODocument) iDoc1.getRecord()).field(field.getKey());
 			if (fieldValue1 == null)
-				return 1;
+				return factor(-1, field.getValue());
 
 			fieldValue2 = ((ODocument) iDoc2.getRecord()).field(field.getKey());
 			if (fieldValue2 == null)
-				return -1;
+				return factor(1, field.getValue());
 
 			if (!(fieldValue1 instanceof Comparable<?>))
 				throw new IllegalArgumentException("Cannot sort documents because the field '" + field.getKey() + "' is not comparable");

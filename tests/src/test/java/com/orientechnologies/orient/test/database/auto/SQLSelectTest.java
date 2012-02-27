@@ -673,13 +673,13 @@ public class SQLSelectTest {
 		Assert.assertTrue(result.size() != 0);
 
 		String lastName = null;
-		boolean isNullSegment = false; // NULL VALUES AT THE END!
+		boolean isNullSegment = true; // NULL VALUES AT THE BEGINNING!
 		for (ODocument d : result) {
 			final String fieldValue = d.field("name");
-			if (fieldValue == null)
-				isNullSegment = true;
+			if (fieldValue != null)
+				isNullSegment = false;
 			else
-				Assert.assertFalse(isNullSegment);
+				Assert.assertTrue(isNullSegment);
 
 			if (lastName != null && fieldValue != null)
 				Assert.assertTrue(fieldValue.compareTo(lastName) >= 0);
