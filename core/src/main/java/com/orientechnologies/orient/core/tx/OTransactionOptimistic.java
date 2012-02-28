@@ -50,9 +50,6 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
 		status = TXSTATUS.ROLLBACKING;
 
-		// ROLLBACK AT STORAGE LEVEL DONE IN THE COMMIT PHASE ONLY
-		// database.getStorage().rollback(this);
-
 		// CLEAR THE CACHE MOVING GOOD RECORDS TO LEVEL-2 CACHE
 		database.getLevel1Cache().clear();
 
@@ -100,7 +97,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 		invokeBeforeRecordListener(iStatus, iRecord);
 
 		if ((status == OTransaction.TXSTATUS.COMMITTING) && database.getStorage() instanceof OStorageEmbedded) {
-			// I'M COMMITTING OR IT'S AN INDEX: BYPASS LOCAL BUFFER
+			// I'M COMMITTING: BYPASS LOCAL BUFFER
 			switch (iStatus) {
 			case ORecordOperation.CREATED:
 			case ORecordOperation.UPDATED:
