@@ -321,6 +321,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		if (properties.containsKey(lowerName))
 			throw new OSchemaException("Class " + name + " already has property '" + iPropertyName + "'");
 
+        if (iType == null)
+            throw new OSchemaException("Property type not defined.");
+
 		final StringBuilder cmd = new StringBuilder("create property ");
 		// CLASS.PROPERTY NAME
 		cmd.append(name);
