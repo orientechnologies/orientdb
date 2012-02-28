@@ -832,7 +832,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 			final OProperty propertyToIndex = properties.get(fieldName.toLowerCase());
 			final OType propertyType = propertyToIndex.getType();
 			if (propertyType.equals(OType.EMBEDDEDLIST) || propertyType.equals(OType.EMBEDDEDSET) || propertyType.equals(OType.LINKSET)
-				 || propertyType.equals(OType.EMBEDDEDMAP) || propertyType.equals(OType.LINKMAP))
+					|| propertyType.equals(OType.LINKLIST) || propertyType.equals(OType.EMBEDDEDMAP) || propertyType.equals(OType.LINKMAP))
 				throw new OIndexException("Collections are not supported in composite indexes");
 
 			final OPropertyIndexDefinition propertyIndex = new OPropertyIndexDefinition(name, propertyToIndex.getName(), propertyType);
