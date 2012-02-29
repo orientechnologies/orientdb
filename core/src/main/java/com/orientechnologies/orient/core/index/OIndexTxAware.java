@@ -92,7 +92,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
 
 	@Override
 	public int remove(final OIdentifiable iRID) {
-		database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, null, iRID);
+		database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, "*", iRID);
 		return 1;
 	}
 

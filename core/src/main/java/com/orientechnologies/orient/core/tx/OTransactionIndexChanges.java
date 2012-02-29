@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
