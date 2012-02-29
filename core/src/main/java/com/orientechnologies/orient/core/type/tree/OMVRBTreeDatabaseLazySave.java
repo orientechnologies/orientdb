@@ -52,7 +52,12 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> {
 	 */
 	@Override
 	public synchronized int commitChanges() {
-		if (transactionRunning || maxUpdatesBeforeSave == 0 || (maxUpdatesBeforeSave > 0 && ++updates >= maxUpdatesBeforeSave)) {
+		return commitChanges(false);
+	}
+
+	public synchronized int commitChanges(boolean force) {
+		if (transactionRunning || maxUpdatesBeforeSave == 0 ||
+						(maxUpdatesBeforeSave > 0 && ++updates >= maxUpdatesBeforeSave) || force) {
 			updates = 0;
 			return lazySave();
 		}

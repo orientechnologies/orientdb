@@ -16,10 +16,6 @@
 package com.orientechnologies.orient.core.tx;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.WeakHashMap;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
@@ -27,13 +23,11 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 public abstract class OTransactionAbstract implements OTransaction {
 	protected final ODatabaseRecordTx	database;
 	protected TXSTATUS								status	= TXSTATUS.INVALID;
-	protected Set<OTxRecordListener> recordListeners;
 
 	protected OTransactionAbstract(final ODatabaseRecordTx iDatabase) {
 		database = iDatabase;
@@ -87,62 +81,4 @@ public abstract class OTransactionAbstract implements OTransaction {
 				OLogManager.instance().error(this, "Error on rollback callback against listener: " + listener, t);
 			}
 	}
-
-	public void addRecordListener(OTxRecordListener listener) {
-		if(recordListeners == null)
-			recordListeners = new HashSet<OTxRecordListener>();
-
-		recordListeners.add(listener);
-	}
-
-	public void removeRecordListener(OTxRecordListener listener) {
-		if(recordListeners == null)
-			return;
-		recordListeners.remove(listener);
-	}
-
-	protected void invokeBeforeRecordListener(final byte operation, final ORecord<?> record) {
-		if(recordListeners == null || recordListeners.isEmpty())
-			return;
-
-		for(final OTxRecordListener listener : recordListeners) {
-			switch (operation) {
-				case ORecordOperation.CREATED:
-					listener.onBeforeCreateRecordTx(record);
-					break;
-				case ORecordOperation.UPDATED:
-					listener.onBeforeUpdateRecordTx(record);
-					break;
-				case ORecordOperation.DELETED:
-					listener.onBeforeDeleteRecordTx(record);
-					break;
-				case ORecordOperation.LOADED:
-					listener.onBeforeLoadRecordTx(record);
-					break;
-			}
-		}
-	}
-
-	protected void invokeAfterRecordListener(final byte operation, final ORecord<?> record) {
-		if(recordListeners == null || recordListeners.isEmpty())
-			return;
-
-		for(final OTxRecordListener listener : recordListeners) {
-			switch (operation) {
-				case ORecordOperation.CREATED:
-					listener.onAfterCreateRecordTx(record);
-					break;
-				case ORecordOperation.UPDATED:
-					listener.onAfterUpdateRecordTx(record);
-					break;
-				case ORecordOperation.DELETED:
-					listener.onAfterDeleteRecordTx(record);
-					break;
-				case ORecordOperation.LOADED:
-					listener.onAfterLoadRecordTx(record);
-					break;
-			}
-		}
-	}
-
 }

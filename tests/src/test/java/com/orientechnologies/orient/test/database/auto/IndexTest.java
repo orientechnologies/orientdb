@@ -1103,23 +1103,22 @@ public class IndexTest {
 		docOne.field("label", "A");
 		docOne.save();
 
-		final List<ODocument> resultBeforeCommit = db.query(new OSQLSynchQuery<ODocument>("select from TransactionUniqueIndexTest"));
+		final List<ODocument> resultBeforeCommit = db.query(new OSQLSynchQuery<ODocument>("select from index:idxTransactionUniqueIndexTest"));
 		Assert.assertEquals(resultBeforeCommit.size(), 1);
 
 		db.begin();
-
 		try {
 			ODocument docTwo = new ODocument("TransactionUniqueIndexTest");
 			docTwo.field("label", "A");
 			docTwo.save();
 
 			db.commit();
+			Assert.fail();
 		} catch (OIndexException oie) {
-			db.rollback();
 		}
 
-		final List<ODocument> resultAfterCommit = db.query(new OSQLSynchQuery<ODocument>("select from TransactionUniqueIndexTest"));
-		Assert.assertEquals(resultAfterCommit, resultBeforeCommit);
+		final List<ODocument> resultAfterCommit = db.query(new OSQLSynchQuery<ODocument>("select from index:idxTransactionUniqueIndexTest"));
+		Assert.assertEquals(resultAfterCommit.size(), 1);
 	}
 
 	@Test(dependsOnMethods = "testTransactionUniqueIndexTestOne")
@@ -1136,7 +1135,7 @@ public class IndexTest {
 		}
 
 
-		final List<ODocument> resultBeforeCommit = db.query(new OSQLSynchQuery<ODocument>("select from TransactionUniqueIndexTest"));
+		final List<ODocument> resultBeforeCommit = db.query(new OSQLSynchQuery<ODocument>("select from index:idxTransactionUniqueIndexTest"));
 		Assert.assertEquals(resultBeforeCommit.size(), 1);
 
 		db.begin();
@@ -1152,12 +1151,12 @@ public class IndexTest {
 			docTwo.save();
 
 			db.commit();
+			Assert.fail();
 		} catch (OIndexException oie) {
-			db.rollback();
 		}
 
-		final List<ODocument> resultAfterCommit = db.query(new OSQLSynchQuery<ODocument>("select from TransactionUniqueIndexTest"));
-		Assert.assertEquals(resultAfterCommit, resultBeforeCommit);
+		final List<ODocument> resultAfterCommit = db.query(new OSQLSynchQuery<ODocument>("select from index:idxTransactionUniqueIndexTest"));
+		Assert.assertEquals(resultAfterCommit.size(), 1);
 	}
 
 	public void testTransactionUniqueIndexTestWithDotNameOne()
@@ -1175,7 +1174,7 @@ public class IndexTest {
 		docOne.field("label", "A");
 		docOne.save();
 
-		final List<ODocument> resultBeforeCommit = db.query(new OSQLSynchQuery<ODocument>("select from TransactionUniqueIndexWithDotTest"));
+		final List<ODocument> resultBeforeCommit = db.query(new OSQLSynchQuery<ODocument>("select from  index:TransactionUniqueIndexWithDotTest.label"));
 		Assert.assertEquals(resultBeforeCommit.size(), 1);
 
 		db.begin();
@@ -1186,12 +1185,12 @@ public class IndexTest {
 			docTwo.save();
 
 			db.commit();
+			Assert.fail();
 		} catch (OIndexException oie) {
-			db.rollback();
 		}
 
-		final List<ODocument> resultAfterCommit = db.query(new OSQLSynchQuery<ODocument>("select from TransactionUniqueIndexWithDotTest"));
-		Assert.assertEquals(resultAfterCommit, resultBeforeCommit);
+		final List<ODocument> resultAfterCommit = db.query(new OSQLSynchQuery<ODocument>("select from  index:TransactionUniqueIndexWithDotTest.label"));
+		Assert.assertEquals(resultAfterCommit.size(), 1);
 	}
 
 	@Test(dependsOnMethods = "testTransactionUniqueIndexTestWithDotNameOne")
@@ -1206,8 +1205,7 @@ public class IndexTest {
 			db.getMetadata().getSchema().save();
 		}
 
-
-		final List<ODocument> resultBeforeCommit = db.query(new OSQLSynchQuery<ODocument>("select from TransactionUniqueIndexWithDotTest"));
+		final List<ODocument> resultBeforeCommit = db.query(new OSQLSynchQuery<ODocument>("select from index:TransactionUniqueIndexWithDotTest.label"));
 		Assert.assertEquals(resultBeforeCommit.size(), 1);
 
 		db.begin();
@@ -1223,12 +1221,12 @@ public class IndexTest {
 			docTwo.save();
 
 			db.commit();
+			Assert.fail();
 		} catch (OIndexException oie) {
-			db.rollback();
 		}
 
-		final List<ODocument> resultAfterCommit = db.query(new OSQLSynchQuery<ODocument>("select from TransactionUniqueIndexWithDotTest"));
-		Assert.assertEquals(resultAfterCommit, resultBeforeCommit);
+		final List<ODocument> resultAfterCommit = db.query(new OSQLSynchQuery<ODocument>("select from  index:TransactionUniqueIndexWithDotTest.label"));
+		Assert.assertEquals(resultAfterCommit.size(), 1);
 	}
 
 

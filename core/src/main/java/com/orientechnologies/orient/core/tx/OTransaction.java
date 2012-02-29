@@ -90,18 +90,4 @@ public interface OTransaction {
 	public void setUsingLog(boolean useLog);
 
 	public void close();
-
-	/**
-	 * When commit in transaction is performed all new records will change their identity, but index values will contain staile links,
-	 * to fix them given method will be called for each entry.
-	 *
-	 * @param oldRid   Record identity before commit.
-	 * @param newRid   Record identity after commit.
-	 */
-	public void updateIndexIdentityAfterCommit(final ORID oldRid, final ORID newRid);
-
-	public void addRecordListener(final OTxRecordListener listener);
-
-	public void removeRecordListener(final OTxRecordListener listener);
-
 }

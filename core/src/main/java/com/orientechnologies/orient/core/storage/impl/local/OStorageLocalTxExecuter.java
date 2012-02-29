@@ -211,7 +211,6 @@ public class OStorageLocalTxExecuter {
 			}
 
 			if (rid.isNew()) {
-				ORID prevRid = new ORecordId(rid);
 				if (iUseLog)
 					rid.clusterPosition = createRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getRecordType());
 				else
@@ -220,7 +219,6 @@ public class OStorageLocalTxExecuter {
 
 				txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
 				iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_CREATE, txEntry.getRecord());
-				iTx.updateIndexIdentityAfterCommit(prevRid, rid);
 			} else {
 				if (iUseLog)
 					txEntry.getRecord()

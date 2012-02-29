@@ -621,8 +621,6 @@ public class OStorageMemory extends OStorageEmbedded {
 				byte[] stream = txEntry.getRecord().toStream();
 
 				if (rid.isNew()) {
-					final ORID oldRid = new ORecordId(rid);
-
 					if (iTx.getDatabase().callbackHooks(ORecordHook.TYPE.BEFORE_CREATE, txEntry.getRecord()))
 						// RECORD CHANGED: RE-STREAM IT
 						stream = txEntry.getRecord().toStream();
@@ -630,7 +628,7 @@ public class OStorageMemory extends OStorageEmbedded {
 				  txEntry.getRecord().onBeforeIdentityChanged(rid);
 					createRecord(rid, stream, txEntry.getRecord().getRecordType(), 0, null);
 					txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
-					iTx.updateIndexIdentityAfterCommit(oldRid, txEntry.getRecord().getIdentity());
+
 					iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_CREATE, txEntry.getRecord());
 
 				} else {

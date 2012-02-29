@@ -33,117 +33,97 @@ import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.tx.OTxRecordListener;
 
 /**
  * Handles indexing when records change.
  *
  * @author Andrey Lomakin, Artem Orobets
  */
-public class OClassIndexManager implements OTxRecordListener {
+public class OClassIndexManager extends ODocumentHookAbstract {
+	@Override
+	public boolean onRecordBeforeCreate(ODocument iRecord) {
+		iRecord = checkForLoading(iRecord);
 
-	public void onBeforeCreateRecordTx(ORecord<?> iRecord) {
-		if(!(iRecord instanceof ODocument))
-			return;
-
-		ODocument doc = (ODocument)iRecord;
-		doc = checkForLoading(doc);
-
-		checkIndexedPropertiesOnCreation(doc);
+		checkIndexedPropertiesOnCreation(iRecord);
+		return false;
 	}
 
-	public void onAfterCreateRecordTx(ORecord<?> iRecord) {
-		if(!(iRecord instanceof ODocument))
-			return;
+	@Override
+	public void onRecordAfterCreate(ODocument iRecord) {
+		iRecord = checkForLoading(iRecord);
 
-		ODocument doc = (ODocument)iRecord;
-		doc = checkForLoading(doc);
-
-		final OClass cls = doc.getSchemaClass();
+		final OClass cls = iRecord.getSchemaClass();
 		if (cls != null) {
 			final Collection<OIndex<?>> indexes = cls.getIndexes();
 			for (final OIndex<?> index : indexes) {
-				final Object key = index.getDefinition().getDocumentValueToIndex(doc);
+				final Object key = index.getDefinition().getDocumentValueToIndex(iRecord);
 				// SAVE A COPY TO AVOID PROBLEM ON RECYCLING OF THE RECORD
 				if (key instanceof Collection) {
 					for (final Object keyItem : (Collection<?>) key)
 						if (keyItem != null)
-							index.put(keyItem, doc.placeholder());
+							index.put(keyItem, iRecord.placeholder());
 				} else if (key != null)
-					index.put(key, doc.placeholder());
+					index.put(key, iRecord.placeholder());
 			}
 		}
 	}
 
-	public void onBeforeUpdateRecordTx(ORecord<?> iRecord) {
-		if(!(iRecord instanceof ODocument))
-			return;
+	@Override
+	public boolean onRecordBeforeUpdate(ODocument iRecord) {
+		iRecord = checkForLoading(iRecord);
 
-		ODocument doc = (ODocument)iRecord;
-		doc = checkForLoading(doc);
-
-		checkIndexedPropertiesOnUpdate(doc);
+		checkIndexedPropertiesOnUpdate(iRecord);
+		return false;
 	}
 
-	public void onAfterUpdateRecordTx(ORecord<?> iRecord) {
-		if(!(iRecord instanceof ODocument))
-			return;
+	@Override
+	public void onRecordAfterUpdate(ODocument iRecord) {
+		iRecord = checkForLoading(iRecord);
 
-		ODocument doc = (ODocument)iRecord;
-
-		doc = checkForLoading(doc);
-
-		final OClass cls = doc.getSchemaClass();
+		final OClass cls = iRecord.getSchemaClass();
 		if (cls == null)
 			return;
 
 		final Collection<OIndex<?>> indexes = cls.getIndexes();
 
 		if (!indexes.isEmpty()) {
-			final Set<String> dirtyFields = new HashSet<String>(Arrays.asList(doc.getDirtyFields()));
+			final Set<String> dirtyFields = new HashSet<String>(Arrays.asList(iRecord.getDirtyFields()));
 
 			if (!dirtyFields.isEmpty()) {
 				for (final OIndex<?> index : indexes) {
 					if (index.getDefinition() instanceof OCompositeIndexDefinition)
-						processCompositeIndexUpdate(index, dirtyFields, doc);
+						processCompositeIndexUpdate(index, dirtyFields, iRecord);
 					else
-						processSingleIndexUpdate(index, dirtyFields, doc);
+						processSingleIndexUpdate(index, dirtyFields, iRecord);
 				}
 			}
 		}
 
-		if (doc.isTrackingChanges()) {
-			doc.setTrackingChanges(false);
-			doc.setTrackingChanges(true);
+		if (iRecord.isTrackingChanges()) {
+			iRecord.setTrackingChanges(false);
+			iRecord.setTrackingChanges(true);
 		}
 	}
 
-	public void onBeforeDeleteRecordTx(ORecord<?> iRecord) {
-		if(!(iRecord instanceof ODocument))
-			return;
-
-		ODocument doc = (ODocument)iRecord;
-
-		if (doc.fields() == 0)
+	@Override
+	public boolean onRecordBeforeDelete(final ODocument iDocument) {
+		if (iDocument.fields() == 0)
 			// FORCE LOADING OF CLASS+FIELDS TO USE IT AFTER ON onRecordAfterDelete METHOD
-			doc.reload();
+			iDocument.reload();
+		return false;
 	}
 
-	public void onAfterDeleteRecordTx(ORecord<?> iRecord) {
-		if(!(iRecord instanceof ODocument))
-			return;
-
-		ODocument doc = (ODocument)iRecord;
-		final OClass cls = doc.getSchemaClass();
+	@Override
+	public void onRecordAfterDelete(final ODocument iRecord) {
+		final OClass cls = iRecord.getSchemaClass();
 		if (cls == null)
 			return;
 
 		final Collection<OIndex<?>> indexes = new ArrayList<OIndex<?>>(cls.getIndexes());
 
 		if (!indexes.isEmpty()) {
-			final Set<String> dirtyFields = new HashSet<String>(Arrays.asList(doc.getDirtyFields()));
+			final Set<String> dirtyFields = new HashSet<String>(Arrays.asList(iRecord.getDirtyFields()));
 
 			if (!dirtyFields.isEmpty()) {
 				// REMOVE INDEX OF ENTRIES FOR THE OLD VALUES
@@ -154,9 +134,9 @@ public class OClassIndexManager implements OTxRecordListener {
 
 					final boolean result;
 					if (index.getDefinition() instanceof OCompositeIndexDefinition)
-						result = processCompositeIndexDelete(index, dirtyFields, doc);
+						result = processCompositeIndexDelete(index, dirtyFields, iRecord);
 					else
-						result = processSingleIndexDelete(index, dirtyFields, doc);
+						result = processSingleIndexDelete(index, dirtyFields, iRecord);
 
 					if (result)
 						indexIterator.remove();
@@ -165,7 +145,7 @@ public class OClassIndexManager implements OTxRecordListener {
 
 			// REMOVE INDEX OF ENTRIES FOR THE NON CHANGED ONLY VALUES
 			for (final OIndex<?> index : indexes) {
-				final Object key = index.getDefinition().getDocumentValueToIndex(doc);
+				final Object key = index.getDefinition().getDocumentValueToIndex(iRecord);
 				if (key instanceof Collection) {
 					for (final Object keyItem : (Collection<?>) key)
 						if (keyItem != null)
@@ -175,16 +155,10 @@ public class OClassIndexManager implements OTxRecordListener {
 			}
 		}
 
-		if (doc.isTrackingChanges()) {
-			doc.setTrackingChanges(false);
-			doc.setTrackingChanges(true);
+		if (iRecord.isTrackingChanges()) {
+			iRecord.setTrackingChanges(false);
+			iRecord.setTrackingChanges(true);
 		}
-	}
-
-	public void onBeforeLoadRecordTx(ORecord<?> iRecord) {
-	}
-
-	public void onAfterLoadRecordTx(ORecord<?> iRecord) {
 	}
 
 	private void processCompositeIndexUpdate(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {

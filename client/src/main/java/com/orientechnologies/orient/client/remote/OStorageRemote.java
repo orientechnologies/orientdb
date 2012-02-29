@@ -782,8 +782,13 @@ public class OStorageRemote extends OStorageAbstract {
 			try {
 				OChannelBinaryClient network = null;
 				try {
-					//serialize all records before commit to gather all index changes and check unique index entries.
+					network = beginRequest(OChannelBinaryProtocol.REQUEST_TX_COMMIT);
+
+					network.writeInt(iTx.getId());
+					network.writeByte((byte) (iTx.isUsingLog() ? 1 : 0));
+
 					final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
+
 					while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
 						for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
 							tmpEntries.add(txEntry);
@@ -792,17 +797,8 @@ public class OStorageRemote extends OStorageAbstract {
 
 						if (tmpEntries.size() > 0)
 							for (ORecordOperation txEntry : tmpEntries)
-								txEntry.getRecord().toStream();
-					}
-
-
-					network = beginRequest(OChannelBinaryProtocol.REQUEST_TX_COMMIT);
-
-					network.writeInt(iTx.getId());
-					network.writeByte((byte) (iTx.isUsingLog() ? 1 : 0));
-
-					for(ORecordOperation txEntry : iTx.getAllRecordEntries()) {
 								commitEntry(network, txEntry);
+
 					}
 
 					// END OF RECORD ENTRIES

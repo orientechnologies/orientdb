@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -61,8 +60,7 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProviderAbs
  * @author Luca Garulli
  * 
  */
-public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveExternal implements OIndexInternal<T>,
-		ODatabaseListener {
+public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveExternal implements OIndexInternal<T> {
 	protected static final String										CONFIG_MAP_RID	= "mapRid";
 	protected static final String										CONFIG_CLUSTERS	= "clusters";
 	protected String																name;
@@ -693,6 +691,14 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 	}
 
 	public void onBeforeTxBegin(final ODatabase iDatabase) {
+		acquireExclusiveLock();
+		try {
+
+			map.commitChanges(true);
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public void onBeforeTxRollback(final ODatabase iDatabase) {
@@ -715,14 +721,6 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 	}
 
 	public void onBeforeTxCommit(final ODatabase iDatabase) {
-		acquireExclusiveLock();
-		try {
-
-			map.commitChanges();
-
-		} finally {
-			releaseExclusiveLock();
-		}
 	}
 
 	public void onAfterTxCommit(final ODatabase iDatabase) {
