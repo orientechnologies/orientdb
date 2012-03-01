@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.config;
 
+@SuppressWarnings("serial")
 public class OStorageTxConfiguration extends OStorageFileConfiguration {
 	private static final String	DEF_EXTENSION				= ".otd";
 	private static final String	DEF_MAX_SIZE				= "512mb";

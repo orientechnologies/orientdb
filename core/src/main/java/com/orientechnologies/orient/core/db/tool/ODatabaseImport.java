@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
-import com.orientechnologies.common.parser.OStringForwardReader;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -60,7 +59,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 	private Map<OPropertyImpl, String>	linkedClasses		= new HashMap<OPropertyImpl, String>();
 	private Map<OClass, String>					superClasses		= new HashMap<OClass, String>();
 	private OJSONReader									jsonReader;
-	private OStringForwardReader				reader;
 	private ORecordInternal<?>					record;
 	private List<String>								recordToDelete	= new ArrayList<String>();
 	private Map<OProperty, String>			propertyIndexes	= new HashMap<OProperty, String>();
@@ -607,14 +605,5 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
 	public void close() {
 		database.declareIntent(null);
-
-		if (reader == null)
-			return;
-
-		try {
-			reader.close();
-			reader = null;
-		} catch (IOException e) {
-		}
 	}
 }

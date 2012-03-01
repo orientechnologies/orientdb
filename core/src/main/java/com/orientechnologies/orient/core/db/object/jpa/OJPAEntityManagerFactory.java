@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.db.object.jpa;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,16 +31,16 @@ import javax.persistence.EntityManagerFactory;
  * 
  */
 public class OJPAEntityManagerFactory implements EntityManagerFactory {
-	private boolean															opened		= true;
+	private boolean																opened		= true;
 	private List<OJPAEntityManager>								instances	= new ArrayList<OJPAEntityManager>();
 	private static final OJPAEntityManagerFactory	INSTANCE	= new OJPAEntityManagerFactory();
 
 	public EntityManager createEntityManager() {
-		return createEntityManager(null);
+		return createEntityManager(new HashMap<Object, Object>());
 	}
 
 	@SuppressWarnings("rawtypes")
-	public EntityManager createEntityManager(Map map) {
+	public EntityManager createEntityManager(final Map map) {
 		final OJPAEntityManager newInstance = new OJPAEntityManager(map);
 		instances.add(newInstance);
 		return newInstance;

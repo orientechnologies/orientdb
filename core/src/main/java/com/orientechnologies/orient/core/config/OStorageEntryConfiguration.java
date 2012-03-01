@@ -15,7 +15,10 @@
  */
 package com.orientechnologies.orient.core.config;
 
-public class OStorageEntryConfiguration {
+import java.io.Serializable;
+
+@SuppressWarnings("serial")
+public class OStorageEntryConfiguration implements Serializable {
 	public String	name;
 	public String	value;
 

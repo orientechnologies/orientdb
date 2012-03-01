@@ -113,6 +113,7 @@ public class OObjectSerializerHelper {
 			jpaAccessClass = Class.forName("javax.persistence.Access");
 
 		} catch (Exception e) {
+			// IGNORE THE EXCEPTION: JPA NOT FOUND
 		}
 	}
 
@@ -649,7 +650,6 @@ public class OObjectSerializerHelper {
 			} else if (fieldClass.isEnum()) {
 				// ENUM
 				iFieldValue = ((Enum<?>) iFieldValue).name();
-				iType = OType.STRING;
 			} else {
 				// LINK OR EMBEDDED
 				fieldClass = iEntityManager.getEntityClass(fieldClass.getSimpleName());
@@ -661,13 +661,6 @@ public class OObjectSerializerHelper {
 					iFieldValue = toStream(pojo, linkedDocument, iEntityManager, linkedDocument.getSchemaClass(), iObj2RecHandler, db,
 							iSaveOnlyDirty);
 
-					// if (linkedDocument.isDirty()) {
-					// // SAVE THE DOCUMENT AND GET UDPATE THE VERSION. CALL THE
-					// UNDERLYING SAVE() TO AVOID THE SERIALIZATION THREAD IS
-					// CLEANED
-					// // AND GOES RECURSIVELY UP THE STACK IS EXHAUSTED
-					// db.getUnderlying().save(linkedDocument);
-					// }
 					iObj2RecHandler.registerUserObject(pojo, linkedDocument);
 
 				} else {

@@ -592,7 +592,7 @@ public abstract class OStringSerializerHelper {
 		return buffer.toString();
 	}
 
-	public static OClass getRecordClassName(String iValue, OClass iLinkedClass) {
+	public static OClass getRecordClassName(final String iValue, OClass iLinkedClass) {
 		// EXTRACT THE CLASS NAME
 		int classSeparatorPos = iValue.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
 		if (classSeparatorPos > -1) {
@@ -600,8 +600,6 @@ public abstract class OStringSerializerHelper {
 			final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
 			if (className != null && database != null)
 				iLinkedClass = database.getMetadata().getSchema().getClass(className);
-
-			iValue = iValue.substring(classSeparatorPos + 1);
 		}
 		return iLinkedClass;
 	}

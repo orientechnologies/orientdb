@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.serialization.serializer.stream;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OArrays;
@@ -39,7 +40,8 @@ public class OStreamSerializerAnyStreamable implements OStreamSerializer {
 
 		final int classNameSize = OBinaryProtocol.bytes2int(iStream);
 		if (classNameSize <= 0)
-			OLogManager.instance().error(this, "Class signature not found in ANY element: " + iStream, OSerializationException.class);
+			OLogManager.instance().error(this, "Class signature not found in ANY element: " + Arrays.toString(iStream),
+					OSerializationException.class);
 
 		final String className = OBinaryProtocol.bytes2string(iStream, 4, classNameSize);
 

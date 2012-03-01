@@ -15,7 +15,10 @@
  */
 package com.orientechnologies.orient.core.config;
 
-public class OStorageFileConfiguration {
+import java.io.Serializable;
+
+@SuppressWarnings("serial")
+public class OStorageFileConfiguration implements Serializable {
 
 	public transient OStorageSegmentConfiguration	parent;
 

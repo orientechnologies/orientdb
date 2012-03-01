@@ -313,7 +313,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 			throw new OSchemaException("Property '" + iPropertyName + "' not found in class " + name + "'");
 	}
 
-	public OProperty addProperty(final String iPropertyName, final OType iType, final OType iLinkedType, final OClass iLinkedClass) {
+	protected OProperty addProperty(final String iPropertyName, final OType iType, final OType iLinkedType, final OClass iLinkedClass) {
 		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 
 		final String lowerName = iPropertyName.toLowerCase();
@@ -321,8 +321,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		if (properties.containsKey(lowerName))
 			throw new OSchemaException("Class " + name + " already has property '" + iPropertyName + "'");
 
-        if (iType == null)
-            throw new OSchemaException("Property type not defined.");
+		if (iType == null)
+			throw new OSchemaException("Property type not defined.");
 
 		final StringBuilder cmd = new StringBuilder("create property ");
 		// CLASS.PROPERTY NAME

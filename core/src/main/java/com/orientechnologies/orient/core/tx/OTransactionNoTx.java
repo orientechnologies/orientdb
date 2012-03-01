@@ -74,7 +74,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
 
 			if (e instanceof RuntimeException)
 				throw (RuntimeException) e;
-			new OException(e);
+			throw new OException(e);
 		}
 	}
 
@@ -95,7 +95,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
 
 			if (e instanceof RuntimeException)
 				throw (RuntimeException) e;
-			new OException(e);
+			throw new OException(e);
 		}
 	}
 

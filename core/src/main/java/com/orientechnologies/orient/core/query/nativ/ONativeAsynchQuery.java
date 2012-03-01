@@ -31,9 +31,8 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
 @SuppressWarnings("serial")
 public abstract class ONativeAsynchQuery<CTX extends OQueryContextNative> extends ONativeQuery<CTX> {
-	protected OCommandResultListener	resultListener;
-	protected int											resultCount	= 0;
-	protected ORecordInternal<?>			record;
+	protected int									resultCount	= 0;
+	protected ORecordInternal<?>	record;
 
 	public ONativeAsynchQuery(final String iCluster, final CTX iQueryRecordImpl) {
 		this(iCluster, iQueryRecordImpl, null);

@@ -162,7 +162,7 @@ public class ODocumentHelper {
 				throw new IllegalArgumentException("Property '" + iFieldName + "' of type '" + iFieldType
 						+ "' cannot accept value of type: " + iValue.getClass());
 		} else if (Date.class.isAssignableFrom(iFieldType)) {
-			if (iValue instanceof String && iDocument.getDatabase() != null) {
+			if (iValue instanceof String && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
 				final OStorageConfiguration config = iDocument.getDatabase().getStorage().getConfiguration();
 
 				DateFormat formatter = config.getDateFormatInstance();

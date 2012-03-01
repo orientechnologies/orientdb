@@ -1766,9 +1766,13 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 					e = new OMVRBTreeEntryPosition<K, V>(next);
 				else
 					e = null;
-				final K k = e.getKey();
-				if (e == null || e.entry == null || k == fenceKey || k.equals(fenceKey))
+				if (e == null || e.entry == null)
 					throw new NoSuchElementException();
+
+				final K k = e.getKey();
+				if (k == fenceKey || k.equals(fenceKey))
+					throw new NoSuchElementException();
+
 				if (m.modCount != expectedModCount)
 					throw new ConcurrentModificationException();
 				next.assign(OMVRBTree.next(e));
@@ -1782,9 +1786,14 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 					e = new OMVRBTreeEntryPosition<K, V>(next);
 				else
 					e = null;
-				final K k = e.getKey();
-				if (e == null || e.entry == null || k == fenceKey || k.equals(fenceKey))
+
+				if (e == null || e.entry == null)
 					throw new NoSuchElementException();
+
+				final K k = e.getKey();
+				if (k == fenceKey || k.equals(fenceKey))
+					throw new NoSuchElementException();
+
 				if (m.modCount != expectedModCount)
 					throw new ConcurrentModificationException();
 				next.assign(OMVRBTree.previous(e));
@@ -2389,9 +2398,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 * 
 	 * @param p
 	 *          Node to remove
-   *
-   * @return Node that was removed. Passed and removed nodes may be different in case node to remove contains two children.
-   *         In this case node successor will be found and removed but it's content will be copied to the node that was passed in method.
+	 * 
+	 * @return Node that was removed. Passed and removed nodes may be different in case node to remove contains two children. In this
+	 *         case node successor will be found and removed but it's content will be copied to the node that was passed in method.
 	 */
 	protected OMVRBTreeEntry<K, V> removeNode(OMVRBTreeEntry<K, V> p) {
 		modCount++;
@@ -2438,8 +2447,8 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 				p.setParent(null);
 			}
 		}
-    
-    return p;
+
+		return p;
 	}
 
 	/** From CLR */

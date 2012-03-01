@@ -443,10 +443,6 @@ public enum OGlobalConfiguration {
 	}
 
 	private static void autoConfig() {
-		if (System.getProperty("os.name").indexOf("Windows") > -1) {
-			// WINDOWS
-		}
-
 		if (System.getProperty("os.arch").indexOf("64") > -1) {
 			// 64 BIT
 
