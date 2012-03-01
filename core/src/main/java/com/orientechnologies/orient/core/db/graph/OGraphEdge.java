@@ -145,21 +145,25 @@ public class OGraphEdge extends OGraphElement {
 		}
 
 		// REMOVE THE EDGE DOCUMENT
-		Set<ODocument> docs = sourceVertex.field(OGraphDatabase.VERTEX_FIELD_OUT);
-		if (docs != null)
-			docs.remove(iEdge);
+		if (sourceVertex != null) {
+			final Set<ODocument> docs = sourceVertex.field(OGraphDatabase.VERTEX_FIELD_OUT);
+			if (docs != null)
+				docs.remove(iEdge);
 
-		sourceVertex.setDirty();
-		sourceVertex.save();
+			sourceVertex.setDirty();
+			sourceVertex.save();
+		}
 
 		// REMOVE THE EDGE DOCUMENT FROM THE TARGET VERTEX
-		docs = targetVertex.field(OGraphDatabase.VERTEX_FIELD_IN);
-		if (docs != null)
-			docs.remove(iEdge);
+		if (targetVertex != null) {
+			final Set<ODocument> docs = targetVertex.field(OGraphDatabase.VERTEX_FIELD_IN);
+			if (docs != null)
+				docs.remove(iEdge);
 
-		targetVertex.setDirty();
-		targetVertex.save();
-
+			targetVertex.setDirty();
+			targetVertex.save();
+		}
+		
 		if (iDatabase.existsUserObjectByRID(iEdge.getIdentity())) {
 			final OGraphEdge edge = (OGraphEdge) iDatabase.getUserObjectByRecord(iEdge, null);
 			iDatabase.unregisterPojo(edge, iEdge);

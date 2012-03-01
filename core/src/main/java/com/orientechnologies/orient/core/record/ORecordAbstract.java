@@ -299,8 +299,8 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		if (iOther == null)
 			return 1;
 
-		if (_recordId == null && iOther.getIdentity() == null)
-			return 0;
+		if (_recordId == null)
+			return iOther.getIdentity() == null ? 0 : 1;
 
 		return _recordId.compareTo(iOther.getIdentity());
 	}

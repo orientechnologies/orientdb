@@ -123,9 +123,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		while (current != null && current.getUnderlying() instanceof ODatabaseComplex<?> && !(current instanceof ODatabaseDocumentTx))
 			current = current.getUnderlying();
 
-		for (ODocument d : ((ODatabaseDocumentTx) current).browseClass(name, true)) {
-			d.validate();
-		}
+		if (current != null)
+			for (ODocument d : ((ODatabaseDocumentTx) current).browseClass(name, true)) {
+				d.validate();
+			}
 	}
 
 	public OClass getSuperClass() {

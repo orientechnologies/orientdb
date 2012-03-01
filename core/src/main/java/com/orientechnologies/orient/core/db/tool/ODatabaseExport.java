@@ -142,7 +142,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 						continue;
 				}
 
-				if (excludeClusters.contains(clusterName))
+				if (excludeClusters != null && excludeClusters.contains(clusterName))
 					continue;
 
 				recordTot = database.countClusterElements(clusterName);

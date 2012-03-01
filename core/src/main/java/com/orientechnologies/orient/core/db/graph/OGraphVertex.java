@@ -347,12 +347,18 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 	@Override
 	public void delete() {
 		// DELETE ALL THE IN-OUT EDGES FROM RAM
-		if (in != null && in.get() != null)
-			in.get().clear();
+		if (in != null) {
+			Set<OGraphEdge> set = in.get();
+			if (set != null)
+				set.clear();
+		}
 		in = null;
 
-		if (out != null && out.get() != null)
-			out.get().clear();
+		if (out != null) {
+			Set<OGraphEdge> set = out.get();
+			if (set != null)
+				set.clear();
+		}
 		out = null;
 
 		Set<ODocument> docs = (Set<ODocument>) document.field(OGraphDatabase.VERTEX_FIELD_IN);
@@ -394,10 +400,12 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 
 			final OGraphVertex vertex = (OGraphVertex) iDatabase.getUserObjectByRecord(iSourceVertex, null);
 			// REMOVE THE EDGE OBJECT
-			if (vertex.out != null && vertex.out.get() != null) {
-				for (OGraphEdge e : vertex.out.get())
-					if (e.getIn().getDocument().equals(iTargetVertex))
-						vertex.out.get().remove(e);
+			if (vertex.out != null) {
+				final Set<OGraphEdge> obj = vertex.out.get();
+				if (obj != null)
+					for (OGraphEdge e : obj)
+						if (e.getIn().getDocument().equals(iTargetVertex))
+							obj.remove(e);
 			}
 		}
 
@@ -406,10 +414,12 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 
 			final OGraphVertex vertex = (OGraphVertex) iDatabase.getUserObjectByRecord(iTargetVertex, null);
 			// REMOVE THE EDGE OBJECT FROM THE TARGET VERTEX
-			if (vertex.in != null && vertex.in.get() != null) {
-				for (OGraphEdge e : vertex.in.get())
-					if (e.getOut().getDocument().equals(iSourceVertex))
-						vertex.in.get().remove(e);
+			if (vertex.in != null) {
+				final Set<OGraphEdge> obj = vertex.in.get();
+				if (obj != null)
+					for (OGraphEdge e : obj)
+						if (e.getOut().getDocument().equals(iSourceVertex))
+							obj.remove(e);
 			}
 		}
 

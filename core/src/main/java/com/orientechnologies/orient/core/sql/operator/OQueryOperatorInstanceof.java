@@ -60,7 +60,7 @@ public class OQueryOperatorInstanceof extends OQueryOperatorEqualityNotNulls {
 			// GET THE CLASS BY NAME
 			cls = schema.getClass((String) iLeft);
 
-		return cls != null ? cls.isSubClassOf(baseClass) : null;
+		return cls != null ? cls.isSubClassOf(baseClass) : false;
 	}
 
 	@Override

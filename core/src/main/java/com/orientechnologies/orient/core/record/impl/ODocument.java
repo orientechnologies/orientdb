@@ -402,7 +402,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 			if (!first)
 				buffer.append('}');
 
-			if (_recordId.isValid()) {
+			if (_recordId != null && _recordId.isValid()) {
 				buffer.append(" v");
 				buffer.append(_version);
 			}
@@ -510,7 +510,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
 			if (t == OType.BINARY && value instanceof String)
 				newValue = OStringSerializerHelper.getBinaryContent(value);
-			else if ((t == OType.DATE || t == OType.DATE) && value instanceof Long)
+			else if (t == OType.DATE && value instanceof Long)
 				newValue = (RET) new Date(((Long) value).longValue());
 			else if ((t == OType.EMBEDDEDSET || t == OType.LINKSET) && value instanceof List)
 				// CONVERT LIST TO SET

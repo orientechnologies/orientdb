@@ -38,17 +38,14 @@ public class OStreamSerializerFactory {
 			else if (iName.equals(OStreamSerializerAnyStreamable.NAME))
 				return OStreamSerializerAnyStreamable.INSTANCE;
 
-			else if (iName.equals(OStreamSerializerAnyStatic.NAME))
-				return new OStreamSerializerAnyStatic(null);
-
 			else if (iName.equals(OStreamSerializerRID.NAME))
 				return OStreamSerializerRID.INSTANCE;
 
 			else if (iName.equals(OStreamSerializerListRID.NAME))
 				return OStreamSerializerListRID.INSTANCE;
 
-            else if(iName.equals(OCompositeKeySerializer.NAME))
-                return OCompositeKeySerializer.INSTANCE;
+			else if (iName.equals(OCompositeKeySerializer.NAME))
+				return OCompositeKeySerializer.INSTANCE;
 
 			throw new OConfigurationException("Stream Serializer '" + iName + "' not registered");
 

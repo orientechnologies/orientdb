@@ -64,14 +64,15 @@ public class OStreamSerializerAnyRecord implements OStreamSerializer {
 				}
 			}
 		} catch (Exception e) {
-			OLogManager.instance().exception("Error on unmarshalling content. Class %s", e, OSerializationException.class, cls.getName());
+			OLogManager.instance().exception("Error on unmarshalling content. Class %s", e, OSerializationException.class,
+					cls != null ? cls.getName() : "?");
 		}
 
 		OLogManager
 				.instance()
 				.exception(
 						"Cannot unmarshall the record since the serialized object of class %s has no constructor with suitable parameters: %s(ORID)",
-						null, OSerializationException.class, cls.getSimpleName(), cls.getSimpleName());
+						null, OSerializationException.class, cls != null ? cls.getSimpleName() : "?", cls != null ? cls.getSimpleName() : "?");
 
 		return null;
 	}
