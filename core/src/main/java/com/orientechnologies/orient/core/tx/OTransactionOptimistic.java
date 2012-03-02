@@ -151,8 +151,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 			// && iRecord.getIdentity().isValid() && allEntries.containsKey(iRecord.getIdentity())) {
 			// if ((OStorage.CLUSTER_INDEX_NAME.equals(iClusterName) || iRecord.getIdentity().getClusterId() == database.getStorage()
 			// .getClusterIdByName(OStorage.CLUSTER_INDEX_NAME)) && database.getStorage() instanceof OStorageEmbedded) {
+			
 			// I'M COMMITTING: BYPASS LOCAL BUFFER
-
 			switch (iStatus) {
 			case ORecordOperation.CREATED:
 			case ORecordOperation.UPDATED:

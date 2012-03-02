@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Vector;
 
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -32,6 +34,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
@@ -53,8 +56,15 @@ public class TransactionConsistencyTest {
 	// }
 
 	@Parameters(value = "url")
-	public TransactionConsistencyTest(String iURL) throws IOException {
+	public TransactionConsistencyTest(@Optional(value = "memory:test") String iURL) throws IOException {
 		url = iURL;
+	}
+
+	@BeforeClass
+	public void init() {
+		ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
+		if ("memory:test".equals(database.getURL()))
+			database.create();
 	}
 
 	@Test
@@ -625,6 +635,7 @@ public class TransactionConsistencyTest {
 			db.close();
 		}
 	}
+
 	//
 	// @SuppressWarnings("unchecked")
 	// @Test
@@ -674,4 +685,109 @@ public class TransactionConsistencyTest {
 	// db.close();
 	// System.out.println("************ end testTransactionPopulatePartialDelete *******************");
 	// }
+
+	public void TransactionRollbackConstistencyTest() {
+		System.out.println("**************************TransactionRollbackConsistencyTest***************************************");
+		ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+		db.open("admin", "admin");
+		OClass vertexClass = db.getMetadata().getSchema().createClass("TRVertex");
+		OClass edgeClass = db.getMetadata().getSchema().createClass("TREdge");
+		vertexClass.createProperty("in", OType.LINKSET, edgeClass);
+		vertexClass.createProperty("out", OType.LINKSET, edgeClass);
+		edgeClass.createProperty("in", OType.LINK, vertexClass);
+		edgeClass.createProperty("out", OType.LINK, vertexClass);
+
+		OClass personClass = db.getMetadata().getSchema().createClass("TRPerson", vertexClass);
+		personClass.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE);
+		personClass.createProperty("surname", OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+		personClass.createProperty("version", OType.INTEGER);
+
+		db.getMetadata().getSchema().save();
+		db.close();
+
+		final int cnt = 4;
+
+		db.open("admin", "admin");
+		db.begin();
+		Vector inserted = new Vector();
+
+		for (int i = 0; i < cnt; i++) {
+			ODocument person = new ODocument("TRPerson");
+			person.field("name", Character.toString((char) ('A' + i)));
+			person.field("surname", Character.toString((char) ('A' + (i % 3))));
+			person.field("myversion", 0);
+			person.field("in", new HashSet<ODocument>());
+			person.field("out", new HashSet<ODocument>());
+
+			if (i >= 1) {
+				ODocument edge = new ODocument("TREdge");
+				edge.field("in", person.getIdentity());
+				edge.field("out", inserted.elementAt(i - 1));
+				((HashSet<ODocument>) person.field("out")).add(edge);
+				((HashSet<ODocument>) ((ODocument) inserted.elementAt(i - 1)).field("in")).add(edge);
+				edge.save();
+			}
+			inserted.add(person);
+			person.save();
+		}
+		db.commit();
+
+		final List<ODocument> result1 = db.command(new OCommandSQL("select from TRPerson")).execute();
+		Assert.assertNotNull(result1);
+		Assert.assertEquals(result1.size(), 4);
+		System.out.println("Before transaction commit");
+		for (ODocument d : result1)
+			System.out.println(d);
+
+		try {
+			db.begin();
+			Vector inserted2 = new Vector();
+
+			for (int i = 0; i < cnt; i++) {
+				ODocument person = new ODocument("TRPerson");
+				person.field("name", Character.toString((char) ('a' + i)));
+				person.field("surname", Character.toString((char) ('a' + (i % 3))));
+				person.field("myversion", 0);
+				person.field("in", new HashSet<ODocument>());
+				person.field("out", new HashSet<ODocument>());
+
+				if (i >= 1) {
+					ODocument edge = new ODocument("TREdge");
+					edge.field("in", person.getIdentity());
+					edge.field("out", inserted2.elementAt(i - 1));
+					((HashSet<ODocument>) person.field("out")).add(edge);
+					((HashSet<ODocument>) ((ODocument) inserted2.elementAt(i - 1)).field("in")).add(edge);
+					edge.save();
+				}
+				inserted2.add(person);
+				person.save();
+			}
+
+			for (int i = 0; i < cnt; i++) {
+				if (i != cnt - 1) {
+					((ODocument) inserted.elementAt(i)).field("myversion", 2);
+					((ODocument) inserted.elementAt(i)).save();
+				}
+			}
+
+			((ODocument) inserted.elementAt(cnt - 1)).delete();
+			((ODocument) inserted.elementAt(cnt - 2)).setVersion(0);
+			((ODocument) inserted.elementAt(cnt - 2)).save();
+			db.commit();
+			Assert.assertTrue(false);
+		} catch (OConcurrentModificationException e) {
+			Assert.assertTrue(true);
+			db.rollback();
+		}
+
+		final List<ODocument> result2 = db.command(new OCommandSQL("select from TRPerson")).execute();
+		Assert.assertNotNull(result2);
+		System.out.println("After transaction commit failure/rollback");
+		for (ODocument d : result2)
+			System.out.println(d);
+		Assert.assertEquals(result2.size(), 4);
+
+		db.close();
+		System.out.println("**************************TransactionRollbackConstistencyTest***************************************");
+	}
 }

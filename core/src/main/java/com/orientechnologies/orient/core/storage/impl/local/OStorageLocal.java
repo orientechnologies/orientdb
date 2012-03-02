@@ -795,11 +795,18 @@ public class OStorageLocal extends OStorageEmbedded {
 			ORecordCallback<Long> iCallback) {
 		checkOpeness();
 
-		iRid.clusterPosition = createRecord(getClusterById(iRid.clusterId), iContent, iRecordType);
+		final OCluster cluster = getClusterById(iRid.clusterId);
+
+		if (txManager.isCommitting())
+			iRid.clusterPosition = txManager
+					.createRecord(txManager.getCurrentTransaction().getId(), cluster, iRid, iContent, iRecordType);
+		else
+			iRid.clusterPosition = createRecord(cluster, iContent, iRecordType);
 		return iRid.clusterPosition;
 	}
 
-	public ORawBuffer readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache, ORecordCallback<ORawBuffer> iCallback) {
+	public ORawBuffer readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
+			ORecordCallback<ORawBuffer> iCallback) {
 		checkOpeness();
 		return readRecord(getClusterById(iRid.clusterId), iRid, true);
 	}
@@ -807,12 +814,24 @@ public class OStorageLocal extends OStorageEmbedded {
 	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType, final int iMode,
 			ORecordCallback<Integer> iCallback) {
 		checkOpeness();
-		return updateRecord(getClusterById(iRid.clusterId), iRid, iContent, iVersion, iRecordType);
+
+		final OCluster cluster = getClusterById(iRid.clusterId);
+
+		if (txManager.isCommitting())
+			return txManager.updateRecord(txManager.getCurrentTransaction().getId(), cluster, iRid, iContent, iVersion, iRecordType);
+		else
+			return updateRecord(cluster, iRid, iContent, iVersion, iRecordType);
 	}
 
 	public boolean deleteRecord(final ORecordId iRid, final int iVersion, final int iMode, ORecordCallback<Boolean> iCallback) {
 		checkOpeness();
-		return deleteRecord(getClusterById(iRid.clusterId), iRid, iVersion);
+
+		final OCluster cluster = getClusterById(iRid.clusterId);
+
+		if (txManager.isCommitting())
+			return txManager.deleteRecord(txManager.getCurrentTransaction().getId(), cluster, iRid.clusterPosition, iVersion);
+		else
+			return deleteRecord(cluster, iRid, iVersion);
 	}
 
 	public Set<String> getClusterNames() {
