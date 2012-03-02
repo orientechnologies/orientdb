@@ -887,6 +887,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
 		final ORecordId rid = channel.readRID();
 		final String fetchPlanString = channel.readString();
+		boolean ignoreCache = false;
+		if (connection.data.protocolVersion >= 9)
+			ignoreCache = channel.readByte() == 1;
 
 		if (rid.clusterId == 0 && rid.clusterPosition == 0) {
 			// @COMPATIBILITY 0.9.25
@@ -906,7 +909,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 			}
 
 		} else {
-			final ORecordInternal<?> record = connection.database.load(rid, fetchPlanString);
+			final ORecordInternal<?> record = connection.database.load(rid, fetchPlanString, ignoreCache);
 
 			beginResponse();
 			try {

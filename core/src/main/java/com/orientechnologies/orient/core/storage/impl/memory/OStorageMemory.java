@@ -235,7 +235,7 @@ public class OStorageMemory extends OStorageEmbedded {
 		}
 	}
 
-	public ORawBuffer readRecord(final ORecordId iRid, String iFetchPlan, ORecordCallback<ORawBuffer> iCallback) {
+	public ORawBuffer readRecord(final ORecordId iRid, String iFetchPlan, boolean iIgnoreCache, ORecordCallback<ORawBuffer> iCallback) {
 		return readRecord(getClusterById(iRid.clusterId), iRid, true);
 	}
 

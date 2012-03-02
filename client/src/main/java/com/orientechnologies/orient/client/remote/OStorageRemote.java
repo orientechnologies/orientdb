@@ -362,7 +362,8 @@ public class OStorageRemote extends OStorageAbstract {
 		} while (true);
 	}
 
-	public ORawBuffer readRecord(final ORecordId iRid, final String iFetchPlan, final ORecordCallback<ORawBuffer> iCallback) {
+	public ORawBuffer readRecord(final ORecordId iRid, final String iFetchPlan, final boolean iIgnoreCache,
+			final ORecordCallback<ORawBuffer> iCallback) {
 		checkConnection();
 
 		if (OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting)
@@ -377,6 +378,8 @@ public class OStorageRemote extends OStorageAbstract {
 					network = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_LOAD);
 					network.writeRID(iRid);
 					network.writeString(iFetchPlan != null ? iFetchPlan : "");
+					if (network.getSrvProtocolVersion() >= 9)
+						network.writeByte((byte) (iIgnoreCache ? 1 : 0));
 
 				} finally {
 					endRequest(network);

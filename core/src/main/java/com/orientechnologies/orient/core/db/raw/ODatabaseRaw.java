@@ -207,14 +207,14 @@ public class ODatabaseRaw implements ODatabase {
 		return storage.count(iClusterIds);
 	}
 
-	public ORawBuffer read(final ORecordId iRid, final String iFetchPlan) {
+	public ORawBuffer read(final ORecordId iRid, final String iFetchPlan, final boolean iIgnoreCache) {
 		if (!iRid.isValid())
 			return null;
 
 		OFetchHelper.checkFetchPlanValid(iFetchPlan);
 
 		try {
-			return storage.readRecord(iRid, iFetchPlan, null);
+			return storage.readRecord(iRid, iFetchPlan, iIgnoreCache, null);
 
 		} catch (Throwable t) {
 			if (iRid.isTemporary())

@@ -75,7 +75,7 @@ public interface OStorage extends OSharedContainer {
 	// CRUD OPERATIONS
 	public long createRecord(ORecordId iRecordId, byte[] iContent, byte iRecordType, int iMode, ORecordCallback<Long> iCallback);
 
-	public ORawBuffer readRecord(ORecordId iRid, String iFetchPlan, ORecordCallback<ORawBuffer> iCallback);
+	public ORawBuffer readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache, ORecordCallback<ORawBuffer> iCallback);
 
 	public int updateRecord(ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType, int iMode,
 			ORecordCallback<Integer> iCallback);

@@ -49,7 +49,7 @@ public class ReadAllClusterObjectsSpeedTest extends SpeedTestMonoThread {
 		for (int i = 0; i < db.countClusterElements(CLUSTER_NAME); ++i) {
 			rid.clusterPosition = i;
 			
-			buffer = db.read(rid, null);
+			buffer = db.read(rid, null, false);
 			if (buffer != null)
 				++objectsRead;
 		}

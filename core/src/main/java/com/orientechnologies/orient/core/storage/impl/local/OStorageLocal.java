@@ -799,7 +799,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		return iRid.clusterPosition;
 	}
 
-	public ORawBuffer readRecord(final ORecordId iRid, final String iFetchPlan, ORecordCallback<ORawBuffer> iCallback) {
+	public ORawBuffer readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache, ORecordCallback<ORawBuffer> iCallback) {
 		checkOpeness();
 		return readRecord(getClusterById(iRid.clusterId), iRid, true);
 	}

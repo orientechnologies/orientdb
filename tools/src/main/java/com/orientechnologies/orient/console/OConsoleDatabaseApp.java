@@ -709,7 +709,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		checkCurrentDatabase();
 
 		ORecordId rid = new ORecordId(iRecordId);
-		final ORawBuffer buffer = currentDatabase.getStorage().readRecord(rid, null, null);
+		final ORawBuffer buffer = currentDatabase.getStorage().readRecord(rid, null, false, null);
 
 		if (buffer == null)
 			throw new OException("The record has been deleted");

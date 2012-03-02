@@ -536,7 +536,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				return (RET) record;
 			}
 
-			final ORawBuffer recordBuffer = underlying.read(iRid, iFetchPlan);
+			final ORawBuffer recordBuffer = underlying.read(iRid, iFetchPlan, iIgnoreCache);
 			if (recordBuffer == null)
 				return null;
 
