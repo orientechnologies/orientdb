@@ -204,7 +204,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 	 * - 2 bytes: cluster id <br/>
 	 * - 8 bytes: position in cluster <br/>
 	 * - 4 bytes: record version <br/>
-	 * - x bytes: record vontent <br/>
+	 * - x bytes: record content <br/>
 	 * 
 	 * @param o
 	 * @throws IOException
