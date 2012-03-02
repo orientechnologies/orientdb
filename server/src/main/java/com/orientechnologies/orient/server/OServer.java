@@ -81,6 +81,8 @@ public class OServer {
 	private ObjectName																				onServer			= new ObjectName("OrientDB:type=Server");
 	private final CountDownLatch															startupLatch	= new CountDownLatch(1);
 
+	private Random																						random				= new Random();
+
 	public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
 			InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
 		defaultSettings();
@@ -454,8 +456,7 @@ public class OServer {
 
 		if (iPassword == null)
 			// AUTO GENERATE PASSWORD
-			iPassword = OSecurityManager.instance().digest2String(String.valueOf(new Random(System.currentTimeMillis()).nextLong()),
-					false);
+			iPassword = OSecurityManager.instance().digest2String(String.valueOf(random.nextLong()), false);
 
 		configuration.users[configuration.users.length - 1] = new OServerUserConfiguration(iName, iPassword, iPermissions);
 

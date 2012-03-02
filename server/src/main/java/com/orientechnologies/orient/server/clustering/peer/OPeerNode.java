@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
 import com.orientechnologies.orient.server.clustering.OClusterNetworkProtocol;
-import com.orientechnologies.orient.server.clustering.leader.ODiscoveryListener;
 import com.orientechnologies.orient.server.handler.distributed.OClusterProtocol;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
 
@@ -35,7 +34,6 @@ import com.orientechnologies.orient.server.handler.distributed.ODistributedServe
  */
 public class OPeerNode {
 	private final ODistributedServerManager	manager;
-	private ODiscoveryListener							discoveryListener;
 	private OLeaderCheckerTask							leaderCheckerTask;
 	private long														lastHeartBeat;
 	private OClusterNetworkProtocol					leaderConnection;
@@ -58,11 +56,6 @@ public class OPeerNode {
 		if (leaderCheckerTask != null) {
 			leaderCheckerTask.cancel();
 			leaderCheckerTask = null;
-		}
-
-		if (discoveryListener != null) {
-			discoveryListener.sendShutdown();
-			discoveryListener = null;
 		}
 	}
 

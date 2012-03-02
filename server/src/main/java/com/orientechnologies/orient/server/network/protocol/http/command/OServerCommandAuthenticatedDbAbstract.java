@@ -62,10 +62,9 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 			if (iRequest.authorization == null || SESSIONID_LOGOUT.equals(iRequest.sessionId)) {
 				sendAuthorizationRequest(iRequest, iRequest.databaseName);
 				return false;
-			} else {
-				if (iRequest.url != null)
-					return authenticate(iRequest, iRequest.databaseName);
-			}
+			} else
+				return authenticate(iRequest, iRequest.databaseName);
+
 		} else {
 			// CHECK THE SESSION VALIDITY
 			if (iRequest.sessionId.length() > 1 && OHttpSessionManager.getInstance().getSession(iRequest.sessionId) == null) {
@@ -75,8 +74,6 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 			}
 			return true;
 		}
-
-		return false;
 	}
 
 	private boolean authenticate(final OHttpRequest iRequest, final String iDatabaseName) throws IOException {

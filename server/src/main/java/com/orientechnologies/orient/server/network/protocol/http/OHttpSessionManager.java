@@ -36,6 +36,7 @@ public class OHttpSessionManager extends OSharedResourceAbstract {
 	private static final OHttpSessionManager	instance	= new OHttpSessionManager();
 	private Map<String, OHttpSession>					sessions	= new HashMap<String, OHttpSession>();
 	private int																expirationTime;
+	private Random														random		= new Random();
 
 	protected OHttpSessionManager() {
 		expirationTime = OGlobalConfiguration.NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT.getValueAsInteger() * 1000;
@@ -100,15 +101,15 @@ public class OHttpSessionManager extends OSharedResourceAbstract {
 	}
 
 	public String createSession(final String iDatabaseName, final String iUserName) {
-		final String id = "OS" + System.currentTimeMillis() + new Random().nextLong();
 		acquireExclusiveLock();
 		try {
+			final String id = "OS" + System.currentTimeMillis() + random.nextLong();
 			sessions.put(id, new OHttpSession(id, iDatabaseName, iUserName));
+			return id;
 
 		} finally {
 			releaseExclusiveLock();
 		}
-		return id;
 	}
 
 	public OHttpSession removeSession(final String iSessionId) {

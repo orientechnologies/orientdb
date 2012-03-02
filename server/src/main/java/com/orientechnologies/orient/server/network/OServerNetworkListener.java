@@ -52,9 +52,6 @@ public class OServerNetworkListener extends Thread {
 		super(Orient.getThreadGroup(), "OrientDB " + iProtocol.getSimpleName() + " (" + iHostName + ":" + iHostPortRange + ")");
 		server = iServer;
 
-		if (iProtocol == null)
-			throw new IllegalArgumentException("Cannot start listener: protocol not found");
-
 		listen(iHostName, iHostPortRange, iProtocolName);
 		protocolType = iProtocol;
 

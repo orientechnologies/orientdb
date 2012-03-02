@@ -1438,13 +1438,11 @@ public class OStorageRemote extends OStorageAbstract {
 		if (obj == null)
 			return;
 
-		synchronized (clusterConfiguration) {
-			// UPDATE IT
-			clusterConfiguration = obj;
+		// UPDATE IT
+		clusterConfiguration = obj;
 
-			if (OLogManager.instance().isDebugEnabled())
-				OLogManager.instance().debug(this, "Received new cluster configuration: %s", clusterConfiguration.toJSON(""));
-		}
+		if (OLogManager.instance().isDebugEnabled())
+			OLogManager.instance().debug(this, "Received new cluster configuration: %s", clusterConfiguration.toJSON(""));
 	}
 
 	private void commitEntry(final OChannelBinaryClient iNetwork, final ORecordOperation txEntry) throws IOException {

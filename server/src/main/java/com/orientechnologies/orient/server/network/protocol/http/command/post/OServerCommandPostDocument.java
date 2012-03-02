@@ -53,7 +53,7 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
 		}
 
 		sendTextContent(iRequest, OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, null,
-				OHttpUtils.CONTENT_TEXT_PLAIN, doc != null ? doc.getIdentity() : "?");
+				OHttpUtils.CONTENT_TEXT_PLAIN, doc.getIdentity());
 		return false;
 	}
 

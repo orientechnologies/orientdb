@@ -59,7 +59,7 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 		if (result == null)
 			result = new ArrayList<Object>();
 
-		if (iRequester.getParameters() != null)
+		if (iRequester != null && iRequester.getParameters() != null)
 			currentParameters = new HashMap<Object, Object>();
 
 		final Object scriptResult = OGremlinHelper.execute(db, (String) iParameters[0], iRequester != null ? iRequester.getParameters()
