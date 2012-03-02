@@ -15,20 +15,11 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexMVRBTreeAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXSTATUS;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
@@ -239,56 +230,6 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 	}
 
 	public void executeRollback(final OTransaction iTransaction) {
-	}
-
-	@SuppressWarnings("rawtypes")
-	public void executeCommit() {
-		if (!(getStorage() instanceof OStorageEmbedded))
-			getStorage().commit(currentTx);
-		else {
-			final List<String> involvedIndexes = currentTx.getInvolvedIndexes();
-
-			// LOCK INVOLVED INDEXES
-			List<OIndexMVRBTreeAbstract<?>> lockedIndexes = null;
-			try {
-				if (involvedIndexes != null)
-					for (String indexName : involvedIndexes) {
-						final OIndexMVRBTreeAbstract<?> index = (OIndexMVRBTreeAbstract<?>) getMetadata().getIndexManager().getIndexInternal(
-								indexName);
-						if (lockedIndexes == null)
-							lockedIndexes = new ArrayList<OIndexMVRBTreeAbstract<?>>();
-
-						index.acquireExclusiveLock();
-						lockedIndexes.add(index);
-					}
-
-				getStorage().callInLock(new Callable<Void>() {
-
-					public Void call() throws Exception {
-						getStorage().commit(currentTx);
-
-						// COMMIT INDEX CHANGES
-						final ODocument indexEntries = currentTx.getIndexChanges();
-						if (indexEntries != null) {
-							for (Entry<String, Object> indexEntry : indexEntries) {
-								final OIndex<?> index = getMetadata().getIndexManager().getIndexInternal(indexEntry.getKey());
-								index.commit((ODocument) indexEntry.getValue());
-							}
-						}
-						return null;
-					}
-
-				}, true);
-
-			} finally {
-				// RELEASE INDEX LOCKS IF ANY
-				if (lockedIndexes != null)
-					// DON'T USE GENERICS TO AVOID OpenJDK CRASH :-(
-					for (OIndexMVRBTreeAbstract index : lockedIndexes) {
-						index.releaseExclusiveLock();
-					}
-			}
-		}
 	}
 
 	protected void checkTransaction() {

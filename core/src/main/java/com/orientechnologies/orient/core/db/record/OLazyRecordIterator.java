@@ -54,10 +54,12 @@ public class OLazyRecordIterator implements OLazyIterator<OIdentifiable> {
 			return null;
 
 		if (value instanceof ORecordId && autoConvert2Record) {
-			value = ((ORecordId) value).getRecord();
+			final ORecord<?> rec = ((ORecordId) value).getRecord();
 
 			if (underlying instanceof OLazyIterator<?>)
-				((OLazyIterator<OIdentifiable>) underlying).update(value);
+				((OLazyIterator<OIdentifiable>) underlying).update(rec);
+			
+			value = rec;
 		}
 
 		return value;

@@ -15,6 +15,10 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -23,8 +27,10 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexMVRBTreeAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
@@ -43,7 +49,54 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 	public void commit() {
 		checkTransaction();
 		status = TXSTATUS.COMMITTING;
-		database.executeCommit();
+
+		if (!(database.getStorage() instanceof OStorageEmbedded))
+			database.getStorage().commit(this);
+		else {
+			database.getStorage().callInLock(new Callable<Void>() {
+
+				public Void call() throws Exception {
+					final List<String> involvedIndexes = getInvolvedIndexes();
+
+					// LOCK INVOLVED INDEXES
+					List<OIndexMVRBTreeAbstract<?>> lockedIndexes = null;
+					try {
+						if (involvedIndexes != null)
+							for (String indexName : involvedIndexes) {
+								final OIndexMVRBTreeAbstract<?> index = (OIndexMVRBTreeAbstract<?>) database.getMetadata().getIndexManager()
+										.getIndexInternal(indexName);
+								if (lockedIndexes == null)
+									lockedIndexes = new ArrayList<OIndexMVRBTreeAbstract<?>>();
+
+								index.acquireExclusiveLock();
+								lockedIndexes.add(index);
+							}
+
+						database.getStorage().commit(OTransactionOptimistic.this);
+
+						// COMMIT INDEX CHANGES
+						final ODocument indexEntries = getIndexChanges();
+						if (indexEntries != null) {
+							for (Entry<String, Object> indexEntry : indexEntries) {
+								final OIndex<?> index = database.getMetadata().getIndexManager().getIndexInternal(indexEntry.getKey());
+								index.commit((ODocument) indexEntry.getValue());
+							}
+						}
+						return null;
+
+					} finally {
+						// RELEASE INDEX LOCKS IF ANY
+						if (lockedIndexes != null)
+							// DON'T USE GENERICS TO AVOID OpenJDK CRASH :-(
+							for (OIndexMVRBTreeAbstract<?> index : lockedIndexes) {
+								index.releaseExclusiveLock();
+							}
+					}
+				}
+
+			}, true);
+
+		}
 	}
 
 	public void rollback() {
@@ -95,7 +148,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 		checkTransaction();
 
 		if ((status == OTransaction.TXSTATUS.COMMITTING) && database.getStorage() instanceof OStorageEmbedded) {
+			// && iRecord.getIdentity().isValid() && allEntries.containsKey(iRecord.getIdentity())) {
+			// if ((OStorage.CLUSTER_INDEX_NAME.equals(iClusterName) || iRecord.getIdentity().getClusterId() == database.getStorage()
+			// .getClusterIdByName(OStorage.CLUSTER_INDEX_NAME)) && database.getStorage() instanceof OStorageEmbedded) {
 			// I'M COMMITTING: BYPASS LOCAL BUFFER
+
 			switch (iStatus) {
 			case ORecordOperation.CREATED:
 			case ORecordOperation.UPDATED:
