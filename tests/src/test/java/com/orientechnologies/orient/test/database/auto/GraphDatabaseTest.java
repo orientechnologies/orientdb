@@ -355,7 +355,48 @@ public class GraphDatabaseTest {
 			database.createEdge(a.getIdentity(), c.getIdentity()).save();
 
 			a.reload();
-			//Assert.assertEquals(database.getOutEdges(a).size(), 2);
+			// Assert.assertEquals(database.getOutEdges(a).size(), 2);
+
+		} finally {
+			database.close();
+		}
+	}
+
+	@Test(dependsOnMethods = "populate")
+	public void testBlaaa() {
+		database.open("admin", "admin");
+
+		try {
+			// add source
+			ODocument sourceDoc = database.createVertex();
+			sourceDoc.field("name", "MyTest", OType.STRING);
+			sourceDoc.save();
+
+			// add first office
+			ODocument office1Doc = database.createVertex();
+			office1Doc.field("name", "office1", OType.STRING);
+			office1Doc.save();
+
+			List<ODocument> source1 = database.query(new OSQLSynchQuery<ODocument>("select * from V where name = 'MyTest'"));
+			for (int i = 0; i < source1.size(); i++)
+				database.createEdge(source1.get(i), office1Doc).field("label", "office", OType.STRING).save();
+
+			String query11 = "select out[label='office'].size() from V where name = 'MyTest'";
+			List<ODocument> officesDoc11 = database.query(new OSQLSynchQuery<ODocument>(query11));
+			System.out.println(officesDoc11);
+
+			// add second office
+			ODocument office2Doc = database.createVertex();
+			office2Doc.field("name", "office2", OType.STRING);
+			office2Doc.save();
+
+			List<ODocument> source2 = database.query(new OSQLSynchQuery<ODocument>("select * from V where name = 'MyTest'"));
+			for (int i = 0; i < source2.size(); i++)
+				database.createEdge(source2.get(i), office2Doc).field("label", "office", OType.STRING).save();
+
+			String query21 = "select out[label='office'].size() from V where name = 'MyTest'";
+			List<ODocument> officesDoc21 = database.query(new OSQLSynchQuery<ODocument>(query21));
+			System.out.println(officesDoc21);
 
 		} finally {
 			database.close();

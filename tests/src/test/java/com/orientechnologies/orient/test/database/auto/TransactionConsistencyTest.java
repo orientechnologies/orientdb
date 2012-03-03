@@ -29,6 +29,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache.STRATEGY;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -789,5 +790,32 @@ public class TransactionConsistencyTest {
 
 		db.close();
 		System.out.println("**************************TransactionRollbackConstistencyTest***************************************");
+	}
+
+	@Test
+	public void testQueryIsolation() {
+		OGraphDatabase db = new OGraphDatabase(url);
+		db.open("admin", "admin");
+
+		try {
+			db.begin();
+
+			ODocument v1 = db.createVertex();
+			v1.field("purpose", "testQueryIsolation");
+			v1.save();
+
+			if (!url.startsWith("remote")) {
+				List<OIdentifiable> result = db.query(new OSQLSynchQuery<Object>("select from V where purpose = 'testQueryIsolation'"));
+				Assert.assertEquals(result.size(), 1);
+			}
+
+			db.commit();
+
+			List<OIdentifiable> result = db.query(new OSQLSynchQuery<Object>("select from V where purpose = 'testQueryIsolation'"));
+			Assert.assertEquals(result.size(), 1);
+
+		} finally {
+			db.close();
+		}
 	}
 }
