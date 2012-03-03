@@ -332,10 +332,14 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 		for (final OIndex<?> index : indexes) {
 			final Object key = index.getDefinition().getDocumentValueToIndex(iRecord);
 			if (key instanceof Collection) {
-				for (final Object keyItem : (Collection<?>) key)
-					index.checkEntry(iRecord, keyItem);
-			} else
-				index.checkEntry(iRecord, key);
+				for (final Object keyItem : (Collection<?>) key) {
+					if(keyItem != null)
+						index.checkEntry(iRecord, keyItem);
+				}
+			} else {
+				if(key != null)
+					index.checkEntry(iRecord, key);
+			}
 		}
 
 	}
@@ -357,10 +361,14 @@ public class OClassIndexManager extends ODocumentHookAbstract {
         if(dirtyFields.contains(indexField))  {
           final Object key = index.getDefinition().getDocumentValueToIndex(iRecord);
           if (key instanceof Collection) {
-            for (final Object keyItem : (Collection<?>) key)
-              index.checkEntry(iRecord, keyItem);
-          } else
-            index.checkEntry(iRecord, key);
+            for (final Object keyItem : (Collection<?>) key) {
+							if(keyItem != null)
+								index.checkEntry(iRecord, keyItem);
+						}
+          } else {
+						if(key != null)
+							index.checkEntry(iRecord, key);
+					}
           break;
         }
       }

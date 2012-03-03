@@ -119,6 +119,30 @@ public class ClassIndexManagerTest {
 		Assert.assertTrue(exceptionThrown);
 	}
 
+	public void testPropertiesCheckUniqueIndexDubKeyIsNullCreate() {
+		final ODocument docOne = new ODocument("classIndexManagerTestClass");
+		final ODocument docTwo = new ODocument("classIndexManagerTestClass");
+
+		docOne.field("prop1", "a");
+		docOne.save();
+
+  	docTwo.field("prop1", (String)null);
+		docTwo.save();
+	}
+
+	public void testPropertiesCheckUniqueIndexDubKeyIsNullCreateInTx() {
+		final ODocument docOne = new ODocument("classIndexManagerTestClass");
+		final ODocument docTwo = new ODocument("classIndexManagerTestClass");
+
+		database.begin();
+		docOne.field("prop1", "a");
+		docOne.save();
+
+		docTwo.field("prop1", (String)null);
+		docTwo.save();
+		database.commit();
+	}
+
 	public void testPropertiesCheckUniqueIndexInParentDubKeysCreate() {
 		final ODocument docOne = new ODocument("classIndexManagerTestClass");
 		final ODocument docTwo = new ODocument("classIndexManagerTestClass");
@@ -154,6 +178,36 @@ public class ClassIndexManagerTest {
 			exceptionThrown = true;
 		}
 		Assert.assertTrue(exceptionThrown);
+	}
+
+	public void testPropertiesCheckUniqueIndexDubKeyIsNullUpdate() {
+		final ODocument docOne = new ODocument("classIndexManagerTestClass");
+		final ODocument docTwo = new ODocument("classIndexManagerTestClass");
+
+		docOne.field("prop1", "a");
+		docOne.save();
+
+		docTwo.field("prop1", "b");
+		docTwo.save();
+
+		docTwo.field("prop1", (String)null);
+		docTwo.save();
+	}
+
+	public void testPropertiesCheckUniqueIndexDubKeyIsNullUpdateInTX() {
+		final ODocument docOne = new ODocument("classIndexManagerTestClass");
+		final ODocument docTwo = new ODocument("classIndexManagerTestClass");
+
+		database.begin();
+		docOne.field("prop1", "a");
+		docOne.save();
+
+		docTwo.field("prop1", "b");
+		docTwo.save();
+
+		docTwo.field("prop1", (String)null);
+		docTwo.save();
+		database.commit();
 	}
 
 	public void testPropertiesCheckNonUniqueIndexDubKeys() {
