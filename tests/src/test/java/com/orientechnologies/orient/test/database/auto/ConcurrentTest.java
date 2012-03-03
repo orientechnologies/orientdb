@@ -60,11 +60,11 @@ public class ConcurrentTest {
 						try {
 							db.begin(TXTYPE.OPTIMISTIC);
 
-							ODocument vDoc1 = db.load(rid1);
+							ODocument vDoc1 = db.load(rid1, null, true);
 							vDoc1.field(threadName, vDoc1.field(threadName) + ";" + i);
 							vDoc1.save();
 
-							ODocument vDoc2 = db.load(rid2);
+							ODocument vDoc2 = db.load(rid2, null, true);
 							vDoc2.field(threadName, vDoc2.field(threadName) + ";" + i);
 							vDoc2.save();
 
@@ -161,14 +161,14 @@ public class ConcurrentTest {
 		vThread2.join();
 		vThread3.join();
 
-		doc1 = database1.load(rid1);
+		doc1 = database1.load(rid1, null, true);
 		Assert.assertEquals(doc1.field(vUpdate1.threadName), vUpdate1.fieldValue, vUpdate1.threadName);
 		Assert.assertEquals(doc1.field(vUpdate2.threadName), vUpdate2.fieldValue, vUpdate2.threadName);
 		Assert.assertEquals(doc1.field(vUpdate3.threadName), vUpdate3.fieldValue, vUpdate3.threadName);
 		System.out.println("RESULT doc 1:");
 		System.out.println(doc1.toJSON());
 
-		doc2 = database1.load(rid2);
+		doc2 = database1.load(rid2, null, true);
 		Assert.assertEquals(doc2.field(vUpdate1.threadName), vUpdate1.fieldValue, vUpdate1.threadName);
 		Assert.assertEquals(doc2.field(vUpdate2.threadName), vUpdate2.fieldValue, vUpdate2.threadName);
 		Assert.assertEquals(doc2.field(vUpdate3.threadName), vUpdate3.fieldValue, vUpdate3.threadName);

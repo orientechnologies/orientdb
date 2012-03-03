@@ -500,7 +500,7 @@ public class ODocumentHelper {
 
 				// SETS
 			} else if (fieldValue instanceof OMVRBTreeRIDSet) {
-				iCloned._fieldValues.put(iEntry.getKey(), ((OMVRBTreeRIDSet) fieldValue).copy());
+				iCloned._fieldValues.put(iEntry.getKey(), ((OMVRBTreeRIDSet) fieldValue).copy(iCloned));
 
 			} else if (fieldValue instanceof ORecordTrackedSet) {
 				final ORecordTrackedSet newList = new ORecordTrackedSet(iCloned);
