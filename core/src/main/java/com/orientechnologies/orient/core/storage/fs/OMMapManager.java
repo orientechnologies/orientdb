@@ -95,9 +95,9 @@ public class OMMapManager {
 		});
 	}
 
-	public static OMMapBufferEntry request(final OFileMMap iFile, final long iBeginOffset, final int iSize,
+	public static OMMapBufferEntry acquire(final OFileMMap iFile, final long iBeginOffset, final int iSize,
 			final OPERATION_TYPE iOperationType, final ALLOC_STRATEGY iStrategy) {
-		return request(iFile, iBeginOffset, iSize, false, iOperationType, iStrategy);
+		return acquire(iFile, iBeginOffset, iSize, false, iOperationType, iStrategy);
 	}
 
 	/**
@@ -116,7 +116,7 @@ public class OMMapManager {
 	 * @param iStrategy
 	 * @return The mmap buffer entry if found, or null if the operation is READ and the buffer pool is full.
 	 */
-	public synchronized static OMMapBufferEntry request(final OFileMMap iFile, final long iBeginOffset, final int iSize,
+	public synchronized static OMMapBufferEntry acquire(final OFileMMap iFile, final long iBeginOffset, final int iSize,
 			final boolean iForce, final OPERATION_TYPE iOperationType, final ALLOC_STRATEGY iStrategy) {
 
 		if (iStrategy == ALLOC_STRATEGY.MMAP_NEVER)
@@ -212,8 +212,12 @@ public class OMMapManager {
 				return entry;
 
 		} finally {
-			if (entry != null && iOperationType == OPERATION_TYPE.WRITE)
-				entry.setDirty();
+			if (entry != null) {
+				entry.acquire();
+
+				if (iOperationType == OPERATION_TYPE.WRITE)
+					entry.setDirty();
+			}
 		}
 
 		return null;
@@ -237,7 +241,8 @@ public class OMMapManager {
 			final OMMapBufferEntry entry = it.next();
 
 			// REMOVE FROM COLLECTIONS
-			removeEntry(it, entry);
+			if (removeEntry(entry))
+				it.remove();
 
 			if (totalMemory < memoryThreshold)
 				break;
@@ -270,31 +275,33 @@ public class OMMapManager {
 		for (Iterator<OMMapBufferEntry> it = bufferPoolLRU.iterator(); it.hasNext();) {
 			entry = it.next();
 			if (entry.file != null && entry.file.isClosed()) {
-				removeEntry(it, entry);
-				entry.close();
+				if (removeEntry(entry))
+					it.remove();
 			}
 		}
 	}
 
-	/**
-	 * Frees the mmap entry from the memory
-	 */
-	private static boolean removeEntry(final Iterator<OMMapBufferEntry> it, final OMMapBufferEntry entry) {
-		if (entry.flush()) {
+	protected static boolean removeEntry(final OMMapBufferEntry entry) {
+		if (!entry.flush())
+			return false;
+
+		entry.acquire();
+		try {
 			// COMMITTED: REMOVE IT
-			it.remove();
 			final List<OMMapBufferEntry> file = bufferPoolPerFile.get(entry.file);
 			if (file != null) {
 				file.remove(entry);
 				if (file.isEmpty())
 					bufferPoolPerFile.remove(entry.file);
 			}
-			entry.buffer = null;
+			entry.close();
 
 			totalMemory -= entry.size;
 			return true;
+
+		} finally {
+			entry.release();
 		}
-		return false;
 	}
 
 	/**
@@ -307,9 +314,8 @@ public class OMMapManager {
 		if (entries != null) {
 			for (OMMapBufferEntry entry : entries) {
 				bufferPoolLRU.remove(entry);
-				entry.close();
+				removeEntry(entry);
 			}
-			entries.clear();
 		}
 	}
 
@@ -326,9 +332,9 @@ public class OMMapManager {
 	}
 
 	public synchronized static void shutdown() {
-		for (OMMapBufferEntry entry : new ArrayList<OMMapBufferEntry>(bufferPoolLRU)) {
-			entry.close();
-		}
+		for (OMMapBufferEntry entry : new ArrayList<OMMapBufferEntry>(bufferPoolLRU))
+			removeEntry(entry);
+
 		bufferPoolLRU.clear();
 		bufferPoolPerFile.clear();
 		totalMemory = 0;

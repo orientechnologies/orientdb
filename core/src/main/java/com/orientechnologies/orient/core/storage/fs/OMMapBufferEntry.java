@@ -19,12 +19,13 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.MappedByteBuffer;
 
+import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 
-public class OMMapBufferEntry implements Comparable<OMMapBufferEntry> {
+public class OMMapBufferEntry extends OSharedResourceAbstract implements Comparable<OMMapBufferEntry> {
 	private static final int	FORCE_DELAY;
 	private static final int	FORCE_RETRY;
 
@@ -42,7 +43,7 @@ public class OMMapBufferEntry implements Comparable<OMMapBufferEntry> {
 
 		// GET SUN JDK METHOD TO CLEAN MMAP BUFFERS
 		try {
-			// sunClass = Class.forName("sun.nio.ch.DirectBuffer");
+			sunClass = Class.forName("sun.nio.ch.DirectBuffer");
 		} catch (Exception e) {
 			// IGNORE IT AND USE GC TO FREE RESOURCES
 		}
@@ -62,32 +63,40 @@ public class OMMapBufferEntry implements Comparable<OMMapBufferEntry> {
 	 * 
 	 * @return true if the buffer has been successfully flushed, otherwise false.
 	 */
-	public boolean flush() {
+	boolean flush() {
 		if (!dirty)
 			return true;
 
-		final long timer = OProfiler.getInstance().startChrono();
+		acquireExclusiveLock();
+		try {
 
-		// FORCE THE WRITE OF THE BUFFER
-		for (int i = 0; i < FORCE_RETRY; ++i) {
-			try {
-				buffer.force();
-				dirty = false;
-				break;
-			} catch (Exception e) {
-				OLogManager.instance().debug(this, "Cannot write memory buffer to disk. Retrying (" + (i + 1) + "/" + FORCE_RETRY + ")...");
-				OMemoryWatchDog.freeMemory(FORCE_DELAY);
+			final long timer = OProfiler.getInstance().startChrono();
+
+			// FORCE THE WRITE OF THE BUFFER
+			for (int i = 0; i < FORCE_RETRY; ++i) {
+				try {
+					buffer.force();
+					dirty = false;
+					break;
+				} catch (Exception e) {
+					OLogManager.instance().debug(this,
+							"Cannot write memory buffer to disk. Retrying (" + (i + 1) + "/" + FORCE_RETRY + ")...");
+					OMemoryWatchDog.freeMemory(FORCE_DELAY);
+				}
 			}
+
+			if (dirty)
+				OLogManager.instance().debug(this, "Cannot commit memory buffer to disk after %d retries", FORCE_RETRY);
+			else
+				OProfiler.getInstance().updateCounter("OMMapManager.pagesCommitted", 1);
+
+			OProfiler.getInstance().stopChrono("OMMapManager.commitPages", timer);
+
+			return !dirty;
+
+		} finally {
+			releaseExclusiveLock();
 		}
-
-		if (dirty)
-			OLogManager.instance().debug(this, "Cannot commit memory buffer to disk after %d retries", FORCE_RETRY);
-		else
-			OProfiler.getInstance().updateCounter("OMMapManager.pagesCommitted", 1);
-
-		OProfiler.getInstance().stopChrono("OMMapManager.commitPages", timer);
-
-		return !dirty;
 	}
 
 	@Override
@@ -99,49 +108,57 @@ public class OMMapBufferEntry implements Comparable<OMMapBufferEntry> {
 	}
 
 	/**
-	 * Force closing of file is it's opened yet.
+	 * Force closing of file if it's opened yet.
 	 */
-	public void close() {
+	void close() {
 		flush();
 
-		if (file != null) {
-			if (!file.isClosed()) {
+		acquireExclusiveLock();
+		try {
+
+			if (file != null)
+				file = null;
+
+			if (buffer != null && sunClass != null) {
+				// USE SUN JVM SPECIAL METHOD TO FREE RESOURCES
 				try {
-					file.close();
-				} catch (IOException e) {
+					final Method m = sunClass.getMethod("cleaner");
+					final Object cleaner = m.invoke(buffer);
+					cleaner.getClass().getMethod("clean").invoke(cleaner);
+				} catch (Exception e) {
+					OLogManager.instance().error(this, "Error on calling MMap buffer clean", e);
 				}
 			}
-			file = null;
-		}
 
-		if (buffer != null && sunClass != null) {
-			// USE SUN JVM SPECIAL METHOD TO FREE RESOURCES
-			try {
-				final Method m = sunClass.getMethod("cleaner");
-				final Object cleaner = m.invoke(buffer);
-				cleaner.getClass().getMethod("clean").invoke(cleaner);
-			} catch (Exception e) {
-				OLogManager.instance().error(this, "Error on calling MMap buffer clean", e);
-			}
-		}
+			buffer = null;
+			counter = 0;
 
-		buffer = null;
-		counter = 0;
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public int compareTo(final OMMapBufferEntry iOther) {
 		return (int) (beginOffset - iOther.beginOffset);
 	}
 
-	public boolean isValid() {
+	boolean isValid() {
 		return buffer != null;
 	}
 
-	public boolean isDirty() {
+	boolean isDirty() {
 		return dirty;
 	}
 
-	public void setDirty() {
+	void setDirty() {
 		this.dirty = true;
+	}
+
+	void acquire() {
+		super.acquireExclusiveLock();
+	}
+
+	void release() {
+		super.releaseExclusiveLock();
 	}
 }
