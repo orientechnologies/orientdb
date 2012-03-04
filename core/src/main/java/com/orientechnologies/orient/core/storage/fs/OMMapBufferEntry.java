@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.fs;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.MappedByteBuffer;
 
@@ -111,27 +110,28 @@ public class OMMapBufferEntry extends OSharedResourceAbstract implements Compara
 	 * Force closing of file if it's opened yet.
 	 */
 	void close() {
-		flush();
-
 		acquireExclusiveLock();
 		try {
 
-			if (file != null)
-				file = null;
+			if (buffer != null) {
+				if (dirty)
+					buffer.force();
 
-			if (buffer != null && sunClass != null) {
-				// USE SUN JVM SPECIAL METHOD TO FREE RESOURCES
-				try {
-					final Method m = sunClass.getMethod("cleaner");
-					final Object cleaner = m.invoke(buffer);
-					cleaner.getClass().getMethod("clean").invoke(cleaner);
-				} catch (Exception e) {
-					OLogManager.instance().error(this, "Error on calling MMap buffer clean", e);
+				if (sunClass != null) {
+					// USE SUN JVM SPECIAL METHOD TO FREE RESOURCES
+					try {
+						final Method m = sunClass.getMethod("cleaner");
+						final Object cleaner = m.invoke(buffer);
+						cleaner.getClass().getMethod("clean").invoke(cleaner);
+					} catch (Exception e) {
+						OLogManager.instance().error(this, "Error on calling Sun's MMap buffer clean", e);
+					}
 				}
-			}
 
-			buffer = null;
+				buffer = null;
+			}
 			counter = 0;
+			file = null;
 
 		} finally {
 			releaseExclusiveLock();
