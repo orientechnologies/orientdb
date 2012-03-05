@@ -79,7 +79,7 @@
 </div>
 
 <script language="javascript">
-	jQuery("#queryText").val((jQuery.trim(jQuery("#queryText").val())));
+	$("#queryText").val(($.trim($("#queryText").val())));
 
 	$("#editRecord").click(
 			function() {
@@ -107,7 +107,6 @@
 		var code = queryEditor.getCode();
 		code = jQuery.trim(code);
 		queryEditor.setCode(code);
-		controller.parameter('queryRequest', code);
 		var limit = $('#limit').val();
 
 		queryResult = orientServer.query(code + "/" + limit);
@@ -121,10 +120,12 @@
 			controller.parameter('savedQueries', savedQueries);
 		}
 
-		if ($.inArray(code, savedQueries) == -1) {
-			savedQueries.unshift(code);
-			refreshSavedQueries();
-		}
+		var pos = $.inArray(code, savedQueries);
+		if (pos > -1)
+			savedQueries.splice(pos, 1);
+
+		savedQueries.unshift(code);
+		refreshSavedQueries();
 
 		if (queryResult == null) {
 			jQuery("#output").text(orientServer.getErrorMessage());
@@ -141,6 +142,8 @@
 					+ savedQueries[q] + '</option>';
 		}
 		$("#savedQueries").html(options);
+		$("#savedQueries").attr('selectedIndex', 1);
+		return $("#savedQueries").val();
 	}
 
 	function clearResultset() {
@@ -151,9 +154,7 @@
 		queryEditor.setCode($(this).val());
 	});
 
-	var previous = controller.parameter('queryRequest');
-	if (previous != null)
-		$('#queryText').val(previous);
+	$("#queryText").val(refreshSavedQueries());
 
 	previous = controller.parameter('queryResponse');
 	if (previous != null)
@@ -163,15 +164,12 @@
 	if (previous != null)
 		$("#limit").val(previous);
 
-	refreshSavedQueries();
-
 	queryEditor = CodeMirror.fromTextArea('queryText', {
 		width : "920px",
 		height : "60px",
 		parserfile : "parsesql.js",
 		stylesheet : "styles/codemirror/sqlcolors.css",
 		path : "js/codemirror/",
-		textWrapping : false,
-		onLoad : controller.parameter('queryLoad')
+		textWrapping : false
 	});
 </script>
