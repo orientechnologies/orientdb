@@ -82,7 +82,7 @@ function ODocumentView(name, component, doc, options) {
 
 	ODocumentView.prototype.render = function(doc, database) {
 		if (doc != null) {
-			if (doc instanceof string)
+			if (typeof doc == "string")
 				// LOAD THE RECORD BY RID
 				doc = database.load(doc);
 			else
@@ -314,7 +314,7 @@ function ODocumentView(name, component, doc, options) {
 					object[fieldName] = [];
 					fieldValue = fieldValue.split(",");
 					for (fieldIndex in fieldValue) {
-						object[fieldName].push(jQuery
+						object[fieldName].push($
 								.trim(fieldValue[fieldIndex]));
 					}
 				} else {

@@ -83,16 +83,16 @@
 
 	$("#editRecord").click(
 			function() {
-				var selectedRow = jQuery("#queryResultTable").jqGrid(
-						'getGridParam', 'selrow');
+				var selectedRow = $("#queryResultTable").jqGrid('getGridParam',
+						'selrow');
 				if (selectedRow != null)
 					displayDocument(queryResult.result[selectedRow - 1],
 							orientServer);
 			});
 	$("#graphRecord").click(
 			function() {
-				var selectedRow = jQuery("#queryResultTable").jqGrid(
-						'getGridParam', 'selrow');
+				var selectedRow = $("#queryResultTable").jqGrid('getGridParam',
+						'selrow');
 				if (selectedRow != null)
 					displayGraph(queryResult.result[selectedRow - 1]);
 			});
@@ -101,12 +101,20 @@
 		displayResultSet(data["result"], data["schema"]);
 	}
 
-	function executeQuery() {
+	function executeQuery(code) {
 		startTimer();
 
-		var code = queryEditor.getCode();
-		code = jQuery.trim(code);
-		queryEditor.setCode(code);
+		if (code)
+			queryEditor.setCode(code);
+		else
+			code = queryEditor.getCode();
+
+		var formattedCode = $.trim(code);
+		if (formattedCode != code) {
+			code = formattedCode;
+			queryEditor.setCode(code);
+		}
+
 		var limit = $('#limit').val();
 
 		queryResult = orientServer.query(code + "/" + limit);
@@ -128,7 +136,7 @@
 		refreshSavedQueries();
 
 		if (queryResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
+			$("#output").text(orientServer.getErrorMessage());
 		} else {
 			queryResponse(queryResult);
 		}
@@ -147,15 +155,21 @@
 	}
 
 	function clearResultset() {
-		jQuery("#queryResultTable").jqGrid('clearGridData');
+		$("#queryResultTable").jqGrid('clearGridData');
+	}
+
+	var passedQuery = controller.parameter('queryLoad');
+	if (passedQuery) {
 	}
 
 	$("#savedQueries").change(function() {
 		queryEditor.setCode($(this).val());
 	});
 
+	var currentQuery = $("#queryText").val().trim();
+
 	var lastQuery = refreshSavedQueries();
-	if (lastQuery)
+	if (currentQuery.length == 0 && lastQuery)
 		$("#queryText").val(lastQuery);
 
 	previous = controller.parameter('queryResponse');
@@ -172,6 +186,7 @@
 		parserfile : "parsesql.js",
 		stylesheet : "styles/codemirror/sqlcolors.css",
 		path : "js/codemirror/",
-		textWrapping : false
+		textWrapping : false,
+		onLoad : controller.parameter('queryLoad')
 	});
 </script>
