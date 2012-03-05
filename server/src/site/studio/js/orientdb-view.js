@@ -30,16 +30,20 @@ function ODocumentView(name, component, doc, options) {
 
 		styleClass : "odocumentview",
 		showRid : true,
-		ridLabelStyleClass : "odocumentview_header_label",
-		ridValueStyleClass : "odocumentview_header_value",
+		ridLabelStyleClass : "odocumentview_rid_label",
+		ridValueStyleClass : "odocumentview_rid_value",
 
 		showClass : true,
-		classLabelStyleClass : "odocumentview_header_label",
-		classValueStyleClass : "odocumentview_header_value",
+		classLabelStyleClass : "odocumentview_class_label",
+		classValueStyleClass : "odocumentview_class_value",
 
 		showVersion : true,
-		versionLabelStyleClass : "odocumentview_header_label",
-		versionValueStyleClass : "odocumentview_header_value",
+		versionLabelStyleClass : "odocumentview_version_label",
+		versionValueStyleClass : "odocumentview_version_value",
+
+		showFieldType : true,
+		typeLabelStyleClass : "odocumentview_type_label",
+		typeValueStyleClass : "odocumentview_type_value",
 
 		fieldColumnName : "Field",
 		fieldStyleClass : "odocumentview_field_label",
@@ -80,6 +84,11 @@ function ODocumentView(name, component, doc, options) {
 		}
 	}
 
+	this.types = [ "binary", "boolean", "embedded", "embeddedlist",
+			"embeddedmap", "embeddedset", "decimal", "float", "date",
+			"datetime", "double", "integer", "link", "linklist", "linkmap",
+			"linkset", "long", "short", "string" ];
+
 	ODocumentView.prototype.render = function(doc, database) {
 		if (doc != null)
 			this.doc = doc;
@@ -96,6 +105,8 @@ function ODocumentView(name, component, doc, options) {
 		component += "<tr><td><table id='" + this.componentId
 				+ "_header' width='100%'><tr>";
 
+		var fieldValue;
+		var currentClass;
 		if (this.settings.showClass) {
 			if (this.doc != null)
 				fieldValue = this.doc['@class'];
@@ -104,8 +115,10 @@ function ODocumentView(name, component, doc, options) {
 					+ this.settings.classValueStyleClass + "'>";
 			for (cls in databaseInfo['classes']) {
 				classes += "<option";
-				if (databaseInfo['classes'][cls].name == fieldValue)
+				if (databaseInfo['classes'][cls].name == fieldValue) {
+					currentClass = databaseInfo['classes'][cls];
 					classes += " selected = 'yes'";
+				}
 				classes += ">" + databaseInfo['classes'][cls].name
 						+ "</option>";
 			}
@@ -117,6 +130,35 @@ function ODocumentView(name, component, doc, options) {
 					+ "</td>";
 		}
 
+		if (this.settings.showRid) {
+			if (this.doc != null)
+				fieldValue = this.doc['@rid'].substring(1);
+			else
+				fieldValue = "-1:-1";
+
+			component += "<td class='" + this.settings.ridLabelStyleClass
+					+ "'>@rid</td><td class='"
+					+ this.settings.ridValueStyleClass
+					+ "'><input id='doc__rid' class='"
+					+ this.settings.ridValueStyleClass + "' value='"
+					+ fieldValue + "'/></td>";
+		}
+
+		if (this.settings.showVersion) {
+			if (this.doc != null)
+				fieldValue = this.doc['@version'];
+			else
+				fieldValue = 0;
+
+			component += "<td class='" + this.settings.versionLabelStyleClass
+					+ "'>@version</td><td class='"
+					+ this.settings.versionValueStyleClass
+					+ "'><input id='doc__version' class='"
+					+ this.settings.versionValueStyleClass
+					+ "'disabled value='" + fieldValue + "'/></td>";
+		}
+
+		component += "<td width='200'></td>";
 		component += "<td align='left'>"
 				+ this.generateButton('doc_create', 'Create ', 'add.png', null,
 						"ODocumentView.create('" + this.name + "')") + "</td>";
@@ -143,37 +185,6 @@ function ODocumentView(name, component, doc, options) {
 				+ this.generateButton('doc_clear', 'Clear ', 'clear.png', null,
 						"ODocumentView.clear('" + this.name + "')") + "</td>";
 
-		component += "<td width='200'></td>";
-
-		var fieldValue;
-		if (this.settings.showRid) {
-			if (this.doc != null)
-				fieldValue = this.doc['@rid'];
-			else
-				fieldValue = "-1:-1";
-
-			component += "<td class='" + this.settings.ridLabelStyleClass
-					+ "'>@rid</td><td class='"
-					+ this.settings.ridValueStyleClass
-					+ "'><input id='doc__rid' class='"
-					+ this.settings.ridValueStyleClass + "' value='"
-					+ fieldValue + "'/></td>";
-		}
-
-		if (this.settings.showVersion) {
-			if (this.doc != null)
-				fieldValue = this.doc['@version'];
-			else
-				fieldValue = 0;
-
-			component += "<td class='" + this.settings.versionLabelStyleClass
-					+ "'>@version</td><td class='"
-					+ this.settings.versionValueStyleClass
-					+ "'><input id='doc__version' class='"
-					+ this.settings.versionValueStyleClass
-					+ "'disabled value='" + fieldValue + "'/></td>";
-		}
-
 		component += "</tr></table></td></tr>";
 
 		component += "<tr><td><table id='" + this.componentId
@@ -187,7 +198,14 @@ function ODocumentView(name, component, doc, options) {
 					continue;
 
 				fieldValue = this.doc[fieldName];
-				component += this.renderRow(fieldName, fieldValue);
+				var fieldType = "string";
+				for (p in currentClass.properties) {
+					if (currentClass.properties[p].name == fieldName) {
+						fieldType = currentClass.properties[p].type;
+						break;
+					}
+				}
+				component += this.renderRow(fieldName, fieldValue, fieldType);
 			}
 
 		component += "</table></td></tr>";
@@ -219,6 +237,10 @@ function ODocumentView(name, component, doc, options) {
 
 	ODocumentView.prototype.renderRow = function(fieldName, fieldValue,
 			fieldType) {
+
+		if (fieldType)
+			fieldType = fieldType.toLowerCase();
+
 		component = "<tr id='doc_" + this.fieldNum + "'><td class='"
 				+ this.settings.fieldStyleClass + "'><input id='doc_"
 				+ this.fieldNum + "_label' class='"
@@ -237,21 +259,20 @@ function ODocumentView(name, component, doc, options) {
 		if (fieldValue == null)
 			component += 'null';
 		else if (fieldValue instanceof Array) {
-			fieldType = "a";
+			component += '[';
 			for (v in fieldValue) {
 				if (v > 0)
 					component += ', ';
 
-				if (typeof fieldValue[v] == 'object')
+				if (typeof fieldValue[v] == 'object' && fieldValue[v]['@rid'])
 					component += ('#' + fieldValue[v]['@rid']);
 				else
 					component += fieldValue[v];
 			}
-		} else if (typeof fieldValue == 'object') {
-			fieldType = "o";
+			component += ']';
+		} else if (typeof fieldValue == 'object' && fieldValue['@rid']) {
 			component += ('#' + fieldValue['@rid']);
 		} else {
-			fieldType = "";
 			component += fieldValue;
 		}
 
@@ -259,13 +280,26 @@ function ODocumentView(name, component, doc, options) {
 			component += "</" + this.settings.valueHtmlComponentType + ">";
 		}
 
-		component += "<input type='hidden' id='doc_" + this.fieldNum
-				+ "_type' value='" + fieldType + "'>";
+		if (this.settings.showFieldType) {
+			component += "</td><td class='" + this.settings.fieldStyleClass
+					+ "'>";
+			component += "<select id='doc_" + this.fieldNum + "_type' class='"
+					+ this.settings.typeValueStyleClass + "'>";
+			for (i in this.types) {
+				var t = this.types[i];
+				component += "<option";
+				if (t == fieldType)
+					component += " selected = 'yes'";
+				component += ">" + t + "</option>";
+			}
+			component += "</select>";
+		}
 
 		component += "</td><td class='" + this.settings.fieldStyleClass + "'>";
 		component += this.generateButton('doc_' + this.fieldNum + '_remove',
 				'', 'remove.png', null, "ODocumentView.removeField('doc_"
 						+ this.fieldNum + "')");
+
 		component += "</td></tr>";
 
 		this.fieldNum++;
@@ -302,14 +336,20 @@ function ODocumentView(name, component, doc, options) {
 			fieldName = $('#doc_' + i + '_label').val();
 
 			if (fieldName != null) {
-				fieldValue = $('#doc_' + i + '_value').val();
+				fieldValue = $('#doc_' + i + '_value').val().trim();
 				fieldType = $('#doc_' + i + '_type').val();
 
-				if (fieldType == 'a') {
+				if (fieldType == 'linkset' || fieldType == 'linklist'
+						|| fieldType == 'embeddedset' || fieldType == 'embeddedlist') {
 					object[fieldName] = [];
-					fieldValue = fieldValue.split(",");
-					for (fieldIndex in fieldValue) {
-						object[fieldName].push($.trim(fieldValue[fieldIndex]));
+					if (fieldValue.length > 0) {
+						fieldValue = fieldValue.substring(1,
+								fieldValue.length - 1);
+						fieldValue = fieldValue.split(",");
+						for (fieldIndex in fieldValue) {
+							object[fieldName].push($
+									.trim(fieldValue[fieldIndex]));
+						}
 					}
 				} else {
 					if (isNaN(fieldValue))
@@ -380,7 +420,8 @@ function ODocumentView(name, component, doc, options) {
 
 			if (!found)
 				component.append(this.renderRow(
-						selectedClass.properties[p].name, ""));
+						selectedClass.properties[p].name, "",
+						selectedClass.properties[p].type));
 		}
 	}
 
@@ -429,7 +470,7 @@ function ODocumentView(name, component, doc, options) {
 	ODocumentView.addField = function(instanceName) {
 		var instance = ODocumentViewInstances[instanceName];
 		$('#' + instance.getComponentId() + "_fields").append(
-				instance.renderRow("", ""));
+				instance.renderRow("", "", "string"));
 	}
 
 	ODocumentView.removeField = function(id) {

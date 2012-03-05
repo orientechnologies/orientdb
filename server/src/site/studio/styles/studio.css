@@ -34,23 +34,25 @@ table.ograph_detail {
 	background-color: #87B6D9;
 }
 
-td.odocumentview_header_label {
+input.odocumentview_version_value {
 	font-size: 13pt;
-	text-align: left;
+	width: 60px;
 }
 
-td.odocumentview_header_value {
+input.odocumentview_rid_value {
 	font-size: 13pt;
+	width: 90px;
 }
 
-input.odocumentview_header_value {
+select.odocumentview_class_value {
+	font-size: 13pt;
+	width: 200px;
+}
+
+select.odocumentview_type_value {
 	font-size: 13pt;
 	width: 100px;
-}
-
-select.odocumentview_header_value {
-	font-size: 13pt;
-	width: 150px;
+	color: grey;
 }
 
 input.odocumentview_field_label {
@@ -73,7 +75,7 @@ td.odocumentview_field_value {
 textarea.odocumentview_field_value {
 	font-size: 13pt;
 	vertical-align: top;
-	width: 700px;
+	width: 620px;
 }
 
 .navigation {
@@ -124,7 +126,7 @@ ul#navigation li a {
 	text-align: center;
 	padding-top: 80px;
 	opacity: 0.9;
-	filter: progid:      DXImageTransform.Microsoft.Alpha(      opacity=      70 );
+	filter: progid:           DXImageTransform.Microsoft.Alpha(           opacity=           70 );
 }
 
 ul#navigation li a:hover {
@@ -166,39 +168,39 @@ ul#navigation .menu-server a {
 }
 
 .tooltip {
-	background-color:#5C9CCC;
-	border:1px solid #fff;
-	padding:10px 15px;
-	width:200px;
-	display:none;
-	color:#fff;
-	text-align:left;
-	font-size:12px;
-    z-index: 950;
+	background-color: #5C9CCC;
+	border: 1px solid #fff;
+	padding: 10px 15px;
+	width: 200px;
+	display: none;
+	color: #fff;
+	text-align: left;
+	font-size: 12px;
+	z-index: 950;
 	/* outline radius for mozilla/firefox only */
-	-moz-box-shadow:0 0 10px #000;
-	-webkit-box-shadow:0 0 10px #000;
+	-moz-box-shadow: 0 0 10px #000;
+	-webkit-box-shadow: 0 0 10px #000;
 }
 
 button.exportButton {
-  position: relative;
-  overflow: hidden;
-  direction: ltr;
-  cursor: pointer;
-  text-align: center;
-  color: #333;
-  font-weight: bold;
-  -moz-border-radius: 10px;
-  -webkit-border-radius: 10px;
-  border-radius: 10px;
-  width: 15em;
-  height: 2.5em;
-  line-height: 2.5em;
-  background: #3399FF;
-  border: 1px solid #2e6e9e;
-  text-align: center !important; 
+	position: relative;
+	overflow: hidden;
+	direction: ltr;
+	cursor: pointer;
+	text-align: center;
+	color: #333;
+	font-weight: bold;
+	-moz-border-radius: 10px;
+	-webkit-border-radius: 10px;
+	border-radius: 10px;
+	width: 15em;
+	height: 2.5em;
+	line-height: 2.5em;
+	background: #3399FF;
+	border: 1px solid #2e6e9e;
+	text-align: center !important;
 }
 
-button.exportButton:hover{
- background: #33CCFF;
+button.exportButton:hover {
+	background: #33CCFF;
 }

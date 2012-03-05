@@ -145,13 +145,41 @@ function dynaUnformatter(cellvalue, options, rowObject) {
 	return cellvalue;
 }
 function classFormatter(cellvalue, options, rowObject) {
-	return "<a href='#' onclick=\"openClass('" + cellvalue + "');\">"
-			+ cellvalue + "</a>";
+	return "<button onclick=\"openClass('" + cellvalue + "');\">" + cellvalue
+			+ "</button>";
 }
 
 function linkFormatter(cellvalue, options, rowObject) {
 	return cellvalue + " <img src='images/link.png' onclick=\"openLink('"
 			+ cellvalue + "');\" />";
+}
+function linksFormatter(cellvalue, options, rowObject) {
+	if (typeof cellvalue == 'string')
+		cellvalue = cellvalue.substring(1, cellvalue.length-1).split(',');
+
+	var buffer = "[";
+	for (i in cellvalue) {
+		if (buffer.length > 1)
+			buffer += ",";
+		buffer += cellvalue[i]
+				+ " <img src='images/link.png' onclick=\"openLink('"
+				+ cellvalue[i] + "');\" />";
+	}
+	buffer += "]";
+	return buffer;
+}
+function linksUnformatter(cellvalue, options, rowObject) {
+	var buffer = "[";
+	if (cellvalue.length > 2) {
+		var entries = cellvalue.substring(1, cellvalue.length - 1).split(',');
+		for (i in entries) {
+			if (buffer.length > 1)
+				buffer += ",";
+			buffer += entries[i].split(' ')[0];
+		}
+	}
+	buffer += "]";
+	return buffer;
 }
 function linkUnformatter(cellvalue, options) {
 	if (cellvalue)
@@ -172,7 +200,7 @@ function openLink(rid) {
 	displayDocument(rid, orientServer);
 }
 
-function displayResultSet(result, schema) {
+function displayResultSet(result) {
 	$("#output").val(
 			"Query executed in " + stopTimer() + " sec. Returned "
 					+ result.length + " record(s)");
@@ -182,6 +210,17 @@ function displayResultSet(result, schema) {
 
 	// CREATE COLUMN MODEL
 	var columnModel = new Array();
+	var schema;
+
+	if (result.length > 0) {
+		for (cls in databaseInfo['classes']) {
+			if (databaseInfo['classes'][cls].name == result[0]["@class"]) {
+				schema = databaseInfo['classes'][cls];
+				break;
+			}
+		}
+
+	}
 
 	columnModel.push({
 		"name" : "@rid",
@@ -220,8 +259,17 @@ function displayResultSet(result, schema) {
 		editOptions = null;
 		unformatter = null;
 
-		if (schema && schema.properties && schema.properties[columnNames[col]]) {
-			var type = schema.properties[columnNames[col]].type;
+		var type;
+
+		if (schema && columnNames[col].charAt(0) != '@') {
+
+			for (p in schema.properties) {
+				if (schema.properties[p].name == columnNames[col]) {
+					type = schema.properties[p].type;
+					break;
+				}
+			}
+
 			switch (type) {
 			case 'STRING':
 				formatter = "text";
@@ -243,19 +291,21 @@ function displayResultSet(result, schema) {
 				formatter = "embeddedListFormatter";
 				break;
 			case 'LINKLIST':
-				formatter = "linkListFormatter";
+				formatter = linksFormatter;
+				unformatter = linksUnformatter;
 				break;
 			case 'EMBEDDEDSET':
 				formatter = "embeddedSetFormatter";
 				break;
 			case 'LINKSET':
-				formatter = "linkSetFormatter";
+				formatter = linksFormatter;
+				unformatter = linksUnformatter;
 				break;
-			default:
-				formatter = "text";
 			}
-		} else {
-			// UNKNOWN: USE DYNAMIC FORMATTE
+		}
+
+		if (!type) {
+			// UNKNOWN: USE DYNAMIC FORMATTER
 			formatter = dynaFormatter;
 			unformatter = dynaUnformatter;
 		}
