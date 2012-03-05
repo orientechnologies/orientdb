@@ -132,6 +132,18 @@ function buildColumnNames(table) {
 	return columnNames;
 }
 
+function dynaFormatter(cellvalue, options, rowObject) {
+	if (typeof cellvalue == 'string' && cellvalue.charAt(0) == '#'
+			&& cellvalue.indexOf(':') > -1) {
+		// LINK
+		return linkFormatter(cellvalue, options, rowObject);
+	}
+	return cellvalue;
+}
+
+function dynaUnformatter(cellvalue, options, rowObject) {
+	return cellvalue;
+}
 function classFormatter(cellvalue, options, rowObject) {
 	return "<a href='#' onclick=\"openClass('" + cellvalue + "');\">"
 			+ cellvalue + "</a>";
@@ -242,8 +254,11 @@ function displayResultSet(result, schema) {
 			default:
 				formatter = "text";
 			}
-		} else
-			formatter = "text";
+		} else {
+			// UNKNOWN: USE DYNAMIC FORMATTE
+			formatter = dynaFormatter;
+			unformatter = dynaUnformatter;
+		}
 
 		editFormatter = formatter;
 
