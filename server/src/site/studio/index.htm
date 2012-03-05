@@ -60,6 +60,11 @@
 	}
 
 	function displayDocument(selObject, database) {
+
+		if (typeof selObject == "string")
+			// LOAD THE RECORD BY RID
+			selObject = database.load(selObject);
+
 		selectedObject = selObject;
 
 		controller.loadFragment("panelDocument.htm", function() {

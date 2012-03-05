@@ -81,13 +81,8 @@ function ODocumentView(name, component, doc, options) {
 	}
 
 	ODocumentView.prototype.render = function(doc, database) {
-		if (doc != null) {
-			if (typeof doc == "string")
-				// LOAD THE RECORD BY RID
-				doc = database.load(doc);
-			else
-				this.doc = doc;
-		}
+		if (doc != null)
+			this.doc = doc;
 
 		if (database != null)
 			this.database = database;
@@ -314,8 +309,7 @@ function ODocumentView(name, component, doc, options) {
 					object[fieldName] = [];
 					fieldValue = fieldValue.split(",");
 					for (fieldIndex in fieldValue) {
-						object[fieldName].push($
-								.trim(fieldValue[fieldIndex]));
+						object[fieldName].push($.trim(fieldValue[fieldIndex]));
 					}
 				} else {
 					if (isNaN(fieldValue))
