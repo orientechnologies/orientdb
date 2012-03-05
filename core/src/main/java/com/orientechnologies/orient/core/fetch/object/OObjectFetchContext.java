@@ -94,14 +94,14 @@ public class OObjectFetchContext implements OFetchContext {
 			if (lazyLoading)
 				target = new OLazyObjectSet<Object>(iRootRecord, (Collection<Object>) iCollection).setFetchPlan(fetchPlan);
 			else {
-				target = new HashSet(iCollection);
+				target = new HashSet();
 			}
 		} else {
 			final Collection<Object> list = (Collection<Object>) iCollection;
 			if (lazyLoading)
 				target = new OLazyObjectList<Object>(iRootRecord, list).setFetchPlan(fetchPlan);
 			else {
-				target = new ArrayList(list);
+				target = new ArrayList();
 			}
 		}
 		OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, target);
