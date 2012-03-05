@@ -154,7 +154,9 @@
 		queryEditor.setCode($(this).val());
 	});
 
-	$("#queryText").val(refreshSavedQueries());
+	var lastQuery = refreshSavedQueries();
+	if (lastQuery)
+		$("#queryText").val(lastQuery);
 
 	previous = controller.parameter('queryResponse');
 	if (previous != null)

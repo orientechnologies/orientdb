@@ -81,8 +81,13 @@ function ODocumentView(name, component, doc, options) {
 	}
 
 	ODocumentView.prototype.render = function(doc, database) {
-		if (doc != null)
-			this.doc = doc;
+		if (doc != null) {
+			if (doc instanceof string)
+				// LOAD THE RECORD BY RID
+				doc = database.load(doc);
+			else
+				this.doc = doc;
+		}
 
 		if (database != null)
 			this.database = database;
