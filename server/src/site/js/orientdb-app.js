@@ -132,6 +132,11 @@ function buildColumnNames(table) {
 	return columnNames;
 }
 
+function classFormatter(cellvalue, options, rowObject) {
+	return "<a href='#' onclick=\"openClass('" + cellvalue + "');\">"
+			+ cellvalue + "</a>";
+}
+
 function linkFormatter(cellvalue, options, rowObject) {
 	return cellvalue + " <img src='images/link.png' onclick=\"openLink('"
 			+ cellvalue + "');\" />";
@@ -146,8 +151,13 @@ function embeddedFormatter(cellvalue, options, rowObject) {
 	return "<img src='images/embedded.png' />";
 }
 
-function openLink(cellvalue) {
-	displayDocument(cellvalue, orientServer);
+function openClass(clsName) {
+	controller.loadFragment("panelDatabase.htm", function() {
+		displayClass(clsName);
+	});
+}
+function openLink(rid) {
+	displayDocument(rid, orientServer);
 }
 
 function displayResultSet(result, schema) {
@@ -184,22 +194,9 @@ function displayResultSet(result, schema) {
 		"index" : "@class",
 		"width" : 30,
 		"classes" : "cell_readonly",
+		formatter : classFormatter,
 		searchoptions : {
 			sopt : [ "cn" ]
-		}
-	});
-	columnModel.push({
-		"name" : "@class",
-		"index" : "_className",
-		edittype : "select",
-		editoptions : {
-			value : classEnumeration
-		},
-		hidden : true,
-		editable : true,
-		search : false,
-		editrules : {
-			edithidden : true
 		}
 	});
 

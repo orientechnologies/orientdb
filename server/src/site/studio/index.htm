@@ -60,7 +60,6 @@
 	}
 
 	function displayDocument(selObject, database) {
-
 		if (typeof selObject == "string")
 			// LOAD THE RECORD BY RID
 			selObject = database.load(selObject);
@@ -73,6 +72,10 @@
 	}
 
 	function displayGraph(selObject) {
+		if (typeof selObject == "string")
+			// LOAD THE RECORD BY RID
+			selObject = database.load(selObject);
+
 		selectedObject = selObject;
 
 		controller.loadFragment("panelGraph.htm", function() {

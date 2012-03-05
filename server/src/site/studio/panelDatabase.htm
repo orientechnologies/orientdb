@@ -1156,5 +1156,19 @@
 							$('#output').val(responseText);
 						}
 					});
+
+	function displayClass(clsName) {
+		$('#tabs-db').tabs('select', 0);
+
+		var rows = $('#databaseClasses').getGridParam("records");
+		for ( var i = 0; i < rows; ++i) {
+			var row = $('#databaseClasses').jqGrid('getRowData', i);
+			if (row['name'] == clsName) {
+				$('#databaseClasses').setSelection(i);
+				break;
+			}
+		}
+	}
+
 	showDatabaseInfo();
 </script>
