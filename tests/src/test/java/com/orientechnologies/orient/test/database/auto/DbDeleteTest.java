@@ -36,7 +36,7 @@ public class DbDeleteTest {
 	}
 
 	public void testDbDelete() throws IOException {
-		new ODatabaseDocumentTx("local:" + testPath + "/" + DbImportExportTest.NEW_DB_URL).delete();
+		new ODatabaseDocumentTx("local:" + testPath + "/" + DbImportExportTest.NEW_DB_URL).drop();
 
 		Assert.assertFalse(new File(testPath + "/" + DbImportExportTest.NEW_DB_PATH).exists());
 	}

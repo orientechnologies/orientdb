@@ -280,8 +280,8 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 	}
 
 	@Override
-	public void delete() {
-		underlying.delete();
+	public void drop() {
+		underlying.drop();
 	}
 
 	public String getType() {

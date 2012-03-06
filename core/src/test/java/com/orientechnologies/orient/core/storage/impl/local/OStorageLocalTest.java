@@ -41,7 +41,7 @@ public class OStorageLocalTest {
 		dbPath += "/foo";
 		db = new ODatabaseDocumentTx("local:" + dbPath).open("admin", "admin");
 		db.close();
-		db.delete();
+		db.drop();
 		Assert.assertTrue(true);
 	}
 
@@ -78,7 +78,7 @@ public class OStorageLocalTest {
 		System.out.println("Open OK!");
 		Assert.assertTrue(db.exists());
 		System.out.println("Exists OK!");
-		db.delete();
+		db.drop();
 		System.out.println("Delete OK!");
 	}
 

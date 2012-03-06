@@ -14,7 +14,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class GraphDatabaseSuperNodeSpeedTest {
 
-	private static final String	DEFAULT_DB_URL			= "local:database/graphtest";
+	private static final String	DEFAULT_DB_URL			= "local:C:/temp/databases/graphtest";
 	private static final String	DEFAULT_DB_USER			= "admin";
 	private static final String	DEFAULT_DB_PASSWORD	= "admin";
 	private static final int		MAX									= 1000000;
@@ -24,7 +24,7 @@ public class GraphDatabaseSuperNodeSpeedTest {
 	public void setUpClass() {
 		database = new OGraphDatabase(DEFAULT_DB_URL);
 		if (database.exists())
-			database.delete();
+			database.drop();
 
 		database.create();
 		database.close();

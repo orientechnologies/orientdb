@@ -78,18 +78,18 @@ public interface ODatabase {
 	public void reload();
 
 	/**
+	 * Drops a database.
+	 * 
+	 */
+	public void drop();
+
+	/**
 	 * Deletes a database.
 	 * 
 	 * @see #drop()
 	 */
 	@Deprecated
 	public void delete();
-
-	/**
-	 * Drops a database.
-	 * 
-	 */
-	public void drop();
 
 	/**
 	 * Declares an intent to the database. Intents aim to optimize common use cases.

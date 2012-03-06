@@ -32,7 +32,7 @@ public class LocalDocumentAndBinarySpeedTest {
 	public void setUpClass() {
 		database = new ODatabaseDocumentTx(DEFAULT_DB_URL);
 		if (database.exists()) {
-			database.delete();
+			database.drop();
 			database.create();
 		} else {
 			database.create();

@@ -502,7 +502,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
 		OLogManager.instance().info(this, "Dropped database '%s", connection.database.getURL());
 
-		connection.database.delete();
+		connection.database.drop();
 		connection.close();
 
 		if (OClientConnectionManager.instance().disconnect(connection.id))

@@ -363,7 +363,7 @@ public class GraphDatabaseTest {
 	}
 
 	@Test(dependsOnMethods = "populate")
-	public void testBlaaa() {
+	public void testEdgeCreationIn2Steps() {
 		database.open("admin", "admin");
 
 		try {

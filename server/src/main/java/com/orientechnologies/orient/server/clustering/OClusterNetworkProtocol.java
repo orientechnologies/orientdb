@@ -313,7 +313,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 
 				if (database.exists()) {
 					OLogManager.instance().info(this, "<-> DB %s: deleting existent database...", database.getName());
-					database.delete();
+					database.drop();
 				}
 
 				database = createDatabase(database, dbUser, dbPasswd);

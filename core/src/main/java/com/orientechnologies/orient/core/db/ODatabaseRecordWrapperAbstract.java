@@ -53,10 +53,19 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 		return (THISDB) super.create();
 	}
 
+	/**
+	 * Uses drop() instead.
+	 */
+	@Deprecated
 	@Override
 	public void delete() {
+		drop();
+	}
+
+	@Override
+	public void drop() {
 		checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_DELETE);
-		super.delete();
+		super.drop();
 	}
 
 	public int addCluster(final String iClusterName, final CLUSTER_TYPE iType) {

@@ -66,7 +66,7 @@ public class LocalCreateDocumentMultiThreadIndexedSpeedTest extends OrientMultiT
 			database.open("admin", "admin");
 		else {
 			if (database.exists())
-				database.delete();
+				database.drop();
 
 			database.create();
 		}

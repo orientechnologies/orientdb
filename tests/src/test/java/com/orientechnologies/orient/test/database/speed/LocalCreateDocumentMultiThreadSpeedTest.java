@@ -49,7 +49,7 @@ public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadTe
 		if (database.exists())
 			// database.open("admin", "admin");
 			// else
-			database.delete();
+			database.drop();
 		
 		database.create();
 

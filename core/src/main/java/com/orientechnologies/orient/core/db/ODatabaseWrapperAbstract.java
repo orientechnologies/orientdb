@@ -68,9 +68,12 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 		Orient.instance().getDatabaseFactory().unregister(databaseOwner);
 	}
 
+	/**
+	 * Uses drop() instead.
+	 */
+	@Deprecated
 	public void delete() {
-		underlying.drop();
-		Orient.instance().getDatabaseFactory().unregister(databaseOwner);
+		drop();
 	}
 
 	public void drop() {

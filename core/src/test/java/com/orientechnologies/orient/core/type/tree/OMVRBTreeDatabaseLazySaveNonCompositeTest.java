@@ -45,7 +45,7 @@ public class OMVRBTreeDatabaseLazySaveNonCompositeTest extends OMVRBTreeNonCompo
 
 	@AfterClass
 	public void afterClass() {
-		database.delete();
+		database.drop();
 
 		OGlobalConfiguration.MVRBTREE_NODE_PAGE_SIZE.setValue(oldPageSize);
 		OGlobalConfiguration.MVRBTREE_ENTRYPOINTS.setValue(oldEntryPoints);
