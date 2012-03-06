@@ -36,7 +36,6 @@ public class OIndexFullText extends OIndexMultiValues {
 	private static final String	CONFIG_STOP_WORDS		= "stopWords";
 	private static final String	CONFIG_IGNORE_CHARS	= "ignoreChars";
 
-	private static String				DEF_CLUSTER_NAME		= "FullTextIndex";
 	private static String				DEF_IGNORE_CHARS		= " \r\n\t:;,.|+*/\\=!?[]()'\"";
 	private static String				DEF_STOP_WORDS			= "the in a at as and or for his her " + "him this that what which while "
 																											+ "up with be was is";
@@ -64,9 +63,9 @@ public class OIndexFullText extends OIndexMultiValues {
 
 		acquireExclusiveLock();
 		try {
-			
+
 			map.save();
-			
+
 		} finally {
 			releaseExclusiveLock();
 		}

@@ -37,7 +37,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Handles indexing when records change.
- *
+ * 
  * @author Andrey Lomakin, Artem Orobets
  */
 public class OClassIndexManager extends ODocumentHookAbstract {
@@ -172,7 +172,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 					if (dirtyFields.contains(field)) {
 						origValues.add(iRecord.getOriginalValue(field));
 					} else {
-						origValues.add(iRecord.<Object>field(field));
+						origValues.add(iRecord.<Object> field(field));
 					}
 				}
 
@@ -208,7 +208,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 			final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
 			final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
 
-			for (OMultiValueChangeEvent changeEvent : multiValueChangeTimeLine.getMultiValueChangeEvents()) {
+			for (OMultiValueChangeEvent<?, ?> changeEvent : multiValueChangeTimeLine.getMultiValueChangeEvents()) {
 				indexDefinitionMultiValue.processChangeEvent(changeEvent, keysToAdd, keysToRemove);
 			}
 
@@ -275,7 +275,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 					if (dirtyFields.contains(field))
 						origValues.add(iRecord.getOriginalValue(field));
 					else
-						origValues.add(iRecord.<Object>field(field));
+						origValues.add(iRecord.<Object> field(field));
 				}
 
 				final Object origValue = indexDefinition.createValue(origValues);
@@ -308,7 +308,6 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 			} else
 				origValue = indexDefinition.createValue(iRecord.getOriginalValue(indexField));
 
-
 			if (origValue instanceof Collection) {
 				for (final Object valueItem : (Collection<?>) origValue) {
 					if (valueItem != null) {
@@ -333,48 +332,48 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 			final Object key = index.getDefinition().getDocumentValueToIndex(iRecord);
 			if (key instanceof Collection) {
 				for (final Object keyItem : (Collection<?>) key) {
-					if(keyItem != null)
+					if (keyItem != null)
 						index.checkEntry(iRecord, keyItem);
 				}
 			} else {
-				if(key != null)
+				if (key != null)
 					index.checkEntry(iRecord, key);
 			}
 		}
 
 	}
 
-  private void checkIndexedPropertiesOnUpdate(final ODocument iRecord) {
-    final OClass cls = iRecord.getSchemaClass();
-    if (cls == null)
-      return;
+	private void checkIndexedPropertiesOnUpdate(final ODocument iRecord) {
+		final OClass cls = iRecord.getSchemaClass();
+		if (cls == null)
+			return;
 
-    final Set<String> dirtyFields = new HashSet<String>(Arrays.asList(iRecord.getDirtyFields()));
-    if(dirtyFields.isEmpty())
-      return;
-    
-    final Collection<OIndex<?>> indexes = cls.getIndexes();
-    for (final OIndex<?> index : indexes) {
-      final OIndexDefinition indexDefinition = index.getDefinition();
-      final List<String> indexFields = indexDefinition.getFields();
-      for(final String indexField : indexFields) {
-        if(dirtyFields.contains(indexField))  {
-          final Object key = index.getDefinition().getDocumentValueToIndex(iRecord);
-          if (key instanceof Collection) {
-            for (final Object keyItem : (Collection<?>) key) {
-							if(keyItem != null)
+		final Set<String> dirtyFields = new HashSet<String>(Arrays.asList(iRecord.getDirtyFields()));
+		if (dirtyFields.isEmpty())
+			return;
+
+		final Collection<OIndex<?>> indexes = cls.getIndexes();
+		for (final OIndex<?> index : indexes) {
+			final OIndexDefinition indexDefinition = index.getDefinition();
+			final List<String> indexFields = indexDefinition.getFields();
+			for (final String indexField : indexFields) {
+				if (dirtyFields.contains(indexField)) {
+					final Object key = index.getDefinition().getDocumentValueToIndex(iRecord);
+					if (key instanceof Collection) {
+						for (final Object keyItem : (Collection<?>) key) {
+							if (keyItem != null)
 								index.checkEntry(iRecord, keyItem);
 						}
-          } else {
-						if(key != null)
+					} else {
+						if (key != null)
 							index.checkEntry(iRecord, key);
 					}
-          break;
-        }
-      }
-    }
-  }
-  
+					break;
+				}
+			}
+		}
+	}
+
 	private ODocument checkForLoading(final ODocument iRecord) {
 		if (iRecord.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
 			try {

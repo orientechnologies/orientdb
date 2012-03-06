@@ -43,6 +43,6 @@ import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 	 * @param keysToAdd     Values that should be added to related index.
 	 * @param keysToRemove  Values that should be removed to related index.
 	 */
-	public void processChangeEvent(final OMultiValueChangeEvent changeEvent, final Map<Object, Integer> keysToAdd,
+	public void processChangeEvent(final OMultiValueChangeEvent<?,?> changeEvent, final Map<Object, Integer> keysToAdd,
 																	 final Map<Object, Integer> keysToRemove);
 }

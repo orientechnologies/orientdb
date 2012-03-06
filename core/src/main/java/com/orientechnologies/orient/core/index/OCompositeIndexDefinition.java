@@ -24,8 +24,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import com.orientechnologies.common.collection.OCompositeKey;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -106,7 +104,7 @@ public class OCompositeIndexDefinition extends ODocumentWrapperNoClass implement
 		final OCompositeKey compositeKey = new OCompositeKey();
 
 		for (final OIndexDefinition indexDefinition : indexDefinitions) {
-			final Comparable result = (Comparable) indexDefinition.getDocumentValueToIndex(iDocument);
+			final Comparable<?> result = (Comparable<?>) indexDefinition.getDocumentValueToIndex(iDocument);
 
 			if (result == null)
 				return null;
@@ -120,7 +118,7 @@ public class OCompositeIndexDefinition extends ODocumentWrapperNoClass implement
 	/**
 	 * {@inheritDoc}
 	 */
-	public Comparable createValue(final List<?> params) {
+	public Comparable<?> createValue(final List<?> params) {
 		int currentParamIndex = 0;
 		final OCompositeKey compositeKey = new OCompositeKey();
 
@@ -137,7 +135,7 @@ public class OCompositeIndexDefinition extends ODocumentWrapperNoClass implement
 			final List<?> indexParams = params.subList(currentParamIndex, endIndex);
 			currentParamIndex += indexDefinition.getParamCount();
 
-			final Comparable keyValue = (Comparable) indexDefinition.createValue(indexParams);
+			final Comparable<?> keyValue = (Comparable<?>) indexDefinition.createValue(indexParams);
 
 			if (keyValue == null)
 				return null;
@@ -151,7 +149,7 @@ public class OCompositeIndexDefinition extends ODocumentWrapperNoClass implement
 	/**
 	 * {@inheritDoc}
 	 */
-	public Comparable createValue(final Object... params) {
+	public Comparable<?> createValue(final Object... params) {
 		return createValue(Arrays.asList(params));
 	}
 

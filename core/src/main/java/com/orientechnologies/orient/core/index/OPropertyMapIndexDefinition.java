@@ -15,15 +15,19 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-
-import java.util.*;
 
 /**
  * Index implementation bound to one schema class property that presents
  * {@link com.orientechnologies.orient.core.metadata.schema.OType#EMBEDDEDMAP or
- * {@link com.orientechnologies.orient.core.metadata.schema.OType#LINKMAP} property.
+ * 
+ * @link com.orientechnologies.orient.core.metadata.schema.OType#LINKMAP} property.
  */
 public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiValue implements OIndexDefinitionMultiValue {
 
@@ -31,11 +35,10 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
 	 * Indicates whether Map will be indexed using its keys or values.
 	 */
 	public static enum INDEX_BY {
-		KEY,
-		VALUE
+		KEY, VALUE
 	}
 
-	private INDEX_BY indexBy = INDEX_BY.KEY;
+	private INDEX_BY	indexBy	= INDEX_BY.KEY;
 
 	public OPropertyMapIndexDefinition() {
 	}
@@ -54,7 +57,7 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
 		if (!(params.get(0) instanceof Map))
 			return null;
 
-		final Collection mapParams = extractMapParams((Map) params.get(0));
+		final Collection<?> mapParams = extractMapParams((Map<?, ?>) params.get(0));
 		final List<Object> result = new ArrayList<Object>(mapParams.size());
 		for (final Object mapParam : mapParams) {
 			result.add(createSingleValue(mapParam));
@@ -68,7 +71,7 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
 		if (!(params[0] instanceof Map))
 			return null;
 
-		final Collection mapParams = extractMapParams((Map) params[0]);
+		final Collection<?> mapParams = extractMapParams((Map<?, ?>) params[0]);
 
 		final List<Object> result = new ArrayList<Object>(mapParams.size());
 		for (final Object mapParam : mapParams) {
@@ -91,10 +94,10 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
 	@Override
 	protected void serializeFromStream() {
 		super.serializeFromStream();
-		indexBy = INDEX_BY.valueOf(document.<String>field("mapIndexBy"));
+		indexBy = INDEX_BY.valueOf(document.<String> field("mapIndexBy"));
 	}
 
-	private Collection extractMapParams(Map map) {
+	private Collection<?> extractMapParams(Map<?, ?> map) {
 		if (indexBy == INDEX_BY.KEY)
 			return map.keySet();
 
@@ -103,13 +106,17 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
 
 	@Override
 	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		if (!super.equals(o)) return false;
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
+		if (!super.equals(o))
+			return false;
 
 		OPropertyMapIndexDefinition that = (OPropertyMapIndexDefinition) o;
 
-		if (indexBy != that.indexBy) return false;
+		if (indexBy != that.indexBy)
+			return false;
 
 		return true;
 	}
@@ -118,7 +125,8 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
 		return OType.convert(param, keyType.getDefaultJavaType());
 	}
 
-	public void processChangeEvent(final OMultiValueChangeEvent changeEvent, final Map<Object, Integer> keysToAdd, final Map<Object, Integer> keysToRemove) {
+	public void processChangeEvent(final OMultiValueChangeEvent<?, ?> changeEvent, final Map<Object, Integer> keysToAdd,
+			final Map<Object, Integer> keysToRemove) {
 		final boolean result;
 		if (indexBy.equals(INDEX_BY.KEY))
 			result = processKeyChangeEvent(changeEvent, keysToAdd, keysToRemove);
@@ -129,36 +137,37 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
 			throw new IllegalArgumentException("Invalid change type :" + changeEvent.getChangeType());
 	}
 
-	private boolean processKeyChangeEvent(final OMultiValueChangeEvent changeEvent, final Map<Object, Integer> keysToAdd, final Map<Object, Integer> keysToRemove) {
+	private boolean processKeyChangeEvent(final OMultiValueChangeEvent<?, ?> changeEvent, final Map<Object, Integer> keysToAdd,
+			final Map<Object, Integer> keysToRemove) {
 		switch (changeEvent.getChangeType()) {
-			case ADD:
-				processAdd(createSingleValue(changeEvent.getKey()), keysToAdd, keysToRemove);
-				return true;
-			case REMOVE:
-				processRemoval(createSingleValue(changeEvent.getKey()), keysToAdd, keysToRemove);
-				return true;
-			case UPDATE:
-				return true;
+		case ADD:
+			processAdd(createSingleValue(changeEvent.getKey()), keysToAdd, keysToRemove);
+			return true;
+		case REMOVE:
+			processRemoval(createSingleValue(changeEvent.getKey()), keysToAdd, keysToRemove);
+			return true;
+		case UPDATE:
+			return true;
 		}
 		return false;
 	}
 
-	private boolean processValueChangeEvent(final OMultiValueChangeEvent changeEvent, final Map<Object, Integer> keysToAdd, final Map<Object, Integer> keysToRemove) {
+	private boolean processValueChangeEvent(final OMultiValueChangeEvent<?, ?> changeEvent, final Map<Object, Integer> keysToAdd,
+			final Map<Object, Integer> keysToRemove) {
 		switch (changeEvent.getChangeType()) {
-			case ADD:
-				processAdd(createSingleValue(changeEvent.getValue()), keysToAdd, keysToRemove);
-				return true;
-			case REMOVE:
-				processRemoval(createSingleValue(changeEvent.getOldValue()), keysToAdd, keysToRemove);
-				return true;
-			case UPDATE:
-				processRemoval(createSingleValue(changeEvent.getOldValue()), keysToAdd, keysToRemove);
-				processAdd(createSingleValue(changeEvent.getValue()), keysToAdd, keysToRemove);
-				return true;
+		case ADD:
+			processAdd(createSingleValue(changeEvent.getValue()), keysToAdd, keysToRemove);
+			return true;
+		case REMOVE:
+			processRemoval(createSingleValue(changeEvent.getOldValue()), keysToAdd, keysToRemove);
+			return true;
+		case UPDATE:
+			processRemoval(createSingleValue(changeEvent.getOldValue()), keysToAdd, keysToRemove);
+			processAdd(createSingleValue(changeEvent.getValue()), keysToAdd, keysToRemove);
+			return true;
 		}
 		return false;
 	}
-
 
 	@Override
 	public int hashCode() {
@@ -169,9 +178,7 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
 
 	@Override
 	public String toString() {
-		return "OPropertyMapIndexDefinition{" +
-						"indexBy=" + indexBy +
-						"} " + super.toString();
+		return "OPropertyMapIndexDefinition{" + "indexBy=" + indexBy + "} " + super.toString();
 	}
 
 	@Override

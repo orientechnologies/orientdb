@@ -27,8 +27,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 public class OIndexManagerRemote extends OIndexManagerAbstract {
-	private static final String	QUERY_CREATE	= "create index %s %s %s";
-	private static final String	QUERY_DROP		= "drop index %s";
+	private static final String	QUERY_DROP	= "drop index %s";
 
 	public OIndexManagerRemote(final ODatabaseRecord iDatabase) {
 		super(iDatabase);
@@ -43,7 +42,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 				getConfiguration());
 	}
 
-	public OIndex createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
+	public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
 			final int[] iClusterIdsToIndex, final OProgressListener iProgressListener) {
 		final String createIndexDDL;
 		if (iIndexDefinition != null) {

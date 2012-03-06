@@ -61,6 +61,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
 		return false;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean remove(final Object o) {
 		if (super.remove(o)) {
