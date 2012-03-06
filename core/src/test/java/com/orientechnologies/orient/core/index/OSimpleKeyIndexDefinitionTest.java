@@ -149,7 +149,7 @@ public class OSimpleKeyIndexDefinitionTest {
 		loadedKeyIndexDefinition.fromStream(loadDocument);
 
 		databaseDocumentTx.close();
-		databaseDocumentTx.delete();
+		databaseDocumentTx.drop();
 
 		Assert.assertEquals(loadedKeyIndexDefinition, simpleKeyIndexDefinition);
 	}

@@ -96,7 +96,7 @@ public class OPropertyIndexDefinitionTest {
         final OPropertyIndexDefinition result = new OPropertyIndexDefinition();
         result.fromStream(docToLoad);
 
-        database.delete();
+        database.drop();
         Assert.assertEquals(result, propertyIndex);
     }
 

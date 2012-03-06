@@ -202,7 +202,7 @@ public class OPropertyMapIndexDefinitionTest {
 		final OPropertyIndexDefinition result = new OPropertyMapIndexDefinition();
 		result.fromStream(docToLoad);
 
-		database.delete();
+		database.drop();
 		Assert.assertEquals(result, propertyIndexByKey);
 	}
 
@@ -220,7 +220,7 @@ public class OPropertyMapIndexDefinitionTest {
 		final OPropertyIndexDefinition result = new OPropertyMapIndexDefinition();
 		result.fromStream(docToLoad);
 
-		database.delete();
+		database.drop();
 		Assert.assertEquals(result, propertyIndexByValue);
 	}
 

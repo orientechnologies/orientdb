@@ -136,7 +136,7 @@ public class OCompositeIndexDefinitionTest {
 		final OCompositeIndexDefinition result = new OCompositeIndexDefinition();
 		result.fromStream(docToLoad);
 
-		database.delete();
+		database.drop();
 		Assert.assertEquals(result, emptyCompositeIndex);
 	}
 
@@ -174,7 +174,7 @@ public class OCompositeIndexDefinitionTest {
 		final OCompositeIndexDefinition result = new OCompositeIndexDefinition();
 		result.fromStream(docToLoad);
 
-		database.delete();
+		database.drop();
 		Assert.assertEquals(result, emptyCompositeIndexTwo);
 	}
 
