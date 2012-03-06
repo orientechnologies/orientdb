@@ -145,25 +145,33 @@ function dynaUnformatter(cellvalue, options, rowObject) {
 	return cellvalue;
 }
 function classFormatter(cellvalue, options, rowObject) {
-	return "<button onclick=\"openClass('" + cellvalue + "');\">" + cellvalue
-			+ "</button>";
+	return "<button onclick=\"openClass('" + cellvalue
+			+ "');\" class='className'>" + cellvalue + "</button>";
 }
 
 function linkFormatter(cellvalue, options, rowObject) {
-	return cellvalue + " <img src='images/link.png' onclick=\"openLink('"
-			+ cellvalue + "');\" />";
+	return "<button onclick=\"openLink('" + cellvalue + "');\" class='link'>"
+			+ cellvalue + "</button>";
+}
+function linkUnformatter(cellvalue, options) {
+	if (cellvalue)
+		return cellvalue.split(" ")[0];
+
+	return "";
 }
 function linksFormatter(cellvalue, options, rowObject) {
-	if (typeof cellvalue == 'string')
-		cellvalue = cellvalue.substring(1, cellvalue.length-1).split(',');
+	if (typeof cellvalue == 'string') {
+		cellvalue = cellvalue.substring(1, cellvalue.length - 1);
+		if (cellvalue.length == 0)
+			return "[]";
+		cellvalue = cellvalue.split(',');
+	}
 
 	var buffer = "[";
 	for (i in cellvalue) {
 		if (buffer.length > 1)
 			buffer += ",";
-		buffer += cellvalue[i]
-				+ " <img src='images/link.png' onclick=\"openLink('"
-				+ cellvalue[i] + "');\" />";
+		buffer += linkFormatter(cellvalue[i]);
 	}
 	buffer += "]";
 	return buffer;
@@ -180,12 +188,6 @@ function linksUnformatter(cellvalue, options, rowObject) {
 	}
 	buffer += "]";
 	return buffer;
-}
-function linkUnformatter(cellvalue, options) {
-	if (cellvalue)
-		return cellvalue.split(" ")[0];
-
-	return "";
 }
 function embeddedFormatter(cellvalue, options, rowObject) {
 	return "<img src='images/embedded.png' />";
@@ -259,7 +261,7 @@ function displayResultSet(result) {
 		editOptions = null;
 		unformatter = null;
 
-		var type;
+		var type = null;
 
 		if (schema && columnNames[col].charAt(0) != '@') {
 
