@@ -442,7 +442,8 @@ public abstract class OStringSerializerHelper {
 			}
 		}
 
-		iCollection.add(buffer.toString().trim());
+		if (buffer.length() > 0)
+			iCollection.add(buffer.toString().trim());
 
 		return --currentPos;
 	}
