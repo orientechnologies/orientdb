@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record.string
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Set;
@@ -105,7 +106,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 		case DATE:
 		case DATETIME:
 		case LINK:
-      return simpleValueFromStream( iValue, iType );
+			return simpleValueFromStream(iValue, iType);
 
 		case EMBEDDED:
 		case CUSTOM:
@@ -361,6 +362,17 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 					&& iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.BINARY_BEGINEND)
 				// STRING
 				return OStringSerializerHelper.getBinaryContent(iValue);
+			else if (iValue.charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN
+					&& iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.COLLECTION_END) {
+				// COLLECTION
+				final ArrayList<String> coll = new ArrayList<String>();
+				OStringSerializerHelper.getCollection(iValue, 0, coll);
+				return coll;
+			} else if (iValue.charAt(0) == OStringSerializerHelper.MAP_BEGIN
+					&& iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.MAP_END) {
+				// MAP
+				return OStringSerializerHelper.getMap(iValue);
+			}
 
 		if (iValue.charAt(0) == ORID.PREFIX)
 			// RID
@@ -413,75 +425,75 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 			return new Float(iValue);
 	}
 
-  public static Object simpleValueFromStream(final Object iValue,  final OType iType) {
-    switch (iType) {
-      case STRING:
-        if (iValue instanceof String) {
-          final String s = OStringSerializerHelper.getStringContent(iValue);
-          return OStringSerializerHelper.decode(s);
-        }
-        return iValue.toString();
+	public static Object simpleValueFromStream(final Object iValue, final OType iType) {
+		switch (iType) {
+		case STRING:
+			if (iValue instanceof String) {
+				final String s = OStringSerializerHelper.getStringContent(iValue);
+				return OStringSerializerHelper.decode(s);
+			}
+			return iValue.toString();
 
-      case INTEGER:
-        if (iValue instanceof Integer)
-          return iValue;
-        return new Integer(iValue.toString());
+		case INTEGER:
+			if (iValue instanceof Integer)
+				return iValue;
+			return new Integer(iValue.toString());
 
-      case BOOLEAN:
-        if (iValue instanceof Boolean)
-          return iValue;
-        return new Boolean(iValue.toString());
+		case BOOLEAN:
+			if (iValue instanceof Boolean)
+				return iValue;
+			return new Boolean(iValue.toString());
 
-      case FLOAT:
-        if (iValue instanceof Float)
-          return iValue;
-        return convertValue((String) iValue, iType);
+		case FLOAT:
+			if (iValue instanceof Float)
+				return iValue;
+			return convertValue((String) iValue, iType);
 
-      case DECIMAL:
-        if (iValue instanceof BigDecimal)
-          return iValue;
-        return convertValue((String) iValue, iType);
+		case DECIMAL:
+			if (iValue instanceof BigDecimal)
+				return iValue;
+			return convertValue((String) iValue, iType);
 
-      case LONG:
-        if (iValue instanceof Long)
-          return iValue;
-        return convertValue((String) iValue, iType);
+		case LONG:
+			if (iValue instanceof Long)
+				return iValue;
+			return convertValue((String) iValue, iType);
 
-      case DOUBLE:
-        if (iValue instanceof Double)
-          return iValue;
-        return convertValue((String) iValue, iType);
+		case DOUBLE:
+			if (iValue instanceof Double)
+				return iValue;
+			return convertValue((String) iValue, iType);
 
-      case SHORT:
-        if (iValue instanceof Short)
-          return iValue;
-        return convertValue((String) iValue, iType);
+		case SHORT:
+			if (iValue instanceof Short)
+				return iValue;
+			return convertValue((String) iValue, iType);
 
-      case BYTE:
-        if (iValue instanceof Byte)
-          return iValue;
-        return convertValue((String) iValue, iType);
+		case BYTE:
+			if (iValue instanceof Byte)
+				return iValue;
+			return convertValue((String) iValue, iType);
 
-      case BINARY:
-        return OStringSerializerHelper.getBinaryContent(iValue);
+		case BINARY:
+			return OStringSerializerHelper.getBinaryContent(iValue);
 
-      case DATE:
-      case DATETIME:
-        if (iValue instanceof Date)
-          return iValue;
-        return convertValue((String) iValue, iType);
+		case DATE:
+		case DATETIME:
+			if (iValue instanceof Date)
+				return iValue;
+			return convertValue((String) iValue, iType);
 
-      case LINK:
-        if (iValue instanceof ORID)
-          return iValue.toString();
-        else if (iValue instanceof String)
-          return new ORecordId((String) iValue);
-        else
-          return ((ORecord<?>) iValue).getIdentity().toString();
-    }
+		case LINK:
+			if (iValue instanceof ORID)
+				return iValue.toString();
+			else if (iValue instanceof String)
+				return new ORecordId((String) iValue);
+			else
+				return ((ORecord<?>) iValue).getIdentity().toString();
+		}
 
-    throw new IllegalArgumentException("Type " + iType + " is not simple type.");
-  }
+		throw new IllegalArgumentException("Type " + iType + " is not simple type.");
+	}
 
 	public static void simpleValueToStream(final StringBuilder iBuffer, final OType iType, final Object iValue) {
 		if (iValue == null || iType == null)
