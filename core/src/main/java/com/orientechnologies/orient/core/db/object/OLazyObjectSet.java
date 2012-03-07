@@ -83,7 +83,7 @@ public class OLazyObjectSet<TYPE> implements Set<Object>, Serializable {
 		if (converted && e instanceof ORID)
 			converted = false;
 		setDirty();
-		return underlying.add(getDatabase().getRecordByUserObject(e, false));
+		return underlying.add(getDatabase().getRecordByUserObject(e, true));
 	}
 
 	public boolean remove(final Object o) {
