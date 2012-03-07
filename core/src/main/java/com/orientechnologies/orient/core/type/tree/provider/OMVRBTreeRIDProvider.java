@@ -258,6 +258,10 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 		if (!marshalling) {
 			if (buffer != null)
 				buffer.setLength(0);
+
+			if (tree.getOwner() != null)
+				tree.getOwner().setDirty();
+
 			return super.setDirty();
 		}
 		return false;

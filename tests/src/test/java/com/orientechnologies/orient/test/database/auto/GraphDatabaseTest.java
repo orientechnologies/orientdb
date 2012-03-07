@@ -402,4 +402,56 @@ public class GraphDatabaseTest {
 			database.close();
 		}
 	}
+
+	@Test
+	public void saveEdges() {
+		database.open("admin", "admin");
+
+		try {
+			database.declareIntent(new OIntentMassiveInsert());
+
+			ODocument v = database.createVertex();
+			v.field("name", "superNode");
+
+			long insertBegin = System.currentTimeMillis();
+
+			long begin = insertBegin;
+			for (int i = 1; i <= 1000; ++i) {
+				database.createEdge(v, database.createVertex().field("id", i)).save();
+				if (i % 100 == 0) {
+					final long now = System.currentTimeMillis();
+					System.out.printf("\nInserted %d edges, elapsed %d ms. v.out=%d", i, now - begin, ((Set<?>) v.field("out")).size());
+					begin = System.currentTimeMillis();
+				}
+			}
+
+			int originalEdges = ((Set<?>) v.field("out")).size();
+			System.out.println("Edge count (Original instance): " + originalEdges);
+
+			ODocument x = database.load(v.getIdentity());
+			int loadedEdges = ((Set<?>) x.field("out")).size();
+			System.out.println("Edge count (Loaded instance): " + loadedEdges);
+
+			Assert.assertEquals(originalEdges, originalEdges);
+
+			long now = System.currentTimeMillis();
+			System.out.printf("\nInsertion completed in %dms. DB edges %d, DB vertices %d", now - insertBegin, database.countEdges(),
+					database.countVertexes());
+
+			int i = 1;
+			for (OIdentifiable e : database.getOutEdges(v)) {
+				Assert.assertEquals(database.getInVertex(e).field("id"), i);
+				if (i % 100 == 0) {
+					now = System.currentTimeMillis();
+					System.out.printf("\nRead %d edges and %d vertices, elapsed %d ms", i, i, now - begin);
+					begin = System.currentTimeMillis();
+				}
+				i++;
+			}
+			database.declareIntent(null);
+
+		} finally {
+			database.close();
+		}
+	}
 }
