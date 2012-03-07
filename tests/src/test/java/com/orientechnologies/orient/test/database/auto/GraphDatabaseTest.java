@@ -432,7 +432,7 @@ public class GraphDatabaseTest {
 			int loadedEdges = ((Set<?>) x.field("out")).size();
 			System.out.println("Edge count (Loaded instance): " + loadedEdges);
 
-			Assert.assertEquals(originalEdges, originalEdges);
+			Assert.assertEquals(originalEdges, loadedEdges);
 
 			long now = System.currentTimeMillis();
 			System.out.printf("\nInsertion completed in %dms. DB edges %d, DB vertices %d", now - insertBegin, database.countEdges(),
