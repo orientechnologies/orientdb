@@ -421,7 +421,8 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 				// SEARCH INSIDE THE NODE
 				final V value = lastNode.search(k);
 
-				setLastSearchNode(key, lastNode);
+				if(value != null)
+					setLastSearchNode(key, lastNode);
 
 				// PROBABLY PARTIAL KEY IS FOUND USE SEARCH MODE TO FIND PREFERRED ONE
 				if (value != null && key instanceof OCompositeKey)
@@ -2797,6 +2798,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 				return comparator.compare((K) key, (K) lastSearchKey) == 0 ? lastSearchNode : null;
 			else
 				try {
+					if(key instanceof OCompositeKey)
+						return key.equals(lastSearchKey) ? lastSearchNode : null;
+
 					return ((Comparable<? super K>) key).compareTo((K) lastSearchKey) == 0 ? lastSearchNode : null;
 				} catch (Exception e) {
 					// IGNORE IT
