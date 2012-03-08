@@ -45,7 +45,7 @@ public class OLogFormatter extends Formatter {
 		Level iLevel = iRecord.getLevel();
 		String iMessage = iRecord.getMessage();
 		Object[] iAdditionalArgs = iRecord.getParameters();
-		String iRequester = getSourceClassSimpleName(iRecord.getSourceClassName());
+		String iRequester = getSourceClassSimpleName(iRecord.getLoggerName());
 
 		final StringBuilder buffer = new StringBuilder();
 		buffer.append(EOL);
