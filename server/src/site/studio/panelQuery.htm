@@ -2,19 +2,10 @@
 	<table style="width: 100%;" cellpadding="0" cellspacing="0">
 		<tr>
 			<td valign="top">
-				<table style="width: 100%;" cellpadding="0" cellspacing="0">
+				<table style="width: 100%;" cellpadding="0" cellspacing="2">
 					<tr>
 						<td valign="top">
-							<table cellpadding="0" cellspacing="0">
-								<tr>
-									<td align="left">History <select id="savedQueries"></select></td>
-								</tr>
-							</table>
-						</td>
-					</tr>
-					<tr>
-						<td valign="top">
-							<table style="width: 100%;" cellpadding="0" cellspacing="0">
+							<table style="width: 100%;" cellpadding="0" cellspacing="3">
 								<tr>
 									<td style="border: 1px solid gray; width: 90%;"><textarea id="queryText" title="value">
                                                                 select from Address where city.country.name = 'Italy'
@@ -22,51 +13,60 @@
 								</tr>
 								<tr>
 									<td valign="top">
-										<table id="queryResultTable" width="100%">
+										<table style="width: 100%;" cellpadding="0" cellspacing="0">
+											<tr>
+												<td align='left'>
+													<button onclick="javascript:executeQuery()" class="ui-button-text-icon" style="width: 120px; height: 30px; text-align: center">
+														Execute <img border="0" alt="Execute" src="images/execute.png" align="top" />
+													</button>
+												</td>
+												<td align="left">History: <select style="width: 500px;" id="savedQueries"></select></td>
+												<td align="right">Limit: <input id="limit" size="1" value="20" /></td>
+												<td align='right'>Language: <select id="language"><option label="SQL" value="sql">SQL</option>
+														<option label="GREMLIN" value="gremlin">GREMLIN</option>
+												</select></td>
+												<td style="font-size: 10pt;" align="right"><a href="http://code.google.com/p/orient/wiki/SQLQuery" target="help">SQL syntax</a></td>
+											</tr>
+
 										</table>
-										<div id="queryResultTableNav"></div>
-									</td>
-								</tr>
-							</table>
-						</td>
-						<td valign="top">
-							<table>
-								<tr>
-									<td>
-										<button onclick="javascript:executeQuery()" class="ui-button-text-icon" style="width: 90px; text-align: center">
-											Execute<br /> <img border="0" alt="Execute" src="images/execute.png" align="top" />
-										</button>
 									</td>
 								</tr>
 								<tr>
-									<td align="left">Limit: <input id="limit" size="1" value="20" />
-									</td>
-								</tr>
-								<tr>
-									<td style="font-size: 10pt;"><a href="http://code.google.com/p/orient/wiki/SQLQuery" target="help">SQL syntax</a></td>
-								</tr>
-								<tr>
-									<td style="font-size: 10pt;"><a href="http://code.google.com/p/orient/wiki/SQLWhere" target="help">SQL operators</a></td>
-								</tr>
-								<tr>
-									<td>
-										<button id="deleteRecord" class="ui-button-text-icon" style="width: 90px; text-align: center">
-											Delete <img border="0" alt="Delete record" src="images/delete.png" align="top" />
-										</button>
-									</td>
-								</tr>
-								<tr>
-									<td>
-										<button id="editRecord" class="ui-button-text-icon" style="width: 90px; text-align: center">
-											Edit <img border="0" alt="Edit record" src="images/set.png" align="top" />
-										</button>
-									</td>
-								</tr>
-								<tr>
-									<td>
-										<button id="graphRecord" class="ui-button-text-icon" style="width: 90px; text-align: center">
-											Graph <img border="0" alt="Graph record" src="images/graph.png" align="top" />
-										</button>
+									<td valign="top">
+										<div id="tabs-results">
+											<ul>
+												<li><a href="#tab-table"><span>Table</span> </a></li>
+												<li><a href="#tab-json"><span>Json</span> </a></li>
+											</ul>
+											<div id="tab-table">
+												<table style="width: 100%;" cellpadding="0" cellspacing="0">
+													<tr>
+														<td style="width: 100px;" align="right">
+															<button id="deleteRecord" class="ui-button-text-icon" style="width: 90px; text-align: center">
+																Delete <img border="0" alt="Delete record" src="images/delete.png" align="top" />
+															</button>
+															<button id="editRecord" class="ui-button-text-icon" style="width: 90px; text-align: center">
+																Edit <img border="0" alt="Edit record" src="images/set.png" align="top" />
+															</button>
+															<button id="graphRecord" class="ui-button-text-icon" style="width: 90px; text-align: center">
+																Graph <img border="0" alt="Graph record" src="images/graph.png" align="top" />
+															</button>
+														</td>
+													</tr>
+													<tr>
+														<td>
+															<table id="queryResultTable" style="width: 100%;">
+															</table>
+															<div id="queryResultTableNav"></div>
+														</td>
+													</tr>
+												</table>
+											</div>
+											<div id="tab-json">
+												<textarea id="commandOutput" cols="110" rows="15" title="value" readonly="readonly">
+                                                            </textarea>
+											</div>
+										</div>
 									</td>
 								</tr>
 							</table>
@@ -79,6 +79,8 @@
 </div>
 
 <script language="javascript">
+	var commandResponse;
+	
 	$("#queryText").val(($.trim($("#queryText").val())));
 
 	$("#editRecord").click(
@@ -86,7 +88,7 @@
 				var selectedRow = $("#queryResultTable").jqGrid('getGridParam',
 						'selrow');
 				if (selectedRow != null)
-					displayDocument(queryResult.result[selectedRow - 1],
+					displayDocument(commandResponse.result[selectedRow - 1],
 							orientServer);
 			});
 	$("#graphRecord").click(
@@ -94,11 +96,11 @@
 				var selectedRow = $("#queryResultTable").jqGrid('getGridParam',
 						'selrow');
 				if (selectedRow != null)
-					displayGraph(queryResult.result[selectedRow - 1]);
+					displayGraph(commandResponse.result[selectedRow - 1]);
 			});
 
 	function queryResponse(data) {
-		displayResultSet(data["result"], data["schema"]);
+		displayResultSet(data["result"]);
 	}
 
 	function executeQuery(code) {
@@ -117,8 +119,20 @@
 
 		var limit = $('#limit').val();
 
-		queryResult = orientServer.query(code + "/" + limit);
-		controller.parameter('queryResponse', queryResult);
+		orientServer.setEvalResponse(false);
+		var commandResult = orientServer.executeCommand(code, $('#language')
+				.val(), limit);
+		orientServer.setEvalResponse(true);
+
+		if (commandResult && commandResult.charAt(0) == '{') {
+			commandResponse = orientServer.transformResponse(commandResult);
+			$('#tabs-results').tabs('select', 0);
+		} else {
+			commandResponse = commandResult;
+			$('#tabs-results').tabs('select', 1);
+		}
+
+		controller.parameter('queryResponse', commandResponse);
 
 		controller.parameter('queryLimit', limit);
 
@@ -135,10 +149,12 @@
 		savedQueries.unshift(code);
 		refreshSavedQueries();
 
-		if (queryResult == null) {
+		if (commandResult == null) {
 			$("#output").text(orientServer.getErrorMessage());
+			commandOutputEditor.setCode('');
 		} else {
-			queryResponse(queryResult);
+			queryResponse(commandResponse);
+			commandOutputEditor.setCode(commandResult);
 		}
 	}
 
@@ -158,15 +174,11 @@
 		$("#queryResultTable").jqGrid('clearGridData');
 	}
 
-	var passedQuery = controller.parameter('queryLoad');
-	if (passedQuery) {
-	}
-
 	$("#savedQueries").change(function() {
 		queryEditor.setCode($(this).val());
 	});
 
-	var currentQuery = $("#queryText").val().trim();
+	var currentQuery = $.trim($("#queryText").val());
 
 	var lastQuery = refreshSavedQueries();
 	if (currentQuery.length == 0 && lastQuery)
@@ -175,6 +187,10 @@
 	previous = controller.parameter('queryResponse');
 	if (previous != null)
 		queryResponse(previous);
+
+	previous = controller.parameter('commandResponse');
+	if (previous != null)
+		$('#commandOutput').val(previous);
 
 	previous = controller.parameter('queryLimit');
 	if (previous != null)
@@ -189,4 +205,17 @@
 		textWrapping : false,
 		onLoad : controller.parameter('queryLoad')
 	});
+
+	commandOutputEditor = CodeMirror.fromTextArea('commandOutput', {
+		width : "920px",
+		height : "250px",
+		parserfile : [ "tokenizejavascript.js", "parsejavascript.js" ],
+		stylesheet : "styles/codemirror/jscolors.css",
+		path : "js/codemirror/",
+		textWrapping : true,
+		json : true
+	});
+
+	$('#tabs-results').tabs();
+	$('#tabs-results').tabs('select', 0);
 </script>
