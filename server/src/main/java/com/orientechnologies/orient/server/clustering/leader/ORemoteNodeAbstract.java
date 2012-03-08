@@ -42,9 +42,10 @@ public class ORemoteNodeAbstract {
 		id = networkAddress + ":" + networkPort;
 	}
 
-	public OChannelBinaryClient beginRequest(final short iRequestType) throws IOException {
+	public OChannelBinaryClient beginRequest(final byte iRequestType) throws IOException {
 		channel.beginRequest();
-		channel.writeShort(iRequestType);
+		channel.writeByte(iRequestType);
+		channel.writeInt(sessionId);
 		return channel;
 	}
 

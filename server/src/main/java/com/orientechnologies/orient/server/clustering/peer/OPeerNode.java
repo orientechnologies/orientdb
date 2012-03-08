@@ -63,8 +63,11 @@ public class OPeerNode {
 		return lastHeartBeat;
 	}
 
-	public void updateHeartBeatTime() {
-		this.lastHeartBeat = System.currentTimeMillis();
+	public long updateHeartBeatTime() {
+		final long now = System.currentTimeMillis();
+		final long lastInterval = now - this.lastHeartBeat;
+		this.lastHeartBeat = now;
+		return lastInterval;
 	}
 
 	public ODistributedServerManager getManager() {

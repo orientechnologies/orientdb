@@ -47,7 +47,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 	}
 
 	public void endRequest() throws IOException {
-		out.flush();
+		flush();
 		lockWrite.unlock();
 	}
 

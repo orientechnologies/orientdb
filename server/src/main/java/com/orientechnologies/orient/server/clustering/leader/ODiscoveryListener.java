@@ -67,8 +67,9 @@ public class ODiscoveryListener extends OSoftThread {
 			// BLOCKS UNTIL SOMETHING IS RECEIVED OR SOCKET SHUTDOWN
 			socket.receive(dgram);
 
-			OLogManager.instance().debug(this, "Received multicast packet %d bytes from %s:%d", dgram.getLength(), dgram.getAddress(),
-					dgram.getPort());
+			if (OLogManager.instance().isDebugEnabled())
+				OLogManager.instance().debug(this, "Received multicast packet %d bytes from %s:%d", dgram.getLength(), dgram.getAddress(),
+						dgram.getPort());
 
 			final byte[] buffer = new byte[dgram.getLength()];
 			System.arraycopy(dgram.getData(), 0, buffer, 0, buffer.length);
@@ -103,9 +104,11 @@ public class ODiscoveryListener extends OSoftThread {
 
 				// CHECK IF THE PACKET WAS SENT BY MYSELF
 				if (configuredServerAddress.equals(binaryNetworkListener.getInboundAddr().getHostName())
-						&& serverPort == binaryNetworkListener.getInboundAddr().getPort())
+						&& serverPort == binaryNetworkListener.getInboundAddr().getPort()) {
 					// IT'S ME, JUST IGNORE
+					OLogManager.instance().debug(this, "Ignored because sent by myself");
 					return;
+				}
 
 				// GOOD PACKET, PASS TO THE DISTRIBUTED NODE MANAGER THIS INFO
 				if (manager.getLeader() != null)

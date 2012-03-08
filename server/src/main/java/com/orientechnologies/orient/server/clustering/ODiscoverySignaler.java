@@ -59,12 +59,14 @@ public class ODiscoverySignaler extends OPollerThread {
 	}
 
 	private void startTimeoutPresenceTask() {
+		if (runningTask != null)
+			return;
+
 		runningTask = new TimerTask() {
 			@Override
 			public void run() {
 				try {
-					if (running)
-						// TIMEOUT: STOP TO SEND PACKETS TO BEING DISCOVERED
+					if (running && !manager.isLeader())
 						manager.becameLeader();
 
 				} catch (Exception e) {

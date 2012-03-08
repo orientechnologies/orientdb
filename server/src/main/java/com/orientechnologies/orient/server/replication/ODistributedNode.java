@@ -79,9 +79,9 @@ public class ODistributedNode {
 
 				iDatabase.connected();
 
-				status = STATUS.SYNCHRONIZING;
+				setStatus(STATUS.SYNCHRONIZING);
 				iDatabase.connection.synchronize(iDatabase.databaseName, replicator.getLocalDatabaseConfiguration(iDatabase.databaseName));
-				status = STATUS.ONLINE;
+				setStatus(STATUS.ONLINE);
 
 			} catch (Exception e) {
 				iDatabase.close();
@@ -125,7 +125,7 @@ public class ODistributedNode {
 		db = createDatabaseEntry(iDb.getName(), SYNCH_TYPE.SYNCH, iUserName, iUserPasswd);
 
 		try {
-			status = STATUS.SYNCHRONIZING;
+			setStatus(STATUS.SYNCHRONIZING);
 
 			OLogManager.instance().info(this,
 					"<-> DB %s: sharing database exporting to the remote server %s via streaming across the network...", db.databaseName, id);
@@ -139,12 +139,10 @@ public class ODistributedNode {
 			databases.remove(iDb.getName());
 			throw e;
 		} finally {
-			status = STATUS.ONLINE;
+			setStatus(STATUS.ONLINE);
 		}
 
 		OLogManager.instance().info(this, "<-> DB %s: sharing completed (%dms)", db.databaseName, System.currentTimeMillis() - time);
-
-		status = STATUS.ONLINE;
 
 		return db;
 	}
@@ -212,5 +210,10 @@ public class ODistributedNode {
 	public void registerDatabase(final ODistributedDatabaseInfo iDatabaseEntry) throws IOException {
 		databases.put(iDatabaseEntry.databaseName, iDatabaseEntry);
 		iDatabaseEntry.connected();
+	}
+
+	private void setStatus(final STATUS iStatus) {
+		OLogManager.instance().debug(this, "%s: Node changed status %s -> %s", id, status, iStatus);
+		status = iStatus;
 	}
 }

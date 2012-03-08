@@ -54,7 +54,7 @@ public class OChannelBinaryClient extends OChannelBinaryAsynch {
 		out = new DataOutputStream(outStream);
 
 		try {
-			srvProtocolVersion = in.readShort();
+			srvProtocolVersion = readShort();
 		} catch (IOException e) {
 			throw new ONetworkProtocolException("Cannot read protocol version from remote server " + socket.getRemoteSocketAddress()
 					+ ": " + e);

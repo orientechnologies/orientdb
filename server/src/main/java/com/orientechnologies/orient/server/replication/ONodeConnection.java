@@ -51,18 +51,19 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 
 	private final OReplicator										replicator;
 	private final OReplicationConflictResolver	conflictResolver;
-	private final int														sessionId	= 0;
 	protected final ExecutorService							asynchExecutor;
 
 	public ONodeConnection(final OReplicator iReplicator, final String iNodeId, final OReplicationConflictResolver iConflictResolver)
 			throws IOException {
 		super(iNodeId.split(":")[0], Integer.parseInt(iNodeId.split(":")[1]));
-		channel = new OChannelBinaryClient(networkAddress, networkPort, new OContextConfiguration(),
-				OClusterProtocol.CURRENT_PROTOCOL_VERSION);
 
 		OLogManager.instance().warn(this, "Cluster <%s>: connecting to node %s...", iReplicator.getManager().getConfig().name, iNodeId);
 
+		channel = new OChannelBinaryClient(networkAddress, networkPort, new OContextConfiguration(),
+				OClusterProtocol.CURRENT_PROTOCOL_VERSION);
+
 		beginRequest(OClusterProtocol.REQUEST_NODE2NODE_CONNECT);
+
 		try {
 			// CONNECT TO THE SERVER
 			channel.writeString(iReplicator.getManager().getId());
@@ -77,6 +78,8 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 		} finally {
 			endResponse();
 		}
+
+		OLogManager.instance().debug(this, "Cluster <%s>: node %s connected", iReplicator.getManager().getConfig().name, iNodeId);
 
 		serviceThread = new OAsynchChannelServiceThread(new ODistributedRemoteAsynchEventListener(iReplicator.getManager(),
 				new ODistributedRemoteAsynchEventListener(iReplicator.getManager(), null, iNodeId), iNodeId), channel,

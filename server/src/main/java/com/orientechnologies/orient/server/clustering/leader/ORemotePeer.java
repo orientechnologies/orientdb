@@ -46,7 +46,7 @@ public class ORemotePeer extends ORemoteNodeAbstract {
 		super(iServerAddress, iServerPort);
 		leader = iNode;
 		configuration = new OContextConfiguration();
-		status = STATUS.CONNECTING;
+		setStatus(STATUS.CONNECTING);
 	}
 
 	/**
@@ -109,7 +109,7 @@ public class ORemotePeer extends ORemoteNodeAbstract {
 		channel.writeBytes(answer.toStream());
 		channel.flush();
 
-		status = STATUS.CONNECTED;
+		setStatus(STATUS.CONNECTED);
 
 		serviceThread = new OAsynchChannelServiceThread(new ODistributedRemoteAsynchEventListener(leader.getManager(), null, id),
 				channel, "OrientDB <- Asynch Node/" + id);
@@ -126,7 +126,7 @@ public class ORemotePeer extends ORemoteNodeAbstract {
 
 		configuration.setValue(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT, iNetworkTimeout);
 		OLogManager.instance()
-				.debug(this, "Sending keepalive message to distributed server node %s:%d...", networkAddress, networkPort);
+				.debug(this, "Sending heartbeat message to distributed server node %s:%d...", networkAddress, networkPort);
 
 		try {
 			channel.beginRequest();
@@ -142,6 +142,9 @@ public class ORemotePeer extends ORemoteNodeAbstract {
 			} finally {
 				channel.endResponse();
 			}
+
+			OLogManager.instance().debug(this, "Received heartbeat ACK from distributed server node %s:%d...", networkAddress,
+					networkPort);
 
 		} catch (Exception e) {
 			OLogManager.instance().debug(this, "Error on sending heartbeat to server node", e, toString());
@@ -161,12 +164,23 @@ public class ORemotePeer extends ORemoteNodeAbstract {
 		final boolean connected = super.checkConnection();
 
 		if (!connected)
-			status = STATUS.DISCONNECTED;
+			setStatus(STATUS.DISCONNECTED);
 
 		return connected;
 	}
 
+	@Override
+	public void disconnect() {
+		super.disconnect();
+		setStatus(STATUS.DISCONNECTED);
+	}
+
 	public STATUS getStatus() {
 		return status;
+	}
+
+	private void setStatus(final STATUS iStatus) {
+		OLogManager.instance().debug(this, "%s: Peer changed status %s -> %s", id, status, iStatus);
+		status = iStatus;
 	}
 }

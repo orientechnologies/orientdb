@@ -87,10 +87,19 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 
 			remoteNodeId = channel.readString();
 
+			if (OLogManager.instance().isDebugEnabled())
+				OLogManager.instance().debug(this, "Cluster <%s>: remote node %s connected, authenticating it...",
+						manager.getConfig().name, remoteNodeId);
+
 			setName("OrientDB <- Node/" + remoteNodeId);
 
 			// AUTHENTICATE
-			serverLogin(channel.readString(), channel.readString(), "connect");
+			final String userName = channel.readString();
+			serverLogin(userName, channel.readString(), "connect");
+
+			if (OLogManager.instance().isDebugEnabled())
+				OLogManager.instance().debug(this, "Cluster <%s>: remote node %s authenticated correctly with user '%s'",
+						manager.getConfig().name, remoteNodeId, userName);
 
 			channel.acquireExclusiveLock();
 			try {
@@ -157,8 +166,8 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			else {
 				// OK TO BE A PEER
 				setName("OrientDB <- Distributed Leader");
-				manager.getReplicator().updateConfiguration(new ODocument(channel.readBytes()));
 				manager.becomePeer(this);
+				manager.getReplicator().updateConfiguration(new ODocument(channel.readBytes()));
 			}
 
 			break;
@@ -167,7 +176,11 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 		case OClusterProtocol.REQUEST_LEADER2PEER_HEARTBEAT:
 			checkConnected();
 			commandInfo = "Cluster Heartbeat";
-			manager.updateHeartBeatTime();
+
+			final long lastInterval = manager.updateHeartBeatTime();
+
+			if (OLogManager.instance().isDebugEnabled())
+				OLogManager.instance().debug(this, "Received heartbeat message from leader. Last interval was " + lastInterval + "ms");
 
 			channel.acquireExclusiveLock();
 			try {
@@ -181,6 +194,9 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			commandInfo = "Synchronization between nodes";
 			final String dbName = channel.readString();
 			final ODocument cfg = new ODocument(channel.readBytes());
+
+			if (OLogManager.instance().isInfoEnabled())
+				OLogManager.instance().info(this, "<-> DB %s: received synchronization request from node %s...", dbName, remoteNodeId);
 
 			if (!databases.containsKey(dbName)) {
 				// OPEN THE DB FOR THE FIRST TIME
@@ -199,9 +215,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 				final String node = nodeCfg.field("node");
 				final long lastLog = (Long) nodeCfg.field("lastLog");
 
-				OLogManager.instance().info(this,
-						"<-> DB %s: received synchronization request from node %s reading operation logs after %d", dbName, remoteNodeId,
-						lastLog);
+				OLogManager.instance().info(this, "<-> DB %s: Reading operation logs from %s after %d", dbName, remoteNodeId, lastLog);
 
 				// channel.
 				final OOperationLog opLog = manager.getReplicator().getOperationLog(node, dbName);
@@ -235,8 +249,13 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			// END OF NODES
 			channel.writeByte((byte) 0);
 
-			// START REPLICATION BACK
-			manager.getReplicator().startReplication(dbName, remoteNodeId, SYNCH_TYPE.ASYNCH.toString());
+//			OLogManager.instance().info(this, "<-> DB %s: Synchronization completed from node %s, starting inverse replication...",
+//					dbName, remoteNodeId);
+//
+//			// START REPLICATION BACK
+//			manager.getReplicator().startReplication(dbName, remoteNodeId, SYNCH_TYPE.ASYNCH.toString());
+//
+//			OLogManager.instance().info(this, "<-> DB %s: Reverse synchronization completed to node %s", dbName, remoteNodeId);
 
 			break;
 		}

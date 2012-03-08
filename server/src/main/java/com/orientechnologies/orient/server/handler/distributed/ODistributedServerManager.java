@@ -78,7 +78,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		if (status == STATUS.DISABLED)
 			return;
 
-		status = STATUS.STARTING;
+		setStatus(STATUS.STARTING);
 		sendPresence();
 		try {
 			replicator = new OReplicator(this);
@@ -96,7 +96,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 		replicator.shutdown();
 
-		status = STATUS.OFFLINE;
+		setStatus(STATUS.OFFLINE);
 	}
 
 	protected void sendPresence() {
@@ -122,6 +122,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 			if (peer == null)
 				peer = new OPeerNode(this, iConnection);
+
+			setStatus(STATUS.PEER);
 		}
 	}
 
@@ -130,9 +132,6 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	 * 
 	 */
 	public void becameLeader() {
-		if (id.equals("192.168.1.100:2425"))
-			return;
-
 		synchronized (this) {
 
 			if (peer != null) {
@@ -145,6 +144,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 				sendPresence();
 			}
 		}
+		setStatus(STATUS.LEADER);
 	}
 
 	/**
@@ -237,11 +237,12 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		return iNodeId.equals(distributedNetworkListener.getInboundAddr().getAddress().getHostAddress() + ":" + parts[1]);
 	}
 
-	public void updateHeartBeatTime() {
+	public long updateHeartBeatTime() {
 		synchronized (this) {
 			if (peer != null)
-				peer.updateHeartBeatTime();
+				return peer.updateHeartBeatTime();
 		}
+		return -1;
 	}
 
 	public OReplicator getReplicator() {
@@ -274,5 +275,10 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 				}
 			}
 		}
+	}
+
+	private void setStatus(final STATUS iStatus) {
+		OLogManager.instance().debug(this, "%s: Server changed status %s -> %s", id, status, iStatus);
+		status = iStatus;
 	}
 }
