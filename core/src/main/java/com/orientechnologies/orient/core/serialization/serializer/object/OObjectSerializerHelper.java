@@ -19,6 +19,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,6 +46,7 @@ import com.orientechnologies.orient.core.annotation.OVersion;
 import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
+import com.orientechnologies.orient.core.db.object.OLazyObjectList;
 import com.orientechnologies.orient.core.db.object.OLazyObjectMap;
 import com.orientechnologies.orient.core.db.object.OObjectNotDetachedException;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -73,7 +75,11 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
 @SuppressWarnings("unchecked")
 /**
- * Helper class to manage POJO by using the reflection. 
+ * Helper class to manage POJO by using the reflection.
+ *  
+ * @author Luca Garulli
+ * @author Luca Molino
+ * @author Jacques Desodt
  */
 public class OObjectSerializerHelper {
 	private static final Class<?>[]															callbackAnnotationClasses	= new Class[] {
@@ -192,7 +198,8 @@ public class OObjectSerializerHelper {
 			Object o = setters.get(className + "." + iProperty);
 
 			if (o instanceof Method) {
-				((Method) o).invoke(iPojo, OType.convert(iValue, ((Method) o).getParameterTypes()[0]));
+				((Method) o).invoke(iPojo,
+						OObjectSerializerHelper.convertInObject(iPojo, iProperty, iValue, ((Method) o).getParameterTypes()[0]));
 			} else if (o instanceof Field) {
 				((Field) o).set(iPojo, OType.convert(iValue, ((Field) o).getType()));
 			}
@@ -997,4 +1004,84 @@ public class OObjectSerializerHelper {
 		return embeddedFields.get(iPojoClass) != null && embeddedFields.get(iPojoClass).contains(iFieldName);
 	}
 
+	public static Object convertDocumentInType(final ODocument oDocument, final Class<?> type) {
+		Object pojo = null;
+		try {
+			pojo = type.newInstance();
+			final List<Field> fields = OObjectSerializerHelper.analyzeClass(type);
+			for (Field aField : fields) {
+				OObjectSerializerHelper.setFieldFromDocument(oDocument, pojo, aField);
+			}
+		} catch (Exception e) {
+			OLogManager.instance().error(null, "Error on converting document in object", e);
+		}
+		return pojo;
+	}
+
+	private static void setFieldFromDocument(final ODocument iDocument, final Object iPojo, final Field iField) throws Exception {
+		final String idFieldName = OObjectSerializerHelper.setObjectID(iDocument.getIdentity(), iPojo);
+		final String vFieldName = OObjectSerializerHelper.setObjectVersion(iDocument.getVersion(), iPojo);
+		final String fieldName = iField.getName();
+		// Don't assign id and version fields, used by Orient
+		if (!fieldName.equals(idFieldName) && !fieldName.equals(vFieldName)) {
+			// Assign only fields that are in the document
+			if (iDocument.containsField(fieldName)) {
+				Class<?> aClass = (Class<?>) iField.getGenericType();
+				Object fieldValue = iDocument.field(fieldName);
+				Object realValue = OObjectSerializerHelper.getObject(fieldValue, aClass);
+				String setterName = "set" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
+				final Method m = iPojo.getClass().getMethod(setterName, aClass);
+				m.invoke(iPojo, realValue);
+			}
+		}
+	}
+
+	private static Object getObject(final Object fieldValue, final Class<?> aClass) {
+		if (fieldValue instanceof ODocument)
+			return OObjectSerializerHelper.convertDocumentInType((ODocument) fieldValue, aClass);
+		return fieldValue;
+	}
+
+	public static Object convertInObject(final Object iPojo, final String iField, final Object iValue, final Class<?> parameterType) {
+		// New conversion method working with OLazyObjectList
+		if (!(iValue instanceof OLazyObjectList<?>))
+			return OType.convert(iValue, parameterType);
+
+		List<Object> aSubList = null;
+		try {
+			final Field aField = OObjectSerializerHelper.getField(iPojo, iField);
+			final Class<?> listClass = aField.getType();
+			final ParameterizedType aType = (ParameterizedType) aField.getGenericType();
+			final Class<?> objectClass = (Class<?>) aType.getActualTypeArguments()[0];
+			final OLazyObjectList<?> aList = (OLazyObjectList<?>) iValue;
+			// Instantiation of the list
+			if (listClass.isInterface()) {
+				aSubList = (List<Object>) new ArrayList<Object>();
+			} else {
+				aSubList = (List<Object>) listClass.newInstance();
+			}
+			for (int i = 0; i < aList.size(); i++) {
+				final Object value = aList.get(i);
+				if (value instanceof ODocument) {
+					final ODocument aDocument = (ODocument) value;
+					aSubList.add(OObjectSerializerHelper.convertDocumentInType(aDocument, objectClass));
+				} else {
+					aSubList.add(value);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return aSubList;
+	}
+
+	private static Field getField(final Object iPojo, final String iField) {
+		final List<Field> fields = OObjectSerializerHelper.getClassFields(iPojo.getClass());
+		if (fields != null) {
+			for (Field f : fields)
+				if (f.getName().equals(iField))
+					return f;
+		}
+		return null;
+	}
 }
