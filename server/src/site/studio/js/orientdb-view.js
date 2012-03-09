@@ -162,7 +162,7 @@ function ODocumentView(name, component, doc, options) {
 		component += "</form></div></div>";
 
 		// FIELD BIG BLOCK
-		component += "<div class='row-fluid'><div class='well noborder'><div class='row-fluid'>";
+		component += "<div class='row-fluid'><div class='well noborder'><div class='row-fluid'";
 
 		// HEADER
 		component += "<div class='span2' style='margin-left: 0px;'>"
@@ -171,6 +171,9 @@ function ODocumentView(name, component, doc, options) {
 				+ this.settings.valueColumnName + "</div>";
 
 		// BEGIN FIELDS
+		component += "<div class='span12' id='" + this.componentId
+				+ "_fields'>";
+
 		var fieldValue;
 		this.fieldNum = 0;
 		if (this.doc != null)
@@ -188,6 +191,7 @@ function ODocumentView(name, component, doc, options) {
 				}
 				component += this.renderRow(fieldName, fieldValue, fieldType);
 			}
+		component += "</div>";
 		// END FIELDS
 
 		// BEGIN ADD BUTTON
@@ -224,7 +228,8 @@ function ODocumentView(name, component, doc, options) {
 		if (fieldType)
 			fieldType = fieldType.toLowerCase();
 
-		component = "<div class='row-fluid noborder' id='doc_" + this.fieldNum + "'>";
+		component = "<div class='row-fluid noborder' id='doc_" + this.fieldNum
+				+ "'>";
 
 		// BEGIN FIELD LABEL
 		component += "<div class='span2'><input id='doc_"
