@@ -452,9 +452,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
 		ResultSet result =  new OrientJdbcResultSet(iOrientJdbcStatement, records, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
 
-		ResultSet proxy = OrientJdbcUtils.getProxy(ResultSet.class, result);
-
-		return proxy;
+		return result;
 	}
 
 	public ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern, String[] types) throws SQLException {

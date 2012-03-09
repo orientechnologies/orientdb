@@ -87,6 +87,10 @@ public class OrientJdbcResultSet implements ResultSet {
 		else throw new SQLException("Bad ResultSet Holdability type: " + holdability + " instead of one of the following values: " + HOLD_CURSORS_OVER_COMMIT + " or" + CLOSE_CURSORS_AT_COMMIT);
 	}
 
+	private void setDatabaseOnThreadLocalInstance() {
+		ODatabaseRecordThreadLocal.INSTANCE.set(statement.database);
+	}
+
 	public void close() throws SQLException {
 		cursor = 0;
 		rowCount = 0;
@@ -354,7 +358,7 @@ public class OrientJdbcResultSet implements ResultSet {
 
 	public Date getDate(String columnLabel) throws SQLException {
 		try {
-			ODatabaseRecordThreadLocal.INSTANCE.set(statement.database);
+			setDatabaseOnThreadLocalInstance();
 
 			java.util.Date date = document.field(columnLabel, OType.DATETIME);
 			return new Date(date.getTime());
@@ -370,6 +374,8 @@ public class OrientJdbcResultSet implements ResultSet {
 	public Date getDate(String columnLabel, Calendar cal) throws SQLException {
 		if (cal == null) throw new SQLException();
 		try {
+			setDatabaseOnThreadLocalInstance();
+			
 			java.util.Date date = document.field(columnLabel, OType.DATETIME);
 			if (date == null) return null;
 			cal.setTimeInMillis(date.getTime());

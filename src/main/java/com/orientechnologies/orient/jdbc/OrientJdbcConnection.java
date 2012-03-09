@@ -59,6 +59,7 @@ public class OrientJdbcConnection implements Connection {
 
 		String username = iInfo.getProperty("user", "admin");
 		String password = iInfo.getProperty("password", "admin");
+
 		
 		database = ODatabaseDocumentPool.global().acquire(dbUrl, username, password);
 //		database = new ODatabaseDocumentTx(dbUrl);
