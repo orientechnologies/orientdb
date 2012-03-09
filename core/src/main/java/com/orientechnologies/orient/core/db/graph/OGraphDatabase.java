@@ -524,7 +524,10 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	}
 
 	public OGraphDatabase setRoot(final String iName, final ODocument iNode) {
-		getDictionary().put(iName, iNode);
+		if (iNode == null)
+			getDictionary().remove(iName);
+		else
+			getDictionary().put(iName, iNode);
 		return this;
 	}
 
