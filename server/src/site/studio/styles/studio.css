@@ -26,31 +26,19 @@ td {
 	font-size: 12pt;
 }
 
-table.odocumentview {
-	background-color: #87B6D9;
-}
-
 table.ograph_detail {
 	background-color: #87B6D9;
 }
 
 input.odocumentview_version_value {
-	font-size: 13pt;
 	width: 60px;
 }
 
 input.odocumentview_rid_value {
-	font-size: 13pt;
 	width: 90px;
 }
 
-select.odocumentview_class_value {
-	font-size: 13pt;
-	width: 200px;
-}
-
 select.odocumentview_type_value {
-	font-size: 13pt;
 	width: 100px;
 	color: grey;
 }
@@ -75,7 +63,7 @@ td.odocumentview_field_value {
 textarea.odocumentview_field_value {
 	font-size: 13pt;
 	vertical-align: top;
-	width: 620px;
+	width: 700px;
 }
 
 button.className {
@@ -84,95 +72,6 @@ button.className {
 
 button.link {
 	font-size: 9pt;
-}
-
-.navigation {
-	position: fixed;
-	margin: 0px;
-	padding: 0px;
-	top: 0px;
-	right: 10px;
-	list-style: none;
-	z-index: 999999;
-	width: 721px;
-}
-
-.navigation-ie {
-	position: absolute;
-	margin: 0px;
-	padding: 0px;
-	top: 0px;
-	right: 10px;
-	list-style: none;
-	z-index: 999999;
-	width: 721px;
-}
-
-ul#navigation li {
-	width: 103px;
-	display: inline;
-	float: left;
-}
-
-ul#navigation li a {
-	display: block;
-	float: left;
-	margin-top: -2px;
-	width: 100px;
-	height: 25px;
-	color: white;
-	background-color: #6ea8d0;
-	background-repeat: no-repeat;
-	background-position: 50% 10px;
-	border: 1px solid #BDDCEF;
-	-moz-border-radius: 0px 0px 10px 10px;
-	-webkit-border-bottom-right-radius: 10px;
-	-webkit-border-bottom-left-radius: 10px;
-	-khtml-border-bottom-right-radius: 10px;
-	-khtml-border-bottom-left-radius: 10px;
-	text-decoration: none;
-	text-align: center;
-	padding-top: 80px;
-	opacity: 0.9;
-	filter: progid:             DXImageTransform.Microsoft.Alpha(             opacity=             70 );
-}
-
-ul#navigation li a:hover {
-	color: black;
-	background-color: #CAE3F2;
-}
-
-ul#navigation li a span {
-	letter-spacing: 2px;
-	font-size: 11px;
-}
-
-ul#navigation .menu-database a {
-	background-image: url(../images/menu-database.png);
-}
-
-ul#navigation .menu-query a {
-	background-image: url(../images/menu-query.png);
-}
-
-ul#navigation .menu-command a {
-	background-image: url(../images/menu-command.png);
-}
-
-ul#navigation .menu-document a {
-	background-image: url(../images/menu-document.png);
-}
-
-ul#navigation .menu-graph a {
-	background-image: url(../images/menu-graph.png);
-}
-
-ul#navigation .menu-raw a {
-	background-image: url(../images/menu-raw.png);
-}
-
-ul#navigation .menu-server a {
-	background-image: url(../images/menu-server.png);
 }
 
 .tooltip {
@@ -211,4 +110,8 @@ button.exportButton {
 
 button.exportButton:hover {
 	background: #33CCFF;
+}
+
+.noborder {
+	margin-left: 0px;
 }

@@ -145,13 +145,13 @@ function dynaUnformatter(cellvalue, options, rowObject) {
 	return cellvalue;
 }
 function classFormatter(cellvalue, options, rowObject) {
-	return "<button onclick=\"openClass('" + cellvalue
-			+ "');\" class='className'>" + cellvalue + "</button>";
+	return "<a onclick=\"openClass('" + cellvalue
+			+ "');\" class='label'>" + cellvalue + "</a>";
 }
 
 function linkFormatter(cellvalue, options, rowObject) {
-	return "<button onclick=\"openLink('" + cellvalue + "');\" class='link'>"
-			+ cellvalue + "</button>";
+	return "<a onclick=\"openLink('" + cellvalue + "');\" class='label'>"
+			+ cellvalue + "</a>";
 }
 function linkUnformatter(cellvalue, options) {
 	if (cellvalue)

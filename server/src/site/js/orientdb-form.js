@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-               
+
 /**
  * Client-side form binding.
  * 
@@ -29,15 +29,15 @@ function OForm(options) {
 	this.objectsMetaData = {};
 
 	this.options = {
-			debug : false,
-			onBeforeAdd : function() {
-			},
-			onAfterAdd : function() {
-			},
-			onBeforeRemove : function() {
-			},
-			onAfterRemove : function() {
-			}
+		debug : false,
+		onBeforeAdd : function() {
+		},
+		onAfterAdd : function() {
+		},
+		onBeforeRemove : function() {
+		},
+		onAfterRemove : function() {
+		}
 	};
 
 	if (options) {
@@ -114,54 +114,54 @@ OForm.prototype.values = function(prefix) {
 
 			$.each(path,
 					function(i, stringItem) {
-				if (!pointer) {
-					pointer = driver;
-				}
+						if (!pointer) {
+							pointer = driver;
+						}
 
-				if (!pointer[stringItem]) {
-					pointer[stringItem] = {};
-				}
+						if (!pointer[stringItem]) {
+							pointer[stringItem] = {};
+						}
 
-				if (i == path.length - 1) {
-					var value = el.value;
-					if (pointer['@class']) {
-						var className = pointer['@class'];
-						var classInfo = window.form
-						.findClassSchema(className);
-						if (classInfo != null) {
-							var itemType = window.form.findFieldType(
-									classInfo, stringItem);
-							if (itemType == 'STRING') {
-								value = el.value;
-							} else if (itemType == 'INTEGER'
-								|| itemType == 'SHORT'
-									|| itemType == 'LONG'
-										|| itemType == 'BYTE') {
-								value = parseInt(el.value, 10);
-							} else if (itemType == 'FLOAT'
-								|| itemType == 'DOUBLE'
-									|| itemType == 'LONG') {
-								value = parseFloat(el.value);
-							} else if (itemType == 'BOOLEAN') {
-								value = Boolean(el.value);
+						if (i == path.length - 1) {
+							var value = el.value;
+							if (pointer['@class']) {
+								var className = pointer['@class'];
+								var classInfo = window.form
+										.findClassSchema(className);
+								if (classInfo != null) {
+									var itemType = window.form.findFieldType(
+											classInfo, stringItem);
+									if (itemType == 'STRING') {
+										value = el.value;
+									} else if (itemType == 'INTEGER'
+											|| itemType == 'SHORT'
+											|| itemType == 'LONG'
+											|| itemType == 'BYTE') {
+										value = parseInt(el.value, 10);
+									} else if (itemType == 'FLOAT'
+											|| itemType == 'DOUBLE'
+											|| itemType == 'LONG') {
+										value = parseFloat(el.value);
+									} else if (itemType == 'BOOLEAN') {
+										value = Boolean(el.value);
+									}
+								}
+							}
+							pointer[stringItem] = value;
+						} else {
+							pointer = pointer[stringItem];
+							var verify = path[i + 1];
+
+							if (!parseInt(verify, 10) && verify != 0) {
+								pointer['@type'] = 'd';
+								if (!pointer['@class']) {
+									var classN = form.findClass(id, i + 1);
+									if (classN)
+										pointer['@class'] = classN;
+								}
 							}
 						}
-					}
-					pointer[stringItem] = value;
-				} else {
-					pointer = pointer[stringItem];
-					var verify = path[i + 1];
-
-					if (!parseInt(verify, 10) && verify != 0) {
-						pointer['@type'] = 'd';
-						if (!pointer['@class']) {
-							var classN = form.findClass(id, i + 1);
-							if (classN)
-								pointer['@class'] = classN;
-						}
-					}
-				}
-			});
+					});
 		}
 	});
 	return driver;
