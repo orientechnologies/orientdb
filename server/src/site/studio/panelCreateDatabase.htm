@@ -5,10 +5,10 @@
 				<table width="100%" cellpadding="4" cellspacing="3">
 					<tr>
 						<td colspan="3" align="left" valign="bottom"><a href="http://www.orientechnologies.com/orient-db.htm"><img border="0"
-								src="images/orient_db.png" /></a><b class="help"> Studio</b></td>
+								src="images/orient_db.png" /></a><b> Studio</b></td>
 					</tr>
 					<tr>
-						<td colspan="2" align="left" class="help"><br>
+						<td colspan="2" align="left"><br>
 							<h2>Create new database</h2>
 							<p>
 								To create a new database assure to have the rights to access to the remote server with the privilege "database.create". if you've not defined
@@ -28,30 +28,30 @@
 							</p></td>
 					</tr>
 					<tr>
-						<td align="right" class="ui-widget help">Server:</td>
-						<td><input id="server" size="50" value="" class="ui-widget help" /></td>
+						<td align="right">Server:</td>
+						<td><input id="server" size="50" value="" /></td>
 					</tr>
 					<tr>
-						<td align="right" class="ui-widget help">Database name:</td>
+						<td align="right">Database name:</td>
 						<td><table>
 								<tr>
-									<td id="databaseCell"><input id="database" size="50" value="" class="ui-widget help" /></td>
+									<td id="databaseCell"><input id="database" size="50" value="" /></td>
 								</tr>
 							</table></td>
 					</tr>
 					<tr>
-						<td align="right" class="ui-widget help">Type:</td>
-						<td><select id="databaseType" class="ui-widget help">
+						<td align="right">Type:</td>
+						<td><select id="databaseType">
 								<option value="local">local</option>
 								<option value="memory">memory</option>
 						</select></td>
 					</tr>
 					<tr>
-						<td align="center" colspan="2" class="ui-widget help">
-							<button type="submit" id="buttonConnect" class="ui-button-text-icon">
+						<td align="center" colspan="2">
+							<button type="submit" id="buttonConnect" class="btn btn-primary">
 								Create <img border="0" alt="Create" src="images/connect.png" align="top" />
 							</button>
-							<button id="buttonCancel" class="ui-button-text-icon">
+							<button id="buttonCancel" class="btn">
 								Cancel <img border="0" alt="Back" src="images/back.png" align="top" />
 							</button>
 						</td>
@@ -69,7 +69,8 @@
 					orientServer = new ODatabase($('#server').val() + '/'
 							+ $('#database').val());
 				}
-				databaseInfo = orientServer.create(null,null,$('#databaseType').val());
+				databaseInfo = orientServer.create(null, null, $(
+						'#databaseType').val());
 				if (databaseInfo == null) {
 					jQuery("#output").text(orientServer.getErrorMessage());
 				} else {
