@@ -53,9 +53,6 @@ function fillDynaTable(iTable, iTitle, iColumnsNames, iColumnsModel, iData,
 		multiselect : false,
 		viewrecords : true,
 		gridview : true,
-		sortname : "@rid",
-		sortorder : "asc",
-		caption : iTitle,
 		loadonce : true,
 		colNames : iColumnsNames,
 		colModel : columnModel
@@ -145,12 +142,12 @@ function dynaUnformatter(cellvalue, options, rowObject) {
 	return cellvalue;
 }
 function classFormatter(cellvalue, options, rowObject) {
-	return "<a onclick=\"openClass('" + cellvalue
-			+ "');\" class='label'>" + cellvalue + "</a>";
+	return "<a onclick=\"openClass('" + cellvalue + "');\" class='className'>"
+			+ cellvalue + "</a>";
 }
 
 function linkFormatter(cellvalue, options, rowObject) {
-	return "<a onclick=\"openLink('" + cellvalue + "');\" class='label'>"
+	return "<a onclick=\"openLink('" + cellvalue + "');\" class='link'>"
 			+ cellvalue + "</a>";
 }
 function linkUnformatter(cellvalue, options) {
@@ -227,8 +224,12 @@ function displayResultSet(result) {
 	columnModel.push({
 		"name" : "@rid",
 		"index" : "@rid",
-		"width" : 30,
+		"align" : "center",
 		"classes" : "cell_readonly",
+		"width" : "70px",
+		formatter : linkFormatter,
+		unformatter : linkUnformatter,
+		fixed : true,
 		searchoptions : {
 			sopt : [ "cn" ]
 		}
@@ -236,8 +237,9 @@ function displayResultSet(result) {
 	columnModel.push({
 		"name" : "@version",
 		"index" : "@version",
-		"width" : 30,
 		"classes" : "cell_readonly",
+		"width" : "40px",
+		fixed : true,
 		searchoptions : {
 			sopt : [ "cn" ]
 		}
@@ -245,8 +247,9 @@ function displayResultSet(result) {
 	columnModel.push({
 		"name" : "@class",
 		"index" : "@class",
-		"width" : 30,
 		"classes" : "cell_readonly",
+		"width" : "100px",
+		fixed : true,
 		formatter : classFormatter,
 		searchoptions : {
 			sopt : [ "cn" ]
@@ -319,7 +322,6 @@ function displayResultSet(result) {
 				name : columnNames[col],
 				editable : true,
 				index : columnNames[col],
-				width : 80,
 				formatter : formatter,
 				unformat : unformatter,
 				// edittype : editFormatter,
@@ -335,15 +337,9 @@ function displayResultSet(result) {
 	var lastsel;
 
 	$($('#queryResultTable')).jqGrid('GridUnload');
-	fillDynaTable(
-			$('#queryResultTable'),
-			"Resultset",
-			columnNames,
-			columnModel,
-			result,
-			{
+	fillDynaTable($('#queryResultTable'), "Resultset", columnNames,
+			columnModel, result, {
 				sortname : '@rid',
-				width : 400,
 				height : 300,
 				editurl : getStudioURL('document'),
 				onSelectRow : function(id) {
@@ -352,7 +348,8 @@ function displayResultSet(result) {
 						lastsel = id;
 					}
 
-					var recId = $('#queryResultTable').jqGrid('getRowData', id)["@rid"];
+					var recId = getRid(id);
+
 					$('#queryResultTable').jqGrid('editRow', id, true, null,
 							function(response, postdata) {
 								$("#output").val(response.responseText);
@@ -378,8 +375,7 @@ function displayResultSet(result) {
 				var selectedRow = $("#queryResultTable").jqGrid('getGridParam',
 						'selrow');
 				if (selectedRow != null) {
-					var recId = $('#queryResultTable').jqGrid('getRowData',
-							selectedRow)["@rid"];
+					var recId = getRid(selectedRow);
 					$("#queryResultTable").jqGrid('delGridRow', selectedRow, {
 						reloadAfterSubmit : false,
 						closeAfterDelete : true,
@@ -394,4 +390,20 @@ function displayResultSet(result) {
 					alert("Please Select Row to delete!");
 			});
 
+}
+
+function getRid(id) {
+	var obj = $('#queryResultTable').jqGrid('getRowData', id);
+	if (!obj)
+		return null;
+
+	var recId = obj["@rid"];
+	var begin = recId.indexOf('>#');
+	if (begin > -1) {
+		var end = recId.indexOf('<', begin);
+		recId = recId.substring(begin + 1, end);
+	}
+
+	selectedObject = recId;
+	return recId;
 }

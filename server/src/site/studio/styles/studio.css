@@ -66,14 +66,6 @@ textarea.odocumentview_field_value {
 	width: 700px;
 }
 
-button.className {
-	font-size: 9pt;
-}
-
-button.link {
-	font-size: 9pt;
-}
-
 .tooltip {
 	background-color: #5C9CCC;
 	border: 1px solid #fff;
@@ -114,4 +106,38 @@ button.exportButton:hover {
 
 .noborder {
 	margin-left: 0px;
+}
+
+.link {
+	padding: 2px 4px 3px;
+	font-size: 11.049999999999999px;
+	font-weight: bold;
+	-webkit-border-radius: 3px;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+	color: #fff!important;
+	background-color: #3a87ad;
+	cursor: pointer;
+}
+
+.link:hover {
+	background-color: #2d6987;
+	text-decoration: none;
+}
+
+.className {
+	padding: 2px 4px 3px;
+	font-size: 11.049999999999999px;
+	font-weight: bold;
+	-webkit-border-radius: 3px;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+	color: #fff!important;
+	background-color: #3a87ad;
+	cursor: pointer;
+}
+
+.className:hover {
+	background-color: #2d6987;
+	text-decoration: none;
 }

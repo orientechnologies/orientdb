@@ -1,83 +1,67 @@
 <div id="tab-query">
-	<table style="width: 100%;">
-		<tr>
-			<td valign="top">
-				<table style="width: 100%;">
-					<tr>
-						<td valign="top">
-							<table style="width: 100%;">
-								<tr>
-									<td style="border: 1px solid gray; width: 90%;"><textarea id="queryText" title="value">
-                                                                select from Address where city.country.name = 'Italy'
-                                                            </textarea></td>
-								</tr>
-								<tr>
-									<td valign="top">
-										<table style="width: 100%;">
-											<tr>
-												<td align='left'>
-													<button onclick="javascript:executeQuery()" class="btn btn-primary btn-large">
-														Execute <img border="0" alt="Execute" src="images/execute.png" align="top" />
-													</button>
-												</td>
-												<td align="left">History: <select style="width: 600px;" id="savedQueries"></select></td>
-												<td align="left">Limit: <input id="limit" class="input-mini" size="1" value="20" /></td>
-												<td align='left'>Language: <select id="language" class="input-small"><option label="SQL" value="sql">SQL</option>
-														<option label="GREMLIN" value="gremlin">GREMLIN</option>
-												</select></td>
-												<td style="font-size: 10pt;" align="right"><a href="http://code.google.com/p/orient/wiki/SQLQuery" target="help">SQL syntax</a></td>
-											</tr>
-
-										</table>
-									</td>
-								</tr>
-								<tr>
-									<td valign="top">
-										<div id="tabs-results">
-											<ul>
-												<li><a href="#tab-table"><span>Table</span> </a></li>
-												<li><a href="#tab-json"><span>Json</span> </a></li>
-											</ul>
-											<div id="tab-table">
-												<table style="width: 100%;">
-													<tr>
-														<td align="right">
-															<div class="btn-group">
-																<button id="deleteRecord" class="btn" style="width: 90px; text-align: center">
-																	Delete <img border="0" alt="Delete record" src="images/delete.png" align="top" />
-																</button>
-																<button id="editRecord" class="btn" style="width: 90px; text-align: center">
-																	Edit <img border="0" alt="Edit record" src="images/set.png" align="top" />
-																</button>
-																<button id="graphRecord" class="btn" style="width: 90px; text-align: center">
-																	Graph <img border="0" alt="Graph record" src="images/graph.png" align="top" />
-																</button>
-															</div>
-														</td>
-													</tr>
-													<tr>
-														<td>
-															<table id="queryResultTable" style="width: 100%;">
-															</table>
-															<div id="queryResultTableNav"></div>
-														</td>
-													</tr>
-												</table>
-											</div>
-											<div id="tab-json">
-												<textarea id="commandOutput" cols="110" rows="15" title="value" readonly="readonly">
-                                                            </textarea>
-											</div>
-										</div>
-									</td>
-								</tr>
+	<div>
+		<div class="row-fluid">
+			<div class="span12" style="border: 1px solid gray;">
+				<textarea id="queryText" title="value">select from Address where city.country.name = 'Italy'</textarea>
+			</div>
+		</div>
+		<div class="row-fluid">
+			<div class="span2">
+				<button onclick="javascript:executeQuery()" class="btn btn-primary btn-large">
+					Execute <img border="0" alt="Execute" src="images/execute.png" align="top" />
+				</button>
+			</div>
+			<div class="span5">
+				History: <select style="width: 400px;" id="savedQueries"></select>
+			</div>
+			<div class="span2">
+				Limit: <input id="limit" class="input-mini" size="1" value="20" />
+			</div>
+			<div class="span2">
+				Language: <select id="language" class="input-small"><option label="SQL" value="sql">SQL</option>
+					<option label="GREMLIN" value="gremlin">GREMLIN</option>
+				</select>
+			</div>
+			<div class="span1">
+				<a href="http://code.google.com/p/orient/wiki/SQLQuery" target="help">SQL syntax</a>
+			</div>
+		</div>
+		<div>
+			<div id="tabs-results" class="noborder">
+				<ul>
+					<li><a href="#tab-table"><span>Table</span> </a></li>
+					<li><a href="#tab-json"><span>Json</span> </a></li>
+				</ul>
+				<div id="tab-table" class="noborder">
+					<div class="row">
+						<div class="offset9 span3 btn-group">
+							<button id="deleteRecord" class="btn" style="width: 90px; text-align: center">
+								Delete <img border="0" alt="Delete record" src="images/delete.png" align="top" />
+							</button>
+							<button id="editRecord" class="btn" style="width: 90px; text-align: center">
+								Edit <img border="0" alt="Edit record" src="images/set.png" align="top" />
+							</button>
+							<button id="graphRecord" class="btn" style="width: 90px; text-align: center">
+								Graph <img border="0" alt="Graph record" src="images/graph.png" align="top" />
+							</button>
+						</div>
+					</div>
+					<div class="row">
+						<div class="span12">
+							<table id="queryResultTable" style="width: 100%;">
 							</table>
-						</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-	</table>
+							<div id="queryResultTableNav"></div>
+						</div>
+					</div>
+				</div>
+				<div id="tab-json" class="noborder">
+					<textarea id="commandOutput" cols="110" rows="15" title="value" readonly="readonly">
+                                                           </textarea>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
 </div>
 
 <script>
@@ -135,6 +119,7 @@
 		}
 
 		controller.parameter('queryResponse', commandResponse);
+		controller.parameter('commandResponse', commandResult);
 
 		controller.parameter('queryLimit', limit);
 
@@ -199,7 +184,7 @@
 		$("#limit").val(previous);
 
 	queryEditor = CodeMirror.fromTextArea('queryText', {
-		width : "920px",
+		width : "auto",
 		height : "60px",
 		parserfile : "parsesql.js",
 		stylesheet : "styles/codemirror/sqlcolors.css",
@@ -209,8 +194,8 @@
 	});
 
 	commandOutputEditor = CodeMirror.fromTextArea('commandOutput', {
-		width : "920px",
-		height : "250px",
+		width : "auto",
+		height : "300px",
 		parserfile : [ "tokenizejavascript.js", "parsejavascript.js" ],
 		stylesheet : "styles/codemirror/jscolors.css",
 		path : "js/codemirror/",

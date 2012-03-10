@@ -40,6 +40,7 @@
 	var classEnumeration; // CONTAINS THE DB CLASSES
 	var selectedClassName; // CONTAINS LATEST SELECTED CLASS NAME
 	var orientServer;
+	var selectedObject;
 
 	var controller = new OController({
 		component : "panel",
@@ -65,54 +66,41 @@
 	}
 
 	function displayDocument(selObject, database) {
-		if (typeof selObject == "string")
-			// LOAD THE RECORD BY RID
-			selObject = database.load(selObject);
-
 		selectedObject = selObject;
-
-		controller.loadFragment("panelDocument.htm", function() {
-			documentView.render(selObject, database);
-		});
+		controller.loadFragment("panelDocument.htm");
 	}
 
 	function displayGraph(selObject) {
-		if (typeof selObject == "string")
-			// LOAD THE RECORD BY RID
-			selObject = database.load(selObject);
-
 		selectedObject = selObject;
-
-		controller.loadFragment("panelGraph.htm", function() {
-			graphEditor.render(selObject);
-		});
+		controller.loadFragment("panelGraph.htm");
 	}
 </script>
 </head>
 <body>
 	<div class="container">
-		<div class="row-fluid noborder" id="header">
-			<div class="span5">
-				<div class="row-fluid noborder">
-					<a href="."><img border="0" src="images/orient_db.png" /></a>
+		<div class="row noborder" id="header">
+			<div class="span2">
+				<div class="row">
+					<div class="span2">
+						<label class="control-label">&nbsp;</label>
+					</div>
+					<div class="span2">
+						<a href="."><img border="0" src="images/orient_db.png" /></a>
+					</div>
 				</div>
-				<div class="row-fluid">
-					<div class="span6" style="margin-left: 0px;">
-						<label class="control-label">Server</label>
+			</div>
+			<div class="span3">
+				<div class="row">
+					<div class="span3">
+						<label class="control-label">Database:</label>
 					</div>
-					<div class="span6" style="margin-left: 0px;">
-						<label class="control-label">Database </label>
-					</div>
-					<div class="span6" style="margin-left: 0px;">
-						<input id="header-server" value="" readonly />
-					</div>
-					<div class="span6" style="margin-left: 0px;">
-						<input id="header-database" value="demo" readonly />
+					<div class="span3">
+						<input id="header-server" value="" readonly type="hidden" /> <input id="header-database" value="demo" readonly />
 					</div>
 				</div>
 			</div>
 			<div class="span7" align="right">
-				<div id="navigation2" class="btn-group" align="right">
+				<div id="navigation-bar" class="btn-group" align="right">
 					<button class="btn" onclick="javascript:controller.loadFragment('panelDatabase.htm')">
 						<img src='images/menu-database.png' /><br>Database
 					</button>

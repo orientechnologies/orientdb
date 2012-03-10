@@ -17,7 +17,7 @@
 // GLOBAL VARIABLES
 var queryEditor;
 var commandEditor;
-var selectedObject;
+var graphEditor;
 
 function startTimer() {
 	startTime = new Date().getTime();

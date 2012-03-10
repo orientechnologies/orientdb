@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 
-function OGraph(doc, displayComponent, detailComponent, loadDepthComponent) {
+function OGraph(doc, displayComponent, detailComponent, loadDepth) {
 	this.displayComponent = displayComponent;
 	this.detailComponent = detailComponent;
+	this.loadDepth = loadDepth;
 	this.doc = null;
 
 	OGraph.prototype.render = function(doc) {
-		if (doc == null)
-			return;
-
-		this.doc = doc;
-
 		var node = this.document2node(doc);
 		// load JSON data
 		ht.loadJSON(node);
@@ -59,17 +55,29 @@ function OGraph(doc, displayComponent, detailComponent, loadDepthComponent) {
 	};
 
 	OGraph.prototype.document2node = function(doc) {
+		if (doc)
+			this.doc = doc;
+		else
+			this.doc = selectedObject;
+
+		if (typeof this.doc == "string") {
+			// LOAD THE RECORD BY RID
+			console.log("[Graph] reloading document: " + this.doc
+					+ " - fetchPlan: " + this.loadDepth);
+			this.doc = orientServer.load(this.doc, "*:" + this.loadDepth);
+		}
+
 		var node = {
 			children : [],
 			data : {
-				document : doc
+				document : this.doc
 			}
 		};
 
 		var rid;
 		var value;
-		for (index in doc) {
-			value = doc[index];
+		for (index in this.doc) {
+			value = this.doc[index];
 
 			if (index == '@rid')
 				node['id'] = value;
@@ -222,14 +230,9 @@ function OGraph(doc, displayComponent, detailComponent, loadDepthComponent) {
 						if (node == false)
 							return;
 
-						var level = 2;
-						if (loadDepthComponent != null)
-							level = $('#' + loadDepthComponent).val();
-
-						var ans = loadDocument(node.id, level);
-						if (ans != null) {
+						var ans = render(node.id);
+						if (ans != null)
 							node.name = ans.name;
-						}
 
 						// $jit.id(detailComponent).innerHTML =
 						// formatDocumentContent(

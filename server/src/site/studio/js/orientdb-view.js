@@ -85,11 +85,16 @@ function ODocumentView(name, component, doc, options) {
 			"linkset", "long", "short", "string" ];
 
 	ODocumentView.prototype.render = function(doc, database) {
-		if (doc != null)
-			this.doc = doc;
-
 		if (database != null)
 			this.database = database;
+
+		if (doc != null && this.database != null) {
+			if (typeof doc == "string")
+				// LOAD THE RECORD BY RID
+				this.doc = database.load(doc);
+			else
+				this.doc = doc;
+		}
 
 		var script = "<script>";
 
@@ -162,16 +167,18 @@ function ODocumentView(name, component, doc, options) {
 		component += "</form></div></div>";
 
 		// FIELD BIG BLOCK
-		component += "<div class='row-fluid'><div class='well noborder'><div class='row-fluid'";
+		component += "<div class='row-fluid'><div class='well noborder'><div class='row noborder'><div class='span12'><div class='row-fluid noborder'>";
 
 		// HEADER
-		component += "<div class='span2' style='margin-left: 0px;'>"
+		component += "<div class='span2 noborder'>"
 				+ this.settings.fieldColumnName + "</div>"
-				+ "<div class='span10' style='margin-left: 0px;'>"
+				+ "<div class='span10 noborder'>"
 				+ this.settings.valueColumnName + "</div>";
 
+		component += "</div></div>";
+
 		// BEGIN FIELDS
-		component += "<div class='span12' id='" + this.componentId
+		component += "<div class='span12 noborder' id='" + this.componentId
 				+ "_fields'>";
 
 		var fieldValue;
@@ -195,13 +202,13 @@ function ODocumentView(name, component, doc, options) {
 		// END FIELDS
 
 		// BEGIN ADD BUTTON
-		component += "<div class='row'><div class='offset10 span2'>"
+		component += "<div class='offset10 span2 noborder'>"
 				+ this.generateButton('doc_addField', 'Add Field', 'icon-plus',
 						"btn", "ODocumentView.addField('" + this.name + "')")
 				+ "</div>";
 		// END ADD BUTTON
 
-		component += "</div></div><div>"
+		component += "</div><div>"
 				+ this.generateButton('doc_save', 'Save', 'icon-ok',
 						"btn btn-large btn-primary", "ODocumentView.save('"
 								+ this.name + "')") + "</div>";
@@ -232,7 +239,7 @@ function ODocumentView(name, component, doc, options) {
 				+ "'>";
 
 		// BEGIN FIELD LABEL
-		component += "<div class='span2'><input id='doc_"
+		component += "<div class='span2 noborder'><input id='doc_"
 				+ this.fieldNum
 				+ "_label' class='input-small' style='margin-left: 0px;' value='";
 		component += fieldName;
@@ -240,7 +247,7 @@ function ODocumentView(name, component, doc, options) {
 		// END FIELD LABEL
 
 		// BEGIN FIELD VALUE
-		component += "<div class='span8' style='margin-left: 0px;'>";
+		component += "<div class='span8 noborder' style='margin-left: 0px;'>";
 		if (this.settings.editable) {
 			component += "<" + this.settings.valueHtmlComponentType
 					+ " id='doc_" + this.fieldNum + "_value' ";
@@ -277,7 +284,7 @@ function ODocumentView(name, component, doc, options) {
 		// END FIELD VALUE
 
 		// BEGIN FIELD TYPE + REMOVE
-		component += "<div class='span2' style='margin-left: 0px;'>";
+		component += "<div class='span2 noborder' style='margin-left: 0px;'>";
 		component += "<select id='doc_" + this.fieldNum + "_type' class='"
 				+ this.settings.typeValueStyleClass + "'>";
 		for (i in this.types) {
