@@ -788,11 +788,11 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		if (!OHookThreadLocal.INSTANCE.push(id))
 			return false;
 
-		final ORecord<?> rec = id.getRecord();
-		if (rec == null)
-			return false;
-
 		try {
+			final ORecord<?> rec = id.getRecord();
+			if (rec == null)
+				return false;
+
 			boolean recordChanged = false;
 			for (ORecordHook hook : hooks)
 				if (hook.onTrigger(iType, rec))
