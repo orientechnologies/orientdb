@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.clustering.leader;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -102,6 +103,9 @@ public class OLeaderNode {
 	public void connect2Peer(final String[] iServerAddresses, final int iServerPort) {
 		Throwable lastException = null;
 
+		if (OLogManager.instance().isDebugEnabled())
+			OLogManager.instance().debug(this, "Trying to connecting to peer %s:%d", Arrays.toString(iServerAddresses), iServerPort);
+
 		for (String serverAddress : iServerAddresses) {
 			final String key = ODistributedServerManager.getNodeName(serverAddress, iServerPort);
 			final ORemotePeer node;
@@ -110,6 +114,10 @@ public class OLeaderNode {
 				if (nodes.containsKey(key)) {
 					// ALREADY REGISTERED, MAYBE IT WAS DISCONNECTED
 					node = nodes.get(key);
+
+					if (OLogManager.instance().isDebugEnabled())
+						OLogManager.instance().debug(this, "Peer %s already registered. Now has status: %s", key, node.getStatus());
+
 					if (node.getStatus() != ORemotePeer.STATUS.UNREACHABLE && node.getStatus() != ORemotePeer.STATUS.DISCONNECTED
 							&& node.checkConnection())
 						// CONNECTION OK
@@ -155,16 +163,6 @@ public class OLeaderNode {
 		}
 
 		removePeer(iNode);
-	}
-
-	public ORemotePeer getPeerNode(final String iNodeName) {
-		synchronized (this) {
-			final ORemotePeer node = nodes.get(ODistributedServerManager.resolveNetworkHost(iNodeName));
-			if (node != null)
-				return node;
-
-			throw new IllegalArgumentException("Node '" + iNodeName + "' is not configured on server: " + manager.getId());
-		}
 	}
 
 	public List<ORemotePeer> getPeerNodeList() {

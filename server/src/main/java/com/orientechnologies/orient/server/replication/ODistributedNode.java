@@ -36,7 +36,7 @@ import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.
  */
 public class ODistributedNode {
 	public enum STATUS {
-		ONLINE, SYNCHRONIZING
+		OFFLINE, ONLINE, SYNCHRONIZING
 	}
 
 	private final OReplicator											replicator;
@@ -45,7 +45,7 @@ public class ODistributedNode {
 	public int																		networkPort;
 	public Date																		connectedOn;
 	private Map<String, ODistributedDatabaseInfo>	databases	= new HashMap<String, ODistributedDatabaseInfo>();
-	private STATUS																status		= STATUS.ONLINE;
+	private STATUS																status		= STATUS.OFFLINE;
 
 	public ODistributedNode(final OReplicator iReplicator, final String iId) throws IOException {
 		replicator = iReplicator;
@@ -63,6 +63,10 @@ public class ODistributedNode {
 
 	public void startDatabaseReplication(final ODistributedDatabaseInfo iDatabase) throws IOException {
 		synchronized (this) {
+			if (status == STATUS.ONLINE)
+				// ALREADY ONLINE
+				return;
+
 			// REMOVE ANY OTHER PREVIOUS ENTRY
 			final ODistributedDatabaseInfo oldDbInfo = databases.remove(iDatabase.databaseName);
 			if (oldDbInfo != null)
@@ -133,13 +137,13 @@ public class ODistributedNode {
 			db.connection = new ONodeConnection(replicator, id, replicator.getConflictResolver());
 			db.connection.copy(iDb, db.databaseName, db.userName, db.userPassword, iRemoteEngine);
 			db.connected();
+			setStatus(STATUS.ONLINE);
 
 		} catch (IOException e) {
 			// ERROR
 			databases.remove(iDb.getName());
+			setStatus(STATUS.OFFLINE);
 			throw e;
-		} finally {
-			setStatus(STATUS.ONLINE);
 		}
 
 		OLogManager.instance().info(this, "<-> DB %s: sharing completed (%dms)", db.databaseName, System.currentTimeMillis() - time);

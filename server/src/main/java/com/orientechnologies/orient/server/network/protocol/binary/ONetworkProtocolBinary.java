@@ -448,7 +448,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
 		checkServerAccess("database.copy");
 
-		openDatabase(ODatabaseDocument.TYPE, dbUrl, dbUser, dbPassword);
+		connection.database = (ODatabaseDocumentTx) openDatabase(ODatabaseDocument.TYPE, dbUrl, dbUser, dbPassword);
 
 		final ODistributedServerManager manager = OServerMain.server().getHandler(ODistributedServerManager.class);
 		final ODistributedNode node = manager.getReplicator().getOrCreateDistributedNode(remoteServerName);

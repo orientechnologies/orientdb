@@ -83,8 +83,10 @@ public class ODiscoveryListener extends OSoftThread {
 
 				int i = 0;
 
-				if (!parts[i].startsWith(ODistributedServerConfiguration.PACKET_HEADER))
+				if (!parts[i].startsWith(ODistributedServerConfiguration.PACKET_HEADER)) {
+					OLogManager.instance().debug(this, "Packet discarded because invalid");
 					return;
+				}
 
 				if (Integer.parseInt(parts[++i]) != ODistributedServerConfiguration.PROTOCOL_VERSION) {
 					OLogManager.instance().debug(this, "Received bad multicast packet with version %s not equals to the current %d",
@@ -111,8 +113,12 @@ public class ODiscoveryListener extends OSoftThread {
 				}
 
 				// GOOD PACKET, PASS TO THE DISTRIBUTED NODE MANAGER THIS INFO
-				if (manager.getLeader() != null)
-					manager.getLeader().connect2Peer(new String[] { sourceServerAddress, configuredServerAddress }, serverPort);
+				if (manager.getLeader() == null) {
+					OLogManager.instance().debug(this, "Packet discarded because I'm not the leader");
+					return;
+				}
+
+				manager.getLeader().connect2Peer(new String[] { sourceServerAddress, configuredServerAddress }, serverPort);
 
 			} catch (Exception e) {
 				// WRONG PACKET
