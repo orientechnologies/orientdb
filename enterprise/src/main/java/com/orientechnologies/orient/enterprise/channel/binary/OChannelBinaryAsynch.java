@@ -17,8 +17,10 @@ package com.orientechnologies.orient.enterprise.channel.binary;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -52,10 +54,22 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 	}
 
 	public void beginResponse(final int iRequesterId) throws IOException {
+		try {
+			beginResponse(iRequesterId, 0);
+		} catch (InterruptedException e) {
+			// NEVER HAPPENS
+			e.printStackTrace();
+		}
+	}
+
+	public void beginResponse(final int iRequesterId, final long iTimeout) throws IOException, InterruptedException {
 		int unreadResponse = 0;
 		// WAIT FOR THE RESPONSE
 		do {
-			lockRead.lock();
+			if (iTimeout <= 0)
+				lockRead.lock();
+			else if (!lockRead.tryLock(iTimeout, TimeUnit.MILLISECONDS))
+				throw new OTimeoutException("Cannot acquire read lock against channel: " + this);
 
 			if (!channelRead) {
 				channelRead = true;
@@ -102,7 +116,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 					wait(1000);
 					if (System.currentTimeMillis() - start >= 1000)
 						unreadResponse++;
-					
+
 				} catch (InterruptedException e) {
 					Thread.currentThread().interrupt();
 				}
