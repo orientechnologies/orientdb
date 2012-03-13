@@ -58,7 +58,10 @@ public class ODatabaseFactory {
 	}
 
 	public ODatabaseDocumentTx createDatabase(final String iType, final String url) {
-		return new ODatabaseDocumentTx(url);
+		if ("graph".equals(iType))
+			return new OGraphDatabase(url);
+		else
+			return new ODatabaseDocumentTx(url);
 	}
 
 	public ODatabaseDocumentTx createObjectDatabase(final String url) {
