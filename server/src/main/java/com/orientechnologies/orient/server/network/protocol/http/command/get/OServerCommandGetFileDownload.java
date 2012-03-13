@@ -21,6 +21,10 @@ import java.util.Date;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecordAbstract;
+import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -50,13 +54,26 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
 		iRequest.data.commandInfo = "Download";
 		iRequest.data.commandDetail = rid;
 
-		final ORecordBytes response;
+		final ORecordAbstract<?> response;
 
 		try {
 
 			response = db.load(new ORecordId(rid));
 			if (response != null) {
-				sendBinaryFileContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, fileType, response, fileName);
+				if (response instanceof ORecordBytes) {
+					sendORecordBinaryFileContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, fileType,
+							(ORecordBytes) response, fileName);
+				} else if (response instanceof ORecordSchemaAware) {
+					for (OProperty prop : ((ORecordSchemaAware<?>) response).getSchemaClass().properties()) {
+						if (prop.getType().equals(OType.BINARY))
+							sendBinaryFieldFileContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, fileType,
+									(byte[]) ((ORecordSchemaAware<?>) response).field(prop.getName()), fileName);
+					}
+				} else {
+					sendTextContent(iRequest, OHttpUtils.STATUS_INVALIDMETHOD_CODE,
+							"Record requested is not a file nor has a readable schema", null, OHttpUtils.CONTENT_TEXT_PLAIN,
+							"Record requested is not a file nor has a readable schema");
+				}
 			} else {
 				sendTextContent(iRequest, OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Record requested not exists", null,
 						OHttpUtils.CONTENT_TEXT_PLAIN, "Record requestes not exists");
@@ -72,7 +89,7 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
 		return false;
 	}
 
-	protected void sendBinaryFileContent(final OHttpRequest iRequest, final int iCode, final String iReason,
+	protected void sendORecordBinaryFileContent(final OHttpRequest iRequest, final int iCode, final String iReason,
 			final String iContentType, final ORecordBytes record, final String iFileName) throws IOException {
 		sendStatus(iRequest, iCode, iReason);
 		sendResponseHeaders(iRequest, iContentType);
@@ -82,6 +99,20 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
 		writeLine(iRequest, null);
 
 		record.toOutputStream(iRequest.channel.outStream);
+
+		iRequest.channel.flush();
+	}
+
+	protected void sendBinaryFieldFileContent(final OHttpRequest iRequest, final int iCode, final String iReason,
+			final String iContentType, final byte[] record, final String iFileName) throws IOException {
+		sendStatus(iRequest, iCode, iReason);
+		sendResponseHeaders(iRequest, iContentType);
+		writeLine(iRequest, "Content-Disposition: attachment; filename=" + iFileName);
+		writeLine(iRequest, "Date: " + new Date());
+		writeLine(iRequest, OHttpUtils.HEADER_CONTENT_LENGTH + (record.length));
+		writeLine(iRequest, null);
+
+		iRequest.channel.outStream.write(record);
 
 		iRequest.channel.flush();
 	}
