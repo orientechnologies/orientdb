@@ -53,7 +53,7 @@ function ODatabase(databasePath) {
 				this.encodedDatabaseName += parts[p];
 			}
 		} else
-		this.encodedDatabaseName = this.databaseName;
+			this.encodedDatabaseName = this.databaseName;
 	}
 
 	ODatabase.prototype.getDatabaseInfo = function() {
@@ -63,12 +63,12 @@ function ODatabase(databasePath) {
 		this.databaseInfo = iDatabaseInfo;
 	}
 
-    ODatabase.prototype.getUrlSuffix = function() {
-        return this.urlSuffix;
-    }
-    ODatabase.prototype.setUrlSuffix = function(iUrlSuffix) {
-        this.urlSuffix = iUrlSuffix;
-    }
+	ODatabase.prototype.getUrlSuffix = function() {
+		return this.urlSuffix;
+	}
+	ODatabase.prototype.setUrlSuffix = function(iUrlSuffix) {
+		this.urlSuffix = iUrlSuffix;
+	}
 
 	ODatabase.prototype.getCommandResult = function() {
 		return this.commandResult;
@@ -118,23 +118,24 @@ function ODatabase(databasePath) {
 	ODatabase.prototype.setParseResponseLinks = function(iParseResponseLinks) {
 		this.parseResponseLink = iParseResponseLinks;
 	}
-	
+
 	ODatabase.prototype.getUserName = function() {
-		if( !this.databaseInfo )
+		if (!this.databaseInfo)
 			return null;
-		
+
 		return this.databaseInfo.currentUser;
 	}
-	
+
 	ODatabase.prototype.getUser = function() {
-		var queryString = "select from OUser where name = '" + this.getUserName() + "'";
+		var queryString = "select from OUser where name = '"
+				+ this.getUserName() + "'";
 		query = this.query(queryString, null, '*:-1');
-		if( query == null )
+		if (query == null)
 			return null;
 
 		return query.result[0];
 	}
-	
+
 	ODatabase.prototype.getRemoveObjectCircleReferences = function() {
 		return this.removeObjectCircleReferences;
 	}
@@ -160,7 +161,8 @@ function ODatabase(databasePath) {
 		}
 		$.ajax({
 			type : type,
-			url : urlPrefix + 'connect/' + this.encodedDatabaseName + this.urlSuffix,
+			url : urlPrefix + 'connect/' + this.encodedDatabaseName
+					+ this.urlSuffix,
 			context : this,
 			async : false,
 			username : userName,
@@ -176,8 +178,6 @@ function ODatabase(databasePath) {
 		});
 		return this.getDatabaseInfo();
 	}
-	
-
 
 	ODatabase.prototype.create = function(userName, userPass, type) {
 		if (userName == null) {
@@ -193,8 +193,8 @@ function ODatabase(databasePath) {
 		}
 		$.ajax({
 			type : "POST",
-			url : urlPrefix + 'database/' + this.encodedDatabaseName
-			+ '/' + type + this.urlSuffix,
+			url : urlPrefix + 'database/' + this.encodedDatabaseName + '/'
+					+ type + this.urlSuffix,
 			context : this,
 			async : false,
 			username : userName,
@@ -211,7 +211,8 @@ function ODatabase(databasePath) {
 		return this.getDatabaseInfo();
 	}
 
-	ODatabase.prototype.query = function(iQuery, iLimit, iFetchPlan, successCallback) {
+	ODatabase.prototype.query = function(iQuery, iLimit, iFetchPlan,
+			successCallback) {
 		if (this.databaseInfo == null) {
 			this.open();
 		}
@@ -287,7 +288,7 @@ function ODatabase(databasePath) {
 		if (this.databaseInfo == null) {
 			this.open();
 		}
-	
+
 		var rid = obj['@rid'];
 		var methodType = rid == null || rid == '-1:-1' ? 'POST' : 'PUT';
 		if (this.removeObjectCircleReferences && typeof obj == 'object') {
@@ -296,7 +297,7 @@ function ODatabase(databasePath) {
 		var url = urlPrefix + 'document/' + this.encodedDatabaseName;
 		if (rid)
 			url += '/' + this.URLEncode(rid);
-		
+
 		$.ajax({
 			type : methodType,
 			url : url + this.urlSuffix,
@@ -308,18 +309,17 @@ function ODatabase(databasePath) {
 				this.setErrorMessage(null);
 				this.setCommandResponse(msg);
 				this.setCommandResult(msg);
-				if(successCallback)
-					successCallback();
+				if (successCallback)
+					successCallback(msg.responseText);
 			},
 			error : function(msg) {
 				this.handleResponse(null);
 				this.setErrorMessage('Save error: ' + msg.responseText);
-				if(errorCallback)
+				if (errorCallback)
 					errorCallback(msg.responseText);
 			}
 		});
-		
-		 
+
 		if (methodType == 'PUT') {
 			return rid;
 		} else {
@@ -484,8 +484,9 @@ function ODatabase(databasePath) {
 		});
 		return this.getCommandResult();
 	}
-	
-	ODatabase.prototype.createProperty = function(iClassName, iPropertyName, iPropertyType, iLinkedType) {
+
+	ODatabase.prototype.createProperty = function(iClassName, iPropertyName,
+			iPropertyType, iLinkedType) {
 		if (this.databaseInfo == null) {
 			this.open();
 		}
@@ -502,7 +503,8 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : "POST",
 			url : urlPrefix + 'property/' + this.encodedDatabaseName + '/'
-					+ iClassName + '/' + iPropertyName + iPropertyType + iLinkedType + this.urlSuffix,
+					+ iClassName + '/' + iPropertyName + iPropertyType
+					+ iLinkedType + this.urlSuffix,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -516,13 +518,13 @@ function ODatabase(databasePath) {
 		});
 		return this.getCommandResult();
 	}
-	
-	ODatabase.prototype.createProperties = function(iClassName,iPropertiesJson) {
+
+	ODatabase.prototype.createProperties = function(iClassName, iPropertiesJson) {
 		if (this.databaseInfo == null) {
 			this.open();
 		}
 		var jsonData;
-		if (typeof iPropertiesJson == 'object' ){
+		if (typeof iPropertiesJson == 'object') {
 			jsonData = $toJSON(iPropertiesJson)
 		} else {
 			jsonData = iPropertiesJson;
@@ -584,7 +586,8 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : "POST",
 			url : urlPrefix + 'command/' + this.encodedDatabaseName + '/'
-					+ iLanguage + '/' + iCommand + "/" + iLimit + this.urlSuffix,
+					+ iLanguage + '/' + iCommand + "/" + iLimit
+					+ this.urlSuffix,
 			context : this,
 			async : false,
 			'dataType' : dataType,
@@ -686,8 +689,52 @@ function ODatabase(databasePath) {
 		return this.getCommandResult();
 	}
 
+	ODatabase.prototype.importRecords = function(content, configuration,
+			errorCallback, successCallback) {
+		if (this.databaseInfo == null)
+			this.open();
+
+		var cfg = {
+			"format" : "CSV",
+			"separator" : ",",
+			"stringDelimiter" : '"',
+			"decimalSeparator" : ".",
+			"thousandsSeparator" : ","
+		}
+
+		if (configuration)
+			// OVERWRITE DEFAULT CONFIGURATION
+			for (c in configuration)
+				cfg[c] = configuration[c];
+
+		$.ajax({
+			type : "POST",
+			url : urlPrefix + 'importRecords/' + $('#header-database').val()
+					+ '/' + cfg["format"] + '/' + cfg["class"] + '/'
+					+ cfg["separator"] + '/' + cfg["stringDelimiter"]
+					+ cfg["decimalSeparator"] + '/' + cfg["thousandsSeparator"]
+					+ '/' + this.urlSuffix,
+			data : content,
+			context : this,
+			async : false,
+			success : function(msg) {
+				this.setErrorMessage(null);
+				this.setCommandResponse(msg);
+				this.setCommandResult(msg);
+				if (successCallback)
+					successCallback(msg);
+			},
+			error : function(msg) {
+				this.handleResponse(null);
+				this.setErrorMessage('Import error: ' + msg.responseText);
+				if (errorCallback)
+					errorCallback(msg);
+			}
+		});
+	}
+
 	ODatabase.prototype.handleResponse = function(iResponse) {
-		if (typeof iResponse != 'object'){
+		if (typeof iResponse != 'object') {
 			iResponse = this.UTF8Encode(iResponse);
 		}
 		this.setCommandResponse(iResponse);
@@ -773,8 +820,8 @@ function ODatabase(databasePath) {
 			if (typeof value == 'object') {
 				this.getObjectFromLinksMap(value, linkMap);
 			} else {
-				if (field != '@rid' && value.length > 0 && value.charAt(0) == '#'
-						&& linkMap[value] != null) {
+				if (field != '@rid' && value.length > 0
+						&& value.charAt(0) == '#' && linkMap[value] != null) {
 					obj[field] = linkMap[value];
 				}
 			}
@@ -783,21 +830,21 @@ function ODatabase(databasePath) {
 	}
 
 	ODatabase.prototype.removeCircleReferences = function(obj, linkMap) {
-        linkMap = this.removeCircleReferencesPopulateMap(obj, linkMap);
-        if (obj != null && typeof obj == 'object' && !$.isArray(obj)) {
-            if (obj['@rid'] != null && obj['@rid']) {
-                var rid = this.getRidWithPound(obj['@rid']);
-                linkMap[rid] = rid;
-            }
-        }
-        this.removeCircleReferencesChangeObject(obj, linkMap);
-    }
+		linkMap = this.removeCircleReferencesPopulateMap(obj, linkMap);
+		if (obj != null && typeof obj == 'object' && !$.isArray(obj)) {
+			if (obj['@rid'] != null && obj['@rid']) {
+				var rid = this.getRidWithPound(obj['@rid']);
+				linkMap[rid] = rid;
+			}
+		}
+		this.removeCircleReferencesChangeObject(obj, linkMap);
+	}
 
 	ODatabase.prototype.removeCircleReferencesPopulateMap = function(obj,
 			linkMap) {
 		for (field in obj) {
 			var value = obj[field];
-			if (value!=null && typeof value == 'object' && !$.isArray(value)) {
+			if (value != null && typeof value == 'object' && !$.isArray(value)) {
 				if (value['@rid'] != null && value['@rid']) {
 					var rid = this.getRidWithPound(value['@rid']);
 					if (linkMap[rid] == null || !linkMap[rid]) {
@@ -806,10 +853,11 @@ function ODatabase(databasePath) {
 					linkMap = this.removeCircleReferencesPopulateMap(value,
 							linkMap);
 				}
-			} else if (value!=null && typeof value == 'object' && $.isArray(value)) {
+			} else if (value != null && typeof value == 'object'
+					&& $.isArray(value)) {
 				for (i in value) {
 					var arrayValue = value[i];
-					if (arrayValue!=null && typeof arrayValue == 'object') {
+					if (arrayValue != null && typeof arrayValue == 'object') {
 						if (arrayValue['@rid'] != null && arrayValue['@rid']) {
 							var rid = this.getRidWithPound(arrayValue['@rid']);
 							if (linkMap[rid] == null || !linkMap[rid]) {
@@ -829,7 +877,7 @@ function ODatabase(databasePath) {
 			linkMap) {
 		for (field in obj) {
 			var value = obj[field];
-			if (value!=null && typeof value == 'object' && !$.isArray(value)) {
+			if (value != null && typeof value == 'object' && !$.isArray(value)) {
 				var inspectObject = true;
 				if (value['@rid'] != null && value['@rid']) {
 					var rid = this.getRidWithPound(value['@rid']);
@@ -846,7 +894,8 @@ function ODatabase(databasePath) {
 				if (inspectObject) {
 					this.removeCircleReferencesChangeObject(value, linkMap);
 				}
-			} else if (value!=null && typeof value == 'object' && $.isArray(value)) {
+			} else if (value != null && typeof value == 'object'
+					&& $.isArray(value)) {
 				for (i in value) {
 					var arrayValue = value[i];
 					if (typeof arrayValue == 'object') {
@@ -940,61 +989,57 @@ function ODatabase(databasePath) {
 
 		return utftext;
 	}
-	
-	ODatabase.prototype.UTF8Encode =  function (string) {
-		string = string.replace(/\r\n/g,"\n");
+
+	ODatabase.prototype.UTF8Encode = function(string) {
+		string = string.replace(/\r\n/g, "\n");
 		var utftext = "";
- 
-		for (var n = 0; n < string.length; n++) {
- 
+
+		for ( var n = 0; n < string.length; n++) {
+
 			var c = string.charCodeAt(n);
- 
+
 			if (c < 128) {
 				utftext += String.fromCharCode(c);
-			}
-			else if((c > 127) && (c < 2048)) {
+			} else if ((c > 127) && (c < 2048)) {
 				utftext += String.fromCharCode((c >> 6) | 192);
 				utftext += String.fromCharCode((c & 63) | 128);
-			}
-			else {
+			} else {
 				utftext += String.fromCharCode((c >> 12) | 224);
 				utftext += String.fromCharCode(((c >> 6) & 63) | 128);
 				utftext += String.fromCharCode((c & 63) | 128);
 			}
- 
+
 		}
- 
+
 		return utftext;
 	}
-	
-	ODatabase.prototype.UTF8Decode = function (utftext) {
+
+	ODatabase.prototype.UTF8Decode = function(utftext) {
 		var string = "";
 		var i = 0;
 		var c = c1 = c2 = 0;
- 
-		while ( i < utftext.length ) {
- 
+
+		while (i < utftext.length) {
+
 			c = utftext.charCodeAt(i);
- 
+
 			if (c < 128) {
 				string += String.fromCharCode(c);
 				i++;
-			}
-			else if((c > 191) && (c < 224)) {
-				c2 = utftext.charCodeAt(i+1);
+			} else if ((c > 191) && (c < 224)) {
+				c2 = utftext.charCodeAt(i + 1);
 				string += String.fromCharCode(((c & 31) << 6) | (c2 & 63));
 				i += 2;
-			}
-			else {
-				c2 = utftext.charCodeAt(i+1);
-				c3 = utftext.charCodeAt(i+2);
-				string += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
+			} else {
+				c2 = utftext.charCodeAt(i + 1);
+				c3 = utftext.charCodeAt(i + 2);
+				string += String.fromCharCode(((c & 15) << 12)
+						| ((c2 & 63) << 6) | (c3 & 63));
 				i += 3;
 			}
- 
+
 		}
-		
+
 		return string;
-		
 	}
 }
