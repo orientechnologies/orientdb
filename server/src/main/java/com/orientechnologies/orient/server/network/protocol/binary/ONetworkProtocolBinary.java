@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
@@ -500,10 +501,15 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
 		connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, "local");
 
-		OLogManager.instance().info(this, "Dropped database '%s", connection.database.getURL());
+		if (connection.database.exists()) {
 
-		connection.database.drop();
-		connection.close();
+			OLogManager.instance().info(this, "Dropped database '%s", connection.database.getURL());
+
+			connection.database.drop();
+			connection.close();
+		} else {
+			throw new OStorageException("Database with name '" + dbName + "' doesn't exits.");
+		}
 
 		if (OClientConnectionManager.instance().disconnect(connection.id))
 			sendShutdown();

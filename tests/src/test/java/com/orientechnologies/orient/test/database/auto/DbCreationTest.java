@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
@@ -125,7 +126,11 @@ public class DbCreationTest {
 
 		ODatabaseDocumentTx db = new ODatabaseDocumentTx(u);
 
-		ODatabaseHelper.deleteDatabase(db);
+		try {
+			ODatabaseHelper.deleteDatabase(db);
+		} catch (OStorageException e) {
+			Assert.assertTrue(e.getCause().getMessage().equals("Database with name 'sub/subTest' doesn't exits."));
+		}
 		ODatabaseHelper.createDatabase(db, u);
 		db.open("admin", "admin");
 		db.close();
@@ -147,7 +152,11 @@ public class DbCreationTest {
 
 		ODatabaseDocumentTx db = new ODatabaseDocumentTx(u);
 
-		ODatabaseHelper.deleteDatabase(db);
+		try {
+			ODatabaseHelper.deleteDatabase(db);
+		} catch (OStorageException e) {
+			Assert.assertTrue(e.getCause().getMessage().equals("Database with name 'sub/subTest' doesn't exits."));
+		}
 		ODatabaseHelper.createDatabase(db, u);
 
 		db = ODatabaseDocumentPool.global().acquire(u, "admin", "admin");
@@ -159,7 +168,12 @@ public class DbCreationTest {
 	@Test
 	public void testCreateAndConnectionPool() throws IOException {
 		ODatabaseDocument db = new ODatabaseDocumentTx(url);
-		ODatabaseHelper.deleteDatabase(db);
+		try {
+			ODatabaseHelper.deleteDatabase(db);
+		} catch (OStorageException e) {
+			Assert.assertTrue(e.getCause().getMessage().startsWith("Database with name '"));
+			Assert.assertTrue(e.getCause().getMessage().endsWith("'doesn't exits."));
+		}
 		ODatabaseHelper.createDatabase(db, url);
 		db.close();
 		// Get connection from pool
