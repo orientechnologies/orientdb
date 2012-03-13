@@ -83,6 +83,20 @@ function getRequestParam(name, string) {
 	return params[name] || "";
 }
 
+function generateClassSelect(id, selectedClass) {
+	var classes = "<select id='" + id + "'>";
+	for (cls in databaseInfo['classes']) {
+		classes += "<option";
+		if (selectedClass && databaseInfo['classes'][cls].name == selectedClass) {
+			currentClass = databaseInfo['classes'][cls];
+			classes += " selected = 'yes'";
+		}
+		classes += ">" + databaseInfo['classes'][cls].name + "</option>";
+	}
+	classes += "</select>";
+	return classes;
+}
+
 $(document).ready(function() {
 	$(document).ajaxError(function(event, request, settings, err) {
 		$("#output").val("Error: " + request.responseText);

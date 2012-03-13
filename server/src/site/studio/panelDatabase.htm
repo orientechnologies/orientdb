@@ -290,43 +290,108 @@
 			</table>
 		</div>
 		<div id="tab-db-importExport">
-			<table style="width: 100%;" cellpadding="5">
-				<tr>
-					<td valign="top">
-						<button id="exportDatabase" class="ui-button-text exportButton" style="text-align: left; width: 100%;">Export Database</button>
-					</td>
-					<td valign="top" class="help">Orient server can export databases as JSON data. Click the <b>Export Database</b> button to download a gzip
-						compressed file containing said JSON file.
-					</td>
-				</tr>
-				<tr>
-					<td valign="top">
-						<div id="importDatabaseContainer">
-							<form id="importDatabase" class="file_upload" enctype="multipart/form-data" method="POST">
-								<input type="file" multiple="" name="databaseFile" />
-								<button type="button">Upload</button>
-								<div class="file_upload_label">Import Database</div>
-							</form>
-							<table id="importFileUploadTable">
-							</table>
-							<table id="importFileDownloadTable">
-							</table>
-						</div>
-					</td>
-					<td valign="top" class="help">Import a previously exported database. JSON data.<br /> <b>Requirements:</b>
-						<ul>
-							<li>Supported only JSON text file types.</li>
-							<li>The default max request content lenght is 100000 bytes.<br />To change it add the following entry (value expressed in bytes) in the <b>orientdb-server-config.xml</b>:<br>
-								<code>&lt;entry name=&#34;network.http.maxLength&#34; value=&#34;&#34; &#47;&gt;</code></li>
-						</ul>
-					</td>
-				</tr>
-			</table>
+			<div id="tabs-impexp" class="row-fluid">
+				<ul>
+					<li><a href="#tab-impexp-db"><span>Database</span> </a></li>
+					<li><a href="#tab-impexp-records"><span>Records</span> </a></li>
+				</ul>
+				<div id="tab-impexp-db" class="row-fluid">
+					<table style="width: 100%;" cellpadding="5">
+						<tr>
+							<td valign="top">
+								<button id="exportDatabase" class="ui-button-text exportButton" style="text-align: left; width: 100%;">Export Database</button>
+							</td>
+							<td valign="top" class="help">Orient server can export databases as JSON data. Click the <b>Export Database</b> button to download a gzip
+								compressed file containing said JSON file.
+							</td>
+						</tr>
+						<tr>
+							<td valign="top">
+								<div id="importDatabaseContainer">
+									<form id="importDatabase" class="file_upload" enctype="multipart/form-data" method="POST">
+										<input type="file" multiple="" name="databaseFile" />
+										<button type="button">Upload</button>
+										<div class="file_upload_label">Import Database</div>
+									</form>
+									<table id="importFileUploadTable">
+									</table>
+									<table id="importFileDownloadTable">
+									</table>
+								</div>
+							</td>
+							<td valign="top" class="help">Import a previously exported database. JSON data.<br /> <b>Requirements:</b>
+								<ul>
+									<li>Supported only JSON text file types.</li>
+									<li>The default max request content lenght is 100000 bytes.<br />To change it add the following entry (value expressed in bytes) in the
+										<b>orientdb-server-config.xml</b>:<br> <code>&lt;entry name=&#34;network.http.maxLength&#34; value=&#34;&#34; &#47;&gt;</code></li>
+								</ul>
+							</td>
+						</tr>
+					</table>
+				</div>
+				<div id="tab-impexp-records">
+					<div class="row">
+						<table style='width: 100%;'>
+							<tr>
+								<td>Format:</td>
+								<td>Class:</td>
+								<td>Separator:</td>
+								<td>String delimiter:</td>
+								<td>Locale:</td>
+								<td colspan="2">
+									<button onclick="javascript:importRecords()" class="btn">
+										Import <i class="icon-arrow-right"></i>
+									</button>
+								</td>
+							</tr>
+							<tr>
+								<td><select id="importRecordsFormat" class="input-mini"><option value="csv">CSV</option></select></td>
+								<td>
+									<div id="impexp-classes"></div>
+								</td>
+								<td><input type="text" id="importRecordsSeparator" value="," class="input-mini" style="width: 20px;" /></td>
+								<td><input type="text" id="importRecordsStringDelimiter" value='"' class="input-mini" style="width: 20px;" /></td>
+								<td><input type="text" id="importRecordsLocale" class="input-mini" style="width: 80px;"></td>
+							</tr>
+						</table>
+						<table style='width: auto;'>
+							<tr>
+								<td><label>Input</label> <textarea style='width: auto;' id="importRecordsContent" rows="20" cols="200"></textarea></td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>
 
-<script language="javascript">
+<script>
+	function importRecords() {
+		var format = $("#importRecordsFormat").val();
+		var cls = $("#importRecordsClass").val();
+		var content = $.trim($("#importRecordsContent").val());
+		var separator = $.trim($("#importRecordsSeparator").val());
+		var stringDelimiter = $.trim($("#importRecordsStringDelimiter").val());
+		var decimalSeparator = $
+				.trim($("#importRecordsDecimalSeparator").val());
+		var thousandsSeparator = $.trim($("#importRecordsThousandsSeparator")
+				.val());
+
+		orientServer.importRecords(content, {
+			"format" : format,
+			"class" : cls,
+			"separator" : separator,
+			"stringDelimiter" : stringDelimiter,
+			"decimalSeparator" : decimalSeparator,
+			"thousandsSeparator" : thousandsSeparator
+		}, function(msg) {
+			$("#output").text(msg);
+		}, function(msg) {
+			$("#output").val(msg);
+		});
+	}
+
 	function showDatabaseInfo() {
 		fillDynaTable($('#databaseClusters'), "Clusters", [ 'id', 'name',
 				'type', 'records', 'size', 'filled', 'maxSize', 'files' ], [ {
@@ -1134,6 +1199,8 @@
 						}
 					});
 	$('#tabs-security').tabs();
+	$('#tabs-impexp').tabs();
+	$('#impexp-classes').html(generateClassSelect("importRecordsClass"));
 
 	$('#importDatabase')
 			.fileUploadUI(

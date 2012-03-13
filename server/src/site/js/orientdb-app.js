@@ -200,6 +200,9 @@ function openLink(rid) {
 }
 
 function displayResultSet(result) {
+	if (!result || result.constructor != Array)
+		return;
+
 	$("#output").val(
 			"Query executed in " + stopTimer() + " sec. Returned "
 					+ result.length + " record(s)");

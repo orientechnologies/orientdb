@@ -135,18 +135,8 @@ function ODocumentView(name, component, doc, options) {
 		if (this.doc != null)
 			fieldValue = this.doc['@class'];
 
-		classes = "<select id='doc__class'>";
-		for (cls in databaseInfo['classes']) {
-			classes += "<option";
-			if (databaseInfo['classes'][cls].name == fieldValue) {
-				currentClass = databaseInfo['classes'][cls];
-				classes += " selected = 'yes'";
-			}
-			classes += ">" + databaseInfo['classes'][cls].name + "</option>";
-		}
-		classes += "</select>";
-
-		component += "<label>@class</label>" + classes;
+		component += "<label>@class</label>"
+				+ generateClassSelect("doc__class", fieldValue);
 
 		if (this.doc != null)
 			fieldValue = this.doc['@rid'].substring(1);

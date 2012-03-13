@@ -108,6 +108,10 @@ button.exportButton:hover {
 	margin-left: 0px;
 }
 
+button.uniform-large {
+	width: 130px;
+}
+
 .link {
 	padding: 2px 4px 3px;
 	font-size: 11.049999999999999px;
@@ -115,7 +119,7 @@ button.exportButton:hover {
 	-webkit-border-radius: 3px;
 	-moz-border-radius: 3px;
 	border-radius: 3px;
-	color: #fff!important;
+	color: #fff !important;
 	background-color: #3a87ad;
 	cursor: pointer;
 }
@@ -132,7 +136,7 @@ button.exportButton:hover {
 	-webkit-border-radius: 3px;
 	-moz-border-radius: 3px;
 	border-radius: 3px;
-	color: #fff!important;
+	color: #fff !important;
 	background-color: #3a87ad;
 	cursor: pointer;
 }
