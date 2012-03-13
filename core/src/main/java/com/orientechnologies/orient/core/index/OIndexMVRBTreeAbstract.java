@@ -113,7 +113,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 					clustersToIndex.add(iDatabase.getClusterNameById(id));
 
 			final OStreamSerializer keySerializer;
-			if (indexDefinition instanceof OCompositeIndexDefinition)
+			if (indexDefinition != null && indexDefinition.getTypes().length > 1)
 				keySerializer = OCompositeKeySerializer.INSTANCE;
 			else
 				keySerializer = OStreamSerializerLiteral.INSTANCE;
