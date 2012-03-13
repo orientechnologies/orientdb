@@ -74,8 +74,15 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 		iRequest.data.commandInfo = "Get static content";
 		iRequest.data.commandDetail = iRequest.url;
 
-		if (wwwPath == null)
+		if (wwwPath == null) {
 			wwwPath = iRequest.configuration.getValueAsString("orientdb.www.path", "src/site");
+
+			final File wwwPathDirectory = new File(wwwPath);
+			if (!wwwPathDirectory.exists())
+				OLogManager.instance().warn(this, "orientdb.www.path variable points to '%s' but it doesn't exists", wwwPath);
+			if (!wwwPathDirectory.isDirectory())
+				OLogManager.instance().warn(this, "orientdb.www.path variable points to '%s' but it isn't a directory", wwwPath);
+		}
 
 		if (cacheContents == null && OGlobalConfiguration.SERVER_CACHE_FILE_STATIC.getValueAsBoolean())
 			// CREATE THE CACHE IF ENABLED
