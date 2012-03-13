@@ -17,9 +17,9 @@ package com.orientechnologies.orient.server.network.protocol.http;
 
 /**
  * Contains HTTP utilities static methods and constants.
- *
+ * 
  * @author Luca Garulli
- *
+ * 
  */
 public class OHttpUtils {
 
@@ -63,18 +63,22 @@ public class OHttpUtils {
 	public static final String	STATUS_CREATED_DESCRIPTION					= "Created";
 	public static final int			STATUS_OK_CODE											= 200;
 	public static final String	STATUS_OK_DESCRIPTION								= "OK";
+	public static final int			STATUS_BADREQ_CODE									= 400;
+	public static final String	STATUS_BADREQ_DESCRIPTION						= "Bad request";
 	public static final int			STATUS_AUTH_CODE										= 401;
 	public static final String	STATUS_AUTH_DESCRIPTION							= "Unauthorized";
+	public static final int			STATUS_FORBIDDEN_CODE								= 403;
+	public static final String	STATUS_FORBIDDEN_DESCRIPTION				= "Forbidden";
 	public static final int			STATUS_NOTFOUND_CODE								= 404;
 	public static final String	STATUS_NOTFOUND_DESCRIPTION					= "Not Found";
 	public static final int			STATUS_INVALIDMETHOD_CODE						= 405;
 	public static final String	STATUS_INVALIDMETHOD_DESCRIPTION		= "Method Not Allowed";
 	public static final int			STATUS_CONFLICT_CODE								= 409;
 	public static final String	STATUS_CONFLICT_DESCRIPTION					= "Conflict";
-	public static final int			STATUS_INTERNALERROR								= 500;
-	public static final String	STATUS_ERROR_DESCRIPTION						= "Internal Server Error";
-    public static final int			STATUS_FORBIDDEN_CODE								= 403;
-	public static final String	STATUS_FORBIDDEN_DESCRIPTION						= "Forbidden";
+	public static final int			STATUS_INTERNALERROR_CODE						= 500;
+	public static final String	STATUS_INTERNALERROR_DESCRIPTION		= "Internal Server Error";
+	public static final int			STATUS_NOTIMPL_CODE									= 501;
+	public static final String	STATUS_NOTIMPL_DESCRIPTION					= "Not Implemented";
 
 	public static String[] getParts(String iURI) {
 		if (iURI == null || iURI.length() == 0)

@@ -103,7 +103,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 		// GET THE TARGET CLASS
 		final OClass cls = db.getMetadata().getSchema().getClass(rid);
 		if (cls == null) {
-			sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Class '"
+			sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Class '"
 					+ rid + "' not found.");
 			return;
 		}
@@ -136,7 +136,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 						"Property " + fields.get("name") + " created successfully");
 
 			} catch (Exception e) {
-				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error on creating a new property in class " + rid + ": " + e,
+				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on creating a new property in class " + rid + ": " + e,
 						null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating a new property in class " + rid + ": " + e);
 			}
 		} else if ("del".equals(operation)) {
@@ -175,7 +175,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 						+ "' created successfully with id=" + db.getMetadata().getSchema().getClasses().size());
 
 			} catch (Exception e) {
-				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error on creating the new class '" + rid + "': " + e, null,
+				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on creating the new class '" + rid + "': " + e, null,
 						OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating the new class '" + rid + "': " + e);
 			}
 		} else if ("del".equals(operation)) {
@@ -274,7 +274,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 		// GET THE TARGET CLASS
 		final OClass cls = db.getMetadata().getSchema().getClass(rid);
 		if (cls == null) {
-			sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Class '"
+			sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Class '"
 					+ rid + "' not found.");
 			return;
 		}
@@ -296,7 +296,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 						"Index " + fields.get("name") + " created successfully");
 
 			} catch (Exception e) {
-				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error on creating a new index for class " + rid + ": " + e,
+				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on creating a new index for class " + rid + ": " + e,
 						null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating a new index for class " + rid + ": " + e);
 			}
 		} else if ("del".equals(operation)) {
@@ -305,7 +305,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 			try {
 				final OIndex<?> index = cls.getClassIndex(className);
 				if (index == null) {
-					sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Index '"
+					sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Index '"
 							+ className + "' not found in class '" + rid + "'.");
 					return;
 				}
@@ -315,12 +315,12 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Index " + className
 						+ " deleted successfully.");
 			} catch (Exception e) {
-				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error on deletion index '" + className + "' for class " + rid
+				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on deletion index '" + className + "' for class " + rid
 						+ ": " + e, null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error on deletion index '" + className + "' for class " + rid + ": "
 						+ e);
 			}
 		} else
-			sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN,
+			sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN,
 					"Operation not supported");
 	}
 

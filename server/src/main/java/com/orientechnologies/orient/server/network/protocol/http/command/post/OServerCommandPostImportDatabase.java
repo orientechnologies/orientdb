@@ -65,7 +65,7 @@ public class OServerCommandPostImportDatabase extends OHttpMultipartRequestComma
 				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON,
 						"{\"responseText\": \"Database imported Correctly, see server log for more informations.\"}");
 			} catch (Exception e) {
-				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, e.getMessage() + ": " + e.getCause() != null ? e.getCause()
+				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, e.getMessage() + ": " + e.getCause() != null ? e.getCause()
 						.getMessage() : "", null, OHttpUtils.CONTENT_JSON, "{\"responseText\": \"" + e.getMessage() + ": "
 						+ (e.getCause() != null ? e.getCause().getMessage() : "") + "\"}");
 			} finally {

@@ -79,7 +79,7 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
 						OHttpUtils.CONTENT_TEXT_PLAIN, "Record requestes not exists");
 			}
 		} catch (Exception e) {
-			sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, OHttpUtils.STATUS_ERROR_DESCRIPTION, null,
+			sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, OHttpUtils.STATUS_INTERNALERROR_DESCRIPTION, null,
 					OHttpUtils.CONTENT_TEXT_PLAIN, e.getMessage());
 		} finally {
 			if (db != null)

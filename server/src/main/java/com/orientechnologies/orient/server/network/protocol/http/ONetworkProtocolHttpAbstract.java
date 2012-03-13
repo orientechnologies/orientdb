@@ -22,6 +22,8 @@ import java.net.SocketTimeoutException;
 import java.net.URLDecoder;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.IllegalFormatException;
+import java.util.InputMismatchException;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -165,15 +167,22 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		String errorMessage = null;
 		String responseHeaders = null;
 
-		if (e instanceof ORecordNotFoundException)
-			errorCode = 404;
-		else if (e instanceof OConcurrentModificationException) {
+		if (e instanceof IllegalFormatException || e instanceof InputMismatchException) {
+			errorCode = OHttpUtils.STATUS_BADREQ_CODE;
+			errorReason = OHttpUtils.STATUS_BADREQ_DESCRIPTION;
+		} else if (e instanceof ORecordNotFoundException) {
+			errorCode = OHttpUtils.STATUS_NOTFOUND_CODE;
+			errorReason = OHttpUtils.STATUS_NOTFOUND_DESCRIPTION;
+		} else if (e instanceof OConcurrentModificationException) {
 			errorCode = OHttpUtils.STATUS_CONFLICT_CODE;
 			errorReason = OHttpUtils.STATUS_CONFLICT_DESCRIPTION;
 		} else if (e instanceof OLockException) {
 			errorCode = 423;
+		} else if (e instanceof UnsupportedOperationException) {
+			errorCode = OHttpUtils.STATUS_NOTIMPL_CODE;
+			errorReason = OHttpUtils.STATUS_NOTIMPL_DESCRIPTION;
 		} else if (e instanceof IllegalArgumentException)
-			errorCode = OHttpUtils.STATUS_INTERNALERROR;
+			errorCode = OHttpUtils.STATUS_INTERNALERROR_CODE;
 
 		if (e instanceof ODatabaseException || e instanceof OSecurityAccessException || e instanceof OCommandExecutionException
 				|| e instanceof OLockException) {
@@ -205,7 +214,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		}
 
 		if (errorReason == null)
-			errorReason = OHttpUtils.STATUS_ERROR_DESCRIPTION;
+			errorReason = OHttpUtils.STATUS_INTERNALERROR_DESCRIPTION;
 
 		if (errorMessage == null) {
 			// FORMAT GENERIC MESSAGE BY READING THE EXCEPTION STACK
