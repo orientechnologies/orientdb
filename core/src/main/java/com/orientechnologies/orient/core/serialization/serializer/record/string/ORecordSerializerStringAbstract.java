@@ -419,10 +419,14 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 				}
 		}
 
-		if (integer)
-			return new Integer(iValue);
-		else
-			return new Float(iValue);
+		if (integer) {
+			try {
+				return new Integer(iValue);
+			} catch (NumberFormatException e) {
+				return new Long(iValue);
+			}
+		} else
+			return new BigDecimal(iValue);
 	}
 
 	public static Object simpleValueFromStream(final Object iValue, final OType iType) {
