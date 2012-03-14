@@ -43,8 +43,10 @@ public class OClientConnection {
 	}
 
 	public void close() {
-		if (database != null)
+		if (database != null) {
 			database.close();
+			database = null;
+		}
 	}
 
 	@Override
