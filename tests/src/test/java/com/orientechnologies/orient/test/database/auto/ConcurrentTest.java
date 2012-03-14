@@ -149,9 +149,9 @@ public class ConcurrentTest {
 		UpdateField vUpdate2 = new UpdateField(database2, rid2, rid1, "thread2");
 		UpdateField vUpdate3 = new UpdateField(database3, rid2, rid1, "thread3");
 
-		Thread vThread1 = new Thread(vUpdate1);
-		Thread vThread2 = new Thread(vUpdate2);
-		Thread vThread3 = new Thread(vUpdate3);
+		Thread vThread1 = new Thread(vUpdate1, "ConcurrentTest1");
+		Thread vThread2 = new Thread(vUpdate2, "ConcurrentTest2");
+		Thread vThread3 = new Thread(vUpdate3, "ConcurrentTest3");
 
 		vThread1.start();
 		vThread2.start();

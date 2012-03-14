@@ -54,9 +54,9 @@ public class DbCreationTest {
 			database = new ODatabaseObjectTx(url);
 			database.setProperty("security", Boolean.FALSE);
 
-			ODatabaseHelper.deleteDatabase(database);
+			ODatabaseHelper.dropDatabase(database, "server");
 			ODatabaseHelper.createDatabase(database, url);
-			ODatabaseHelper.deleteDatabase(database);
+			ODatabaseHelper.dropDatabase(database, "server");
 		}
 	}
 
@@ -127,7 +127,7 @@ public class DbCreationTest {
 		ODatabaseDocumentTx db = new ODatabaseDocumentTx(u);
 
 		try {
-			ODatabaseHelper.deleteDatabase(db);
+			ODatabaseHelper.dropDatabase(db);
 		} catch (OStorageException e) {
 			Assert.assertTrue(e.getCause().getMessage().equals("Database with name 'sub/subTest' doesn't exits."));
 		}
@@ -135,7 +135,7 @@ public class DbCreationTest {
 		db.open("admin", "admin");
 		db.close();
 
-		ODatabaseHelper.deleteDatabase(db);
+		ODatabaseHelper.dropDatabase(db);
 	}
 
 	@Test(dependsOnMethods = { "testChangeLocale" })
@@ -153,7 +153,7 @@ public class DbCreationTest {
 		ODatabaseDocumentTx db = new ODatabaseDocumentTx(u);
 
 		try {
-			ODatabaseHelper.deleteDatabase(db);
+			ODatabaseHelper.dropDatabase(db);
 		} catch (OStorageException e) {
 			Assert.assertTrue(e.getCause().getMessage().equals("Database with name 'sub/subTest' doesn't exits."));
 		}
@@ -162,14 +162,14 @@ public class DbCreationTest {
 		db = ODatabaseDocumentPool.global().acquire(u, "admin", "admin");
 		db.close();
 
-		ODatabaseHelper.deleteDatabase(db);
+		ODatabaseHelper.dropDatabase(db);
 	}
 
 	@Test
 	public void testCreateAndConnectionPool() throws IOException {
 		ODatabaseDocument db = new ODatabaseDocumentTx(url);
 		try {
-			ODatabaseHelper.deleteDatabase(db);
+			ODatabaseHelper.dropDatabase(db);
 		} catch (OStorageException e) {
 			Assert.assertTrue(e.getCause().getMessage().startsWith("Database with name '"));
 			Assert.assertTrue(e.getCause().getMessage().endsWith("'doesn't exits."));
@@ -182,7 +182,7 @@ public class DbCreationTest {
 
 		// Destroy db in the back of the pool
 		db = new ODatabaseDocumentTx(url);
-		ODatabaseHelper.deleteDatabase(db);
+		ODatabaseHelper.dropDatabase(db);
 
 		// Re-create it so that the db exists for the pool
 		db = new ODatabaseDocumentTx(url);
