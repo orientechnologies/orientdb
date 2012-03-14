@@ -234,7 +234,7 @@ public class OStorageRemote extends OStorageAbstract {
 					endRequest(network);
 				}
 
-				getResponse(network);
+				// getResponse(network);
 			}
 
 			setSessionId(-1);
@@ -265,6 +265,7 @@ public class OStorageRemote extends OStorageAbstract {
 			throw e;
 		} catch (Exception e) {
 			OLogManager.instance().debug(this, "Error on closing remote connection: %s", network);
+			closeChannel(network);
 		} finally {
 
 			lock.releaseExclusiveLock();
@@ -338,8 +339,8 @@ public class OStorageRemote extends OStorageAbstract {
 						public Object call() throws Exception {
 							final Long result;
 
-							beginResponse(network);
 							try {
+								beginResponse(network);
 								result = network.readLong();
 							} finally {
 								endResponse(network);
@@ -450,8 +451,8 @@ public class OStorageRemote extends OStorageAbstract {
 						public Object call() throws Exception {
 							int result;
 
-							beginResponse(network);
 							try {
+								beginResponse(network);
 								result = network.readInt();
 							} finally {
 								endResponse(network);
@@ -505,8 +506,8 @@ public class OStorageRemote extends OStorageAbstract {
 						public Object call() throws Exception {
 							Boolean result;
 
-							beginResponse(network);
 							try {
+								beginResponse(network);
 								result = network.readByte() == 1;
 							} finally {
 								endResponse(network);
@@ -1163,7 +1164,6 @@ public class OStorageRemote extends OStorageAbstract {
 
 		try {
 			beginResponse(network);
-
 			sessionId = network.readInt();
 
 			OLogManager.instance().debug(null, "Client connected with session id: " + sessionId);

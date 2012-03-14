@@ -106,7 +106,7 @@ public enum OGlobalConfiguration {
 			"Transaction mode used in TinkerPop Blueprints implementation. 0 = Automatic (default), 1 = Manual", Integer.class, 0),
 
 	// TREEMAP
-	MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 1000),
+	MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 2000),
 
 	MVRBTREE_LAZY_UPDATES(
 			"mvrbtree.lazyUpdates",
@@ -259,6 +259,7 @@ public enum OGlobalConfiguration {
 					OProfiler.getInstance().setAutoDumpReset((Boolean) iNewValue);
 				}
 			}),
+
 	// LOG
 	LOG_CONSOLE_LEVEL("log.console.level", "Console logging level", String.class, "info", new OConfigurationChangeCallback() {
 		public void change(final Object iCurrentValue, final Object iNewValue) {

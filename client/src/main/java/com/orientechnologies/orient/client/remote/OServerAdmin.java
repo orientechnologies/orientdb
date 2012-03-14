@@ -345,9 +345,9 @@ public class OServerAdmin {
 		try {
 			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_GET);
 			network.writeString(iConfig.getKey());
-			storage.beginResponse(network);
 
 			try {
+				storage.beginResponse(network);
 				return network.readString();
 			} finally {
 				storage.endResponse(network);

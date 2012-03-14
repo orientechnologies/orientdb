@@ -502,7 +502,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 		connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, "local");
 
 		if (connection.database.exists()) {
-
 			OLogManager.instance().info(this, "Dropped database '%s", connection.database.getURL());
 
 			connection.database.drop();
@@ -510,9 +509,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 		} else {
 			throw new OStorageException("Database with name '" + dbName + "' doesn't exits.");
 		}
-
-		if (OClientConnectionManager.instance().disconnect(connection.id))
-			sendShutdown();
 
 		beginResponse();
 		try {
@@ -568,16 +564,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
 		if (connection != null) {
 			connection.close();
-
 			if (OClientConnectionManager.instance().disconnect(connection.id))
 				sendShutdown();
-		}
-
-		beginResponse();
-		try {
-			sendOk(clientTxId);
-		} finally {
-			endResponse();
 		}
 	}
 
