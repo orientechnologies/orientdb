@@ -297,6 +297,9 @@ public abstract class OChannelBinary extends OChannel {
 
 	@Override
 	public void close() {
+		if (debug)
+			OLogManager.instance().debug(this, "%s - Closing socket...", socket.getRemoteSocketAddress());
+
 		boolean lockAcquired = false;
 		try {
 			acquireExclusiveLock();
