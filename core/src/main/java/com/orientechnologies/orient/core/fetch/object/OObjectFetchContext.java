@@ -87,7 +87,7 @@ public class OObjectFetchContext implements OFetchContext {
 	public void onBeforeCollection(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject, final Collection<?> iCollection) throws OFetchException {
 		final Class<?> type = OObjectSerializerHelper.getFieldType(iUserObject, iFieldName);
 		final Collection target;
-		if (Set.class.isAssignableFrom(type)) {
+		if (type != null && Set.class.isAssignableFrom(type)) {
 			if (lazyLoading)
 				target = new OLazyObjectSet<Object>(iRootRecord, (Collection<Object>) iCollection).setFetchPlan(fetchPlan);
 			else {
