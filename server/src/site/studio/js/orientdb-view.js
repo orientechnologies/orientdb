@@ -171,6 +171,8 @@ function ODocumentView(name, component, doc, options) {
 		component += "<div class='span12 noborder' id='" + this.componentId
 				+ "_fields'>";
 
+		var currentClass = orientServer.getClass(this.doc["@class"]);
+
 		var fieldValue;
 		this.fieldNum = 0;
 		if (this.doc != null)

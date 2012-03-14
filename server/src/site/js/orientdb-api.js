@@ -525,7 +525,7 @@ function ODatabase(databasePath) {
 		}
 		var jsonData;
 		if (typeof iPropertiesJson == 'object') {
-			jsonData = $toJSON(iPropertiesJson)
+			jsonData = $.toJSON(iPropertiesJson)
 		} else {
 			jsonData = iPropertiesJson;
 		}
@@ -648,6 +648,15 @@ function ODatabase(databasePath) {
 			return null;
 		}
 		return this.transformResponse(this.getDatabaseInfo())['classes'];
+	}
+
+	ODatabase.prototype.getClass = function(className) {
+		for (cls in databaseInfo['classes']) {
+			if (databaseInfo['classes'][cls].name == className) {
+				return databaseInfo['classes'][cls];
+			}
+		}
+		return classes;
 	}
 
 	ODatabase.prototype.securityRoles = function() {
