@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONReader;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
@@ -116,6 +117,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			}
 
 			deleteHoleRecords();
+
+			database.command(new OCommandSQL("rebuild index *")).execute();
 
 			database.setStatus(STATUS.OPEN);
 
