@@ -35,25 +35,30 @@ public class OSharedResourceAdaptive {
 	private final AtomicInteger	users	= new AtomicInteger(0);
 	private final boolean				concurrent;
 	private final int						timeout;
+	private final boolean				ignoreThreadInterruption;
 
 	protected OSharedResourceAdaptive() {
 		this.concurrent = true;
 		this.timeout = 0;
+		this.ignoreThreadInterruption = false;
 	}
 
 	protected OSharedResourceAdaptive(final int iTimeout) {
 		this.concurrent = true;
 		this.timeout = iTimeout;
+		this.ignoreThreadInterruption = false;
 	}
 
 	protected OSharedResourceAdaptive(final boolean iConcurrent) {
 		this.concurrent = iConcurrent;
 		this.timeout = 0;
+		this.ignoreThreadInterruption = false;
 	}
 
-	protected OSharedResourceAdaptive(final boolean iConcurrent, final int iTimeout) {
+	protected OSharedResourceAdaptive(final boolean iConcurrent, final int iTimeout, boolean ignoreThreadInterruption) {
 		this.concurrent = iConcurrent;
 		this.timeout = iTimeout;
+		this.ignoreThreadInterruption = ignoreThreadInterruption;
 	}
 
 	protected void acquireExclusiveLock() {
@@ -64,9 +69,23 @@ public class OSharedResourceAdaptive {
 						// OK
 						return;
 				} catch (InterruptedException e) {
-					throw new OLockException("Thread interrupted while waiting for resource of class '" + getClass() + "'");
+					if (ignoreThreadInterruption) {
+						// IGNORE THE THREAD IS INTERRUPTED: TRY TO RE-LOCK AGAIN
+						try {
+							if (lock.writeLock().tryLock(timeout, TimeUnit.MILLISECONDS)) {
+								// OK, RESET THE INTERRUPTED STATE
+								Thread.currentThread().interrupt();
+								return;
+							}
+						} catch (InterruptedException e2) {
+						}
+					}
+
+					throw new OLockException("Thread interrupted while waiting for resource of class '" + getClass() + "' with timeout="
+							+ timeout);
 				}
-				throw new OTimeoutException("Timeout on acquiring exclusive lock against resource of class: " + getClass());
+				throw new OTimeoutException("Timeout on acquiring exclusive lock against resource of class: " + getClass()
+						+ " with timeout=" + timeout);
 			} else
 				lock.writeLock().lock();
 	}
@@ -83,9 +102,22 @@ public class OSharedResourceAdaptive {
 						// OK
 						return;
 				} catch (InterruptedException e) {
-					throw new OLockException("Thread interrupted while waiting for resource of class '" + getClass() + "'");
+					if (ignoreThreadInterruption) {
+						// IGNORE THE THREAD IS INTERRUPTED: TRY TO RE-LOCK AGAIN
+						try {
+							if (lock.readLock().tryLock(timeout, TimeUnit.MILLISECONDS)) {
+								// OK, RESET THE INTERRUPTED STATE
+								Thread.currentThread().interrupt();
+								return;
+							}
+						} catch (InterruptedException e2) {
+						}
+					}
+					throw new OLockException("Thread interrupted while waiting for resource of class '" + getClass() + "' with timeout="
+							+ timeout);
 				}
-				throw new OTimeoutException("Timeout on acquiring shared lock against resource of class : " + getClass());
+				throw new OTimeoutException("Timeout on acquiring shared lock against resource of class : " + getClass() + " with timeout="
+						+ timeout);
 			} else
 				lock.readLock().lock();
 	}

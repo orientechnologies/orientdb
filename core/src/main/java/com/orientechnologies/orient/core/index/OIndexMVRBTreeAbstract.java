@@ -74,7 +74,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 	private final Listener													watchDog;
 
 	public OIndexMVRBTreeAbstract(final String iType) {
-		super(true, OGlobalConfiguration.MVRBTREE_TIMEOUT.getValueAsInteger());
+		super(true, OGlobalConfiguration.MVRBTREE_TIMEOUT.getValueAsInteger(), true);
 
 		type = iType;
 		watchDog = new Listener() {

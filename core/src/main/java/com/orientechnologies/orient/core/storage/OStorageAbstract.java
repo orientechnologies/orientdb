@@ -40,7 +40,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 
 	protected volatile STATUS									status	= STATUS.CLOSED;
 	protected OSharedResourceAdaptiveExternal	lock		= new OSharedResourceAdaptiveExternal(
-																												OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), 0);
+																												OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), 0, true);
 
 	protected enum STATUS {
 		CLOSED, OPEN, CLOSING
