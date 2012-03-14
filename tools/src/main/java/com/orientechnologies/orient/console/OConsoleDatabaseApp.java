@@ -506,6 +506,32 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		updateDatabaseInfo();
 	}
 
+	@ConsoleCommand(splitInWords = false, description = "Traverse records and display the results")
+	public void traverse(@ConsoleParameter(name = "query-text", description = "The traverse to execute") String iQueryText) {
+		final List<String> columns = new ArrayList<String>();
+		final int limit;
+		if (iQueryText.contains("limit")) {
+			// RESET CONSOLE FLAG
+			limit = -1;
+		} else {
+			limit = Integer.parseInt((String) properties.get("limit"));
+		}
+
+		long start = System.currentTimeMillis();
+		currentResultSet = currentDatabase.command(new OCommandSQL("traverse " + iQueryText)).execute();
+
+		int i = 0;
+		for (OIdentifiable record : currentResultSet) {
+			dumpRecordInTable(i++, record, columns);
+		}
+
+		if (currentResultSet.size() > 0 && (limit == -1 || currentResultSet.size() < limit))
+			printHeaderLine(columns);
+
+		out.println("\n" + currentResultSet.size() + " item(s) found. Traverse executed in "
+				+ (float) (System.currentTimeMillis() - start) / 1000 + " sec(s).");
+	}
+
 	@ConsoleCommand(splitInWords = false, description = "Execute a query against the database and display the results")
 	public void select(@ConsoleParameter(name = "query-text", description = "The query to execute") String iQueryText) {
 		checkCurrentDatabase();
@@ -698,7 +724,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 				throw new OException("The record requested is not part of current result set (0"
 						+ (currentResultSet.size() > 0 ? "-" + (currentResultSet.size() - 1) : "") + ")");
 
-			currentRecord =currentResultSet.get(recNumber).getRecord();
+			currentRecord = currentResultSet.get(recNumber).getRecord();
 		}
 
 		dumpRecordDetails();
