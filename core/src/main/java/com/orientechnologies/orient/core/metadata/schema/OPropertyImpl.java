@@ -470,7 +470,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 				throw new IllegalArgumentException("Syntax error: expected <name> = <value>, instead found: " + iValue);
 
 			final List<String> words = OStringSerializerHelper.smartSplit(iValue.toString(), '=');
-			setCustomInternal(words.get(0), words.get(1));
+			setCustomInternal(words.get(0).trim(), words.get(1).trim());
 			break;
 		}
 
@@ -520,7 +520,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 				throw new IllegalArgumentException("Syntax error: expected <name> = <value>, instead found: " + iValue);
 
 			final List<String> words = OStringSerializerHelper.smartSplit(iValue.toString(), '=');
-			setCustom(words.get(0), words.get(1));
+			setCustom(words.get(0).trim(), words.get(1).trim());
 			break;
 		}
 	}
