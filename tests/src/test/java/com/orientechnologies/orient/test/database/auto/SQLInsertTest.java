@@ -44,10 +44,28 @@ public class SQLInsertTest {
 		int addressId = database.getMetadata().getSchema().getClass("Address").getDefaultClusterId();
 
 		ODocument doc = (ODocument) database.command(
-				new OCommandSQL("insert into Profile (name, surname, salary, location, dummy) values ('Luca','Smith', 109.9, " + addressId
-						+ ":3, name)")).execute();
+				new OCommandSQL("insert into Profile (name, surname, salary, location, dummy) values ('Luca','Smith', 109.9, #" + addressId
+						+ ":3, 'hooray')")).execute();
 
 		Assert.assertTrue(doc != null);
+		Assert.assertEquals(doc.field("name"), "Luca");
+		Assert.assertEquals(doc.field("surname"), "Smith");
+		Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 109.9f);
+		Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, 3));
+		Assert.assertEquals(doc.field("dummy"), "hooray");
+
+		doc = (ODocument) database.command(
+				new OCommandSQL("insert into Profile SET name = 'Luca', surname = 'Smith', salary = 109.9, location = #" + addressId
+						+ ":3, dummy =  'hooray'")).execute();
+
+		database.delete(doc);
+
+		Assert.assertTrue(doc != null);
+		Assert.assertEquals(doc.field("name"), "Luca");
+		Assert.assertEquals(doc.field("surname"), "Smith");
+		Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 109.9f);
+		Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, 3));
+		Assert.assertEquals(doc.field("dummy"), "hooray");
 
 		database.close();
 	}
@@ -69,10 +87,24 @@ public class SQLInsertTest {
 		Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, 3));
 		Assert.assertEquals(doc.field("dummy"), "hooray");
 
+		database.delete(doc);
+
+		doc = (ODocument) database.command(
+				new OCommandSQL("insert into Profile SET name = ?, surname = ?, salary = ?, location = ?, dummy = ?")).execute("Marc",
+				"Smith", 120.0, new ORecordId(addressId, 3), "hooray");
+
+		Assert.assertTrue(doc != null);
+		Assert.assertEquals(doc.field("name"), "Marc");
+		Assert.assertEquals(doc.field("surname"), "Smith");
+		Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 120.0f);
+		Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, 3));
+		Assert.assertEquals(doc.field("dummy"), "hooray");
+
 		database.close();
 	}
 
 	@Test
+	@SuppressWarnings("unchecked")
 	public void insertMap() {
 		database.open("admin", "admin");
 
@@ -90,7 +122,6 @@ public class SQLInsertTest {
 		Assert.assertEquals(doc.field("name"), "circle");
 		Assert.assertTrue(doc.field("properties") instanceof Map);
 
-		@SuppressWarnings("unchecked")
 		Map<Object, Object> entries = ((Map<Object, Object>) doc.field("properties"));
 		Assert.assertEquals(entries.size(), 2);
 

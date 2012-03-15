@@ -39,13 +39,15 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  * 
  */
 public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
-	public static final String	KEYWORD_INSERT	= "INSERT";
-	private static final String	KEYWORD_VALUES	= "VALUES";
-	private static final String	KEYWORD_INTO		= "INTO";
-	private String							className				= null;
-	private String							clusterName			= null;
-	private String							indexName				= null;
+	public static final String	KEYWORD_INSERT		= "INSERT";
+	private static final String	KEYWORD_VALUES		= "VALUES";
+	private static final String	KEYWORD_INTO			= "INTO";
+	private static final String	KEYWORD_SET				= "SET";
+	private String							className					= null;
+	private String							clusterName				= null;
+	private String							indexName					= null;
 	private Map<String, Object>	fields;
+	private int									parameterCounter	= 0;
 
 	@SuppressWarnings("unchecked")
 	public OCommandExecutorSQLInsert parse(final OCommandRequestText iRequest) {
@@ -95,9 +97,23 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 		}
 
 		final int beginFields = OStringParser.jumpWhiteSpaces(text, pos);
-		if (beginFields == -1 || text.charAt(beginFields) != '(')
-			throw new OCommandSQLParsingException("Set of fields is missed. Example: (name, surname). Use " + getSyntax(), text, pos);
+		if (beginFields == -1 || (text.charAt(beginFields) != '(' && !text.startsWith(KEYWORD_SET, beginFields)))
+			throw new OCommandSQLParsingException("Set of fields is missed. Example: (name, surname) or SET name = 'Bill'. Use "
+					+ getSyntax(), text, pos);
 
+		if (text.charAt(beginFields) == '(') {
+			parseBracesFields(word, beginFields);
+		} else {
+			fields = new LinkedHashMap<String, Object>();
+			pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+			parseSetFields(word, pos);
+		}
+
+		return this;
+	}
+
+	protected void parseBracesFields(StringBuilder word, final int beginFields) {
+		int pos;
 		final int endFields = text.indexOf(')', beginFields + 1);
 		if (endFields == -1)
 			throw new OCommandSQLParsingException("Missed closed brace. Use " + getSyntax(), text, beginFields);
@@ -141,8 +157,6 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 		fields = new LinkedHashMap<String, Object>();
 		for (int i = 0; i < fieldNames.size(); ++i)
 			fields.put(fieldNames.get(i), fieldValues[i]);
-
-		return this;
 	}
 
 	/**
@@ -176,6 +190,56 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 
 	@Override
 	public String getSyntax() {
-		return "INSERT INTO <Class>|cluster:<cluster>|index:<index> (<field>[,]*) VALUES (<expression>[,]*)";
+		return "INSERT INTO <Class>|cluster:<cluster>|index:<index> [(<field>[,]*) VALUES (<expression>[,]*)]|[SET <field> = <expression>[,]*]";
+	}
+
+	private int parseSetFields(final StringBuilder word, int pos) {
+		String fieldName;
+		String fieldValue;
+		int newPos = pos;
+
+		while (pos != -1 && (fields.size() == 0 || word.toString().equals(","))) {
+			newPos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
+			if (newPos == -1)
+				throw new OCommandSQLParsingException("Field name expected", text, pos);
+			pos = newPos;
+
+			fieldName = word.toString();
+
+			newPos = OStringParser.jumpWhiteSpaces(text, pos);
+
+			if (newPos == -1 || text.charAt(newPos) != '=')
+				throw new OCommandSQLParsingException("Character '=' was expected", text, pos);
+
+			pos = newPos;
+			newPos = OSQLHelper.nextWord(text, textUpperCase, pos + 1, word, false, " =><");
+			if (pos == -1)
+				throw new OCommandSQLParsingException("Value expected", text, pos);
+
+			fieldValue = word.toString();
+
+			if (fieldValue.endsWith(",")) {
+				pos = newPos - 1;
+				fieldValue = fieldValue.substring(0, fieldValue.length() - 1);
+			} else
+				pos = newPos;
+
+			// INSERT TRANSFORMED FIELD VALUE
+			fields.put(fieldName, getFieldValueCountingParameters(fieldValue));
+
+			pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+		}
+
+		if (fields.size() == 0)
+			throw new OCommandSQLParsingException("Entries to set <field> = <value> are missed. Example: name = 'Bill', salary = 300.2",
+					text, pos);
+
+		return pos;
+	}
+
+	private Object getFieldValueCountingParameters(String fieldValue) {
+		if (fieldValue.trim().equals("?"))
+			parameterCounter++;
+		return OSQLHelper.parseValue(this, fieldValue, context);
 	}
 }
