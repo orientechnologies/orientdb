@@ -382,11 +382,12 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		// READ PROPERTIES
 		OPropertyImpl prop;
 		Collection<ODocument> storedProperties = document.field("properties");
-		for (ODocument p : storedProperties) {
-			prop = new OPropertyImpl(this, p);
-			prop.fromStream();
-			properties.put(prop.getName().toLowerCase(), prop);
-		}
+		if (storedProperties != null)
+			for (ODocument p : storedProperties) {
+				prop = new OPropertyImpl(this, p);
+				prop.fromStream();
+				properties.put(prop.getName().toLowerCase(), prop);
+			}
 	}
 
 	@Override
@@ -396,17 +397,20 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
 		try {
 			document.field("name", name);
-			document.field("shortName", shortName);
+			if (shortName != null)
+				document.field("shortName", shortName);
 			document.field("defaultClusterId", defaultClusterId);
 			document.field("clusterIds", clusterIds);
 			document.field("overSize", overSize);
 			document.field("strictMode", strictMode);
 
-			final Set<ODocument> props = new HashSet<ODocument>();
-			for (final OProperty p : properties.values()) {
-				props.add(((OPropertyImpl) p).toStream());
+			if (properties != null) {
+				final Set<ODocument> props = new HashSet<ODocument>();
+				for (final OProperty p : properties.values()) {
+					props.add(((OPropertyImpl) p).toStream());
+				}
+				document.field("properties", props, OType.EMBEDDEDSET);
 			}
-			document.field("properties", props, OType.EMBEDDEDSET);
 
 			if (superClass != null)
 				document.field("superClass", superClass.getName());

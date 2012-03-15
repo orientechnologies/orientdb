@@ -173,5 +173,5 @@ public interface OProperty extends Comparable<OProperty> {
 
 	public Object get(ATTRIBUTES iAttribute);
 
-	public void set(ATTRIBUTES attribute, Object iValue, Object... iAdditionalArgs);
+	public void set(ATTRIBUTES attribute, Object iValue);
 }

@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
@@ -360,6 +361,10 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	}
 
 	public OPropertyImpl setCustom(final String iName, final String iValue) {
+		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+		final String cmd = String.format("alter property %s custom %s=%s", getFullName(), iName, iValue);
+		getDatabase().command(new OCommandSQL(cmd)).execute();
+		setCustomInternal(iName, iValue);
 		return this;
 	}
 
@@ -426,7 +431,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		throw new IllegalArgumentException("Cannot find attribute '" + iAttribute + "'");
 	}
 
-	public void setInternalAndSave(final ATTRIBUTES attribute, final Object iValue, final Object... iAdditionalArgs) {
+	public void setInternalAndSave(final ATTRIBUTES attribute, final Object iValue) {
 		if (attribute == null)
 			throw new IllegalArgumentException("attribute is null");
 
@@ -461,7 +466,11 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 			setTypeInternal(OType.valueOf(stringValue.toUpperCase(Locale.ENGLISH)));
 			break;
 		case CUSTOM:
-			setCustomInternal((String) iValue, (String) iAdditionalArgs[0]);
+			if (iValue.toString().indexOf("=") == -1)
+				throw new IllegalArgumentException("Syntax error: expected <name> = <value>, instead found: " + iValue);
+
+			final List<String> words = OStringSerializerHelper.smartSplit(iValue.toString(), '=');
+			setCustomInternal(words.get(0), words.get(1));
 			break;
 		}
 
@@ -472,7 +481,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		}
 	}
 
-	public void set(final ATTRIBUTES attribute, final Object iValue, final Object... iAdditionalArgs) {
+	public void set(final ATTRIBUTES attribute, final Object iValue) {
 		if (attribute == null)
 			throw new IllegalArgumentException("attribute is null");
 
@@ -507,7 +516,11 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 			setType(OType.valueOf(stringValue.toUpperCase(Locale.ENGLISH)));
 			break;
 		case CUSTOM:
-			setCustom((String) iValue, (String) iAdditionalArgs[0]);
+			if (iValue.toString().indexOf("=") == -1)
+				throw new IllegalArgumentException("Syntax error: expected <name> = <value>, instead found: " + iValue);
+
+			final List<String> words = OStringSerializerHelper.smartSplit(iValue.toString(), '=');
+			setCustom(words.get(0), words.get(1));
 			break;
 		}
 	}

@@ -282,4 +282,39 @@ public class SchemaTest {
 		Assert.assertNull(database.getClusterNameById(clusterId));
 		database.close();
 	}
+
+	@Test(dependsOnMethods = "createSchema")
+	public void customAttributes() {
+		database = new ODatabaseFlat(url);
+		database.open("admin", "admin");
+
+		// TEST CUSTOM PROPERTY CREATION
+		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").setCustom("stereotype", "icon");
+
+		Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"), "icon");
+
+		// TEST CUSTOM PROPERTY EXISTS EVEN AFTER REOPEN
+		database.close();
+		database.open("admin", "admin");
+
+		Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"), "icon");
+
+		// TEST CUSTOM PROPERTY REMOVAL
+		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").setCustom("stereotype", null);
+		Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"), null);
+
+		// TEST CUSTOM PROPERTY UPDATE
+		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").setCustom("stereotype", "polygon");
+		Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"),
+				"polygon");
+
+		// TEST CUSTOM PROPERTY UDPATED EVEN AFTER REOPEN
+		database.close();
+		database.open("admin", "admin");
+
+		Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"),
+				"polygon");
+
+		database.close();
+	}
 }
