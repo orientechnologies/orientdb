@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -153,11 +154,11 @@ public class Orient extends OSharedResourceAbstract {
 	}
 
 	public void registerStorage(final OStorage iStorage) throws IOException {
-		for (OOrientListener l : listeners)
-			l.onStorageRegistered(iStorage);
-
 		acquireExclusiveLock();
 		try {
+			for (OOrientListener l : listeners)
+				l.onStorageRegistered(iStorage);
+
 			if (!storages.containsKey(iStorage.getName()))
 				storages.put(iStorage.getURL(), iStorage);
 
@@ -218,11 +219,15 @@ public class Orient extends OSharedResourceAbstract {
 	}
 
 	public void unregisterStorage(final OStorage iStorage) {
-		for (OOrientListener l : listeners)
-			l.onStorageUnregistered(iStorage);
+		if (!active)
+			// SHUTDOWNING OR NOT ACTIVE: RETURN
+			return;
 
 		acquireExclusiveLock();
 		try {
+			for (OOrientListener l : listeners)
+				l.onStorageUnregistered(iStorage);
+
 			for (Entry<String, OStorage> s : storages.entrySet()) {
 				if (s.getValue() == iStorage) {
 					storages.remove(s.getKey());
@@ -255,6 +260,8 @@ public class Orient extends OSharedResourceAbstract {
 			if (!active)
 				return;
 
+			active = false;
+
 			shutdownHook.cancel();
 
 			OLogManager.instance().debug(this, "Orient Engine is shutting down...");
@@ -275,7 +282,6 @@ public class Orient extends OSharedResourceAbstract {
 			}
 
 			OMMapManager.shutdown();
-			active = false;
 
 			// STOP ALL THE PENDING THREADS
 			threadGroup.interrupt();
@@ -296,8 +302,8 @@ public class Orient extends OSharedResourceAbstract {
 		Runtime.getRuntime().removeShutdownHook(shutdownHook);
 	}
 
-	public Iterable<ODatabaseLifecycleListener> getDbLifecycleListeners() {
-		return dbLifecycleListeners;
+	public Iterator<ODatabaseLifecycleListener> getDbLifecycleListeners() {
+		return dbLifecycleListeners.iterator();
 	}
 
 	public void addDbLifecycleListener(final ODatabaseLifecycleListener iListener) {
@@ -329,24 +335,47 @@ public class Orient extends OSharedResourceAbstract {
 	}
 
 	public void registerListener(final OOrientListener iListener) {
-		if (!listeners.contains(iListener))
-			listeners.add(iListener);
+		acquireExclusiveLock();
+		try {
+
+			if (!listeners.contains(iListener))
+				listeners.add(iListener);
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public void unregisterListener(final OOrientListener iListener) {
-		for (int i = 0; i < listeners.size(); ++i)
-			if (listeners.get(i) == iListener) {
-				listeners.remove(i);
-				break;
-			}
+		if (!active)
+			// SHUTDOWNING OR NOT ACTIVE: RETURN
+			return;
+
+		acquireExclusiveLock();
+		try {
+
+			for (int i = 0; i < listeners.size(); ++i)
+				if (listeners.get(i) == iListener) {
+					listeners.remove(i);
+					break;
+				}
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public List<OOrientListener> getListeners() {
-		return listeners;
+		acquireExclusiveLock();
+		try {
+			return new ArrayList<OOrientListener>(listeners);
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public void setRecordFactoryManager(ORecordFactoryManager iRecordFactoryManager) {
 		recordFactoryManager = iRecordFactoryManager;
 	}
-
 }

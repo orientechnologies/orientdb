@@ -18,9 +18,11 @@ package com.orientechnologies.orient.core.metadata.schema;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.common.util.OCaseIncentiveComparator;
@@ -48,20 +50,21 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  * 
  */
 public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty {
-	private OClassImpl				owner;
+	private OClassImpl					owner;
 
-	private String						name;
-	private OType							type;
+	private String							name;
+	private OType								type;
 
-	private OType							linkedType;
-	private OClass						linkedClass;
-	transient private String	linkedClassName;
+	private OType								linkedType;
+	private OClass							linkedClass;
+	transient private String		linkedClassName;
 
-	private boolean						mandatory;
-	private boolean						notNull	= false;
-	private String						min;
-	private String						max;
-	private String						regexp;
+	private boolean							mandatory;
+	private boolean							notNull	= false;
+	private String							min;
+	private String							max;
+	private String							regexp;
+	private Map<String, String>	customFields;
 
 	/**
 	 * Constructor used in unmarshalling.
@@ -349,6 +352,24 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		return this;
 	}
 
+	public String getCustom(final String iName) {
+		if (customFields == null)
+			return null;
+
+		return customFields.get(iName);
+	}
+
+	public OPropertyImpl setCustom(final String iName, final String iValue) {
+		return this;
+	}
+
+	public void setCustomInternal(final String iName, final String iValue) {
+		if (customFields == null)
+			customFields = new HashMap<String, String>();
+
+		customFields.put(iName, iValue);
+	}
+
 	/**
 	 * Change the type. It checks for compatibility between the change of type.
 	 * 
@@ -405,11 +426,11 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		throw new IllegalArgumentException("Cannot find attribute '" + iAttribute + "'");
 	}
 
-	public void setInternalAndSave(final ATTRIBUTES attribute, final Object iValue) {
+	public void setInternalAndSave(final ATTRIBUTES attribute, final Object iValue, final Object... iAdditionalArgs) {
 		if (attribute == null)
 			throw new IllegalArgumentException("attribute is null");
 
-		String stringValue = iValue != null ? iValue.toString() : null;
+		final String stringValue = iValue != null ? iValue.toString() : null;
 
 		switch (attribute) {
 		case LINKEDCLASS:
@@ -439,17 +460,19 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		case TYPE:
 			setTypeInternal(OType.valueOf(stringValue.toUpperCase(Locale.ENGLISH)));
 			break;
+		case CUSTOM:
+			setCustomInternal((String) iValue, (String) iAdditionalArgs[0]);
+			break;
 		}
 
 		try {
-			// owner.validateInstances();
 			saveInternal();
 		} catch (Exception e) {
 			owner.reload();
 		}
 	}
 
-	public void set(final ATTRIBUTES attribute, final Object iValue) {
+	public void set(final ATTRIBUTES attribute, final Object iValue, final Object... iAdditionalArgs) {
 		if (attribute == null)
 			throw new IllegalArgumentException("attribute is null");
 
@@ -482,6 +505,9 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 			break;
 		case TYPE:
 			setType(OType.valueOf(stringValue.toUpperCase(Locale.ENGLISH)));
+			break;
+		case CUSTOM:
+			setCustom((String) iValue, (String) iAdditionalArgs[0]);
 			break;
 		}
 	}
@@ -524,13 +550,15 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
 		mandatory = (Boolean) document.field("mandatory");
 		notNull = (Boolean) document.field("notNull");
+
 		min = document.field("min");
 		max = document.field("max");
 		regexp = document.field("regexp");
-
 		linkedClassName = (String) document.field("linkedClass");
 		if (document.field("linkedType") != null)
 			linkedType = OType.getById(((Integer) document.field("linkedType")).byteValue());
+
+		document.field("customFields", customFields, OType.EMBEDDEDMAP);
 	}
 
 	public Collection<OIndex<?>> getAllIndexes() {
@@ -555,12 +583,20 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 			document.field("type", type.id);
 			document.field("mandatory", mandatory);
 			document.field("notNull", notNull);
-			document.field("min", min);
-			document.field("max", max);
-			document.field("regexp", regexp);
 
-			document.field("linkedClass", linkedClass != null ? linkedClass.getName() : linkedClassName);
-			document.field("linkedType", linkedType != null ? linkedType.id : null);
+			if (min != null)
+				document.field("min", min);
+			if (max != null)
+				document.field("max", max);
+			if (regexp != null)
+				document.field("regexp", regexp);
+			if (linkedType != null)
+				document.field("linkedType", linkedType.id);
+			if (linkedClass != null || linkedClassName != null)
+				document.field("linkedClass", linkedClass != null ? linkedClass.getName() : linkedClassName);
+			if (customFields != null && customFields.size() > 0)
+				document.field("customFields", customFields, OType.EMBEDDEDMAP);
+
 		} finally {
 			document.setInternalStatus(ORecordElement.STATUS.LOADED);
 		}

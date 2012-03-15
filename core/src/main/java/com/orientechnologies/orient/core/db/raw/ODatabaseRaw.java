@@ -83,8 +83,8 @@ public class ODatabaseRaw implements ODatabase {
 			storage.open(iUserName, iUserPassword, properties);
 
 			// WAKE UP DB LIFECYCLE LISTENER
-			for (ODatabaseLifecycleListener it : Orient.instance().getDbLifecycleListeners())
-				it.onOpen(getDatabaseOwner());
+			for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
+				it.next().onOpen(getDatabaseOwner());
 
 			// WAKE UP LISTENERS
 			for (ODatabaseListener listener : listeners)
@@ -113,8 +113,8 @@ public class ODatabaseRaw implements ODatabase {
 			storage.create(properties);
 
 			// WAKE UP DB LIFECYCLE LISTENER
-			for (ODatabaseLifecycleListener it : Orient.instance().getDbLifecycleListeners())
-				it.onOpen(getDatabaseOwner());
+			for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
+				it.next().onOpen(getDatabaseOwner());
 
 			// WAKE UP LISTENERS
 			for (ODatabaseListener listener : listeners)
@@ -490,8 +490,8 @@ public class ODatabaseRaw implements ODatabase {
 
 	public void callOnCloseListeners() {
 		// WAKE UP DB LIFECYCLE LISTENER
-		for (ODatabaseLifecycleListener it : Orient.instance().getDbLifecycleListeners())
-			it.onClose(getDatabaseOwner());
+		for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
+			it.next().onClose(getDatabaseOwner());
 
 		// WAKE UP LISTENERS
 		for (ODatabaseListener listener : listeners)
