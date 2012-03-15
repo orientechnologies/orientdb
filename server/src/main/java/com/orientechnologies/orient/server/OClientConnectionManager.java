@@ -70,9 +70,6 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
 	}
 
 	public OClientConnection getConnection(final Socket socket, final int iChannelId) {
-		if (iChannelId < 0)
-			return null;
-
 		acquireSharedLock();
 		try {
 			OClientConnection conn = null;
@@ -84,6 +81,7 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
 						+ " while it's tied to connection " + conn.getChannel().socket);
 
 			return conn;
+
 		} finally {
 			releaseSharedLock();
 		}
@@ -103,6 +101,7 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
 			final OClientConnection connection = connections.remove(iChannelId);
 
 			if (connection != null) {
+				connection.close();
 				// CHECK IF THERE ARE OTHER CONNECTIONS
 				for (Entry<Integer, OClientConnection> entry : connections.entrySet()) {
 					if (entry.getValue().getProtocol().equals(connection.getProtocol()))
@@ -119,6 +118,8 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
 
 	public void disconnect(final OClientConnection connection) {
 		OProfiler.getInstance().updateCounter("OServer.connections.actives", -1);
+
+		connection.close();
 
 		acquireExclusiveLock();
 		try {

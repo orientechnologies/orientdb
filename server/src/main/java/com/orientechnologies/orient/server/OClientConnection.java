@@ -47,6 +47,7 @@ public class OClientConnection {
 			database.close();
 			database = null;
 		}
+		records2Push.clear();
 	}
 
 	@Override
