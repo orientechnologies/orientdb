@@ -138,11 +138,8 @@ public class ORemotePeer extends ORemoteNodeAbstract {
 
 			OLogManager.instance().debug(this, "Waiting for the heartbeat response from %s:%d...", networkAddress, networkPort);
 
-			try {
-				channel.beginResponse(sessionId, 1000);
-			} finally {
-				channel.endResponse();
-			}
+			channel.beginResponse(sessionId, 2000);
+			channel.endResponse();
 
 			OLogManager.instance().debug(this, "Received heartbeat ACK from %s:%d...", networkAddress, networkPort);
 

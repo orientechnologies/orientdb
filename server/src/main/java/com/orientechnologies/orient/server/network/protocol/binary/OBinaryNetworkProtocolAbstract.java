@@ -145,7 +145,6 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 
 	@Override
 	public void shutdown() {
-		sendShutdown();
 		channel.close();
 	}
 

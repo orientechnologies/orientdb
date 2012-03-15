@@ -66,7 +66,7 @@ public class ODiscoverySignaler extends OPollerThread {
 			@Override
 			public void run() {
 				try {
-					if (running && !manager.isLeader())
+					if (isRunning() && !manager.isLeader())
 						manager.becameLeader();
 
 				} catch (Exception e) {
@@ -103,7 +103,7 @@ public class ODiscoverySignaler extends OPollerThread {
 		try {
 			socket.send(dgram);
 		} catch (Throwable t) {
-			shutdown();
+			sendShutdown();
 			OLogManager
 					.instance()
 					.error(

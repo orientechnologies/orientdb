@@ -3,8 +3,6 @@ package com.orientechnologies.common.thread;
 import com.orientechnologies.common.util.OService;
 
 public abstract class OSoftThread extends Thread implements OService {
-	protected volatile boolean	running	= true;
-
 	public OSoftThread() {
 	}
 
@@ -26,15 +24,12 @@ public abstract class OSoftThread extends Thread implements OService {
 	protected abstract void execute() throws Exception;
 
 	public void startup() {
-		running = true;
 	}
 
 	public void shutdown() {
-		running = false;
 	}
 
 	public void sendShutdown() {
-		running = false;
 		interrupt();
 	}
 
@@ -42,7 +37,7 @@ public abstract class OSoftThread extends Thread implements OService {
 	public void run() {
 		startup();
 
-		while (running) {
+		while (!isInterrupted()) {
 			try {
 				beforeExecution();
 				execute();
@@ -56,14 +51,14 @@ public abstract class OSoftThread extends Thread implements OService {
 	}
 
 	public boolean isRunning() {
-		return running;
+		return !interrupted();
 	}
 
 	/**
 	 * Pauses current thread until iTime timeout or a wake up by another thread.
 	 * 
 	 * @param iTime
-	 * @return true if timeout has reached, otherwise false. False is the case of wakeup by another thread.
+	 * @return true if timeout has reached, otherwise false. False is the case of wake-up by another thread.
 	 */
 	public static boolean pauseCurrentThread(long iTime) {
 		try {

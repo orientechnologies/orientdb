@@ -33,7 +33,7 @@ public class OSingleFileSegment extends OSharedResourceAdaptive {
 	protected OStorageFileConfiguration	config;
 
 	public OSingleFileSegment(final String iPath, final String iType) throws IOException {
-		super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
+		super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), 0, true);
 		file = OFileFactory.instance().create(iType, OSystemVariableResolver.resolveSystemVariables(iPath), "rw");
 	}
 

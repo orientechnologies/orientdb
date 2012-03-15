@@ -59,4 +59,6 @@ public interface OServerHandler extends OService {
 	 * Configures the handler. Called at startup.
 	 */
 	public void config(OServer oServer, OServerParameterConfiguration[] iParams);
+
+	public void sendShutdown();
 }

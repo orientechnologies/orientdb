@@ -32,6 +32,9 @@ public abstract class OServerHandlerAbstract implements OServerHandler {
 	public void shutdown() {
 	}
 
+	public void sendShutdown() {
+	}
+
 	public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
 	}
 

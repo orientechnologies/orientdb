@@ -111,7 +111,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		synchronized (this) {
 
 			if (discoverySignaler != null) {
-				discoverySignaler.shutdown();
+				discoverySignaler.sendShutdown();
 				discoverySignaler = null;
 			}
 

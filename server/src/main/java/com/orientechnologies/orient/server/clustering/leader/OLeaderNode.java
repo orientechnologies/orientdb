@@ -84,7 +84,7 @@ public class OLeaderNode {
 			clusterDbConfigurations.clear();
 
 			if (discoveryListener != null) {
-				discoveryListener.shutdown();
+				discoveryListener.sendShutdown();
 				discoveryListener = null;
 			}
 		}

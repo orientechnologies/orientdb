@@ -162,7 +162,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 
 			if (remainTheLeader)
 				// ABORT THE CONNECTION & THREAD
-				shutdown();
+				sendShutdown();
 			else {
 				// OK TO BE A PEER
 				setName("OrientDB <- Distributed Leader");
