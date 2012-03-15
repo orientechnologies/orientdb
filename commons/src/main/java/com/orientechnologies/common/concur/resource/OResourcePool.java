@@ -43,6 +43,7 @@ public class OResourcePool<K, V> {
 			if (!sem.tryAcquire(iMaxWaitMillis, TimeUnit.MILLISECONDS))
 				throw new OLockException("Cannot acquire lock on requested resource: " + iKey);
 		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
 			throw new OLockException("Cannot acquire lock on requested resource: " + iKey, e);
 		}
 

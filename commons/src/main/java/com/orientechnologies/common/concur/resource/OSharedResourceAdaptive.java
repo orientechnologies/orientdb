@@ -78,6 +78,7 @@ public class OSharedResourceAdaptive {
 								return;
 							}
 						} catch (InterruptedException e2) {
+							Thread.currentThread().interrupt();
 						}
 					}
 
@@ -111,6 +112,7 @@ public class OSharedResourceAdaptive {
 								return;
 							}
 						} catch (InterruptedException e2) {
+							Thread.currentThread().interrupt();
 						}
 					}
 					throw new OLockException("Thread interrupted while waiting for resource of class '" + getClass() + "' with timeout="

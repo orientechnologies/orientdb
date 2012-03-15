@@ -41,6 +41,7 @@ public abstract class OSharedResourceTimeout {
 				// OK
 				return;
 		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
 		}
 		throw new OTimeoutException("Timeout on acquiring shared lock against resource: " + this);
 	}

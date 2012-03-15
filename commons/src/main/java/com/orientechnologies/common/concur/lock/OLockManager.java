@@ -71,6 +71,7 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 							throw new OLockException("Timeout on acquiring resource '" + iResourceId + "' because is locked from another thread");
 					}
 				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
 					throw new OLockException("Thread interrupted while waiting for resource '" + iResourceId + "'");
 				}
 			}

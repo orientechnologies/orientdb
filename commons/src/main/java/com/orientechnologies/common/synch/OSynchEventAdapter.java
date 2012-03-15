@@ -40,6 +40,7 @@ public class OSynchEventAdapter<RESOURCE_TYPE, RESPONSE_TYPE> {
 			try {
 				iResource.wait(iTimeout);
 			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
 				throw new OLockException("Thread interrupted while waiting for resource '" + iResource + "'");
 			}
 		}

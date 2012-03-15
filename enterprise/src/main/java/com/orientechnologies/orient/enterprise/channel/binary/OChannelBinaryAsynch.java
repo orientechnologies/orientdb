@@ -57,7 +57,8 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 		try {
 			beginResponse(iRequesterId, 0);
 		} catch (InterruptedException e) {
-			// NEVER HAPPENS
+			Thread.currentThread().interrupt();
+			// NEVER HAPPENS?
 			e.printStackTrace();
 		}
 	}

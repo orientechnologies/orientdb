@@ -68,6 +68,7 @@ public abstract class OSoftThread extends Thread implements OService {
 			Thread.sleep(iTime);
 			return true;
 		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
 			return false;
 		}
 	}

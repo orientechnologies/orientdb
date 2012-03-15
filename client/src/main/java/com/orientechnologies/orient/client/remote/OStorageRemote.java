@@ -1096,6 +1096,9 @@ public class OStorageRemote extends OStorageAbstract {
 				try {
 					Thread.sleep(currentRetryDelay);
 				} catch (InterruptedException e) {
+					// THREAD INTERRUPTED: RETURN EXCEPTION
+					Thread.currentThread().interrupt();
+					break;
 				}
 
 			try {
@@ -1350,7 +1353,9 @@ public class OStorageRemote extends OStorageAbstract {
 							networkPool.wait(5000);
 							OProfiler.getInstance().updateCounter("network.connectionPool.timeout", +1);
 						} catch (InterruptedException e) {
-							break;
+							// THREAD INTERRUPTED: RETURN EXCEPTION
+							Thread.currentThread().interrupt();
+							throw new OStorageException("Cannot acquire a connection because the thread has been interrupted");
 						}
 
 						final long elapsed = OProfiler.getInstance().stopChrono("network.connectionPool.waitingTime", startToWait);

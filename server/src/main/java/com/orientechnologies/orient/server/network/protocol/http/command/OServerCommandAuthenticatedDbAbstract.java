@@ -92,6 +92,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 		} catch (OLockException e) {
 			OLogManager.instance().error(this, "Cannot access to the database '" + iDatabaseName + "'", ODatabaseException.class, e);
 		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
 			OLogManager.instance().error(this, "Cannot access to the database '" + iDatabaseName + "'", ODatabaseException.class, e);
 		} finally {
 			if (db != null)
