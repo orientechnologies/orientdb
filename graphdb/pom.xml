@@ -70,21 +70,21 @@
 		<dependency>
 			<groupId>com.tinkerpop</groupId>
 			<artifactId>pipes</artifactId>
-			<version>0.9</version>
+			<version>1.0</version>
 			<type>jar</type>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.tinkerpop.gremlin</groupId>
 			<artifactId>gremlin-java</artifactId>
-			<version>1.4</version>
+			<version>1.5</version>
 			<type>jar</type>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.tinkerpop.gremlin</groupId>
 			<artifactId>gremlin-groovy</artifactId>
-			<version>1.4</version>
+			<version>1.5</version>
 			<type>jar</type>
 			<scope>compile</scope>
 		</dependency>
