@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.List;
 import java.util.Map;
 
 import org.testng.Assert;
@@ -127,6 +128,79 @@ public class SQLInsertTest {
 
 		Assert.assertEquals(entries.get("round"), "eeee");
 		Assert.assertEquals(entries.get("blaaa"), "zigzag");
+
+		database.delete(doc);
+
+		doc = (ODocument) database
+				.command(
+						new OCommandSQL(
+								"insert into cluster:default SET equaledges = 'no', name = 'circle', properties = {'round':'eeee', 'blaaa':'zigzag'} "))
+				.execute();
+
+		Assert.assertTrue(doc != null);
+
+		doc = (ODocument) new ODocument(doc.getIdentity()).load();
+
+		Assert.assertEquals(doc.field("equaledges"), "no");
+		Assert.assertEquals(doc.field("name"), "circle");
+		Assert.assertTrue(doc.field("properties") instanceof Map);
+
+		entries = ((Map<Object, Object>) doc.field("properties"));
+		Assert.assertEquals(entries.size(), 2);
+
+		Assert.assertEquals(entries.get("round"), "eeee");
+		Assert.assertEquals(entries.get("blaaa"), "zigzag");
+		database.close();
+	}
+
+	@Test
+	@SuppressWarnings("unchecked")
+	public void insertList() {
+		database.open("admin", "admin");
+
+		ODocument doc = (ODocument) database.command(
+				new OCommandSQL(
+						"insert into cluster:default (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )"))
+				.execute();
+
+		Assert.assertTrue(doc != null);
+
+		doc = (ODocument) new ODocument(doc.getIdentity()).load();
+
+		Assert.assertEquals(doc.field("equaledges"), "yes");
+		Assert.assertEquals(doc.field("name"), "square");
+		Assert.assertTrue(doc.field("list") instanceof List);
+
+		List<Object> entries = ((List<Object>) doc.field("list"));
+		Assert.assertEquals(entries.size(), 4);
+
+		Assert.assertEquals(entries.get(0), "bottom");
+		Assert.assertEquals(entries.get(1), "top");
+		Assert.assertEquals(entries.get(2), "left");
+		Assert.assertEquals(entries.get(3), "right");
+
+		database.delete(doc);
+
+		doc = (ODocument) database.command(
+				new OCommandSQL(
+						"insert into cluster:default SET equaledges = 'yes', name = 'square', list = ['bottom', 'top','left','right'] "))
+				.execute();
+
+		Assert.assertTrue(doc != null);
+
+		doc = (ODocument) new ODocument(doc.getIdentity()).load();
+
+		Assert.assertEquals(doc.field("equaledges"), "yes");
+		Assert.assertEquals(doc.field("name"), "square");
+		Assert.assertTrue(doc.field("list") instanceof List);
+
+		entries = ((List<Object>) doc.field("list"));
+		Assert.assertEquals(entries.size(), 4);
+
+		Assert.assertEquals(entries.get(0), "bottom");
+		Assert.assertEquals(entries.get(1), "top");
+		Assert.assertEquals(entries.get(2), "left");
+		Assert.assertEquals(entries.get(3), "right");
 
 		database.close();
 	}

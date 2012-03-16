@@ -218,6 +218,13 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 
 			fieldValue = word.toString();
 
+			while (pos > -1 && (fieldValue.startsWith("{") && (!fieldValue.endsWith("}") && !fieldValue.endsWith("},")))
+					|| (fieldValue.startsWith("[") && (!fieldValue.endsWith("],") && !fieldValue.endsWith("]")))) {
+				pos = newPos;
+				newPos = OSQLHelper.nextWord(text, textUpperCase, pos + 1, word, false, " =><");
+				fieldValue += word.toString();
+			}
+
 			if (fieldValue.endsWith(",")) {
 				pos = newPos - 1;
 				fieldValue = fieldValue.substring(0, fieldValue.length() - 1);
