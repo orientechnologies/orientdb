@@ -160,26 +160,37 @@ public class JSONTest {
 
 		Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
 		Assert.assertTrue(loadedDoc.field("long") instanceof Long);
+		Assert.assertEquals(((Long) newDoc.field("long")).longValue(), ((Long) loadedDoc.field("long")).longValue());
 		Assert.assertTrue(loadedDoc.field("date") instanceof Date);
 		Assert.assertTrue(loadedDoc.field("byte") instanceof Byte);
+		Assert.assertEquals(((Byte) newDoc.field("byte")).byteValue(), ((Byte) loadedDoc.field("byte")).byteValue());
 		Assert.assertTrue(loadedDoc.field("doc") instanceof ODocument);
+
 		ODocument firstDoc = loadedDoc.field("doc");
 		Assert.assertTrue(firstLevelDoc.hasSameContentOf(firstDoc));
 		Assert.assertTrue(firstDoc.field("long") instanceof Long);
+		Assert.assertEquals(((Long) firstLevelDoc.field("long")).longValue(), ((Long) firstDoc.field("long")).longValue());
 		Assert.assertTrue(firstDoc.field("date") instanceof Date);
 		Assert.assertTrue(firstDoc.field("byte") instanceof Byte);
+		Assert.assertEquals(((Byte) firstLevelDoc.field("byte")).byteValue(), ((Byte) firstDoc.field("byte")).byteValue());
 		Assert.assertTrue(firstDoc.field("doc") instanceof ODocument);
+
 		ODocument secondDoc = firstDoc.field("doc");
 		Assert.assertTrue(secondLevelDoc.hasSameContentOf(secondDoc));
 		Assert.assertTrue(secondDoc.field("long") instanceof Long);
+		Assert.assertEquals(((Long) secondLevelDoc.field("long")).longValue(), ((Long) secondDoc.field("long")).longValue());
 		Assert.assertTrue(secondDoc.field("date") instanceof Date);
 		Assert.assertTrue(secondDoc.field("byte") instanceof Byte);
+		Assert.assertEquals(((Byte) secondLevelDoc.field("byte")).byteValue(), ((Byte) secondDoc.field("byte")).byteValue());
 		Assert.assertTrue(secondDoc.field("doc") instanceof ODocument);
+
 		ODocument thirdDoc = secondDoc.field("doc");
 		Assert.assertTrue(thirdLevelDoc.hasSameContentOf(thirdDoc));
 		Assert.assertTrue(thirdDoc.field("long") instanceof Long);
+		Assert.assertEquals(((Long) thirdLevelDoc.field("long")).longValue(), ((Long) thirdDoc.field("long")).longValue());
 		Assert.assertTrue(thirdDoc.field("date") instanceof Date);
 		Assert.assertTrue(thirdDoc.field("byte") instanceof Byte);
+		Assert.assertEquals(((Byte) thirdLevelDoc.field("byte")).byteValue(), ((Byte) thirdDoc.field("byte")).byteValue());
 	}
 
 	@Test

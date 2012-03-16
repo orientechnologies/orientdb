@@ -307,6 +307,13 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 						}
 				}
 
+				if (iFieldTypes != null) {
+					Character c = null;
+					c = iFieldTypes.get(iFieldName);
+					if (c != null)
+						iType = ORecordSerializerStringAbstract.getType(iFieldValueAsString, c);
+				}
+
 				if (iType == null) {
 					if (iFieldValueAsString.length() == DEF_DATE_FORMAT.length())
 						// TRY TO PARSE AS DATE
@@ -354,7 +361,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 						throw new OSerializationException("Unable to unmarshall date: " + iFieldValueAsString, e);
 					}
 				}
-
+			case BINARY:
+				return OStringSerializerHelper.fieldTypeFromStream(iRecord, iType, iFieldValueAsString);
 			default:
 				return OStringSerializerHelper.fieldTypeFromStream(iRecord, iType, iFieldValue);
 			}

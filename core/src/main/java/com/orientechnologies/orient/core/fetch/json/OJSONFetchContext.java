@@ -88,7 +88,7 @@ public class OJSONFetchContext implements OFetchContext {
 				appendType(typesStack.peek(), iFieldName, 'd');
 			else if (iFieldValue instanceof Date)
 				appendType(typesStack.peek(), iFieldName, 't');
-			else if (iFieldValue instanceof Byte)
+			else if (iFieldValue instanceof Byte || iFieldValue instanceof byte[])
 				appendType(typesStack.peek(), iFieldName, 'b');
 			// typesStack.add(buffer);
 		}

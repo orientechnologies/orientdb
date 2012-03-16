@@ -336,6 +336,40 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 	}
 
 	/**
+	 * Parses the field type char returning the closer type. Default is STRING. b=binary if iValue.lenght() >= 4 b=byte if
+	 * iValue.lenght() <= 3 s=short, l=long f=float d=double a=date t=datetime
+	 * 
+	 * @param iValue
+	 *          Value to parse
+	 * @param iCharType
+	 *          Char value indicating the type
+	 * @return The closest type recognized
+	 */
+	public static OType getType(final String iValue, final char iCharType) {
+		if (iCharType == 'f')
+			return OType.FLOAT;
+		else if (iCharType == 'c')
+			return OType.DECIMAL;
+		else if (iCharType == 'l')
+			return OType.LONG;
+		else if (iCharType == 'd')
+			return OType.DOUBLE;
+		else if (iCharType == 'b') {
+			if (iValue.length() >= 1 && iValue.length() <= 3)
+				return OType.BYTE;
+			else
+				return OType.BINARY;
+		} else if (iCharType == 'a')
+			return OType.DATE;
+		else if (iCharType == 't')
+			return OType.DATETIME;
+		else if (iCharType == 's')
+			return OType.SHORT;
+
+		return OType.STRING;
+	}
+
+	/**
 	 * Parses a string returning the value with the closer type. Numbers by default are INTEGER if haven't decimal separator,
 	 * otherwise FLOAT. To treat all the number types numbers are postponed with a character that tells the type: b=byte, s=short,
 	 * l=long, f=float, d=double, t=date. If starts with # it's a RecordID. Most of the code is equals to getType() but has been

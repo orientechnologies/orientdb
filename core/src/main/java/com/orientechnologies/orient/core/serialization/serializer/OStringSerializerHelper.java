@@ -660,8 +660,9 @@ public abstract class OStringSerializerHelper {
 					|| (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\''))
 				// @COMPATIBILITY 1.0rc7-SNAPSHOT ' TO SUPPORT OLD DATABASES
 				s = s.substring(1, s.length() - 1);
-			else
-				throw new IllegalArgumentException("Not binary type: " + iValue);
+// IN CASE OF JSON BINARY IMPORT THIS EXEPTION IS WRONG
+//			else
+//				throw new IllegalArgumentException("Not binary type: " + iValue);
 
 			return OBase64Utils.decode(s);
 		} else
