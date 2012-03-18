@@ -20,7 +20,6 @@
  */
 package com.orientechnologies.orient.jdbc.graph;
 
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -50,7 +49,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
- * 
+ * @author Roberto Franchini (CELI srl - franchini@celi.it)
  * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci@gmail.com)
  * 
  */
@@ -64,7 +63,7 @@ public class OrientGraphJdbcQueryTest extends OrientGraphJdbcBaseTest {
 
 	@After
 	public void clean() {
-		
+
 	}
 
 	@Test
@@ -84,8 +83,6 @@ public class OrientGraphJdbcQueryTest extends OrientGraphJdbcBaseTest {
 
 					int columnType = resultMetaData.getColumnType(i);
 					Integer expectedType = OrientGraphJdbcCreationHelper.SQL_TYPES.get(columnName);
-					System.out.println("columnType:: " + columnType);
-					System.out.println("expectedType:: " + expectedType);
 
 					assertColumnType(columnName, expectedType, columnType);
 

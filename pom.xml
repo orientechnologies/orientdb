@@ -24,9 +24,9 @@
 	</properties>
 	<repositories>
 		<repository>
-			<id>orientechnologies-repository</id>
-			<name>Orient Technologies Maven2 Repository</name>
-			<url>http://www.orientechnologies.com/listing/m2</url>
+			<id>oss-sonatype</id>
+			<name>Sonatype OSS repository</name>
+			<url>https://oss.sonatype.org/content/groups/public/</url>
 			<snapshots>
 				<enabled>true</enabled>
 				<updatePolicy>always</updatePolicy>
@@ -92,7 +92,7 @@
 			<groupId>com.orientechnologies</groupId>
 			<artifactId>orientdb-client</artifactId>
 			<version>${orient.version}</version>
-<!-- 			<scope>test</scope> -->
+			<!-- <scope>test</scope> -->
 		</dependency>
 		<!-- <dependency> -->
 		<!-- <groupId>org.springframework</groupId> -->
