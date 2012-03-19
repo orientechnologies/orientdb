@@ -31,9 +31,8 @@ import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
 
-public class OServerCommandGetStaticContent extends OServerCommandAbstract {
+public class OServerCommandGetStaticContent extends OServerCommandConfigurableAbstract {
 	private static final String[]										DEF_PATTERN				= { "GET|www", "GET|studio/", "GET|", "GET|*.htm",
 			"GET|*.html", "GET|*.xml", "GET|*.jpeg", "GET|*.jpg", "GET|*.png", "GET|*.gif", "GET|*.js", "GET|*.otf", "GET|*.css",
 			"GET|*.swf", "GET|favicon.ico", "GET|robots.txt"							};
@@ -44,14 +43,13 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 	private Map<String, String>											cacheHttp					= new HashMap<String, String>();
 	private String																	cacheHttpDefault	= "Cache-Control: max-age=3000";
 	private String																	wwwPath;
-	private final String[]													pattern;
 
 	public OServerCommandGetStaticContent() {
-		pattern = DEF_PATTERN;
+		super(DEF_PATTERN);
 	}
 
 	public OServerCommandGetStaticContent(final OServerCommandConfiguration iConfiguration) {
-		pattern = iConfiguration.pattern.split(" ");
+		super(iConfiguration.pattern);
 
 		// LOAD HTTP CACHE CONFIGURATION
 		for (OServerEntryConfiguration par : iConfiguration.parameters) {
@@ -183,11 +181,6 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 				}
 		}
 		return false;
-	}
-
-	@Override
-	public String[] getNames() {
-		return pattern;
 	}
 
 	@Override

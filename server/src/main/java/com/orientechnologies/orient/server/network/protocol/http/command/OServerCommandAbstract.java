@@ -18,8 +18,11 @@ package com.orientechnologies.orient.server.network.protocol.http.command;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -130,6 +133,22 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 			iRequest.channel.outStream.write(OBinaryProtocol.string2bytes(iContent));
 	}
 
+	protected Map<String, String> getParameters(final OHttpRequest iRequest) {
+		int begin = iRequest.url.indexOf("?");
+		if (begin > -1) {
+			Map<String, String> params = new HashMap<String, String>();
+			String parameters = iRequest.url.substring(begin + 1);
+			final String[] paramPairs = parameters.split("&");
+			for (String p : paramPairs) {
+				final String[] parts = p.split("=");
+				if (parts.length == 2)
+					params.put(parts[0], parts[1]);
+			}
+			return params;
+		}
+		return Collections.emptyMap();
+	}
+
 	protected String[] checkSyntax(String iURL, final int iArgumentCount, final String iSyntax) {
 		final int parametersPos = iURL.indexOf('?');
 		if (parametersPos > -1)
@@ -156,6 +175,15 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 
 		// WRITE RECORDS
 		json.beginCollection(1, true, "result");
+		formatCollection(iRecords, buffer, format);
+		json.endCollection(1, true);
+
+		json.endObject();
+
+		sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
+	}
+
+	protected void formatCollection(final List<OIdentifiable> iRecords, final StringWriter buffer, final String format) {
 		if (iRecords != null) {
 			int counter = 0;
 			String objectJson;
@@ -173,11 +201,6 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 					}
 			}
 		}
-		json.endCollection(1, true);
-
-		json.endObject();
-
-		sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
 	}
 
 	protected void sendRecordContent(final OHttpRequest iRequest, final ORecord<?> iRecord) throws IOException {
