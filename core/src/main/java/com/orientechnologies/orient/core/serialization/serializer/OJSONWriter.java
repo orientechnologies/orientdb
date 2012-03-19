@@ -79,6 +79,22 @@ public class OJSONWriter {
 		return this;
 	}
 
+	public OJSONWriter writeRecord(final int iIdentLevel, final boolean iNewLine, final Object iName, final ORecord<?> iRecord)
+			throws IOException {
+		if (!firstAttribute)
+			out.append(", ");
+
+		format(iIdentLevel, iNewLine);
+
+		if (iName != null)
+			out.append("\"" + iName.toString() + "\":");
+
+		out.append(iRecord.toJSON(format));
+
+		firstAttribute = false;
+		return this;
+	}
+
 	public OJSONWriter endObject() throws IOException {
 		format(0, true);
 		out.append('}');
