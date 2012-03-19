@@ -16,9 +16,9 @@
 package com.orientechnologies.common.collection;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -39,19 +39,19 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable {
 	private final List<Comparable>	keys;
 
 	public OCompositeKey(final List<? extends Comparable> keys) {
-		this();
+		this.keys = new ArrayList<Comparable>(keys.size());
 		for (final Comparable key : keys)
 			addKey(key);
 	}
 
 	public OCompositeKey(final Comparable... keys) {
-		this();
+		this.keys = new ArrayList<Comparable>(keys.length);
 		for (final Comparable key : keys)
 			addKey(key);
 	}
 
 	public OCompositeKey() {
-		this.keys = new LinkedList<Comparable>();
+		this.keys = new ArrayList<Comparable>();
 	}
 
 	/**

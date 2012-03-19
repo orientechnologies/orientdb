@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
@@ -55,6 +56,9 @@ public class OPropertyIndexDefinition extends ODocumentWrapperNoClass implements
 	}
 
 	public Object getDocumentValueToIndex(final ODocument iDocument) {
+		if (OType.LINK.equals(keyType)) {
+			return createValue(iDocument.field(field, ORID.class));
+		}
 		return createValue(iDocument.field(field));
 	}
 
