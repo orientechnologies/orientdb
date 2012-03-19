@@ -27,6 +27,10 @@ public class ODistributedDatabaseInfo {
 		SYNCH, ASYNCH
 	}
 
+	public enum STATUS_TYPE {
+		ONLINE, OFFLINE
+	}
+
 	public String						serverId;
 	public String						databaseName;
 	public String						userName;
@@ -34,14 +38,16 @@ public class ODistributedDatabaseInfo {
 	public SYNCH_TYPE				synchType;
 	public ONodeConnection	connection;
 	public OOperationLog		log;
+	public STATUS_TYPE			status;
 
 	public ODistributedDatabaseInfo(final String iServerid, final String dbName, final String iUserName, final String iUserPasswd,
-			final SYNCH_TYPE iSynchType) {
+			final SYNCH_TYPE iSynchType, final STATUS_TYPE iStatus) {
 		serverId = iServerid;
 		databaseName = dbName;
 		userName = iUserName;
 		userPassword = iUserPasswd;
 		synchType = iSynchType;
+		status = iStatus;
 	}
 
 	public void connected() throws IOException {
@@ -51,5 +57,14 @@ public class ODistributedDatabaseInfo {
 	public void close() throws IOException {
 		if (log != null)
 			log.close();
+		status = STATUS_TYPE.OFFLINE;
+	}
+
+	public void setOnline() {
+		status = STATUS_TYPE.ONLINE;
+	}
+
+	public void setOffline() {
+		status = STATUS_TYPE.OFFLINE;
 	}
 }

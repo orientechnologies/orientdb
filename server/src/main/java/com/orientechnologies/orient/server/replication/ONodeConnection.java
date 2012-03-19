@@ -135,6 +135,7 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 			} finally {
 				endResponse();
 			}
+			
 
 		} catch (OException e) {
 			// PASS THROUGH

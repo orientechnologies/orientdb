@@ -101,11 +101,11 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 				OLogManager.instance().debug(this, "Cluster <%s>: remote node %s authenticated correctly with user '%s'",
 						manager.getConfig().name, remoteNodeId, userName);
 
-			channel.acquireExclusiveLock();
+			beginResponse();
 			try {
 				sendOk(clientTxId);
 			} finally {
-				channel.releaseExclusiveLock();
+				endResponse();
 			}
 			break;
 		}
@@ -124,7 +124,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 
 			boolean remainTheLeader = false;
 
-			channel.acquireExclusiveLock();
+			beginResponse();
 			try {
 				sendOk(clientTxId);
 
@@ -156,8 +156,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 					channel.writeBytes(localCfg.toStream());
 				}
 			} finally {
-				channel.releaseExclusiveLock();
-				channel.flush();
+				endResponse();
 			}
 
 			if (remainTheLeader)
@@ -182,11 +181,11 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			if (OLogManager.instance().isDebugEnabled())
 				OLogManager.instance().debug(this, "Received heartbeat message from leader. Last interval was " + lastInterval + "ms");
 
-			channel.acquireExclusiveLock();
+			beginResponse();
 			try {
 				sendOk(clientTxId);
 			} finally {
-				channel.releaseExclusiveLock();
+				endResponse();
 			}
 			break;
 
@@ -205,49 +204,54 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 				databases.put(dbName, db);
 			}
 
-			sendOk(clientTxId);
+			beginResponse();
+			try {
+				sendOk(clientTxId);
 
-			final ORecordOperation op = new ORecordOperation();
+				final ORecordOperation op = new ORecordOperation();
 
-			// SYNCHRONIZE ALL THE NODES
-			Collection<ODocument> nodes = cfg.field("nodes");
-			for (ODocument nodeCfg : nodes) {
-				final String node = nodeCfg.field("node");
-				final long lastLog = (Long) nodeCfg.field("lastLog");
+				// SYNCHRONIZE ALL THE NODES
+				Collection<ODocument> nodes = cfg.field("nodes");
+				for (ODocument nodeCfg : nodes) {
+					final String node = nodeCfg.field("node");
+					final long lastLog = (Long) nodeCfg.field("lastLog");
 
-				OLogManager.instance().info(this, "<-> DB %s: Reading operation logs from %s after %d", dbName, remoteNodeId, lastLog);
+					OLogManager.instance().info(this, "<-> DB %s: Reading operation logs from %s after %d", dbName, remoteNodeId, lastLog);
 
-				// channel.
-				final OOperationLog opLog = manager.getReplicator().getOperationLog(node, dbName);
+					// channel.
+					final OOperationLog opLog = manager.getReplicator().getOperationLog(node, dbName);
 
-				if (opLog != null) {
-					// SEND NODE LOGS
-					channel.writeByte((byte) 1);
-					channel.writeString(node);
-
-					// SEND LOG DELTA
-					int position = opLog.findOperationId(lastLog);
-					int sent = 0;
-
-					sendOk(clientTxId);
-
-					for (int i = position - 1; i >= 0; --i) {
+					if (opLog != null) {
+						// SEND NODE LOGS
 						channel.writeByte((byte) 1);
-						opLog.getEntry(i, op);
+						channel.writeString(node);
 
-						channel.writeBytes(op.toStream());
-						sent++;
+						// SEND LOG DELTA
+						int position = opLog.findOperationId(lastLog);
+						int sent = 0;
 
-						OLogManager.instance().info(this, ">> %s: (%d) operation %d with RID %s", dbName, sent, op.serial,
-								op.record.getIdentity());
+						sendOk(clientTxId);
+
+						for (int i = position - 1; i >= 0; --i) {
+							channel.writeByte((byte) 1);
+							opLog.getEntry(i, op);
+
+							channel.writeBytes(op.toStream());
+							sent++;
+
+							OLogManager.instance().info(this, ">> %s: (%d) operation %d with RID %s", dbName, sent, op.serial,
+									op.record.getIdentity());
+						}
+
+						// END OF OPERATIONS PER NODE
+						channel.writeByte((byte) 0);
 					}
-
-					// END OF OPERATIONS PER NODE
-					channel.writeByte((byte) 0);
 				}
+				// END OF NODES
+				channel.writeByte((byte) 0);
+			} finally {
+				endResponse();
 			}
-			// END OF NODES
-			channel.writeByte((byte) 0);
 
 			OLogManager.instance().info(this, "<-> DB %s: Synchronization completed from node %s, starting inverse replication...",
 					dbName, remoteNodeId);
@@ -305,12 +309,12 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			final ODistributedDatabaseInfo db = node.getDatabase(database.getName());
 			db.log.appendLog(operationId, operationType, rid);
 
-			channel.acquireExclusiveLock();
+			beginResponse();
 			try {
 				sendOk(clientTxId);
 				channel.writeLong(result);
 			} finally {
-				channel.releaseExclusiveLock();
+				endResponse();
 			}
 			break;
 		}
@@ -342,16 +346,15 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 
 				OLogManager.instance().info(this, "<-> DB %s: reading database content via streaming from remote server node...", dbName);
 
-				channel.acquireExclusiveLock();
+				beginResponse();
 				try {
 					new ODatabaseImport(database, new OChannelBinaryInputStream(channel), this).importDatabase();
 
 					OLogManager.instance().info(this, "<-> DB %s: database imported correctly", dbName);
 
 					sendOk(clientTxId);
-					channel.flush();
 				} finally {
-					channel.releaseExclusiveLock();
+					endResponse();
 				}
 
 			} finally {
@@ -368,6 +371,15 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 		}
 
 		return true;
+	}
+
+	private void beginResponse() {
+		channel.acquireExclusiveLock();
+	}
+
+	private void endResponse() throws IOException {
+		channel.flush();
+		channel.releaseExclusiveLock();
 	}
 
 	@Override

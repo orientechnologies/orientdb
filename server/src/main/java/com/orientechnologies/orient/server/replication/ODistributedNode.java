@@ -26,6 +26,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.STATUS_TYPE;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.SYNCH_TYPE;
 
 /**
@@ -58,7 +59,7 @@ public class ODistributedNode {
 
 	protected ODistributedDatabaseInfo createDatabaseEntry(final String dbName, SYNCH_TYPE iSynchType, final String iUserName,
 			final String iUserPasswd) throws IOException {
-		return new ODistributedDatabaseInfo(id, dbName, iUserName, iUserPasswd, iSynchType);
+		return new ODistributedDatabaseInfo(id, dbName, iUserName, iUserPasswd, iSynchType, STATUS_TYPE.OFFLINE);
 	}
 
 	public void startDatabaseReplication(final ODistributedDatabaseInfo iDatabase) throws IOException {
@@ -85,9 +86,11 @@ public class ODistributedNode {
 
 				setStatus(STATUS.SYNCHRONIZING);
 				iDatabase.connection.synchronize(iDatabase.databaseName, replicator.getLocalDatabaseConfiguration(iDatabase.databaseName));
+				iDatabase.setOnline();
 				setStatus(STATUS.ONLINE);
 
 			} catch (Exception e) {
+				iDatabase.setOffline();
 				iDatabase.close();
 				databases.remove(iDatabase.databaseName);
 				OLogManager.instance().warn(this, "<> DB %s: cannot find database on remote server. Removing it from shared list.", e,

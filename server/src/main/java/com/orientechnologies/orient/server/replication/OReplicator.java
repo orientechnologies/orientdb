@@ -32,6 +32,7 @@ import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerConfiguration;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.STATUS_TYPE;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.SYNCH_TYPE;
 import com.orientechnologies.orient.server.replication.conflict.OReplicationConflictResolver;
 
@@ -111,16 +112,18 @@ public class OReplicator {
 	}
 
 	public void startReplication(final String dbName, final String nodeId, final String mode) throws IOException {
-		if (manager.itsMe(nodeId)) {
+		if (manager.itsMe(nodeId))
 			// DON'T OPEN A CONNECTION TO MYSELF BUT START REPLICATION
 			return;
-		}
 
 		// GET THE NODE
 		final ODistributedNode dNode = getOrCreateDistributedNode(nodeId);
 		ODistributedDatabaseInfo db = dNode.getDatabase(dbName);
 		if (db == null)
 			db = dNode.createDatabaseEntry(dbName, SYNCH_TYPE.valueOf(mode.toUpperCase()), replicatorUser.name, replicatorUser.password);
+		else if (db.status == STATUS_TYPE.ONLINE)
+			// ALREADY CONNECTED
+			return;
 
 		if (!localLogs.containsKey(dbName))
 			// INITIALIZING OPERATION LOG

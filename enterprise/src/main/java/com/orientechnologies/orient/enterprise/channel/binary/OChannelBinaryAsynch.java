@@ -39,6 +39,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 	private int									currentSessionId;
 
 	private static final int		MAX_UNREAD_RESPONSES	= 5;
+	private static final int		MAX_LENGTH_DEBUG			= 100;
 
 	public OChannelBinaryAsynch(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
 		super(iSocket, iConfig);
@@ -95,17 +96,21 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 				final StringBuilder dirtyBuffer = new StringBuilder();
 				int i = 0;
 				while (in.available() > 0) {
-					if (dirtyBuffer.length() > 0)
-						dirtyBuffer.append('-');
-					dirtyBuffer.append(in.read());
+					char c = (char) in.read();
 					++i;
+
+					if (dirtyBuffer.length() < MAX_LENGTH_DEBUG) {
+						if (dirtyBuffer.length() > 0)
+							dirtyBuffer.append('-');
+						dirtyBuffer.append(c);
+					}
 				}
 
 				OLogManager.instance().error(
 						this,
 						"Received unread response for session=" + currentSessionId
 								+ ", probably corrupted data from the network connection. Cleared dirty data in the buffer (" + i + " bytes): ["
-								+ dirtyBuffer + "]", OIOException.class);
+								+ dirtyBuffer + (i > dirtyBuffer.length() ? "..." : "") + "]", OIOException.class);
 			}
 
 			lockRead.unlock();
