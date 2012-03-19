@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
+import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 
 /**
  * Run-time query condition evaluator.
@@ -228,6 +229,9 @@ public class OSQLFilterCondition {
 				return null;
 			}
 		}
+
+		if (iValue instanceof OSQLQuery<?>)
+			return ((OSQLQuery<?>) iValue).execute();
 
 		if (iValue instanceof OSQLFilterItem)
 			return ((OSQLFilterItem) iValue).getValue(o, iContext);

@@ -25,6 +25,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -53,9 +55,18 @@ public class SQLSelectTest {
 		database = new ODatabaseDocumentTx(iURL);
 	}
 
+	@BeforeMethod
+	protected void init() {
+		database.open("admin", "admin");
+	}
+
+	@AfterMethod
+	protected void deinit() {
+		database.close();
+	}
+
 	@Test
 	public void queryNoDirtyResultset() {
-		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>(" select from Profile ")).execute();
 
@@ -65,12 +76,10 @@ public class SQLSelectTest {
 			Assert.assertFalse(d.isDirty());
 		}
 
-		database.close();
 	}
 
 	@Test
 	public void queryNoWhere() {
-		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>(" select from Profile ")).execute();
 
@@ -80,12 +89,10 @@ public class SQLSelectTest {
 			Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
 		}
 
-		database.close();
 	}
 
 	@Test
 	public void queryParentesisAsRight() {
-		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(
 				new OSQLSynchQuery<ODocument>(
@@ -97,12 +104,10 @@ public class SQLSelectTest {
 			Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
 		}
 
-		database.close();
 	}
 
 	@Test
 	public void querySingleAndDoubleQuotes() {
-		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where name = 'Giuseppe'"))
 				.execute();
@@ -114,12 +119,10 @@ public class SQLSelectTest {
 		Assert.assertTrue(result.size() != 0);
 		Assert.assertEquals(result.size(), count);
 
-		database.close();
 	}
 
 	@Test
 	public void queryTwoParentesisConditions() {
-		database.open("admin", "admin");
 
 		List<ODocument> result = database
 				.command(
@@ -133,12 +136,10 @@ public class SQLSelectTest {
 			Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
 		}
 
-		database.close();
 	}
 
 	@Test
 	public void querySchemaAndLike() {
-		database.open("admin", "admin");
 
 		List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:profile where name like 'G%'"))
 				.execute();
@@ -178,12 +179,10 @@ public class SQLSelectTest {
 			Assert.assertTrue(record.field("name").toString().contains("G"));
 		}
 
-		database.close();
 	}
 
 	@Test
 	public void queryContainsInEmbeddedSet() {
-		database.open("admin", "admin");
 
 		Set<String> tags = new HashSet<String>();
 		tags.add("smart");
@@ -206,12 +205,10 @@ public class SQLSelectTest {
 
 		// doc.delete();
 
-		database.close();
 	}
 
 	@Test
 	public void queryContainsInEmbeddedList() {
-		database.open("admin", "admin");
 
 		List<String> tags = new ArrayList<String>();
 		tags.add("smart");
@@ -239,12 +236,10 @@ public class SQLSelectTest {
 
 		doc.delete();
 
-		database.close();
 	}
 
 	@Test
 	public void queryContainsInDocumentSet() {
-		database.open("admin", "admin");
 
 		HashSet<ODocument> coll = new HashSet<ODocument>();
 		coll.add(new ODocument("name", "Luca", "surname", "Garulli"));
@@ -263,12 +258,10 @@ public class SQLSelectTest {
 
 		doc.delete();
 
-		database.close();
 	}
 
 	@Test
 	public void queryContainsInDocumentList() {
-		database.open("admin", "admin");
 
 		List<ODocument> coll = new ArrayList<ODocument>();
 		coll.add(new ODocument("name", "Luca", "surname", "Garulli"));
@@ -287,12 +280,10 @@ public class SQLSelectTest {
 
 		doc.delete();
 
-		database.close();
 	}
 
 	@Test
 	public void queryContainsInEmbeddedMapClassic() {
-		database.open("admin", "admin");
 
 		Map<String, ODocument> customReferences = new HashMap<String, ODocument>();
 		customReferences.put("first", new ODocument("name", "Luca", "surname", "Garulli"));
@@ -330,12 +321,10 @@ public class SQLSelectTest {
 
 		doc.delete();
 
-		database.close();
 	}
 
 	@Test
 	public void queryContainsInEmbeddedMapNew() {
-		database.open("admin", "admin");
 
 		Map<String, ODocument> customReferences = new HashMap<String, ODocument>();
 		customReferences.put("first", new ODocument("name", "Luca", "surname", "Garulli"));
@@ -360,12 +349,10 @@ public class SQLSelectTest {
 
 		doc.delete();
 
-		database.close();
 	}
 
 	@Test
 	public void queryCollectionContainsLowerCaseSubStringIgnoreCase() {
-		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(
 				new OSQLSynchQuery<ODocument>(
@@ -388,12 +375,10 @@ public class SQLSelectTest {
 			Assert.assertTrue(found);
 		}
 
-		database.close();
 	}
 
 	@Test
 	public void queryCollectionContainsInRecords() {
-		database.open("admin", "admin");
 
 		record.reset();
 		record.setClassName("Animal");
@@ -463,12 +448,10 @@ public class SQLSelectTest {
 
 		record.delete();
 
-		database.close();
 	}
 
 	@Test
 	public void queryCollectionInNumbers() {
-		database.open("admin", "admin");
 
 		record.reset();
 		record.setClassName("Animal");
@@ -531,23 +514,19 @@ public class SQLSelectTest {
 
 		record.delete();
 
-		database.close();
 	}
 
 	@Test
 	public void queryWhereRidDirectMatching() {
-		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select * from OUser where roles in #3:0")).execute();
 
 		Assert.assertEquals(result.size(), 1);
 
-		database.close();
 	}
 
 	@Test
 	public void queryInAsParameter() {
-		database.open("admin", "admin");
 
 		List<ODocument> roles = database.query(new OSQLSynchQuery<Object>("select from orole"));
 		roles.remove(0);
@@ -556,12 +535,10 @@ public class SQLSelectTest {
 
 		Assert.assertEquals(result.size(), 2);
 
-		database.close();
 	}
 
 	@Test
 	public void queryAnyOperator() {
-		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where any() like 'N%'")).execute();
 
@@ -582,12 +559,10 @@ public class SQLSelectTest {
 			Assert.assertTrue(found);
 		}
 
-		database.close();
 	}
 
 	@Test
 	public void queryTraverseAnyOperator() {
-		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(
 				new OSQLSynchQuery<ODocument>("select from Profile where any() traverse(0,3,any()) ( any().indexOf('Navona') > -1 )"))
@@ -601,12 +576,10 @@ public class SQLSelectTest {
 			Assert.assertTrue(record.getClassName().equalsIgnoreCase("Profile"));
 		}
 
-		database.close();
 	}
 
 	@Test
 	public void queryTraverseAndClass() {
-		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(
 				new OSQLSynchQuery<ODocument>("select from Profile where any() traverse(0,7) (@class = 'City')")).execute();
@@ -619,12 +592,10 @@ public class SQLSelectTest {
 			Assert.assertTrue(record.getClassName().equalsIgnoreCase("Profile"));
 		}
 
-		database.close();
 	}
 
 	@Test
 	public void queryTraverseInfiniteLevelOperator() {
-		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(
 				new OSQLSynchQuery<ODocument>("select from Profile where any() traverse(0,-1) ( any().indexOf('Navona') > -1 )")).execute();
@@ -637,12 +608,10 @@ public class SQLSelectTest {
 			Assert.assertTrue(record.getClassName().equalsIgnoreCase("Profile"));
 		}
 
-		database.close();
 	}
 
 	@Test
 	public void queryTraverseEdges() {
-		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(
 				new OSQLSynchQuery<ODocument>(
@@ -650,23 +619,19 @@ public class SQLSelectTest {
 
 		Assert.assertTrue(result.size() > 0);
 
-		database.close();
 	}
 
 	@Test
 	public void queryAllOperator() {
-		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Account where all() is null")).execute();
 
 		Assert.assertTrue(result.size() == 0);
 
-		database.close();
 	}
 
 	@Test
 	public void queryOrderBy() {
-		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile order by name")).execute();
 
@@ -686,12 +651,19 @@ public class SQLSelectTest {
 			lastName = fieldValue;
 		}
 
-		database.close();
+	}
+
+	@Test
+	public void queryLimitOnly() {
+
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile limit 1")).execute();
+
+		Assert.assertEquals(result.size(), 1);
+
 	}
 
 	@Test
 	public void queryOrderByAndLimit() {
-		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile order by name limit 2")).execute();
 
@@ -704,12 +676,10 @@ public class SQLSelectTest {
 			lastName = d.field("name");
 		}
 
-		database.close();
 	}
 
 	@Test
 	public void queryConditionAndOrderBy() {
-		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(
 				new OSQLSynchQuery<ODocument>("select from Profile where name is not null order by name")).execute();
@@ -723,12 +693,10 @@ public class SQLSelectTest {
 			lastName = d.field("name");
 		}
 
-		database.close();
 	}
 
 	@Test
 	public void queryConditionsAndOrderBy() {
-		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(
 				new OSQLSynchQuery<ODocument>("select from Profile where name is not null order by name desc, id asc")).execute();
@@ -742,12 +710,10 @@ public class SQLSelectTest {
 			lastName = d.field("name");
 		}
 
-		database.close();
 	}
 
 	@Test
 	public void queryRecordTargetRid() {
-		database.open("admin", "admin");
 
 		int profileClusterId = database.getMetadata().getSchema().getClass("Profile").getDefaultClusterId();
 		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from " + profileClusterId + ":0")).execute();
@@ -758,12 +724,11 @@ public class SQLSelectTest {
 			Assert.assertEquals(d.getIdentity().toString(), "#" + profileClusterId + ":0");
 		}
 
-		database.close();
 	}
 
 	@Test
 	public void queryRecordTargetRids() {
-		database.open("admin", "admin");
+
 		int profileClusterId = database.getMetadata().getSchema().getClass("Profile").getDefaultClusterId();
 
 		List<ODocument> result = database.command(
@@ -774,12 +739,11 @@ public class SQLSelectTest {
 		Assert.assertEquals(result.get(0).getIdentity().toString(), "#" + profileClusterId + ":0");
 		Assert.assertEquals(result.get(1).getIdentity().toString(), "#" + profileClusterId + ":1");
 
-		database.close();
 	}
 
 	@Test
 	public void queryRecordAttribRid() {
-		database.open("admin", "admin");
+
 		int profileClusterId = database.getMetadata().getSchema().getClass("Profile").getDefaultClusterId();
 
 		List<ODocument> result = database.command(
@@ -791,12 +755,10 @@ public class SQLSelectTest {
 			Assert.assertEquals(d.getIdentity().toString(), "#" + profileClusterId + ":0");
 		}
 
-		database.close();
 	}
 
 	@Test
 	public void queryRecordAttribClass() {
-		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where @class = 'Profile'"))
 				.execute();
@@ -807,12 +769,10 @@ public class SQLSelectTest {
 			Assert.assertEquals(d.getClassName(), "Profile");
 		}
 
-		database.close();
 	}
 
 	@Test
 	public void queryRecordAttribVersion() {
-		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where @version > 0")).execute();
 
@@ -822,12 +782,10 @@ public class SQLSelectTest {
 			Assert.assertTrue(d.getVersion() > 0);
 		}
 
-		database.close();
 	}
 
 	@Test
 	public void queryRecordAttribSize() {
-		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where @size >= 50")).execute();
 
@@ -837,12 +795,10 @@ public class SQLSelectTest {
 			Assert.assertTrue(d.toStream().length >= 50);
 		}
 
-		database.close();
 	}
 
 	@Test
 	public void queryRecordAttribType() {
-		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where @type = 'document'"))
 				.execute();
@@ -853,12 +809,10 @@ public class SQLSelectTest {
 			Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
 		}
 
-		database.close();
 	}
 
 	@Test
 	public void queryWrongOperator() {
-		database.open("admin", "admin");
 
 		try {
 			database.query(new OSQLSynchQuery<ODocument>("select from Profile where name like.toLowerCase() '%Jay%'"));
@@ -867,31 +821,25 @@ public class SQLSelectTest {
 			Assert.assertTrue(true);
 		}
 
-		database.close();
 	}
 
 	@Test
 	public void queryEscaping() {
-		database.open("admin", "admin");
 
 		database.query(new OSQLSynchQuery<ODocument>("select from Profile where name like '%\\'Jay%'"));
 
-		database.close();
 	}
 
 	@Test
 	public void queryWithLimit() {
-		database.open("admin", "admin");
 
 		Assert.assertEquals(database.query(new OSQLSynchQuery<ODocument>("select from Profile limit 3")).size(), 3);
 
-		database.close();
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public void testRecordNumbers() {
-		database.open("admin", "admin");
 
 		long tot = database.countClass("OGraphVertex");
 
@@ -904,12 +852,10 @@ public class SQLSelectTest {
 
 		Assert.assertTrue(database.query(new OSQLSynchQuery<ODocument>("select from OGraphVertex")).size() >= tot);
 
-		database.close();
 	}
 
 	@Test
 	public void queryWithManualPagination() {
-		database.open("admin", "admin");
 
 		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile where @rid > ? LIMIT 3");
 		ORID last = new ORecordId();
@@ -932,12 +878,11 @@ public class SQLSelectTest {
 		}
 
 		Assert.assertTrue(iterationCount > 1);
-		database.close();
+
 	}
 
 	@Test
 	public void queryWithAutomaticPagination() {
-		database.open("admin", "admin");
 
 		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile LIMIT 3");
 		ORID last = new ORecordId();
@@ -960,12 +905,11 @@ public class SQLSelectTest {
 		}
 
 		Assert.assertTrue(iterationCount > 1);
-		database.close();
+
 	}
 
 	@Test
 	public void queryWithAutomaticPaginationAndRidInWhere() {
-		database.open("admin", "admin");
 
 		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
 				"select from Profile where @rid between #11:2 and #11:30 LIMIT 3");
@@ -992,12 +936,11 @@ public class SQLSelectTest {
 
 		Assert.assertEquals(last, new ORecordId(11, 30));
 		Assert.assertTrue(iterationCount > 1);
-		database.close();
+
 	}
 
 	@Test
 	public void queryWithAutomaticPaginationWithWhere() {
-		database.open("admin", "admin");
 
 		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
 				"select from Profile where followers.length() > 0 LIMIT 3");
@@ -1024,12 +967,11 @@ public class SQLSelectTest {
 		}
 
 		Assert.assertTrue(iterationCount > 1);
-		database.close();
+
 	}
 
 	@Test
 	public void queryWithAutomaticPaginationWithWhereAndBindingVar() {
-		database.open("admin", "admin");
 
 		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
 				"select from Profile where followers.length() > ? LIMIT 3");
@@ -1054,12 +996,11 @@ public class SQLSelectTest {
 		}
 
 		Assert.assertTrue(iterationCount > 1);
-		database.close();
+
 	}
 
 	@Test
 	public void queryWithAutomaticPaginationWithWhereAndBindingVarAtTheFirstQueryCall() {
-		database.open("admin", "admin");
 
 		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
 				"select from Profile where followers.length() > ? LIMIT 3");
@@ -1084,12 +1025,11 @@ public class SQLSelectTest {
 		}
 
 		Assert.assertTrue(iterationCount > 1);
-		database.close();
+
 	}
 
 	@Test
 	public void queryWithAbsenceOfAutomaticPaginationBecauseOfBindingVarReset() {
-		database.open("admin", "admin");
 
 		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
 				"select from Profile where followers.length() > ? LIMIT 3");
@@ -1103,12 +1043,11 @@ public class SQLSelectTest {
 		final ORID firstRidSecondQueryQuery = resultset.get(0).getIdentity();
 
 		Assert.assertEquals(firstRidFirstQuery, firstRidSecondQueryQuery);
-		database.close();
+
 	}
 
 	@Test
 	public void queryResetPagination() {
-		database.open("admin", "admin");
 
 		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile LIMIT 3");
 
@@ -1121,12 +1060,10 @@ public class SQLSelectTest {
 
 		Assert.assertEquals(firstRidFirstQuery, firstRidSecondQueryQuery);
 
-		database.close();
 	}
 
 	@Test
 	public void queryBetween() {
-		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select * from account where nr between 10 and 20"))
 				.execute();
@@ -1137,12 +1074,10 @@ public class SQLSelectTest {
 			Assert.assertTrue(((Integer) record.field("nr")) >= 10 && ((Integer) record.field("nr")) <= 20);
 		}
 
-		database.close();
 	}
 
 	@Test
 	public void queryParenthesisInStrings() {
-		database.open("admin", "admin");
 
 		Assert.assertNotNull(database.command(new OCommandSQL("INSERT INTO account (name) VALUES ('test (demo)')")).execute());
 
@@ -1156,12 +1091,10 @@ public class SQLSelectTest {
 			Assert.assertEquals(record.field("name"), "test (demo)");
 		}
 
-		database.close();
 	}
 
 	@Test
 	public void queryMathOperators() {
-		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select * from account where id < 3 + 4")).execute();
 		Assert.assertFalse(result.isEmpty());
@@ -1195,12 +1128,10 @@ public class SQLSelectTest {
 				.execute();
 		Assert.assertEquals(result.size(), ((Number) result2.get(0).field("tot")).intValue());
 
-		database.close();
 	}
 
 	@Test
 	public void testBetweenWithParameters() {
-		database.open("admin", "admin");
 
 		final List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select * from company where id between ? and ?"),
 				4, 7);
@@ -1212,12 +1143,10 @@ public class SQLSelectTest {
 			resultsList.remove(record.<Integer> field("id"));
 		}
 
-		database.close();
 	}
 
 	@Test
 	public void testInWithParameters() {
-		database.open("admin", "admin");
 
 		final List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select * from company where id in [?, ?, ?, ?]"),
 				4, 5, 6, 7);
@@ -1229,7 +1158,6 @@ public class SQLSelectTest {
 			resultsList.remove(record.<Integer> field("id"));
 		}
 
-		database.close();
 	}
 
 	@Test
@@ -1289,7 +1217,6 @@ public class SQLSelectTest {
 
 	@Test
 	public void testQueryAsClass() {
-		database.open("admin", "admin");
 
 		try {
 			List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
@@ -1301,13 +1228,12 @@ public class SQLSelectTest {
 						.getSchemaClass().getName(), "Address");
 			}
 		} finally {
-			database.close();
+
 		}
 	}
 
 	@Test
 	public void testQueryNotOperator() {
-		database.open("admin", "admin");
 
 		try {
 			List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
@@ -1321,13 +1247,12 @@ public class SQLSelectTest {
 			}
 
 		} finally {
-			database.close();
+
 		}
 	}
 
 	@Test
 	public void testSquareBracketsOnCondition() {
-		database.open("admin", "admin");
 
 		try {
 			List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
@@ -1340,12 +1265,11 @@ public class SQLSelectTest {
 			}
 
 		} finally {
-			database.close();
+
 		}
 	}
 
 	public void testParams() {
-		database.open("admin", "admin");
 
 		try {
 			OClass test = database.getMetadata().getSchema().getClass("test");
@@ -1364,13 +1288,12 @@ public class SQLSelectTest {
 			System.out.println(database.query(new OSQLSynchQuery<ODocument>("select from test where f1 = :p1 and f2 = :p1"), parameters));
 
 		} finally {
-			database.close();
+
 		}
 	}
 
 	@Test
 	public void queryInstanceOfOperator() {
-		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Account")).execute();
 
@@ -1386,6 +1309,15 @@ public class SQLSelectTest {
 
 		Assert.assertEquals(result3.size(), result.size());
 
-		database.close();
+	}
+
+	@Test
+	public void subQuery() {
+
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>("select from Account where name in ( select name from Account limit 1 )")).execute();
+
+		Assert.assertTrue(result.size() != 0);
+
 	}
 }

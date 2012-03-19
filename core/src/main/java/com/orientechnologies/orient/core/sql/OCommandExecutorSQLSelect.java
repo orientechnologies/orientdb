@@ -109,13 +109,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 			return this;
 
 		int endPosition = text.length();
-		int endP = textUpperCase.indexOf(" " + OCommandExecutorSQLSelect.KEYWORD_ORDER_BY, currentPos);
-		if (endP > -1 && endP < endPosition)
-			endPosition = endP;
-
-		endP = textUpperCase.indexOf(" " + OCommandExecutorSQLSelect.KEYWORD_LIMIT, currentPos);
-		if (endP > -1 && endP < endPosition)
-			endPosition = endP;
 
 		if (context == null)
 			context = new OBasicCommandContext();

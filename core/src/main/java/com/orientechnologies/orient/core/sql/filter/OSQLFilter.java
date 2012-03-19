@@ -40,11 +40,13 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNot;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 /**
  * Parsed query. It's built once a query is parsed.
@@ -80,8 +82,11 @@ public class OSQLFilter extends OCommandToParse {
 				if (newPos > -1) {
 					if (word.toString().equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)) {
 						currentPos = newPos;
-						rootCondition = extractConditions(null);
-					} else
+						rootCondition = (OSQLFilterCondition) extractConditions(null);
+					} else if (word.toString().equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT)
+							|| word.toString().equals(OCommandExecutorSQLSelect.KEYWORD_ORDER))
+						return;
+					else
 						throw new OQueryParsingException("Found invalid keyword '" + word + "'", text, newPos);
 				}
 			}
@@ -211,7 +216,19 @@ public class OSQLFilter extends OCommandToParse {
 		return currentPos > -1;
 	}
 
-	private OSQLFilterCondition extractConditions(final OSQLFilterCondition iParentCondition) {
+	private Object extractConditions(final OSQLFilterCondition iParentCondition) {
+		final int oldPosition = currentPos;
+		final String[] words = nextValue(true);
+
+		if (words != null && words.length > 0 && (words[0].equalsIgnoreCase("SELECT") || words[0].equalsIgnoreCase("TRAVERSE"))) {
+			// SUB QUERY
+			final StringBuilder embedded = new StringBuilder();
+			OStringSerializerHelper.getEmbedded(text, oldPosition - 1, -1, embedded);
+			currentPos += embedded.length() + 1;
+			return new OSQLSynchQuery<Object>(embedded.toString());
+		}
+
+		currentPos = oldPosition;
 		final OSQLFilterCondition currentCondition = extractCondition();
 
 		// CHECK IF THERE IS ANOTHER CONDITION ON RIGHT
@@ -223,6 +240,8 @@ public class OSQLFilter extends OCommandToParse {
 			return currentCondition;
 
 		final OQueryOperator nextOperator = extractConditionOperator();
+		if (nextOperator == null)
+			return currentCondition;
 
 		if (nextOperator.precedence > currentCondition.getOperator().precedence) {
 			// SWAP ITEMS
@@ -244,6 +263,10 @@ public class OSQLFilter extends OCommandToParse {
 
 		// EXTRACT ITEMS
 		Object left = extractConditionItem(true, 1);
+
+		if (checkForEnd(left.toString()))
+			return null;
+
 		final OQueryOperator oper;
 		final Object right;
 
@@ -260,6 +283,15 @@ public class OSQLFilter extends OCommandToParse {
 		return new OSQLFilterCondition(left, oper, right);
 	}
 
+	protected boolean checkForEnd(final String iWord) {
+		if (iWord != null
+				&& (iWord.equals(OCommandExecutorSQLSelect.KEYWORD_ORDER) || iWord.equals(OCommandExecutorSQLSelect.KEYWORD_LIMIT))) {
+			currentPos -= iWord.length();
+			return true;
+		}
+		return false;
+	}
+
 	private OQueryOperator extractConditionOperator() {
 		if (!jumpWhiteSpaces())
 			// END OF PARSING: JUST RETURN
@@ -271,6 +303,9 @@ public class OSQLFilter extends OCommandToParse {
 
 		String word;
 		word = nextWord(true, " 0123456789'\"");
+
+		if (checkForEnd(word))
+			return null;
 
 		for (OQueryOperator op : OSQLEngine.getInstance().getRecordOperators()) {
 			if (word.startsWith(op.keyword)) {
@@ -297,7 +332,7 @@ public class OSQLFilter extends OCommandToParse {
 		final Object[] result = new Object[iExpectedWords];
 
 		for (int i = 0; i < iExpectedWords; ++i) {
-			String[] words = nextValue(true);
+			final String[] words = nextValue(true);
 			if (words == null)
 				break;
 
@@ -307,7 +342,7 @@ public class OSQLFilter extends OCommandToParse {
 				// SUB-CONDITION
 				currentPos = currentPos - words[0].length() + 1;
 
-				OSQLFilterCondition subCondition = extractConditions(null);
+				final Object subCondition = extractConditions(null);
 
 				if (!jumpWhiteSpaces() || text.charAt(currentPos) == ')')
 					braces--;

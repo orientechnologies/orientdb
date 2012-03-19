@@ -9,7 +9,6 @@ public class OFileUtils {
 	private static final int	GIGABYTE	= 1073741824;
 	private static final long	TERABYTE	= 1099511627776L;
 
-	@SuppressWarnings("unchecked")
 	public static long getSizeAsNumber(final Object iSize) {
 		if (iSize == null)
 			throw new IllegalArgumentException("Size is null");
