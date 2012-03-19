@@ -230,8 +230,9 @@ public class OSQLFilterCondition {
 			}
 		}
 
-		if (iValue instanceof OSQLQuery<?>)
-			return ((OSQLQuery<?>) iValue).execute();
+		if (iValue instanceof OSQLQuery<?>) {
+			return ((OSQLQuery<?>) iValue).setContext(iContext).execute();
+		}
 
 		if (iValue instanceof OSQLFilterItem)
 			return ((OSQLFilterItem) iValue).getValue(o, iContext);

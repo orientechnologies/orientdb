@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.sql.query;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 
 /**
@@ -67,6 +68,7 @@ public class OSQLAsynchQuery<T extends Object> extends OSQLQuery<T> implements O
 		return null;
 	}
 
-	public void setContext(OCommandContext iContext) {
+	public OCommandRequestText setContext(OCommandContext iContext) {
+		return this;
 	}
 }

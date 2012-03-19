@@ -31,5 +31,5 @@ public interface OCommandRequestText extends OCommandRequestInternal, OSerializa
 
 	public OCommandContext getContext();
 
-	public void setContext(final OCommandContext iContext);
+	public OCommandRequestText setContext(final OCommandContext iContext);
 }

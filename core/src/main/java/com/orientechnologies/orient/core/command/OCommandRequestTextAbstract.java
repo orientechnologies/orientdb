@@ -176,8 +176,9 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
 		return context;
 	}
 
-	public void setContext(final OCommandContext iContext) {
+	public OCommandRequestText setContext(final OCommandContext iContext) {
 		context = iContext;
+		return this;
 	}
 
 	@Override
