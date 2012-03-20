@@ -12,18 +12,18 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 @Test
 public class OStorageLocalTest {
-    private boolean oldStorageOpen;
+	private boolean	oldStorageOpen;
 
-    @BeforeMethod
-    public void beforeMethod() {
-        oldStorageOpen = OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean();
-        OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
-    }
+	@BeforeMethod
+	public void beforeMethod() {
+		oldStorageOpen = OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean();
+		OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
+	}
 
-    @AfterMethod
-    public void afterMethod() {
-       OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(oldStorageOpen);
-    }
+	@AfterMethod
+	public void afterMethod() {
+		OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(oldStorageOpen);
+	}
 
 	public void withLegacyPath() {
 		String dbPath = getDatabasePath();
@@ -40,7 +40,6 @@ public class OStorageLocalTest {
 		// Something was added to dbPath so the legacy situation was simulated
 		dbPath += "/foo";
 		db = new ODatabaseDocumentTx("local:" + dbPath).open("admin", "admin");
-		db.close();
 		db.drop();
 		Assert.assertTrue(true);
 	}

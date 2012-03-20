@@ -148,7 +148,6 @@ public class OSimpleKeyIndexDefinitionTest {
 		final OSimpleKeyIndexDefinition loadedKeyIndexDefinition = new OSimpleKeyIndexDefinition();
 		loadedKeyIndexDefinition.fromStream(loadDocument);
 
-		databaseDocumentTx.close();
 		databaseDocumentTx.drop();
 
 		Assert.assertEquals(loadedKeyIndexDefinition, simpleKeyIndexDefinition);
