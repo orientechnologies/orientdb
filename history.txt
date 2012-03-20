@@ -29,6 +29,16 @@
 This document enlist the last changes to the OrientDB project.
 
 -------------------------------------------------------------------------------
+VERSION 1.0rc9 - (March, 20th 2012)
+-------------------------------------------------------------------------------
+- Studio new look&feel and improved Query panel
+- SQL: new sub query, INSERT accepts SET syntax like SQL UPDATE
+- Schema: new support for metadata on property
+- Many bug fixed, 35 issues in total
+
+Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.0rc9
+
+-------------------------------------------------------------------------------
 VERSION 1.0rc8 - (February, 2nd 2012)
 -------------------------------------------------------------------------------
 - New TRAVERSE command to traverse records by relationships
@@ -41,7 +51,7 @@ VERSION 1.0rc8 - (February, 2nd 2012)
 - SQL: new NOT and INSTANCEOF operators
 - Index works also against MAP types
 - Supported JPA @Embedded annotation
-- many bug fixed, 54 issues in total
+- Many bug fixed, 54 issues in total
 
 Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.0rc8
 
