@@ -57,7 +57,11 @@ public class ODatabaseHelper {
 		if (database.getURL().startsWith("remote:")) {
 			new OServerAdmin(database.getURL()).connect("root", getServerRootPassword(iDirectory)).dropDatabase();
 		} else {
-			database.drop();
+			if (existsDatabase(database)) {
+				if (database.isClosed())
+					database.open("admin", "admin");
+				database.drop();
+			}
 		}
 	}
 

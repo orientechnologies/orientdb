@@ -179,6 +179,13 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	}
 
 	@Override
+	public void drop() {
+		checkOpeness();
+		checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_DELETE);
+		super.drop();
+	}
+
+	@Override
 	public void close() {
 		setCurrentDatabaseinThreadLocal();
 

@@ -23,20 +23,40 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.client.db.ODatabaseHelper;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 
 @Test(groups = "db")
 public class DbDeleteTest {
 	private String	testPath;
+	private String	url;
 
 	@Parameters(value = { "url", "testPath" })
 	public DbDeleteTest(String iURL, String iTestPath) {
 		testPath = iTestPath;
+		url = iURL;
 		OProfiler.getInstance().startRecording();
 	}
 
+	public void testDbDeleteNoCredential() throws IOException {
+		ODatabaseDocument db = new ODatabaseDocumentTx(url);
+		try {
+			db.drop();
+			Assert.fail("Should have thrown ODatabaseException because trying to delete a not opened");
+		} catch (ODatabaseException e) {
+			Assert.assertTrue(e.getMessage().equals("Database '" + url + "' is closed"));
+		} catch (OStorageException e) {
+			Assert.assertTrue(e.getMessage().startsWith("Cannot delete the remote storage:"));
+		}
+	}
+
+	@Test(dependsOnMethods = { "testDbDeleteNoCredential" })
 	public void testDbDelete() throws IOException {
-		new ODatabaseDocumentTx("local:" + testPath + "/" + DbImportExportTest.NEW_DB_URL).drop();
+		ODatabaseDocument db = new ODatabaseDocumentTx("local:" + testPath + "/" + DbImportExportTest.NEW_DB_URL);
+		ODatabaseHelper.dropDatabase(db);
 
 		Assert.assertFalse(new File(testPath + "/" + DbImportExportTest.NEW_DB_PATH).exists());
 	}

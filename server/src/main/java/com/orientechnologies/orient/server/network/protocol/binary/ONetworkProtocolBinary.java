@@ -514,6 +514,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 		if (connection.database.exists()) {
 			OLogManager.instance().info(this, "Dropped database '%s", connection.database.getURL());
 
+			if (connection.database.isClosed())
+				openDatabase(connection.database, serverUser.name, serverUser.password);
 			connection.database.drop();
 			connection.close();
 		} else {

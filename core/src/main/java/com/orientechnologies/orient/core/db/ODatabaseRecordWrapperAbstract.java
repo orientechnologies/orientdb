@@ -64,6 +64,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 
 	@Override
 	public void drop() {
+		checkOpeness();
 		checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_DELETE);
 		super.drop();
 	}

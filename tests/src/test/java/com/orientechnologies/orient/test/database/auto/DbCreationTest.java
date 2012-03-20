@@ -160,7 +160,8 @@ public class DbCreationTest {
 		ODatabaseHelper.createDatabase(db, u);
 
 		db = ODatabaseDocumentPool.global().acquire(u, "admin", "admin");
-		db.close();
+		if (u.startsWith("remote:"))
+			db.close();
 
 		ODatabaseHelper.dropDatabase(db);
 	}
@@ -168,12 +169,9 @@ public class DbCreationTest {
 	@Test
 	public void testCreateAndConnectionPool() throws IOException {
 		ODatabaseDocument db = new ODatabaseDocumentTx(url);
-		try {
-			ODatabaseHelper.dropDatabase(db);
-		} catch (OStorageException e) {
-			Assert.assertTrue(e.getCause().getMessage().startsWith("Database with name '"));
-			Assert.assertTrue(e.getCause().getMessage().endsWith("'doesn't exits."));
-		}
+
+		ODatabaseHelper.dropDatabase(db);
+
 		ODatabaseHelper.createDatabase(db, url);
 		db.close();
 		// Get connection from pool

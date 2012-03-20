@@ -333,6 +333,31 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 		return database;
 	}
 
+	protected ODatabaseComplex<?> openDatabase(final ODatabaseComplex<?> database, final String iUser, final String iPassword) {
+
+		if (database.isClosed())
+			if (database.getStorage() instanceof OStorageMemory)
+				database.create();
+			else {
+				try {
+					database.open(iUser, iPassword);
+				} catch (OSecurityException e) {
+					// TRY WITH SERVER'S USER
+					try {
+						serverLogin(iUser, iPassword, "database.passthrough");
+					} catch (OSecurityException ex) {
+						throw e;
+					}
+
+					// SERVER AUTHENTICATED, BYPASS SECURITY
+					database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
+					database.open(iUser, iPassword);
+				}
+			}
+
+		return database;
+	}
+
 	protected int deleteRecord(final ODatabaseRecord iDatabase, final ORID rid, final int version) {
 		final ORecordInternal<?> record = iDatabase.load(rid);
 		if (record != null) {
