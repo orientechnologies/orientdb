@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.util.List;
+import java.util.Map;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -23,6 +24,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -82,6 +84,63 @@ public class SQLUpdateTest {
 		final int records = (Integer) database.command(new OCommandSQL("update Account remove addresses = #12:0")).execute();
 
 		Assert.assertEquals(records, updatedRecords);
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "updateCollectionsRemoveWithWhereOperator")
+	public void updateCollectionsWithSetOperator() {
+		database.open("admin", "admin");
+
+		List<ODocument> docs = database.query(new OSQLSynchQuery<ODocument>("select from Account"));
+
+		for (ODocument doc : docs) {
+
+			final int records = (Integer) database.command(
+					new OCommandSQL("update Account set addresses = [#12:0, #12:1,#12:2] where @rid = " + doc.getIdentity())).execute();
+
+			Assert.assertEquals(records, 1);
+
+			ODocument loadedDoc = database.load(doc.getIdentity(), "*:-1", true);
+			Assert.assertEquals(((List<?>) loadedDoc.field("addresses")).size(), 3);
+			Assert.assertEquals(((OIdentifiable) ((List<?>) loadedDoc.field("addresses")).get(0)).getIdentity().toString(), "#12:0");
+			loadedDoc.field("addresses", doc.field("addresses"));
+			database.save(loadedDoc);
+		}
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "updateCollectionsRemoveWithWhereOperator")
+	public void updateMapsWithSetOperator() {
+		database.open("admin", "admin");
+
+		ODocument doc = (ODocument) database
+				.command(
+						new OCommandSQL(
+								"insert into cluster:default (equaledges, name, properties) values ('no', 'circleUpdate', {'round':'eeee', 'blaaa':'zigzag'} )"))
+				.execute();
+
+		Integer records = (Integer) database.command(
+				new OCommandSQL("update " + doc.getIdentity()
+						+ " set properties = {'roundOne':'ffff', 'bla':'zagzig','testTestTEST':'okOkOK'}")).execute();
+
+		Assert.assertEquals(records.intValue(), 1);
+
+		ODocument loadedDoc = database.load(doc.getIdentity(), "*:-1", true);
+
+		Assert.assertTrue(loadedDoc.field("properties") instanceof Map);
+
+		@SuppressWarnings("unchecked")
+		Map<Object, Object> entries = ((Map<Object, Object>) loadedDoc.field("properties"));
+		Assert.assertEquals(entries.size(), 3);
+
+		Assert.assertNull(entries.get("round"));
+		Assert.assertNull(entries.get("blaaa"));
+
+		Assert.assertEquals(entries.get("roundOne"), "ffff");
+		Assert.assertEquals(entries.get("bla"), "zagzig");
+		Assert.assertEquals(entries.get("testTestTEST"), "okOkOK");
 
 		database.close();
 	}
