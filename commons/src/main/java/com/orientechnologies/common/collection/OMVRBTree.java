@@ -347,18 +347,6 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			return iGetContainer ? root : null;
 		}
 
-		OMVRBTreeEntry<K, V> p = getBestEntryPoint((K) key);
-
-		checkTreeStructure(p);
-
-		if (p == null)
-			return setLastSearchNode(key, null);
-
-		OMVRBTreeEntry<K, V> lastNode = p;
-		OMVRBTreeEntry<K, V> prevNode = null;
-		OMVRBTreeEntry<K, V> tmpNode;
-		int beginKey = -1;
-		int steps = -1;
 		final Comparable<? super K> k;
 
 		if (keySize == 1)
@@ -379,9 +367,22 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
 			for (int i = 0; i < itemsToAdd; i++)
 				fullKey.addKey(keyItem);
-			
+
 			k = (Comparable)fullKey;
 		}
+
+		OMVRBTreeEntry<K, V> p = getBestEntryPoint((K) k);
+
+		checkTreeStructure(p);
+
+		if (p == null)
+			return setLastSearchNode(key, null);
+
+		OMVRBTreeEntry<K, V> lastNode = p;
+		OMVRBTreeEntry<K, V> prevNode = null;
+		OMVRBTreeEntry<K, V> tmpNode;
+		int beginKey = -1;
+		int steps = -1;
 
 
 		try {
