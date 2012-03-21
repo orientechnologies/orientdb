@@ -202,9 +202,6 @@ public class OStorageRemote extends OStorageAbstract {
 					endResponse(network);
 				}
 
-			} catch (OException e) {
-				// PASS THROUGH
-				throw e;
 			} catch (Exception e) {
 				handleException("Error on reloading database information", e);
 
@@ -260,9 +257,6 @@ public class OStorageRemote extends OStorageAbstract {
 
 			Orient.instance().unregisterStorage(this);
 
-		} catch (OException e) {
-			// PASS THROUGH
-			throw e;
 		} catch (Exception e) {
 			OLogManager.instance().debug(this, "Error on closing remote connection: %s", network);
 			closeChannel(network);
@@ -353,9 +347,6 @@ public class OStorageRemote extends OStorageAbstract {
 					asynchExecutor.submit(new FutureTask<Object>(response));
 				}
 
-			} catch (OException e) {
-				// PASS THROUGH
-				throw e;
 			} catch (Exception e) {
 				handleException("Error on create record in cluster: " + iRid.clusterId, e);
 
@@ -408,9 +399,6 @@ public class OStorageRemote extends OStorageAbstract {
 					endResponse(network);
 				}
 
-			} catch (OException e) {
-				// PASS THROUGH
-				throw e;
 			} catch (Exception e) {
 				handleException("Error on read record " + iRid, e);
 
@@ -465,9 +453,6 @@ public class OStorageRemote extends OStorageAbstract {
 					};
 					asynchExecutor.submit(new FutureTask<Object>(response));
 				}
-			} catch (OException e) {
-				// PASS THROUGH
-				throw e;
 			} catch (Exception e) {
 				handleException("Error on update record " + iRid, e);
 
@@ -520,9 +505,6 @@ public class OStorageRemote extends OStorageAbstract {
 					};
 					asynchExecutor.submit(new FutureTask<Object>(response));
 				}
-			} catch (OException e) {
-				// PASS THROUGH
-				throw e;
 			} catch (Exception e) {
 				handleException("Error on delete record " + iRid, e);
 
@@ -556,9 +538,6 @@ public class OStorageRemote extends OStorageAbstract {
 					endResponse(network);
 				}
 
-			} catch (OException e) {
-				// PASS THROUGH
-				throw e;
 			} catch (Exception e) {
 				handleException("Error on getting last entry position count in cluster: " + iClusterId, e);
 
@@ -586,9 +565,7 @@ public class OStorageRemote extends OStorageAbstract {
 				} finally {
 					endResponse(network);
 				}
-			} catch (OException e) {
-				// PASS THROUGH
-				throw e;
+
 			} catch (Exception e) {
 				handleException("Error on read database size", e);
 
@@ -617,9 +594,7 @@ public class OStorageRemote extends OStorageAbstract {
 				} finally {
 					endResponse(network);
 				}
-			} catch (OException e) {
-				// PASS THROUGH
-				throw e;
+
 			} catch (Exception e) {
 				handleException("Error on read database record count", e);
 
@@ -650,9 +625,7 @@ public class OStorageRemote extends OStorageAbstract {
 				} finally {
 					endResponse(network);
 				}
-			} catch (OException e) {
-				// PASS THROUGH
-				throw e;
+
 			} catch (Exception e) {
 				handleException("Error on read record count in clusters: " + Arrays.toString(iClusterIds), e);
 
@@ -765,9 +738,6 @@ public class OStorageRemote extends OStorageAbstract {
 					endResponse(network);
 				}
 
-			} catch (OException e) {
-				// PASS THROUGH
-				throw e;
 			} catch (Exception e) {
 				handleException("Error on executing command: " + iCommand, e);
 
@@ -855,9 +825,7 @@ public class OStorageRemote extends OStorageAbstract {
 				OTransactionAbstract.updateCacheFromEntries(this, iTx, iTx.getAllRecordEntries(), false);
 
 				break;
-			} catch (OException e) {
-				// PASS THROUGH
-				throw e;
+
 			} catch (Exception e) {
 				handleException("Error on commit", e);
 
@@ -935,9 +903,7 @@ public class OStorageRemote extends OStorageAbstract {
 				} finally {
 					endResponse(network);
 				}
-			} catch (OException e) {
-				// PASS THROUGH
-				throw e;
+
 			} catch (Exception e) {
 				handleException("Error on add new cluster", e);
 
@@ -981,9 +947,6 @@ public class OStorageRemote extends OStorageAbstract {
 					endResponse(network);
 				}
 
-			} catch (OException e) {
-				// PASS THROUGH
-				throw e;
 			} catch (Exception e) {
 				handleException("Error on removing of cluster", e);
 
@@ -1017,12 +980,8 @@ public class OStorageRemote extends OStorageAbstract {
 					endResponse(network);
 				}
 
-			} catch (OException e) {
-				// PASS THROUGH
-				throw e;
 			} catch (Exception e) {
 				handleException("Error on add new data segment", e);
-
 			}
 		} while (true);
 	}
@@ -1081,7 +1040,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 		final int currentMaxRetry;
 		final int currentRetryDelay;
-		if (clusterConfiguration != null) {
+		if (clusterConfiguration != null && !clusterConfiguration.isEmpty()) {
 			// IN CLUSTER: NO RETRY AND 0 SLEEP TIME BETWEEN NODES
 			currentMaxRetry = 1;
 			currentRetryDelay = 0;
@@ -1382,8 +1341,16 @@ public class OStorageRemote extends OStorageAbstract {
 
 		try {
 			iNetwork.flush();
-			// } catch (IOException e) {
-			// IGNORE IT BECAUSE IT COULD BE CALLED AFTER A NETWORK ERROR TO RELEASE THE SOCKET
+		} catch (IOException e) {
+			try {
+				iNetwork.close();
+			} catch (Exception e2) {
+			} finally {
+				synchronized (networkPool) {
+					networkPool.remove(iNetwork);
+				}
+			}
+			throw e;
 		} finally {
 
 			iNetwork.getLockWrite().unlock();
