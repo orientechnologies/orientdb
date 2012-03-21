@@ -218,9 +218,9 @@ public class DocumentTrackingTest {
 		Assert.assertTrue(document.isDirty());
 
 		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linklist");
-		Assert.assertNull(timeLine);
+		Assert.assertNotNull(timeLine);
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
+		Assert.assertEquals(document.getDirtyFields(), new String[]{"linklist"});
 	}
 
 	public void testDocumentLinkMapTrackingAfterSave() {
@@ -248,9 +248,9 @@ public class DocumentTrackingTest {
 		trackedMap.put("key2", docTwo.getIdentity());
 
 		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linkmap");
-		Assert.assertNull(timeLine);
+		Assert.assertNotNull(timeLine);
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
+		Assert.assertEquals(document.getDirtyFields(), new String[]{"linkmap"});
 	}
 
 	public void testDocumentEmbeddedListTrackingAfterSaveCacheDisabled() {
@@ -454,9 +454,9 @@ public class DocumentTrackingTest {
 		Assert.assertTrue(document.isDirty());
 
 		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linklist");
-		Assert.assertNull(timeLine);
+		Assert.assertNotNull(timeLine);
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
+		Assert.assertEquals(document.getDirtyFields(), new String[]{"linklist"});
 
 		database.getLevel1Cache().setEnable(true);
 		database.getLevel2Cache().setEnable(true);
@@ -495,9 +495,9 @@ public class DocumentTrackingTest {
 		trackedMap.put("key2", docTwo.getIdentity());
 
 		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linkmap");
-		Assert.assertNull(timeLine);
+		Assert.assertNotNull(timeLine);
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
+		Assert.assertEquals(document.getDirtyFields(), new String[]{"linkmap"});
 
 		database.getLevel1Cache().setEnable(true);
 		database.getLevel2Cache().setEnable(true);
@@ -656,9 +656,9 @@ public class DocumentTrackingTest {
 		Assert.assertTrue(document.isDirty());
 
 		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linklist");
-		Assert.assertNull(timeLine);
+		Assert.assertNotNull(timeLine);
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
+		Assert.assertEquals(document.getDirtyFields(), new String[]{"linklist"});
 	}
 
 	public void testDocumentLinkMapTrackingAfterSaveWithClass() {
@@ -686,9 +686,9 @@ public class DocumentTrackingTest {
 		trackedMap.put("key2", docTwo.getIdentity());
 
 		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linkmap");
-		Assert.assertNull(timeLine);
+		Assert.assertNotNull(timeLine);
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
+		Assert.assertEquals(document.getDirtyFields(), new String[]{"linkmap"});
 	}
 
 	public void testDocumentEmbeddedListTrackingAfterConversion() {

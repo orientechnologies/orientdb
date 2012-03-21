@@ -77,6 +77,7 @@
 			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetEntriesTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.MapIndexTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectByLinkedPropertyIndexReuseTest" />
+            <class name="com.orientechnologies.orient.test.database.auto.LinkListIndexTest"/>
 		</classes>
 	</test>
 	<test name="Dictionary">

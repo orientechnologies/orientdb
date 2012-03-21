@@ -64,6 +64,12 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 			this.recordType = ODocument.RECORD_TYPE;
 	}
 
+	public ORecordLazyList(final ODocument iSourceRecord, final Collection<? extends OIdentifiable> iOrigin) {
+		this(iSourceRecord);
+		if (iOrigin != null && !iOrigin.isEmpty())
+			addAll(iOrigin);
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean addAll(Collection<? extends OIdentifiable> c) {

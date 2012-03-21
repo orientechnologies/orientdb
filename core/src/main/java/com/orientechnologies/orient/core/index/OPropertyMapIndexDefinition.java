@@ -22,6 +22,7 @@ import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Index implementation bound to one schema class property that presents
@@ -50,6 +51,11 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
 			throw new NullPointerException("You have to provide way by which map entries should be mapped");
 
 		this.indexBy = indexBy;
+	}
+
+	@Override
+	public Object getDocumentValueToIndex(ODocument iDocument) {
+		return createValue(iDocument.field(field));
 	}
 
 	@Override

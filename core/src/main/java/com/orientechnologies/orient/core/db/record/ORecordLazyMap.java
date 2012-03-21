@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.db.record;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE;
@@ -54,6 +55,12 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
 				// SET AS NON-LAZY LOAD THE COLLECTION TOO
 				autoConvertToRecord = false;
 		}
+	}
+
+	public ORecordLazyMap(final ODocument iSourceRecord, final Map<Object, OIdentifiable> iOrigin) {
+		this(iSourceRecord);
+		if (iOrigin != null && !iOrigin.isEmpty())
+			putAll(iOrigin);
 	}
 
 	@Override
