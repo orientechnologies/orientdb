@@ -40,11 +40,15 @@ public class OMVRBTreeMemory<K, V> extends OMVRBTree<K, V> {
 	}
 
 	public OMVRBTreeMemory(final int iPageSize, final float iLoadFactor) {
-		super();
+		this(iPageSize, iLoadFactor, 1);
+	}
+
+	public OMVRBTreeMemory(final int iPageSize, final float iLoadFactor, final int keySize) {
+		super(keySize);
 		defaultPageSize = iPageSize;
 		pageLoadFactor = iLoadFactor;
 	}
-
+	
 	/**
 	 * Constructs a new, empty tree map, ordered according to the given comparator. All keys inserted into the map must be <i>mutually
 	 * comparable</i> by the given comparator: <tt>comparator.compare(k1,

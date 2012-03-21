@@ -37,6 +37,7 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
 	protected int												size;
 	protected int												pageSize;
 	protected ORecordId									root;
+	protected int 											keySize = 1;
 
 	public OMVRBTreeProviderAbstract(final ORecordInternal<?> iRecord, final OStorage iStorage, final String iClusterName,
 			final ORID iRID) {
@@ -60,6 +61,14 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
 		record = iRecord;
 		record.setIdentity(new ORecordId());
 		updateConfig();
+	}
+
+	public int getKeySize() {
+		return keySize;
+	}
+
+	public void setKeySize(int keySize) {
+		this.keySize = keySize;
 	}
 
 	public int getSize() {

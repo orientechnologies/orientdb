@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> {
 	private static final long			serialVersionUID					= 1L;
 
-	public final static byte			CURRENT_PROTOCOL_VERSION	= 0;
+	public final static byte			CURRENT_PROTOCOL_VERSION	= 1;
 
 	protected final OMemoryStream	stream;
 	protected OStreamSerializer		keySerializer;
@@ -93,6 +93,7 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 
 			stream.set(size);
 			stream.set(pageSize);
+			stream.set(keySize);
 
 			stream.set(keySerializer.getName());
 			stream.set(valueSerializer.getName());
@@ -129,6 +130,14 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 				pageSize = stream.getAsShort();
 			else
 				pageSize = stream.getAsInteger();
+
+			if(protocolVersion < 1) {
+				keySize = 1;
+				OLogManager.instance().warn(this, "Previous index version was found, " +
+								" partial composite index queries may do not work if you do not rebuild index.");
+			}	else
+			  keySize = stream.getAsInteger();
+
 
 			serializerFromStream(stream);
 

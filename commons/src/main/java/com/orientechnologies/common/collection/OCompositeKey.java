@@ -101,6 +101,18 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable {
 			final Comparable inKey = inIter.next();
 			final Comparable outKey = outIter.next();
 
+			if(outKey instanceof OAlwaysGreaterKey)
+				return -1;
+
+			if(outKey instanceof OAlwaysLessKey)
+				return 1;
+
+			if(inKey instanceof OAlwaysGreaterKey)
+				return 1;
+
+			if(inKey instanceof OAlwaysLessKey)
+				return -1;
+
 			@SuppressWarnings("unchecked")
 			final int result = inKey.compareTo(outKey);
 			if (result != 0)

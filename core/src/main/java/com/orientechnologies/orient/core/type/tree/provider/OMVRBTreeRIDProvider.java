@@ -274,6 +274,8 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 		final ODocument doc = (ODocument) record;
 		doc.setClassName(PERSISTENT_CLASS_NAME);
 		doc.field("root", root != null ? root : null);
+		doc.field("keySize", keySize);
+
 		if (tree.getTemporaryEntries() != null && tree.getTemporaryEntries().size() > 0)
 			doc.field("tempEntries", new ArrayList<ORecord<?>>(tree.getTemporaryEntries().keySet()));
 
@@ -283,6 +285,9 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 	public void fromDocument(final ODocument iDocument) {
 		pageSize = (Integer) iDocument.field("pageSize");
 		root = iDocument.field("root", OType.LINK);
+		if(iDocument.field("keySize") != null)
+			keySize = iDocument.<Integer>field("keySize");
+
 		final Collection<OIdentifiable> tempEntries = iDocument.field("tempEntries");
 		if (tempEntries != null && !tempEntries.isEmpty())
 			for (OIdentifiable entry : tempEntries)

@@ -3,14 +3,15 @@ package com.orientechnologies.orient.core.index;
 import java.util.AbstractSet;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class ODocumentFieldsHashSet extends AbstractSet<ODocument> {
-	private final HashSet<ODocumentWrapper>	hashSet;
+	private final LinkedHashSet<ODocumentWrapper> hashSet;
 
 	public ODocumentFieldsHashSet() {
-		hashSet = new HashSet<ODocumentWrapper>();
+		hashSet = new LinkedHashSet<ODocumentWrapper>();
 	}
 
 	@Override

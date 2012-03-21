@@ -64,9 +64,14 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 	private static final int																	OPTIMIZE_MAX_RETRY	= 10;
 
 	public OMVRBTreePersistent(OMVRBTreeProvider<K, V> iProvider) {
-		super();
+		this(iProvider, 1);
+	}
+
+	public OMVRBTreePersistent(OMVRBTreeProvider<K, V> iProvider, int keySize) {
+		super(keySize);
 		pageLoadFactor = (Float) OGlobalConfiguration.MVRBTREE_LOAD_FACTOR.getValue();
 		dataProvider = iProvider;
+		dataProvider.setKeySize(keySize);
 		config();
 	}
 
@@ -94,6 +99,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 
 		// RESET LAST SEARCH STATE
 		setLastSearchNode(null, null);
+		keySize = dataProvider.getKeySize();
 
 		// LOAD THE ROOT OBJECT AFTER ALL
 		final ORID rootRid = dataProvider.getRoot();

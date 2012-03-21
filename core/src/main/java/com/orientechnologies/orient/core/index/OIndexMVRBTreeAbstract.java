@@ -112,13 +112,15 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 				for (final int id : iClusterIdsToIndex)
 					clustersToIndex.add(iDatabase.getClusterNameById(id));
 
-			final OStreamSerializer keySerializer;
-			if (indexDefinition != null && indexDefinition.getTypes().length > 1)
-				keySerializer = OCompositeKeySerializer.INSTANCE;
-			else
-				keySerializer = OStreamSerializerLiteral.INSTANCE;
-
-			map = new OMVRBTreeDatabaseLazySave<Object, T>(iDatabase, iClusterIndexName, keySerializer, iValueSerializer);
+			if (indexDefinition != null && indexDefinition.getTypes().length > 1) {
+				final OStreamSerializer keySerializer = OCompositeKeySerializer.INSTANCE;
+				map = new OMVRBTreeDatabaseLazySave<Object, T>(iDatabase, iClusterIndexName, keySerializer, iValueSerializer,
+								indexDefinition.getTypes().length);
+			}	else {
+				final OStreamSerializer keySerializer = OStreamSerializerLiteral.INSTANCE;
+				map = new OMVRBTreeDatabaseLazySave<Object, T>(iDatabase, iClusterIndexName, keySerializer, iValueSerializer,
+								1);
+			}
 
 			installHooks(iDatabase);
 

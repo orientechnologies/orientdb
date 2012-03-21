@@ -41,8 +41,8 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
 	}
 
 	public OMVRBTreeDatabase(final ODatabaseRecord iDatabase, String iClusterName, final OStreamSerializer iKeySerializer,
-			final OStreamSerializer iValueSerializer) {
-		super(new OMVRBTreeMapProvider<K, V>(null, iClusterName, iKeySerializer, iValueSerializer));
+			final OStreamSerializer iValueSerializer, int keySize) {
+		super(new OMVRBTreeMapProvider<K, V>(null, iClusterName, iKeySerializer, iValueSerializer), keySize);
 	}
 
 	public void onAfterTxCommit() {

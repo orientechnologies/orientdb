@@ -279,7 +279,7 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 
 			final Set<ODocument> result = new ODocumentFieldsHashSet();
 
-			while (entry != null && !(maxEntriesToFetch > -1 && result.size() != maxEntriesToFetch)) {
+			while (entry != null && !(maxEntriesToFetch > -1 && result.size() == maxEntriesToFetch)) {
 				final ODocument document = new ODocument();
 				document.field("key", entry.getKey());
 				document.field("rid", entry.getValue().getIdentity());

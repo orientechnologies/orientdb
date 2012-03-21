@@ -29,6 +29,10 @@ import com.orientechnologies.orient.core.id.ORID;
  */
 public interface OMVRBTreeProvider<K, V> {
 
+  public void setKeySize(int keySize);
+	
+	public int getKeySize();
+	
 	public int getSize();
 
 	public int getDefaultPageSize();

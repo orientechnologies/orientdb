@@ -16,7 +16,7 @@ public class OMVRBTreeCompositeTest {
 
 	@BeforeMethod
 	public void beforeMethod() throws Exception {
-		tree = new OMVRBTreeMemory<OCompositeKey, Double>(4, 0.5f);
+		tree = new OMVRBTreeMemory<OCompositeKey, Double>(4, 0.5f, 2);
 		for (double i = 1; i < 4; i++) {
 			for (double j = 1; j < 10; j++) {
 				final OCompositeKey compositeKey = new OCompositeKey();

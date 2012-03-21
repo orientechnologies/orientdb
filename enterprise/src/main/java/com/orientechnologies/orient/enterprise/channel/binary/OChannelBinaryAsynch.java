@@ -38,7 +38,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 	private byte								currentStatus;
 	private int									currentSessionId;
 
-	private static final int		MAX_UNREAD_RESPONSES	= 5;
+	private static final int		MAX_UNREAD_RESPONSES	= 120;
 	private static final int		MAX_LENGTH_DEBUG			= 100;
 
 	public OChannelBinaryAsynch(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
