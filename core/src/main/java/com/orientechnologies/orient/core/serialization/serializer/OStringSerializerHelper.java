@@ -579,15 +579,22 @@ public abstract class OStringSerializerHelper {
 			return iText;
 
 		// CHANGE THE INPUT STRING
-		final StringBuilder buffer = new StringBuilder(iText);
+		final int textSize = iText.length();
+		final StringBuilder buffer = new StringBuilder(textSize);
+		buffer.append(iText.substring(0, pos));
+		
+		boolean escaped = false;
+		for (int i = pos; i < textSize; ++i) {
+			final char c = iText.charAt(i);
 
-		char c;
-		for (int i = pos; i < buffer.length(); ++i) {
-			c = buffer.charAt(i);
-
-			if (c == '\\') {
-				buffer.deleteCharAt(i);
+			if (escaped)
+				escaped = false;
+			else if (c == '\\') {
+				escaped = true;
+				continue;
 			}
+
+			buffer.append(c);
 		}
 
 		return buffer.toString();
@@ -660,9 +667,9 @@ public abstract class OStringSerializerHelper {
 					|| (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\''))
 				// @COMPATIBILITY 1.0rc7-SNAPSHOT ' TO SUPPORT OLD DATABASES
 				s = s.substring(1, s.length() - 1);
-// IN CASE OF JSON BINARY IMPORT THIS EXEPTION IS WRONG
-//			else
-//				throw new IllegalArgumentException("Not binary type: " + iValue);
+			// IN CASE OF JSON BINARY IMPORT THIS EXEPTION IS WRONG
+			// else
+			// throw new IllegalArgumentException("Not binary type: " + iValue);
 
 			return OBase64Utils.decode(s);
 		} else
