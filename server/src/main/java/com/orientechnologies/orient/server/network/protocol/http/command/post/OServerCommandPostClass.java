@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -40,7 +39,7 @@ public class OServerCommandPostClass extends OServerCommandAuthenticatedDbAbstra
 			if (db.getMetadata().getSchema().getClass(urlParts[2]) != null)
 				throw new IllegalArgumentException("Class '" + urlParts[2] + "' already exists");
 
-			final OClass cls = db.getMetadata().getSchema().createClass(urlParts[2]);
+			db.getMetadata().getSchema().createClass(urlParts[2]);
 
 			sendTextContent(iRequest, OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, null,
 					OHttpUtils.CONTENT_TEXT_PLAIN, db.getMetadata().getSchema().getClasses().size());
