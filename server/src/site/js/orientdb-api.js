@@ -179,13 +179,17 @@ function ODatabase(databasePath) {
 		return this.getDatabaseInfo();
 	}
 
-	ODatabase.prototype.create = function(userName, userPass, type) {
-		if (userName == null) {
+	ODatabase.prototype.create = function(userName, userPass, type,
+			databaseType) {
+		if (userName == null)
 			userName = '';
-		}
-		if (userPass == null) {
+
+		if (userPass == null)
 			userPass = '';
-		}
+
+		if (databaseType == null)
+			databaseType = 'document';
+
 		urlPrefix = this.databaseUrl;
 
 		if (type == null || type == '') {
@@ -194,7 +198,7 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : "POST",
 			url : urlPrefix + 'database/' + this.encodedDatabaseName + '/'
-					+ type + this.urlSuffix,
+					+ type + '/' + databaseType + this.urlSuffix,
 			context : this,
 			async : false,
 			username : userName,

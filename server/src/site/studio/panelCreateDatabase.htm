@@ -42,6 +42,13 @@
 					<tr>
 						<td align="right">Type:</td>
 						<td><select id="databaseType">
+								<option value="document">document</option>
+								<option value="graph">graph</option>
+						</select></td>
+					</tr>
+					<tr>
+						<td align="right">Storage Type:</td>
+						<td><select id="storageType">
 								<option value="local">local</option>
 								<option value="memory">memory</option>
 						</select></td>
@@ -69,8 +76,8 @@
 					orientServer = new ODatabase($('#server').val() + '/'
 							+ $('#database').val());
 				}
-				databaseInfo = orientServer.create(null, null, $(
-						'#databaseType').val());
+				databaseInfo = orientServer.create(null, null,
+						$('#storageType').val(), $('#databaseType').val());
 				if (databaseInfo == null) {
 					jQuery("#output").text(orientServer.getErrorMessage());
 				} else {
