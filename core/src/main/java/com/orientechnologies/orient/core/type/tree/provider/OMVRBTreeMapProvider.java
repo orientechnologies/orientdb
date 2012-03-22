@@ -116,9 +116,12 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 				// @COMPATIBILITY BEFORE 0.9.25
 				stream.getAsByte();
 				if (protocolVersion != CURRENT_PROTOCOL_VERSION)
-					throw new OSerializationException(
-							"The index has been created with a previous version of OrientDB. Soft transitions between versions is supported since 0.9.25. To use it with this version of OrientDB you need to export and import your database. "
-									+ protocolVersion + "<->" + CURRENT_PROTOCOL_VERSION);
+					OLogManager
+							.instance()
+							.debug(
+									this,
+									"Found tree %s created with MVRBTree protocol version %d while current one supports the version %d. The tree will be migrated transparently",
+									getRecord().getIdentity(), protocolVersion, CURRENT_PROTOCOL_VERSION);
 			}
 
 			root = new ORecordId();
@@ -131,13 +134,12 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 			else
 				pageSize = stream.getAsInteger();
 
-			if(protocolVersion < 1) {
+			if (protocolVersion < 1) {
 				keySize = 1;
-				OLogManager.instance().warn(this, "Previous index version was found, " +
-								" partial composite index queries may do not work if you do not rebuild index.");
-			}	else
-			  keySize = stream.getAsInteger();
-
+				OLogManager.instance().warn(this,
+						"Previous index version was found, " + " partial composite index queries may do not work if you do not rebuild index.");
+			} else
+				keySize = stream.getAsInteger();
 
 			serializerFromStream(stream);
 
