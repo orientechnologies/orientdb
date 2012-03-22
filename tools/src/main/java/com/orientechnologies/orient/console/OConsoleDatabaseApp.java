@@ -320,7 +320,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 	@ConsoleCommand(splitInWords = false, description = "Alters a cluster in the current database. The cluster can be physical or logical")
 	public void alterCluster(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-		sqlCommand("alter", iCommandText, "\nCluster updated successfully\n");
+		sqlCommand("alter", iCommandText, "\nCluster updated successfully\n", false);
 		updateDatabaseInfo();
 	}
 
@@ -391,18 +391,18 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 	@ConsoleCommand(splitInWords = false, description = "Truncate the class content in the current database")
 	public void truncateClass(@ConsoleParameter(name = "text", description = "The name of the class to truncate") String iCommandText) {
-		sqlCommand("truncate", iCommandText, "\nTruncated %d record(s) in %f sec(s).\n");
+		sqlCommand("truncate", iCommandText, "\nTruncated %d record(s) in %f sec(s).\n", true);
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Truncate the cluster content in the current database")
 	public void truncateCluster(
 			@ConsoleParameter(name = "text", description = "The name of the class to truncate") String iCommandText) {
-		sqlCommand("truncate", iCommandText, "\nTruncated %d record(s) in %f sec(s).\n");
+		sqlCommand("truncate", iCommandText, "\nTruncated %d record(s) in %f sec(s).\n", true);
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Truncate a record deleting it at low level")
 	public void truncateRecord(@ConsoleParameter(name = "text", description = "The record(s) to truncate") String iCommandText) {
-		sqlCommand("truncate", iCommandText, "\nTruncated %d record(s) in %f sec(s).\n");
+		sqlCommand("truncate", iCommandText, "\nTruncated %d record(s) in %f sec(s).\n", true);
 	}
 
 	@ConsoleCommand(description = "Load a record in memory using passed fetch plan")
@@ -433,12 +433,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 	@ConsoleCommand(splitInWords = false, description = "Insert a new record into the database")
 	public void insert(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-		sqlCommand("insert", iCommandText, "\nInserted record '%s' in %f sec(s).\n");
+		sqlCommand("insert", iCommandText, "\nInserted record '%s' in %f sec(s).\n", true);
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Update records in the database")
 	public void update(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-		sqlCommand("update", iCommandText, "\nUpdated %d record(s) in %f sec(s).\n");
+		sqlCommand("update", iCommandText, "\nUpdated %d record(s) in %f sec(s).\n", true);
 		updateDatabaseInfo();
 		currentDatabase.getLevel1Cache().invalidate();
 		currentDatabase.getLevel2Cache().clear();
@@ -446,7 +446,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 	@ConsoleCommand(splitInWords = false, description = "Delete records from the database")
 	public void delete(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-		sqlCommand("delete", iCommandText, "\nDelete %d record(s) in %f sec(s).\n");
+		sqlCommand("delete", iCommandText, "\nDelete %d record(s) in %f sec(s).\n", true);
 		updateDatabaseInfo();
 		currentDatabase.getLevel1Cache().invalidate();
 		currentDatabase.getLevel2Cache().clear();
@@ -454,55 +454,55 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 	@ConsoleCommand(splitInWords = false, description = "Grant privileges to a role")
 	public void grant(@ConsoleParameter(name = "text", description = "Grant command") String iCommandText) {
-		sqlCommand("grant", iCommandText, "\nPrivilege granted to the role: %s\n");
+		sqlCommand("grant", iCommandText, "\nPrivilege granted to the role: %s\n", true);
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Revoke privileges to a role")
 	public void revoke(@ConsoleParameter(name = "text", description = "Revoke command") String iCommandText) {
-		sqlCommand("revoke", iCommandText, "\nPrivilege revoked to the role: %s\n");
+		sqlCommand("revoke", iCommandText, "\nPrivilege revoked to the role: %s\n", true);
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Create a link from a JOIN")
 	public void createLink(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-		sqlCommand("create", iCommandText, "\nCreated %d link(s) in %f sec(s).\n");
+		sqlCommand("create", iCommandText, "\nCreated %d link(s) in %f sec(s).\n", true);
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Find all references the target record id @rid")
 	public void findReferences(
 			@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-		sqlCommand("find", iCommandText, "\nFound %s in %f sec(s).\n");
+		sqlCommand("find", iCommandText, "\nFound %s in %f sec(s).\n", true);
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Alter a database property")
 	public void alterDatabase(
 			@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-		sqlCommand("alter", iCommandText, "\nDatabase updated successfully\n");
+		sqlCommand("alter", iCommandText, "\nDatabase updated successfully\n", false);
 		updateDatabaseInfo();
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Alter a class in the database schema")
 	public void alterClass(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-		sqlCommand("alter", iCommandText, "\nClass updated successfully\n");
+		sqlCommand("alter", iCommandText, "\nClass updated successfully\n", false);
 		updateDatabaseInfo();
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Create a class")
 	public void createClass(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-		sqlCommand("create", iCommandText, "\nClass created successfully with id=%d\n");
+		sqlCommand("create", iCommandText, "\nClass created successfully with id=%d\n", true);
 		updateDatabaseInfo();
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Alter a class property in the database schema")
 	public void alterProperty(
 			@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-		sqlCommand("alter", iCommandText, "\nProperty updated successfully\n");
+		sqlCommand("alter", iCommandText, "\nProperty updated successfully\n", false);
 		updateDatabaseInfo();
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Create a property")
 	public void createProperty(
 			@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-		sqlCommand("create", iCommandText, "\nProperty created successfully with id=%d\n");
+		sqlCommand("create", iCommandText, "\nProperty created successfully with id=%d\n", true);
 		updateDatabaseInfo();
 	}
 
@@ -590,7 +590,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			throws IOException {
 		out.println("\nCreating index...");
 
-		sqlCommand("create", iCommandText, "\nCreated index successfully with %d entries in %f sec(s).\n");
+		sqlCommand("create", iCommandText, "\nCreated index successfully with %d entries in %f sec(s).\n", true);
 		updateDatabaseInfo();
 		out.println("\nIndex created successfully");
 	}
@@ -646,7 +646,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			throws IOException {
 		out.println("\nRemoving index...");
 
-		sqlCommand("drop", iCommandText, "\nRemoved index %d link(s) in %f sec(s).\n");
+		sqlCommand("drop", iCommandText, "\nRemoved index %d link(s) in %f sec(s).\n", true);
 		updateDatabaseInfo();
 		out.println("\nIndex removed successfully");
 	}
@@ -656,7 +656,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			throws IOException {
 		out.println("\nRebuilding index(es)...");
 
-		sqlCommand("rebuild", iCommandText, "\nRebuilt index(es). Found %d link(s) in %f sec(s).\n");
+		sqlCommand("rebuild", iCommandText, "\nRebuilt index(es). Found %d link(s) in %f sec(s).\n", true);
 		updateDatabaseInfo();
 		out.println("\nIndex(es) rebuilt successfully");
 	}
@@ -664,17 +664,15 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	@ConsoleCommand(splitInWords = false, description = "Remove a class from the schema")
 	public void dropClass(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText)
 			throws IOException {
-		sqlCommand("drop", iCommandText, "\nRemoved class in %f sec(s).\n");
+		sqlCommand("drop", iCommandText, "\nRemoved class in %f sec(s).\n", false);
 		updateDatabaseInfo();
-		out.println("\nClass removed successfully");
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Remove a property from a class")
 	public void dropProperty(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText)
 			throws IOException {
-		sqlCommand("drop", iCommandText, "\nRemoved class property in %f sec(s).\n");
+		sqlCommand("drop", iCommandText, "\nRemoved class property in %f sec(s).\n", false);
 		updateDatabaseInfo();
-		out.println("\nClass property removed successfully");
 	}
 
 	@ConsoleCommand(description = "Browse all records of a class")
@@ -1519,7 +1517,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		printHeaderLine(columns);
 	}
 
-	private Object sqlCommand(final String iExpectedCommand, String iReceivedCommand, final String iMessage) {
+	private Object sqlCommand(final String iExpectedCommand, String iReceivedCommand, final String iMessage,
+			final boolean iIncludeResult) {
 		checkCurrentDatabase();
 
 		if (iReceivedCommand == null)
@@ -1533,8 +1532,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 		final Object result = new OCommandSQL(iReceivedCommand).setProgressListener(this).execute();
 
-		if (result != null)
+		if (result != null && iIncludeResult)
 			out.printf(iMessage, result, (float) (System.currentTimeMillis() - start) / 1000);
+		else
+			out.printf(iMessage, (float) (System.currentTimeMillis() - start) / 1000);
 
 		return result;
 	}
