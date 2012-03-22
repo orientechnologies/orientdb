@@ -252,7 +252,7 @@ public class IndexTxAwareMultiValueGetValuesTest {
 		Assert.assertEquals(index.getEntries(Arrays.asList(1, 2)).size(), 3);
 	}
 
-	@Test
+	@Test(enabled = false)
 	public void testRemoveOneWithinTransaction() {
 		database.getMetadata().getIndexManager().reload();
 		database.begin();
@@ -296,7 +296,7 @@ public class IndexTxAwareMultiValueGetValuesTest {
 		Assert.assertEquals(index.getEntries(Arrays.asList(1, 2)).size(), 1);
 	}
 
-	@Test
+	@Test(enabled = false)
 	public void testPutAfterRemove() {
 		database.getMetadata().getIndexManager().reload();
 		database.begin();
