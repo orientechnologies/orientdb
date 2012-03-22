@@ -359,7 +359,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		return result;
 	}
 
-	public Set<OIdentifiable> getOutEdges(final ODocument iVertex) {
+	public Set<OIdentifiable> getOutEdges(final OIdentifiable iVertex) {
 		return getOutEdges(iVertex, null);
 	}
 
@@ -372,10 +372,11 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	 *          Label to search
 	 * @return
 	 */
-	public Set<OIdentifiable> getOutEdges(final ODocument iVertex, final String iLabel) {
-		checkVertexClass(iVertex);
+	public Set<OIdentifiable> getOutEdges(final OIdentifiable iVertex, final String iLabel) {
+		final ODocument vertex = iVertex.getRecord();
+		checkVertexClass(vertex);
 
-		final OMVRBTreeRIDSet set = iVertex.field(VERTEX_FIELD_OUT);
+		final OMVRBTreeRIDSet set = vertex.field(VERTEX_FIELD_OUT);
 
 		if (iLabel == null)
 			// RETURN THE ENTIRE COLLECTION
@@ -404,10 +405,11 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	 *          Map where keys are property names and values the expected values
 	 * @return
 	 */
-	public Set<OIdentifiable> getOutEdgesHavingProperties(final ODocument iVertex, final Map<String, Object> iProperties) {
-		checkVertexClass(iVertex);
+	public Set<OIdentifiable> getOutEdgesHavingProperties(final OIdentifiable iVertex, final Map<String, Object> iProperties) {
+		final ODocument vertex = iVertex.getRecord();
+		checkVertexClass(vertex);
 
-		return filterEdgesByProperties((OMVRBTreeRIDSet) iVertex.field(VERTEX_FIELD_OUT), iProperties);
+		return filterEdgesByProperties((OMVRBTreeRIDSet) vertex.field(VERTEX_FIELD_OUT), iProperties);
 	}
 
 	/**
@@ -419,20 +421,22 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	 *          Map where keys are property names and values the expected values
 	 * @return
 	 */
-	public Set<OIdentifiable> getOutEdgesHavingProperties(final ODocument iVertex, Iterable<String> iProperties) {
-		checkVertexClass(iVertex);
+	public Set<OIdentifiable> getOutEdgesHavingProperties(final OIdentifiable iVertex, Iterable<String> iProperties) {
+		final ODocument vertex = iVertex.getRecord();
+		checkVertexClass(vertex);
 
-		return filterEdgesByProperties((OMVRBTreeRIDSet) iVertex.field(VERTEX_FIELD_OUT), iProperties);
+		return filterEdgesByProperties((OMVRBTreeRIDSet) vertex.field(VERTEX_FIELD_OUT), iProperties);
 	}
 
-	public Set<OIdentifiable> getInEdges(final ODocument iVertex) {
+	public Set<OIdentifiable> getInEdges(final OIdentifiable iVertex) {
 		return getInEdges(iVertex, null);
 	}
 
-	public Set<OIdentifiable> getInEdges(final ODocument iVertex, final String iLabel) {
-		checkVertexClass(iVertex);
+	public Set<OIdentifiable> getInEdges(final OIdentifiable iVertex, final String iLabel) {
+		final ODocument vertex = iVertex.getRecord();
+		checkVertexClass(vertex);
 
-		final OMVRBTreeRIDSet set = iVertex.field(VERTEX_FIELD_IN);
+		final OMVRBTreeRIDSet set = vertex.field(VERTEX_FIELD_IN);
 
 		if (iLabel == null)
 			// RETURN THE ENTIRE COLLECTION
@@ -461,10 +465,11 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	 *          Map where keys are property names and values the expected values
 	 * @return
 	 */
-	public Set<OIdentifiable> getInEdgesHavingProperties(final ODocument iVertex, Iterable<String> iProperties) {
-		checkVertexClass(iVertex);
+	public Set<OIdentifiable> getInEdgesHavingProperties(final OIdentifiable iVertex, Iterable<String> iProperties) {
+		final ODocument vertex = iVertex.getRecord();
+		checkVertexClass(vertex);
 
-		return filterEdgesByProperties((OMVRBTreeRIDSet) iVertex.field(VERTEX_FIELD_IN), iProperties);
+		return filterEdgesByProperties((OMVRBTreeRIDSet) vertex.field(VERTEX_FIELD_IN), iProperties);
 	}
 
 	/**
