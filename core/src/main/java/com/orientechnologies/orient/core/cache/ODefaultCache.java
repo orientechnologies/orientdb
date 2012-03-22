@@ -73,11 +73,12 @@ public class ODefaultCache implements OCache {
 		return enabled.compareAndSet(true, false);
 	}
 
-	public ORecordInternal<?> get(ORID id) {
+	public ORecordInternal<?> get(final ORID id) {
 		if (!isEnabled())
 			return null;
+
+		lock.acquireSharedLock();
 		try {
-			lock.acquireSharedLock();
 			return cache.get(id);
 		} finally {
 			lock.releaseSharedLock();
@@ -87,8 +88,9 @@ public class ODefaultCache implements OCache {
 	public ORecordInternal<?> put(final ORecordInternal<?> record) {
 		if (!isEnabled())
 			return null;
+
+		lock.acquireExclusiveLock();
 		try {
-			lock.acquireExclusiveLock();
 			return cache.put(record.getIdentity(), record);
 		} finally {
 			lock.releaseExclusiveLock();
@@ -98,8 +100,9 @@ public class ODefaultCache implements OCache {
 	public ORecordInternal<?> remove(final ORID id) {
 		if (!isEnabled())
 			return null;
+
+		lock.acquireExclusiveLock();
 		try {
-			lock.acquireExclusiveLock();
 			return cache.remove(id);
 		} finally {
 			lock.releaseExclusiveLock();
@@ -109,8 +112,9 @@ public class ODefaultCache implements OCache {
 	public void clear() {
 		if (!isEnabled())
 			return;
+
+		lock.acquireExclusiveLock();
 		try {
-			lock.acquireExclusiveLock();
 			cache.clear();
 		} finally {
 			lock.releaseExclusiveLock();
@@ -118,8 +122,8 @@ public class ODefaultCache implements OCache {
 	}
 
 	public int size() {
+		lock.acquireSharedLock();
 		try {
-			lock.acquireSharedLock();
 			return cache.size();
 		} finally {
 			lock.releaseSharedLock();
@@ -131,8 +135,8 @@ public class ODefaultCache implements OCache {
 	}
 
 	public Collection<ORID> keys() {
+		lock.acquireSharedLock();
 		try {
-			lock.acquireSharedLock();
 			return new ArrayList<ORID>(cache.keySet());
 		} finally {
 			lock.releaseSharedLock();
@@ -140,19 +144,19 @@ public class ODefaultCache implements OCache {
 	}
 
 	private void removeEldest(final int threshold) {
+		lock.acquireExclusiveLock();
 		try {
-			lock.acquireExclusiveLock();
 			cache.removeEldest(threshold);
 		} finally {
 			lock.releaseExclusiveLock();
 		}
 	}
 
-	public void lock(ORID id) {
+	public void lock(final ORID id) {
 		lock.acquireExclusiveLock();
 	}
 
-	public void unlock(ORID id) {
+	public void unlock(final ORID id) {
 		lock.releaseExclusiveLock();
 	}
 
@@ -213,6 +217,5 @@ public class ODefaultCache implements OCache {
 				OLogManager.instance().error(this, "Error occurred during default cache cleanup", e);
 			}
 		}
-
 	}
 }
