@@ -69,7 +69,8 @@
             <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetEntriesTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetEntriesTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.LinkListIndexTest"/>
-        </classes>
+            <class name="com.orientechnologies.orient.test.database.auto.LinkMapIndexTest"/>
+           </classes>
 	</test>
 	<test name="Dictionary">
 		<classes>
