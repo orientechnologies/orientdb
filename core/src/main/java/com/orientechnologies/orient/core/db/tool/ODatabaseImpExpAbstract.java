@@ -41,9 +41,13 @@ public abstract class ODatabaseImpExpAbstract {
 	protected boolean									includeRecords	= true;
 	protected OCommandOutputListener	listener;
 
+	protected final static String			DEFAULT_EXT			= ".json";
+
 	public ODatabaseImpExpAbstract(final ODatabaseRecord iDatabase, final String iFileName, final OCommandOutputListener iListener) {
 		database = iDatabase;
 		fileName = iFileName;
+		if (fileName.indexOf('.') == -1)
+			fileName += DEFAULT_EXT;
 		listener = iListener;
 		excludeClusters = new LinkedHashSet<String>();
 	}
