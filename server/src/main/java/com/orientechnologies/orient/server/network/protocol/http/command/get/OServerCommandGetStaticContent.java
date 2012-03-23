@@ -38,11 +38,14 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
 			"GET|*.swf", "GET|favicon.ico", "GET|robots.txt"							};
 
 	private static final String											CONFIG_HTTP_CACHE	= "http.cache:";
+	private static final String											CONFIG_ROOT_PATH	= "root.path";
+	private static final String											CONFIG_FILE_PATH	= "file.path";
 
 	private Map<String, OStaticContentCachedEntry>	cacheContents;
 	private Map<String, String>											cacheHttp					= new HashMap<String, String>();
 	private String																	cacheHttpDefault	= "Cache-Control: max-age=3000";
-	private String																	wwwPath;
+	private String																	rootPath;
+	private String																	filePath;
 
 	public OServerCommandGetStaticContent() {
 		super(DEF_PATTERN);
@@ -63,7 +66,11 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
 						cacheHttp.put(f, par.value);
 					}
 				}
-			}
+			} else if (par.name.startsWith(CONFIG_ROOT_PATH))
+				rootPath = par.value;
+			else if (par.name.startsWith(CONFIG_FILE_PATH))
+				filePath = par.value;
+
 		}
 	}
 
@@ -72,14 +79,23 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
 		iRequest.data.commandInfo = "Get static content";
 		iRequest.data.commandDetail = iRequest.url;
 
-		if (wwwPath == null) {
-			wwwPath = iRequest.configuration.getValueAsString("orientdb.www.path", "src/site");
+		if (filePath == null && rootPath == null) {
+			// GET GLOBAL CONFIG
+			rootPath = iRequest.configuration.getValueAsString("orientdb.www.path", "src/site");
+			if (rootPath == null) {
+				OLogManager.instance().warn(this,
+						"No path configured. Specify the 'root.path', 'file.path' or the global 'orientdb.www.path' variable", rootPath);
+				return false;
+			}
+		}
 
-			final File wwwPathDirectory = new File(wwwPath);
+		if (filePath == null) {
+			// CHECK DIRECTORY
+			final File wwwPathDirectory = new File(rootPath);
 			if (!wwwPathDirectory.exists())
-				OLogManager.instance().warn(this, "orientdb.www.path variable points to '%s' but it doesn't exists", wwwPath);
+				OLogManager.instance().warn(this, "path variable points to '%s' but it doesn't exists", rootPath);
 			if (!wwwPathDirectory.isDirectory())
-				OLogManager.instance().warn(this, "orientdb.www.path variable points to '%s' but it isn't a directory", wwwPath);
+				OLogManager.instance().warn(this, "path variable points to '%s' but it isn't a directory", rootPath);
 		}
 
 		if (cacheContents == null && OGlobalConfiguration.SERVER_CACHE_FILE_STATIC.getValueAsBoolean())
@@ -91,18 +107,22 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
 		String type = null;
 
 		try {
-			final String url = getResource(iRequest);
-
-			String filePath;
-			// REPLACE WWW WITH REAL PATH
-			if (url.startsWith("/www"))
-				filePath = wwwPath + url.substring("/www".length(), url.length());
-			else
-				filePath = wwwPath + url;
+			String path;
+			if (filePath != null)
+				// SINGLE FILE
+				path = filePath;
+			else {
+				// GET FROM A DIRECTORY
+				final String url = getResource(iRequest);
+				if (url.startsWith("/www"))
+					path = rootPath + url.substring("/www".length(), url.length());
+				else
+					path = rootPath + url;
+			}
 
 			if (cacheContents != null) {
 				synchronized (cacheContents) {
-					final OStaticContentCachedEntry cachedEntry = cacheContents.get(filePath);
+					final OStaticContentCachedEntry cachedEntry = cacheContents.get(path);
 					if (cachedEntry != null) {
 						is = new ByteArrayInputStream(cachedEntry.content);
 						contentSize = cachedEntry.size;
@@ -112,38 +132,38 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
 			}
 
 			if (is == null) {
-				File inputFile = new File(filePath);
+				File inputFile = new File(path);
 				if (!inputFile.exists()) {
-					OLogManager.instance().debug(this, "Static resource not found: %s", filePath);
+					OLogManager.instance().debug(this, "Static resource not found: %s", path);
 
 					sendBinaryContent(iRequest, 404, "File not found", null, null, 0);
 					return false;
 				}
 
-				if (inputFile.isDirectory()) {
-					inputFile = new File(filePath + "/index.htm");
+				if (filePath == null && inputFile.isDirectory()) {
+					inputFile = new File(path + "/index.htm");
 					if (inputFile.exists())
-						filePath = url + "/index.htm";
+						path = path + "/index.htm";
 					else {
-						inputFile = new File(url + "/index.html");
+						inputFile = new File(path + "/index.html");
 						if (inputFile.exists())
-							filePath = url + "/index.html";
+							path = path + "/index.html";
 					}
 				}
 
-				if (filePath.endsWith(".htm") || filePath.endsWith(".html"))
+				if (path.endsWith(".htm") || path.endsWith(".html"))
 					type = "text/html";
-				else if (filePath.endsWith(".png"))
+				else if (path.endsWith(".png"))
 					type = "image/png";
-				else if (filePath.endsWith(".jpeg"))
+				else if (path.endsWith(".jpeg"))
 					type = "image/jpeg";
-				else if (filePath.endsWith(".js"))
+				else if (path.endsWith(".js"))
 					type = "application/x-javascript";
-				else if (filePath.endsWith(".css"))
+				else if (path.endsWith(".css"))
 					type = "text/css";
-				else if (filePath.endsWith(".ico"))
+				else if (path.endsWith(".ico"))
 					type = "image/x-icon";
-				else if (filePath.endsWith(".otf"))
+				else if (path.endsWith(".otf"))
 					type = "font/opentype";
 				else
 					type = "text/plain";
@@ -162,7 +182,7 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
 					cachedEntry.size = contentSize;
 					cachedEntry.type = type;
 
-					cacheContents.put(url, cachedEntry);
+					cacheContents.put(path, cachedEntry);
 
 					is = new ByteArrayInputStream(cachedEntry.content);
 				}
