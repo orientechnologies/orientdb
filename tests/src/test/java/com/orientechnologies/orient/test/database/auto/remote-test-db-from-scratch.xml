@@ -37,7 +37,7 @@
 			<class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentValidationTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.ObjectTreeTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.ObjectDetachingTest" />
-      <class name="com.orientechnologies.orient.test.database.auto.DocumentTrackingTest"/>
+			<class name="com.orientechnologies.orient.test.database.auto.DocumentTrackingTest" />
 		</classes>
 	</test>
 	<test name="Tx">
@@ -64,11 +64,15 @@
 			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectCompositeIndexDirectSearchTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.MapIndexTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectByLinkedPropertyIndexReuseTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.LinkListIndexTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.LinkMapIndexTest"/>
-			<!-- <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetValuesTest"/> <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetValuesTest"/>
-				<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetTest"/> <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetTest"/>
-				<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetEntriesTest"/> <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetEntriesTest"/> -->
+			<class name="com.orientechnologies.orient.test.database.auto.LinkListIndexTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.LinkMapIndexTest" />
+
+			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetValuesTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetValuesTest" />
+            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetEntriesTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetEntriesTest"/>
 		</classes>
 	</test>
 	<test name="Dictionary">
