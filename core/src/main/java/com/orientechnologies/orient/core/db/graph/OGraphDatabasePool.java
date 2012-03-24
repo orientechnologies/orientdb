@@ -15,52 +15,21 @@
  */
 package com.orientechnologies.orient.core.db.graph;
 
-import com.orientechnologies.orient.core.db.ODatabasePoolAbstract;
 import com.orientechnologies.orient.core.db.ODatabasePoolBase;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 
 public class OGraphDatabasePool extends ODatabasePoolBase<OGraphDatabase> {
 
 	private static OGraphDatabasePool	globalInstance	= new OGraphDatabasePool();
 
-	@Override
-	public void setup(final int iMinSize, final int iMaxSize) {
-		if (dbPool == null)
-			synchronized (this) {
-				if (dbPool == null) {
-					dbPool = new ODatabasePoolAbstract<OGraphDatabase>(this, iMinSize, iMaxSize) {
-
-						public OGraphDatabase createNewResource(final String iDatabaseName, final Object... iAdditionalArgs) {
-							if (iAdditionalArgs.length < 2)
-								throw new OSecurityAccessException("Username and/or password missing");
-
-							final OGraphDatabasePooled db = new OGraphDatabasePooled((OGraphDatabasePool) owner, iDatabaseName,
-									(String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
-
-							ODatabaseRecordThreadLocal.INSTANCE.set(db);
-
-							return db;
-						}
-
-						public boolean reuseResource(final String iKey, final Object[] iAdditionalArgs, final OGraphDatabase iValue) {
-							ODatabaseRecordThreadLocal.INSTANCE.set(iValue);
-
-							((OGraphDatabasePooled) iValue).reuse(owner, iAdditionalArgs);
-
-							if (!iValue.getStorage().isClosed()) {
-								iValue.getMetadata().getSecurity().authenticate((String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
-								return true;
-							}
-							return false;
-						}
-					};
-				}
-			}
-	}
-
 	public static OGraphDatabasePool global() {
 		globalInstance.setup();
 		return globalInstance;
+	}
+
+	@Override
+	protected OGraphDatabase createResource(Object owner, String iDatabaseName,
+			Object... iAdditionalArgs) {
+		return new OGraphDatabasePooled((OGraphDatabasePool) owner, iDatabaseName,
+				(String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
 	}
 }

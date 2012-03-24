@@ -18,6 +18,8 @@ package com.orientechnologies.orient.core.db;
 import java.util.Map;
 
 import com.orientechnologies.common.concur.resource.OResourcePool;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 
 /**
  * Database pool base class.
@@ -32,7 +34,39 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
 		setup(1, 20);
 	}
 
-	protected abstract void setup(int iMin, int iMax);
+	protected abstract DB createResource(Object owner, String iDatabaseName, Object... iAdditionalArgs);
+
+	protected void setup(final int iMinSize, final int iMaxSize) {
+		if (dbPool == null)
+			synchronized (this) {
+				if (dbPool == null) {
+					dbPool = new ODatabasePoolAbstract<DB>(this, iMinSize, iMaxSize) {
+
+						public DB createNewResource(final String iDatabaseName, final Object... iAdditionalArgs) {
+							if (iAdditionalArgs.length < 2)
+								throw new OSecurityAccessException("Username and/or password missed");
+
+							return createResource(owner, iDatabaseName, iAdditionalArgs);
+						}
+
+						public boolean reuseResource(final String iKey, final Object[] iAdditionalArgs, final DB iValue) {
+							if (!iValue.isClosed()) {
+								((ODatabasePooled) iValue).reuse(owner, iAdditionalArgs);
+								if (iValue.getStorage().isClosed())
+									// STORAGE HAS BEEN CLOSED: REOPEN IT
+									iValue.getStorage().open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1], null);
+								else if (!((ODatabaseRecord) iValue).getUser().checkPassword((String) iAdditionalArgs[1]))
+									throw new OSecurityAccessException(iValue.getName(), "User or password not valid for database: '"
+											+ iValue.getName() + "'");
+
+								return true;
+							}
+							return false;
+						}
+					};
+				}
+			}
+	}
 
 	public DB acquire(final String iName, final String iUserName, final String iUserPassword) {
 		setup();

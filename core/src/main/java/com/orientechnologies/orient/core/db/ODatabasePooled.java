@@ -16,6 +16,9 @@
 package com.orientechnologies.orient.core.db;
 
 public interface ODatabasePooled {
+	
+	public void reuse(final Object iOwner, final Object[] iAdditionalArgs);
+	
 	public void forceClose();
 
 }
