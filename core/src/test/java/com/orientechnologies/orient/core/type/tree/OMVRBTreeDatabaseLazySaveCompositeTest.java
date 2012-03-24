@@ -41,7 +41,7 @@ public class OMVRBTreeDatabaseLazySaveCompositeTest extends OMVRBTreeCompositeTe
 	@BeforeMethod
 	@Override
 	public void beforeMethod() throws Exception {
-		tree = new OMVRBTreeDatabaseLazySave<OCompositeKey, Double>(database, "indextestclsuter", OCompositeKeySerializer.INSTANCE,
+		tree = new OMVRBTreeDatabaseLazySave<OCompositeKey, Double>("indextestclsuter", OCompositeKeySerializer.INSTANCE,
 				OStreamSerializerLiteral.INSTANCE, 2);
 
 		for (double i = 1; i < 4; i++) {

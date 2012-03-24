@@ -19,7 +19,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
-import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
 
 /**
  * Collects changes all together and save them following the selected strategy. By default the map is saved automatically every
@@ -34,17 +33,13 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> {
 	protected int			updates							= 0;
 	protected boolean	transactionRunning	= false;
 
-	public OMVRBTreeDatabaseLazySave(OMVRBTreeProvider<K, V> iProvider) {
-		super(iProvider);
-	}
-
 	public OMVRBTreeDatabaseLazySave(ODatabaseRecord iDatabase, ORID iRID) {
 		super(iDatabase, iRID);
 	}
 
-	public OMVRBTreeDatabaseLazySave(ODatabaseRecord iDatabase, String iClusterName, OStreamSerializer iKeySerializer,
+	public OMVRBTreeDatabaseLazySave(String iClusterName, OStreamSerializer iKeySerializer,
 																	 OStreamSerializer iValueSerializer, int keySize) {
-		super(iDatabase, iClusterName, iKeySerializer, iValueSerializer, keySize);
+		super(iClusterName, iKeySerializer, iValueSerializer, keySize);
 	}
 
 	/**

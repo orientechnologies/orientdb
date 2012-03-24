@@ -64,15 +64,16 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 	private static final int																	OPTIMIZE_MAX_RETRY	= 10;
 
 	public OMVRBTreePersistent(OMVRBTreeProvider<K, V> iProvider) {
-		this(iProvider, 1);
+		super();
+		pageLoadFactor = (Float) OGlobalConfiguration.MVRBTREE_LOAD_FACTOR.getValue();
+		dataProvider = iProvider;
+		config();
 	}
 
 	public OMVRBTreePersistent(OMVRBTreeProvider<K, V> iProvider, int keySize) {
-		super(keySize);
-		pageLoadFactor = (Float) OGlobalConfiguration.MVRBTREE_LOAD_FACTOR.getValue();
-		dataProvider = iProvider;
+		this(iProvider);
+		this.keySize = keySize;
 		dataProvider.setKeySize(keySize);
-		config();
 	}
 
 	@Override

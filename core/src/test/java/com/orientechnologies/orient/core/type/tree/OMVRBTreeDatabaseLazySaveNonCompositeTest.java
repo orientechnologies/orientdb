@@ -32,7 +32,7 @@ public class OMVRBTreeDatabaseLazySaveNonCompositeTest extends OMVRBTreeNonCompo
 		oldEntryPoints = OGlobalConfiguration.MVRBTREE_ENTRYPOINTS.getValueAsInteger();
 		OGlobalConfiguration.MVRBTREE_ENTRYPOINTS.setValue(1);
 
-		tree = new OMVRBTreeDatabaseLazySave<Double, Double>(database, "indextestclsuter", OStreamSerializerLiteral.INSTANCE,
+		tree = new OMVRBTreeDatabaseLazySave<Double, Double>("indextestclsuter", OStreamSerializerLiteral.INSTANCE,
 				OStreamSerializerLiteral.INSTANCE, 1);
 
 		for (double i = 1; i < 10; i++) {

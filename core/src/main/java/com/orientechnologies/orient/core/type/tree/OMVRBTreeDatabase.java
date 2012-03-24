@@ -32,16 +32,12 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider
 @SuppressWarnings("serial")
 public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
 
-	public OMVRBTreeDatabase(OMVRBTreeProvider<K, V> iProvider) {
-		super(iProvider);
-	}
-
 	public OMVRBTreeDatabase(final ODatabaseRecord iDatabase, final ORID iRID) {
 		super(new OMVRBTreeMapProvider<K, V>(null, iDatabase.getClusterNameById(iRID.getClusterId()), iRID));
 	}
 
-	public OMVRBTreeDatabase(final ODatabaseRecord iDatabase, String iClusterName, final OStreamSerializer iKeySerializer,
-			final OStreamSerializer iValueSerializer, int keySize) {
+	public OMVRBTreeDatabase(String iClusterName, final OStreamSerializer iKeySerializer,
+													 final OStreamSerializer iValueSerializer, int keySize) {
 		super(new OMVRBTreeMapProvider<K, V>(null, iClusterName, iKeySerializer, iValueSerializer), keySize);
 	}
 

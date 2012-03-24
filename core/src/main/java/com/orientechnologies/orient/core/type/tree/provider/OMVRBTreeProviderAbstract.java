@@ -39,12 +39,6 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
 	protected ORecordId									root;
 	protected int 											keySize = 1;
 
-	public OMVRBTreeProviderAbstract(final ORecordInternal<?> iRecord, final OStorage iStorage, final String iClusterName,
-			final ORID iRID) {
-		this(iRecord, iStorage, iClusterName);
-		record.setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
-	}
-
 	public OMVRBTreeProviderAbstract(final ORecordInternal<?> iRecord, final OStorage iStorage, final String iClusterName) {
 		storage = iStorage;
 		clusterName = iClusterName;
