@@ -571,7 +571,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		if (document.field("linkedType") != null)
 			linkedType = OType.getById(((Integer) document.field("linkedType")).byteValue());
 
-		document.field("customFields", customFields, OType.EMBEDDEDMAP);
+		customFields = document.field("customFields", OType.EMBEDDEDMAP);
 	}
 
 	public Collection<OIndex<?>> getAllIndexes() {
