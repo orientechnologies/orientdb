@@ -281,6 +281,26 @@ public abstract class OAbstractFile implements OFile {
 	}
 
 	/*
+	 * Locks a portion of file.
+	 */
+	public FileLock lock(final long iRangeFrom, final long iRangeSize, final boolean iShared) throws IOException {
+		return channel.lock(iRangeFrom, iRangeSize, iShared);
+	}
+
+	/*
+	 * Unlocks a portion of file.
+	 */
+	public OFile unlock(final FileLock iLock) throws IOException {
+		if (iLock != null) {
+			try {
+				iLock.release();
+			} catch (ClosedChannelException e) {
+			}
+		}
+		return this;
+	}
+
+	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#lock()

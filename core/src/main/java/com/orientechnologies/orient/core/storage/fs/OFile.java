@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.storage.fs;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.channels.FileLock;
 
 /**
  * Interface to represent low-level File access. To use 3rd party implementations register them to the {@link OFileFactory}
@@ -97,6 +98,10 @@ public interface OFile {
 	public abstract void write(long iOffset, byte[] iSourceBuffer) throws IOException;
 
 	public abstract void lock() throws IOException;
+
+	public FileLock lock(final long iRangeFrom, final long iRangeSize, final boolean iShared) throws IOException;
+
+	public OFile unlock(final FileLock iLock) throws IOException;
 
 	public abstract void unlock() throws IOException;
 
