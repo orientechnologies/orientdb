@@ -91,7 +91,7 @@ public enum OGlobalConfiguration {
 	//SETTINGS OF NON-TRANSACTIONAL MODE
 	NON_TX_RECORD_UPDATE_SYNCH("nonTX.recordUpdate.synch",
 					"Executes a synch against the file-system at every record operation. This slows down records updates " +
-									"but guarantee transaction reliability on unreliable drives",
+									"but guarantee reliability on unreliable drives",
 					Boolean.class, Boolean.FALSE),
 
 	// TRANSACTIONS
