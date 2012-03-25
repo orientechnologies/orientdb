@@ -84,7 +84,8 @@ public class OSQLFilter extends OCommandToParse {
 						currentPos = newPos;
 						rootCondition = (OSQLFilterCondition) extractConditions(null);
 					} else if (word.toString().equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT)
-							|| word.toString().equals(OCommandExecutorSQLSelect.KEYWORD_ORDER))
+							|| word.toString().equals(OCommandExecutorSQLSelect.KEYWORD_ORDER)
+							|| word.toString().equals(OCommandExecutorSQLSelect.KEYWORD_SKIP))
 						return;
 					else
 						throw new OQueryParsingException("Found invalid keyword '" + word + "'", text, newPos);
@@ -285,7 +286,8 @@ public class OSQLFilter extends OCommandToParse {
 
 	protected boolean checkForEnd(final String iWord) {
 		if (iWord != null
-				&& (iWord.equals(OCommandExecutorSQLSelect.KEYWORD_ORDER) || iWord.equals(OCommandExecutorSQLSelect.KEYWORD_LIMIT))) {
+				&& (iWord.equals(OCommandExecutorSQLSelect.KEYWORD_ORDER) || iWord.equals(OCommandExecutorSQLSelect.KEYWORD_LIMIT) || iWord
+						.equals(OCommandExecutorSQLSelect.KEYWORD_SKIP))) {
 			currentPos -= iWord.length();
 			return true;
 		}

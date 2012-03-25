@@ -613,6 +613,15 @@ public class SQLSelectTest {
 	}
 
 	@Test
+	public void querySkipOnly() {
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile")).execute();
+		int total = result.size();
+
+		result = database.command(new OSQLSynchQuery<ODocument>("select from Profile skip 1")).execute();
+		Assert.assertEquals(result.size(), total - 1);
+	}
+
+	@Test
 	public void queryOrderByAndLimit() {
 		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile order by name limit 2")).execute();
 

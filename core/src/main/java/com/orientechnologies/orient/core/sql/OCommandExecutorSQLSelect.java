@@ -134,6 +134,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 						parseOrderBy(word);
 					else if (w.equals(KEYWORD_LIMIT))
 						parseLimit(word);
+					else if (w.equals(KEYWORD_SKIP))
+						parseSkip(word);
 				}
 			}
 		}
@@ -185,6 +187,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 	}
 
 	protected boolean addResult(final OIdentifiable iRecord) {
+		if (skip > 0) {
+			skip--;
+			return true;
+		}
+
 		resultCount++;
 
 		OIdentifiable recordCopy = iRecord instanceof ORecord<?> ? ((ORecord<?>) iRecord).copy() : iRecord.getIdentity().copy();
@@ -1032,10 +1039,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 		if (index == null)
 			throw new OCommandExecutionException("Target index '" + compiledFilter.getTargetIndex() + "' not found");
 
-		//nothing was added yet, so index definition for manual index was not calculated
-		if(index.getDefinition() == null)
+		// nothing was added yet, so index definition for manual index was not calculated
+		if (index.getDefinition() == null)
 			return;
-
 
 		if (compiledFilter.getRootCondition() != null) {
 			if (!"KEY".equalsIgnoreCase(compiledFilter.getRootCondition().getLeft().toString()))

@@ -72,6 +72,7 @@ public abstract class OCommandExecutorSQLExtractAbstract extends OCommandExecuto
 	protected Iterable<? extends OIdentifiable>				target;
 	protected List<OIdentifiable>											tempResult;
 	protected int																			resultCount;
+	protected int																			skip								= 0;
 
 	/**
 	 * Compile the filter conditions only the first time.
@@ -182,7 +183,42 @@ public abstract class OCommandExecutorSQLExtractAbstract extends OCommandExecuto
 			throw new OCommandSQLParsingException("Invalid LIMIT value setted to '" + word
 					+ "' but it should be a valid integer. Example: LIMIT 10", text, currentPos);
 		}
+
+		if (limit < 0)
+			throw new OCommandSQLParsingException("Invalid LIMIT value setted to the negative number '" + word
+					+ "'. Only positive numbers are valid. Example: LIMIT 10", text, currentPos);
+
 		return limit;
+	}
+
+	/**
+	 * Parses the skip keyword if found.
+	 * 
+	 * @param word
+	 *          StringBuilder to parse
+	 * @return
+	 * @return the skip found as integer, or -1 if no skip is found. -1 means no skip.
+	 * @throws OCommandSQLParsingException
+	 *           if no valid skip has been found
+	 */
+	protected int parseSkip(final StringBuilder word) throws OCommandSQLParsingException {
+		if (!word.toString().equals(KEYWORD_SKIP))
+			return -1;
+
+		currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
+		try {
+			skip = Integer.parseInt(word.toString());
+
+		} catch (Exception e) {
+			throw new OCommandSQLParsingException("Invalid SKIP value setted to '" + word
+					+ "' but it should be a valid positive integer. Example: SKIP 10", text, currentPos);
+		}
+
+		if (skip < 0)
+			throw new OCommandSQLParsingException("Invalid SKIP value setted to the negative number '" + word
+					+ "'. Only positive numbers are valid. Example: SKIP 10", text, currentPos);
+
+		return skip;
 	}
 
 	protected boolean filter(final ORecordInternal<?> iRecord) {

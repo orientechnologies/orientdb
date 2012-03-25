@@ -93,6 +93,8 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLExtractAbstr
 					w = word.toString();
 					if (w.equals(KEYWORD_LIMIT))
 						parseLimit(word);
+					else if (w.equals(KEYWORD_SKIP))
+						parseSkip(word);
 				}
 			}
 		}
