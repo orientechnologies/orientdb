@@ -67,7 +67,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 
 			reload();
 
-			return indexes.get(iName.toLowerCase());
+			return preProcessBeforeReturn(indexes.get(iName.toLowerCase()));
 		} finally {
 			releaseExclusiveLock();
 		}

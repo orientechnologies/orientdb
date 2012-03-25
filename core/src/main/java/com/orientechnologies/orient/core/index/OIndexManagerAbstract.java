@@ -390,7 +390,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 		return result;
 	}
 
-	private OIndex<?> preProcessBeforeReturn(final OIndexInternal<?> index) {
+	protected OIndex<?> preProcessBeforeReturn(final OIndexInternal<?> index) {
 		getDatabase().registerListener(index);
 		if (index instanceof OIndexMultiValues)
 			return new OIndexTxAwareMultiValue(getDatabase(), (OIndex<Collection<OIdentifiable>>) getIndexInstance(index));

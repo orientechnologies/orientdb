@@ -21,6 +21,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -64,21 +66,20 @@ public class TruncateTest {
 	public void testTruncateClass() {
 
 		OSchema schema = database.getMetadata().getSchema();
-		OClass testClass;
-		if (schema.existsClass("test_class")) {
-			testClass = schema.getClass("test_class");
-		} else {
-			testClass = schema.createClass("test_class");
-		}
+		OClass testClass = getOrCreateClass(schema);
+
+		final OIndex<?> index = getOrCreateIndex(testClass);
+		schema.save();
+		
 		database.command(new OCommandSQL("truncate class test_class")).execute();
 
 		database.save(new ODocument(testClass).field("name", "x").field("data", Arrays.asList(1, 2)));
-		database.save(new ODocument(testClass).field("name", "y").field("data", Arrays.asList(3, 1)));
+		database.save(new ODocument(testClass).field("name", "y").field("data", Arrays.asList(3, 0)));
 
 		database.command(new OCommandSQL("truncate class test_class")).execute();
 
 		database.save(new ODocument(testClass).field("name", "x").field("data", Arrays.asList(5, 6, 7)));
-		database.save(new ODocument(testClass).field("name", "y").field("data", Arrays.asList(8, 9, 0)));
+		database.save(new ODocument(testClass).field("name", "y").field("data", Arrays.asList(8, 9, -1)));
 
 		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from test_class"));
 		Assert.assertEquals(result.size(), 2);
@@ -86,8 +87,37 @@ public class TruncateTest {
 		for (ODocument document : result) {
 			set.addAll((Collection<Integer>) document.field("data"));
 		}
-		Assert.assertTrue(set.containsAll(Arrays.asList(5, 6, 7, 8, 9, 0)));
+		Assert.assertTrue(set.containsAll(Arrays.asList(5, 6, 7, 8, 9, -1)));
+
+		Assert.assertEquals(index.getSize(), 6);
+		
+		for (Object o : index.keys()) {
+			if (o instanceof ODocument) {
+				o = ((ODocument) o).field("key");
+			}
+			Assert.assertTrue(set.contains(o));
+		}
 
 		schema.dropClass("test_class");
+	}
+
+	private OIndex<?> getOrCreateIndex(OClass testClass) {
+		OIndex<?> index = database.getMetadata().getIndexManager().getIndex("test_class_by_data");
+		if (index == null) {
+			testClass.createProperty("data", OType.EMBEDDEDLIST, OType.INTEGER);
+			index = testClass.createIndex("test_class_by_data", OClass.INDEX_TYPE.UNIQUE, "data");
+		}
+		return index;
+	}
+
+	private OClass getOrCreateClass(OSchema schema) {
+		OClass testClass;
+		if (schema.existsClass("test_class")) {
+			testClass = schema.getClass("test_class");
+		} else {
+			testClass = schema.createClass("test_class");
+		}
+		schema.save();
+		return testClass;
 	}
 }

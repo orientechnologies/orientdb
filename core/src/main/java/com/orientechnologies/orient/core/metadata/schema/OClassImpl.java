@@ -27,6 +27,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
@@ -615,9 +616,20 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	 * @throws IOException
 	 */
 	public void truncate() throws IOException {
-		for (int id : clusterIds) {
-			getDatabase().getStorage().getClusterById(id).truncate();
-		}
+		getDatabase().checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_UPDATE);
+
+		getDatabase().getStorage().callInLock(new Callable<Object>() {
+			public Object call() throws Exception {
+				for (int id : clusterIds) {
+					getDatabase().getStorage().getClusterById(id).truncate();
+				}
+
+				for (OIndex<?> index : getClassIndexes()) {
+					index.clear();
+				}
+				return null;
+			}
+		}, true );
 	}
 
 	/**
