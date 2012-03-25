@@ -801,10 +801,10 @@ public class OStorageLocal extends OStorageEmbedded {
 			iRid.clusterPosition = txManager
 					.createRecord(txManager.getCurrentTransaction().getId(), cluster, iRid, iContent, iRecordType);
 		else {
-			iRid.clusterPosition = createRecord(cluster, iContent, iRecordType);
+			final OPhysicalPosition ppos = createRecord(cluster, iContent, iRecordType, iRid);
 
 			if(OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
-				synch();
+				synchRecordUpdate(cluster, ppos);
 		}
 
 		return iRid.clusterPosition;
@@ -825,12 +825,15 @@ public class OStorageLocal extends OStorageEmbedded {
 		if (txManager.isCommitting())
 			return txManager.updateRecord(txManager.getCurrentTransaction().getId(), cluster, iRid, iContent, iVersion, iRecordType);
 		else {
-			final int version = updateRecord(cluster, iRid, iContent, iVersion, iRecordType);
+			final OPhysicalPosition ppos = updateRecord(cluster, iRid, iContent, iVersion, iRecordType);
 
-			if(version > -1 && OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
-				synch();
+			if(ppos != null && OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
+				synchRecordUpdate(cluster, ppos);
 
-			return version;
+			if(ppos != null)
+				return ppos.version;
+
+			return -1;
 		}
 	}
 
@@ -842,12 +845,11 @@ public class OStorageLocal extends OStorageEmbedded {
 		if (txManager.isCommitting())
 			return txManager.deleteRecord(txManager.getCurrentTransaction().getId(), cluster, iRid.clusterPosition, iVersion);
 		else {
-			final boolean deleted = deleteRecord(cluster, iRid, iVersion);
+			final OPhysicalPosition ppos = deleteRecord(cluster, iRid, iVersion);
+			if(ppos != null && OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
+				synchRecordUpdate(cluster, ppos);
 
-			if(deleted && OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
-				synch();
-
-			return deleted;
+			return ppos != null;
 		}
 	}
 
@@ -984,6 +986,33 @@ public class OStorageLocal extends OStorageEmbedded {
 			lock.releaseExclusiveLock();
 
 			OProfiler.getInstance().stopChrono("storage." + name + ".synch", timer);
+		}
+	}
+
+	protected void synchRecordUpdate(final OCluster cluster, final OPhysicalPosition ppos) {
+		checkOpeness();
+
+		final long timer = OProfiler.getInstance().startChrono();
+
+		lock.acquireExclusiveLock();
+		try {
+			saveVersion();
+
+			cluster.synch();
+
+			final ODataLocal data = getDataSegment(ppos.dataSegmentId);
+			data.synch();
+
+			if (configuration != null)
+				configuration.synch();
+
+		} catch (IOException e) {
+			throw new OStorageException("Error on synch storage '" + name + "'", e);
+
+		} finally {
+			lock.releaseExclusiveLock();
+
+			OProfiler.getInstance().stopChrono("storage." + name + "record.synch", timer);
 		}
 	}
 
@@ -1268,7 +1297,8 @@ public class OStorageLocal extends OStorageEmbedded {
 		return 0;
 	}
 
-	protected long createRecord(final OCluster iClusterSegment, final byte[] iContent, final byte iRecordType) {
+	protected OPhysicalPosition createRecord(final OCluster iClusterSegment, final byte[] iContent,
+																					 final byte iRecordType, final ORecordId iRid) {
 		checkOpeness();
 
 		if (iContent == null)
@@ -1293,12 +1323,19 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			incrementVersion();
 
-			return rid.clusterPosition;
+			final OPhysicalPosition ppos = new OPhysicalPosition();
+			ppos.dataChunkPosition = dataOffset;
+			ppos.dataSegmentId = dataSegment;
+			ppos.type = iRecordType;
+			ppos.version = 0;
 
+			iRid.clusterPosition = rid.clusterPosition;
+
+			return ppos;
 		} catch (IOException e) {
 
 			OLogManager.instance().error(this, "Error on creating record in cluster: " + iClusterSegment, e);
-			return -1;
+			return null;
 		} finally {
 			lock.releaseSharedLock();
 
@@ -1361,7 +1398,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		}
 	}
 
-	protected int updateRecord(final OCluster iClusterSegment, final ORecordId iRid, final byte[] iContent, final int iVersion,
+	protected OPhysicalPosition updateRecord(final OCluster iClusterSegment, final ORecordId iRid, final byte[] iContent, final int iVersion,
 			final byte iRecordType) {
 		if (iClusterSegment == null)
 			throw new OStorageException("Cluster not defined for record: " + iRid);
@@ -1376,7 +1413,7 @@ public class OStorageLocal extends OStorageEmbedded {
 				final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
 				if (!checkForRecordValidity(ppos))
 					// DELETED
-					return -1;
+					return null;
 
 				// VERSION CONTROL CHECK
 				switch (iVersion) {
@@ -1430,7 +1467,8 @@ public class OStorageLocal extends OStorageEmbedded {
 
 				incrementVersion();
 
-				return ppos.version;
+				ppos.dataChunkPosition = newDataSegmentOffset;
+				return ppos;
 
 			} finally {
 				lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
@@ -1445,10 +1483,10 @@ public class OStorageLocal extends OStorageEmbedded {
 			OProfiler.getInstance().stopChrono(PROFILER_UPDATE_RECORD, timer);
 		}
 
-		return -1;
+		return null;
 	}
 
-	protected boolean deleteRecord(final OCluster iClusterSegment, final ORecordId iRid, final int iVersion) {
+	protected OPhysicalPosition deleteRecord(final OCluster iClusterSegment, final ORecordId iRid, final int iVersion) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		lock.acquireExclusiveLock();
@@ -1461,7 +1499,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
 				if (!checkForRecordValidity(ppos))
 					// ALREADY DELETED
-					return false;
+					return null;
 
 				// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
 				if (iVersion > -1 && ppos.version != iVersion)
@@ -1480,7 +1518,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
 				incrementVersion();
 
-				return true;
+				return ppos;
 
 			} finally {
 				lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
@@ -1495,7 +1533,7 @@ public class OStorageLocal extends OStorageEmbedded {
 			OProfiler.getInstance().stopChrono(PROFILER_DELETE_RECORD, timer);
 		}
 
-		return false;
+		return null;
 	}
 
 	/***

@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -64,7 +65,7 @@ public class OStorageLocalTxExecuter {
 		iRid.clusterPosition = -1;
 
 		try {
-			iRid.clusterPosition = storage.createRecord(iClusterSegment, iContent, iRecordType);
+			storage.createRecord(iClusterSegment, iContent, iRecordType, iRid);
 
 			// SAVE INTO THE LOG THE POSITION OF THE RECORD JUST CREATED. IF TX FAILS AT THIS POINT A GHOST RECORD IS CREATED UNTIL DEFRAG
 			txSegment.addLog(OTxSegment.OPERATION_CREATE, iTxId, iRid.clusterId, iRid.clusterPosition, iRecordType, 0, null);
@@ -99,7 +100,11 @@ public class OStorageLocalTxExecuter {
 			txSegment.addLog(OTxSegment.OPERATION_UPDATE, iTxId, iRid.clusterId, iRid.clusterPosition, iRecordType, buffer.version,
 					buffer.buffer);
 
-			return storage.updateRecord(iClusterSegment, iRid, iContent, iVersion, iRecordType);
+			final OPhysicalPosition ppos = storage.updateRecord(iClusterSegment, iRid, iContent, iVersion, iRecordType);
+			if(ppos != null)
+				return ppos.version;
+
+			return -1;
 
 		} catch (IOException e) {
 
@@ -120,7 +125,7 @@ public class OStorageLocalTxExecuter {
 			txSegment.addLog(OTxSegment.OPERATION_DELETE, iTxId, iClusterSegment.getId(), iPosition, buffer.recordType, buffer.version,
 					buffer.buffer);
 
-			return storage.deleteRecord(iClusterSegment, rid, iVersion);
+			return storage.deleteRecord(iClusterSegment, rid, iVersion) != null;
 
 		} catch (IOException e) {
 
