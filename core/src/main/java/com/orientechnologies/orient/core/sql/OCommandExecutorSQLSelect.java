@@ -1028,8 +1028,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 	private void searchInIndex() {
 		final OIndex<Object> index = (OIndex<Object>) getDatabase().getMetadata().getIndexManager()
 				.getIndex(compiledFilter.getTargetIndex());
+
 		if (index == null)
 			throw new OCommandExecutionException("Target index '" + compiledFilter.getTargetIndex() + "' not found");
+
+		//nothing was added yet, so index definition for manual index was not calculated
+		if(index.getDefinition() == null)
+			return;
+
 
 		if (compiledFilter.getRootCondition() != null) {
 			if (!"KEY".equalsIgnoreCase(compiledFilter.getRootCondition().getLeft().toString()))
