@@ -230,6 +230,10 @@ public enum OGlobalConfiguration {
 	NETWORK_BINARY_MAX_CONTENT_LENGTH("network.binary.maxLength", "TCP/IP max content length in bytes of BINARY requests",
 			Integer.class, 100000),
 
+	NETWORK_BINARY_READ_RESPONSE_MAX_TIME("network.binary.readResponse.maxTime",
+			"Maximum time (in seconds) to wait until response will be read. Otherwise response will be dropped from chanel",
+			Integer.class, 30),
+
 	NETWORK_BINARY_DEBUG("network.binary.debug", "Debug mode: print all data incoming on the binary channel", Boolean.class, false),
 
 	NETWORK_HTTP_MAX_CONTENT_LENGTH("network.http.maxLength", "TCP/IP max content length in bytes for HTTP requests", Integer.class,

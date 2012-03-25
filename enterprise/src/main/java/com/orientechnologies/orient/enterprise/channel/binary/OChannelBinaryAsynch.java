@@ -24,6 +24,7 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 /**
  * Implementation that supports multiple client requests.
@@ -37,12 +38,13 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 	private boolean							channelRead						= false;
 	private byte								currentStatus;
 	private int									currentSessionId;
+	private final int 					maxUnreadResponses;
 
-	private static final int		MAX_UNREAD_RESPONSES	= 120;
 	private static final int		MAX_LENGTH_DEBUG			= 100;
 
 	public OChannelBinaryAsynch(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
 		super(iSocket, iConfig);
+		maxUnreadResponses = OGlobalConfiguration.NETWORK_BINARY_READ_RESPONSE_MAX_TIME.getValueAsInteger();
 	}
 
 	public void beginRequest() {
@@ -92,7 +94,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 				// IT'S FOR ME
 				break;
 
-			if (unreadResponse > MAX_UNREAD_RESPONSES) {
+			if (unreadResponse > maxUnreadResponses) {
 				final StringBuilder dirtyBuffer = new StringBuilder();
 				int i = 0;
 				while (in.available() > 0) {
