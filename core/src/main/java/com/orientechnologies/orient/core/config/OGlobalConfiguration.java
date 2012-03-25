@@ -88,6 +88,12 @@ public enum OGlobalConfiguration {
 
 	DB_VALIDATION("db.validation", "Enables or disables validation of records", Boolean.class, true),
 
+	//SETTINGS OF NON-TRANSACTIONAL MODE
+	NON_TX_RECORD_UPDATE_SYNCH("nonTX.recordUpdate.synch",
+					"Executes a synch against the file-system at every record operation. This slows down records updates " +
+									"but guarantee transaction reliability on unreliable drives",
+					Boolean.class, Boolean.FALSE),
+
 	// TRANSACTIONS
 	TX_USE_LOG("tx.useLog", "Transactions use log file to store temporary data to be rolled back in case of crash", Boolean.class,
 			true),

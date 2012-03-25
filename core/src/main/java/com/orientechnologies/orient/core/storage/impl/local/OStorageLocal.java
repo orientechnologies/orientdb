@@ -800,8 +800,13 @@ public class OStorageLocal extends OStorageEmbedded {
 		if (txManager.isCommitting())
 			iRid.clusterPosition = txManager
 					.createRecord(txManager.getCurrentTransaction().getId(), cluster, iRid, iContent, iRecordType);
-		else
+		else {
 			iRid.clusterPosition = createRecord(cluster, iContent, iRecordType);
+
+			if(OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
+				synch();
+		}
+
 		return iRid.clusterPosition;
 	}
 
@@ -819,8 +824,14 @@ public class OStorageLocal extends OStorageEmbedded {
 
 		if (txManager.isCommitting())
 			return txManager.updateRecord(txManager.getCurrentTransaction().getId(), cluster, iRid, iContent, iVersion, iRecordType);
-		else
-			return updateRecord(cluster, iRid, iContent, iVersion, iRecordType);
+		else {
+			final int version = updateRecord(cluster, iRid, iContent, iVersion, iRecordType);
+
+			if(version > -1 && OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
+				synch();
+
+			return version;
+		}
 	}
 
 	public boolean deleteRecord(final ORecordId iRid, final int iVersion, final int iMode, ORecordCallback<Boolean> iCallback) {
@@ -830,8 +841,14 @@ public class OStorageLocal extends OStorageEmbedded {
 
 		if (txManager.isCommitting())
 			return txManager.deleteRecord(txManager.getCurrentTransaction().getId(), cluster, iRid.clusterPosition, iVersion);
-		else
-			return deleteRecord(cluster, iRid, iVersion);
+		else {
+			final boolean deleted = deleteRecord(cluster, iRid, iVersion);
+
+			if(deleted && OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
+				synch();
+
+			return deleted;
+		}
 	}
 
 	public Set<String> getClusterNames() {
