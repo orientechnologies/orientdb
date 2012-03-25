@@ -622,6 +622,18 @@ public class SQLSelectTest {
 	}
 
 	@Test
+	public void queryPaginationWithSkipAndLimit() {
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile")).execute();
+
+		List<ODocument> page = database.command(new OSQLSynchQuery<ODocument>("select from Profile skip 10 limit 10")).execute();
+		Assert.assertEquals(page.size(), 10);
+
+		for (int i = 0; i < page.size(); ++i) {
+			Assert.assertEquals(page.get(i), result.get(10 + i));
+		}
+	}
+
+	@Test
 	public void queryOrderByAndLimit() {
 		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile order by name limit 2")).execute();
 
