@@ -77,6 +77,10 @@ public class OAutomaticBackup extends OServerHandlerAbstract {
 
 			@Override
 			public void run() {
+				OLogManager.instance().info(this, "[OAutomaticBackup] Scanning databases to backup...");
+
+				int ok = 0, errors = 0;
+
 				final Map<String, String> databaseNames = OServerMain.server().getAvailableStorageNames();
 				for (final Entry<String, String> dbName : databaseNames.entrySet()) {
 					boolean include;
@@ -112,6 +116,8 @@ public class OAutomaticBackup extends OServerHandlerAbstract {
 							db.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
 							db.open("admin", "aaa");
 
+							final long begin = System.currentTimeMillis();
+
 							new ODatabaseExport(db, exportFilePath, new OCommandOutputListener() {
 								@Override
 								public void onMessage(final String iText) {
@@ -119,14 +125,22 @@ public class OAutomaticBackup extends OServerHandlerAbstract {
 								}
 							}).exportDatabase();
 
+							OLogManager.instance().info(
+									this,
+									"[OAutomaticBackup] - Backup of database '" + dbName.getValue() + "' completed in "
+											+ (System.currentTimeMillis() - begin) + "ms");
+							ok++;
+
 						} catch (IOException e) {
 							OLogManager.instance().error(this,
-									"[OAutomaticBackup] Error on exporting database '" + dbName.getValue() + "' to file: " + exportFilePath, e);
+									"[OAutomaticBackup] - Error on exporting database '" + dbName.getValue() + "' to file: " + exportFilePath, e);
+							errors++;
 						} finally {
 							db.close();
 						}
 					}
 				}
+				OLogManager.instance().info(this, "[OAutomaticBackup] Backup finished: %d ok, %d errors", ok, errors);
 			}
 		}, delay, delay);
 	}
