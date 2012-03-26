@@ -1103,47 +1103,56 @@ public class OStorageRemote extends OStorageAbstract {
 		setSessionId(-1);
 		createConnectionPool();
 
-		OChannelBinaryClient network = null;
-		try {
-			network = beginRequest(OChannelBinaryProtocol.REQUEST_DB_OPEN);
+		while (!networkPool.isEmpty()) {
+			try {
 
-			// @SINCE 1.0rc8
-			sendClientInfo(network);
+				OChannelBinaryClient network = null;
+				try {
+					network = beginRequest(OChannelBinaryProtocol.REQUEST_DB_OPEN);
 
-			network.writeString(name);
+					// @SINCE 1.0rc8
+					sendClientInfo(network);
 
-			if (network.getSrvProtocolVersion() >= 8)
-				network.writeString(connectionDbType);
+					network.writeString(name);
 
-			network.writeString(connectionUserName);
-			network.writeString(connectionUserPassword);
+					if (network.getSrvProtocolVersion() >= 8)
+						network.writeString(connectionDbType);
 
-		} finally {
-			endRequest(network);
+					network.writeString(connectionUserName);
+					network.writeString(connectionUserPassword);
+
+				} finally {
+					endRequest(network);
+				}
+
+				final int sessionId;
+
+				try {
+					beginResponse(network);
+					sessionId = network.readInt();
+					setSessionId(sessionId);
+
+					OLogManager.instance().debug(null, "Client connected with session id: " + sessionId);
+
+					readDatabaseInformation(network);
+
+					// READ CLUSTER CONFIGURATION
+					clusterConfiguration = new ODocument(network.readBytes());
+
+					defaultClusterId = clustersIds.get(OStorage.CLUSTER_DEFAULT_NAME);
+					status = STATUS.OPEN;
+					return;
+
+				} finally {
+					endResponse(network);
+				}
+			} catch (Exception e) {
+				handleException("Cannot create a connection to remote server address(es): " + serverURLs, e);
+			}
 		}
 
-		final int sessionId;
+		throw new OStorageException("Cannot create a connection to remote server address(es): " + serverURLs);
 
-		try {
-			beginResponse(network);
-			sessionId = network.readInt();
-
-			OLogManager.instance().debug(null, "Client connected with session id: " + sessionId);
-
-			readDatabaseInformation(network);
-
-			// READ CLUSTER CONFIGURATION
-			clusterConfiguration = new ODocument(network.readBytes());
-
-		} finally {
-			endResponse(network);
-		}
-
-		setSessionId(sessionId);
-
-		defaultClusterId = clustersIds.get(OStorage.CLUSTER_DEFAULT_NAME);
-
-		status = STATUS.OPEN;
 	}
 
 	protected void sendClientInfo(OChannelBinaryClient network) throws IOException {
