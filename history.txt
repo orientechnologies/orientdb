@@ -29,10 +29,11 @@
 This document enlist the last changes to the OrientDB project.
 
 -------------------------------------------------------------------------------
-VERSION 1.0rc9 - (March, 20th 2012)
+VERSION 1.0rc9 - (March, 26th 2012)
 -------------------------------------------------------------------------------
 - Studio new look&feel and improved Query panel
-- SQL: new sub query, INSERT accepts SET syntax like SQL UPDATE
+- SQL: new sub query, new SKIP keyword for pagination,
+       INSERT accepts SET syntax like SQL UPDATE
 - Schema: new support for metadata on property
 - Many bug fixed, 35 issues in total
 
