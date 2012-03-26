@@ -646,7 +646,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			throws IOException {
 		out.println("\nRemoving index...");
 
-		sqlCommand("drop", iCommandText, "\nRemoved index %d link(s) in %f sec(s).\n", true);
+		sqlCommand("drop", iCommandText, "\nDropped index in %f sec(s).\n", false);
 		updateDatabaseInfo();
 		out.println("\nIndex removed successfully");
 	}
