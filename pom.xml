@@ -268,9 +268,9 @@
 	</distributionManagement>
 
 	<scm>
-		<connection>scm:svn:http://orient.googlecode.com/svn/trunk/</connection>
-		<developerConnection>scm:svn:https://orient.googlecode.com/svn/trunk/</developerConnection>
-		<url>http://orient.googlecode.com/svn/trunk/</url>
+		<connection>scm:svn:http://orient.googlecode.com/svn/tags/1.0rc9</connection>
+		<developerConnection>scm:svn:https://orient.googlecode.com/svn/tags/1.0rc9</developerConnection>
+		<url>http://orient.googlecode.com/svn/tags/1.0rc9</url>
 	</scm>
 
 	<ciManagement>
