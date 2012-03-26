@@ -4,7 +4,7 @@
 
 	<groupId>com.orientechnologies</groupId>
 	<artifactId>orientdb-parent</artifactId>
-	<version>1.0rc9</version>
+	<version>1.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>OrientDB</name>
 	<url>http://www.orientechnologies.com</url>
@@ -268,9 +268,9 @@
 	</distributionManagement>
 
 	<scm>
-		<connection>scm:svn:http://orient.googlecode.com/svn/tags/1.0rc9</connection>
-		<developerConnection>scm:svn:https://orient.googlecode.com/svn/tags/1.0rc9</developerConnection>
-		<url>http://orient.googlecode.com/svn/tags/1.0rc9</url>
+		<connection>scm:svn:http://orient.googlecode.com/svn/</connection>
+		<developerConnection>scm:svn:https://orient.googlecode.com/svn/</developerConnection>
+		<url>http://orient.googlecode.com/svn/</url>
 	</scm>
 
 	<ciManagement>
