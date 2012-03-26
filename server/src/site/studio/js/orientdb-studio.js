@@ -29,7 +29,7 @@ function stopTimer() {
 
 function getStudioURL(context) {
 	return $('#header-server').val() + '/studio/'
-			+ $('#header-database').val().replace('/', '$') + '/' + context;
+			+ $('#header-database').val().replace(/\//g, '$') + '/' + context;
 }
 
 function clear(component) {
