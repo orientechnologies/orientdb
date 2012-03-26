@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>com.orientechnologies</groupId>
 		<artifactId>orientdb-parent</artifactId>
-		<version>1.0rc9-SNAPSHOT</version>
+		<version>1.0rc9</version>
 	</parent>
 
 	<artifactId>orientdb-jdbc</artifactId>
@@ -19,8 +19,8 @@
 	</organization>
 	<properties>
 		<jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
-		<orient.version>1.0rc9-SNAPSHOT</orient.version>
-		<tinkerpop.blueprints.version>1.1</tinkerpop.blueprints.version>
+		<orient.version>1.0rc9</orient.version>
+		<tinkerpop.blueprints.version>1.5</tinkerpop.blueprints.version>
 	</properties>
 	<repositories>
 		<repository>
@@ -75,17 +75,24 @@
 			<version>${orient.version}</version>
 		</dependency>
 
+<!-- 		<dependency> -->
+<!-- 			<groupId>com.tinkerpop.blueprints</groupId> -->
+<!-- 			<artifactId>blueprints-orient-graph</artifactId> -->
+<!-- 			<version>${tinkerpop.blueprints.version}</version> -->
+<!-- 			<scope>test</scope> -->
+<!-- 		</dependency> -->
+<!-- 		<dependency> -->
+<!-- 			<groupId>com.tinkerpop.blueprints</groupId> -->
+<!-- 			<artifactId>blueprints-core</artifactId> -->
+<!-- 			<version>${tinkerpop.blueprints.version}</version> -->
+<!-- 			<scope>test</scope> -->
+<!-- 		</dependency> -->
+
 		<dependency>
-			<groupId>com.tinkerpop.blueprints</groupId>
-			<artifactId>blueprints-orient-graph</artifactId>
-			<version>${tinkerpop.blueprints.version}</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.tinkerpop.blueprints</groupId>
-			<artifactId>blueprints-core</artifactId>
-			<version>${tinkerpop.blueprints.version}</version>
-			<scope>test</scope>
+			<groupId>com.orientechnologies</groupId>
+			<artifactId>orientdb-graphdb</artifactId>
+			<version>${orient.version}</version>
+			<!-- <scope>test</scope> -->
 		</dependency>
 
 		<dependency>

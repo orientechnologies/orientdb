@@ -30,18 +30,23 @@ public abstract class OrientJdbcBaseTest {
 		dbUrl = "memory:test";
 
 		ODatabaseDocumentPool.global().close();
-		
+
 		ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
-	
+
 		String username = "admin";
 		String password = "admin";
 
-		if (db.exists() ) db.delete();
+		if (db.exists()) {
+			db.open(username, password);
+			db.drop();
+			db.close();
+		}
+
 		db.create();
-		
+
 		createSchemaDB(db);
 		loadDB(db, 20);
-		
+
 		db.close();
 
 		Properties info = new Properties();

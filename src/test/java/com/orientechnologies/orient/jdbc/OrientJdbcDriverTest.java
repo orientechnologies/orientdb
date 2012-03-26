@@ -30,7 +30,13 @@ public class OrientJdbcDriverTest {
 		String dbUrl = "memory:test";
 
 		ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
-		if (db.exists()) db.delete();
+
+		if (db.exists()) {
+			db.open("admin", "admin");
+			db.drop();
+			db.close();
+		}
+
 		db.create();
 
 		Properties info = new Properties();
@@ -44,6 +50,4 @@ public class OrientJdbcDriverTest {
 		assertTrue(conn.isClosed());
 	}
 
-		
-	
 }
