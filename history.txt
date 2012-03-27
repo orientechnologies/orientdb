@@ -34,6 +34,7 @@ VERSION 1.0rc9 - (March, 26th 2012)
 - Studio new look&feel and improved Query panel
 - SQL: new sub query, new SKIP keyword for pagination,
        INSERT accepts SET syntax like SQL UPDATE
+- Update Tinkerpop stack: Gremlin 1.5, Blueprints 1.2 and Pipes 1.0
 - Schema: new support for metadata on property
 - Many bug fixed, 35 issues in total
 
