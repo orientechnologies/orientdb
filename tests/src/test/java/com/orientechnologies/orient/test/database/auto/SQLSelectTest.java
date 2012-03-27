@@ -17,7 +17,9 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -37,6 +39,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -1225,5 +1228,46 @@ public class SQLSelectTest {
 				new OSQLSynchQuery<ODocument>("select from Account where name in ( select name from Account limit 1 )")).execute();
 
 		Assert.assertTrue(result.size() != 0);
+	}
+	
+	@Test
+	public void queryOrderByWithLimit() {
+		
+		OSchema schema = database.getMetadata().getSchema();
+		OClass facClass = schema.getClass("FicheAppelCDI");
+		if (facClass == null) {
+			facClass = schema.createClass("FicheAppelCDI");
+		}
+		if (!facClass.existsProperty("date")) {
+		    facClass.createProperty("date", OType.DATE);
+		}
+
+		final Calendar currentYear = Calendar.getInstance();
+		final Calendar oneYearAgo = Calendar.getInstance();
+		oneYearAgo.add(Calendar.YEAR, -1);
+
+		ODocument doc1 = new ODocument(facClass);
+		doc1.field("context", "test");
+		doc1.field("date", currentYear.getTime());
+		doc1.save();
+
+		ODocument doc2 = new ODocument(facClass);
+		doc2.field("context", "test");
+		doc2.field("date", oneYearAgo.getTime());
+		doc2.save();
+
+		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
+				"select * from " + facClass.getName() + " where context = 'test' order by date", 1));
+
+		Calendar smaller = Calendar.getInstance();
+		smaller.setTime((Date) result.get(0).field("date", Date.class));
+		Assert.assertEquals(smaller.get(Calendar.YEAR), oneYearAgo.get(Calendar.YEAR));
+		
+		result = database.query(new OSQLSynchQuery<ODocument>(
+				"select * from " + facClass.getName() + " where context = 'test' order by date DESC", 1));
+
+		Calendar bigger = Calendar.getInstance();
+		bigger.setTime((Date) result.get(0).field("date", Date.class));
+		Assert.assertEquals(bigger.get(Calendar.YEAR), currentYear.get(Calendar.YEAR));
 	}
 }

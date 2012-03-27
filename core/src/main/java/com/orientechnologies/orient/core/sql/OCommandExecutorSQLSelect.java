@@ -218,10 +218,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 	}
 
 	private int getQueryFetchLimit() {
+		if (orderedFields != null) {
+			return -1;
+		}
+		
 		final int sqlLimit;
 		final int requestLimit;
 
-		if (orderedFields == null && limit > -1)
+		if (limit > -1)
 			sqlLimit = limit;
 		else
 			sqlLimit = -1;
