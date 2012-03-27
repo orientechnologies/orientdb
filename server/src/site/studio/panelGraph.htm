@@ -1,7 +1,6 @@
-<link type="text/css" href="styles/jit/base.css" rel="stylesheet" />
 <!--[if IE]><script src="js/jit/excanvas.js"></script><![endif]-->
 
-<script src="js/sigma.min.js"></script>
+<script src="js/sigma.js"></script>
 <style>
 .sigma-expand {
 	position: absolute;
@@ -24,9 +23,10 @@
 					<td valign="top">
 						<table style="width: 100%;">
 							<tr>
-								<td valign="middle" align="center">Lazy load depth <input id="graph-load-depth" type="text" value="2" class="input-mini" />
-
-								</td>
+								<td>Lazy load depth</td>
+							</tr>
+							<tr>
+								<td><input id="graph-load-depth" type="text" value="2" class="input-mini" /></td>
 							</tr>
 							<tr>
 								<td>
@@ -96,6 +96,7 @@
 	});
 
 	$("#editReload").click(function() {
+		g.reset();
 		g.drawGraph(selectedObject, $('#graph-load-depth').val());
 	});
 

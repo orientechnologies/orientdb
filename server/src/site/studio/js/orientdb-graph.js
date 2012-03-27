@@ -339,6 +339,9 @@ function OGraph(targetId) {
 	OGraph.prototype.deactivateFishEye = function() {
 		this.sigInst.desactivateFishEye();
 	}
+	OGraph.prototype.reset = function() {
+		this.sigInst.emptyGraph();
+	}
 
 	this.init();
 }

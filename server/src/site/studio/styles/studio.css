@@ -145,3 +145,11 @@ button.uniform-large {
 	background-color: #2d6987;
 	text-decoration: none;
 }
+
+#graphPanel {
+	position: relative;
+	width: 900px;
+	height: 500px;
+	margin: auto;
+	overflow: hidden;
+}
