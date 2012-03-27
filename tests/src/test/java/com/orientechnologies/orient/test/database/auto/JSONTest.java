@@ -26,10 +26,10 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 
 @SuppressWarnings("unchecked")
 @Test
@@ -345,5 +345,57 @@ public class JSONTest {
 		ODocument doc2 = new ODocument().fromJSON(doc2Json);
 		String doc2String = new String(doc2.toStream());
 		Assert.assertEquals(doc2Json, "{" + doc2String + "}");
+	}
+
+	public void testSameNameCollectionsAndMap() {
+		ODocument doc = new ODocument();
+		doc.field("string", "STRING_VALUE");
+		List<ODocument> list = new ArrayList<ODocument>();
+		for (int i = 0; i < 10; i++) {
+			ODocument doc1 = new ODocument();
+			doc.field("number", i);
+			list.add(doc1);
+			Map<String, ODocument> docMap = new HashMap<String, ODocument>();
+			for (int j = 0; j < 5; j++) {
+				ODocument doc2 = new ODocument();
+				doc2.field("blabla", j);
+				docMap.put(String.valueOf(j), doc2);
+				ODocument doc3 = new ODocument();
+				doc3.field("blubli", String.valueOf(i + j));
+				doc2.field("out", doc3);
+			}
+			doc1.field("out", docMap);
+			list.add(doc1);
+		}
+		doc.field("out", list);
+		String json = doc.toJSON();
+		ODocument newDoc = new ODocument().fromJSON(json);
+		Assert.assertEquals(newDoc.toJSON(), json);
+		Assert.assertTrue(newDoc.hasSameContentOf(doc));
+
+		doc = new ODocument();
+		doc.field("string", "STRING_VALUE");
+		Map<String, ODocument> docMap = new HashMap<String, ODocument>();
+		for (int i = 0; i < 10; i++) {
+			ODocument doc1 = new ODocument();
+			doc.field("number", i);
+			list.add(doc1);
+			list = new ArrayList<ODocument>();
+			for (int j = 0; j < 5; j++) {
+				ODocument doc2 = new ODocument();
+				doc2.field("blabla", j);
+				list.add(doc2);
+				ODocument doc3 = new ODocument();
+				doc3.field("blubli", String.valueOf(i + j));
+				doc2.field("out", doc3);
+			}
+			doc1.field("out", list);
+			docMap.put(String.valueOf(i), doc1);
+		}
+		doc.field("out", docMap);
+		json = doc.toJSON();
+		newDoc = new ODocument().fromJSON(json);
+		Assert.assertEquals(newDoc.toJSON(), json);
+		Assert.assertTrue(newDoc.hasSameContentOf(doc));
 	}
 }

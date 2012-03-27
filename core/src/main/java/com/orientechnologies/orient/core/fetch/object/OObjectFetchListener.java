@@ -42,8 +42,8 @@ import com.orientechnologies.orient.core.serialization.serializer.object.OObject
 public class OObjectFetchListener implements OFetchListener {
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public void processStandardField(final ORecordSchemaAware<?> iRecord, final Object iFieldValue, final String iFieldName, final OFetchContext iContext, final Object iUserObject)
-			throws OFetchException {
+	public void processStandardField(final ORecordSchemaAware<?> iRecord, final Object iFieldValue, final String iFieldName,
+			final OFetchContext iContext, final Object iUserObject) throws OFetchException {
 		if (iFieldValue instanceof ORecordLazyList)
 			OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, new OLazyObjectList(iRecord, (ORecordLazyList) iFieldValue));
 		else if (iFieldValue instanceof ORecordLazySet)
@@ -57,13 +57,22 @@ public class OObjectFetchListener implements OFetchListener {
 	public void processStandardCollectionValue(Object iFieldValue, OFetchContext iContext) throws OFetchException {
 	}
 
-	public void parseLinked(final ORecordSchemaAware<?> iRootRecord, final OIdentifiable iLinked, final Object iUserObject, final String iFieldName, final OFetchContext iContext)
-			throws OFetchException {
+	public void parseLinked(final ORecordSchemaAware<?> iRootRecord, final OIdentifiable iLinked, final Object iUserObject,
+			final String iFieldName, final OFetchContext iContext) throws OFetchException {
+		if (iLinked instanceof ORecordSchemaAware
+				&& !(((OObjectFetchContext) iContext).getObj2RecHandler().existsUserObjectByRID(iLinked.getIdentity()))) {
+			fetchLinked(iRootRecord, iUserObject, iFieldName, (ORecordSchemaAware<?>) iLinked, iContext);
+		}
+	}
+
+	public void parseLinkedCollectionValue(ORecordSchemaAware<?> iRootRecord, OIdentifiable iLinked, Object iUserObject,
+			String iFieldName, OFetchContext iContext) throws OFetchException {
 		final Class<?> type = OObjectSerializerHelper.getFieldType(iUserObject, iFieldName);
 		if (type == null || Map.class.isAssignableFrom(type)) {
 		} else if (Set.class.isAssignableFrom(type) || Collection.class.isAssignableFrom(type) || type.isArray()) {
 			if (!((OObjectFetchContext) iContext).isLazyLoading()) {
-				Object value = ((OObjectFetchContext) iContext).getObj2RecHandler().getUserObjectByRecord((ODocument) iLinked, ((OObjectFetchContext) iContext).getFetchPlan());
+				Object value = ((OObjectFetchContext) iContext).getObj2RecHandler().getUserObjectByRecord((ODocument) iLinked,
+						((OObjectFetchContext) iContext).getFetchPlan());
 				if (!((OObjectFetchContext) iContext).isLazyLoading()) {
 					Collection<Object> target = (Collection<Object>) OObjectSerializerHelper.getFieldValue(iUserObject, iFieldName);
 					target.add(value);
@@ -71,32 +80,34 @@ public class OObjectFetchListener implements OFetchListener {
 				}
 			}
 			return;
-		} else if (iLinked instanceof ORecordSchemaAware && !(((OObjectFetchContext) iContext).getObj2RecHandler().existsUserObjectByRID(iLinked.getIdentity()))) {
-			fetchLinked(iRootRecord, iUserObject, iFieldName, (ORecordSchemaAware<?>) iLinked, iContext);
 		}
 	}
 
-	public Object fetchLinkedMapEntry(final ORecordSchemaAware<?> iRoot, final Object iUserObject, final String iFieldName, String iKey, final ORecordSchemaAware<?> iLinked,
-			final OFetchContext iContext) throws OFetchException {
+	public Object fetchLinkedMapEntry(final ORecordSchemaAware<?> iRoot, final Object iUserObject, final String iFieldName,
+			String iKey, final ORecordSchemaAware<?> iLinked, final OFetchContext iContext) throws OFetchException {
 		Object value = null;
-		final Class<?> type = OObjectSerializerHelper.getFieldType((ODocument) iLinked, ((OObjectFetchContext) iContext).getEntityManager());
+		final Class<?> type = OObjectSerializerHelper.getFieldType((ODocument) iLinked,
+				((OObjectFetchContext) iContext).getEntityManager());
 		final Class<?> fieldClass = ((OObjectFetchContext) iContext).getEntityManager().getEntityClass(type.getSimpleName());
 		if (fieldClass != null) {
 			// RECOGNIZED TYPE
-			value = ((OObjectFetchContext) iContext).getObj2RecHandler().getUserObjectByRecord((ODocument) iLinked, ((OObjectFetchContext) iContext).getFetchPlan());
+			value = ((OObjectFetchContext) iContext).getObj2RecHandler().getUserObjectByRecord((ODocument) iLinked,
+					((OObjectFetchContext) iContext).getFetchPlan());
 		}
 		return value;
 	}
 
 	@SuppressWarnings("unchecked")
-	public Object fetchLinkedCollectionValue(final ORecordSchemaAware<?> iRoot, final Object iUserObject, final String iFieldName, final ORecordSchemaAware<?> iLinked,
-			final OFetchContext iContext) throws OFetchException {
+	public Object fetchLinkedCollectionValue(final ORecordSchemaAware<?> iRoot, final Object iUserObject, final String iFieldName,
+			final ORecordSchemaAware<?> iLinked, final OFetchContext iContext) throws OFetchException {
 		Object value = null;
-		final Class<?> fieldClass = OObjectSerializerHelper.getFieldType((ODocument) iLinked, ((OObjectFetchContext) iContext).getEntityManager());
+		final Class<?> fieldClass = OObjectSerializerHelper.getFieldType((ODocument) iLinked,
+				((OObjectFetchContext) iContext).getEntityManager());
 
 		if (fieldClass != null) {
 			// RECOGNIZED TYPE
-			value = ((OObjectFetchContext) iContext).getObj2RecHandler().getUserObjectByRecord((ODocument) iLinked, ((OObjectFetchContext) iContext).getFetchPlan());
+			value = ((OObjectFetchContext) iContext).getObj2RecHandler().getUserObjectByRecord((ODocument) iLinked,
+					((OObjectFetchContext) iContext).getFetchPlan());
 			if (!((OObjectFetchContext) iContext).isLazyLoading()) {
 				Collection<Object> target = (Collection<Object>) OObjectSerializerHelper.getFieldValue(iUserObject, iFieldName);
 				target.add(value);
@@ -107,7 +118,8 @@ public class OObjectFetchListener implements OFetchListener {
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public Object fetchLinked(ORecordSchemaAware<?> iRoot, Object iUserObject, String iFieldName, ORecordSchemaAware<?> iLinked, OFetchContext iContext) throws OFetchException {
+	public Object fetchLinked(ORecordSchemaAware<?> iRoot, Object iUserObject, String iFieldName, ORecordSchemaAware<?> iLinked,
+			OFetchContext iContext) throws OFetchException {
 		if (iUserObject == null)
 			return null;
 		final Class<?> type;
@@ -139,7 +151,8 @@ public class OObjectFetchListener implements OFetchListener {
 			fieldClass = ((OObjectFetchContext) iContext).getEntityManager().getEntityClass(type.getSimpleName());
 			if (fieldClass != null) {
 				// RECOGNIZED TYPE
-				fieldValue = ((OObjectFetchContext) iContext).getObj2RecHandler().getUserObjectByRecord((ODocument) iLinked, ((OObjectFetchContext) iContext).getFetchPlan());
+				fieldValue = ((OObjectFetchContext) iContext).getObj2RecHandler().getUserObjectByRecord((ODocument) iLinked,
+						((OObjectFetchContext) iContext).getFetchPlan());
 			}
 		}
 

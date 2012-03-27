@@ -50,11 +50,11 @@ public interface OFetchContext {
 	public void onAfterMap(final ORecordSchemaAware<?> iRootRecord, final String iFieldName, final Object iUserObject)
 			throws OFetchException;
 
-	public void onBeforeDocument(final ORecordSchemaAware<?> iRecord, final String iFieldName, final Object iUserObject)
-			throws OFetchException;
+	public void onBeforeDocument(final ORecordSchemaAware<?> iRecord, final ORecordSchemaAware<?> iDocument, final String iFieldName,
+			final Object iUserObject) throws OFetchException;
 
-	public void onAfterDocument(final ORecordSchemaAware<?> iRootRecord, final String iFieldName, final Object iUserObject)
-			throws OFetchException;
+	public void onAfterDocument(final ORecordSchemaAware<?> iRootRecord, final ORecordSchemaAware<?> iDocument,
+			final String iFieldName, final Object iUserObject) throws OFetchException;
 
 	public void onBeforeStandardField(final Object iFieldValue, final String iFieldName, final Object iUserObject);
 

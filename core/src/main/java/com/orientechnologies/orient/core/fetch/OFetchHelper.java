@@ -359,13 +359,13 @@ public class OFetchHelper {
 			final Integer fieldDepthLevel = parsedRecords.get(d.getIdentity());
 			if (!d.getIdentity().isValid() || (fieldDepthLevel != null && fieldDepthLevel.intValue() == iLevelFromRoot)) {
 				removeParsedFromMap(parsedRecords, d);
-				iContext.onBeforeDocument(d, key, iUserObject);
+				iContext.onBeforeDocument(iRootRecord, d, key, iUserObject);
 				final Object userObject = iListener.fetchLinkedMapEntry(iRootRecord, iUserObject, fieldName, key, d, iContext);
 				processRecord(d, userObject, iFetchPlan, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords,
 						iFieldPathFromRoot, iListener, iContext);
-				iContext.onAfterDocument(d, key, iUserObject);
+				iContext.onAfterDocument(iRootRecord, d, key, iUserObject);
 			} else {
-				iListener.parseLinked(iRootRecord, d, iUserObject, key, iContext);
+				iListener.parseLinkedCollectionValue(iRootRecord, d, iUserObject, key, iContext);
 			}
 		}
 		iContext.onAfterMap(iRootRecord, fieldName, iUserObject);
@@ -383,13 +383,13 @@ public class OFetchHelper {
 				final Integer fieldDepthLevel = parsedRecords.get(d.getIdentity());
 				if (!d.getIdentity().isValid() || (fieldDepthLevel != null && fieldDepthLevel.intValue() == iLevelFromRoot)) {
 					removeParsedFromMap(parsedRecords, d);
-					iContext.onBeforeDocument(d, fieldName, iUserObject);
+					iContext.onBeforeDocument(iRootRecord, d, fieldName, iUserObject);
 					final Object userObject = iListener.fetchLinked(iRootRecord, iUserObject, fieldName, d, iContext);
 					processRecord(d, userObject, iFetchPlan, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords,
 							iFieldPathFromRoot, iListener, iContext);
-					iContext.onAfterDocument(d, fieldName, iUserObject);
+					iContext.onAfterDocument(iRootRecord, d, fieldName, iUserObject);
 				} else {
-					iListener.parseLinked(iRootRecord, d, iUserObject, fieldName, iContext);
+					iListener.parseLinkedCollectionValue(iRootRecord, d, iUserObject, fieldName, iContext);
 				}
 			}
 			iContext.onAfterArray(iRootRecord, fieldName, iUserObject);
@@ -421,15 +421,15 @@ public class OFetchHelper {
 				if (!(d instanceof ODocument)) {
 					iListener.processStandardField(null, d, fieldName, iContext, iUserObject);
 				} else {
-					iContext.onBeforeDocument((ODocument) d, fieldName, iUserObject);
+					iContext.onBeforeDocument(iRootRecord, (ODocument) d, fieldName, iUserObject);
 					final Object userObject = iListener.fetchLinkedCollectionValue(iRootRecord, iUserObject, fieldName, (ODocument) d,
 							iContext);
 					processRecord((ODocument) d, userObject, iFetchPlan, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords,
 							iFieldPathFromRoot, iListener, iContext);
-					iContext.onAfterDocument((ODocument) d, fieldName, iUserObject);
+					iContext.onAfterDocument(iRootRecord, (ODocument) d, fieldName, iUserObject);
 				}
 			} else {
-				iListener.parseLinked(iRootRecord, d, iUserObject, fieldName, iContext);
+				iListener.parseLinkedCollectionValue(iRootRecord, d, iUserObject, fieldName, iContext);
 			}
 		}
 		iContext.onAfterCollection(iRootRecord, fieldName, iUserObject);
@@ -443,11 +443,11 @@ public class OFetchHelper {
 		if (!fieldValue.getIdentity().isValid() || (fieldDepthLevel != null && fieldDepthLevel.intValue() == iLevelFromRoot)) {
 			removeParsedFromMap(parsedRecords, fieldValue);
 			final ODocument linked = (ODocument) fieldValue;
-			iContext.onBeforeDocument(linked, fieldName, iUserObject);
+			iContext.onBeforeDocument(iRootRecord, linked, fieldName, iUserObject);
 			Object userObject = iListener.fetchLinked(iRootRecord, iUserObject, fieldName, linked, iContext);
 			processRecord(linked, userObject, iFetchPlan, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords,
 					iFieldPathFromRoot, iListener, iContext);
-			iContext.onAfterDocument(iRootRecord, fieldName, iUserObject);
+			iContext.onAfterDocument(iRootRecord, linked, fieldName, iUserObject);
 		} else {
 			iListener.parseLinked(iRootRecord, fieldValue, iUserObject, fieldName, iContext);
 		}

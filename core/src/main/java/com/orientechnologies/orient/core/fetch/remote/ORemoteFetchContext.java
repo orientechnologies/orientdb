@@ -49,7 +49,8 @@ public class ORemoteFetchContext implements OFetchContext {
 	public void onAfterArray(ORecordSchemaAware<?> iRootRecord, String iFieldName, Object iUserObject) throws OFetchException {
 	}
 
-	public void onBeforeDocument(ORecordSchemaAware<?> iRecord, String iFieldName, final Object iUserObject) throws OFetchException {
+	public void onBeforeDocument(ORecordSchemaAware<?> iRecord, final ORecordSchemaAware<?> iDocument, String iFieldName,
+			final Object iUserObject) throws OFetchException {
 	}
 
 	public void onBeforeCollection(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject,
@@ -62,8 +63,8 @@ public class ORemoteFetchContext implements OFetchContext {
 	public void onAfterFetch(ORecordSchemaAware<?> iRootRecord) throws OFetchException {
 	}
 
-	public void onAfterDocument(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject)
-			throws OFetchException {
+	public void onAfterDocument(ORecordSchemaAware<?> iRootRecord, final ORecordSchemaAware<?> iDocument, String iFieldName,
+			final Object iUserObject) throws OFetchException {
 	}
 
 	public void onAfterCollection(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject)

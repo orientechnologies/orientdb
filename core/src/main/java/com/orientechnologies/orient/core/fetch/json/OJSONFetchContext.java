@@ -36,17 +36,17 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
  */
 public class OJSONFetchContext implements OFetchContext {
 
-	protected final OJSONWriter						jsonWriter;
-	protected int													indentLevel			= 0;
-	protected final boolean								includeType;
-	protected final boolean								includeId;
-	protected final boolean								includeVer;
-	protected final boolean								includeClazz;
-	protected final boolean								attribSameRow;
-	protected final boolean								alwaysFetchEmbeddedDocuments;
-	protected final boolean								keepTypes;
-	protected final Stack<StringBuilder>	typesStack			= new Stack<StringBuilder>();
-	protected final Stack<String>					collectionStack	= new Stack<String>();
+	protected final OJSONWriter										jsonWriter;
+	protected int																	indentLevel			= 0;
+	protected final boolean												includeType;
+	protected final boolean												includeId;
+	protected final boolean												includeVer;
+	protected final boolean												includeClazz;
+	protected final boolean												attribSameRow;
+	protected final boolean												alwaysFetchEmbeddedDocuments;
+	protected final boolean												keepTypes;
+	protected final Stack<StringBuilder>					typesStack			= new Stack<StringBuilder>();
+	protected final Stack<ORecordSchemaAware<?>>	collectionStack	= new Stack<ORecordSchemaAware<?>>();
 
 	public OJSONFetchContext(final OJSONWriter iJsonWriter, boolean iIncludeType, final boolean iIncludeId,
 			final boolean iIncludeVer, final boolean iIncludeClazz, final boolean iAttribSameRow, final boolean iKeepTypes,
@@ -111,7 +111,7 @@ public class OJSONFetchContext implements OFetchContext {
 		indentLevel++;
 		try {
 			jsonWriter.beginCollection(indentLevel, true, iFieldName);
-			collectionStack.add(iFieldName);
+			collectionStack.add(iRootRecord);
 		} catch (IOException e) {
 			throw new OFetchException("Error writing collection field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
 		}
@@ -145,22 +145,24 @@ public class OJSONFetchContext implements OFetchContext {
 		indentLevel--;
 	}
 
-	public void onBeforeDocument(final ORecordSchemaAware<?> iRootRecord, final String iFieldName, final Object iUserObject) {
+	public void onBeforeDocument(final ORecordSchemaAware<?> iRootRecord, final ORecordSchemaAware<?> iDocument,
+			final String iFieldName, final Object iUserObject) {
 		indentLevel++;
 		try {
 			final String fieldName;
-			if (!collectionStack.isEmpty() && collectionStack.peek().equals(iFieldName))
+			if (!collectionStack.isEmpty() && collectionStack.peek().equals(iRootRecord))
 				fieldName = null;
 			else
 				fieldName = iFieldName;
 			jsonWriter.beginObject(indentLevel, true, fieldName);
-			writeSignature(jsonWriter, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, iRootRecord);
+			writeSignature(jsonWriter, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, iDocument);
 		} catch (IOException e) {
 			throw new OFetchException("Error writing link field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
 		}
 	}
 
-	public void onAfterDocument(final ORecordSchemaAware<?> iRootRecord, final String iFieldName, final Object iUserObject) {
+	public void onAfterDocument(final ORecordSchemaAware<?> iRootRecord, final ORecordSchemaAware<?> iDocument,
+			final String iFieldName, final Object iUserObject) {
 		try {
 			jsonWriter.endObject(indentLevel + 1, true);
 		} catch (IOException e) {
@@ -170,12 +172,15 @@ public class OJSONFetchContext implements OFetchContext {
 	}
 
 	public void writeLinkedValue(final OIdentifiable iRecord, final String iFieldName) throws IOException {
-		if (!collectionStack.isEmpty() && collectionStack.peek().equals(iFieldName)) {
-			jsonWriter.writeValue(indentLevel, true, OJSONWriter.encode(iRecord.getIdentity()));
-		} else {
-			jsonWriter.writeAttribute(indentLevel, true, iFieldName, OJSONWriter.encode(iRecord.getIdentity()));
-		}
+		jsonWriter.writeValue(indentLevel, true, OJSONWriter.encode(iRecord.getIdentity()));
+	}
 
+	public void writeLinkedAttribute(final OIdentifiable iRecord, final String iFieldName) throws IOException {
+		jsonWriter.writeAttribute(indentLevel, true, iFieldName, OJSONWriter.encode(iRecord.getIdentity()));
+	}
+
+	public boolean isInCollection(ORecordSchemaAware<?> record) {
+		return !collectionStack.isEmpty() && collectionStack.peek().equals(record);
 	}
 
 	public OJSONWriter getJsonWriter() {

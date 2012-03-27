@@ -39,6 +39,9 @@ public interface OFetchListener {
 
 	public void parseLinked(final ORecordSchemaAware<?> iRootRecord, final OIdentifiable iLinked, final Object iUserObject, final String iFieldName, final OFetchContext iContext)
 			throws OFetchException;
+	
+	public void parseLinkedCollectionValue(final ORecordSchemaAware<?> iRootRecord, final OIdentifiable iLinked, final Object iUserObject, final String iFieldName, final OFetchContext iContext)
+	throws OFetchException;
 
 	public Object fetchLinkedMapEntry(final ORecordSchemaAware<?> iRoot, final Object iUserObject, final String iFieldName, final String iKey, final ORecordSchemaAware<?> iLinked,
 			final OFetchContext iContext) throws OFetchException;

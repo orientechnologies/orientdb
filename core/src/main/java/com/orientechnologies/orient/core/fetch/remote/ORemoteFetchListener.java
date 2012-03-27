@@ -43,24 +43,31 @@ public class ORemoteFetchListener implements OFetchListener {
 		recordsToSend = iRecordsToSend;
 	}
 
-	public void processStandardField(ORecordSchemaAware<?> iRecord, Object iFieldValue, String iFieldName, OFetchContext iContext, final Object iusObject) throws OFetchException {
+	public void processStandardField(ORecordSchemaAware<?> iRecord, Object iFieldValue, String iFieldName, OFetchContext iContext,
+			final Object iusObject) throws OFetchException {
 	}
 
-	public void parseLinked(ORecordSchemaAware<?> iRootRecord, OIdentifiable iLinked, Object iUserObject, String iFieldName, OFetchContext iContext) throws OFetchException {
+	public void parseLinked(ORecordSchemaAware<?> iRootRecord, OIdentifiable iLinked, Object iUserObject, String iFieldName,
+			OFetchContext iContext) throws OFetchException {
 	}
 
-	public Object fetchLinkedMapEntry(ORecordSchemaAware<?> iRoot, Object iUserObject, String iFieldName, String iKey, ORecordSchemaAware<?> iLinked, OFetchContext iContext)
-			throws OFetchException {
+	public void parseLinkedCollectionValue(ORecordSchemaAware<?> iRootRecord, OIdentifiable iLinked, Object iUserObject,
+			String iFieldName, OFetchContext iContext) throws OFetchException {
+	}
+
+	public Object fetchLinkedMapEntry(ORecordSchemaAware<?> iRoot, Object iUserObject, String iFieldName, String iKey,
+			ORecordSchemaAware<?> iLinked, OFetchContext iContext) throws OFetchException {
 		return recordsToSend.add((ODocument) iLinked) ? iLinked : null;
 	}
 
-	public Object fetchLinkedCollectionValue(ORecordSchemaAware<?> iRoot, Object iUserObject, String iFieldName, ORecordSchemaAware<?> iLinked, OFetchContext iContext)
-			throws OFetchException {
+	public Object fetchLinkedCollectionValue(ORecordSchemaAware<?> iRoot, Object iUserObject, String iFieldName,
+			ORecordSchemaAware<?> iLinked, OFetchContext iContext) throws OFetchException {
 		return recordsToSend.add((ODocument) iLinked) ? iLinked : null;
 	}
 
 	@SuppressWarnings("unchecked")
-	public Object fetchLinked(ORecordSchemaAware<?> iRoot, Object iUserObject, String iFieldName, ORecordSchemaAware<?> iLinked, OFetchContext iContext) throws OFetchException {
+	public Object fetchLinked(ORecordSchemaAware<?> iRoot, Object iUserObject, String iFieldName, ORecordSchemaAware<?> iLinked,
+			OFetchContext iContext) throws OFetchException {
 		if (iLinked instanceof ODocument)
 			return recordsToSend.add((ODocument) iLinked) ? iLinked : null;
 		else if (iLinked instanceof Collection<?>)
