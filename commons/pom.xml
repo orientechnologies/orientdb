@@ -8,7 +8,7 @@
 	</parent>
 
 	<artifactId>orient-commons</artifactId>
-	<packaging>jar</packaging>
+	<packaging>bundle</packaging>
 
 	<name>Orient Commons</name>
 

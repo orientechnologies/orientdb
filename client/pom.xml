@@ -8,7 +8,7 @@
 	</parent>
 
 	<artifactId>orientdb-client</artifactId>
-	<packaging>jar</packaging>
+	<packaging>bundle</packaging>
 
 	<name>OrientDB Client</name>
 

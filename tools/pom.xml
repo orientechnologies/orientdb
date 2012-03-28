@@ -8,8 +8,8 @@
 	</parent>
 
 	<artifactId>orientdb-tools</artifactId>
-	<packaging>jar</packaging>
-
+	<packaging>bundle</packaging>
+	
 	<name>OrientDB Tools</name>
 
 	<organization>
