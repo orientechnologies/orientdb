@@ -8,7 +8,7 @@
 	</parent>
 
 	<artifactId>orientdb-tests</artifactId>
-	<packaging>bundle</packaging>
+	<packaging>jar</packaging>
 	
 	<name>OrientDB Tests</name>
 

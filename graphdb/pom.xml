@@ -18,6 +18,8 @@
 	</organization>
 	<properties>
 		<jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
+		<import.package>*</import.package>
+		<export.package>com.orientechnologies.orient.server.*</export.package>
 	</properties>
 
 	<dependencies>
