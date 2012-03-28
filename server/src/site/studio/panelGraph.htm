@@ -59,6 +59,13 @@
 								</label></td>
 							</tr>
 							<tr>
+								<td>Edge type</td>
+								<td><select id="edgeType" class="input-small">
+										<option value="curve">curve</option>
+										<option value="line">line</option>
+								</select></td>
+							</tr>
+							<tr>
 								<td colspan="2"><label class="checkbox"> <input id="activateFishEye" type="checkbox" checked="checked"> <i
 										class="icon-eye-open"></i> Auto Zoom
 								</label></td>
@@ -109,8 +116,11 @@
 		else
 			$("#root-rid").val(selectedObject);
 
-		g.drawGraph(selectedObject, $('#graph-load-depth').val(), $(
-				'#bpGraphModel').attr('checked'));
+		g.drawGraph(selectedObject, {
+			"depth" : $('#graph-load-depth').val(),
+			"bluePrintsGraphModel" : $('#bpGraphModel').attr('checked'),
+			"edgeType" : $('#edgeType').val()
+		});
 	}
 
 	$("#editGraph").click(function() {
@@ -134,6 +144,11 @@
 		else
 			g.deactivateFishEye();
 	});
+
+	$("#edgeType").change(function() {
+		reload();
+	});
+
 	$("#bpGraphModel").click(function() {
 		reload();
 	});
@@ -145,8 +160,12 @@
 			"legend" : "legend"
 		});
 
-		g.drawGraph(selectedObject, $('#graph-load-depth').val(), $(
-				'#bpGraphModel').attr('checked'));
+		g.drawGraph(selectedObject, {
+			"depth" : $('#graph-load-depth').val(),
+			"bluePrintsGraphModel" : $('#bpGraphModel').attr('checked'),
+			"edgeType" : $('#edgeType').val()
+		});
+
 		g.activateFishEye();
 	}
 </script>

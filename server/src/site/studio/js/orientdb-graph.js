@@ -15,7 +15,17 @@
  */
 function OGraph(targetId, config) {
 	this.targetId = targetId;
-	this.config = config ? config : {};
+	this.config = {
+		"depth" : 2,
+		"bluePrintsGraphModel" : "false",
+		"edgeType" : "curve",
+		"colors" : {}
+	};
+
+	// OVERWRITE CONFIG
+	if (config)
+		for (c in config)
+			this.config[c] = config[c];
 
 	this.sigRoot = document.getElementById(targetId);
 	this.sigInst = sigma.init(this.sigRoot).drawingProperties({
@@ -24,12 +34,11 @@ function OGraph(targetId, config) {
 		minNodeSize : 0.5,
 		maxNodeSize : 15,
 		minEdgeSize : 1,
-		maxEdgeSize : 1
+		maxEdgeSize : 1,
+		defaultEdgeType : this.config.edgeType
 	});
 
 	this.popUp = null;
-	this.colors = {};
-	this.bluePrintsGraphModel = false; // TREAT EDGES NOT AS NODES
 
 	OGraph.prototype.init = function() {
 		// The following method will parse the related sigma instance nodes
@@ -258,19 +267,26 @@ function OGraph(targetId, config) {
 		};
 	}
 
-	OGraph.prototype.drawGraph = function(rootNode, deep, bluePrintsGraphModel) {
-		if (!rootNode || !targetId)
+	OGraph.prototype.drawGraph = function(rootNode, config) {
+		if (!rootNode)
 			return;
 
-		this.bluePrintsGraphModel = bluePrintsGraphModel
-				&& bluePrintsGraphModel == "checked";
+		if (config)
+			for (c in config)
+				this.config[c] = config[c];
 
-		if (deep)
+		this.sigInst.drawingProperties({
+			"defaultEdgeType" : this.config.edgeType
+		});
+
+		if (this.config.depth)
 			// RELOAD THE NODE WITH A FETCH PLAN
 			if (typeof rootNode == "string")
-				rootNode = orientServer.load(rootNode, "*:" + deep);
+				rootNode = orientServer
+						.load(rootNode, "*:" + this.config.depth);
 			else if (typeof rootNode == "object")
-				rootNode = orientServer.load(rootNode["@rid"], "*:" + deep);
+				rootNode = orientServer.load(rootNode["@rid"], "*:"
+						+ this.config.depth);
 
 		if (this.config["onLoad"])
 			this.config["onLoad"](rootNode);
@@ -314,7 +330,7 @@ function OGraph(targetId, config) {
 	}
 
 	OGraph.prototype.drawChildVertex = function(name, node, nodeId, child) {
-		if (this.bluePrintsGraphModel) {
+		if (this.config.bluePrintsGraphModel == "checked") {
 			if (child["out"] == nodeId)
 				child = child["in"];
 			else
@@ -336,12 +352,12 @@ function OGraph(targetId, config) {
 			return null;
 
 		// APPLY ONE COLOR PER CLASS TYPE
-		var color = this.colors[node["@class"]];
+		var color = this.config.colors[node["@class"]];
 		if (!color) {
 			color = 'rgb(' + Math.round(Math.random() * 256) + ','
 					+ Math.round(Math.random() * 256) + ','
 					+ Math.round(Math.random() * 256) + ')';
-			this.colors[node["@class"]] = color;
+			this.config.colors[node["@class"]] = color;
 			if (this.config["legend"])
 				$('#' + this.config["legend"]).append(
 						"<tr><td style='width: 30px; height: 15px; background-color: "
@@ -419,7 +435,7 @@ function OGraph(targetId, config) {
 		this.sigInst.desactivateFishEye();
 	}
 	OGraph.prototype.reset = function() {
-		this.colors = {};
+		this.config.colors = {};
 		if (this.config["legend"])
 			$('#' + this.config["legend"]).text("");
 		this.sigInst.emptyGraph();
