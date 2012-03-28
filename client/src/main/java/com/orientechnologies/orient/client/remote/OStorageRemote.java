@@ -153,12 +153,12 @@ public class OStorageRemote extends OStorageAbstract {
 
 		lock.acquireExclusiveLock();
 
-		connectionUserName = iUserName;
-		connectionUserPassword = iUserPassword;
-		connectionOptions = iOptions != null ? new HashMap<String, Object>(iOptions) : null; // CREATE A COPY TO AVOID USER MANIPULATION
-																																													// POST OPEN
-
 		try {
+			connectionUserName = iUserName;
+			connectionUserPassword = iUserPassword;
+			connectionOptions = iOptions != null ? new HashMap<String, Object>(iOptions) : null; // CREATE A COPY TO AVOID USER
+																																														// MANIPULATION
+																																														// POST OPEN
 			openRemoteDatabase();
 
 			configuration = new OStorageConfiguration(this);

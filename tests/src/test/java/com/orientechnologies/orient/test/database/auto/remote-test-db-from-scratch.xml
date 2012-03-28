@@ -69,10 +69,10 @@
 
 			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetValuesTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetValuesTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetEntriesTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetEntriesTest"/>
+			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetEntriesTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetEntriesTest" />
 		</classes>
 	</test>
 	<test name="Dictionary">
@@ -132,7 +132,8 @@
 			<class name="com.orientechnologies.orient.test.database.auto.SQLFindReferencesTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.SQLCreateLinkTest" />
 			<!-- <class name="com.orientechnologies.orient.test.database.auto.MultipleDBTest" /> -->
-			<class name="com.orientechnologies.orient.test.database.auto.ConcurrentTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.ConcurrentUpdatesTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.ConcurrentQueriesTest" />
 		</classes>
 	</test>
 	<test name="DbTools">

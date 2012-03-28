@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
 @Test
-public class ConcurrentTest {
+public class ConcurrentUpdatesTest {
 
 	protected String	url;
 	private boolean		level1CacheEnabled;
@@ -85,7 +85,7 @@ public class ConcurrentTest {
 	}
 
 	@Parameters(value = "url")
-	public ConcurrentTest(@Optional(value = "memory:test") String iURL) {
+	public ConcurrentUpdatesTest(@Optional(value = "memory:test") String iURL) {
 		url = iURL;
 	}
 
