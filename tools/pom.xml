@@ -9,7 +9,7 @@
 
 	<artifactId>orientdb-tools</artifactId>
 	<packaging>bundle</packaging>
-	
+
 	<name>OrientDB Tools</name>
 
 	<organization>
@@ -17,6 +17,8 @@
 		<url>http://www.orientechnologies.com</url>
 	</organization>
 	<properties>
+		<import.package>*</import.package>
+		<export.package>com.orientechnologies.orient.console.*</export.package>
 		<jar.manifest.mainclass>com.orientechnologies.orient.console.OConsoleDatabaseApp</jar.manifest.mainclass>
 	</properties>
 	<dependencies>
