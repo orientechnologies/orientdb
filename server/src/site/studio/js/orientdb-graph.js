@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-function OGraph(targetId) {
+function OGraph(targetId, config) {
 	this.targetId = targetId;
+	this.config = config ? config : {};
+
 	this.sigRoot = document.getElementById(targetId);
 	this.sigInst = sigma.init(this.sigRoot).drawingProperties({
 		defaultLabelColor : '#fff'
 	}).graphProperties({
 		minNodeSize : 0.5,
-		maxNodeSize : 5,
+		maxNodeSize : 15,
 		minEdgeSize : 1,
 		maxEdgeSize : 1
 	});
+
 	this.popUp = null;
+	this.colors = {};
+	this.bluePrintsGraphModel = false; // TREAT EDGES NOT AS NODES
 
 	OGraph.prototype.init = function() {
 		// The following method will parse the related sigma instance nodes
@@ -43,7 +48,8 @@ function OGraph(targetId) {
 		// The following method will parse the related sigma instance nodes
 		// and set its position to as random in a square around the center:
 		sigma.publicPrototype.randomLayout = function() {
-			var W = 100, H = 100;
+			var component = $('#' + self.targetId);
+			var W = component.width() / 2 - 50, H = component.height() / 2 - 50;
 
 			this.iterNodes(function(n) {
 				n.x = W * Math.random();
@@ -129,6 +135,40 @@ function OGraph(targetId) {
 			};
 		};
 
+		OGraph.prototype.displayOnlySelected = function(event) {
+			var nodes = event.content;
+			var neighbors = {};
+
+			this.sigInst.iterEdges(function(e) {
+				if (nodes.indexOf(e.source) >= 0
+						|| nodes.indexOf(e.target) >= 0) {
+					neighbors[e.source] = 1;
+					neighbors[e.target] = 1;
+				}
+			});
+
+			this.sigInst.iterNodes(function(n) {
+				if (!neighbors[n.id]) {
+					n.hidden = 1;
+				} else {
+					n.hidden = 0;
+				}
+			});
+		}
+		OGraph.prototype.hideNodeInfo = function(event) {
+			this.popUp && this.popUp.remove();
+			this.popUp = false;
+		}
+
+		OGraph.prototype.displayAll = function(event) {
+			this.sigInst.iterEdges(function(e) {
+				e.hidden = 0;
+			});
+			this.sigInst.iterNodes(function(n) {
+				n.hidden = 0;
+			});
+		}
+
 		OGraph.prototype.attributesToString = function(obj) {
 			var buffer = '<ul>';
 			for (a in obj) {
@@ -146,6 +186,8 @@ function OGraph(targetId) {
 			}, [ event.content[0] ]);
 
 			var document = orientServer.load(event.content[0]);
+			if (this.config["onLoad"])
+				this.config["onLoad"](document);
 
 			this.popUp = $('<div class="node-info-popup"></div>').append(
 			// The GEXF parser stores all the attributes in an array named
@@ -169,11 +211,6 @@ function OGraph(targetId) {
 			$('ul', this.popUp).css('margin', '0 0 0 20px');
 
 			$('#' + targetId).append(this.popUp);
-		}
-
-		OGraph.prototype.hideNodeInfo = function(event) {
-			this.popUp && this.popUp.remove();
-			this.popUp = false;
 		}
 
 		var self = this;
@@ -221,9 +258,12 @@ function OGraph(targetId) {
 		};
 	}
 
-	OGraph.prototype.drawGraph = function(rootNode, deep) {
+	OGraph.prototype.drawGraph = function(rootNode, deep, bluePrintsGraphModel) {
 		if (!rootNode || !targetId)
 			return;
+
+		this.bluePrintsGraphModel = bluePrintsGraphModel
+				&& bluePrintsGraphModel == "checked";
 
 		if (deep)
 			// RELOAD THE NODE WITH A FETCH PLAN
@@ -232,16 +272,23 @@ function OGraph(targetId) {
 			else if (typeof rootNode == "object")
 				rootNode = orientServer.load(rootNode["@rid"], "*:" + deep);
 
-		if (rootNode)
-			this.drawVertex(rootNode);
+		if (this.config["onLoad"])
+			this.config["onLoad"](rootNode);
 
-		this.sigInst.position(0, 0, 1).activateFishEye().draw();
+		if (rootNode) {
+			this.drawVertex(rootNode, null, {
+				'x' : 0.5,
+				'y' : 0.5
+			});
+		}
+
+		this.sigInst.position(0, 0, 1).draw();
 	}
 
-	OGraph.prototype.drawVertex = function(node, rootNodeId) {
+	OGraph.prototype.drawVertex = function(node, rootNodeId, config) {
 		var nodeId = this.getEndpoint(node);
 		if (!nodeId) {
-			var nodeId = this.drawEndpoint(node);
+			var nodeId = this.drawEndpoint(node, config);
 
 			// DRAW CONNECTED NODES
 			for (fieldName in node) {
@@ -267,36 +314,68 @@ function OGraph(targetId) {
 	}
 
 	OGraph.prototype.drawChildVertex = function(name, node, nodeId, child) {
+		if (this.bluePrintsGraphModel) {
+			if (child["out"] == nodeId)
+				child = child["in"];
+			else
+				child = child["out"];
+		}
+
 		var childId = this.drawVertex(child, nodeId);
 		if (childId && nodeId) {
+
 			// CREATE THE EDGE
 			this.sigInst.addEdge(nodeId + "_" + name + "_" + childId, nodeId,
 					childId);
 		}
 	}
 
-	OGraph.prototype.drawEndpoint = function(node) {
-		if (node == null)
-			return null;
-
-		var nodeId = null;
-		if (node instanceof String && node.charAt(0) == '#')
-			nodeId = node;
-		else
-			nodeId = node["@rid"];
-
+	OGraph.prototype.drawEndpoint = function(node, config) {
+		var nodeId = getRID(node);
 		if (nodeId == null)
 			return null;
 
-		this.sigInst.addNode(nodeId, {
-			label : nodeId,
+		// APPLY ONE COLOR PER CLASS TYPE
+		var color = this.colors[node["@class"]];
+		if (!color) {
+			color = 'rgb(' + Math.round(Math.random() * 256) + ','
+					+ Math.round(Math.random() * 256) + ','
+					+ Math.round(Math.random() * 256) + ')';
+			this.colors[node["@class"]] = color;
+			if (this.config["legend"])
+				$('#' + this.config["legend"]).append(
+						"<tr><td style='width: 30px; height: 15px; background-color: "
+								+ color + ";'></td><td>" + node["@class"]
+								+ "</td></tr>");
+		}
+
+		if (!config)
+			config = {};
+
+		var totalEdges = node["out"] && node["out"].constructor == Array ? node["out"].length
+				: 0;
+		totalEdges += node["in"] && node["in"].constructor == Array ? node["in"].length
+				: 0;
+
+		var size = 0.5 + (totalEdges * 0.1);
+		if (size > 15)
+			size = 15;
+
+		if (!config)
+			config = {};
+
+		var localConfig = {
+			'label' : nodeId,
 			'x' : Math.random(),
 			'y' : Math.random(),
-			'size' : 0.5 + 4.5 * Math.random(),
-			'color' : 'rgb(' + Math.round(Math.random() * 256) + ','
-					+ Math.round(Math.random() * 256) + ','
-					+ Math.round(Math.random() * 256) + ')'
-		});
+			'size' : size,
+			'color' : color
+		};
+
+		for (cfg in config)
+			localConfig[cfg] = config[cfg];
+
+		this.sigInst.addNode(nodeId, localConfig);
 
 		for (f in node) {
 			var field = node[f];
@@ -340,6 +419,9 @@ function OGraph(targetId) {
 		this.sigInst.desactivateFishEye();
 	}
 	OGraph.prototype.reset = function() {
+		this.colors = {};
+		if (this.config["legend"])
+			$('#' + this.config["legend"]).text("");
 		this.sigInst.emptyGraph();
 	}
 

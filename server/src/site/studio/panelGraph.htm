@@ -23,61 +23,71 @@
 					<td valign="top">
 						<table style="width: 100%;">
 							<tr>
-								<td>Lazy load depth</td>
+								<td>@rid</td>
+								<td><input id="root-rid" type="text" class="input-small" /></td>
 							</tr>
 							<tr>
-								<td><input id="graph-load-depth" type="text" value="2" class="input-mini" /></td>
-							</tr>
-							<tr>
-								<td>
-									<button id="editReload" class="btn" style="width: 90px; text-align: center">
-										Reload <img border="0" alt="Reload record" src="images/refresh.png" align="top" />
-									</button>
-								</td>
-							</tr>
-							<tr>
-								<td>
-									<div id="graph-inner-details">&nbsp;</div>
-								</td>
-							</tr>
-							<tr>
-								<td>
-									<button id="editGraph" class="btn" style="width: 90px; text-align: center">
+								<td colspan="2">
+									<button id="editGraph" class="btn" style="width: 140px; text-align: center">
 										Edit <img border="0" alt="Edit record" src="images/set.png" align="top" />
 									</button>
 								</td>
 							</tr>
 							<tr>
-								<td>
+								<td colspan="2">
 									<div id="graph-inner-details">&nbsp;</div>
 								</td>
 							</tr>
 							<tr>
-								<td>
-									<button id="circularLayout" class="btn" style="width: 90px; text-align: center">
+								<td>Depth</td>
+								<td><input id="graph-load-depth" type="text" value="2" class="input-mini" style="width: 30px;" /></td>
+							</tr>
+							<tr>
+								<td colspan="2">
+									<button id="editReload" class="btn" style="width: 140px; text-align: center">
+										Reload <img border="0" alt="Reload record" src="images/refresh.png" align="top" />
+									</button>
+								</td>
+							</tr>
+							<tr>
+								<td colspan="2">
+									<div id="graph-inner-details">&nbsp;</div>
+								</td>
+							</tr>
+							<tr>
+								<td colspan="2"><label class="checkbox"> <input id="bpGraphModel" type="checkbox"> Blueprints Graph model
+								</label></td>
+							</tr>
+							<tr>
+								<td colspan="2"><label class="checkbox"> <input id="activateFishEye" type="checkbox" checked="checked"> <i
+										class="icon-eye-open"></i> Auto Zoom
+								</label></td>
+							</tr>
+							<tr>
+								<td colspan="2">
+									<div id="graph-inner-details">&nbsp;</div>
+								</td>
+							</tr>
+							<tr>
+								<td colspan="2">
+									<button id="circularLayout" class="btn" style="width: 140px; text-align: center">
 										Circular layout <i class="icon-share"></i>
 									</button>
 								</td>
 							</tr>
 							<tr>
-								<td>
-									<button id="randomLayout" class="btn" style="width: 90px; text-align: center">
+								<td colspan="2">
+									<button id="randomLayout" class="btn" style="width: 140px; text-align: center">
 										Random layout <i class="icon-align-center"></i>
 									</button>
 								</td>
 							</tr>
 							<tr>
-								<td>
-									<button id="activateFishEye" class="btn" style="width: 90px; text-align: center">
-										Auto Zoom <i class="icon-eye-open"></i>
-									</button>
-								</td>
-							</tr>
-							<tr>
-								<td>
-									<button id="deactivateFishEye" class="btn" style="width: 90px; text-align: center">
-										No Zoom <i class="icon-eye-close"></i>
-									</button>
+								<td colspan="2">
+									<div>
+										<b><br />Legend</b>
+									</div>
+									<table id="legend" style="width: 100%;"></table>
 								</td>
 							</tr>
 						</table>
@@ -90,14 +100,26 @@
 </table>
 
 <script>
+	function reload() {
+		g.reset();
+
+		var rid = $("#root-rid").val();
+		if (rid && rid.length > 0)
+			selectedObject = rid;
+		else
+			$("#root-rid").val(selectedObject);
+
+		g.drawGraph(selectedObject, $('#graph-load-depth').val(), $(
+				'#bpGraphModel').attr('checked'));
+	}
+
 	$("#editGraph").click(function() {
 		if (selectedObject != null)
 			displayDocument(selectedObject, orientServer);
 	});
 
 	$("#editReload").click(function() {
-		g.reset();
-		g.drawGraph(selectedObject, $('#graph-load-depth').val());
+		reload();
 	});
 
 	$("#circularLayout").click(function() {
@@ -107,12 +129,24 @@
 		g.randomLayout();
 	});
 	$("#activateFishEye").click(function() {
-		g.activateFishEye();
+		if ($("#activateFishEye").attr('checked') == 'checked')
+			g.activateFishEye();
+		else
+			g.deactivateFishEye();
 	});
-	$("#deactivateFishEye").click(function() {
-		g.deactivateFishEye();
+	$("#bpGraphModel").click(function() {
+		reload();
 	});
 
-	var g = new OGraph('graphPanel');
-	g.drawGraph(selectedObject, $('#graph-load-depth').val());
+	if (selectedObject) {
+		$("#root-rid").val(getRID(selectedObject));
+
+		var g = new OGraph('graphPanel', {
+			"legend" : "legend"
+		});
+
+		g.drawGraph(selectedObject, $('#graph-load-depth').val(), $(
+				'#bpGraphModel').attr('checked'));
+		g.activateFishEye();
+	}
 </script>

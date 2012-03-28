@@ -97,6 +97,19 @@ function generateClassSelect(id, selectedClass) {
 	return classes;
 }
 
+function getRID(value) {
+	if (value == null)
+		return null;
+
+	var rid = null;
+	if (value instanceof String && value.charAt(0) == '#')
+		rid = value;
+	else
+		rid = value["@rid"];
+
+	return rid;
+}
+
 $(document).ready(function() {
 	$(document).ajaxError(function(event, request, settings, err) {
 		$("#output").val("Error: " + request.responseText);
