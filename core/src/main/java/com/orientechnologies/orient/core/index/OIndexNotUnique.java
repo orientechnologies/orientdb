@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+
 /**
  * Index implementation that allows multiple values for the same key.
  * 
@@ -22,7 +24,10 @@ package com.orientechnologies.orient.core.index;
  * 
  */
 public class OIndexNotUnique extends OIndexMultiValues {
+    
+    public static final String TYPE_ID = OClass.INDEX_TYPE.NOTUNIQUE.toString();
+    
 	public OIndexNotUnique() {
-		super("NOTUNIQUE");
+		super(TYPE_ID);
 	}
 }

@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 
 /**
  * Dictionary index similar to unique index but does not check for updates, just executes changes. Last put always wins and override
@@ -25,8 +26,11 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  * 
  */
 public class OIndexDictionary extends OIndexOneValue {
+    
+    public static final String TYPE_ID = OClass.INDEX_TYPE.DICTIONARY.toString();
+    
 	public OIndexDictionary() {
-		super("DICTIONARY");
+		super(TYPE_ID);
 	}
 
 	public OIndexOneValue put(final Object iKey, final OIdentifiable iSingleValue) {

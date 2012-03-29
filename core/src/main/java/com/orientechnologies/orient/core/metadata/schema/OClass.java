@@ -21,7 +21,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.*;
 
 /**
  * Schema class
@@ -168,6 +168,21 @@ public interface OClass extends Comparable<OClass> {
 	 * @return Class index registered inside of given class ans associated with database index.
 	 */
 	public OIndex<?> createIndex(String iName, INDEX_TYPE iType, String... fields);
+    
+    /**
+	 * Creates database index that is based on passed in field names. Given index will be added into class instance and associated
+	 * with database index.
+	 * 
+	 * @param fields
+	 *          Field names from which index will be created.
+	 * @param iName
+	 *          Database index name
+	 * @param iType
+	 *          Index type.
+	 * 
+	 * @return Class index registered inside of given class ans associated with database index.
+	 */
+	public OIndex<?> createIndex(String iName, String iType, String... fields);
 
 	/**
 	 * Creates database index that is based on passed in field names. Given index will be added into class instance.
@@ -184,6 +199,22 @@ public interface OClass extends Comparable<OClass> {
 	 * @return Class index registered inside of given class ans associated with database index.
 	 */
 	public OIndex<?> createIndex(String iName, INDEX_TYPE iType, OProgressListener iProgressListener, String... fields);
+    
+    /**
+	 * Creates database index that is based on passed in field names. Given index will be added into class instance.
+	 * 
+	 * @param fields
+	 *          Field names from which index will be created.
+	 * @param iName
+	 *          Database index name.
+	 * @param iType
+	 *          Index type.
+	 * @param iProgressListener
+	 *          Progress listener.
+	 * 
+	 * @return Class index registered inside of given class ans associated with database index.
+	 */
+	public OIndex<?> createIndex(String iName, String iType, OProgressListener iProgressListener, String... fields);
 
 	/**
 	 * Returns list of indexes that contain passed in fields names as their first keys. Order of fields does not matter.

@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 
 /**
  * Index implementation that allows only one value for a key.
@@ -24,8 +25,11 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  * 
  */
 public class OIndexUnique extends OIndexOneValue {
+    
+    public static final String TYPE_ID = OClass.INDEX_TYPE.UNIQUE.toString();
+    
 	public OIndexUnique() {
-		super("UNIQUE");
+		super(TYPE_ID);
 	}
 
 	public OIndexOneValue put(final Object iKey, final OIdentifiable iSingleValue) {

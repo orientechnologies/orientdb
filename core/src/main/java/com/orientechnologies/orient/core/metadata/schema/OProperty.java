@@ -115,6 +115,17 @@ public interface OProperty extends Comparable<OProperty> {
 	 * @return see {@link OClass#createIndex(String, OClass.INDEX_TYPE, String...)}.
 	 */
 	public OIndex<?> createIndex(final OClass.INDEX_TYPE iType);
+    
+    /**
+	 * Creates an index on this property. Indexes speed up queries but slow down insert and update operations. For massive inserts we
+	 * suggest to remove the index, make the massive insert and recreate it.
+	 * 
+	 * 
+	 * @param iType
+	 * @return see {@link OClass#createIndex(String, OClass.INDEX_TYPE, String...)}.
+	 */
+	public OIndex<?> createIndex(final String iType);
+    
 
 	/**
 	 * Remove the index on property

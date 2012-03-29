@@ -52,6 +52,11 @@ public interface OIndex<T> {
 
 	public void unload();
 
+    /**
+     * Types of the keys that index can accept, if index contains composite key, 
+     * list of types of elements from which this index consist will be returned, 
+     * otherwise single element (key type obviously) will be returned.
+     */
 	public OType[] getKeyTypes();
 
 	public Iterator<Entry<Object, T>> iterator();
@@ -203,8 +208,17 @@ public interface OIndex<T> {
 
 	public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo);
 
+    /**
+     * @return number of entries in the index.
+     */
 	public long getSize();
 
+    /**
+     * For unique indexes it will throw exception if passed in key is contained in index.
+     * 
+     * @param iRecord
+     * @param iKey 
+     */
 	public void checkEntry(final OIdentifiable iRecord, final Object iKey);
 
 	public OIndex<T> lazySave();

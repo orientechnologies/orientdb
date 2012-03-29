@@ -109,7 +109,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	 * Creates an index on this property. Indexes speed up queries but slow down insert and update operations. For massive inserts we
 	 * suggest to remove the index, make the massive insert and recreate it.
 	 * 
-	 * 
 	 * @param iType
 	 *          One of types supported.
 	 *          <ul>
@@ -121,8 +120,21 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 	 * @see {@link OClass#createIndex(String, OClass.INDEX_TYPE, String...)} instead.
 	 */
 	public OIndex<?> createIndex(final OClass.INDEX_TYPE iType) {
+		return createIndex(iType.toString());
+	}
+    
+    /**
+	 * Creates an index on this property. Indexes speed up queries but slow down insert and update operations. For massive inserts we
+	 * suggest to remove the index, make the massive insert and recreate it.
+	 * 
+	 * @param iType
+	 * @return
+	 * @see {@link OClass#createIndex(String, OClass.INDEX_TYPE, String...)} instead.
+	 */
+	public OIndex<?> createIndex(final String iType) {
 		return owner.createIndex(getFullName(), iType, name);
 	}
+    
 
 	/**
 	 * Remove the index on property

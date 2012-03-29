@@ -27,10 +27,10 @@ public class OIndexFactory extends ODynamicFactory<String, Class<? extends OInde
 	 * Register default index implementation.
 	 */
 	protected OIndexFactory() {
-		register(OClass.INDEX_TYPE.UNIQUE.toString(), OIndexUnique.class);
-		register(OClass.INDEX_TYPE.NOTUNIQUE.toString(), OIndexNotUnique.class);
-		register(OClass.INDEX_TYPE.FULLTEXT.toString(), OIndexFullText.class);
-		register(OClass.INDEX_TYPE.DICTIONARY.toString(), OIndexDictionary.class);
+		register(OIndexUnique.TYPE_ID,      OIndexUnique.class);
+		register(OIndexNotUnique.TYPE_ID,   OIndexNotUnique.class);
+		register(OIndexFullText.TYPE_ID,    OIndexFullText.class);
+		register(OIndexDictionary.TYPE_ID,  OIndexDictionary.class);
 	}
 
 	@SuppressWarnings("unchecked")

@@ -805,19 +805,30 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	}
 
 	public OIndex<?> createIndex(final String iName, final INDEX_TYPE iType, final String... fields) {
+		return createIndex(iName, iType.name(), fields);
+	}
+    
+	public OIndex<?> createIndex(final String iName, final String iType, final String... fields) {
 		return createIndex(iName, iType, null, fields);
 	}
 
 	public OIndex<?> createIndex(final String iName, final INDEX_TYPE iType, final OProgressListener iProgressListener,
 			final String... fields) {
-		if (!(INDEX_TYPE.DICTIONARY.equals(iType) || INDEX_TYPE.FULLTEXT.equals(iType) || INDEX_TYPE.NOTUNIQUE.equals(iType) || INDEX_TYPE.UNIQUE
-				.equals(iType)))
+        return createIndex(iName, iType.name(), iProgressListener, fields);
+    }
+    
+	public OIndex<?> createIndex(final String iName, final String iType, final OProgressListener iProgressListener,
+			final String... fields) {
+		if (!(     INDEX_TYPE.DICTIONARY.toString().equals(iType) 
+                || INDEX_TYPE.FULLTEXT.toString().equals(iType) 
+                || INDEX_TYPE.NOTUNIQUE.toString().equals(iType) 
+                || INDEX_TYPE.UNIQUE.toString().equals(iType)))
 			throw new OIndexException("Index of this type (" + iType + ") cannot be used in class indexes.");
 
 		if (fields.length == 0)
 			throw new OIndexException("List of fields to index cannot be empty.");
 
-		if (fields.length > 1 && INDEX_TYPE.FULLTEXT.equals(iType))
+		if (fields.length > 1 && INDEX_TYPE.FULLTEXT.toString().equals(iType))
 			throw new OIndexException(INDEX_TYPE.FULLTEXT + " indexes cannot be used as composite ones.");
 
 		final Set<String> existingFieldNames = properties.keySet();
