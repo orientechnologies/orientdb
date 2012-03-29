@@ -42,7 +42,7 @@ public class OPeerNode {
 		manager = iManager;
 		leaderConnection = iConnection;
 
-		OLogManager.instance().info(this, "Cluster <%s> joined as peer node", iManager.getConfig().name);
+		OLogManager.instance().info(this, "CLUSTER <%s> joined as peer node", iManager.getConfig().name);
 
 		// FIRST TIME: SCHEDULE THE HEARTBEAT CHECKER
 		leaderCheckerTask = new OLeaderCheckerTask(this);

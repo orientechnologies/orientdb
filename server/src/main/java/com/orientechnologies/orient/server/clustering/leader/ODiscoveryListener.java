@@ -42,7 +42,7 @@ public class ODiscoveryListener extends OSoftThread {
 		manager = iManager;
 		binaryNetworkListener = iNetworkListener;
 
-		OLogManager.instance().info(this, "Cluster <%s>: listening for distributed nodes on IP multicast: %s:%d",
+		OLogManager.instance().info(this, "CLUSTER <%s>: listening for distributed nodes on IP multicast: %s:%d",
 				iManager.getConfig().name, iManager.getConfig().networkMulticastAddress, iManager.getConfig().networkMulticastPort);
 
 		dgram = new DatagramPacket(recvBuffer, recvBuffer.length);

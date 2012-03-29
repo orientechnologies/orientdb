@@ -27,7 +27,7 @@ public class ODistributedRemoteAsynchEventListener implements ORemoteServerEvent
 				manager.getReplicator().updateConfiguration(updateCfg);
 
 			} catch (Exception e) {
-				OLogManager.instance().error(this, "Cluster <%s>: error on updating leader's database list for peer %s", e,
+				OLogManager.instance().error(this, "CLUSTER <%s>: error on updating leader's database list for peer %s", e,
 						manager.getConfig().name, nodeId);
 			}
 

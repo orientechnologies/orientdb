@@ -57,7 +57,7 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 			throws IOException {
 		super(iNodeId.split(":")[0], Integer.parseInt(iNodeId.split(":")[1]));
 
-		OLogManager.instance().warn(this, "Cluster <%s>: connecting to node %s...", iReplicator.getManager().getConfig().name, iNodeId);
+		OLogManager.instance().warn(this, "REPL connecting to node %s...", iNodeId);
 
 		channel = new OChannelBinaryClient(networkAddress, networkPort, new OContextConfiguration(),
 				OClusterProtocol.CURRENT_PROTOCOL_VERSION);
@@ -79,7 +79,7 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 			endResponse();
 		}
 
-		OLogManager.instance().debug(this, "Cluster <%s>: node %s connected", iReplicator.getManager().getConfig().name, iNodeId);
+		OLogManager.instance().debug(this, "REPL <%s>: node %s connected", iReplicator.getManager().getConfig().name, iNodeId);
 
 		serviceThread = new OAsynchChannelServiceThread(new ODistributedRemoteAsynchEventListener(iReplicator.getManager(),
 				new ODistributedRemoteAsynchEventListener(iReplicator.getManager(), null, iNodeId), iNodeId), channel,
@@ -94,7 +94,7 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 
 		final long time = System.currentTimeMillis();
 
-		OLogManager.instance().info(this, "<-> DB %s: synchronization started. Storing delta of updates...", iDatabaseName);
+		OLogManager.instance().info(this, "REPL <%s> synchronization started. Storing delta of updates...", iDatabaseName);
 
 		try {
 			ODocument cfg = new ODocument().field("nodes", iDbCfg, OType.EMBEDDEDSET);
@@ -121,7 +121,7 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 						opLog.fromStream(network.readBytes());
 						ops++;
 
-						OLogManager.instance().info(this, "<< DB %s: (%d) received record %s", iDatabaseName, ops, opLog.record);
+						OLogManager.instance().info(this, "REPL <%s> (%d) received record %s", iDatabaseName, ops, opLog.record);
 
 						replicator.getOperationLog(nodeId, iDatabaseName).appendLog(opLog.serial, opLog.type,
 								(ORecordId) opLog.record.getIdentity());
@@ -129,19 +129,18 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 				}
 
 				if (OLogManager.instance().isInfoEnabled())
-					OLogManager.instance().info(this, "<-> DB %s: synchronization completed. Received %d operations from remote node (%dms)",
+					OLogManager.instance().info(this, "REPL <%s> synchronization completed. Received %d operations from remote node (%dms)",
 							iDatabaseName, ops, (System.currentTimeMillis() - time));
 
 			} finally {
 				endResponse();
 			}
-			
 
 		} catch (OException e) {
 			// PASS THROUGH
 			throw e;
 		} catch (Exception e) {
-			throw new OIOException("<-> DB " + iDatabaseName + ": error on synchronization", e);
+			throw new OIOException("REPL <" + iDatabaseName + "> error on synchronization", e);
 		}
 	}
 
@@ -162,8 +161,8 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 				break;
 			}
 
-			OLogManager.instance().warn(this, ">> DB %s: (%s mode) %s record %s...", databaseEntry.databaseName, iRequestType, operation,
-					iRecord.getIdentity());
+			OLogManager.instance().warn(this, "REPL <%s> (%s mode) %s record %s -> %s...", databaseEntry.databaseName, iRequestType,
+					operation, iRecord.getIdentity(), databaseEntry.serverId);
 		}
 
 		do {
@@ -215,7 +214,7 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 				// PASS THROUGH
 				throw e;
 			} catch (Exception e) {
-				throw new OIOException("<-> DB " + databaseEntry.databaseName + ": error on distribute record: " + iRecord.getIdentity(), e);
+				throw new OIOException("REPL <" + databaseEntry.databaseName + "> error on distribute record: " + iRecord.getIdentity(), e);
 
 			}
 		} while (true);

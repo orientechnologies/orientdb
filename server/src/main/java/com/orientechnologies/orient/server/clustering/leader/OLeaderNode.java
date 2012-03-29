@@ -53,7 +53,7 @@ public class OLeaderNode {
 
 	public OLeaderNode(final ODistributedServerManager iManager) {
 		this.manager = iManager;
-		OLogManager.instance().warn(this, "Cluster <%s>: current node is the new Leader Node", iManager.getConfig().name);
+		OLogManager.instance().warn(this, "CLUSTER <%s>: current node is the new Leader Node", iManager.getConfig().name);
 
 		for (String db : OServerMain.server().getAvailableStorageNames().keySet()) {
 			try {
@@ -138,7 +138,7 @@ public class OLeaderNode {
 			}
 		}
 
-		OLogManager.instance().error(this, "Cluster <%s>: cannot connect to distributed server node using addresses %s:%d and %s:%d",
+		OLogManager.instance().error(this, "CLUSTER <%s>: cannot connect to distributed server node using addresses %s:%d and %s:%d",
 				manager.getConfig().name, lastException, iServerAddresses[0], iServerPort, iServerAddresses[1], iServerPort);
 	}
 
@@ -270,7 +270,7 @@ public class OLeaderNode {
 			}
 		}
 
-		OLogManager.instance().warn(this, "Cluster <%s>: removed server node %s:%d", manager.getConfig().name, iNode.networkAddress,
+		OLogManager.instance().warn(this, "CLUSTER <%s>: removed server node %s:%d", manager.getConfig().name, iNode.networkAddress,
 				iNode.networkPort);
 	}
 }

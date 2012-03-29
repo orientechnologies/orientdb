@@ -42,7 +42,7 @@ public class OLeaderCheckerTask extends TimerTask {
 		if (time > heartBeatDelay) {
 			// NO LEADER HEARTBEAT RECEIVED FROM LONG TIME: BECAME THE LEADER!
 			OLogManager.instance().warn(this,
-					"Cluster <%s>: no heartbeat message has been received from the Leader node (last was %d ms ago)",
+					"CLUSTER <%s>: no heartbeat message has been received from the Leader node (last was %d ms ago)",
 					peer.getManager().getConfig().name, time);
 
 			cancel();

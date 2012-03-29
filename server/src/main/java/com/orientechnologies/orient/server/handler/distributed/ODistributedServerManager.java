@@ -256,7 +256,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 				OChannelBinary ch = (OChannelBinary) c.protocol.getChannel();
 
 				OLogManager.instance().info(this,
-						"Cluster <%s>: pushing distributed configuration for database '%s' to the connected client %s...", getConfig().name,
+						"CLUSTER <%s>: pushing distributed configuration for database '%s' to the connected client %s...", getConfig().name,
 						iDatabaseName, ch.socket.getRemoteSocketAddress());
 
 				ch.acquireExclusiveLock();

@@ -73,7 +73,7 @@ public class ODistributedNode {
 			if (oldDbInfo != null)
 				oldDbInfo.close();
 
-			OLogManager.instance().warn(this, "<-> DB %s: starting replication against distributed node %s:%d", iDatabase.databaseName,
+			OLogManager.instance().warn(this, "REPL <%s> starting replication against distributed node %s:%d", iDatabase.databaseName,
 					networkAddress, networkPort);
 
 			try {
@@ -135,7 +135,7 @@ public class ODistributedNode {
 			setStatus(STATUS.SYNCHRONIZING);
 
 			OLogManager.instance().info(this,
-					"<-> DB %s: sharing database exporting to the remote server %s via streaming across the network...", db.databaseName, id);
+					"REPL <%s> sharing database exporting to the remote server %s via streaming across the network...", db.databaseName, id);
 
 			db.connection = new ONodeConnection(replicator, id, replicator.getConflictResolver());
 			db.connection.copy(iDb, db.databaseName, db.userName, db.userPassword, iRemoteEngine);
@@ -149,7 +149,7 @@ public class ODistributedNode {
 			throw e;
 		}
 
-		OLogManager.instance().info(this, "<-> DB %s: sharing completed (%dms)", db.databaseName, System.currentTimeMillis() - time);
+		OLogManager.instance().info(this, "REPL <%s> sharing completed (%dms)", db.databaseName, System.currentTimeMillis() - time);
 
 		return db;
 	}

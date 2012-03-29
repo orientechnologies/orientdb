@@ -380,9 +380,9 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 		final ORecordInternal<?> newRecord = Orient.instance().getRecordFactoryManager().newInstance(recordType);
 		newRecord.fill(rid, version, buffer, true);
 
-		if (((OSchemaProxy) iDatabase.getMetadata().getSchema()).getIdentity().equals(rid))
-			// || ((OIndexManagerImpl) connection.database.getMetadata().getIndexManager()).getDocument().getIdentity().equals(rid)) {
-			throw new OSecurityAccessException("Cannot update internal record " + rid);
+//		if (((OSchemaProxy) iDatabase.getMetadata().getSchema()).getIdentity().equals(rid))
+//			// || ((OIndexManagerImpl) connection.database.getMetadata().getIndexManager()).getDocument().getIdentity().equals(rid)) {
+//			throw new OSecurityAccessException("Cannot update internal record " + rid);
 
 		final ORecordInternal<?> currentRecord;
 		if (newRecord instanceof ODocument) {

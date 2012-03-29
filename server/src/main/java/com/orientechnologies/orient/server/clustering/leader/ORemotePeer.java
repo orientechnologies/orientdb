@@ -64,7 +64,7 @@ public class ORemotePeer extends ORemoteNodeAbstract {
 
 		channel = new OChannelBinaryClient(networkAddress, networkPort, configuration, OClusterProtocol.CURRENT_PROTOCOL_VERSION);
 
-		OLogManager.instance().warn(this, "Cluster <%s>: received joining request from peer node %s:%d. Checking authorizations...",
+		OLogManager.instance().warn(this, "CLUSTER <%s>: received joining request from peer node %s:%d. Checking authorizations...",
 				iClusterName, networkAddress, networkPort);
 
 		// CONNECT TO THE SERVER
@@ -89,14 +89,14 @@ public class ORemotePeer extends ORemoteNodeAbstract {
 						.instance()
 						.warn(
 								this,
-								"Cluster <%s>: remote server node %s:%d has refused the connection because it's the new Leader. Switching to be a Peer Node...",
+								"CLUSTER <%s>: remote server node %s:%d has refused the connection because it's the new Leader. Switching to be a Peer Node...",
 								leader.getManager().getConfig().name, networkAddress, networkPort);
 				leader.getManager().becomePeer(null);
 				disconnect();
 				return false;
 			}
 
-			OLogManager.instance().info(this, "Cluster <%s>: joined peer node %s:%d", iClusterName, networkAddress, networkPort);
+			OLogManager.instance().info(this, "CLUSTER <%s>: joined peer node %s:%d", iClusterName, networkAddress, networkPort);
 
 			// READ PEER DATABASES
 			cfg = new ODocument().fromStream(channel.readBytes());

@@ -164,8 +164,13 @@ public class OReplicator {
 			for (ODistributedNode node : nodes.values()) {
 				if (node.getStatus() == ODistributedNode.STATUS.ONLINE) {
 					final ODistributedDatabaseInfo dbEntry = node.getDatabase(dbName);
-					if (dbEntry != null)
-						node.sendRequest(opId, iTransactionEntry, dbEntry.synchType);
+					if (dbEntry != null) {
+						if (dbEntry.status != STATUS_TYPE.ONLINE)
+							OLogManager.instance().info(this, "REPL <%s> status %s, the change is ot propagated", dbEntry.databaseName,
+									dbEntry.status);
+						else
+							node.sendRequest(opId, iTransactionEntry, dbEntry.synchType);
+					}
 				}
 			}
 		}

@@ -98,7 +98,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			serverLogin(userName, channel.readString(), "connect");
 
 			if (OLogManager.instance().isDebugEnabled())
-				OLogManager.instance().debug(this, "Cluster <%s>: remote node %s authenticated correctly with user '%s'",
+				OLogManager.instance().debug(this, "CLUSTER <%s>: remote node %s authenticated correctly with user '%s'",
 						manager.getConfig().name, remoteNodeId, userName);
 
 			beginResponse();
@@ -195,7 +195,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			final ODocument cfg = new ODocument(channel.readBytes());
 
 			if (OLogManager.instance().isInfoEnabled())
-				OLogManager.instance().info(this, "<-> DB %s: received synchronization request from node %s...", dbName, remoteNodeId);
+				OLogManager.instance().info(this, "REPL <%s> received synchronization request from node %s...", dbName, remoteNodeId);
 
 			if (!databases.containsKey(dbName)) {
 				// OPEN THE DB FOR THE FIRST TIME
@@ -216,7 +216,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 					final String node = nodeCfg.field("node");
 					final long lastLog = (Long) nodeCfg.field("lastLog");
 
-					OLogManager.instance().info(this, "<-> DB %s: Reading operation logs from %s after %d", dbName, remoteNodeId, lastLog);
+					OLogManager.instance().info(this, "REPL <%s> reading operation logs from %s after %d", dbName, remoteNodeId, lastLog);
 
 					// channel.
 					final OOperationLog opLog = manager.getReplicator().getOperationLog(node, dbName);
@@ -253,13 +253,13 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 				endResponse();
 			}
 
-			OLogManager.instance().info(this, "<-> DB %s: Synchronization completed from node %s, starting inverse replication...",
+			OLogManager.instance().info(this, "REPL <%s> synchronization completed from node %s, starting inverse replication...",
 					dbName, remoteNodeId);
 
 			// START REPLICATION BACK
 			manager.getReplicator().startReplication(dbName, remoteNodeId, SYNCH_TYPE.ASYNCH.toString());
 
-			OLogManager.instance().info(this, "<-> DB %s: Reverse synchronization completed to node %s", dbName, remoteNodeId);
+			OLogManager.instance().info(this, "REPL <%s> reverse synchronization completed to node %s", dbName, remoteNodeId);
 
 			break;
 		}
@@ -330,12 +330,12 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			final String engineType = channel.readString();
 
 			try {
-				OLogManager.instance().info(this, "<-> DB %s: importing database...", dbName);
+				OLogManager.instance().info(this, "REPL <%s> importing database...", dbName);
 
 				ODatabaseDocumentTx database = getDatabaseInstance(dbName, dbType, engineType);
 
 				if (database.exists()) {
-					OLogManager.instance().info(this, "<-> DB %s: deleting existent database...", database.getName());
+					OLogManager.instance().info(this, "REPL <%s> deleting existent database...", database.getName());
 					database.drop();
 				}
 
@@ -344,13 +344,13 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 				if (database.isClosed())
 					database.open(dbUser, dbPasswd);
 
-				OLogManager.instance().info(this, "<-> DB %s: reading database content via streaming from remote server node...", dbName);
+				OLogManager.instance().info(this, "REPL <%s> reading database content via streaming from remote server node...", dbName);
 
 				beginResponse();
 				try {
 					new ODatabaseImport(database, new OChannelBinaryInputStream(channel), this).importDatabase();
 
-					OLogManager.instance().info(this, "<-> DB %s: database imported correctly", dbName);
+					OLogManager.instance().info(this, "REPL <%s> database imported correctly", dbName);
 
 					sendOk(clientTxId);
 				} finally {
