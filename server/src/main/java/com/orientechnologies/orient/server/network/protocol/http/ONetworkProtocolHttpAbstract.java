@@ -335,8 +335,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 											+ ": the maximum allowed is " + requestMaxContentLength);
 
 					} else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_CONTENT_TYPE)) {
-						final String contentType = line.substring(OHttpUtils.HEADER_CONTENT_TYPE.length());
-						if (OStringSerializerHelper.startsWithIgnoreCase(contentType, OHttpUtils.CONTENT_TYPE_MULTIPART)) {
+						iRequest.contentType = line.substring(OHttpUtils.HEADER_CONTENT_TYPE.length());
+						if (OStringSerializerHelper.startsWithIgnoreCase(iRequest.contentType, OHttpUtils.CONTENT_TYPE_MULTIPART)) {
 							iRequest.isMultipart = true;
 							iRequest.boundary = new String(line.substring(OHttpUtils.HEADER_CONTENT_TYPE.length()
 									+ OHttpUtils.CONTENT_TYPE_MULTIPART.length() + 2 + OHttpUtils.BOUNDARY.length() + 1));
@@ -443,7 +443,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 					request.url = URLDecoder.decode(words[1], "UTF-8").trim();
 					request.httpVersion = words[2];
 					readAllContent(request);
-					if (request.content != null)
+
+					if (request.content != null && request.contentType.equals(OHttpUtils.CONTENT_TYPE_URLENCODED))
 						request.content = URLDecoder.decode(request.content, "UTF-8").trim();
 
 					if (OLogManager.instance().isDebugEnabled())

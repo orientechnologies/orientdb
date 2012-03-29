@@ -164,6 +164,8 @@ function ODatabase(databasePath) {
 			url : urlPrefix + 'connect/' + this.encodedDatabaseName
 					+ this.urlSuffix,
 			context : this,
+			contentType : "application/json; charset=utf-8",
+			processData : false,
 			async : false,
 			username : userName,
 			password : userPass,
@@ -200,6 +202,8 @@ function ODatabase(databasePath) {
 			url : urlPrefix + 'database/' + this.encodedDatabaseName + '/'
 					+ type + '/' + databaseType + this.urlSuffix,
 			context : this,
+			contentType : "application/json; charset=utf-8",
+			processData : false,
 			async : false,
 			username : userName,
 			password : userPass,
@@ -241,6 +245,8 @@ function ODatabase(databasePath) {
 					+ iQuery + iLimit + iFetchPlan + this.urlSuffix,
 			context : this,
 			async : false,
+			contentType : "application/json; charset=utf-8",
+			processData : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
 				this.handleResponse(msg);
@@ -275,6 +281,8 @@ function ODatabase(databasePath) {
 			url : urlPrefix + 'document/' + this.encodedDatabaseName + '/'
 					+ iRID + iFetchPlan + this.urlSuffix,
 			context : this,
+			contentType : "application/json; charset=utf-8",
+			processData : false,
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
@@ -306,8 +314,9 @@ function ODatabase(databasePath) {
 			type : methodType,
 			url : url + this.urlSuffix,
 			data : $.toJSON(obj),
-			processData : false,
 			context : this,
+			contentType : "application/json; charset=utf-8",
+			processData : false,
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
@@ -346,6 +355,7 @@ function ODatabase(databasePath) {
 			type : "DELETE",
 			url : urlPrefix + 'document/' + this.encodedDatabaseName + '/'
 					+ rid + this.urlSuffix,
+			contentType : "application/json; charset=utf-8",
 			processData : false,
 			context : this,
 			async : false,
@@ -387,6 +397,8 @@ function ODatabase(databasePath) {
 			url : req + this.urlSuffix,
 			context : this,
 			async : false,
+			contentType : "application/json; charset=utf-8",
+			processData : false,
 			data : content,
 			success : function(msg) {
 				this.setErrorMessage(null);
@@ -409,6 +421,8 @@ function ODatabase(databasePath) {
 					+ iIndexName + "/" + iKey + this.urlSuffix,
 			context : this,
 			async : false,
+			contentType : "application/json; charset=utf-8",
+			processData : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
 				this.handleResponse(msg);
@@ -455,6 +469,8 @@ function ODatabase(databasePath) {
 					+ iClassName + this.urlSuffix,
 			context : this,
 			async : false,
+			contentType : "application/json; charset=utf-8",
+			processData : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
 				this.handleResponse(msg);
@@ -477,6 +493,8 @@ function ODatabase(databasePath) {
 					+ iClassName + this.urlSuffix,
 			context : this,
 			async : false,
+			contentType : "application/json; charset=utf-8",
+			processData : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
 				this.handleResponse(msg);
@@ -509,6 +527,8 @@ function ODatabase(databasePath) {
 			url : urlPrefix + 'property/' + this.encodedDatabaseName + '/'
 					+ iClassName + '/' + iPropertyName + iPropertyType
 					+ iLinkedType + this.urlSuffix,
+			contentType : "application/json; charset=utf-8",
+			processData : false,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -539,6 +559,8 @@ function ODatabase(databasePath) {
 					+ iClassName + this.urlSuffix,
 			context : this,
 			data : jsonData,
+			contentType : "application/json; charset=utf-8",
+			processData : false,
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
@@ -561,6 +583,8 @@ function ODatabase(databasePath) {
 			url : urlPrefix + 'cluster/' + this.encodedDatabaseName + '/'
 					+ iClassName + this.urlSuffix,
 			context : this,
+			contentType : "application/json; charset=utf-8",
+			processData : false,
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
@@ -595,6 +619,8 @@ function ODatabase(databasePath) {
 			context : this,
 			async : false,
 			'dataType' : dataType,
+			contentType : "application/json; charset=utf-8",
+			processData : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
 				this.handleResponse(msg);
@@ -615,6 +641,8 @@ function ODatabase(databasePath) {
 			type : "GET",
 			url : urlPrefix + 'server' + this.urlSuffix,
 			context : this,
+			contentType : "application/json; charset=utf-8",
+			processData : false,
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
@@ -633,6 +661,8 @@ function ODatabase(databasePath) {
 			type : "GET",
 			url : this.databaseUrl + '/' + 'listDatabases' + this.urlSuffix,
 			context : this,
+			contentType : "application/json; charset=utf-8",
+			processData : false,
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
@@ -685,6 +715,8 @@ function ODatabase(databasePath) {
 				type : 'GET',
 				url : urlPrefix + 'disconnect' + this.urlSuffix,
 				dataType : "json",
+				contentType : "application/json; charset=utf-8",
+				processData : false,
 				async : false,
 				context : this,
 				success : function(msg) {
@@ -729,6 +761,8 @@ function ODatabase(databasePath) {
 					+ '/' + this.urlSuffix,
 			data : content,
 			context : this,
+			contentType : "application/json; charset=utf-8",
+			processData : false,
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);

@@ -34,6 +34,7 @@ public class OHttpRequest {
 	public String													sessionId;
 	public String													url;
 	public String													httpVersion;
+	public String													contentType;
 	public String													content;
 	public OHttpMultipartBaseInputStream	multipartStream;
 	public String													boundary;

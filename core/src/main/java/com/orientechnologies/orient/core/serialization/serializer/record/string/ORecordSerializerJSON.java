@@ -255,13 +255,15 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 					iFieldValue = item.trim();
 					iFieldValueAsString = iFieldValue.length() >= 2 ? iFieldValue.substring(1, iFieldValue.length() - 1) : iFieldValue;
 
-					collectionItem = getValue(iRecord, null, iFieldValue, iFieldValueAsString, iLinkedType, null, iFieldTypes);
+					if (iFieldValueAsString != null && iFieldValueAsString.length() > 0) {
+						collectionItem = getValue(iRecord, null, iFieldValue, iFieldValueAsString, iLinkedType, null, iFieldTypes);
 
-					if (collectionItem instanceof ODocument && iRecord instanceof ODocument)
-						// SET THE OWNER
-						((ODocument) collectionItem).addOwner(iRecord);
+						if (collectionItem instanceof ODocument && iRecord instanceof ODocument)
+							// SET THE OWNER
+							((ODocument) collectionItem).addOwner(iRecord);
 
-					((Collection<Object>) embeddedCollection).add(collectionItem);
+						((Collection<Object>) embeddedCollection).add(collectionItem);
+					}
 				}
 			}
 

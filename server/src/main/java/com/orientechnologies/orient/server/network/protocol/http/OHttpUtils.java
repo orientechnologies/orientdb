@@ -50,6 +50,7 @@ public class OHttpUtils {
 	public static final String	MULTIPART_CONTENT_TYPE							= "Content-Type";
 
 	public static final String	CONTENT_TYPE_MULTIPART							= "multipart/form-data";
+	public static final String	CONTENT_TYPE_URLENCODED							= "application/x-www-form-urlencoded";
 	public static final String	BOUNDARY														= "boundary";
 
 	public static final String	CONTENT_TEXT_PLAIN									= "text/plain";

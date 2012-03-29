@@ -157,6 +157,11 @@
 		$.ajax({
 			type : $('#rawMethod').val(),
 			url : req,
+			data : code,
+			contentType : "application/json; charset=utf-8",
+			processData : false,
+			cache : false,
+			dataType : 'text',
 			success : function(msg) {
 				rawEditor.setCode(msg);
 				rawEditor.reindent();
@@ -164,9 +169,6 @@
 				jQuery("#output").val(
 						"Raw command executed in " + stopTimer() + " sec.");
 			},
-			data : code,
-			cache : false,
-			dataType : 'text',
 			error : function(msg) {
 				rawEditor.setCode("");
 				jQuery("#output").val("Command response: " + msg);
