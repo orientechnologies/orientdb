@@ -54,18 +54,19 @@ public class OLogFormatter extends Formatter {
 		}
 		buffer.append(' ');
 		buffer.append(iLevel.getName().substring(0, 4));
-		if (iRequester != null) {
-			buffer.append(" [");
-			buffer.append(iRequester);
-			buffer.append(']');
-		}
-		buffer.append(' ');
+		buffer.append(" - ");
 
 		// FORMAT THE MESSAGE
 		try {
 			buffer.append(String.format(iMessage, iAdditionalArgs));
 		} catch (Exception e) {
 			buffer.append(iMessage);
+		}
+
+		if (iRequester != null) {
+			buffer.append(" [");
+			buffer.append(iRequester);
+			buffer.append(']');
 		}
 
 		return buffer.toString();
