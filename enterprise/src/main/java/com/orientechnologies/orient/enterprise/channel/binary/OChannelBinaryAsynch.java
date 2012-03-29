@@ -33,14 +33,14 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  * 
  */
 public class OChannelBinaryAsynch extends OChannelBinary {
-	private final ReentrantLock	lockRead							= new ReentrantLock();
-	private final ReentrantLock	lockWrite							= new ReentrantLock();
-	private boolean							channelRead						= false;
+	private final ReentrantLock	lockRead					= new ReentrantLock();
+	private final ReentrantLock	lockWrite					= new ReentrantLock();
+	private boolean							channelRead				= false;
 	private byte								currentStatus;
 	private int									currentSessionId;
-	private final int 					maxUnreadResponses;
+	private final int						maxUnreadResponses;
 
-	private static final int		MAX_LENGTH_DEBUG			= 100;
+	private static final int		MAX_LENGTH_DEBUG	= 100;
 
 	public OChannelBinaryAsynch(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
 		super(iSocket, iConfig);
@@ -82,6 +82,10 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 					currentStatus = readByte();
 					currentSessionId = readInt();
 
+					if (debug)
+						OLogManager.instance().debug(this, "%s - Read response: %d-%d", socket.getRemoteSocketAddress(), (int) currentStatus,
+								currentSessionId);
+
 				} catch (IOException e) {
 					// UNLOCK THE RESOURCE AND PROPAGATES THE EXCEPTION
 					lockRead.unlock();
@@ -93,6 +97,10 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 			if (currentSessionId == iRequesterId)
 				// IT'S FOR ME
 				break;
+
+			if (debug)
+				OLogManager.instance().debug(this, "%s - Session %d skip response, it is for %d", socket.getRemoteSocketAddress(),
+						iRequesterId, currentSessionId);
 
 			if (unreadResponse > maxUnreadResponses) {
 				final StringBuilder dirtyBuffer = new StringBuilder();
@@ -110,7 +118,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 
 				OLogManager.instance().error(
 						this,
-						"Received unread response for session=" + currentSessionId
+						"Received unread response from " + socket.getRemoteSocketAddress() + " for session=" + currentSessionId
 								+ ", probably corrupted data from the network connection. Cleared dirty data in the buffer (" + i + " bytes): ["
 								+ dirtyBuffer + (i > dirtyBuffer.length() ? "..." : "") + "]", OIOException.class);
 			}
@@ -130,6 +138,9 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 				}
 			}
 		} while (true);
+
+		if (debug)
+			OLogManager.instance().debug(this, "%s - Session %d handle response", socket.getRemoteSocketAddress(), iRequesterId);
 
 		handleStatus(currentStatus, currentSessionId);
 	}

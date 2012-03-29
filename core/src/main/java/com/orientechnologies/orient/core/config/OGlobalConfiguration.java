@@ -88,11 +88,10 @@ public enum OGlobalConfiguration {
 
 	DB_VALIDATION("db.validation", "Enables or disables validation of records", Boolean.class, true),
 
-	//SETTINGS OF NON-TRANSACTIONAL MODE
+	// SETTINGS OF NON-TRANSACTIONAL MODE
 	NON_TX_RECORD_UPDATE_SYNCH("nonTX.recordUpdate.synch",
-					"Executes a synch against the file-system at every record operation. This slows down records updates " +
-									"but guarantee reliability on unreliable drives",
-					Boolean.class, Boolean.FALSE),
+			"Executes a synch against the file-system at every record operation. This slows down records updates "
+					+ "but guarantee reliability on unreliable drives", Boolean.class, Boolean.FALSE),
 
 	// TRANSACTIONS
 	TX_USE_LOG("tx.useLog", "Transactions use log file to store temporary data to be rolled back in case of crash", Boolean.class,
@@ -228,11 +227,11 @@ public enum OGlobalConfiguration {
 			"Maximum time (in ms) to wait for the answer from DNS about the TXT record for load balancing", Integer.class, 2000),
 
 	NETWORK_BINARY_MAX_CONTENT_LENGTH("network.binary.maxLength", "TCP/IP max content length in bytes of BINARY requests",
-			Integer.class, 100000),
+			Integer.class, 32736),
 
 	NETWORK_BINARY_READ_RESPONSE_MAX_TIME("network.binary.readResponse.maxTime",
 			"Maximum time (in seconds) to wait until response will be read. Otherwise response will be dropped from chanel",
-			Integer.class, 30),
+			Integer.class, 10),
 
 	NETWORK_BINARY_DEBUG("network.binary.debug", "Debug mode: print all data incoming on the binary channel", Boolean.class, false),
 

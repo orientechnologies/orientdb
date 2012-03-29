@@ -207,13 +207,19 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			beginResponse();
 			try {
 				sendOk(clientTxId);
+				OLogManager.instance().info(this, "------------------------------------------------------------------");
 
 				final ORecordOperation op = new ORecordOperation();
 
 				// SYNCHRONIZE ALL THE NODES
 				Collection<ODocument> nodes = cfg.field("nodes");
+
+				// SEND TOTAL OF NODES
+				channel.writeInt(nodes.size());
+
 				for (ODocument nodeCfg : nodes) {
 					final String node = nodeCfg.field("node");
+					channel.writeString(node);
 					final long lastLog = (Long) nodeCfg.field("lastLog");
 
 					OLogManager.instance().info(this, "REPL <%s> reading operation logs from %s after %d", dbName, remoteNodeId, lastLog);
@@ -223,17 +229,15 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 
 					if (opLog != null) {
 						// SEND NODE LOGS
-						channel.writeByte((byte) 1);
-						channel.writeString(node);
 
 						// SEND LOG DELTA
 						int position = opLog.findOperationId(lastLog);
 						int sent = 0;
 
-						sendOk(clientTxId);
+						// SEND TOTAL OF LOG ENTRIES
+						channel.writeInt(position);
 
 						for (int i = position - 1; i >= 0; --i) {
-							channel.writeByte((byte) 1);
 							opLog.getEntry(i, op);
 
 							channel.writeBytes(op.toStream());
@@ -242,13 +246,9 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 							OLogManager.instance().info(this, ">> %s: (%d) operation %d with RID %s", dbName, sent, op.serial,
 									op.record.getIdentity());
 						}
-
-						// END OF OPERATIONS PER NODE
-						channel.writeByte((byte) 0);
-					}
+					} else
+						channel.writeInt(0);
 				}
-				// END OF NODES
-				channel.writeByte((byte) 0);
 			} finally {
 				endResponse();
 			}

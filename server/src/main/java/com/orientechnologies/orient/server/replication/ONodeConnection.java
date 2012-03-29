@@ -110,15 +110,24 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 				endRequest();
 			}
 
+			OLogManager.instance().info(this, "------------------------------------------------------------------");
+
 			beginResponse();
 			try {
 				int ops = 0;
 				final ORecordOperation opLog = new ORecordOperation();
-				while (network.readByte() == 1) {
+				final int nodes = network.readInt();
+				for (int n = 0; n < nodes; ++n) {
 					final String nodeId = network.readString();
 
-					while (network.readByte() == 1) {
-						opLog.fromStream(network.readBytes());
+					final int logEntries = network.readInt();
+
+					for (int l = 0; l < logEntries; ++l) {
+						final byte[] buffer = network.readBytes();
+						if (buffer == null)
+							break;
+
+						opLog.fromStream(buffer);
 						ops++;
 
 						OLogManager.instance().info(this, "REPL <%s> (%d) received record %s", iDatabaseName, ops, opLog.record);

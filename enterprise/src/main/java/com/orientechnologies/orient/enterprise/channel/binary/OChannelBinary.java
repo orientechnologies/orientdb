@@ -44,7 +44,7 @@ public abstract class OChannelBinary extends OChannel {
 	public DataInputStream	in;
 	public DataOutputStream	out;
 	private final int				maxChunkSize;
-	private boolean					debug;
+	protected final boolean	debug;
 	private final byte[]		buffer;
 
 	public OChannelBinary(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
@@ -105,19 +105,27 @@ public abstract class OChannelBinary extends OChannel {
 	public String readString() throws IOException {
 		if (debug) {
 			OLogManager.instance().debug(this, "%s - Reading string (4+N bytes)...", socket.getRemoteSocketAddress());
-			byte[] buffer = readBytes();
-			if (buffer == null)
+			final int len = in.readInt();
+			if (len < 0)
 				return null;
-			String value = new String(buffer);
+
+			// REUSE STATIC BUFFER?
+			final byte[] tmp = new byte[len];
+			in.readFully(tmp);
+
+			final String value = new String(tmp);
 			OLogManager.instance().debug(this, "%s - Read string: %s", socket.getRemoteSocketAddress(), value);
 			return value;
 		}
 
-		final byte[] buffer = readBytes();
-		if (buffer == null)
+		final int len = in.readInt();
+		if (len < 0)
 			return null;
 
-		return new String(buffer);
+		final byte[] tmp = new byte[len];
+		in.readFully(tmp);
+
+		return new String(tmp);
 	}
 
 	public byte[] readBytes() throws IOException {
@@ -136,6 +144,7 @@ public abstract class OChannelBinary extends OChannel {
 		if (debug)
 			OLogManager.instance().debug(this, "%s - Reading %d bytes...", socket.getRemoteSocketAddress(), len);
 
+		// REUSE STATIC BUFFER?
 		final byte[] tmp = new byte[len];
 		in.readFully(tmp);
 
@@ -234,8 +243,11 @@ public abstract class OChannelBinary extends OChannel {
 
 		if (iContent == null)
 			out.writeInt(-1);
-		else
-			writeBytes(iContent.getBytes());
+		else {
+			final byte[] buffer = iContent.getBytes();
+			out.writeInt(buffer.length);
+			out.write(buffer, 0, buffer.length);
+		}
 
 		return this;
 	}

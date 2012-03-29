@@ -37,7 +37,7 @@ public class OAsynchChannelServiceThread extends OSoftThread {
 	public OAsynchChannelServiceThread(final ORemoteServerEventListener iRemoteServerEventListener,
 			final OChannelBinaryClient iFirstChannel, final String iThreadName) {
 		super(Orient.getThreadGroup(), iThreadName);
-		sessionId = sessionIdSerial.decrementAndGet();
+		sessionId = sessionIdSerial.getAndIncrement();
 		remoteServerEventListener = iRemoteServerEventListener;
 		network = iFirstChannel;
 		start();
