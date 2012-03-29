@@ -17,14 +17,12 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.util.List;
 
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -33,9 +31,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 public class ConcurrentQueriesTest {
 	private final static int	THREADS	= 10;
 	protected String					url;
-	private boolean						level1CacheEnabled;
-	private boolean						level2CacheEnabled;
-	private boolean						mvccEnabled;
 
 	static class CommandExecutor implements Runnable {
 
@@ -56,7 +51,7 @@ public class ConcurrentQueriesTest {
 						while (true) {
 							try {
 								List<ODocument> result = db.command(new OCommandSQL("select from Concurrent")).execute();
-								System.out.println("Thread " + threadName + " result = " + result.size());
+								System.out.println("Thread " + threadName + ", step " + i + ", result = " + result.size());
 								break;
 							} catch (ONeedRetryException e) {
 								// e.printStackTrace();
@@ -97,7 +92,7 @@ public class ConcurrentQueriesTest {
 		Thread[] threads = new Thread[THREADS];
 		System.out.println("Spanning " + THREADS + " threads...");
 		for (int i = 0; i < THREADS; ++i) {
-			threads[i] = new Thread(new CommandExecutor(url, "thread1"), "ConcurrentTest1");
+			threads[i] = new Thread(new CommandExecutor(url, "thread" + i), "ConcurrentTest1");
 		}
 
 		System.out.println("Starting " + THREADS + " threads...");
