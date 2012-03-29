@@ -65,25 +65,8 @@ public class ORecordOperation implements OSerializableStream {
 
 	@Override
 	public String toString() {
-		final StringBuilder builder = new StringBuilder();
-		builder.append("ORecordOperation [record=").append(record).append(", type=");
-
-		switch (type) {
-		case CREATED:
-			builder.append("CREATE");
-			break;
-		case UPDATED:
-			builder.append("UPDATE");
-			break;
-		case DELETED:
-			builder.append("DELETE");
-			break;
-		case LOADED:
-			builder.append("LOADED");
-			break;
-		}
-		builder.append("]");
-		return builder.toString();
+		return new StringBuilder().append("ORecordOperation [record=").append(record).append(", type=").append(getName(type))
+				.append("]").toString();
 	}
 
 	public ORecordInternal<?> getRecord() {
@@ -132,5 +115,21 @@ public class ORecordOperation implements OSerializableStream {
 		} catch (Exception e) {
 			throw new OSerializationException("Cannot deserialize record operation", e);
 		}
+	}
+
+	public static String getName(final int type) {
+		String operation = "?";
+		switch (type) {
+		case ORecordOperation.CREATED:
+			operation = "CREATE";
+			break;
+		case ORecordOperation.UPDATED:
+			operation = "UPDATE";
+			break;
+		case ORecordOperation.DELETED:
+			operation = "DELETE";
+			break;
+		}
+		return operation;
 	}
 }

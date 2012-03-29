@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -379,9 +380,9 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 		final ORecordInternal<?> newRecord = Orient.instance().getRecordFactoryManager().newInstance(recordType);
 		newRecord.fill(rid, version, buffer, true);
 
-//		if (((OSchemaProxy) iDatabase.getMetadata().getSchema()).getIdentity().equals(rid))
-//			// || ((OIndexManagerImpl) connection.database.getMetadata().getIndexManager()).getDocument().getIdentity().equals(rid)) {
-//			throw new OSecurityAccessException("Cannot update internal record " + rid);
+		if (((OSchemaProxy) iDatabase.getMetadata().getSchema()).getIdentity().equals(rid))
+			// || ((OIndexManagerImpl) connection.database.getMetadata().getIndexManager()).getDocument().getIdentity().equals(rid)) {
+			throw new OSecurityAccessException("Cannot update internal record " + rid);
 
 		final ORecordInternal<?> currentRecord;
 		if (newRecord instanceof ODocument) {

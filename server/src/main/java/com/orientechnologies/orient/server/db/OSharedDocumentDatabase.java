@@ -31,7 +31,7 @@ public class OSharedDocumentDatabase {
 	}
 
 	public static void release(final ODatabaseDocumentTx iDatabase) {
-		ODatabaseDocumentPool.global().release(iDatabase);
+		iDatabase.close();
 	}
 
 	public static Map<String, OResourcePool<String, ODatabaseDocumentTx>> getDatabasePools() {

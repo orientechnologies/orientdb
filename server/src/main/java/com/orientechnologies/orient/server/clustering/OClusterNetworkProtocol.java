@@ -45,6 +45,7 @@ import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.SYNCH_TYPE;
 import com.orientechnologies.orient.server.replication.ODistributedNode;
 import com.orientechnologies.orient.server.replication.OOperationLog;
+import com.orientechnologies.orient.server.replication.conflict.OReplicationConflictException;
 
 /**
  * Extends binary protocol to include cluster commands.
@@ -88,8 +89,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			remoteNodeId = channel.readString();
 
 			if (OLogManager.instance().isDebugEnabled())
-				OLogManager.instance().debug(this, "Cluster <%s>: remote node %s connected, authenticating it...",
-						manager.getConfig().name, remoteNodeId);
+				OLogManager.instance().debug(this, "REPL NODE <%s> connected, authenticating it...", remoteNodeId);
 
 			setName("OrientDB <- Node/" + remoteNodeId);
 
@@ -98,8 +98,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			serverLogin(userName, channel.readString(), "connect");
 
 			if (OLogManager.instance().isDebugEnabled())
-				OLogManager.instance().debug(this, "CLUSTER <%s>: remote node %s authenticated correctly with user '%s'",
-						manager.getConfig().name, remoteNodeId, userName);
+				OLogManager.instance().debug(this, "REPL NODE <%s> authenticated correctly with user '%s'", remoteNodeId, userName);
 
 			beginResponse();
 			try {
@@ -195,7 +194,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			final ODocument cfg = new ODocument(channel.readBytes());
 
 			if (OLogManager.instance().isInfoEnabled())
-				OLogManager.instance().info(this, "REPL <%s> received synchronization request from node %s...", dbName, remoteNodeId);
+				OLogManager.instance().info(this, "REPL DB <-(%s) received synchronization request from node %s...", dbName, remoteNodeId);
 
 			if (!databases.containsKey(dbName)) {
 				// OPEN THE DB FOR THE FIRST TIME
@@ -207,7 +206,6 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			beginResponse();
 			try {
 				sendOk(clientTxId);
-				OLogManager.instance().info(this, "------------------------------------------------------------------");
 
 				final ORecordOperation op = new ORecordOperation();
 
@@ -222,7 +220,8 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 					channel.writeString(node);
 					final long lastLog = (Long) nodeCfg.field("lastLog");
 
-					OLogManager.instance().info(this, "REPL <%s> reading operation logs from %s after %d", dbName, remoteNodeId, lastLog);
+					OLogManager.instance()
+							.info(this, "REPL DB <-(%s) reading operation logs from %s after %d", dbName, remoteNodeId, lastLog);
 
 					// channel.
 					final OOperationLog opLog = manager.getReplicator().getOperationLog(node, dbName);
@@ -243,7 +242,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 							channel.writeBytes(op.toStream());
 							sent++;
 
-							OLogManager.instance().info(this, ">> %s: (%d) operation %d with RID %s", dbName, sent, op.serial,
+							OLogManager.instance().info(this, "REPL DB <-(%s) #%d operation %d with RID %s", dbName, sent, op.serial,
 									op.record.getIdentity());
 						}
 					} else
@@ -253,13 +252,13 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 				endResponse();
 			}
 
-			OLogManager.instance().info(this, "REPL <%s> synchronization completed from node %s, starting inverse replication...",
+			OLogManager.instance().info(this, "REPL DB (%s)-> synchronization completed from node %s, starting inverse replication...",
 					dbName, remoteNodeId);
 
 			// START REPLICATION BACK
 			manager.getReplicator().startReplication(dbName, remoteNodeId, SYNCH_TYPE.ASYNCH.toString());
 
-			OLogManager.instance().info(this, "REPL <%s> reverse synchronization completed to node %s", dbName, remoteNodeId);
+			OLogManager.instance().info(this, "REPL DB <-(%s) reverse synchronization completed to node %s", dbName, remoteNodeId);
 
 			break;
 		}
@@ -276,6 +275,9 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			final int version = channel.readInt();
 			final byte recordType = channel.readByte();
 
+			OLogManager.instance().info(this, "REPL DB <-(%s) %s record %s from %s...", dbName, ORecordOperation.getName(operationType),
+					rid, remoteNodeId);
+
 			final long result;
 
 			ODatabaseRecord database = databases.get(dbName);
@@ -286,7 +288,12 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 
 				switch (operationType) {
 				case ORecordOperation.CREATED:
+					long origClusterPosition = rid.clusterPosition;
+					rid.clusterPosition = -1;
 					result = createRecord(database, rid, buffer, recordType);
+					if (result != origClusterPosition)
+						throw new OReplicationConflictException("Record created has RID different by the original: original " + rid.clusterId
+								+ ":" + origClusterPosition + ", local " + rid.clusterId + ":" + result);
 					break;
 
 				case ORecordOperation.UPDATED:

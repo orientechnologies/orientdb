@@ -57,7 +57,7 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 			throws IOException {
 		super(iNodeId.split(":")[0], Integer.parseInt(iNodeId.split(":")[1]));
 
-		OLogManager.instance().warn(this, "REPL connecting to node %s...", iNodeId);
+		OLogManager.instance().warn(this, "REPL NODE (%s)-> connecting...", iNodeId);
 
 		channel = new OChannelBinaryClient(networkAddress, networkPort, new OContextConfiguration(),
 				OClusterProtocol.CURRENT_PROTOCOL_VERSION);
@@ -79,7 +79,7 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 			endResponse();
 		}
 
-		OLogManager.instance().debug(this, "REPL <%s>: node %s connected", iReplicator.getManager().getConfig().name, iNodeId);
+		OLogManager.instance().debug(this, "REPL NODE <-(%s) connected", iNodeId);
 
 		serviceThread = new OAsynchChannelServiceThread(new ODistributedRemoteAsynchEventListener(iReplicator.getManager(),
 				new ODistributedRemoteAsynchEventListener(iReplicator.getManager(), null, iNodeId), iNodeId), channel,
@@ -94,7 +94,7 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 
 		final long time = System.currentTimeMillis();
 
-		OLogManager.instance().info(this, "REPL <%s> synchronization started. Storing delta of updates...", iDatabaseName);
+		OLogManager.instance().info(this, "REPL DB <-(%s) synchronization started. Storing delta of updates...", iDatabaseName);
 
 		try {
 			ODocument cfg = new ODocument().field("nodes", iDbCfg, OType.EMBEDDEDSET);
@@ -109,8 +109,6 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 			} finally {
 				endRequest();
 			}
-
-			OLogManager.instance().info(this, "------------------------------------------------------------------");
 
 			beginResponse();
 			try {
@@ -130,7 +128,7 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 						opLog.fromStream(buffer);
 						ops++;
 
-						OLogManager.instance().info(this, "REPL <%s> (%d) received record %s", iDatabaseName, ops, opLog.record);
+						OLogManager.instance().info(this, "REPL DB <-(%s) (%d) received record %s", iDatabaseName, ops, opLog.record);
 
 						replicator.getOperationLog(nodeId, iDatabaseName).appendLog(opLog.serial, opLog.type,
 								(ORecordId) opLog.record.getIdentity());
@@ -138,8 +136,9 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 				}
 
 				if (OLogManager.instance().isInfoEnabled())
-					OLogManager.instance().info(this, "REPL <%s> synchronization completed. Received %d operations from remote node (%dms)",
-							iDatabaseName, ops, (System.currentTimeMillis() - time));
+					OLogManager.instance().info(this,
+							"REPL DB <-(%s) synchronization completed. Received %d operations from remote node (%dms)", iDatabaseName, ops,
+							(System.currentTimeMillis() - time));
 
 			} finally {
 				endResponse();
@@ -149,30 +148,16 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 			// PASS THROUGH
 			throw e;
 		} catch (Exception e) {
-			throw new OIOException("REPL <" + iDatabaseName + "> error on synchronization", e);
+			throw new OIOException("REPL DB (" + iDatabaseName + ") error on synchronization", e);
 		}
 	}
 
 	public void distributeChange(final ODistributedDatabaseInfo databaseEntry, final ORecordOperation iRequest,
 			final SYNCH_TYPE iRequestType, final ORecordInternal<?> iRecord) {
 
-		if (OLogManager.instance().isWarnEnabled()) {
-			String operation = "?";
-			switch (iRequest.type) {
-			case ORecordOperation.CREATED:
-				operation = "CREATE";
-				break;
-			case ORecordOperation.UPDATED:
-				operation = "UPDATE";
-				break;
-			case ORecordOperation.DELETED:
-				operation = "DELETE";
-				break;
-			}
-
-			OLogManager.instance().warn(this, "REPL <%s> (%s mode) %s record %s -> %s...", databaseEntry.databaseName, iRequestType,
-					operation, iRecord.getIdentity(), databaseEntry.serverId);
-		}
+		if (OLogManager.instance().isInfoEnabled())
+			OLogManager.instance().info(this, "REPL DB (%s)-> (%s mode) %s record %s to %s...", databaseEntry.databaseName, iRequestType,
+					ORecordOperation.getName(iRequest.type), iRecord.getIdentity(), databaseEntry.serverId);
 
 		do {
 			try {

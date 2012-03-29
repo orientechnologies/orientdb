@@ -104,7 +104,7 @@ public class OOperationLog extends OSingleFileSegment {
 
 		acquireExclusiveLock();
 		try {
-			int offset = file.allocateSpace(file.getFilledUpTo() + RECORD_SIZE);
+			int offset = file.allocateSpace(RECORD_SIZE);
 
 			file.writeLong(offset, iSerial);
 			offset += OBinaryProtocol.SIZE_LONG;
@@ -147,7 +147,7 @@ public class OOperationLog extends OSingleFileSegment {
 		final int pos = iPosition * RECORD_SIZE;
 
 		iEntry.type = file.readByte(pos + OFFSET_OPERAT);
-		iEntry.record = new ORecordId(file.readShort(pos + OFFSET_OPERAT));
+		iEntry.record = new ORecordId(file.readShort(pos + OFFSET_RID), file.readLong(pos + OFFSET_RID + OBinaryProtocol.SIZE_SHORT));
 		return iEntry;
 	}
 

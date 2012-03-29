@@ -17,6 +17,7 @@ package com.orientechnologies.orient.server.replication;
 
 import java.io.IOException;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -26,6 +27,7 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.network.protocol.distributed.ODistributedRequesterThreadLocal;
 
 /**
@@ -58,15 +60,18 @@ public class OReplicatorRecordHook implements ORecordHook, ODatabaseLifecycleLis
 		try {
 			switch (iType) {
 			case AFTER_CREATE:
-				replicator.distributeRequest(new ORecordOperation((ORecordInternal<?>) iRecord, ORecordOperation.CREATED));
+				if (checkRecord(iRecord))
+					replicator.distributeRequest(new ORecordOperation((ORecordInternal<?>) iRecord, ORecordOperation.CREATED));
 				break;
 
 			case AFTER_UPDATE:
-				replicator.distributeRequest(new ORecordOperation((ORecordInternal<?>) iRecord, ORecordOperation.UPDATED));
+				if (checkRecord(iRecord))
+					replicator.distributeRequest(new ORecordOperation((ORecordInternal<?>) iRecord, ORecordOperation.UPDATED));
 				break;
 
 			case AFTER_DELETE:
-				replicator.distributeRequest(new ORecordOperation((ORecordInternal<?>) iRecord, ORecordOperation.DELETED));
+				if (checkRecord(iRecord))
+					replicator.distributeRequest(new ORecordOperation((ORecordInternal<?>) iRecord, ORecordOperation.DELETED));
 				break;
 			}
 		} catch (IOException e) {
@@ -89,5 +94,18 @@ public class OReplicatorRecordHook implements ORecordHook, ODatabaseLifecycleLis
 	@Override
 	public void onClose(final ODatabase iDatabase) {
 		((ODatabaseComplex<?>) iDatabase).unregisterHook(this);
+	}
+
+	protected boolean checkRecord(final ORecord<?> iRecord) {
+		final int clId = iRecord.getIdentity().getClusterId();
+
+		if (clId == iRecord.getDatabase().getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME)
+				|| clId == iRecord.getDatabase().getClusterIdByName(OStorage.CLUSTER_INDEX_NAME)) {
+			OLogManager.instance().warn(this,
+					"Changes to the %s.%s cluster can't be propagated to remote nodes. Assure to align the schema manually",
+					iRecord.getDatabase().getName(), OStorage.CLUSTER_INTERNAL_NAME);
+			return false;
+		}
+		return true;
 	}
 }

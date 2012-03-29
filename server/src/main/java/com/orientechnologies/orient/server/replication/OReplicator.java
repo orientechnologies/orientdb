@@ -69,6 +69,7 @@ public class OReplicator {
 	private Map<String, OOperationLog>					localLogs								= new HashMap<String, OOperationLog>();
 	private final Set<String>										ignoredClusters					= new HashSet<String>();
 	private final Set<String>										ignoredDocumentClasses	= new HashSet<String>();
+	private final Set<ORecordId>								ignoredRecords					= new HashSet<ORecordId>();
 	private final OReplicationConflictResolver	conflictResolver;
 
 	public OReplicator(final ODistributedServerManager iManager) throws IOException {
@@ -281,6 +282,18 @@ public class OReplicator {
 
 	public void removeIgnoreCluster(final String ignoredCluster) {
 		ignoredClusters.remove(ignoredCluster);
+	}
+
+	public boolean isIgnoredRecord(final ORecordId ignoredRecord) {
+		return ignoredRecords.contains(ignoredRecord);
+	}
+
+	public void addIgnoredRecord(final ORecordId ignoredRecord) {
+		ignoredRecords.add(ignoredRecord);
+	}
+
+	public void removeIgnoreRecord(final ORecordId ignoredRecord) {
+		ignoredRecords.remove(ignoredRecord);
 	}
 
 	public OReplicationConflictResolver getConflictResolver() {

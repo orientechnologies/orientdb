@@ -73,8 +73,8 @@ public class ODistributedNode {
 			if (oldDbInfo != null)
 				oldDbInfo.close();
 
-			OLogManager.instance().warn(this, "REPL <%s> starting replication against distributed node %s:%d", iDatabase.databaseName,
-					networkAddress, networkPort);
+			OLogManager.instance()
+					.warn(this, "REPL DB <%s> starting replication against distributed node %s", iDatabase.databaseName, id);
 
 			try {
 				databases.put(iDatabase.databaseName, iDatabase);
@@ -93,7 +93,7 @@ public class ODistributedNode {
 				iDatabase.setOffline();
 				iDatabase.close();
 				databases.remove(iDatabase.databaseName);
-				OLogManager.instance().warn(this, "<> DB %s: cannot find database on remote server. Removing it from shared list.", e,
+				OLogManager.instance().warn(this, "REPL DB %s: cannot find database on remote server. Removing it from shared list.", e,
 						iDatabase.databaseName);
 			}
 		}
@@ -160,7 +160,7 @@ public class ODistributedNode {
 	}
 
 	public String getName() {
-		return networkAddress + ":" + networkPort;
+		return id;
 	}
 
 	/**
@@ -191,7 +191,7 @@ public class ODistributedNode {
 		disconnect();
 
 		// ERROR
-		OLogManager.instance().warn(this, "<-> NODE %s:%d seems down, retrying to connect...", networkAddress, networkPort);
+		OLogManager.instance().warn(this, "REPL NODE <%s> seems down, retrying to connect...", id);
 
 		// RECONNECT ALL DATABASES
 		try {
@@ -200,7 +200,7 @@ public class ODistributedNode {
 			}
 		} catch (IOException e) {
 			// IO ERROR: THE NODE SEEMED ALWAYS MORE DOWN: START TO COLLECT DATA FOR IT WAITING FOR A FUTURE RE-CONNECTION
-			OLogManager.instance().warn(this, "<-> NODE %s:%d is down, remove it from replication", networkAddress, networkPort);
+			OLogManager.instance().warn(this, "REPL NODE <%s> is down, remove it from replication", id);
 		}
 
 		if (iRequestType == SYNCH_TYPE.SYNCH) {
@@ -220,7 +220,7 @@ public class ODistributedNode {
 	}
 
 	private void setStatus(final STATUS iStatus) {
-		OLogManager.instance().debug(this, "%s: Node changed status %s -> %s", id, status, iStatus);
+		OLogManager.instance().debug(this, "REPL NODE <%s> changed status %s -> %s", id, status, iStatus);
 		status = iStatus;
 	}
 }
