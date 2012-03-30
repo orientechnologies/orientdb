@@ -130,6 +130,7 @@ public class OOperationLog extends OSingleFileSegment {
 	public ORecordOperation getEntry(final int iPosition, final ORecordOperation iEntry) throws IOException {
 		final int pos = iPosition * RECORD_SIZE;
 
+		iEntry.serial = file.readLong(pos);
 		iEntry.type = file.readByte(pos + OFFSET_OPERAT);
 		iEntry.record = new ORecordId(file.readShort(pos + OFFSET_RID), file.readLong(pos + OFFSET_RID + OBinaryProtocol.SIZE_SHORT));
 		return iEntry;

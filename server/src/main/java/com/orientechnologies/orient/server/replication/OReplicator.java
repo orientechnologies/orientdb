@@ -108,14 +108,14 @@ public class OReplicator {
 			final Collection<ODocument> dbNodes = db.field("nodes");
 
 			for (ODocument node : dbNodes)
-				startReplication(dbName, (String) node.field("id"), node.field("mode").toString());
+				startReplication((String) node.field("id"), dbName, node.field("mode").toString());
 		}
 	}
 
-	public void startReplication(final String dbName, final String nodeId, final String mode) throws IOException {
+	public boolean connect(final String nodeId, final String dbName, final String mode) throws IOException {
 		if (manager.itsMe(nodeId))
 			// DON'T OPEN A CONNECTION TO MYSELF BUT START REPLICATION
-			return;
+			return false;
 
 		// GET THE NODE
 		final ODistributedNode dNode = getOrCreateDistributedNode(nodeId);
@@ -124,11 +124,25 @@ public class OReplicator {
 			db = dNode.createDatabaseEntry(dbName, SYNCH_TYPE.valueOf(mode.toUpperCase()), replicatorUser.name, replicatorUser.password);
 		else if (db.status == STATUS_TYPE.ONLINE)
 			// ALREADY CONNECTED
-			return;
+			return false;
+
+		if (db.connection == null)
+			db.connection = new ONodeConnection(this, nodeId, getConflictResolver());
 
 		if (!localLogs.containsKey(dbName))
 			// INITIALIZING OPERATION LOG
 			localLogs.put(dbName, new OOperationLog(manager.getId(), dbName));
+
+		return true;
+	}
+
+	public void startReplication(final String nodeId, final String dbName, final String mode) throws IOException {
+		if (!connect(nodeId, dbName, mode))
+			return;
+
+		// GET THE NODE
+		final ODistributedNode dNode = getOrCreateDistributedNode(nodeId);
+		ODistributedDatabaseInfo db = dNode.getDatabase(dbName);
 
 		dNode.startDatabaseReplication(db);
 	}
@@ -159,7 +173,8 @@ public class OReplicator {
 				// DB NOT REPLICATED: IGNORE IT
 				return;
 
-			final long opId = log.appendLocalLog(iTransactionEntry.type, (ORecordId) iTransactionEntry.getRecord().getIdentity());
+			iTransactionEntry.serial = log
+					.appendLocalLog(iTransactionEntry.type, (ORecordId) iTransactionEntry.getRecord().getIdentity());
 
 			// GET THE NODES INVOLVED IN THE UPDATE
 			for (ODistributedNode node : nodes.values()) {
@@ -170,7 +185,7 @@ public class OReplicator {
 							OLogManager.instance().info(this, "REPL <%s> status %s, the change is ot propagated", dbEntry.databaseName,
 									dbEntry.status);
 						else
-							node.sendRequest(opId, iTransactionEntry, dbEntry.synchType);
+							node.sendRequest(iTransactionEntry, dbEntry.synchType);
 					}
 				}
 			}

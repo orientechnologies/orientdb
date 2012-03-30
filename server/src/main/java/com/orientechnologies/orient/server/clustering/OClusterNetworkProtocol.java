@@ -198,81 +198,73 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			logger.setDatabase(dbName);
 			logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "received synchronization request");
 
-			if (!databases.containsKey(dbName)) {
-				// OPEN THE DB FOR THE FIRST TIME
-				final ODatabaseDocumentTx db = (ODatabaseDocumentTx) openDatabase(ODatabaseDocumentTx.TYPE, dbName, serverUser.name,
-						serverUser.password);
-				databases.put(dbName, db);
-			}
+			getOrOpenDatabase(dbName);
 
 			beginResponse();
 			try {
 				sendOk(clientTxId);
-
-				final ORecordOperation op = new ORecordOperation();
-
-				// SYNCHRONIZE ALL THE NODES
-				Collection<ODocument> nodes = cfg.field("nodes");
-
-				// SEND TOTAL OF NODES
-				channel.writeInt(nodes.size());
-
-				for (ODocument nodeCfg : nodes) {
-					final String node = nodeCfg.field("node");
-					channel.writeString(node);
-					final long lastLog = (Long) nodeCfg.field("lastLog");
-
-					logger
-							.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "reading operation for node %s logs after %d", node, lastLog);
-
-					// channel.
-					final OOperationLog opLog = manager.getReplicator().getOperationLog(node, dbName);
-
-					if (opLog != null) {
-						int sent = 0;
-
-						// SEND LOG DELTA
-						int position = opLog.findOperationId(lastLog);
-						// SEND TOTAL OF LOG ENTRIES
-						final int totalToSend = opLog.totalEntries();
-						channel.writeInt(totalToSend - position);
-
-						for (int i = position; i < totalToSend; ++i) {
-							opLog.getEntry(i, op);
-
-							try {
-								channel.writeBytes(op.toStream());
-								sent++;
-
-								logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "#%d operation %d with RID %s", sent, op.serial,
-										op.record.getIdentity());
-
-							} catch (OSerializationException e) {
-
-								logger.log(this, Level.SEVERE, TYPE.REPLICATION, DIRECTION.OUT,
-										"#%d cannot be transmitted, log entry %d, record %s: ", sent, op.serial, op.record.getIdentity(), e.getCause());
-								// TRANSMIT EMPTY RECORD TO CONTINUE WITHOUT ERRORS
-								channel.writeBytes(null);
-
-							} catch (RuntimeException e) {
-								logger.log(this, Level.SEVERE, TYPE.REPLICATION, DIRECTION.OUT,
-										"#%d cannot be transmitted, log entry %d, record %s", e, sent, op.serial, op.record.getIdentity());
-								throw e;
-							}
-						}
-					} else
-						channel.writeInt(0);
-				}
 			} finally {
 				endResponse();
 			}
 
-			logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "synchronization completed, starting inverse replication...");
+			logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "opening a connection back...");
+
+			manager.getReplicator().connect(remoteNodeId, dbName, SYNCH_TYPE.ASYNCH.toString());
+
+			// SEND ALL THE LOGS
+			final ODistributedNode replicationNode = manager.getReplicator().getNode(remoteNodeId);
+			final ORecordOperation op = new ORecordOperation();
+
+			// SYNCHRONIZE ALL THE NODES
+			Collection<ODocument> nodes = cfg.field("nodes");
+			int sent = 0;
+
+			for (ODocument nodeCfg : nodes) {
+				final String node = nodeCfg.field("node");
+				final long lastLog = (Long) nodeCfg.field("lastLog");
+
+				logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "reading operation for node %s logs after %d", node, lastLog);
+
+				// channel.
+				final OOperationLog opLog = manager.getReplicator().getOperationLog(node, dbName);
+
+				if (opLog != null) {
+
+					// SEND LOG DELTA
+					int position = opLog.findOperationId(lastLog);
+					// SEND TOTAL OF LOG ENTRIES
+					final int totalToSend = opLog.totalEntries();
+
+					for (int i = position; i < totalToSend; ++i) {
+						opLog.getEntry(i, op);
+
+						try {
+							replicationNode.sendRequest(op, SYNCH_TYPE.SYNCH);
+							sent++;
+
+							logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "#%d operation %d with RID %s", sent, op.serial,
+									op.record.getIdentity());
+
+						} catch (OSerializationException e) {
+
+							logger.log(this, Level.SEVERE, TYPE.REPLICATION, DIRECTION.OUT,
+									"#%d cannot be transmitted, log entry %d, record %s: ", sent, op.serial, op.record.getIdentity(), e.getCause());
+
+						} catch (RuntimeException e) {
+							logger.log(this, Level.SEVERE, TYPE.REPLICATION, DIRECTION.OUT, "#%d cannot be transmitted, log entry %d, record %s",
+									e, sent, op.serial, op.record.getIdentity());
+							throw e;
+						}
+					}
+				}
+			}
+
+			logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "starting inverse replication...");
 
 			// START REPLICATION BACK
-			manager.getReplicator().startReplication(dbName, remoteNodeId, SYNCH_TYPE.ASYNCH.toString());
+			manager.getReplicator().startReplication(remoteNodeId, dbName, SYNCH_TYPE.ASYNCH.toString());
 
-			logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "reverse synchronization completed");
+			logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "synchronization completed");
 
 			break;
 		}
@@ -294,7 +286,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 
 			final long result;
 
-			ODatabaseRecord database = databases.get(dbName);
+			final ODatabaseRecord database = getOrOpenDatabase(dbName);
 
 			// REPLICATION SOURCE: AVOID LOOP
 			ODistributedRequesterThreadLocal.INSTANCE.set(true);
@@ -395,6 +387,18 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 		}
 
 		return true;
+	}
+
+	protected ODatabaseRecord getOrOpenDatabase(final String dbName) {
+		ODatabaseRecord db = databases.get(dbName);
+
+		if (db == null) {
+			// OPEN THE DB FOR THE FIRST TIME
+			db = (ODatabaseDocumentTx) openDatabase(ODatabaseDocumentTx.TYPE, dbName, serverUser.name, serverUser.password);
+			databases.put(dbName, db);
+		}
+
+		return db;
 	}
 
 	private void beginResponse() {

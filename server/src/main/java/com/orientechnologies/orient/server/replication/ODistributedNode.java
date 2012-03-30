@@ -64,7 +64,10 @@ public class ODistributedNode {
 
 	protected ODistributedDatabaseInfo createDatabaseEntry(final String dbName, SYNCH_TYPE iSynchType, final String iUserName,
 			final String iUserPasswd) throws IOException {
-		return new ODistributedDatabaseInfo(id, dbName, iUserName, iUserPasswd, iSynchType, STATUS_TYPE.OFFLINE);
+		final ODistributedDatabaseInfo obj = new ODistributedDatabaseInfo(id, dbName, iUserName, iUserPasswd, iSynchType,
+				STATUS_TYPE.OFFLINE);
+		databases.put(dbName, obj);
+		return obj;
 	}
 
 	public void startDatabaseReplication(final ODistributedDatabaseInfo iDatabase) throws IOException {
@@ -104,8 +107,7 @@ public class ODistributedNode {
 		}
 	}
 
-	public void sendRequest(final long iOperationId, final ORecordOperation iRequest, final SYNCH_TYPE iRequestType)
-			throws IOException {
+	public void sendRequest(final ORecordOperation iRequest, final SYNCH_TYPE iRequestType) throws IOException {
 		final ODistributedDatabaseInfo databaseEntry = databases.get(iRequest.getRecord().getDatabase().getName());
 		if (databaseEntry == null)
 			return;

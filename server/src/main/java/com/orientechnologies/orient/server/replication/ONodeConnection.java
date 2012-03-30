@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -52,7 +51,6 @@ import com.orientechnologies.orient.server.replication.conflict.OReplicationConf
  */
 public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutputListener {
 
-	private final OReplicator										replicator;
 	private final OReplicationConflictResolver	conflictResolver;
 	protected final ExecutorService							asynchExecutor;
 
@@ -89,15 +87,11 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 				new ODistributedRemoteAsynchEventListener(iReplicator.getManager(), null, iNodeId), iNodeId), channel,
 				"OrientDB <- Asynch Node/" + iNodeId);
 
-		replicator = iReplicator;
 		conflictResolver = iConflictResolver;
 		asynchExecutor = Executors.newSingleThreadExecutor();
 	}
 
 	public void synchronize(final String iDatabaseName, final Set<ODocument> iDbCfg) {
-
-		final long time = System.currentTimeMillis();
-
 		logger.setDatabase(iDatabaseName);
 		logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "synchronization started. Storing delta of updates...");
 
@@ -117,32 +111,6 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 
 			beginResponse();
 			try {
-				int ops = 0;
-				final ORecordOperation opLog = new ORecordOperation();
-				final int nodes = network.readInt();
-				for (int n = 0; n < nodes; ++n) {
-					final String nodeId = network.readString();
-
-					final int logEntries = network.readInt();
-
-					for (int l = 0; l < logEntries; ++l) {
-						final byte[] buffer = network.readBytes();
-						if (buffer == null)
-							continue;
-
-						opLog.fromStream(buffer);
-						ops++;
-
-						logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "#%d received record %s", ops, opLog.record.getIdentity());
-
-						replicator.getOperationLog(nodeId, iDatabaseName).appendLog(opLog.serial, opLog.type,
-								(ORecordId) opLog.record.getIdentity());
-					}
-				}
-
-				logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN,
-						"synchronization completed. Received %d operations from remote node (%dms)", ops, (System.currentTimeMillis() - time));
-
 			} finally {
 				endResponse();
 			}
@@ -171,7 +139,7 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 				try {
 					network.writeString(databaseEntry.databaseName);
 					network.writeByte(iRequest.type);
-					network.writeLong(0); // OPERATION ID
+					network.writeLong(iRequest.serial); // OPERATION ID
 					network.writeRID(iRecord.getIdentity());
 					network.writeBytes(iRecord.toStream());
 					network.writeInt(iRecord.getVersion() - 1);
