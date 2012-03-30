@@ -574,9 +574,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 	protected void closeDatabase() throws IOException {
 		setDataCommandInfo("Close Database");
 
-		if (connection != null)
+		if (connection != null) {
+			if (connection.data.protocolVersion < 9)
+				// OLD CLIENTS WAIT FOR A OK
+				sendOk(clientTxId);
+
 			if (OClientConnectionManager.instance().disconnect(connection.id))
 				sendShutdown();
+		}
 	}
 
 	protected void configList() throws IOException {
