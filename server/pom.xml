@@ -47,7 +47,6 @@
 				<configuration>
 					<archive>
 						<manifest>
-							<manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
 							<mainClass>${jar.manifest.mainclass}</mainClass>
 						</manifest>
 					</archive>
