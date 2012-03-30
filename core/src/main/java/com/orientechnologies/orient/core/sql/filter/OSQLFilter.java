@@ -485,7 +485,7 @@ public class OSQLFilter extends OCommandToParse {
 				// BEGIN OF RID
 			} else if (c == '(') {
 				openBraces++;
-			} else if (c == ')') {
+			} else if (c == ')' && openBraces > 0) {
 				openBraces--;
 			} else if (c == OStringSerializerHelper.COLLECTION_BEGIN) {
 				openBraket++;
