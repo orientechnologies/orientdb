@@ -1,0 +1,76 @@
+Manifest-Version: 1.0
+Export-Package: com.orientechnologies.orient.console;uses:="com.orient
+ echnologies.orient.core.storage.impl.local,com.orientechnologies.orie
+ nt.enterprise.command,com.orientechnologies.orient.core.serialization
+ .serializer.record.string,com.orientechnologies.orient.core.tx,com.or
+ ientechnologies.orient.core.config,com.orientechnologies.orient.core,
+ com.orientechnologies.orient.core.sql,com.orientechnologies.common.io
+ ,com.orientechnologies.common.profiler,com.orientechnologies.common.e
+ xception,com.orientechnologies.common.console,com.orientechnologies.o
+ rient.core.db,com.orientechnologies.orient.core.iterator,com.orientec
+ hnologies.orient.core.index,com.orientechnologies.orient.core.metadat
+ a.schema,com.orientechnologies.orient.core.dictionary,com.orientechno
+ logies.orient.core.intent,com.orientechnologies.common.listener,com.o
+ rientechnologies.orient.client.remote,com.orientechnologies.orient.co
+ re.db.tool,com.orientechnologies.orient.core.command.script,com.orien
+ technologies.orient.core.record,com.orientechnologies.orient.core.exc
+ eption,com.orientechnologies.orient.core.query,com.orientechnologies.
+ orient.core.serialization.serializer.record,com.orientechnologies.ori
+ ent.core.db.document,com.orientechnologies.orient.core.cache,com.orie
+ ntechnologies.orient.core.storage,com.orientechnologies.orient.core.c
+ ommand,com.orientechnologies.orient.core.metadata,com.orientechnologi
+ es.orient.core.id,com.orientechnologies.orient.core.record.impl,com.o
+ rientechnologies.orient.core.db.record,com.orientechnologies.orient.c
+ ore.sql.query,com.orientechnologies.orient.core.storage.impl.memory,c
+ om.orientechnologies.common.console.annotation,com.orientechnologies.
+ orient.core.type"
+Implementation-Title: OrientDB Tools
+Built-By: Luca
+Tool: Bnd-1.15.0
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Implementation-Vendor: Orient Technologies
+Implementation-Vendor-Id: com.orientechnologies
+Specification-Title: OrientDB Tools
+Bundle-License: http://www.apache.org/licenses/LICENSE-2.0.txt
+Bundle-SymbolicName: com.orientechnologies.orientdb-tools
+Implementation-Version: 1.0-SNAPSHOT
+Class-Path: orientdb-client-1.0-SNAPSHOT.jar orientdb-enterprise-1.0-S
+ NAPSHOT.jar orientdb-core-1.0-SNAPSHOT.jar orient-commons-1.0-SNAPSHO
+ T.jar persistence-api-1.0.jar
+Specification-Vendor: Orient Technologies
+Bundle-Name: OrientDB Tools
+Created-By: Apache Maven Bundle Plugin
+Bundle-Vendor: Orient Technologies
+Bundle-Version: 1.0.0.SNAPSHOT
+Build-Jdk: 1.7.0_03
+Bnd-LastModified: 1332929415895
+Bundle-ManifestVersion: 2
+Bundle-Description: OrientDB NoSQL document graph dbms
+Bundle-DocURL: http://www.orientechnologies.com
+Import-Package: com.orientechnologies.common.console,com.orientechnolo
+ gies.common.console.annotation,com.orientechnologies.common.exception
+ ,com.orientechnologies.common.io,com.orientechnologies.common.listene
+ r,com.orientechnologies.common.profiler,com.orientechnologies.orient.
+ client.remote,com.orientechnologies.orient.core,com.orientechnologies
+ .orient.core.cache,com.orientechnologies.orient.core.command,com.orie
+ ntechnologies.orient.core.command.script,com.orientechnologies.orient
+ .core.config,com.orientechnologies.orient.core.db,com.orientechnologi
+ es.orient.core.db.document,com.orientechnologies.orient.core.db.recor
+ d,com.orientechnologies.orient.core.db.tool,com.orientechnologies.ori
+ ent.core.dictionary,com.orientechnologies.orient.core.exception,com.o
+ rientechnologies.orient.core.id,com.orientechnologies.orient.core.ind
+ ex,com.orientechnologies.orient.core.intent,com.orientechnologies.ori
+ ent.core.iterator,com.orientechnologies.orient.core.metadata,com.orie
+ ntechnologies.orient.core.metadata.schema,com.orientechnologies.orien
+ t.core.query,com.orientechnologies.orient.core.record,com.orientechno
+ logies.orient.core.record.impl,com.orientechnologies.orient.core.seri
+ alization.serializer.record,com.orientechnologies.orient.core.seriali
+ zation.serializer.record.string,com.orientechnologies.orient.core.sql
+ ,com.orientechnologies.orient.core.sql.query,com.orientechnologies.or
+ ient.core.storage,com.orientechnologies.orient.core.storage.impl.loca
+ l,com.orientechnologies.orient.core.storage.impl.memory,com.orientech
+ nologies.orient.core.tx,com.orientechnologies.orient.core.type,com.or
+ ientechnologies.orient.enterprise.command
+Specification-Version: 1.0-SNAPSHOT
+Main-Class: com.orientechnologies.orient.console.OConsoleDatabaseApp
+
