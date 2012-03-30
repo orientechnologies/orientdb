@@ -517,9 +517,26 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 																															 OMVRBTreeEntry<K, V> lastNode,
 																															 final OCompositeKey compositeKey) {
 
-		//RARE CASE WHEN NODE ITSELF DOES CONTAIN KEY, BUT ALL KEYS LESS THE GIVEN ONE
+		//RARE CASE WHEN NODE ITSELF DOES CONTAIN KEY, BUT ALL KEYS LESS THAN GIVEN ONE
+
+		final int oldPageIndex = pageIndex;
+		final  OMVRBTreeEntry<K, V> oldNode = lastNode;
+
 		if(pageIndex >= lastNode.getSize()) {
 			lastNode = next(lastNode);
+
+			if(lastNode == null) {
+				lastNode = oldNode;
+				pageIndex = oldPageIndex;
+
+				pageItemFound = false;
+
+				if(iGetContainer)
+					return lastNode;
+
+				return null;
+			}
+
 		}
 
 		pageItemComparator = ((OCompositeKey) lastNode.getKey()).compareTo(compositeKey);
