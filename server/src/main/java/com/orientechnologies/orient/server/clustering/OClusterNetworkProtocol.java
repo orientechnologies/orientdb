@@ -22,8 +22,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -32,11 +32,14 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryInputStream;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
+import com.orientechnologies.orient.server.clustering.OClusterLogger.DIRECTION;
+import com.orientechnologies.orient.server.clustering.OClusterLogger.TYPE;
 import com.orientechnologies.orient.server.handler.distributed.OClusterProtocol;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.binary.OBinaryNetworkProtocolAbstract;
@@ -57,6 +60,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 	private ODistributedServerManager						manager;
 	private String															remoteNodeId;
 	private String															commandInfo;
+	private OClusterLogger											logger		= new OClusterLogger();
 	private final Map<String, ODatabaseRecord>	databases	= new HashMap<String, ODatabaseRecord>(5);
 
 	public OClusterNetworkProtocol() {
@@ -88,8 +92,8 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 
 			remoteNodeId = channel.readString();
 
-			if (OLogManager.instance().isDebugEnabled())
-				OLogManager.instance().debug(this, "REPL NODE <%s> connected, authenticating it...", remoteNodeId);
+			logger.setNode(remoteNodeId);
+			logger.log(this, Level.FINE, TYPE.REPLICATION, DIRECTION.IN, "connected, authenticating it...");
 
 			setName("OrientDB <- Node/" + remoteNodeId);
 
@@ -97,8 +101,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			final String userName = channel.readString();
 			serverLogin(userName, channel.readString(), "connect");
 
-			if (OLogManager.instance().isDebugEnabled())
-				OLogManager.instance().debug(this, "REPL NODE <%s> authenticated correctly with user '%s'", remoteNodeId, userName);
+			logger.log(this, Level.FINE, TYPE.REPLICATION, DIRECTION.IN, "authenticated correctly with user '%s'", userName);
 
 			beginResponse();
 			try {
@@ -116,6 +119,8 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			final byte[] encodedSecurityKey = doc.field("clusterKey");
 			final String leaderAddress = doc.field("leaderNodeAddress");
 
+			logger.setNode(leaderAddress);
+
 			if (!clusterName.equals(manager.getName()) || !Arrays.equals(encodedSecurityKey, manager.getConfig().getSecurityKey()))
 				throw new OSecurityException("Invalid combination of cluster name and key received");
 
@@ -128,12 +133,9 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 				sendOk(clientTxId);
 
 				if (manager.isLeader()) {
-					OLogManager
-							.instance()
-							.warn(
-									this,
-									"Received remote connection from the leader node %s, but current node is itself leader: split network problem or high network latency?",
-									leaderAddress);
+					logger
+							.log(this, Level.WARNING, TYPE.CLUSTER, DIRECTION.IN,
+									"received remote connection from the leader, but current node is itself leader: split network problem or high network latency?");
 
 					// CHECK WHAT LEADER WINS
 					final String myUid = InetAddress.getLocalHost().getHostAddress() + ":" + channel.socket.getLocalPort();
@@ -142,8 +144,9 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 						// BY CONVENTION THE LOWER VALUE WINS AND REMAIN LEADER
 						// THIS NODE IS OLDER: WIN! REFUSE THE CONNECTION
 						remainTheLeader = true;
-						OLogManager.instance().warn(this,
-								"Current node remains the Leader of the cluster because it has lower network address", leaderAddress);
+
+						logger.log(this, Level.WARNING, TYPE.CLUSTER, DIRECTION.NONE,
+								"current node remains the Leader of the cluster because it has lower network address");
 					}
 				}
 
@@ -177,8 +180,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 
 			final long lastInterval = manager.updateHeartBeatTime();
 
-			if (OLogManager.instance().isDebugEnabled())
-				OLogManager.instance().debug(this, "Received heartbeat message from leader. Last interval was " + lastInterval + "ms");
+			logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.IN, "heartbeat. Last msg was %dms ago", lastInterval);
 
 			beginResponse();
 			try {
@@ -193,8 +195,8 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			final String dbName = channel.readString();
 			final ODocument cfg = new ODocument(channel.readBytes());
 
-			if (OLogManager.instance().isInfoEnabled())
-				OLogManager.instance().info(this, "REPL DB <-(%s) received synchronization request from node %s...", dbName, remoteNodeId);
+			logger.setDatabase(dbName);
+			logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "received synchronization request");
 
 			if (!databases.containsKey(dbName)) {
 				// OPEN THE DB FOR THE FIRST TIME
@@ -220,30 +222,43 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 					channel.writeString(node);
 					final long lastLog = (Long) nodeCfg.field("lastLog");
 
-					OLogManager.instance()
-							.info(this, "REPL DB <-(%s) reading operation logs from %s after %d", dbName, remoteNodeId, lastLog);
+					logger
+							.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "reading operation for node %s logs after %d", node, lastLog);
 
 					// channel.
 					final OOperationLog opLog = manager.getReplicator().getOperationLog(node, dbName);
 
 					if (opLog != null) {
-						// SEND NODE LOGS
+						int sent = 0;
 
 						// SEND LOG DELTA
 						int position = opLog.findOperationId(lastLog);
-						int sent = 0;
-
 						// SEND TOTAL OF LOG ENTRIES
-						channel.writeInt(position);
+						final int totalToSend = opLog.totalEntries();
+						channel.writeInt(totalToSend - position);
 
-						for (int i = position - 1; i >= 0; --i) {
+						for (int i = position; i < totalToSend; ++i) {
 							opLog.getEntry(i, op);
 
-							channel.writeBytes(op.toStream());
-							sent++;
+							try {
+								channel.writeBytes(op.toStream());
+								sent++;
 
-							OLogManager.instance().info(this, "REPL DB <-(%s) #%d operation %d with RID %s", dbName, sent, op.serial,
-									op.record.getIdentity());
+								logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "#%d operation %d with RID %s", sent, op.serial,
+										op.record.getIdentity());
+
+							} catch (OSerializationException e) {
+
+								logger.log(this, Level.SEVERE, TYPE.REPLICATION, DIRECTION.OUT,
+										"#%d cannot be transmitted, log entry %d, record %s: ", sent, op.serial, op.record.getIdentity(), e.getCause());
+								// TRANSMIT EMPTY RECORD TO CONTINUE WITHOUT ERRORS
+								channel.writeBytes(null);
+
+							} catch (RuntimeException e) {
+								logger.log(this, Level.SEVERE, TYPE.REPLICATION, DIRECTION.OUT,
+										"#%d cannot be transmitted, log entry %d, record %s", e, sent, op.serial, op.record.getIdentity());
+								throw e;
+							}
 						}
 					} else
 						channel.writeInt(0);
@@ -252,13 +267,12 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 				endResponse();
 			}
 
-			OLogManager.instance().info(this, "REPL DB (%s)-> synchronization completed from node %s, starting inverse replication...",
-					dbName, remoteNodeId);
+			logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "synchronization completed, starting inverse replication...");
 
 			// START REPLICATION BACK
 			manager.getReplicator().startReplication(dbName, remoteNodeId, SYNCH_TYPE.ASYNCH.toString());
 
-			OLogManager.instance().info(this, "REPL DB <-(%s) reverse synchronization completed to node %s", dbName, remoteNodeId);
+			logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "reverse synchronization completed");
 
 			break;
 		}
@@ -275,8 +289,8 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			final int version = channel.readInt();
 			final byte recordType = channel.readByte();
 
-			OLogManager.instance().info(this, "REPL DB <-(%s) %s record %s from %s...", dbName, ORecordOperation.getName(operationType),
-					rid, remoteNodeId);
+			logger.setNode(dbName);
+			logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "%s record %s...", ORecordOperation.getName(operationType), rid);
 
 			final long result;
 
@@ -294,6 +308,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 					if (result != origClusterPosition)
 						throw new OReplicationConflictException("Record created has RID different by the original: original " + rid.clusterId
 								+ ":" + origClusterPosition + ", local " + rid.clusterId + ":" + result);
+					rid.clusterPosition = result;
 					break;
 
 				case ORecordOperation.UPDATED:
@@ -337,12 +352,13 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			final String engineType = channel.readString();
 
 			try {
-				OLogManager.instance().info(this, "REPL <%s> importing database...", dbName);
+				logger.setNode(dbName);
+				logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "importing database...");
 
 				ODatabaseDocumentTx database = getDatabaseInstance(dbName, dbType, engineType);
 
 				if (database.exists()) {
-					OLogManager.instance().info(this, "REPL <%s> deleting existent database...", database.getName());
+					logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.NONE, "deleting existent database...", database.getName());
 					database.drop();
 				}
 
@@ -351,13 +367,14 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 				if (database.isClosed())
 					database.open(dbUser, dbPasswd);
 
-				OLogManager.instance().info(this, "REPL <%s> reading database content via streaming from remote server node...", dbName);
+				logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN,
+						"reading database content via streaming from remote server node...");
 
 				beginResponse();
 				try {
 					new ODatabaseImport(database, new OChannelBinaryInputStream(channel), this).importDatabase();
 
-					OLogManager.instance().info(this, "REPL <%s> database imported correctly", dbName);
+					logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "database imported correctly");
 
 					sendOk(clientTxId);
 				} finally {

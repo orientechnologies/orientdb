@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.logging.Level;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -30,6 +31,9 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServerMain;
+import com.orientechnologies.orient.server.clustering.OClusterLogger;
+import com.orientechnologies.orient.server.clustering.OClusterLogger.DIRECTION;
+import com.orientechnologies.orient.server.clustering.OClusterLogger.TYPE;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
 
 /**
@@ -50,10 +54,13 @@ public class OLeaderNode {
 	private final HashMap<String, ORemotePeer>	nodes										= new LinkedHashMap<String, ORemotePeer>();	;
 	private ODocument														clusterDbConfigurations	= new ODocument();
 	private ODiscoveryListener									discoveryListener;
+	private OClusterLogger											logger									= new OClusterLogger();
 
 	public OLeaderNode(final ODistributedServerManager iManager) {
 		this.manager = iManager;
-		OLogManager.instance().warn(this, "CLUSTER <%s>: current node is the new Leader Node", iManager.getConfig().name);
+
+		logger.log(this, Level.WARNING, TYPE.CLUSTER, DIRECTION.NONE, "current node is the new Leader Node of cluster %s",
+				iManager.getConfig().name);
 
 		for (String db : OServerMain.server().getAvailableStorageNames().keySet()) {
 			try {
@@ -104,7 +111,8 @@ public class OLeaderNode {
 		Throwable lastException = null;
 
 		if (OLogManager.instance().isDebugEnabled())
-			OLogManager.instance().debug(this, "Trying to connecting to peer %s:%d", Arrays.toString(iServerAddresses), iServerPort);
+			logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.NONE, "trying to connecting to peer %s:%d",
+					Arrays.toString(iServerAddresses), iServerPort);
 
 		for (String serverAddress : iServerAddresses) {
 			final String key = ODistributedServerManager.getNodeName(serverAddress, iServerPort);
@@ -115,8 +123,8 @@ public class OLeaderNode {
 					// ALREADY REGISTERED, MAYBE IT WAS DISCONNECTED
 					node = nodes.get(key);
 
-					if (OLogManager.instance().isDebugEnabled())
-						OLogManager.instance().debug(this, "Peer %s already registered. Now has status: %s", key, node.getStatus());
+					logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.NONE, "peer %s already registered. Now has status: %s", key,
+							node.getStatus());
 
 					if (node.getStatus() != ORemotePeer.STATUS.UNREACHABLE && node.getStatus() != ORemotePeer.STATUS.DISCONNECTED
 							&& node.checkConnection())
@@ -138,8 +146,8 @@ public class OLeaderNode {
 			}
 		}
 
-		OLogManager.instance().error(this, "CLUSTER <%s>: cannot connect to distributed server node using addresses %s:%d and %s:%d",
-				manager.getConfig().name, lastException, iServerAddresses[0], iServerPort, iServerAddresses[1], iServerPort);
+		logger.error(this, TYPE.CLUSTER, DIRECTION.NONE, "cannot connect to distributed server node using addresses %s:%d and %s:%d",
+				lastException, null, iServerAddresses[0], iServerPort, iServerAddresses[1], iServerPort);
 	}
 
 	/**
@@ -149,8 +157,7 @@ public class OLeaderNode {
 		iNode.disconnect();
 
 		// ERROR
-		OLogManager.instance()
-				.warn(this, "Peer node %s:%d seems down, retrying to connect...", iNode.networkAddress, iNode.networkPort);
+		logger.log(this, Level.WARNING, TYPE.CLUSTER, DIRECTION.NONE, "peer node %s seems down, retrying to connect...", iNode.getId());
 
 		// RETRY TO CONNECT
 		try {
@@ -158,8 +165,8 @@ public class OLeaderNode {
 				return;
 		} catch (IOException e) {
 			// IO ERROR: THE NODE SEEMED ALWAYS MORE DOWN: START TO COLLECT DATA FOR IT WAITING FOR A FUTURE RE-CONNECTION
-			OLogManager.instance().debug(this, "Remote server node %s:%d is down, set it as DISCONNECTED and start to buffer changes",
-					iNode.networkAddress, iNode.networkPort);
+			logger.log(this, Level.WARNING, TYPE.CLUSTER, DIRECTION.NONE,
+					"remote server node %s is down, set it as DISCONNECTED and start to buffer changes", iNode.getId());
 		}
 
 		removePeer(iNode);
@@ -270,7 +277,6 @@ public class OLeaderNode {
 			}
 		}
 
-		OLogManager.instance().warn(this, "CLUSTER <%s>: removed server node %s:%d", manager.getConfig().name, iNode.networkAddress,
-				iNode.networkPort);
+		logger.log(this, Level.WARNING, TYPE.CLUSTER, DIRECTION.NONE, "removed server node %s", iNode.getId());
 	}
 }

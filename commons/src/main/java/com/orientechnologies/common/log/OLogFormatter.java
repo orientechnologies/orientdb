@@ -54,7 +54,7 @@ public class OLogFormatter extends Formatter {
 		}
 		buffer.append(' ');
 		buffer.append(iLevel.getName().substring(0, 4));
-		buffer.append(" - ");
+		buffer.append(' ');
 
 		// FORMAT THE MESSAGE
 		try {

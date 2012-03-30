@@ -44,7 +44,7 @@ public class ORecordOperation implements OSerializableStream {
 	public ORecordOperation() {
 	}
 
-	public ORecordOperation(final ORecordInternal<?> iRecord, final byte iStatus) {
+	public ORecordOperation(final OIdentifiable iRecord, final byte iStatus) {
 		// CLONE RECORD AND CONTENT
 		this.record = iRecord;
 		this.type = iStatus;

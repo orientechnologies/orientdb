@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.handler.distributed;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.logging.Level;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -27,6 +28,9 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.clustering.OClusterLogger;
+import com.orientechnologies.orient.server.clustering.OClusterLogger.DIRECTION;
+import com.orientechnologies.orient.server.clustering.OClusterLogger.TYPE;
 import com.orientechnologies.orient.server.clustering.OClusterNetworkProtocol;
 import com.orientechnologies.orient.server.clustering.ODiscoverySignaler;
 import com.orientechnologies.orient.server.clustering.leader.ODiscoveryListener;
@@ -72,6 +76,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	private OLeaderNode												leader;
 	private OPeerNode													peer;
 	protected STATUS													status			= STATUS.OFFLINE;
+	protected OClusterLogger									logger			= new OClusterLogger();
 
 	@Override
 	public void startup() {
@@ -255,9 +260,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 					&& c.protocol.getChannel() instanceof OChannelBinary) {
 				OChannelBinary ch = (OChannelBinary) c.protocol.getChannel();
 
-				OLogManager.instance().info(this,
-						"CLUSTER <%s>: pushing distributed configuration for database '%s' to the connected client %s...", getConfig().name,
-						iDatabaseName, ch.socket.getRemoteSocketAddress());
+				logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.NONE,
+						"pushing distributed configuration to the connected client %s...", ch.socket.getRemoteSocketAddress());
 
 				ch.acquireExclusiveLock();
 
@@ -278,7 +282,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	}
 
 	private void setStatus(final STATUS iStatus) {
-		OLogManager.instance().debug(this, "%s: Server changed status %s -> %s", id, status, iStatus);
+		logger.log(this, Level.INFO, TYPE.CLUSTER, DIRECTION.NONE, "server changed status %s -> %s", status, iStatus);
 		status = iStatus;
 	}
 }

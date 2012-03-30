@@ -15,15 +15,17 @@
 package com.orientechnologies.orient.server.clustering.leader;
 
 import java.io.IOException;
+import java.util.logging.Level;
 
 import javax.crypto.SecretKey;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.enterprise.channel.binary.OAsynchChannelServiceThread;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
+import com.orientechnologies.orient.server.clustering.OClusterLogger.DIRECTION;
+import com.orientechnologies.orient.server.clustering.OClusterLogger.TYPE;
 import com.orientechnologies.orient.server.handler.distributed.OClusterProtocol;
 import com.orientechnologies.orient.server.replication.ODistributedRemoteAsynchEventListener;
 
@@ -47,6 +49,8 @@ public class ORemotePeer extends ORemoteNodeAbstract {
 		leader = iNode;
 		configuration = new OContextConfiguration();
 		setStatus(STATUS.CONNECTING);
+
+		logger.setNode(iServerAddress);
 	}
 
 	/**
@@ -64,8 +68,8 @@ public class ORemotePeer extends ORemoteNodeAbstract {
 
 		channel = new OChannelBinaryClient(networkAddress, networkPort, configuration, OClusterProtocol.CURRENT_PROTOCOL_VERSION);
 
-		OLogManager.instance().warn(this, "CLUSTER <%s>: received joining request from peer node %s:%d. Checking authorizations...",
-				iClusterName, networkAddress, networkPort);
+		logger.log(this, Level.WARNING, TYPE.CLUSTER, DIRECTION.IN,
+				"received joining request from peer node. Checking authorizations...");
 
 		// CONNECT TO THE SERVER
 		channel.writeByte(OClusterProtocol.REQUEST_LEADER2PEER_CONNECT);
@@ -85,18 +89,14 @@ public class ORemotePeer extends ORemoteNodeAbstract {
 		try {
 			final byte connectedAsPeer = channel.readByte();
 			if (connectedAsPeer == 0) {
-				OLogManager
-						.instance()
-						.warn(
-								this,
-								"CLUSTER <%s>: remote server node %s:%d has refused the connection because it's the new Leader. Switching to be a Peer Node...",
-								leader.getManager().getConfig().name, networkAddress, networkPort);
+				logger.log(this, Level.WARNING, TYPE.CLUSTER, DIRECTION.IN,
+						"remote server node has refused the connection because it's the new Leader. Switching to be a Peer Node...");
 				leader.getManager().becomePeer(null);
 				disconnect();
 				return false;
 			}
 
-			OLogManager.instance().info(this, "CLUSTER <%s>: joined peer node %s:%d", iClusterName, networkAddress, networkPort);
+			logger.log(this, Level.INFO, TYPE.CLUSTER, DIRECTION.IN, "joined peer node");
 
 			// READ PEER DATABASES
 			cfg = new ODocument().fromStream(channel.readBytes());
@@ -125,7 +125,7 @@ public class ORemotePeer extends ORemoteNodeAbstract {
 			return false;
 
 		configuration.setValue(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT, iNetworkTimeout);
-		OLogManager.instance().debug(this, "Sending heartbeat message to %s:%d...", networkAddress, networkPort);
+		logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.OUT, "Sending heartbeat message...");
 
 		try {
 			channel.beginRequest();
@@ -136,15 +136,15 @@ public class ORemotePeer extends ORemoteNodeAbstract {
 				channel.endRequest();
 			}
 
-			OLogManager.instance().debug(this, "Waiting for the heartbeat response from %s:%d...", networkAddress, networkPort);
+			logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.IN, "Waiting for the heartbeat response...");
 
 			channel.beginResponse(sessionId, 2000);
 			channel.endResponse();
 
-			OLogManager.instance().debug(this, "Received heartbeat ACK from %s:%d...", networkAddress, networkPort);
+			logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.IN, "Received heartbeat ACK");
 
 		} catch (Exception e) {
-			OLogManager.instance().debug(this, "Error on sending heartbeat to server node", e, toString());
+			logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.OUT, "Error on sending heartbeat to server node", e);
 			return false;
 		}
 
@@ -177,7 +177,7 @@ public class ORemotePeer extends ORemoteNodeAbstract {
 	}
 
 	private void setStatus(final STATUS iStatus) {
-		OLogManager.instance().debug(this, "%s: Peer changed status %s -> %s", id, status, iStatus);
+		logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.NONE, "peer changed status %s -> %s", status, iStatus);
 		status = iStatus;
 	}
 }

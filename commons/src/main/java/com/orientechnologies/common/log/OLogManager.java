@@ -38,8 +38,8 @@ public class OLogManager {
 			final Logger log = iRequester != null ? Logger.getLogger(iRequester.getClass().getName()) : Logger.getLogger("");
 			if (log.isLoggable(iLevel)) {
 				// ENCODE OF SPECIAL FORMAT CHAR '%' IF ANY
-//				if (iMessage.contains("%"))
-//					iMessage = iMessage.replaceAll("%", "%%");
+				// if (iMessage.contains("%"))
+				// iMessage = iMessage.replaceAll("%", "%%");
 				final String msg = String.format(iMessage, iAdditionalArgs);
 				if (iException != null)
 					log.log(iLevel, msg, iException);
@@ -62,16 +62,17 @@ public class OLogManager {
 	public void debug(final Object iRequester, final String iMessage, final Throwable iException,
 			final Class<? extends OException> iExceptionClass, final Object... iAdditionalArgs) {
 		debug(iRequester, iMessage, iException, iAdditionalArgs);
-
-		try {
-			throw iExceptionClass.getConstructor(String.class, Throwable.class).newInstance(iMessage, iException);
-		} catch (NoSuchMethodException e) {
-		} catch (IllegalArgumentException e) {
-		} catch (SecurityException e) {
-		} catch (InstantiationException e) {
-		} catch (IllegalAccessException e) {
-		} catch (InvocationTargetException e) {
-		}
+		
+		if (iExceptionClass != null)
+			try {
+				throw iExceptionClass.getConstructor(String.class, Throwable.class).newInstance(iMessage, iException);
+			} catch (NoSuchMethodException e) {
+			} catch (IllegalArgumentException e) {
+			} catch (SecurityException e) {
+			} catch (InstantiationException e) {
+			} catch (IllegalAccessException e) {
+			} catch (InvocationTargetException e) {
+			}
 	}
 
 	public void info(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
@@ -94,6 +95,10 @@ public class OLogManager {
 			log(iRequester, Level.WARNING, iMessage, iException, iAdditionalArgs);
 	}
 
+	public void config(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
+		log(iRequester, Level.CONFIG, iMessage, null, iAdditionalArgs);
+	}
+
 	public void error(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
 		log(iRequester, Level.SEVERE, iMessage, null, iAdditionalArgs);
 	}
@@ -103,25 +108,22 @@ public class OLogManager {
 			log(iRequester, Level.SEVERE, iMessage, iException, iAdditionalArgs);
 	}
 
-	public void config(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
-		log(iRequester, Level.CONFIG, iMessage, null, iAdditionalArgs);
-	}
-
 	public void error(final Object iRequester, final String iMessage, final Throwable iException,
 			final Class<? extends OException> iExceptionClass, final Object... iAdditionalArgs) {
 		error(iRequester, iMessage, iException, iAdditionalArgs);
 
 		final String msg = String.format(iMessage, iAdditionalArgs);
 
-		try {
-			throw iExceptionClass.getConstructor(String.class, Throwable.class).newInstance(msg, iException);
-		} catch (NoSuchMethodException e) {
-		} catch (IllegalArgumentException e) {
-		} catch (SecurityException e) {
-		} catch (InstantiationException e) {
-		} catch (IllegalAccessException e) {
-		} catch (InvocationTargetException e) {
-		}
+		if (iExceptionClass != null)
+			try {
+				throw iExceptionClass.getConstructor(String.class, Throwable.class).newInstance(msg, iException);
+			} catch (NoSuchMethodException e) {
+			} catch (IllegalArgumentException e) {
+			} catch (SecurityException e) {
+			} catch (InstantiationException e) {
+			} catch (IllegalAccessException e) {
+			} catch (InvocationTargetException e) {
+			}
 	}
 
 	public void error(final Object iRequester, final String iMessage, final Class<? extends OException> iExceptionClass) {
@@ -193,6 +195,18 @@ public class OLogManager {
 
 	public void setErrorEnabled(boolean error) {
 		this.error = error;
+	}
+
+	public boolean isLevelEnabled(final Level level) {
+		if (level.equals(Level.FINER) || level.equals(Level.FINE) || level.equals(Level.FINEST))
+			return debug;
+		else if (level.equals(Level.INFO))
+			return info;
+		else if (level.equals(Level.WARNING))
+			return warn;
+		else if (level.equals(Level.SEVERE))
+			return error;
+		return false;
 	}
 
 	public boolean isDebugEnabled() {

@@ -21,11 +21,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.server.clustering.OClusterLogger;
+import com.orientechnologies.orient.server.clustering.OClusterLogger.DIRECTION;
+import com.orientechnologies.orient.server.clustering.OClusterLogger.TYPE;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.STATUS_TYPE;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.SYNCH_TYPE;
 
@@ -47,6 +50,7 @@ public class ODistributedNode {
 	public Date																		connectedOn;
 	private Map<String, ODistributedDatabaseInfo>	databases	= new HashMap<String, ODistributedDatabaseInfo>();
 	private STATUS																status		= STATUS.OFFLINE;
+	protected OClusterLogger											logger		= new OClusterLogger();
 
 	public ODistributedNode(final OReplicator iReplicator, final String iId) throws IOException {
 		replicator = iReplicator;
@@ -55,6 +59,7 @@ public class ODistributedNode {
 		final String[] parts = iId.split(":");
 		networkAddress = parts[0];
 		networkPort = Integer.parseInt(parts[1]);
+		logger.setNode(iId);
 	}
 
 	protected ODistributedDatabaseInfo createDatabaseEntry(final String dbName, SYNCH_TYPE iSynchType, final String iUserName,
@@ -73,8 +78,8 @@ public class ODistributedNode {
 			if (oldDbInfo != null)
 				oldDbInfo.close();
 
-			OLogManager.instance()
-					.warn(this, "REPL DB <%s> starting replication against distributed node %s", iDatabase.databaseName, id);
+			logger.setDatabase(iDatabase.databaseName);
+			logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.OUT, "starting replication against distributed node");
 
 			try {
 				databases.put(iDatabase.databaseName, iDatabase);
@@ -93,8 +98,8 @@ public class ODistributedNode {
 				iDatabase.setOffline();
 				iDatabase.close();
 				databases.remove(iDatabase.databaseName);
-				OLogManager.instance().warn(this, "REPL DB %s: cannot find database on remote server. Removing it from shared list.", e,
-						iDatabase.databaseName);
+				logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.NONE,
+						"cannot find database on remote server. Removing it from shared list", e);
 			}
 		}
 	}
@@ -134,8 +139,8 @@ public class ODistributedNode {
 		try {
 			setStatus(STATUS.SYNCHRONIZING);
 
-			OLogManager.instance().info(this,
-					"REPL <%s> sharing database exporting to the remote server %s via streaming across the network...", db.databaseName, id);
+			logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.NONE,
+					"sharing database exporting to the remote server via streaming across the network...");
 
 			db.connection = new ONodeConnection(replicator, id, replicator.getConflictResolver());
 			db.connection.copy(iDb, db.databaseName, db.userName, db.userPassword, iRemoteEngine);
@@ -149,7 +154,7 @@ public class ODistributedNode {
 			throw e;
 		}
 
-		OLogManager.instance().info(this, "REPL <%s> sharing completed (%dms)", db.databaseName, System.currentTimeMillis() - time);
+		logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.NONE, "sharing completed (%dms)", System.currentTimeMillis() - time);
 
 		return db;
 	}
@@ -191,7 +196,7 @@ public class ODistributedNode {
 		disconnect();
 
 		// ERROR
-		OLogManager.instance().warn(this, "REPL NODE <%s> seems down, retrying to connect...", id);
+		logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.NONE, "seems down, retrying to connect...");
 
 		// RECONNECT ALL DATABASES
 		try {
@@ -200,7 +205,7 @@ public class ODistributedNode {
 			}
 		} catch (IOException e) {
 			// IO ERROR: THE NODE SEEMED ALWAYS MORE DOWN: START TO COLLECT DATA FOR IT WAITING FOR A FUTURE RE-CONNECTION
-			OLogManager.instance().warn(this, "REPL NODE <%s> is down, remove it from replication", id);
+			logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.NONE, "is down, remove it from replication");
 		}
 
 		if (iRequestType == SYNCH_TYPE.SYNCH) {
@@ -220,7 +225,7 @@ public class ODistributedNode {
 	}
 
 	private void setStatus(final STATUS iStatus) {
-		OLogManager.instance().debug(this, "REPL NODE <%s> changed status %s -> %s", id, status, iStatus);
+		logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.NONE, "changed status %s -> %s", status, iStatus);
 		status = iStatus;
 	}
 }

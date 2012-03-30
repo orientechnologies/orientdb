@@ -21,6 +21,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
+import java.util.logging.Level;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -39,6 +40,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.enterprise.channel.binary.OAsynchChannelServiceThread;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryOutputStream;
+import com.orientechnologies.orient.server.clustering.OClusterLogger.DIRECTION;
+import com.orientechnologies.orient.server.clustering.OClusterLogger.TYPE;
 import com.orientechnologies.orient.server.clustering.leader.ORemoteNodeAbstract;
 import com.orientechnologies.orient.server.handler.distributed.OClusterProtocol;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.SYNCH_TYPE;
@@ -57,7 +60,8 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 			throws IOException {
 		super(iNodeId.split(":")[0], Integer.parseInt(iNodeId.split(":")[1]));
 
-		OLogManager.instance().warn(this, "REPL NODE (%s)-> connecting...", iNodeId);
+		logger.setNode(iNodeId);
+		logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "connecting...", iNodeId);
 
 		channel = new OChannelBinaryClient(networkAddress, networkPort, new OContextConfiguration(),
 				OClusterProtocol.CURRENT_PROTOCOL_VERSION);
@@ -79,7 +83,7 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 			endResponse();
 		}
 
-		OLogManager.instance().debug(this, "REPL NODE <-(%s) connected", iNodeId);
+		logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "connected");
 
 		serviceThread = new OAsynchChannelServiceThread(new ODistributedRemoteAsynchEventListener(iReplicator.getManager(),
 				new ODistributedRemoteAsynchEventListener(iReplicator.getManager(), null, iNodeId), iNodeId), channel,
@@ -94,7 +98,8 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 
 		final long time = System.currentTimeMillis();
 
-		OLogManager.instance().info(this, "REPL DB <-(%s) synchronization started. Storing delta of updates...", iDatabaseName);
+		logger.setDatabase(iDatabaseName);
+		logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "synchronization started. Storing delta of updates...");
 
 		try {
 			ODocument cfg = new ODocument().field("nodes", iDbCfg, OType.EMBEDDEDSET);
@@ -123,22 +128,20 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 					for (int l = 0; l < logEntries; ++l) {
 						final byte[] buffer = network.readBytes();
 						if (buffer == null)
-							break;
+							continue;
 
 						opLog.fromStream(buffer);
 						ops++;
 
-						OLogManager.instance().info(this, "REPL DB <-(%s) (%d) received record %s", iDatabaseName, ops, opLog.record);
+						logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "#%d received record %s", ops, opLog.record.getIdentity());
 
 						replicator.getOperationLog(nodeId, iDatabaseName).appendLog(opLog.serial, opLog.type,
 								(ORecordId) opLog.record.getIdentity());
 					}
 				}
 
-				if (OLogManager.instance().isInfoEnabled())
-					OLogManager.instance().info(this,
-							"REPL DB <-(%s) synchronization completed. Received %d operations from remote node (%dms)", iDatabaseName, ops,
-							(System.currentTimeMillis() - time));
+				logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN,
+						"synchronization completed. Received %d operations from remote node (%dms)", ops, (System.currentTimeMillis() - time));
 
 			} finally {
 				endResponse();
@@ -155,9 +158,12 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 	public void distributeChange(final ODistributedDatabaseInfo databaseEntry, final ORecordOperation iRequest,
 			final SYNCH_TYPE iRequestType, final ORecordInternal<?> iRecord) {
 
+		logger.setNode(databaseEntry.serverId);
+		logger.setDatabase(databaseEntry.databaseName);
+
 		if (OLogManager.instance().isInfoEnabled())
-			OLogManager.instance().info(this, "REPL DB (%s)-> (%s mode) %s record %s to %s...", databaseEntry.databaseName, iRequestType,
-					ORecordOperation.getName(iRequest.type), iRecord.getIdentity(), databaseEntry.serverId);
+			logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "%s record %s in %s mode",
+					ORecordOperation.getName(iRequest.type), iRecord.getIdentity(), iRequestType);
 
 		do {
 			try {

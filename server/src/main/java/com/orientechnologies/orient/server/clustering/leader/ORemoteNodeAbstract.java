@@ -19,6 +19,7 @@ import java.util.Date;
 
 import com.orientechnologies.orient.enterprise.channel.binary.OAsynchChannelServiceThread;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
+import com.orientechnologies.orient.server.clustering.OClusterLogger;
 
 /**
  * Basic abstract class for remote node.
@@ -34,6 +35,7 @@ public class ORemoteNodeAbstract {
 	protected OChannelBinaryClient				channel;
 	protected final int										sessionId	= 0;
 	protected OAsynchChannelServiceThread	serviceThread;
+	protected OClusterLogger							logger		= new OClusterLogger();
 
 	public ORemoteNodeAbstract(final String iServerAddress, final int iServerPort) {
 		networkAddress = iServerAddress;

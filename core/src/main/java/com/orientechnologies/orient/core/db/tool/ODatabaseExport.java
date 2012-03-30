@@ -180,7 +180,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 									.instance()
 									.error(
 											this,
-											"Error on exporting record #%s. It seems corrupted; size: %d bytes, raw content (as string):\n==========\n%s\n==========",
+											"Error on exporting record %s. It seems corrupted; size: %d bytes, raw content (as string):\n==========\n%s\n==========",
 											t, rec.getIdentity(), buffer.length, new String(buffer));
 						}
 					}

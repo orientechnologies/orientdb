@@ -73,23 +73,7 @@ public class OOperationLog extends OSingleFileSegment {
 
 		acquireExclusiveLock();
 		try {
-			int offset = file.allocateSpace(file.getFilledUpTo() + RECORD_SIZE);
-
-			file.writeLong(offset, serial);
-			offset += OBinaryProtocol.SIZE_LONG;
-
-			file.writeByte(offset, iOperation);
-			offset += OBinaryProtocol.SIZE_BYTE;
-
-			file.writeShort(offset, (short) iRID.clusterId);
-			offset += OBinaryProtocol.SIZE_SHORT;
-
-			file.writeLong(offset, iRID.clusterPosition);
-			offset += OBinaryProtocol.SIZE_LONG;
-
-			if (synchEnabled)
-				file.synch();
-
+			appendLog(serial, iOperation, iRID);
 			return serial++;
 
 		} finally {
@@ -130,7 +114,7 @@ public class OOperationLog extends OSingleFileSegment {
 		return nodeId;
 	}
 
-	public int findOperationId(long iOperationId) throws IOException {
+	public int findOperationId(final long iOperationId) throws IOException {
 		if (iOperationId == -1)
 			// SYNCH THE ENTIRE FILE
 			return totalEntries() - 1;

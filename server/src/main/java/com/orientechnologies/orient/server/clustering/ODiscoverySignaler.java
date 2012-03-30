@@ -18,12 +18,15 @@ package com.orientechnologies.orient.server.clustering;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.util.TimerTask;
+import java.util.logging.Level;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.thread.OPollerThread;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.server.clustering.OClusterLogger.DIRECTION;
+import com.orientechnologies.orient.server.clustering.OClusterLogger.TYPE;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerConfiguration;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -41,6 +44,7 @@ public class ODiscoverySignaler extends OPollerThread {
 	private DatagramSocket						socket;
 	private ODistributedServerManager	manager;
 	private TimerTask									runningTask;
+	private OClusterLogger						logger	= new OClusterLogger();
 
 	public ODiscoverySignaler(final ODistributedServerManager iManager, final OServerNetworkListener iNetworkListener) {
 		super(iManager.getConfig().networkMulticastHeartbeat * 1000, Orient.getThreadGroup(), "OrientDB Distributed-DiscoverySignaler");
@@ -84,8 +88,9 @@ public class ODiscoverySignaler extends OPollerThread {
 			dgram = new DatagramPacket(discoveryPacket, discoveryPacket.length, manager.getConfig().networkMulticastAddress,
 					manager.getConfig().networkMulticastPort);
 			socket = new DatagramSocket();
+			logger.setNode(manager.getConfig().networkMulticastAddress + ":" + manager.getConfig().networkMulticastPort);
 		} catch (Exception e) {
-			OLogManager.instance().error(this, "Cannot startup distributed server discovery signaler", e);
+			OLogManager.instance().error(this, "LEADER Cannot startup distributed server discovery signaler", e);
 		}
 		super.startup();
 	}
@@ -97,17 +102,18 @@ public class ODiscoverySignaler extends OPollerThread {
 			return;
 		}
 
-		OLogManager.instance().debug(this, "Sending node presence signal over the network against IP Multicast %s:%d...",
-				dgram.getAddress(), dgram.getPort());
+		logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.OUT, "network ip multicast...");
 
 		try {
 			socket.send(dgram);
 		} catch (Throwable t) {
 			sendShutdown();
-			OLogManager
-					.instance()
-					.error(
+			logger
+					.log(
 							this,
+							Level.SEVERE,
+							TYPE.CLUSTER,
+							DIRECTION.OUT,
 							"Error on sending signal for distributed server presence, probably the IP MULTICAST is disabled in current network configuration: %s",
 							t.getMessage());
 		} finally {

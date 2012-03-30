@@ -18,12 +18,15 @@ package com.orientechnologies.orient.server.clustering.leader;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.MulticastSocket;
+import java.util.logging.Level;
 
 import com.orientechnologies.common.io.OIOException;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.thread.OSoftThread;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.server.clustering.OClusterLogger;
+import com.orientechnologies.orient.server.clustering.OClusterLogger.DIRECTION;
+import com.orientechnologies.orient.server.clustering.OClusterLogger.TYPE;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerConfiguration;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -35,6 +38,7 @@ public class ODiscoveryListener extends OSoftThread {
 	private OServerNetworkListener		binaryNetworkListener;
 
 	private MulticastSocket						socket;
+	private OClusterLogger						logger			= new OClusterLogger();
 
 	public ODiscoveryListener(final ODistributedServerManager iManager, final OServerNetworkListener iNetworkListener) {
 		super(Orient.getThreadGroup(), "OrientDB Distributed-DiscoveryListener");
@@ -42,8 +46,8 @@ public class ODiscoveryListener extends OSoftThread {
 		manager = iManager;
 		binaryNetworkListener = iNetworkListener;
 
-		OLogManager.instance().info(this, "CLUSTER <%s>: listening for distributed nodes on IP multicast: %s:%d",
-				iManager.getConfig().name, iManager.getConfig().networkMulticastAddress, iManager.getConfig().networkMulticastPort);
+		logger.log(this, Level.INFO, TYPE.CLUSTER, DIRECTION.IN, "listening for distributed nodes on IP multicast: %s:%d",
+				iManager.getConfig().networkMulticastAddress, iManager.getConfig().networkMulticastPort);
 
 		dgram = new DatagramPacket(recvBuffer, recvBuffer.length);
 		try {
@@ -67,9 +71,8 @@ public class ODiscoveryListener extends OSoftThread {
 			// BLOCKS UNTIL SOMETHING IS RECEIVED OR SOCKET SHUTDOWN
 			socket.receive(dgram);
 
-			if (OLogManager.instance().isDebugEnabled())
-				OLogManager.instance().debug(this, "Received multicast packet %d bytes from %s:%d", dgram.getLength(), dgram.getAddress(),
-						dgram.getPort());
+			logger.setNode(dgram.getAddress() + ":" + dgram.getPort());
+			logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.IN, "received multicast packet %d bytes from", dgram.getLength());
 
 			final byte[] buffer = new byte[dgram.getLength()];
 			System.arraycopy(dgram.getData(), 0, buffer, 0, buffer.length);
@@ -84,19 +87,22 @@ public class ODiscoveryListener extends OSoftThread {
 				int i = 0;
 
 				if (!parts[i].startsWith(ODistributedServerConfiguration.PACKET_HEADER)) {
-					OLogManager.instance().debug(this, "Packet discarded because invalid");
+					logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.IN, "packet discarded because invalid");
 					return;
 				}
 
 				if (Integer.parseInt(parts[++i]) != ODistributedServerConfiguration.PROTOCOL_VERSION) {
-					OLogManager.instance().debug(this, "Received bad multicast packet with version %s not equals to the current %d",
-							parts[i], ODistributedServerConfiguration.PROTOCOL_VERSION);
+					logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.IN,
+							"received bad multicast packet with version %s not equals to the current %d", parts[i],
+							ODistributedServerConfiguration.PROTOCOL_VERSION);
 					return;
 				}
 
 				if (!parts[++i].equals(manager.getConfig().name)) {
-					OLogManager.instance().debug(this, "Received bad multicast packet with cluster name %s not equals to the current %s",
-							parts[i], manager.getConfig().name);
+					logger
+							.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.IN,
+									"received bad multicast packet with cluster name %s not equals to the current %s", parts[i],
+									manager.getConfig().name);
 					return;
 				}
 
@@ -108,13 +114,13 @@ public class ODiscoveryListener extends OSoftThread {
 				if (configuredServerAddress.equals(binaryNetworkListener.getInboundAddr().getHostName())
 						&& serverPort == binaryNetworkListener.getInboundAddr().getPort()) {
 					// IT'S ME, JUST IGNORE
-					OLogManager.instance().debug(this, "Ignored because sent by myself");
+					logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.IN, "ignored because sent by myself");
 					return;
 				}
 
 				// GOOD PACKET, PASS TO THE DISTRIBUTED NODE MANAGER THIS INFO
 				if (manager.getLeader() == null) {
-					OLogManager.instance().debug(this, "Packet discarded because I'm not the leader");
+					logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.IN, "packet discarded because I'm not the leader");
 					return;
 				}
 
@@ -122,10 +128,10 @@ public class ODiscoveryListener extends OSoftThread {
 
 			} catch (Exception e) {
 				// WRONG PACKET
-				OLogManager.instance().debug(this, "Received wrong packet from multicast IP", e);
+				logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.IN, "received wrong packet from multicast IP", e);
 			}
 		} catch (Throwable t) {
-			OLogManager.instance().error(this, "Error on executing request", t);
+			logger.error(this, TYPE.CLUSTER, DIRECTION.IN, "Error on executing request", t, null);
 		} finally {
 		}
 	}
