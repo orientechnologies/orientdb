@@ -3,6 +3,7 @@
 <project basedir="." >
 	<property name="project.src"  value="src/main/java" />
 	<property name="project.src2" value="${project.src}" />
+	<property name="project.res" value="src/main/resources" />
 	<property name="project.lib" value="lib" />
 	<property name="project.lib2" value="${project.lib}" />
 	<property name="project.doc" value="doc" />
@@ -40,7 +41,16 @@
 			<src path="${project.src}" />
 			<src path="${project.src2}" />
 			<classpath refid="project.classpath" />
-		</javac>
+		</javac>     
+        <!--<copydir dest="${web.dir}/${deploy.name}" src="${src.web.dir}">  
+            <include name="**/*" />  
+        </copydir>  -->
+        
+        <copy todir="${project.build}">
+			<fileset dir="${project.res}">
+                <include name="**/*"/>
+			</fileset>
+		</copy>
 	</target>
 
 	<target name="jar" depends="compile">

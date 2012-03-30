@@ -64,7 +64,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 			final int[] iClusterIdsToIndex, final OProgressListener iProgressListener) {
 		acquireExclusiveLock();
 		try {
-			final OIndexInternal<?> index = OIndexFactory.instance().newInstance(getDatabase(), iType);
+			final OIndexInternal<?> index = OIndexes.createIndex(getDatabase(), iType);
 
 			index.create(iName, indexDefinition, getDatabase(), defaultClusterName, iClusterIdsToIndex, iProgressListener);
 			addIndexInternal(index);
@@ -133,7 +133,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 			if (idxs != null) {
 				OIndexInternal<?> index;
 				for (final ODocument d : idxs) {
-					index = OIndexFactory.instance().newInstance(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE));
+					index = OIndexes.createIndex(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE));
 					((OIndexInternal<?>) index).loadFromConfiguration(d);
 					addIndexInternal(index);
 				}

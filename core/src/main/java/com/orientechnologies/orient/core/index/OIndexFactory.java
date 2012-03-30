@@ -19,38 +19,22 @@ import com.orientechnologies.common.factory.ODynamicFactory;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import java.util.Set;
 
-public class OIndexFactory extends ODynamicFactory<String, Class<? extends OIndexInternal<?>>> {
-	private static final OIndexFactory	instance	= new OIndexFactory();
-
-	/**
-	 * Register default index implementation.
-	 */
-	protected OIndexFactory() {
-		register(OIndexUnique.TYPE_ID,      OIndexUnique.class);
-		register(OIndexNotUnique.TYPE_ID,   OIndexNotUnique.class);
-		register(OIndexFullText.TYPE_ID,    OIndexFullText.class);
-		register(OIndexDictionary.TYPE_ID,  OIndexDictionary.class);
-	}
-
-	@SuppressWarnings("unchecked")
-	public <T extends OIndexInternal<?>> T newInstance(final ODatabaseRecord iDatabase, final String iIndexType) {
-		if (iIndexType == null)
-			throw new IllegalArgumentException("Index type is null");
-
-		final Class<? extends OIndexInternal<?>> indexClass = registry.get(iIndexType);
-
-		if (indexClass == null)
-			throw new OConfigurationException("Index type '" + iIndexType + "' is not configured");
-
-		try {
-			return (T) indexClass.newInstance();
-		} catch (final Exception e) {
-			throw new OConfigurationException("Cannot create index type '" + iIndexType + "'", e);
-		}
-	}
-
-	public static OIndexFactory instance() {
-		return instance;
-	}
+public interface OIndexFactory {
+	
+    /**
+     * @return List of supported indexes of this factory
+     */
+    Set<String> getTypes();
+    
+    /**
+     * 
+     * @param iDatabase
+     * @param iIndexType index type
+     * @return OIndexInternal
+     * @throws OConfigurationException if index creation failed
+     */
+    OIndexInternal createIndex(ODatabaseRecord iDatabase, String iIndexType) throws OConfigurationException;
+    
 }

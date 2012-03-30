@@ -103,7 +103,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 			if (idxs != null) {
 				OIndexInternal<?> index;
 				for (final ODocument d : idxs) {
-					index = OIndexFactory.instance().newInstance(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE));
+					index = OIndexes.createIndex(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE));
 					((OIndexInternal<?>) index).loadFromConfiguration(d);
 					addIndexInternal(index);
 				}
