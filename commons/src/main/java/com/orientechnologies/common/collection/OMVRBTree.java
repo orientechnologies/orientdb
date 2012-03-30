@@ -490,6 +490,17 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		final int oldPageIndex = pageIndex;
 
 		final OMVRBTreeEntry<K, V> prevNd = previous(lastNode);
+
+		if(prevNd == null) {
+			pageIndex = oldPageIndex;
+			pageItemFound = false;
+
+			if(iGetContainer)
+				return lastNode;
+
+			return null;
+		}
+
 		pageItemComparator = ((OCompositeKey)prevNd.getKey()).compareTo(compositeKey);
 
 		if(pageItemComparator == 0) {
