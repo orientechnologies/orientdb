@@ -31,45 +31,44 @@ import java.util.Set;
  * <li>DICTIONARY</li>
  * </ul>
  */
-public class OMVRBIndexFactory implements OIndexFactory{
+public class OMVRBIndexFactory implements OIndexFactory {
 
-    private static final Set<String> TYPES;
-    static {
-        final Set<String> types = new HashSet<String>();
-        types.add(OIndexUnique.TYPE_ID);
-        types.add(OIndexNotUnique.TYPE_ID);
-        types.add(OIndexFullText.TYPE_ID);
-        types.add(OIndexDictionary.TYPE_ID);
-        TYPES = Collections.unmodifiableSet(types);
-    }
-    
-    /**
-     * Index types : 
-     * <ul> 
-     * <li>UNIQUE</li> 
-     * <li>NOTUNIQUE</li> 
-     * <li>FULLTEXT</li>
-     * <li>DICTIONARY</li> 
-     * </ul>
-     */
-    public Set<String> getTypes() {
-        return TYPES;
-    }
+	private static final Set<String>	TYPES;
+	static {
+		final Set<String> types = new HashSet<String>();
+		types.add(OIndexUnique.TYPE_ID);
+		types.add(OIndexNotUnique.TYPE_ID);
+		types.add(OIndexFullText.TYPE_ID);
+		types.add(OIndexDictionary.TYPE_ID);
+		TYPES = Collections.unmodifiableSet(types);
+	}
 
-    @Override
-    public OIndexInternal createIndex(ODatabaseRecord iDatabase, String iIndexType) throws OConfigurationException {
-        
-        if(OIndexUnique.TYPE_ID.equals(iIndexType)){
-            return new OIndexUnique();
-        }else if(OIndexNotUnique.TYPE_ID.equals(iIndexType)){
-            return new OIndexNotUnique();
-        }else if(OIndexFullText.TYPE_ID.equals(iIndexType)){
-            return new OIndexFullText();
-        }else if(OIndexDictionary.TYPE_ID.equals(iIndexType)){
-            return new OIndexDictionary();
-        }
-        
-        throw new OConfigurationException("Unsupported type : "+iIndexType);
-    }
-    
+	/**
+	 * Index types :
+	 * <ul>
+	 * <li>UNIQUE</li>
+	 * <li>NOTUNIQUE</li>
+	 * <li>FULLTEXT</li>
+	 * <li>DICTIONARY</li>
+	 * </ul>
+	 */
+	public Set<String> getTypes() {
+		return TYPES;
+	}
+
+	public OIndexInternal createIndex(ODatabaseRecord iDatabase, String iIndexType) throws OConfigurationException {
+
+		if (OIndexUnique.TYPE_ID.equals(iIndexType)) {
+			return new OIndexUnique();
+		} else if (OIndexNotUnique.TYPE_ID.equals(iIndexType)) {
+			return new OIndexNotUnique();
+		} else if (OIndexFullText.TYPE_ID.equals(iIndexType)) {
+			return new OIndexFullText();
+		} else if (OIndexDictionary.TYPE_ID.equals(iIndexType)) {
+			return new OIndexDictionary();
+		}
+
+		throw new OConfigurationException("Unsupported type : " + iIndexType);
+	}
+
 }
