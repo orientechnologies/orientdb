@@ -53,39 +53,16 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 
 	private final OReplicationConflictResolver	conflictResolver;
 	protected final ExecutorService							asynchExecutor;
+	protected final OReplicator									replicator;
 
 	public ONodeConnection(final OReplicator iReplicator, final String iNodeId, final OReplicationConflictResolver iConflictResolver)
 			throws IOException {
 		super(iNodeId.split(":")[0], Integer.parseInt(iNodeId.split(":")[1]));
 
+		replicator = iReplicator;
 		logger.setNode(iNodeId);
-		logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "connecting...", iNodeId);
 
-		channel = new OChannelBinaryClient(networkAddress, networkPort, new OContextConfiguration(),
-				OClusterProtocol.CURRENT_PROTOCOL_VERSION);
-
-		beginRequest(OClusterProtocol.REQUEST_NODE2NODE_CONNECT);
-
-		try {
-			// CONNECT TO THE SERVER
-			channel.writeString(iReplicator.getManager().getId());
-			channel.writeString(iReplicator.getReplicatorUser().name);
-			channel.writeString(iReplicator.getReplicatorUser().password);
-		} finally {
-			endRequest();
-		}
-
-		try {
-			beginResponse();
-		} finally {
-			endResponse();
-		}
-
-		logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "connected");
-
-		serviceThread = new OAsynchChannelServiceThread(new ODistributedRemoteAsynchEventListener(iReplicator.getManager(),
-				new ODistributedRemoteAsynchEventListener(iReplicator.getManager(), null, iNodeId), iNodeId), channel,
-				"OrientDB <- Asynch Node/" + iNodeId);
+		connect();
 
 		conflictResolver = iConflictResolver;
 		asynchExecutor = Executors.newSingleThreadExecutor();
@@ -97,6 +74,8 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 
 		try {
 			ODocument cfg = new ODocument().field("nodes", iDbCfg, OType.EMBEDDEDSET);
+
+			connect();
 
 			// SEND CURRENT CONFIGURATION FOR CURRENT DATABASE
 			final OChannelBinaryClient network = beginRequest(OClusterProtocol.REQUEST_NODE2NODE_REPLICATION_SYNCHRONIZE);
@@ -198,6 +177,7 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 			network.writeString(dbName);
 			network.writeString(iDbUser);
 			network.writeString(iDbPasswd);
+			network.writeString(iDatabase.getType());
 			network.writeString(iEngineName);
 
 			// START THE EXPORT GIVING AS OUTPUTSTREAM THE CHANNEL TO STREAM THE EXPORT
@@ -237,5 +217,38 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 	}
 
 	public void onMessage(final String iText) {
+	}
+
+	protected void connect() throws IOException {
+		if (channel != null)
+			return;
+
+		logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "connecting...", getId());
+
+		channel = new OChannelBinaryClient(networkAddress, networkPort, new OContextConfiguration(),
+				OClusterProtocol.CURRENT_PROTOCOL_VERSION);
+
+		beginRequest(OClusterProtocol.REQUEST_NODE2NODE_CONNECT);
+
+		try {
+			// CONNECT TO THE SERVER
+			channel.writeString(replicator.getManager().getId());
+			channel.writeString(replicator.getReplicatorUser().name);
+			channel.writeString(replicator.getReplicatorUser().password);
+		} finally {
+			endRequest();
+		}
+
+		try {
+			beginResponse();
+		} finally {
+			endResponse();
+		}
+
+		logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "connected");
+
+		serviceThread = new OAsynchChannelServiceThread(new ODistributedRemoteAsynchEventListener(replicator.getManager(),
+				new ODistributedRemoteAsynchEventListener(replicator.getManager(), null, getId()), getId()), channel,
+				"OrientDB <- Asynch Node/" + getId());
 	}
 }

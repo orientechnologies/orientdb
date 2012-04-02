@@ -47,7 +47,7 @@ public class OPeerCheckerTask extends TimerTask {
 					leader.handlePeerNodeFailure(node);
 			}
 
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			// AVOID THE TIMER IS NOT SCHEDULED ANYMORE IN CASE OF EXCEPTION
 			e.printStackTrace();
 		}

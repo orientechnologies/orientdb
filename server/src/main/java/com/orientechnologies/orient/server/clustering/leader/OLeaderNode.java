@@ -55,6 +55,7 @@ public class OLeaderNode {
 	private ODocument														clusterDbConfigurations	= new ODocument();
 	private ODiscoveryListener									discoveryListener;
 	private OClusterLogger											logger									= new OClusterLogger();
+	private OPeerCheckerTask										peerCheckerTask;
 
 	public OLeaderNode(final ODistributedServerManager iManager) {
 		this.manager = iManager;
@@ -73,7 +74,8 @@ public class OLeaderNode {
 		discoveryListener = new ODiscoveryListener(manager, manager.getDistributedNetworkListener());
 
 		// START HEARTBEAT FOR CONNECTIONS
-		Orient.getTimer().schedule(new OPeerCheckerTask(this), manager.getConfig().networkHeartbeatDelay,
+		peerCheckerTask = new OPeerCheckerTask(this);
+		Orient.getTimer().schedule(peerCheckerTask, manager.getConfig().networkHeartbeatDelay,
 				manager.getConfig().networkHeartbeatDelay);
 	}
 
@@ -89,6 +91,11 @@ public class OLeaderNode {
 
 			nodes.clear();
 			clusterDbConfigurations.clear();
+
+			if (peerCheckerTask != null) {
+				peerCheckerTask.cancel();
+				peerCheckerTask = null;
+			}
 
 			if (discoveryListener != null) {
 				discoveryListener.sendShutdown();
@@ -183,8 +190,11 @@ public class OLeaderNode {
 	}
 
 	public ODocument updatePeerDatabases(final String iNodeId, final ODocument iConfiguration) throws UnknownHostException {
+		if (iConfiguration == null)
+			return null;
+
 		// RECEIVE AVAILABLE DATABASES
-		ODocument answer = new ODocument();
+		final ODocument answer = new ODocument();
 
 		for (String dbName : iConfiguration.fieldNames()) {
 			// UPDATE LEADER'S CONFIGURATION

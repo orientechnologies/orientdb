@@ -43,7 +43,7 @@ import com.orientechnologies.orient.server.clustering.OClusterLogger.TYPE;
 import com.orientechnologies.orient.server.handler.distributed.OClusterProtocol;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.binary.OBinaryNetworkProtocolAbstract;
-import com.orientechnologies.orient.server.network.protocol.distributed.ODistributedRequesterThreadLocal;
+import com.orientechnologies.orient.server.network.protocol.distributed.OReplicationActiveThreadLocal;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.SYNCH_TYPE;
 import com.orientechnologies.orient.server.replication.ODistributedNode;
@@ -232,28 +232,31 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 
 					// SEND LOG DELTA
 					int position = opLog.findOperationId(lastLog);
-					// SEND TOTAL OF LOG ENTRIES
-					final int totalToSend = opLog.totalEntries();
 
-					for (int i = position; i < totalToSend; ++i) {
-						opLog.getEntry(i, op);
+					if (position > -1) {
+						// SEND TOTAL OF LOG ENTRIES
+						final int totalToSend = opLog.totalEntries();
 
-						try {
-							replicationNode.sendRequest(op, SYNCH_TYPE.SYNCH);
-							sent++;
+						for (int i = position; i < totalToSend; ++i) {
+							opLog.getEntry(i, op);
 
-							logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "#%d operation %d with RID %s", sent, op.serial,
-									op.record.getIdentity());
+							try {
+								replicationNode.sendRequest(op, SYNCH_TYPE.SYNCH);
+								sent++;
 
-						} catch (OSerializationException e) {
+								logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "#%d operation %d with RID %s", sent, op.serial,
+										op.record.getIdentity());
 
-							logger.log(this, Level.SEVERE, TYPE.REPLICATION, DIRECTION.OUT,
-									"#%d cannot be transmitted, log entry %d, record %s: ", sent, op.serial, op.record.getIdentity(), e.getCause());
+							} catch (OSerializationException e) {
 
-						} catch (RuntimeException e) {
-							logger.log(this, Level.SEVERE, TYPE.REPLICATION, DIRECTION.OUT, "#%d cannot be transmitted, log entry %d, record %s",
-									e, sent, op.serial, op.record.getIdentity());
-							throw e;
+								logger.log(this, Level.SEVERE, TYPE.REPLICATION, DIRECTION.OUT,
+										"#%d cannot be transmitted, log entry %d, record %s: ", sent, op.serial, op.record.getIdentity(), e.getCause());
+
+							} catch (RuntimeException e) {
+								logger.log(this, Level.SEVERE, TYPE.REPLICATION, DIRECTION.OUT,
+										"#%d cannot be transmitted, log entry %d, record %s", e, sent, op.serial, op.record.getIdentity());
+								throw e;
+							}
 						}
 					}
 				}
@@ -289,7 +292,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			final ODatabaseRecord database = getOrOpenDatabase(dbName);
 
 			// REPLICATION SOURCE: AVOID LOOP
-			ODistributedRequesterThreadLocal.INSTANCE.set(true);
+			OReplicationActiveThreadLocal.INSTANCE.set(false);
 			try {
 
 				switch (operationType) {
@@ -315,7 +318,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 					throw new IllegalArgumentException("Received invalid distributed record change operation type: " + operationType);
 				}
 			} finally {
-				ODistributedRequesterThreadLocal.INSTANCE.set(false);
+				OReplicationActiveThreadLocal.INSTANCE.set(true);
 			}
 
 			// LOGS THE CHANGE
@@ -364,12 +367,17 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 
 				beginResponse();
 				try {
+					// REPLICATION SOURCE: AVOID LOOP
+					OReplicationActiveThreadLocal.INSTANCE.set(false);
+
 					new ODatabaseImport(database, new OChannelBinaryInputStream(channel), this).importDatabase();
 
 					logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "database imported correctly");
 
 					sendOk(clientTxId);
 				} finally {
+					OReplicationActiveThreadLocal.INSTANCE.set(true);
+
 					endResponse();
 				}
 

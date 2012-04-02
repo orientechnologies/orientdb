@@ -16,8 +16,11 @@
 package com.orientechnologies.orient.server.clustering.peer;
 
 import java.util.TimerTask;
+import java.util.logging.Level;
 
-import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.server.clustering.OClusterLogger;
+import com.orientechnologies.orient.server.clustering.OClusterLogger.DIRECTION;
+import com.orientechnologies.orient.server.clustering.OClusterLogger.TYPE;
 
 /**
  * Checks the heart-beat sent by the leader node. If too much time is gone it tries to became the new leader.
@@ -26,8 +29,9 @@ import com.orientechnologies.common.log.OLogManager;
  * 
  */
 public class OLeaderCheckerTask extends TimerTask {
-	private OPeerNode	peer;
-	private long			heartBeatDelay;
+	private OPeerNode				peer;
+	private long						heartBeatDelay;
+	private OClusterLogger	logger	= new OClusterLogger();
 
 	public OLeaderCheckerTask(final OPeerNode iPeerNode) {
 		this.peer = iPeerNode;
@@ -41,9 +45,8 @@ public class OLeaderCheckerTask extends TimerTask {
 		final long time = System.currentTimeMillis() - peer.getLastHeartBeat();
 		if (time > heartBeatDelay) {
 			// NO LEADER HEARTBEAT RECEIVED FROM LONG TIME: BECAME THE LEADER!
-			OLogManager.instance().warn(this,
-					"CLUSTER <%s>: no heartbeat message has been received from the Leader node (last was %d ms ago)",
-					peer.getManager().getConfig().name, time);
+			logger.log(this, Level.WARNING, TYPE.CLUSTER, DIRECTION.IN,
+					"no heartbeat message has been received from the Leader node (last was %d ms ago)", time);
 
 			cancel();
 			peer.getManager().becameLeader();

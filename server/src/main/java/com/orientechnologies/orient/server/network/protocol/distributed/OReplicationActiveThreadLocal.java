@@ -16,17 +16,17 @@
 package com.orientechnologies.orient.server.network.protocol.distributed;
 
 /**
- * Keep in thread local space the server requester
+ * Enables or disables the replication. It's used to avoid loops on replication.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ODistributedRequesterThreadLocal extends ThreadLocal<Boolean> {
-	public static ODistributedRequesterThreadLocal	INSTANCE	= new ODistributedRequesterThreadLocal();
+public class OReplicationActiveThreadLocal extends ThreadLocal<Boolean> {
+	public static OReplicationActiveThreadLocal	INSTANCE	= new OReplicationActiveThreadLocal();
 
 	@Override
 	protected Boolean initialValue() {
-		return Boolean.FALSE;
+		return Boolean.TRUE;
 	}
 
 }

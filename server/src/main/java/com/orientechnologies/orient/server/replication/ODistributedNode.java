@@ -49,7 +49,7 @@ public class ODistributedNode {
 	public int																		networkPort;
 	public Date																		connectedOn;
 	private Map<String, ODistributedDatabaseInfo>	databases	= new HashMap<String, ODistributedDatabaseInfo>();
-	private STATUS																status		= STATUS.OFFLINE;
+	private STATUS																status		= STATUS.ONLINE;
 	protected OClusterLogger											logger		= new OClusterLogger();
 
 	public ODistributedNode(final OReplicator iReplicator, final String iId) throws IOException {
@@ -72,8 +72,8 @@ public class ODistributedNode {
 
 	public void startDatabaseReplication(final ODistributedDatabaseInfo iDatabase) throws IOException {
 		synchronized (this) {
-			if (status == STATUS.ONLINE)
-				// ALREADY ONLINE
+			if (status != STATUS.ONLINE)
+				// THE NODE IS OFFLINE
 				return;
 
 			// REMOVE ANY OTHER PREVIOUS ENTRY
@@ -107,12 +107,29 @@ public class ODistributedNode {
 		}
 	}
 
+	public void stopDatabaseReplication(final ODistributedDatabaseInfo iDatabase) {
+		synchronized (this) {
+			if (status != STATUS.ONLINE)
+				// THE NODE IS OFFLINE
+				return;
+
+			logger.setDatabase(iDatabase.databaseName);
+
+			iDatabase.setOffline();
+
+			logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.OUT, "stopped replication against distributed node");
+		}
+	}
+
 	public void sendRequest(final ORecordOperation iRequest, final SYNCH_TYPE iRequestType) throws IOException {
-		final ODistributedDatabaseInfo databaseEntry = databases.get(iRequest.getRecord().getDatabase().getName());
-		if (databaseEntry == null)
+		final ORecordInternal<?> record = iRequest.getRecord();
+		if( record == null )
+			// RECORD DOESN'T EXIST ANYMORE
 			return;
 
-		final ORecordInternal<?> record = iRequest.getRecord();
+		final ODistributedDatabaseInfo databaseEntry = databases.get(record.getDatabase().getName());
+		if (databaseEntry == null)
+			return;
 
 		try {
 			databaseEntry.connection.distributeChange(databaseEntry, iRequest, iRequestType, record);
@@ -179,6 +196,7 @@ public class ODistributedNode {
 				db.connection.disconnect();
 		}
 		databases.clear();
+		status = STATUS.OFFLINE;
 	}
 
 	public ODistributedDatabaseInfo getDatabase(final String iDatabaseName) {

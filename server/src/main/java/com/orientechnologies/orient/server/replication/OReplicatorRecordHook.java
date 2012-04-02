@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.server.network.protocol.distributed.ODistributedRequesterThreadLocal;
+import com.orientechnologies.orient.server.network.protocol.distributed.OReplicationActiveThreadLocal;
 
 /**
  * Record hook implementation. Catches all the relevant events and propagates to the other cluster nodes.
@@ -49,12 +49,16 @@ public class OReplicatorRecordHook implements ORecordHook, ODatabaseLifecycleLis
 
 	@Override
 	public boolean onTrigger(final TYPE iType, final ORecord<?> iRecord) {
-		if (ODistributedRequesterThreadLocal.INSTANCE.get())
+		if (!OReplicationActiveThreadLocal.INSTANCE.get())
 			// REPLICATED RECORD, AVOID TO PROPAGATE IT AGAIN
 			return false;
 
 		if (iRecord instanceof ODocument && replicator.isIgnoredDocumentClass(((ODocument) iRecord).getClassName()))
 			// AVOID TO REPLICATE THE CONFLICT
+			return false;
+
+		if (!replicator.isReplicated(iRecord.getDatabase().getName()))
+			// DB NOT REPLICATED
 			return false;
 
 		try {
@@ -102,7 +106,7 @@ public class OReplicatorRecordHook implements ORecordHook, ODatabaseLifecycleLis
 		if (clId == iRecord.getDatabase().getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME)
 				|| clId == iRecord.getDatabase().getClusterIdByName(OStorage.CLUSTER_INDEX_NAME)) {
 			OLogManager.instance().warn(this,
-					"Changes to the %s.%s cluster can't be propagated to remote nodes. Assure to align the schema manually",
+					"Changes to the cluster %s.%s can't be propagated to remote nodes. Assure to align the schema manually",
 					iRecord.getDatabase().getName(), OStorage.CLUSTER_INTERNAL_NAME);
 			return false;
 		}

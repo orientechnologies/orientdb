@@ -273,17 +273,85 @@ public class OServerAdmin {
 	}
 
 	/**
+	 * Starts the replication between two servers.
+	 * 
+	 * @param iDatabaseName
+	 *          database name to replicate
+	 * @param iRemoteServer
+	 *          remote server alias as IP+address
+	 * @return The instance itself. Useful to execute method in chain
+	 * @throws IOException
+	 */
+	public synchronized OServerAdmin startReplication(final String iDatabaseName, final String iRemoteServer) throws IOException {
+		try {
+
+			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_REPLICATION);
+			try {
+				network.writeString("start");
+				network.writeString(iDatabaseName);
+				network.writeString(iRemoteServer);
+			} finally {
+				storage.endRequest(network);
+			}
+
+			storage.getResponse(network);
+
+			OLogManager.instance().debug(this, "Started replication of database '%s' from server '%s' to '%s'", iDatabaseName,
+					storage.getURL(), iRemoteServer);
+
+		} catch (Exception e) {
+			OLogManager.instance().exception("Cannot start the replication of database: " + iDatabaseName, e, OStorageException.class);
+		}
+
+		return this;
+	}
+
+	/**
+	 * Stops the replication between two servers.
+	 * 
+	 * @param iDatabaseName
+	 *          database name to replicate
+	 * @param iRemoteServer
+	 *          remote server alias as IP+address
+	 * @return The instance itself. Useful to execute method in chain
+	 * @throws IOException
+	 */
+	public synchronized OServerAdmin stopReplication(final String iDatabaseName, final String iRemoteServer) throws IOException {
+		try {
+
+			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_REPLICATION);
+			try {
+				network.writeString("stop");
+				network.writeString(iDatabaseName);
+				network.writeString(iRemoteServer);
+			} finally {
+				storage.endRequest(network);
+			}
+
+			storage.getResponse(network);
+
+			OLogManager.instance().debug(this, "Stopped replication of database '%s' from server '%s' to '%s'", iDatabaseName,
+					storage.getURL(), iRemoteServer);
+
+		} catch (Exception e) {
+			OLogManager.instance().exception("Cannot stop the replication of database: " + iDatabaseName, e, OStorageException.class);
+		}
+
+		return this;
+	}
+
+	/**
+	 * Copies a database to a remote server instance.
 	 * 
 	 * @param iDatabaseName
 	 * @param iDatabaseUserName
 	 * @param iDatabaseUserPassword
 	 * @param iRemoteName
 	 * @param iRemoteEngine
-	 * @param iSynchronousMode
 	 * @return The instance itself. Useful to execute method in chain
 	 * @throws IOException
 	 */
-	public synchronized OServerAdmin shareDatabase(final String iDatabaseName, final String iDatabaseUserName,
+	public synchronized OServerAdmin copyDatabase(final String iDatabaseName, final String iDatabaseUserName,
 			final String iDatabaseUserPassword, final String iRemoteName, final String iRemoteEngine) throws IOException {
 		storage.checkConnection();
 
@@ -302,10 +370,10 @@ public class OServerAdmin {
 
 			storage.getResponse(network);
 
-			OLogManager.instance().debug(this, "Database '%s' has been shared with the server '%s'", iDatabaseName, iRemoteName);
+			OLogManager.instance().debug(this, "Database '%s' has been copied to the server '%s'", iDatabaseName, iRemoteName);
 
 		} catch (Exception e) {
-			OLogManager.instance().exception("Cannot share the database: " + iDatabaseName, e, OStorageException.class);
+			OLogManager.instance().exception("Cannot copy the database: " + iDatabaseName, e, OStorageException.class);
 		}
 
 		return this;

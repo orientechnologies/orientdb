@@ -96,7 +96,7 @@ public class ORemoteNodeAbstract {
 		return id;
 	}
 
-	public Object getId() {
+	public String getId() {
 		return id;
 	}
 }

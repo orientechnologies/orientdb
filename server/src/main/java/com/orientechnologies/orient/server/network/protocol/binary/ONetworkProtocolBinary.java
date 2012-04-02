@@ -194,6 +194,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 			copyDatabase();
 			break;
 
+		case OChannelBinaryProtocol.REQUEST_DB_REPLICATION:
+			replicationDatabase();
+			break;
+
 		case OChannelBinaryProtocol.REQUEST_DATACLUSTER_COUNT:
 			countClusters();
 			break;
@@ -466,6 +470,32 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
 		node.copyDatabase(connection.database, remoteServerEngine, manager.getReplicator().getReplicatorUser().name, manager
 				.getReplicator().getReplicatorUser().password);
+
+		beginResponse();
+		try {
+			sendOk(clientTxId);
+		} finally {
+			endResponse();
+		}
+	}
+
+	protected void replicationDatabase() throws IOException {
+		setDataCommandInfo("Replication command");
+
+		final String action = channel.readString();
+		final String dbName = channel.readString();
+		final String remoteServer = channel.readString();
+
+		final ODistributedServerManager manager = OServerMain.server().getHandler(ODistributedServerManager.class);
+		final ODistributedNode node = manager.getReplicator().getOrCreateDistributedNode(remoteServer);
+
+		if (action.equals("start")) {
+			checkServerAccess("server.replication.start");
+			node.startDatabaseReplication(node.getDatabase(dbName));
+		} else if (action.equals("stop")) {
+			checkServerAccess("server.replication.stop");
+			node.stopDatabaseReplication(node.getDatabase(dbName));
+		}
 
 		beginResponse();
 		try {

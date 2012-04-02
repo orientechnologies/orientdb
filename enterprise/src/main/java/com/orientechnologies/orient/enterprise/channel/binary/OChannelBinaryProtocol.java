@@ -67,6 +67,7 @@ public class OChannelBinaryProtocol {
 	public static final byte	REQUEST_DB_RELOAD							= 73; // SINCE 1.0rc4
 	public static final byte	REQUEST_DB_LIST								= 74; // SINCE 1.0rc6
 	public static final byte	REQUEST_DB_COPY								= 75; // SINCE 1.0rc8
+	public static final byte	REQUEST_DB_REPLICATION				= 76; // SINCE 1.0
 
 	public static final byte	REQUEST_PUSH_RECORD						= 79;
 	public static final byte	PUSH_NODE2CLIENT_DB_CONFIG		= 80;

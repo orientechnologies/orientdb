@@ -16,12 +16,15 @@
 package com.orientechnologies.orient.server.clustering.peer;
 
 import java.io.IOException;
+import java.util.logging.Level;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
+import com.orientechnologies.orient.server.clustering.OClusterLogger;
+import com.orientechnologies.orient.server.clustering.OClusterLogger.DIRECTION;
+import com.orientechnologies.orient.server.clustering.OClusterLogger.TYPE;
 import com.orientechnologies.orient.server.clustering.OClusterNetworkProtocol;
 import com.orientechnologies.orient.server.handler.distributed.OClusterProtocol;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
@@ -37,12 +40,13 @@ public class OPeerNode {
 	private OLeaderCheckerTask							leaderCheckerTask;
 	private long														lastHeartBeat;
 	private OClusterNetworkProtocol					leaderConnection;
+	private OClusterLogger									logger	= new OClusterLogger();
 
 	public OPeerNode(final ODistributedServerManager iManager, final OClusterNetworkProtocol iConnection) {
 		manager = iManager;
 		leaderConnection = iConnection;
 
-		OLogManager.instance().info(this, "CLUSTER <%s> joined as peer node", iManager.getConfig().name);
+		logger.log(this, Level.INFO, TYPE.CLUSTER, DIRECTION.IN, "joined cluster <%s> as peer node", iManager.getConfig().name);
 
 		// FIRST TIME: SCHEDULE THE HEARTBEAT CHECKER
 		leaderCheckerTask = new OLeaderCheckerTask(this);
@@ -77,6 +81,8 @@ public class OPeerNode {
 	public void updateConfigurationToLeader() throws IOException {
 		if (manager.isLeader())
 			return;
+
+		logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.OUT, "Sending cluster configuration to leader");
 
 		final ODocument doc = new ODocument();
 		doc.field("availableDatabases", manager.getReplicator().getLocalDatabaseConfiguration());

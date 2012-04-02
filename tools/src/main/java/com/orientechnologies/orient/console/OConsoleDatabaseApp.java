@@ -1025,8 +1025,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			out.println("Entry removed from the dictionary.");
 	}
 
-	@ConsoleCommand(description = "Share a database with a remote server")
-	public void shareDatabase(
+	@ConsoleCommand(description = "Copy a database to a remote server")
+	public void copyDatabase(
 			@ConsoleParameter(name = "db-name", description = "Name of the database to share") final String iDatabaseName,
 			@ConsoleParameter(name = "db-user", description = "Database user") final String iDatabaseUserName,
 			@ConsoleParameter(name = "db-password", description = "Database password") String iDatabaseUserPassword,
@@ -1038,9 +1038,46 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			if (serverAdmin == null)
 				throw new IllegalStateException("You must be connected to a remote server to share a database");
 
-			serverAdmin.shareDatabase(iDatabaseName, iDatabaseUserName, iDatabaseUserPassword, iRemoteName, iRemoteEngine);
+			serverAdmin.copyDatabase(iDatabaseName, iDatabaseUserName, iDatabaseUserPassword, iRemoteName, iRemoteEngine);
 
 			out.println("Database '" + iDatabaseName + "' has been shared with the server '" + iRemoteName + "'");
+
+		} catch (Exception e) {
+			printError(e);
+		}
+	}
+
+	@ConsoleCommand(description = "Start the replication of a database against a remote server")
+	public void startReplication(
+			@ConsoleParameter(name = "db-name", description = "Name of the database") final String iDatabaseName,
+			@ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName)
+			throws IOException {
+
+		try {
+			if (serverAdmin == null)
+				throw new IllegalStateException("You must be connected to a remote server to start the replication");
+
+			serverAdmin.startReplication(iDatabaseName, iRemoteName);
+
+			out.println("Replication started for database '" + iDatabaseName + "' against the server '" + iRemoteName + "'");
+
+		} catch (Exception e) {
+			printError(e);
+		}
+	}
+
+	@ConsoleCommand(description = "Stop the replication of a database against a remote server")
+	public void stopReplication(@ConsoleParameter(name = "db-name", description = "Name of the database") final String iDatabaseName,
+			@ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName)
+			throws IOException {
+
+		try {
+			if (serverAdmin == null)
+				throw new IllegalStateException("You must be connected to a remote server to stop the replication");
+
+			serverAdmin.stopReplication(iDatabaseName, iRemoteName);
+
+			out.println("Replication started for database '" + iDatabaseName + "' against the server '" + iRemoteName + "'");
 
 		} catch (Exception e) {
 			printError(e);

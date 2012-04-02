@@ -68,6 +68,8 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 
 	public void beginResponse(final int iRequesterId, final long iTimeout) throws IOException, InterruptedException {
 		int unreadResponse = 0;
+		final long startClock = iTimeout > 0 ? System.currentTimeMillis() : 0;
+
 		// WAIT FOR THE RESPONSE
 		do {
 			if (iTimeout <= 0)
@@ -101,6 +103,9 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 			if (debug)
 				OLogManager.instance().debug(this, "%s - Session %d skip response, it is for %d", socket.getRemoteSocketAddress(),
 						iRequesterId, currentSessionId);
+
+			if (iTimeout > 0 && (System.currentTimeMillis() - startClock) > iTimeout)
+				throw new OTimeoutException("Timeout on reading response from the server for the request " + iRequesterId);
 
 			if (unreadResponse > maxUnreadResponses) {
 				final StringBuilder dirtyBuffer = new StringBuilder();
