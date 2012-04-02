@@ -30,10 +30,16 @@ public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAb
 		return (RET) run(iArgs);
 	}
 
+	/**
+	 * Returns the current fetch plan.
+	 */
 	public String getFetchPlan() {
 		return fetchPlan;
 	}
 
+	/**
+	 * Sets the fetch plan to use.
+	 */
 	public OQuery<T> setFetchPlan(final String fetchPlan) {
 		OFetchHelper.checkFetchPlanValid(fetchPlan);
 		if (fetchPlan != null && fetchPlan.length() == 0)
@@ -43,9 +49,11 @@ public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAb
 		return this;
 	}
 
+	/**
+	 * Resets the query removing the result set. Call this to reuse the Query object preventing a pagination.
+	 */
 	@Override
 	public void reset() {
 	}
-	
-	
+
 }
