@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.zip.GZIPOutputStream;
 
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -172,6 +173,14 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 						}
 
 						exportRecord(recordTot, recordNum++, rec);
+					} catch (IOException e) {
+						OLogManager.instance().error(this, "\nError on exporting record %s because of I/O problems", e, rec.getIdentity());
+						// RE-THROW THE EXCEPTION UP
+						throw e;
+					} catch (OIOException e) {
+						OLogManager.instance().error(this, "\nError on exporting record %s because of I/O problems", e, rec.getIdentity());
+						// RE-THROW THE EXCEPTION UP
+						throw e;
 					} catch (Throwable t) {
 						if (rec != null) {
 							final byte[] buffer = rec.toStream();
@@ -180,7 +189,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 									.instance()
 									.error(
 											this,
-											"Error on exporting record %s. It seems corrupted; size: %d bytes, raw content (as string):\n==========\n%s\n==========",
+											"\nError on exporting record %s. It seems corrupted; size: %d bytes, raw content (as string):\n==========\n%s\n==========",
 											t, rec.getIdentity(), buffer.length, new String(buffer));
 						}
 					}

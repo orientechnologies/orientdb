@@ -19,12 +19,14 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.logging.Level;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -69,9 +71,11 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 	protected int												requestType;
 	protected int												clientTxId;
 	protected OServerUserConfiguration	serverUser;
+	private final Level									logClientExceptions;
 
 	public OBinaryNetworkProtocolAbstract(final String iThreadName) {
 		super(Orient.getThreadGroup(), iThreadName);
+		logClientExceptions = Level.parse(OGlobalConfiguration.SERVER_LOG_CLIENT_EXCEPTION_LEVEL.getValueAsString());
 	}
 
 	/**
@@ -184,6 +188,10 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 			channel.writeByte((byte) 0);
 
 			channel.flush();
+
+			if (OLogManager.instance().isLevelEnabled(logClientExceptions))
+				OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s", current,
+						channel.socket.getRemoteSocketAddress());
 
 		} finally {
 			channel.releaseExclusiveLock();

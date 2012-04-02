@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
+import java.util.logging.Level;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -288,7 +289,12 @@ public enum OGlobalConfiguration {
 	CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool", "Maximum channel pool size", Integer.class, 1),
 
 	// SERVER
-	SERVER_CACHE_FILE_STATIC("server.cache.file.static", "Cache static resources loading", Boolean.class, false),
+	SERVER_CACHE_FILE_STATIC("server.cache.staticFile", "Cache static resources loading", Boolean.class, false),
+
+	SERVER_LOG_CLIENT_EXCEPTION_LEVEL(
+			"server.log.clientExceptionLevel",
+			"Logs client exceptions. Use any level supported by Java java.util.logging.Level class: OFF, FINE, CONFIG, INFO, WARNING, SEVERE",
+			Level.class, Level.FINE),
 
 	// DISTRIBUTED SERVERS
 	DISTRIBUTED_ASYNC_TIME_DELAY("distributed.async.timeDelay",
