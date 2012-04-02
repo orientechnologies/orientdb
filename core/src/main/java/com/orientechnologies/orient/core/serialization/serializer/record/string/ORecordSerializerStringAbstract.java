@@ -300,10 +300,12 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 					if (index > 0)
 						if (!integer && c == 'E') {
 							// CHECK FOR SCIENTIFIC NOTATION
-							if (index < iValue.length())
-								index++;
-							if (iValue.charAt(index) == '-')
+							if (index < iValue.length()) {
+								if (iValue.charAt(index + 1) == '-')
+									// JUMP THE DASH IF ANY (NOT MANDATORY)
+									index++;
 								continue;
+							}
 						} else if (c == 'f')
 							return OType.FLOAT;
 						else if (c == 'c')
