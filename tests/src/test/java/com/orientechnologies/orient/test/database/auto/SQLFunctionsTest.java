@@ -315,7 +315,7 @@ public class SQLFunctionsTest {
 			Assert.assertTrue((Integer) d.field("id") <= 1000);
 		}
 
-		OSQLEngine.getInstance().unregisterInlineFunction("bigger");
+		OSQLEngine.getInstance().unregisterFunction("bigger");
 		database.close();
 	}
 }

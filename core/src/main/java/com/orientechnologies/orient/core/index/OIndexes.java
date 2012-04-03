@@ -105,8 +105,10 @@ public final class OIndexes {
      * @param iIndexType index type
      * @return OIndexInternal
      * @throws OConfigurationException if index creation failed
+     * @throws OIndexException if index type does not exist
      */
-    public static OIndexInternal createIndex(ODatabaseRecord iDatabase, String iIndexType) throws OConfigurationException{
+    public static OIndexInternal createIndex(ODatabaseRecord iDatabase, String iIndexType) 
+            throws OConfigurationException, OIndexException{
         final Iterator<OIndexFactory> ite = getAllFactories();
         while(ite.hasNext()){
             final OIndexFactory factory = ite.next();
@@ -115,7 +117,7 @@ public final class OIndexes {
             }
         }
         
-        throw new OConfigurationException(
+        throw new OIndexException(
                 "Index type : " + iIndexType +" is not supported. "
                 + "Types are "+toString(getIndexTypes()));
     }

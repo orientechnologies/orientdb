@@ -17,6 +17,7 @@
 package com.orientechnologies.common.util;
 
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -42,5 +43,29 @@ public class OCollections {
             i++;
         }
         return -1;
+    }
+    
+    /**
+     * Create a string representation of all objects in the given Iterable.
+     * example : [value1,value2,value3]
+     * 
+     * @param iterable
+     * @return String
+     */
+    public static String toString(Iterable<?> iterable){
+        final StringBuilder builder = new StringBuilder();
+        builder.append('[');
+        int cnt = 0;
+        final Iterator ite = iterable.iterator();
+        while(ite.hasNext()){
+            if(cnt!=0){
+                builder.append(',');
+            }
+            cnt++;
+            final Object obj = ite.next();
+            builder.append(obj);
+        }        
+        builder.append(']');
+        return builder.toString();
     }
 }

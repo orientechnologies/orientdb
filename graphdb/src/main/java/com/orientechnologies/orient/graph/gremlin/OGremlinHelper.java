@@ -44,7 +44,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.tinkerpop.blueprints.pgm.impls.orientdb.OrientGraph;
 import com.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngineFactory;
 import com.tinkerpop.gremlin.java.GremlinPipeline;
@@ -68,7 +67,6 @@ public class OGremlinHelper {
 	public OGremlinHelper() {
 		OCommandManager.instance().registerRequester("gremlin", OCommandGremlin.class);
 		OCommandManager.instance().registerExecutor(OCommandGremlin.class, OCommandGremlinExecutor.class);
-		OSQLEngine.getInstance().registerFunction(OSQLFunctionGremlin.NAME, OSQLFunctionGremlin.class);
 	}
 
 	/**

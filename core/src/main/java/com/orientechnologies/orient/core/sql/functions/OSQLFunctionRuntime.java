@@ -101,11 +101,7 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
 
 		final List<String> funcParamsText = OStringSerializerHelper.getParameters(iText);
 
-		function = OSQLEngine.getInstance().getInlineFunction(funcName);
-		if (function == null)
-			// AGGREGATION ?
-			function = OSQLEngine.getInstance().getAggregationFunction(funcName);
-
+		function = OSQLEngine.getInstance().getFunction(funcName);
 		if (function == null)
 			throw new OCommandSQLParsingException("Unknow function " + funcName + "()");
 

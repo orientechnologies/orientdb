@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -25,6 +27,7 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 /**
@@ -150,6 +153,30 @@ public class OIndexFullText extends OIndexMultiValues {
 		return removed;
 	}
 
+    @Override
+    public OIndexInternal<?> create(String iName, OIndexDefinition iIndexDefinition, 
+    ODatabaseRecord iDatabase, String iClusterIndexName, int[] iClusterIdsToIndex, 
+    OProgressListener iProgressListener, OStreamSerializer iValueSerializer) {
+        
+        if (iIndexDefinition.getFields().size() > 1 ){
+			throw new OIndexException(TYPE_ID + " indexes cannot be used as composite ones.");
+        }
+        
+        return super.create(iName, iIndexDefinition, iDatabase, iClusterIndexName, 
+                iClusterIdsToIndex, iProgressListener, iValueSerializer);
+    }
+
+    @Override
+    public OIndexMultiValues create(String iName, OIndexDefinition indexDefinition, 
+    ODatabaseRecord iDatabase, String iClusterIndexName, int[] iClusterIdsToIndex, 
+    OProgressListener iProgressListener) {
+        if (indexDefinition.getFields().size() > 1 ){
+			throw new OIndexException(TYPE_ID + " indexes cannot be used as composite ones.");
+        }
+        return super.create(iName, indexDefinition, iDatabase, iClusterIndexName, 
+                iClusterIdsToIndex, iProgressListener);
+    }
+    
 	@Override
 	public ODocument updateConfiguration() {
 		super.updateConfiguration();

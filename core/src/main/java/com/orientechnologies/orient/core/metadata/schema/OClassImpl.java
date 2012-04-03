@@ -819,17 +819,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     
 	public OIndex<?> createIndex(final String iName, final String iType, final OProgressListener iProgressListener,
 			final String... fields) {
-		if (!(     INDEX_TYPE.DICTIONARY.toString().equals(iType) 
-                || INDEX_TYPE.FULLTEXT.toString().equals(iType) 
-                || INDEX_TYPE.NOTUNIQUE.toString().equals(iType) 
-                || INDEX_TYPE.UNIQUE.toString().equals(iType)))
-			throw new OIndexException("Index of this type (" + iType + ") cannot be used in class indexes.");
 
-		if (fields.length == 0)
+		if (fields.length == 0){
 			throw new OIndexException("List of fields to index cannot be empty.");
-
-		if (fields.length > 1 && INDEX_TYPE.FULLTEXT.toString().equals(iType))
-			throw new OIndexException(INDEX_TYPE.FULLTEXT + " indexes cannot be used as composite ones.");
+        }
 
 		final Set<String> existingFieldNames = properties.keySet();
 		final List<String> fieldsToIndex = new LinkedList<String>();

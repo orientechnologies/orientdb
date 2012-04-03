@@ -1,0 +1,2 @@
+com.orientechnologies.orient.core.sql.functions.ODefaultSQLFunctionFactory
+com.orientechnologies.orient.core.sql.OSQLEngine$ODynamicFunctionFactory
