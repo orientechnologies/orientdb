@@ -36,7 +36,7 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
 
 	protected abstract DB createResource(Object owner, String iDatabaseName, Object... iAdditionalArgs);
 
-	protected void setup(final int iMinSize, final int iMaxSize) {
+	public void setup(final int iMinSize, final int iMaxSize) {
 		if (dbPool == null)
 			synchronized (this) {
 				if (dbPool == null) {
