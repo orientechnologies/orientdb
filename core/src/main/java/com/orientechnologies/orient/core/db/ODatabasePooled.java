@@ -15,10 +15,24 @@
  */
 package com.orientechnologies.orient.core.db;
 
+/**
+ * Basic interface for pooled database implementations.
+ * 
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * 
+ */
 public interface ODatabasePooled {
-	
-	public void reuse(final Object iOwner, final Object[] iAdditionalArgs);
-	
-	public void forceClose();
 
+	/**
+	 * Reuses current instance.
+	 * 
+	 * @param iOwner
+	 * @param iAdditionalArgs
+	 */
+	public void reuse(final Object iOwner, final Object[] iAdditionalArgs);
+
+	/**
+	 * Force closing the current instance avoiding to being reused.
+	 */
+	public void forceClose();
 }

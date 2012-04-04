@@ -21,8 +21,8 @@ import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 /**
- * Pooled wrapper to the ODatabaseObjectTx class. Allows to being reused across calls. The close() method does not close the database
- * for real but release it to the owner pool. The database born as opened and will leave open until the pool is closed.
+ * Pooled wrapper to the ODatabaseObjectTx class. Allows to being reused across calls. The close() method does not close the
+ * database for real but release it to the owner pool. The database born as opened and will leave open until the pool is closed.
  * 
  * @author Luca Garulli
  * @see ODatabasePoolBase
@@ -83,8 +83,9 @@ public class OGraphDatabasePooled extends OGraphDatabase implements ODatabasePoo
 		((ODatabaseRaw) underlying.getUnderlying()).callOnCloseListeners();
 		getLevel1Cache().clear();
 
-		ownerPool.release(this);
+		final OGraphDatabasePool pool = ownerPool;
 		ownerPool = null;
+		pool.release(this);
 	}
 
 	public void forceClose() {

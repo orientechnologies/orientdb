@@ -68,8 +68,10 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
 	public void close() {
 		rollback();
 		getLevel1Cache().clear();
-		ownerPool.release(this);
+
+		final ODatabaseDocumentPool pool = ownerPool;
 		ownerPool = null;
+		pool.release(this);
 	}
 
 	public void forceClose() {

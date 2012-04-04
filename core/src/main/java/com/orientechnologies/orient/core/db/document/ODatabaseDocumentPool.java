@@ -27,9 +27,8 @@ public class ODatabaseDocumentPool extends ODatabasePoolBase<ODatabaseDocumentTx
 	}
 
 	@Override
-	protected ODatabaseDocumentTx createResource(Object owner,
-			String iDatabaseName, Object... iAdditionalArgs) {
-		return new ODatabaseDocumentTxPooled((ODatabaseDocumentPool) owner, iDatabaseName,
-				(String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
+	protected ODatabaseDocumentTx createResource(Object owner, String iDatabaseName, Object... iAdditionalArgs) {
+		return new ODatabaseDocumentTxPooled((ODatabaseDocumentPool) owner, iDatabaseName, (String) iAdditionalArgs[0],
+				(String) iAdditionalArgs[1]);
 	}
 }
