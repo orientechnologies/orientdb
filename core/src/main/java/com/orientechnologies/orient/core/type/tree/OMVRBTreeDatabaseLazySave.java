@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.type.tree;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 
 /**
@@ -37,7 +38,7 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> {
 		super(iDatabase, iRID);
 	}
 
-	public OMVRBTreeDatabaseLazySave(String iClusterName, OStreamSerializer iKeySerializer,
+	public OMVRBTreeDatabaseLazySave(String iClusterName, OBinarySerializer iKeySerializer,
 																	 OStreamSerializer iValueSerializer, int keySize) {
 		super(iClusterName, iKeySerializer, iValueSerializer, keySize);
 	}

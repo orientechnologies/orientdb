@@ -18,12 +18,15 @@ package com.orientechnologies.orient.core.serialization.serializer.stream;
 import java.io.IOException;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 
-public class OStreamSerializerRID implements OStreamSerializer {
+public class OStreamSerializerRID implements OStreamSerializer, OBinarySerializer<OIdentifiable> {
 	public static final String								NAME			= "p";
-
 	public static final OStreamSerializerRID	INSTANCE	= new OStreamSerializerRID();
+	public static final byte ID = 16;
 
 	public String getName() {
 		return NAME;
@@ -41,5 +44,25 @@ public class OStreamSerializerRID implements OStreamSerializer {
 			return null;
 
 		return ((OIdentifiable) iObject).getIdentity().toStream();
+	}
+
+	public int getObjectSize(OIdentifiable object) {
+		return OLinkSerializer.INSTANCE.getObjectSize(object.getIdentity());
+	}
+
+	public void serialize(OIdentifiable object, byte[] stream, int startPosition) {
+		OLinkSerializer.INSTANCE.serialize(object.getIdentity(), stream, startPosition);
+	}
+
+	public ORID deserialize(byte[] stream, int startPosition) {
+		return OLinkSerializer.INSTANCE.deserialize(stream, startPosition);
+	}
+
+	public int getObjectSize(byte[] stream, int startPosition) {
+		return  OLinkSerializer.INSTANCE.getObjectSize(stream, startPosition);
+	}
+
+	public byte getId() {
+		return ID;
 	}
 }

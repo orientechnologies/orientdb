@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.type.tree.provider;
 
-import java.io.IOException;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -27,6 +25,8 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ORecordBytesLazy;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerFactory;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -34,11 +34,11 @@ import com.orientechnologies.orient.core.storage.OStorage;
 public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> {
 	private static final long			serialVersionUID					= 1L;
 
-	public final static byte			CURRENT_PROTOCOL_VERSION	= 1;
+	public final static byte			CURRENT_PROTOCOL_VERSION	= 3;
 
 	protected final OMemoryStream	stream;
-	protected OStreamSerializer		keySerializer;
-	protected OStreamSerializer		valueSerializer;
+	protected OBinarySerializer<K> keySerializer;
+	protected OStreamSerializer  	valueSerializer;
 	protected boolean							keepKeysInMemory;
 	protected boolean							keepValuesInMemory;
 
@@ -47,7 +47,7 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 		record.setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
 	}
 
-	public OMVRBTreeMapProvider(final OStorage iStorage, final String iClusterName, final OStreamSerializer iKeySerializer,
+	public OMVRBTreeMapProvider(final OStorage iStorage, final String iClusterName, final OBinarySerializer<K> iKeySerializer,
 			final OStreamSerializer iValueSerializer) {
 		super(new ORecordBytesLazy(), iStorage, iClusterName);
 		((ORecordBytesLazy) record).recycle(this);
@@ -95,7 +95,7 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 			stream.set(pageSize);
 			stream.set(keySize);
 
-			stream.set(keySerializer.getName());
+			stream.set(keySerializer.getId());
 			stream.set(valueSerializer.getName());
 
 			final byte[] result = stream.toByteArray();
@@ -116,12 +116,9 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 				// @COMPATIBILITY BEFORE 0.9.25
 				stream.getAsByte();
 				if (protocolVersion != CURRENT_PROTOCOL_VERSION)
-					OLogManager
-							.instance()
-							.debug(
-									this,
-									"Found tree %s created with MVRBTree protocol version %d while current one supports the version %d. The tree will be migrated transparently",
-									getRecord().getIdentity(), protocolVersion, CURRENT_PROTOCOL_VERSION);
+					throw new OSerializationException(
+									"The index has been created with a previous version of OrientDB. To use it with this version of OrientDB you need to export and import your database. "
+													+ protocolVersion + "<->" + CURRENT_PROTOCOL_VERSION);
 			}
 
 			root = new ORecordId();
@@ -141,7 +138,8 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 			} else
 				keySize = stream.getAsInteger();
 
-			serializerFromStream(stream);
+			keySerializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(stream.getAsByte());
+			valueSerializer = OStreamSerializerFactory.get(stream.getAsString());
 
 		} catch (Exception e) {
 			OLogManager.instance().error(this, "Error on unmarshalling OMVRBTreeMapProvider object from record: %s", e,
@@ -150,10 +148,5 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 			OProfiler.getInstance().stopChrono("OMVRBTreeMapProvider.fromStream", timer);
 		}
 		return this;
-	}
-
-	protected void serializerFromStream(final OMemoryStream stream) throws IOException {
-		keySerializer = OStreamSerializerFactory.get(stream.getAsString());
-		valueSerializer = OStreamSerializerFactory.get(stream.getAsString());
 	}
 }

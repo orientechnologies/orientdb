@@ -367,6 +367,104 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 		}
 	}
 
+
+	@Override
+	public OMVRBTreeEntry<K, V> getCeilingEntry(K key, PartialSearchMode partialSearchMode) {
+		for (int i = 0; i < OPTIMIZE_MAX_RETRY; ++i) {
+			try {
+				return super.getCeilingEntry(key, partialSearchMode);
+			} catch (OLowMemoryException e) {
+				OLogManager.instance().debug(this, "Optimization required during node search %d/%d", i, OPTIMIZE_MAX_RETRY);
+
+				// LOW MEMORY DURING LOAD: THIS MEANS DEEP LOADING OF NODES. EXECUTE THE OPTIMIZATION AND RETRY IT
+				optimize(true);
+
+				System.gc();
+
+				if (i > 0)
+					// WAIT A PROPORTIONAL TIME
+					try {
+						Thread.sleep(300 * i);
+					} catch (InterruptedException e1) {
+					}
+			}
+		}
+
+		throw new OLowMemoryException("OMVRBTreePersistent.getCeilingEntry()");
+	}
+
+	@Override
+	public OMVRBTreeEntry<K, V> getFloorEntry(K key, PartialSearchMode partialSearchMode) {
+		for (int i = 0; i < OPTIMIZE_MAX_RETRY; ++i) {
+			try {
+				return super.getFloorEntry(key, partialSearchMode);
+			} catch (OLowMemoryException e) {
+				OLogManager.instance().debug(this, "Optimization required during node search %d/%d", i, OPTIMIZE_MAX_RETRY);
+
+				// LOW MEMORY DURING LOAD: THIS MEANS DEEP LOADING OF NODES. EXECUTE THE OPTIMIZATION AND RETRY IT
+				optimize(true);
+
+				System.gc();
+
+				if (i > 0)
+					// WAIT A PROPORTIONAL TIME
+					try {
+						Thread.sleep(300 * i);
+					} catch (InterruptedException e1) {
+					}
+			}
+		}
+		throw new OLowMemoryException("OMVRBTreePersistent.getFloorEntry()");
+	}
+
+	@Override
+	public OMVRBTreeEntry<K, V> getHigherEntry(K key) {
+		for (int i = 0; i < OPTIMIZE_MAX_RETRY; ++i) {
+			try {
+				return super.getHigherEntry(key);
+			} catch (OLowMemoryException e) {
+				OLogManager.instance().debug(this, "Optimization required during node search %d/%d", i, OPTIMIZE_MAX_RETRY);
+
+				// LOW MEMORY DURING LOAD: THIS MEANS DEEP LOADING OF NODES. EXECUTE THE OPTIMIZATION AND RETRY IT
+				optimize(true);
+
+				System.gc();
+
+				if (i > 0)
+					// WAIT A PROPORTIONAL TIME
+					try {
+						Thread.sleep(300 * i);
+					} catch (InterruptedException e1) {
+					}
+			}
+		}
+		throw new OLowMemoryException("OMVRBTreePersistent.getHigherEntry)");
+	}
+
+	@Override
+	public OMVRBTreeEntry<K, V> getLowerEntry(K key) {
+		for (int i = 0; i < OPTIMIZE_MAX_RETRY; ++i) {
+			try {
+				return super.getLowerEntry(key);
+			} catch (OLowMemoryException e) {
+				OLogManager.instance().debug(this, "Optimization required during node search %d/%d", i, OPTIMIZE_MAX_RETRY);
+
+				// LOW MEMORY DURING LOAD: THIS MEANS DEEP LOADING OF NODES. EXECUTE THE OPTIMIZATION AND RETRY IT
+				optimize(true);
+
+				System.gc();
+
+				if (i > 0)
+					// WAIT A PROPORTIONAL TIME
+					try {
+						Thread.sleep(300 * i);
+					} catch (InterruptedException e1) {
+					}
+			}
+		}
+		throw new OLowMemoryException("OMVRBTreePersistent.getLowerEntry()");
+	}
+
 	@Override
 	public V put(final K key, final V value) {
 		optimize();
@@ -921,8 +1019,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 	/**
 	 * Removes the node from the local cache.
 	 * 
-	 * @param iNode
-	 *          Node to remove
+	 * @param iRid
+	 *          RID of node to remove
 	 */
 	protected void removeNodeFromCache(final ORID iRid) {
 		cache.remove(iRid);

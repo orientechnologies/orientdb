@@ -9,7 +9,7 @@ import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.collection.OMVRBTreeCompositeTest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OCompositeKeySerializer;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerLiteral;
 import com.orientechnologies.orient.core.storage.OStorage;
 

@@ -1,12 +1,12 @@
 Manifest-Version: 1.0
 Export-Package: com.orientechnologies.orient.console;uses:="com.orient
- echnologies.orient.core.storage.impl.local,com.orientechnologies.orie
- nt.enterprise.command,com.orientechnologies.orient.core.serialization
+ echnologies.orient.enterprise.command,com.orientechnologies.orient.co
+ re.storage.impl.local,com.orientechnologies.orient.core.serialization
  .serializer.record.string,com.orientechnologies.orient.core.tx,com.or
  ientechnologies.orient.core.config,com.orientechnologies.orient.core,
  com.orientechnologies.orient.core.sql,com.orientechnologies.common.io
- ,com.orientechnologies.common.profiler,com.orientechnologies.common.e
- xception,com.orientechnologies.common.console,com.orientechnologies.o
+ ,com.orientechnologies.common.exception,com.orientechnologies.common.
+ profiler,com.orientechnologies.common.console,com.orientechnologies.o
  rient.core.db,com.orientechnologies.orient.core.iterator,com.orientec
  hnologies.orient.core.index,com.orientechnologies.orient.core.metadat
  a.schema,com.orientechnologies.orient.core.dictionary,com.orientechno
@@ -25,7 +25,7 @@ Export-Package: com.orientechnologies.orient.console;uses:="com.orient
  om.orientechnologies.common.console.annotation,com.orientechnologies.
  orient.core.type"
 Implementation-Title: OrientDB Tools
-Built-By: Luca
+Built-By: =4@59
 Tool: Bnd-1.15.0
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Implementation-Vendor: Orient Technologies
@@ -42,8 +42,8 @@ Bundle-Name: OrientDB Tools
 Created-By: Apache Maven Bundle Plugin
 Bundle-Vendor: Orient Technologies
 Bundle-Version: 1.0.0.SNAPSHOT
-Build-Jdk: 1.7.0_03
-Bnd-LastModified: 1332929415895
+Build-Jdk: 1.6.0_30
+Bnd-LastModified: 1333567019002
 Bundle-ManifestVersion: 2
 Bundle-Description: OrientDB NoSQL document graph dbms
 Bundle-DocURL: http://www.orientechnologies.com

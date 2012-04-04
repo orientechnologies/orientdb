@@ -21,6 +21,7 @@ import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
 import com.orientechnologies.orient.core.config.OStorageLogicalClusterConfiguration;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLongSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerLong;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -65,7 +66,7 @@ public class OClusterLogical implements OCluster {
 
 		try {
 			map = new OMVRBTreeStorage<Long, OPhysicalPosition>(iStorage, iStorage.getClusterById(iPhysicalClusterId).getName(),
-					OStreamSerializerLong.INSTANCE, OStreamSerializerAnyStreamable.INSTANCE);
+							OLongSerializer.INSTANCE, OStreamSerializerAnyStreamable.INSTANCE);
 
 			total = new OPhysicalPosition(0, -1, (byte) 0);
 			map.put(new Long(-1), total);

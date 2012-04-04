@@ -582,7 +582,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 * @param partialSearchMode
 	 *          In case of {@link OCompositeKey} key is passed in this parameter will be used to find preferred one.
 	 */
-	public final OMVRBTreeEntry<K, V> getCeilingEntry(final K key, final PartialSearchMode partialSearchMode) {
+	public OMVRBTreeEntry<K, V> getCeilingEntry(final K key, final PartialSearchMode partialSearchMode) {
 		OMVRBTreeEntry<K, V> p = getEntry(key, true, partialSearchMode);
 
 		if (p == null)
@@ -610,7 +610,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 * @param partialSearchMode
 	 *          In case of {@link OCompositeKey} composite key is passed in this parameter will be used to find preferred one.
 	 */
-	public final OMVRBTreeEntry<K, V> getFloorEntry(final K key, final PartialSearchMode partialSearchMode) {
+	public OMVRBTreeEntry<K, V> getFloorEntry(final K key, final PartialSearchMode partialSearchMode) {
 		OMVRBTreeEntry<K, V> p = getEntry(key, true, partialSearchMode);
 
 		if (p == null)
@@ -631,7 +631,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		if (partialSearchMode.equals(PartialSearchMode.NONE))
 			return foundEntry;
 
-		final OCompositeKey keyToSearch = (OCompositeKey) key;
+		final OCompositeKey keyToSearch = key;
 		final OCompositeKey foundKey = (OCompositeKey) foundEntry.getKey();
 
 		if (keyToSearch.getKeys().size() < keySize) {
@@ -668,7 +668,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 * Gets the entry for the least key greater than the specified key; if no such entry exists, returns the entry for the least key
 	 * greater than the specified key; if no such entry exists returns <tt>null</tt>.
 	 */
-	public final OMVRBTreeEntry<K, V> getHigherEntry(final K key) {
+	public OMVRBTreeEntry<K, V> getHigherEntry(final K key) {
 		final OMVRBTreeEntry<K, V> p = getEntry(key, true, PartialSearchMode.HIGHEST_BOUNDARY);
 
 		if (p == null)
@@ -688,7 +688,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 * Returns the entry for the greatest key less than the specified key; if no such entry exists (i.e., the least key in the Tree is
 	 * greater than the specified key), returns <tt>null</tt>.
 	 */
-	public final OMVRBTreeEntry<K, V> getLowerEntry(final K key) {
+	public OMVRBTreeEntry<K, V> getLowerEntry(final K key) {
 		final OMVRBTreeEntry<K, V> p = getEntry(key, true, PartialSearchMode.LOWEST_BOUNDARY);
 
 		if (p == null)

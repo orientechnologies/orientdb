@@ -20,8 +20,8 @@ import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
-import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider;
 
 /**
@@ -36,7 +36,7 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
 		super(new OMVRBTreeMapProvider<K, V>(null, iDatabase.getClusterNameById(iRID.getClusterId()), iRID));
 	}
 
-	public OMVRBTreeDatabase(String iClusterName, final OStreamSerializer iKeySerializer,
+	public OMVRBTreeDatabase(String iClusterName, final OBinarySerializer iKeySerializer,
 													 final OStreamSerializer iValueSerializer, int keySize) {
 		super(new OMVRBTreeMapProvider<K, V>(null, iClusterName, iKeySerializer, iValueSerializer), keySize);
 	}

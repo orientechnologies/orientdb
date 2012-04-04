@@ -46,10 +46,11 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OCompositeKeySerializer;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerLiteral;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProviderAbstract;
@@ -113,11 +114,11 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 					clustersToIndex.add(iDatabase.getClusterNameById(id));
 
 			if (indexDefinition != null && indexDefinition.getTypes().length > 1) {
-				final OStreamSerializer keySerializer = OCompositeKeySerializer.INSTANCE;
+				final OBinarySerializer keySerializer = OCompositeKeySerializer.INSTANCE;
 				map = new OMVRBTreeDatabaseLazySave<Object, T>(iClusterIndexName, keySerializer, iValueSerializer,
 								indexDefinition.getTypes().length);
 			}	else {
-				final OStreamSerializer keySerializer = OStreamSerializerLiteral.INSTANCE;
+				final OBinarySerializer keySerializer = OSimpleKeySerializer.INSTANCE;
 				map = new OMVRBTreeDatabaseLazySave<Object, T>(iClusterIndexName, keySerializer, iValueSerializer,	1);
 			}
 
