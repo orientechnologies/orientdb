@@ -117,7 +117,12 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 				if (KEYWORD_KEY.equalsIgnoreCase(compiledFilter.getRootCondition().getLeft().toString()))
 					// FOUND KEY ONLY
 					key = compiledFilter.getRootCondition().getRight();
-				else if (compiledFilter.getRootCondition().getLeft() instanceof OSQLFilterCondition) {
+
+				else if (KEYWORD_RID.equalsIgnoreCase(compiledFilter.getRootCondition().getLeft().toString())) {
+					// BY RID
+					value = compiledFilter.getRootCondition().getRight();
+
+				} else if (compiledFilter.getRootCondition().getLeft() instanceof OSQLFilterCondition) {
 					// KEY AND VALUE
 					final OSQLFilterCondition leftCondition = (OSQLFilterCondition) compiledFilter.getRootCondition().getLeft();
 					if (KEYWORD_KEY.equalsIgnoreCase(leftCondition.getLeft().toString()))
@@ -129,12 +134,12 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 
 				}
 
-				if (key == null)
-					throw new OCommandExecutionException("'Key' field is required for queries against indexes");
-
 				final boolean result;
 				if (value != VALUE_NOT_FOUND)
-					result = index.remove(key, (OIdentifiable) value);
+					if (key != null)
+						result = index.remove(key, (OIdentifiable) value);
+					else
+						return index.remove((OIdentifiable) value);
 				else
 					result = index.remove(key);
 				return result ? 1 : 0;
