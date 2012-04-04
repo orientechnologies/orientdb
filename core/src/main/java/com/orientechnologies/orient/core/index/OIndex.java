@@ -50,32 +50,71 @@ public interface OIndex<T> {
 	public OIndex<T> create(String iName, final OIndexDefinition iIndexDefinition, final ODatabaseRecord iDatabase,
 			final String iClusterIndexName, final int[] iClusterIdsToIndex, final OProgressListener iProgressListener);
 
+	/**
+	 * Unloads the index freeing the resource in memory.
+	 */
 	public void unload();
 
-    /**
-     * Types of the keys that index can accept, if index contains composite key, 
-     * list of types of elements from which this index consist will be returned, 
-     * otherwise single element (key type obviously) will be returned.
-     */
+	/**
+	 * Types of the keys that index can accept, if index contains composite key, list of types of elements from which this index
+	 * consist will be returned, otherwise single element (key type obviously) will be returned.
+	 */
 	public OType[] getKeyTypes();
 
+	/**
+	 * Returns an iterator to walk across all the index items.
+	 * 
+	 * @return
+	 */
 	public Iterator<Entry<Object, T>> iterator();
 
 	/**
 	 * Gets the set of records associated with the passed key.
 	 * 
 	 * @param iKey
-	 *          Key to search
+	 *          The key to search
 	 * @return The Record set if found, otherwise an empty Set
 	 */
 	public T get(Object iKey);
 
+	/**
+	 * Tells if a key is contained in the index.
+	 * 
+	 * @param iKey
+	 *          The key to search
+	 * @return True if the key is contained, otherwise false
+	 */
 	public boolean contains(Object iKey);
 
-	public OIndex<T> put(final Object iKey, final OIdentifiable iValue);
+	/**
+	 * Inserts a new entry in the index. The behaviour depends by the index implementation.
+	 * 
+	 * @param iKey
+	 *          Entry's key
+	 * @param iValue
+	 *          Entry's value as OIdentifiable instance
+	 * @return The index instance itself to allow in chain calls
+	 */
+	public OIndex<T> put(Object iKey, OIdentifiable iValue);
 
-	public boolean remove(final Object iKey);
+	/**
+	 * Removes an entry by its key.
+	 * 
+	 * @param iKey
+	 *          The entry's key to remove
+	 * @return True if the entry has been found and removed, otherwise false
+	 */
+	public boolean remove(Object iKey);
 
+	/**
+	 * Removes an entry by its key and value.
+	 * 
+	 * @param iKey
+	 *          The entry's key to remove
+	 * @param iValue
+	 *          Entry's value as OIdentifiable instance
+	 * @return True if the entry has been found and removed, otherwise false
+	 */
 	public boolean remove(Object iKey, OIdentifiable iRID);
 
 	/**
@@ -87,8 +126,18 @@ public interface OIndex<T> {
 	 */
 	public int remove(OIdentifiable iRID);
 
+	/**
+	 * Clears the index removing all the entries in one shot.
+	 * 
+	 * @return The index instance itself to allow in chain calls
+	 */
 	public OIndex<T> clear();
 
+	/**
+	 * Returns an Iterable instance of all the keys contained in the index.
+	 * 
+	 * @return A Iterable<Object> that lazy load the entries once fetched
+	 */
 	public Iterable<Object> keys();
 
 	/**
@@ -208,29 +257,58 @@ public interface OIndex<T> {
 
 	public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo);
 
-    /**
-     * @return number of entries in the index.
-     */
+	/**
+	 * @return number of entries in the index.
+	 */
 	public long getSize();
 
-    /**
-     * For unique indexes it will throw exception if passed in key is contained in index.
-     * 
-     * @param iRecord
-     * @param iKey 
-     */
+	/**
+	 * For unique indexes it will throw exception if passed in key is contained in index.
+	 * 
+	 * @param iRecord
+	 * @param iKey
+	 */
 	public void checkEntry(final OIdentifiable iRecord, final Object iKey);
 
+	/**
+	 * Stores all the in-memory changes to disk.
+	 * 
+	 * @return The index instance itself to allow in chain calls
+	 */
 	public OIndex<T> lazySave();
 
+	/**
+	 * Delete the index.
+	 * 
+	 * @return The index instance itself to allow in chain calls
+	 */
 	public OIndex<T> delete();
 
+	/**
+	 * Returns the index name.
+	 * 
+	 * @return The name of the index
+	 */
 	public String getName();
 
+	/**
+	 * Returns the type of the index as string.
+	 */
 	public String getType();
 
+	/**
+	 * Tells if the index is automatic. Automatic means it's maintained automatically by OrientDB. This is the case of indexes created
+	 * against schema properties. Automatic indexes can always been rebuilt.
+	 * 
+	 * @return True if the index is automatic, otherwise false
+	 */
 	public boolean isAutomatic();
 
+	/**
+	 * Rebuilds an automatic index.
+	 * 
+	 * @return The number of entries rebuilt
+	 */
 	public long rebuild();
 
 	/**
@@ -238,18 +316,32 @@ public interface OIndex<T> {
 	 */
 	public long rebuild(final OProgressListener iProgressListener);
 
+	/**
+	 * Returns the index configuration.
+	 * 
+	 * @return An ODocument object containing all the index properties
+	 */
 	public ODocument getConfiguration();
 
+	/**
+	 * Returns the Record Identity of the index if persistent.
+	 * 
+	 * @return Valid ORID if it's persistent, otherwise ORID(-1:-1)
+	 */
 	public ORID getIdentity();
 
 	/**
-	 * Commit changes as atomic.
+	 * Commits changes as atomic. It's called during the transaction's commit.
 	 * 
 	 * @param iDocument
 	 *          Collection of entries to commit
 	 */
 	public void commit(ODocument iDocument);
 
+	/**
+	 * Returns the internal index used.
+	 * 
+	 */
 	public OIndexInternal<T> getInternal();
 
 	/**
@@ -266,7 +358,6 @@ public interface OIndex<T> {
 	/**
 	 * Returns a set of documents with keys in specific set
 	 * 
-	 * 
 	 * @param iKeys
 	 *          Set of keys
 	 * @return
@@ -276,5 +367,4 @@ public interface OIndex<T> {
 	public Collection<ODocument> getEntries(Collection<?> iKeys, int maxEntriesToFetch);
 
 	public OIndexDefinition getDefinition();
-
 }

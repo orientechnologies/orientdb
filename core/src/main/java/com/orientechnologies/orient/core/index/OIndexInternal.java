@@ -37,6 +37,9 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
 	public static final String	INDEX_DEFINITION				= "indexDefinition";
 	public static final String	INDEX_DEFINITION_CLASS	= "indexDefinitionClass";
 
+	/**
+	 * Flushes in-memory changes to disk.
+	 */
 	public void flush();
 
 	/**
@@ -48,7 +51,19 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
 	 */
 	public int count(final OIdentifiable iRecord);
 
+	/**
+	 * Loads the index giving the configuration.
+	 * 
+	 * @param iConfig
+	 *          ODocument instance containing the configuration
+	 */
 	public OIndexInternal<T> loadFromConfiguration(ODocument iConfig);
 
+	/**
+	 * Saves the index configuration to disk.
+	 * 
+	 * @return The configuration as ODocument instance
+	 * @see #getConfiguration()
+	 */
 	public ODocument updateConfiguration();
 }
