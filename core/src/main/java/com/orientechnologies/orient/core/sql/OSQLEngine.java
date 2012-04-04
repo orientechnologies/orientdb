@@ -125,6 +125,7 @@ public class OSQLEngine {
 	public static void registerOperator(final OQueryOperator iOperator) {
 		final OQueryOperator[] ops = new OQueryOperator[RECORD_OPERATORS.length + 1];
 		System.arraycopy(RECORD_OPERATORS, 0, ops, 0, RECORD_OPERATORS.length);
+        ops[RECORD_OPERATORS.length-1] = iOperator;
 		RECORD_OPERATORS = ops;
 	}
 

@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import java.util.*;
@@ -88,17 +89,7 @@ public final class OIndexes {
         }
         return types;
     }
-    
-    private static String toString(Set<String> types){
-        final StringBuilder builder = new StringBuilder();
-        builder.append('[');
-        for(String type : types){
-            builder.append(type).append(',');
-        }
-        builder.append(']');
-        return builder.toString();
-    }
-    
+        
     /**
      * 
      * @param iDatabase
@@ -119,7 +110,7 @@ public final class OIndexes {
         
         throw new OIndexException(
                 "Index type : " + iIndexType +" is not supported. "
-                + "Types are "+toString(getIndexTypes()));
+                + "Types are "+OCollections.toString(getIndexTypes()));
     }
     
     /**
