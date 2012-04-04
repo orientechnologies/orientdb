@@ -131,12 +131,7 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 			else
 				pageSize = stream.getAsInteger();
 
-			if (protocolVersion < 1) {
-				keySize = 1;
-				OLogManager.instance().warn(this,
-						"Previous index version was found, " + " partial composite index queries may do not work if you do not rebuild index.");
-			} else
-				keySize = stream.getAsInteger();
+			keySize = stream.getAsInteger();
 
 			keySerializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(stream.getAsByte());
 			valueSerializer = OStreamSerializerFactory.get(stream.getAsString());
