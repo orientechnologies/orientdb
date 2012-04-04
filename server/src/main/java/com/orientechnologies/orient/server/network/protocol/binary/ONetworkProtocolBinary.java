@@ -605,7 +605,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 		setDataCommandInfo("Close Database");
 
 		if (connection != null) {
-			if (connection.data.protocolVersion < 9)
+			if (connection.data.protocolVersion > 0 && connection.data.protocolVersion < 9)
 				// OLD CLIENTS WAIT FOR A OK
 				sendOk(clientTxId);
 
@@ -1014,7 +1014,12 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 	}
 
 	private void sendDatabaseInformation() throws IOException {
-		channel.writeShort((short) connection.database.getClusterNames().size());
+		final int clusters = connection.database.getClusterNames().size();
+		if (connection.data.protocolVersion >= 7)
+			channel.writeShort((short) clusters);
+		else
+			channel.writeInt(clusters);
+
 		for (OCluster c : (connection.database.getStorage()).getClusterInstances()) {
 			if (c != null) {
 				channel.writeString(c.getName());
