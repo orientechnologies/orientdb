@@ -15,8 +15,16 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.imageio.spi.ServiceRegistry;
 
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -51,28 +59,25 @@ import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMinus;
 import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMod;
 import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMultiply;
 import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorPlus;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import javax.imageio.spi.ServiceRegistry;
 
 public class OSQLEngine {
-    
-    private static Set<OSQLFunctionFactory> FUNCTION_FACTORIES = null;
-    
-    protected Map<String, Class<? extends OCommandExecutorSQLAbstract>>	commands							= new HashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
+
+	private static Set<OSQLFunctionFactory>															FUNCTION_FACTORIES	= null;
+
+	protected Map<String, Class<? extends OCommandExecutorSQLAbstract>>	commands						= new HashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
 
 	// WARNING: ORDER IS IMPORTANT TO AVOID SUB-STRING LIKE "IS" and AND "INSTANCEOF": INSTANCEOF MUST BE PLACED BEFORE! AND ALSO FOR
 	// PERFORMANCE (MOST USED BEFORE)
-	public static OQueryOperator[]																			RECORD_OPERATORS			= { new OQueryOperatorEquals(),
+	public static OQueryOperator[]																			RECORD_OPERATORS		= { new OQueryOperatorEquals(),
 			new OQueryOperatorAnd(), new OQueryOperatorOr(), new OQueryOperatorNotEquals(), new OQueryOperatorNot(),
 			new OQueryOperatorMinorEquals(), new OQueryOperatorMinor(), new OQueryOperatorMajorEquals(), new OQueryOperatorContainsAll(),
 			new OQueryOperatorMajor(), new OQueryOperatorLike(), new OQueryOperatorMatches(), new OQueryOperatorInstanceof(),
 			new OQueryOperatorIs(), new OQueryOperatorIn(), new OQueryOperatorContainsKey(), new OQueryOperatorContainsValue(),
 			new OQueryOperatorContainsText(), new OQueryOperatorContains(), new OQueryOperatorContainsText(),
 			new OQueryOperatorTraverse(), new OQueryOperatorBetween(), new OQueryOperatorPlus(), new OQueryOperatorMinus(),
-			new OQueryOperatorMultiply(), new OQueryOperatorDivide(), new OQueryOperatorMod()		};
+			new OQueryOperatorMultiply(), new OQueryOperatorDivide(), new OQueryOperatorMod()	};
 
-	protected static final OSQLEngine																					INSTANCE							= new OSQLEngine();
+	protected static final OSQLEngine																		INSTANCE						= new OSQLEngine();
 
 	protected OSQLEngine() {
 		// COMMANDS
@@ -125,7 +130,7 @@ public class OSQLEngine {
 	public static void registerOperator(final OQueryOperator iOperator) {
 		final OQueryOperator[] ops = new OQueryOperator[RECORD_OPERATORS.length + 1];
 		System.arraycopy(RECORD_OPERATORS, 0, ops, 0, RECORD_OPERATORS.length);
-        ops[RECORD_OPERATORS.length-1] = iOperator;
+		ops[RECORD_OPERATORS.length - 1] = iOperator;
 		RECORD_OPERATORS = ops;
 	}
 
@@ -138,69 +143,66 @@ public class OSQLEngine {
 	}
 
 	public OSQLFunction getFunction(String iFunctionName) {
-        iFunctionName = iFunctionName.toUpperCase(Locale.ENGLISH);
-        
+		iFunctionName = iFunctionName.toUpperCase(Locale.ENGLISH);
+
 		final Iterator<OSQLFunctionFactory> ite = getFunctionFactories();
-        while(ite.hasNext()){
-            final OSQLFunctionFactory factory = ite.next();
-            if(factory.getNames().contains(iFunctionName)){
-                return factory.createFunction(iFunctionName);
-            }
-        }
-        
-        throw new OCommandSQLParsingException("No function for name "+iFunctionName+
-                ", available names are : "+OCollections.toString(getFunctionNames()));
+		while (ite.hasNext()) {
+			final OSQLFunctionFactory factory = ite.next();
+			if (factory.getNames().contains(iFunctionName)) {
+				return factory.createFunction(iFunctionName);
+			}
+		}
+
+		throw new OCommandSQLParsingException("No function for name " + iFunctionName + ", available names are : "
+				+ OCollections.toString(getFunctionNames()));
 	}
 
 	public void unregisterFunction(String iName) {
 		iName = iName.toUpperCase(Locale.ENGLISH);
-        ODynamicFunctionFactory.FUNCTIONS.remove(iName);
+		ODynamicFunctionFactory.FUNCTIONS.remove(iName);
 	}
-    
-    /**
-     * @return Iterator of all function factories
-     */
-    public static synchronized Iterator<OSQLFunctionFactory> getFunctionFactories(){
-        if(FUNCTION_FACTORIES == null){
-            final Iterator<OSQLFunctionFactory> ite = ServiceRegistry.lookupProviders(OSQLFunctionFactory.class);
-            final Set<OSQLFunctionFactory> factories = new HashSet<OSQLFunctionFactory>();
-            while(ite.hasNext()){
-                factories.add(ite.next());
-            }
-            FUNCTION_FACTORIES = Collections.unmodifiableSet(factories);
-        }
-        return FUNCTION_FACTORIES.iterator();
-    }
-    
-    /**
-     * Iterates on all factories and append all function names.
-     * 
-     * @return Set of all function names.
-     */
-    public static Set<String> getFunctionNames(){
-        final Set<String> types = new HashSet<String>();
-        final Iterator<OSQLFunctionFactory> ite = getFunctionFactories();
-        while(ite.hasNext()){
-            types.addAll(ite.next().getNames());
-        }
-        return types;
-    }
-            
-    /**
-     * Scans for factory plug-ins on the application class path. This method is
-     * needed because the application class path can theoretically change, or
-     * additional plug-ins may become available. Rather than re-scanning the
-     * classpath on every invocation of the API, the class path is scanned
-     * automatically only on the first invocation. Clients can call this method
-     * to prompt a re-scan. Thus this method need only be invoked by
-     * sophisticated applications which dynamically make new plug-ins available
-     * at runtime.
-     */
-    public static synchronized void scanForPlugins() {
-        //clear cache, will cause a rescan on next getFunctionFactories call
-        FUNCTION_FACTORIES = null; 
-    }
-    
+
+	/**
+	 * @return Iterator of all function factories
+	 */
+	public static synchronized Iterator<OSQLFunctionFactory> getFunctionFactories() {
+		if (FUNCTION_FACTORIES == null) {
+			final Iterator<OSQLFunctionFactory> ite = ServiceRegistry.lookupProviders(OSQLFunctionFactory.class);
+			final Set<OSQLFunctionFactory> factories = new HashSet<OSQLFunctionFactory>();
+			while (ite.hasNext()) {
+				factories.add(ite.next());
+			}
+			FUNCTION_FACTORIES = Collections.unmodifiableSet(factories);
+		}
+		return FUNCTION_FACTORIES.iterator();
+	}
+
+	/**
+	 * Iterates on all factories and append all function names.
+	 * 
+	 * @return Set of all function names.
+	 */
+	public static Set<String> getFunctionNames() {
+		final Set<String> types = new HashSet<String>();
+		final Iterator<OSQLFunctionFactory> ite = getFunctionFactories();
+		while (ite.hasNext()) {
+			types.addAll(ite.next().getNames());
+		}
+		return types;
+	}
+
+	/**
+	 * Scans for factory plug-ins on the application class path. This method is needed because the application class path can
+	 * theoretically change, or additional plug-ins may become available. Rather than re-scanning the classpath on every invocation of
+	 * the API, the class path is scanned automatically only on the first invocation. Clients can call this method to prompt a
+	 * re-scan. Thus this method need only be invoked by sophisticated applications which dynamically make new plug-ins available at
+	 * runtime.
+	 */
+	public static synchronized void scanForPlugins() {
+		// clear cache, will cause a rescan on next getFunctionFactories call
+		FUNCTION_FACTORIES = null;
+	}
+
 	public OCommandExecutorSQLAbstract getCommand(final String iText) {
 		int pos = -1;
 		Class<? extends OCommandExecutorSQLAbstract> commandClass = null;
@@ -231,36 +233,36 @@ public class OSQLEngine {
 	public static OSQLEngine getInstance() {
 		return INSTANCE;
 	}
-    
-    public static class ODynamicFunctionFactory implements OSQLFunctionFactory{
 
-        private static final Map<String,Object> FUNCTIONS = new ConcurrentHashMap<String, Object>();
-        
-        public Set<String> getNames() {
-            return FUNCTIONS.keySet();
-        }
+	public static class ODynamicFunctionFactory implements OSQLFunctionFactory {
 
-        public OSQLFunction createFunction(String name) throws OCommandExecutionException {
-            final Object obj = FUNCTIONS.get(name);
+		private static final Map<String, Object>	FUNCTIONS	= new ConcurrentHashMap<String, Object>();
 
-            if(obj == null){
-                throw new OCommandExecutionException("Unknowned function name :" + name);
-            }
+		public Set<String> getNames() {
+			return FUNCTIONS.keySet();
+		}
 
-            if(obj instanceof OSQLFunction){
-                return (OSQLFunction) obj;
-            }else{
-                //it's a class
-                final Class clazz = (Class) obj;
-                try {
-                    return (OSQLFunction) clazz.newInstance();
-                } catch (Exception e) {
-                    throw new OCommandExecutionException("Error in creation of function " + name
-                            + "(). Probably there is not an empty constructor or the constructor generates errors", e);
-                }
-            }
-        }
-        
-    }
-    
+		public OSQLFunction createFunction(String name) throws OCommandExecutionException {
+			final Object obj = FUNCTIONS.get(name);
+
+			if (obj == null) {
+				throw new OCommandExecutionException("Unknowned function name :" + name);
+			}
+
+			if (obj instanceof OSQLFunction) {
+				return (OSQLFunction) obj;
+			} else {
+				// it's a class
+				final Class<?> clazz = (Class<?>) obj;
+				try {
+					return (OSQLFunction) clazz.newInstance();
+				} catch (Exception e) {
+					throw new OCommandExecutionException("Error in creation of function " + name
+							+ "(). Probably there is not an empty constructor or the constructor generates errors", e);
+				}
+			}
+		}
+
+	}
+
 }

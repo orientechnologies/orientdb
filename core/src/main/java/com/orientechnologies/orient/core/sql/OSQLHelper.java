@@ -250,30 +250,29 @@ public class OSQLHelper {
 		return iObject;
 	}
 
-	public static void bindParameters(final ODocument iDocument, final Map<String, Object> iFields, final Map<Object, Object> iArgs) {
-		int paramCounter = 0;
-
-		// BIND VALUES
-		for (Entry<String, Object> field : iFields.entrySet()) {
-			if (field.getValue() instanceof OSQLFilterItemField) {
-				final OSQLFilterItemField f = (OSQLFilterItemField) field.getValue();
-				if (f.getRoot().equals("?")) {
-					// POSITIONAL PARAMETER
-					iDocument.field(field.getKey(), iArgs.get(paramCounter++));
-					continue;
-				} else if (f.getRoot().startsWith(":")) {
-					// NAMED PARAMETER
-					iDocument.field(field.getKey(), iArgs.get(f.getRoot().substring(1)));
-					continue;
-				}
-			}
-
-			if (field.getValue() instanceof ODocument && !((ODocument) field.getValue()).getIdentity().isValid())
-				// EMBEDDED DOCUMENT
-				((ODocument) field.getValue()).addOwner(iDocument);
-			
-			iDocument.field(field.getKey(), OSQLHelper.getValue(field.getValue(), iDocument));
+	public static Object resolveFieldValue(final ODocument iDocument, final String iFieldName, final Object iFieldValue,
+			final OCommandParameters iArguments) {
+		if (iFieldValue instanceof OSQLFilterItemField) {
+			final OSQLFilterItemField f = (OSQLFilterItemField) iFieldValue;
+			if (f.getRoot().equals("?"))
+				// POSITIONAL PARAMETER
+				return iArguments.getNext();
+			else if (f.getRoot().startsWith(":"))
+				// NAMED PARAMETER
+				return iArguments.getByName(f.getRoot().substring(1));
 		}
 
+		if (iFieldValue instanceof ODocument && !((ODocument) iFieldValue).getIdentity().isValid())
+			// EMBEDDED DOCUMENT
+			((ODocument) iFieldValue).addOwner(iDocument);
+
+		return OSQLHelper.getValue(iFieldValue, iDocument);
+	}
+
+	public static void bindParameters(final ODocument iDocument, final Map<String, Object> iFields,
+			final OCommandParameters iArguments) {
+		// BIND VALUES
+		for (Entry<String, Object> field : iFields.entrySet())
+			iDocument.field(field.getKey(), resolveFieldValue(iDocument, field.getKey(), field.getValue(), iArguments));
 	}
 }

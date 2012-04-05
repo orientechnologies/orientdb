@@ -46,19 +46,23 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
  * 
  */
 public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware implements OCommandResultListener {
-	public static final String									KEYWORD_UPDATE	= "UPDATE";
-	private static final String									KEYWORD_ADD			= "ADD";
-	private static final String									KEYWORD_PUT			= "PUT";
-	private static final String									KEYWORD_REMOVE	= "REMOVE";
-	private Map<String, Object>									setEntries			= new LinkedHashMap<String, Object>();
-	private Map<String, Object>									addEntries			= new LinkedHashMap<String, Object>();
-	private Map<String, OPair<String, Object>>	putEntries			= new LinkedHashMap<String, OPair<String, Object>>();
-	private Map<String, Object>									removeEntries		= new LinkedHashMap<String, Object>();
+	public static final String									KEYWORD_UPDATE		= "UPDATE";
+	private static final String									KEYWORD_ADD				= "ADD";
+	private static final String									KEYWORD_PUT				= "PUT";
+	private static final String									KEYWORD_REMOVE		= "REMOVE";
+	private static final String									KEYWORD_INCREMENT	= "INCREMENT";
+
+	private Map<String, Object>									setEntries				= new LinkedHashMap<String, Object>();
+	private Map<String, Object>									addEntries				= new LinkedHashMap<String, Object>();
+	private Map<String, OPair<String, Object>>	putEntries				= new LinkedHashMap<String, OPair<String, Object>>();
+	private Map<String, Object>									removeEntries			= new LinkedHashMap<String, Object>();
+	private Map<String, Number>									incrementEntries	= new LinkedHashMap<String, Number>();
+
 	private OQuery<?>														query;
-	private int																	recordCount			= 0;
+	private int																	recordCount				= 0;
 	private String															subjectName;
-	private static final Object									EMPTY_VALUE			= new Object();
-	private Map<Object, Object>									parameters;
+	private static final Object									EMPTY_VALUE				= new Object();
+	private OCommandParameters									parameters;
 
 	@SuppressWarnings("unchecked")
 	public OCommandExecutorSQLUpdate parse(final OCommandRequestText iRequest) {
@@ -68,6 +72,11 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 		init(iRequest.getText());
 
 		setEntries.clear();
+		addEntries.clear();
+		putEntries.clear();
+		removeEntries.clear();
+		incrementEntries.clear();
+
 		query = null;
 		recordCount = 0;
 
@@ -104,6 +113,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 				pos = parsePutFields(word, pos);
 			else if (word.toString().equals(KEYWORD_REMOVE))
 				pos = parseRemoveFields(word, pos);
+			else if (word.toString().equals(KEYWORD_INCREMENT))
+				pos = parseIncrementFields(word, pos);
 			else
 				break;
 		}
@@ -124,12 +135,12 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 		if (subjectName == null)
 			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-		parameters = iArgs;
+		parameters = new OCommandParameters(iArgs);
 
 		Map<Object, Object> queryArgs = new HashMap<Object, Object>();
-		for (int i = parameterCounter; parameters != null && i < parameters.size(); i++) {
-			if (parameters.get(i) != null)
-				queryArgs.put(i - parameterCounter, parameters.get(i));
+		for (int i = parameterCounter; i < parameters.size(); i++) {
+			if (parameters.getByName(i) != null)
+				queryArgs.put(i - parameterCounter, parameters.getByName(i));
 		}
 
 		getDatabase().query(query, queryArgs);
@@ -145,13 +156,15 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 
 		boolean recordUpdated = false;
 
-		// BIND VALUES TO UPDATE
-		Object v;
+		parameters.reset();
 
+		// BIND VALUES TO UPDATE
 		if (!setEntries.isEmpty()) {
 			OSQLHelper.bindParameters(record, setEntries, parameters);
 			recordUpdated = true;
 		}
+
+		Object v;
 
 		// BIND VALUES TO ADD
 		Collection<Object> coll;
@@ -261,7 +274,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 		String fieldValue;
 		int newPos = pos;
 
-		while (pos != -1 && (setEntries.size() == 0 || word.toString().equals(",")) && !word.toString().equals(KEYWORD_WHERE)) {
+		while (pos != -1 && (addEntries.size() == 0 || word.toString().equals(",")) && !word.toString().equals(KEYWORD_WHERE)) {
 			newPos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
 			if (newPos == -1)
 				throw new OCommandSQLParsingException("Field name expected. Use " + getSyntax(), text, pos);
@@ -409,8 +422,12 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 		return pos;
 	}
 
+	private int parseIncrementFields(final StringBuilder word, int pos) {
+		return -1;
+	}
+
 	@Override
 	public String getSyntax() {
-		return "UPDATE <class>|cluster:<cluster>> [SET|ADD|PUT|REMOVE] [[,] <field-name> = <field-value>]* [WHERE <conditions>]";
+		return "UPDATE <class>|cluster:<cluster>> [SET|ADD|PUT|REMOVE|INCREMENT] [[,] <field-name> = <field-value>]* [WHERE <conditions>]";
 	}
 }

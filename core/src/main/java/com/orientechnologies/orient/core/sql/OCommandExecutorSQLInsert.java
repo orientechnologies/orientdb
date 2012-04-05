@@ -177,7 +177,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware {
 			// CREATE NEW DOCUMENT
 			ODocument doc = className != null ? new ODocument(className) : new ODocument();
 
-			OSQLHelper.bindParameters(doc, fields, iArgs);
+			OSQLHelper.bindParameters(doc, fields, new OCommandParameters(iArgs));
 
 			if (clusterName != null)
 				doc.save(clusterName);
