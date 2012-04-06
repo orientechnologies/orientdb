@@ -35,7 +35,7 @@ public class OGremlinFunctionFactory implements OSQLFunctionFactory{
 		FUNCTIONS.put(OSQLFunctionGremlin.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionGremlin.class);
     }
     
-    public Set<String> getNames() {
+    public Set<String> getFunctionNames() {
         return FUNCTIONS.keySet();
     }
 

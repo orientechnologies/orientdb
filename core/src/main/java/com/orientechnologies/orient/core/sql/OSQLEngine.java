@@ -15,131 +15,105 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javax.imageio.spi.ServiceRegistry;
 
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFactory;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContains;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsAll;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsKey;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsText;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsValue;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorInstanceof;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIs;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorLike;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMatches;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNot;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNotEquals;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorOr;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorTraverse;
-import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorDivide;
-import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMinus;
-import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMod;
-import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMultiply;
-import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorPlus;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorFactory;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 public class OSQLEngine {
 
-	private static Set<OSQLFunctionFactory>															FUNCTION_FACTORIES	= null;
-
-	protected Map<String, Class<? extends OCommandExecutorSQLAbstract>>	commands						= new HashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
-
-	// WARNING: ORDER IS IMPORTANT TO AVOID SUB-STRING LIKE "IS" and AND "INSTANCEOF": INSTANCEOF MUST BE PLACED BEFORE! AND ALSO FOR
-	// PERFORMANCE (MOST USED BEFORE)
-	public static OQueryOperator[]																			RECORD_OPERATORS		= { new OQueryOperatorEquals(),
-			new OQueryOperatorAnd(), new OQueryOperatorOr(), new OQueryOperatorNotEquals(), new OQueryOperatorNot(),
-			new OQueryOperatorMinorEquals(), new OQueryOperatorMinor(), new OQueryOperatorMajorEquals(), new OQueryOperatorContainsAll(),
-			new OQueryOperatorMajor(), new OQueryOperatorLike(), new OQueryOperatorMatches(), new OQueryOperatorInstanceof(),
-			new OQueryOperatorIs(), new OQueryOperatorIn(), new OQueryOperatorContainsKey(), new OQueryOperatorContainsValue(),
-			new OQueryOperatorContainsText(), new OQueryOperatorContains(), new OQueryOperatorContainsText(),
-			new OQueryOperatorTraverse(), new OQueryOperatorBetween(), new OQueryOperatorPlus(), new OQueryOperatorMinus(),
-			new OQueryOperatorMultiply(), new OQueryOperatorDivide(), new OQueryOperatorMod()	};
-
+    
+    private static Set<OSQLFunctionFactory> FUNCTION_FACTORIES = null;
+    private static Set<OCommandExecutorSQLFactory> EXECUTOR_FACTORIES = null;
+    private static Set<OQueryOperatorFactory> OPERATOR_FACTORIES = null;
+    private static OQueryOperator[] SORTED_OPERATORS = null;
+    
 	protected static final OSQLEngine																		INSTANCE						= new OSQLEngine();
 
-	protected OSQLEngine() {
-		// COMMANDS
-		commands.put(OCommandExecutorSQLAlterDatabase.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterDatabase.KEYWORD_DATABASE,
-				OCommandExecutorSQLAlterDatabase.class);
-		commands.put(OCommandExecutorSQLSelect.KEYWORD_SELECT, OCommandExecutorSQLSelect.class);
-		commands.put(OCommandExecutorSQLTraverse.KEYWORD_TRAVERSE, OCommandExecutorSQLTraverse.class);
-		commands.put(OCommandExecutorSQLInsert.KEYWORD_INSERT, OCommandExecutorSQLInsert.class);
-		commands.put(OCommandExecutorSQLUpdate.KEYWORD_UPDATE, OCommandExecutorSQLUpdate.class);
-		commands.put(OCommandExecutorSQLDelete.KEYWORD_DELETE, OCommandExecutorSQLDelete.class);
-		commands.put(OCommandExecutorSQLGrant.KEYWORD_GRANT, OCommandExecutorSQLGrant.class);
-		commands.put(OCommandExecutorSQLRevoke.KEYWORD_REVOKE, OCommandExecutorSQLRevoke.class);
-		commands.put(OCommandExecutorSQLCreateLink.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateLink.KEYWORD_LINK,
-				OCommandExecutorSQLCreateLink.class);
-		commands.put(OCommandExecutorSQLCreateIndex.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateIndex.KEYWORD_INDEX,
-				OCommandExecutorSQLCreateIndex.class);
-		commands.put(OCommandExecutorSQLDropIndex.KEYWORD_DROP + " " + OCommandExecutorSQLDropIndex.KEYWORD_INDEX,
-				OCommandExecutorSQLDropIndex.class);
-		commands.put(OCommandExecutorSQLRebuildIndex.KEYWORD_REBUILD + " " + OCommandExecutorSQLRebuildIndex.KEYWORD_INDEX,
-				OCommandExecutorSQLRebuildIndex.class);
-		commands.put(OCommandExecutorSQLCreateClass.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateClass.KEYWORD_CLASS,
-				OCommandExecutorSQLCreateClass.class);
-		commands.put(OCommandExecutorSQLAlterClass.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterClass.KEYWORD_CLASS,
-				OCommandExecutorSQLAlterClass.class);
-		commands.put(OCommandExecutorSQLCreateProperty.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateProperty.KEYWORD_PROPERTY,
-				OCommandExecutorSQLCreateProperty.class);
-		commands.put(OCommandExecutorSQLAlterProperty.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterProperty.KEYWORD_PROPERTY,
-				OCommandExecutorSQLAlterProperty.class);
-		commands.put(OCommandExecutorSQLDropClass.KEYWORD_DROP + " " + OCommandExecutorSQLDropClass.KEYWORD_CLASS,
-				OCommandExecutorSQLDropClass.class);
-		commands.put(OCommandExecutorSQLDropProperty.KEYWORD_DROP + " " + OCommandExecutorSQLDropProperty.KEYWORD_PROPERTY,
-				OCommandExecutorSQLDropProperty.class);
-		commands.put(OCommandExecutorSQLFindReferences.KEYWORD_FIND + " " + OCommandExecutorSQLFindReferences.KEYWORD_REFERENCES,
-				OCommandExecutorSQLFindReferences.class);
-		commands.put(OCommandExecutorSQLTruncateClass.KEYWORD_TRUNCATE + " " + OCommandExecutorSQLTruncateClass.KEYWORD_CLASS,
-				OCommandExecutorSQLTruncateClass.class);
-		commands.put(OCommandExecutorSQLTruncateCluster.KEYWORD_TRUNCATE + " " + OCommandExecutorSQLTruncateCluster.KEYWORD_CLUSTER,
-				OCommandExecutorSQLTruncateCluster.class);
-		commands.put(OCommandExecutorSQLTruncateRecord.KEYWORD_TRUNCATE + " " + OCommandExecutorSQLTruncateRecord.KEYWORD_RECORD,
-				OCommandExecutorSQLTruncateRecord.class);
-		commands.put(OCommandExecutorSQLAlterCluster.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterCluster.KEYWORD_CLUSTER,
-				OCommandExecutorSQLAlterCluster.class);
+	protected OSQLEngine() {}
 
-	}
-
-	public OQueryOperator[] getRecordOperators() {
-		return RECORD_OPERATORS;
-	}
+	public synchronized OQueryOperator[] getRecordOperators() {
+        if(SORTED_OPERATORS != null){
+            return SORTED_OPERATORS;
+        }
+        
+        //sort operators, will happen only very few times since we cache the result
+        final Iterator<OQueryOperatorFactory> ite = getOperatorFactories();
+        final List<OQueryOperator> operators = new ArrayList<OQueryOperator>();
+        while (ite.hasNext()) {
+            final OQueryOperatorFactory factory = ite.next();
+            operators.addAll(factory.getOperators());
+        }
+        
+        final List<OQueryOperator> sorted = new ArrayList<OQueryOperator>();
+        final Set<Pair> pairs = new LinkedHashSet<Pair>();
+        for (final OQueryOperator ca : operators) {
+            for (final OQueryOperator cb : operators) {
+                if (ca != cb) {
+                    switch (ca.compare(cb)) {
+                        case BEFORE: pairs.add(new Pair(ca, cb)); break;
+                        case AFTER:  pairs.add(new Pair(cb, ca)); break;
+                    }
+                    switch (cb.compare(ca)) {
+                        case BEFORE: pairs.add(new Pair(cb, ca)); break;
+                        case AFTER:  pairs.add(new Pair(ca, cb)); break;
+                    }
+                }
+            }
+        }
+        boolean added;
+        do {
+            added = false;
+scan:       for (final Iterator<OQueryOperator> it=operators.iterator(); it.hasNext();) {
+                final OQueryOperator candidate = it.next();
+                for (final Pair pair : pairs) {
+                    if (pair.after == candidate) {
+                        continue scan;
+                    }
+                }
+                sorted.add(candidate);
+                it.remove();
+                for (final Iterator<Pair> itp=pairs.iterator(); itp.hasNext();) {
+                    if (itp.next().before == candidate) {
+                        itp.remove();
+                    }
+                }
+                added = true;
+            }
+        } while (added);
+        if (!operators.isEmpty()) {
+            throw new OException("Unvalid sorting. " + OCollections.toString(pairs));
+        }
+        SORTED_OPERATORS = sorted.toArray(new OQueryOperator[sorted.size()]);
+        return SORTED_OPERATORS;
+    }
 
 	public static void registerOperator(final OQueryOperator iOperator) {
-		final OQueryOperator[] ops = new OQueryOperator[RECORD_OPERATORS.length + 1];
-		System.arraycopy(RECORD_OPERATORS, 0, ops, 0, RECORD_OPERATORS.length);
-		ops[RECORD_OPERATORS.length - 1] = iOperator;
-		RECORD_OPERATORS = ops;
+		ODynamicSQLElementFactory.OPERATORS.add(iOperator);
+                SORTED_OPERATORS = null; //clear cache
 	}
 
 	public void registerFunction(final String iName, final OSQLFunction iFunction) {
-		ODynamicFunctionFactory.FUNCTIONS.put(iName.toUpperCase(Locale.ENGLISH), iFunction);
+		ODynamicSQLElementFactory.FUNCTIONS.put(iName.toUpperCase(Locale.ENGLISH), iFunction);
 	}
 
 	public void registerFunction(final String iName, final Class<? extends OSQLFunction> iFunctionClass) {
-		ODynamicFunctionFactory.FUNCTIONS.put(iName.toUpperCase(Locale.ENGLISH), iFunctionClass);
+		ODynamicSQLElementFactory.FUNCTIONS.put(iName.toUpperCase(Locale.ENGLISH), iFunctionClass);
 	}
 
 	public OSQLFunction getFunction(String iFunctionName) {
@@ -148,7 +122,7 @@ public class OSQLEngine {
 		final Iterator<OSQLFunctionFactory> ite = getFunctionFactories();
 		while (ite.hasNext()) {
 			final OSQLFunctionFactory factory = ite.next();
-			if (factory.getNames().contains(iFunctionName)) {
+			if (factory.getFunctionNames().contains(iFunctionName)) {
 				return factory.createFunction(iFunctionName);
 			}
 		}
@@ -159,7 +133,7 @@ public class OSQLEngine {
 
 	public void unregisterFunction(String iName) {
 		iName = iName.toUpperCase(Locale.ENGLISH);
-		ODynamicFunctionFactory.FUNCTIONS.remove(iName);
+		ODynamicSQLElementFactory.FUNCTIONS.remove(iName);
 	}
 
 	/**
@@ -176,6 +150,36 @@ public class OSQLEngine {
 		}
 		return FUNCTION_FACTORIES.iterator();
 	}
+        
+        /**
+	 * @return Iterator of all operator factories
+	 */
+	public static synchronized Iterator<OQueryOperatorFactory> getOperatorFactories() {
+		if (OPERATOR_FACTORIES == null) {
+			final Iterator<OQueryOperatorFactory> ite = ServiceRegistry.lookupProviders(OQueryOperatorFactory.class);
+			final Set<OQueryOperatorFactory> factories = new HashSet<OQueryOperatorFactory>();
+			while (ite.hasNext()) {
+				factories.add(ite.next());
+			}
+			OPERATOR_FACTORIES = Collections.unmodifiableSet(factories);
+		}
+		return OPERATOR_FACTORIES.iterator();
+	}
+                
+        /**
+	 * @return Iterator of all command factories
+	 */
+	public static synchronized Iterator<OCommandExecutorSQLFactory> getCommandFactories() {
+		if (EXECUTOR_FACTORIES == null) {
+			final Iterator<OCommandExecutorSQLFactory> ite = ServiceRegistry.lookupProviders(OCommandExecutorSQLFactory.class);
+			final Set<OCommandExecutorSQLFactory> factories = new HashSet<OCommandExecutorSQLFactory>();
+			while (ite.hasNext()) {
+				factories.add(ite.next());
+			}
+			EXECUTOR_FACTORIES = Collections.unmodifiableSet(factories);
+		}
+		return EXECUTOR_FACTORIES.iterator();
+	}
 
 	/**
 	 * Iterates on all factories and append all function names.
@@ -186,11 +190,25 @@ public class OSQLEngine {
 		final Set<String> types = new HashSet<String>();
 		final Iterator<OSQLFunctionFactory> ite = getFunctionFactories();
 		while (ite.hasNext()) {
-			types.addAll(ite.next().getNames());
+			types.addAll(ite.next().getFunctionNames());
 		}
 		return types;
 	}
 
+    /**
+     * Iterates on all factories and append all command names.
+     * 
+     * @return Set of all command names.
+     */
+    public static Set<String> getCommandNames() {
+        final Set<String> types = new HashSet<String>();
+        final Iterator<OCommandExecutorSQLFactory> ite = getCommandFactories();
+        while (ite.hasNext()) {
+            types.addAll(ite.next().getCommandNames());
+        }
+        return types;
+    }
+        
 	/**
 	 * Scans for factory plug-ins on the application class path. This method is needed because the application class path can
 	 * theoretically change, or additional plug-ins may become available. Rather than re-scanning the classpath on every invocation of
@@ -203,27 +221,33 @@ public class OSQLEngine {
 		FUNCTION_FACTORIES = null;
 	}
 
-	public OCommandExecutorSQLAbstract getCommand(final String iText) {
-		int pos = -1;
-		Class<? extends OCommandExecutorSQLAbstract> commandClass = null;
-		while (commandClass == null) {
-			pos = iText.indexOf(' ', pos + 1);
-			if (pos > -1) {
-				String piece = iText.substring(0, pos);
-				commandClass = commands.get(piece);
-			} else
-				break;
-		}
+	public OCommandExecutorSQLAbstract getCommand(final String candidate) {
+		final Set<String> names = getCommandNames();
 
-		if (commandClass != null)
-			try {
-				return commandClass.newInstance();
-			} catch (Exception e) {
-				throw new OCommandExecutionException("Error in creation of command " + commandClass
-						+ "(). Probably there is not an empty constructor or the constructor generates errors", e);
-			}
+                String commandName = candidate;
+                boolean found = names.contains(commandName);
+                int pos = -1;
+                while(!found){
+                    pos = candidate.indexOf(' ', pos + 1);
+                    if (pos > -1) {
+                        commandName = candidate.substring(0, pos);
+                        found = names.contains(commandName);
+                    } else {
+                        break;
+                    }
+                }
 
-		return null;
+                if (found) {
+                    final Iterator<OCommandExecutorSQLFactory> ite = getCommandFactories();
+                    while (ite.hasNext()) {
+                        final OCommandExecutorSQLFactory factory = ite.next();
+                        if (factory.getCommandNames().contains(commandName)) {
+                            return factory.createCommand(commandName);
+                        }
+                    }
+                }
+
+                return null;
 	}
 
 	public OSQLFilter parseFromWhereCondition(final String iText, final OCommandContext iContext) {
@@ -234,35 +258,39 @@ public class OSQLEngine {
 		return INSTANCE;
 	}
 
-	public static class ODynamicFunctionFactory implements OSQLFunctionFactory {
+        
+    /**
+     * internal use only, to sort operators.
+     */
+    private static final class Pair {
 
-		private static final Map<String, Object>	FUNCTIONS	= new ConcurrentHashMap<String, Object>();
+        final OQueryOperator before;
+        final OQueryOperator after;
 
-		public Set<String> getNames() {
-			return FUNCTIONS.keySet();
-		}
+        public Pair(final OQueryOperator before, final OQueryOperator after) {
+            this.before = before;
+            this.after = after;
+        }
 
-		public OSQLFunction createFunction(String name) throws OCommandExecutionException {
-			final Object obj = FUNCTIONS.get(name);
+        @Override
+        public boolean equals(final Object obj) {
+            if (obj instanceof Pair) {
+                final Pair that = (Pair) obj;
+                return before == that.before && after == that.after;
+            }
+            return false;
+        }
 
-			if (obj == null) {
-				throw new OCommandExecutionException("Unknowned function name :" + name);
-			}
+        @Override
+        public int hashCode() {
+            return System.identityHashCode(before) + 31 * System.identityHashCode(after);
+        }
 
-			if (obj instanceof OSQLFunction) {
-				return (OSQLFunction) obj;
-			} else {
-				// it's a class
-				final Class<?> clazz = (Class<?>) obj;
-				try {
-					return (OSQLFunction) clazz.newInstance();
-				} catch (Exception e) {
-					throw new OCommandExecutionException("Error in creation of function " + name
-							+ "(). Probably there is not an empty constructor or the constructor generates errors", e);
-				}
-			}
-		}
-
-	}
-
+        @Override
+        public String toString() {
+            return before +" > "+ after;
+        }
+        
+    }
+    
 }

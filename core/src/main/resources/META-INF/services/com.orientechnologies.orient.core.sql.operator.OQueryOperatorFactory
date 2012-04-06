@@ -1,0 +1,2 @@
+com.orientechnologies.orient.core.sql.operator.ODefaultQueryOperatorFactory
+com.orientechnologies.orient.core.sql.ODynamicSQLElementFactory
