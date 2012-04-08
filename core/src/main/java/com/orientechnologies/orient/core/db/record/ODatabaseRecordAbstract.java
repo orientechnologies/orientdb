@@ -692,11 +692,13 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		setCurrentDatabaseinThreadLocal();
 
 		try {
-			callbackHooks(TYPE.BEFORE_DELETE, iRecord);
+			//if cache is switched off record will be unreachable after delete.
+			ORecord<?> rec = iRecord.getRecord();
+			callbackHooks(TYPE.BEFORE_DELETE, rec);
 
 			underlying.delete(rid, iVersion, iRequired, (byte) iMode.ordinal());
 
-			callbackHooks(TYPE.AFTER_DELETE, iRecord);
+			callbackHooks(TYPE.AFTER_DELETE, rec);
 
 			// REMOVE THE RECORD FROM 1 AND 2 LEVEL CACHES
 			getLevel1Cache().deleteRecord(rid);
