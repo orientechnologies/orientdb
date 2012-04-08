@@ -1,10 +1,14 @@
 package com.orientechnologies.orient.core.db.record;
 
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
+import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import com.orientechnologies.common.types.ORef;
@@ -310,4 +314,27 @@ public class TrackedSetTest {
 		Assert.assertEquals(original, trackedSet.returnOriginalState(firedEvents));
 	}
 
+	/**
+	 * Test that {@link OTrackedSet} is serialised correctly.
+	 */
+	@Test
+	public void testSetSerialization() throws Exception {
+		ODocument doc = new ODocument();
+
+		OTrackedSet<String> beforeSerialization = new OTrackedSet<String>(doc);
+		beforeSerialization.add("firstVal");
+		beforeSerialization.add("secondVal");
+
+		final OMemoryStream memoryStream = new OMemoryStream();
+		ObjectOutputStream out = new ObjectOutputStream(memoryStream);
+		out.writeObject(beforeSerialization);
+		out.close();
+
+		final ObjectInputStream input = new ObjectInputStream(new OMemoryInputStream(memoryStream.copy()));
+		@SuppressWarnings("unchecked")
+		final OTrackedSet<String> afterSerialization = (OTrackedSet<String>) input.readObject();
+
+		Assert.assertEquals(afterSerialization.size(), beforeSerialization.size(), "Set size");
+		Assert.assertTrue(beforeSerialization.containsAll(afterSerialization));
+	}
 }

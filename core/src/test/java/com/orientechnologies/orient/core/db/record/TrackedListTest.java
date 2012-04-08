@@ -1,8 +1,12 @@
 package com.orientechnologies.orient.core.db.record;
 
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
+import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import com.orientechnologies.common.types.ORef;
@@ -650,5 +654,31 @@ public class TrackedListTest {
 		trackedList.add("value12");
 
 		Assert.assertEquals(original, trackedList.returnOriginalState(firedEvents));
+	}
+
+	/**
+	 * Test that {@link OTrackedList} is serialised correctly.
+	 */
+	@Test
+	public void testSerialization() throws Exception {
+		ODocument doc = new ODocument();
+
+		OTrackedList<String> beforeSerialization = new OTrackedList<String>(doc);
+		beforeSerialization.add("firstVal");
+		beforeSerialization.add("secondVal");
+
+		final OMemoryStream memoryStream = new OMemoryStream();
+		ObjectOutputStream out = new ObjectOutputStream(memoryStream);
+		out.writeObject(beforeSerialization);
+		out.close();
+
+		final ObjectInputStream input = new ObjectInputStream(new OMemoryInputStream(memoryStream.copy()));
+		@SuppressWarnings("unchecked")
+		final List<String> afterSerialization = (OTrackedList<String>) input.readObject();
+
+		Assert.assertEquals(afterSerialization.size(), beforeSerialization.size(), "List size");
+		for (int i = 0; i < afterSerialization.size(); i++) {
+			Assert.assertEquals(afterSerialization.get(i), beforeSerialization.get(i));
+		}
 	}
 }

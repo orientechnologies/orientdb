@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.db.record;
 
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -7,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
+import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import com.orientechnologies.common.types.ORef;
@@ -374,5 +378,31 @@ public class TrackedMapTest {
 
 		Assert.assertEquals(trackedMap.returnOriginalState(firedEvents), original);
 
+	}
+
+	/**
+	 * Test that {@link OTrackedMap} is serialised correctly.
+	 */
+	@Test
+	public void testMapSerialization() throws Exception {
+		ODocument doc = new ODocument();
+
+		OTrackedMap<String> beforeSerialization = new OTrackedMap<String>(doc);
+		beforeSerialization.put(0, "firstVal");
+		beforeSerialization.put(1, "secondVal");
+
+		final OMemoryStream memoryStream = new OMemoryStream();
+		ObjectOutputStream out = new ObjectOutputStream(memoryStream);
+		out.writeObject(beforeSerialization);
+		out.close();
+
+		final ObjectInputStream input = new ObjectInputStream(new OMemoryInputStream(memoryStream.copy()));
+		@SuppressWarnings("unchecked")
+		final OTrackedMap<String> afterSerialization = (OTrackedMap<String>) input.readObject();
+
+		Assert.assertEquals(afterSerialization.size(), beforeSerialization.size(), "Map size");
+		for (int i = 0; i < afterSerialization.size(); i++) {
+			Assert.assertEquals(afterSerialization.get(i), beforeSerialization.get(i));
+		}
 	}
 }
