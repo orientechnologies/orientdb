@@ -1,135 +1,137 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>com.orientechnologies</groupId>
-		<artifactId>orientdb-parent</artifactId>
-		<version>1.0rc9</version>
-	</parent>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <!--parent>
+        <groupId>com.orientechnologies</groupId>
+        <artifactId>orientdb-parent</artifactId>
+        <version>1.0rc9</version>
+    </parent-->
 
-	<artifactId>orientdb-jdbc</artifactId>
-	<packaging>jar</packaging>
-	<version>1.0-SNAPSHOT</version>
 
-	<name>OrientDB JDBC</name>
+    <artifactId>orientdb-jdbc</artifactId>
+    <packaging>jar</packaging>
+    <version>1.0-SNAPSHOT</version>
 
-	<organization>
-		<name>Orient Technologies</name>
-		<url>http://www.orientechnologies.com</url>
-	</organization>
-	<properties>
-		<jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
-		<orient.version>1.0rc9</orient.version>
-		<tinkerpop.blueprints.version>1.5</tinkerpop.blueprints.version>
-	</properties>
-	<repositories>
-		<repository>
-			<id>oss-sonatype</id>
-			<name>Sonatype OSS repository</name>
-			<url>https://oss.sonatype.org/content/groups/public/</url>
-			<snapshots>
-				<enabled>true</enabled>
-				<updatePolicy>always</updatePolicy>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>tinkerpop-repository</id>
-			<name>TinkerPop Maven2 Repository</name>
-			<url>http://tinkerpop.com/maven2</url>
-			<snapshots>
-				<enabled>true</enabled>
-				<updatePolicy>always</updatePolicy>
-			</snapshots>
-		</repository>
-	</repositories>
-	<dependencies>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit-dep</artifactId>
-			<version>4.10</version>
-			<scope>test</scope>
-		</dependency>
+    <name>OrientDB JDBC</name>
 
-		<dependency>
-			<groupId>org.hamcrest</groupId>
-			<artifactId>hamcrest-integration</artifactId>
-			<version>1.2.1</version>
-			<scope>test</scope>
-		</dependency>
+    <organization>
+        <name>Orient Technologies</name>
+        <url>http://www.orientechnologies.com</url>
+    </organization>
+    <properties>
+        <jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
+        <orient.version>1.0rc9</orient.version>
+        <tinkerpop.blueprints.version>1.5</tinkerpop.blueprints.version>
+    </properties>
+    <repositories>
+        <repository>
+            <id>oss-sonatype</id>
+            <name>Sonatype OSS repository</name>
+            <url>https://oss.sonatype.org/content/groups/public/</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>tinkerpop-repository</id>
+            <name>TinkerPop Maven2 Repository</name>
+            <url>http://tinkerpop.com/maven2</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+        </repository>
+    </repositories>
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit-dep</artifactId>
+            <version>4.10</version>
+            <scope>test</scope>
+        </dependency>
 
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-enterprise</artifactId>
-			<version>${orient.version}</version>
-			<exclusions>
-				<exclusion>
-					<artifactId>orient-commons</artifactId>
-					<groupId>com.orientechnologies</groupId>
-				</exclusion>
-			</exclusions>
-		</dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-integration</artifactId>
+            <version>1.2.1</version>
+            <scope>test</scope>
+        </dependency>
 
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orient-commons</artifactId>
-			<version>${orient.version}</version>
-		</dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-enterprise</artifactId>
+            <version>${orient.version}</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>orient-commons</artifactId>
+                    <groupId>com.orientechnologies</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 
-		<!-- <dependency> -->
-		<!-- <groupId>com.tinkerpop.blueprints</groupId> -->
-		<!-- <artifactId>blueprints-orient-graph</artifactId> -->
-		<!-- <version>${tinkerpop.blueprints.version}</version> -->
-		<!-- <scope>test</scope> -->
-		<!-- </dependency> -->
-		<!-- <dependency> -->
-		<!-- <groupId>com.tinkerpop.blueprints</groupId> -->
-		<!-- <artifactId>blueprints-core</artifactId> -->
-		<!-- <version>${tinkerpop.blueprints.version}</version> -->
-		<!-- <scope>test</scope> -->
-		<!-- </dependency> -->
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orient-commons</artifactId>
+            <version>${orient.version}</version>
+        </dependency>
 
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-graphdb</artifactId>
-			<version>${orient.version}</version>
-		</dependency>
+        <!-- <dependency> -->
+        <!-- <groupId>com.tinkerpop.blueprints</groupId> -->
+        <!-- <artifactId>blueprints-orient-graph</artifactId> -->
+        <!-- <version>${tinkerpop.blueprints.version}</version> -->
+        <!-- <scope>test</scope> -->
+        <!-- </dependency> -->
+        <!-- <dependency> -->
+        <!-- <groupId>com.tinkerpop.blueprints</groupId> -->
+        <!-- <artifactId>blueprints-core</artifactId> -->
+        <!-- <version>${tinkerpop.blueprints.version}</version> -->
+        <!-- <scope>test</scope> -->
+        <!-- </dependency> -->
 
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-client</artifactId>
-			<version>${orient.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>log4j</groupId>
-			<artifactId>log4j</artifactId>
-			<version>1.2.16</version>
-			<scope>provided</scope>
-		</dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-graphdb</artifactId>
+            <version>${orient.version}</version>
+        </dependency>
 
-	</dependencies>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-client</artifactId>
+            <version>${orient.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.16</version>
+            <scope>provided</scope>
+        </dependency>
 
-	<build>
-		<plugins>
-			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<configuration>
-					<appendAssemblyId>false</appendAssemblyId>
-					<descriptorRefs>
-						<descriptorRef>jar-with-dependencies</descriptorRef>
-					</descriptorRefs>
-				</configuration>
-			</plugin>
-			<plugin>
-				<artifactId>maven-jar-plugin</artifactId>
-				<configuration>
-					<archive>
-						<manifest>
-							<mainClass>${jar.manifest.mainclass}</mainClass>
-						</manifest>
-					</archive>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <appendAssemblyId>false</appendAssemblyId>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>${jar.manifest.mainclass}</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
