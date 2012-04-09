@@ -11,17 +11,17 @@ import static org.junit.Assert.assertNotNull;
 
 public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
 
-	@Test
-	public void shouldMapReturnTypes() throws Exception {
+    @Test
+    public void shouldMapReturnTypes() throws Exception {
 
-		assertFalse(conn.isClosed());
+        assertFalse(conn.isClosed());
 
-		Statement stmt = conn.createStatement();
-		ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item");
-		
-		ResultSetMetaData metaData = rs.getMetaData();
-		
-		assertNotNull(metaData);
-	}
+        Statement stmt = conn.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item");
+
+        ResultSetMetaData metaData = rs.getMetaData();
+
+        assertNotNull(metaData);
+    }
 
 }

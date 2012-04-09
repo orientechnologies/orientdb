@@ -44,56 +44,55 @@ import static java.lang.Class.forName;
 
 /**
  * @author Salvatore Piccione
- * 
  */
 public abstract class OrientGraphJdbcBaseTest {
 
-	private static final String DB_URL_PREFIX = "jdbc:orient:";
+    private static final String DB_URL_PREFIX = "jdbc:orient:";
 
-	private static final Properties info = new Properties();
+    private static final Properties info = new Properties();
 
-	protected OrientJdbcConnection conn;
+    protected OrientJdbcConnection conn;
 
-	@BeforeClass
-	public static void setUpClass() {
-		try {
-			PropertyConfigurator.configure(new File(OrientGraphJdbcBaseTest.class.getClassLoader().getResource("log4j.properties").toURI()).getAbsolutePath());
-		} catch (URISyntaxException e1) {
-			e1.printStackTrace();
-		}
+    @BeforeClass
+    public static void setUpClass() {
+        try {
+            PropertyConfigurator.configure(new File(OrientGraphJdbcBaseTest.class.getClassLoader().getResource("log4j.properties").toURI()).getAbsolutePath());
+        } catch (URISyntaxException e1) {
+            e1.printStackTrace();
+        }
 
-		// create the graph
-		OrientGraphJdbcCreationHelper.createGraphDatabase();
+        // create the graph
+        OrientGraphJdbcCreationHelper.createGraphDatabase();
 
-		info.put("user", OrientGraphJdbcCreationHelper.USERNAME);
-		info.put("password", OrientGraphJdbcCreationHelper.PASSWORD);
+        info.put("user", OrientGraphJdbcCreationHelper.USERNAME);
+        info.put("password", OrientGraphJdbcCreationHelper.PASSWORD);
 
-		// load the JDBC driver
-		try {
-			forName(OrientJdbcDriver.class.getName());
-		} catch (Exception e) {
-			e.printStackTrace();
-			Assert.fail("An error occured during the setting up of the test classes: " + e.getMessage());
-		}
-	}
+        // load the JDBC driver
+        try {
+            forName(OrientJdbcDriver.class.getName());
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail("An error occured during the setting up of the test classes: " + e.getMessage());
+        }
+    }
 
-	@Before
-	public void setUp() {
-		try {
-			conn = (OrientJdbcConnection) DriverManager.getConnection(DB_URL_PREFIX + OrientGraphJdbcCreationHelper.URL_DB, info);
-		} catch (SQLException e) {
-			e.printStackTrace();
-			Assert.fail("An error occured during the set up of the JDBC connection: " + e.getMessage());
-		}
-	}
+    @Before
+    public void setUp() {
+        try {
+            conn = (OrientJdbcConnection) DriverManager.getConnection(DB_URL_PREFIX + OrientGraphJdbcCreationHelper.URL_DB, info);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            Assert.fail("An error occured during the set up of the JDBC connection: " + e.getMessage());
+        }
+    }
 
-	@After
-	public void tearDown() {
-		try {
-			if (!conn.isClosed()) conn.close();
-		} catch (SQLException e) {
-			e.printStackTrace();
-			Assert.fail("An error occured during the closing of the JDBC connection: " + e.getMessage());
-		}
-	}
+    @After
+    public void tearDown() {
+        try {
+            if (!conn.isClosed()) conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            Assert.fail("An error occured during the closing of the JDBC connection: " + e.getMessage());
+        }
+    }
 }

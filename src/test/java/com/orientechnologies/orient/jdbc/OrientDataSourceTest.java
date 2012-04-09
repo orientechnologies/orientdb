@@ -12,33 +12,33 @@ import static org.junit.Assert.assertTrue;
 
 public class OrientDataSourceTest {
 
-	@Test
-	public void shouldConnect() throws SQLException {
-		String dbUrl = "memory:test";
+    @Test
+    public void shouldConnect() throws SQLException {
+        String dbUrl = "memory:test";
 
-		String username = "admin";
-		String password = "admin";
+        String username = "admin";
+        String password = "admin";
 
-		ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
-		if (db.exists()) {
-			db.open(username, password);
-			db.drop();
-			db.close();
-		}
+        ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
+        if (db.exists()) {
+            db.open(username, password);
+            db.drop();
+            db.close();
+        }
 
-		db.create();
+        db.create();
 
-		OrientDataSource ds = new OrientDataSource();
-		ds.setUrl("jdbc:orient:memory:test");
-		ds.setUsername(username);
-		ds.setPassword(password);
+        OrientDataSource ds = new OrientDataSource();
+        ds.setUrl("jdbc:orient:memory:test");
+        ds.setUsername(username);
+        ds.setPassword(password);
 
-		Connection conn = ds.getConnection();
+        Connection conn = ds.getConnection();
 
-		assertNotNull(conn);
-		conn.close();
-		assertTrue(conn.isClosed());
+        assertNotNull(conn);
+        conn.close();
+        assertTrue(conn.isClosed());
 
-	}
+    }
 
 }

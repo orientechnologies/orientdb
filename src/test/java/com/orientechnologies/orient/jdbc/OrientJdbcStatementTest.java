@@ -11,21 +11,21 @@ import static org.junit.Assert.assertTrue;
 
 public class OrientJdbcStatementTest extends OrientJdbcBaseTest {
 
-	@Test
-	public void shouldCreateStatement() throws Exception {
-		Statement stmt = conn.createStatement();
-		assertNotNull(stmt);
-		stmt.close();
-		assertTrue(stmt.isClosed());
+    @Test
+    public void shouldCreateStatement() throws Exception {
+        Statement stmt = conn.createStatement();
+        assertNotNull(stmt);
+        stmt.close();
+        assertTrue(stmt.isClosed());
 
-	}
+    }
 
-	@Test
-	public void shouldReturnEmptyResultSetOnEmptyQuery() throws SQLException {
-		Statement stmt = conn.createStatement();
-		stmt.execute("");
-		assertNull(stmt.getResultSet());
-		assertTrue(!stmt.getMoreResults());
-	}
+    @Test
+    public void shouldReturnEmptyResultSetOnEmptyQuery() throws SQLException {
+        Statement stmt = conn.createStatement();
+        stmt.execute("");
+        assertNull(stmt.getResultSet());
+        assertTrue(!stmt.getMoreResults());
+    }
 
 }

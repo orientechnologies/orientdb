@@ -7,13 +7,12 @@
         <artifactId>orientdb-parent</artifactId>
         <version>1.0rc9</version>
     </parent-->
-
-
+    <name>OrientDB JDBC</name>
+    <groupId>com.orientechnologies</groupId>
     <artifactId>orientdb-jdbc</artifactId>
     <packaging>jar</packaging>
     <version>1.0-SNAPSHOT</version>
 
-    <name>OrientDB JDBC</name>
 
     <organization>
         <name>Orient Technologies</name>
@@ -21,7 +20,7 @@
     </organization>
     <properties>
         <jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
-        <orient.version>1.0rc9</orient.version>
+        <orient.version>1.0-SNAPSHOT</orient.version>
         <tinkerpop.blueprints.version>1.5</tinkerpop.blueprints.version>
     </properties>
     <repositories>
@@ -63,12 +62,6 @@
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-enterprise</artifactId>
             <version>${orient.version}</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>orient-commons</artifactId>
-                    <groupId>com.orientechnologies</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <dependency>
@@ -76,31 +69,28 @@
             <artifactId>orient-commons</artifactId>
             <version>${orient.version}</version>
         </dependency>
-
-        <!-- <dependency> -->
-        <!-- <groupId>com.tinkerpop.blueprints</groupId> -->
-        <!-- <artifactId>blueprints-orient-graph</artifactId> -->
-        <!-- <version>${tinkerpop.blueprints.version}</version> -->
-        <!-- <scope>test</scope> -->
-        <!-- </dependency> -->
-        <!-- <dependency> -->
-        <!-- <groupId>com.tinkerpop.blueprints</groupId> -->
-        <!-- <artifactId>blueprints-core</artifactId> -->
-        <!-- <version>${tinkerpop.blueprints.version}</version> -->
-        <!-- <scope>test</scope> -->
-        <!-- </dependency> -->
-
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-graphdb</artifactId>
             <version>${orient.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.orientechnologies</groupId>
+                    <artifactId>orientdb-client</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.orientechnologies</groupId>
+                    <artifactId>orientdb-server</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
-
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-client</artifactId>
             <version>${orient.version}</version>
+            <type>jar</type>
         </dependency>
+
         <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
@@ -112,6 +102,17 @@
 
     <build>
         <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                    <encoding>UTF-8</encoding>
+                    <fork>true</fork>
+                </configuration>
+            </plugin>
+
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
