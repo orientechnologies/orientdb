@@ -71,7 +71,7 @@ public class OSQLFilter extends OCommandToParse {
 		context = iContext;
 		try {
 			database = ODatabaseRecordThreadLocal.INSTANCE.get();
-			text = iText.trim();
+			text = iText;
 			textUpperCase = text.toUpperCase(Locale.ENGLISH);
 
 			if (extractTargets()) {

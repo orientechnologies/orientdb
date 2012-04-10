@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test(groups = "sql-select")
@@ -483,7 +484,7 @@ public class SQLSelectTest {
 		result = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:animal where rates in 500")).execute();
 		Assert.assertEquals(result.size(), 0);
 
-		result = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:animal where rates in [100])")).execute();
+		result = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:animal where rates in [100]")).execute();
 		Assert.assertEquals(result.size(), 1);
 
 		record.delete();
@@ -606,6 +607,11 @@ public class SQLSelectTest {
 				Assert.assertTrue(fieldValue.compareTo(lastName) >= 0);
 			lastName = fieldValue;
 		}
+	}
+
+	@Test(expectedExceptions = OCommandSQLParsingException.class)
+	public void queryOrderByWrongSyntax() {
+		database.command(new OSQLSynchQuery<ODocument>("select from Profile order by name aaaa")).execute();
 	}
 
 	@Test
@@ -1229,17 +1235,17 @@ public class SQLSelectTest {
 
 		Assert.assertTrue(result.size() != 0);
 	}
-	
+
 	@Test
 	public void queryOrderByWithLimit() {
-		
+
 		OSchema schema = database.getMetadata().getSchema();
 		OClass facClass = schema.getClass("FicheAppelCDI");
 		if (facClass == null) {
 			facClass = schema.createClass("FicheAppelCDI");
 		}
 		if (!facClass.existsProperty("date")) {
-		    facClass.createProperty("date", OType.DATE);
+			facClass.createProperty("date", OType.DATE);
 		}
 
 		final Calendar currentYear = Calendar.getInstance();
@@ -1256,15 +1262,15 @@ public class SQLSelectTest {
 		doc2.field("date", oneYearAgo.getTime());
 		doc2.save();
 
-		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
-				"select * from " + facClass.getName() + " where context = 'test' order by date", 1));
+		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select * from " + facClass.getName()
+				+ " where context = 'test' order by date", 1));
 
 		Calendar smaller = Calendar.getInstance();
 		smaller.setTime((Date) result.get(0).field("date", Date.class));
 		Assert.assertEquals(smaller.get(Calendar.YEAR), oneYearAgo.get(Calendar.YEAR));
-		
-		result = database.query(new OSQLSynchQuery<ODocument>(
-				"select * from " + facClass.getName() + " where context = 'test' order by date DESC", 1));
+
+		result = database.query(new OSQLSynchQuery<ODocument>("select * from " + facClass.getName()
+				+ " where context = 'test' order by date DESC", 1));
 
 		Calendar bigger = Calendar.getInstance();
 		bigger.setTime((Date) result.get(0).field("date", Date.class));

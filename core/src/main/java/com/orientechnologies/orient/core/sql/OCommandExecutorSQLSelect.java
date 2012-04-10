@@ -136,6 +136,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 						parseLimit(word);
 					else if (w.equals(KEYWORD_SKIP))
 						parseSkip(word);
+					else
+						throw new OCommandSQLParsingException("Invalid keyword '" + w + "'");
 				}
 			}
 		}
@@ -221,7 +223,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 		if (orderedFields != null) {
 			return -1;
 		}
-		
+
 		final int sqlLimit;
 		final int requestLimit;
 
@@ -264,7 +266,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 		String fieldOrdering;
 
 		orderedFields = new ArrayList<OPair<String, String>>();
-		while (currentPos != -1 && (orderedFields.size() == 0 || word.toString().equals(","))) {
+		while (currentPos != -1) {
 			currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, false, " =><");
 			if (currentPos == -1)
 				throw new OCommandSQLParsingException("Field name expected", text, currentPos);
@@ -295,17 +297,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 
 			orderedFields.add(new OPair<String, String>(fieldName, fieldOrdering));
 
-			if (currentPos == -1)
+			if (!word.toString().equals(",")) {
+				// GO BACK
+				currentPos -= word.length();
 				break;
+			}
 		}
 
 		if (orderedFields.size() == 0)
 			throw new OCommandSQLParsingException("Order by field set was missed. Example: ORDER BY name ASC, salary DESC", text,
 					currentPos);
-
-		if (word.toString().equals(KEYWORD_LIMIT))
-			// GO BACK
-			currentPos -= KEYWORD_LIMIT.length();
 	}
 
 	@Override

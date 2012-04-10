@@ -29,7 +29,7 @@ public class OStringParser {
 	public static final String	COMMON_JUMP	= " \r\n";
 
 	public static String getWordFromString(String iText, final int iBeginIndex, final String ioSeparatorChars) {
-		return getWord(iText.trim(), iBeginIndex, ioSeparatorChars);
+		return getWord(iText, iBeginIndex, ioSeparatorChars);
 	}
 
 	public static String getWord(final CharSequence iText, final int iBeginIndex, final String ioSeparatorChars) {
