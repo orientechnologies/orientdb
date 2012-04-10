@@ -241,7 +241,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 						if (ioResult != null) {
 							if (ioResult instanceof Long)
 								ioResult = new Date((Long) ioResult);
-							else
+							else if (!(ioResult instanceof Date))
 								ioResult = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateFormatInstance()
 										.parse(ioResult.toString());
 						}
@@ -249,7 +249,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 						if (ioResult != null) {
 							if (ioResult instanceof Long)
 								ioResult = new Date((Long) ioResult);
-							else
+							else if (!(ioResult instanceof Date))
 								ioResult = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance()
 										.parse(ioResult.toString());
 						}
