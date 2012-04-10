@@ -275,7 +275,7 @@ public class OStringParser {
 	 * @return The new offset inside the string analyzed
 	 */
 	public static int jumpWhiteSpaces(final CharSequence iText, final int iCurrentPosition) {
-		return jump(iText, iCurrentPosition, WHITE_SPACE);
+		return jump(iText, iCurrentPosition, COMMON_JUMP);
 	}
 
 	/**
