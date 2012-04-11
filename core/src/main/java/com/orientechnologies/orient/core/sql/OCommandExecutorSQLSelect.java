@@ -985,8 +985,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 				if (fieldValue != null)
 					if (fieldValue instanceof Collection<?>) {
 						for (Object o : ((Collection<?>) fieldValue)) {
-							if (o instanceof ODocument)
-								finalResult.add((ODocument) o);
+							if (o instanceof OIdentifiable)
+								finalResult.add(((OIdentifiable) o).getRecord());
 						}
 					} else
 						finalResult.add((OIdentifiable) fieldValue);
