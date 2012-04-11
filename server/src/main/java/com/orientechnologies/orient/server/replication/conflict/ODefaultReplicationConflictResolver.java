@@ -20,6 +20,7 @@ import java.util.Map;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -64,8 +65,8 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
 	@Override
 	public void handleCreateConflict(final byte iOperation, SYNCH_TYPE iRequestType, final ORecordInternal<?> iRecord,
 			final long iOtherClusterPosition) {
-		OLogManager.instance().warn(this, "-> %s (%s mode) CONFLICT record %s (other RID=#%d:%d)...", this, iRequestType,
-				iRecord.getIdentity(), iRecord.getIdentity().getClusterId(), iOtherClusterPosition);
+		OLogManager.instance().warn(this, "-> %s (%s mode) CONFLICT %s record %s (other RID=#%d:%d)...", this, iRequestType,
+				ORecordOperation.getName(iOperation), iRecord.getIdentity(), iRecord.getIdentity().getClusterId(), iOtherClusterPosition);
 
 		final ODocument doc = createConflictDocument(iOperation, iRecord);
 		doc.field("otherClusterPos", iOtherClusterPosition);
@@ -82,8 +83,8 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
 	@Override
 	public void handleUpdateConflict(final byte iOperation, SYNCH_TYPE iRequestType, final ORecordInternal<?> iRecord,
 			final int iCurrentVersion, final int iOtherVersion) {
-		OLogManager.instance().warn(this, "-> %s (%s mode) CONFLICT record %s (current=v%d, other=v%d)...", this, iRequestType,
-				iRecord.getIdentity(), iCurrentVersion, iOtherVersion);
+		OLogManager.instance().warn(this, "-> %s (%s mode) CONFLICT %s record %s (current=v%d, other=v%d)...", this, iRequestType,
+				ORecordOperation.getName(iOperation), iRecord.getIdentity(), iCurrentVersion, iOtherVersion);
 
 		final ODocument doc = createConflictDocument(iOperation, iRecord);
 		doc.field("currentVersion", iCurrentVersion);
@@ -100,8 +101,8 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
 	 */
 	@Override
 	public void handleDeleteConflict(final byte iOperation, SYNCH_TYPE iRequestType, final ORecordInternal<?> iRecord) {
-		OLogManager.instance().warn(this, "-> %s (%s mode) CONFLICT record %s (cannot be deleted on other node)", this, iRequestType,
-				iRecord.getIdentity());
+		OLogManager.instance().warn(this, "-> %s (%s mode) CONFLICT %s record %s (cannot be deleted on other node)", this,
+				iRequestType, ORecordOperation.getName(iOperation), iRecord.getIdentity());
 
 		final ODocument doc = createConflictDocument(iOperation, iRecord);
 		doc.save();

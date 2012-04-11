@@ -60,7 +60,7 @@ public class OLeaderNode {
 	public OLeaderNode(final ODistributedServerManager iManager) {
 		this.manager = iManager;
 
-		logger.log(this, Level.WARNING, TYPE.CLUSTER, DIRECTION.NONE, "current node is the new Leader Node of cluster %s",
+		logger.log(this, Level.WARNING, TYPE.CLUSTER, DIRECTION.NONE, "current node is the new Leader Node of cluster '%s'",
 				iManager.getConfig().name);
 
 		for (String db : OServerMain.server().getAvailableStorageNames().keySet()) {

@@ -60,8 +60,8 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 	private ODistributedServerManager						manager;
 	private String															remoteNodeId;
 	private String															commandInfo;
-	private OClusterLogger											logger		= new OClusterLogger();
 	private final Map<String, ODatabaseRecord>	databases	= new HashMap<String, ODatabaseRecord>(5);
+	private final OClusterLogger								logger		= new OClusterLogger();
 
 	public OClusterNetworkProtocol() {
 		super("OrientDB <- Node/?");
@@ -231,7 +231,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 				if (opLog != null) {
 
 					// SEND LOG DELTA
-					int position = opLog.findOperationId(lastLog);
+					final int position = opLog.findOperationId(lastLog);
 
 					if (position > -1) {
 						// SEND TOTAL OF LOG ENTRIES
@@ -324,7 +324,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			// LOGS THE CHANGE
 			final ODistributedNode node = manager.getReplicator().getNode(remoteNodeId);
 			final ODistributedDatabaseInfo db = node.getDatabase(database.getName());
-			db.log.appendLog(operationId, operationType, rid);
+			db.getLog().appendLog(operationId, operationType, rid);
 
 			beginResponse();
 			try {
@@ -364,6 +364,8 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 
 				logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN,
 						"reading database content via streaming from remote server node...");
+
+				manager.getReplicator().resetAnyPreviousReplicationLog(dbName);
 
 				beginResponse();
 				try {

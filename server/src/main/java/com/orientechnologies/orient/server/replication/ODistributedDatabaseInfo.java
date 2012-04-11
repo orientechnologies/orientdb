@@ -16,6 +16,11 @@
 package com.orientechnologies.orient.server.replication;
 
 import java.io.IOException;
+import java.util.logging.Level;
+
+import com.orientechnologies.orient.server.clustering.OClusterLogger;
+import com.orientechnologies.orient.server.clustering.OClusterLogger.DIRECTION;
+import com.orientechnologies.orient.server.clustering.OClusterLogger.TYPE;
 
 /**
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
@@ -28,43 +33,58 @@ public class ODistributedDatabaseInfo {
 	}
 
 	public enum STATUS_TYPE {
-		ONLINE, OFFLINE
+		ONLINE, OFFLINE, SYNCHRONIZING
 	}
 
-	public String						serverId;
-	public String						databaseName;
-	public String						userName;
-	public String						userPassword;
-	public SYNCH_TYPE				synchType;
-	public ONodeConnection	connection;
-	public OOperationLog		log;
-	public STATUS_TYPE			status;
+	public String									serverId;
+	public String									databaseName;
+	public String									userName;
+	public String									userPassword;
+	public SYNCH_TYPE							synchType;
+	public ONodeConnection				connection;
+	public STATUS_TYPE						status;
+	private OOperationLog					log;
+	private final OClusterLogger	logger	= new OClusterLogger();
 
 	public ODistributedDatabaseInfo(final String iServerid, final String dbName, final String iUserName, final String iUserPasswd,
-			final SYNCH_TYPE iSynchType, final STATUS_TYPE iStatus) {
+			final SYNCH_TYPE iSynchType, final STATUS_TYPE iStatus) throws IOException {
 		serverId = iServerid;
 		databaseName = dbName;
 		userName = iUserName;
 		userPassword = iUserPasswd;
 		synchType = iSynchType;
 		status = iStatus;
-	}
 
-	public void connected() throws IOException {
-		log = new OOperationLog(serverId, databaseName);
+		logger.setDatabase(dbName);
+		logger.setNode(iServerid);
+
+		log = new OOperationLog(serverId, databaseName, false);
 	}
 
 	public void close() throws IOException {
 		if (log != null)
 			log.close();
-		status = STATUS_TYPE.OFFLINE;
+		setStatus(STATUS_TYPE.OFFLINE);
 	}
 
 	public void setOnline() {
-		status = STATUS_TYPE.ONLINE;
+		setStatus(STATUS_TYPE.ONLINE);
+	}
+
+	public void setSynchronizing() {
+		setStatus(STATUS_TYPE.SYNCHRONIZING);
 	}
 
 	public void setOffline() {
-		status = STATUS_TYPE.OFFLINE;
+		setStatus(STATUS_TYPE.OFFLINE);
+	}
+
+	public OOperationLog getLog() {
+		return log;
+	}
+
+	private void setStatus(final STATUS_TYPE iStatus) {
+		logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.NONE, "distributed db changed status %s -> %s", status, iStatus);
+		status = iStatus;
 	}
 }

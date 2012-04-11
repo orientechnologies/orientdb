@@ -16,12 +16,16 @@
 package com.orientechnologies.orient.server.replication;
 
 import java.io.IOException;
+import java.util.logging.Level;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.impl.local.OSingleFileSegment;
+import com.orientechnologies.orient.server.clustering.OClusterLogger;
+import com.orientechnologies.orient.server.clustering.OClusterLogger.DIRECTION;
+import com.orientechnologies.orient.server.clustering.OClusterLogger.TYPE;
 
 /**
  * Write all the operation during server cluster.<br/>
@@ -39,28 +43,36 @@ import com.orientechnologies.orient.core.storage.impl.local.OSingleFileSegment;
  * </code><br/>
  */
 public class OOperationLog extends OSingleFileSegment {
-	public static final String	EXTENSION				= ".dol";
-	private static final int		DEF_START_SIZE	= 262144;
+	public static final String		EXTENSION				= ".dol";
+	private static final int			DEF_START_SIZE	= 262144;
 
-	private static final int		OFFSET_SERIAL		= 0;
-	private static final int		OFFSET_OPERAT		= OFFSET_SERIAL + OBinaryProtocol.SIZE_LONG;
-	private static final int		OFFSET_RID			= OFFSET_OPERAT + OBinaryProtocol.SIZE_BYTE;
-	private static final int		RECORD_SIZE			= OFFSET_RID + ORecordId.PERSISTENT_SIZE;
+	private static final int			OFFSET_SERIAL		= 0;
+	private static final int			OFFSET_OPERAT		= OFFSET_SERIAL + OBinaryProtocol.SIZE_LONG;
+	private static final int			OFFSET_RID			= OFFSET_OPERAT + OBinaryProtocol.SIZE_BYTE;
+	private static final int			RECORD_SIZE			= OFFSET_RID + ORecordId.PERSISTENT_SIZE;
 
-	private long								serial;
-	private final String				nodeId;
-	private final boolean				synchEnabled;
+	private long									serial;
+	private final String					nodeId;
+	private final boolean					synchEnabled;
+	private final OClusterLogger	logger					= new OClusterLogger();
 
-	public OOperationLog(final String iNodeId, final String iDatabase) throws IOException {
+	public OOperationLog(final String iNodeId, final String iDatabase, final boolean iReset) throws IOException {
 		super(OReplicator.DIRECTORY_NAME + "/" + iDatabase + "/" + iNodeId.replace('.', '_').replace(':', '-') + EXTENSION,
 				OGlobalConfiguration.DISTRIBUTED_LOG_TYPE.getValueAsString());
 		nodeId = iNodeId;
 		synchEnabled = OGlobalConfiguration.DISTRIBUTED_LOG_SYNCH.getValueAsBoolean();
 
+		logger.setNode(nodeId);
+		logger.setDatabase(iDatabase);
+
 		file.setFailCheck(false);
-		if (exists())
-			open();
-		else
+		if (exists()) {
+			if (iReset) {
+				delete();
+				create(DEF_START_SIZE);
+			} else
+				open();
+		} else
 			create(DEF_START_SIZE);
 
 		serial = getLastOperationId() + 1;
@@ -88,6 +100,10 @@ public class OOperationLog extends OSingleFileSegment {
 
 		acquireExclusiveLock();
 		try {
+
+			logger.log(this, Level.FINE, TYPE.REPLICATION, DIRECTION.NONE, "Journaled operation #%d as %s against record %s", iSerial,
+					ORecordOperation.getName(iOperation), iRID);
+
 			int offset = file.allocateSpace(RECORD_SIZE);
 
 			file.writeLong(offset, iSerial);

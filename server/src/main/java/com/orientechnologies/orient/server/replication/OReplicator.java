@@ -134,10 +134,7 @@ public class OReplicator {
 		if (db.connection == null)
 			db.connection = new ONodeConnection(this, nodeId, getConflictResolver());
 
-		if (!localLogs.containsKey(dbName))
-			// INITIALIZING OPERATION LOG
-			localLogs.put(dbName, new OOperationLog(manager.getId(), dbName));
-
+		createLocalLog(dbName, false);
 		return db.status != STATUS_TYPE.ONLINE;
 	}
 
@@ -145,13 +142,10 @@ public class OReplicator {
 		if (!connect(nodeId, dbName, mode))
 			return;
 
-		// GET THE NODE
-		synchronized (this) {
-			final ODistributedNode dNode = getOrCreateDistributedNode(nodeId);
-			ODistributedDatabaseInfo db = dNode.getDatabase(dbName);
+		final ODistributedNode dNode = getOrCreateDistributedNode(nodeId);
+		ODistributedDatabaseInfo db = dNode.getDatabase(dbName);
 
-			dNode.startDatabaseReplication(db);
-		}
+		dNode.startDatabaseReplication(db);
 	}
 
 	protected void removeDistributedNode(final String iNodeId, final IOException iCause) {
@@ -184,21 +178,20 @@ public class OReplicator {
 			if (nodes.isEmpty())
 				return;
 
+			logger.setDatabase(dbName);
+
 			// GET THE NODES INVOLVED IN THE UPDATE
 			for (ODistributedNode node : nodes.values()) {
-				if (node.getStatus() != ODistributedNode.STATUS.ONLINE)
-					logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "node status %s: the change is not propagated",
-							node.getStatus());
-				else {
-					final ODistributedDatabaseInfo dbEntry = node.getDatabase(dbName);
-					if (dbEntry != null) {
-						if (dbEntry.status != STATUS_TYPE.ONLINE)
-							OLogManager.instance().info(this, "REPL <%s> status %s, the change is not propagated", dbEntry.databaseName,
-									dbEntry.status);
-						else
-							// SEND THE REQUEST
-							node.sendRequest(iTransactionEntry, dbEntry.synchType);
-					}
+				logger.setNode(node.getName());
+
+				final ODistributedDatabaseInfo dbEntry = node.getDatabase(dbName);
+				if (dbEntry != null) {
+					if (dbEntry.status != STATUS_TYPE.ONLINE)
+						logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "database status %s: the change is not propagated",
+								dbEntry.status);
+					else
+						// SEND THE REQUEST
+						node.sendRequest(iTransactionEntry, dbEntry.synchType);
 				}
 			}
 		}
@@ -353,14 +346,20 @@ public class OReplicator {
 	 * @param iDatabaseName
 	 *          Database's name
 	 * @return OOperationLog instance
+	 * @throws IOException
 	 */
-	public OOperationLog getOperationLog(final String iNodeId, final String iDatabaseName) {
+	public OOperationLog getOperationLog(final String iNodeId, final String iDatabaseName) throws IOException {
 		synchronized (this) {
 			if (manager.itsMe(iNodeId))
 				return localLogs.get(iDatabaseName);
 
 			final ODistributedNode node = nodes.get(iNodeId);
-			return node != null ? node.getDatabase(iDatabaseName).log : null;
+			if (node != null) {
+				final ODistributedDatabaseInfo db = node.getDatabase(iDatabaseName);
+				if (db != null)
+					return db.getLog();
+			}
+			return null;
 		}
 	}
 
@@ -370,11 +369,23 @@ public class OReplicator {
 		}
 	}
 
+	public void resetAnyPreviousReplicationLog(final String iDatabaseName) throws IOException {
+		createLocalLog(iDatabaseName, true);
+	}
+
 	public ODistributedServerManager getManager() {
 		return manager;
 	}
 
 	public OServerUserConfiguration getReplicatorUser() {
 		return replicatorUser;
+	}
+
+	private void createLocalLog(final String dbName, final boolean iReset) throws IOException {
+		synchronized (this) {
+			if (!localLogs.containsKey(dbName))
+				// INITIALIZING OPERATION LOG
+				localLogs.put(dbName, new OOperationLog(manager.getId(), dbName, iReset));
+		}
 	}
 }

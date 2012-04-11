@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -39,17 +40,12 @@ import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.
  * 
  */
 public class ODistributedNode {
-	public enum STATUS {
-		OFFLINE, ONLINE, SYNCHRONIZING
-	}
-
 	private final OReplicator											replicator;
 	private final String													id;
 	public String																	networkAddress;
 	public int																		networkPort;
 	public Date																		connectedOn;
 	private Map<String, ODistributedDatabaseInfo>	databases	= new HashMap<String, ODistributedDatabaseInfo>();
-	private STATUS																status		= STATUS.ONLINE;
 	protected OClusterLogger											logger		= new OClusterLogger();
 
 	public ODistributedNode(final OReplicator iReplicator, final String iId) throws IOException {
@@ -71,17 +67,12 @@ public class ODistributedNode {
 	}
 
 	public void startDatabaseReplication(final ODistributedDatabaseInfo iDatabase) throws IOException {
+		if (iDatabase == null)
+			throw new IllegalArgumentException("Database is null");
+
+		logger.setDatabase(iDatabase.databaseName);
+
 		synchronized (this) {
-			if (status != STATUS.ONLINE)
-				// THE NODE IS OFFLINE
-				return;
-
-			// REMOVE ANY OTHER PREVIOUS ENTRY
-			final ODistributedDatabaseInfo oldDbInfo = databases.remove(iDatabase.databaseName);
-			if (oldDbInfo != null)
-				oldDbInfo.close();
-
-			logger.setDatabase(iDatabase.databaseName);
 			logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.OUT, "starting replication against distributed node");
 
 			try {
@@ -90,12 +81,8 @@ public class ODistributedNode {
 				if (iDatabase.connection == null)
 					iDatabase.connection = new ONodeConnection(replicator, id, replicator.getConflictResolver());
 
-				iDatabase.connected();
-
-				setStatus(STATUS.SYNCHRONIZING);
 				iDatabase.connection.synchronize(iDatabase.databaseName, replicator.getLocalDatabaseConfiguration(iDatabase.databaseName));
 				iDatabase.setOnline();
-				setStatus(STATUS.ONLINE);
 
 			} catch (Exception e) {
 				iDatabase.setOffline();
@@ -109,10 +96,6 @@ public class ODistributedNode {
 
 	public void stopDatabaseReplication(final ODistributedDatabaseInfo iDatabase) {
 		synchronized (this) {
-			if (status != STATUS.ONLINE)
-				// THE NODE IS OFFLINE
-				return;
-
 			logger.setDatabase(iDatabase.databaseName);
 
 			iDatabase.setOffline();
@@ -123,7 +106,7 @@ public class ODistributedNode {
 
 	public void sendRequest(final ORecordOperation iRequest, final SYNCH_TYPE iRequestType) throws IOException {
 		final ORecordInternal<?> record = iRequest.getRecord();
-		if( record == null )
+		if (record == null)
 			// RECORD DOESN'T EXIST ANYMORE
 			return;
 
@@ -147,30 +130,29 @@ public class ODistributedNode {
 			throw new ODistributedSynchronizationException("Database '" + iDb.getName() + "' is already shared on remote server node '"
 					+ id + "'");
 
-		if (status != STATUS.ONLINE)
-			throw new ODistributedSynchronizationException("Cannot share database '" + iDb.getName() + "' on remote server node '" + id
-					+ "' because is disconnected");
-
 		final long time = System.currentTimeMillis();
 
 		db = createDatabaseEntry(iDb.getName(), SYNCH_TYPE.SYNCH, iUserName, iUserPasswd);
 
 		try {
-			setStatus(STATUS.SYNCHRONIZING);
+			logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT,
+					"copying database to the remote server via streaming across the network...");
 
-			logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.NONE,
-					"sharing database exporting to the remote server via streaming across the network...");
-
+			db.setSynchronizing();
 			db.connection = new ONodeConnection(replicator, id, replicator.getConflictResolver());
 			db.connection.copy(iDb, db.databaseName, db.userName, db.userPassword, iRemoteEngine);
-			db.connected();
-			setStatus(STATUS.ONLINE);
 
 		} catch (IOException e) {
 			// ERROR
 			databases.remove(iDb.getName());
-			setStatus(STATUS.OFFLINE);
 			throw e;
+
+		} catch (Exception e) {
+			// ERROR
+			databases.remove(iDb.getName());
+
+			logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "Error on copying database");
+			throw new OIOException("Error on copying database", e);
 		}
 
 		logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.NONE, "sharing completed (%dms)", System.currentTimeMillis() - time);
@@ -196,7 +178,6 @@ public class ODistributedNode {
 				db.connection.disconnect();
 		}
 		databases.clear();
-		status = STATUS.OFFLINE;
 	}
 
 	public ODistributedDatabaseInfo getDatabase(final String iDatabaseName) {
@@ -204,8 +185,8 @@ public class ODistributedNode {
 	}
 
 	public long[] getLogRange(final String iDatabaseName) throws IOException {
-		return new long[] { databases.get(iDatabaseName).log.getFirstOperationId(),
-				databases.get(iDatabaseName).log.getLastOperationId() };
+		return new long[] { databases.get(iDatabaseName).getLog().getFirstOperationId(),
+				databases.get(iDatabaseName).getLog().getLastOperationId() };
 	}
 
 	protected void handleError(final ORecordOperation iRequest, final SYNCH_TYPE iRequestType, final Exception iException)
@@ -235,17 +216,7 @@ public class ODistributedNode {
 		}
 	}
 
-	public com.orientechnologies.orient.server.replication.ODistributedNode.STATUS getStatus() {
-		return status;
-	}
-
 	public void registerDatabase(final ODistributedDatabaseInfo iDatabaseEntry) throws IOException {
 		databases.put(iDatabaseEntry.databaseName, iDatabaseEntry);
-		iDatabaseEntry.connected();
-	}
-
-	private void setStatus(final STATUS iStatus) {
-		logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.NONE, "changed status %s -> %s", status, iStatus);
-		status = iStatus;
 	}
 }

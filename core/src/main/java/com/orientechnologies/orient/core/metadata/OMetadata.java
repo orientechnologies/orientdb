@@ -65,8 +65,8 @@ public class OMetadata {
 		try {
 			init(false);
 
-			schema.create();
 			security.create();
+			schema.create();
 			indexManager.create();
 		} finally {
 			OProfiler.getInstance().stopChrono("OMetadata.load", timer);
