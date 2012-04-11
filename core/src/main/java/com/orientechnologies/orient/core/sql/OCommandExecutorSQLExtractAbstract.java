@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNotEquals;
@@ -301,21 +302,57 @@ public abstract class OCommandExecutorSQLExtractAbstract extends OCommandExecuto
 		optimizeBranch(null, compiledFilter.getRootCondition());
 	}
 
+        /**
+         * Check function arguments and pre calculate it if possible
+         * @param function
+         * @return optimized function, same function if no change
+         */
+        protected Object optimizeFunction(OSQLFunctionRuntime function){
+            boolean precalculate = true;
+            for (int i = 0; i < function.configuredParameters.length; ++i) {
+                if (function.configuredParameters[i] instanceof OSQLFilterItemField) {
+                    precalculate = false;
+                } else if (function.configuredParameters[i] instanceof OSQLFunctionRuntime) {
+                    final Object res = optimizeFunction((OSQLFunctionRuntime)function.configuredParameters[i]);
+                    function.configuredParameters[i] = res;
+                    if(res instanceof OSQLFunctionRuntime || res instanceof OSQLFilterItemField){
+                        //function might have been optimized but result is still not static
+                        precalculate = false;
+                    }
+                }
+            }
+
+            if(precalculate){
+                //all fields are static, we can calculate it only once.
+                return function.execute(null, null); //we can pass nulls here, they wont be used
+            }else{
+                return function;
+            }
+        }
+        
 	protected void optimizeBranch(final OSQLFilterCondition iParentCondition, OSQLFilterCondition iCondition) {
 		if (iCondition == null)
 			return;
 
-		final Object left = iCondition.getLeft();
+		Object left = iCondition.getLeft();
 
-		if (left instanceof OSQLFilterCondition)
+		if (left instanceof OSQLFilterCondition){
 			// ANALYSE LEFT RECURSIVELY
 			optimizeBranch(iCondition, (OSQLFilterCondition) left);
+                }else if (left instanceof OSQLFunctionRuntime) {
+                    left = optimizeFunction((OSQLFunctionRuntime)left);
+                    iCondition.setLeft(left);
+                }
 
-		final Object right = iCondition.getRight();
+		Object right = iCondition.getRight();
 
-		if (right instanceof OSQLFilterCondition)
+		if (right instanceof OSQLFilterCondition){
 			// ANALYSE RIGHT RECURSIVELY
 			optimizeBranch(iCondition, (OSQLFilterCondition) right);
+                }else if (right instanceof OSQLFunctionRuntime) {
+                    right = optimizeFunction((OSQLFunctionRuntime)right);
+                    iCondition.setRight(right);
+                }
 
 		final OQueryOperator oper = iCondition.getOperator();
 
