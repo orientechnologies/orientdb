@@ -32,6 +32,11 @@ public interface ODatabasePooled {
 	public void reuse(final Object iOwner, final Object[] iAdditionalArgs);
 
 	/**
+	 * Tells if the underlying database is closed.
+	 */
+	public boolean isUnderlyingOpen();
+
+	/**
 	 * Force closing the current instance avoiding to being reused.
 	 */
 	public void forceClose();

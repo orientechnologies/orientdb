@@ -61,6 +61,10 @@ public class ODatabaseObjectTxPooled extends ODatabaseObjectTx implements ODatab
 				"Database instance was retrieved from a pool. You cannot create the database in this way. Please use directly ODatabaseObjectTx.create()");
 	}
 
+	public boolean isUnderlyingOpen() {
+		return !super.isClosed();
+	}
+
 	@Override
 	public boolean isClosed() {
 		return ownerPool == null || super.isClosed();

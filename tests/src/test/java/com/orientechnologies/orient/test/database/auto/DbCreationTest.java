@@ -187,8 +187,19 @@ public class DbCreationTest {
 		ODatabaseHelper.createDatabase(db, url);
 		db.close();
 
-		db = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-		db.close();
+		ODatabaseDocumentPool.global().close();
 	}
 
+	@Test
+	public void testOpenCloseConnectionPool() throws IOException {
+		ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+		if (!ODatabaseHelper.existsDatabase(db)) {
+			ODatabaseHelper.createDatabase(db, url);
+			db.close();
+		}
+
+		for (int i = 0; i < 500; i++) {
+			ODatabaseDocumentPool.global().acquire(url, "admin", "admin").close();
+		}
+	}
 }

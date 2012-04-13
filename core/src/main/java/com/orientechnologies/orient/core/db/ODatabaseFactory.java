@@ -21,6 +21,7 @@ import java.util.WeakHashMap;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Factory to create high-level ODatabase instances. The global instance is managed by Orient class.
@@ -31,13 +32,38 @@ import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 public class ODatabaseFactory {
 	final WeakHashMap<ODatabaseComplex<?>, Thread>	instances	= new WeakHashMap<ODatabaseComplex<?>, Thread>();
 
+	/**
+	 * Registers a database.
+	 * 
+	 * @param db
+	 * @return
+	 */
 	public synchronized ODatabaseComplex<?> register(final ODatabaseComplex<?> db) {
 		instances.put(db, Thread.currentThread());
 		return db;
 	}
 
+	/**
+	 * Unregisters a database.
+	 * 
+	 * @param db
+	 */
 	public synchronized void unregister(final ODatabaseComplex<?> db) {
 		instances.remove(db);
+	}
+
+	/**
+	 * Unregisters all the database instances that share the storage received as argument.
+	 * 
+	 * @param iStorage
+	 */
+	public synchronized void unregister(final OStorage iStorage) {
+		for (ODatabaseComplex<?> db : new HashSet<ODatabaseComplex<?>>(instances.keySet())) {
+			if (db != null && db.getStorage() == iStorage) {
+				db.close();
+				instances.remove(db);
+			}
+		}
 	}
 
 	/**

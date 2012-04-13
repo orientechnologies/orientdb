@@ -49,7 +49,7 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
 						}
 
 						public boolean reuseResource(final String iKey, final Object[] iAdditionalArgs, final DB iValue) {
-							if (!iValue.isClosed()) {
+							if (((ODatabasePooled) iValue).isUnderlyingOpen()) {
 								((ODatabasePooled) iValue).reuse(owner, iAdditionalArgs);
 								if (iValue.getStorage().isClosed())
 									// STORAGE HAS BEEN CLOSED: REOPEN IT
@@ -83,8 +83,10 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
 	}
 
 	public void close() {
-		if (dbPool != null)
+		if (dbPool != null){
 			dbPool.close();
+			dbPool = null;
+		}
 	}
 
 	public int getMaxSize() {

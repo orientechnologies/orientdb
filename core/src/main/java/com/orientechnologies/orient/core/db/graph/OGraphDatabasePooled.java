@@ -60,6 +60,10 @@ public class OGraphDatabasePooled extends OGraphDatabase implements ODatabasePoo
 				"Database instance was retrieved from a pool. You cannot create the database in this way. Please use directly OGraphDatabase.create()");
 	}
 
+	public boolean isUnderlyingOpen() {
+		return !super.isClosed();
+	}
+
 	@Override
 	public boolean isClosed() {
 		return ownerPool == null || super.isClosed();

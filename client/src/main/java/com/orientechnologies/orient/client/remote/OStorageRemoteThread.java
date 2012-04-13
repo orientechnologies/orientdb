@@ -289,7 +289,6 @@ public class OStorageRemoteThread implements OStorage {
 	}
 
 	public boolean isClosed() {
-		delegate.setSessionId(sessionId);
 		return delegate.isClosed();
 	}
 
