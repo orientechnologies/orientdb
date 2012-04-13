@@ -277,7 +277,7 @@ public class ODatabaseRaw implements ODatabase {
 
 	@Override
 	public void finalize() {
-		close();
+		//close();
 	}
 
 	public int getClusters() {
