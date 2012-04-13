@@ -299,7 +299,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			for (String ridAsString : block.fieldNames()) {
 				rid.fromString(ridAsString);
 				final ORawBuffer localRecord = storage.readRecord(rid, null, false, null);
-				final int remoteVersion = block.field(ridAsString);
+				final int remoteVersion = (Integer) block.field(ridAsString);
 
 				if (localRecord.version == -1) {
 					// LOCAL IS DELETED
