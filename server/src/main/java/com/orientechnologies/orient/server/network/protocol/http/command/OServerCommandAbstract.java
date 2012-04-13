@@ -32,13 +32,15 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestException;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 public abstract class OServerCommandAbstract implements OServerCommand {
 
-	protected static final String	JSON_FORMAT	= "type,indent:2,rid,version,attribSameRow,class";
+	protected static final String	JSON_FORMAT		= "type,indent:2,rid,version,attribSameRow,class";
+	private static final char[]		URL_SEPARATOR	= { '/' };
 
 	/**
 	 * Default constructor. Disable cache of content at HTTP level
@@ -154,11 +156,12 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 		if (parametersPos > -1)
 			iURL = iURL.substring(0, parametersPos);
 
-		String[] parts = iURL.substring(1).split("/");
-		if (parts.length < iArgumentCount)
+		final List<String> parts = OStringSerializerHelper.smartSplit(iURL, URL_SEPARATOR, 1, -1, true);
+		if (parts.size() < iArgumentCount)
 			throw new OHttpRequestException(iSyntax);
 
-		return parts;
+		final String[] array = new String[parts.size()];
+		return parts.toArray(array);
 	}
 
 	protected void sendRecordsContent(final OHttpRequest iRequest, final List<OIdentifiable> iRecords) throws IOException {
