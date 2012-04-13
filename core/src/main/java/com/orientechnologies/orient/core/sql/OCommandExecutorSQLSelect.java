@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -194,10 +195,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 			return true;
 		}
 
-		resultCount++;
-
 		OIdentifiable recordCopy = iRecord instanceof ORecord<?> ? ((ORecord<?>) iRecord).copy() : iRecord.getIdentity().copy();
 		recordCopy = applyProjections(recordCopy);
+
+		resultCount++;
 
 		if (recordCopy != null)
 			if (anyFunctionAggregates || orderedFields != null || flattenTarget != null) {
@@ -1000,6 +1001,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 			// APPLY PROJECTIONS
 			final ODocument doc = iRecord.getRecord();
 			final ODocument result = new ODocument().setOrdered(true);
+
+			// ASSIGN A TEMPORARY RID TO ALLOW PAGINATION IF ANY
+			((ORecordId) result.getIdentity()).clusterId = -2;
+			((ORecordId) result.getIdentity()).clusterPosition = resultCount;
 
 			boolean canExcludeResult = false;
 

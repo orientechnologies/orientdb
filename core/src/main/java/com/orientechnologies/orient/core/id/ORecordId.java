@@ -83,7 +83,7 @@ public class ORecordId implements ORID {
 	}
 
 	public boolean isPersistent() {
-		return clusterPosition > -1;
+		return clusterId > -1 && clusterPosition > -1;
 	}
 
 	public boolean isNew() {
@@ -181,7 +181,7 @@ public class ORecordId implements ORID {
 	}
 
 	private void checkClusterLimits() {
-		if (clusterId < -1)
+		if (clusterId < -2)
 			throw new ODatabaseException("RecordId cannot support negative cluster id. You've used: " + clusterId);
 
 		if (clusterId > CLUSTER_MAX)

@@ -54,14 +54,14 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
 		else if (iRight instanceof ODocument) {
 			// MATCH WITH ONE SINGLE DOCUMENT FIELD
 			final ODocument r = (ODocument) iRight;
-			if (!r.getIdentity().isValid() && r.fields() == 1) {
+			if (!r.getIdentity().isPersistent() && r.fields() == 1) {
 				Object field = r.field(r.fieldNames()[0]);
 				return iLeft.equals(field);
 			}
 		} else if (iLeft instanceof ODocument) {
 			// MATCH WITH ONE SINGLE DOCUMENT FIELD
 			final ODocument r = (ODocument) iLeft;
-			if (!r.getIdentity().isValid() && r.fields() == 1) {
+			if (!r.getIdentity().isPersistent() && r.fields() == 1) {
 				Object field = r.field(r.fieldNames()[0]);
 				return iRight.equals(field);
 			}
