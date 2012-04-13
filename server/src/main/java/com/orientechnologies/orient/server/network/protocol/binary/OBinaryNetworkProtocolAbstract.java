@@ -42,7 +42,6 @@ import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -272,9 +271,9 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 		OLogManager.instance().info(this, "Created database '%s' of type '%s'", iDatabase.getURL(),
 				iDatabase.getStorage() instanceof OStorageLocal ? "local" : "memory");
 
-		if (iDatabase.getStorage() instanceof OStorageLocal)
-			// CLOSE IT BECAUSE IT WILL BE OPEN AT FIRST USE
-			iDatabase.close();
+//		if (iDatabase.getStorage() instanceof OStorageLocal)
+//			// CLOSE IT BECAUSE IT WILL BE OPEN AT FIRST USE
+//			iDatabase.close();
 
 		return iDatabase;
 	}
@@ -304,43 +303,6 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 					+ "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
 	}
 
-	protected OServerUserConfiguration serverLogin(final String iUser, final String iPassword, final String iResource) {
-		if (!OServerMain.server().authenticate(iUser, iPassword, iResource))
-			throw new OSecurityAccessException(
-					"Wrong user/password to [connect] to the remote OrientDB Server instance. Get the user/password from the config/orientdb-server-config.xml file");
-
-		serverUser = OServerMain.server().getUser(iUser);
-		return serverUser;
-	}
-
-	protected ODatabaseComplex<?> openDatabase(final String iDbType, final String iDbUrl, final String iUser, final String iPassword) {
-		final String path = OServerMain.server().getStoragePath(iDbUrl);
-
-		final ODatabaseComplex<?> database = Orient.instance().getDatabaseFactory().createDatabase(iDbType, path);
-
-		if (database.isClosed())
-			if (database.getStorage() instanceof OStorageMemory)
-				database.create();
-			else {
-				try {
-					database.open(iUser, iPassword);
-				} catch (OSecurityException e) {
-					// TRY WITH SERVER'S USER
-					try {
-						serverLogin(iUser, iPassword, "database.passthrough");
-					} catch (OSecurityException ex) {
-						throw e;
-					}
-
-					// SERVER AUTHENTICATED, BYPASS SECURITY
-					database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
-					database.open(iUser, iPassword);
-				}
-			}
-
-		return database;
-	}
-
 	protected ODatabaseComplex<?> openDatabase(final ODatabaseComplex<?> database, final String iUser, final String iPassword) {
 
 		if (database.isClosed())
@@ -352,7 +314,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 				} catch (OSecurityException e) {
 					// TRY WITH SERVER'S USER
 					try {
-						serverLogin(iUser, iPassword, "database.passthrough");
+						serverUser = OServerMain.server().serverLogin(iUser, iPassword, "database.passthrough");
 					} catch (OSecurityException ex) {
 						throw e;
 					}
@@ -388,9 +350,9 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 		final ORecordInternal<?> newRecord = Orient.instance().getRecordFactoryManager().newInstance(recordType);
 		newRecord.fill(rid, version, buffer, true);
 
-//		if (((OSchemaProxy) iDatabase.getMetadata().getSchema()).getIdentity().equals(rid))
-//			// || ((OIndexManagerImpl) connection.database.getMetadata().getIndexManager()).getDocument().getIdentity().equals(rid)) {
-//			throw new OSecurityAccessException("Cannot update internal record " + rid);
+		// if (((OSchemaProxy) iDatabase.getMetadata().getSchema()).getIdentity().equals(rid))
+		// // || ((OIndexManagerImpl) connection.database.getMetadata().getIndexManager()).getDocument().getIdentity().equals(rid)) {
+		// throw new OSecurityAccessException("Cannot update internal record " + rid);
 
 		final ORecordInternal<?> currentRecord;
 		if (newRecord instanceof ODocument) {

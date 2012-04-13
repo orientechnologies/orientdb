@@ -34,7 +34,10 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryInputStream;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
@@ -99,7 +102,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 
 			// AUTHENTICATE
 			final String userName = channel.readString();
-			serverLogin(userName, channel.readString(), "connect");
+			serverUser = OServerMain.server().serverLogin(userName, channel.readString(), "connect");
 
 			logger.log(this, Level.FINE, TYPE.REPLICATION, DIRECTION.IN, "authenticated correctly with user '%s'", userName);
 
@@ -241,7 +244,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 							opLog.getEntry(i, op);
 
 							try {
-								replicationNode.sendRequest(op, SYNCH_TYPE.SYNCH);
+								replicationNode.propagateChange(op, SYNCH_TYPE.SYNCH);
 								sent++;
 
 								logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "#%d operation %d with RID %s", sent, op.serial,
@@ -272,7 +275,94 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			break;
 		}
 
-		case OClusterProtocol.REQUEST_NODE2NODE_REPLICATION_RECORD_CHANGE: {
+		case OClusterProtocol.REQUEST_NODE2NODE_REPLICATION_ALIGN: {
+			commandInfo = "Alignment between nodes";
+			final ODocument cfg = new ODocument(channel.readBytes());
+			final String dbName = cfg.field("db");
+			final ODocument block = cfg.field("block");
+
+			logger.setDatabase(dbName);
+			logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "received alignment request");
+
+			final ODatabaseRecord db = getOrOpenDatabase(dbName);
+			final OStorage storage = db.getStorage();
+			final ODistributedNode remoteNode = manager.getReplicator().getNode(remoteNodeId);
+
+			beginResponse();
+			try {
+				sendOk(clientTxId);
+			} finally {
+				endResponse();
+			}
+
+			ORecordId rid = new ORecordId();
+			for (String ridAsString : block.fieldNames()) {
+				rid.fromString(ridAsString);
+				final ORawBuffer localRecord = storage.readRecord(rid, null, false, null);
+				final int remoteVersion = block.field(ridAsString);
+
+				if (localRecord.version == -1) {
+					// LOCAL IS DELETED
+					if (remoteVersion > -1)
+						// DELETE REMOTE RECORD
+						remoteNode.propagateChange(new ORecordOperation(rid, ORecordOperation.DELETED), SYNCH_TYPE.SYNCH);
+
+				} else if (remoteVersion == -1) {
+					// REMOTE IS DELETED
+					if (localRecord.version > -1)
+						// DELETE REMOTE RECORD
+						db.delete(rid);
+
+				} else if (localRecord.version > remoteVersion) {
+					// LOCAL WINS
+					logger.log(this, Level.FINE, TYPE.REPLICATION, DIRECTION.IN, "Sending record %s to remote: my version %d > remote %d",
+							rid, localRecord.version, remoteVersion);
+
+					remoteNode.propagateChange(new ORecordOperation(rid, ORecordOperation.UPDATED), SYNCH_TYPE.SYNCH);
+
+				} else if (localRecord.version < remoteVersion) {
+					// REMOTE WINS
+					logger.log(this, Level.FINE, TYPE.REPLICATION, DIRECTION.IN, "Getting remote record %s: its version %d > mine %d", rid,
+							remoteVersion, localRecord.version);
+
+					remoteNode.requestRecord(dbName, rid);
+				}
+			}
+
+			logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "alignment completed for %d", block.fields());
+
+			break;
+		}
+
+		case OClusterProtocol.REQUEST_NODE2NODE_REPLICATION_RECORD_REQUEST: {
+			commandInfo = "Retrieve record";
+
+			final String dbName = channel.readString();
+			final ORecordId rid = channel.readRID();
+
+			logger.setNode(dbName);
+			logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "record %s...", rid);
+
+			final ODatabaseRecord database = getOrOpenDatabase(dbName);
+			final ORecordInternal<?> record = database.load(rid);
+
+			beginResponse();
+			try {
+				sendOk(clientTxId);
+				if (record != null) {
+					channel.writeByte(record.getRecordType());
+					channel.writeInt(record.getVersion());
+					channel.writeBytes(record.toStream());
+				} else
+					channel.writeByte((byte) -1);
+
+			} finally {
+				endResponse();
+			}
+			break;
+		}
+
+		case OClusterProtocol.REQUEST_NODE2NODE_REPLICATION_RECORD_PROPAGATE: {
 			commandInfo = "Distributed record change";
 
 			final String dbName = channel.readString();
@@ -281,7 +371,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 
 			final ORecordId rid = channel.readRID();
 			final byte[] buffer = channel.readBytes();
-			final int version = channel.readInt();
+			final int version = channel.readInt() - 1;
 			final byte recordType = channel.readByte();
 
 			logger.setNode(dbName);
@@ -335,7 +425,6 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 			}
 			break;
 		}
-
 		case OClusterProtocol.REQUEST_NODE2NODE_DB_COPY: {
 			checkConnected();
 			commandInfo = "Importing a database from a remote node";
@@ -404,7 +493,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 
 		if (db == null) {
 			// OPEN THE DB FOR THE FIRST TIME
-			db = (ODatabaseDocumentTx) openDatabase(ODatabaseDocumentTx.TYPE, dbName, serverUser.name, serverUser.password);
+			db = (ODatabaseDocumentTx) OServerMain.server().openDatabase(ODatabaseDocumentTx.TYPE, dbName, serverUser.name, serverUser.password);
 			databases.put(dbName, db);
 		}
 

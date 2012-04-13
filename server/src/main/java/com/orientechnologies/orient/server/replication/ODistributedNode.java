@@ -26,6 +26,8 @@ import java.util.logging.Level;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.server.clustering.OClusterLogger;
 import com.orientechnologies.orient.server.clustering.OClusterLogger.DIRECTION;
@@ -58,10 +60,20 @@ public class ODistributedNode {
 		logger.setNode(iId);
 	}
 
-	protected ODistributedDatabaseInfo createDatabaseEntry(final String dbName, SYNCH_TYPE iSynchType, final String iUserName,
-			final String iUserPasswd) throws IOException {
-		final ODistributedDatabaseInfo obj = new ODistributedDatabaseInfo(id, dbName, iUserName, iUserPasswd, iSynchType,
-				STATUS_TYPE.OFFLINE);
+	public ODistributedDatabaseInfo getDatabase(final String iDatabaseName) {
+		return databases.get(iDatabaseName);
+	}
+
+	public ODistributedDatabaseInfo getOrCreateDatabaseEntry(final String iDatabaseName) throws IOException {
+		ODistributedDatabaseInfo db = databases.get(iDatabaseName);
+		if (db == null)
+			db = createDatabaseEntry(iDatabaseName, SYNCH_TYPE.SYNCH);
+		return db;
+	}
+
+	protected ODistributedDatabaseInfo createDatabaseEntry(final String dbName, SYNCH_TYPE iSynchType) throws IOException {
+		final ODistributedDatabaseInfo obj = new ODistributedDatabaseInfo(id, dbName, replicator.getReplicatorUser().name,
+				replicator.getReplicatorUser().password, iSynchType, STATUS_TYPE.OFFLINE);
 		databases.put(dbName, obj);
 		return obj;
 	}
@@ -104,7 +116,39 @@ public class ODistributedNode {
 		}
 	}
 
-	public void sendRequest(final ORecordOperation iRequest, final SYNCH_TYPE iRequestType) throws IOException {
+	public void startDatabaseAlignment(final ODistributedDatabaseInfo iDatabase, final String iOptions) throws IOException {
+		if (iDatabase == null)
+			throw new IllegalArgumentException("Database is null");
+
+		logger.setDatabase(iDatabase.databaseName);
+
+		synchronized (this) {
+			if (!iDatabase.isOnline())
+				throw new IllegalArgumentException("Database '" + iDatabase.databaseName + "' is not replicated");
+
+			logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.OUT, "starting alignment against distributed node");
+
+			try {
+				databases.put(iDatabase.databaseName, iDatabase);
+
+				if (iDatabase.connection == null)
+					iDatabase.connection = new ONodeConnection(replicator, id, replicator.getConflictResolver());
+
+				iDatabase.setSynchronizing();
+				iDatabase.connection.align(iDatabase.databaseName, iOptions);
+				iDatabase.setOnline();
+
+			} catch (Exception e) {
+				iDatabase.setOffline();
+				iDatabase.close();
+				databases.remove(iDatabase.databaseName);
+				logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.NONE,
+						"cannot find database on remote server. Removing it from shared list", e);
+			}
+		}
+	}
+
+	public void propagateChange(final ORecordOperation iRequest, final SYNCH_TYPE iRequestType) throws IOException {
 		final ORecordInternal<?> record = iRequest.getRecord();
 		if (record == null)
 			// RECORD DOESN'T EXIST ANYMORE
@@ -115,15 +159,26 @@ public class ODistributedNode {
 			return;
 
 		try {
-			databaseEntry.connection.distributeChange(databaseEntry, iRequest, iRequestType, record);
+			databaseEntry.connection.propagateChange(databaseEntry, iRequest, iRequestType, record);
 
 		} catch (Exception e) {
 			handleError(iRequest, iRequestType, e);
 		}
 	}
 
-	public ODistributedDatabaseInfo copyDatabase(final ODatabaseRecord iDb, final String iRemoteEngine, String iUserName,
-			String iUserPasswd) throws IOException {
+	public ORecord<?> requestRecord(final String iDatabaseName, final ORecordId rid) {
+		final ODistributedDatabaseInfo databaseEntry = databases.get(iDatabaseName);
+		if (databaseEntry != null)
+			try {
+				return databaseEntry.connection.requestRecord(databaseEntry, rid);
+
+			} catch (Exception e) {
+				logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "Error on retrieving record %s from remote server", rid);
+			}
+		return null;
+	}
+
+	public ODistributedDatabaseInfo copyDatabase(final ODatabaseRecord iDb, final String iRemoteEngine) throws IOException {
 		ODistributedDatabaseInfo db = getDatabase(iDb.getName());
 
 		if (db != null)
@@ -132,7 +187,7 @@ public class ODistributedNode {
 
 		final long time = System.currentTimeMillis();
 
-		db = createDatabaseEntry(iDb.getName(), SYNCH_TYPE.SYNCH, iUserName, iUserPasswd);
+		db = createDatabaseEntry(iDb.getName(), SYNCH_TYPE.SYNCH);
 
 		try {
 			logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT,
@@ -178,10 +233,6 @@ public class ODistributedNode {
 				db.connection.disconnect();
 		}
 		databases.clear();
-	}
-
-	public ODistributedDatabaseInfo getDatabase(final String iDatabaseName) {
-		return databases.get(iDatabaseName);
 	}
 
 	public long[] getLogRange(final String iDatabaseName) throws IOException {

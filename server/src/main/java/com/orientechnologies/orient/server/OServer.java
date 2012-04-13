@@ -44,11 +44,16 @@ import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 import com.orientechnologies.orient.enterprise.command.OCommandExecutorScript;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerConfigurationLoaderXml;
@@ -275,6 +280,14 @@ public class OServer {
 
 	public ThreadGroup getServerThreadGroup() {
 		return threadGroup;
+	}
+
+	public OServerUserConfiguration serverLogin(final String iUser, final String iPassword, final String iResource) {
+		if (!authenticate(iUser, iPassword, iResource))
+			throw new OSecurityAccessException(
+					"Wrong user/password to [connect] to the remote OrientDB Server instance. Get the user/password from the config/orientdb-server-config.xml file");
+
+		return getUser(iUser);
 	}
 
 	/**
@@ -518,5 +531,33 @@ public class OServer {
 				}
 			}
 		}
+	}
+
+	public ODatabaseComplex<?> openDatabase(final String iDbType, final String iDbUrl, final String iUser, final String iPassword) {
+		final String path = OServerMain.server().getStoragePath(iDbUrl);
+
+		final ODatabaseComplex<?> database = Orient.instance().getDatabaseFactory().createDatabase(iDbType, path);
+
+		if (database.isClosed())
+			if (database.getStorage() instanceof OStorageMemory)
+				database.create();
+			else {
+				try {
+					database.open(iUser, iPassword);
+				} catch (OSecurityException e) {
+					// TRY WITH SERVER'S USER
+					try {
+						OServerMain.server().serverLogin(iUser, iPassword, "database.passthrough");
+					} catch (OSecurityException ex) {
+						throw e;
+					}
+
+					// SERVER AUTHENTICATED, BYPASS SECURITY
+					database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
+					database.open(iUser, iPassword);
+				}
+			}
+
+		return database;
 	}
 }

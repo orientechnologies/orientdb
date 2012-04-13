@@ -308,7 +308,10 @@ public enum OGlobalConfiguration {
 	DISTRIBUTED_LOG_SYNCH(
 			"distributed.log.synch",
 			"Executes a synch against the file-system at every log entry. This slows down server operations, but guarantee transaction reliability on unreliable drives",
-			Boolean.class, Boolean.FALSE);
+			Boolean.class, Boolean.FALSE),
+
+	DISTRIBUTED_ALIGN_RECORD_BLOCK("distributed.align.recordBlock",
+			"Number of records to send in block to the remote server during alignment", Integer.class, 200);
 
 	private final String									key;
 	private final Object									defValue;

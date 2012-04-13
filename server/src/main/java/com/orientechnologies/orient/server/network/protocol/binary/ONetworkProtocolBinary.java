@@ -66,6 +66,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.handler.OServerHandlerHelper;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo;
 import com.orientechnologies.orient.server.replication.ODistributedNode;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 
@@ -196,6 +197,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
 		case OChannelBinaryProtocol.REQUEST_DB_REPLICATION:
 			replicationDatabase();
+			break;
+
+		case OChannelBinaryProtocol.REQUEST_DB_ALIGN:
+			alignDatabase();
 			break;
 
 		case OChannelBinaryProtocol.REQUEST_DATACLUSTER_COUNT:
@@ -383,7 +388,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 		user = channel.readString();
 		passwd = channel.readString();
 
-		connection.database = (ODatabaseDocumentTx) openDatabase(dbType, dbURL, user, passwd);
+		connection.database = (ODatabaseDocumentTx) OServerMain.server().openDatabase(dbType, dbURL, user, passwd);
 		connection.rawDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
 
 		if (!(connection.database.getStorage() instanceof OStorageEmbedded) && !loadUserFromSchema(user, passwd)) {
@@ -411,7 +416,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
 		readConnectionData();
 
-		serverUser = serverLogin(channel.readString(), channel.readString(), "connect");
+		serverUser = OServerMain.server().serverLogin(channel.readString(), channel.readString(), "connect");
 
 		beginResponse();
 		try {
@@ -463,13 +468,13 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
 		checkServerAccess("database.copy");
 
-		connection.database = (ODatabaseDocumentTx) openDatabase(ODatabaseDocument.TYPE, dbUrl, dbUser, dbPassword);
+		connection.database = (ODatabaseDocumentTx) OServerMain.server()
+				.openDatabase(ODatabaseDocument.TYPE, dbUrl, dbUser, dbPassword);
 
 		final ODistributedServerManager manager = OServerMain.server().getHandler(ODistributedServerManager.class);
 		final ODistributedNode node = manager.getReplicator().getOrCreateDistributedNode(remoteServerName);
 
-		node.copyDatabase(connection.database, remoteServerEngine, manager.getReplicator().getReplicatorUser().name, manager
-				.getReplicator().getReplicatorUser().password);
+		node.copyDatabase(connection.database, remoteServerEngine);
 
 		beginResponse();
 		try {
@@ -489,13 +494,36 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 		final ODistributedServerManager manager = OServerMain.server().getHandler(ODistributedServerManager.class);
 		final ODistributedNode node = manager.getReplicator().getOrCreateDistributedNode(remoteServer);
 
+		final ODistributedDatabaseInfo db = node.getOrCreateDatabaseEntry(dbName);
+
 		if (action.equals("start")) {
 			checkServerAccess("server.replication.start");
-			node.startDatabaseReplication(node.getDatabase(dbName));
+			node.startDatabaseReplication(db);
 		} else if (action.equals("stop")) {
 			checkServerAccess("server.replication.stop");
-			node.stopDatabaseReplication(node.getDatabase(dbName));
+			node.stopDatabaseReplication(db);
 		}
+
+		beginResponse();
+		try {
+			sendOk(clientTxId);
+		} finally {
+			endResponse();
+		}
+	}
+
+	protected void alignDatabase() throws IOException {
+		setDataCommandInfo("Align database command");
+
+		final String dbName = channel.readString();
+		final String remoteServer = channel.readString();
+		final String options = channel.readString();
+
+		final ODistributedServerManager manager = OServerMain.server().getHandler(ODistributedServerManager.class);
+		final ODistributedNode node = manager.getReplicator().getOrCreateDistributedNode(remoteServer);
+
+		checkServerAccess("server.align");
+		node.startDatabaseAlignment(node.getOrCreateDatabaseEntry(dbName), options);
 
 		beginResponse();
 		try {

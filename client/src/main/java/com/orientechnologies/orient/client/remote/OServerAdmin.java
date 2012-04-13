@@ -307,6 +307,44 @@ public class OServerAdmin {
 	}
 
 	/**
+	 * Aligns a database between two servers
+	 * 
+	 * @param iDatabaseName
+	 *          database name to align
+	 * @param iRemoteServer
+	 *          remote server alias as IP+address
+	 * @param iOptions
+	 *          options
+	 * @return
+	 * @return The instance itself. Useful to execute method in chain
+	 * @throws IOException
+	 */
+	public OServerAdmin alignDatabase(final String iDatabaseName, final String iRemoteServer, final String iOptions) {
+		try {
+			OLogManager.instance().debug(this, "Started the alignment of database '%s' from server '%s' to '%s' with options %s",
+					iDatabaseName, storage.getURL(), iRemoteServer, iOptions);
+
+			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_ALIGN);
+			try {
+				network.writeString(iDatabaseName);
+				network.writeString(iRemoteServer);
+				network.writeString(iOptions);
+			} finally {
+				storage.endRequest(network);
+			}
+
+			storage.getResponse(network);
+
+			OLogManager.instance().debug(this, "Alignment finished");
+
+		} catch (Exception e) {
+			OLogManager.instance().exception("Cannot align database: " + iDatabaseName, e, OStorageException.class);
+		}
+
+		return this;
+	}
+
+	/**
 	 * Stops the replication between two servers.
 	 * 
 	 * @param iDatabaseName

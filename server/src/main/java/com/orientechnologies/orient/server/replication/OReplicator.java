@@ -129,7 +129,7 @@ public class OReplicator {
 		final ODistributedNode dNode = getOrCreateDistributedNode(nodeId);
 		ODistributedDatabaseInfo db = dNode.getDatabase(dbName);
 		if (db == null)
-			db = dNode.createDatabaseEntry(dbName, SYNCH_TYPE.valueOf(mode.toUpperCase()), replicatorUser.name, replicatorUser.password);
+			db = dNode.createDatabaseEntry(dbName, SYNCH_TYPE.valueOf(mode.toUpperCase()));
 
 		if (db.connection == null)
 			db.connection = new ONodeConnection(this, nodeId, getConflictResolver());
@@ -143,7 +143,7 @@ public class OReplicator {
 			return;
 
 		final ODistributedNode dNode = getOrCreateDistributedNode(nodeId);
-		ODistributedDatabaseInfo db = dNode.getDatabase(dbName);
+		ODistributedDatabaseInfo db = dNode.getOrCreateDatabaseEntry(dbName);
 
 		dNode.startDatabaseReplication(db);
 	}
@@ -191,7 +191,7 @@ public class OReplicator {
 								dbEntry.status);
 					else
 						// SEND THE REQUEST
-						node.sendRequest(iTransactionEntry, dbEntry.synchType);
+						node.propagateChange(iTransactionEntry, dbEntry.synchType);
 				}
 			}
 		}
@@ -259,8 +259,7 @@ public class OReplicator {
 						final ODistributedNode node = getOrCreateDistributedNode(nodeId);
 
 						if (node.getDatabase(dbName) == null) {
-							node.registerDatabase(node.createDatabaseEntry(dbName, SYNCH_TYPE.ASYNCH,
-									manager.getReplicator().getReplicatorUser().name, manager.getReplicator().getReplicatorUser().password));
+							node.registerDatabase(node.createDatabaseEntry(dbName, SYNCH_TYPE.ASYNCH));
 						}
 
 						final ODocument nodeCfg = new ODocument();

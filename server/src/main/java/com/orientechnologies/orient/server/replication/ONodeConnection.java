@@ -26,19 +26,29 @@ import java.util.logging.Level;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.enterprise.channel.binary.OAsynchChannelServiceThread;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryOutputStream;
+import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.clustering.OClusterLogger.DIRECTION;
 import com.orientechnologies.orient.server.clustering.OClusterLogger.TYPE;
 import com.orientechnologies.orient.server.clustering.leader.ORemoteNodeAbstract;
@@ -102,7 +112,114 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 		}
 	}
 
-	public void distributeChange(final ODistributedDatabaseInfo databaseEntry, final ORecordOperation iRequest,
+	public void align(final String iDatabaseName, final String iOptions) {
+		logger.setDatabase(iDatabaseName);
+		logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "alignment started with options %s", iOptions);
+
+		try {
+			connect();
+
+			final String path = OServerMain.server().getStoragePath(iDatabaseName);
+			final ODatabaseComplex<?> database = OServerMain.server().openDatabase("document", path, null, null);
+
+			final int blockSize = OGlobalConfiguration.DISTRIBUTED_ALIGN_RECORD_BLOCK.getValueAsInteger();
+
+			final ODocument cfg = new ODocument();
+			cfg.field("db", iDatabaseName);
+
+			final ODocument block = new ODocument().addOwner(cfg);
+			cfg.field("block", block);
+
+			int current = 0;
+
+			OPhysicalPosition ppos = new OPhysicalPosition();
+			for (OCluster cluster : database.getStorage().getClusterInstances()) {
+				final OClusterPositionIterator iterator = cluster.absoluteIterator();
+				while (iterator.hasNext()) {
+					final long position = iterator.next();
+					cluster.getPhysicalPosition(position, ppos);
+
+					block.field(cluster.getId() + ":" + position, ppos.version);
+
+					if (current++ % blockSize == 0) {
+						// SEND THE BLOCK
+						sendAlignmentBlock(cfg);
+						current = 0;
+					}
+				}
+			}
+
+			if (current > 0)
+				// SEND THE LAST BLOCK
+				sendAlignmentBlock(cfg);
+
+		} catch (OException e) {
+			// PASS THROUGH
+			throw e;
+		} catch (Exception e) {
+			throw new OIOException("REPL DB (" + iDatabaseName + ") error on alignment", e);
+		}
+	}
+
+	protected void sendAlignmentBlock(final ODocument cfg) throws IOException {
+		final OChannelBinaryClient network = beginRequest(OClusterProtocol.REQUEST_NODE2NODE_REPLICATION_ALIGN);
+		try {
+			network.writeBytes(cfg.toStream());
+			network.flush();
+		} finally {
+			endRequest();
+			cfg.clear();
+		}
+
+		beginResponse();
+		try {
+		} finally {
+			endResponse();
+		}
+	}
+
+	public ORecord<?> requestRecord(final ODistributedDatabaseInfo databaseEntry, final ORecordId rid) {
+		logger.setNode(databaseEntry.serverId);
+		logger.setDatabase(databaseEntry.databaseName);
+
+		if (OLogManager.instance().isInfoEnabled())
+			logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "%s record", rid);
+
+		do {
+			try {
+				final OChannelBinaryClient network = beginRequest(OClusterProtocol.REQUEST_NODE2NODE_REPLICATION_RECORD_REQUEST);
+				try {
+					network.writeString(databaseEntry.databaseName);
+					network.writeRID(rid);
+
+				} finally {
+					endRequest();
+				}
+
+				try {
+					beginResponse();
+
+					final byte recordType = network.readByte();
+					if (recordType > -1) {
+						final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
+						record.fill(rid, network.readInt(), network.readBytes(), false);
+						return record;
+					} else
+						return null;
+
+				} finally {
+					endResponse();
+				}
+			} catch (OException e) {
+				// PASS THROUGH
+				throw e;
+			} catch (Exception e) {
+				throw new OIOException("REPL <" + databaseEntry.databaseName + "> error on reading record: " + rid, e);
+			}
+		} while (true);
+	}
+
+	public void propagateChange(final ODistributedDatabaseInfo databaseEntry, final ORecordOperation iRequest,
 			final SYNCH_TYPE iRequestType, final ORecordInternal<?> iRecord) {
 
 		logger.setNode(databaseEntry.serverId);
@@ -114,14 +231,14 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 
 		do {
 			try {
-				final OChannelBinaryClient network = beginRequest(OClusterProtocol.REQUEST_NODE2NODE_REPLICATION_RECORD_CHANGE);
+				final OChannelBinaryClient network = beginRequest(OClusterProtocol.REQUEST_NODE2NODE_REPLICATION_RECORD_PROPAGATE);
 				try {
 					network.writeString(databaseEntry.databaseName);
 					network.writeByte(iRequest.type);
 					network.writeLong(iRequest.serial); // OPERATION ID
 					network.writeRID(iRecord.getIdentity());
 					network.writeBytes(iRecord.toStream());
-					network.writeInt(iRecord.getVersion() - 1);
+					network.writeInt(iRecord.getVersion());
 					network.writeByte(iRecord.getRecordType());
 
 				} finally {

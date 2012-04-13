@@ -67,6 +67,10 @@ public class ODistributedDatabaseInfo {
 		setStatus(STATUS_TYPE.OFFLINE);
 	}
 
+	public boolean isOnline() {
+		return status == STATUS_TYPE.ONLINE;
+	}
+
 	public void setOnline() {
 		setStatus(STATUS_TYPE.ONLINE);
 	}
