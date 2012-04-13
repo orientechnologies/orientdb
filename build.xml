@@ -89,8 +89,8 @@
 		<javadoc sourcepath="." packagenames="com.orientechnologies.*" destdir="${global.release}/javadoc" public="true"
              useexternalfile="yes" linksource="yes" author="true" version="true" use="yes" verbose="no"
 			 windowtitle="OrientDB v. ${version} Javadocs"
-             header="&lt;a target='_parent' href='http://www.orientechnologies.com/orient-db.htm' &gt;&lt;img src='orient_db.png' border='0' /&gt;&lt;/a&gt;"
-             bottom="&lt;center&gt;Copyrights 2010-2011 (c) Luca Garulli. All Rights Reserved. This software is released as Open Source using the &lt;a target='_parent' href='http://www.apache.org/licenses/LICENSE-2.0'&gt;Apache 2.0 license&lt;/a&gt;.&lt;/center&gt;"
+             header="&lt;a target='_parent' href='http://www.orientdb.org/orient-db.htm' &gt;&lt;img src='http://www.orientdb.org/images/orientdb_small.png' border='0' /&gt;&lt;/a&gt;"
+             bottom="&lt;center&gt;Copyrights 2010-2012 (c) Luca Garulli. All Rights Reserved. This software is released as Open Source using the &lt;a target='_parent' href='http://www.apache.org/licenses/LICENSE-2.0'&gt;Apache 2.0 license&lt;/a&gt;.&lt;/center&gt;"
              overview="overview.html">
 			<classpath>
 				<fileset dir=".">
@@ -111,6 +111,8 @@
 				<param name="-hide" value="java.*" />
 				<param name="-collpackages" value="java.util.*" />
 				<param name="-qualify" />
+				<param name="-inferrel"/>
+                <param name="-inferdep"/>
 				<param name="-postfixpackage" />
 				<param name="-nodefontsize" value="9" />
 				<param name="-nodefontpackagesize" value="7" />
