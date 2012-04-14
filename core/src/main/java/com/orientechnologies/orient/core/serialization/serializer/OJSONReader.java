@@ -105,6 +105,9 @@ public class OJSONReader {
 
 		jump(iJumpChars);
 
+		if (!in.ready())
+			return this;
+
 		// READ WHILE THERE IS SOMETHING OF AVAILABLE
 		int openBrackets = 0;
 		char beginStringChar = ' ';

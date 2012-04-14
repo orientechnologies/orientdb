@@ -16,7 +16,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
-import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.HashMap;
 
@@ -34,16 +34,13 @@ import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttp
  * @author luca.molino
  * 
  */
-public class OServerCommandPostImportDatabase extends OHttpMultipartRequestCommand<String, StringWriter> implements
+public class OServerCommandPostImportDatabase extends OHttpMultipartRequestCommand<String, InputStream> implements
 		OCommandOutputListener {
 
-	private static final String[]	NAMES	= { "POST|import/*" };
-
-	protected StringWriter				buffer;
-
-	protected StringWriter				importData;
-
-	protected ODatabaseRecord			database;
+	protected static final String[]	NAMES	= { "POST|import/*" };
+	protected StringWriter					buffer;
+	protected InputStream						importData;
+	protected ODatabaseRecord				database;
 
 	@Override
 	public boolean execute(final OHttpRequest iRequest) throws Exception {
@@ -56,11 +53,15 @@ public class OServerCommandPostImportDatabase extends OHttpMultipartRequestComma
 		} else {
 			database = getProfiledDatabaseInstance(iRequest);
 			try {
-				buffer = new StringWriter();
-				importData = new StringWriter();
 				parse(iRequest, new OHttpMultipartContentBaseParser(), new OHttpMultipartDatabaseImportContentParser(), database);
-				ODatabaseImport importer = new ODatabaseImport(getProfiledDatabaseInstance(iRequest), new ByteArrayInputStream(importData
-						.toString().getBytes()), this);
+				//
+				// FileOutputStream f = new FileOutputStream("C:/temp/backup.gz");
+				// while (importData.available() > 0) {
+				// f.write(importData.read());
+				// }
+				// f.close()
+
+				ODatabaseImport importer = new ODatabaseImport(getProfiledDatabaseInstance(iRequest), importData, this);
 				importer.importDatabase();
 				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON,
 						"{\"responseText\": \"Database imported Correctly, see server log for more informations.\"}");
@@ -72,9 +73,6 @@ public class OServerCommandPostImportDatabase extends OHttpMultipartRequestComma
 				if (database != null)
 					database.close();
 				database = null;
-				if (buffer != null)
-					buffer.close();
-				buffer = null;
 				if (importData != null)
 					importData.close();
 				importData = null;
@@ -84,18 +82,14 @@ public class OServerCommandPostImportDatabase extends OHttpMultipartRequestComma
 	}
 
 	@Override
-	protected void processBaseContent(OHttpRequest iRequest, String iContentResult, HashMap<String, String> headers) throws Exception {
+	protected void processBaseContent(final OHttpRequest iRequest, final String iContentResult, final HashMap<String, String> headers)
+			throws Exception {
 	}
 
 	@Override
-	protected void processFileContent(OHttpRequest iRequest, StringWriter iContentResult, HashMap<String, String> headers)
-			throws Exception {
-		if (headers.get(OHttpUtils.MULTIPART_CONTENT_FILENAME).endsWith(".gzip")) {
-			sendTextContent(iRequest, OHttpUtils.STATUS_INVALIDMETHOD_CODE, "KO", null, OHttpUtils.CONTENT_JSON,
-					"{\"responseText\": \"Gzip Format not supported.\"}");
-		} else {
-			importData = iContentResult;
-		}
+	protected void processFileContent(final OHttpRequest iRequest, final InputStream iContentResult,
+			final HashMap<String, String> headers) throws Exception {
+		importData = iContentResult;
 	}
 
 	@Override

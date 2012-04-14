@@ -26,19 +26,17 @@ import java.io.InputStream;
 public class OHttpMultipartBaseInputStream extends InputStream {
 
 	protected StringBuilder	buffer;
-
 	protected int						contentLength	= 0;
-
 	protected InputStream		wrappedInputStream;
 
-	public OHttpMultipartBaseInputStream(InputStream in, int iSkipInput, int iContentLength) {
+	public OHttpMultipartBaseInputStream(final InputStream in, final int iSkipInput, final int iContentLength) {
 		wrappedInputStream = in;
 		contentLength = iContentLength;
 		buffer = new StringBuilder();
 		buffer.append((char) iSkipInput);
 	}
-	
-	public OHttpMultipartBaseInputStream(InputStream in, char iSkipInput, int iContentLength) {
+
+	public OHttpMultipartBaseInputStream(final InputStream in, final char iSkipInput, final int iContentLength) {
 		wrappedInputStream = in;
 		contentLength = iContentLength;
 		buffer = new StringBuilder();
@@ -49,12 +47,12 @@ public class OHttpMultipartBaseInputStream extends InputStream {
 		return wrappedInputStream;
 	}
 
-	public void setSkipInput(int iSkipInput) {
+	public void setSkipInput(final int iSkipInput) {
 		this.buffer.append((char) iSkipInput);
 		contentLength++;
 	}
 
-	public void setSkipInput(StringBuilder iSkipInput) {
+	public void setSkipInput(final StringBuilder iSkipInput) {
 		this.buffer.append(iSkipInput);
 		contentLength += iSkipInput.length();
 	}
@@ -81,7 +79,7 @@ public class OHttpMultipartBaseInputStream extends InputStream {
 	}
 
 	@Override
-	public synchronized void mark(int readlimit) {
+	public synchronized void mark(final int readlimit) {
 		wrappedInputStream.mark(readlimit);
 	}
 
@@ -91,13 +89,26 @@ public class OHttpMultipartBaseInputStream extends InputStream {
 	}
 
 	@Override
-	public int read(byte[] b, int off, int len) throws IOException {
-		return wrappedInputStream.read(b, off, len);
+	public int read(final byte[] b, final int off, final int len) throws IOException {
+		if (buffer.length() > 0) {
+			int tot2Read = Math.min(buffer.length(), len);
+
+			for (int i = 0; i < tot2Read; ++i) {
+				b[i] = (byte) buffer.charAt(0);
+				buffer.deleteCharAt(0);
+				contentLength--;
+			}
+			return tot2Read;
+		}
+
+		int totRead = wrappedInputStream.read(b, off, len);
+		contentLength -= totRead;
+		return totRead;
 	}
 
 	@Override
 	public int read(byte[] b) throws IOException {
-		return wrappedInputStream.read(b);
+		return read(b, 0, b.length);
 	}
 
 	@Override
@@ -106,7 +117,7 @@ public class OHttpMultipartBaseInputStream extends InputStream {
 	}
 
 	@Override
-	public long skip(long n) throws IOException {
+	public long skip(final long n) throws IOException {
 		return wrappedInputStream.skip(n);
 	}
 

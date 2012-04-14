@@ -18,8 +18,8 @@ package com.orientechnologies.orient.server.network.protocol.http.multipart;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringWriter;
 import java.util.Map;
+import java.util.zip.GZIPInputStream;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -29,22 +29,16 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
  * @author luca.molino
  * 
  */
-public class OHttpMultipartDatabaseImportContentParser implements OHttpMultipartContentParser<StringWriter> {
+public class OHttpMultipartDatabaseImportContentParser implements OHttpMultipartContentParser<InputStream> {
 
 	@Override
-	public StringWriter parse(final OHttpRequest iRequest, final Map<String, String> headers,
+	public InputStream parse(final OHttpRequest iRequest, final Map<String, String> headers,
 			final OHttpMultipartContentInputStream in, ODatabaseRecord database) throws IOException {
-		String fileName = headers.get(OHttpUtils.MULTIPART_CONTENT_FILENAME);
-		StringWriter data = new StringWriter();
-		InputStream inStream = null;
-		if (fileName.endsWith(".gz")) {
-			return data;
-		} else {
-			inStream = in;
-		}
-		while (inStream.available() > 0) {
-			data.append((char) inStream.read());
-		}
-		return data;
+		final String fileName = headers.get(OHttpUtils.MULTIPART_CONTENT_FILENAME);
+
+		if (fileName.endsWith(".gz") || fileName.endsWith(".gzip"))
+			return new GZIPInputStream(in);
+
+		return in;
 	}
 }

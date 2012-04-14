@@ -120,7 +120,7 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 			connect();
 
 			final String path = OServerMain.server().getStoragePath(iDatabaseName);
-			final ODatabaseComplex<?> database = OServerMain.server().openDatabase("document", path, null, null);
+			final ODatabaseComplex<?> database = OServerMain.server().openDatabase("document", "local:" + path, null, null);
 
 			final int blockSize = OGlobalConfiguration.DISTRIBUTED_ALIGN_RECORD_BLOCK.getValueAsInteger();
 

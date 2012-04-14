@@ -70,10 +70,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		super(database, iFileName, iListener);
 
 		InputStream inStream;
+		final FileInputStream f = new FileInputStream(fileName);
 		try {
-			inStream = new GZIPInputStream(new FileInputStream(fileName));
+			inStream = new GZIPInputStream(f);
 		} catch (Exception e) {
-			inStream = new FileInputStream(fileName);
+			inStream = f;
 		}
 
 		jsonReader = new OJSONReader(new InputStreamReader(inStream));
