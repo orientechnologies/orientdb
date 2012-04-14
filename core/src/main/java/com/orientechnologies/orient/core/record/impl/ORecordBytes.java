@@ -15,10 +15,10 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -38,7 +38,8 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 @SuppressWarnings({ "unchecked", "serial" })
 public class ORecordBytes extends ORecordAbstract<byte[]> {
 
-	public static final byte	RECORD_TYPE	= 'b';
+	public static final byte RECORD_TYPE = 'b';
+	private static final byte[] EMPTY_SOURCE = new byte[]{};
 
 	public ORecordBytes() {
 		setup();
@@ -110,8 +111,9 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 		final OMemoryStream out = new OMemoryStream();
 		try {
 			int b;
-			while ((b = in.read()) > -1)
+      while ((b = in.read()) > -1) {
 				out.write(b);
+			}
 			out.flush();
 			_source = out.toByteArray();
 		} finally {
@@ -123,28 +125,36 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 
 	/**
 	 * Reads the input stream in memory specifying the maximum bytes to read. This is more efficient than
-	 * {@link #fromInputStream(InputStream)} because allocation is made only once. If input stream contains less bytes than total size
-	 * parameter, the rest of content will be empty (filled to 0)
+	 * {@link #fromInputStream(InputStream)} because allocation is made only once.
 	 * 
 	 * @param in
 	 *          Input Stream, use buffered input stream wrapper to speed up reading
 	 * @param iMaxSize
-	 *          Maximin size to read
-	 * @return Buffer read from the stream. It's also the internal buffer size in bytes
-	 * @throws IOException
+	 *          Maximum size to read
+	 * @return Buffer count of bytes that are read from the stream. It's also the internal buffer size in bytes
+	 * @throws IOException if an I/O error occurs.
 	 */
 	public int fromInputStream(final InputStream in, final int iMaxSize) throws IOException {
-		final int bufferSize = Math.min(in.available(), iMaxSize);
-		_source = new byte[bufferSize];
-		in.read(_source);
-		_size = bufferSize;
+		final byte[] buffer = new byte[iMaxSize];
+		final int readBytesCount = in.read(buffer);
+		if (readBytesCount == -1) {
+			_source = EMPTY_SOURCE;
+			_size = 0;
+		} else if (readBytesCount == iMaxSize) {
+			_source = buffer;
+			_size = iMaxSize;
+		} else {
+			_source = Arrays.copyOf(buffer, readBytesCount);
+			_size = readBytesCount;
+		}
 		return _size;
 	}
 
 	public void toOutputStream(final OutputStream out) throws IOException {
 		checkForLoading();
 
-		if (_source.length > 0)
+		if (_source.length > 0) {
 			out.write(_source);
+		}
 	}
 }
