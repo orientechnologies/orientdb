@@ -2001,4 +2001,31 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
 		}
 		return count;
 	}
+
+	@Test
+	public void testCompositeIndexEmptyResult() {
+		long oldIndexUsage = profiler.getCounter("Query.indexUsage");
+		long oldCompositeIndexUsage = profiler.getCounter("Query.compositeIndexUsage");
+		long oldCompositeIndexUsage2 = profiler.getCounter("Query.compositeIndexUsage.2");
+
+		if (oldIndexUsage == -1) {
+			oldIndexUsage = 0;
+		}
+		if (oldCompositeIndexUsage == -1) {
+			oldCompositeIndexUsage = 0;
+		}
+		if (oldCompositeIndexUsage2 == -1) {
+			oldCompositeIndexUsage2 = 0;
+		}
+
+		final List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>(
+						"select * from sqlSelectIndexReuseTestClass where prop1 = 1777 and prop2  = 2777")).execute();
+
+		Assert.assertEquals(result.size(), 0);
+
+		Assert.assertEquals(profiler.getCounter("Query.indexUsage"), oldIndexUsage + 1);
+		Assert.assertEquals(profiler.getCounter("Query.compositeIndexUsage"), oldCompositeIndexUsage + 1);
+		Assert.assertEquals(profiler.getCounter("Query.compositeIndexUsage.2"), oldCompositeIndexUsage2 + 1);
+	}
 }
