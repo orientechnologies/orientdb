@@ -38,7 +38,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrackedMultiValue<T, T>, Serializable {
 	protected final ORecord<?>										sourceRecord;
 	private STATUS																status					= STATUS.NOT_LOADED;
-	private transient Set<OMultiValueChangeListener<T, T>>	changeListeners	= Collections
+	private Set<OMultiValueChangeListener<T, T>>	changeListeners	= Collections
 																																		.newSetFromMap(new WeakHashMap<OMultiValueChangeListener<T, T>, Boolean>());
 	protected Class<?>														genericClass;
 
@@ -157,5 +157,9 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
 
 	public void setGenericClass(Class<?> genericClass) {
 		this.genericClass = genericClass;
+	}
+
+	private Object writeReplace() {
+		return new HashSet<T>(this);
 	}
 }

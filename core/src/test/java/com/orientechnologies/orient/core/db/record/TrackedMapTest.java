@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.db.record;
 
+import java.io.IOException;
+import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
@@ -385,20 +387,25 @@ public class TrackedMapTest {
 	 */
 	@Test
 	public void testMapSerialization() throws Exception {
-		ODocument doc = new ODocument();
 
-		OTrackedMap<String> beforeSerialization = new OTrackedMap<String>(doc);
+		class NotSerializableDocument extends ODocument {
+			private void writeObject(ObjectOutputStream oos) throws IOException {
+				throw new NotSerializableException();
+			}
+		}
+
+		final OTrackedMap<String> beforeSerialization = new OTrackedMap<String>(new NotSerializableDocument());
 		beforeSerialization.put(0, "firstVal");
 		beforeSerialization.put(1, "secondVal");
 
 		final OMemoryStream memoryStream = new OMemoryStream();
-		ObjectOutputStream out = new ObjectOutputStream(memoryStream);
+		final ObjectOutputStream out = new ObjectOutputStream(memoryStream);
 		out.writeObject(beforeSerialization);
 		out.close();
 
 		final ObjectInputStream input = new ObjectInputStream(new OMemoryInputStream(memoryStream.copy()));
 		@SuppressWarnings("unchecked")
-		final OTrackedMap<String> afterSerialization = (OTrackedMap<String>) input.readObject();
+		final Map<Object, String> afterSerialization = (Map<Object, String>) input.readObject();
 
 		Assert.assertEquals(afterSerialization.size(), beforeSerialization.size(), "Map size");
 		for (int i = 0; i < afterSerialization.size(); i++) {

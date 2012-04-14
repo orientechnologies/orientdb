@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.db.record;
 
+import java.io.IOException;
+import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
@@ -661,9 +663,14 @@ public class TrackedListTest {
 	 */
 	@Test
 	public void testSerialization() throws Exception {
-		ODocument doc = new ODocument();
 
-		OTrackedList<String> beforeSerialization = new OTrackedList<String>(doc);
+		class NotSerializableDocument extends ODocument {
+			private void writeObject(ObjectOutputStream oos) throws IOException {
+				throw new NotSerializableException();
+			}
+		}
+
+		final OTrackedList<String> beforeSerialization = new OTrackedList<String>(new NotSerializableDocument());
 		beforeSerialization.add("firstVal");
 		beforeSerialization.add("secondVal");
 
@@ -674,7 +681,7 @@ public class TrackedListTest {
 
 		final ObjectInputStream input = new ObjectInputStream(new OMemoryInputStream(memoryStream.copy()));
 		@SuppressWarnings("unchecked")
-		final List<String> afterSerialization = (OTrackedList<String>) input.readObject();
+		final List<String> afterSerialization = (List<String>) input.readObject();
 
 		Assert.assertEquals(afterSerialization.size(), beforeSerialization.size(), "List size");
 		for (int i = 0; i < afterSerialization.size(); i++) {

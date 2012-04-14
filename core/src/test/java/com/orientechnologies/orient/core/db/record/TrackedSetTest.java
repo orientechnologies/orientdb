@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.db.record;
 
+import java.io.IOException;
+import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
@@ -319,9 +321,14 @@ public class TrackedSetTest {
 	 */
 	@Test
 	public void testSetSerialization() throws Exception {
-		ODocument doc = new ODocument();
 
-		OTrackedSet<String> beforeSerialization = new OTrackedSet<String>(doc);
+		class NotSerializableDocument extends ODocument {
+			private void writeObject(ObjectOutputStream oos) throws IOException {
+				throw new NotSerializableException();
+			}
+		}
+
+		final OTrackedSet<String> beforeSerialization = new OTrackedSet<String>(new NotSerializableDocument());
 		beforeSerialization.add("firstVal");
 		beforeSerialization.add("secondVal");
 
@@ -332,7 +339,7 @@ public class TrackedSetTest {
 
 		final ObjectInputStream input = new ObjectInputStream(new OMemoryInputStream(memoryStream.copy()));
 		@SuppressWarnings("unchecked")
-		final OTrackedSet<String> afterSerialization = (OTrackedSet<String>) input.readObject();
+		final Set<String> afterSerialization = (Set<String>) input.readObject();
 
 		Assert.assertEquals(afterSerialization.size(), beforeSerialization.size(), "Set size");
 		Assert.assertTrue(beforeSerialization.containsAll(afterSerialization));

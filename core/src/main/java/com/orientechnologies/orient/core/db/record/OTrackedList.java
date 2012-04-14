@@ -38,7 +38,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTrackedMultiValue<Integer, T>, Serializable {
 	protected final ORecord<?>																			sourceRecord;
 	private STATUS																									status					= STATUS.NOT_LOADED;
-	protected transient Set<OMultiValueChangeListener<Integer, T>>	changeListeners	= Collections
+	protected Set<OMultiValueChangeListener<Integer, T>>	changeListeners	= Collections
 																																						.newSetFromMap(new WeakHashMap<OMultiValueChangeListener<Integer, T>, Boolean>());
 	protected Class<?>																							genericClass;
 
@@ -199,5 +199,9 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
 
 	public void setGenericClass(Class<?> genericClass) {
 		this.genericClass = genericClass;
+	}
+
+	private Object writeReplace() {
+		return new ArrayList<T>(this);
 	}
 }
