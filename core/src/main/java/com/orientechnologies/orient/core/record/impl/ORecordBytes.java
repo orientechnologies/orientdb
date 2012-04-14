@@ -109,9 +109,9 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 	public int fromInputStream(final InputStream in) throws IOException {
 		final OMemoryStream out = new OMemoryStream();
 		try {
-			while (in.available() > 0) {
-				out.write(in.read());
-			}
+			int b;
+			while ((b = in.read()) > -1)
+				out.write(b);
 			out.flush();
 			_source = out.toByteArray();
 		} finally {
@@ -144,11 +144,7 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 	public void toOutputStream(final OutputStream out) throws IOException {
 		checkForLoading();
 
-		if (_source.length > 0) {
-			ByteArrayInputStream in = new ByteArrayInputStream(_source);
-			while (in.available() > 0) {
-				out.write(in.read());
-			}
-		}
+		if (_source.length > 0)
+			out.write(_source);
 	}
 }

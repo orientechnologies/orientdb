@@ -107,11 +107,11 @@ public class OHttpMultipartContentInputStream extends InputStream {
 	protected void bufferData() throws IOException {
 		boolean checkingEnd = true;
 		int boundaryCursor = 0;
-		StringBuilder buffer = new StringBuilder();
-		while (wrappedInputStream.available() > 0 && checkingEnd) {
-			int value = wrappedInputStream.read();
-			buffer.append((char) value);
-			if (((char) value) == boundary.charAt(boundaryCursor)) {
+		final StringBuilder buffer = new StringBuilder();
+		int b;
+		while ((b = wrappedInputStream.read()) > 0 && checkingEnd) {
+			buffer.append((char) b);
+			if (((char) b) == boundary.charAt(boundaryCursor)) {
 				internalAvailable = false;
 				boundaryCursor++;
 				if (boundaryCursor == boundary.length()) {

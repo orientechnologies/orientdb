@@ -37,16 +37,16 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
 		STATUS_EXPECTED_BOUNDARY, STATUS_EXPECTED_BOUNDARY_CRLF, STATUS_EXPECTED_PART_HEADERS, STATUS_EXPECTED_PART_CONTENT, STATUS_EXPECTED_END_REQUEST
 	}
 
-	public void parse(OHttpRequest iRequest, OHttpMultipartContentParser<B> standardContentParser,
-			OHttpMultipartContentParser<F> fileContentParser, ODatabaseRecord database) throws Exception {
-		int in;
+	public void parse(final OHttpRequest iRequest, final OHttpMultipartContentParser<B> standardContentParser,
+			final OHttpMultipartContentParser<F> fileContentParser, final ODatabaseRecord database) throws Exception {
 		char currChar;
 		boolean endRequest = false;
-		OHttpMultipartContentInputStream contentIn = new OHttpMultipartContentInputStream(iRequest.multipartStream, iRequest.boundary);
-		HashMap<String, String> headers = new LinkedHashMap<String, String>();
+		final OHttpMultipartContentInputStream contentIn = new OHttpMultipartContentInputStream(iRequest.multipartStream,
+				iRequest.boundary);
+		final HashMap<String, String> headers = new LinkedHashMap<String, String>();
+		int in;
 		try {
-			while (iRequest.multipartStream.available() > 0 && !endRequest) {
-				in = iRequest.multipartStream.read();
+			while (!endRequest && (in = iRequest.multipartStream.read()) > 0) {
 				currChar = (char) in;
 				switch (parseStatus) {
 				case STATUS_EXPECTED_BOUNDARY: {

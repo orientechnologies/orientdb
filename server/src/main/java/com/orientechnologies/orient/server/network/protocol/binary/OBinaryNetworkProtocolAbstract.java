@@ -189,8 +189,8 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 			channel.flush();
 
 			if (OLogManager.instance().isLevelEnabled(logClientExceptions))
-				OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s", current,
-						channel.socket.getRemoteSocketAddress());
+				OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", current,
+						channel.socket.getRemoteSocketAddress(), t);
 
 		} finally {
 			channel.releaseExclusiveLock();
@@ -271,9 +271,9 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 		OLogManager.instance().info(this, "Created database '%s' of type '%s'", iDatabase.getURL(),
 				iDatabase.getStorage() instanceof OStorageLocal ? "local" : "memory");
 
-//		if (iDatabase.getStorage() instanceof OStorageLocal)
-//			// CLOSE IT BECAUSE IT WILL BE OPEN AT FIRST USE
-//			iDatabase.close();
+		// if (iDatabase.getStorage() instanceof OStorageLocal)
+		// // CLOSE IT BECAUSE IT WILL BE OPEN AT FIRST USE
+		// iDatabase.close();
 
 		return iDatabase;
 	}

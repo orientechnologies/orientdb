@@ -56,9 +56,9 @@ public class OHttpMultipartFileToDiskContentParser implements OHttpMultipartCont
 		}
 		final OutputStream out = new BufferedOutputStream(new FileOutputStream(path + fileName.toString()));
 		try {
-			while (in.available() > 0) {
-				int value = in.read();
-				out.write(value);
+			int b;
+			while ((b = in.read()) > 0) {
+				out.write(b);
 				fileSize++;
 			}
 		} finally {

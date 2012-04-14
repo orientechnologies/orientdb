@@ -32,9 +32,10 @@ public class OHttpMultipartContentBaseParser implements OHttpMultipartContentPar
 	public String parse(OHttpRequest iRequest, Map<String, String> headers, OHttpMultipartContentInputStream in,
 			ODatabaseRecord database) throws IOException {
 		StringBuilder builder = new StringBuilder();
-		while (in.available() > 0) {
-			builder.append((char) in.read());
-		}
+		int b;
+		while ((b = in.read()) > 0)
+			builder.append((char) b);
+
 		return builder.toString();
 	}
 
