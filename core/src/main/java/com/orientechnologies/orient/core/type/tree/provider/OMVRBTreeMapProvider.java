@@ -27,8 +27,13 @@ import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLongSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerLiteral;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerLong;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> {
@@ -38,6 +43,8 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 
 	protected final OMemoryStream	stream;
 	protected OBinarySerializer<K> keySerializer;
+	protected OStreamSerializer    streamKeySerializer;
+
 	protected OStreamSerializer  	valueSerializer;
 	protected boolean							keepKeysInMemory;
 	protected boolean							keepValuesInMemory;
@@ -98,6 +105,11 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 			stream.set(keySerializer.getId());
 			stream.set(valueSerializer.getName());
 
+			if(streamKeySerializer != null)
+				stream.set(streamKeySerializer.getName());
+			else
+			  stream.set("");
+
 			final byte[] result = stream.toByteArray();
 			record.fromStream(result);
 			return result;
@@ -116,9 +128,12 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 				// @COMPATIBILITY BEFORE 0.9.25
 				stream.getAsByte();
 				if (protocolVersion != CURRENT_PROTOCOL_VERSION)
-					throw new OSerializationException(
-									"The index has been created with a previous version of OrientDB. To use it with this version of OrientDB you need to export and import your database. "
-													+ protocolVersion + "<->" + CURRENT_PROTOCOL_VERSION);
+					OLogManager
+									.instance()
+									.debug(
+													this,
+													"Found tree %s created with MVRBTree protocol version %d while current one supports the version %d. The tree will be migrated transparently",
+													getRecord().getIdentity(), protocolVersion, CURRENT_PROTOCOL_VERSION);
 			}
 
 			root = new ORecordId();
@@ -131,11 +146,29 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 			else
 				pageSize = stream.getAsInteger();
 
-			keySize = stream.getAsInteger();
+			//@COMPATIBILITY BEFORE 1.0
+			if (protocolVersion < 1) {
+				keySize = 1;
+				OLogManager.instance().warn(this,
+								"Previous index version was found, partial composite index queries may do not work if you " +
+												"do not recreate index.");
+			} else
+				keySize = stream.getAsInteger();
 
-			keySerializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(stream.getAsByte());
-			valueSerializer = OStreamSerializerFactory.get(stream.getAsString());
+			//@COMPATIBILITY BEFORE 1.0
+			if(protocolVersion < 3) {
+				streamKeySerializer = OStreamSerializerFactory.get(stream.getAsString());
+				valueSerializer = OStreamSerializerFactory.get(stream.getAsString());
 
+				keySerializer = createRelatedSerializer(streamKeySerializer);
+			} else {
+				keySerializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(stream.getAsByte());
+				valueSerializer = OStreamSerializerFactory.get(stream.getAsString());
+
+				final String oldKeySerializerName = stream.getAsString();
+				if(oldKeySerializerName.length() > 0)
+					streamKeySerializer = OStreamSerializerFactory.get(oldKeySerializerName);
+			}
 		} catch (Exception e) {
 			OLogManager.instance().error(this, "Error on unmarshalling OMVRBTreeMapProvider object from record: %s", e,
 					OSerializationException.class, root);
@@ -143,5 +176,19 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 			OProfiler.getInstance().stopChrono("OMVRBTreeMapProvider.fromStream", timer);
 		}
 		return this;
+	}
+
+	public OBinarySerializer<K> createRelatedSerializer(final OStreamSerializer streamKeySerializer) {
+		if(streamKeySerializer instanceof OBinarySerializer)
+			return (OBinarySerializer<K>) streamKeySerializer;
+
+		if(streamKeySerializer instanceof OStreamSerializerLiteral)
+			return (OBinarySerializer<K>)OSimpleKeySerializer.INSTANCE;
+
+		if(streamKeySerializer instanceof OStreamSerializerLong)
+			return (OBinarySerializer<K>)OLongSerializer.INSTANCE;
+
+		throw new OSerializationException("Given serializer " + streamKeySerializer.getClass().getName()
+						+ " can not be converted into " + OBinarySerializer.class.getName() + ".");
 	}
 }

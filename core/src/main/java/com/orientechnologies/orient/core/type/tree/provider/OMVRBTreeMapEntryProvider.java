@@ -20,7 +20,6 @@ import java.util.Arrays;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -32,6 +31,13 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.*;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 
 public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderAbstract<K, V> {
+	/**
+	 * Current version of serialization format for single MVRBTree node.
+	 * Versions have negative numbers for backward compatibility with previous format that does not have
+	 * version number, but first value in serialized content was non-negative integer.
+	 */
+	private static final int CURRENT_VERSION = -1;
+
 	private static final long	serialVersionUID	= 1L;
 	protected K[]							keys;
 	protected V[]							values;
@@ -229,16 +235,34 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
 	}
 
 	@SuppressWarnings("unchecked")
-	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
+	public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
 		final long timer = OProfiler.getInstance().startChrono();
-
 		try {
+			//@COMPATIBILITY BEFORE 1.0
+			if(OIntegerSerializer.INSTANCE.deserialize(iStream, 0) >= 0) {
+				OLogManager
+								.instance()
+								.warn(this, "Previous version of serialization format was found for node with id "
+												+ record.getIdentity() + " conversion to new format will be performed." +
+												" It will take some time. If this message is shown constantly please recreate indexes.");
+
+				iStream = convertIntoNewSerializationFormat(iStream);
+
+				OLogManager
+								.instance()
+								.warn(this, "Conversion of data to new serialization format for node " +
+												record.getIdentity() + " was finished. ");
+
+			}
+
 			if (((OMVRBTreeMapProvider<K, V>) treeDataProvider).valueSerializer instanceof OBinarySerializer)
 				fromStreamUsingBinarySerializer(iStream);
 			else
 				fromStreamUsingBinaryStreamSerializer(iStream);
 			return this;
-		} finally {
+		} catch (IOException e) {
+			throw new OSerializationException("Can not unmarshall tree node with id ", e);
+		}	finally {
 			OProfiler.getInstance().stopChrono("OMVRBTreeMapEntry.fromStream", timer);
 		}
 	}
@@ -262,7 +286,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
 	}
 
 	private void toStreamUsingBinarySerializer() {
-		int bufferSize = OIntegerSerializer.INT_SIZE;
+		int bufferSize = 2 * OIntegerSerializer.INT_SIZE;
 
 		bufferSize +=  OLinkSerializer.INSTANCE.getObjectSize(parentRid) * 3;
 		bufferSize += OBooleanSerializer.BOOLEAN_SIZE;
@@ -276,7 +300,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
 
 		byte[] outBuffer = new byte[bufferSize];
 
-		int offset = serializeMetadata(outBuffer);
+		int offset = serializeMetadata(outBuffer, size, pageSize, parentRid, leftRid, rightRid, color);
 
 		for(int i = 0; i < size; i++) {
 			offset = serializeKey(outBuffer, offset, i);
@@ -290,30 +314,43 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
 	}
 
 
-	private int serializeMetadata(byte[] newBuffer) {
+	private int serializeMetadata(byte[] newBuffer, int iSize, int iPageSize,
+																ORID iParentId, ORID iLeftRid, ORID iRightRid, boolean iColor) {
 		int offset = 0;
-		OIntegerSerializer.INSTANCE.serialize(pageSize, newBuffer, offset);
+
+		OIntegerSerializer.INSTANCE.serialize(CURRENT_VERSION, newBuffer, offset);
 		offset += OIntegerSerializer.INT_SIZE;
 
-		OLinkSerializer.INSTANCE.serialize(parentRid, newBuffer, offset);
-		offset += OLinkSerializer.INSTANCE.getObjectSize(parentRid);
+		OIntegerSerializer.INSTANCE.serialize(iPageSize, newBuffer, offset);
+		offset += OIntegerSerializer.INT_SIZE;
 
-		OLinkSerializer.INSTANCE.serialize(leftRid, newBuffer, offset);
-		offset += OLinkSerializer.INSTANCE.getObjectSize(leftRid);
+		OLinkSerializer.INSTANCE.serialize(iParentId, newBuffer, offset);
+		offset += OLinkSerializer.INSTANCE.getObjectSize(iParentId);
 
-		OLinkSerializer.INSTANCE.serialize(rightRid, newBuffer, offset);
-		offset += OLinkSerializer.INSTANCE.getObjectSize(rightRid);
+		OLinkSerializer.INSTANCE.serialize(iLeftRid, newBuffer, offset);
+		offset += OLinkSerializer.INSTANCE.getObjectSize(iLeftRid);
 
-		OBooleanSerializer.INSTANCE.serialize(color, newBuffer, offset);
+		OLinkSerializer.INSTANCE.serialize(iRightRid, newBuffer, offset);
+		offset += OLinkSerializer.INSTANCE.getObjectSize(iRightRid);
+
+		OBooleanSerializer.INSTANCE.serialize(iColor, newBuffer, offset);
 		offset += OBooleanSerializer.BOOLEAN_SIZE;
 
-		OIntegerSerializer.INSTANCE.serialize(size, newBuffer, offset);
+		OIntegerSerializer.INSTANCE.serialize(iSize, newBuffer, offset);
 		offset += OIntegerSerializer.INT_SIZE;
 		return offset;
 	}
 
 	private int deserializeMetadata(byte[] inBuffer) {
 		int offset = 0;
+
+		int currentVersion = OIntegerSerializer.INSTANCE.deserialize(inBuffer, offset);
+		offset += OIntegerSerializer.INT_SIZE;
+
+		if(currentVersion != CURRENT_VERSION)
+			throw new OSerializationException("MVRBTree node is stored using " + currentVersion +
+							" version of serialization format but current version is " + CURRENT_VERSION + ".");
+
 		pageSize = OIntegerSerializer.INSTANCE.deserialize(inBuffer, offset);
 		offset += OIntegerSerializer.INT_SIZE;
 
@@ -391,7 +428,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
 	}
 
 	private void toStreamUsingBinaryStreamSerializer() throws IOException {
-		int bufferSize = OIntegerSerializer.INT_SIZE;
+		int bufferSize = 2* OIntegerSerializer.INT_SIZE;
 
 		bufferSize +=  OLinkSerializer.INSTANCE.getObjectSize(parentRid) * 3;
 		bufferSize += OBooleanSerializer.BOOLEAN_SIZE;
@@ -402,7 +439,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
 
 		final byte[] outBuffer = new byte[bufferSize * 2];
 
-		int offset = serializeMetadata(outBuffer);
+		int offset = serializeMetadata(outBuffer, size, pageSize, parentRid, leftRid, rightRid, color);
 
 		for(int i = 0; i < size; i++) {
 			offset = serializeKey(outBuffer, offset, i);
@@ -478,7 +515,6 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     buffer = inBuffer;
 	}
 
-
 	/**
 	 * Serialize only the new values or the changed.
 	 * 
@@ -504,5 +540,116 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
 			return ((OBinarySerializer<V>)valueSerializer).deserialize(buffer, serializedValues[iIndex]);
 
 		return valueSerializer.fromStream(stream.getAsByteArray(serializedValues[iIndex]));
+	}
+
+	private byte[] convertIntoNewSerializationFormat(byte[] stream) throws IOException {
+    final OMemoryStream oldStream = new OMemoryStream(stream);
+
+		int oldPageSize = oldStream.getAsInteger();
+
+		ORecordId oldParentRid = new ORecordId().fromStream(oldStream.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
+		ORecordId oldLeftRid = new ORecordId().fromStream(oldStream.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
+		ORecordId oldRightRid = new ORecordId().fromStream(oldStream.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
+
+		boolean oldColor = oldStream.getAsBoolean();
+		int oldSize = oldStream.getAsInteger();
+
+		if (oldSize > oldPageSize)
+			throw new OConfigurationException("Loaded index with page size set to " + oldPageSize
+							+ " while the loaded was built with: " + oldSize);
+
+		K[] oldKeys = (K[])new Object[oldPageSize];
+		for (int i = 0; i < oldSize; ++i) {
+			oldKeys[i] =
+							(K)((OMVRBTreeMapProvider<K, V>) treeDataProvider).streamKeySerializer.fromStream(oldStream.getAsByteArray());
+		}
+
+		V[] oldValues = (V[])new Object[oldPageSize];
+		for (int i = 0; i < oldSize; ++i) {
+			oldValues[i] =
+							(V)((OMVRBTreeMapProvider<K, V>) treeDataProvider).valueSerializer.fromStream(oldStream.getAsByteArray());
+		}
+
+		byte[] result;
+		if(((OMVRBTreeMapProvider<K, V>) treeDataProvider).valueSerializer instanceof OBinarySerializer)
+			result = convertNewSerializationFormatBinarySerializer(oldSize, oldPageSize, oldParentRid,
+							oldLeftRid, oldRightRid, oldColor, oldKeys, oldValues);
+		else
+		  result = convertNewSerializationFormatStreamSerializer(oldSize, oldPageSize, oldParentRid,
+							oldLeftRid, oldRightRid, oldColor, oldKeys, oldValues);
+
+		return result;
+	}
+
+	private byte[] convertNewSerializationFormatBinarySerializer(int oldSize, int oldPageSize,
+																															 ORecordId oldParentRid, ORecordId oldLeftRid,
+																															 ORecordId oldRightRid, boolean oldColor, K[] oldKeys,
+																															 V[] oldValues) {
+		int bufferSize = 2 * OIntegerSerializer.INT_SIZE;
+
+		bufferSize +=  OLinkSerializer.INSTANCE.getObjectSize(oldParentRid) * 3;
+		bufferSize += OBooleanSerializer.BOOLEAN_SIZE;
+		bufferSize += OIntegerSerializer.INT_SIZE;
+
+		final OBinarySerializer<K> keySerializer = ((OMVRBTreeMapProvider<K, V>) treeDataProvider).keySerializer;
+		final OBinarySerializer<V> valueSerializer =
+						(OBinarySerializer<V>)((OMVRBTreeMapProvider<K, V>) treeDataProvider).valueSerializer;
+
+		for (int i = 0; i < oldSize; ++i)
+			bufferSize += keySerializer.getObjectSize(oldKeys[i]);
+
+		for (int i = 0; i < oldSize; ++i)
+			bufferSize += valueSerializer.getObjectSize(oldValues[i]);
+
+		byte[] outBuffer = new byte[bufferSize];
+
+		int offset = serializeMetadata(outBuffer, oldSize, oldPageSize, oldParentRid, oldLeftRid, oldRightRid,
+						oldColor);
+
+		for(int i = 0; i < oldSize; i++) {
+			keySerializer.serialize(oldKeys[i], outBuffer, offset);
+			offset += keySerializer.getObjectSize(oldKeys[i]);
+		}
+
+		for(int i = 0; i < oldSize; i++) {
+			valueSerializer.serialize(oldValues[i], outBuffer, offset);
+			offset += valueSerializer.getObjectSize(oldValues[i]);
+		}
+
+		return outBuffer;
+	}
+
+	private byte[] convertNewSerializationFormatStreamSerializer(int oldSize, int oldPageSize,
+																															 ORecordId oldParentRid, ORecordId oldLeftRid,
+																															 ORecordId oldRightRid, boolean oldColor, K[] oldKeys,
+																															 V[] oldValues) throws IOException {
+		int bufferSize = 2 * OIntegerSerializer.INT_SIZE;
+
+		bufferSize +=  OLinkSerializer.INSTANCE.getObjectSize(oldParentRid) * 3;
+		bufferSize += OBooleanSerializer.BOOLEAN_SIZE;
+		bufferSize += OIntegerSerializer.INT_SIZE;
+
+		final OBinarySerializer<K> keySerializer = ((OMVRBTreeMapProvider<K, V>) treeDataProvider).keySerializer;
+		final OStreamSerializer valueSerializer =	((OMVRBTreeMapProvider<K, V>) treeDataProvider).valueSerializer;
+
+		for (int i = 0; i < oldSize; ++i)
+			bufferSize += keySerializer.getObjectSize(oldKeys[i]);
+
+		final byte[] outBuffer = new byte[bufferSize * 2];
+
+		int offset = serializeMetadata(outBuffer, oldSize, oldPageSize, oldParentRid, oldLeftRid, oldRightRid, oldColor);
+
+		for(int i = 0; i < oldSize; i++) {
+			keySerializer.serialize(oldKeys[i], outBuffer, offset);
+			offset += keySerializer.getObjectSize(oldKeys[i]);
+		}
+
+		final OMemoryStream outStream = new OMemoryStream(outBuffer);
+		outStream.jump(offset);
+
+		for (int i = 0; i < oldSize; ++i)
+			outStream.set(valueSerializer.toStream(oldValues[i]));
+
+		return outStream.toByteArray();
 	}
 }

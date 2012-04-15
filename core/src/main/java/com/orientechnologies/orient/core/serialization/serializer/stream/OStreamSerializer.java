@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.stream;
 
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
+
 import java.io.IOException;
 
 public interface OStreamSerializer {

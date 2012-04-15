@@ -16,13 +16,18 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.binary.impl.index;
 
+import java.io.IOException;
 import java.util.List;
 
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OIntegerSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 
 /**
  * Serializer that is used for serialization of {@link OCompositeKey} keys in index.
@@ -30,8 +35,9 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OI
  * @author Andrey Lomakin
  * @since 29.07.11
  */
-public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey> {
+public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>, OStreamSerializer {
 
+	public static final String									NAME			= "cks";
 
 	public static final OCompositeKeySerializer	INSTANCE	= new OCompositeKeySerializer();
 	public static final byte ID = 14;
@@ -109,5 +115,28 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
 
 	public byte getId() {
 		return ID;
+	}
+
+	public byte[] toStream(final Object iObject) throws IOException {
+		throw new UnsupportedOperationException("CSV storage format is out of dated and is not supported.");
+	}
+
+	public Object fromStream(final byte[] iStream) throws IOException {
+		final OCompositeKey compositeKey = new OCompositeKey();
+		final OMemoryInputStream inputStream = new OMemoryInputStream(iStream);
+
+		final int keysSize = inputStream.getAsInteger();
+		for (int i = 0; i < keysSize; i++) {
+			final byte[] keyBytes = inputStream.getAsByteArray();
+			final String keyString = OBinaryProtocol.bytes2string(keyBytes);
+			final int typeSeparatorPos = keyString.indexOf( ',' );
+			final OType type = OType.valueOf( keyString.substring( 0, typeSeparatorPos ) );
+			compositeKey.addKey((Comparable) ORecordSerializerStringAbstract.simpleValueFromStream(keyString.substring(typeSeparatorPos + 1), type));
+		}
+		return compositeKey;
+	}
+
+	public String getName() {
+		return NAME;
 	}
 }

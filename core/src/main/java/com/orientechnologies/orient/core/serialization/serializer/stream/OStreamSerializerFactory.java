@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.serialization.serializer.stream;
 
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 
 public class OStreamSerializerFactory {
 	public static OStreamSerializer get(final String iName) {
@@ -44,6 +45,8 @@ public class OStreamSerializerFactory {
 			else if (iName.equals(OStreamSerializerListRID.NAME))
 				return OStreamSerializerListRID.INSTANCE;
 
+			else if(iName.equals(OCompositeKeySerializer.NAME))
+				return OCompositeKeySerializer.INSTANCE;
 
 			throw new OConfigurationException("Stream Serializer '" + iName + "' not registered");
 
