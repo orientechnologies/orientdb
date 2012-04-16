@@ -12,9 +12,9 @@
 			<li><a href="#tab-server-profiler"><span>Profiler</span> </a></li>
 		</ul>
 		<div id="tab-server-intro">
-			<p class="help">This is the section with the Server's information. To access it you have to provide the OrientDB Server's credentials. If you
-				have access to the server look to the orientdb-server-config.xml file and search the XML user tag. Remember that the first time the Server is
-				executed the 'root' user is created with a automatically generated password. Below and example:</p>
+			<p class="help hidden-phone">This is the section with the Server's information. To access it you have to provide the OrientDB Server's
+				credentials. If you have access to the server look to the orientdb-server-config.xml file and search the XML user tag. Remember that the first
+				time the Server is executed the 'root' user is created with a automatically generated password. Below and example:</p>
 			<p class="code">
 				&lt;users&gt;<br /> &nbsp;&nbsp;&lt;user&gt; name="root" password="FAFF343DD54DKFJFKDA95F05A033A6A59E2F57CDF35058E4D4AF7AE12910B508384C47"
 				resources="*" /&gt;<br /> &lt;/users&gt;
@@ -23,10 +23,10 @@
 		<div id="tab-server-conns">
 			<table style="width: 100%;">
 				<tr>
-					<td valign="top" class="help">Below all the active connections. Keep in mind that HTTP connections are stateless, so no database is retained
-						and usually after a short timeout (seconds) they are killed. Binary connections, instead, remain in life until the connection client closes it.
-						Binary connections are used by the <a href="http://code.google.com/p/orient/wiki/ConsoleCommands">Orient Console</a> tool and by any Orient Java
-						applications that uses the native <a href="http://code.google.com/p/orient/wiki/JavaAPI">Java API</a>.
+					<td valign="top" class="help hidden-phone">Below all the active connections. Keep in mind that HTTP connections are stateless, so no
+						database is retained and usually after a short timeout (seconds) they are killed. Binary connections, instead, remain in life until the
+						connection client closes it. Binary connections are used by the <a href="http://code.google.com/p/orient/wiki/ConsoleCommands">Orient
+							Console</a> tool and by any Orient Java applications that uses the native <a href="http://code.google.com/p/orient/wiki/JavaAPI">Java API</a>.
 					</td>
 				</tr>
 				<tr>
@@ -112,7 +112,7 @@
 				'Command info', 'Command detail', 'Last command On',
 				'Last command info', 'Last command detail',
 				'Last execution time', 'Total working time', 'Connected since',
-				'Protocol', 'Client Id' , 'Driver'], server['connections']);
+				'Protocol', 'Client Id', 'Driver' ], server['connections']);
 		fillStaticTable($('#serverDbs'), [ 'Database', 'User', 'Status',
 				'Storage' ], server['dbs']);
 		fillStaticTable($('#serverStorages'), [ 'Name', 'Type', 'Path',

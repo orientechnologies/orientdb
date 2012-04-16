@@ -54,7 +54,7 @@
 										</tr>
 									</table>
 								</td>
-								<td valign="top" class="help">Select the class to display the properties associated. Each class can store its records into one or
+								<td valign="top" class="help hidden-phone">Select the class to display the properties associated. Each class can store its records into one or
 									multiple <b>Clusters</b> (see "Structure" tab). A class can be <b>schema-less</b> (has no properties), <b>schema-full</b> (all properties as
 									mandatories) or with a <b>partial schema</b>.
 								</td>
@@ -153,7 +153,7 @@
 		<div id="tab-db-structure">
 			<table style="width: 100%;" cellpadding="5">
 				<tr>
-					<td valign="top" class="help"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Cluster">Clusters</a> </b> are sets of records
+					<td valign="top" class="help hidden-phone"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Cluster">Clusters</a> </b> are sets of records
 						grouped by a mean. Any mean you want to assign. You can use a Cluster like a Table of the Relational DBMS world, namely to group records of the
 						same type. Or you could want to group records by different logics. <br /> <br /> There are two kinds of clusters: <b><a
 							href="http://code.google.com/p/orient/wiki/Concepts#Local_Physical_Cluster">Physical</a> </b> and <b><a
@@ -191,7 +191,7 @@
 					</td>
 				</tr>
 				<tr>
-					<td valign="top" class="help"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Data_Segment">Data segments</a> </b> are the
+					<td valign="top" class="help hidden-phone"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Data_Segment">Data segments</a> </b> are the
 						segments that contain data pointed by Clusters.</td>
 				</tr>
 				<tr>
@@ -201,7 +201,7 @@
 					</td>
 				</tr>
 				<tr>
-					<td valign="top" class="help"><b>Tx Segment</b> handles the transaction log for the entire database. It's used in Transactions.</td>
+					<td valign="top" class="help hidden-phone"><b>Tx Segment</b> handles the transaction log for the entire database. It's used in Transactions.</td>
 				</tr>
 				<tr>
 					<td valign="top" width="500">
@@ -214,7 +214,7 @@
 		<div id="tab-db-allocation">
 			<table style="width: 100%;" cellpadding="5">
 				<tr>
-					<td valign="top" class="help"><canvas id="allocation-canvas" width="850" height="500"></canvas></td>
+					<td valign="top" class="help hidden-phone"><canvas id="allocation-canvas" width="850" height="500"></canvas></td>
 					<td>
 					<td valign="top">
 						<table>
@@ -278,14 +278,14 @@
 						<table id="databaseConfig" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
 						</table>
 					</td>
-					<td valign="top" class="help"></td>
+					<td valign="top" class="help hidden-phone"></td>
 				</tr>
 				<tr>
 					<td valign="top">
 						<table id="databaseConfigProperties" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
 						</table>
 					</td>
-					<td valign="top" class="help"></td>
+					<td valign="top" class="help hidden-phone"></td>
 				</tr>
 			</table>
 		</div>
@@ -301,7 +301,7 @@
 							<td valign="top">
 								<button id="exportDatabase" class="ui-button-text exportButton" style="text-align: left; width: 100%;">Export Database</button>
 							</td>
-							<td valign="top" class="help">Orient server can export databases as JSON data. Click the <b>Export Database</b> button to download a gzip
+							<td valign="top" class="help hidden-phone">Orient server can export databases as JSON data. Click the <b>Export Database</b> button to download a gzip
 								compressed file containing said JSON file.
 							</td>
 						</tr>
@@ -319,7 +319,7 @@
 									</table>
 								</div>
 							</td>
-							<td valign="top" class="help">Import a previously exported database. JSON data.<br /> <b>Requirements:</b>
+							<td valign="top" class="help hidden-phone">Import a previously exported database. JSON data.<br /> <b>Requirements:</b>
 								<ul>
 									<li>Supported only JSON text file types.</li>
 									<li>The default max request content lenght is 100000 bytes.<br />To change it add the following entry (value expressed in bytes) in the

@@ -690,7 +690,7 @@ function ODatabase(databasePath) {
 				return databaseInfo['classes'][cls];
 			}
 		}
-		return classes;
+		return null;
 	}
 
 	ODatabase.prototype.securityRoles = function() {

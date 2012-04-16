@@ -129,15 +129,16 @@ function ODocumentView(name, component, doc, options) {
 		component += "<div class='row'>";
 		component += "<div class='span6'><form class='form-inline'>";
 
-		var fieldValue;
-		var currentClass;
-
+		var fieldValue
 		if (this.doc != null)
 			fieldValue = this.doc['@class'];
 
 		component += "<label>@class</label>"
 				+ generateClassSelect("doc__class", fieldValue);
 
+		var currentClass = orientServer.getClass(fieldValue);
+
+		var fieldValue;
 		if (this.doc != null)
 			fieldValue = this.doc['@rid'].substring(1);
 		else
@@ -170,8 +171,6 @@ function ODocumentView(name, component, doc, options) {
 		// BEGIN FIELDS
 		component += "<div class='span12 noborder' id='" + this.componentId
 				+ "_fields'>";
-
-		var currentClass = orientServer.getClass(this.doc["@class"]);
 
 		var fieldValue;
 		this.fieldNum = 0;
