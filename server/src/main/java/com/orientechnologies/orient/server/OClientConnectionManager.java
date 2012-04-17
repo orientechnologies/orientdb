@@ -76,9 +76,11 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
 
 			// SEARCH THE CONNECTION BY ID
 			conn = connections.get(iChannelId);
-			if (conn != null && conn.getChannel().socket != socket)
-				throw new IllegalStateException("Requested sessionId " + iChannelId + " by connection " + socket
-						+ " while it's tied to connection " + conn.getChannel().socket);
+			
+			// COMMENTED TO USE SOCKET POOL: THINK TO ANOTHER WAY TO IMPROVE SECURITY
+			// if (conn != null && conn.getChannel().socket != socket)
+			// throw new IllegalStateException("Requested sessionId " + iChannelId + " by connection " + socket
+			// + " while it's tied to connection " + conn.getChannel().socket);
 
 			return conn;
 

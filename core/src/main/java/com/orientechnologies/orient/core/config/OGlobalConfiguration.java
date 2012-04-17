@@ -286,7 +286,7 @@ public enum OGlobalConfiguration {
 	// CLIENT
 	CLIENT_CHANNEL_MIN_POOL("client.channel.minPool", "Minimum pool size", Integer.class, 1),
 
-	CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool", "Maximum channel pool size", Integer.class, 1),
+	CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool", "Maximum channel pool size", Integer.class, 5),
 
 	// SERVER
 	SERVER_CACHE_FILE_STATIC("server.cache.staticFile", "Cache static resources loading", Boolean.class, false),
