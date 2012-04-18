@@ -16,10 +16,11 @@
 package com.orientechnologies.orient.core.config;
 
 public class OStoragePhysicalClusterConfiguration extends OStorageSegmentConfiguration implements OStorageClusterConfiguration {
+	private static final long					serialVersionUID	= 1L;
 
 	public OStorageFileConfiguration	holeFile;
 
-	private static final String				START_SIZE	= "1Mb";
+	private static final String				START_SIZE				= "1Mb";
 
 	public OStoragePhysicalClusterConfiguration(final OStorageConfiguration iStorageConfiguration, final int iId) {
 		root = iStorageConfiguration;
@@ -27,12 +28,12 @@ public class OStoragePhysicalClusterConfiguration extends OStorageSegmentConfigu
 		id = iId;
 	}
 
-	public OStoragePhysicalClusterConfiguration(String iClusterName) {
+	public OStoragePhysicalClusterConfiguration(final String iClusterName) {
 		super(iClusterName);
 		fileStartSize = START_SIZE;
 	}
 
-	public OStoragePhysicalClusterConfiguration(OStorageConfiguration iRoot, String iSegmentName, final int iId) {
+	public OStoragePhysicalClusterConfiguration(final OStorageConfiguration iRoot, final String iSegmentName, final int iId) {
 		super(iRoot, iSegmentName);
 		fileStartSize = START_SIZE;
 		id = iId;
@@ -47,7 +48,7 @@ public class OStoragePhysicalClusterConfiguration extends OStorageSegmentConfigu
 	}
 
 	@Override
-	public void setRoot(OStorageConfiguration root) {
+	public void setRoot(final OStorageConfiguration root) {
 		super.setRoot(root);
 		holeFile.parent = this;
 	}

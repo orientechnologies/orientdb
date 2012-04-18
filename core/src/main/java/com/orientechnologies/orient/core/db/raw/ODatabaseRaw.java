@@ -232,7 +232,7 @@ public class ODatabaseRaw implements ODatabase {
 		try {
 			if (iRid.clusterPosition < 0) {
 				// CREATE
-				return storage.createRecord(iRid, iContent, iRecordType, iMode, null);
+				return storage.createRecord(0, iRid, iContent, iRecordType, iMode, null);
 
 			} else {
 				// UPDATE

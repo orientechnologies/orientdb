@@ -407,7 +407,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			iListener.onMessage("\nChecking database '" + getName() + "'...\n");
 
-			iListener.onMessage("\n- Checking cluster coherence...\n");
+			iListener.onMessage("\n(1) Checking clusters. This activity checks if pointers to data are coherent.\n");
 
 			final OPhysicalPosition ppos = new OPhysicalPosition();
 
@@ -416,7 +416,7 @@ public class OStorageLocal extends OStorageEmbedded {
 				if (!(c instanceof OClusterLocal))
 					continue;
 
-				iListener.onMessage(" +- Checking cluster '" + c.getName() + "' (id=" + c.getId() + ")...\n");
+				iListener.onMessage(String.format("- %5d %s", c.getId(), c.getName()));
 
 				// BROWSE ALL THE RECORDS
 				for (final OClusterPositionIterator it = c.absoluteIterator(); it.hasNext();) {
@@ -479,7 +479,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
 				final int tot = ((OClusterLocal) c).holeSegment.getHoles();
 				if (tot > 0) {
-					iListener.onMessage("  +- Checking " + tot + " hole(s)...\n");
+					iListener.onMessage(" [found " + tot + " hole(s)]");
 					// CHECK HOLES
 					for (int i = 0; i < tot; ++i) {
 						long recycledPosition = -1;
@@ -501,21 +501,26 @@ public class OStorageLocal extends OStorageEmbedded {
 						}
 					}
 				}
+				iListener.onMessage(" = OK\n");
 			}
 
 			int totalChunks = 0;
-			iListener.onMessage("\n- Checking data chunks integrity...\n");
+			iListener
+					.onMessage("\n(2) Checking data chunks integrity. In this phase data segments are scanned to find the back reference into the clusters.\n");
 			for (ODataLocal d : dataSegments) {
-				int pos = 0;
-				while (pos < d.getFilledUpTo()) {
-					totalChunks++;
-					int recordSize = Integer.MIN_VALUE;
+				int nextPos = 0;
+
+				for (int pos = 0; pos < d.getFilledUpTo();) {
 					try {
-						recordSize = d.getRecordSize(pos);
+						pos = nextPos;
+
+						int recordSize = d.getRecordSize(pos);
 						final ORecordId rid = d.getRecordRid(pos);
 
 						if (recordSize < 0) {
 							// HOLE: CHECK HOLE PRESENCE
+							nextPos = pos + (recordSize * -1);
+
 							boolean found = false;
 							for (ODataHoleInfo hole : getHolesList()) {
 								if (hole.dataOffset == pos) {
@@ -535,14 +540,17 @@ public class OStorageLocal extends OStorageEmbedded {
 										.warn(
 												this,
 												"[OStorageLocal.check] Deleted chunk at position %d (recordSize=%d) points to the valid RID %s instead of #-1:-1",
-												pos, recordSize, rid);
+												pos, recordSize * -1, rid);
 								warnings++;
 							}
 
 							recordSize *= -1;
-							pos += recordSize;
 
 						} else {
+
+							// REGULAR DATA CHUNK
+							nextPos = pos + OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_SHORT + OBinaryProtocol.SIZE_LONG + recordSize;
+
 							final byte[] buffer = d.getRecord(pos);
 							if (buffer.length != recordSize) {
 								OLogManager.instance().warn(this, "[OStorageLocal.check] Wrong record size: found %d but record length is %d",
@@ -577,12 +585,13 @@ public class OStorageLocal extends OStorageEmbedded {
 									}
 								}
 							}
-							pos += OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_SHORT + OBinaryProtocol.SIZE_LONG + recordSize;
 						}
+						totalChunks++;
+
 					} catch (Exception e) {
-						OLogManager.instance().warn(this, "[OStorageLocal.check] Found wrong chunk %d, cause: ", e, pos, e.toString());
+						OLogManager.instance().warn(this, "[OStorageLocal.check] Found wrong chunk %d in %s:%d, cause: ", e, totalChunks,
+								d.getName(), pos, e.toString());
 						errors++;
-						break;
 					}
 				}
 			}
@@ -596,7 +605,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		}
 	}
 
-	public ODataLocal getDataSegment(final int iDataSegmentId) {
+	public ODataLocal getDataSegmentById(final int iDataSegmentId) {
 		checkOpeness();
 
 		lock.acquireSharedLock();
@@ -616,7 +625,7 @@ public class OStorageLocal extends OStorageEmbedded {
 	 * Add a new data segment in the default segment directory and with filename equals to the cluster name.
 	 */
 	public int addDataSegment(final String iDataSegmentName) {
-		String segmentFileName = storagePath + "/" + iDataSegmentName;
+		final String segmentFileName = storagePath + "/" + iDataSegmentName;
 		return addDataSegment(iDataSegmentName, segmentFileName);
 	}
 
@@ -791,19 +800,20 @@ public class OStorageLocal extends OStorageEmbedded {
 		}
 	}
 
-	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType, final int iMode,
-			ORecordCallback<Long> iCallback) {
+	public long createRecord(int iDataSegmentId, final ORecordId iRid, final byte[] iContent, final byte iRecordType,
+			final int iMode, ORecordCallback<Long> iCallback) {
 		checkOpeness();
 
 		final OCluster cluster = getClusterById(iRid.clusterId);
+		final ODataLocal dataSegment = getDataSegmentById(iDataSegmentId);
 
 		if (txManager.isCommitting())
-			iRid.clusterPosition = txManager
-					.createRecord(txManager.getCurrentTransaction().getId(), cluster, iRid, iContent, iRecordType);
+			iRid.clusterPosition = txManager.createRecord(txManager.getCurrentTransaction().getId(), dataSegment, cluster, iRid,
+					iContent, iRecordType);
 		else {
-			final OPhysicalPosition ppos = createRecord(cluster, iContent, iRecordType, iRid);
+			final OPhysicalPosition ppos = createRecord(dataSegment, cluster, iContent, iRecordType, iRid);
 
-			if(OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
+			if (OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
 				synchRecordUpdate(cluster, ppos);
 		}
 
@@ -827,10 +837,10 @@ public class OStorageLocal extends OStorageEmbedded {
 		else {
 			final OPhysicalPosition ppos = updateRecord(cluster, iRid, iContent, iVersion, iRecordType);
 
-			if(ppos != null && OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
+			if (ppos != null && OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
 				synchRecordUpdate(cluster, ppos);
 
-			if(ppos != null)
+			if (ppos != null)
 				return ppos.version;
 
 			return -1;
@@ -846,7 +856,7 @@ public class OStorageLocal extends OStorageEmbedded {
 			return txManager.deleteRecord(txManager.getCurrentTransaction().getId(), cluster, iRid.clusterPosition, iVersion);
 		else {
 			final OPhysicalPosition ppos = deleteRecord(cluster, iRid, iVersion);
-			if(ppos != null && OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
+			if (ppos != null && OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
 				synchRecordUpdate(cluster, ppos);
 
 			return ppos != null;
@@ -1000,7 +1010,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			cluster.synch();
 
-			final ODataLocal data = getDataSegment(ppos.dataSegmentId);
+			final ODataLocal data = getDataSegmentById(ppos.dataSegmentId);
 			data.synch();
 
 			if (configuration != null)
@@ -1297,8 +1307,8 @@ public class OStorageLocal extends OStorageEmbedded {
 		return 0;
 	}
 
-	protected OPhysicalPosition createRecord(final OCluster iClusterSegment, final byte[] iContent,
-																					 final byte iRecordType, final ORecordId iRid) {
+	protected OPhysicalPosition createRecord(final ODataLocal iDataSegment, final OCluster iClusterSegment, final byte[] iContent,
+			final byte iRecordType, final ORecordId iRid) {
 		checkOpeness();
 
 		if (iContent == null)
@@ -1309,23 +1319,19 @@ public class OStorageLocal extends OStorageEmbedded {
 		lock.acquireSharedLock();
 		try {
 
-			final int dataSegment = getDataSegmentForRecord(iClusterSegment, iContent);
-			final ODataLocal data = getDataSegment(dataSegment);
-
 			final ORecordId rid = new ORecordId(iClusterSegment.getId());
 			rid.clusterPosition = iClusterSegment.addPhysicalPosition(-1, -1, iRecordType);
 
-			final long dataOffset = data.addRecord(rid, iContent);
+			final long dataOffset = iDataSegment.addRecord(rid, iContent);
 
-			// UPDATE THE POSITION IN CLUSTER WITH THE POSITION OF RECORD IN
-			// DATA
-			iClusterSegment.setPhysicalPosition(rid.clusterPosition, dataSegment, dataOffset, iRecordType, 0);
+			// UPDATE THE POSITION IN CLUSTER WITH THE POSITION OF RECORD IN DATA
+			iClusterSegment.setPhysicalPosition(rid.clusterPosition, iDataSegment.getId(), dataOffset, iRecordType, 0);
 
 			incrementVersion();
 
 			final OPhysicalPosition ppos = new OPhysicalPosition();
 			ppos.dataChunkPosition = dataOffset;
-			ppos.dataSegmentId = dataSegment;
+			ppos.dataSegmentId = iDataSegment.getId();
 			ppos.type = iRecordType;
 			ppos.version = 0;
 
@@ -1378,7 +1384,7 @@ public class OStorageLocal extends OStorageEmbedded {
 					// DELETED
 					return null;
 
-				final ODataLocal data = getDataSegment(ppos.dataSegmentId);
+				final ODataLocal data = getDataSegmentById(ppos.dataSegmentId);
 				return new ORawBuffer(data.getRecord(ppos.dataChunkPosition), ppos.version, ppos.type);
 
 			} finally {
@@ -1398,8 +1404,8 @@ public class OStorageLocal extends OStorageEmbedded {
 		}
 	}
 
-	protected OPhysicalPosition updateRecord(final OCluster iClusterSegment, final ORecordId iRid, final byte[] iContent, final int iVersion,
-			final byte iRecordType) {
+	protected OPhysicalPosition updateRecord(final OCluster iClusterSegment, final ORecordId iRid, final byte[] iContent,
+			final int iVersion, final byte iRecordType) {
 		if (iClusterSegment == null)
 			throw new OStorageException("Cluster not defined for record: " + iRid);
 
@@ -1455,10 +1461,10 @@ public class OStorageLocal extends OStorageEmbedded {
 				final long newDataSegmentOffset;
 				if (ppos.dataChunkPosition == -1)
 					// WAS EMPTY FIRST TIME, CREATE IT NOW
-					newDataSegmentOffset = getDataSegment(ppos.dataSegmentId).addRecord(iRid, iContent);
+					newDataSegmentOffset = getDataSegmentById(ppos.dataSegmentId).addRecord(iRid, iContent);
 				else
 					// UPDATE IT
-					newDataSegmentOffset = getDataSegment(ppos.dataSegmentId).setRecord(ppos.dataChunkPosition, iRid, iContent);
+					newDataSegmentOffset = getDataSegmentById(ppos.dataSegmentId).setRecord(ppos.dataChunkPosition, iRid, iContent);
 
 				if (newDataSegmentOffset != ppos.dataChunkPosition)
 					// UPDATE DATA SEGMENT OFFSET WITH THE NEW PHYSICAL POSITION
@@ -1512,7 +1518,7 @@ public class OStorageLocal extends OStorageEmbedded {
 									+ ppos.version + " your=v" + iVersion + ")", iRid, ppos.version, iVersion);
 
 				if (ppos.dataChunkPosition > -1)
-					getDataSegment(ppos.dataSegmentId).deleteRecord(ppos.dataChunkPosition);
+					getDataSegmentById(ppos.dataSegmentId).deleteRecord(ppos.dataChunkPosition);
 
 				iClusterSegment.removePhysicalPosition(iRid.clusterPosition, ppos);
 

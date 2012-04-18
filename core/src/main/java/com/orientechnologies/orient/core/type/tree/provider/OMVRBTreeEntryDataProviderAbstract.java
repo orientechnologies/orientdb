@@ -177,7 +177,7 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
 			if (record.getIdentity().getClusterId() == ORID.CLUSTER_ID_INVALID)
 				((ORecordId) record.getIdentity()).clusterId = treeDataProvider.clusterId;
 			record.setIdentity(record.getIdentity().getClusterId(),
-					iSt.createRecord((ORecordId) record.getIdentity(), record.toStream(), record.getRecordType(), (byte) 0, null));
+					iSt.createRecord(0, (ORecordId) record.getIdentity(), record.toStream(), record.getRecordType(), (byte) 0, null));
 		}
 		record.unsetDirty();
 

@@ -132,10 +132,10 @@ public class OStorageRemoteThread implements OStorage {
 		return delegate.getClusterNames();
 	}
 
-	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType, final int iMode,
-			ORecordCallback<Long> iCallback) {
+	public long createRecord(int iDataSegmentId, final ORecordId iRid, final byte[] iContent, final byte iRecordType,
+			final int iMode, ORecordCallback<Long> iCallback) {
 		delegate.setSessionId(sessionId);
-		return delegate.createRecord(iRid, iContent, iRecordType, iMode, null);
+		return delegate.createRecord(0, iRid, iContent, iRecordType, iMode, null);
 	}
 
 	public ORawBuffer readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache, ORecordCallback<ORawBuffer> iCallback) {

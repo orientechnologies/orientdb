@@ -270,6 +270,19 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		out.println("\nDone.");
 	}
 
+	@ConsoleCommand(description = "Create a new data-segment in the current database.")
+	public void createDatasegment(
+			@ConsoleParameter(name = "data segment name", description = "The name of the cluster to create") final String iName,
+			@ConsoleParameter(name = "data segment path", description = "The path where to place the files") final String iPath) {
+		checkCurrentDatabase();
+
+		out.println("Creating data-segment [" + iName + "] in database " + currentDatabaseName + " in path: " + iPath + "...");
+
+		currentDatabase.addDataSegment(iName, iPath);
+
+		updateDatabaseInfo();
+	}
+
 	@SuppressWarnings("deprecation")
 	@ConsoleCommand(description = "Create a new cluster in the current database. The cluster can be physical or logical")
 	public void createCluster(

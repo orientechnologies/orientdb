@@ -300,8 +300,8 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 	}
 
-	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType, int iMode,
-			final ORecordCallback<Long> iCallback) {
+	public long createRecord(int iDataSegmentId, final ORecordId iRid, final byte[] iContent, final byte iRecordType,
+			int iMode, final ORecordCallback<Long> iCallback) {
 		checkConnection();
 
 		do {

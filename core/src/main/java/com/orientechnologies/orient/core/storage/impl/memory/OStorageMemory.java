@@ -58,13 +58,16 @@ import com.orientechnologies.orient.core.tx.OTxListener;
  * 
  */
 public class OStorageMemory extends OStorageEmbedded {
-	private final ODataSegmentMemory		data							= new ODataSegmentMemory();
-	private final List<OClusterMemory>	clusters					= new ArrayList<OClusterMemory>();
-	private int													defaultClusterId	= 0;
+	private final List<ODataSegmentMemory>	data							= new ArrayList<ODataSegmentMemory>();
+	private final List<OClusterMemory>			clusters					= new ArrayList<OClusterMemory>();
+	private int															defaultClusterId	= 0;
 
 	public OStorageMemory(final String iURL) {
 		super(iURL, OEngineMemory.NAME + ":" + iURL, "rw");
 		configuration = new OStorageConfiguration(this);
+
+		// ADD DEFAULT DATA SEGMENT
+		data.add(new ODataSegmentMemory());
 	}
 
 	public void create(final Map<String, Object> iOptions) {
@@ -137,8 +140,12 @@ public class OStorageMemory extends OStorageEmbedded {
 					c.close();
 			clusters.clear();
 
-			// CLOSE THE DATA SEGMENT
-			data.close();
+			// CLOSE THE DATA SEGMENTS
+			for (ODataSegmentMemory d : data)
+				if (d != null)
+					d.close();
+			data.clear();
+
 			level2Cache.shutdown();
 
 			super.close(iForce);
@@ -214,12 +221,13 @@ public class OStorageMemory extends OStorageEmbedded {
 		return addDataSegment(iSegmentName);
 	}
 
-	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType, final int iMode,
-			ORecordCallback<Long> iCallback) {
+	public long createRecord(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent, final byte iRecordType,
+			final int iMode, ORecordCallback<Long> iCallback) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		lock.acquireSharedLock();
 		try {
+			final ODataSegmentMemory data = getDataSegmentById(iDataSegmentId);
 
 			final long offset = data.createRecord(iContent);
 			final OCluster cluster = getClusterById(iRid.clusterId);
@@ -259,7 +267,9 @@ public class OStorageMemory extends OStorageEmbedded {
 				if (ppos == null)
 					return null;
 
-				return new ORawBuffer(data.readRecord(ppos.dataChunkPosition), ppos.version, ppos.type);
+				final ODataSegmentMemory dataSegment = getDataSegmentById(ppos.dataSegmentId);
+
+				return new ORawBuffer(dataSegment.readRecord(ppos.dataChunkPosition), ppos.version, ppos.type);
 
 			} finally {
 				lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.SHARED);
@@ -304,7 +314,8 @@ public class OStorageMemory extends OStorageEmbedded {
 						--ppos.version;
 				}
 
-				data.updateRecord(ppos.dataChunkPosition, iContent);
+				final ODataSegmentMemory dataSegment = getDataSegmentById(ppos.dataSegmentId);
+				dataSegment.updateRecord(ppos.dataChunkPosition, iContent);
 
 				return ppos.version;
 
@@ -345,7 +356,9 @@ public class OStorageMemory extends OStorageEmbedded {
 									+ ppos.version + " your=v" + iVersion + ")", iRid, ppos.version, iVersion);
 
 				cluster.removePhysicalPosition(iRid.clusterPosition, null);
-				data.deleteRecord(ppos.dataChunkPosition);
+
+				final ODataSegmentMemory dataSegment = getDataSegmentById(ppos.dataSegmentId);
+				dataSegment.deleteRecord(ppos.dataChunkPosition);
 
 				return true;
 
@@ -526,6 +539,20 @@ public class OStorageMemory extends OStorageEmbedded {
 		}
 	}
 
+	public ODataSegmentMemory getDataSegmentById(int iDataId) {
+		lock.acquireSharedLock();
+		try {
+
+			if (iDataId < 0 || iDataId > data.size() - 1)
+				throw new IllegalArgumentException("Invalid data segment id " + iDataId + ". Range is 0-" + (data.size() - 1));
+
+			return data.get(iDataId);
+
+		} finally {
+			lock.releaseSharedLock();
+		}
+	}
+
 	public OCluster getClusterById(int iClusterId) {
 		lock.acquireSharedLock();
 		try {
@@ -572,7 +599,9 @@ public class OStorageMemory extends OStorageEmbedded {
 
 		lock.acquireSharedLock();
 		try {
-			size += data.getSize();
+			for (ODataSegmentMemory d : data)
+				if (d != null)
+					size += d.getSize();
 
 			for (OClusterMemory c : clusters)
 				if (c != null)
@@ -591,8 +620,8 @@ public class OStorageMemory extends OStorageEmbedded {
 
 		lock.acquireSharedLock();
 		try {
-
-			if (ppos.dataChunkPosition >= data.count())
+			final ODataSegmentMemory dataSegment = getDataSegmentById(ppos.dataSegmentId);
+			if (ppos.dataChunkPosition >= dataSegment.count())
 				return false;
 
 		} finally {
@@ -625,8 +654,8 @@ public class OStorageMemory extends OStorageEmbedded {
 						// RECORD CHANGED: RE-STREAM IT
 						stream = txEntry.getRecord().toStream();
 
-				  txEntry.getRecord().onBeforeIdentityChanged(rid);
-					createRecord(rid, stream, txEntry.getRecord().getRecordType(), 0, null);
+					txEntry.getRecord().onBeforeIdentityChanged(rid);
+					createRecord(txEntry.dataSegmentId, rid, stream, txEntry.getRecord().getRecordType(), 0, null);
 					txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
 
 					iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_CREATE, txEntry.getRecord());

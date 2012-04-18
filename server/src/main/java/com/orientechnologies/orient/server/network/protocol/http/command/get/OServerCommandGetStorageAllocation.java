@@ -50,7 +50,7 @@ public class OServerCommandGetStorageAllocation extends OServerCommandAuthentica
 			final StringWriter buffer = new StringWriter();
 			final OJSONWriter json = new OJSONWriter(buffer);
 
-			final ODataLocal dataSegment = ((OStorageLocal) db.getStorage()).getDataSegment(0);
+			final ODataLocal dataSegment = ((OStorageLocal) db.getStorage()).getDataSegmentById(0);
 			final long dbSize = dataSegment.getFilledUpTo();
 
 			json.beginObject();

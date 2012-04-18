@@ -15,8 +15,9 @@
  */
 package com.orientechnologies.orient.core.config;
 
-
 public class OStorageClusterHoleConfiguration extends OStorageFileConfiguration {
+	private static final long		serialVersionUID		= 1L;
+	
 	private static final String	DEF_EXTENSION				= ".och";
 	private static final String	DEF_INCREMENT_SIZE	= "50%";
 

@@ -41,6 +41,8 @@ public class ORecordOperation implements OSerializableStream {
 	public byte								type;
 	public OIdentifiable			record;
 
+	public int								dataSegmentId			= 0;	// DEFAULT ONE
+
 	public ORecordOperation() {
 	}
 

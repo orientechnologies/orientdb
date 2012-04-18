@@ -73,7 +73,7 @@ public interface OStorage extends OSharedContainer {
 	public OLevel2RecordCache getLevel2Cache();
 
 	// CRUD OPERATIONS
-	public long createRecord(ORecordId iRecordId, byte[] iContent, byte iRecordType, int iMode, ORecordCallback<Long> iCallback);
+	public long createRecord(int iDataSegmentId, ORecordId iRecordId, byte[] iContent, byte iRecordType, int iMode, ORecordCallback<Long> iCallback);
 
 	public ORawBuffer readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache, ORecordCallback<ORawBuffer> iCallback);
 

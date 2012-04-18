@@ -16,11 +16,12 @@
 package com.orientechnologies.orient.core.config;
 
 public class OStorageDataConfiguration extends OStorageSegmentConfiguration {
+	private static final long							serialVersionUID	= 1L;
 
 	public OStorageDataHoleConfiguration	holeFile;
 
-	private static final String						START_SIZE			= "1Mb";
-	private static final String						INCREMENT_SIZE	= "100%";
+	private static final String						START_SIZE				= "1Mb";
+	private static final String						INCREMENT_SIZE		= "100%";
 
 	public OStorageDataConfiguration(final OStorageConfiguration iRoot, final String iSegmentName) {
 		super(iRoot, iSegmentName);

@@ -177,7 +177,7 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
 			if (record.getIdentity().getClusterId() == ORID.CLUSTER_ID_INVALID)
 				((ORecordId) record.getIdentity()).clusterId = clusterId;
 
-			iSt.createRecord((ORecordId) record.getIdentity(), record.toStream(), record.getRecordType(), (byte) 0, null);
+			iSt.createRecord(0, (ORecordId) record.getIdentity(), record.toStream(), record.getRecordType(), (byte) 0, null);
 		}
 		record.unsetDirty();
 	}

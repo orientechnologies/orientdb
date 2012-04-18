@@ -60,12 +60,12 @@ public class OStorageLocalTxExecuter {
 		txSegment.close();
 	}
 
-	protected long createRecord(final int iTxId, final OCluster iClusterSegment, final ORecordId iRid, final byte[] iContent,
-			final byte iRecordType) {
+	protected long createRecord(final int iTxId, final ODataLocal iDataSegment, final OCluster iClusterSegment, final ORecordId iRid,
+			final byte[] iContent, final byte iRecordType) {
 		iRid.clusterPosition = -1;
 
 		try {
-			storage.createRecord(iClusterSegment, iContent, iRecordType, iRid);
+			storage.createRecord(iDataSegment, iClusterSegment, iContent, iRecordType, iRid);
 
 			// SAVE INTO THE LOG THE POSITION OF THE RECORD JUST CREATED. IF TX FAILS AT THIS POINT A GHOST RECORD IS CREATED UNTIL DEFRAG
 			txSegment.addLog(OTxSegment.OPERATION_CREATE, iTxId, iRid.clusterId, iRid.clusterPosition, iRecordType, 0, null);
@@ -101,7 +101,7 @@ public class OStorageLocalTxExecuter {
 					buffer.buffer);
 
 			final OPhysicalPosition ppos = storage.updateRecord(iClusterSegment, iRid, iContent, iVersion, iRecordType);
-			if(ppos != null)
+			if (ppos != null)
 				return ppos.version;
 
 			return -1;
@@ -187,6 +187,7 @@ public class OStorageLocalTxExecuter {
 		}
 
 		final OCluster cluster = storage.getClusterById(rid.clusterId);
+		final ODataLocal dataSegment = storage.getDataSegmentById(txEntry.dataSegmentId);
 
 		if (cluster.getName().equals(OStorage.CLUSTER_INDEX_NAME))
 			// AVOID TO COMMIT INDEX STUFF
@@ -224,10 +225,10 @@ public class OStorageLocalTxExecuter {
 
 			if (rid.isNew()) {
 				if (iUseLog)
-					rid.clusterPosition = createRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getRecordType());
+					rid.clusterPosition = createRecord(iTx.getId(), dataSegment, cluster, rid, stream, txEntry.getRecord().getRecordType());
 				else
 					rid.clusterPosition = iTx.getDatabase().getStorage()
-							.createRecord(rid, stream, txEntry.getRecord().getRecordType(), (byte) 0, null);
+							.createRecord(0, rid, stream, txEntry.getRecord().getRecordType(), (byte) 0, null);
 
 				txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
 				iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_CREATE, txEntry.getRecord());

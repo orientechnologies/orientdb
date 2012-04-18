@@ -143,7 +143,7 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 					getPhysicalPosition(i, ppos);
 
 					if (storage.checkForRecordValidity(ppos))
-						storage.getDataSegment(ppos.dataSegmentId).deleteRecord(ppos.dataChunkPosition);
+						storage.getDataSegmentById(ppos.dataSegmentId).deleteRecord(ppos.dataChunkPosition);
 				}
 			}
 
@@ -444,7 +444,7 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 			Long position = it.next();
 			pos = getPhysicalPosition(position.longValue(), pos);
 			if (pos.dataChunkPosition > -1)
-				size += storage.getDataSegment(pos.dataSegmentId).getRecordSize(pos.dataChunkPosition);
+				size += storage.getDataSegmentById(pos.dataSegmentId).getRecordSize(pos.dataChunkPosition);
 		}
 		return size;
 	}
