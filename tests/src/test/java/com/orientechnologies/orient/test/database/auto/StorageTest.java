@@ -17,8 +17,6 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -50,7 +48,8 @@ public class StorageTest {
 
 		database.open("admin", "admin");
 
-		Path tempDir = Files.createTempDirectory("binary-Segment");
+		File tempDir = new File(System.getProperty("java.io.tmpdir") + "/binary-Segment");
+		tempDir.mkdirs();
 
 		final int segmentId = database.addDataSegment("binary", tempDir.toString());
 		Assert.assertEquals(segmentId, 1);
