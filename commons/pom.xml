@@ -1,51 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>com.orientechnologies</groupId>
-		<artifactId>orientdb-parent</artifactId>
-		<version>1.0-SNAPSHOT</version>
-	</parent>
 
-	<artifactId>orient-commons</artifactId>
-	<packaging>bundle</packaging>
+  <modelVersion>4.0.0</modelVersion>
 
-	<name>Orient Commons</name>
+  <parent>
+    <groupId>com.orientechnologies</groupId>
+    <artifactId>orientdb-parent</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <relativePath>../</relativePath>
+  </parent>
 
-	<dependencies>
-		<!-- External -->
-		<dependency>
-			<groupId>org.testng</groupId>
-			<artifactId>testng</artifactId>
-			<version>5.14.1</version>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
+  <artifactId>orient-commons</artifactId>
 
-	<organization>
-		<name>Orient Technologies</name>
-		<url>http://www.orientechnologies.com</url>
-	</organization>
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<configuration>
-					<archive>
-					</archive>
-				</configuration>
-				<executions>
-					<execution>
-						<goals>
-							<goal>test-jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
-	<properties>
-		<export.package>com.orientechnologies.common.*</export.package>
-	</properties>
+  <name>Orient Commons</name>
+
+  <properties>
+    <osgi.export>com.orientechnologies.common.*</osgi.export>
+  </properties>
+
+  <dependencies>
+    <!-- External -->
+    <dependency>
+      <groupId>org.testng</groupId>
+      <artifactId>testng</artifactId>
+      <version>5.14.1</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+          </archive>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
 </project>
