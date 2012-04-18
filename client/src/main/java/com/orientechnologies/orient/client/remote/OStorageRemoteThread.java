@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.ODataSegment;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -138,7 +139,8 @@ public class OStorageRemoteThread implements OStorage {
 		return delegate.createRecord(0, iRid, iContent, iRecordType, iMode, null);
 	}
 
-	public ORawBuffer readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache, ORecordCallback<ORawBuffer> iCallback) {
+	public ORawBuffer readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
+			ORecordCallback<ORawBuffer> iCallback) {
 		delegate.setSessionId(sessionId);
 		return delegate.readRecord(iRid, iFetchPlan, iIgnoreCache, null);
 	}
@@ -357,5 +359,9 @@ public class OStorageRemoteThread implements OStorage {
 
 	public static int getNextConnectionId() {
 		return sessionSerialId.decrementAndGet();
+	}
+
+	public ODataSegment getDataSegmentById(final int iDataSegmentId) {
+		return delegate.getDataSegmentById(iDataSegmentId);
 	}
 }

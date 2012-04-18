@@ -65,6 +65,7 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.ODataSegment;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -300,8 +301,8 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 	}
 
-	public long createRecord(int iDataSegmentId, final ORecordId iRid, final byte[] iContent, final byte iRecordType,
-			int iMode, final ORecordCallback<Long> iCallback) {
+	public long createRecord(int iDataSegmentId, final ORecordId iRid, final byte[] iContent, final byte iRecordType, int iMode,
+			final ORecordCallback<Long> iCallback) {
 		checkConnection();
 
 		do {
@@ -1517,5 +1518,9 @@ public class OStorageRemote extends OStorageAbstract {
 
 	public String getClientId() {
 		return clientId;
+	}
+
+	public ODataSegment getDataSegmentById(final int iDataSegmentId) {
+		throw new UnsupportedOperationException("getDataSegmentById()");
 	}
 }

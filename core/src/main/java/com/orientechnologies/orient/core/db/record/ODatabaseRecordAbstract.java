@@ -29,11 +29,13 @@ import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODataSegmentStrategy;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
+import com.orientechnologies.orient.core.db.ODefaultDataSegmentStrategy;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -66,16 +68,17 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 	private OMetadata												metadata;
 	private OUser														user;
-	private static final String							DEF_RECORD_FORMAT	= "csv";
+	private static final String							DEF_RECORD_FORMAT		= "csv";
 	private byte														recordType;
 	private String													recordFormat;
-	private Set<ORecordHook>								hooks							= new HashSet<ORecordHook>();
+	private Set<ORecordHook>								hooks								= new HashSet<ORecordHook>();
 	private final Set<ORecordHook>					unmodifiableHooks;
-	private boolean													retainRecords			= true;
+	private boolean													retainRecords				= true;
 	private OLevel1RecordCache							level1Cache;
 	private boolean													mvcc;
 	private boolean													validation;
 	private ODictionary<ORecordInternal<?>>	dictionary;
+	private ODataSegmentStrategy						dataSegmentStrategy	= new ODefaultDataSegmentStrategy();
 
 	public ODatabaseRecordAbstract(final String iURL, final byte iRecordType) {
 		super(new ODatabaseRaw(iURL));
@@ -644,8 +647,10 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			// GET THE LATEST VERSION. IT COULD CHANGE BECAUSE THE RECORD COULD BE BEEN LINKED FROM OTHERS
 			final int realVersion = iVersion == -1 || !mvcc ? -1 : iRecord.getVersion();
 
+			final int dataSegmentId = dataSegmentStrategy.assignDataSegmentId(this, iRecord);
+
 			// SAVE IT
-			final long result = underlying.save(rid, stream, realVersion, iRecord.getRecordType(), iMode.ordinal());
+			final long result = underlying.save(dataSegmentId, rid, stream, realVersion, iRecord.getRecordType(), iMode.ordinal());
 
 			if (isNew) {
 				// UPDATE INFORMATION: CLUSTER ID+POSITION
@@ -692,7 +697,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		setCurrentDatabaseinThreadLocal();
 
 		try {
-			//if cache is switched off record will be unreachable after delete.
+			// if cache is switched off record will be unreachable after delete.
 			ORecord<?> rec = iRecord.getRecord();
 			callbackHooks(TYPE.BEFORE_DELETE, rec);
 
@@ -842,5 +847,13 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	public <DB extends ODatabaseRecord> DB setValidationEnabled(final boolean iEnabled) {
 		validation = iEnabled;
 		return (DB) this;
+	}
+
+	public ODataSegmentStrategy getDataSegmentStrategy() {
+		return dataSegmentStrategy;
+	}
+
+	public void setDataSegmentStrategy(ODataSegmentStrategy dataSegmentStrategy) {
+		this.dataSegmentStrategy = dataSegmentStrategy;
 	}
 }

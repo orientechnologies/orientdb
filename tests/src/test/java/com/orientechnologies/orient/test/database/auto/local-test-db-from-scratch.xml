@@ -15,6 +15,7 @@
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.DbListenerTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.DbCreationTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.StorageTest" />
 		</classes>
 	</test>
 	<test name="Schema">

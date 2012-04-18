@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import com.orientechnologies.orient.core.db.ODataSegmentStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -143,4 +144,8 @@ public interface ODatabaseRecord extends ODatabaseComplex<ORecordInternal<?>> {
 	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	public <DB extends ODatabaseRecord> DB setValidationEnabled(boolean iEnabled);
+
+	public ODataSegmentStrategy getDataSegmentStrategy();
+
+	public void setDataSegmentStrategy(ODataSegmentStrategy dataSegmentStrategy);
 }

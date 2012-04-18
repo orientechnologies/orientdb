@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.ODataSegment;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 
@@ -43,7 +44,7 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
  * +--------------+--------------+--------------+----------------------+<br/>
  * = 14+? bytes<br/>
  */
-public class ODataLocal extends OMultiFileSegment {
+public class ODataLocal extends OMultiFileSegment implements ODataSegment {
 	static final String							DEF_EXTENSION		= ".oda";
 	public static final int					RECORD_FIX_SIZE	= 14;
 	protected final int							id;
@@ -118,6 +119,11 @@ public class ODataLocal extends OMultiFileSegment {
 		}
 	}
 
+	@Override
+	public long getSize() {
+		return super.getFilledUpTo();
+	}
+	
 	/**
 	 * Add the record content in file.
 	 * 

@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.ODataSegment;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -58,16 +59,13 @@ import com.orientechnologies.orient.core.tx.OTxListener;
  * 
  */
 public class OStorageMemory extends OStorageEmbedded {
-	private final List<ODataSegmentMemory>	data							= new ArrayList<ODataSegmentMemory>();
+	private final List<ODataSegmentMemory>	dataSegments			= new ArrayList<ODataSegmentMemory>();
 	private final List<OClusterMemory>			clusters					= new ArrayList<OClusterMemory>();
 	private int															defaultClusterId	= 0;
 
 	public OStorageMemory(final String iURL) {
 		super(iURL, OEngineMemory.NAME + ":" + iURL, "rw");
 		configuration = new OStorageConfiguration(this);
-
-		// ADD DEFAULT DATA SEGMENT
-		data.add(new ODataSegmentMemory());
 	}
 
 	public void create(final Map<String, Object> iOptions) {
@@ -141,10 +139,10 @@ public class OStorageMemory extends OStorageEmbedded {
 			clusters.clear();
 
 			// CLOSE THE DATA SEGMENTS
-			for (ODataSegmentMemory d : data)
+			for (ODataSegmentMemory d : dataSegments)
 				if (d != null)
 					d.close();
-			data.clear();
+			dataSegments.clear();
 
 			level2Cache.shutdown();
 
@@ -213,8 +211,15 @@ public class OStorageMemory extends OStorageEmbedded {
 	}
 
 	public int addDataSegment(final String iDataSegmentName) {
-		// UNIQUE DATASEGMENT
-		return 0;
+		lock.acquireExclusiveLock();
+		try {
+
+			dataSegments.add(new ODataSegmentMemory(iDataSegmentName, dataSegments.size()));
+			return dataSegments.size() - 1;
+
+		} finally {
+			lock.releaseExclusiveLock();
+		}
 	}
 
 	public int addDataSegment(final String iSegmentName, final String iSegmentFileName) {
@@ -227,7 +232,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
 		lock.acquireSharedLock();
 		try {
-			final ODataSegmentMemory data = getDataSegmentById(iDataSegmentId);
+			final ODataSegmentMemory data = (ODataSegmentMemory) getDataSegmentById(iDataSegmentId);
 
 			final long offset = data.createRecord(iContent);
 			final OCluster cluster = getClusterById(iRid.clusterId);
@@ -267,7 +272,7 @@ public class OStorageMemory extends OStorageEmbedded {
 				if (ppos == null)
 					return null;
 
-				final ODataSegmentMemory dataSegment = getDataSegmentById(ppos.dataSegmentId);
+				final ODataSegmentMemory dataSegment = (ODataSegmentMemory) getDataSegmentById(ppos.dataSegmentId);
 
 				return new ORawBuffer(dataSegment.readRecord(ppos.dataChunkPosition), ppos.version, ppos.type);
 
@@ -314,7 +319,7 @@ public class OStorageMemory extends OStorageEmbedded {
 						--ppos.version;
 				}
 
-				final ODataSegmentMemory dataSegment = getDataSegmentById(ppos.dataSegmentId);
+				final ODataSegmentMemory dataSegment = (ODataSegmentMemory) getDataSegmentById(ppos.dataSegmentId);
 				dataSegment.updateRecord(ppos.dataChunkPosition, iContent);
 
 				return ppos.version;
@@ -357,7 +362,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
 				cluster.removePhysicalPosition(iRid.clusterPosition, null);
 
-				final ODataSegmentMemory dataSegment = getDataSegmentById(ppos.dataSegmentId);
+				final ODataSegmentMemory dataSegment = (ODataSegmentMemory) getDataSegmentById(ppos.dataSegmentId);
 				dataSegment.deleteRecord(ppos.dataChunkPosition);
 
 				return true;
@@ -539,14 +544,14 @@ public class OStorageMemory extends OStorageEmbedded {
 		}
 	}
 
-	public ODataSegmentMemory getDataSegmentById(int iDataId) {
+	public ODataSegment getDataSegmentById(int iDataId) {
 		lock.acquireSharedLock();
 		try {
 
-			if (iDataId < 0 || iDataId > data.size() - 1)
-				throw new IllegalArgumentException("Invalid data segment id " + iDataId + ". Range is 0-" + (data.size() - 1));
+			if (iDataId < 0 || iDataId > dataSegments.size() - 1)
+				throw new IllegalArgumentException("Invalid data segment id " + iDataId + ". Range is 0-" + (dataSegments.size() - 1));
 
-			return data.get(iDataId);
+			return dataSegments.get(iDataId);
 
 		} finally {
 			lock.releaseSharedLock();
@@ -599,7 +604,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
 		lock.acquireSharedLock();
 		try {
-			for (ODataSegmentMemory d : data)
+			for (ODataSegmentMemory d : dataSegments)
 				if (d != null)
 					size += d.getSize();
 
@@ -620,7 +625,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
 		lock.acquireSharedLock();
 		try {
-			final ODataSegmentMemory dataSegment = getDataSegmentById(ppos.dataSegmentId);
+			final ODataSegmentMemory dataSegment = (ODataSegmentMemory) getDataSegmentById(ppos.dataSegmentId);
 			if (ppos.dataChunkPosition >= dataSegment.count())
 				return false;
 

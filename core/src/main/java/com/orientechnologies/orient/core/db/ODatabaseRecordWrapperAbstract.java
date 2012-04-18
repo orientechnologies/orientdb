@@ -320,6 +320,14 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 		return (DBTYPE) this;
 	}
 
+	public ODataSegmentStrategy getDataSegmentStrategy() {
+		return underlying.getDataSegmentStrategy();
+	}
+
+	public void setDataSegmentStrategy(final ODataSegmentStrategy dataSegmentStrategy) {
+		underlying.setDataSegmentStrategy(dataSegmentStrategy);
+	}
+
 	protected void checkClusterBoundedToClass(int iClusterId) {
 		for (OClass clazz : getMetadata().getSchema().getClasses()) {
 			if (clazz.getDefaultClusterId() == iClusterId)

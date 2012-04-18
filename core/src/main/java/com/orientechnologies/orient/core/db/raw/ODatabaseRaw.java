@@ -225,14 +225,15 @@ public class ODatabaseRaw implements ODatabase {
 		}
 	}
 
-	public long save(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType, final int iMode) {
+	public long save(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent, final int iVersion,
+			final byte iRecordType, final int iMode) {
 		// CHECK IF RECORD TYPE IS SUPPORTED
 		Orient.instance().getRecordFactoryManager().getRecordTypeClass(iRecordType);
 
 		try {
 			if (iRid.clusterPosition < 0) {
 				// CREATE
-				return storage.createRecord(0, iRid, iContent, iRecordType, iMode, null);
+				return storage.createRecord(iDataSegmentId, iRid, iContent, iRecordType, iMode, null);
 
 			} else {
 				// UPDATE
@@ -277,7 +278,7 @@ public class ODatabaseRaw implements ODatabase {
 
 	@Override
 	public void finalize() {
-		//close();
+		// close();
 	}
 
 	public int getClusters() {
