@@ -25,6 +25,7 @@ import com.orientechnologies.common.util.OMultiKey;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -62,6 +63,11 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 	 */
 	public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition indexDefinition,
 			final int[] iClusterIdsToIndex, final OProgressListener iProgressListener) {
+
+		final Character c = OSchemaShared.checkNameIfValid(iName);
+		if (c != null)
+			throw new IllegalArgumentException("Invalid index name '" + iName + "'. Character '" + c + "' is invalid");
+
 		acquireExclusiveLock();
 		try {
 			final OIndexInternal<?> index = OIndexes.createIndex(getDatabase(), iType);

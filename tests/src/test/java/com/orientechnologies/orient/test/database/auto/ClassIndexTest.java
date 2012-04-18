@@ -111,7 +111,21 @@ public class ClassIndexTest
 
   }
 
-  @Test
+	@Test
+	public void testCreateOnePropertyIndexInvalidName()
+	{
+		try {
+			oClass.createIndex( "ClassIndex:TestPropertyOne", OClass.INDEX_TYPE.UNIQUE, "fOne" );
+			fail();
+		} catch (Exception e) {
+			if(e.getCause() != null)
+				e = (Exception)e.getCause();
+
+			assertTrue(e instanceof IllegalArgumentException);
+		}
+	}
+
+	@Test
   public void createCompositeIndexTestWithoutListener()
   {
     final OIndex result = oClass.createIndex( "ClassIndexTestCompositeOne", OClass.INDEX_TYPE.UNIQUE, "fOne", "fTwo" );

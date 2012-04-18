@@ -19,641 +19,658 @@ import static org.testng.Assert.*;
 
 @Test
 public class IndexManagerTest {
-    private static final String CLASS_NAME = "classForIndexManagerTest";
-    private ODatabaseDocument databaseDocument;
+	private static final String CLASS_NAME = "classForIndexManagerTest";
+	private ODatabaseDocument databaseDocument;
 
-    private String url;
+	private String url;
 
-    @Parameters(value = "url")
-    public IndexManagerTest(String iURL) {
-        url = iURL;
-    }
+	@Parameters(value = "url")
+	public IndexManagerTest(String iURL) {
+		url = iURL;
+	}
 
-    @BeforeClass
-    public void beforeClass() {
-        databaseDocument = new ODatabaseDocumentTx(url);
-        databaseDocument.open("admin", "admin");
+	@BeforeClass
+	public void beforeClass() {
+		databaseDocument = new ODatabaseDocumentTx(url);
+		databaseDocument.open("admin", "admin");
 
-        final OSchema schema = databaseDocument.getMetadata().getSchema();
+		final OSchema schema = databaseDocument.getMetadata().getSchema();
 
-        final OClass oClass = schema.createClass(CLASS_NAME);
+		final OClass oClass = schema.createClass(CLASS_NAME);
 
 
-        oClass.createProperty("fOne", OType.INTEGER);
-        oClass.createProperty("fTwo", OType.STRING);
-        oClass.createProperty("fThree", OType.BOOLEAN);
-        oClass.createProperty("fFour", OType.INTEGER);
+		oClass.createProperty("fOne", OType.INTEGER);
+		oClass.createProperty("fTwo", OType.STRING);
+		oClass.createProperty("fThree", OType.BOOLEAN);
+		oClass.createProperty("fFour", OType.INTEGER);
 
-        oClass.createProperty("fSix", OType.STRING);
-        oClass.createProperty("fSeven", OType.STRING);
+		oClass.createProperty("fSix", OType.STRING);
+		oClass.createProperty("fSeven", OType.STRING);
 
-        schema.save();
-        databaseDocument.close();
-    }
+		schema.save();
+		databaseDocument.close();
+	}
 
-    @BeforeMethod
-    public void beforeMethod() {
-        databaseDocument.open("admin", "admin");
-    }
+	@BeforeMethod
+	public void beforeMethod() {
+		databaseDocument.open("admin", "admin");
+	}
 
-    @AfterMethod
-    public void afterMethod() {
-        databaseDocument.close();
-    }
+	@AfterMethod
+	public void afterMethod() {
+		databaseDocument.close();
+	}
 
-    @AfterClass
-    public void afterClass() {
-        databaseDocument.open("admin", "admin");
-        databaseDocument.getMetadata().getSchema().dropClass(CLASS_NAME);
-        databaseDocument.getMetadata().getSchema().dropClass("indexManagerTestClassTwo");
-        databaseDocument.close();
-    }
+	@AfterClass
+	public void afterClass() {
+		databaseDocument.open("admin", "admin");
+		databaseDocument.getMetadata().getSchema().dropClass(CLASS_NAME);
+		databaseDocument.getMetadata().getSchema().dropClass("indexManagerTestClassTwo");
+		databaseDocument.close();
+	}
 
-    @Test
-    public void testCreateSimpleKeyIndexTest() {
-        final OIndexManagerProxy indexManager = databaseDocument.getMetadata().getIndexManager();
+	@Test
+	public void testCreateSimpleKeyInvalidNameIndex() {
+		final OIndexManagerProxy indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final OIndex result = indexManager.createIndex("simplekey", OClass.INDEX_TYPE.UNIQUE.toString(),
-                new OSimpleKeyIndexDefinition(OType.INTEGER),
-                null, null);
+		try {
+			indexManager.createIndex("simple:key", OClass.INDEX_TYPE.UNIQUE.toString(),
+							new OSimpleKeyIndexDefinition(OType.INTEGER),
+							null, null);
+			fail();
+		} catch (Exception e) {
+			if(e.getCause() != null)
+				e = (Exception)e.getCause();
 
-        assertEquals(result.getName(), "simplekey");
+			assertTrue(e instanceof IllegalArgumentException);
+		}
+	}
 
-        indexManager.reload();
-        assertNull(databaseDocument.getMetadata().getIndexManager().getClassIndex(CLASS_NAME, "simplekey"));
-        assertEquals(databaseDocument.getMetadata().getIndexManager().getIndex("simplekey").getName(), result.getName());
-    }
+	@Test
+	public void testCreateSimpleKeyIndexTest() {
+		final OIndexManagerProxy indexManager = databaseDocument.getMetadata().getIndexManager();
 
-    @Test
-    public void testCreateNullKeyDefinitionIndexTest() {
-        final OIndexManagerProxy indexManager = databaseDocument.getMetadata().getIndexManager();
+		final OIndex result = indexManager.createIndex("simplekey", OClass.INDEX_TYPE.UNIQUE.toString(),
+						new OSimpleKeyIndexDefinition(OType.INTEGER),
+						null, null);
 
-        final OIndex result = indexManager.createIndex("nullkey", OClass.INDEX_TYPE.UNIQUE.toString(),
-                null, null, null);
+		assertEquals(result.getName(), "simplekey");
 
-        assertEquals(result.getName(), "nullkey");
-        indexManager.reload();
+		indexManager.reload();
+		assertNull(databaseDocument.getMetadata().getIndexManager().getClassIndex(CLASS_NAME, "simplekey"));
+		assertEquals(databaseDocument.getMetadata().getIndexManager().getIndex("simplekey").getName(), result.getName());
+	}
 
-        assertNull(databaseDocument.getMetadata().getIndexManager().getClassIndex(CLASS_NAME, "nullkey"));
-        assertEquals(databaseDocument.getMetadata().getIndexManager().getIndex("nullkey").getName(), result.getName());
-    }
+	@Test
+	public void testCreateNullKeyDefinitionIndexTest() {
+		final OIndexManagerProxy indexManager = databaseDocument.getMetadata().getIndexManager();
 
+		final OIndex result = indexManager.createIndex("nullkey", OClass.INDEX_TYPE.UNIQUE.toString(),
+						null, null, null);
 
-    @Test
-    public void testCreateOnePropertyIndexTest() {
-        final OIndexManagerProxy indexManager = databaseDocument.getMetadata().getIndexManager();
+		assertEquals(result.getName(), "nullkey");
+		indexManager.reload();
 
-        final OIndex result = indexManager.createIndex("propertyone", OClass.INDEX_TYPE.UNIQUE.toString(),
-                new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER),
-                new int[]{databaseDocument.getClusterIdByName(CLASS_NAME)}, null);
+		assertNull(databaseDocument.getMetadata().getIndexManager().getClassIndex(CLASS_NAME, "nullkey"));
+		assertEquals(databaseDocument.getMetadata().getIndexManager().getIndex("nullkey").getName(), result.getName());
+	}
 
-        assertEquals(result.getName(), "propertyone");
 
-        indexManager.reload();
-        assertEquals(databaseDocument.getMetadata().getIndexManager().getClassIndex(CLASS_NAME, "propertyone").getName(),
-                result.getName());
+	@Test
+	public void testCreateOnePropertyIndexTest() {
+		final OIndexManagerProxy indexManager = databaseDocument.getMetadata().getIndexManager();
 
-    }
+		final OIndex result = indexManager.createIndex("propertyone", OClass.INDEX_TYPE.UNIQUE.toString(),
+						new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER),
+						new int[]{databaseDocument.getClusterIdByName(CLASS_NAME)}, null);
 
-    @Test
-    public void createCompositeIndexTestWithoutListener() {
-        final OIndexManagerProxy indexManager = databaseDocument.getMetadata().getIndexManager();
+		assertEquals(result.getName(), "propertyone");
 
-        final OIndex result = indexManager.createIndex("compositeone", OClass.INDEX_TYPE.NOTUNIQUE.toString(),
-                new OCompositeIndexDefinition(CLASS_NAME, Arrays.asList(
-                        new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER),
-                        new OPropertyIndexDefinition(CLASS_NAME, "fTwo", OType.STRING)
+		indexManager.reload();
+		assertEquals(databaseDocument.getMetadata().getIndexManager().getClassIndex(CLASS_NAME, "propertyone").getName(),
+						result.getName());
 
-                )), new int[]{databaseDocument.getClusterIdByName(CLASS_NAME)}, null);
+	}
 
-        assertEquals(result.getName(), "compositeone");
+	@Test
+	public void createCompositeIndexTestWithoutListener() {
+		final OIndexManagerProxy indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        indexManager.reload();
-        assertEquals(databaseDocument.getMetadata().getIndexManager().getClassIndex(CLASS_NAME, "compositeone").getName(),
-                result.getName());
-    }
+		final OIndex result = indexManager.createIndex("compositeone", OClass.INDEX_TYPE.NOTUNIQUE.toString(),
+						new OCompositeIndexDefinition(CLASS_NAME, Arrays.asList(
+										new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER),
+										new OPropertyIndexDefinition(CLASS_NAME, "fTwo", OType.STRING)
 
-    @Test
-    public void createCompositeIndexTestWithListener() {
-        final AtomicInteger atomicInteger = new AtomicInteger(0);
-        final OProgressListener progressListener = new OProgressListener() {
-            public void onBegin(final Object iTask, final long iTotal) {
-                atomicInteger.incrementAndGet();
-            }
+						)), new int[]{databaseDocument.getClusterIdByName(CLASS_NAME)}, null);
 
-            public boolean onProgress(final Object iTask, final long iCounter, final float iPercent) {
-                return true;
-            }
+		assertEquals(result.getName(), "compositeone");
 
-            public void onCompletition(final Object iTask, final boolean iSucceed) {
-                atomicInteger.incrementAndGet();
-            }
-        };
+		indexManager.reload();
+		assertEquals(databaseDocument.getMetadata().getIndexManager().getClassIndex(CLASS_NAME, "compositeone").getName(),
+						result.getName());
+	}
 
-        final OIndexManagerProxy indexManager = databaseDocument.getMetadata().getIndexManager();
+	@Test
+	public void createCompositeIndexTestWithListener() {
+		final AtomicInteger atomicInteger = new AtomicInteger(0);
+		final OProgressListener progressListener = new OProgressListener() {
+			public void onBegin(final Object iTask, final long iTotal) {
+				atomicInteger.incrementAndGet();
+			}
 
-        final OIndex result = indexManager.createIndex("compositetwo", OClass.INDEX_TYPE.NOTUNIQUE.toString(),
-                new OCompositeIndexDefinition(CLASS_NAME, Arrays.asList(
-                        new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER),
-                        new OPropertyIndexDefinition(CLASS_NAME, "fTwo", OType.STRING),
-                        new OPropertyIndexDefinition(CLASS_NAME, "fThree", OType.BOOLEAN)
+			public boolean onProgress(final Object iTask, final long iCounter, final float iPercent) {
+				return true;
+			}
 
-                )), new int[]{databaseDocument.getClusterIdByName(CLASS_NAME)}, progressListener);
+			public void onCompletition(final Object iTask, final boolean iSucceed) {
+				atomicInteger.incrementAndGet();
+			}
+		};
 
-        assertEquals(result.getName(), "compositetwo");
-        assertEquals(atomicInteger.get(), 2);
+		final OIndexManagerProxy indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        indexManager.reload();
-        assertEquals(databaseDocument.getMetadata().getIndexManager().getClassIndex(CLASS_NAME, "compositetwo").getName(),
-                result.getName());
+		final OIndex result = indexManager.createIndex("compositetwo", OClass.INDEX_TYPE.NOTUNIQUE.toString(),
+						new OCompositeIndexDefinition(CLASS_NAME, Arrays.asList(
+										new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER),
+										new OPropertyIndexDefinition(CLASS_NAME, "fTwo", OType.STRING),
+										new OPropertyIndexDefinition(CLASS_NAME, "fThree", OType.BOOLEAN)
 
-    }
+						)), new int[]{databaseDocument.getClusterIdByName(CLASS_NAME)}, progressListener);
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testAreIndexedOneProperty() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+		assertEquals(result.getName(), "compositetwo");
+		assertEquals(atomicInteger.get(), 2);
 
-        final boolean result = indexManager.areIndexed(CLASS_NAME, Arrays.asList("fOne"));
+		indexManager.reload();
+		assertEquals(databaseDocument.getMetadata().getIndexManager().getClassIndex(CLASS_NAME, "compositetwo").getName(),
+						result.getName());
 
-        assertTrue(result);
-    }
+	}
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testAreIndexedDoesNotContainProperty() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testAreIndexedOneProperty() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final boolean result = indexManager.areIndexed(CLASS_NAME, Arrays.asList("fSix"));
+		final boolean result = indexManager.areIndexed(CLASS_NAME, Arrays.asList("fOne"));
 
-        assertFalse(result);
-    }
+		assertTrue(result);
+	}
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testAreIndexedTwoProperties() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testAreIndexedDoesNotContainProperty() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final boolean result = indexManager.areIndexed(CLASS_NAME, Arrays.asList("fTwo", "fOne"));
+		final boolean result = indexManager.areIndexed(CLASS_NAME, Arrays.asList("fSix"));
 
-        assertTrue(result);
-    }
+		assertFalse(result);
+	}
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testAreIndexedThreeProperties() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testAreIndexedTwoProperties() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final boolean result = indexManager.areIndexed(CLASS_NAME, Arrays.asList("fTwo", "fOne", "fThree"));
+		final boolean result = indexManager.areIndexed(CLASS_NAME, Arrays.asList("fTwo", "fOne"));
 
-        assertTrue(result);
-    }
+		assertTrue(result);
+	}
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testAreIndexedThreePropertiesBrokenFiledNameCase() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testAreIndexedThreeProperties() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final boolean result = indexManager.areIndexed(CLASS_NAME, Arrays.asList("ftwO", "Fone", "fThrEE"));
+		final boolean result = indexManager.areIndexed(CLASS_NAME, Arrays.asList("fTwo", "fOne", "fThree"));
 
-        assertTrue(result);
-    }
+		assertTrue(result);
+	}
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testAreIndexedThreePropertiesBrokenClassNameCase() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testAreIndexedThreePropertiesBrokenFiledNameCase() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final boolean result = indexManager.areIndexed("ClaSSForIndeXManagerTeST", Arrays.asList("fTwo", "fOne", "fThree"));
+		final boolean result = indexManager.areIndexed(CLASS_NAME, Arrays.asList("ftwO", "Fone", "fThrEE"));
 
-        assertTrue(result);
-    }
+		assertTrue(result);
+	}
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testAreIndexedPropertiesNotFirst() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testAreIndexedThreePropertiesBrokenClassNameCase() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final boolean result = indexManager.areIndexed(CLASS_NAME, Arrays.asList("fTwo", "fTree"));
+		final boolean result = indexManager.areIndexed("ClaSSForIndeXManagerTeST", Arrays.asList("fTwo", "fOne", "fThree"));
 
-        assertFalse(result);
-    }
+		assertTrue(result);
+	}
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testAreIndexedPropertiesMoreThanNeeded() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testAreIndexedPropertiesNotFirst() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final boolean result = indexManager.areIndexed(CLASS_NAME, Arrays.asList("fTwo", "fOne", "fThee", "fFour"));
+		final boolean result = indexManager.areIndexed(CLASS_NAME, Arrays.asList("fTwo", "fTree"));
 
-        assertFalse(result);
-    }
+		assertFalse(result);
+	}
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testAreIndexedOnePropertyArrayParams() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testAreIndexedPropertiesMoreThanNeeded() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final boolean result = indexManager.areIndexed(CLASS_NAME, "fOne");
+		final boolean result = indexManager.areIndexed(CLASS_NAME, Arrays.asList("fTwo", "fOne", "fThee", "fFour"));
 
-        assertTrue(result);
-    }
+		assertFalse(result);
+	}
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testAreIndexedDoesNotContainPropertyArrayParams() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testAreIndexedOnePropertyArrayParams() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final boolean result = indexManager.areIndexed(CLASS_NAME, "fSix");
+		final boolean result = indexManager.areIndexed(CLASS_NAME, "fOne");
 
-        assertFalse(result);
-    }
+		assertTrue(result);
+	}
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testAreIndexedTwoPropertiesArrayParams() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testAreIndexedDoesNotContainPropertyArrayParams() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final boolean result = indexManager.areIndexed(CLASS_NAME, "fTwo", "fOne");
+		final boolean result = indexManager.areIndexed(CLASS_NAME, "fSix");
 
-        assertTrue(result);
-    }
+		assertFalse(result);
+	}
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testAreIndexedThreePropertiesArrayParams() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testAreIndexedTwoPropertiesArrayParams() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final boolean result = indexManager.areIndexed(CLASS_NAME, "fTwo", "fOne", "fThree");
+		final boolean result = indexManager.areIndexed(CLASS_NAME, "fTwo", "fOne");
 
-        assertTrue(result);
-    }
+		assertTrue(result);
+	}
 
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testAreIndexedThreePropertiesArrayParams() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testAreIndexedPropertiesNotFirstArrayParams() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+		final boolean result = indexManager.areIndexed(CLASS_NAME, "fTwo", "fOne", "fThree");
 
-        final boolean result = indexManager.areIndexed(CLASS_NAME, "fTwo", "fTree");
+		assertTrue(result);
+	}
 
-        assertFalse(result);
-    }
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testAreIndexedPropertiesMoreThanNeededArrayParams() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testAreIndexedPropertiesNotFirstArrayParams() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final boolean result = indexManager.areIndexed(CLASS_NAME, "fTwo", "fOne", "fThee", "fFour");
+		final boolean result = indexManager.areIndexed(CLASS_NAME, "fTwo", "fTree");
 
-        assertFalse(result);
-    }
+		assertFalse(result);
+	}
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testGetClassInvolvedIndexesOnePropertyArrayParams() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testAreIndexedPropertiesMoreThanNeededArrayParams() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME, "fOne");
+		final boolean result = indexManager.areIndexed(CLASS_NAME, "fTwo", "fOne", "fThee", "fFour");
 
-        assertEquals(result.size(), 3);
+		assertFalse(result);
+	}
 
-        assertTrue(containsIndex(result, "propertyone"));
-        assertTrue(containsIndex(result, "compositeone"));
-        assertTrue(containsIndex(result, "compositetwo"));
-    }
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testGetClassInvolvedIndexesOnePropertyArrayParams() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testGetClassInvolvedIndexesTwoPropertiesArrayParams() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+		final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME, "fOne");
 
-        final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME, "fTwo", "fOne");
-        assertEquals(result.size(), 2);
+		assertEquals(result.size(), 3);
 
-        assertTrue(containsIndex(result, "compositeone"));
-        assertTrue(containsIndex(result, "compositetwo"));
-    }
+		assertTrue(containsIndex(result, "propertyone"));
+		assertTrue(containsIndex(result, "compositeone"));
+		assertTrue(containsIndex(result, "compositetwo"));
+	}
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testGetClassInvolvedIndexesThreePropertiesArrayParams() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testGetClassInvolvedIndexesTwoPropertiesArrayParams() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME, "fTwo", "fOne", "fThree");
+		final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME, "fTwo", "fOne");
+		assertEquals(result.size(), 2);
 
-        assertEquals(result.size(), 1);
-        assertEquals(result.iterator().next().getName(), "compositetwo");
-    }
+		assertTrue(containsIndex(result, "compositeone"));
+		assertTrue(containsIndex(result, "compositetwo"));
+	}
 
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testGetClassInvolvedIndexesThreePropertiesArrayParams() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testGetClassInvolvedIndexesNotInvolvedPropertiesArrayParams() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+		final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME, "fTwo", "fOne", "fThree");
 
-        final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME, "fTwo", "fFour");
+		assertEquals(result.size(), 1);
+		assertEquals(result.iterator().next().getName(), "compositetwo");
+	}
 
-        assertEquals(result.size(), 0);
-    }
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testGetClassInvolvedIndexesPropertiesMorThanNeededArrayParams() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testGetClassInvolvedIndexesNotInvolvedPropertiesArrayParams() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME, "fTwo", "fOne", "fThee", "fFour");
+		final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME, "fTwo", "fFour");
 
-        assertEquals(result.size(), 0);
-    }
+		assertEquals(result.size(), 0);
+	}
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testGetInvolvedIndexesPropertiesMorThanNeeded() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testGetClassInvolvedIndexesPropertiesMorThanNeededArrayParams() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME,
-                Arrays.asList("fTwo", "fOne", "fThee", "fFour"));
+		final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME, "fTwo", "fOne", "fThee", "fFour");
 
-        assertEquals(result.size(), 0);
-    }
+		assertEquals(result.size(), 0);
+	}
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testGetClassInvolvedIndexesNotExistingClass() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testGetInvolvedIndexesPropertiesMorThanNeeded() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes("testlass", Arrays.asList("fOne"));
+		final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME,
+						Arrays.asList("fTwo", "fOne", "fThee", "fFour"));
 
-        assertTrue(result.isEmpty());
-    }
+		assertEquals(result.size(), 0);
+	}
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testGetClassInvolvedIndexesOneProperty() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testGetClassInvolvedIndexesNotExistingClass() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME, Arrays.asList("fOne"));
+		final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes("testlass", Arrays.asList("fOne"));
 
-        assertEquals(result.size(), 3);
+		assertTrue(result.isEmpty());
+	}
 
-        assertTrue(containsIndex(result, "propertyone"));
-        assertTrue(containsIndex(result, "compositeone"));
-        assertTrue(containsIndex(result, "compositetwo"));
-    }
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testGetClassInvolvedIndexesOneProperty() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testGetClassInvolvedIndexesOnePropertyBrokenClassNameCase() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+		final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME, Arrays.asList("fOne"));
 
-        final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes("ClaSSforindeXmanagerTEST", Arrays.asList("fOne"));
+		assertEquals(result.size(), 3);
 
-        assertEquals(result.size(), 3);
+		assertTrue(containsIndex(result, "propertyone"));
+		assertTrue(containsIndex(result, "compositeone"));
+		assertTrue(containsIndex(result, "compositetwo"));
+	}
 
-        assertTrue(containsIndex(result, "propertyone"));
-        assertTrue(containsIndex(result, "compositeone"));
-        assertTrue(containsIndex(result, "compositetwo"));
-    }
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testGetClassInvolvedIndexesOnePropertyBrokenClassNameCase() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
+		final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes("ClaSSforindeXmanagerTEST", Arrays.asList("fOne"));
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testGetClassInvolvedIndexesTwoProperties() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+		assertEquals(result.size(), 3);
 
-        final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME, Arrays.asList("fTwo", "fOne"));
-        assertEquals(result.size(), 2);
+		assertTrue(containsIndex(result, "propertyone"));
+		assertTrue(containsIndex(result, "compositeone"));
+		assertTrue(containsIndex(result, "compositetwo"));
+	}
 
-        assertTrue(containsIndex(result, "compositeone"));
-        assertTrue(containsIndex(result, "compositetwo"));
-    }
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testGetClassInvolvedIndexesThreeProperties() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testGetClassInvolvedIndexesTwoProperties() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME,
-                Arrays.asList("fTwo", "fOne", "fThree"));
+		final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME, Arrays.asList("fTwo", "fOne"));
+		assertEquals(result.size(), 2);
 
-        assertEquals(result.size(), 1);
-        assertEquals(result.iterator().next().getName(), "compositetwo");
-    }
+		assertTrue(containsIndex(result, "compositeone"));
+		assertTrue(containsIndex(result, "compositetwo"));
+	}
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testGetClassInvolvedIndexesThreePropertiesBrokenFiledNameTest() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testGetClassInvolvedIndexesThreeProperties() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME,
-                Arrays.asList("ftwO", "foNe", "fThrEE"));
+		final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME,
+						Arrays.asList("fTwo", "fOne", "fThree"));
 
-        assertEquals(result.size(), 1);
-        assertEquals(result.iterator().next().getName(), "compositetwo");
-    }
+		assertEquals(result.size(), 1);
+		assertEquals(result.iterator().next().getName(), "compositetwo");
+	}
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testGetClassInvolvedIndexesNotInvolvedProperties() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testGetClassInvolvedIndexesThreePropertiesBrokenFiledNameTest() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME, Arrays.asList("fTwo", "fFour"));
+		final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME,
+						Arrays.asList("ftwO", "foNe", "fThrEE"));
 
-        assertEquals(result.size(), 0);
-    }
+		assertEquals(result.size(), 1);
+		assertEquals(result.iterator().next().getName(), "compositetwo");
+	}
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testGetClassInvolvedIndexesPropertiesMorThanNeeded() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testGetClassInvolvedIndexesNotInvolvedProperties() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME,
-                Arrays.asList("fTwo", "fOne", "fThee", "fFour"));
+		final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME, Arrays.asList("fTwo", "fFour"));
 
-        assertEquals(result.size(), 0);
-    }
+		assertEquals(result.size(), 0);
+	}
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testGetClassIndexes() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testGetClassInvolvedIndexesPropertiesMorThanNeeded() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final Set<OIndex<?>> indexes = indexManager.getClassIndexes(CLASS_NAME);
-        final Set<OIndexDefinition> expectedIndexDefinitions = new HashSet<OIndexDefinition>();
+		final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME,
+						Arrays.asList("fTwo", "fOne", "fThee", "fFour"));
 
-        final OCompositeIndexDefinition compositeIndexOne = new OCompositeIndexDefinition(CLASS_NAME);
+		assertEquals(result.size(), 0);
+	}
 
-        compositeIndexOne.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER));
-        compositeIndexOne.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fTwo", OType.STRING));
-        expectedIndexDefinitions.add(compositeIndexOne);
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testGetClassIndexes() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final OCompositeIndexDefinition compositeIndexTwo = new OCompositeIndexDefinition(CLASS_NAME);
+		final Set<OIndex<?>> indexes = indexManager.getClassIndexes(CLASS_NAME);
+		final Set<OIndexDefinition> expectedIndexDefinitions = new HashSet<OIndexDefinition>();
 
-        compositeIndexTwo.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER));
-        compositeIndexTwo.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fTwo", OType.STRING));
-        compositeIndexTwo.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fThree", OType.BOOLEAN));
-        expectedIndexDefinitions.add(compositeIndexTwo);
+		final OCompositeIndexDefinition compositeIndexOne = new OCompositeIndexDefinition(CLASS_NAME);
 
-        final OPropertyIndexDefinition propertyIndex = new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER);
-        expectedIndexDefinitions.add(propertyIndex);
+		compositeIndexOne.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER));
+		compositeIndexOne.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fTwo", OType.STRING));
+		expectedIndexDefinitions.add(compositeIndexOne);
 
-        assertEquals(indexes.size(), 3);
+		final OCompositeIndexDefinition compositeIndexTwo = new OCompositeIndexDefinition(CLASS_NAME);
 
-        for (final OIndex index : indexes) {
-            assertTrue(expectedIndexDefinitions.contains(index.getDefinition()));
-        }
+		compositeIndexTwo.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER));
+		compositeIndexTwo.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fTwo", OType.STRING));
+		compositeIndexTwo.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fThree", OType.BOOLEAN));
+		expectedIndexDefinitions.add(compositeIndexTwo);
 
-    }
+		final OPropertyIndexDefinition propertyIndex = new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER);
+		expectedIndexDefinitions.add(propertyIndex);
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testGetClassIndexesBrokenClassNameCase() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+		assertEquals(indexes.size(), 3);
 
-        final Set<OIndex<?>> indexes = indexManager.getClassIndexes("ClassforindeXMaNAgerTeST");
-        final Set<OIndexDefinition> expectedIndexDefinitions = new HashSet<OIndexDefinition>();
+		for (final OIndex index : indexes) {
+			assertTrue(expectedIndexDefinitions.contains(index.getDefinition()));
+		}
 
-        final OCompositeIndexDefinition compositeIndexOne = new OCompositeIndexDefinition(CLASS_NAME);
+	}
 
-        compositeIndexOne.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER));
-        compositeIndexOne.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fTwo", OType.STRING));
-        expectedIndexDefinitions.add(compositeIndexOne);
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testGetClassIndexesBrokenClassNameCase() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        final OCompositeIndexDefinition compositeIndexTwo = new OCompositeIndexDefinition(CLASS_NAME);
+		final Set<OIndex<?>> indexes = indexManager.getClassIndexes("ClassforindeXMaNAgerTeST");
+		final Set<OIndexDefinition> expectedIndexDefinitions = new HashSet<OIndexDefinition>();
 
-        compositeIndexTwo.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER));
-        compositeIndexTwo.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fTwo", OType.STRING));
-        compositeIndexTwo.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fThree", OType.BOOLEAN));
-        expectedIndexDefinitions.add(compositeIndexTwo);
+		final OCompositeIndexDefinition compositeIndexOne = new OCompositeIndexDefinition(CLASS_NAME);
 
-        final OPropertyIndexDefinition propertyIndex = new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER);
-        expectedIndexDefinitions.add(propertyIndex);
+		compositeIndexOne.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER));
+		compositeIndexOne.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fTwo", OType.STRING));
+		expectedIndexDefinitions.add(compositeIndexOne);
 
-        assertEquals(indexes.size(), 3);
+		final OCompositeIndexDefinition compositeIndexTwo = new OCompositeIndexDefinition(CLASS_NAME);
 
-        for (final OIndex index : indexes) {
-            assertTrue(expectedIndexDefinitions.contains(index.getDefinition()));
-        }
+		compositeIndexTwo.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER));
+		compositeIndexTwo.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fTwo", OType.STRING));
+		compositeIndexTwo.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fThree", OType.BOOLEAN));
+		expectedIndexDefinitions.add(compositeIndexTwo);
 
-    }
+		final OPropertyIndexDefinition propertyIndex = new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER);
+		expectedIndexDefinitions.add(propertyIndex);
 
-    @Test
-    public void testDropIndex() throws Exception {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+		assertEquals(indexes.size(), 3);
 
-        indexManager.createIndex("anotherproperty", OClass.INDEX_TYPE.UNIQUE.toString(),
-                new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER),
-                new int[]{databaseDocument.getClusterIdByName(CLASS_NAME)}, null);
+		for (final OIndex index : indexes) {
+			assertTrue(expectedIndexDefinitions.contains(index.getDefinition()));
+		}
 
-        assertNotNull(indexManager.getIndex("anotherproperty"));
-        assertNotNull(indexManager.getClassIndex(CLASS_NAME, "anotherproperty"));
+	}
 
+	@Test
+	public void testDropIndex() throws Exception {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        indexManager.dropIndex("anotherproperty");
+		indexManager.createIndex("anotherproperty", OClass.INDEX_TYPE.UNIQUE.toString(),
+						new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER),
+						new int[]{databaseDocument.getClusterIdByName(CLASS_NAME)}, null);
 
-        assertNull(indexManager.getIndex("anotherproperty"));
-        assertNull(indexManager.getClassIndex(CLASS_NAME, "anotherproperty"));
-    }
+		assertNotNull(indexManager.getIndex("anotherproperty"));
+		assertNotNull(indexManager.getClassIndex(CLASS_NAME, "anotherproperty"));
 
-    @Test
-    public void testDropSimpleKey() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
-        indexManager.createIndex("simplekeytwo", OClass.INDEX_TYPE.UNIQUE.toString(),
-                new OSimpleKeyIndexDefinition(OType.INTEGER),
-                null, null);
 
+		indexManager.dropIndex("anotherproperty");
 
-        assertNotNull(indexManager.getIndex("simplekeytwo"));
+		assertNull(indexManager.getIndex("anotherproperty"));
+		assertNull(indexManager.getClassIndex(CLASS_NAME, "anotherproperty"));
+	}
 
-        indexManager.dropIndex("simplekeytwo");
+	@Test
+	public void testDropSimpleKey() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+		indexManager.createIndex("simplekeytwo", OClass.INDEX_TYPE.UNIQUE.toString(),
+						new OSimpleKeyIndexDefinition(OType.INTEGER),
+						null, null);
 
-        assertNull(indexManager.getIndex("simplekeytwo"));
-    }
 
-    @Test
-    public void testDropNullKeyDefinition() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+		assertNotNull(indexManager.getIndex("simplekeytwo"));
 
-        indexManager.createIndex("nullkeytwo", OClass.INDEX_TYPE.UNIQUE.toString(),
-                null, null, null);
+		indexManager.dropIndex("simplekeytwo");
 
-        assertNotNull(indexManager.getIndex("nullkeytwo"));
+		assertNull(indexManager.getIndex("simplekeytwo"));
+	}
 
-        indexManager.dropIndex("nullkeytwo");
+	@Test
+	public void testDropNullKeyDefinition() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        assertNull(indexManager.getIndex("nullkeytwo"));
-    }
+		indexManager.createIndex("nullkeytwo", OClass.INDEX_TYPE.UNIQUE.toString(),
+						null, null, null);
 
-    @Test
-    public void testDropAllClassIndexes() {
-        final OClass oClass = databaseDocument.getMetadata().getSchema().createClass("indexManagerTestClassTwo");
-        oClass.createProperty("fOne", OType.INTEGER);
+		assertNotNull(indexManager.getIndex("nullkeytwo"));
 
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+		indexManager.dropIndex("nullkeytwo");
 
-        indexManager.createIndex("twoclassproperty", OClass.INDEX_TYPE.UNIQUE.toString(),
-                new OPropertyIndexDefinition("indexManagerTestClassTwo", "fOne", OType.INTEGER),
-                new int[]{databaseDocument.getClusterIdByName("indexManagerTestClassTwo")}, null);
+		assertNull(indexManager.getIndex("nullkeytwo"));
+	}
 
-        assertFalse(indexManager.getClassIndexes("indexManagerTestClassTwo").isEmpty());
+	@Test
+	public void testDropAllClassIndexes() {
+		final OClass oClass = databaseDocument.getMetadata().getSchema().createClass("indexManagerTestClassTwo");
+		oClass.createProperty("fOne", OType.INTEGER);
 
-        indexManager.dropIndex("twoclassproperty");
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-        assertTrue(indexManager.getClassIndexes("indexManagerTestClassTwo").isEmpty());
-    }
+		indexManager.createIndex("twoclassproperty", OClass.INDEX_TYPE.UNIQUE.toString(),
+						new OPropertyIndexDefinition("indexManagerTestClassTwo", "fOne", OType.INTEGER),
+						new int[]{databaseDocument.getClusterIdByName("indexManagerTestClassTwo")}, null);
 
-    @Test(dependsOnMethods = "testDropAllClassIndexes")
-    public void testDropNonExistingClassIndex() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+		assertFalse(indexManager.getClassIndexes("indexManagerTestClassTwo").isEmpty());
 
-        indexManager.dropIndex("twoclassproperty");
-    }
+		indexManager.dropIndex("twoclassproperty");
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testGetClassIndex() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+		assertTrue(indexManager.getClassIndexes("indexManagerTestClassTwo").isEmpty());
+	}
 
-        final OIndex<?> result = indexManager.getClassIndex(CLASS_NAME, "propertyone");
-        assertNotNull(result);
-        assertEquals(result.getName(), "propertyone");
-    }
+	@Test(dependsOnMethods = "testDropAllClassIndexes")
+	public void testDropNonExistingClassIndex() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testGetClassIndexBrokenClassNameCase() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+		indexManager.dropIndex("twoclassproperty");
+	}
 
-        final OIndex<?> result = indexManager.getClassIndex("ClaSSforindeXManagerTeST", "propertyone");
-        assertNotNull(result);
-        assertEquals(result.getName(), "propertyone");
-    }
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testGetClassIndex() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testGetClassIndexWrongIndexName() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+		final OIndex<?> result = indexManager.getClassIndex(CLASS_NAME, "propertyone");
+		assertNotNull(result);
+		assertEquals(result.getName(), "propertyone");
+	}
 
-        final OIndex<?> result = indexManager.getClassIndex(CLASS_NAME, "propertyonetwo");
-        assertNull(result);
-    }
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testGetClassIndexBrokenClassNameCase() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-    @Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
-            "testCreateOnePropertyIndexTest"})
-    public void testGetClassIndexWrongClassName() {
-        final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+		final OIndex<?> result = indexManager.getClassIndex("ClaSSforindeXManagerTeST", "propertyone");
+		assertNotNull(result);
+		assertEquals(result.getName(), "propertyone");
+	}
 
-        final OIndex<?> result = indexManager.getClassIndex("testClassTT", "propertyone");
-        assertNull(result);
-    }
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testGetClassIndexWrongIndexName() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-    private boolean containsIndex(final Collection<? extends OIndex> classIndexes, final String indexName) {
-        for (final OIndex index : classIndexes) {
-            if (index.getName().equals(indexName))
-                return true;
-        }
-        return false;
-    }
+		final OIndex<?> result = indexManager.getClassIndex(CLASS_NAME, "propertyonetwo");
+		assertNull(result);
+	}
+
+	@Test(dependsOnMethods = {"createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
+					"testCreateOnePropertyIndexTest"})
+	public void testGetClassIndexWrongClassName() {
+		final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
+
+		final OIndex<?> result = indexManager.getClassIndex("testClassTT", "propertyone");
+		assertNull(result);
+	}
+
+	private boolean containsIndex(final Collection<? extends OIndex> classIndexes, final String indexName) {
+		for (final OIndex index : classIndexes) {
+			if (index.getName().equals(indexName))
+				return true;
+		}
+		return false;
+	}
 }
