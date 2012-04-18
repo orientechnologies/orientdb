@@ -97,7 +97,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		}
 
 		variableParser = new OStorageVariableParser(storagePath);
-		configuration = new OStorageConfigurationSegment(this, storagePath);
+		configuration = new OStorageConfigurationSegment(this);
 		txManager = new OStorageLocalTxExecuter(this, configuration.txSegment);
 
 		PROFILER_CREATE_RECORD = "storage." + name + ".createRecord";
@@ -131,7 +131,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			// OPEN BASIC SEGMENTS
 			int pos;
-			pos = registerDataSegment(new OStorageDataConfiguration(configuration, OStorage.DATA_DEFAULT_NAME));
+			pos = registerDataSegment(new OStorageDataConfiguration(configuration, OStorage.DATA_DEFAULT_NAME, 0, getStoragePath()));
 			dataSegments[pos].open();
 
 			pos = createClusterFromConfig(new OStoragePhysicalClusterConfiguration(configuration, OStorage.CLUSTER_INTERNAL_NAME,
@@ -625,11 +625,10 @@ public class OStorageLocal extends OStorageEmbedded {
 	 * Add a new data segment in the default segment directory and with filename equals to the cluster name.
 	 */
 	public int addDataSegment(final String iDataSegmentName) {
-		final String segmentFileName = storagePath + "/" + iDataSegmentName;
-		return addDataSegment(iDataSegmentName, segmentFileName);
+		return addDataSegment(iDataSegmentName, null);
 	}
 
-	public int addDataSegment(String iSegmentName, final String iSegmentFileName) {
+	public int addDataSegment(String iSegmentName, final String iDirectory) {
 		checkOpeness();
 
 		iSegmentName = iSegmentName.toLowerCase();
@@ -637,7 +636,8 @@ public class OStorageLocal extends OStorageEmbedded {
 		lock.acquireExclusiveLock();
 		try {
 
-			final OStorageDataConfiguration conf = new OStorageDataConfiguration(configuration, iSegmentName);
+			final OStorageDataConfiguration conf = new OStorageDataConfiguration(configuration, iSegmentName,
+					configuration.dataSegments.size(), iDirectory);
 			configuration.dataSegments.add(conf);
 
 			final int pos = registerDataSegment(conf);
@@ -651,7 +651,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			return pos;
 		} catch (Throwable e) {
-			OLogManager.instance().error(this, "Error on creation of new data segment '" + iSegmentName + "' in: " + iSegmentFileName, e,
+			OLogManager.instance().error(this, "Error on creation of new data segment '" + iSegmentName + "' in: " + iDirectory, e,
 					OStorageException.class);
 			return -1;
 
@@ -1299,12 +1299,6 @@ public class OStorageLocal extends OStorageEmbedded {
 	private void checkClusterSegmentIndexRange(final int iClusterId) {
 		if (iClusterId > clusters.length - 1)
 			throw new IllegalArgumentException("Cluster segment #" + iClusterId + " does not exist in storage '" + name + "'");
-	}
-
-	protected int getDataSegmentForRecord(final OCluster iCluster, final byte[] iContent) {
-		// TODO: CREATE POLICY & STRATEGY TO ASSIGN THE BEST-MULTIPLE DATA
-		// SEGMENT
-		return 0;
 	}
 
 	protected OPhysicalPosition createRecord(final ODataLocal iDataSegment, final OCluster iClusterSegment, final byte[] iContent,

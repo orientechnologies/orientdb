@@ -64,8 +64,8 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
 		super(iStorage, iConfig, DEF_EXTENSION, 0);
 		id = iId;
 
-		iConfig.holeFile = new OStorageDataHoleConfiguration(iConfig, OStorageVariableParser.DB_PATH_VARIABLE + "/" + name,
-				iConfig.fileType, iConfig.maxSize);
+		iConfig.holeFile = new OStorageDataHoleConfiguration(iConfig, iConfig.getDirectory() + "/" + name, iConfig.fileType,
+				iConfig.maxSize);
 		holeSegment = new ODataLocalHole(iStorage, iConfig.holeFile);
 
 		defStartSize = OFileUtils.getSizeAsNumber(iConfig.fileStartSize);
@@ -123,7 +123,7 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
 	public long getSize() {
 		return super.getFilledUpTo();
 	}
-	
+
 	/**
 	 * Add the record content in file.
 	 * 

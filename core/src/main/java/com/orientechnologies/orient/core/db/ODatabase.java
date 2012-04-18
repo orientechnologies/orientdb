@@ -308,7 +308,7 @@ public interface ODatabase {
 	 * Adds a data segment where to store record content. Data segments contain the content of records. Cluster segments contain the
 	 * pointer to them.
 	 */
-	public int addDataSegment(String iSegmentName, String iSegmentFileName);
+	public int addDataSegment(String iSegmentName, String iDirectory);
 
 	/**
 	 * Sets a property value

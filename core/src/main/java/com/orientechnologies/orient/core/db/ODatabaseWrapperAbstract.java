@@ -195,9 +195,9 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 		return underlying.dropCluster(iClusterId);
 	}
 
-	public int addDataSegment(final String iSegmentName, final String iSegmentFileName) {
+	public int addDataSegment(final String iSegmentName, final String iDirectory) {
 		checkOpeness();
-		return underlying.addDataSegment(iSegmentName, iSegmentFileName);
+		return underlying.addDataSegment(iSegmentName, iDirectory);
 	}
 
 	public int getDefaultClusterId() {

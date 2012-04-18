@@ -341,8 +341,8 @@ public class ODatabaseRaw implements ODatabase {
 		return storage.dropCluster(iClusterId);
 	}
 
-	public int addDataSegment(final String iSegmentName, final String iSegmentFileName) {
-		return storage.addDataSegment(iSegmentName, iSegmentFileName);
+	public int addDataSegment(final String iSegmentName, final String iDirectory) {
+		return storage.addDataSegment(iSegmentName, iDirectory);
 	}
 
 	public Collection<String> getClusterNames() {

@@ -28,13 +28,8 @@ public class OStoragePhysicalClusterConfiguration extends OStorageSegmentConfigu
 		id = iId;
 	}
 
-	public OStoragePhysicalClusterConfiguration(final String iClusterName) {
-		super(iClusterName);
-		fileStartSize = START_SIZE;
-	}
-
 	public OStoragePhysicalClusterConfiguration(final OStorageConfiguration iRoot, final String iSegmentName, final int iId) {
-		super(iRoot, iSegmentName);
+		super(iRoot, iSegmentName, iId);
 		fileStartSize = START_SIZE;
 		id = iId;
 	}

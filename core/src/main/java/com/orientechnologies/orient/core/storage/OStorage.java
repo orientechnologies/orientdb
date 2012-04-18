@@ -128,7 +128,7 @@ public interface OStorage extends OSharedContainer {
 	 */
 	public int addDataSegment(String iDataSegmentName);
 
-	public int addDataSegment(String iSegmentName, String iSegmentFileName);
+	public int addDataSegment(String iSegmentName, String iDirectory);
 
 	public long count(int iClusterId);
 

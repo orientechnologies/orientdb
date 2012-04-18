@@ -106,9 +106,9 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 	}
 
 	@Override
-	public int addDataSegment(final String iSegmentName, final String iSegmentFileName) {
+	public int addDataSegment(final String iSegmentName, final String iDirectory) {
 		checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
-		return super.addDataSegment(iSegmentName, iSegmentFileName);
+		return super.addDataSegment(iSegmentName, iDirectory);
 	}
 
 	public OTransaction getTransaction() {

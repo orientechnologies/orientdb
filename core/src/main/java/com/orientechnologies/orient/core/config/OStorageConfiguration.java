@@ -28,12 +28,23 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
+/**
+ * Versions:<li>
+ * <ul>
+ * 3 = introduced file directory.
+ * </ul>
+ * </li>
+ * 
+ * @author Luca
+ * 
+ */
 @SuppressWarnings("serial")
 public class OStorageConfiguration implements OSerializableStream {
 	public static final ORecordId							CONFIG_RID			= new ORecordId(0, 0);
 
-	public static final int										CURRENT_VERSION	= 2;
+	public static final int										CURRENT_VERSION	= 3;
 
 	public int																version					= -1;
 	public String															name;
@@ -46,7 +57,7 @@ public class OStorageConfiguration implements OSerializableStream {
 	public String															dateFormat			= "yyyy-MM-dd";
 	public String															dateTimeFormat	= "yyyy-MM-dd HH:mm:ss";
 
-	public OStorageSegmentConfiguration				fileTemplate		= new OStorageSegmentConfiguration();
+	public final OStorageSegmentConfiguration	fileTemplate;
 
 	public List<OStorageClusterConfiguration>	clusters				= new ArrayList<OStorageClusterConfiguration>();
 	public List<OStorageDataConfiguration>		dataSegments		= new ArrayList<OStorageDataConfiguration>();
@@ -61,6 +72,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
 	public OStorageConfiguration(final OStorage iStorage) {
 		storage = iStorage;
+		fileTemplate = new OStorageSegmentConfiguration();
 	}
 
 	/**
@@ -90,6 +102,10 @@ public class OStorageConfiguration implements OSerializableStream {
 
 	public boolean isEmpty() {
 		return clusters.isEmpty();
+	}
+
+	public String getDirectory() {
+		return fileTemplate.directory != null ? fileTemplate.getDirectory() : ((OStorageLocal) storage).getStoragePath();
 	}
 
 	public Locale getLocaleInstance() {
@@ -157,7 +173,6 @@ public class OStorageConfiguration implements OSerializableStream {
 				continue;
 
 			clusterName = read(values[index++]);
-
 			clusterType = read(values[index++]);
 
 			final OStorageClusterConfiguration currentCluster;
@@ -198,7 +213,7 @@ public class OStorageConfiguration implements OSerializableStream {
 			dataId = Integer.parseInt(read(values[index++]));
 			dataName = read(values[index++]);
 
-			data = new OStorageDataConfiguration(this, dataName);
+			data = new OStorageDataConfiguration(this, dataName, dataId);
 			index = phySegmentFromStream(values, index, data);
 			data.holeFile = new OStorageDataHoleConfiguration(data, read(values[index++]), read(values[index++]), read(values[index++]));
 			dataSegments.set(dataId, data);
@@ -285,6 +300,7 @@ public class OStorageConfiguration implements OSerializableStream {
 	}
 
 	private int phySegmentFromStream(final String[] values, int index, final OStorageSegmentConfiguration iSegment) {
+		iSegment.directory = version > 2 ? read(values[index++]) : null;
 		iSegment.maxSize = read(values[index++]);
 		iSegment.fileType = read(values[index++]);
 		iSegment.fileStartSize = read(values[index++]);
@@ -314,6 +330,7 @@ public class OStorageConfiguration implements OSerializableStream {
 	}
 
 	private void phySegmentToStream(final StringBuilder iBuffer, final OStorageSegmentConfiguration iSegment) {
+		write(iBuffer, iSegment.directory);
 		write(iBuffer, iSegment.maxSize);
 		write(iBuffer, iSegment.fileType);
 		write(iBuffer, iSegment.fileStartSize);

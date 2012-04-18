@@ -23,14 +23,15 @@ public class OStorageDataConfiguration extends OStorageSegmentConfiguration {
 	private static final String						START_SIZE				= "1Mb";
 	private static final String						INCREMENT_SIZE		= "100%";
 
-	public OStorageDataConfiguration(final OStorageConfiguration iRoot, final String iSegmentName) {
-		super(iRoot, iSegmentName);
+	public OStorageDataConfiguration(final OStorageConfiguration iRoot, final String iSegmentName, final int iId) {
+		super(iRoot, iSegmentName, iId);
 		fileStartSize = START_SIZE;
 		fileIncrementSize = INCREMENT_SIZE;
 	}
 
-	public OStorageDataConfiguration(final String iSegmentName) {
-		super(iSegmentName);
+	public OStorageDataConfiguration(final OStorageConfiguration iRoot, final String iSegmentName, final int iId,
+			final String iDirectory) {
+		super(iRoot, iSegmentName, iId, iDirectory);
 		fileStartSize = START_SIZE;
 		fileIncrementSize = INCREMENT_SIZE;
 	}
