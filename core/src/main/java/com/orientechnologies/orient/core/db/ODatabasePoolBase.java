@@ -67,37 +67,80 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
 			}
 	}
 
+	/**
+	 * Acquires a connection from the pool. If the pool is empty, then the caller thread will wait for it.
+	 * 
+	 * @param iName
+	 *          Database name
+	 * @param iUserName
+	 *          User name
+	 * @param iUserPassword
+	 *          User password
+	 * @return A pooled database instance
+	 */
 	public DB acquire(final String iName, final String iUserName, final String iUserPassword) {
 		setup();
 		return dbPool.acquire(iName, iUserName, iUserPassword);
 	}
 
+	/**
+	 * Acquires a connection from the pool specifying options. If the pool is empty, then the caller thread will wait for it.
+	 * 
+	 * @param iName
+	 *          Database name
+	 * @param iUserName
+	 *          User name
+	 * @param iUserPassword
+	 *          User password
+	 * @return A pooled database instance
+	 */
 	public DB acquire(final String iName, final String iUserName, final String iUserPassword,
 			final Map<String, Object> iOptionalParams) {
 		setup();
 		return dbPool.acquire(iName, iUserName, iUserPassword, iOptionalParams);
 	}
 
+	/**
+	 * Don't call it directly but use database.close().
+	 * 
+	 * @param iDatabase
+	 */
 	public void release(final DB iDatabase) {
-		dbPool.release(iDatabase);
+		if (dbPool != null)
+			dbPool.release(iDatabase);
 	}
 
+	/**
+	 * Closes the entire pool freeing all the connections.
+	 */
 	public void close() {
-		if (dbPool != null){
+		if (dbPool != null) {
 			dbPool.close();
 			dbPool = null;
 		}
 	}
 
+	/**
+	 * Returns the maximum size of the pool
+	 * 
+	 */
 	public int getMaxSize() {
 		setup();
 		return dbPool.getMaxSize();
 	}
 
+	/**
+	 * Returns all the configured pools.
+	 * 
+	 */
 	public Map<String, OResourcePool<String, DB>> getPools() {
 		return dbPool.getPools();
 	}
 
+	/**
+	 * Removes a pool by name/user
+	 * 
+	 */
 	public void remove(final String iName, final String iUser) {
 		dbPool.remove(iName, iUser);
 	}
