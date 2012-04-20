@@ -300,8 +300,6 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
 
 			final long[] pos = getRelativePosition(iPosition);
 			final OFile file = files[(int) pos[0]];
-			file.writeShort(pos[1] + OBinaryProtocol.SIZE_INT, (short) -1);
-			file.writeLong(pos[1] + OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_SHORT, -1);
 
 			final int recordSize = file.readInt(pos[1]);
 			handleHole(iPosition, recordSize);
@@ -401,6 +399,7 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
 				// IT'S CONSECUTIVE TO ANOTHER HOLE AT THE LEFT: UPDATE LAST ONE
 				holeSize += closestHole.size;
 				holeSegment.updateHole(closestHole, closestHole.dataOffset, holeSize);
+				holePositionOffset = closestHole.dataOffset;
 
 			} else if (holePositionOffset + holeSize == closestHole.dataOffset) {
 				// IT'S CONSECUTIVE TO ANOTHER HOLE AT THE RIGHT: UPDATE LAST ONE

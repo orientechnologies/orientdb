@@ -48,7 +48,6 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -502,50 +501,46 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			int totalChunks = 0;
 			iListener
-					.onMessage("\n(2) Checking data chunks integrity. In this phase data segments are scanned to find the back reference into the clusters.\n");
+					.onMessage("\n(2) Checking data chunks integrity. In this phase data segments are scanned to check the back reference into the clusters.\n");
 			for (ODataLocal d : dataSegments) {
 				int nextPos = 0;
 
-				for (int pos = 0; pos < d.getFilledUpTo();) {
+				for (int pos = 0; nextPos < d.getFilledUpTo();) {
 					try {
 						pos = nextPos;
 
 						int recordSize = d.getRecordSize(pos);
-						final ORecordId rid = d.getRecordRid(pos);
-
 						if (recordSize < 0) {
+							recordSize *= -1;
+
 							// HOLE: CHECK HOLE PRESENCE
-							nextPos = pos + (recordSize * -1);
+							nextPos = pos + recordSize;
 
 							boolean found = false;
-							for (ODataHoleInfo hole : getHolesList()) {
+							for (ODataHoleInfo hole : d.getHolesList()) {
 								if (hole.dataOffset == pos) {
 									found = true;
+
+									if (hole.size != recordSize) {
+										OLogManager.instance().warn(this, "[OStorageLocal.check] chunk %d has size %d while the hole has %d", pos,
+												recordSize, hole.size);
+										warnings++;
+									}
+
 									break;
 								}
 							}
 
 							if (!found) {
-								OLogManager.instance().warn(this, "[OStorageLocal.check] Cannot find hole for deleted chunk %d", pos);
+								OLogManager.instance().warn(this, "[OStorageLocal.check] Cannot find hole for deleted chunk %d of size %d", pos,
+										recordSize);
 								warnings++;
 							}
-
-							if (rid.isValid()) {
-								OLogManager
-										.instance()
-										.warn(
-												this,
-												"[OStorageLocal.check] Deleted chunk at position %d (recordSize=%d) points to the valid RID %s instead of #-1:-1",
-												pos, recordSize * -1, rid);
-								warnings++;
-							}
-
-							recordSize *= -1;
 
 						} else {
 
 							// REGULAR DATA CHUNK
-							nextPos = pos + OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_SHORT + OBinaryProtocol.SIZE_LONG + recordSize;
+							nextPos = pos + ODataLocal.RECORD_FIX_SIZE + recordSize;
 
 							final byte[] buffer = d.getRecord(pos);
 							if (buffer.length != recordSize) {
@@ -554,6 +549,7 @@ public class OStorageLocal extends OStorageEmbedded {
 								warnings++;
 							}
 
+							final ORecordId rid = d.getRecordRid(pos);
 							if (!rid.isValid()) {
 								OLogManager.instance().warn(this, "[OStorageLocal.check] Chunk at position %d points to invalid RID %s", pos, rid);
 								warnings++;
