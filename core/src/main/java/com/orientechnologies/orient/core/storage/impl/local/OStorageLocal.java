@@ -390,7 +390,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		}
 	}
 
-	public void check(final OCommandOutputListener iListener) {
+	public boolean check(final OCommandOutputListener iListener) {
 		int errors = 0;
 		int warnings = 0;
 
@@ -595,6 +595,8 @@ public class OStorageLocal extends OStorageEmbedded {
 		} finally {
 			lock.releaseSharedLock();
 		}
+
+		return errors == 0;
 	}
 
 	public ODataLocal getDataSegmentById(final int iDataSegmentId) {
