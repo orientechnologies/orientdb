@@ -232,14 +232,14 @@ public class OStorageLocal extends OStorageEmbedded {
 			addDataSegment(OStorage.DATA_DEFAULT_NAME);
 
 			// ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
-			addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OStorage.CLUSTER_INTERNAL_NAME, null, 0);
+			addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OStorage.CLUSTER_INTERNAL_NAME, null, null);
 
 			// ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
 			// INDEXING
-			addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OStorage.CLUSTER_INDEX_NAME, null, 0);
+			addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OStorage.CLUSTER_INDEX_NAME, null, null);
 
 			// ADD THE DEFAULT CLUSTER
-			defaultClusterId = addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OStorage.CLUSTER_DEFAULT_NAME, null, 0);
+			defaultClusterId = addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OStorage.CLUSTER_DEFAULT_NAME, null, null);
 
 			configuration.create();
 
@@ -618,6 +618,9 @@ public class OStorageLocal extends OStorageEmbedded {
 	}
 
 	public int getDataSegmentIdByName(final String iDataSegmentName) {
+		if (iDataSegmentName == null)
+			return 0;
+
 		checkOpeness();
 
 		lock.acquireSharedLock();
@@ -676,7 +679,7 @@ public class OStorageLocal extends OStorageEmbedded {
 	/**
 	 * Add a new cluster into the storage. Type can be: "physical" or "logical".
 	 */
-	public int addCluster(final String iClusterType, String iClusterName, final String iLocation, final int iDataSegmentId,
+	public int addCluster(final String iClusterType, String iClusterName, final String iLocation, final String iDataSegmentName,
 			final Object... iParameters) {
 		checkOpeness();
 
@@ -694,7 +697,7 @@ public class OStorageLocal extends OStorageEmbedded {
 					}
 
 				cluster = Orient.instance().getClusterFactory().createCluster(iClusterType);
-				cluster.configure(this, clusterPos, iClusterName, iLocation, iDataSegmentId, iParameters);
+				cluster.configure(this, clusterPos, iClusterName, iLocation, getDataSegmentIdByName(iDataSegmentName), iParameters);
 			} else
 				cluster = null;
 

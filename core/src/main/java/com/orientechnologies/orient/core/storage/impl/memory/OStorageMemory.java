@@ -78,13 +78,13 @@ public class OStorageMemory extends OStorageEmbedded {
 			addDataSegment(OStorage.DATA_DEFAULT_NAME);
 
 			// ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
-			addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OStorage.CLUSTER_INTERNAL_NAME, null, 0);
+			addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OStorage.CLUSTER_INTERNAL_NAME, null, null);
 
 			// ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING
-			addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OStorage.CLUSTER_INDEX_NAME, null, 0);
+			addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OStorage.CLUSTER_INDEX_NAME, null, null);
 
 			// ADD THE DEFAULT CLUSTER
-			defaultClusterId = addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OStorage.CLUSTER_DEFAULT_NAME, null, 0);
+			defaultClusterId = addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OStorage.CLUSTER_DEFAULT_NAME, null, null);
 
 			configuration.create();
 
@@ -164,8 +164,8 @@ public class OStorageMemory extends OStorageEmbedded {
 	public void reload() {
 	}
 
-	public int addCluster(final String iClusterType, final String iClusterName, final String iLocation, final int iDataSegmentId,
-			final Object... iParameters) {
+	public int addCluster(final String iClusterType, final String iClusterName, final String iLocation,
+			final String iDataSegmentName, final Object... iParameters) {
 		lock.acquireExclusiveLock();
 		try {
 			int clusterId = clusters.size();
@@ -177,7 +177,8 @@ public class OStorageMemory extends OStorageEmbedded {
 			}
 
 			final OClusterMemory cluster = new OClusterMemory();
-			cluster.configure(this, clusterId, iClusterName.toLowerCase(), iLocation, iDataSegmentId, iParameters);
+			cluster.configure(this, clusterId, iClusterName.toLowerCase(), iLocation, getDataSegmentIdByName(iDataSegmentName),
+					iParameters);
 
 			if (clusterId == clusters.size())
 				// APPEND IT
@@ -589,6 +590,9 @@ public class OStorageMemory extends OStorageEmbedded {
 	}
 
 	public int getDataSegmentIdByName(final String iDataSegmentName) {
+		if (iDataSegmentName == null)
+			return 0;
+
 		lock.acquireSharedLock();
 		try {
 

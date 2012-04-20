@@ -326,16 +326,16 @@ public class ODatabaseRaw implements ODatabase {
 	}
 
 	public int addCluster(String iClusterName, CLUSTER_TYPE iType, Object... iParameters) {
-		return addCluster(iType.toString(), iClusterName, null, 0, iParameters);
+		return addCluster(iType.toString(), iClusterName, null, null, iParameters);
 	}
 
-	public int addCluster(final String iType, final String iClusterName, final String iLocation, final int iDataSegmentId,
+	public int addCluster(final String iType, final String iClusterName, final String iLocation, final String iDataSegmentName,
 			final Object... iParameters) {
-		return storage.addCluster(iType, iClusterName, iLocation, iDataSegmentId, iParameters);
+		return storage.addCluster(iType, iClusterName, iLocation, iDataSegmentName, iParameters);
 	}
 
 	public int addPhysicalCluster(final String iClusterName, final String iLocation, final int iStartSize) {
-		return storage.addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), iClusterName, null, 0, iLocation, iStartSize);
+		return storage.addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), iClusterName, null, null, iLocation, iStartSize);
 	}
 
 	public boolean dropCluster(final String iClusterName) {

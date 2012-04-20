@@ -102,16 +102,21 @@ public interface OStorage extends OSharedContainer {
 
 	/**
 	 * Add a new cluster into the storage.
+	 * 
 	 * @param iClusterType
 	 *          Cluster type. Type depends by the implementation.
 	 * @param iClusterName
 	 *          name of the cluster
+	 * @param iLocation
+	 *          Location where to store the cluster
+	 * @param iDataSegmentName
+	 *          Name of the data-segment to use. null means 'default'
 	 * @param iParameters
 	 *          Additional parameters to configure the cluster
 	 * 
 	 * @throws IOException
 	 */
-	public int addCluster(String iClusterType, String iClusterName, String iLocation, int iDataSegmentId, Object... iParameters);
+	public int addCluster(String iClusterType, String iClusterName, String iLocation, String iDataSegmentName, Object... iParameters);
 
 	public boolean dropCluster(String iClusterName);
 

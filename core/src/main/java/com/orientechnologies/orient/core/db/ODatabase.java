@@ -293,14 +293,14 @@ public interface ODatabase {
 	 *          Cluster type between the defined ones
 	 * @param iClusterName
 	 *          Cluster name
-	 * @param iDataSegmentId
-	 *          Data segment where to store record of this cluster
+	 * @param iDataSegmentName
+	 *          Data segment where to store record of this cluster. null means 'default'
 	 * @param iParameters
 	 *          Additional parameters to pass to the factories
 	 * 
 	 * @return Cluster id
 	 */
-	public int addCluster(String iType, String iClusterName, String iLocation, final int iDataSegmentId, Object... iParameters);
+	public int addCluster(String iType, String iClusterName, String iLocation, final String iDataSegmentName, Object... iParameters);
 
 	/**
 	 * Adds a physical cluster. Physical clusters need separate files. Access is faster than the logical cluster but the database size

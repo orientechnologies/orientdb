@@ -458,7 +458,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			int clusterId = name != null ? database.getClusterIdByName(name) : -1;
 			if (clusterId == -1) {
 				// CREATE IT
-				clusterId = database.addCluster(type, name, null, 0);
+				clusterId = database.addCluster(type, name, null, null);
 			}
 
 			if (clusterId != id)

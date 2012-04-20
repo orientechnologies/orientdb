@@ -174,14 +174,14 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 		return underlying.getClusterRecordSizeByName(iClusterName);
 	}
 
-	public int addCluster(final String iType, final String iClusterName, final String iLocation, final int iDataSegmentId,
+	public int addCluster(final String iType, final String iClusterName, final String iLocation, final String iDataSegmentName,
 			final Object... iParameters) {
 		checkOpeness();
-		return underlying.addCluster(iType, iClusterName, iLocation, iDataSegmentId, iParameters);
+		return underlying.addCluster(iType, iClusterName, iLocation, iDataSegmentName, iParameters);
 	}
 
 	/**
-	 * @deprecated Use {@link #addCluster(String, String, String, int, Object...)} instead
+	 * @deprecated Use {@link #addCluster(String, String, String, String, Object...)} instead
 	 * @param iClusterName
 	 * @param iSize
 	 * @return
@@ -189,11 +189,11 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 	@Deprecated
 	public int addPhysicalCluster(final String iClusterName, final String iLocation, final int iSize) {
 		checkOpeness();
-		return underlying.addCluster(CLUSTER_TYPE.PHYSICAL.toString(), iClusterName, iLocation, 0);
+		return underlying.addCluster(CLUSTER_TYPE.PHYSICAL.toString(), iClusterName, iLocation, null);
 	}
 
 	/**
-	 * @deprecated Use {@link #addCluster(String, String, String, int, Object...)} instead
+	 * @deprecated Use {@link #addCluster(String, String, String, String, Object...)} instead
 	 * @param iClusterName
 	 * @param iSize
 	 * @return
@@ -206,12 +206,12 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 
 	public int addCluster(final String iClusterName, final CLUSTER_TYPE iType, final Object... iParameters) {
 		checkOpeness();
-		return underlying.addCluster(iType.toString(), iClusterName, null, 0, iParameters);
+		return underlying.addCluster(iType.toString(), iClusterName, null, null, iParameters);
 	}
 
 	public int addCluster(String iClusterName, CLUSTER_TYPE iType) {
 		checkOpeness();
-		return underlying.addCluster(iType.toString(), iClusterName, null, 0);
+		return underlying.addCluster(iType.toString(), iClusterName, null, null);
 	}
 
 	public boolean dropDataSegment(String name) {

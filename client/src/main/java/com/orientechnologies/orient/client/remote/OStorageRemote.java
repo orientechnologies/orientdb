@@ -869,8 +869,8 @@ public class OStorageRemote extends OStorageAbstract {
 		return defaultClusterId;
 	}
 
-	public int addCluster(final String iClusterType, final String iClusterName, final String iLocation, final int iDataSegmentId,
-			final Object... iArguments) {
+	public int addCluster(final String iClusterType, final String iClusterName, final String iLocation,
+			final String iDataSegmentName, final Object... iArguments) {
 		checkConnection();
 
 		do {
@@ -884,7 +884,7 @@ public class OStorageRemote extends OStorageAbstract {
 					if (network.getSrvProtocolVersion() >= 10 || iClusterType.equalsIgnoreCase("PHYSICAL"))
 						network.writeString(iLocation);
 					if (network.getSrvProtocolVersion() >= 10)
-						network.writeInt(iDataSegmentId);
+						network.writeString(iDataSegmentName);
 					else
 						network.writeInt(-1);
 
@@ -1547,6 +1547,9 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public int getDataSegmentIdByName(final String iName) {
+		if (iName == null)
+			return 0;
+
 		throw new UnsupportedOperationException("getDataSegmentIdByName()");
 	}
 

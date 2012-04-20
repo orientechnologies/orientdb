@@ -109,19 +109,19 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
 		if (attribute == null)
 			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-		final OCluster cls = getCluster();
+		final OCluster cluster = getCluster();
 
-		if (cls == null)
+		if (cluster == null)
 			throw new OCommandExecutionException("Cluster '" + clusterName + "' not found");
 
 		if (clusterId > -1 && clusterName.equals(String.valueOf(clusterId))) {
-			clusterName = cls.getName();
+			clusterName = cluster.getName();
 		} else {
-			clusterId = cls.getId();
+			clusterId = cluster.getId();
 		}
 
 		try {
-			cls.set(attribute, value);
+			cluster.set(attribute, value);
 		} catch (IOException ioe) {
 			throw new OCommandExecutionException("Error altering cluster '" + clusterName + "'", ioe);
 		}

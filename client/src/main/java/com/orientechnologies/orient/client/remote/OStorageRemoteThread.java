@@ -216,10 +216,10 @@ public class OStorageRemoteThread implements OStorage {
 		return delegate.getDefaultClusterId();
 	}
 
-	public int addCluster(final String iClusterType, final String iClusterName, final String iLocation, final int iDataSegmentId,
+	public int addCluster(final String iClusterType, final String iClusterName, final String iLocation, final String iDataSegmentName,
 			final Object... iArguments) {
 		delegate.setSessionId(sessionId);
-		return delegate.addCluster(iClusterType, iClusterName, iLocation, iDataSegmentId, iArguments);
+		return delegate.addCluster(iClusterType, iClusterName, iLocation, iDataSegmentName, iArguments);
 	}
 
 	public boolean dropCluster(final int iClusterId) {

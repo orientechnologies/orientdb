@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 public class OClusterMemory extends OSharedResourceAbstract implements OCluster {
 	public static final String			TYPE		= "MEMORY";
 
+	private OStorage								storage;
 	private int											id;
 	private String									name;
 	private int											dataSegmentId;
@@ -44,6 +45,7 @@ public class OClusterMemory extends OSharedResourceAbstract implements OCluster 
 
 	public void configure(final OStorage iStorage, final int iId, final String iClusterName, final String iLocation,
 			final int iDataSegmentId, final Object... iParameters) {
+		this.storage = iStorage;
 		this.id = iId;
 		this.name = iClusterName;
 		this.dataSegmentId = iDataSegmentId;
@@ -119,6 +121,11 @@ public class OClusterMemory extends OSharedResourceAbstract implements OCluster 
 		switch (iAttribute) {
 		case NAME:
 			name = stringValue;
+			break;
+
+		case DATASEGMENT:
+			dataSegmentId = storage.getDataSegmentIdByName(stringValue);
+			break;
 		}
 	}
 

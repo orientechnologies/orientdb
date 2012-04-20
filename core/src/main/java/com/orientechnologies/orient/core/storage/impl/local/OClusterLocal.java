@@ -169,6 +169,10 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
 		switch (iAttribute) {
 		case NAME:
 			setNameInternal(stringValue);
+			break;
+		case DATASEGMENT:
+			setDataSegmentInternal(stringValue);
+			break;
 		}
 
 	}
@@ -486,7 +490,7 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
 		}
 	}
 
-	private void setNameInternal(String iNewName) {
+	private void setNameInternal(final String iNewName) {
 		if (storage.getClusterIdByName(iNewName) > -1)
 			throw new IllegalArgumentException("Cluster with name '" + iNewName + "' already exists");
 		acquireExclusiveLock();
@@ -514,6 +518,27 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
 			storage.renameCluster(name, iNewName);
 			name = iNewName;
 			storage.getConfiguration().update();
+		} finally {
+			releaseExclusiveLock();
+		}
+
+	}
+
+	/**
+	 * Assigns a different data-segment id.
+	 * 
+	 * @param iName
+	 *          Data-segment's name
+	 */
+	private void setDataSegmentInternal(final String iName) {
+		acquireExclusiveLock();
+		try {
+
+			final int dataId = storage.getDataSegmentIdByName(iName);
+			config.setDataSegmentId(dataId);
+
+			storage.getConfiguration().update();
+
 		} finally {
 			releaseExclusiveLock();
 		}

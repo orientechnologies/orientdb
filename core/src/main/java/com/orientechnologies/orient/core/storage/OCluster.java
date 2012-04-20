@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 public interface OCluster {
 
 	public static enum ATTRIBUTES {
-		NAME
+		NAME, DATASEGMENT
 	}
 
 	public void configure(OStorage iStorage, int iId, String iClusterName, final String iLocation, int iDataSegmentId,

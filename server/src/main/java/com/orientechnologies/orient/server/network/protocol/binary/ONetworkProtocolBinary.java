@@ -343,17 +343,17 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 		else
 			location = null;
 
-		final int dataSegmentId;
+		final String dataSegmentName;
 		if (connection.data.protocolVersion >= 10)
-			dataSegmentId = channel.readInt();
+			dataSegmentName = channel.readString();
 		else {
 			channel.readInt(); // OLD INIT SIZE, NOT MORE USED
-			dataSegmentId = 0;
+			dataSegmentName = null;
 		}
 
 		Object[] params = null;
 
-		final int num = connection.database.addCluster(type, name, location, dataSegmentId, params);
+		final int num = connection.database.addCluster(type, name, location, dataSegmentName, params);
 
 		beginResponse();
 		try {

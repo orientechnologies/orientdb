@@ -69,14 +69,14 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 		super.drop();
 	}
 
-	public int addCluster(final String iType, final String iClusterName, final String iLocation, final int iDataSegmentId,
+	public int addCluster(final String iType, final String iClusterName, final String iLocation, final String iDataSegmentName,
 			final Object... iParameters) {
 		checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
-		return super.addCluster(iType, iClusterName, iLocation, iDataSegmentId, iParameters);
+		return super.addCluster(iType, iClusterName, iLocation, iDataSegmentName, iParameters);
 	}
 
 	public int addCluster(final String iClusterName, final CLUSTER_TYPE iType, final Object... iParameters) {
-		return super.addCluster(iType.toString(), iClusterName, null, 0, iParameters);
+		return super.addCluster(iType.toString(), iClusterName, null, null, iParameters);
 	}
 
 	@Override

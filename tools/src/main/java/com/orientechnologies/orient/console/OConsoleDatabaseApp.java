@@ -290,7 +290,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	public void createCluster(
 			@ConsoleParameter(name = "cluster-name", description = "The name of the cluster to create") String iClusterName,
 			@ConsoleParameter(name = "cluster-type", description = "Cluster type: 'physical' or 'memory'") String iClusterType,
-			@ConsoleParameter(name = "datasegment", description = "Data segment to use. '0' or 'default' will use the default one") String iDataSegmentId,
+			@ConsoleParameter(name = "data-segment", description = "Data segment to use. 'default' will use the default one") String iDataSegmentName,
 			@ConsoleParameter(name = "location", description = "Location where to place the new cluster files, if appliable. use 'default' to leave into the database directory") String iLocation,
 			@ConsoleParameter(name = "position", description = "cluster id to replace, an empty position or 'append' to append at the end") String iPosition) {
 		checkCurrentDatabase();
@@ -298,14 +298,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		final int position = iPosition.toLowerCase().equals("append") ? -1 : Integer.parseInt(iPosition);
 		if ("default".equalsIgnoreCase(iLocation))
 			iLocation = null;
-		final int dataSegmentId = iDataSegmentId != null ? currentDatabase.getDataSegmentIdByName(iDataSegmentId) : 0;
 
 		out.println("Creating cluster [" + iClusterName + "] of type '" + iClusterType + "' in database " + currentDatabaseName
 				+ (position == -1 ? " as last one" : " in place of #" + position) + "...");
 
 		iClusterType = iClusterType.toUpperCase();
 
-		int clusterId = currentDatabase.addCluster(iClusterType, iClusterName, iLocation, dataSegmentId);
+		int clusterId = currentDatabase.addCluster(iClusterType, iClusterName, iLocation, iDataSegmentName);
 
 		out.println(currentDatabase.getClusterType(iClusterName) + " cluster created correctly with id #" + clusterId);
 		updateDatabaseInfo();
