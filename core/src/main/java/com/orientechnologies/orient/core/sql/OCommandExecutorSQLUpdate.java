@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -97,10 +98,10 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 
 		newPos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		if (newPos == -1
-				|| (!word.toString().equals(KEYWORD_SET) && !word.toString().equals(KEYWORD_ADD) && !word.toString().equals(KEYWORD_PUT) && !word
-						.toString().equals(KEYWORD_REMOVE)))
-			throw new OCommandSQLParsingException("Expected keyword " + KEYWORD_SET + "," + KEYWORD_ADD + "," + KEYWORD_PUT + " or "
-					+ KEYWORD_REMOVE + ". Use " + getSyntax(), text, pos);
+				|| (!word.toString().equals(KEYWORD_SET) && !word.toString().equals(KEYWORD_ADD) && !word.toString().equals(KEYWORD_PUT)
+						&& !word.toString().equals(KEYWORD_REMOVE) && !word.toString().equals(KEYWORD_INCREMENT)))
+			throw new OCommandSQLParsingException("Expected keyword " + KEYWORD_SET + "," + KEYWORD_ADD + "," + KEYWORD_PUT + ","
+					+ KEYWORD_REMOVE + " or " + KEYWORD_INCREMENT + ". Use " + getSyntax(), text, pos);
 
 		pos = newPos;
 
@@ -161,6 +162,20 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 		// BIND VALUES TO UPDATE
 		if (!setEntries.isEmpty()) {
 			OSQLHelper.bindParameters(record, setEntries, parameters);
+			recordUpdated = true;
+		}
+
+		// BIND VALUES TO INCREMENT
+		for (Map.Entry<String, Number> entry : incrementEntries.entrySet()) {
+			final Number prevValue = record.field(entry.getKey());
+
+			if (prevValue == null)
+				// NO PREVIOUS VALUE: CONSIDER AS 0
+				record.field(entry.getKey(), entry.getValue());
+			else
+				// COMPUTING INCREMENT
+				record.field(entry.getKey(), OType.increment(prevValue, entry.getValue()));
+
 			recordUpdated = true;
 		}
 
@@ -423,7 +438,47 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 	}
 
 	private int parseIncrementFields(final StringBuilder word, int pos) {
-		return -1;
+		String fieldName;
+		String fieldValue;
+		int newPos = pos;
+
+		while (pos != -1 && (incrementEntries.size() == 0 || word.toString().equals(",")) && !word.toString().equals(KEYWORD_WHERE)) {
+			newPos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
+			if (newPos == -1)
+				throw new OCommandSQLParsingException("Field name expected. Use " + getSyntax(), text, pos);
+			pos = newPos;
+
+			fieldName = word.toString();
+
+			newPos = OStringParser.jumpWhiteSpaces(text, pos);
+
+			if (newPos == -1 || text.charAt(newPos) != '=')
+				throw new OCommandSQLParsingException("Character '=' was expected. Use " + getSyntax(), text, pos);
+
+			pos = newPos;
+			newPos = OSQLHelper.nextWord(text, textUpperCase, pos + 1, word, false, " =><");
+			if (pos == -1)
+				throw new OCommandSQLParsingException("Value expected. Use " + getSyntax(), text, pos);
+
+			fieldValue = word.toString();
+
+			if (fieldValue.endsWith(",")) {
+				pos = newPos - 1;
+				fieldValue = fieldValue.substring(0, fieldValue.length() - 1);
+			} else
+				pos = newPos;
+
+			// INSERT TRANSFORMED FIELD VALUE
+			incrementEntries.put(fieldName, (Number) getFieldValueCountingParameters(fieldValue));
+
+			pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+		}
+
+		if (incrementEntries.size() == 0)
+			throw new OCommandSQLParsingException("Entries to increment <field> = <value> are missed. Example: salary = -100. Use "
+					+ getSyntax(), text, pos);
+
+		return pos;
 	}
 
 	@Override

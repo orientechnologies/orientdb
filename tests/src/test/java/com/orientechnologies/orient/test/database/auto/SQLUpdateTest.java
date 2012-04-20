@@ -205,6 +205,40 @@ public class SQLUpdateTest {
 		database.close();
 	}
 
+	public void updateIncrement() {
+		database.open("admin", "admin");
+
+		List<ODocument> result1 = database.command(new OCommandSQL("select salary from Account where salary is defined")).execute();
+		Assert.assertFalse(result1.isEmpty());
+
+		updatedRecords = (Integer) database.command(new OCommandSQL("update Account increment salary = 10 where salary is defined")).execute();
+		Assert.assertTrue(updatedRecords > 0);
+
+		List<ODocument> result2 = database.command(new OCommandSQL("select salary from Account where salary is defined")).execute();
+		Assert.assertFalse(result2.isEmpty());
+		Assert.assertEquals(result2.size(), result1.size());
+
+		for (int i = 0; i < result1.size(); ++i) {
+			float salary1 = result1.get(i).field("salary");
+			float salary2 = result2.get(i).field("salary");
+			Assert.assertEquals(salary2, salary1 + 10);
+		}
+
+		updatedRecords = (Integer) database.command(new OCommandSQL("update Account increment salary = -10 where salary is defined")).execute();
+		Assert.assertTrue(updatedRecords > 0);
+
+		List<ODocument> result3 = database.command(new OCommandSQL("select salary from Account where salary is defined")).execute();
+		Assert.assertFalse(result3.isEmpty());
+		Assert.assertEquals(result3.size(), result1.size());
+
+		for (int i = 0; i < result1.size(); ++i) {
+			float salary1 = result1.get(i).field("salary");
+			float salary3 = result3.get(i).field("salary");
+			Assert.assertEquals(salary3, salary1);
+		}
+		database.close();
+	}
+
 	private void checkUpdatedDoc(ODatabaseDocument database, String expectedName, String expectedCity, String expectedGender) {
 		List<ODocument> result = database.query(new OSQLSynchQuery<Object>("select * from person"));
 		ODocument oDoc = result.get(0);

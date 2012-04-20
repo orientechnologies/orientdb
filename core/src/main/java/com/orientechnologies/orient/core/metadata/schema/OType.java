@@ -200,7 +200,7 @@ public enum OType {
 	 */
 	public float asFloat(final Object iValue) {
 		if (iValue instanceof Number)
-			return ((Number) iValue).intValue();
+			return ((Number) iValue).floatValue();
 		else if (iValue instanceof String)
 			return Float.valueOf((String) iValue);
 
@@ -381,5 +381,99 @@ public enum OType {
 
 	public Class<?>[] getJavaTypes() {
 		return javaTypes;
+	}
+
+	public static Number increment(Number a, Number b) {
+		if (a == null || b == null)
+			throw new IllegalArgumentException("Cannot increment a null value");
+
+		if (a instanceof Integer) {
+			if (b instanceof Integer)
+				return new Integer(a.intValue() + b.intValue());
+			else if (b instanceof Long)
+				return new Long(a.intValue() + b.longValue());
+			else if (b instanceof Short)
+				return new Integer(a.intValue() + b.shortValue());
+			else if (b instanceof Float)
+				return new Float(a.intValue() + b.floatValue());
+			else if (b instanceof Double)
+				return new Double(a.intValue() + b.doubleValue());
+			else if (b instanceof BigDecimal)
+				return new BigDecimal(a.intValue()).add((BigDecimal) b);
+
+		} else if (a instanceof Long) {
+			if (b instanceof Integer)
+				return new Long(a.longValue() + b.intValue());
+			else if (b instanceof Long)
+				return new Long(a.longValue() + b.longValue());
+			else if (b instanceof Short)
+				return new Long(a.longValue() + b.shortValue());
+			else if (b instanceof Float)
+				return new Float(a.longValue() + b.floatValue());
+			else if (b instanceof Double)
+				return new Double(a.longValue() + b.doubleValue());
+			else if (b instanceof BigDecimal)
+				return new BigDecimal(a.longValue()).add((BigDecimal) b);
+
+		} else if (a instanceof Short) {
+			if (b instanceof Integer)
+				return new Integer(a.shortValue() + b.intValue());
+			else if (b instanceof Long)
+				return new Long(a.shortValue() + b.longValue());
+			else if (b instanceof Short)
+				return new Short((short) (a.shortValue() + b.shortValue()));
+			else if (b instanceof Float)
+				return new Float(a.shortValue() + b.floatValue());
+			else if (b instanceof Double)
+				return new Double(a.shortValue() + b.doubleValue());
+			else if (b instanceof BigDecimal)
+				return new BigDecimal(a.shortValue()).add((BigDecimal) b);
+
+		} else if (a instanceof Float) {
+			if (b instanceof Integer)
+				return new Float(a.floatValue() + b.intValue());
+			else if (b instanceof Long)
+				return new Float(a.floatValue() + b.longValue());
+			else if (b instanceof Short)
+				return new Float(a.floatValue() + b.shortValue());
+			else if (b instanceof Float)
+				return new Float(a.floatValue() + b.floatValue());
+			else if (b instanceof Double)
+				return new Double(a.floatValue() + b.doubleValue());
+			else if (b instanceof BigDecimal)
+				return new BigDecimal(a.floatValue()).add((BigDecimal) b);
+
+		} else if (a instanceof Double) {
+			if (b instanceof Integer)
+				return new Double(a.doubleValue() + b.intValue());
+			else if (b instanceof Long)
+				return new Double(a.doubleValue() + b.longValue());
+			else if (b instanceof Short)
+				return new Double(a.doubleValue() + b.shortValue());
+			else if (b instanceof Float)
+				return new Double(a.doubleValue() + b.floatValue());
+			else if (b instanceof Double)
+				return new Double(a.doubleValue() + b.doubleValue());
+			else if (b instanceof BigDecimal)
+				return new BigDecimal(a.doubleValue()).add((BigDecimal) b);
+
+		} else if (a instanceof BigDecimal) {
+			if (b instanceof Integer)
+				return ((BigDecimal) a).add(new BigDecimal(b.intValue()));
+			else if (b instanceof Long)
+				return ((BigDecimal) a).add(new BigDecimal(b.longValue()));
+			else if (b instanceof Short)
+				return ((BigDecimal) a).add(new BigDecimal(b.shortValue()));
+			else if (b instanceof Float)
+				return ((BigDecimal) a).add(new BigDecimal(b.floatValue()));
+			else if (b instanceof Double)
+				return ((BigDecimal) a).add(new BigDecimal(b.doubleValue()));
+			else if (b instanceof BigDecimal)
+				return ((BigDecimal) a).add((BigDecimal) b);
+
+		}
+
+		throw new IllegalArgumentException("Cannot increment value '" + a + "' (" + a.getClass() + ") with '" + b + "' ("
+				+ b.getClass() + ")");
 	}
 }

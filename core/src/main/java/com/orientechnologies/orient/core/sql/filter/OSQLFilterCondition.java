@@ -113,6 +113,11 @@ public class OSQLFilterCondition {
 			result = new Object[] { ((OSQLFilterItemAbstract) this.left).getRoot(), r };
 		}
 
+		// NOT_NULL OPERATOR
+		else if ((r instanceof String && r.equals(OSQLHelper.NOT_NULL)) || (l instanceof String && l.equals(OSQLHelper.NOT_NULL))) {
+			result = null;
+		}
+
 		else if (l != null && r != null && !l.getClass().isAssignableFrom(r.getClass()) && !r.getClass().isAssignableFrom(l.getClass()))
 			// INTEGERS
 			if (r instanceof Integer && !(l instanceof Number)) {
