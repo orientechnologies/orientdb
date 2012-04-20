@@ -1125,11 +1125,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	public void checkDatabase() throws IOException {
 		checkCurrentDatabase();
 
-		if (currentDatabase.getStorage() instanceof OStorageRemote) {
-			out.println("Cannot check integrity of remote database. Connect to it using local mode.");
-			return;
-		} else if (currentDatabase.getStorage() instanceof OStorageMemory) {
-			out.println("Cannot check integrity of in-memory database.");
+		if (!(currentDatabase.getStorage() instanceof OStorageLocal)) {
+			out.println("Cannot check integrity of non-local database. Connect to it using local mode.");
 			return;
 		}
 
