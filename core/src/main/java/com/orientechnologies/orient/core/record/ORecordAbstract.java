@@ -36,6 +36,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	protected int															_version;
 	protected byte[]													_source;
 	protected int															_size;
+	protected String													_dataSegmentName;
 	protected transient ORecordSerializer			_recordFormat;
 	protected Boolean													_pinned			= null;
 	protected boolean													_dirty			= true;
@@ -183,6 +184,18 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	@Override
 	public String toString() {
 		return (_recordId.isValid() ? _recordId : "") + (_source != null ? Arrays.toString(_source) : "[]") + " v" + _version;
+	}
+
+	public String getDataSegmentName() {
+		return _dataSegmentName;
+	}
+
+	public <RET extends ORecord<T>> RET setDataSegmentName(final String iName) {
+		if (_recordId.isValid())
+			throw new IllegalStateException("Cannot assign a data segment to a not new record");
+		
+		_dataSegmentName = iName;
+		return (RET) this;
 	}
 
 	public int getVersion() {

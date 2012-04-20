@@ -979,7 +979,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 		final byte recordType = channel.readByte();
 		final byte mode = channel.readByte();
 
-		final long clusterPosition = createRecord(connection.database, rid, buffer, recordType);
+		final long clusterPosition = createRecord(connection.database, rid, buffer, recordType, dataSegmentId);
 
 		if (mode == 0) {
 

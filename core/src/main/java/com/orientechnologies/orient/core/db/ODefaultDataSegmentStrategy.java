@@ -26,6 +26,9 @@ import com.orientechnologies.orient.core.record.ORecord;
 public class ODefaultDataSegmentStrategy implements ODataSegmentStrategy {
 
 	public int assignDataSegmentId(final ODatabase iDatabase, final ORecord<?> iRecord) {
+		final String dsName = iRecord.getDataSegmentName();
+		if (dsName != null)
+			return iDatabase.getDataSegmentIdByName(dsName);
 		return 0;
 	}
 

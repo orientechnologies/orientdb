@@ -73,6 +73,22 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
 	public ORID getIdentity();
 
 	/**
+	 * Returns the data segment where the record will be created at first.
+	 * 
+	 * @return Data segment name
+	 */
+	public String getDataSegmentName();
+
+	/**
+	 * Sets the data segment name where to save the record the first time it's created.
+	 * 
+	 * @param iName
+	 *          Data segment name
+	 * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
+	public <RET extends ORecord<T>> RET setDataSegmentName(String iName);
+
+	/**
 	 * Returns the current version number of the record. When the record is created has version = 0. At every change the storage
 	 * increment the version number. Version number is used by Optimistic transactions to check if the record is changed in the
 	 * meanwhile of the transaction.

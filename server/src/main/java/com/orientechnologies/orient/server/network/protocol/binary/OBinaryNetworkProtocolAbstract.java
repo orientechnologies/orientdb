@@ -338,9 +338,12 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 		return 0;
 	}
 
-	protected long createRecord(final ODatabaseRecord iDatabase, final ORecordId rid, final byte[] buffer, final byte recordType) {
+	protected long createRecord(final ODatabaseRecord iDatabase, final ORecordId rid, final byte[] buffer, final byte recordType,
+			int dataSegmentId) {
 		final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
 		record.fill(rid, 0, buffer, true);
+		if (dataSegmentId > 0)
+			record.setDataSegmentName(iDatabase.getDataSegmentNameById(dataSegmentId));
 		iDatabase.save(record);
 		return record.getIdentity().getClusterPosition();
 	}

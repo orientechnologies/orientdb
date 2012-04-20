@@ -171,6 +171,8 @@ public interface ODatabase {
 	 */
 	public int getDataSegmentIdByName(String iDataSegmentName);
 
+	public String getDataSegmentNameById(int dataSegmentId);
+
 	/**
 	 * Returns the default cluster id. If not specified all the new entities will be stored in the default cluster.
 	 * 
@@ -273,6 +275,7 @@ public interface ODatabase {
 
 	/**
 	 * Adds a new cluster.
+	 * 
 	 * @param iClusterName
 	 *          Cluster name
 	 * @param iType
@@ -285,6 +288,7 @@ public interface ODatabase {
 
 	/**
 	 * Adds a new cluster.
+	 * 
 	 * @param iType
 	 *          Cluster type between the defined ones
 	 * @param iClusterName
