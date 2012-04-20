@@ -80,6 +80,11 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
 			if (iStartSize == -1)
 				iStartSize = DEF_SIZE;
 
+			if (config.root.clusters.size() <= config.id)
+				config.root.clusters.add(config);
+			else
+				config.root.clusters.set(config.id, config);
+
 			fileSegment.create(iStartSize);
 			holeSegment.create();
 

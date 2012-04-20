@@ -11,6 +11,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class LocalGraphDbTest {
+	public static void main(String[] args) throws IOException {
+		new LocalGraphDbTest().multipleDatabasesSameThread();
+	}
+
 	public LocalGraphDbTest() {
 		OGremlinHelper.global().create();
 	}
@@ -36,8 +40,8 @@ public class LocalGraphDbTest {
 
 		db1 = OGraphDatabasePool.global().acquire(db1URL, "admin", "admin"); // this line throws the Exception
 
-		final List<?> result = db1.query( new OSQLSynchQuery<ODocument>("select out[weight=3].size() from V where out.size() > 0"));
-		
+		final List<?> result = db1.query(new OSQLSynchQuery<ODocument>("select out[weight=3].size() from V where out.size() > 0"));
+
 		doc1 = db1.createVertex();
 		doc1.field("newkey", "newvalue");
 		doc1.save();

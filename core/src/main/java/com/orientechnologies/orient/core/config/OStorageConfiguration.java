@@ -171,6 +171,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
 			final String clusterName = read(values[index++]);
 			final int targetDataSegmentId = version >= 3 ? Integer.parseInt(read(values[index++])) : 0;
+
 			final String clusterType = read(values[index++]);
 
 			final OStorageClusterConfiguration currentCluster;
@@ -254,6 +255,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
 			write(buffer, c.getId());
 			write(buffer, c.getName());
+			write(buffer, c.getDataSegmentId());
 
 			if (c instanceof OStoragePhysicalClusterConfiguration) {
 				// PHYSICAL
