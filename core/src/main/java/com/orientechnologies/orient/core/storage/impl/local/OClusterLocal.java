@@ -618,17 +618,20 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
 	protected void init(final OStorage iStorage, final int iId, final String iClusterName, final String iLocation,
 			final int iDataSegmentId, final Object... iParameters) throws IOException {
 		storage = (OStorageLocal) iStorage;
-		config = new OStoragePhysicalClusterConfiguration(storage.getConfiguration(), iId, iDataSegmentId);
+		((OStoragePhysicalClusterConfiguration) config).setDataSegmentId(iDataSegmentId);
+		config.id = iId;
 		config.name = iClusterName;
 		name = iClusterName;
 		id = iId;
 
-		fileSegment = new OMultiFileSegment(storage, config, DEF_EXTENSION, DEF_SIZE);
+		if (fileSegment == null) {
+			fileSegment = new OMultiFileSegment(storage, config, DEF_EXTENSION, DEF_SIZE);
 
-		config.setHoleFile(new OStorageClusterHoleConfiguration(config, OStorageVariableParser.DB_PATH_VARIABLE + "/" + config.name,
-				config.fileType, config.fileMaxSize));
+			config.setHoleFile(new OStorageClusterHoleConfiguration(config, OStorageVariableParser.DB_PATH_VARIABLE + "/" + config.name,
+					config.fileType, config.fileMaxSize));
 
-		holeSegment = new OClusterLocalHole(this, storage, config.getHoleFile());
+			holeSegment = new OClusterLocalHole(this, storage, config.getHoleFile());
+		}
 	}
 
 	public OStoragePhysicalClusterConfiguration getConfig() {
