@@ -30,21 +30,22 @@ import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.lang.ref.WeakReference;
 
-public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBTreeEntryDataProvider<K, V>, OSerializableStream, ORecordListener {
-	private static final long												serialVersionUID	= 1L;
+public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBTreeEntryDataProvider<K, V>, OSerializableStream,
+		ORecordListener {
+	private static final long													serialVersionUID	= 1L;
 
-	protected final OMVRBTreeProviderAbstract<K, V>	treeDataProvider;
+	protected final OMVRBTreeProviderAbstract<K, V>		treeDataProvider;
 
-	protected int																		size							= 0;
-	protected int																		pageSize;
+	protected int																			size							= 0;
+	protected int																			pageSize;
 
-	protected ORecordId															parentRid;
-	protected ORecordId															leftRid;
-	protected ORecordId															rightRid;
-	protected boolean																color							= OMVRBTree.RED;
-	protected ORecordBytesLazy											record;
-	protected OMemoryStream													stream;
-	protected WeakReference<OIdentityChangedListener> identityChangedListener;
+	protected ORecordId																parentRid;
+	protected ORecordId																leftRid;
+	protected ORecordId																rightRid;
+	protected boolean																	color							= OMVRBTree.RED;
+	protected ORecordBytesLazy												record;
+	protected OMemoryStream														stream;
+	protected WeakReference<OIdentityChangedListener>	identityChangedListener;
 
 	public OMVRBTreeEntryDataProviderAbstract(final OMVRBTreeProviderAbstract<K, V> iTreeDataProvider, final int iFixedSize) {
 		this(iTreeDataProvider, null);
@@ -69,7 +70,7 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
 		} else
 			record.setIdentity(new ORecordId());
 
-		if(record.getIdentity().isNew() || record.getIdentity().isTemporary())
+		if (record.getIdentity().isNew() || record.getIdentity().isTemporary())
 			record.addListener(this);
 	}
 
@@ -162,7 +163,7 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
 		}
 		record.save(treeDataProvider.clusterName);
 
-		if(!record.getIdentity().isTemporary())
+		if (!record.getIdentity().isTemporary())
 			record.removeListener(this);
 	}
 
@@ -181,7 +182,7 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
 		}
 		record.unsetDirty();
 
-		if(!record.getIdentity().isTemporary())
+		if (!record.getIdentity().isTemporary())
 			record.removeListener(this);
 	}
 
@@ -204,10 +205,10 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
 	}
 
 	public void onEvent(ORecord<?> record, ORecordListener.EVENT event) {
-		if(ORecordListener.EVENT.IDENTITY_CHANGED.equals(event))
-			if(identityChangedListener != null) {
+		if (ORecordListener.EVENT.IDENTITY_CHANGED.equals(event))
+			if (identityChangedListener != null) {
 				final OIdentityChangedListener listener = identityChangedListener.get();
-				if(listener != null)
+				if (listener != null)
 					listener.onIdentityChanged(record.getIdentity());
 			}
 	}
@@ -217,13 +218,12 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
 	}
 
 	public void removeIdentityChangedListener(final OIdentityChangedListener listener) {
-		if(identityChangedListener != null) {
+		if (identityChangedListener != null) {
 			final OIdentityChangedListener identityListener = identityChangedListener.get();
-			if(identityListener != null && identityListener.equals(listener))
+			if (identityListener != null && identityListener.equals(listener))
 				identityChangedListener = null;
 		}
 	}
-
 
 	public void clear() {
 		if (stream != null) {

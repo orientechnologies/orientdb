@@ -22,7 +22,7 @@ public abstract class OSegment extends OSharedResourceAdaptive {
 	protected OStorageLocal	storage;
 	protected String				name;
 
-	public OSegment(final OStorageLocal iStorage, String iName) {
+	public OSegment(final OStorageLocal iStorage, final String iName) {
 		super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), 0, true);
 		storage = iStorage;
 		name = iName;

@@ -42,7 +42,7 @@ public interface OStorage extends OSharedContainer {
 	public static final String	DATA_DEFAULT_NAME			= "default";
 
 	public enum CLUSTER_TYPE {
-		PHYSICAL, LOGICAL, MEMORY
+		PHYSICAL, MEMORY
 	}
 
 	public enum SIZE {
@@ -102,16 +102,16 @@ public interface OStorage extends OSharedContainer {
 
 	/**
 	 * Add a new cluster into the storage.
-	 * 
-	 * @param iClusterName
-	 *          name of the cluster
 	 * @param iClusterType
 	 *          Cluster type. Type depends by the implementation.
+	 * @param iClusterName
+	 *          name of the cluster
 	 * @param iParameters
 	 *          Additional parameters to configure the cluster
+	 * 
 	 * @throws IOException
 	 */
-	public int addCluster(String iClusterName, OStorage.CLUSTER_TYPE iClusterType, Object... iParameters);
+	public int addCluster(String iClusterType, String iClusterName, String iLocation, int iDataSegmentId, Object... iParameters);
 
 	public boolean dropCluster(String iClusterName);
 
@@ -187,4 +187,8 @@ public interface OStorage extends OSharedContainer {
 	public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock);
 
 	public ODataSegment getDataSegmentById(int iDataSegmentId);
+
+	public int getDataSegmentIdByName(String iDataSegmentName);
+
+	public boolean dropDataSegment(String iName);
 }

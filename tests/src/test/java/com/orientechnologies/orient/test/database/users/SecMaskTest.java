@@ -94,7 +94,7 @@ public class SecMaskTest {
 
 	public static void create() {
 		OClass account = database.getMetadata().getSchema()
-				.createClass("Account", database.getStorage().addCluster("account", OStorage.CLUSTER_TYPE.PHYSICAL));
+				.createClass("Account", database.addCluster("account", OStorage.CLUSTER_TYPE.PHYSICAL));
 		account.createProperty("id", OType.LONG);
 		account.createProperty("val1", OType.DOUBLE);
 		account.createProperty("val2", OType.DOUBLE);

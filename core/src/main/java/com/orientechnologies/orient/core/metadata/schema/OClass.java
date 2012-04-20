@@ -83,6 +83,8 @@ public interface OClass extends Comparable<OClass> {
 	public int[] getPolymorphicClusterIds();
 
 	public Iterator<OClass> getBaseClasses();
+	
+	public long getSize();
 
 	/**
 	 * Returns the oversize factor. Oversize is used to extend the record size by a factor to avoid defragmentation upon updates. 0 or

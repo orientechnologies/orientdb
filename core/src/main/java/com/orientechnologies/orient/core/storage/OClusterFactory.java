@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2010 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 1999-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.config;
+package com.orientechnologies.orient.core.storage;
 
-public interface OStorageClusterConfiguration {
+import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 
-	public int getId();
+public interface OClusterFactory {
+	OCluster createCluster(String iType);
 
-	public String getName();
+	OCluster createCluster(OStorageClusterConfiguration iConfig);
 
-	public String getLocation();
-
-	public int getDataSegmentId();
+	String[] getSupported();
 }

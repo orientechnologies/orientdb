@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.storage.impl.memory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,6 +42,10 @@ public class ODataSegmentMemory extends OSharedResourceAbstract implements OData
 		} finally {
 			releaseExclusiveLock();
 		}
+	}
+
+	public void drop() throws IOException {
+		close();
 	}
 
 	public int count() {

@@ -146,6 +146,11 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 		return underlying.getClusterType(iClusterName);
 	}
 
+	public int getDataSegmentIdByName(final String iDataSegmentName) {
+		checkOpeness();
+		return underlying.getDataSegmentIdByName(iDataSegmentName);
+	}
+
 	public int getClusterIdByName(final String iClusterName) {
 		checkOpeness();
 		return underlying.getClusterIdByName(iClusterName);
@@ -164,25 +169,48 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 		return underlying.getClusterRecordSizeByName(iClusterName);
 	}
 
-	public int addCluster(final String iClusterName, final CLUSTER_TYPE iType) {
+	public int addCluster(final String iType, final String iClusterName, final String iLocation, final int iDataSegmentId,
+			final Object... iParameters) {
 		checkOpeness();
-		return underlying.addCluster(iClusterName, iType);
+		return underlying.addCluster(iType, iClusterName, iLocation, iDataSegmentId, iParameters);
 	}
 
+	/**
+	 * @deprecated Use {@link #addCluster(String, String, String, int, Object...)} instead
+	 * @param iClusterName
+	 * @param iSize
+	 * @return
+	 */
 	@Deprecated
-	public int addLogicalCluster(final String iClusterName, final int iPhyClusterContainerId) {
+	public int addPhysicalCluster(final String iClusterName, final String iLocation, final int iSize) {
 		checkOpeness();
-		return underlying.addLogicalCluster(iClusterName, iPhyClusterContainerId);
+		return underlying.addCluster(CLUSTER_TYPE.PHYSICAL.toString(), iClusterName, iLocation, 0);
 	}
 
-	public int addPhysicalCluster(final String iClusterName, final String iClusterFileName, final int iStartSize) {
-		checkOpeness();
-		return underlying.addPhysicalCluster(iClusterName, iClusterFileName, iStartSize);
-	}
-
+	/**
+	 * @deprecated Use {@link #addCluster(String, String, String, int, Object...)} instead
+	 * @param iClusterName
+	 * @param iSize
+	 * @return
+	 */
+	@Deprecated
 	public int addPhysicalCluster(final String iClusterName) {
 		checkOpeness();
-		return underlying.addPhysicalCluster(iClusterName, iClusterName, -1);
+		return underlying.addPhysicalCluster(iClusterName, null, -1);
+	}
+
+	public int addCluster(final String iClusterName, final CLUSTER_TYPE iType, final Object... iParameters) {
+		checkOpeness();
+		return underlying.addCluster(iType.toString(), iClusterName, null, 0, iParameters);
+	}
+
+	public int addCluster(String iClusterName, CLUSTER_TYPE iType) {
+		checkOpeness();
+		return underlying.addCluster(iType.toString(), iClusterName, null, 0);
+	}
+
+	public boolean dropDataSegment(String name) {
+		return underlying.dropDataSegment(name);
 	}
 
 	public boolean dropCluster(final String iClusterName) {
@@ -195,9 +223,9 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 		return underlying.dropCluster(iClusterId);
 	}
 
-	public int addDataSegment(final String iSegmentName, final String iDirectory) {
+	public int addDataSegment(final String iSegmentName, final String iLocation) {
 		checkOpeness();
-		return underlying.addDataSegment(iSegmentName, iDirectory);
+		return underlying.addDataSegment(iSegmentName, iLocation);
 	}
 
 	public int getDefaultClusterId() {
@@ -268,6 +296,10 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 
 	public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock) {
 		return getStorage().callInLock(iCallable, iExclusiveLock);
+	}
+
+	public long getSize() {
+		return underlying.getSize();
 	}
 
 	protected void checkOpeness() {

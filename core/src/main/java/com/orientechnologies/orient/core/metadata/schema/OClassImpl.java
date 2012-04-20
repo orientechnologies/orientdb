@@ -172,6 +172,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		name = iName;
 	}
 
+	public long getSize() {
+		long size = 0;
+		for (int clusterId : clusterIds)
+			size += getDatabase().getClusterRecordSizeById(clusterId);
+
+		return size;
+	}
+
 	public String getShortName() {
 		return shortName;
 	}
@@ -629,7 +637,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 				}
 				return null;
 			}
-		}, true );
+		}, true);
 	}
 
 	/**
@@ -807,22 +815,22 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	public OIndex<?> createIndex(final String iName, final INDEX_TYPE iType, final String... fields) {
 		return createIndex(iName, iType.name(), fields);
 	}
-    
+
 	public OIndex<?> createIndex(final String iName, final String iType, final String... fields) {
 		return createIndex(iName, iType, null, fields);
 	}
 
 	public OIndex<?> createIndex(final String iName, final INDEX_TYPE iType, final OProgressListener iProgressListener,
 			final String... fields) {
-        return createIndex(iName, iType.name(), iProgressListener, fields);
-    }
-    
+		return createIndex(iName, iType.name(), iProgressListener, fields);
+	}
+
 	public OIndex<?> createIndex(final String iName, final String iType, final OProgressListener iProgressListener,
 			final String... fields) {
 
-		if (fields.length == 0){
+		if (fields.length == 0) {
 			throw new OIndexException("List of fields to index cannot be empty.");
-        }
+		}
 
 		final Set<String> existingFieldNames = properties.keySet();
 		final List<String> fieldsToIndex = new LinkedList<String>();
@@ -897,9 +905,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 				|| propertyToIndexType.equals(OType.LINKLIST) || propertyToIndexType.equals(OType.LINKSET)) {
 			if (propertyToIndexType.equals(OType.LINKSET))
 				throw new OIndexException("LINKSET indexing is not supported.");
-			else if(propertyToIndexType.equals(OType.LINKLIST)) {
+			else if (propertyToIndexType.equals(OType.LINKLIST)) {
 				indexType = OType.LINK;
-			} else 	{
+			} else {
 				indexType = propertyToIndex.getLinkedType();
 				if (indexType == null)
 					throw new OIndexException("Linked type was not provided."

@@ -56,7 +56,6 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
@@ -203,6 +202,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 			alignDatabase();
 			break;
 
+		case OChannelBinaryProtocol.REQUEST_DATASEGMENT_ADD:
+			addDataSegment();
+			break;
+
+		case OChannelBinaryProtocol.REQUEST_DATASEGMENT_DROP:
+			dropDataSegment();
+			break;
+
 		case OChannelBinaryProtocol.REQUEST_DATACLUSTER_COUNT:
 			countClusters();
 			break;
@@ -215,7 +222,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 			addCluster();
 			break;
 
-		case OChannelBinaryProtocol.REQUEST_DATACLUSTER_REMOVE:
+		case OChannelBinaryProtocol.REQUEST_DATACLUSTER_DROP:
 			removeCluster();
 			break;
 
@@ -267,6 +274,43 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 		return true;
 	}
 
+	protected void addDataSegment() throws IOException {
+		setDataCommandInfo("Add data segment");
+
+		checkDatabase();
+
+		final String name = channel.readString();
+		final String location = channel.readString();
+
+		final int num = connection.database.addDataSegment(name, location);
+
+		beginResponse();
+		try {
+			sendOk(clientTxId);
+			channel.writeInt(num);
+		} finally {
+			endResponse();
+		}
+	}
+
+	protected void dropDataSegment() throws IOException {
+		setDataCommandInfo("Drop data segment");
+
+		checkDatabase();
+
+		final String name = channel.readString();
+
+		boolean result = connection.database.dropDataSegment(name);
+
+		beginResponse();
+		try {
+			sendOk(clientTxId);
+			channel.writeByte((byte) (result ? 1 : 0));
+		} finally {
+			endResponse();
+		}
+	}
+
 	protected void removeCluster() throws IOException {
 		setDataCommandInfo("Remove cluster");
 
@@ -293,24 +337,23 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 		final String type = channel.readString();
 		final String name = channel.readString();
 
-		final int num;
-		OStorage.CLUSTER_TYPE t = OStorage.CLUSTER_TYPE.valueOf(type);
-		switch (t) {
-		case PHYSICAL:
-			num = connection.database.addPhysicalCluster(name, channel.readString(), channel.readInt());
-			break;
+		final String location;
+		if (connection.data.protocolVersion >= 10 || type.equalsIgnoreCase("PHYSICAL"))
+			location = channel.readString();
+		else
+			location = null;
 
-		case MEMORY:
-			num = connection.database.getStorage().addCluster(name, t);
-			break;
-
-		case LOGICAL:
-			num = connection.database.addLogicalCluster(name, channel.readInt());
-			break;
-
-		default:
-			throw new IllegalArgumentException("Cluster type " + type + " is not supported");
+		final int dataSegmentId;
+		if (connection.data.protocolVersion >= 10)
+			dataSegmentId = channel.readInt();
+		else {
+			channel.readInt(); // OLD INIT SIZE, NOT MORE USED
+			dataSegmentId = 0;
 		}
+
+		Object[] params = null;
+
+		final int num = connection.database.addCluster(type, name, location, dataSegmentId, params);
 
 		beginResponse();
 		try {
@@ -930,6 +973,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
 		checkDatabase();
 
+		final int dataSegmentId = connection.data.protocolVersion >= 10 ? channel.readInt() : 0;
 		final ORecordId rid = new ORecordId(channel.readShort(), ORID.CLUSTER_POS_INVALID);
 		final byte[] buffer = channel.readBytes();
 		final byte recordType = channel.readByte();

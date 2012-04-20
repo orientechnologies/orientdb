@@ -42,13 +42,13 @@ public class OChannelBinaryProtocol {
 	public static final byte	REQUEST_DB_COUNTRECORDS				= 9;
 
 	public static final byte	REQUEST_DATACLUSTER_ADD				= 10;
-	public static final byte	REQUEST_DATACLUSTER_REMOVE		= 11;
+	public static final byte	REQUEST_DATACLUSTER_DROP			= 11;
 	public static final byte	REQUEST_DATACLUSTER_COUNT			= 12;
 	public static final byte	REQUEST_DATACLUSTER_DATARANGE	= 13;
 	public static final byte	REQUEST_DATACLUSTER_COPY			= 14;
 
 	public static final byte	REQUEST_DATASEGMENT_ADD				= 20;
-	public static final byte	REQUEST_DATASEGMENT_REMOVE		= 21;
+	public static final byte	REQUEST_DATASEGMENT_DROP			= 21;
 
 	public static final byte	REQUEST_RECORD_LOAD						= 30;
 	public static final byte	REQUEST_RECORD_CREATE					= 31;
@@ -81,7 +81,7 @@ public class OChannelBinaryProtocol {
 	// CONSTANTS
 	public static final short	RECORD_NULL										= -2;
 	public static final short	RECORD_RID										= -3;
-	public static final int		CURRENT_PROTOCOL_VERSION			= 9;	// SENT AS SHORT AS FIRST PACKET AFTER SOCKET CONNECTION
+	public static final int		CURRENT_PROTOCOL_VERSION			= 10; // SENT AS SHORT AS FIRST PACKET AFTER SOCKET CONNECTION
 
 	public static OIdentifiable readIdentifiable(final OChannelBinaryClient network) throws IOException {
 		final int classId = network.readShort();

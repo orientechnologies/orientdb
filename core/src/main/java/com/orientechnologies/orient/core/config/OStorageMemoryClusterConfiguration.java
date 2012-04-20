@@ -15,25 +15,8 @@
  */
 package com.orientechnologies.orient.core.config;
 
-
-public class OStorageMemoryClusterConfiguration implements OStorageClusterConfiguration {
-  public String name;
-  public int    id;
-
-  public OStorageMemoryClusterConfiguration(final String name, final int id) {
-    this.name = name;
-    this.id = id;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public int getId() {
-    return id;
-  }
-
-  public void setId(final int iId) {
-    id = iId;
-  }
+public class OStorageMemoryClusterConfiguration extends OAbstractStorageClusterConfiguration {
+	public OStorageMemoryClusterConfiguration(final String name, final int id, final int iDataSegmentId) {
+		super(name, id, iDataSegmentId);
+	}
 }

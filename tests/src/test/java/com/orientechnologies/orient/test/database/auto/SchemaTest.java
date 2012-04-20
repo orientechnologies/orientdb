@@ -161,7 +161,7 @@ public class SchemaTest {
 		database = new ODatabaseFlat(url);
 		database.open("admin", "admin");
 
-		Assert.assertTrue(database.getStorage().getSize() > 0);
+		Assert.assertTrue(database.getSize() > 0);
 
 		database.close();
 	}

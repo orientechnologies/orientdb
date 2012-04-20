@@ -15,19 +15,16 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import com.orientechnologies.orient.core.id.ORID;
-
-public class OStorageLogicalClusterConfiguration implements OStorageClusterConfiguration {
-	public String	name;
+public abstract class OAbstractStorageClusterConfiguration implements OStorageClusterConfiguration {
 	public int		id;
-	public int		physicalClusterId;
-	public ORID		map;
+	public String	name;
+	public String	location;
+	protected int	dataSegmentId;
 
-	public OStorageLogicalClusterConfiguration(final String name, final int id, final int iPhysicalClusterId, final ORID map) {
+	public OAbstractStorageClusterConfiguration(final String name, final int id, final int iDataSegmentId) {
 		this.name = name;
 		this.id = id;
-		this.physicalClusterId = iPhysicalClusterId;
-		this.map = map;
+		this.dataSegmentId = iDataSegmentId;
 	}
 
 	public String getName() {
@@ -40,5 +37,13 @@ public class OStorageLogicalClusterConfiguration implements OStorageClusterConfi
 
 	public void setId(final int iId) {
 		id = iId;
+	}
+
+	public int getDataSegmentId() {
+		return dataSegmentId;
+	}
+
+	public String getLocation() {
+		return location;
 	}
 }

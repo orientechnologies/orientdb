@@ -40,8 +40,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
-import com.orientechnologies.orient.core.storage.impl.local.OClusterLogical;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider;
 
 /**
@@ -247,12 +245,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 			writer.writeAttribute(0, false, "name", clusterName != null ? clusterName : "");
 			writer.writeAttribute(0, false, "id", clusterId);
 			writer.writeAttribute(0, false, "type", clusterName != null ? database.getClusterType(clusterName) : "");
-
-			if (clusterName != null && database.getStorage() instanceof OStorageLocal)
-				if (database.getClusterType(clusterName).equals("LOGICAL")) {
-					OClusterLogical cluster = (OClusterLogical) database.getStorage().getClusterById(clusterId);
-					writer.writeAttribute(0, false, "rid", cluster.getRID());
-				}
 
 			exportedClusters++;
 			writer.endObject(2, false);

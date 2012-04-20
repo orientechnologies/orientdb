@@ -228,7 +228,7 @@ public class OStorageLocalTxExecuter {
 					rid.clusterPosition = createRecord(iTx.getId(), dataSegment, cluster, rid, stream, txEntry.getRecord().getRecordType());
 				else
 					rid.clusterPosition = iTx.getDatabase().getStorage()
-							.createRecord(0, rid, stream, txEntry.getRecord().getRecordType(), (byte) 0, null);
+							.createRecord(txEntry.dataSegmentId, rid, stream, txEntry.getRecord().getRecordType(), (byte) 0, null);
 
 				txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
 				iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_CREATE, txEntry.getRecord());

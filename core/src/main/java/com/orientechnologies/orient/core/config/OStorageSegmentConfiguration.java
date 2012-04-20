@@ -31,7 +31,7 @@ public class OStorageSegmentConfiguration implements Serializable {
 	public String														defrag						= "auto";
 
 	public OStorageFileConfiguration[]			infoFiles;
-	String																	directory;
+	String																	location;
 
 	public OStorageSegmentConfiguration() {
 		infoFiles = new OStorageFileConfiguration[0];
@@ -49,7 +49,7 @@ public class OStorageSegmentConfiguration implements Serializable {
 		root = iRoot;
 		name = iSegmentName;
 		id = iId;
-		directory = iDirectory;
+		location = iDirectory;
 		infoFiles = new OStorageFileConfiguration[0];
 	}
 
@@ -59,9 +59,9 @@ public class OStorageSegmentConfiguration implements Serializable {
 			f.parent = this;
 	}
 
-	public String getDirectory() {
-		if (directory != null)
-			return directory;
+	public String getLocation() {
+		if (location != null)
+			return location;
 
 		return root != null ? root.getDirectory() : null;
 	}

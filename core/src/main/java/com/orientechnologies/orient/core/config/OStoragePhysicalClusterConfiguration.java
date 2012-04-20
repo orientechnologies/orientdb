@@ -17,21 +17,23 @@ package com.orientechnologies.orient.core.config;
 
 public class OStoragePhysicalClusterConfiguration extends OStorageSegmentConfiguration implements OStorageClusterConfiguration {
 	private static final long					serialVersionUID	= 1L;
-
-	public OStorageFileConfiguration	holeFile;
-
 	private static final String				START_SIZE				= "1Mb";
 
-	public OStoragePhysicalClusterConfiguration(final OStorageConfiguration iStorageConfiguration, final int iId) {
-		root = iStorageConfiguration;
+	private OStorageFileConfiguration	holeFile;
+	private int												dataSegmentId;
+
+	public OStoragePhysicalClusterConfiguration(final OStorageConfiguration iStorageConfiguration, final int iId,
+			final int iDataSegmentId) {
+		super(iStorageConfiguration, null, iId);
 		fileStartSize = START_SIZE;
-		id = iId;
+		dataSegmentId = iDataSegmentId;
 	}
 
-	public OStoragePhysicalClusterConfiguration(final OStorageConfiguration iRoot, final String iSegmentName, final int iId) {
-		super(iRoot, iSegmentName, iId);
+	public OStoragePhysicalClusterConfiguration(final OStorageConfiguration iStorageConfiguration, final int iId,
+			final int iDataSegmentId, final String iSegmentName) {
+		super(iStorageConfiguration, iSegmentName, iId);
 		fileStartSize = START_SIZE;
-		id = iId;
+		dataSegmentId = iDataSegmentId;
 	}
 
 	public String getName() {
@@ -46,5 +48,21 @@ public class OStoragePhysicalClusterConfiguration extends OStorageSegmentConfigu
 	public void setRoot(final OStorageConfiguration root) {
 		super.setRoot(root);
 		holeFile.parent = this;
+	}
+
+	public int getDataSegmentId() {
+		return dataSegmentId;
+	}
+
+	public OStorageFileConfiguration getHoleFile() {
+		return holeFile;
+	}
+
+	public void setHoleFile(OStorageFileConfiguration holeFile) {
+		this.holeFile = holeFile;
+	}
+
+	public void setDataSegmentId(int dataSegmentId) {
+		this.dataSegmentId = dataSegmentId;
 	}
 }

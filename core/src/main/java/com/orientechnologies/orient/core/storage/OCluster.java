@@ -17,6 +17,8 @@ package com.orientechnologies.orient.core.storage;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+
 /**
  * Handle the table to resolve logical address to physical address.<br/>
  * <br/>
@@ -33,6 +35,11 @@ public interface OCluster {
 	public static enum ATTRIBUTES {
 		NAME
 	}
+
+	public void configure(OStorage iStorage, int iId, String iClusterName, final String iLocation, int iDataSegmentId,
+			Object... iParameters) throws IOException;
+
+	public void configure(OStorage iStorage, OStorageClusterConfiguration iConfig) throws IOException;
 
 	public void create(int iStartSize) throws IOException;
 
@@ -52,6 +59,8 @@ public interface OCluster {
 	public void truncate() throws IOException;
 
 	public String getType();
+
+	public int getDataSegmentId();
 
 	/**
 	 * Adds a new entry.
@@ -116,18 +125,11 @@ public interface OCluster {
 	public String getName();
 
 	/**
-	 * Returns the size of the cluster in bytes.
+	 * Returns the size of the records contained in the cluster in bytes.
 	 * 
 	 * @return
 	 */
-	public long getSize();
-
-	/**
-	 * Returns the size of the record contained in the cluster in bytes.
-	 * 
-	 * @return
-	 */
-	public long getRecordsSize() throws IOException;
+	public long getRecordsSize();
 
 	public OClusterPositionIterator absoluteIterator();
 

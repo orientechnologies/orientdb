@@ -133,10 +133,10 @@ public class OStorageRemoteThread implements OStorage {
 		return delegate.getClusterNames();
 	}
 
-	public long createRecord(int iDataSegmentId, final ORecordId iRid, final byte[] iContent, final byte iRecordType,
+	public long createRecord(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent, final byte iRecordType,
 			final int iMode, ORecordCallback<Long> iCallback) {
 		delegate.setSessionId(sessionId);
-		return delegate.createRecord(0, iRid, iContent, iRecordType, iMode, null);
+		return delegate.createRecord(iDataSegmentId, iRid, iContent, iRecordType, iMode, null);
 	}
 
 	public ORawBuffer readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
@@ -216,14 +216,23 @@ public class OStorageRemoteThread implements OStorage {
 		return delegate.getDefaultClusterId();
 	}
 
-	public int addCluster(final String iClusterName, final CLUSTER_TYPE iClusterType, final Object... iArguments) {
+	public int addCluster(final String iClusterType, final String iClusterName, final String iLocation, final int iDataSegmentId,
+			final Object... iArguments) {
 		delegate.setSessionId(sessionId);
-		return delegate.addCluster(iClusterName, iClusterType, iArguments);
+		return delegate.addCluster(iClusterType, iClusterName, iLocation, iDataSegmentId, iArguments);
 	}
 
 	public boolean dropCluster(final int iClusterId) {
 		delegate.setSessionId(sessionId);
 		return delegate.dropCluster(iClusterId);
+	}
+
+	public ODataSegment getDataSegmentById(final int iDataSegmentId) {
+		return delegate.getDataSegmentById(iDataSegmentId);
+	}
+
+	public int getDataSegmentIdByName(final String iDataSegmentName) {
+		return delegate.getDataSegmentIdByName(iDataSegmentName);
 	}
 
 	public int addDataSegment(final String iDataSegmentName) {
@@ -234,6 +243,11 @@ public class OStorageRemoteThread implements OStorage {
 	public int addDataSegment(final String iSegmentName, final String iSegmentFileName) {
 		delegate.setSessionId(sessionId);
 		return delegate.addDataSegment(iSegmentName, iSegmentFileName);
+	}
+
+	public boolean dropDataSegment(final String iSegmentName) {
+		delegate.setSessionId(sessionId);
+		return delegate.dropDataSegment(iSegmentName);
 	}
 
 	public void synch() {
@@ -359,9 +373,5 @@ public class OStorageRemoteThread implements OStorage {
 
 	public static int getNextConnectionId() {
 		return sessionSerialId.decrementAndGet();
-	}
-
-	public ODataSegment getDataSegmentById(final int iDataSegmentId) {
-		return delegate.getDataSegmentById(iDataSegmentId);
 	}
 }

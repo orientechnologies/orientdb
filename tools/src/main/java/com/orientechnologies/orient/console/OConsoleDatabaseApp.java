@@ -273,37 +273,41 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	@ConsoleCommand(description = "Create a new data-segment in the current database.")
 	public void createDatasegment(
 			@ConsoleParameter(name = "datasegment-name", description = "The name of the data segment to create") final String iName,
-			@ConsoleParameter(name = "datasegment-path", description = "The directory where to place the files", optional = true) final String iPath) {
+			@ConsoleParameter(name = "datasegment-location", description = "The directory where to place the files", optional = true) final String iLocation) {
 		checkCurrentDatabase();
 
-		if (iPath != null)
-			out.println("Creating data-segment [" + iName + "] in database " + currentDatabaseName + " in path: " + iPath + "...");
+		if (iLocation != null)
+			out.println("Creating data-segment [" + iName + "] in database " + currentDatabaseName + " in path: " + iLocation + "...");
 		else
 			out.println("Creating data-segment [" + iName + "] in database directory...");
 
-		currentDatabase.addDataSegment(iName, iPath);
+		currentDatabase.addDataSegment(iName, iLocation);
 
 		updateDatabaseInfo();
 	}
 
-	@SuppressWarnings("deprecation")
 	@ConsoleCommand(description = "Create a new cluster in the current database. The cluster can be physical or logical")
 	public void createCluster(
 			@ConsoleParameter(name = "cluster-name", description = "The name of the cluster to create") String iClusterName,
-			@ConsoleParameter(name = "cluster-type", description = "Cluster type: 'physical' or 'logical'") String iClusterType,
+			@ConsoleParameter(name = "cluster-type", description = "Cluster type: 'physical' or 'memory'") String iClusterType,
+			@ConsoleParameter(name = "datasegment", description = "Data segment to use. '0' or 'default' will use the default one") String iDataSegmentId,
+			@ConsoleParameter(name = "location", description = "Location where to place the new cluster files, if appliable. use 'default' to leave into the database directory") String iLocation,
 			@ConsoleParameter(name = "position", description = "cluster id to replace, an empty position or 'append' to append at the end") String iPosition) {
 		checkCurrentDatabase();
 
 		final int position = iPosition.toLowerCase().equals("append") ? -1 : Integer.parseInt(iPosition);
+		if ("default".equalsIgnoreCase(iLocation))
+			iLocation = null;
+		final int dataSegmentId = iDataSegmentId != null ? currentDatabase.getDataSegmentIdByName(iDataSegmentId) : 0;
 
 		out.println("Creating cluster [" + iClusterName + "] of type '" + iClusterType + "' in database " + currentDatabaseName
 				+ (position == -1 ? " as last one" : " in place of #" + position) + "...");
 
-		int clusterId = iClusterType.equalsIgnoreCase("physical") ? currentDatabase.addPhysicalCluster(iClusterName, iClusterName, -1)
-				: currentDatabase.addLogicalCluster(iClusterName, currentDatabase.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME));
+		iClusterType = iClusterType.toUpperCase();
 
-		out.println((iClusterType.equalsIgnoreCase("physical") ? "Physical" : "Logical") + " cluster created correctly with id #"
-				+ clusterId);
+		int clusterId = currentDatabase.addCluster(iClusterType, iClusterName, iLocation, dataSegmentId);
+
+		out.println(currentDatabase.getClusterType(iClusterName) + " cluster created correctly with id #" + clusterId);
 		updateDatabaseInfo();
 	}
 

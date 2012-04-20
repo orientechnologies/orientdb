@@ -135,7 +135,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 		int clusterId = getDatabase().getClusterIdByName(iClassName);
 		if (clusterId == -1) {
 			// CREATE A NEW CLUSTER
-			clusterId = getDatabase().addCluster(iClassName, iType);
+			clusterId = getDatabase().addCluster(iType.toString(), iClassName, null, 0);
 		}
 
 		return createClass(iClassName, iSuperClass, clusterId);
@@ -237,7 +237,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
 		if (iClusterIds == null || iClusterIds.length == 0)
 			// CREATE A NEW CLUSTER
-			iClusterIds = new int[] { getDatabase().addCluster(iClassName, CLUSTER_TYPE.PHYSICAL) };
+			iClusterIds = new int[] { getDatabase().addCluster(CLUSTER_TYPE.PHYSICAL.toString(), iClassName, null, 0) };
 
 		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_CREATE);
 

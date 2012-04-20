@@ -44,6 +44,8 @@ import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.record.ORecordFactoryManager;
+import com.orientechnologies.orient.core.storage.OClusterFactory;
+import com.orientechnologies.orient.core.storage.ODefaultClusterFactory;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 
@@ -56,6 +58,7 @@ public class Orient extends OSharedResourceAbstract {
 	protected final List<OOrientListener>			listeners							= new ArrayList<OOrientListener>();
 	protected ORecordFactoryManager						recordFactoryManager	= new ORecordFactoryManager();
 	protected ODatabaseFactory								databaseFactory				= new ODatabaseFactory();
+	protected OClusterFactory									clusterFactory				= new ODefaultClusterFactory();
 	protected volatile boolean								active								= false;
 
 	protected static final OrientShutdownHook	shutdownHook					= new OrientShutdownHook();
@@ -324,6 +327,10 @@ public class Orient extends OSharedResourceAbstract {
 
 	public ORecordFactoryManager getRecordFactoryManager() {
 		return recordFactoryManager;
+	}
+
+	public OClusterFactory getClusterFactory() {
+		return clusterFactory;
 	}
 
 	public ODatabaseFactory getDatabaseFactory() {

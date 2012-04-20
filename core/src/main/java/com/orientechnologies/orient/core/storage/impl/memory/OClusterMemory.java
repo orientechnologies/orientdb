@@ -20,21 +20,44 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
+import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 public class OClusterMemory extends OSharedResourceAbstract implements OCluster {
 	public static final String			TYPE		= "MEMORY";
 
 	private int											id;
 	private String									name;
+	private int											dataSegmentId;
 	private List<OPhysicalPosition>	entries	= new ArrayList<OPhysicalPosition>();
 	private List<Integer>						removed	= new ArrayList<Integer>();
 
-	public OClusterMemory(final int id, final String name) {
-		this.id = id;
-		this.name = name;
+	public OClusterMemory() {
+	}
+
+	public void configure(final OStorage iStorage, final OStorageClusterConfiguration iConfig) throws IOException {
+		configure(iStorage, iConfig.getId(), iConfig.getName(), iConfig.getLocation(), iConfig.getDataSegmentId());
+	}
+
+	public void configure(final OStorage iStorage, final int iId, final String iClusterName, final String iLocation,
+			final int iDataSegmentId, final Object... iParameters) {
+		this.id = iId;
+		this.name = iClusterName;
+		this.dataSegmentId = iDataSegmentId;
+	}
+
+	public int getDataSegmentId() {
+		acquireSharedLock();
+		try {
+
+			return dataSegmentId;
+
+		} finally {
+			releaseSharedLock();
+		}
 	}
 
 	public OClusterPositionIterator absoluteIterator() {
@@ -110,7 +133,7 @@ public class OClusterMemory extends OSharedResourceAbstract implements OCluster 
 		}
 	}
 
-	public long getSize() {
+	public long getRecordsSize() {
 		acquireSharedLock();
 		try {
 
@@ -123,10 +146,6 @@ public class OClusterMemory extends OSharedResourceAbstract implements OCluster 
 		} finally {
 			releaseSharedLock();
 		}
-	}
-
-	public long getRecordsSize() throws IOException {
-		return getSize();
 	}
 
 	public long getFirstEntryPosition() {

@@ -48,7 +48,6 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONReader;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Import data from a file into a database.
@@ -459,10 +458,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			int clusterId = name != null ? database.getClusterIdByName(name) : -1;
 			if (clusterId == -1) {
 				// CREATE IT
-				if (type.equals("LOGICAL"))
-					clusterId = database.addLogicalCluster(name, database.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME));
-				else
-					clusterId = database.addPhysicalCluster(name, name, -1);
+				clusterId = database.addCluster(type, name, null, 0);
 			}
 
 			if (clusterId != id)

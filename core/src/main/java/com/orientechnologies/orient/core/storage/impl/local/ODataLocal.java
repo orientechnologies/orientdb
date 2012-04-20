@@ -64,7 +64,7 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
 		super(iStorage, iConfig, DEF_EXTENSION, 0);
 		id = iId;
 
-		iConfig.holeFile = new OStorageDataHoleConfiguration(iConfig, iConfig.getDirectory() + "/" + name, iConfig.fileType,
+		iConfig.holeFile = new OStorageDataHoleConfiguration(iConfig, iConfig.getLocation() + "/" + name, iConfig.fileType,
 				iConfig.maxSize);
 		holeSegment = new ODataLocalHole(iStorage, iConfig.holeFile);
 
@@ -100,6 +100,19 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
 
 			super.create((int) (iStartSize > -1 ? iStartSize : defStartSize));
 			holeSegment.create(-1);
+
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
+	public void drop() throws IOException {
+		acquireExclusiveLock();
+		try {
+
+			close();
+			super.delete();
+			holeSegment.delete();
 
 		} finally {
 			releaseExclusiveLock();

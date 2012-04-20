@@ -37,7 +37,7 @@ public class CreateRelationshipsSpeedTest extends SpeedTestMonoThread {
 			database.addCluster("Animal", OStorage.CLUSTER_TYPE.PHYSICAL);
 
 		if (!database.getClusterNames().contains("Vaccinate"))
-			database.getStorage().addCluster("Vaccinate", OStorage.CLUSTER_TYPE.PHYSICAL);
+			database.addCluster("Vaccinate", OStorage.CLUSTER_TYPE.PHYSICAL);
 	}
 
 	@Override

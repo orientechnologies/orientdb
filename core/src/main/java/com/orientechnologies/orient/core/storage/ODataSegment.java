@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.storage;
 
+import java.io.IOException;
+
 /**
  * Stores the record content.
  * 
@@ -31,4 +33,6 @@ public interface ODataSegment {
 	 * @return
 	 */
 	public long getSize();
+
+	public void drop() throws IOException;
 }

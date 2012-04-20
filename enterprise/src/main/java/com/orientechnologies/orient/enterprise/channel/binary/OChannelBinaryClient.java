@@ -23,13 +23,16 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 public class OChannelBinaryClient extends OChannelBinaryAsynch {
-	final protected int	timeout;						// IN MS
-	final private short	srvProtocolVersion;
+	final protected int				timeout;																			// IN MS
+	final private short				srvProtocolVersion;
+	final private List<Short>	srvProtocolVersions	= new ArrayList<Short>();
 
 	public OChannelBinaryClient(final String remoteHost, final int remotePort, final OContextConfiguration iConfig,
 			final int iProtocolVersion) throws IOException {
@@ -55,6 +58,12 @@ public class OChannelBinaryClient extends OChannelBinaryAsynch {
 
 		try {
 			srvProtocolVersion = readShort();
+//			if (srvProtocolVersion >= 10) {
+//				// READ ALL THE SUPPORTED VERSIONS
+//				short next;
+//				while ((next = readShort()) > -1)
+//					srvProtocolVersions.add(next);
+//			}
 		} catch (IOException e) {
 			throw new ONetworkProtocolException("Cannot read protocol version from remote server " + socket.getRemoteSocketAddress()
 					+ ": " + e);
@@ -80,17 +89,15 @@ public class OChannelBinaryClient extends OChannelBinaryAsynch {
 	 * @return true if it's connected, otherwise false.
 	 */
 	public boolean isConnected() {
-		if (socket != null && socket.isConnected() && !socket.isInputShutdown() && !socket.isOutputShutdown()) {
-			// try {
-			// out.flush();
+		if (socket != null && socket.isConnected() && !socket.isInputShutdown() && !socket.isOutputShutdown())
 			return true;
-			// } catch (IOException e) {
-			// }
-		}
-
 		return false;
 	}
 
+	/**
+	 * Gets the major supported protocol version
+	 * 
+	 */
 	public short getSrvProtocolVersion() {
 		return srvProtocolVersion;
 	}

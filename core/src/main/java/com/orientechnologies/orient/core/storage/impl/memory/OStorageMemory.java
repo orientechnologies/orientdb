@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -77,13 +78,13 @@ public class OStorageMemory extends OStorageEmbedded {
 			addDataSegment(OStorage.DATA_DEFAULT_NAME);
 
 			// ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
-			addCluster(OStorage.CLUSTER_INTERNAL_NAME, null);
+			addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OStorage.CLUSTER_INTERNAL_NAME, null, 0);
 
 			// ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING
-			addCluster(OStorage.CLUSTER_INDEX_NAME, null);
+			addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OStorage.CLUSTER_INDEX_NAME, null, 0);
 
 			// ADD THE DEFAULT CLUSTER
-			defaultClusterId = addCluster(OStorage.CLUSTER_DEFAULT_NAME, null);
+			defaultClusterId = addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OStorage.CLUSTER_DEFAULT_NAME, null, 0);
 
 			configuration.create();
 
@@ -163,7 +164,8 @@ public class OStorageMemory extends OStorageEmbedded {
 	public void reload() {
 	}
 
-	public int addCluster(final String iClusterName, final OStorage.CLUSTER_TYPE iClusterType, final Object... iParameters) {
+	public int addCluster(final String iClusterType, final String iClusterName, final String iLocation, final int iDataSegmentId,
+			final Object... iParameters) {
 		lock.acquireExclusiveLock();
 		try {
 			int clusterId = clusters.size();
@@ -174,7 +176,8 @@ public class OStorageMemory extends OStorageEmbedded {
 				}
 			}
 
-			final OClusterMemory cluster = new OClusterMemory(clusterId, iClusterName.toLowerCase());
+			final OClusterMemory cluster = new OClusterMemory();
+			cluster.configure(this, clusterId, iClusterName.toLowerCase(), iLocation, iDataSegmentId, iParameters);
 
 			if (clusterId == clusters.size())
 				// APPEND IT
@@ -210,6 +213,33 @@ public class OStorageMemory extends OStorageEmbedded {
 		return false;
 	}
 
+	public boolean dropDataSegment(final String iName) {
+		lock.acquireExclusiveLock();
+		try {
+
+			final int id = getDataSegmentIdByName(iName);
+			final ODataSegment data = dataSegments.get(id);
+			if (data == null)
+				return false;
+
+			data.drop();
+
+			dataSegments.set(id, null);
+
+			// UPDATE CONFIGURATION
+			configuration.dropCluster(id);
+
+			return true;
+		} catch (Exception e) {
+			OLogManager.instance().exception("Error while removing data segment '" + iName + "'", e, OStorageException.class);
+
+		} finally {
+			lock.releaseExclusiveLock();
+		}
+
+		return false;
+	}
+
 	public int addDataSegment(final String iDataSegmentName) {
 		lock.acquireExclusiveLock();
 		try {
@@ -222,7 +252,7 @@ public class OStorageMemory extends OStorageEmbedded {
 		}
 	}
 
-	public int addDataSegment(final String iSegmentName, final String iSegmentFileName) {
+	public int addDataSegment(final String iSegmentName, final String iLocation) {
 		return addDataSegment(iSegmentName);
 	}
 
@@ -558,6 +588,21 @@ public class OStorageMemory extends OStorageEmbedded {
 		}
 	}
 
+	public int getDataSegmentIdByName(final String iDataSegmentName) {
+		lock.acquireSharedLock();
+		try {
+
+			for (ODataSegmentMemory d : dataSegments)
+				if (d.getName().equalsIgnoreCase(iDataSegmentName))
+					return d.getId();
+
+			throw new IllegalArgumentException("Data segment '" + iDataSegmentName + "' does not exist in storage '" + name + "'");
+
+		} finally {
+			lock.releaseSharedLock();
+		}
+	}
+
 	public OCluster getClusterById(int iClusterId) {
 		lock.acquireSharedLock();
 		try {
@@ -607,10 +652,6 @@ public class OStorageMemory extends OStorageEmbedded {
 			for (ODataSegmentMemory d : dataSegments)
 				if (d != null)
 					size += d.getSize();
-
-			for (OClusterMemory c : clusters)
-				if (c != null)
-					size += c.getSize();
 
 		} finally {
 			lock.releaseSharedLock();

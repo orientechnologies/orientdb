@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
+import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 
 /**
  * Delegates all the CRUD operations to the current transaction.
@@ -57,5 +58,4 @@ public class ODatabaseFlat extends ODatabaseRecordTx {
 			getTransaction().close();
 		}
 	}
-
 }
