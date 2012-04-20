@@ -18,6 +18,7 @@
 
   <properties>
     <VERSION>${project.version}</VERSION>
+    <BUILD>${implementation.build}; ${maven.build.timestamp}</BUILD>
   </properties>
 
   <dependencies>

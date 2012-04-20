@@ -25,4 +25,4 @@ export ORIENTDB_HOME
 
 # Only set ORIENTDB_HOME if not already set correctly
 
-java -client -Dorientdb.build.number=@BUILD@ -cp "$ORIENTDB_HOME/lib/*:" com.orientechnologies.orient.graph.console.OGremlinConsole $*
+java -client -Dorientdb.build.number="@BUILD@" -cp "$ORIENTDB_HOME/lib/*:" com.orientechnologies.orient.graph.console.OGremlinConsole $*

@@ -1,114 +1,146 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <assembly>
-	<!-- id typically identifies the "type" (src vs bin etc) of the assembly -->
-	<id>distribution</id>
-	<formats>
-		<format>dir</format>
-		<format>tar.gz</format>
-		<format>tar.bz2</format>
-		<format>zip</format>
-	</formats>
-	<fileSets>
-		<fileSet>
-			<directory>${basedir}/../server/benchmarks</directory>
-			<outputDirectory>benchmark</outputDirectory>
-			<includes>
-				<include>*.*</include>
-			</includes>
-			<excludes>
-				<exclude>*.sh</exclude>
-			</excludes>
-			<filtered>true</filtered>
-		</fileSet>
-		<fileSet>
-			<directory>${basedir}/../server/benchmarks</directory>
-			<outputDirectory>benchmark</outputDirectory>
-			<includes>
-				<include>*.sh</include>
-			</includes>
-			<fileMode>755</fileMode>
-			<filtered>true</filtered>
-		</fileSet>
-		<fileSet>
-			<directory>${basedir}/../server/script</directory>
-			<outputDirectory>bin</outputDirectory>
-			<includes>
-				<include>*.bat</include>
-			</includes>
-			<filtered>true</filtered>
-		</fileSet>
-		<fileSet>
-			<directory>${basedir}/../server/script</directory>
-			<outputDirectory>bin</outputDirectory>
-			<includes>
-				<include>*.sh</include>
-			</includes>
-			<fileMode>755</fileMode>
-			<filtered>true</filtered>
-		</fileSet>
-		<fileSet>
-			<directory>${basedir}/../tools/script</directory>
-			<outputDirectory>bin</outputDirectory>
-			<includes>
-				<include>*.bat</include>
-			</includes>
-			<filtered>true</filtered>
-		</fileSet>
-		<fileSet>
-			<directory>${basedir}/../tools/script</directory>
-			<outputDirectory>bin</outputDirectory>
-			<includes>
-				<include>*.sh</include>
-			</includes>
-			<fileMode>755</fileMode>
-			<filtered>true</filtered>
-		</fileSet>
-		<fileSet>
-			<directory>${basedir}/../server/config</directory>
-			<outputDirectory>config</outputDirectory>
-		</fileSet>
-		<fileSet>
-			<directory>${basedir}/../server/src/site</directory>
-			<outputDirectory>www</outputDirectory>
-		</fileSet>
-		<fileSet> <!-- Just to create an empty log directory... -->
-			<directory>${basedir}/../server/config</directory>
-			<outputDirectory>log</outputDirectory>
-			<excludes>
-				<exclude>*.*</exclude>
-			</excludes>
-		</fileSet>
-		<fileSet> <!-- Just to create an empty log directory... -->
-			<directory>${basedir}/../server/config</directory>
-			<outputDirectory>databases</outputDirectory>
-			<excludes>
-				<exclude>*.*</exclude>
-			</excludes>
-		</fileSet>
-	</fileSets>
-	<files>
-		<file>
-			<source>${basedir}/../license.txt</source>
-			<fileMode>644</fileMode>
-		</file>
-		<file>
-			<source>${basedir}/../history.txt</source>
-			<destName>history.txt</destName>
-			<fileMode>644</fileMode>
-		</file>
-		<file>
-			<source>${basedir}/../readme.txt</source>
-			<destName>readme.txt</destName>
-			<fileMode>644</fileMode>
-		</file>
-	</files>
-	<dependencySets>
-		<dependencySet>
-			<outputDirectory>lib</outputDirectory>
-			<excludes>
-				<exclude>*:pom</exclude>
-			</excludes>
-		</dependencySet>
-	</dependencySets>
+
+  <id>distribution</id>
+
+  <formats>
+    <format>dir</format>
+    <format>tar.gz</format>
+    <format>tar.bz2</format>
+    <format>zip</format>
+  </formats>
+
+  <fileSets>
+    <!--
+     | copy benchmarks scripts
+    -->
+    <fileSet>
+      <directory>${basedir}/../server/benchmarks</directory>
+      <outputDirectory>benchmark</outputDirectory>
+      <excludes>
+        <exclude>*.sh</exclude>
+      </excludes>
+      <filtered>true</filtered>
+    </fileSet>
+    <fileSet>
+      <directory>${basedir}/../server/benchmarks</directory>
+      <outputDirectory>benchmark</outputDirectory>
+      <includes>
+        <include>*.sh</include>
+      </includes>
+      <fileMode>755</fileMode>
+      <filtered>true</filtered>
+    </fileSet>
+
+    <!--
+     | copy server scripts
+    -->
+    <fileSet>
+      <directory>${basedir}/../server/script</directory>
+      <outputDirectory>bin</outputDirectory>
+      <includes>
+        <include>*.bat</include>
+      </includes>
+      <filtered>true</filtered>
+    </fileSet>
+    <fileSet>
+      <directory>${basedir}/../server/script</directory>
+      <outputDirectory>bin</outputDirectory>
+      <includes>
+        <include>*.sh</include>
+      </includes>
+      <fileMode>755</fileMode>
+      <filtered>true</filtered>
+    </fileSet>
+
+    <!--
+     | copy tools scripts
+    -->
+    <fileSet>
+      <directory>${basedir}/../tools/script</directory>
+      <outputDirectory>bin</outputDirectory>
+      <includes>
+        <include>*.bat</include>
+      </includes>
+      <filtered>true</filtered>
+    </fileSet>
+    <fileSet>
+      <directory>${basedir}/../tools/script</directory>
+      <outputDirectory>bin</outputDirectory>
+      <includes>
+        <include>*.sh</include>
+      </includes>
+      <fileMode>755</fileMode>
+      <filtered>true</filtered>
+    </fileSet>
+
+    <!--
+     | server configuration
+    -->
+    <fileSet>
+      <directory>${basedir}/../server/config</directory>
+      <outputDirectory>config</outputDirectory>
+    </fileSet>
+
+    <!--
+     | server browsable documentation
+    -->
+    <fileSet>
+      <directory>${basedir}/../server/src/site</directory>
+      <outputDirectory>www</outputDirectory>
+    </fileSet>
+
+    <!--
+     | creates an empty log directory
+    -->
+    <fileSet>
+      <directory>${basedir}/../server/config</directory>
+      <outputDirectory>log</outputDirectory>
+      <excludes>
+        <exclude>*</exclude>
+      </excludes>
+    </fileSet>
+
+    <!--
+     | creates an empty databases directory
+    -->
+    <fileSet>
+      <directory>${basedir}/../server/config</directory>
+      <outputDirectory>databases</outputDirectory>
+      <excludes>
+        <exclude>*</exclude>
+      </excludes>
+    </fileSet>
+  </fileSets>
+
+  <!--
+   | includes legals
+  -->
+  <files>
+    <file>
+      <source>${basedir}/../license.txt</source>
+      <fileMode>644</fileMode>
+    </file>
+    <file>
+      <source>${basedir}/../history.txt</source>
+      <fileMode>644</fileMode>
+    </file>
+    <file>
+      <source>${basedir}/../readme.txt</source>
+      <fileMode>644</fileMode>
+    </file>
+  </files>
+
+  <!--
+   | all artifacts in a /lib dir
+  -->
+  <dependencySets>
+    <dependencySet>
+      <outputDirectory>lib</outputDirectory>
+      <excludes>
+        <exclude>*:pom</exclude>
+      </excludes>
+    </dependencySet>
+  </dependencySets>
 
 </assembly>
