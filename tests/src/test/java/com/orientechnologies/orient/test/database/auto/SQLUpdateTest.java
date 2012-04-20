@@ -219,8 +219,8 @@ public class SQLUpdateTest {
 		Assert.assertEquals(result2.size(), result1.size());
 
 		for (int i = 0; i < result1.size(); ++i) {
-			float salary1 = result1.get(i).field("salary");
-			float salary2 = result2.get(i).field("salary");
+			float salary1 = (Float) result1.get(i).field("salary");
+			float salary2 = (Float) result2.get(i).field("salary");
 			Assert.assertEquals(salary2, salary1 + 10);
 		}
 
@@ -232,8 +232,8 @@ public class SQLUpdateTest {
 		Assert.assertEquals(result3.size(), result1.size());
 
 		for (int i = 0; i < result1.size(); ++i) {
-			float salary1 = result1.get(i).field("salary");
-			float salary3 = result3.get(i).field("salary");
+			float salary1 = (Float) result1.get(i).field("salary");
+			float salary3 = (Float) result3.get(i).field("salary");
 			Assert.assertEquals(salary3, salary1);
 		}
 		database.close();
