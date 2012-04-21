@@ -21,27 +21,64 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
 @SuppressWarnings("serial")
 public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysicalPosition> {
-	public int	dataSegmentId;				// ID OF DATA SEGMENT
-	public long	dataChunkPosition;	// POSITION OF CHUNK EXPRESSES AS OFFSET IN BYTES INSIDE THE DATA SEGMENT
-	public byte	type;							// RECORD TYPE
-	public int	version	= 0;				// RECORD VERSION
+	public long								clusterPosition;																																											// POSITION
+																																																																	// IN
+																																																																	// THE
+																																																																	// CLUSTER
+	public int								dataSegmentId;																																												// ID
+																																																																	// OF
+																																																																	// DATA
+																																																																	// SEGMENT
+	public long								dataSegmentPos;																																											// POSITION
+																																																																	// OF
+																																																																	// CHUNK
+																																																																	// EXPRESSES
+																																																																	// AS
+																																																																	// OFFSET
+																																																																	// IN
+																																																																	// BYTES
+																																																																	// INSIDE
+																																																																	// THE
+																																																																	// DATA
+																																																																	// SEGMENT
+	public byte								recordType;																																													// RECORD
+	// TYPE
+	public int								recordVersion	= 0;																																										// RECORD
+	// VERSION
 
-	public int	recordSize;				// SIZE IN BYTES OF THE RECORD. USED ONLY IN MEMORY
+	public int								recordSize;																																													// SIZE
+																																																																	// IN
+																																																																	// BYTES
+																																																																	// OF
+																																																																	// THE
+																																																																	// RECORD.
+																																																																	// USED
+																																																																	// ONLY
+																																																																	// IN
+																																																																	// MEMORY
+
+	private static final int	BINARY_SIZE		= OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_LONG
+																							+ OBinaryProtocol.SIZE_BYTE + OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_INT;
 
 	public OPhysicalPosition() {
 	}
 
-	public OPhysicalPosition(final int iDataSegment, final long iPosition, final byte iRecordType) {
-		dataSegmentId = iDataSegment;
-		dataChunkPosition = iPosition;
-		type = iRecordType;
+	public OPhysicalPosition(final long iClusterPosition) {
+		clusterPosition = iClusterPosition;
+	}
+
+	public OPhysicalPosition(final int iDataSegmentId, final long iDataSegmentPosition, final byte iRecordType) {
+		dataSegmentId = iDataSegmentId;
+		dataSegmentPos = iDataSegmentPosition;
+		recordType = iRecordType;
 	}
 
 	public void copyTo(final OPhysicalPosition iDest) {
+		iDest.clusterPosition = clusterPosition;
 		iDest.dataSegmentId = dataSegmentId;
-		iDest.dataChunkPosition = dataChunkPosition;
-		iDest.type = type;
-		iDest.version = version;
+		iDest.dataSegmentPos = dataSegmentPos;
+		iDest.recordType = recordType;
+		iDest.recordVersion = recordVersion;
 		iDest.recordSize = recordSize;
 	}
 
@@ -51,52 +88,57 @@ public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysi
 
 	@Override
 	public String toString() {
-		return "dataSegment=" + dataSegmentId + ", recordPosition=" + dataChunkPosition + ", type=" + type + ", recordSize=" + recordSize
-				+ ", v=" + version;
+		return "cluster-pos=" + clusterPosition + " data-segment-id=" + dataSegmentId + " data-segment-pos=" + dataSegmentPos
+				+ " record-type=" + recordType + " record-size=" + recordSize + " v=" + recordVersion;
 	}
 
 	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
 		int pos = 0;
 
+		clusterPosition = OBinaryProtocol.bytes2long(iStream, pos);
+		pos += OBinaryProtocol.SIZE_LONG;
+
 		dataSegmentId = OBinaryProtocol.bytes2int(iStream, pos);
 		pos += OBinaryProtocol.SIZE_INT;
 
-		dataChunkPosition = OBinaryProtocol.bytes2long(iStream, pos);
+		dataSegmentPos = OBinaryProtocol.bytes2long(iStream, pos);
 		pos += OBinaryProtocol.SIZE_LONG;
 
-		type = iStream[pos];
+		recordType = iStream[pos];
 		pos += OBinaryProtocol.SIZE_BYTE;
 
 		recordSize = OBinaryProtocol.bytes2int(iStream, pos);
 		pos += OBinaryProtocol.SIZE_INT;
 
-		version = OBinaryProtocol.bytes2int(iStream, pos);
+		recordVersion = OBinaryProtocol.bytes2int(iStream, pos);
 
 		return this;
 	}
 
 	public byte[] toStream() throws OSerializationException {
-		byte[] buffer = new byte[OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_BYTE
-				+ OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_INT];
+		byte[] buffer = new byte[BINARY_SIZE];
 		int pos = 0;
+
+		OBinaryProtocol.long2bytes(clusterPosition, buffer, pos);
+		pos += OBinaryProtocol.SIZE_LONG;
 
 		OBinaryProtocol.int2bytes(dataSegmentId, buffer, pos);
 		pos += OBinaryProtocol.SIZE_INT;
 
-		OBinaryProtocol.long2bytes(dataChunkPosition, buffer, pos);
+		OBinaryProtocol.long2bytes(dataSegmentPos, buffer, pos);
 		pos += OBinaryProtocol.SIZE_LONG;
 
-		buffer[pos] = type;
+		buffer[pos] = recordType;
 		pos += OBinaryProtocol.SIZE_BYTE;
 
 		OBinaryProtocol.int2bytes(recordSize, buffer, pos);
 		pos += OBinaryProtocol.SIZE_INT;
 
-		OBinaryProtocol.int2bytes(version, buffer, pos);
+		OBinaryProtocol.int2bytes(recordVersion, buffer, pos);
 		return buffer;
 	}
 
 	public int compareTo(final OPhysicalPosition iOther) {
-		return (int) (dataChunkPosition - iOther.dataChunkPosition);
+		return (int) (dataSegmentPos - iOther.dataSegmentPos);
 	}
 }

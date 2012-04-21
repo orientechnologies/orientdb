@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -177,7 +178,9 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
 			if (record.getIdentity().getClusterId() == ORID.CLUSTER_ID_INVALID)
 				((ORecordId) record.getIdentity()).clusterId = clusterId;
 
-			iSt.createRecord(0, (ORecordId) record.getIdentity(), record.toStream(), record.getRecordType(), (byte) 0, null);
+			final OPhysicalPosition ppos = iSt.createRecord(0, (ORecordId) record.getIdentity(), record.toStream(), record.getRecordType(), (byte) 0, null);
+			record.setVersion( ppos.recordVersion );
+
 		}
 		record.unsetDirty();
 	}

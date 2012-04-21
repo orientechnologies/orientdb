@@ -59,7 +59,7 @@ public class OSingleFileSegment extends OSharedResourceAdaptive {
 			if (!softClosed) {
 				// LAST TIME THE FILE WAS NOT CLOSED IN SOFT WAY
 				OLogManager.instance().warn(this,
-						"File " + file.getAbsolutePath() + " was not closed correctly last time. Checking segments...");
+						"file " + file.getAbsolutePath() + " was not closed correctly last time. Checking segments...");
 			}
 
 			return softClosed;

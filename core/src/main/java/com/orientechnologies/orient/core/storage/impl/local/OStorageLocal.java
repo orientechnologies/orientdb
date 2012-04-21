@@ -415,10 +415,10 @@ public class OStorageLocal extends OStorageEmbedded {
 
 				// BROWSE ALL THE RECORDS
 				for (final OClusterPositionIterator it = c.absoluteIterator(); it.hasNext();) {
-					final Long pos = it.next();
+					ppos.clusterPosition = it.next();
 					totalRecors++;
 					try {
-						c.getPhysicalPosition(pos, ppos);
+						c.getPhysicalPosition(ppos);
 
 						if (ppos.dataSegmentId >= dataSegments.length) {
 							formatMessage(iVerbose, iListener, "WARN: Found wrong data segment %d ", ppos.dataSegmentId);
@@ -435,22 +435,19 @@ public class OStorageLocal extends OStorageEmbedded {
 							warnings++;
 						}
 
-						if (ppos.dataChunkPosition > dataSegments[ppos.dataSegmentId].getFilledUpTo()) {
+						if (ppos.dataSegmentPos > dataSegments[ppos.dataSegmentId].getFilledUpTo()) {
 							formatMessage(iVerbose, iListener, "WARN: Found wrong pointer to data chunk %d out of data segment size (%d) ",
-									ppos.dataChunkPosition, dataSegments[ppos.dataSegmentId].getFilledUpTo());
+									ppos.dataSegmentPos, dataSegments[ppos.dataSegmentId].getFilledUpTo());
 							warnings++;
 						}
 
-						if (ppos.version < -1) {
-							formatMessage(iVerbose, iListener, "WARN: Found wrong record version %d ", ppos.version);
-							warnings++;
-						} else if (ppos.version == -1) {
+						if (ppos.recordVersion < 0) {
 							// CHECK IF THE HOLE EXISTS
 							boolean found = false;
 							int tot = ((OClusterLocal) c).holeSegment.getHoles();
 							for (int i = 0; i < tot; ++i) {
 								final long recycledPosition = ((OClusterLocal) c).holeSegment.getEntryPosition(i) / OClusterLocal.RECORD_SIZE;
-								if (recycledPosition == pos) {
+								if (recycledPosition == ppos.clusterPosition) {
 									// FOUND
 									found = true;
 									break;
@@ -458,13 +455,14 @@ public class OStorageLocal extends OStorageEmbedded {
 							}
 
 							if (!found) {
-								formatMessage(iVerbose, iListener, "WARN: Cannot find hole for deleted record %d:%d ", c.getId(), pos);
+								formatMessage(iVerbose, iListener, "WARN: Cannot find hole for deleted record %d:%d ", c.getId(),
+										ppos.clusterPosition);
 								warnings++;
 							}
 						}
 
 					} catch (IOException e) {
-						formatMessage(iVerbose, iListener, "WARN: Error while reading record #%d:%d ", e, c.getId(), pos);
+						formatMessage(iVerbose, iListener, "WARN: Error while reading record #%d:%d ", e, c.getId(), ppos.clusterPosition);
 						warnings++;
 					}
 				}
@@ -476,10 +474,10 @@ public class OStorageLocal extends OStorageEmbedded {
 					for (int i = 0; i < tot; ++i) {
 						long recycledPosition = -1;
 						try {
-							recycledPosition = ((OClusterLocal) c).holeSegment.getEntryPosition(i) / OClusterLocal.RECORD_SIZE;
-							c.getPhysicalPosition(recycledPosition, ppos);
+							ppos.clusterPosition = ((OClusterLocal) c).holeSegment.getEntryPosition(i) / OClusterLocal.RECORD_SIZE;
+							c.getPhysicalPosition(ppos);
 
-							if (ppos.version != -1) {
+							if (ppos.recordVersion > -1) {
 								formatMessage(iVerbose, iListener, "WARN: Found wrong hole %d/%d for deleted record %d:%d. The record seems good ",
 										i, tot - 1, c.getId(), recycledPosition);
 								warnings++;
@@ -599,7 +597,8 @@ public class OStorageLocal extends OStorageEmbedded {
 												d.getName(), totalChunks, pos, recordSize, rid, rid.clusterId);
 										warnings++;
 									} else {
-										clusters[rid.clusterId].getPhysicalPosition(rid.clusterPosition, ppos);
+										ppos.clusterPosition = rid.clusterPosition;
+										clusters[rid.clusterId].getPhysicalPosition(ppos);
 
 										if (ppos.dataSegmentId != d.getId()) {
 											formatMessage(
@@ -610,12 +609,12 @@ public class OStorageLocal extends OStorageEmbedded {
 											warnings++;
 										}
 
-										if (ppos.dataChunkPosition != pos) {
+										if (ppos.dataSegmentPos != pos) {
 											formatMessage(
 													iVerbose,
 													iListener,
 													"WARN: Chunk %s:%d (offset=%d size=%d) point to the RID %d but it doesn't point to current chunk %d but to %d ",
-													d.getName(), totalChunks, pos, recordSize, rid, ppos.dataChunkPosition, pos);
+													d.getName(), totalChunks, pos, recordSize, rid, ppos.dataSegmentPos, pos);
 											warnings++;
 										}
 									}
@@ -890,24 +889,24 @@ public class OStorageLocal extends OStorageEmbedded {
 		}
 	}
 
-	public long createRecord(int iDataSegmentId, final ORecordId iRid, final byte[] iContent, final byte iRecordType,
+	public OPhysicalPosition createRecord(int iDataSegmentId, final ORecordId iRid, final byte[] iContent, final byte iRecordType,
 			final int iMode, ORecordCallback<Long> iCallback) {
 		checkOpeness();
 
 		final OCluster cluster = getClusterById(iRid.clusterId);
 		final ODataLocal dataSegment = getDataSegmentById(iDataSegmentId);
 
-		if (txManager.isCommitting())
-			iRid.clusterPosition = txManager.createRecord(txManager.getCurrentTransaction().getId(), dataSegment, cluster, iRid,
-					iContent, iRecordType);
-		else {
-			final OPhysicalPosition ppos = createRecord(dataSegment, cluster, iContent, iRecordType, iRid);
-
+		final OPhysicalPosition ppos;
+		if (txManager.isCommitting()) {
+			ppos = txManager.createRecord(txManager.getCurrentTransaction().getId(), dataSegment, cluster, iRid, iContent, iRecordType);
+			iRid.clusterPosition = ppos.clusterPosition;
+		} else {
+			ppos = createRecord(dataSegment, cluster, iContent, iRecordType, iRid);
 			if (OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
 				synchRecordUpdate(cluster, ppos);
 		}
 
-		return iRid.clusterPosition;
+		return ppos;
 	}
 
 	public ORawBuffer readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
@@ -931,7 +930,7 @@ public class OStorageLocal extends OStorageEmbedded {
 				synchRecordUpdate(cluster, ppos);
 
 			if (ppos != null)
-				return ppos.version;
+				return ppos.recordVersion;
 
 			return -1;
 		}
@@ -1396,24 +1395,19 @@ public class OStorageLocal extends OStorageEmbedded {
 
 		lock.acquireSharedLock();
 		try {
+			final OPhysicalPosition ppos = new OPhysicalPosition(-1, -1, iRecordType);
 
-			final ORecordId rid = new ORecordId(iClusterSegment.getId());
-			rid.clusterPosition = iClusterSegment.addPhysicalPosition(-1, -1, iRecordType);
+			iClusterSegment.addPhysicalPosition(ppos);
 
-			final long dataOffset = iDataSegment.addRecord(rid, iContent);
+			iRid.clusterPosition = ppos.clusterPosition;
+
+			ppos.dataSegmentId = iDataSegment.getId();
+			ppos.dataSegmentPos = iDataSegment.addRecord(iRid, iContent);
 
 			// UPDATE THE POSITION IN CLUSTER WITH THE POSITION OF RECORD IN DATA
-			iClusterSegment.setPhysicalPosition(rid.clusterPosition, iDataSegment.getId(), dataOffset, iRecordType, 0);
+			iClusterSegment.updateDataSegmentPosition(ppos.clusterPosition, ppos.dataSegmentId, ppos.dataSegmentPos);
 
 			incrementVersion();
-
-			final OPhysicalPosition ppos = new OPhysicalPosition();
-			ppos.dataChunkPosition = dataOffset;
-			ppos.dataSegmentId = iDataSegment.getId();
-			ppos.type = iRecordType;
-			ppos.version = 0;
-
-			iRid.clusterPosition = rid.clusterPosition;
 
 			return ppos;
 		} catch (IOException e) {
@@ -1457,13 +1451,13 @@ public class OStorageLocal extends OStorageEmbedded {
 					throw new ORecordNotFoundException("Record " + iRid + " is outside cluster range. Valid range for cluster '"
 							+ iClusterSegment.getName() + "' is 0-" + lastPos + " in storage '" + name + "'");
 
-				final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
+				final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
 				if (ppos == null || !checkForRecordValidity(ppos))
 					// DELETED
 					return null;
 
 				final ODataLocal data = getDataSegmentById(ppos.dataSegmentId);
-				return new ORawBuffer(data.getRecord(ppos.dataChunkPosition), ppos.version, ppos.type);
+				return new ORawBuffer(data.getRecord(ppos.dataSegmentPos), ppos.recordVersion, ppos.recordType);
 
 			} finally {
 				lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.SHARED);
@@ -1494,7 +1488,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		try {
 			lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
 			try {
-				final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
+				final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
 				if (!checkForRecordValidity(ppos))
 					// DELETED
 					return null;
@@ -1503,8 +1497,8 @@ public class OStorageLocal extends OStorageEmbedded {
 				switch (iVersion) {
 				// DOCUMENT UPDATE, NO VERSION CONTROL
 				case -1:
-					++ppos.version;
-					iClusterSegment.updateVersion(iRid.clusterPosition, ppos.version);
+					++ppos.recordVersion;
+					iClusterSegment.updateVersion(iRid.clusterPosition, ppos.recordVersion);
 					break;
 
 				// DOCUMENT UPDATE, NO VERSION CONTROL, NO VERSION UPDATE
@@ -1515,43 +1509,42 @@ public class OStorageLocal extends OStorageEmbedded {
 					// MVCC CONTROL AND RECORD UPDATE OR WRONG VERSION VALUE
 					if (iVersion > -1) {
 						// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-						if (iVersion != ppos.version)
+						if (iVersion != ppos.recordVersion)
 							throw new OConcurrentModificationException(
 									"Cannot update record "
 											+ iRid
 											+ " in storage '"
 											+ name
 											+ "' because the version is not the latest. Probably you are updating an old record or it has been modified by another user (db=v"
-											+ ppos.version + " your=v" + iVersion + ")", iRid, ppos.version, iVersion);
-						++ppos.version;
-						iClusterSegment.updateVersion(iRid.clusterPosition, ppos.version);
+											+ ppos.recordVersion + " your=v" + iVersion + ")", iRid, ppos.recordVersion, iVersion);
+						++ppos.recordVersion;
+						iClusterSegment.updateVersion(iRid.clusterPosition, ppos.recordVersion);
 					} else {
 						// DOCUMENT ROLLBACKED
-						ppos.version = iVersion - Integer.MIN_VALUE;
-						iClusterSegment.updateVersion(iRid.clusterPosition, ppos.version);
+						ppos.recordVersion = iVersion - Integer.MIN_VALUE;
+						iClusterSegment.updateVersion(iRid.clusterPosition, ppos.recordVersion);
 					}
 
 				}
 
-				if (ppos.type != iRecordType)
+				if (ppos.recordType != iRecordType)
 					iClusterSegment.updateRecordType(iRid.clusterPosition, iRecordType);
 
 				final long newDataSegmentOffset;
-				if (ppos.dataChunkPosition == -1)
+				if (ppos.dataSegmentPos == -1)
 					// WAS EMPTY FIRST TIME, CREATE IT NOW
 					newDataSegmentOffset = getDataSegmentById(ppos.dataSegmentId).addRecord(iRid, iContent);
 				else
 					// UPDATE IT
-					newDataSegmentOffset = getDataSegmentById(ppos.dataSegmentId).setRecord(ppos.dataChunkPosition, iRid, iContent);
+					newDataSegmentOffset = getDataSegmentById(ppos.dataSegmentId).setRecord(ppos.dataSegmentPos, iRid, iContent);
 
-				if (newDataSegmentOffset != ppos.dataChunkPosition)
+				if (newDataSegmentOffset != ppos.dataSegmentPos)
 					// UPDATE DATA SEGMENT OFFSET WITH THE NEW PHYSICAL POSITION
-					iClusterSegment.setPhysicalPosition(iRid.clusterPosition, ppos.dataSegmentId, newDataSegmentOffset, iRecordType,
-							ppos.version);
+					iClusterSegment.updateDataSegmentPosition(ppos.clusterPosition, ppos.dataSegmentId, newDataSegmentOffset);
 
 				incrementVersion();
 
-				ppos.dataChunkPosition = newDataSegmentOffset;
+				ppos.dataSegmentPos = newDataSegmentOffset;
 				return ppos;
 
 			} finally {
@@ -1579,26 +1572,26 @@ public class OStorageLocal extends OStorageEmbedded {
 			lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
 			try {
 
-				final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
+				final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
 
 				if (!checkForRecordValidity(ppos))
 					// ALREADY DELETED
 					return null;
 
 				// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-				if (iVersion > -1 && ppos.version != iVersion)
+				if (iVersion > -1 && ppos.recordVersion != iVersion)
 					throw new OConcurrentModificationException(
 							"Cannot delete the record "
 									+ iRid
 									+ " in storage '"
 									+ name
 									+ "' because the version is not the latest. Probably you are deleting an old record or it has been modified by another user (db=v"
-									+ ppos.version + " your=v" + iVersion + ")", iRid, ppos.version, iVersion);
+									+ ppos.recordVersion + " your=v" + iVersion + ")", iRid, ppos.recordVersion, iVersion);
 
-				if (ppos.dataChunkPosition > -1)
-					getDataSegmentById(ppos.dataSegmentId).deleteRecord(ppos.dataChunkPosition);
+				if (ppos.dataSegmentPos > -1)
+					getDataSegmentById(ppos.dataSegmentId).deleteRecord(ppos.dataSegmentPos);
 
-				iClusterSegment.removePhysicalPosition(iRid.clusterPosition, ppos);
+				iClusterSegment.removePhysicalPosition(iRid.clusterPosition);
 
 				incrementVersion();
 

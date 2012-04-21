@@ -199,6 +199,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	}
 
 	public int getVersion() {
+		checkForLoading();
 		return _version;
 	}
 

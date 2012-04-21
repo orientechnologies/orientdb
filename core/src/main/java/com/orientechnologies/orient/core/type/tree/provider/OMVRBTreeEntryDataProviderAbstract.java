@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.type.tree.provider;
 
+import java.lang.ref.WeakReference;
+
 import com.orientechnologies.common.collection.OMVRBTree;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -25,10 +27,9 @@ import com.orientechnologies.orient.core.record.ORecordListener;
 import com.orientechnologies.orient.core.record.impl.ORecordBytesLazy;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.lang.ref.WeakReference;
 
 public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBTreeEntryDataProvider<K, V>, OSerializableStream,
 		ORecordListener {
@@ -177,8 +178,12 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
 			// CREATE IT
 			if (record.getIdentity().getClusterId() == ORID.CLUSTER_ID_INVALID)
 				((ORecordId) record.getIdentity()).clusterId = treeDataProvider.clusterId;
-			record.setIdentity(record.getIdentity().getClusterId(),
-					iSt.createRecord(0, (ORecordId) record.getIdentity(), record.toStream(), record.getRecordType(), (byte) 0, null));
+
+			final OPhysicalPosition ppos = iSt.createRecord(0, (ORecordId) record.getIdentity(), record.toStream(),
+					record.getRecordType(), (byte) 0, null);
+
+			record.setIdentity(record.getIdentity().getClusterId(), ppos.clusterPosition);
+			record.setVersion(ppos.recordVersion);
 		}
 		record.unsetDirty();
 

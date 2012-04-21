@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 
 /**
- * Handles the table to resolve logical address to physical address. Deleted records have version = -1. <br/>
+ * Handles the table to resolve logical address to physical address. Deleted records have negative versions. <br/>
  * <br/>
  * Record structure:<br/>
  * <code>
@@ -149,11 +149,11 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
 			if (begin > -1) {
 				final long end = getLastEntryPosition();
 				final OPhysicalPosition ppos = new OPhysicalPosition();
-				for (long i = begin; i <= end; ++i) {
-					getPhysicalPosition(i, ppos);
+				for (ppos.clusterPosition = begin; ppos.clusterPosition <= end; ++ppos.clusterPosition) {
+					getPhysicalPosition(ppos);
 
 					if (storage.checkForRecordValidity(ppos))
-						storage.getDataSegmentById(ppos.dataSegmentId).deleteRecord(ppos.dataChunkPosition);
+						storage.getDataSegmentById(ppos.dataSegmentId).deleteRecord(ppos.dataSegmentPos);
 				}
 			}
 
@@ -187,21 +187,21 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
 	 * 
 	 * @throws IOException
 	 */
-	public OPhysicalPosition getPhysicalPosition(long iPosition, final OPhysicalPosition iPPosition) throws IOException {
-		iPosition = iPosition * RECORD_SIZE;
+	public OPhysicalPosition getPhysicalPosition(final OPhysicalPosition iPPosition) throws IOException {
+		final long filePosition = iPPosition.clusterPosition * RECORD_SIZE;
 
 		acquireSharedLock();
 		try {
 
-			final long[] pos = fileSegment.getRelativePosition(iPosition);
+			final long[] pos = fileSegment.getRelativePosition(filePosition);
 
 			final OFile f = fileSegment.files[(int) pos[0]];
 			long p = pos[1];
 
 			iPPosition.dataSegmentId = f.readShort(p);
-			iPPosition.dataChunkPosition = f.readLong(p += OBinaryProtocol.SIZE_SHORT);
-			iPPosition.type = f.readByte(p += OBinaryProtocol.SIZE_LONG);
-			iPPosition.version = f.readInt(p += OBinaryProtocol.SIZE_BYTE);
+			iPPosition.dataSegmentPos = f.readLong(p += OBinaryProtocol.SIZE_SHORT);
+			iPPosition.recordType = f.readByte(p += OBinaryProtocol.SIZE_LONG);
+			iPPosition.recordVersion = f.readInt(p += OBinaryProtocol.SIZE_BYTE);
 			return iPPosition;
 
 		} finally {
@@ -214,22 +214,21 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
 	 * 
 	 * @throws IOException
 	 */
-	public void setPhysicalPosition(long iPosition, final int iDataId, final long iDataPosition, final byte iRecordType, int iVersion)
-			throws IOException {
-		iPosition = iPosition * RECORD_SIZE;
+	public void setPhysicalPosition(final OPhysicalPosition iPosition) throws IOException {
+		final long filePosition = iPosition.clusterPosition * RECORD_SIZE;
 
 		acquireExclusiveLock();
 		try {
 
-			final long[] pos = fileSegment.getRelativePosition(iPosition);
+			final long[] pos = fileSegment.getRelativePosition(filePosition);
 
 			final OFile f = fileSegment.files[(int) pos[0]];
 			long p = pos[1];
 
-			f.writeShort(p, (short) iDataId);
-			f.writeLong(p += OBinaryProtocol.SIZE_SHORT, iDataPosition);
-			f.writeByte(p += OBinaryProtocol.SIZE_LONG, iRecordType);
-			f.writeInt(p += OBinaryProtocol.SIZE_BYTE, iVersion);
+			f.writeShort(p, (short) iPosition.dataSegmentId);
+			f.writeLong(p += OBinaryProtocol.SIZE_SHORT, iPosition.dataSegmentPos);
+			f.writeByte(p += OBinaryProtocol.SIZE_LONG, iPosition.recordType);
+			f.writeInt(p += OBinaryProtocol.SIZE_BYTE, iPosition.recordVersion);
 
 		} finally {
 			releaseExclusiveLock();
@@ -241,7 +240,8 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
 	 * 
 	 * @throws IOException
 	 */
-	public void setPhysicalPosition(long iPosition, final long iDataPosition) throws IOException {
+	public void updateDataSegmentPosition(long iPosition, final int iDataSegmentId, final long iDataSegmentPosition)
+			throws IOException {
 		iPosition = iPosition * RECORD_SIZE;
 
 		acquireExclusiveLock();
@@ -252,7 +252,8 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
 			final OFile f = fileSegment.files[(int) pos[0]];
 			long p = pos[1];
 
-			f.writeLong(p += OBinaryProtocol.SIZE_SHORT, iDataPosition);
+			f.writeShort(p, (short) iDataSegmentId);
+			f.writeLong(p += OBinaryProtocol.SIZE_SHORT, iDataSegmentPosition);
 
 		} finally {
 			releaseExclusiveLock();
@@ -291,11 +292,11 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
 	}
 
 	/**
-	 * Remove the Logical position entry. Add to the hole segment and change the version to -1.
+	 * Removes the Logical position entry. Add to the hole segment and add the minus to the version.
 	 * 
 	 * @throws IOException
 	 */
-	public void removePhysicalPosition(final long iPosition, final OPhysicalPosition iPPosition) throws IOException {
+	public void removePhysicalPosition(final long iPosition) throws IOException {
 		final long position = iPosition * RECORD_SIZE;
 
 		acquireExclusiveLock();
@@ -303,18 +304,13 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
 
 			final long[] pos = fileSegment.getRelativePosition(position);
 			final OFile file = fileSegment.files[(int) pos[0]];
-			long p = pos[1];
-
-			// SAVE THE OLD DATA AND RETRIEVE THEM TO THE CALLER
-			iPPosition.dataSegmentId = file.readShort(p);
-			iPPosition.dataChunkPosition = file.readLong(p += OBinaryProtocol.SIZE_SHORT);
-			iPPosition.type = file.readByte(p += OBinaryProtocol.SIZE_LONG);
-			iPPosition.version = file.readInt(p += OBinaryProtocol.SIZE_BYTE);
+			final long p = pos[1] + OBinaryProtocol.SIZE_SHORT + OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_BYTE;
 
 			holeSegment.pushPosition(position);
 
-			// SET VERSION = -1
-			file.writeInt(p, -1);
+			// MARK DELETED SETTING VERSION TO NEGATIVE NUMBER
+			final int version = file.readInt(p);
+			file.writeInt(p, (version + 1) * -1);
 
 			updateBoundsAfterDeletion(iPosition);
 
@@ -350,34 +346,43 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
 	 * 
 	 * @throws IOException
 	 */
-	public long addPhysicalPosition(final int iDataSegmentId, final long iPosition, final byte iRecordType) throws IOException {
+	public void addPhysicalPosition(final OPhysicalPosition iPPosition) throws IOException {
 		acquireExclusiveLock();
 		try {
 
 			long offset = holeSegment.popLastEntryPosition();
 
 			final long[] pos;
-			if (offset > -1)
+			final boolean recycled;
+			if (offset > -1) {
 				// REUSE THE HOLE
 				pos = fileSegment.getRelativePosition(offset);
-			else {
+				recycled = true;
+			} else {
 				// NO HOLES FOUND: ALLOCATE MORE SPACE
 				pos = fileSegment.allocateSpace(RECORD_SIZE);
 				offset = fileSegment.getAbsolutePosition(pos);
+				recycled = false;
 			}
 
 			OFile file = fileSegment.files[(int) pos[0]];
 			long p = pos[1];
 
-			file.writeShort(p, (short) iDataSegmentId);
-			file.writeLong(p += OBinaryProtocol.SIZE_SHORT, iPosition);
-			file.writeByte(p += OBinaryProtocol.SIZE_LONG, iRecordType);
+			file.writeShort(p, (short) iPPosition.dataSegmentId);
+			file.writeLong(p += OBinaryProtocol.SIZE_SHORT, iPPosition.dataSegmentPos);
+			file.writeByte(p += OBinaryProtocol.SIZE_LONG, iPPosition.recordType);
 
-			final long returnedPosition = offset / RECORD_SIZE;
+			if (recycled)
+				// GET LAST VERSION
+				iPPosition.recordVersion = file.readInt(p + OBinaryProtocol.SIZE_BYTE) * -1;
+			else
+				iPPosition.recordVersion = 0;
 
-			updateBoundsAfterInsertion(returnedPosition);
+			file.writeInt(p + OBinaryProtocol.SIZE_BYTE, iPPosition.recordVersion);
 
-			return returnedPosition;
+			iPPosition.clusterPosition = offset / RECORD_SIZE;
+
+			updateBoundsAfterInsertion(iPPosition.clusterPosition);
 
 		} finally {
 			releaseExclusiveLock();
@@ -479,10 +484,10 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
 			final OClusterPositionIterator it = absoluteIterator();
 			final OPhysicalPosition pos = new OPhysicalPosition();
 			while (it.hasNext()) {
-				final Long position = it.next();
-				getPhysicalPosition(position.longValue(), pos);
-				if (pos.dataChunkPosition > -1)
-					size += storage.getDataSegmentById(pos.dataSegmentId).getRecordSize(pos.dataChunkPosition);
+				pos.clusterPosition = it.next();
+				getPhysicalPosition(pos);
+				if (pos.dataSegmentPos > -1 && pos.recordVersion > -1)
+					size += storage.getDataSegmentById(pos.dataSegmentId).getRecordSize(pos.dataSegmentPos);
 			}
 
 			return size;

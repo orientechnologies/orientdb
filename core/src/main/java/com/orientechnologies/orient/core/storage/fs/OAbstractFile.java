@@ -204,7 +204,7 @@ public abstract class OAbstractFile implements OFile {
 					.instance()
 					.warn(
 							this,
-							"Invalid filledUp value (%d) for file %s. Resetting the file size %d to the os file size: %d. Probably the file was not closed correctly last time",
+							"invalid filledUp value (%d) for file %s. Resetting the file size %d to the os file size: %d. Probably the file was not closed correctly last time",
 							filledUpTo, getOsFile().getAbsolutePath(), size, fileSize);
 			setSize(fileSize);
 		}
@@ -511,7 +511,7 @@ public abstract class OAbstractFile implements OFile {
 	}
 
 	protected void openChannel(final int iNewSize) throws IOException {
-		OLogManager.instance().debug(this, "[OFile.openChannel] Opening channel for file: " + osFile);
+		OLogManager.instance().debug(this, "[OFile.openChannel] opening channel for file: " + osFile);
 
 		for (int i = 0; i < OPEN_RETRY_MAX; ++i)
 			try {

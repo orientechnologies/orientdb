@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
@@ -132,14 +131,14 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 
 			int current = 0;
 
-			OPhysicalPosition ppos = new OPhysicalPosition();
+			final OPhysicalPosition ppos = new OPhysicalPosition();
 			for (OCluster cluster : database.getStorage().getClusterInstances()) {
 				final OClusterPositionIterator iterator = cluster.absoluteIterator();
 				while (iterator.hasNext()) {
-					final long position = iterator.next();
-					cluster.getPhysicalPosition(position, ppos);
+					ppos.clusterPosition = iterator.next();
+					cluster.getPhysicalPosition(ppos);
 
-					block.field(cluster.getId() + ":" + position, ppos.version);
+					block.field(cluster.getId() + ":" + ppos.clusterPosition, ppos.recordVersion);
 
 					if (current++ % blockSize == 0) {
 						// SEND THE BLOCK

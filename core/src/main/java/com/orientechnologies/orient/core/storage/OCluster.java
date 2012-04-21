@@ -65,20 +65,20 @@ public interface OCluster {
 	/**
 	 * Adds a new entry.
 	 */
-	public long addPhysicalPosition(int iDataSegmentId, long iPosition, final byte iRecordType) throws IOException;
+	public void addPhysicalPosition(OPhysicalPosition iPPosition) throws IOException;
 
 	/**
 	 * Fills and return the PhysicalPosition object received as parameter with the physical position of logical record iPosition
 	 * 
 	 * @throws IOException
 	 */
-	public OPhysicalPosition getPhysicalPosition(long iPosition, OPhysicalPosition iPPosition) throws IOException;
+	public OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) throws IOException;
 
 	/**
 	 * Updates position in data segment (usually on defrag).
 	 */
 
-	public void setPhysicalPosition(long iPosition, long iDataPosition) throws IOException;
+	public void updateDataSegmentPosition(long iPosition, int iDataSegmentId, long iDataPosition) throws IOException;
 
 	/**
 	 * Changes the PhysicalPosition of the logical record iPosition.
@@ -86,13 +86,12 @@ public interface OCluster {
 	 * @param iVersion
 	 *          TODO
 	 */
-	public void setPhysicalPosition(long iPosition, int iDataSegment, long iDataPosition, final byte iRecordType, int iVersion)
-			throws IOException;
+	public void setPhysicalPosition(OPhysicalPosition iPPosition) throws IOException;
 
 	/**
 	 * Removes the Logical Position entry.
 	 */
-	public void removePhysicalPosition(long iPosition, OPhysicalPosition iPPosition) throws IOException;
+	public void removePhysicalPosition(long iPosition) throws IOException;
 
 	public void updateRecordType(long iPosition, final byte iRecordType) throws IOException;
 

@@ -552,14 +552,15 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
 		if (clusterId > -1) {
 			// CHANGE THE POINTMENT OF CLUSTER TO THE NEW POSITION. -1 MEANS TEMP RECORD
 			final OCluster cluster = storage.getClusterById(clusterId);
-			final OPhysicalPosition ppos = cluster.getPhysicalPosition(clusterPosition, new OPhysicalPosition());
 
-			if (ppos.dataChunkPosition != iSourcePosition)
+			final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(clusterPosition));
+
+			if (ppos.dataSegmentPos != iSourcePosition)
 				OLogManager.instance().warn(this,
 						"Found corrupted record hole for rid %d:%d: data position is wrong: %d <-> %d. Auto fixed by writing position %d",
-						clusterId, clusterPosition, ppos.dataChunkPosition, iSourcePosition, iDestinationPosition);
+						clusterId, clusterPosition, ppos.dataSegmentPos, iSourcePosition, iDestinationPosition);
 
-			cluster.setPhysicalPosition(clusterPosition, iDestinationPosition);
+			cluster.updateDataSegmentPosition(clusterPosition, id, iDestinationPosition);
 		}
 
 		writeRecord(getRelativePosition(iDestinationPosition), clusterId, clusterPosition, content);

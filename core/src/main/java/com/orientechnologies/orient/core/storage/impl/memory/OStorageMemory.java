@@ -257,8 +257,8 @@ public class OStorageMemory extends OStorageEmbedded {
 		return addDataSegment(iSegmentName);
 	}
 
-	public long createRecord(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent, final byte iRecordType,
-			final int iMode, ORecordCallback<Long> iCallback) {
+	public OPhysicalPosition createRecord(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent,
+			final byte iRecordType, final int iMode, ORecordCallback<Long> iCallback) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		lock.acquireSharedLock();
@@ -268,8 +268,12 @@ public class OStorageMemory extends OStorageEmbedded {
 			final long offset = data.createRecord(iContent);
 			final OCluster cluster = getClusterById(iRid.clusterId);
 
-			iRid.clusterPosition = cluster.addPhysicalPosition(0, offset, iRecordType);
-			return iRid.clusterPosition;
+			// ASSIGN THE POSITION IN THE CLUSTER
+			final OPhysicalPosition ppos = new OPhysicalPosition(iDataSegmentId, offset, iRecordType);
+			cluster.addPhysicalPosition(ppos);
+			iRid.clusterPosition = ppos.clusterPosition;
+
+			return ppos;
 		} catch (IOException e) {
 			throw new OStorageException("Error on create record in cluster: " + iRid.clusterId, e);
 
@@ -298,14 +302,14 @@ public class OStorageMemory extends OStorageEmbedded {
 						+ iClusterSegment.getName() + "' is 0-" + lastPos);
 
 			try {
-				final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
+				final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
 
 				if (ppos == null)
 					return null;
 
 				final ODataSegmentMemory dataSegment = (ODataSegmentMemory) getDataSegmentById(ppos.dataSegmentId);
 
-				return new ORawBuffer(dataSegment.readRecord(ppos.dataChunkPosition), ppos.version, ppos.type);
+				return new ORawBuffer(dataSegment.readRecord(ppos.dataSegmentPos), ppos.recordVersion, ppos.recordType);
 
 			} finally {
 				lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.SHARED);
@@ -331,29 +335,29 @@ public class OStorageMemory extends OStorageEmbedded {
 			lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
 			try {
 
-				final OPhysicalPosition ppos = cluster.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
+				final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
 				if (ppos == null)
 					return -1;
 
 				if (iVersion != -1) {
 					if (iVersion > -1) {
 						// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-						if (iVersion != ppos.version)
+						if (iVersion != ppos.recordVersion)
 							throw new OConcurrentModificationException(
 									"Cannot update record "
 											+ iRid
 											+ " because the version is not the latest. Probably you are updating an old record or it has been modified by another user (db=v"
-											+ ppos.version + " your=v" + iVersion + ")", iRid, ppos.version, iVersion);
+											+ ppos.recordVersion + " your=v" + iVersion + ")", iRid, ppos.recordVersion, iVersion);
 
-						++ppos.version;
+						++ppos.recordVersion;
 					} else
-						--ppos.version;
+						--ppos.recordVersion;
 				}
 
 				final ODataSegmentMemory dataSegment = (ODataSegmentMemory) getDataSegmentById(ppos.dataSegmentId);
-				dataSegment.updateRecord(ppos.dataChunkPosition, iContent);
+				dataSegment.updateRecord(ppos.dataSegmentPos, iContent);
 
-				return ppos.version;
+				return ppos.recordVersion;
 
 			} finally {
 				lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
@@ -378,23 +382,23 @@ public class OStorageMemory extends OStorageEmbedded {
 			lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
 			try {
 
-				final OPhysicalPosition ppos = cluster.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
+				final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
 
 				if (ppos == null)
 					return false;
 
 				// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-				if (iVersion > -1 && ppos.version != iVersion)
+				if (iVersion > -1 && ppos.recordVersion != iVersion)
 					throw new OConcurrentModificationException(
 							"Cannot delete record "
 									+ iRid
 									+ " because the version is not the latest. Probably you are deleting an old record or it has been modified by another user (db=v"
-									+ ppos.version + " your=v" + iVersion + ")", iRid, ppos.version, iVersion);
+									+ ppos.recordVersion + " your=v" + iVersion + ")", iRid, ppos.recordVersion, iVersion);
 
-				cluster.removePhysicalPosition(iRid.clusterPosition, null);
+				cluster.removePhysicalPosition(iRid.clusterPosition);
 
 				final ODataSegmentMemory dataSegment = (ODataSegmentMemory) getDataSegmentById(ppos.dataSegmentId);
-				dataSegment.deleteRecord(ppos.dataChunkPosition);
+				dataSegment.deleteRecord(ppos.dataSegmentPos);
 
 				return true;
 
@@ -671,7 +675,7 @@ public class OStorageMemory extends OStorageEmbedded {
 		lock.acquireSharedLock();
 		try {
 			final ODataSegmentMemory dataSegment = (ODataSegmentMemory) getDataSegmentById(ppos.dataSegmentId);
-			if (ppos.dataChunkPosition >= dataSegment.count())
+			if (ppos.dataSegmentPos >= dataSegment.count())
 				return false;
 
 		} finally {
@@ -705,7 +709,9 @@ public class OStorageMemory extends OStorageEmbedded {
 						stream = txEntry.getRecord().toStream();
 
 					txEntry.getRecord().onBeforeIdentityChanged(rid);
-					createRecord(txEntry.dataSegmentId, rid, stream, txEntry.getRecord().getRecordType(), 0, null);
+					final OPhysicalPosition ppos = createRecord(txEntry.dataSegmentId, rid, stream, txEntry.getRecord().getRecordType(), 0,
+							null);
+					txEntry.getRecord().setVersion(ppos.recordVersion);
 					txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
 
 					iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_CREATE, txEntry.getRecord());

@@ -650,7 +650,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			final int dataSegmentId = dataSegmentStrategy.assignDataSegmentId(this, iRecord);
 
 			// SAVE IT
-			final long result = underlying.save(dataSegmentId, rid, stream, realVersion, iRecord.getRecordType(), iMode.ordinal());
+			final int version = underlying.save(dataSegmentId, rid, stream, realVersion, iRecord.getRecordType(), iMode.ordinal());
 
 			if (isNew) {
 				// UPDATE INFORMATION: CLUSTER ID+POSITION
@@ -658,10 +658,10 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				// NOTIFY IDENTITY HAS CHANGED
 				iRecord.onAfterIdentityChanged(iRecord);
 				// UPDATE INFORMATION: CLUSTER ID+POSITION
-				iRecord.fill(rid, 0, stream, stream == null || stream.length == 0);
+				iRecord.fill(rid, version, stream, stream == null || stream.length == 0);
 			} else {
 				// UPDATE INFORMATION: VERSION
-				iRecord.fill(rid, (int) result, stream, stream == null || stream.length == 0);
+				iRecord.fill(rid, version, stream, stream == null || stream.length == 0);
 			}
 
 			callbackHooks(wasNew ? TYPE.AFTER_CREATE : TYPE.AFTER_UPDATE, iRecord);

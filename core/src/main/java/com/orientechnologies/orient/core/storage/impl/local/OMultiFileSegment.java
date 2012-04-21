@@ -87,7 +87,7 @@ public class OMultiFileSegment extends OSegment {
 			if (!file.open()) {
 				// LAST TIME THE FILE WAS NOT CLOSED IN SOFT WAY
 				OLogManager.instance().warn(this,
-						"Segment file " + OFileUtils.getPath(file.getName()) + " was not closed correctly last time. Checking segments...");
+						"segment file " + OFileUtils.getPath(file.getName()) + " was not closed correctly last time. Checking segments...");
 				OLogManager.instance().warn(this, "OK");
 			}
 	}

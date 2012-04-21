@@ -66,6 +66,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ODataSegment;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -301,9 +302,11 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 	}
 
-	public long createRecord(int iDataSegmentId, final ORecordId iRid, final byte[] iContent, final byte iRecordType, int iMode,
-			final ORecordCallback<Long> iCallback) {
+	public OPhysicalPosition createRecord(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent,
+			final byte iRecordType, int iMode, final ORecordCallback<Long> iCallback) {
 		checkConnection();
+
+		final OPhysicalPosition ppos = new OPhysicalPosition(iDataSegmentId, -1, iRecordType);
 
 		do {
 			try {
@@ -322,13 +325,18 @@ public class OStorageRemote extends OStorageAbstract {
 				}
 
 				if (iMode == 1)
-					return -1;
+					return ppos;
 
 				if (iCallback == null)
 					try {
 						beginResponse(network);
 						iRid.clusterPosition = network.readLong();
-						return iRid.clusterPosition;
+						ppos.clusterPosition = iRid.clusterPosition;
+						if (network.getSrvProtocolVersion() >= 11)
+							ppos.recordVersion = network.readInt();
+						else
+							ppos.recordVersion = 0;
+						return ppos;
 					} finally {
 						endResponse(network);
 					}
