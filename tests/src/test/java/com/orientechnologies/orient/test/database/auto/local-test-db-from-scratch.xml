@@ -150,6 +150,7 @@
 	</test>
 	<test name="DbTools">
 		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.DbCheckTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.DbImportExportTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.DbCompareTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.DbDeleteTest" />

@@ -400,9 +400,9 @@ public class OStorageLocal extends OStorageEmbedded {
 			long totalRecors = 0;
 			final long start = System.currentTimeMillis();
 
-			iListener.onMessage("\nChecking database '" + getName() + "'...\n");
+			formatMessage(iVerbose, iListener, "\nChecking database '" + getName() + "'...\n");
 
-			iListener.onMessage("\n(1) Checking data-clusters. This activity checks if pointers to data are coherent.");
+			formatMessage(iVerbose, iListener, "\n(1) Checking data-clusters. This activity checks if pointers to data are coherent.");
 
 			final OPhysicalPosition ppos = new OPhysicalPosition();
 
@@ -539,8 +539,6 @@ public class OStorageLocal extends OStorageEmbedded {
 							recordSize *= -1;
 
 							// HOLE: CHECK HOLE PRESENCE
-							nextPos = pos + recordSize;
-
 							if (foundHole != null) {
 								if (foundHole.size != recordSize) {
 									formatMessage(iVerbose, iListener,
@@ -548,12 +546,15 @@ public class OStorageLocal extends OStorageEmbedded {
 											pos, recordSize, foundHole.size);
 									warnings++;
 								}
+
+								nextPos = pos + foundHole.size;
 							} else {
 								formatMessage(iVerbose, iListener, "WARN: Chunk %s:%d (offset=%d size=%d) has no hole for deleted chunk ",
 										d.getName(), totalChunks, pos, recordSize);
 								warnings++;
-							}
 
+								nextPos = pos + recordSize;
+							}
 						} else {
 
 							if (foundHole != null) {
