@@ -83,7 +83,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.impl.local.ODataHoleInfo;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
-import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 import com.orientechnologies.orient.enterprise.command.OCommandExecutorScript;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
@@ -1122,7 +1121,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	}
 
 	@ConsoleCommand(description = "Check database integrity")
-	public void checkDatabase() throws IOException {
+	public void checkDatabase(@ConsoleParameter(name = "options", description = "Options: -v", optional = true) final String iOptions)
+			throws IOException {
 		checkCurrentDatabase();
 
 		if (!(currentDatabase.getStorage() instanceof OStorageLocal)) {
@@ -1130,8 +1130,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			return;
 		}
 
+		boolean verbose = iOptions != null && iOptions.indexOf("-v") > -1;
+
 		try {
-			((OStorageLocal) currentDatabase.getStorage()).check(this);
+			((OStorageLocal) currentDatabase.getStorage()).check(verbose, this);
 		} catch (ODatabaseImportException e) {
 			printError(e);
 		}

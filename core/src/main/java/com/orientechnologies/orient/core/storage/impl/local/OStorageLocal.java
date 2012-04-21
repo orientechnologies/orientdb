@@ -390,7 +390,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		}
 	}
 
-	public boolean check(final OCommandOutputListener iListener) {
+	public boolean check(final boolean iVerbose, final OCommandOutputListener iListener) {
 		int errors = 0;
 		int warnings = 0;
 
@@ -402,7 +402,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			iListener.onMessage("\nChecking database '" + getName() + "'...\n");
 
-			iListener.onMessage("\n(1) Checking clusters. This activity checks if pointers to data are coherent.\n");
+			iListener.onMessage("\n(1) Checking data-clusters. This activity checks if pointers to data are coherent.");
 
 			final OPhysicalPosition ppos = new OPhysicalPosition();
 
@@ -411,7 +411,7 @@ public class OStorageLocal extends OStorageEmbedded {
 				if (!(c instanceof OClusterLocal))
 					continue;
 
-				iListener.onMessage(String.format("- %5d %s", c.getId(), c.getName()));
+				formatMessage(iVerbose, iListener, "\n- data-cluster #%-5d %s -> ", c.getId(), c.getName());
 
 				// BROWSE ALL THE RECORDS
 				for (final OClusterPositionIterator it = c.absoluteIterator(); it.hasNext();) {
@@ -421,30 +421,28 @@ public class OStorageLocal extends OStorageEmbedded {
 						c.getPhysicalPosition(pos, ppos);
 
 						if (ppos.dataSegmentId >= dataSegments.length) {
-							OLogManager.instance().warn(this, "[OStorageLocal.check] Found wrong data segment %d", ppos.dataSegmentId);
+							formatMessage(iVerbose, iListener, "WARN: Found wrong data segment %d ", ppos.dataSegmentId);
 							warnings++;
 						}
 
 						if (ppos.recordSize < 0) {
-							OLogManager.instance().warn(this, "[OStorageLocal.check] Found wrong record size %d", ppos.recordSize);
+							formatMessage(iVerbose, iListener, "WARN: Found wrong record size %d ", ppos.recordSize);
 							warnings++;
 						}
 
 						if (ppos.recordSize >= 1000000) {
-							OLogManager.instance().warn(this, "[OStorageLocal.check] Found suspected big record size %d. Is it corrupted?",
-									ppos.recordSize);
+							formatMessage(iVerbose, iListener, "WARN: Found suspected big record size %d. Is it corrupted? ", ppos.recordSize);
 							warnings++;
 						}
 
 						if (ppos.dataChunkPosition > dataSegments[ppos.dataSegmentId].getFilledUpTo()) {
-							OLogManager.instance().warn(this,
-									"[OStorageLocal.check] Found wrong pointer to data chunk %d out of data segment size (%d)",
+							formatMessage(iVerbose, iListener, "WARN: Found wrong pointer to data chunk %d out of data segment size (%d) ",
 									ppos.dataChunkPosition, dataSegments[ppos.dataSegmentId].getFilledUpTo());
 							warnings++;
 						}
 
 						if (ppos.version < -1) {
-							OLogManager.instance().warn(this, "[OStorageLocal.check] Found wrong record version %d", ppos.version);
+							formatMessage(iVerbose, iListener, "WARN: Found wrong record version %d ", ppos.version);
 							warnings++;
 						} else if (ppos.version == -1) {
 							// CHECK IF THE HOLE EXISTS
@@ -460,21 +458,20 @@ public class OStorageLocal extends OStorageEmbedded {
 							}
 
 							if (!found) {
-								OLogManager.instance()
-										.warn(this, "[OStorageLocal.check] Cannot find hole for deleted record %d:%d", c.getId(), pos);
+								formatMessage(iVerbose, iListener, "WARN: Cannot find hole for deleted record %d:%d ", c.getId(), pos);
 								warnings++;
 							}
 						}
 
 					} catch (IOException e) {
-						OLogManager.instance().warn(this, "[OStorageLocal.check] Error while reading record #%d:%d", e, c.getId(), pos);
+						formatMessage(iVerbose, iListener, "WARN: Error while reading record #%d:%d ", e, c.getId(), pos);
 						warnings++;
 					}
 				}
 
 				final int tot = ((OClusterLocal) c).holeSegment.getHoles();
 				if (tot > 0) {
-					iListener.onMessage(" [found " + tot + " hole(s)]");
+					formatMessage(iVerbose, iListener, " [found " + tot + " hole(s)]");
 					// CHECK HOLES
 					for (int i = 0; i < tot; ++i) {
 						long recycledPosition = -1;
@@ -483,109 +480,159 @@ public class OStorageLocal extends OStorageEmbedded {
 							c.getPhysicalPosition(recycledPosition, ppos);
 
 							if (ppos.version != -1) {
-								OLogManager.instance().warn(this,
-										"[OStorageLocal.check] Found wrong hole %d/%d for deleted record %d:%d. The record seems good", i, tot - 1,
-										c.getId(), recycledPosition);
+								formatMessage(iVerbose, iListener, "WARN: Found wrong hole %d/%d for deleted record %d:%d. The record seems good ",
+										i, tot - 1, c.getId(), recycledPosition);
 								warnings++;
 							}
 						} catch (Exception e) {
-							OLogManager.instance().warn(this,
-									"[OStorageLocal.check] Found wrong hole %d/%d for deleted record %d:%d. The record not exists", i, tot - 1,
-									c.getId(), recycledPosition);
+							formatMessage(iVerbose, iListener, "WARN: Found wrong hole %d/%d for deleted record %d:%d. The record not exists ",
+									i, tot - 1, c.getId(), recycledPosition);
 							warnings++;
 						}
 					}
 				}
-				iListener.onMessage(" = OK\n");
+				formatMessage(iVerbose, iListener, "OK");
 			}
 
 			int totalChunks = 0;
-			iListener
-					.onMessage("\n(2) Checking data chunks integrity. In this phase data segments are scanned to check the back reference into the clusters.\n");
+			formatMessage(iVerbose, iListener,
+					"\n\n(2) Checking data chunks integrity. In this phase data segments are scanned to check the back reference into the clusters.");
+
 			for (ODataLocal d : dataSegments) {
+				formatMessage(iVerbose, iListener, "\n- data-segment %s (id=%d) size=%d/%d...", d.getName(), d.getId(), d.getFilledUpTo(),
+						d.getSize(), d.getHoles());
+
 				int nextPos = 0;
+
+				// GET DATA-SEGMENT HOLES
+				final List<ODataHoleInfo> holes = d.getHolesList();
+				if (iVerbose) {
+					formatMessage(iVerbose, iListener, "\n-- found %d holes:", holes.size());
+
+					for (ODataHoleInfo hole : holes)
+						formatMessage(iVerbose, iListener, "\n--- hole #%-7d offset=%-10d size=%-7d", hole.holeOffset, hole.dataOffset,
+								hole.size);
+				}
+
+				// CHECK CHUNKS
+				formatMessage(iVerbose, iListener, "\n-- checking chunks:");
 
 				for (int pos = 0; nextPos < d.getFilledUpTo();) {
 					try {
 						pos = nextPos;
 
+						// SEARCH IF THE RECORD IT'S BETWEEN HOLES
+						ODataHoleInfo foundHole = null;
+						for (ODataHoleInfo hole : holes) {
+							if (hole.dataOffset == pos) {
+								// HOLE FOUND!
+								foundHole = hole;
+								break;
+							}
+						}
+
 						int recordSize = d.getRecordSize(pos);
+
+						formatMessage(iVerbose, iListener, "\n--- chunk #%-7d offset=%-10d size=%-7d -> ", totalChunks, pos, recordSize);
+
 						if (recordSize < 0) {
 							recordSize *= -1;
 
 							// HOLE: CHECK HOLE PRESENCE
 							nextPos = pos + recordSize;
 
-							boolean found = false;
-							for (ODataHoleInfo hole : d.getHolesList()) {
-								if (hole.dataOffset == pos) {
-									found = true;
-
-									if (hole.size != recordSize) {
-										OLogManager.instance().warn(this, "[OStorageLocal.check] chunk %d has size %d while the hole has %d", pos,
-												recordSize, hole.size);
-										warnings++;
-									}
-
-									break;
+							if (foundHole != null) {
+								if (foundHole.size != recordSize) {
+									formatMessage(iVerbose, iListener,
+											"WARN: Chunk %s:%d (offset=%d size=%d) differs in size with the hole size %d ", d.getName(), totalChunks,
+											pos, recordSize, foundHole.size);
+									warnings++;
 								}
-							}
-
-							if (!found) {
-								OLogManager.instance().warn(this, "[OStorageLocal.check] Cannot find hole for deleted chunk %d of size %d", pos,
-										recordSize);
+							} else {
+								formatMessage(iVerbose, iListener, "WARN: Chunk %s:%d (offset=%d size=%d) has no hole for deleted chunk ",
+										d.getName(), totalChunks, pos, recordSize);
 								warnings++;
 							}
 
 						} else {
 
-							// REGULAR DATA CHUNK
-							nextPos = pos + ODataLocal.RECORD_FIX_SIZE + recordSize;
-
-							final byte[] buffer = d.getRecord(pos);
-							if (buffer.length != recordSize) {
-								OLogManager.instance().warn(this, "[OStorageLocal.check] Wrong record size: found %d but record length is %d",
-										recordSize, buffer.length);
+							if (foundHole != null) {
+								formatMessage(
+										iVerbose,
+										iListener,
+										"WARN: Chunk %s:%d (offset=%d size=%d) it's between the holes (hole #%d) even if has no negative recordSize. Jump the content ",
+										d.getName(), totalChunks, pos, recordSize, foundHole.holeOffset);
 								warnings++;
-							}
-
-							final ORecordId rid = d.getRecordRid(pos);
-							if (!rid.isValid()) {
-								OLogManager.instance().warn(this, "[OStorageLocal.check] Chunk at position %d points to invalid RID %s", pos, rid);
-								warnings++;
+								nextPos = pos + foundHole.size;
 							} else {
-								if (clusters[rid.clusterId] == null) {
-									OLogManager.instance().warn(this,
-											"[OStorageLocal.check] Found ghost chunk at position %d pointed from %s. The cluster %d not exists", pos,
-											rid, rid.clusterId);
+								// REGULAR DATA CHUNK
+								nextPos = pos + ODataLocal.RECORD_FIX_SIZE + recordSize;
+
+								final byte[] buffer = d.getRecord(pos);
+								if (buffer.length != recordSize) {
+									formatMessage(iVerbose, iListener,
+											"WARN: Chunk %s:%d (offset=%d size=%d) has wrong record size because the record length is %d ", d.getName(),
+											totalChunks, pos, recordSize, buffer.length);
+									warnings++;
+								}
+
+								final ORecordId rid = d.getRecordRid(pos);
+								if (!rid.isValid()) {
+									formatMessage(iVerbose, iListener, "WARN: Chunk %s:%d (offset=%d size=%d) points to invalid RID %s ",
+											d.getName(), totalChunks, pos, recordSize, rid);
 									warnings++;
 								} else {
-									clusters[rid.clusterId].getPhysicalPosition(rid.clusterPosition, ppos);
-
-									if (ppos.dataSegmentId != d.getId()) {
-										OLogManager.instance().warn(this,
-												"[OStorageLocal.check] Wrong record chunk data segment: found %d but current id is %d", ppos.dataSegmentId,
-												d.getId());
+									if (rid.clusterId >= clusters.length) {
+										formatMessage(
+												iVerbose,
+												iListener,
+												"WARN: Chunk %s:%d (offset=%d size=%d) has invalid RID because points to %s but configured clusters are %d in total ",
+												d.getName(), totalChunks, pos, recordSize, rid, clusters.length);
 										warnings++;
-									}
 
-									if (ppos.dataChunkPosition != pos) {
-										OLogManager.instance().warn(this,
-												"[OStorageLocal.check] Wrong chunk position: cluster record points to %d, but current chunk is at %d",
-												ppos.dataChunkPosition, pos);
+									} else if (clusters[rid.clusterId] == null) {
+										formatMessage(
+												iVerbose,
+												iListener,
+												"WARN: Chunk %s:%d (offset=%d size=%d) has invalid RID because points to %s but the cluster %d not exists ",
+												d.getName(), totalChunks, pos, recordSize, rid, rid.clusterId);
 										warnings++;
+									} else {
+										clusters[rid.clusterId].getPhysicalPosition(rid.clusterPosition, ppos);
+
+										if (ppos.dataSegmentId != d.getId()) {
+											formatMessage(
+													iVerbose,
+													iListener,
+													"WARN: Chunk %s:%d (offset=%d size=%d) point to the RID %d but it doesn't point to current data segment %d but to %d ",
+													d.getName(), totalChunks, pos, recordSize, rid, d.getId(), ppos.dataSegmentId);
+											warnings++;
+										}
+
+										if (ppos.dataChunkPosition != pos) {
+											formatMessage(
+													iVerbose,
+													iListener,
+													"WARN: Chunk %s:%d (offset=%d size=%d) point to the RID %d but it doesn't point to current chunk %d but to %d ",
+													d.getName(), totalChunks, pos, recordSize, rid, ppos.dataChunkPosition, pos);
+											warnings++;
+										}
 									}
 								}
 							}
 						}
 						totalChunks++;
 
+						formatMessage(iVerbose, iListener, "OK");
+
 					} catch (Exception e) {
-						OLogManager.instance().warn(this, "[OStorageLocal.check] Found wrong chunk %d in %s:%d, cause: ", e, totalChunks,
-								d.getName(), pos, e.toString());
+						iListener.onMessage("ERROR: " + e.toString());
+						// OLogManager.instance().warn(this, "ERROR: Chunk %s:%d (offset=%d) error: %s", e, d.getName(),
+						// totalChunks, pos, e.toString());
 						errors++;
 					}
 				}
+				formatMessage(iVerbose, iListener, "\n");
 			}
 
 			iListener.onMessage("\nCheck of database completed in " + (System.currentTimeMillis() - start)
@@ -1619,5 +1666,11 @@ public class OStorageLocal extends OStorageEmbedded {
 				return getHoleSize();
 			}
 		});
+	}
+
+	private void formatMessage(final boolean iVerbose, final OCommandOutputListener iListener, final String iMessage,
+			final Object... iArgs) {
+		if (iVerbose)
+			iListener.onMessage(String.format(iMessage, iArgs));
 	}
 }
