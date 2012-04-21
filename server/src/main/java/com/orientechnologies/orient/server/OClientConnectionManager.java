@@ -22,10 +22,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TimerTask;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -39,6 +42,28 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
 	private static final OClientConnectionManager	instance					= new OClientConnectionManager();
 
 	public OClientConnectionManager() {
+		final int delay = OGlobalConfiguration.SERVER_CHANNEL_CLEAN_DELAY.getValueAsInteger();
+
+		Orient.getTimer().schedule(new TimerTask() {
+
+			@Override
+			public void run() {
+				acquireExclusiveLock();
+				try {
+					final HashMap<Integer, OClientConnection> localConnections = new HashMap<Integer, OClientConnection>(connections);
+					for (Entry<Integer, OClientConnection> entry : localConnections.entrySet()) {
+						final Socket socket = entry.getValue().protocol.getChannel().socket;
+						if (socket == null || socket.isClosed() || socket.isInputShutdown()) {
+							OLogManager.instance().debug(this, "[OClientConnectionManager] found and removed pending closed channel %d (%s)",
+									entry.getKey(), socket);
+							connections.remove(entry.getKey());
+						}
+					}
+				} finally {
+					releaseExclusiveLock();
+				}
+			}
+		}, delay, delay);
 	}
 
 	/**
@@ -76,7 +101,7 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
 
 			// SEARCH THE CONNECTION BY ID
 			conn = connections.get(iChannelId);
-			
+
 			// COMMENTED TO USE SOCKET POOL: THINK TO ANOTHER WAY TO IMPROVE SECURITY
 			// if (conn != null && conn.getChannel().socket != socket)
 			// throw new IllegalStateException("Requested sessionId " + iChannelId + " by connection " + socket

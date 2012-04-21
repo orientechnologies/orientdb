@@ -289,6 +289,9 @@ public enum OGlobalConfiguration {
 	CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool", "Maximum channel pool size", Integer.class, 5),
 
 	// SERVER
+	SERVER_CHANNEL_CLEAN_DELAY("server.channel.cleanDelay", "Time in ms of delay to check pending closed connections", Integer.class,
+			5000),
+
 	SERVER_CACHE_FILE_STATIC("server.cache.staticFile", "Cache static resources loading", Boolean.class, false),
 
 	SERVER_LOG_CLIENT_EXCEPTION_LEVEL(
