@@ -886,8 +886,16 @@ public class IndexTest {
 		database.command(new OCommandSQL("drop index inIdx")).execute();
 	}
 
+	@Test
+	public void testIndexCount() {
+		final OIndex nickIndex = database.getMetadata().getIndexManager().getIndex("Profile.nick");
+		final List<ODocument> result = database.query(new OSQLSynchQuery<Object>("select count(*) from index:Profile.nick"));
+		Assert.assertEquals(result.size(), 1);
+		Assert.assertEquals(result.get(0).<Long>field("count").longValue(), nickIndex.getSize());
+	}
+
 	@SuppressWarnings("unchecked")
-	public void LongTypes() {
+	public void longTypes() {
 		database.getMetadata().getSchema().getClass("Profile").createProperty("hash", OType.LONG).createIndex(OClass.INDEX_TYPE.UNIQUE);
 
 		OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) database.getMetadata().getIndexManager().getIndex("Profile.hash");

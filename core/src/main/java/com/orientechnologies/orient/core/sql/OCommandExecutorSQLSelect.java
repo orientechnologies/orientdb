@@ -55,6 +55,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
+import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
@@ -1121,6 +1122,17 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 			}
 
 		} else {
+			//for "select count(*) from index:" we do not need to fetch all index data.
+			if(anyFunctionAggregates && projections.entrySet().size() == 1) {
+				final Object projection = projections.values().iterator().next();
+				if(projection instanceof OSQLFunctionRuntime &&
+								((OSQLFunctionRuntime)projection).getRoot().equals(OSQLFunctionCount.NAME)) {
+					final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection;
+					f.setResult(index.getSize());
+					return;
+				}
+			}
+
 			final OIndexInternal indexInternal = index.getInternal();
 			if(indexInternal instanceof OSharedResource)
 				((OSharedResource) indexInternal).acquireExclusiveLock();
