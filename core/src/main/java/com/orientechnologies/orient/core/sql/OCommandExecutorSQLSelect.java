@@ -28,6 +28,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.collection.OCompositeKey;
+import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -41,14 +42,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
-import com.orientechnologies.orient.core.index.OIndexFullText;
-import com.orientechnologies.orient.core.index.OIndexNotUnique;
-import com.orientechnologies.orient.core.index.OIndexUnique;
-import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -1127,18 +1121,25 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLExtractAbstrac
 			}
 
 		} else {
+			final OIndexInternal indexInternal = index.getInternal();
+			if(indexInternal instanceof OSharedResource)
+				((OSharedResource) indexInternal).acquireExclusiveLock();
 
-			// ADD ALL THE ITEMS AS RESULT
-			for (Iterator<Entry<Object, Object>> it = index.iterator(); it.hasNext();) {
-				final Entry<Object, Object> current = it.next();
+			try {
+				// ADD ALL THE ITEMS AS RESULT
+				for (Iterator<Entry<Object, Object>> it = index.iterator(); it.hasNext();) {
+					final Entry<Object, Object> current = it.next();
 
-				if (current.getValue() instanceof Collection<?>)
-					for (Iterator<OIdentifiable> collIt = ((OMVRBTreeRIDSet) current.getValue()).iterator(); collIt.hasNext();)
-						addResult(createIndexEntryAsDocument(current.getKey(), collIt.next().getIdentity()));
-				else
-					addResult(createIndexEntryAsDocument(current.getKey(), (OIdentifiable) current.getValue()));
+					if (current.getValue() instanceof Collection<?>)
+						for (OIdentifiable identifiable : ((OMVRBTreeRIDSet) current.getValue()))
+							addResult(createIndexEntryAsDocument(current.getKey(), identifiable.getIdentity()));
+					else
+						addResult(createIndexEntryAsDocument(current.getKey(), (OIdentifiable) current.getValue()));
+				}
+			} finally {
+				if(indexInternal instanceof OSharedResource)
+					((OSharedResource) indexInternal).releaseExclusiveLock();
 			}
-
 		}
 
 		if (anyFunctionAggregates) {
