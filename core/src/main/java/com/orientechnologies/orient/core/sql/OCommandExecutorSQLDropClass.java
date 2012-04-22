@@ -107,7 +107,7 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract {
 
 		for(final OIndex<?> oIndex : superClass.getIndexes()) {
 			for(final String clusterName : clusterNames)
-				((OIndexInternal<?>)oIndex.getInternal()).removeCluster(clusterName);
+				oIndex.getInternal().removeCluster(clusterName);
 
 			OLogManager.instance().info("Index %s is used in super class of %s and should be rebuilt.",
 							oIndex.getName(), className);

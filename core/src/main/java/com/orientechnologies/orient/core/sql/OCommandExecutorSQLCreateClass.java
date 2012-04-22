@@ -20,6 +20,8 @@ import java.util.Map;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
@@ -136,6 +138,19 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
 		final OClassImpl sourceClass = (OClassImpl) ((OSchemaProxy) database.getMetadata().getSchema()).createClassInternal(className,
 				superClass, clusterIds);
 		sourceClass.saveInternal();
+
+		if(superClass != null) {
+			int[] clustersToIndex = superClass.getPolymorphicClusterIds();
+			String[] clusterNames = new String[clustersToIndex.length];
+			for(int i = 0; i < clustersToIndex.length; i++) {
+				clusterNames[i] = database.getClusterNameById(clustersToIndex[i]);
+			}
+
+			for(OIndex<?> index : superClass.getIndexes())
+				for(String clusterName : clusterNames)
+					index.getInternal().addCluster(clusterName);
+		}
+
 		return database.getMetadata().getSchema().getClasses().size();
 	}
 
