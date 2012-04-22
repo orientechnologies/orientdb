@@ -517,16 +517,26 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 		}
 	}
 
-	public OIndexMVRBTreeAbstract<T> addCluster(final String iClusterName) {
 
+	public OIndexMVRBTreeAbstract<T> addCluster(final String iClusterName) {
 		acquireExclusiveLock();
 		try {
-
-			clustersToIndex.add(iClusterName);
+			if(clustersToIndex.add(iClusterName))
+				updateConfiguration();
 			return this;
-
 		} finally {
-			releaseSharedLock();
+			releaseExclusiveLock();
+		}
+	}
+
+	public OIndexMVRBTreeAbstract<T> removeCluster(String iClusterName) {
+		acquireExclusiveLock();
+		try {
+			if(clustersToIndex.remove(iClusterName))
+				updateConfiguration();
+			return this;
+		} finally {
+			releaseExclusiveLock();
 		}
 	}
 

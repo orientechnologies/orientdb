@@ -17,10 +17,12 @@ package com.orientechnologies.orient.core.sql;
 
 import java.util.Map;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -83,13 +85,34 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract {
 			database.getMetadata().getIndexManager().dropIndex(oIndex.getName());
 		}
 
+		final OClass superClass = oClass.getSuperClass();
+		final int[] clustersToIndex = oClass.getPolymorphicClusterIds();
+
+		final String[] clusterNames = new String[clustersToIndex.length];
+		for(int i = 0; i < clustersToIndex.length; i++) {
+			clusterNames[i] = database.getClusterNameById(clustersToIndex[i]);
+		}
+
 		final int clusterId = oClass.getDefaultClusterId();
 
 		((OSchemaProxy) database.getMetadata().getSchema()).dropClassInternal(className);
 		((OSchemaProxy) database.getMetadata().getSchema()).saveInternal();
-		((OSchemaProxy) database.getMetadata().getSchema()).reload();
+		database.getMetadata().getSchema().reload();
 
 		deleteDefaultCluster(clusterId);
+
+		if(superClass == null)
+			return true;
+
+
+		for(final OIndex<?> oIndex : superClass.getIndexes()) {
+			for(final String clusterName : clusterNames)
+				((OIndexInternal<?>)oIndex.getInternal()).removeCluster(clusterName);
+
+			OLogManager.instance().info("Index %s is used in super class of %s and should be rebuilt.",
+							oIndex.getName(), className);
+			oIndex.rebuild();
+		}
 
 		return true;
 	}

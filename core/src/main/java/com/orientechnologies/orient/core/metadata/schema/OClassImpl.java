@@ -526,6 +526,36 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		return this;
 	}
 
+	public OClass removeBaseClassInternal(final OClass baseClass) {
+		if(baseClasses == null)
+			return this;
+
+		if(baseClasses.remove(baseClass)) {
+			OClassImpl currentClass = this;
+
+			while (currentClass != null) {
+				currentClass.removePolymorphicClusterIds((OClassImpl)baseClass);
+				currentClass = (OClassImpl) currentClass.getSuperClass();
+			}
+		}
+
+		return this;
+	}
+
+	private void removePolymorphicClusterIds(final OClassImpl iBaseClass) {
+		for(final int clusterId : iBaseClass.polymorphicClusterIds) {
+			final int index = Arrays.binarySearch(polymorphicClusterIds, clusterId);
+			if(index == -1)
+				continue;
+
+			if(index < polymorphicClusterIds.length - 1)
+				System.arraycopy(polymorphicClusterIds, index + 1, polymorphicClusterIds, index,
+								polymorphicClusterIds.length - (index + 1));
+
+			polymorphicClusterIds = Arrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length - 1);
+		}
+	}
+
 	public float getOverSize() {
 		if (overSize > 0)
 			// CUSTOM OVERSIZE SETTED
