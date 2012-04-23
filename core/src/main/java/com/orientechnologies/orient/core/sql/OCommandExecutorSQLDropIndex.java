@@ -36,7 +36,7 @@ public class OCommandExecutorSQLDropIndex extends OCommandExecutorSQLAbstract {
 	private String							name;
 
 	public OCommandExecutorSQLDropIndex parse(final OCommandRequestText iRequest) {
-		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
 		init(iRequest.getText());
 

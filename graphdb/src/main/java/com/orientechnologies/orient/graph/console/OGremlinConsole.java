@@ -69,7 +69,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
 
 	@ConsoleCommand(splitInWords = false, description = "Execute a GREMLIN script")
 	public void gremlin(@ConsoleParameter(name = "script-text", description = "The script text to execute") final String iScriptText) {
-		checkCurrentDatabase();
+		checkForDatabase();
 
 		if (iScriptText == null || iScriptText.length() == 0)
 			return;

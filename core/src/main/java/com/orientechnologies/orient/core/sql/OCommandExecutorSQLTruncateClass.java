@@ -39,7 +39,7 @@ public class OCommandExecutorSQLTruncateClass extends OCommandExecutorSQLAbstrac
 	@SuppressWarnings("unchecked")
 	public OCommandExecutorSQLTruncateClass parse(final OCommandRequestText iRequest) {
 		final ODatabaseRecord database = getDatabase();
-		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_DELETE);
+		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 		init(iRequest.getText());
 
 		StringBuilder word = new StringBuilder();

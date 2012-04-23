@@ -62,7 +62,7 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
 	private boolean							inverse					= false;
 
 	public OCommandExecutorSQLCreateLink parse(final OCommandRequestText iRequest) {
-		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
 		init(iRequest.getText());
 

@@ -16,6 +16,9 @@
 package com.orientechnologies.orient.core.command.script;
 
 import com.orientechnologies.orient.core.command.OCommandRequestTextAbstract;
+import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.serialization.OMemoryStream;
+import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
 /**
  * Script command request implementation. It just stores the request and delegated the execution to the configured OCommandExecutor.
@@ -45,7 +48,21 @@ public class OCommandScript extends OCommandRequestTextAbstract {
 		return language;
 	}
 
-	public void setLanguage(String language) {
+	public OCommandScript setLanguage(String language) {
 		this.language = language;
+		return this;
+	}
+
+	public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
+		final OMemoryStream buffer = new OMemoryStream(iStream);
+		language = buffer.getAsString();
+		fromStream(buffer);
+		return this;
+	}
+
+	public byte[] toStream() throws OSerializationException {
+		final OMemoryStream buffer = new OMemoryStream();
+		buffer.set(language);
+		return toStream(buffer);
 	}
 }

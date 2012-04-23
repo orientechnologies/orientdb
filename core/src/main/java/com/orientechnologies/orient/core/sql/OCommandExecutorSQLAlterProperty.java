@@ -45,7 +45,7 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
 	private String							value;
 
 	public OCommandExecutorSQLAlterProperty parse(final OCommandRequestText iRequest) {
-		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_UPDATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
 		init(iRequest.getText());
 

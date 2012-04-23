@@ -23,6 +23,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -75,7 +76,7 @@ public class OConsoleApplication {
 
 			while (true) {
 				out.println();
-				out.print("> ");
+				out.print("orientdb> ");
 				consoleInput = reader.readLine();
 
 				if (consoleInput == null || consoleInput.length() == 0)
@@ -111,11 +112,18 @@ public class OConsoleApplication {
 
 	protected boolean executeCommands(final String iCommands) {
 		String[] commandLines = OStringParser.split(iCommands, commandSeparator, OStringParser.COMMON_JUMP);
-		// String[] commandLines = iCommands.split(commandSeparator);
-		for (String commandLine : commandLines)
+
+		final List<String> modifiedCommandLines = filterCommands(commandLines);
+
+		// EXECUTE THE COMMANDS IN SEQUENCE
+		for (String commandLine : modifiedCommandLines)
 			if (!execute(commandLine))
 				return false;
 		return true;
+	}
+
+	protected List<String> filterCommands(String[] commandLines) {
+		return Arrays.asList(commandLines);
 	}
 
 	protected boolean executeCommands(final Scanner iScanner) {
@@ -173,7 +181,7 @@ public class OConsoleApplication {
 				commandName.append(ch);
 			}
 
-			if (!commandLowerCase.startsWith(commandName.toString())) {
+			if (!commandLowerCase.startsWith(commandName.toString() + " ")) {
 				if (ann == null)
 					continue;
 

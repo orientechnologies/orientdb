@@ -43,7 +43,7 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract {
 	private String							className;
 
 	public OCommandExecutorSQLDropClass parse(final OCommandRequestText iRequest) {
-		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_DELETE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
 		init(iRequest.getText());
 

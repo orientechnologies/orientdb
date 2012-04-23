@@ -27,8 +27,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 
 /**
  * Text based Command Request abstract class.
@@ -71,61 +71,30 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
 
 	public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
 		final OMemoryStream buffer = new OMemoryStream(iStream);
-
-		text = buffer.getAsString();
-
-		parameters = null;
-
-		final boolean simpleParams = buffer.getAsBoolean();
-		if (simpleParams) {
-			final byte[] paramBuffer = buffer.getAsByteArray();
-			final ODocument param = new ODocument();
-			param.fromStream(paramBuffer);
-
-			Map<String, Object> params = param.field("params");
-
-			parameters = new HashMap<Object, Object>();
-			for (Entry<String, Object> p : params.entrySet()) {
-				final Object value;
-				if (p.getValue() instanceof String)
-					value = ORecordSerializerStringAbstract.getTypeValue((String) p.getValue());
-				else
-					value = p.getValue();
-
-				if (Character.isDigit(p.getKey().charAt(0)))
-					parameters.put(Integer.parseInt(p.getKey()), value);
-				else
-					parameters.put(p.getKey(), value);
-			}
-		}
-
-		final boolean compositeKeyParamsPresent = buffer.getAsBoolean();
-		if (compositeKeyParamsPresent) {
-			final byte[] paramBuffer = buffer.getAsByteArray();
-			final ODocument param = new ODocument();
-			param.fromStream(paramBuffer);
-
-			final Map<String, Object> compositeKeyParams = param.field("compositeKeyParams");
-
-			if (parameters == null)
-				parameters = new HashMap<Object, Object>();
-
-			for (final Entry<String, Object> p : compositeKeyParams.entrySet()) {
-				final Object value = OCompositeKeySerializer.INSTANCE.deserialize(
-								OStringSerializerHelper.getBinaryContent(p.getValue()), 0);
-
-				if (Character.isDigit(p.getKey().charAt(0)))
-					parameters.put(Integer.parseInt(p.getKey()), value);
-				else
-					parameters.put(p.getKey(), value);
-			}
-		}
+		fromStream(buffer);
 		return this;
 	}
 
 	public byte[] toStream() throws OSerializationException {
 		final OMemoryStream buffer = new OMemoryStream();
+		return toStream(buffer);
+	}
 
+	public OCommandContext getContext() {
+		return context;
+	}
+
+	public OCommandRequestText setContext(final OCommandContext iContext) {
+		context = iContext;
+		return this;
+	}
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + " [text=" + text + "]";
+	}
+
+	protected byte[] toStream(final OMemoryStream buffer) {
 		buffer.set(text);
 
 		if (parameters == null || parameters.size() == 0) {
@@ -169,18 +138,55 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
 		return buffer.toByteArray();
 	}
 
-	public OCommandContext getContext() {
-		return context;
-	}
+	protected void fromStream(final OMemoryStream buffer) {
+		text = buffer.getAsString();
 
-	public OCommandRequestText setContext(final OCommandContext iContext) {
-		context = iContext;
-		return this;
-	}
+		parameters = null;
 
-	@Override
-	public String toString() {
-		return getClass().getSimpleName() + " [text=" + text + "]";
+		final boolean simpleParams = buffer.getAsBoolean();
+		if (simpleParams) {
+			final byte[] paramBuffer = buffer.getAsByteArray();
+			final ODocument param = new ODocument();
+			param.fromStream(paramBuffer);
+
+			Map<String, Object> params = param.field("params");
+
+			parameters = new HashMap<Object, Object>();
+			for (Entry<String, Object> p : params.entrySet()) {
+				final Object value;
+				if (p.getValue() instanceof String)
+					value = ORecordSerializerStringAbstract.getTypeValue((String) p.getValue());
+				else
+					value = p.getValue();
+
+				if (Character.isDigit(p.getKey().charAt(0)))
+					parameters.put(Integer.parseInt(p.getKey()), value);
+				else
+					parameters.put(p.getKey(), value);
+			}
+		}
+
+		final boolean compositeKeyParamsPresent = buffer.getAsBoolean();
+		if (compositeKeyParamsPresent) {
+			final byte[] paramBuffer = buffer.getAsByteArray();
+			final ODocument param = new ODocument();
+			param.fromStream(paramBuffer);
+
+			final Map<String, Object> compositeKeyParams = param.field("compositeKeyParams");
+
+			if (parameters == null)
+				parameters = new HashMap<Object, Object>();
+
+			for (final Entry<String, Object> p : compositeKeyParams.entrySet()) {
+				final Object value = OCompositeKeySerializer.INSTANCE
+						.deserialize(OStringSerializerHelper.getBinaryContent(p.getValue()), 0);
+
+				if (Character.isDigit(p.getKey().charAt(0)))
+					parameters.put(Integer.parseInt(p.getKey()), value);
+				else
+					parameters.put(p.getKey(), value);
+			}
+		}
 	}
 
 }

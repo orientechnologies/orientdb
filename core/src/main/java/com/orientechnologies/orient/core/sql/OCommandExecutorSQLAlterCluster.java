@@ -48,7 +48,7 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
 
 	public OCommandExecutorSQLAlterCluster parse(final OCommandRequestText iRequest) {
 		final ODatabaseRecord database = getDatabase();
-		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_UPDATE);
+		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
 		init(iRequest.getText());
 

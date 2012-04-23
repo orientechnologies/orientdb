@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -68,7 +67,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 	@SuppressWarnings("unchecked")
 	public OCommandExecutorSQLUpdate parse(final OCommandRequestText iRequest) {
 		final ODatabaseRecord database = getDatabase();
-		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_UPDATE);
+		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
 		init(iRequest.getText());
 

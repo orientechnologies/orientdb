@@ -54,7 +54,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 	@SuppressWarnings("unchecked")
 	public OCommandExecutorSQLDelete parse(final OCommandRequestText iRequest) {
 		final ODatabaseRecord database = getDatabase();
-		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_DELETE);
+		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
 		init(iRequest.getText());
 

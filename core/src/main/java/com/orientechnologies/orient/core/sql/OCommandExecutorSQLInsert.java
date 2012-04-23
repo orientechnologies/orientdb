@@ -51,7 +51,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware {
 	@SuppressWarnings("unchecked")
 	public OCommandExecutorSQLInsert parse(final OCommandRequestText iRequest) {
 		final ODatabaseRecord database = getDatabase();
-		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
+		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
 		init(iRequest.getText());
 

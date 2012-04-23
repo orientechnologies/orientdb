@@ -40,7 +40,7 @@ public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLAbstr
 	@SuppressWarnings("unchecked")
 	public OCommandExecutorSQLTruncateCluster parse(final OCommandRequestText iRequest) {
 		final ODatabaseRecord database = getDatabase();
-		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_DELETE);
+		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 		init(iRequest.getText());
 
 		StringBuilder word = new StringBuilder();

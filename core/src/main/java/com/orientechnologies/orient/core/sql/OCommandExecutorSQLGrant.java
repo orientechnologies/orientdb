@@ -34,7 +34,7 @@ public class OCommandExecutorSQLGrant extends OCommandExecutorSQLPermissionAbstr
 
 	@SuppressWarnings("unchecked")
 	public OCommandExecutorSQLGrant parse(final OCommandRequestText iRequest) {
-		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
 		init(iRequest.getText());
 

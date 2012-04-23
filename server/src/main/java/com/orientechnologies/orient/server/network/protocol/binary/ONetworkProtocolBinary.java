@@ -790,8 +790,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 	protected void command() throws IOException {
 		setDataCommandInfo("Execute remote command");
 
-		checkDatabase();
-
 		final boolean asynch = channel.readByte() == 'a';
 
 		final OCommandRequestText command = (OCommandRequestText) OStreamSerializerAnyStreamable.INSTANCE.fromStream(channel

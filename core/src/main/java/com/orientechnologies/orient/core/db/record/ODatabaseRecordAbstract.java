@@ -351,6 +351,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	}
 
 	public OCommandRequest command(final OCommandRequest iCommand) {
+		checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
+
 		setCurrentDatabaseinThreadLocal();
 
 		final OCommandRequestInternal command = (OCommandRequestInternal) iCommand;

@@ -45,7 +45,7 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
 	private boolean							force							= false;
 
 	public OCommandExecutorSQLDropProperty parse(final OCommandRequestText iRequest) {
-		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_DELETE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
 		init(iRequest.getText());
 

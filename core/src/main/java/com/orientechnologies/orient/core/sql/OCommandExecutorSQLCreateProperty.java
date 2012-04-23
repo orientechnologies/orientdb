@@ -45,7 +45,7 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
 	private String							linked;
 
 	public OCommandExecutorSQLCreateProperty parse(final OCommandRequestText iRequest) {
-		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
+		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
 		init(iRequest.getText());
 

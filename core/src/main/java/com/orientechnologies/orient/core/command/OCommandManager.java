@@ -64,6 +64,11 @@ public class OCommandManager {
 		return this;
 	}
 
+	public OCommandManager unregisterExecutor(final Class<? extends OCommandRequest> iRequest) {
+		commandReqExecMap.remove(iRequest);
+		return this;
+	}
+
 	public OCommandExecutor getExecutor(OCommandRequestInternal iCommand) {
 		final Class<? extends OCommandExecutor> executorClass = commandReqExecMap.get(iCommand.getClass());
 

@@ -26,6 +26,13 @@
 				<parameter name="db.exclude" value="" /><!-- USE COMMA TO SEPARATE MULTIPLE DATABASE NAMES -->
 			</parameters>
 		</handler>
+		<!-- SERVER SIDE SCRIPT INTERPRETER. WARNING! THIS CAN BE A SECURITY HOLE: ENABLE IT ONLY IF CLIENTS ARE TRUCT, TO TURN ON SET THE 'ENABLED' PARAMETER 
+			TO 'true' -->
+		<handler class="com.orientechnologies.orient.server.handler.OServerSideScriptInterpreter">
+			<parameters>
+				<parameter name="enabled" value="false" />
+			</parameters>
+		</handler>
 	</handlers>
 	<network>
 		<protocols>

@@ -40,8 +40,6 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.OCommandManager;
-import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -54,7 +52,6 @@ import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
-import com.orientechnologies.orient.enterprise.command.OCommandExecutorScript;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerConfigurationLoaderXml;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
@@ -95,9 +92,6 @@ public class OServer {
 		OLogManager.installCustomFormatter();
 
 		threadGroup = new ThreadGroup("OrientDB Server");
-
-		// REGISTER THE COMMAND SCRIPT
-		OCommandManager.instance().registerExecutor(OCommandScript.class, OCommandExecutorScript.class);
 
 		OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(true);
 		System.setProperty("com.sun.management.jmxremote", "true");

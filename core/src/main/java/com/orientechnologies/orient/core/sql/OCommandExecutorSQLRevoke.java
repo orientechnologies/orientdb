@@ -36,7 +36,7 @@ public class OCommandExecutorSQLRevoke extends OCommandExecutorSQLPermissionAbst
 	@SuppressWarnings("unchecked")
 	public OCommandExecutorSQLRevoke parse(final OCommandRequestText iRequest) {
 		final ODatabaseRecord database = getDatabase();
-		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
+		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
 		init(iRequest.getText());
 
