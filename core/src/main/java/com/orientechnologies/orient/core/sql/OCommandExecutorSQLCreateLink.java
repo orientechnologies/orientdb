@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -197,9 +198,12 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
 		if (progressListener != null)
 			progressListener.onBegin(this, totRecords);
 
+		database.declareIntent(new OIntentMassiveInsert());
 		try {
 			// BROWSE ALL THE RECORDS OF THE SOURCE CLASS
 			for (ODocument doc : db.browseClass(sourceClass.getName())) {
+				doc.unpin();
+				
 				value = doc.field(sourceField);
 
 				if (value != null) {
@@ -314,6 +318,9 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
 				progressListener.onCompletition(this, false);
 
 			throw new OCommandExecutionException("Error on creation of links", e);
+
+		} finally {
+			database.declareIntent(null);
 		}
 
 		return total;
