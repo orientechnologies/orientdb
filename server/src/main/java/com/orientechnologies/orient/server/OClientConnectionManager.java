@@ -56,6 +56,10 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
 						if (socket == null || socket.isClosed() || socket.isInputShutdown()) {
 							OLogManager.instance().debug(this, "[OClientConnectionManager] found and removed pending closed channel %d (%s)",
 									entry.getKey(), socket);
+							try {
+								entry.getValue().close();
+							} catch (Exception e) {
+							}
 							connections.remove(entry.getKey());
 						}
 					}
