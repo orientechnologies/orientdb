@@ -181,7 +181,7 @@ public class OConsoleApplication {
 				commandName.append(ch);
 			}
 
-			if (!commandLowerCase.startsWith(commandName.toString() + " ")) {
+			if (!commandLowerCase.equals(commandName.toString()) && !commandLowerCase.startsWith(commandName.toString() + " ")) {
 				if (ann == null)
 					continue;
 
