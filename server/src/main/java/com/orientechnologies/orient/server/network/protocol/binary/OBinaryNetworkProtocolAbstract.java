@@ -306,7 +306,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 	protected ODatabaseComplex<?> openDatabase(final ODatabaseComplex<?> database, final String iUser, final String iPassword) {
 
 		if (database.isClosed())
-			if (database.getStorage() instanceof OStorageMemory)
+			if (database.getStorage() instanceof OStorageMemory && !database.exists())
 				database.create();
 			else {
 				try {
