@@ -31,7 +31,19 @@ import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODetachable;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -341,6 +353,16 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 			throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found");
 
 		return (ODocument) result;
+	}
+
+	@Override
+	public ODocument reload(String iFetchPlan, boolean iIgnoreCache) {
+		super.reload(iFetchPlan, iIgnoreCache);
+		if (!_lazyLoad) {
+			checkForFields();
+			checkForLoading();
+		}
+		return this;
 	}
 
 	public boolean hasSameContentOf(final ODocument iOther) {
@@ -981,7 +1003,14 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 		_fieldChangeListeners = null;
 		_fieldCollectionChangeTimeLines = null;
 
-		return (ODocument) super.fromStream(iRecordBuffer);
+		super.fromStream(iRecordBuffer);
+
+		if (!_lazyLoad) {
+			checkForFields();
+			checkForLoading();
+		}
+
+		return (ODocument) this;
 	}
 
 	@Override
@@ -1209,9 +1238,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 		}
 
 		if (fieldType == null
-				|| !(OType.EMBEDDEDLIST.equals(fieldType) || OType.EMBEDDEDMAP.equals(fieldType) ||
-						OType.EMBEDDEDSET.equals(fieldType) || (OType.LINKLIST.equals(fieldType) ||
-						OType.LINKMAP.equals(fieldType))))
+				|| !(OType.EMBEDDEDLIST.equals(fieldType) || OType.EMBEDDEDMAP.equals(fieldType) || OType.EMBEDDEDSET.equals(fieldType) || (OType.LINKLIST
+						.equals(fieldType) || OType.LINKMAP.equals(fieldType))))
 			return;
 
 		if (!(fieldValue instanceof OTrackedMultiValue))
@@ -1296,11 +1324,10 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 			}
 
 			if (fieldType == null
-					|| !(OType.EMBEDDEDLIST.equals(fieldType) || OType.EMBEDDEDMAP.equals(fieldType) || 
-							OType.EMBEDDEDSET.equals(fieldType) || OType.LINKLIST.equals(fieldType) || 
-			        OType.LINKMAP.equals(fieldType)))
+					|| !(OType.EMBEDDEDLIST.equals(fieldType) || OType.EMBEDDEDMAP.equals(fieldType) || OType.EMBEDDEDSET.equals(fieldType)
+							|| OType.LINKLIST.equals(fieldType) || OType.LINKMAP.equals(fieldType)))
 				continue;
-			
+
 			if (fieldValue instanceof List && fieldType.equals(OType.EMBEDDEDLIST) && !(fieldValue instanceof OTrackedMultiValue))
 				fieldsToUpdate.put(fieldEntry.getKey(), new OTrackedList(this, (List) fieldValue, null));
 			else if (fieldValue instanceof Set && fieldType.equals(OType.EMBEDDEDSET) && !(fieldValue instanceof OTrackedMultiValue))

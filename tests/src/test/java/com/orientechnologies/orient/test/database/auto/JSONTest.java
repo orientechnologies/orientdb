@@ -26,10 +26,11 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 
 @SuppressWarnings("unchecked")
 @Test
@@ -292,6 +293,61 @@ public class JSONTest {
 			ODocument loadedDoc = new ODocument().fromJSON(jsonFull);
 
 			Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
+		}
+	}
+
+	@Test
+	public void testToJSONWithNoLazyLoadAndClosedDatabase() {
+		ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>("select * from Profile where name = 'Barack' and surname = 'Obama'")).execute();
+
+		for (ODocument doc : result) {
+			doc.reload("*:0");
+			String jsonFull = doc.toJSON();
+			ORID rid = doc.getIdentity();
+			database.close();
+			database.open("admin", "admin");
+			doc = database.load(rid);
+			doc.setLazyLoad(false);
+			doc.reload("*:0");
+			database.close();
+			String jsonLoaded = doc.toJSON();
+			Assert.assertEquals(jsonFull, jsonLoaded);
+			database.open("admin", "admin");
+			doc = database.load(rid);
+			doc.setLazyLoad(false);
+			doc.load("*:0");
+			database.close();
+			jsonLoaded = doc.toJSON();
+
+			Assert.assertEquals(jsonFull, jsonLoaded);
+		}
+
+		database.open("admin", "admin");
+
+		for (ODocument doc : result) {
+			doc.reload("*:1");
+			String jsonFull = doc.toJSON();
+			ORID rid = doc.getIdentity();
+			database.close();
+			database.open("admin", "admin");
+			doc = database.load(rid);
+			doc.setLazyLoad(false);
+			doc.reload("*:1");
+			database.close();
+			String jsonLoaded = doc.toJSON();
+			Assert.assertEquals(jsonFull, jsonLoaded);
+			database.open("admin", "admin");
+			doc = database.load(rid);
+			doc.setLazyLoad(false);
+			doc.load("*:1");
+			database.close();
+			jsonLoaded = doc.toJSON();
+
+			Assert.assertEquals(jsonFull, jsonLoaded);
 		}
 	}
 
