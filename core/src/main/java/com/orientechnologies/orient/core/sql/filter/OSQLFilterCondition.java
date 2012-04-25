@@ -64,6 +64,13 @@ public class OSQLFilterCondition {
 	}
 
 	public Object evaluate(final OIdentifiable o, final OCommandContext iContext) {
+		// EXECUTE SUB QUERIES ONCE
+		if (left instanceof OSQLQuery<?>)
+			left = ((OSQLQuery<?>) left).setContext(iContext).execute();
+
+		if (right instanceof OSQLQuery<?>)
+			right = ((OSQLQuery<?>) right).setContext(iContext).execute();
+
 		Object l = evaluate(o, left, iContext);
 		Object r = evaluate(o, right, iContext);
 
@@ -233,10 +240,6 @@ public class OSQLFilterCondition {
 			} catch (ORecordNotFoundException e) {
 				return null;
 			}
-		}
-
-		if (iValue instanceof OSQLQuery<?>) {
-			return ((OSQLQuery<?>) iValue).setContext(iContext).execute();
 		}
 
 		if (iValue instanceof OSQLFilterItem)
