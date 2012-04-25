@@ -79,7 +79,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 	 * 
 	 * @return {@code FieldChain} representation of this filter item.
 	 * @throws IllegalStateException
-	 *           if this filter item can't be represented as {@code FieldChain}.
+	 *           if this filter item cannot be represented as {@code FieldChain}.
 	 */
 	public FieldChain getFieldChain() {
 		if (!isFieldChain()) {

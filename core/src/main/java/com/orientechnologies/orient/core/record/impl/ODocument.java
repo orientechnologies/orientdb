@@ -290,7 +290,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 	}
 
 	/**
-	 * Detaches all the connected records. If new records are linked to the document the detaching can't be completed and false will
+	 * Detaches all the connected records. If new records are linked to the document the detaching cannot be completed and false will
 	 * be returned.
 	 * 
 	 * @return true if the record has been detached, otherwise false

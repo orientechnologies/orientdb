@@ -20,7 +20,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 
 /**
- * Exception thrown when MVCC is enabled and a record can't be updated or deleted because versions don't match.
+ * Exception thrown when MVCC is enabled and a record cannot be updated or deleted because versions don't match.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
