@@ -1162,7 +1162,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	@ConsoleCommand(description = "Align two databases in different servers")
 	public void alignDatabase(@ConsoleParameter(name = "db-name", description = "Name of the database") final String iDatabaseName,
 			@ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName,
-			@ConsoleParameter(name = "options", description = "Alignment options") final String iOptions) throws IOException {
+			@ConsoleParameter(name = "options", description = "Alignment options", optional = true) final String iOptions)
+			throws IOException {
 
 		try {
 			if (serverAdmin == null)

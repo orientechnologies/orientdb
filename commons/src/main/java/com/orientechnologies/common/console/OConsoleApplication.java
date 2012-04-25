@@ -263,6 +263,7 @@ public class OConsoleApplication {
 
 		String paramName = null;
 		String paramDescription = null;
+		boolean paramOptional = false;
 
 		StringBuilder buffer = new StringBuilder("\n\nWhere:\n\n");
 		for (Annotation[] annotations : m.getParameterAnnotations()) {
@@ -270,6 +271,7 @@ public class OConsoleApplication {
 				if (ann instanceof com.orientechnologies.common.console.annotation.ConsoleParameter) {
 					paramName = ((com.orientechnologies.common.console.annotation.ConsoleParameter) ann).name();
 					paramDescription = ((com.orientechnologies.common.console.annotation.ConsoleParameter) ann).description();
+					paramOptional = ((com.orientechnologies.common.console.annotation.ConsoleParameter) ann).optional();
 					break;
 				}
 			}
@@ -277,7 +279,10 @@ public class OConsoleApplication {
 			if (paramName == null)
 				paramName = "?";
 
-			out.print("<" + paramName + "> ");
+			if (paramOptional)
+				out.print("[<" + paramName + ">] ");
+			else
+				out.print("<" + paramName + "> ");
 
 			buffer.append("* ");
 			buffer.append(String.format("%-15s", paramName));
