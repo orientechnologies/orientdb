@@ -221,12 +221,20 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 	public void propagateChange(final ODistributedDatabaseInfo databaseEntry, final ORecordOperation iRequest,
 			final SYNCH_TYPE iRequestType, final ORecordInternal<?> iRecord) {
 
-		logger.setNode(databaseEntry.serverId);
-		logger.setDatabase(databaseEntry.databaseName);
-
 		if (OLogManager.instance().isInfoEnabled())
 			logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "%s record %s in %s mode",
 					ORecordOperation.getName(iRequest.type), iRecord.getIdentity(), iRequestType);
+
+		if (conflictResolver.searchForConflict(iRecord.getIdentity()) != null) {
+			// ALREADY IN CONFLICT
+			if (OLogManager.instance().isDebugEnabled())
+				logger.log(this, Level.FINEST, TYPE.REPLICATION, DIRECTION.OUT, "record %s is in conflict, avoid propagation",
+						iRecord.getIdentity());
+			return;
+		}
+
+		logger.setNode(databaseEntry.serverId);
+		logger.setDatabase(databaseEntry.databaseName);
 
 		do {
 			try {

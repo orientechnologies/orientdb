@@ -106,7 +106,7 @@ public class OReplicatorRecordHook implements ORecordHook, ODatabaseLifecycleLis
 		if (clId == iRecord.getDatabase().getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME)
 				|| clId == iRecord.getDatabase().getClusterIdByName(OStorage.CLUSTER_INDEX_NAME)) {
 			OLogManager.instance().warn(this,
-					"Changes to the cluster %s.%s can't be propagated to remote nodes. Assure to align the schema manually",
+					"Changes to the cluster %s.%s cannot be propagated to remote nodes. Assure to align the schema manually",
 					iRecord.getDatabase().getName(), OStorage.CLUSTER_INTERNAL_NAME);
 			return false;
 		}

@@ -391,8 +391,8 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 					rid.clusterPosition = -1;
 					result = createRecord(database, rid, buffer, recordType, 0).getIdentity().getClusterPosition();
 					if (result != origClusterPosition)
-						throw new OReplicationConflictException("Record created has RID different by the original: original #" + rid.clusterId
-								+ ":" + origClusterPosition + ", local #" + rid.clusterId + ":" + result);
+						throw new OReplicationConflictException("Remote record has RID different by the original", rid, new ORecordId(
+								rid.clusterId, result));
 					rid.clusterPosition = result;
 					break;
 

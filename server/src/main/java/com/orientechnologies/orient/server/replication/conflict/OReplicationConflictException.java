@@ -27,15 +27,15 @@ import com.orientechnologies.orient.core.id.ORecordId;
  */
 public class OReplicationConflictException extends OException {
 
-	private static final String	MESSAGE_RECORD_VERSION	= "your=v";
-
-	private static final String	MESSAGE_DB_VERSION			= "db=v";
+	private static final String	MESSAGE_REMOTE_VERSION	= "remote=v";
+	private static final String	MESSAGE_LOCAL_VERSION		= "local=v";
 
 	private static final long		serialVersionUID				= 1L;
 
-	private final ORID					rid;
-	private final int						databaseVersion;
-	private final int						recordVersion;
+	private final ORID					localRID;
+	private final int						localVersion;
+	private final ORID					remoteRID;
+	private final int						remoteVersion;
 
 	/**
 	 * Rebuilds the original exception from the message.
@@ -44,33 +44,72 @@ public class OReplicationConflictException extends OException {
 		super(message);
 		int beginPos = message.indexOf(ORID.PREFIX);
 		int endPos = message.indexOf(' ', beginPos);
-		rid = new ORecordId(message.substring(beginPos, endPos));
+		localRID = new ORecordId(message.substring(beginPos, endPos));
 
-		beginPos = message.indexOf(MESSAGE_DB_VERSION, endPos) + MESSAGE_DB_VERSION.length();
+		beginPos = message.indexOf(MESSAGE_LOCAL_VERSION, endPos) + MESSAGE_LOCAL_VERSION.length();
 		endPos = message.indexOf(' ', beginPos);
-		databaseVersion = Integer.parseInt(message.substring(beginPos, endPos));
+		localVersion = Integer.parseInt(message.substring(beginPos, endPos));
 
-		beginPos = message.indexOf(MESSAGE_RECORD_VERSION, endPos) + MESSAGE_RECORD_VERSION.length();
+		beginPos = message.indexOf(MESSAGE_REMOTE_VERSION, endPos) + MESSAGE_REMOTE_VERSION.length();
 		endPos = message.indexOf(')', beginPos);
-		recordVersion = Integer.parseInt(message.substring(beginPos, endPos));
+		remoteVersion = Integer.parseInt(message.substring(beginPos, endPos));
+		remoteRID = null;
 	}
 
 	public OReplicationConflictException(final String message, final ORID iRID, final int iDatabaseVersion, final int iRecordVersion) {
 		super(message);
-		rid = iRID;
-		databaseVersion = iDatabaseVersion;
-		recordVersion = iRecordVersion;
+		localRID = iRID;
+		remoteRID = null;
+		localVersion = iDatabaseVersion;
+		remoteVersion = iRecordVersion;
 	}
 
-	public int getDatabaseVersion() {
-		return databaseVersion;
+	public OReplicationConflictException(final String message, final ORID iOriginalRID, final ORID iRemoteRID) {
+		super(message);
+		localRID = iOriginalRID;
+		remoteRID = iRemoteRID;
+		localVersion = remoteVersion = 0;
 	}
 
-	public int getRecordVersion() {
-		return recordVersion;
+	@Override
+	public String getMessage() {
+		return toString();
 	}
 
-	public ORID getRid() {
-		return rid;
+	@Override
+	public String toString() {
+		final StringBuilder buffer = new StringBuilder(super.toString());
+
+		if (remoteRID != null) {
+			// RID CONFLICT
+			buffer.append("local RID=");
+			buffer.append(localRID);
+			buffer.append(" remote RID=");
+			buffer.append(remoteRID);
+		} else {
+			// VERSION CONFLICT
+			buffer.append("local=v");
+			buffer.append(localVersion);
+			buffer.append(" remote=v");
+			buffer.append(remoteVersion);
+		}
+
+		return buffer.toString();
+	}
+
+	public int getLocalVersion() {
+		return localVersion;
+	}
+
+	public int getRemoteVersion() {
+		return remoteVersion;
+	}
+
+	public ORID getLocalRID() {
+		return localRID;
+	}
+
+	public ORID getRemoteRID() {
+		return remoteRID;
 	}
 }
