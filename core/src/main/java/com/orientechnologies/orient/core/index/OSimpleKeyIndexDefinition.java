@@ -31,29 +31,27 @@ public class OSimpleKeyIndexDefinition extends ODocumentWrapperNoClass implement
 	}
 
 	public Comparable<?> createValue(final List<?> params) {
-		if (params == null || params.isEmpty())
+		return createValue(params.toArray());
+	}
+
+	public Comparable<?> createValue(final Object... params) {
+		if (params == null || params.length == 0)
 			return null;
 
 		if (keyTypes.length == 1)
-			return (Comparable<?>) OType.convert(params.iterator().next(), keyTypes[0].getDefaultJavaType());
+			return (Comparable<?>) OType.convert(params[0], keyTypes[0].getDefaultJavaType());
 
 		final OCompositeKey compositeKey = new OCompositeKey();
 
-		int i = 0;
-		for (final Object param : params) {
-			final Comparable<?> paramValue = (Comparable<?>) OType.convert(param, keyTypes[i].getDefaultJavaType());
+		for (int i = 0; i < params.length; ++i) {
+			final Comparable<?> paramValue = (Comparable<?>) OType.convert(params[i], keyTypes[i].getDefaultJavaType());
 
 			if (paramValue == null)
 				return null;
 			compositeKey.addKey(paramValue);
-			i++;
 		}
 
 		return compositeKey;
-	}
-
-	public Comparable<?> createValue(final Object... params) {
-		return createValue(Arrays.asList(params));
 	}
 
 	public int getParamCount() {

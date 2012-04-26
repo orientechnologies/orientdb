@@ -114,15 +114,20 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 					clustersToIndex.add(iDatabase.getClusterNameById(id));
 
 			if (indexDefinition != null) {
-				final OBinarySerializer keySerializer;
-				if (indexDefinition.getTypes().length > 1) {
-					keySerializer = OCompositeKeySerializer.INSTANCE;
+				if (indexDefinition instanceof ORuntimeKeyIndexDefinition) {
+					map = new OMVRBTreeDatabaseLazySave<Object, T>(iClusterIndexName,
+							((ORuntimeKeyIndexDefinition) indexDefinition).getSerializer(), iValueSerializer, 1);
 				} else {
-					keySerializer = new OSimpleKeySerializer(indexDefinition.getTypes()[0]);
+					final OBinarySerializer keySerializer;
+					if (indexDefinition.getTypes().length > 1) {
+						keySerializer = OCompositeKeySerializer.INSTANCE;
+					} else {
+						keySerializer = new OSimpleKeySerializer(indexDefinition.getTypes()[0]);
+					}
+					map = new OMVRBTreeDatabaseLazySave<Object, T>(iClusterIndexName, keySerializer, iValueSerializer,
+							indexDefinition.getTypes().length);
 				}
 
-				map = new OMVRBTreeDatabaseLazySave<Object, T>(iClusterIndexName, keySerializer, iValueSerializer,
-						indexDefinition.getTypes().length);
 			} else
 				map = new OMVRBTreeDatabaseLazySave<Object, T>(iClusterIndexName, new OSimpleKeySerializer(), iValueSerializer, 1);
 

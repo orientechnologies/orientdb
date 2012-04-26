@@ -64,31 +64,31 @@ public class OBinarySerializerFactory {
 	private OBinarySerializerFactory() {
 
 		// STATELESS SERIALIER
-		registerSerializer(ONullSerializer.ID, new ONullSerializer(), null);
+		registerSerializer(new ONullSerializer(), null);
 
-		registerSerializer(OBooleanSerializer.ID, OBooleanSerializer.INSTANCE, OType.BOOLEAN);
-		registerSerializer(OIntegerSerializer.ID, OIntegerSerializer.INSTANCE, OType.INTEGER);
-		registerSerializer(OShortSerializer.ID, OShortSerializer.INSTANCE, OType.SHORT);
-		registerSerializer(OLongSerializer.ID, OLongSerializer.INSTANCE, OType.LONG);
-		registerSerializer(OFloatSerializer.ID, OFloatSerializer.INSTANCE, OType.FLOAT);
-		registerSerializer(ODoubleSerializer.ID, ODoubleSerializer.INSTANCE, OType.DOUBLE);
-		registerSerializer(ODateTimeSerializer.ID, ODateTimeSerializer.INSTANCE, OType.DATETIME);
-		registerSerializer(OCharSerializer.ID, OCharSerializer.INSTANCE, null);
-		registerSerializer(OStringSerializer.ID, OStringSerializer.INSTANCE, OType.STRING);
-		registerSerializer(OByteSerializer.ID, OByteSerializer.INSTANCE, OType.BYTE);
-		registerSerializer(ODateSerializer.ID, ODateSerializer.INSTANCE, OType.DATE);
-		registerSerializer(OLinkSerializer.ID, OLinkSerializer.INSTANCE, OType.LINK);
-		registerSerializer(OCompositeKeySerializer.ID, OCompositeKeySerializer.INSTANCE, null);
-		registerSerializer(OStreamSerializerRID.ID, OStreamSerializerRID.INSTANCE, null);
-		registerSerializer(OBinaryTypeSerializer.ID, OBinaryTypeSerializer.INSTANCE, OType.BINARY);
-		registerSerializer(ODecimalSerializer.ID, ODecimalSerializer.INSTANCE, OType.DECIMAL);
+		registerSerializer(OBooleanSerializer.INSTANCE, OType.BOOLEAN);
+		registerSerializer(OIntegerSerializer.INSTANCE, OType.INTEGER);
+		registerSerializer(OShortSerializer.INSTANCE, OType.SHORT);
+		registerSerializer(OLongSerializer.INSTANCE, OType.LONG);
+		registerSerializer(OFloatSerializer.INSTANCE, OType.FLOAT);
+		registerSerializer(ODoubleSerializer.INSTANCE, OType.DOUBLE);
+		registerSerializer(ODateTimeSerializer.INSTANCE, OType.DATETIME);
+		registerSerializer(OCharSerializer.INSTANCE, null);
+		registerSerializer(OStringSerializer.INSTANCE, OType.STRING);
+		registerSerializer(OByteSerializer.INSTANCE, OType.BYTE);
+		registerSerializer(ODateSerializer.INSTANCE, OType.DATE);
+		registerSerializer(OLinkSerializer.INSTANCE, OType.LINK);
+		registerSerializer(OCompositeKeySerializer.INSTANCE, null);
+		registerSerializer(OStreamSerializerRID.INSTANCE, null);
+		registerSerializer(OBinaryTypeSerializer.INSTANCE, OType.BINARY);
+		registerSerializer(ODecimalSerializer.INSTANCE, OType.DECIMAL);
 
 		// STATEFUL SERIALIER
 		registerSerializer(OSimpleKeySerializer.ID, OSimpleKeySerializer.class);
 	}
 
-	public void registerSerializer(final byte iId, final OBinarySerializer<?> iInstance, final OType iType) {
-		serializerIdMap.put(iId, iInstance);
+	public void registerSerializer(final OBinarySerializer<?> iInstance, final OType iType) {
+		serializerIdMap.put(iInstance.getId(), iInstance);
 		if (iType != null)
 			serializerTypeMap.put(iType, iInstance);
 	}

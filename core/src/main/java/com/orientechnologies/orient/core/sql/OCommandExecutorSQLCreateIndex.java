@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
+import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -54,6 +55,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
 	private String[]						fields;
 	private OClass.INDEX_TYPE		indexType;
 	private OType[]							keyTypes;
+	private byte								serializerKeyId;
 
 	public OCommandExecutorSQLCreateIndex parse(final OCommandRequestText iRequest) {
 		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
@@ -158,19 +160,26 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
 		if (pos != -1 && !word.toString().equalsIgnoreCase("NULL")) {
 			final String typesString = textUpperCase.substring(oldPos).trim();
 
-			ArrayList<OType> keyTypeList = new ArrayList<OType>();
-			for (String typeName : typesString.split("\\s*,\\s*")) {
-				keyTypeList.add(OType.valueOf(typeName));
-			}
+			if (word.toString().equalsIgnoreCase("RUNTIME")) {
+				oldPos = pos;
+				pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 
-			OType[] parsedKeyTypes = new OType[keyTypeList.size()];
-			keyTypeList.toArray(parsedKeyTypes);
-
-			if (keyTypes == null) {
-				keyTypes = parsedKeyTypes;
+				serializerKeyId = Byte.parseByte(word.toString());
 			} else {
-				if (!Arrays.deepEquals(keyTypes, parsedKeyTypes)) {
-					throw new OCommandSQLParsingException("Property type list not match with real property types", text, oldPos);
+				ArrayList<OType> keyTypeList = new ArrayList<OType>();
+				for (String typeName : typesString.split("\\s*,\\s*")) {
+					keyTypeList.add(OType.valueOf(typeName));
+				}
+
+				OType[] parsedKeyTypes = new OType[keyTypeList.size()];
+				keyTypeList.toArray(parsedKeyTypes);
+
+				if (keyTypes == null) {
+					keyTypes = parsedKeyTypes;
+				} else {
+					if (!Arrays.deepEquals(keyTypes, parsedKeyTypes)) {
+						throw new OCommandSQLParsingException("Property type list not match with real property types", text, oldPos);
+					}
 				}
 			}
 		}
@@ -195,7 +204,10 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
 			if (keyTypes != null)
 				idx = database.getMetadata().getIndexManager()
 						.createIndex(indexName, indexType.toString(), new OSimpleKeyIndexDefinition(keyTypes), null, null);
-			else
+			else if (serializerKeyId != 0) {
+				idx = database.getMetadata().getIndexManager()
+						.createIndex(indexName, indexType.toString(), new ORuntimeKeyIndexDefinition(serializerKeyId), null, null);
+			} else
 				idx = database.getMetadata().getIndexManager().createIndex(indexName, indexType.toString(), null, null, null);
 		} else {
 			idx = oClass.createIndex(indexName, indexType, fields);
