@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLongSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerFactory;
@@ -182,7 +181,7 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 			return (OBinarySerializer<K>) streamKeySerializer;
 
 		if (streamKeySerializer instanceof OStreamSerializerLiteral)
-			return (OBinarySerializer<K>) OSimpleKeySerializer.INSTANCE;
+			return (OBinarySerializer<K>) new OSimpleKeySerializer();
 
 		if (streamKeySerializer instanceof OStreamSerializerLong)
 			return (OBinarySerializer<K>) OLongSerializer.INSTANCE;

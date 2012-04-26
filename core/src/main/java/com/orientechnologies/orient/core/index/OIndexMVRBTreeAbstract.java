@@ -47,9 +47,9 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
-import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
@@ -113,14 +113,18 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 				for (final int id : iClusterIdsToIndex)
 					clustersToIndex.add(iDatabase.getClusterNameById(id));
 
-			if (indexDefinition != null && indexDefinition.getTypes().length > 1) {
-				final OBinarySerializer keySerializer = OCompositeKeySerializer.INSTANCE;
+			if (indexDefinition != null) {
+				final OBinarySerializer keySerializer;
+				if (indexDefinition.getTypes().length > 1) {
+					keySerializer = OCompositeKeySerializer.INSTANCE;
+				} else {
+					keySerializer = new OSimpleKeySerializer(indexDefinition.getTypes()[0]);
+				}
+
 				map = new OMVRBTreeDatabaseLazySave<Object, T>(iClusterIndexName, keySerializer, iValueSerializer,
-								indexDefinition.getTypes().length);
-			}	else {
-				final OBinarySerializer keySerializer = OSimpleKeySerializer.INSTANCE;
-				map = new OMVRBTreeDatabaseLazySave<Object, T>(iClusterIndexName, keySerializer, iValueSerializer,	1);
-			}
+						indexDefinition.getTypes().length);
+			} else
+				map = new OMVRBTreeDatabaseLazySave<Object, T>(iClusterIndexName, new OSimpleKeySerializer(), iValueSerializer, 1);
 
 			installHooks(iDatabase);
 
@@ -517,11 +521,10 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 		}
 	}
 
-
 	public OIndexMVRBTreeAbstract<T> addCluster(final String iClusterName) {
 		acquireExclusiveLock();
 		try {
-			if(clustersToIndex.add(iClusterName))
+			if (clustersToIndex.add(iClusterName))
 				updateConfiguration();
 			return this;
 		} finally {
@@ -532,7 +535,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 	public OIndexMVRBTreeAbstract<T> removeCluster(String iClusterName) {
 		acquireExclusiveLock();
 		try {
-			if(clustersToIndex.remove(iClusterName))
+			if (clustersToIndex.remove(iClusterName))
 				updateConfiguration();
 			return this;
 		} finally {

@@ -19,6 +19,7 @@ package com.orientechnologies.orient.core.serialization.serializer.binary;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OBinaryTypeSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OBooleanSerializer;
@@ -47,20 +48,22 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
  */
 public class OBinarySerializerFactory {
 
-	private final Map<Byte, OBinarySerializer<?>>		serializerIdMap				= new HashMap<Byte, OBinarySerializer<?>>();
-	private final Map<OType, OBinarySerializer<?>>	serializerTypeMap			= new HashMap<OType, OBinarySerializer<?>>();
+	private final Map<Byte, OBinarySerializer<?>>										serializerIdMap					= new HashMap<Byte, OBinarySerializer<?>>();
+	private final Map<Byte, Class<? extends OBinarySerializer<?>>>	serializerClassesIdMap	= new HashMap<Byte, Class<? extends OBinarySerializer<?>>>();
+	private final Map<OType, OBinarySerializer<?>>									serializerTypeMap				= new HashMap<OType, OBinarySerializer<?>>();
 
 	/**
 	 * Instance of the factory
 	 */
-	public static final OBinarySerializerFactory		INSTANCE							= new OBinarySerializerFactory();
+	public static final OBinarySerializerFactory										INSTANCE								= new OBinarySerializerFactory();
 	/**
 	 * Size of the type identifier block size
 	 */
-	public static final int													TYPE_IDENTIFIER_SIZE	= 1;
+	public static final int																					TYPE_IDENTIFIER_SIZE		= 1;
 
 	private OBinarySerializerFactory() {
 
+		// STATELESS SERIALIER
 		registerSerializer(ONullSerializer.ID, new ONullSerializer(), null);
 
 		registerSerializer(OBooleanSerializer.ID, OBooleanSerializer.INSTANCE, OType.BOOLEAN);
@@ -76,16 +79,22 @@ public class OBinarySerializerFactory {
 		registerSerializer(ODateSerializer.ID, ODateSerializer.INSTANCE, OType.DATE);
 		registerSerializer(OLinkSerializer.ID, OLinkSerializer.INSTANCE, OType.LINK);
 		registerSerializer(OCompositeKeySerializer.ID, OCompositeKeySerializer.INSTANCE, null);
-		registerSerializer(OSimpleKeySerializer.ID, OSimpleKeySerializer.INSTANCE, null);
 		registerSerializer(OStreamSerializerRID.ID, OStreamSerializerRID.INSTANCE, null);
 		registerSerializer(OBinaryTypeSerializer.ID, OBinaryTypeSerializer.INSTANCE, OType.BINARY);
 		registerSerializer(ODecimalSerializer.ID, ODecimalSerializer.INSTANCE, OType.DECIMAL);
+
+		// STATEFUL SERIALIER
+		registerSerializer(OSimpleKeySerializer.ID, OSimpleKeySerializer.class);
 	}
 
 	public void registerSerializer(final byte iId, final OBinarySerializer<?> iInstance, final OType iType) {
 		serializerIdMap.put(iId, iInstance);
 		if (iType != null)
 			serializerTypeMap.put(iType, iInstance);
+	}
+
+	public void registerSerializer(final byte iId, final Class<? extends OBinarySerializer<?>> iClass) {
+		serializerClassesIdMap.put(iId, iClass);
 	}
 
 	/**
@@ -96,7 +105,17 @@ public class OBinarySerializerFactory {
 	 * @return OBinarySerializer instance.
 	 */
 	public OBinarySerializer getObjectSerializer(final byte identifier) {
-		return serializerIdMap.get(identifier);
+		OBinarySerializer<?> impl = serializerIdMap.get(identifier);
+		if (impl == null) {
+			final Class<? extends OBinarySerializer<?>> cls = serializerClassesIdMap.get(identifier);
+			if (cls != null)
+				try {
+					impl = cls.newInstance();
+				} catch (Exception e) {
+					OLogManager.instance().error(this, "Cannot create an instance of class %s invoking the empty constructor", cls);
+				}
+		}
+		return impl;
 	}
 
 	/**

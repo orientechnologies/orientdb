@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.type.tree;
 
-import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -9,6 +8,8 @@ import org.testng.annotations.Test;
 import com.orientechnologies.common.collection.OMVRBTreeNonCompositeTest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerLiteral;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -33,7 +34,7 @@ public class OMVRBTreeDatabaseLazySaveNonCompositeTest extends OMVRBTreeNonCompo
 		oldEntryPoints = OGlobalConfiguration.MVRBTREE_ENTRYPOINTS.getValueAsInteger();
 		OGlobalConfiguration.MVRBTREE_ENTRYPOINTS.setValue(1);
 
-		tree = new OMVRBTreeDatabaseLazySave<Double, Double>("indextestclsuter", OSimpleKeySerializer.INSTANCE,
+		tree = new OMVRBTreeDatabaseLazySave<Double, Double>("indextestclsuter", new OSimpleKeySerializer(OType.DOUBLE),
 				OStreamSerializerLiteral.INSTANCE, 1);
 
 		for (double i = 1; i < 10; i++) {
