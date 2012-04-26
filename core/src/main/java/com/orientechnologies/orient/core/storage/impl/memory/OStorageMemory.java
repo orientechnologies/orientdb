@@ -65,7 +65,7 @@ public class OStorageMemory extends OStorageEmbedded {
 	private int															defaultClusterId	= 0;
 
 	public OStorageMemory(final String iURL) {
-		super(iURL, OEngineMemory.NAME + ":" + iURL, "rw");
+		super(iURL, iURL, "rw");
 		configuration = new OStorageConfiguration(this);
 	}
 
@@ -746,6 +746,11 @@ public class OStorageMemory extends OStorageEmbedded {
 
 		if (txEntry.getRecord() instanceof OTxListener)
 			((OTxListener) txEntry.getRecord()).onEvent(txEntry, OTxListener.EVENT.AFTER_COMMIT);
+	}
+
+	@Override
+	public String getURL() {
+		return OEngineMemory.NAME + ":" + url;
 	}
 
 	public OStorageConfigurationSegment getConfigurationSegment() {

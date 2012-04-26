@@ -73,12 +73,7 @@ public class OReplicationConflictException extends OException {
 
 	@Override
 	public String getMessage() {
-		return toString();
-	}
-
-	@Override
-	public String toString() {
-		final StringBuilder buffer = new StringBuilder(super.toString());
+		final StringBuilder buffer = new StringBuilder(super.getMessage());
 
 		if (remoteRID != null) {
 			// RID CONFLICT
@@ -95,6 +90,11 @@ public class OReplicationConflictException extends OException {
 		}
 
 		return buffer.toString();
+	}
+
+	@Override
+	public String toString() {
+		return getMessage();
 	}
 
 	public int getLocalVersion() {

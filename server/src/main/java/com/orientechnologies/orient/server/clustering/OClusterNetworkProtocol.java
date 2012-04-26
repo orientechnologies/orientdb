@@ -297,7 +297,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 
 			ORecordId rid = new ORecordId();
 			for (String ridAsString : block.fieldNames()) {
-				rid.fromString(ridAsString);
+				rid.fromString(ridAsString.replace('_', ':'));
 				final ORawBuffer localRecord = storage.readRecord(rid, null, false, null);
 				final int remoteVersion = (Integer) block.field(ridAsString);
 

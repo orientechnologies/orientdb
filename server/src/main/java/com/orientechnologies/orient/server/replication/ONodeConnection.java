@@ -113,13 +113,14 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 
 	public void align(final String iDatabaseName, final String iOptions) {
 		logger.setDatabase(iDatabaseName);
-		logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "alignment started with options %s", iOptions);
+		logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "alignment started with options %s", iOptions);
 
 		try {
 			connect();
 
 			final String path = OServerMain.server().getStoragePath(iDatabaseName);
-			final ODatabaseComplex<?> database = OServerMain.server().openDatabase("document", "local:" + path, null, null);
+			final ODatabaseComplex<?> database = OServerMain.server().openDatabase("document", path, replicator.getReplicatorUser().name,
+					replicator.getReplicatorUser().password);
 
 			final int blockSize = OGlobalConfiguration.DISTRIBUTED_ALIGN_RECORD_BLOCK.getValueAsInteger();
 
@@ -136,14 +137,19 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 				final OClusterPositionIterator iterator = cluster.absoluteIterator();
 				while (iterator.hasNext()) {
 					ppos.clusterPosition = iterator.next();
-					cluster.getPhysicalPosition(ppos);
+					try {
+						cluster.getPhysicalPosition(ppos);
 
-					block.field(cluster.getId() + ":" + ppos.clusterPosition, ppos.recordVersion);
+						block.field(cluster.getId() + "_" + ppos.clusterPosition, ppos.recordVersion);
 
-					if (current++ % blockSize == 0) {
-						// SEND THE BLOCK
-						sendAlignmentBlock(cfg);
-						current = 0;
+						if (++current % blockSize == 0) {
+							// SEND THE BLOCK
+							sendAlignmentBlock(cfg);
+							current = 0;
+						}
+					} catch (Exception e) {
+						logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "Error on loading record %d:%d because: %s",
+								cluster.getId(), ppos.clusterPosition, e.toString());
 					}
 				}
 			}
@@ -167,7 +173,7 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 			network.flush();
 		} finally {
 			endRequest();
-			cfg.clear();
+			((ODocument) cfg.field("block")).clear();
 		}
 
 		beginResponse();

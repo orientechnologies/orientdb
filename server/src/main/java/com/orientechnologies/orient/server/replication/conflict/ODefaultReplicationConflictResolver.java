@@ -146,10 +146,20 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
 	 * @return The document if any, otherwise null
 	 */
 	public ODocument searchForConflict(final OIdentifiable iRecord) {
+		init();
 		return (ODocument) index.get(iRecord);
 	}
 
 	protected ODocument createConflictDocument(final byte iOperation, final ORecordInternal<?> iRecord) {
+		init();
+		final ODocument doc = new ODocument(DISTRIBUTED_CONFLICT_CLASS);
+		doc.field("operation", iOperation);
+		doc.field("date", new Date());
+		doc.field("record", iRecord.getIdentity());
+		return doc;
+	}
+
+	protected void init() {
 		OClass cls = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().getClass(DISTRIBUTED_CONFLICT_CLASS);
 		if (cls == null) {
 			cls = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().createClass(DISTRIBUTED_CONFLICT_CLASS);
@@ -157,12 +167,6 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
 		} else
 			index = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getIndexManager()
 					.getIndex(DISTRIBUTED_CONFLICT_CLASS + ".record");
-
-		final ODocument doc = new ODocument(DISTRIBUTED_CONFLICT_CLASS);
-		doc.field("operation", iOperation);
-		doc.field("date", new Date());
-		doc.field("record", iRecord.getIdentity());
-		return doc;
 	}
 
 	@Override

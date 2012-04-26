@@ -45,7 +45,6 @@ import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -65,7 +64,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ODataSegment;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -1324,6 +1322,9 @@ public class OStorageRemote extends OStorageAbstract {
 
 			while (network == null) {
 				if (networkPool.size() == 0)
+					openRemoteDatabase();
+
+				if (networkPool.size() == 0)
 					throw new ONetworkProtocolException("Connection pool closed");
 
 				network = networkPool.get(networkPoolCursor);
@@ -1550,6 +1551,11 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 
 		defaultClusterId = clustersIds.get(OStorage.CLUSTER_DEFAULT_NAME);
+	}
+
+	@Override
+	public String getURL() {
+		return OEngineRemote.NAME + ":" + url;
 	}
 
 	public String getClientId() {

@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.config;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 
 import javax.xml.bind.JAXBContext;
@@ -31,15 +32,15 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 public class OServerConfigurationLoaderXml {
 	private Class<? extends OServerConfiguration>	rootClass;
 	private JAXBContext														context;
-	private String																configurationText;
+	private InputStream														inputStream;
 	private File																	file;
 
-	public OServerConfigurationLoaderXml(Class<? extends OServerConfiguration> iRootClass, String iConfigurationText) {
+	public OServerConfigurationLoaderXml(final Class<? extends OServerConfiguration> iRootClass, final InputStream iInputStream) {
 		rootClass = iRootClass;
-		configurationText = iConfigurationText;
+		inputStream = iInputStream;
 	}
 
-	public OServerConfigurationLoaderXml(Class<? extends OServerConfiguration> iRootClass, File iFile) {
+	public OServerConfigurationLoaderXml(final Class<? extends OServerConfiguration> iRootClass, final File iFile) {
 		rootClass = iRootClass;
 		file = iFile;
 	}
@@ -59,7 +60,7 @@ public class OServerConfigurationLoaderXml {
 					return rootClass.getConstructor(OServerConfigurationLoaderXml.class).newInstance(this);
 				obj.location = file.getAbsolutePath();
 			} else {
-				obj = rootClass.cast(unmarshaller.unmarshal(new StringReader(configurationText)));
+				obj = rootClass.cast(unmarshaller.unmarshal(inputStream));
 				obj.location = "memory";
 			}
 
