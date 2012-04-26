@@ -31,7 +31,7 @@ public class OSimpleKeyIndexDefinition extends ODocumentWrapperNoClass implement
 	}
 
 	public Comparable<?> createValue(final List<?> params) {
-		return createValue(params.toArray());
+		return createValue(params != null ? params.toArray() : null);
 	}
 
 	public Comparable<?> createValue(final Object... params) {
