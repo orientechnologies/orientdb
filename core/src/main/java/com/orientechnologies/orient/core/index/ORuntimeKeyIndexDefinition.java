@@ -85,7 +85,7 @@ public class ORuntimeKeyIndexDefinition extends ODocumentWrapperNoClass implemen
 
 	@Override
 	protected void fromStream() {
-		final byte keySerializerId = document.field("keySerializerId");
+		final byte keySerializerId = ((Number) document.field("keySerializerId")).byteValue();
 		serializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(keySerializerId);
 	}
 
