@@ -20,6 +20,7 @@ import java.util.Arrays;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OArrays;
+import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -27,8 +28,13 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class OStreamSerializerAnyStreamable implements OStreamSerializer {
-	public static final OStreamSerializerAnyStreamable	INSTANCE	= new OStreamSerializerAnyStreamable();
-	public static final String													NAME			= "at";
+	private static final String													SCRIPT_COMMAND_CLASS					= "s";
+	private static final byte[]													SCRIPT_COMMAND_CLASS_ASBYTES	= SCRIPT_COMMAND_CLASS.getBytes();
+	private static final String													SQL_COMMAND_CLASS							= "c";
+	private static final byte[]													SQL_COMMAND_CLASS_ASBYTES			= SQL_COMMAND_CLASS.getBytes();
+
+	public static final OStreamSerializerAnyStreamable	INSTANCE											= new OStreamSerializerAnyStreamable();
+	public static final String													NAME													= "at";
 
 	/**
 	 * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
@@ -54,6 +60,9 @@ public class OStreamSerializerAnyStreamable implements OStreamSerializer {
 			else if (className.equalsIgnoreCase("c"))
 				// SQL COMMAND
 				stream = new OCommandSQL();
+			else if (className.equalsIgnoreCase("s"))
+				// SCRIPT COMMAND
+				stream = new OCommandScript();
 			else
 				// CREATE THE OBJECT BY INVOKING THE EMPTY CONSTRUCTOR
 				stream = (OSerializableStream) Class.forName(className).newInstance();
@@ -80,7 +89,13 @@ public class OStreamSerializerAnyStreamable implements OStreamSerializer {
 		OSerializableStream stream = (OSerializableStream) iObject;
 
 		// SERIALIZE THE CLASS NAME
-		byte[] className = OBinaryProtocol.string2bytes(iObject.getClass().getName());
+		final byte[] className;
+		if (iObject instanceof OCommandSQL)
+			className = SQL_COMMAND_CLASS_ASBYTES;
+		else if (iObject instanceof OCommandScript)
+			className = SCRIPT_COMMAND_CLASS_ASBYTES;
+		else
+			className = OBinaryProtocol.string2bytes(iObject.getClass().getName());
 
 		// SERIALIZE THE OBJECT CONTENT
 		byte[] objectContent = stream.toStream();
