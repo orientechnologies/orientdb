@@ -15,8 +15,10 @@
  */
 package com.orientechnologies.orient.server;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -125,8 +127,14 @@ public class OServer {
 
 	public void startup(final String iConfiguration) throws InstantiationException, IllegalAccessException, ClassNotFoundException,
 			IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException, IOException {
+		startup(new ByteArrayInputStream(iConfiguration.getBytes()));
+	}
 
-		configurationLoader = new OServerConfigurationLoaderXml(OServerConfiguration.class, iConfiguration);
+	public void startup(final InputStream iInputStream) throws InstantiationException, IllegalAccessException,
+			ClassNotFoundException, IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException,
+			IOException {
+
+		configurationLoader = new OServerConfigurationLoaderXml(OServerConfiguration.class, iInputStream);
 		configuration = configurationLoader.load();
 
 		// Startup function split to allow pre-activation changes
