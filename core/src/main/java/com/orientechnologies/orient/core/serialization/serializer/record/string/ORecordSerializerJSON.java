@@ -261,7 +261,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 						// SET THE OWNER
 						((ODocument) collectionItem).addOwner(iRecord);
 
-					if (collectionItem instanceof String && ((String) collectionItem).length() > 0)
+					if (collectionItem instanceof String && ((String) collectionItem).length() == 0)
 						continue;
 
 					((Collection<Object>) embeddedCollection).add(collectionItem);
