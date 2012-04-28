@@ -38,6 +38,7 @@ goto setArgs
 
 :doneSetArgs
 
-call %JAVA% -client -Dfile.encoding=utf-8 -Dorientdb.build.number="@BUILD@" -cp "%ORIENTDB_HOME%\lib\*;" com.orientechnologies.orient.console.OConsoleDatabaseApp %CMD_LINE_ARGS%
+set ORIENTDB_SETTINGS=-Dcache.level1.enabled=false -Dcache.level2.enabled=false
+call %JAVA% -client %ORIENTDB_SETTINGS% -Dfile.encoding=utf-8 -Dorientdb.build.number="@BUILD@" -cp "%ORIENTDB_HOME%\lib\*;" com.orientechnologies.orient.console.OConsoleDatabaseApp %CMD_LINE_ARGS%
 
 :end

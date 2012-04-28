@@ -53,6 +53,7 @@ LOG_FILE=$ORIENTDB_HOME/config/orientdb-server-log.properties
 LOG_CONSOLE_LEVEL=info
 LOG_FILE_LEVEL=fine
 WWW_PATH=$ORIENTDB_HOME/www
+#ORIENTDB_SETTINGS=-Dcache.level1.enabled=false -Dcache.level2.enabled=false
 #JAVA_OPTS=-Xmx1024m
 
-java -server $JAVA_OPTS -Djava.util.logging.config.file="$LOG_FILE" -Dorientdb.config.file="$CONFIG_FILE" -Dorientdb.www.path="$WWW_PATH" -Dorientdb.build.number="@BUILD@" -cp "$ORIENTDB_HOME/lib/orientdb-server-@VERSION@.jar:$ORIENTDB_HOME/lib/*" com.orientechnologies.orient.server.OServerMain
+java -server $JAVA_OPTS $ORIENTDB_SETTINGS -Djava.util.logging.config.file="$LOG_FILE" -Dorientdb.config.file="$CONFIG_FILE" -Dorientdb.www.path="$WWW_PATH" -Dorientdb.build.number="@BUILD@" -cp "$ORIENTDB_HOME/lib/orientdb-server-@VERSION@.jar:$ORIENTDB_HOME/lib/*" com.orientechnologies.orient.server.OServerMain

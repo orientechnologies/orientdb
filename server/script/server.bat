@@ -69,7 +69,8 @@ set LOG_CONSOLE_LEVEL=info
 set LOG_FILE_LEVEL=fine
 set WWW_PATH=%ORIENTDB_HOME%/www
 REM set JAVA_OPTS=-Xms1024m -Xmx1024m
+REM set ORIENTDB_SETTINGS=-Dcache.level1.enabled=false -Dcache.level2.enabled=false
 
-call %JAVA% -server %JAVA_OPTS% -Djava.util.logging.config.file="%LOG_FILE%" -Dorientdb.config.file="%CONFIG_FILE%" -Dorientdb.www.path="%WWW_PATH%" -Dorientdb.build.number="@BUILD@" -cp "%ORIENTDB_HOME%\lib\*;" com.orientechnologies.orient.server.OServerMain %CMD_LINE_ARGS%
+call %JAVA% -server %JAVA_OPTS% %ORIENTDB_SETTINGS% -Djava.util.logging.config.file="%LOG_FILE%" -Dorientdb.config.file="%CONFIG_FILE%" -Dorientdb.www.path="%WWW_PATH%" -Dorientdb.build.number="@BUILD@" -cp "%ORIENTDB_HOME%\lib\*;" com.orientechnologies.orient.server.OServerMain %CMD_LINE_ARGS%
 
 :end
