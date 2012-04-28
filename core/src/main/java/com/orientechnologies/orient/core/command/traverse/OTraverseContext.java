@@ -25,6 +25,7 @@ import java.util.Set;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 
 public class OTraverseContext implements OCommandContext {
   private OCommandContext                   nestedStack;
@@ -71,14 +72,16 @@ public class OTraverseContext implements OCommandContext {
   }
 
   public Object getVariable(final String iName) {
-    if ("depth".equalsIgnoreCase(iName))
+    final String name = iName.trim().toUpperCase();
+
+    if ("DEPTH".startsWith(name))
       return depth;
-    else if ("path".equalsIgnoreCase(iName))
-      return getPath();
-    else if ("stack".equalsIgnoreCase(iName))
-      return stack;
-    else if ("history".equalsIgnoreCase(iName))
-      return history;
+    else if (name.startsWith("PATH"))
+      return ODocumentHelper.getFieldValue(getPath(), iName.substring("PATH".length()));
+    else if (name.startsWith("STACK"))
+      return ODocumentHelper.getFieldValue(stack, iName.substring("STACK".length()));
+    else if (name.startsWith("HISTORY"))
+      return ODocumentHelper.getFieldValue(history, iName.substring("HISTORY".length()));
     else if (nestedStack != null)
       // DELEGATE
       nestedStack.getVariable(iName);
