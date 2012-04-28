@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.common.parser.OStringParser;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
@@ -133,6 +134,11 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
       assignTarget(null);
 
     return traverse.hasNext();
+  }
+
+  @Override
+  public OCommandContext getContext() {
+    return traverse.getContext();
   }
 
   public OIdentifiable next() {

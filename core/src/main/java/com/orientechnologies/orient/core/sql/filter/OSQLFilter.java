@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
@@ -108,15 +107,6 @@ public class OSQLFilter extends OCommandToParse implements OCommandPredicate {
   }
 
   public boolean evaluate(final ORecord<?> iRecord, final OCommandContext iContext) {
-    if (targetClasses != null) {
-      final OClass cls = targetClasses.keySet().iterator().next();
-      // CHECK IF IT'S PART OF THE REQUESTED CLASS
-      if (iRecord instanceof ODocument && ((ODocument) iRecord).getSchemaClass() == null
-          || !((ODocument) iRecord).getSchemaClass().isSubClassOf(cls))
-        // EXCLUDE IT
-        return false;
-    }
-
     if (rootCondition == null)
       return true;
 

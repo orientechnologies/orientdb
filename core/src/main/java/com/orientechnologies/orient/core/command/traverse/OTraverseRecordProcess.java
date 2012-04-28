@@ -100,6 +100,16 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
     return target;
   }
 
+  @Override
+  public String getStatus() {
+    return target != null ? target.getIdentity().toString() : null;
+  }
+
+  @Override
+  public String toString() {
+    return target != null ? target.getIdentity().toString() : "-";
+  }
+
   /*
    * (non-Javadoc)
    * 

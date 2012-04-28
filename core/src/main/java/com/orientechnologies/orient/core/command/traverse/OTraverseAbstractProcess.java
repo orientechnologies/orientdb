@@ -24,6 +24,8 @@ public abstract class OTraverseAbstractProcess<T> extends OCommandProcess<OTrave
     command.getContext().push(this);
   }
 
+  public abstract String getStatus();
+
   public OIdentifiable drop() {
     command.getContext().pop();
     return null;

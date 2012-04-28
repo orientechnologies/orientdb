@@ -49,14 +49,17 @@ public class OTraverseFieldProcess extends OTraverseAbstractProcess<Iterator<Str
           return subValue;
       }
     }
-    
-    // DROP TWICE TO REMOVE THE RECORD TOO
-    drop();
+
     return drop();
   }
 
   @Override
+  public String getStatus() {
+    return fieldName != null ? "[field:" + fieldName + "]" : null;
+  }
+
+  @Override
   public String toString() {
-    return "[field:" + (fieldName != null ? fieldName : "-") + "]";
+    return fieldName != null ? "[field:" + fieldName + "]" : null;
   }
 }

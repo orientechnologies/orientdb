@@ -31,11 +31,12 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  * @author Luca Garulli
  */
 public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OIdentifiable> {
-  private OTraverseContext                  context = new OTraverseContext();
+  private OTraverseContext                  context  = new OTraverseContext();
   private OCommandPredicate                 predicate;
   private Iterator<? extends OIdentifiable> target;
-  private List<String>                      fields  = new ArrayList<String>();
-  private long                              limit   = 0;
+  private List<String>                      fields   = new ArrayList<String>();
+  private long                              returned = 0;
+  private long                              limit    = 0;
 
   private OIdentifiable                     lastTraversed;
 
@@ -53,6 +54,9 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
   }
 
   public boolean hasNext() {
+    if (limit > 0 && returned >= limit)
+      return false;
+
     if (lastTraversed == null)
       // GET THE NEXT
       lastTraversed = next();
@@ -72,16 +76,21 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
       return result;
     }
 
-    OIdentifiable result = null;
+    if (limit > 0 && returned >= limit)
+      return null;
+
+    OIdentifiable result;
     OTraverseAbstractProcess<?> toProcess;
     // RESUME THE LAST PROCESS
     while ((toProcess = (OTraverseAbstractProcess<?>) context.peek()) != null) {
       result = (OIdentifiable) toProcess.process();
-      if (result != null)
+      if (result != null) {
+        returned++;
         return result;
+      }
     }
 
-    return result;
+    return null;
   }
 
   public void remove() {

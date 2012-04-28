@@ -49,7 +49,12 @@ public class OTraverseRecordSetProcess extends OTraverseAbstractProcess<Iterator
   }
 
   @Override
+  public String getStatus() {
+    return null;
+  }
+
+  @Override
   public String toString() {
-    return record != null ? record.getIdentity().toString() : "-";
+    return target != null ? target.toString() : "-";
   }
 }

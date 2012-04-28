@@ -107,9 +107,13 @@ public class OTraverseContext implements OCommandContext {
   public String getPath() {
     final StringBuilder buffer = new StringBuilder();
     for (OTraverseAbstractProcess<?> process : stack) {
-      if (buffer.length() > 0)
-        buffer.append('.');
-      buffer.append(process.toString());
+      final String status = process.getStatus();
+
+      if (status != null) {
+        if (buffer.length() > 0)
+          buffer.append('.');
+        buffer.append(status);
+      }
     }
     return buffer.toString();
   }
