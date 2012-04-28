@@ -28,9 +28,9 @@ import com.orientechnologies.orient.core.id.ORID;
 
 public class OTraverseContext implements OCommandContext {
   private OCommandContext                   nestedStack;
-  private Set<ORID>                         allTraversed = new HashSet<ORID>();
-  private List<OTraverseAbstractProcess<?>> stack        = new ArrayList<OTraverseAbstractProcess<?>>();
-  private int                               depth        = -1;
+  private Set<ORID>                         history = new HashSet<ORID>();
+  private List<OTraverseAbstractProcess<?>> stack   = new ArrayList<OTraverseAbstractProcess<?>>();
+  private int                               depth   = -1;
 
   public void push(final OTraverseAbstractProcess<?> iProcess) {
     stack.add(iProcess);
@@ -55,11 +55,11 @@ public class OTraverseContext implements OCommandContext {
   }
 
   public boolean isAlreadyTraversed(final OIdentifiable identity) {
-    return allTraversed.contains(identity.getIdentity());
+    return history.contains(identity.getIdentity());
   }
 
   public void addTraversed(final OIdentifiable identity) {
-    allTraversed.add(identity.getIdentity());
+    history.add(identity.getIdentity());
   }
 
   public int incrementDepth() {
@@ -77,6 +77,8 @@ public class OTraverseContext implements OCommandContext {
       return getPath();
     else if ("stack".equalsIgnoreCase(iName))
       return stack;
+    else if ("history".equalsIgnoreCase(iName))
+      return history;
     else if (nestedStack != null)
       // DELEGATE
       nestedStack.getVariable(iName);

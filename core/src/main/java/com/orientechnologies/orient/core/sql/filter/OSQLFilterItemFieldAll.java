@@ -28,7 +28,7 @@ public class OSQLFilterItemFieldAll extends OSQLFilterItemFieldMultiAbstract {
 	public static final String	NAME			= "ALL";
 	public static final String	FULL_NAME	= "ALL()";
 
-	public OSQLFilterItemFieldAll(final OSQLFilter iQueryCompiled, final String iName) {
+  public OSQLFilterItemFieldAll(final OSQLPredicate iQueryCompiled, final String iName) {
 		super(iQueryCompiled, iName, OStringSerializerHelper.getParameters(iName));
 	}
 

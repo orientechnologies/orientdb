@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
+import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 
 /**
@@ -182,7 +183,7 @@ public class OSQLHelper {
 		return null;
 	}
 
-	public static Object parseValue(final OSQLFilter iSQLFilter, final OCommandToParse iCommand, final String iWord,
+	public static Object parseValue(final OSQLPredicate iSQLFilter, final OCommandToParse iCommand, final String iWord,
 			final OCommandContext iContext) {
 		if (iWord.charAt(0) == OStringSerializerHelper.PARAMETER_POSITIONAL
 				|| iWord.charAt(0) == OStringSerializerHelper.PARAMETER_NAMED) {

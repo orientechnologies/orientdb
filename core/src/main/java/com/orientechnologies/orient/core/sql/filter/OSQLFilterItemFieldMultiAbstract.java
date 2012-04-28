@@ -30,25 +30,25 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
  * 
  */
 public abstract class OSQLFilterItemFieldMultiAbstract extends OSQLFilterItemAbstract {
-	private List<String>	names;
+  private List<String> names;
 
-	public OSQLFilterItemFieldMultiAbstract(final OSQLFilter iQueryCompiled, final String iName, final List<String> iNames) {
-		super(iQueryCompiled, iName);
-		names = iNames;
-	}
+  public OSQLFilterItemFieldMultiAbstract(final OSQLPredicate iQueryCompiled, final String iName, final List<String> iNames) {
+    super(iQueryCompiled, iName);
+    names = iNames;
+  }
 
-	public Object getValue(final OIdentifiable iRecord, OCommandContext iContetx) {
-		if (names.size() == 1)
-			return transformValue(iRecord, ODocumentHelper.getIdentifiableValue(iRecord, names.get(0)));
+  public Object getValue(final OIdentifiable iRecord, OCommandContext iContetx) {
+    if (names.size() == 1)
+      return transformValue(iRecord, ODocumentHelper.getIdentifiableValue(iRecord, names.get(0)));
 
-		final Object[] values = ((ODocument) iRecord).fieldValues();
+    final Object[] values = ((ODocument) iRecord).fieldValues();
 
-		if (hasChainOperators()) {
-			// TRANSFORM ALL THE VALUES
-			for (int i = 0; i < values.length; ++i)
-				values[i] = transformValue(iRecord, values[i]);
-		}
+    if (hasChainOperators()) {
+      // TRANSFORM ALL THE VALUES
+      for (int i = 0; i < values.length; ++i)
+        values[i] = transformValue(iRecord, values[i]);
+    }
 
-		return new OQueryRuntimeValueMulti(this, values);
-	}
+    return new OQueryRuntimeValueMulti(this, values);
+  }
 }

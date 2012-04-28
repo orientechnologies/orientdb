@@ -45,7 +45,7 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
    * 
    * @see com.orientechnologies.orient.core.command.OCommand#execute()
    */
-  public Object execute() {
+  public List<OIdentifiable> execute() {
     final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
     while (hasNext())
       result.add(next());
@@ -114,6 +114,17 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
     return context;
   }
 
+  public OTraverse target(final Iterable<? extends OIdentifiable> iTarget) {
+    return target(iTarget.iterator());
+  }
+
+  public OTraverse target(final OIdentifiable... iRecords) {
+    final List<OIdentifiable> list = new ArrayList<OIdentifiable>();
+    for (OIdentifiable id : iRecords)
+      list.add(id);
+    return target(list.iterator());
+  }
+
   @SuppressWarnings("unchecked")
   public OTraverse target(final Iterator<? extends OIdentifiable> iTarget) {
     target = iTarget;
@@ -142,6 +153,12 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
   }
 
   public OTraverse fields(final Collection<String> iFields) {
+    for (String f : iFields)
+      field(f);
+    return this;
+  }
+
+  public OTraverse fields(final String... iFields) {
     for (String f : iFields)
       field(f);
     return this;

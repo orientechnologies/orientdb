@@ -25,19 +25,19 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  * 
  */
 public class OSQLFilterItemFieldAny extends OSQLFilterItemFieldMultiAbstract {
-	public static final String	NAME			= "ANY";
-	public static final String	FULL_NAME	= "ANY()";
+  public static final String NAME      = "ANY";
+  public static final String FULL_NAME = "ANY()";
 
-	public OSQLFilterItemFieldAny(final OSQLFilter iQueryCompiled, final String iName) {
-		super(iQueryCompiled, iName, OStringSerializerHelper.getParameters(iName));
-	}
+  public OSQLFilterItemFieldAny(final OSQLPredicate iQueryCompiled, final String iName) {
+    super(iQueryCompiled, iName, OStringSerializerHelper.getParameters(iName));
+  }
 
-	@Override
-	public String getRoot() {
-		return FULL_NAME;
-	}
+  @Override
+  public String getRoot() {
+    return FULL_NAME;
+  }
 
-	@Override
-	protected void setRoot(final OCommandToParse iQueryToParse, final String iRoot) {
-	}
+  @Override
+  protected void setRoot(final OCommandToParse iQueryToParse, final String iRoot) {
+  }
 }
