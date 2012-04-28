@@ -38,6 +38,6 @@ goto setArgs
 
 :doneSetArgs
 
-call %JAVA% -client -Dfile.encoding=utf-8 -Dorientdb.build.number="@BUILD@" -jar "%ORIENTDB_HOME%\lib\orientdb-tools-@VERSION@.jar" %CMD_LINE_ARGS%
+call %JAVA% -client -Dfile.encoding=utf-8 -Dorientdb.build.number="@BUILD@" -cp "%ORIENTDB_HOME%\lib\*;" com.orientechnologies.orient.console.OConsoleDatabaseApp %CMD_LINE_ARGS%
 
 :end
