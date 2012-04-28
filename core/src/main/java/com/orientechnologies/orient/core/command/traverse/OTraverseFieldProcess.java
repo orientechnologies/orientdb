@@ -55,7 +55,7 @@ public class OTraverseFieldProcess extends OTraverseAbstractProcess<Iterator<Str
 
   @Override
   public String getStatus() {
-    return fieldName != null ? "[field:" + fieldName + "]" : null;
+    return fieldName != null ? fieldName : null;
   }
 
   @Override
