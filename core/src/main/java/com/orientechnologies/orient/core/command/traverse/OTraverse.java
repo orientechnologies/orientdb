@@ -31,13 +31,12 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  * @author Luca Garulli
  */
 public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OIdentifiable> {
-  private OTraverseContext                  context  = new OTraverseContext();
+  private OTraverseContext                  context     = new OTraverseContext();
   private OCommandPredicate                 predicate;
   private Iterator<? extends OIdentifiable> target;
-  private List<String>                      fields   = new ArrayList<String>();
-  private long                              returned = 0;
-  private long                              limit    = 0;
-
+  private List<String>                      fields      = new ArrayList<String>();
+  private long                              resultCount = 0;
+  private long                              limit       = 0;
   private OIdentifiable                     lastTraversed;
 
   /*
@@ -53,8 +52,12 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
     return result;
   }
 
+  public OTraverseAbstractProcess<?> currentProcess() {
+    return (OTraverseAbstractProcess<?>) context.peek();
+  }
+
   public boolean hasNext() {
-    if (limit > 0 && returned >= limit)
+    if (limit > 0 && resultCount >= limit)
       return false;
 
     if (lastTraversed == null)
@@ -76,16 +79,16 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
       return result;
     }
 
-    if (limit > 0 && returned >= limit)
+    if (limit > 0 && resultCount >= limit)
       return null;
 
     OIdentifiable result;
     OTraverseAbstractProcess<?> toProcess;
     // RESUME THE LAST PROCESS
-    while ((toProcess = (OTraverseAbstractProcess<?>) context.peek()) != null) {
+    while ((toProcess = currentProcess()) != null) {
       result = (OIdentifiable) toProcess.process();
       if (result != null) {
-        returned++;
+        resultCount++;
         return result;
       }
     }
@@ -159,13 +162,16 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
     return this;
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see java.lang.Object#toString()
-   */
   @Override
   public String toString() {
     return String.format("OTraverse.target(%s).fields(%s).limit(%d).predicate(%s)", target, fields, limit, predicate);
+  }
+
+  public long getResultCount() {
+    return resultCount;
+  }
+
+  public OIdentifiable getLastTraversed() {
+    return lastTraversed;
   }
 }
