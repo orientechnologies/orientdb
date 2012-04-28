@@ -27,49 +27,57 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class OSecurityNull implements OSecurity {
-	public OUser create() {
-		return null;
-	}
+  public OUser create() {
+    return null;
+  }
 
-	public void load() {
-	}
+  public void load() {
+  }
 
-	public OUser getUser(String iUserName) {
-		return null;
-	}
+  public OUser getUser(String iUserName) {
+    return null;
+  }
 
-	public OUser createUser(String iUserName, String iUserPassword, String[] iRoles) {
-		return null;
-	}
+  public OUser createUser(String iUserName, String iUserPassword, String[] iRoles) {
+    return null;
+  }
 
-	public ORole getRole(String iRoleName) {
-		return null;
-	}
+  public ORole getRole(String iRoleName) {
+    return null;
+  }
 
-	public ORole createRole(String iRoleName, ALLOW_MODES iAllowMode) {
-		return null;
-	}
+  public ORole createRole(String iRoleName, ALLOW_MODES iAllowMode) {
+    return null;
+  }
 
-	public ORole createRole(String iRoleName, ORole iParent, ALLOW_MODES iAllowMode) {
-		return null;
-	}
+  public ORole createRole(String iRoleName, ORole iParent, ALLOW_MODES iAllowMode) {
+    return null;
+  }
 
-	public List<ODocument> getUsers() {
-		return null;
-	}
+  public List<ODocument> getUsers() {
+    return null;
+  }
 
-	public List<ODocument> getRoles() {
-		return null;
-	}
+  public List<ODocument> getRoles() {
+    return null;
+  }
 
-	public OUser authenticate(String iUsername, String iUserPassword) {
-		return null;
-	}
+  public OUser authenticate(String iUsername, String iUserPassword) {
+    return null;
+  }
 
-	public void close() {
-	}
+  public void close() {
+  }
 
-	public OUser repair() {
-		return null;
-	}
+  public OUser repair() {
+    return null;
+  }
+
+  public boolean dropUser(String iUserName) {
+    return false;
+  }
+
+  public boolean dropRole(String iRoleName) {
+    return false;
+  }
 }

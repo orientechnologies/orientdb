@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.sql;
 import java.io.IOException;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -32,62 +33,63 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  * 
  */
 public class OCommandExecutorSQLTruncateClass extends OCommandExecutorSQLAbstract {
-	public static final String	KEYWORD_TRUNCATE	= "TRUNCATE";
-	public static final String	KEYWORD_CLASS			= "CLASS";
-	private OClass							schemaClass;
+  public static final String KEYWORD_TRUNCATE = "TRUNCATE";
+  public static final String KEYWORD_CLASS    = "CLASS";
+  private OClass             schemaClass;
 
-	@SuppressWarnings("unchecked")
-	public OCommandExecutorSQLTruncateClass parse(final OCommandRequestText iRequest) {
-		final ODatabaseRecord database = getDatabase();
-		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
-		init(iRequest.getText());
+  @SuppressWarnings("unchecked")
+  public OCommandExecutorSQLTruncateClass parse(final OCommandRequest iRequest) {
+    final ODatabaseRecord database = getDatabase();
+    database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-		StringBuilder word = new StringBuilder();
+    init(((OCommandRequestText) iRequest).getText());
 
-		int oldPos = 0;
-		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_TRUNCATE))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_TRUNCATE + " not found. Use " + getSyntax(), text, oldPos);
+    StringBuilder word = new StringBuilder();
 
-		oldPos = pos;
-		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_CLASS))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found. Use " + getSyntax(), text, oldPos);
+    int oldPos = 0;
+    int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    if (pos == -1 || !word.toString().equals(KEYWORD_TRUNCATE))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_TRUNCATE + " not found. Use " + getSyntax(), text, oldPos);
 
-		oldPos = pos;
-		pos = OSQLHelper.nextWord(text, text, oldPos, word, true);
-		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected class name. Use " + getSyntax(), text, oldPos);
+    oldPos = pos;
+    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    if (pos == -1 || !word.toString().equals(KEYWORD_CLASS))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found. Use " + getSyntax(), text, oldPos);
 
-		final String className = word.toString();
+    oldPos = pos;
+    pos = OSQLHelper.nextWord(text, text, oldPos, word, true);
+    if (pos == -1)
+      throw new OCommandSQLParsingException("Expected class name. Use " + getSyntax(), text, oldPos);
 
-		schemaClass = database.getMetadata().getSchema().getClass(className);
+    final String className = word.toString();
 
-		if (schemaClass == null)
-			throw new OCommandSQLParsingException("Class '" + className + "' not found", text, oldPos);
-		return this;
-	}
+    schemaClass = database.getMetadata().getSchema().getClass(className);
 
-	/**
-	 * Execute the command.
-	 */
-	public Object execute(final Map<Object, Object> iArgs) {
-		if (schemaClass == null)
-			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    if (schemaClass == null)
+      throw new OCommandSQLParsingException("Class '" + className + "' not found", text, oldPos);
+    return this;
+  }
 
-		final long recs = schemaClass.count();
+  /**
+   * Execute the command.
+   */
+  public Object execute(final Map<Object, Object> iArgs) {
+    if (schemaClass == null)
+      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-		try {
-			schemaClass.truncate();
-		} catch (IOException e) {
-			throw new OCommandExecutionException("Error on executing command", e);
-		}
+    final long recs = schemaClass.count();
 
-		return recs;
-	}
+    try {
+      schemaClass.truncate();
+    } catch (IOException e) {
+      throw new OCommandExecutionException("Error on executing command", e);
+    }
 
-	@Override
-	public String getSyntax() {
-		return "TRUNCATE CLASS <class-name>";
-	}
+    return recs;
+  }
+
+  @Override
+  public String getSyntax() {
+    return "TRUNCATE CLASS <class-name>";
+  }
 }

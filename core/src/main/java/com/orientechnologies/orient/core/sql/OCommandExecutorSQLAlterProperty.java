@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
@@ -36,91 +37,91 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstract {
-	public static final String	KEYWORD_ALTER			= "ALTER";
-	public static final String	KEYWORD_PROPERTY	= "PROPERTY";
+  public static final String KEYWORD_ALTER    = "ALTER";
+  public static final String KEYWORD_PROPERTY = "PROPERTY";
 
-	private String							className;
-	private String							fieldName;
-	private ATTRIBUTES					attribute;
-	private String							value;
+  private String             className;
+  private String             fieldName;
+  private ATTRIBUTES         attribute;
+  private String             value;
 
-	public OCommandExecutorSQLAlterProperty parse(final OCommandRequestText iRequest) {
-		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
+  public OCommandExecutorSQLAlterProperty parse(final OCommandRequest iRequest) {
+    getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-		init(iRequest.getText());
+    init(((OCommandRequestText) iRequest).getText());
 
-		StringBuilder word = new StringBuilder();
+    StringBuilder word = new StringBuilder();
 
-		int oldPos = 0;
-		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_ALTER))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found. Use " + getSyntax(), text, oldPos);
+    int oldPos = 0;
+    int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    if (pos == -1 || !word.toString().equals(KEYWORD_ALTER))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found. Use " + getSyntax(), text, oldPos);
 
-		oldPos = pos;
-		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found. Use " + getSyntax(), text, oldPos);
+    oldPos = pos;
+    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found. Use " + getSyntax(), text, oldPos);
 
-		oldPos = pos;
-		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
-		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, oldPos);
+    oldPos = pos;
+    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
+    if (pos == -1)
+      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, oldPos);
 
-		String[] parts = word.toString().split("\\.");
-		if (parts.length != 2)
-			throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, oldPos);
+    String[] parts = word.toString().split("\\.");
+    if (parts.length != 2)
+      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, oldPos);
 
-		className = parts[0];
-		if (className == null)
-			throw new OCommandSQLParsingException("Class not found", text, oldPos);
-		fieldName = parts[1];
+    className = parts[0];
+    if (className == null)
+      throw new OCommandSQLParsingException("Class not found", text, oldPos);
+    fieldName = parts[1];
 
-		oldPos = pos;
-		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1)
-			throw new OCommandSQLParsingException("Missing property attribute to change. Use " + getSyntax(), text, oldPos);
+    oldPos = pos;
+    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    if (pos == -1)
+      throw new OCommandSQLParsingException("Missing property attribute to change. Use " + getSyntax(), text, oldPos);
 
-		final String attributeAsString = word.toString();
+    final String attributeAsString = word.toString();
 
-		try {
-			attribute = OProperty.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
-		} catch (IllegalArgumentException e) {
-			throw new OCommandSQLParsingException("Unknown property attribute '" + attributeAsString + "'. Supported attributes are: "
-					+ Arrays.toString(OProperty.ATTRIBUTES.values()), text, oldPos);
-		}
+    try {
+      attribute = OProperty.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
+    } catch (IllegalArgumentException e) {
+      throw new OCommandSQLParsingException("Unknown property attribute '" + attributeAsString + "'. Supported attributes are: "
+          + Arrays.toString(OProperty.ATTRIBUTES.values()), text, oldPos);
+    }
 
-		value = text.substring(pos + 1).trim();
+    value = text.substring(pos + 1).trim();
 
-		if (value.length() == 0)
-			throw new OCommandSQLParsingException("Missing property value to change for attribute '" + attribute + "'. Use "
-					+ getSyntax(), text, oldPos);
+    if (value.length() == 0)
+      throw new OCommandSQLParsingException("Missing property value to change for attribute '" + attribute + "'. Use "
+          + getSyntax(), text, oldPos);
 
-		if (value.equalsIgnoreCase("null"))
-			value = null;
+    if (value.equalsIgnoreCase("null"))
+      value = null;
 
-		return this;
-	}
+    return this;
+  }
 
-	/**
-	 * Execute the ALTER PROPERTY.
-	 */
-	public Object execute(final Map<Object, Object> iArgs) {
-		if (attribute == null)
-			throw new OCommandExecutionException("Cannot execute the command because it has not yet been parsed");
+  /**
+   * Execute the ALTER PROPERTY.
+   */
+  public Object execute(final Map<Object, Object> iArgs) {
+    if (attribute == null)
+      throw new OCommandExecutionException("Cannot execute the command because it has not yet been parsed");
 
-		final OClassImpl sourceClass = (OClassImpl) getDatabase().getMetadata().getSchema().getClass(className);
-		if (sourceClass == null)
-			throw new OCommandExecutionException("Source class '" + className + "' not found");
+    final OClassImpl sourceClass = (OClassImpl) getDatabase().getMetadata().getSchema().getClass(className);
+    if (sourceClass == null)
+      throw new OCommandExecutionException("Source class '" + className + "' not found");
 
-		final OPropertyImpl prop = (OPropertyImpl) sourceClass.getProperty(fieldName);
-		if (prop == null)
-			throw new OCommandExecutionException("Property '" + className + "." + fieldName + "' not exists");
+    final OPropertyImpl prop = (OPropertyImpl) sourceClass.getProperty(fieldName);
+    if (prop == null)
+      throw new OCommandExecutionException("Property '" + className + "." + fieldName + "' not exists");
 
-		prop.setInternalAndSave(attribute, value);
-		return null;
-	}
+    prop.setInternalAndSave(attribute, value);
+    return null;
+  }
 
-	public String getSyntax() {
-		return "ALTER PROPERTY <class>.<property> <attribute-name> <attribute-value>";
-	}
+  public String getSyntax() {
+    return "ALTER PROPERTY <class>.<property> <attribute-name> <attribute-value>";
+  }
 }

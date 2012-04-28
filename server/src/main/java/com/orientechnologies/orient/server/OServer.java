@@ -51,6 +51,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
@@ -442,9 +444,9 @@ public class OServer {
 			if (stg.loadOnStartup) {
 				// @COMPATIBILITY
 				if (stg.userName == null)
-					stg.userName = "admin";
+					stg.userName = OUser.ADMIN;
 				if (stg.userPassword == null)
-					stg.userPassword = "admin";
+					stg.userPassword = OUser.ADMIN;
 
 				type = stg.path.substring(0, stg.path.indexOf(':'));
 
@@ -454,8 +456,20 @@ public class OServer {
 
 					if (db.exists())
 						db.open(stg.userName, stg.userPassword);
-					else
+					else {
 						db.create();
+						if (stg.userName.equals(OUser.ADMIN)) {
+							if (!stg.userPassword.equals(OUser.ADMIN))
+								// CHANGE ADMIN PASSWORD
+								db.getMetadata().getSecurity().getUser(OUser.ADMIN).setPassword(stg.userPassword);
+						} else {
+							// CREATE A NEW USER AS ADMIN AND REMOVE THE DEFAULT ONE
+							db.getMetadata().getSecurity().createUser(stg.userName, stg.userPassword, new String[] { ORole.ADMIN });
+							db.getMetadata().getSecurity().dropUser(OUser.ADMIN);
+							db.close();
+							db.open(stg.userName, stg.userPassword);
+						}
+					}
 
 					OLogManager.instance().info(this, "-> Loaded " + type + " database '" + stg.name + "'");
 				} catch (Exception e) {

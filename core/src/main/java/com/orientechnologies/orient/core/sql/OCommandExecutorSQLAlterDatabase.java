@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -36,71 +37,71 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLAlterDatabase extends OCommandExecutorSQLAbstract {
-	public static final String		KEYWORD_ALTER			= "ALTER";
-	public static final String		KEYWORD_DATABASE	= "DATABASE";
+  public static final String   KEYWORD_ALTER    = "ALTER";
+  public static final String   KEYWORD_DATABASE = "DATABASE";
 
-	private ODatabase.ATTRIBUTES	attribute;
-	private String								value;
+  private ODatabase.ATTRIBUTES attribute;
+  private String               value;
 
-	public OCommandExecutorSQLAlterDatabase parse(final OCommandRequestText iRequest) {
-		final ODatabaseRecord database = getDatabase();
-		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
+  public OCommandExecutorSQLAlterDatabase parse(final OCommandRequest iRequest) {
+    final ODatabaseRecord database = getDatabase();
+    database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-		init(iRequest.getText());
+    init(((OCommandRequestText) iRequest).getText());
 
-		StringBuilder word = new StringBuilder();
+    StringBuilder word = new StringBuilder();
 
-		int oldPos = 0;
-		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_ALTER))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found. Use " + getSyntax(), text, oldPos);
+    int oldPos = 0;
+    int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    if (pos == -1 || !word.toString().equals(KEYWORD_ALTER))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found. Use " + getSyntax(), text, oldPos);
 
-		oldPos = pos;
-		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_DATABASE))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_DATABASE + " not found. Use " + getSyntax(), text, oldPos);
+    oldPos = pos;
+    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    if (pos == -1 || !word.toString().equals(KEYWORD_DATABASE))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_DATABASE + " not found. Use " + getSyntax(), text, oldPos);
 
-		oldPos = pos;
-		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1)
-			throw new OCommandSQLParsingException("Missed the database's attribute to change. Use " + getSyntax(), text, oldPos);
+    oldPos = pos;
+    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    if (pos == -1)
+      throw new OCommandSQLParsingException("Missed the database's attribute to change. Use " + getSyntax(), text, oldPos);
 
-		final String attributeAsString = word.toString();
+    final String attributeAsString = word.toString();
 
-		try {
-			attribute = ODatabase.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
-		} catch (IllegalArgumentException e) {
-			throw new OCommandSQLParsingException("Unknown database's attribute '" + attributeAsString + "'. Supported attributes are: "
-					+ Arrays.toString(OClass.ATTRIBUTES.values()), text, oldPos);
-		}
+    try {
+      attribute = ODatabase.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
+    } catch (IllegalArgumentException e) {
+      throw new OCommandSQLParsingException("Unknown database's attribute '" + attributeAsString + "'. Supported attributes are: "
+          + Arrays.toString(OClass.ATTRIBUTES.values()), text, oldPos);
+    }
 
-		value = text.substring(pos + 1).trim();
+    value = text.substring(pos + 1).trim();
 
-		if (value.length() == 0)
-			throw new OCommandSQLParsingException("Missed the database's value to change for attribute '" + attribute + "'. Use "
-					+ getSyntax(), text, oldPos);
+    if (value.length() == 0)
+      throw new OCommandSQLParsingException("Missed the database's value to change for attribute '" + attribute + "'. Use "
+          + getSyntax(), text, oldPos);
 
-		if (value.equalsIgnoreCase("null"))
-			value = null;
+    if (value.equalsIgnoreCase("null"))
+      value = null;
 
-		return this;
-	}
+    return this;
+  }
 
-	/**
-	 * Execute the ALTER DATABASE.
-	 */
-	public Object execute(final Map<Object, Object> iArgs) {
-		if (attribute == null)
-			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+  /**
+   * Execute the ALTER DATABASE.
+   */
+  public Object execute(final Map<Object, Object> iArgs) {
+    if (attribute == null)
+      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-		final ODatabaseRecord database = getDatabase();
-		database.checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
+    final ODatabaseRecord database = getDatabase();
+    database.checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
 
-		((ODatabaseComplex<?>) database).setInternal(attribute, value);
-		return null;
-	}
+    ((ODatabaseComplex<?>) database).setInternal(attribute, value);
+    return null;
+  }
 
-	public String getSyntax() {
-		return "ALTER DATABASE <attribute-name> <attribute-value>";
-	}
+  public String getSyntax() {
+    return "ALTER DATABASE <attribute-name> <attribute-value>";
+  }
 }

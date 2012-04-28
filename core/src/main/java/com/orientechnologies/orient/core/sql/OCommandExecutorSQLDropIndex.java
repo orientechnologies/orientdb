@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.sql;
 
 import java.util.Map;
 
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -30,51 +31,51 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLDropIndex extends OCommandExecutorSQLAbstract {
-	public static final String	KEYWORD_DROP	= "DROP";
-	public static final String	KEYWORD_INDEX	= "INDEX";
+  public static final String KEYWORD_DROP  = "DROP";
+  public static final String KEYWORD_INDEX = "INDEX";
 
-	private String							name;
+  private String             name;
 
-	public OCommandExecutorSQLDropIndex parse(final OCommandRequestText iRequest) {
-		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
+  public OCommandExecutorSQLDropIndex parse(final OCommandRequest iRequest) {
+    getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-		init(iRequest.getText());
+    init(((OCommandRequestText) iRequest).getText());
 
-		final StringBuilder word = new StringBuilder();
+    final StringBuilder word = new StringBuilder();
 
-		int oldPos = 0;
-		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_DROP))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), text, oldPos);
+    int oldPos = 0;
+    int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    if (pos == -1 || !word.toString().equals(KEYWORD_DROP))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), text, oldPos);
 
-		oldPos = pos;
-		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_INDEX))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_INDEX + " not found. Use " + getSyntax(), text, oldPos);
+    oldPos = pos;
+    pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+    if (pos == -1 || !word.toString().equals(KEYWORD_INDEX))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_INDEX + " not found. Use " + getSyntax(), text, oldPos);
 
-		oldPos = pos;
-		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
-		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected index name. Use " + getSyntax(), text, oldPos);
+    oldPos = pos;
+    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
+    if (pos == -1)
+      throw new OCommandSQLParsingException("Expected index name. Use " + getSyntax(), text, oldPos);
 
-		name = word.toString();
+    name = word.toString();
 
-		return this;
-	}
+    return this;
+  }
 
-	/**
-	 * Execute the REMOVE INDEX.
-	 */
-	public Object execute(final Map<Object, Object> iArgs) {
-		if (name == null)
-			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+  /**
+   * Execute the REMOVE INDEX.
+   */
+  public Object execute(final Map<Object, Object> iArgs) {
+    if (name == null)
+      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-		getDatabase().getMetadata().getIndexManager().dropIndex(name);
-		return null;
-	}
+    getDatabase().getMetadata().getIndexManager().dropIndex(name);
+    return null;
+  }
 
-	@Override
-	public String getSyntax() {
-		return "DROP INDEX <index-name>|<class>.<property>";
-	}
+  @Override
+  public String getSyntax() {
+    return "DROP INDEX <index-name>|<class>.<property>";
+  }
 }

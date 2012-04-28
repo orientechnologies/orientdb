@@ -21,6 +21,7 @@ import java.util.Map;
 
 import com.orientechnologies.common.util.OCaseIncentiveComparator;
 import com.orientechnologies.common.util.OCollections;
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -37,118 +38,118 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract {
-	public static final String	KEYWORD_DROP			= "DROP";
-	public static final String	KEYWORD_PROPERTY	= "PROPERTY";
+  public static final String KEYWORD_DROP     = "DROP";
+  public static final String KEYWORD_PROPERTY = "PROPERTY";
 
-	private String							className;
-	private String							fieldName;
-	private boolean							force							= false;
+  private String             className;
+  private String             fieldName;
+  private boolean            force            = false;
 
-	public OCommandExecutorSQLDropProperty parse(final OCommandRequestText iRequest) {
-		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
+  public OCommandExecutorSQLDropProperty parse(final OCommandRequest iRequest) {
+    getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-		init(iRequest.getText());
+    init(((OCommandRequestText) iRequest).getText());
 
-		final StringBuilder word = new StringBuilder();
+    final StringBuilder word = new StringBuilder();
 
-		int oldPos = 0;
-		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_DROP))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), text, oldPos);
+    int oldPos = 0;
+    int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    if (pos == -1 || !word.toString().equals(KEYWORD_DROP))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), text, oldPos);
 
-		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found. Use " + getSyntax(), text, oldPos);
+    pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+    if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found. Use " + getSyntax(), text, oldPos);
 
-		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
-		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, pos);
+    pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
+    if (pos == -1)
+      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, pos);
 
-		String[] parts = word.toString().split("\\.");
-		if (parts.length != 2)
-			throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, pos);
+    String[] parts = word.toString().split("\\.");
+    if (parts.length != 2)
+      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, pos);
 
-		className = parts[0];
-		if (className == null)
-			throw new OCommandSQLParsingException("Class not found", text, pos);
-		fieldName = parts[1];
+    className = parts[0];
+    if (className == null)
+      throw new OCommandSQLParsingException("Class not found", text, pos);
+    fieldName = parts[1];
 
-		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
-		if (pos != -1) {
-			final String forceParameter = word.toString();
-			if ("FORCE".equals(forceParameter)) {
-				force = true;
-			} else {
-				throw new OCommandSQLParsingException("Wrong query parameter", text, pos);
-			}
-		}
+    pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
+    if (pos != -1) {
+      final String forceParameter = word.toString();
+      if ("FORCE".equals(forceParameter)) {
+        force = true;
+      } else {
+        throw new OCommandSQLParsingException("Wrong query parameter", text, pos);
+      }
+    }
 
-		return this;
-	}
+    return this;
+  }
 
-	/**
-	 * Execute the CREATE PROPERTY.
-	 */
-	public Object execute(final Map<Object, Object> iArgs) {
-		if (fieldName == null)
-			throw new OCommandExecutionException("Cannot execute the command because it has not yet been parsed");
+  /**
+   * Execute the CREATE PROPERTY.
+   */
+  public Object execute(final Map<Object, Object> iArgs) {
+    if (fieldName == null)
+      throw new OCommandExecutionException("Cannot execute the command because it has not yet been parsed");
 
-		final ODatabaseRecord database = getDatabase();
-		final OClassImpl sourceClass = (OClassImpl) database.getMetadata().getSchema().getClass(className);
-		if (sourceClass == null)
-			throw new OCommandExecutionException("Source class '" + className + "' not found");
+    final ODatabaseRecord database = getDatabase();
+    final OClassImpl sourceClass = (OClassImpl) database.getMetadata().getSchema().getClass(className);
+    if (sourceClass == null)
+      throw new OCommandExecutionException("Source class '" + className + "' not found");
 
-		final List<OIndex<?>> indexes = relatedIndexes(fieldName);
-		if (!indexes.isEmpty()) {
-			if (force) {
-				dropRelatedIndexes(indexes);
-			} else {
-				final StringBuilder indexNames = new StringBuilder();
+    final List<OIndex<?>> indexes = relatedIndexes(fieldName);
+    if (!indexes.isEmpty()) {
+      if (force) {
+        dropRelatedIndexes(indexes);
+      } else {
+        final StringBuilder indexNames = new StringBuilder();
 
-				boolean first = true;
-				for (final OIndex<?> index : sourceClass.getClassInvolvedIndexes(fieldName)) {
-					if (!first) {
-						indexNames.append(", ");
-					} else {
-						first = false;
-					}
-					indexNames.append(index.getName());
-				}
+        boolean first = true;
+        for (final OIndex<?> index : sourceClass.getClassInvolvedIndexes(fieldName)) {
+          if (!first) {
+            indexNames.append(", ");
+          } else {
+            first = false;
+          }
+          indexNames.append(index.getName());
+        }
 
-				throw new OCommandExecutionException("Property used in indexes (" + indexNames.toString()
-						+ "). Please drop these indexes before removing property or use FORCE parameter.");
-			}
-		}
+        throw new OCommandExecutionException("Property used in indexes (" + indexNames.toString()
+            + "). Please drop these indexes before removing property or use FORCE parameter.");
+      }
+    }
 
-		// REMOVE THE PROPERTY
-		sourceClass.dropPropertyInternal(fieldName);
-		sourceClass.saveInternal();
+    // REMOVE THE PROPERTY
+    sourceClass.dropPropertyInternal(fieldName);
+    sourceClass.saveInternal();
 
-		return null;
-	}
+    return null;
+  }
 
-	private void dropRelatedIndexes(final List<OIndex<?>> indexes) {
-		final ODatabaseRecord database = getDatabase();
-		for (final OIndex<?> index : indexes) {
-			database.command(new OCommandSQL("DROP INDEX " + index.getName())).execute();
-		}
-	}
+  private void dropRelatedIndexes(final List<OIndex<?>> indexes) {
+    final ODatabaseRecord database = getDatabase();
+    for (final OIndex<?> index : indexes) {
+      database.command(new OCommandSQL("DROP INDEX " + index.getName())).execute();
+    }
+  }
 
-	private List<OIndex<?>> relatedIndexes(final String fieldName) {
-		final List<OIndex<?>> result = new ArrayList<OIndex<?>>();
+  private List<OIndex<?>> relatedIndexes(final String fieldName) {
+    final List<OIndex<?>> result = new ArrayList<OIndex<?>>();
 
-		final ODatabaseRecord database = getDatabase();
-		for (final OIndex<?> oIndex : database.getMetadata().getIndexManager().getClassIndexes(className)) {
-			if (OCollections.indexOf(oIndex.getDefinition().getFields(), fieldName, new OCaseIncentiveComparator()) > -1) {
-				result.add(oIndex);
-			}
-		}
+    final ODatabaseRecord database = getDatabase();
+    for (final OIndex<?> oIndex : database.getMetadata().getIndexManager().getClassIndexes(className)) {
+      if (OCollections.indexOf(oIndex.getDefinition().getFields(), fieldName, new OCaseIncentiveComparator()) > -1) {
+        result.add(oIndex);
+      }
+    }
 
-		return result;
-	}
+    return result;
+  }
 
-	@Override
-	public String getSyntax() {
-		return "DROP PROPERTY <class>.<property>";
-	}
+  @Override
+  public String getSyntax() {
+    return "DROP PROPERTY <class>.<property>";
+  }
 }

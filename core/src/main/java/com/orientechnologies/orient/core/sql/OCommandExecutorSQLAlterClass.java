@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -36,98 +37,98 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract {
-	public static final String	KEYWORD_ALTER	= "ALTER";
-	public static final String	KEYWORD_CLASS	= "CLASS";
+  public static final String KEYWORD_ALTER = "ALTER";
+  public static final String KEYWORD_CLASS = "CLASS";
 
-	private String							className;
-	private ATTRIBUTES					attribute;
-	private String							value;
+  private String             className;
+  private ATTRIBUTES         attribute;
+  private String             value;
 
-	public OCommandExecutorSQLAlterClass parse(final OCommandRequestText iRequest) {
-		final ODatabaseRecord database = getDatabase();
-		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
+  public OCommandExecutorSQLAlterClass parse(final OCommandRequest iRequest) {
+    final ODatabaseRecord database = getDatabase();
+    database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-		init(iRequest.getText());
+    init(((OCommandRequestText) iRequest).getText());
 
-		StringBuilder word = new StringBuilder();
+    StringBuilder word = new StringBuilder();
 
-		int oldPos = 0;
-		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_ALTER))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found", text, oldPos);
+    int oldPos = 0;
+    int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    if (pos == -1 || !word.toString().equals(KEYWORD_ALTER))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found", text, oldPos);
 
-		oldPos = pos;
-		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_CLASS))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found", text, oldPos);
+    oldPos = pos;
+    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    if (pos == -1 || !word.toString().equals(KEYWORD_CLASS))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found", text, oldPos);
 
-		oldPos = pos;
-		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
-		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected <class>", text, oldPos);
+    oldPos = pos;
+    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
+    if (pos == -1)
+      throw new OCommandSQLParsingException("Expected <class>", text, oldPos);
 
-		className = word.toString();
+    className = word.toString();
 
-		oldPos = pos;
-		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1)
-			throw new OCommandSQLParsingException("Missed the class's attribute to change", text, oldPos);
+    oldPos = pos;
+    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    if (pos == -1)
+      throw new OCommandSQLParsingException("Missed the class's attribute to change", text, oldPos);
 
-		final String attributeAsString = word.toString();
+    final String attributeAsString = word.toString();
 
-		try {
-			attribute = OClass.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
-		} catch (IllegalArgumentException e) {
-			throw new OCommandSQLParsingException("Unknown class's attribute '" + attributeAsString + "'. Supported attributes are: "
-					+ Arrays.toString(OClass.ATTRIBUTES.values()), text, oldPos);
-		}
+    try {
+      attribute = OClass.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
+    } catch (IllegalArgumentException e) {
+      throw new OCommandSQLParsingException("Unknown class's attribute '" + attributeAsString + "'. Supported attributes are: "
+          + Arrays.toString(OClass.ATTRIBUTES.values()), text, oldPos);
+    }
 
-		value = text.substring(pos + 1).trim();
+    value = text.substring(pos + 1).trim();
 
-		if (value.length() == 0)
-			throw new OCommandSQLParsingException("Missed the property's value to change for attribute '" + attribute + "'", text, oldPos);
+    if (value.length() == 0)
+      throw new OCommandSQLParsingException("Missed the property's value to change for attribute '" + attribute + "'", text, oldPos);
 
-		if (value.equalsIgnoreCase("null"))
-			value = null;
+    if (value.equalsIgnoreCase("null"))
+      value = null;
 
-		return this;
-	}
+    return this;
+  }
 
-	/**
-	 * Execute the ALTER CLASS.
-	 */
-	public Object execute(final Map<Object, Object> iArgs) {
-		if (attribute == null)
-			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+  /**
+   * Execute the ALTER CLASS.
+   */
+  public Object execute(final Map<Object, Object> iArgs) {
+    if (attribute == null)
+      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-		final OClassImpl cls = (OClassImpl) getDatabase().getMetadata().getSchema().getClass(className);
-		if (cls == null)
-			throw new OCommandExecutionException("Source class '" + className + "' not found");
+    final OClassImpl cls = (OClassImpl) getDatabase().getMetadata().getSchema().getClass(className);
+    if (cls == null)
+      throw new OCommandExecutionException("Source class '" + className + "' not found");
 
-		cls.setInternalAndSave(attribute, value);
-		renameCluster();
-		return null;
-	}
+    cls.setInternalAndSave(attribute, value);
+    renameCluster();
+    return null;
+  }
 
-	private void renameCluster() {
-		final ODatabaseRecord database = getDatabase();
-		if (attribute.equals(OClass.ATTRIBUTES.NAME) && checkClusterRenameOk(database.getStorage().getClusterIdByName(value))) {
-			database.command(new OCommandSQL("alter cluster " + className + " name " + value)).execute();
-		}
-	}
+  private void renameCluster() {
+    final ODatabaseRecord database = getDatabase();
+    if (attribute.equals(OClass.ATTRIBUTES.NAME) && checkClusterRenameOk(database.getStorage().getClusterIdByName(value))) {
+      database.command(new OCommandSQL("alter cluster " + className + " name " + value)).execute();
+    }
+  }
 
-	private boolean checkClusterRenameOk(int clusterId) {
-		final ODatabaseRecord database = getDatabase();
-		for (OClass clazz : database.getMetadata().getSchema().getClasses()) {
-			if (clazz.getName().equals(value))
-				continue;
-			else if (clazz.getDefaultClusterId() == clusterId || Arrays.asList(clazz.getClusterIds()).contains(clusterId))
-				return false;
-		}
-		return true;
-	}
+  private boolean checkClusterRenameOk(int clusterId) {
+    final ODatabaseRecord database = getDatabase();
+    for (OClass clazz : database.getMetadata().getSchema().getClasses()) {
+      if (clazz.getName().equals(value))
+        continue;
+      else if (clazz.getDefaultClusterId() == clusterId || Arrays.asList(clazz.getClusterIds()).contains(clusterId))
+        return false;
+    }
+    return true;
+  }
 
-	public String getSyntax() {
-		return "ALTER CLASS <class> <attribute-name> <attribute-value>";
-	}
+  public String getSyntax() {
+    return "ALTER CLASS <class> <attribute-name> <attribute-value>";
+  }
 }

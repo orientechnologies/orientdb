@@ -34,41 +34,46 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  *          Record Type
  */
 public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecordIteratorClusters<REC> {
-	protected final OClass	targetClass;
-	protected boolean				polymorphic;
+  protected final OClass targetClass;
+  protected boolean      polymorphic;
 
-	public ORecordIteratorClass(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
-			final String iClassName, final boolean iPolymorphic) {
-		super(iDatabase, iLowLevelDatabase);
+  public ORecordIteratorClass(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
+      final String iClassName, final boolean iPolymorphic) {
+    super(iDatabase, iLowLevelDatabase);
 
-		targetClass = database.getMetadata().getSchema().getClass(iClassName);
-		if (targetClass == null)
-			throw new IllegalArgumentException("Class '" + iClassName + "' was not found in database schema");
+    targetClass = database.getMetadata().getSchema().getClass(iClassName);
+    if (targetClass == null)
+      throw new IllegalArgumentException("Class '" + iClassName + "' was not found in database schema");
 
-		polymorphic = iPolymorphic;
-		clusterIds = polymorphic ? targetClass.getPolymorphicClusterIds() : targetClass.getClusterIds();
+    polymorphic = iPolymorphic;
+    clusterIds = polymorphic ? targetClass.getPolymorphicClusterIds() : targetClass.getClusterIds();
 
-		config();
-	}
+    config();
+  }
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public REC next() {
-		return (REC) super.next().getRecord();
-	}
+  @SuppressWarnings("unchecked")
+  @Override
+  public REC next() {
+    return (REC) super.next().getRecord();
+  }
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public REC previous() {
-		return (REC) super.previous().getRecord();
-	}
+  @SuppressWarnings("unchecked")
+  @Override
+  public REC previous() {
+    return (REC) super.previous().getRecord();
+  }
 
-	@Override
-	protected boolean include(final ORecord<?> record) {
-		return record instanceof ODocument && targetClass.isSuperClassOf(((ODocument) record).getSchemaClass());
-	}
+  @Override
+  protected boolean include(final ORecord<?> record) {
+    return record instanceof ODocument && targetClass.isSuperClassOf(((ODocument) record).getSchemaClass());
+  }
 
-	public boolean isPolymorphic() {
-		return polymorphic;
-	}
+  public boolean isPolymorphic() {
+    return polymorphic;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("ORecordIteratorClass.targetClass(%s).polymorphic(%s)", targetClass, polymorphic);
+  }
 }

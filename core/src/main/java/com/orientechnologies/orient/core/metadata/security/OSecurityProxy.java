@@ -23,65 +23,73 @@ import com.orientechnologies.orient.core.metadata.security.ORole.ALLOW_MODES;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
- * Manages users and roles.
+ * Proxy class for user management
  * 
  * @author Luca Garulli
  * 
  */
 public class OSecurityProxy extends OProxedResource<OSecurity> implements OSecurity {
-	public OSecurityProxy(final OSecurity iDelegate, final ODatabaseRecord iDatabase) {
-		super(iDelegate, iDatabase);
-	}
+  public OSecurityProxy(final OSecurity iDelegate, final ODatabaseRecord iDatabase) {
+    super(iDelegate, iDatabase);
+  }
 
-	public OUser create() {
-		return delegate.create();
-	}
+  public OUser create() {
+    return delegate.create();
+  }
 
-	public void load() {
-		delegate.load();
-	}
+  public void load() {
+    delegate.load();
+  }
 
-	public void close() {
-		delegate.close();
-	}
+  public void close() {
+    delegate.close();
+  }
 
-	public OUser authenticate(final String iUsername, final String iUserPassword) {
-		return delegate.authenticate(iUsername, iUserPassword);
-	}
+  public OUser authenticate(final String iUsername, final String iUserPassword) {
+    return delegate.authenticate(iUsername, iUserPassword);
+  }
 
-	public OUser getUser(final String iUserName) {
-		return delegate.getUser(iUserName);
-	}
+  public OUser getUser(final String iUserName) {
+    return delegate.getUser(iUserName);
+  }
 
-	public OUser createUser(final String iUserName, final String iUserPassword, final String[] iRoles) {
-		return delegate.createUser(iUserName, iUserPassword, iRoles);
-	}
+  public OUser createUser(final String iUserName, final String iUserPassword, final String[] iRoles) {
+    return delegate.createUser(iUserName, iUserPassword, iRoles);
+  }
 
-	public ORole getRole(final String iRoleName) {
-		return delegate.getRole(iRoleName);
-	}
+  public ORole getRole(final String iRoleName) {
+    return delegate.getRole(iRoleName);
+  }
 
-	public ORole createRole(final String iRoleName, final ALLOW_MODES iAllowMode) {
-		return delegate.createRole(iRoleName, iAllowMode);
-	}
+  public ORole createRole(final String iRoleName, final ALLOW_MODES iAllowMode) {
+    return delegate.createRole(iRoleName, iAllowMode);
+  }
 
-	public ORole createRole(final String iRoleName, final ORole iParent, final ALLOW_MODES iAllowMode) {
-		return delegate.createRole(iRoleName, iParent, iAllowMode);
-	}
+  public ORole createRole(final String iRoleName, final ORole iParent, final ALLOW_MODES iAllowMode) {
+    return delegate.createRole(iRoleName, iParent, iAllowMode);
+  }
 
-	public List<ODocument> getUsers() {
-		return delegate.getUsers();
-	}
+  public List<ODocument> getUsers() {
+    return delegate.getUsers();
+  }
 
-	public List<ODocument> getRoles() {
-		return delegate.getRoles();
-	}
+  public List<ODocument> getRoles() {
+    return delegate.getRoles();
+  }
 
-	public String toString() {
-		return delegate.toString();
-	}
+  public String toString() {
+    return delegate.toString();
+  }
 
-	public OUser repair() {
-		return delegate.repair();
-	}
+  public OUser repair() {
+    return delegate.repair();
+  }
+
+  public boolean dropUser(final String iUserName) {
+    return delegate.dropUser(iUserName);
+  }
+
+  public boolean dropRole(final String iRoleName) {
+    return delegate.dropRole(iRoleName);
+  }
 }

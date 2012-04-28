@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -35,66 +36,67 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  * 
  */
 public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLAbstract {
-	public static final String	KEYWORD_TRUNCATE	= "TRUNCATE";
-	public static final String	KEYWORD_RECORD		= "RECORD";
-	private Set<String>					records						= new HashSet<String>();
+  public static final String KEYWORD_TRUNCATE = "TRUNCATE";
+  public static final String KEYWORD_RECORD   = "RECORD";
+  private Set<String>        records          = new HashSet<String>();
 
-	@SuppressWarnings("unchecked")
-	public OCommandExecutorSQLTruncateRecord parse(final OCommandRequestText iRequest) {
-		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
-		init(iRequest.getText());
+  @SuppressWarnings("unchecked")
+  public OCommandExecutorSQLTruncateRecord parse(final OCommandRequest iRequest) {
+    getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-		StringBuilder word = new StringBuilder();
+    init(((OCommandRequestText) iRequest).getText());
 
-		int oldPos = 0;
-		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_TRUNCATE))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_TRUNCATE + " not found. Use " + getSyntax(), text, oldPos);
+    StringBuilder word = new StringBuilder();
 
-		oldPos = pos;
-		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_RECORD))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_RECORD + " not found. Use " + getSyntax(), text, oldPos);
+    int oldPos = 0;
+    int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    if (pos == -1 || !word.toString().equals(KEYWORD_TRUNCATE))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_TRUNCATE + " not found. Use " + getSyntax(), text, oldPos);
 
-		oldPos = pos;
-		pos = OSQLHelper.nextWord(text, text, oldPos, word, true);
-		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected one or more records. Use " + getSyntax(), text, oldPos);
+    oldPos = pos;
+    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    if (pos == -1 || !word.toString().equals(KEYWORD_RECORD))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_RECORD + " not found. Use " + getSyntax(), text, oldPos);
 
-		if (word.charAt(0) == '[')
-			// COLLECTION
-			OStringSerializerHelper.getCollection(text, oldPos, records);
-		else {
-			records.add(word.toString());
-		}
+    oldPos = pos;
+    pos = OSQLHelper.nextWord(text, text, oldPos, word, true);
+    if (pos == -1)
+      throw new OCommandSQLParsingException("Expected one or more records. Use " + getSyntax(), text, oldPos);
 
-		if (records.isEmpty())
-			throw new OCommandSQLParsingException("Missed record(s). Use " + getSyntax(), text, oldPos);
-		return this;
-	}
+    if (word.charAt(0) == '[')
+      // COLLECTION
+      OStringSerializerHelper.getCollection(text, oldPos, records);
+    else {
+      records.add(word.toString());
+    }
 
-	/**
-	 * Execute the command.
-	 */
-	public Object execute(final Map<Object, Object> iArgs) {
-		if (records.isEmpty())
-			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    if (records.isEmpty())
+      throw new OCommandSQLParsingException("Missed record(s). Use " + getSyntax(), text, oldPos);
+    return this;
+  }
 
-		final ODatabaseRecord database = getDatabase();
-		for (String rec : records) {
-			try {
-				final ORecordId rid = new ORecordId(rec);
-				database.getStorage().deleteRecord(rid, -1, 0, null);
-			} catch (Throwable e) {
-				throw new OCommandExecutionException("Error on executing command", e);
-			}
-		}
+  /**
+   * Execute the command.
+   */
+  public Object execute(final Map<Object, Object> iArgs) {
+    if (records.isEmpty())
+      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-		return records.size();
-	}
+    final ODatabaseRecord database = getDatabase();
+    for (String rec : records) {
+      try {
+        final ORecordId rid = new ORecordId(rec);
+        database.getStorage().deleteRecord(rid, -1, 0, null);
+      } catch (Throwable e) {
+        throw new OCommandExecutionException("Error on executing command", e);
+      }
+    }
 
-	@Override
-	public String getSyntax() {
-		return "TRUNCATE RECORD <rid>*";
-	}
+    return records.size();
+  }
+
+  @Override
+  public String getSyntax() {
+    return "TRUNCATE RECORD <rid>*";
+  }
 }

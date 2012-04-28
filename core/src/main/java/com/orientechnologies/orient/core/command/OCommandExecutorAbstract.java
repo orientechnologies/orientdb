@@ -29,48 +29,48 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
  */
 @SuppressWarnings("unchecked")
 public abstract class OCommandExecutorAbstract extends OCommandToParse implements OCommandExecutor {
-	protected OProgressListener		progressListener;
-	protected int									limit	= -1;
-	protected Map<Object, Object>	parameters;
-	protected OCommandContext			context;
+  protected OProgressListener   progressListener;
+  protected int                 limit = -1;
+  protected Map<Object, Object> parameters;
+  protected OCommandContext     context;
 
-	public OCommandExecutorAbstract init(final String iText) {
-		text = iText;
-		return this;
-	}
+  public OCommandExecutorAbstract init(final String iText) {
+    text = iText;
+    return this;
+  }
 
-	@Override
-	public String toString() {
-		return getClass().getSimpleName() + " [text=" + text + "]";
-	}
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + " [text=" + text + "]";
+  }
 
-	public OProgressListener getProgressListener() {
-		return progressListener;
-	}
+  public OProgressListener getProgressListener() {
+    return progressListener;
+  }
 
-	public <RET extends OCommandExecutor> RET setProgressListener(OProgressListener progressListener) {
-		this.progressListener = progressListener;
-		return (RET) this;
-	}
+  public <RET extends OCommandExecutor> RET setProgressListener(OProgressListener progressListener) {
+    this.progressListener = progressListener;
+    return (RET) this;
+  }
 
-	public int getLimit() {
-		return limit;
-	}
+  public int getLimit() {
+    return limit;
+  }
 
-	public <RET extends OCommandExecutor> RET setLimit(final int iLimit) {
-		this.limit = iLimit;
-		return (RET) this;
-	}
+  public <RET extends OCommandExecutor> RET setLimit(final int iLimit) {
+    this.limit = iLimit;
+    return (RET) this;
+  }
 
-	public Map<Object, Object> getParameters() {
-		return parameters;
-	}
+  public Map<Object, Object> getParameters() {
+    return parameters;
+  }
 
-	public OCommandContext getContext() {
-		return context;
-	}
+  public OCommandContext getContext() {
+    return context;
+  }
 
-	public static ODatabaseRecord getDatabase() {
-		return ODatabaseRecordThreadLocal.INSTANCE.get();
-	}
+  public static ODatabaseRecord getDatabase() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get();
+  }
 }

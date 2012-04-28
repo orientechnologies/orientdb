@@ -25,12 +25,12 @@ import java.util.NoSuchElementException;
  * 
  * @author Anton Cherneckiy (pesua.mail--at--gmail.com)
  */
-public class OIterableObject implements Iterable<Object> {
+public class OIterableObjectArray<T> implements Iterable<T> {
 
-	private Object	object;
-	private int			length;
+	private final Object	object;
+	private int						length;
 
-	public OIterableObject(Object o) {
+	public OIterableObjectArray(Object o) {
 		object = o;
 		length = Array.getLength(o);
 	}
@@ -40,11 +40,12 @@ public class OIterableObject implements Iterable<Object> {
 	 * 
 	 * @return an Iterator.
 	 */
-	public Iterator<Object> iterator() {
+	public Iterator<T> iterator() {
 		return new ObjIterator();
 	}
 
-	private class ObjIterator implements Iterator<Object> {
+	private class ObjIterator implements Iterator<T> {
+		private int	p	= 0;
 
 		/**
 		 * Returns <tt>true</tt> if the iteration has more elements. (In other words, returns <tt>true</tt> if <tt>next</tt> would
@@ -63,9 +64,10 @@ public class OIterableObject implements Iterable<Object> {
 		 * @throws java.util.NoSuchElementException
 		 *           iteration has no more elements.
 		 */
-		public Object next() {
+		@SuppressWarnings("unchecked")
+		public T next() {
 			if (p < length) {
-				return Array.get(object, p++);
+				return (T) Array.get(object, p++);
 			} else {
 				throw new NoSuchElementException();
 			}
@@ -85,7 +87,5 @@ public class OIterableObject implements Iterable<Object> {
 		public void remove() {
 			throw new UnsupportedOperationException();
 		}
-
-		private int	p	= 0;
 	}
 }

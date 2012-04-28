@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.sql;
 import java.io.IOException;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -33,62 +34,63 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
  * 
  */
 public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLAbstract {
-	public static final String	KEYWORD_TRUNCATE	= "TRUNCATE";
-	public static final String	KEYWORD_CLUSTER		= "CLUSTER";
-	private String							clusterName;
+  public static final String KEYWORD_TRUNCATE = "TRUNCATE";
+  public static final String KEYWORD_CLUSTER  = "CLUSTER";
+  private String             clusterName;
 
-	@SuppressWarnings("unchecked")
-	public OCommandExecutorSQLTruncateCluster parse(final OCommandRequestText iRequest) {
-		final ODatabaseRecord database = getDatabase();
-		database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
-		init(iRequest.getText());
+  @SuppressWarnings("unchecked")
+  public OCommandExecutorSQLTruncateCluster parse(final OCommandRequest iRequest) {
+    final ODatabaseRecord database = getDatabase();
+    database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-		StringBuilder word = new StringBuilder();
+    init(((OCommandRequestText) iRequest).getText());
 
-		int oldPos = 0;
-		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_TRUNCATE))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_TRUNCATE + " not found. Use " + getSyntax(), text, oldPos);
+    StringBuilder word = new StringBuilder();
 
-		oldPos = pos;
-		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_CLUSTER))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found. Use " + getSyntax(), text, oldPos);
+    int oldPos = 0;
+    int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    if (pos == -1 || !word.toString().equals(KEYWORD_TRUNCATE))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_TRUNCATE + " not found. Use " + getSyntax(), text, oldPos);
 
-		oldPos = pos;
-		pos = OSQLHelper.nextWord(text, text, oldPos, word, true);
-		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected cluster name. Use " + getSyntax(), text, oldPos);
+    oldPos = pos;
+    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    if (pos == -1 || !word.toString().equals(KEYWORD_CLUSTER))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found. Use " + getSyntax(), text, oldPos);
 
-		clusterName = word.toString();
+    oldPos = pos;
+    pos = OSQLHelper.nextWord(text, text, oldPos, word, true);
+    if (pos == -1)
+      throw new OCommandSQLParsingException("Expected cluster name. Use " + getSyntax(), text, oldPos);
 
-		if (database.getClusterIdByName(clusterName) == -1)
-			throw new OCommandSQLParsingException("Cluster '" + clusterName + "' not found", text, oldPos);
-		return this;
-	}
+    clusterName = word.toString();
 
-	/**
-	 * Execute the command.
-	 */
-	public Object execute(final Map<Object, Object> iArgs) {
-		if (clusterName == null)
-			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    if (database.getClusterIdByName(clusterName) == -1)
+      throw new OCommandSQLParsingException("Cluster '" + clusterName + "' not found", text, oldPos);
+    return this;
+  }
 
-		OCluster cluster = ((OStorageEmbedded) getDatabase().getStorage()).getClusterByName(clusterName);
+  /**
+   * Execute the command.
+   */
+  public Object execute(final Map<Object, Object> iArgs) {
+    if (clusterName == null)
+      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-		final long recs = cluster.getEntries();
+    OCluster cluster = ((OStorageEmbedded) getDatabase().getStorage()).getClusterByName(clusterName);
 
-		try {
-			cluster.truncate();
-		} catch (IOException e) {
-			throw new OCommandExecutionException("Error on executing command", e);
-		}
+    final long recs = cluster.getEntries();
 
-		return recs;
-	}
+    try {
+      cluster.truncate();
+    } catch (IOException e) {
+      throw new OCommandExecutionException("Error on executing command", e);
+    }
 
-	@Override
-	public String getSyntax() {
-		return "TRUNCATE CLUSTER <cluster-name>";
-	}
+    return recs;
+  }
+
+  @Override
+  public String getSyntax() {
+    return "TRUNCATE CLUSTER <cluster-name>";
+  }
 }

@@ -25,50 +25,50 @@ import java.util.Map;
  * 
  */
 public class OBasicCommandContext implements OCommandContext {
-	private OCommandContext			inherited;
-	private Map<String, Object>	variables;
+  private OCommandContext     inherited;
+  private Map<String, Object> variables;
 
-	public Object getVariable(final String iName) {
-		Object result = inherited != null ? inherited.getVariable(iName) : null;
-		if (variables != null && variables.containsKey(iName))
-			result = variables.get(iName);
-		return result;
-	}
+  public Object getVariable(final String iName) {
+    Object result = inherited != null ? inherited.getVariable(iName) : null;
+    if (variables != null && variables.containsKey(iName))
+      result = variables.get(iName);
+    return result;
+  }
 
-	public void setVariable(final String iName, final Object iValue) {
-		init();
-		variables.put(iName, iValue);
-	}
+  public void setVariable(final String iName, final Object iValue) {
+    init();
+    variables.put(iName, iValue);
+  }
 
-	/**
-	 * Returns a read-only map with all the variables.
-	 */
-	public Map<String, Object> getVariables() {
-		final HashMap<String, Object> map = new HashMap<String, Object>();
-		if (inherited != null)
-			map.putAll(inherited.getVariables());
-		if (variables != null)
-			map.putAll(variables);
-		return map;
-	}
+  /**
+   * Returns a read-only map with all the variables.
+   */
+  public Map<String, Object> getVariables() {
+    final HashMap<String, Object> map = new HashMap<String, Object>();
+    if (inherited != null)
+      map.putAll(inherited.getVariables());
+    if (variables != null)
+      map.putAll(variables);
+    return map;
+  }
 
-	/**
-	 * Set the inherited context avoiding to copy all the values every time.
-	 */
-	public void merge(final OCommandContext iContext) {
-		if (iContext == null)
-			return;
+  /**
+   * Set the inherited context avoiding to copy all the values every time.
+   */
+  public void merge(final OCommandContext iContext) {
+    if (iContext == null)
+      return;
 
-		inherited = iContext;
-	}
+    inherited = iContext;
+  }
 
-	@Override
-	public String toString() {
-		return getVariables().toString();
-	}
+  @Override
+  public String toString() {
+    return getVariables().toString();
+  }
 
-	private void init() {
-		if (variables == null)
-			variables = new HashMap<String, Object>();
-	}
+  private void init() {
+    if (variables == null)
+      variables = new HashMap<String, Object>();
+  }
 }

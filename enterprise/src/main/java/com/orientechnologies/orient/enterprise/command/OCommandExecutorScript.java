@@ -25,7 +25,7 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
-import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -38,78 +38,78 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
  * 
  */
 public class OCommandExecutorScript extends OCommandExecutorAbstract {
-	protected static final String								DEF_LANGUAGE		= "javascript";
-	protected static ScriptEngineManager				scriptEngineManager;
-	protected static Map<String, ScriptEngine>	engines;
-	protected static String											defaultLanguage	= DEF_LANGUAGE;
+  protected static final String              DEF_LANGUAGE    = "javascript";
+  protected static ScriptEngineManager       scriptEngineManager;
+  protected static Map<String, ScriptEngine> engines;
+  protected static String                    defaultLanguage = DEF_LANGUAGE;
 
-	protected OCommandScript										request;
+  protected OCommandScript                   request;
 
-	static {
-		if (engines == null) {
-			engines = new HashMap<String, ScriptEngine>();
-			scriptEngineManager = new ScriptEngineManager();
-			for (ScriptEngineFactory f : scriptEngineManager.getEngineFactories()) {
-				engines.put(f.getLanguageName().toLowerCase(), f.getScriptEngine());
+  static {
+    if (engines == null) {
+      engines = new HashMap<String, ScriptEngine>();
+      scriptEngineManager = new ScriptEngineManager();
+      for (ScriptEngineFactory f : scriptEngineManager.getEngineFactories()) {
+        engines.put(f.getLanguageName().toLowerCase(), f.getScriptEngine());
 
-				if (defaultLanguage == null)
-					defaultLanguage = f.getLanguageName();
-			}
+        if (defaultLanguage == null)
+          defaultLanguage = f.getLanguageName();
+      }
 
-			if (!engines.containsKey(DEF_LANGUAGE)) {
-				engines.put(DEF_LANGUAGE, scriptEngineManager.getEngineByName(DEF_LANGUAGE));
-				defaultLanguage = DEF_LANGUAGE;
-			}
-		}
-	}
+      if (!engines.containsKey(DEF_LANGUAGE)) {
+        engines.put(DEF_LANGUAGE, scriptEngineManager.getEngineByName(DEF_LANGUAGE));
+        defaultLanguage = DEF_LANGUAGE;
+      }
+    }
+  }
 
-	public OCommandExecutorScript() {
-	}
+  public OCommandExecutorScript() {
+  }
 
-	@SuppressWarnings("unchecked")
-	public OCommandExecutorScript parse(final OCommandRequestText iRequest) {
-		request = (OCommandScript) iRequest;
-		return this;
-	}
+  @SuppressWarnings("unchecked")
+  public OCommandExecutorScript parse(final OCommandRequest iRequest) {
+    request = (OCommandScript) iRequest;
+    return this;
+  }
 
-	public Object execute(final Map<Object, Object> iArgs) {
+  public Object execute(final Map<Object, Object> iArgs) {
 
-		final String language = request.getLanguage();
-		final String script = request.getText();
+    final String language = request.getLanguage();
+    final String script = request.getText();
 
-		if (language == null)
-			throw new OCommandScriptException("No language was specified");
+    if (language == null)
+      throw new OCommandScriptException("No language was specified");
 
-		if (!engines.containsKey(language.toLowerCase()))
-			throw new OCommandScriptException("Unsupported language: " + language + ". Supported languages are: " + engines);
+    if (!engines.containsKey(language.toLowerCase()))
+      throw new OCommandScriptException("Unsupported language: " + language + ". Supported languages are: " + engines);
 
-		if (script == null)
-			throw new OCommandScriptException("Invalid script: null");
+    if (script == null)
+      throw new OCommandScriptException("Invalid script: null");
 
-		final ScriptEngine scriptEngine = engines.get(language.toLowerCase());
+    final ScriptEngine scriptEngine = engines.get(language.toLowerCase());
 
-		if (scriptEngine == null)
-			throw new OCommandScriptException("Cannot find script engine: " + language);
+    if (scriptEngine == null)
+      throw new OCommandScriptException("Cannot find script engine: " + language);
 
-		final Bindings binding = scriptEngine.createBindings();
+    final Bindings binding = scriptEngine.createBindings();
 
-		// BIND FIXED VARIABLES
-		binding.put("db", new OScriptDocumentDatabaseWrapper((ODatabaseRecordTx) getDatabase()));
-		binding.put("gdb", new OScriptGraphDatabaseWrapper((ODatabaseRecordTx) getDatabase()));
+    // BIND FIXED VARIABLES
+    binding.put("db", new OScriptDocumentDatabaseWrapper((ODatabaseRecordTx) getDatabase()));
+    binding.put("gdb", new OScriptGraphDatabaseWrapper((ODatabaseRecordTx) getDatabase()));
 
-		// BIND PARAMETERS INTO THE SCRIPT
-		if (iArgs != null)
-			for (int i = 0; i < iArgs.size(); ++i) {
-				binding.put("$" + i, iArgs.get(i));
-			}
+    // BIND PARAMETERS INTO THE SCRIPT
+    if (iArgs != null)
+      for (int i = 0; i < iArgs.size(); ++i) {
+        binding.put("$" + i, iArgs.get(i));
+      }
 
-		try {
-			Object result = null;
-			result = scriptEngine.eval(script, binding);
+    try {
+      Object result = null;
+      result = scriptEngine.eval(script, binding);
 
-			return result;
-		} catch (ScriptException e) {
-			throw new OCommandScriptException("Error on execution of the script", request.getText(), 0, e);
-		}
-	}
+      return result;
+    } catch (ScriptException e) {
+      throw new OCommandScriptException("Error on execution of the script", request.getText(), 0, e);
+    }
+  }
 }

@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -46,204 +47,204 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract {
-	public static final String	KEYWORD_CREATE	= "CREATE";
-	public static final String	KEYWORD_INDEX		= "INDEX";
-	public static final String	KEYWORD_ON			= "ON";
+  public static final String KEYWORD_CREATE = "CREATE";
+  public static final String KEYWORD_INDEX  = "INDEX";
+  public static final String KEYWORD_ON     = "ON";
 
-	private String							indexName;
-	private OClass							oClass;
-	private String[]						fields;
-	private OClass.INDEX_TYPE		indexType;
-	private OType[]							keyTypes;
-	private byte								serializerKeyId;
+  private String             indexName;
+  private OClass             oClass;
+  private String[]           fields;
+  private OClass.INDEX_TYPE  indexType;
+  private OType[]            keyTypes;
+  private byte               serializerKeyId;
 
-	public OCommandExecutorSQLCreateIndex parse(final OCommandRequestText iRequest) {
-		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
+  public OCommandExecutorSQLCreateIndex parse(final OCommandRequest iRequest) {
+    getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-		init(iRequest.getText());
+    init(((OCommandRequestText) iRequest).getText());
 
-		final StringBuilder word = new StringBuilder();
+    final StringBuilder word = new StringBuilder();
 
-		int oldPos = 0;
-		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found. Use " + getSyntax(), text, oldPos);
+    int oldPos = 0;
+    int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found. Use " + getSyntax(), text, oldPos);
 
-		oldPos = pos;
-		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_INDEX))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_INDEX + " not found. Use " + getSyntax(), text, oldPos);
+    oldPos = pos;
+    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    if (pos == -1 || !word.toString().equals(KEYWORD_INDEX))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_INDEX + " not found. Use " + getSyntax(), text, oldPos);
 
-		oldPos = pos;
-		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
-		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected index name. Use " + getSyntax(), text, oldPos);
+    oldPos = pos;
+    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
+    if (pos == -1)
+      throw new OCommandSQLParsingException("Expected index name. Use " + getSyntax(), text, oldPos);
 
-		indexName = word.toString();
+    indexName = word.toString();
 
-		final int namePos = oldPos;
-		oldPos = pos;
-		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1)
-			throw new OCommandSQLParsingException("Index type requested. Use " + getSyntax(), text, oldPos + 1);
+    final int namePos = oldPos;
+    oldPos = pos;
+    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    if (pos == -1)
+      throw new OCommandSQLParsingException("Index type requested. Use " + getSyntax(), text, oldPos + 1);
 
-		if (word.toString().equals(KEYWORD_ON)) {
-			if (indexName.contains(".")) {
-				throw new OCommandSQLParsingException("Index name cannot contain '.' character. Use " + getSyntax(), text, namePos);
-			}
+    if (word.toString().equals(KEYWORD_ON)) {
+      if (indexName.contains(".")) {
+        throw new OCommandSQLParsingException("Index name cannot contain '.' character. Use " + getSyntax(), text, namePos);
+      }
 
-			oldPos = pos;
-			pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-			if (pos == -1)
-				throw new OCommandSQLParsingException("Expected class name. Use " + getSyntax(), text, oldPos);
-			oldPos = pos;
-			oClass = findClass(word.toString());
+      oldPos = pos;
+      pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+      if (pos == -1)
+        throw new OCommandSQLParsingException("Expected class name. Use " + getSyntax(), text, oldPos);
+      oldPos = pos;
+      oClass = findClass(word.toString());
 
-			if (oClass == null)
-				throw new OCommandExecutionException("Class " + word + " not found");
+      if (oClass == null)
+        throw new OCommandExecutionException("Class " + word + " not found");
 
-			pos = textUpperCase.indexOf(")");
-			if (pos == -1) {
-				throw new OCommandSQLParsingException("No right bracket found. Use " + getSyntax(), text, oldPos);
-			}
+      pos = textUpperCase.indexOf(")");
+      if (pos == -1) {
+        throw new OCommandSQLParsingException("No right bracket found. Use " + getSyntax(), text, oldPos);
+      }
 
-			final String props = textUpperCase.substring(oldPos, pos).trim().substring(1);
+      final String props = textUpperCase.substring(oldPos, pos).trim().substring(1);
 
-			List<String> propList = new ArrayList<String>();
-			final List<OType> typeList = new ArrayList<OType>();
-			for (String propToIndex : props.trim().split("\\s*,\\s*")) {
-				checkMapIndexSpecifier(propToIndex, text, oldPos);
-				final String propName = propToIndex.split("\\s+")[0];
+      List<String> propList = new ArrayList<String>();
+      final List<OType> typeList = new ArrayList<OType>();
+      for (String propToIndex : props.trim().split("\\s*,\\s*")) {
+        checkMapIndexSpecifier(propToIndex, text, oldPos);
+        final String propName = propToIndex.split("\\s+")[0];
 
-				final OProperty property = oClass.getProperty(propName);
+        final OProperty property = oClass.getProperty(propName);
 
-				if (property == null)
-					throw new IllegalArgumentException("Property '" + propToIndex + "' was not found in class '" + oClass.getName() + "'");
+        if (property == null)
+          throw new IllegalArgumentException("Property '" + propToIndex + "' was not found in class '" + oClass.getName() + "'");
 
-				propList.add(propToIndex);
-				typeList.add(property.getType());
-			}
+        propList.add(propToIndex);
+        typeList.add(property.getType());
+      }
 
-			fields = new String[propList.size()];
-			propList.toArray(fields);
+      fields = new String[propList.size()];
+      propList.toArray(fields);
 
-			oldPos = pos + 1;
-			pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-			if (pos == -1)
-				throw new OCommandSQLParsingException("Index type requested. Use " + getSyntax(), text, oldPos + 1);
+      oldPos = pos + 1;
+      pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+      if (pos == -1)
+        throw new OCommandSQLParsingException("Index type requested. Use " + getSyntax(), text, oldPos + 1);
 
-			keyTypes = new OType[propList.size()];
-			typeList.toArray(keyTypes);
-		} else {
-			if (indexName.indexOf('.') > 0) {
-				final String[] parts = indexName.split("\\.");
+      keyTypes = new OType[propList.size()];
+      typeList.toArray(keyTypes);
+    } else {
+      if (indexName.indexOf('.') > 0) {
+        final String[] parts = indexName.split("\\.");
 
-				oClass = findClass(parts[0]);
-				if (oClass == null)
-					throw new OCommandExecutionException("Class " + parts[0] + " not found");
-				final OProperty prop = oClass.getProperty(parts[1]);
-				if (prop == null)
-					throw new IllegalArgumentException("Property '" + parts[1] + "' was not found in class '" + oClass.getName() + "'");
+        oClass = findClass(parts[0]);
+        if (oClass == null)
+          throw new OCommandExecutionException("Class " + parts[0] + " not found");
+        final OProperty prop = oClass.getProperty(parts[1]);
+        if (prop == null)
+          throw new IllegalArgumentException("Property '" + parts[1] + "' was not found in class '" + oClass.getName() + "'");
 
-				fields = new String[] { prop.getName() };
-				keyTypes = new OType[] { prop.getType() };
-			}
-		}
+        fields = new String[] { prop.getName() };
+        keyTypes = new OType[] { prop.getType() };
+      }
+    }
 
-		indexType = OClass.INDEX_TYPE.valueOf(word.toString());
+    indexType = OClass.INDEX_TYPE.valueOf(word.toString());
 
-		if (indexType == null)
-			throw new OCommandSQLParsingException("Index type is null", text, oldPos);
+    if (indexType == null)
+      throw new OCommandSQLParsingException("Index type is null", text, oldPos);
 
-		oldPos = pos;
-		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos != -1 && !word.toString().equalsIgnoreCase("NULL")) {
-			final String typesString = textUpperCase.substring(oldPos).trim();
+    oldPos = pos;
+    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    if (pos != -1 && !word.toString().equalsIgnoreCase("NULL")) {
+      final String typesString = textUpperCase.substring(oldPos).trim();
 
-			if (word.toString().equalsIgnoreCase("RUNTIME")) {
-				oldPos = pos;
-				pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+      if (word.toString().equalsIgnoreCase("RUNTIME")) {
+        oldPos = pos;
+        pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 
-				serializerKeyId = Byte.parseByte(word.toString());
-			} else {
-				ArrayList<OType> keyTypeList = new ArrayList<OType>();
-				for (String typeName : typesString.split("\\s*,\\s*")) {
-					keyTypeList.add(OType.valueOf(typeName));
-				}
+        serializerKeyId = Byte.parseByte(word.toString());
+      } else {
+        ArrayList<OType> keyTypeList = new ArrayList<OType>();
+        for (String typeName : typesString.split("\\s*,\\s*")) {
+          keyTypeList.add(OType.valueOf(typeName));
+        }
 
-				OType[] parsedKeyTypes = new OType[keyTypeList.size()];
-				keyTypeList.toArray(parsedKeyTypes);
+        OType[] parsedKeyTypes = new OType[keyTypeList.size()];
+        keyTypeList.toArray(parsedKeyTypes);
 
-				if (keyTypes == null) {
-					keyTypes = parsedKeyTypes;
-				} else {
-					if (!Arrays.deepEquals(keyTypes, parsedKeyTypes)) {
-						throw new OCommandSQLParsingException("Property type list not match with real property types", text, oldPos);
-					}
-				}
-			}
-		}
+        if (keyTypes == null) {
+          keyTypes = parsedKeyTypes;
+        } else {
+          if (!Arrays.deepEquals(keyTypes, parsedKeyTypes)) {
+            throw new OCommandSQLParsingException("Property type list not match with real property types", text, oldPos);
+          }
+        }
+      }
+    }
 
-		return this;
-	}
+    return this;
+  }
 
-	private OClass findClass(String part) {
-		return getDatabase().getMetadata().getSchema().getClass(part);
-	}
+  private OClass findClass(String part) {
+    return getDatabase().getMetadata().getSchema().getClass(part);
+  }
 
-	/**
-	 * Execute the CREATE INDEX.
-	 */
-	public Object execute(final Map<Object, Object> iArgs) {
-		if (indexName == null)
-			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+  /**
+   * Execute the CREATE INDEX.
+   */
+  public Object execute(final Map<Object, Object> iArgs) {
+    if (indexName == null)
+      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-		final ODatabaseRecord database = getDatabase();
-		final OIndex<?> idx;
-		if (fields == null || fields.length == 0) {
-			if (keyTypes != null)
-				idx = database.getMetadata().getIndexManager()
-						.createIndex(indexName, indexType.toString(), new OSimpleKeyIndexDefinition(keyTypes), null, null);
-			else if (serializerKeyId != 0) {
-				idx = database.getMetadata().getIndexManager()
-						.createIndex(indexName, indexType.toString(), new ORuntimeKeyIndexDefinition(serializerKeyId), null, null);
-			} else
-				idx = database.getMetadata().getIndexManager().createIndex(indexName, indexType.toString(), null, null, null);
-		} else {
-			idx = oClass.createIndex(indexName, indexType, fields);
-		}
+    final ODatabaseRecord database = getDatabase();
+    final OIndex<?> idx;
+    if (fields == null || fields.length == 0) {
+      if (keyTypes != null)
+        idx = database.getMetadata().getIndexManager()
+            .createIndex(indexName, indexType.toString(), new OSimpleKeyIndexDefinition(keyTypes), null, null);
+      else if (serializerKeyId != 0) {
+        idx = database.getMetadata().getIndexManager()
+            .createIndex(indexName, indexType.toString(), new ORuntimeKeyIndexDefinition(serializerKeyId), null, null);
+      } else
+        idx = database.getMetadata().getIndexManager().createIndex(indexName, indexType.toString(), null, null, null);
+    } else {
+      idx = oClass.createIndex(indexName, indexType, fields);
+    }
 
-		if (idx != null)
-			return idx.getSize();
+    if (idx != null)
+      return idx.getSize();
 
-		return null;
-	}
+    return null;
+  }
 
-	private void checkMapIndexSpecifier(final String fieldName, final String text, final int pos) {
-		String[] fieldNameParts = fieldName.split("\\s+");
-		if (fieldNameParts.length == 1)
-			return;
+  private void checkMapIndexSpecifier(final String fieldName, final String text, final int pos) {
+    String[] fieldNameParts = fieldName.split("\\s+");
+    if (fieldNameParts.length == 1)
+      return;
 
-		if (fieldNameParts.length == 3) {
-			if ("by".equals(fieldNameParts[1].toLowerCase())) {
-				try {
-					OPropertyMapIndexDefinition.INDEX_BY.valueOf(fieldNameParts[2].toUpperCase());
-				} catch (IllegalArgumentException iae) {
-					throw new OCommandSQLParsingException("Illegal field name format, should be '<property> [by key|value]' but was '"
-							+ fieldName + "'", text, pos);
-				}
-				return;
-			}
-			throw new OCommandSQLParsingException("Illegal field name format, should be '<property> [by key|value]' but was '"
-					+ fieldName + "'", text, pos);
-		}
+    if (fieldNameParts.length == 3) {
+      if ("by".equals(fieldNameParts[1].toLowerCase())) {
+        try {
+          OPropertyMapIndexDefinition.INDEX_BY.valueOf(fieldNameParts[2].toUpperCase());
+        } catch (IllegalArgumentException iae) {
+          throw new OCommandSQLParsingException("Illegal field name format, should be '<property> [by key|value]' but was '"
+              + fieldName + "'", text, pos);
+        }
+        return;
+      }
+      throw new OCommandSQLParsingException("Illegal field name format, should be '<property> [by key|value]' but was '"
+          + fieldName + "'", text, pos);
+    }
 
-		throw new OCommandSQLParsingException("Illegal field name format, should be '<property> [by key|value]' but was '" + fieldName
-				+ "'", text, pos);
-	}
+    throw new OCommandSQLParsingException("Illegal field name format, should be '<property> [by key|value]' but was '" + fieldName
+        + "'", text, pos);
+  }
 
-	@Override
-	public String getSyntax() {
-		return "CREATE INDEX <name> [ON <class-name> (prop-names)] <type> [<key-type>]";
-	}
+  @Override
+  public String getSyntax() {
+    return "CREATE INDEX <name> [ON <class-name> (prop-names)] <type> [<key-type>]";
+  }
 }

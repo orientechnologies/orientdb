@@ -47,287 +47,287 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
-	public static final String	KEYWORD_CREATE	= "CREATE";
-	public static final String	KEYWORD_LINK		= "LINK";
-	private static final String	KEYWORD_FROM		= "FROM";
-	private static final String	KEYWORD_TO			= "TO";
-	private static final String	KEYWORD_TYPE		= "TYPE";
+  public static final String  KEYWORD_CREATE = "CREATE";
+  public static final String  KEYWORD_LINK   = "LINK";
+  private static final String KEYWORD_FROM   = "FROM";
+  private static final String KEYWORD_TO     = "TO";
+  private static final String KEYWORD_TYPE   = "TYPE";
 
-	private String							destClassName;
-	private String							destField;
-	private String							sourceClassName;
-	private String							sourceField;
-	private String							linkName;
-	private OType								linkType;
-	private boolean							inverse					= false;
+  private String              destClassName;
+  private String              destField;
+  private String              sourceClassName;
+  private String              sourceField;
+  private String              linkName;
+  private OType               linkType;
+  private boolean             inverse        = false;
 
-	public OCommandExecutorSQLCreateLink parse(final OCommandRequestText iRequest) {
-		getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
+  public OCommandExecutorSQLCreateLink parse(final OCommandRequest iRequest) {
+    getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-		init(iRequest.getText());
+    init(((OCommandRequestText) iRequest).getText());
 
-		StringBuilder word = new StringBuilder();
+    StringBuilder word = new StringBuilder();
 
-		int oldPos = 0;
-		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found. Use " + getSyntax(), text, oldPos);
+    int oldPos = 0;
+    int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found. Use " + getSyntax(), text, oldPos);
 
-		oldPos = pos;
-		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_LINK))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_LINK + " not found. Use " + getSyntax(), text, oldPos);
+    oldPos = pos;
+    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    if (pos == -1 || !word.toString().equals(KEYWORD_LINK))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_LINK + " not found. Use " + getSyntax(), text, oldPos);
 
-		oldPos = pos;
-		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
-		if (pos == -1)
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found. Use " + getSyntax(), text, oldPos);
+    oldPos = pos;
+    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
+    if (pos == -1)
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found. Use " + getSyntax(), text, oldPos);
 
-		if (!word.toString().equalsIgnoreCase(KEYWORD_FROM)) {
-			// GET THE LINK NAME
-			linkName = word.toString();
+    if (!word.toString().equalsIgnoreCase(KEYWORD_FROM)) {
+      // GET THE LINK NAME
+      linkName = word.toString();
 
-			if (OStringSerializerHelper.contains(linkName, ' '))
-				throw new OCommandSQLParsingException("Link name '" + linkName + "' contains not valid characters", text, oldPos);
+      if (OStringSerializerHelper.contains(linkName, ' '))
+        throw new OCommandSQLParsingException("Link name '" + linkName + "' contains not valid characters", text, oldPos);
 
-			oldPos = pos;
-			pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		}
+      oldPos = pos;
+      pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    }
 
-		if (word.toString().equalsIgnoreCase(KEYWORD_TYPE)) {
-			oldPos = pos;
-			pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+    if (word.toString().equalsIgnoreCase(KEYWORD_TYPE)) {
+      oldPos = pos;
+      pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 
-			if (pos == -1)
-				throw new OCommandSQLParsingException("Link type missed. Use " + getSyntax(), text, oldPos);
+      if (pos == -1)
+        throw new OCommandSQLParsingException("Link type missed. Use " + getSyntax(), text, oldPos);
 
-			linkType = OType.valueOf(word.toString().toUpperCase(Locale.ENGLISH));
+      linkType = OType.valueOf(word.toString().toUpperCase(Locale.ENGLISH));
 
-			oldPos = pos;
-			pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
-		}
+      oldPos = pos;
+      pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+    }
 
-		if (pos == -1 || !word.toString().equals(KEYWORD_FROM))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found. Use " + getSyntax(), text, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_FROM))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found. Use " + getSyntax(), text, oldPos);
 
-		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
-		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, pos);
+    pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
+    if (pos == -1)
+      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, pos);
 
-		String[] parts = word.toString().split("\\.");
-		if (parts.length != 2)
-			throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, pos);
+    String[] parts = word.toString().split("\\.");
+    if (parts.length != 2)
+      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, pos);
 
-		sourceClassName = parts[0];
-		if (sourceClassName == null)
-			throw new OCommandSQLParsingException("Class not found", text, pos);
-		sourceField = parts[1];
+    sourceClassName = parts[0];
+    if (sourceClassName == null)
+      throw new OCommandSQLParsingException("Class not found", text, pos);
+    sourceField = parts[1];
 
-		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_TO))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_TO + " not found. Use " + getSyntax(), text, oldPos);
+    pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+    if (pos == -1 || !word.toString().equals(KEYWORD_TO))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_TO + " not found. Use " + getSyntax(), text, oldPos);
 
-		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
-		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, pos);
+    pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
+    if (pos == -1)
+      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, pos);
 
-		parts = word.toString().split("\\.");
-		if (parts.length != 2)
-			throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, pos);
+    parts = word.toString().split("\\.");
+    if (parts.length != 2)
+      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, pos);
 
-		destClassName = parts[0];
-		if (destClassName == null)
-			throw new OCommandSQLParsingException("Class not found", text, pos);
-		destField = parts[1];
+    destClassName = parts[0];
+    if (destClassName == null)
+      throw new OCommandSQLParsingException("Class not found", text, pos);
+    destField = parts[1];
 
-		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
-		if (pos == -1)
-			return this;
+    pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+    if (pos == -1)
+      return this;
 
-		if (!word.toString().equalsIgnoreCase("INVERSE"))
-			throw new OCommandSQLParsingException("Missed 'INVERSE'. Use " + getSyntax(), text, pos);
+    if (!word.toString().equalsIgnoreCase("INVERSE"))
+      throw new OCommandSQLParsingException("Missed 'INVERSE'. Use " + getSyntax(), text, pos);
 
-		inverse = true;
+    inverse = true;
 
-		return this;
-	}
+    return this;
+  }
 
-	/**
-	 * Execute the CREATE LINK.
-	 */
-	public Object execute(final Map<Object, Object> iArgs) {
-		if (destField == null)
-			throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+  /**
+   * Execute the CREATE LINK.
+   */
+  public Object execute(final Map<Object, Object> iArgs) {
+    if (destField == null)
+      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-		final ODatabaseRecord database = getDatabase();
-		if (!(database.getDatabaseOwner() instanceof ODatabaseDocumentTx))
-			throw new OCommandSQLParsingException("This command supports only the database type ODatabaseDocumentTx and type '"
-					+ database.getClass() + "' was found");
+    final ODatabaseRecord database = getDatabase();
+    if (!(database.getDatabaseOwner() instanceof ODatabaseDocumentTx))
+      throw new OCommandSQLParsingException("This command supports only the database type ODatabaseDocumentTx and type '"
+          + database.getClass() + "' was found");
 
-		final ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getDatabaseOwner();
+    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getDatabaseOwner();
 
-		final OClass sourceClass = database.getMetadata().getSchema().getClass(sourceClassName);
-		if (sourceClass == null)
-			throw new OCommandExecutionException("Source class '" + sourceClassName + "' not found");
+    final OClass sourceClass = database.getMetadata().getSchema().getClass(sourceClassName);
+    if (sourceClass == null)
+      throw new OCommandExecutionException("Source class '" + sourceClassName + "' not found");
 
-		final OClass destClass = database.getMetadata().getSchema().getClass(destClassName);
-		if (destClass == null)
-			throw new OCommandExecutionException("Destination class '" + destClassName + "' not found");
+    final OClass destClass = database.getMetadata().getSchema().getClass(destClassName);
+    if (destClass == null)
+      throw new OCommandExecutionException("Destination class '" + destClassName + "' not found");
 
-		Object value;
-		String cmd = "select from " + destClassName + " where " + destField + " = ";
-		List<ODocument> result;
-		ODocument target;
-		Object oldValue;
-		long total = 0;
+    Object value;
+    String cmd = "select from " + destClassName + " where " + destField + " = ";
+    List<ODocument> result;
+    ODocument target;
+    Object oldValue;
+    long total = 0;
 
-		if (linkName == null)
-			// NO LINK NAME EXPRESSED: OVERWRITE THE SOURCE FIELD
-			linkName = sourceField;
+    if (linkName == null)
+      // NO LINK NAME EXPRESSED: OVERWRITE THE SOURCE FIELD
+      linkName = sourceField;
 
-		boolean multipleRelationship;
-		if (linkType != null)
-			// DETERMINE BASED ON FORCED TYPE
-			multipleRelationship = linkType == OType.LINKSET || linkType == OType.LINKLIST;
-		else
-			multipleRelationship = false;
+    boolean multipleRelationship;
+    if (linkType != null)
+      // DETERMINE BASED ON FORCED TYPE
+      multipleRelationship = linkType == OType.LINKSET || linkType == OType.LINKLIST;
+    else
+      multipleRelationship = false;
 
-		long totRecords = db.countClass(sourceClass.getName());
-		long currRecord = 0;
+    long totRecords = db.countClass(sourceClass.getName());
+    long currRecord = 0;
 
-		if (progressListener != null)
-			progressListener.onBegin(this, totRecords);
+    if (progressListener != null)
+      progressListener.onBegin(this, totRecords);
 
-		database.declareIntent(new OIntentMassiveInsert());
-		try {
-			// BROWSE ALL THE RECORDS OF THE SOURCE CLASS
-			for (ODocument doc : db.browseClass(sourceClass.getName())) {
-				doc.unpin();
-				
-				value = doc.field(sourceField);
+    database.declareIntent(new OIntentMassiveInsert());
+    try {
+      // BROWSE ALL THE RECORDS OF THE SOURCE CLASS
+      for (ODocument doc : db.browseClass(sourceClass.getName())) {
+        doc.unpin();
 
-				if (value != null) {
-					if (value instanceof ODocument || value instanceof ORID) {
-						// ALREADY CONVERTED
-					} else if (value instanceof Collection<?>) {
-						// TODO
-					} else {
-						// SEARCH THE DESTINATION RECORD
-						target = null;
+        value = doc.field(sourceField);
 
-						if (value instanceof String)
-							if (((String) value).length() == 0)
-								value = null;
-							else
-								value = "'" + value + "'";
+        if (value != null) {
+          if (value instanceof ODocument || value instanceof ORID) {
+            // ALREADY CONVERTED
+          } else if (value instanceof Collection<?>) {
+            // TODO
+          } else {
+            // SEARCH THE DESTINATION RECORD
+            target = null;
 
-						result = database.<OCommandRequest> command(new OSQLSynchQuery<ODocument>(cmd + value)).execute();
+            if (value instanceof String)
+              if (((String) value).length() == 0)
+                value = null;
+              else
+                value = "'" + value + "'";
 
-						if (result == null || result.size() == 0)
-							value = null;
-						else if (result.size() > 1)
-							throw new OCommandExecutionException("Cannot create link because multiple records was found in class '"
-									+ destClass.getName() + "' with value " + value + " in field '" + destField + "'");
-						else {
-							target = result.get(0);
-							value = target;
-						}
+            result = database.<OCommandRequest> command(new OSQLSynchQuery<ODocument>(cmd + value)).execute();
 
-						if (target != null && inverse) {
-							// INVERSE RELATIONSHIP
-							oldValue = target.field(linkName);
+            if (result == null || result.size() == 0)
+              value = null;
+            else if (result.size() > 1)
+              throw new OCommandExecutionException("Cannot create link because multiple records was found in class '"
+                  + destClass.getName() + "' with value " + value + " in field '" + destField + "'");
+            else {
+              target = result.get(0);
+              value = target;
+            }
 
-							if (oldValue != null) {
-								if (!multipleRelationship)
-									multipleRelationship = true;
+            if (target != null && inverse) {
+              // INVERSE RELATIONSHIP
+              oldValue = target.field(linkName);
 
-								Collection<ODocument> coll;
-								if (oldValue instanceof Collection) {
-									// ADD IT IN THE EXISTENT COLLECTION
-									coll = (Collection<ODocument>) oldValue;
-									target.setDirty();
-								} else {
-									// CREATE A NEW COLLECTION FOR BOTH
-									coll = new ArrayList<ODocument>(2);
-									target.field(linkName, coll);
-									coll.add((ODocument) oldValue);
-								}
-								coll.add(doc);
-							} else {
-								if (linkType != null)
-									if (linkType == OType.LINKSET) {
-										value = new OMVRBTreeRIDSet(target);
-										((OMVRBTreeRIDSet) value).add(doc);
-									} else if (linkType == OType.LINKLIST) {
-										value = new ORecordLazyList(target);
-										((ORecordLazyList) value).add(doc);
-									} else
-										// IGNORE THE TYPE, SET IT AS LINK
-										value = doc;
-								else
-									value = doc;
+              if (oldValue != null) {
+                if (!multipleRelationship)
+                  multipleRelationship = true;
 
-								target.field(linkName, value);
-							}
-							target.save();
+                Collection<ODocument> coll;
+                if (oldValue instanceof Collection) {
+                  // ADD IT IN THE EXISTENT COLLECTION
+                  coll = (Collection<ODocument>) oldValue;
+                  target.setDirty();
+                } else {
+                  // CREATE A NEW COLLECTION FOR BOTH
+                  coll = new ArrayList<ODocument>(2);
+                  target.field(linkName, coll);
+                  coll.add((ODocument) oldValue);
+                }
+                coll.add(doc);
+              } else {
+                if (linkType != null)
+                  if (linkType == OType.LINKSET) {
+                    value = new OMVRBTreeRIDSet(target);
+                    ((OMVRBTreeRIDSet) value).add(doc);
+                  } else if (linkType == OType.LINKLIST) {
+                    value = new ORecordLazyList(target);
+                    ((ORecordLazyList) value).add(doc);
+                  } else
+                    // IGNORE THE TYPE, SET IT AS LINK
+                    value = doc;
+                else
+                  value = doc;
 
-						} else {
-							// SET THE REFERENCE
-							doc.field(linkName, value);
-							doc.save();
-						}
+                target.field(linkName, value);
+              }
+              target.save();
 
-						total++;
-					}
-				}
+            } else {
+              // SET THE REFERENCE
+              doc.field(linkName, value);
+              doc.save();
+            }
 
-				if (progressListener != null)
-					progressListener.onProgress(this, currRecord, currRecord * 100f / totRecords);
-			}
+            total++;
+          }
+        }
 
-			if (total > 0) {
-				if (inverse) {
-					// REMOVE THE OLD PROPERTY IF ANY
-					OProperty prop = destClass.getProperty(linkName);
-					if (prop != null)
-						destClass.dropProperty(linkName);
+        if (progressListener != null)
+          progressListener.onProgress(this, currRecord, currRecord * 100f / totRecords);
+      }
 
-					if (linkType == null)
-						linkType = multipleRelationship ? OType.LINKSET : OType.LINK;
+      if (total > 0) {
+        if (inverse) {
+          // REMOVE THE OLD PROPERTY IF ANY
+          OProperty prop = destClass.getProperty(linkName);
+          if (prop != null)
+            destClass.dropProperty(linkName);
 
-					// CREATE THE PROPERTY
-					destClass.createProperty(linkName, linkType, sourceClass);
+          if (linkType == null)
+            linkType = multipleRelationship ? OType.LINKSET : OType.LINK;
 
-				} else {
+          // CREATE THE PROPERTY
+          destClass.createProperty(linkName, linkType, sourceClass);
 
-					// REMOVE THE OLD PROPERTY IF ANY
-					OProperty prop = sourceClass.getProperty(linkName);
-					if (prop != null)
-						sourceClass.dropProperty(linkName);
+        } else {
 
-					// CREATE THE PROPERTY
-					sourceClass.createProperty(linkName, OType.LINK, destClass);
-				}
-			}
+          // REMOVE THE OLD PROPERTY IF ANY
+          OProperty prop = sourceClass.getProperty(linkName);
+          if (prop != null)
+            sourceClass.dropProperty(linkName);
 
-			if (progressListener != null)
-				progressListener.onCompletition(this, true);
+          // CREATE THE PROPERTY
+          sourceClass.createProperty(linkName, OType.LINK, destClass);
+        }
+      }
 
-		} catch (Exception e) {
-			if (progressListener != null)
-				progressListener.onCompletition(this, false);
+      if (progressListener != null)
+        progressListener.onCompletition(this, true);
 
-			throw new OCommandExecutionException("Error on creation of links", e);
+    } catch (Exception e) {
+      if (progressListener != null)
+        progressListener.onCompletition(this, false);
 
-		} finally {
-			database.declareIntent(null);
-		}
+      throw new OCommandExecutionException("Error on creation of links", e);
 
-		return total;
-	}
+    } finally {
+      database.declareIntent(null);
+    }
 
-	@Override
-	public String getSyntax() {
-		return "CREATE LINK <link-name> [TYPE <link-type>] FROM <source-class>.<source-property> TO <destination-class>.<destination-property> [INVERSE]";
-	}
+    return total;
+  }
+
+  @Override
+  public String getSyntax() {
+    return "CREATE LINK <link-name> [TYPE <link-type>] FROM <source-class>.<source-property> TO <destination-class>.<destination-property> [INVERSE]";
+  }
 }

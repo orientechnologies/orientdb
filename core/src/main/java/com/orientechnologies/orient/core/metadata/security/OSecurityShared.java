@@ -108,6 +108,20 @@ public class OSecurityShared extends OSharedResourceAbstract implements OSecurit
 		}
 	}
 
+	public boolean dropUser(final String iUserName) {
+		acquireExclusiveLock();
+		try {
+
+			final Number removed = getDatabase().<OCommandRequest> command(
+					new OSQLSynchQuery<ODocument>("delete from OUser where name = '" + iUserName + "'")).execute();
+
+			return removed != null && removed.intValue() > 0;
+
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
 	public ORole getRole(final String iRoleName) {
 		acquireExclusiveLock();
 		try {
@@ -136,6 +150,20 @@ public class OSecurityShared extends OSharedResourceAbstract implements OSecurit
 
 			final ORole role = new ORole(iRoleName, iParent, iAllowMode);
 			return role.save();
+
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
+	public boolean dropRole(final String iRoleName) {
+		acquireExclusiveLock();
+		try {
+
+			final Number removed = getDatabase().<OCommandRequest> command(
+					new OSQLSynchQuery<ODocument>("delete from ORole where name = '" + iRoleName + "'")).execute();
+
+			return removed != null && removed.intValue() > 0;
 
 		} finally {
 			releaseExclusiveLock();
