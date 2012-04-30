@@ -19,7 +19,11 @@ function OGraph(targetId, config) {
 		"depth" : 2,
 		"bluePrintsGraphModel" : "false",
 		"edgeType" : "curve",
-		"colors" : {}
+		"colors" : {},
+		"selectedFields" : {},
+		"availableFields" : {},
+		"fieldCallback" : 'enableField',
+		"fieldsColumns" : 2
 	};
 
 	// OVERWRITE CONFIG
@@ -358,11 +362,60 @@ function OGraph(targetId, config) {
 					+ Math.round(Math.random() * 256) + ','
 					+ Math.round(Math.random() * 256) + ')';
 			this.config.colors[node["@class"]] = color;
-			if (this.config["legend"])
-				$('#' + this.config["legend"]).append(
+			if (this.config["legendTagId"])
+				$('#' + this.config["legendTagId"]).append(
 						"<tr><td style='width: 30px; height: 15px; background-color: "
 								+ color + ";'></td><td>" + node["@class"]
 								+ "</td></tr>");
+		}
+
+		var maxColumns = this.config.fieldsColumns;
+		var currentColumn = 0;
+		var snippet = "";
+
+		for (f in node) {
+			var fieldInHtml = f.replace('@', '__');
+			var availableField = this.config.availableFields[f];
+			var selectedField = this.config.selectedFields[fieldInHtml];
+
+			if (!availableField) {
+				this.config.availableFields[f] = true;
+				if (this.config.fieldsTagId) {
+					if (currentColumn == 0)
+						snippet += "<tr>";
+
+					currentColumn++;
+
+					snippet += "<td colspan='"
+							+ (2 / maxColumns)
+							+ "'></td><td><label class='checkbox'><input id='field"
+							+ fieldInHtml + "' type='checkbox'"
+							+ (selectedField ? " checked='checked'" : "")
+							+ " onClick='" + this.config.fieldCallback + "(\""
+							+ fieldInHtml + "\")'>" + f + "</label></td>";
+
+					if (currentColumn >= maxColumns) {
+						currentColumn = 0;
+						snippet += "<\tr>";
+					}
+
+				}
+			}
+		}
+
+		if (snippet.length > 0)
+			$('#' + this.config.fieldsTagId).append(snippet);
+
+		var label = "";
+		for (sf in this.config.selectedFields) {
+			var fieldValue = this.config.selectedFields[sf];
+			var fieldInDocument = sf.replace('__', '@');
+			var nodeFieldValue = node[fieldInDocument];
+			if (fieldValue && nodeFieldValue) {
+				if (label.length > 0)
+					label += ", ";
+				label += fieldInDocument + ":" + nodeFieldValue;
+			}
 		}
 
 		if (!config)
@@ -381,7 +434,7 @@ function OGraph(targetId, config) {
 			config = {};
 
 		var localConfig = {
-			'label' : nodeId,
+			'label' : label,
 			'x' : Math.random(),
 			'y' : Math.random(),
 			'size' : size,
@@ -436,8 +489,11 @@ function OGraph(targetId, config) {
 	}
 	OGraph.prototype.reset = function() {
 		this.config.colors = {};
-		if (this.config["legend"])
-			$('#' + this.config["legend"]).text("");
+		this.config.availableFields = {};
+		if (this.config["legendTagId"])
+			$('#' + this.config["legendTagId"]).text("");
+		if (this.config["fieldsTagId"])
+			$('#' + this.config["fieldsTagId"]).text("");
 		this.sigInst.emptyGraph();
 	}
 

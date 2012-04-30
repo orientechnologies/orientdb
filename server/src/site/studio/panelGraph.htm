@@ -24,18 +24,13 @@
 						<table style="width: 100%;">
 							<tr>
 								<td>@rid</td>
-								<td><input id="root-rid" type="text" class="input-small" /></td>
+								<td><input id="root-rid" type="text" class="input-mini" /></td>
 							</tr>
 							<tr>
 								<td colspan="2">
 									<button id="editGraph" class="btn" style="width: 140px; text-align: center">
 										Edit <img border="0" alt="Edit record" src="images/set.png" align="top" />
 									</button>
-								</td>
-							</tr>
-							<tr>
-								<td colspan="2">
-									<div id="graph-inner-details">&nbsp;</div>
 								</td>
 							</tr>
 							<tr>
@@ -51,7 +46,9 @@
 							</tr>
 							<tr>
 								<td colspan="2">
-									<div id="graph-inner-details">&nbsp;</div>
+									<div id="graph-inner-details">
+										<hr>
+									</div>
 								</td>
 							</tr>
 							<tr>
@@ -72,11 +69,6 @@
 							</tr>
 							<tr>
 								<td colspan="2">
-									<div id="graph-inner-details">&nbsp;</div>
-								</td>
-							</tr>
-							<tr>
-								<td colspan="2">
 									<button id="circularLayout" class="btn" style="width: 140px; text-align: center">
 										Circular layout <i class="icon-share"></i>
 									</button>
@@ -92,7 +84,15 @@
 							<tr>
 								<td colspan="2">
 									<div>
-										<b><br />Legend</b>
+										<b>Fields</b>
+									</div>
+									<table id="fields" style="width: 100%;"></table>
+								</td>
+							</tr>
+							<tr>
+								<td colspan="2">
+									<div>
+										<b>Legend</b>
 									</div>
 									<table id="legend" style="width: 100%;"></table>
 								</td>
@@ -107,6 +107,9 @@
 </table>
 
 <script>
+	var fieldsChecked = {
+		"__rid" : true
+	};
 	function reload() {
 		g.reset();
 
@@ -119,8 +122,17 @@
 		g.drawGraph(selectedObject, {
 			"depth" : $('#graph-load-depth').val(),
 			"bluePrintsGraphModel" : $('#bpGraphModel').attr('checked'),
-			"edgeType" : $('#edgeType').val()
+			"edgeType" : $('#edgeType').val(),
+			"selectedFields" : fieldsChecked
 		});
+	}
+
+	function enableField(field) {
+		if ($('#field' + field).attr('checked') == 'checked')
+			fieldsChecked[field] = true;
+		else
+			delete fieldsChecked[field];
+		reload();
 	}
 
 	$("#editGraph").click(function() {
@@ -157,13 +169,16 @@
 		$("#root-rid").val(getRID(selectedObject));
 
 		var g = new OGraph('graphPanel', {
-			"legend" : "legend"
+			"legendTagId" : "legend",
+			"fieldsTagId" : "fields",
+			"fieldsColumns" : 2
 		});
 
 		g.drawGraph(selectedObject, {
 			"depth" : $('#graph-load-depth').val(),
 			"bluePrintsGraphModel" : $('#bpGraphModel').attr('checked'),
-			"edgeType" : $('#edgeType').val()
+			"edgeType" : $('#edgeType').val(),
+			"selectedFields" : fieldsChecked
 		});
 
 		g.activateFishEye();
