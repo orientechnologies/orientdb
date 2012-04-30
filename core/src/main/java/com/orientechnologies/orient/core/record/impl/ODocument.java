@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -785,7 +786,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
       // RESET THE FIELD TYPE
       setFieldType(f, null);
-      
+
       // RAW SET/REPLACE
       field(f, iOther.get(f));
     }
@@ -1082,6 +1083,25 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
     if (_fieldCollectionChangeTimeLines != null)
       _fieldCollectionChangeTimeLines.clear();
+
+    return this;
+  }
+
+  /**
+   * Rollbacks changes to the loaded version without reloading the document. Works only if tracking changes is enabled @see
+   * {@link #isTrackingChanges()} and {@link #setTrackingChanges(boolean)} methods.
+   */
+  public ODocument undo() {
+    if (!_trackingChanges)
+      throw new OConfigurationException("Cannot undo the document because tracking of changes is disabled");
+
+    for (Entry<String, Object> entry : _fieldOriginalValues.entrySet()) {
+      final Object value = entry.getValue();
+      if (value == null)
+        _fieldValues.remove(entry.getKey());
+      else
+        _fieldValues.put(entry.getKey(), entry.getValue());
+    }
 
     return this;
   }
