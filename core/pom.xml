@@ -1,44 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-  <modelVersion>4.0.0</modelVersion>
+	<modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <groupId>com.orientechnologies</groupId>
-    <artifactId>orientdb-parent</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <relativePath>../</relativePath>
-  </parent>
+	<parent>
+		<groupId>com.orientechnologies</groupId>
+		<artifactId>orientdb-parent</artifactId>
+		<version>1.0-SNAPSHOT</version>
+		<relativePath>../</relativePath>
+	</parent>
 
-  <artifactId>orientdb-core</artifactId>
+	<artifactId>orientdb-core</artifactId>
 
-  <name>OrientDB Core</name>
+	<name>OrientDB Core</name>
 
-  <properties>
-    <osgi.import>*</osgi.import>
-    <osgi.export>com.orientechnologies.orient.core.*</osgi.export>
-  </properties>
+	<properties>
+		<osgi.import>*</osgi.import>
+		<osgi.export>com.orientechnologies.orient.core.*</osgi.export>
+	</properties>
 
-  <dependencies>
-    <dependency>
-      <groupId>com.orientechnologies</groupId>
-      <artifactId>orient-commons</artifactId>
-      <version>${project.version}</version>
-    </dependency>
+	<dependencies>
+		<dependency>
+			<groupId>com.orientechnologies</groupId>
+			<artifactId>orient-commons</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 
-    <dependency>
-      <groupId>javax.persistence</groupId>
-      <artifactId>persistence-api</artifactId>
-      <version>1.0</version>
-      <type>jar</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.testng</groupId>
-      <artifactId>testng</artifactId>
-      <version>5.14.1</version>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
+		<dependency>
+			<groupId>org.testng</groupId>
+			<artifactId>testng</artifactId>
+			<version>5.14.1</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
 
 </project>
