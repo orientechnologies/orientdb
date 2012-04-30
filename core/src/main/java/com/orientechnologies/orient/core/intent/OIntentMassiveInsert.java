@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.core.intent;
 
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
+import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 
@@ -27,9 +27,9 @@ public class OIntentMassiveInsert implements OIntent {
 		while (ownerDb.getDatabaseOwner() != ownerDb)
 			ownerDb = ownerDb.getDatabaseOwner();
 
-		if (ownerDb instanceof ODatabasePojoAbstract) {
-			previousRetainObjects = ((ODatabasePojoAbstract<?>) ownerDb).isRetainObjects();
-			((ODatabasePojoAbstract<?>) ownerDb).setRetainObjects(false);
+		if (ownerDb instanceof ODatabaseObject) {
+			previousRetainObjects = ((ODatabaseObject) ownerDb).isRetainObjects();
+			((ODatabaseObject) ownerDb).setRetainObjects(false);
 		}
 	}
 
@@ -45,7 +45,7 @@ public class OIntentMassiveInsert implements OIntent {
 		while (ownerDb.getDatabaseOwner() != ownerDb)
 			ownerDb = ownerDb.getDatabaseOwner();
 
-		if (ownerDb instanceof ODatabasePojoAbstract)
-			((ODatabasePojoAbstract<?>) ownerDb).setRetainObjects(previousRetainObjects);
+		if (ownerDb instanceof ODatabaseObject)
+			((ODatabaseObject) ownerDb).setRetainObjects(previousRetainObjects);
 	}
 }

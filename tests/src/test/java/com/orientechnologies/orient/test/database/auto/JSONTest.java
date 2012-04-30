@@ -26,11 +26,11 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 
 @SuppressWarnings("unchecked")
 @Test
@@ -281,7 +281,7 @@ public class JSONTest {
 
 	@Test
 	public void testFetchedJson() {
-		ODatabaseObjectTx database = new ODatabaseObjectTx(url);
+		OObjectDatabaseTx database = new OObjectDatabaseTx(url);
 		database.open("admin", "admin");
 		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain");
 

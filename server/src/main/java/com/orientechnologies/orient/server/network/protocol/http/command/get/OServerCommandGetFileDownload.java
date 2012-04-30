@@ -1,7 +1,6 @@
 /*
  *
- * Copyright 2011 Luca Molino (luca.molino--AT--assetdata.it)
- *
+ * Copyright 2011 Luca Molino (molino.luca--AT--gmail.com*
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at

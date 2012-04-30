@@ -23,11 +23,11 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 
 @Test(groups = "sql-select")
 public class SQLSelectProjectionsTest {
@@ -68,7 +68,7 @@ public class SQLSelectProjectionsTest {
 
 	@Test
 	public void queryProjectionObjectLevel() {
-		ODatabaseObjectTx db = new ODatabaseObjectTx(url);
+		OObjectDatabaseTx db = new OObjectDatabaseTx(url);
 		db.open("admin", "admin");
 
 		List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>(" select nick, followings, followers from Profile "));

@@ -17,10 +17,9 @@ package com.orientechnologies.orient.enterprise.command;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map.Entry;
 
-import com.orientechnologies.orient.core.command.OCommandManager;
-import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODataSegmentStrategy;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
@@ -37,13 +36,11 @@ import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 /**
@@ -53,7 +50,7 @@ import com.orientechnologies.orient.core.tx.OTransaction;
  * 
  */
 public class OScriptDocumentDatabaseWrapper {
-	protected ODatabaseDocumentTx	database;
+	private ODatabaseDocumentTx	database;
 
 	public OScriptDocumentDatabaseWrapper(final ODatabaseDocumentTx database) {
 		this.database = database;
@@ -67,35 +64,12 @@ public class OScriptDocumentDatabaseWrapper {
 		this.database = new ODatabaseDocumentTx(iURL);
 	}
 
-	public Object query(final String iText) {
-		return database.command(new OCommandSQL(iText)).execute();
+	public List<OIdentifiable> query(final String iText) {
+		return database.query(new OSQLSynchQuery<Object>(iText));
 	}
 
-	/**
-	 * The same as for client side JS api.
-	 */
-	public Object executeCommand(final String iText, final String iLanguage, final int iLimit, final Object... iParams) {
-		return command(iText, iLanguage, iLimit, iParams);
-	}
-
-	/**
-	 * The same as for client side JS api.
-	 */
-	public Object executeCommand(final String iText, final String iLanguage) {
-		return command(iText, iLanguage);
-	}
-
-	public Object command(final String iText, final String iLanguage, final int iLimit, final Object... iParams) {
-		final OCommandRequestText req = (OCommandRequestText) OCommandManager.instance().getRequester(iLanguage);
-		req.setText(iText);
-		req.setLimit(iLimit);
-		return database.command(req).execute(iParams);
-	}
-
-	public Object command(final String iText, final String iLanguage) {
-		final OCommandRequestText req = (OCommandRequestText) OCommandManager.instance().getRequester(iLanguage);
-		req.setText(iText);
-		return database.command(req).execute();
+	public Object command(final String iText) {
+		return database.command(new OCommandSQL(iText));
 	}
 
 	public boolean exists() {
@@ -158,7 +132,7 @@ public class OScriptDocumentDatabaseWrapper {
 		return database.open(iUserName, iUserPassword);
 	}
 
-	public ODatabaseDocumentTx save(ORecordInternal<?> iRecord) {
+	public ODocument save(ORecordInternal<?> iRecord) {
 		return database.save(iRecord);
 	}
 
@@ -168,31 +142,6 @@ public class OScriptDocumentDatabaseWrapper {
 
 	public <THISDB extends ODatabase> THISDB create() {
 		return database.create();
-	}
-
-	public OClass getClass(final String iClassName) {
-		return database.getMetadata().getSchema().getClass(iClassName);
-	}
-
-	public OClass createClass(final String iClassName) {
-		return database.getMetadata().getSchema().createClass(iClassName);
-	}
-
-	public OProperty createProperty(final String iClassName, final String iPropertyName, final String iPropertyType) {
-		OClass c = database.getMetadata().getSchema().getClass(iClassName);
-		return c.createProperty(iPropertyName, OType.valueOf(iPropertyType.toUpperCase()));
-	}
-
-	public OProperty createProperty(final String iClassName, final String iPropertyName, final String iPropertyType,
-			final String iLinkedType) {
-		OClass c = database.getMetadata().getSchema().getClass(iClassName);
-		return c.createProperty(iPropertyName, OType.valueOf(iPropertyType.toUpperCase()), OType.valueOf(iLinkedType.toUpperCase()));
-	}
-
-	public OProperty createProperty(final String iClassName, final String iPropertyName, final String iPropertyType,
-			final OClass iLinkedClass) {
-		OClass c = database.getMetadata().getSchema().getClass(iClassName);
-		return c.createProperty(iPropertyName, OType.valueOf(iPropertyType.toUpperCase()), iLinkedClass);
 	}
 
 	public boolean dropCluster(int iClusterId) {
@@ -271,7 +220,7 @@ public class OScriptDocumentDatabaseWrapper {
 		return database.getUser();
 	}
 
-	public ODatabaseDocumentTx save(ORecordInternal<?> iRecord, OPERATION_MODE iMode) {
+	public ODocument save(ORecordInternal<?> iRecord, OPERATION_MODE iMode) {
 		return database.save(iRecord, iMode);
 	}
 
@@ -347,7 +296,7 @@ public class OScriptDocumentDatabaseWrapper {
 		return database.setProperty(iName, iValue);
 	}
 
-	public ODatabaseDocumentTx save(ORecordInternal<?> iRecord, String iClusterName) {
+	public ODocument save(ORecordInternal<?> iRecord, String iClusterName) {
 		return database.save(iRecord, iClusterName);
 	}
 
@@ -387,7 +336,7 @@ public class OScriptDocumentDatabaseWrapper {
 		return database.getRecordByUserObject(iUserObject, iCreateIfNotAvailable);
 	}
 
-	public ODatabaseDocumentTx save(ORecordInternal<?> iRecord, String iClusterName, OPERATION_MODE iMode) {
+	public ODocument save(ORecordInternal<?> iRecord, String iClusterName, OPERATION_MODE iMode) {
 		return database.save(iRecord, iClusterName, iMode);
 	}
 

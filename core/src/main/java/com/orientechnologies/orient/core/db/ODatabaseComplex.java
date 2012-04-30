@@ -115,15 +115,16 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 *          Fetch plan used
 	 * @param iIgnoreCache
 	 *          Ignore cache or use it
+	 * @return The loaded entity
 	 */
-	public void reload(final T iObject, String iFetchPlan, boolean iIgnoreCache);
+	public <RET extends T> RET reload(final T iObject, String iFetchPlan, boolean iIgnoreCache);
 
 	/**
 	 * Loads the entity by the Record ID.
 	 * 
 	 * @param iRecordId
 	 *          The unique record id of the entity to load.
-	 * @return
+	 * @return The loaded entity
 	 */
 	public <RET extends T> RET load(ORID iRecordId);
 
@@ -134,7 +135,7 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 *          The unique record id of the entity to load.
 	 * @param iFetchPlan
 	 *          Fetch plan used
-	 * @return
+	 * @return The loaded entity
 	 */
 	public <RET extends T> RET load(ORID iRecordId, String iFetchPlan);
 
@@ -147,7 +148,7 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 *          Fetch plan used
 	 * @param iIgnoreCache
 	 *          Ignore cache or use it
-	 * @return
+	 * @return The loaded entity
 	 */
 	public <RET extends T> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache);
 
@@ -157,9 +158,9 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 * 
 	 * @param iObject
 	 *          The entity to save
-	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 * @return The saved entity.
 	 */
-	public ODatabaseComplex<T> save(T iObject);
+	public <RET extends T> RET save(T iObject);
 
 	/**
 	 * Saves an entity specifying the mode. If the entity is not dirty, then the operation will be ignored. For custom entity
@@ -169,9 +170,9 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 *          The entity to save
 	 * @param iMode
 	 *          Mode of save: synchronous (default) or asynchronous
-	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 * @return The saved entity.
 	 */
-	public ODatabaseComplex<T> save(T iObject, OPERATION_MODE iMode);
+	public <RET extends T> RET save(T iObject, OPERATION_MODE iMode);
 
 	/**
 	 * Saves an entity in the specified cluster in synchronous mode. If the entity is not dirty, then the operation will be ignored.
@@ -181,9 +182,9 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 *          The entity to save
 	 * @param iClusterName
 	 *          Name of the cluster where to save
-	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 * @return The saved entity.
 	 */
-	public ODatabaseComplex<T> save(T iObject, String iClusterName);
+	public <RET extends T> RET save(T iObject, String iClusterName);
 
 	/**
 	 * Saves an entity in the specified cluster specifying the mode. If the entity is not dirty, then the operation will be ignored.
@@ -195,9 +196,9 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 *          Name of the cluster where to save
 	 * @param iMode
 	 *          Mode of save: synchronous (default) or asynchronous
-	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 * @return The saved entity.
 	 */
-	public ODatabaseComplex<T> save(T iObject, String iClusterName, OPERATION_MODE iMode);
+	public <RET extends T> RET save(T iObject, String iClusterName, OPERATION_MODE iMode);
 
 	/**
 	 * Deletes an entity from the database in synchronous mode.

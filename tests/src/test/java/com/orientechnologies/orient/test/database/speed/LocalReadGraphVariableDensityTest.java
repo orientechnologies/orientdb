@@ -18,11 +18,11 @@ package com.orientechnologies.orient.test.database.speed;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.core.db.graph.ODatabaseGraphTx;
-import com.orientechnologies.orient.core.db.graph.OGraphEdge;
-import com.orientechnologies.orient.core.db.graph.OGraphVertex;
 import com.orientechnologies.orient.core.intent.OIntentMassiveRead;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
+import com.orientechnologies.orient.object.db.graph.ODatabaseGraphTx;
+import com.orientechnologies.orient.object.db.graph.OGraphEdge;
+import com.orientechnologies.orient.object.db.graph.OGraphVertex;
 
 @Test(sequential = true)
 public class LocalReadGraphVariableDensityTest {

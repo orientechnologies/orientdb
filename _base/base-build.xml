@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- Copyright (c) 1999-2010 Luca Garulli - LICENSE: Apache 2.0 -->
-<project basedir="." >
-	<property name="project.src"  value="src/main/java" />
+<project basedir=".">
+	<property name="project.src" value="src/main/java" />
 	<property name="project.src2" value="${project.src}" />
 	<property name="project.res" value="src/main/resources" />
 	<property name="project.lib" value="lib" />
@@ -16,16 +16,16 @@
 	<property name="build.sysclasspath" value="ignore" />
 
 	<path id="project.classpath">
-		<filelist dir=".."             files="${project.jar-deps}" />
-		<fileset  dir="${project.lib}" includes="**/*.jar" />
-		<fileset  dir="${project.lib2}" includes="**/*.jar" />
-		<fileset  dir=".."             includes="**/target/*.jar" />
+		<filelist dir=".." files="${project.jar-deps}" />
+		<fileset dir="${project.lib}" includes="**/*.jar" />
+		<fileset dir="${project.lib2}" includes="**/*.jar" />
+		<fileset dir=".." includes="**/target/*.jar" />
 	</path>
 
 	<target name="init">
-    <echo>-----------------------------------</echo>
-    <echo>-> ${ant.project.name}</echo>
-    <echo>-----------------------------------</echo>
+		<echo>-----------------------------------</echo>
+		<echo>-> ${ant.project.name}</echo>
+		<echo>-----------------------------------</echo>
 		<mkdir dir="${project.build}" />
 	</target>
 
@@ -35,9 +35,8 @@
 	</target>
 
 	<target name="compile" depends="init">
-    <mkdir dir="${project.lib}" />
-		<javac destdir="${project.build}" debug="${project.is-debug}" debuglevel="${project.debug-level}" target="${project.target-comp}" source="${project.source-comp}" 
-           verbose="false" includeAntRuntime="false">
+		<mkdir dir="${project.lib}" />
+		<javac destdir="${project.build}" debug="${project.is-debug}" debuglevel="${project.debug-level}" target="${project.target-comp}" source="${project.source-comp}" verbose="false" includeAntRuntime="false">
 			<src path="${project.src}" />
 			<src path="${project.src2}" />
 			<classpath refid="project.classpath" />
@@ -73,9 +72,9 @@
 	<target name="install" depends="jar">
 		<copy todir="${global.lib}">
 			<fileset dir="${project.dist}" includes="*.jar">
-			  <exclude name="*test*.jar"/>
-			  <exclude name="*-javadoc.jar"/>
-			  <exclude name="*-sources.jar"/>
+				<exclude name="*test*.jar" />
+				<exclude name="*-javadoc.jar" />
+				<exclude name="*-sources.jar" />
 			</fileset>
 		</copy>
 	</target>

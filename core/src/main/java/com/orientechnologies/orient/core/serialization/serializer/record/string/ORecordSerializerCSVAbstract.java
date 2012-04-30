@@ -30,8 +30,8 @@ import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
-import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
-import com.orientechnologies.orient.core.db.object.OLazyObjectMap;
+import com.orientechnologies.orient.core.db.object.ODatabaseObject;
+import com.orientechnologies.orient.core.db.object.OLazyObjectMapInterface;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -51,7 +51,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelper;
+import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelperManager;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
@@ -326,8 +326,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			Map<Object, Object> map = (Map<Object, Object>) iValue;
 
 			// LINKED MAP
-			if (map instanceof OLazyObjectMap<?>)
-				((OLazyObjectMap<?>) map).setConvertToRecord(false);
+			if (map instanceof OLazyObjectMapInterface<?>)
+				((OLazyObjectMapInterface<?>) map).setConvertToRecord(false);
 
 			boolean invalidMap = false;
 			try {
@@ -345,8 +345,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 						invalidMap = true;
 				}
 			} finally {
-				if (map instanceof OLazyObjectMap<?>) {
-					((OLazyObjectMap<?>) map).setConvertToRecord(true);
+				if (map instanceof OLazyObjectMapInterface<?>) {
+					((OLazyObjectMapInterface<?>) map).setConvertToRecord(true);
 				}
 			}
 
@@ -426,26 +426,28 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 							if (iDatabase == null && ODatabaseRecordThreadLocal.INSTANCE.isDefined())
 								iDatabase = ODatabaseRecordThreadLocal.INSTANCE.get();
 
-							record = OObjectSerializerHelper.toStream(o.getValue(), new ODocument(o.getValue().getClass().getSimpleName()),
-									iDatabase instanceof ODatabaseObjectTx ? ((ODatabaseObjectTx) iDatabase).getEntityManager()
-											: OEntityManagerInternal.INSTANCE, iLinkedClass, iObjHandler != null ? iObjHandler
-											: new OUserObject2RecordHandler() {
+							record = OObjectSerializerHelperManager.getInstance().toStream(
+									o.getValue(),
+									new ODocument(o.getValue().getClass().getSimpleName()),
+									iDatabase instanceof ODatabaseObject ? ((ODatabaseObject) iDatabase).getEntityManager()
+											: OEntityManagerInternal.INSTANCE, iLinkedClass,
+									iObjHandler != null ? iObjHandler : new OUserObject2RecordHandler() {
 
-												public Object getUserObjectByRecord(ORecordInternal<?> iRecord, final String iFetchPlan) {
-													return iRecord;
-												}
+										public Object getUserObjectByRecord(ORecordInternal<?> iRecord, final String iFetchPlan) {
+											return iRecord;
+										}
 
-												public ORecordInternal<?> getRecordByUserObject(Object iPojo, boolean iCreateIfNotAvailable) {
-													return new ODocument(iLinkedClass);
-												}
+										public ORecordInternal<?> getRecordByUserObject(Object iPojo, boolean iCreateIfNotAvailable) {
+											return new ODocument(iLinkedClass);
+										}
 
-												public boolean existsUserObjectByRID(ORID iRID) {
-													return false;
-												}
+										public boolean existsUserObjectByRID(ORID iRID) {
+											return false;
+										}
 
-												public void registerUserObject(Object iObject, ORecordInternal<?> iRecord) {
-												}
-											}, null, iSaveOnlyDirty);
+										public void registerUserObject(Object iObject, ORecordInternal<?> iRecord) {
+										}
+									}, null, iSaveOnlyDirty);
 						}
 						iOutput.append(OStringSerializerHelper.EMBEDDED_BEGIN);
 						toString(record, iOutput, null, iObjHandler, iMarshalledRecords, false);
@@ -586,11 +588,11 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 			final OClass linkedClass;
 			if (!(o instanceof OIdentifiable)) {
-				final String fieldBound = OObjectSerializerHelper.getDocumentBoundField(o.getClass());
+				final String fieldBound = OObjectSerializerHelperManager.getInstance().getDocumentBoundField(o.getClass());
 				if (fieldBound != null) {
-					OObjectSerializerHelper.invokeCallback(o, null, OBeforeSerialization.class);
-					doc = (ODocument) OObjectSerializerHelper.getFieldValue(o, fieldBound);
-					OObjectSerializerHelper.invokeCallback(o, doc, OAfterSerialization.class);
+					OObjectSerializerHelperManager.getInstance().invokeCallback(o, null, OBeforeSerialization.class);
+					doc = (ODocument) OObjectSerializerHelperManager.getInstance().getFieldValue(o, fieldBound);
+					OObjectSerializerHelperManager.getInstance().invokeCallback(o, doc, OAfterSerialization.class);
 					id = doc;
 				} else if (iLinkedType == null)
 					linkedType = OType.getTypeByClass(o.getClass());
@@ -626,25 +628,27 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					if (iDatabase == null && ODatabaseRecordThreadLocal.INSTANCE.isDefined())
 						iDatabase = ODatabaseRecordThreadLocal.INSTANCE.get();
 
-					id = OObjectSerializerHelper.toStream(o, new ODocument(o.getClass().getSimpleName()),
-							iDatabase instanceof ODatabaseObjectTx ? ((ODatabaseObjectTx) iDatabase).getEntityManager()
-									: OEntityManagerInternal.INSTANCE, iLinkedClass, iObjHandler != null ? iObjHandler
-									: new OUserObject2RecordHandler() {
-										public Object getUserObjectByRecord(ORecordInternal<?> iRecord, final String iFetchPlan) {
-											return iRecord;
-										}
+					id = OObjectSerializerHelperManager.getInstance().toStream(
+							o,
+							new ODocument(o.getClass().getSimpleName()),
+							iDatabase instanceof ODatabaseObject ? ((ODatabaseObject) iDatabase).getEntityManager()
+									: OEntityManagerInternal.INSTANCE, iLinkedClass,
+							iObjHandler != null ? iObjHandler : new OUserObject2RecordHandler() {
+								public Object getUserObjectByRecord(ORecordInternal<?> iRecord, final String iFetchPlan) {
+									return iRecord;
+								}
 
-										public ORecordInternal<?> getRecordByUserObject(Object iPojo, boolean iCreateIfNotAvailable) {
-											return new ODocument(linkedClass);
-										}
+								public ORecordInternal<?> getRecordByUserObject(Object iPojo, boolean iCreateIfNotAvailable) {
+									return new ODocument(linkedClass);
+								}
 
-										public boolean existsUserObjectByRID(ORID iRID) {
-											return false;
-										}
+								public boolean existsUserObjectByRID(ORID iRID) {
+									return false;
+								}
 
-										public void registerUserObject(Object iObject, ORecordInternal<?> iRecord) {
-										}
-									}, null, iSaveOnlyDirty);
+								public void registerUserObject(Object iObject, ORecordInternal<?> iRecord) {
+								}
+							}, null, iSaveOnlyDirty);
 				}
 				toString(doc, iOutput, null, iObjHandler, iMarshalledRecords, false);
 			} else {
@@ -707,9 +711,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		} else {
 			if (!(iLinked instanceof ORecordInternal<?>)) {
 				// NOT RECORD: TRY TO EXTRACT THE DOCUMENT IF ANY
-				final String boundDocumentField = OObjectSerializerHelper.getDocumentBoundField(iLinked.getClass());
+				final String boundDocumentField = OObjectSerializerHelperManager.getInstance().getDocumentBoundField(iLinked.getClass());
 				if (boundDocumentField != null)
-					iLinked = OObjectSerializerHelper.getFieldValue(iLinked, boundDocumentField);
+					iLinked = OObjectSerializerHelperManager.getInstance().getFieldValue(iLinked, boundDocumentField);
 			}
 
 			if (!(iLinked instanceof ORecordInternal<?>))

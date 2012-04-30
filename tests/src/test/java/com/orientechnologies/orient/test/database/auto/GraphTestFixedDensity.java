@@ -19,10 +19,10 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.graph.ODatabaseGraphTx;
-import com.orientechnologies.orient.core.db.graph.OGraphEdge;
-import com.orientechnologies.orient.core.db.graph.OGraphVertex;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.object.db.graph.ODatabaseGraphTx;
+import com.orientechnologies.orient.object.db.graph.OGraphEdge;
+import com.orientechnologies.orient.object.db.graph.OGraphVertex;
 
 @Test
 public class GraphTestFixedDensity {

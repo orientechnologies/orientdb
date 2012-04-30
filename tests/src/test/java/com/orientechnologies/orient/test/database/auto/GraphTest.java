@@ -21,11 +21,11 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.graph.ODatabaseGraphTx;
-import com.orientechnologies.orient.core.db.graph.OGraphElement;
-import com.orientechnologies.orient.core.db.graph.OGraphVertex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.object.db.graph.ODatabaseGraphTx;
+import com.orientechnologies.orient.object.db.graph.OGraphElement;
+import com.orientechnologies.orient.object.db.graph.OGraphVertex;
 
 @Test
 public class GraphTest {

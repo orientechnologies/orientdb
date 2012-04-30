@@ -50,6 +50,7 @@ public abstract class ODatabaseImpExpAbstract {
 			fileName += DEFAULT_EXT;
 		listener = iListener;
 		excludeClusters = new LinkedHashSet<String>();
+		excludeClusters.add("index");
 	}
 
 	public Set<String> getIncludeClusters() {

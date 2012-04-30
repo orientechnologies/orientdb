@@ -21,9 +21,9 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.business.Address;
 import com.orientechnologies.orient.test.domain.business.City;
@@ -34,13 +34,12 @@ import com.orientechnologies.orient.test.domain.business.Country;
 public class CRUDObjectInheritanceTest {
 	protected static final int	TOT_RECORDS	= 10;
 	protected long							startRecordNumber;
-	private ODatabaseObjectTx		database;
+	private OObjectDatabaseTx		database;
 	private City								redmond			= new City(new Country("Washington"), "Redmond");
 
 	@Parameters(value = "url")
 	public CRUDObjectInheritanceTest(String iURL) {
-		database = new ODatabaseObjectTx(iURL);
-		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain");
+		database = new OObjectDatabaseTx(iURL);
 	}
 
 	@Test
@@ -52,7 +51,7 @@ public class CRUDObjectInheritanceTest {
 		Company company;
 
 		for (long i = startRecordNumber; i < startRecordNumber + TOT_RECORDS; ++i) {
-			company = new Company((int) i, "Microsoft" + i);
+			company = database.newInstance(Company.class, (int) i, "Microsoft" + i);
 			company.setEmployees((int) (100000 + i));
 			company.getAddresses().add(new Address("Headquarter", redmond, "WA 98073-9717"));
 			database.save(company);

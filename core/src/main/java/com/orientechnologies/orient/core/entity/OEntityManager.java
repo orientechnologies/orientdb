@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.entity;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.List;
@@ -31,13 +30,13 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 
 public class OEntityManager {
 	private static Map<String, OEntityManager>	databaseInstances	= new HashMap<String, OEntityManager>();
-	private Map<String, Class<?>>								entityClasses			= new HashMap<String, Class<?>>();
+	private OEntityManagerClassHandler					classHandler			= new OEntityManagerClassHandler();
 
 	protected OEntityManager() {
 		OLogManager.instance().debug(this, "Registering entity manager");
 
-		registerEntityClass(OUser.class);
-		registerEntityClass(ORole.class);
+		classHandler.registerEntityClass(OUser.class);
+		classHandler.registerEntityClass(ORole.class);
 	}
 
 	public static synchronized OEntityManager getEntityManagerByDatabaseURL(final String iURL) {
@@ -58,7 +57,7 @@ public class OEntityManager {
 		if (iClassName == null)
 			throw new IllegalArgumentException("Cannot create the object: class name is empty");
 
-		final Class<?> entityClass = getEntityClass(iClassName);
+		final Class<?> entityClass = classHandler.getEntityClass(iClassName);
 
 		try {
 			if (entityClass != null)
@@ -77,27 +76,6 @@ public class OEntityManager {
 		}
 	}
 
-	protected Object createInstance(final Class<?> iClass) throws InstantiationException, IllegalAccessException,
-			InvocationTargetException {
-		Constructor<?> defaultConstructor = null;
-		for (Constructor<?> c : iClass.getDeclaredConstructors()) {
-			if (c.getParameterTypes().length == 0) {
-				defaultConstructor = c;
-				break;
-			}
-		}
-
-		if (defaultConstructor == null)
-			throw new IllegalArgumentException("Cannot create an object of class '" + iClass.getName()
-					+ "' because it has no default constructor. Please define the method: " + iClass.getSimpleName() + "()");
-
-		if (!defaultConstructor.isAccessible())
-			// OVERRIDE PROTECTION
-			defaultConstructor.setAccessible(true);
-
-		return defaultConstructor.newInstance();
-	}
-
 	/**
 	 * Returns the Java class by its name
 	 * 
@@ -106,11 +84,11 @@ public class OEntityManager {
 	 * @return Returns the Java class by its name
 	 */
 	public Class<?> getEntityClass(final String iClassName) {
-		return entityClasses.get(iClassName);
+		return classHandler.getEntityClass(iClassName);
 	}
 
 	public void registerEntityClass(final Class<?> iClass) {
-		entityClasses.put(iClass.getSimpleName(), iClass);
+		classHandler.registerEntityClass(iClass);
 	}
 
 	/**
@@ -141,15 +119,25 @@ public class OEntityManager {
 			throw new OException(e);
 		}
 		for (Class<?> c : classes) {
-			String className = c.getSimpleName();
-			entityClasses.put(className, c);
+			classHandler.registerEntityClass(c);
 		}
 
 		if (OLogManager.instance().isDebugEnabled()) {
-			for (Entry<String, Class<?>> entry : entityClasses.entrySet()) {
+			for (Entry<String, Class<?>> entry : classHandler.getClassesEntrySet()) {
 				OLogManager.instance().debug(this, "Loaded entity class '%s' from: %s", entry.getKey(), entry.getValue());
 			}
 		}
 	}
 
+	public void setClassHandler(OEntityManagerClassHandler classHandler) {
+		for (Entry<String, Class<?>> entry : classHandler.getClassesEntrySet()) {
+			classHandler.registerEntityClass(entry.getValue());
+		}
+		this.classHandler = classHandler;
+	}
+
+	protected Object createInstance(final Class<?> iClass) throws InstantiationException, IllegalAccessException,
+			InvocationTargetException {
+		return classHandler.createInstance(iClass);
+	}
 }

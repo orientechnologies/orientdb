@@ -21,7 +21,7 @@ public class Company extends Account {
 	public Company() {
 	}
 
-	public Company(int iId, String iName) {
+	public Company(Integer iId, String iName) {
 		super(iId, iName, null);
 	}
 

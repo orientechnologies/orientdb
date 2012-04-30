@@ -21,8 +21,8 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
-import com.orientechnologies.orient.core.db.object.ODatabaseObjectPool;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.object.db.OObjectDatabasePool;
 import com.orientechnologies.orient.test.database.base.SetupTest;
 
 @Test(groups = "db")
@@ -36,7 +36,7 @@ public class DbClosedTest {
 			return;
 
 		ODatabaseDocumentPool.global().close();
-		ODatabaseObjectPool.global().close();
+		OObjectDatabasePool.global().close();
 
 		for (OStorage stg : Orient.instance().getStorages()) {
 			Assert.assertTrue(stg.isClosed());

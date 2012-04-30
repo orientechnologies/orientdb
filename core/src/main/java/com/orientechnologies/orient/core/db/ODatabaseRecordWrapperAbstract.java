@@ -208,33 +208,30 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 		return (RET) underlying.load(iRecord, iFetchPlan, iIgnoreCache);
 	}
 
-	public void reload(final ORecordInternal<?> iRecord) {
-		underlying.reload(iRecord, null, true);
+	public <RET extends ORecordInternal<?>> RET reload(final ORecordInternal<?> iRecord) {
+		return (RET) underlying.reload(iRecord, null, true);
 	}
 
-	public void reload(final ORecordInternal<?> iRecord, final String iFetchPlan, final boolean iIgnoreCache) {
-		underlying.reload(iRecord, iFetchPlan, iIgnoreCache);
+	public <RET extends ORecordInternal<?>> RET reload(final ORecordInternal<?> iRecord, final String iFetchPlan,
+			final boolean iIgnoreCache) {
+		return (RET) underlying.reload(iRecord, iFetchPlan, iIgnoreCache);
 	}
 
-	public ODatabaseComplex<ORecordInternal<?>> save(final ORecordInternal<?> iRecord) {
-		underlying.save(iRecord);
-		return this;
+	public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord) {
+		return (RET) underlying.save(iRecord);
 	}
 
-	public ODatabaseComplex<ORecordInternal<?>> save(final ORecordInternal<?> iRecord, final String iClusterName) {
-		underlying.save(iRecord, iClusterName);
-		return this;
+	public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final String iClusterName) {
+		return (RET) underlying.save(iRecord, iClusterName);
 	}
 
-	public ODatabaseComplex<ORecordInternal<?>> save(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {
-		underlying.save(iRecord, iMode);
-		return this;
+	public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {
+		return (RET) underlying.save(iRecord, iMode);
 	}
 
-	public ODatabaseComplex<ORecordInternal<?>> save(final ORecordInternal<?> iRecord, final String iClusterName,
+	public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final String iClusterName,
 			final OPERATION_MODE iMode) {
-		underlying.save(iRecord, iClusterName, iMode);
-		return this;
+		return (RET) underlying.save(iRecord, iClusterName, iMode);
 	}
 
 	public void setInternal(final ATTRIBUTES attribute, final Object iValue) {

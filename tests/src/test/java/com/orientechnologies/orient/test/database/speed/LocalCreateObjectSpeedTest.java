@@ -20,15 +20,15 @@ import java.util.Date;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 import com.orientechnologies.orient.test.domain.business.Account;
 
 @Test(enabled = false)
 public class LocalCreateObjectSpeedTest extends OrientMonoThreadTest {
-	private ODatabaseObjectTx	database;
+	private OObjectDatabaseTx	database;
 	private Account						account;
 	private Date							date	= new Date();
 
@@ -45,7 +45,7 @@ public class LocalCreateObjectSpeedTest extends OrientMonoThreadTest {
 	public void init() {
 		OProfiler.getInstance().startRecording();
 
-		database = new ODatabaseObjectTx(System.getProperty("url")).open("admin", "admin");
+		database = new OObjectDatabaseTx(System.getProperty("url")).open("admin", "admin");
 
 		database.declareIntent(new OIntentMassiveInsert());
 		database.begin(TXTYPE.NOTX);

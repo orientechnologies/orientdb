@@ -27,9 +27,9 @@ import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.object.OLazyObjectList;
-import com.orientechnologies.orient.core.db.object.OLazyObjectMap;
-import com.orientechnologies.orient.core.db.object.OLazyObjectSet;
+import com.orientechnologies.orient.core.db.object.OLazyObjectListInterface;
+import com.orientechnologies.orient.core.db.object.OLazyObjectMapInterface;
+import com.orientechnologies.orient.core.db.object.OLazyObjectSetInterface;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
@@ -129,12 +129,12 @@ public class OFindReferenceHelper {
 	private static void checkCollection(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final Collection<?> values,
 			final ORecord<?> iRootObject) {
 		final Iterator<?> it;
-		if (values instanceof OLazyObjectList) {
-			((OLazyObjectList<?>) values).setConvertToRecord(false);
-			it = ((OLazyObjectList<?>) values).listIterator();
-		} else if (values instanceof OLazyObjectSet) {
-			((OLazyObjectSet<?>) values).setConvertToRecord(false);
-			it = ((OLazyObjectSet<?>) values).iterator();
+		if (values instanceof OLazyObjectListInterface<?>) {
+			((OLazyObjectListInterface<?>) values).setConvertToRecord(false);
+			it = ((OLazyObjectListInterface<?>) values).listIterator();
+		} else if (values instanceof OLazyObjectSetInterface) {
+			((OLazyObjectSetInterface) values).setConvertToRecord(false);
+			it = ((OLazyObjectSetInterface) values).iterator();
 		} else if (values instanceof ORecordLazyList) {
 			it = ((ORecordLazyList) values).rawIterator();
 		} else if (values instanceof OMVRBTreeRIDSet) {
@@ -150,9 +150,9 @@ public class OFindReferenceHelper {
 	private static void checkMap(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final Map<?, ?> values,
 			final ORecord<?> iRootObject) {
 		final Iterator<?> it;
-		if (values instanceof OLazyObjectMap) {
-			((OLazyObjectMap<?>) values).setConvertToRecord(false);
-			it = ((OLazyObjectMap<?>) values).values().iterator();
+		if (values instanceof OLazyObjectMapInterface<?>) {
+			((OLazyObjectMapInterface<?>) values).setConvertToRecord(false);
+			it = ((OLazyObjectMapInterface<?>) values).values().iterator();
 		} else if (values instanceof ORecordLazyMap) {
 			it = ((ORecordLazyMap) values).rawIterator();
 		} else {

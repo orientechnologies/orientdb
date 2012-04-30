@@ -15,10 +15,12 @@
  */
 package com.orientechnologies.orient.core.db.object;
 
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseSchemaAware;
 import com.orientechnologies.orient.core.entity.OEntityManager;
-import com.orientechnologies.orient.core.iterator.OObjectIteratorCluster;
-import com.orientechnologies.orient.core.iterator.OObjectIteratorClass;
+import com.orientechnologies.orient.core.iterator.object.OObjectIteratorClassInterface;
+import com.orientechnologies.orient.core.iterator.object.OObjectIteratorClusterInterface;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Generic interface for object based Database implementations. Binds to/from Document and POJOs.
@@ -27,53 +29,66 @@ import com.orientechnologies.orient.core.iterator.OObjectIteratorClass;
  */
 public interface ODatabaseObject extends ODatabaseSchemaAware<Object> {
 
-  /**
-   * Sets as dirty a POJO. This is useful when you change the object and need to tell to the engine to treat as dirty.
-   * 
-   * @param iPojo
-   *          User object
-   */
-  public void setDirty(final Object iPojo);
-  
-  /**
-   * Sets as not dirty a POJO. This is useful when you change some other object and need to tell to the engine to treat this one as not dirty.
-   * 
-   * @param iPojo
-   *          User object
-   */
-  public void unsetDirty(final Object iPojo);
+	/**
+	 * Sets as dirty a POJO. This is useful when you change the object and need to tell to the engine to treat as dirty.
+	 * 
+	 * @param iPojo
+	 *          User object
+	 */
+	public void setDirty(final Object iPojo);
 
-  /**
-   * Browses all the records of the specified cluster.
-   * 
-   * @param iClusterName
-   *          Cluster name to iterate
-   * @return Iterator of Object instances
-   */
-  public <RET> OObjectIteratorCluster<RET> browseCluster(String iClusterName);
+	/**
+	 * Sets as not dirty a POJO. This is useful when you change some other object and need to tell to the engine to treat this one as
+	 * not dirty.
+	 * 
+	 * @param iPojo
+	 *          User object
+	 */
+	public void unsetDirty(final Object iPojo);
 
-  /**
-   * Browses all the records of the specified class.
-   * 
-   * @param iClusterClass
-   *          Class name to iterate
-   * @return Iterator of Object instances
-   */
-  public <RET> OObjectIteratorClass<RET> browseClass(Class<RET> iClusterClass);
+	/**
+	 * Browses all the records of the specified cluster.
+	 * 
+	 * @param iClusterName
+	 *          Cluster name to iterate
+	 * @return Iterator of Object instances
+	 */
+	public <RET> OObjectIteratorClusterInterface<RET> browseCluster(String iClusterName);
 
-  /**
-   * Creates a new entity of the specified class.
-   * 
-   * @param iType
-   *          Class name where to originate the instance
-   * @return New instance
-   */
-  public <T> T newInstance(Class<T> iType);
+	/**
+	 * Browses all the records of the specified class.
+	 * 
+	 * @param iClusterClass
+	 *          Class name to iterate
+	 * @return Iterator of Object instances
+	 */
+	public <RET> OObjectIteratorClassInterface<RET> browseClass(Class<RET> iClusterClass);
 
-  /**
-   * Returns the entity manager that handle the binding from ODocuments and POJOs.
-   * 
-   * @return
-   */
-  public OEntityManager getEntityManager();
+	/**
+	 * Creates a new entity of the specified class.
+	 * 
+	 * @param iType
+	 *          Class name where to originate the instance
+	 * @return New instance
+	 */
+	public <T> T newInstance(Class<T> iType);
+
+	/**
+	 * Returns the entity manager that handle the binding from ODocuments and POJOs.
+	 * 
+	 * @return
+	 */
+	public OEntityManager getEntityManager();
+
+	public boolean isRetainObjects();
+
+	public ODatabase setRetainObjects(boolean iRetainObjects);
+
+	public Object stream2pojo(ODocument iRecord, final Object iPojo, final String iFetchPlan);
+
+	public ODocument pojo2Stream(final Object iPojo, final ODocument iRecord);
+
+	public boolean isLazyLoading();
+
+	public void setLazyLoading(final boolean lazyLoading);
 }

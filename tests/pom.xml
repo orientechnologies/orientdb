@@ -25,6 +25,13 @@
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
+    
+     <dependency>
+      <groupId>com.orientechnologies</groupId>
+      <artifactId>orientdb-object</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
 
     <dependency>
       <groupId>com.orientechnologies</groupId>

@@ -28,4 +28,6 @@ public interface OOrientListener {
 	public void onStorageRegistered(final OStorage iStorage);
 
 	public void onStorageUnregistered(final OStorage iStorage);
+
+	public void onShutdown();
 }

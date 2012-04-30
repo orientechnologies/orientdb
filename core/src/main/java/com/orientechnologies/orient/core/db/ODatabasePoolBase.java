@@ -41,6 +41,11 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
 				if (dbPool == null) {
 					dbPool = new ODatabasePoolAbstract<DB>(this, iMinSize, iMaxSize) {
 
+						public void onShutdown() {
+							if (owner instanceof ODatabasePoolBase<?>)
+								((ODatabasePoolBase<?>) owner).close();
+						}
+
 						public DB createNewResource(final String iDatabaseName, final Object... iAdditionalArgs) {
 							if (iAdditionalArgs.length < 2)
 								throw new OSecurityAccessException("Username and/or password missed");

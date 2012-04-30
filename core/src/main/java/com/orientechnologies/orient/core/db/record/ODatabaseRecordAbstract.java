@@ -229,16 +229,16 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		super.reload();
 	}
 
-	public void reload(final ORecordInternal<?> iRecord) {
-		executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, null, true);
+	public <RET extends ORecordInternal<?>> RET reload(final ORecordInternal<?> iRecord) {
+		return executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, null, true);
 	}
 
-	public void reload(final ORecordInternal<?> iRecord, final String iFetchPlan) {
-		executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, true);
+	public <RET extends ORecordInternal<?>> RET reload(final ORecordInternal<?> iRecord, final String iFetchPlan) {
+		return executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, true);
 	}
 
-	public void reload(final ORecordInternal<?> iRecord, final String iFetchPlan, boolean iIgnoreCache) {
-		executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache);
+	public <RET extends ORecordInternal<?>> RET reload(final ORecordInternal<?> iRecord, final String iFetchPlan, boolean iIgnoreCache) {
+		return executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache);
 	}
 
 	/**
@@ -268,33 +268,30 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	/**
 	 * Updates the record without checking the version.
 	 */
-	public ODatabaseRecord save(final ORecordInternal<?> iContent) {
-		executeSaveRecord(iContent, null, iContent.getVersion(), iContent.getRecordType(), OPERATION_MODE.SYNCHRONOUS);
-		return this;
+	public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent) {
+		return executeSaveRecord(iContent, null, iContent.getVersion(), iContent.getRecordType(), OPERATION_MODE.SYNCHRONOUS);
 	}
 
 	/**
 	 * Updates the record without checking the version.
 	 */
-	public ODatabaseRecord save(final ORecordInternal<?> iContent, final OPERATION_MODE iMode) {
-		executeSaveRecord(iContent, null, iContent.getVersion(), iContent.getRecordType(), iMode);
-		return this;
+	public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final OPERATION_MODE iMode) {
+		return executeSaveRecord(iContent, null, iContent.getVersion(), iContent.getRecordType(), iMode);
 	}
 
 	/**
 	 * Updates the record in the requested cluster without checking the version.
 	 */
-	public ODatabaseRecord save(final ORecordInternal<?> iContent, final String iClusterName) {
-		executeSaveRecord(iContent, iClusterName, iContent.getVersion(), iContent.getRecordType(), OPERATION_MODE.SYNCHRONOUS);
-		return this;
+	public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final String iClusterName) {
+		return executeSaveRecord(iContent, iClusterName, iContent.getVersion(), iContent.getRecordType(), OPERATION_MODE.SYNCHRONOUS);
 	}
 
 	/**
 	 * Updates the record in the requested cluster without checking the version.
 	 */
-	public ODatabaseRecord save(final ORecordInternal<?> iContent, final String iClusterName, final OPERATION_MODE iMode) {
-		executeSaveRecord(iContent, iClusterName, iContent.getVersion(), iContent.getRecordType(), iMode);
-		return this;
+	public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final String iClusterName,
+			final OPERATION_MODE iMode) {
+		return executeSaveRecord(iContent, iClusterName, iContent.getVersion(), iContent.getRecordType(), iMode);
 	}
 
 	/**
@@ -588,12 +585,12 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		return null;
 	}
 
-	public void executeSaveRecord(final ORecordInternal<?> iRecord, String iClusterName, final int iVersion, final byte iRecordType,
-			final OPERATION_MODE iMode) {
+	public <RET extends ORecordInternal<?>> RET executeSaveRecord(final ORecordInternal<?> iRecord, String iClusterName,
+			final int iVersion, final byte iRecordType, final OPERATION_MODE iMode) {
 		checkOpeness();
 
 		if (!iRecord.isDirty())
-			return;
+			return (RET) iRecord;
 
 		final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
@@ -615,7 +612,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				iRecord.onBeforeIdentityChanged(rid);
 			else if (stream == null || stream.length == 0)
 				// ALREADY CREATED AND WAITING FOR THE RIGHT UPDATE (WE'RE IN A GRAPH)
-				return;
+				return (RET) iRecord;
 
 			if (isNew && rid.clusterId < 0)
 				rid.clusterId = iClusterName != null ? getClusterIdByName(iClusterName) : getDefaultClusterId();
@@ -642,7 +639,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 					// RECORD SAVED DURING PREVIOUS STREAMING PHASE: THIS HAPPENS FOR CIRCULAR REFERENCED RECORDS
 					// ADD/UPDATE IT IN CACHE IF IT'S ACTIVE
 					getLevel1Cache().updateRecord(iRecord);
-					return;
+					return (RET) iRecord;
 				}
 			}
 
@@ -680,6 +677,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			// WRAP IT AS ODATABASE EXCEPTION
 			throw new ODatabaseException("Error on saving record in cluster #" + iRecord.getIdentity().getClusterId(), t);
 		}
+		return (RET) iRecord;
 	}
 
 	public void executeDeleteRecord(final OIdentifiable iRecord, final int iVersion, final boolean iRequired,

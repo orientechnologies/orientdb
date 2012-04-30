@@ -22,22 +22,22 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.hook.ORecordHookAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 
 @Test(groups = "hook")
 public class HookTxTest extends ORecordHookAbstract {
-	private ODatabaseObjectTx	database;
+	private OObjectDatabaseTx	database;
 	private int								callbackCount	= 0;
 	private Profile						p;
 
 	@Parameters(value = "url")
 	public HookTxTest(String iURL) {
-		database = new ODatabaseObjectTx(iURL);
+		database = new OObjectDatabaseTx(iURL);
 	}
 
 	@Test

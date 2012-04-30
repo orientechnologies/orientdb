@@ -35,9 +35,7 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseFactory;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabasePool;
-import com.orientechnologies.orient.core.db.object.ODatabaseObjectPool;
+import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
@@ -50,7 +48,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 
 public class Orient extends OSharedResourceAbstract {
-	public static final String								URL_SYNTAX						= "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
+	public static final String														URL_SYNTAX						= "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
 
 	protected Map<String, OEngine>						engines								= new HashMap<String, OEngine>();
 	protected Map<String, OStorage>						storages							= new HashMap<String, OStorage>();
@@ -61,13 +59,15 @@ public class Orient extends OSharedResourceAbstract {
 	protected OClusterFactory									clusterFactory				= new ODefaultClusterFactory();
 	protected volatile boolean								active								= false;
 
-	protected static final OrientShutdownHook	shutdownHook					= new OrientShutdownHook();
-	protected static final Timer							timer									= new Timer(true);
-	protected static final ThreadGroup				threadGroup						= new ThreadGroup("OrientDB");
-	protected static Orient										instance							= new Orient();
+	protected static final OrientShutdownHook							shutdownHook					= new OrientShutdownHook();
+	protected static final Timer													timer									= new Timer(true);
+	protected static final ThreadGroup										threadGroup						= new ThreadGroup("OrientDB");
+	protected static Orient																instance							= new Orient();
 
-	private final OMemoryWatchDog							memoryWatchDog;
-	private static AtomicInteger							serialId							= new AtomicInteger();
+	private final OMemoryWatchDog													memoryWatchDog;
+	private static AtomicInteger													serialId							= new AtomicInteger();
+
+	protected List<Class<? extends ODatabasePoolBase<?>>>	pools;
 
 	protected Orient() {
 		// REGISTER THE EMBEDDED ENGINE
@@ -265,10 +265,10 @@ public class Orient extends OSharedResourceAbstract {
 
 			OLogManager.instance().debug(this, "Orient Engine is shutting down...");
 
-			// CLOSE ALL THE GLOBAL DATABASE POOLS
-			ODatabaseDocumentPool.global().close();
-			ODatabaseObjectPool.global().close();
-			OGraphDatabasePool.global().close();
+			// CALL THE SHUTDOWN ON ALL THE LISTENERS
+			for (OOrientListener l : listeners) {
+				l.onShutdown();
+			}
 
 			// CLOSE ALL DATABASES
 			databaseFactory.shutdown();

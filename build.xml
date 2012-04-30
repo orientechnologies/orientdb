@@ -23,6 +23,7 @@
         
 		  	<fileset dir="commons"    includes="build.xml" />
 		  	<fileset dir="core"       includes="build.xml" />
+      		<fileset dir="object"     includes="build.xml" />
 		  	<fileset dir="enterprise" includes="build.xml" />
 		  	<fileset dir="client"     includes="build.xml" />
 		  	<fileset dir="server"     includes="build.xml" />
@@ -94,18 +95,20 @@
              overview="overview.html">
 			<classpath>
 				<fileset dir=".">
-					<include name="core/lib/persistence-api-1.0.jar" />
+					<include name="object/lib/persistence-api-1.0.jar" />
 				</fileset>
 			</classpath>
 			<packageset dir="." defaultexcludes="yes">
 				<include name="commons/src/main/java/**"/>
 				<include name="core/src/main/java/**"/>
+				<include name="object/src/main/java/**/*.java"/>
 			</packageset>
 			<fileset dir="." defaultexcludes="yes">
 				<include name="commons/src/main/java/**/*.java"/>
 				<include name="core/src/main/java/**/*.java"/>
 				<include name="client/src/main/java/**/*.java"/>
 				<include name="enterprise/src/main/java/**/*.java"/>
+				<include name="object/src/main/java/**/*.java"/>
 			</fileset>
 			<doclet name="org.umlgraph.doclet.UmlGraphDoc" path="_base/lib/UmlGraph.jar">
 				<param name="-hide" value="java.*" />

@@ -19,10 +19,10 @@ import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 
 /**
  * @author Michael Hiess
@@ -57,7 +57,7 @@ public class MultipleDBTest {
 
 				public void run() {
 
-					ODatabaseObjectTx tx = new ODatabaseObjectTx(dbUrl);
+					OObjectDatabaseTx tx = new OObjectDatabaseTx(dbUrl);
 
 					try {
 						ODatabaseHelper.deleteDatabase(tx);
@@ -79,7 +79,7 @@ public class MultipleDBTest {
 						long start = System.currentTimeMillis();
 						for (int j = 0; j < operations_write; j++) {
 							DummyObject dummy = new DummyObject("name" + j);
-							tx.save(dummy);
+							dummy = tx.save(dummy);
 
 							Assert.assertEquals(((ORID) dummy.getId()).getClusterPosition(), j);
 
@@ -191,7 +191,7 @@ public class MultipleDBTest {
 							ODocument dummy = new ODocument("DummyObject");
 							dummy.field("name", "name" + j);
 
-							tx.save(dummy);
+							dummy =	tx.save(dummy);
 							Assert.assertEquals(((ORID) dummy.getIdentity()).getClusterPosition(), j);
 
 							// Assert.assertEquals(dummy.getId().toString(), "#5:" + j);

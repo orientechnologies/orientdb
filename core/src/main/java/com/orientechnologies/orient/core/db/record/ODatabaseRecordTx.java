@@ -197,24 +197,25 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 	}
 
 	@Override
-	public ODatabaseRecord save(final ORecordInternal<?> iContent, final OPERATION_MODE iMode) {
+	public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final OPERATION_MODE iMode) {
 		return save(iContent, (String) null, iMode);
 	}
 
 	@Override
-	public ODatabaseRecord save(final ORecordInternal<?> iContent) {
+	public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent) {
 		return save(iContent, (String) null, OPERATION_MODE.SYNCHRONOUS);
 	}
 
 	@Override
-	public ODatabaseRecord save(final ORecordInternal<?> iContent, final String iClusterName) {
+	public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final String iClusterName) {
 		return save(iContent, iClusterName, OPERATION_MODE.SYNCHRONOUS);
 	}
 
 	@Override
-	public ODatabaseRecord save(final ORecordInternal<?> iContent, final String iClusterName, final OPERATION_MODE iMode) {
+	public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final String iClusterName,
+			final OPERATION_MODE iMode) {
 		currentTx.saveRecord(iContent, iClusterName, iMode);
-		return this;
+		return (RET) iContent;
 	}
 
 	@Override

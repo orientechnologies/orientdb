@@ -51,6 +51,12 @@
       <artifactId>orientdb-server</artifactId>
       <version>${project.version}</version>
     </dependency>
+    
+     <dependency>
+      <groupId>com.orientechnologies</groupId>
+      <artifactId>orientdb-object</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
     <dependency>
       <groupId>com.orientechnologies</groupId>

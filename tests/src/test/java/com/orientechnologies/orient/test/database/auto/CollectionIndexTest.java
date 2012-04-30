@@ -15,41 +15,44 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.test.domain.whiz.Collector;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@Test(groups = {"index"})
-public class CollectionIndexTest {
-	private final ODatabaseObjectTx database;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
-    @Parameters(value = "url")
-    public CollectionIndexTest(final String iURL) {
-        database = new ODatabaseObjectTx(iURL);
-        database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain");
-    }
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
+import com.orientechnologies.orient.test.domain.whiz.Collector;
+
+@Test(groups = { "index" })
+public class CollectionIndexTest {
+	private final OObjectDatabaseTx	database;
+
+	@Parameters(value = "url")
+	public CollectionIndexTest(final String iURL) {
+		database = new OObjectDatabaseTx(iURL);
+	}
 
 	@BeforeClass
 	public void setupSchema() {
-        database.open("admin", "admin");
-		final OClass collector = database.getMetadata().getSchema().createClass("Collector");
+		database.open("admin", "admin");
+		final OClass collector = database.getMetadata().getSchema().getClass("Collector");
 		collector.createProperty("id", OType.STRING);
-		collector.createProperty("stringCollection",
-                OType.EMBEDDEDLIST, OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+		collector.createProperty("stringCollection", OType.EMBEDDEDLIST, OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
-        database.getMetadata().getSchema().save();
+		database.getMetadata().getSchema().save();
 		database.close();
 	}
 
@@ -74,7 +77,7 @@ public class CollectionIndexTest {
 	public void testIndexCollection() {
 		Collector collector = new Collector();
 		collector.setStringCollection(Arrays.asList("spam", "eggs"));
-		database.save(collector);
+		collector = database.save(collector);
 
 		List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:Collector.stringCollection")).execute();
 
@@ -91,12 +94,12 @@ public class CollectionIndexTest {
 	}
 
 	public void testIndexCollectionInTx() throws Exception {
-		
+
 		try {
 			database.begin();
 			Collector collector = new Collector();
 			collector.setStringCollection(Arrays.asList("spam", "eggs"));
-			database.save(collector);
+			collector = database.save(collector);
 			database.commit();
 		} catch (Exception e) {
 			database.rollback();
@@ -117,13 +120,12 @@ public class CollectionIndexTest {
 		}
 	}
 
-	
 	public void testIndexCollectionUpdate() {
 		Collector collector = new Collector();
 		collector.setStringCollection(Arrays.asList("spam", "eggs"));
-		database.save(collector);
+		collector = database.save(collector);
 		collector.setStringCollection(Arrays.asList("spam", "bacon"));
-		database.save(collector);
+		collector = database.save(collector);
 
 		List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:Collector.stringCollection")).execute();
 
@@ -142,11 +144,11 @@ public class CollectionIndexTest {
 	public void testIndexCollectionUpdateInTx() throws Exception {
 		Collector collector = new Collector();
 		collector.setStringCollection(Arrays.asList("spam", "eggs"));
-		database.save(collector);
+		collector = database.save(collector);
 		try {
 			database.begin();
 			collector.setStringCollection(Arrays.asList("spam", "bacon"));
-			database.save(collector);
+			collector = database.save(collector);
 			database.commit();
 		} catch (Exception e) {
 			database.rollback();
@@ -170,10 +172,10 @@ public class CollectionIndexTest {
 	public void testIndexCollectionUpdateInTxRollback() throws Exception {
 		Collector collector = new Collector();
 		collector.setStringCollection(Arrays.asList("spam", "eggs"));
-		database.save(collector);
+		collector = database.save(collector);
 		database.begin();
 		collector.setStringCollection(Arrays.asList("spam", "bacon"));
-		database.save(collector);
+		collector = database.save(collector);
 		database.rollback();
 
 		List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:Collector.stringCollection")).execute();
@@ -190,11 +192,10 @@ public class CollectionIndexTest {
 		}
 	}
 
-
 	public void testIndexCollectionUpdateAddItem() {
 		Collector collector = new Collector();
 		collector.setStringCollection(Arrays.asList("spam", "eggs"));
-		database.save(collector);
+		collector = database.save(collector);
 
 		database.command(new OCommandSQL("UPDATE " + collector.getId() + " add stringCollection = 'cookies'")).execute();
 
@@ -215,15 +216,15 @@ public class CollectionIndexTest {
 	public void testIndexCollectionUpdateAddItemInTx() throws Exception {
 		Collector collector = new Collector();
 		collector.setStringCollection(new ArrayList<String>(Arrays.asList("spam", "eggs")));
-		database.save(collector);
+		collector = database.save(collector);
 
 		try {
 			database.begin();
-			Collector loadedCollector = (Collector)database.load(new ORecordId(collector.getId()));
+			Collector loadedCollector = (Collector) database.load(new ORecordId(collector.getId()));
 			loadedCollector.getStringCollection().add("cookies");
 			database.save(loadedCollector);
 			database.commit();
-		}catch (Exception e) {
+		} catch (Exception e) {
 			database.rollback();
 			throw e;
 		}
@@ -245,12 +246,12 @@ public class CollectionIndexTest {
 	public void testIndexCollectionUpdateAddItemInTxRollback() throws Exception {
 		Collector collector = new Collector();
 		collector.setStringCollection(new ArrayList<String>(Arrays.asList("spam", "eggs")));
-		database.save(collector);
+		collector = database.save(collector);
 
 		database.begin();
 		Collector loadedCollector = (Collector) database.load(new ORecordId(collector.getId()));
 		loadedCollector.getStringCollection().add("cookies");
-		database.save(loadedCollector);
+		loadedCollector = database.save(loadedCollector);
 		database.rollback();
 
 		List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:Collector.stringCollection")).execute();
@@ -270,15 +271,15 @@ public class CollectionIndexTest {
 	public void testIndexCollectionUpdateRemoveItemInTx() throws Exception {
 		Collector collector = new Collector();
 		collector.setStringCollection(new ArrayList<String>(Arrays.asList("spam", "eggs")));
-		database.save(collector);
+		collector = database.save(collector);
 
 		try {
 			database.begin();
-			Collector loadedCollector = (Collector)database.load(new ORecordId(collector.getId()));
+			Collector loadedCollector = (Collector) database.load(new ORecordId(collector.getId()));
 			loadedCollector.getStringCollection().remove("spam");
-			database.save(loadedCollector);
+			loadedCollector = database.save(loadedCollector);
 			database.commit();
-		}catch (Exception e) {
+		} catch (Exception e) {
 			database.rollback();
 			throw e;
 		}
@@ -300,12 +301,12 @@ public class CollectionIndexTest {
 	public void testIndexCollectionUpdateRemoveItemInTxRollback() throws Exception {
 		Collector collector = new Collector();
 		collector.setStringCollection(new ArrayList<String>(Arrays.asList("spam", "eggs")));
-		database.save(collector);
+		collector = database.save(collector);
 
 		database.begin();
 		Collector loadedCollector = (Collector) database.load(new ORecordId(collector.getId()));
 		loadedCollector.getStringCollection().remove("spam");
-		database.save(loadedCollector);
+		loadedCollector = database.save(loadedCollector);
 		database.rollback();
 
 		List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:Collector.stringCollection")).execute();
@@ -325,7 +326,7 @@ public class CollectionIndexTest {
 	public void testIndexCollectionUpdateRemoveItem() {
 		Collector collector = new Collector();
 		collector.setStringCollection(Arrays.asList("spam", "eggs"));
-		database.save(collector);
+		collector = database.save(collector);
 
 		database.command(new OCommandSQL("UPDATE " + collector.getId() + " remove stringCollection = 'spam'")).execute();
 
@@ -346,7 +347,7 @@ public class CollectionIndexTest {
 	public void testIndexCollectionRemove() {
 		Collector collector = new Collector();
 		collector.setStringCollection(Arrays.asList("spam", "eggs"));
-		database.save(collector);
+		collector = database.save(collector);
 		database.delete(collector);
 
 		List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:Collector.stringCollection")).execute();
@@ -358,7 +359,7 @@ public class CollectionIndexTest {
 	public void testIndexCollectionRemoveInTx() throws Exception {
 		Collector collector = new Collector();
 		collector.setStringCollection(Arrays.asList("spam", "eggs"));
-		database.save(collector);
+		collector = database.save(collector);
 		try {
 			database.begin();
 			database.delete(collector);
@@ -377,7 +378,7 @@ public class CollectionIndexTest {
 	public void testIndexCollectionRemoveInTxRollback() throws Exception {
 		Collector collector = new Collector();
 		collector.setStringCollection(Arrays.asList("spam", "eggs"));
-		database.save(collector);
+		collector = database.save(collector);
 		database.begin();
 		database.delete(collector);
 		database.rollback();
@@ -399,9 +400,10 @@ public class CollectionIndexTest {
 	public void testIndexCollectionSQL() {
 		Collector collector = new Collector();
 		collector.setStringCollection(Arrays.asList("spam", "eggs"));
-		database.save(collector);
+		collector = database.save(collector);
 
-		List<Collector> result = database.query(new OSQLSynchQuery<Collector>("select * from Collector where stringCollection contains ?"), "eggs");
+		List<Collector> result = database.query(new OSQLSynchQuery<Collector>(
+				"select * from Collector where stringCollection contains ?"), "eggs");
 		Assert.assertNotNull(result);
 		Assert.assertEquals(result.size(), 1);
 		Assert.assertEquals(Arrays.asList("spam", "eggs"), result.get(0).getStringCollection());

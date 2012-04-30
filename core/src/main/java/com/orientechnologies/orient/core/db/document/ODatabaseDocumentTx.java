@@ -96,7 +96,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	@Override
-	public ODatabaseDocumentTx save(final ORecordInternal<?> iRecord) {
+	public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord) {
 		return save(iRecord, OPERATION_MODE.SYNCHRONOUS);
 	}
 
@@ -122,11 +122,11 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	@Override
-	public ODatabaseDocumentTx save(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {
+	public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {
 		if (!(iRecord instanceof ODocument))
-			return (ODatabaseDocumentTx) super.save(iRecord, iMode);
+			return (RET) super.save(iRecord, iMode);
 
-		final ODocument doc = (ODocument) iRecord;
+		ODocument doc = (ODocument) iRecord;
 		doc.validate();
 		doc.convertAllMultiValuesToTrackedVersions();
 
@@ -140,8 +140,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 					// CLASS FOUND: FORCE THE STORING IN THE CLUSTER CONFIGURED
 					String clusterName = getClusterNameById(doc.getSchemaClass().getDefaultClusterId());
 
-					super.save(doc, clusterName, iMode);
-					return this;
+					return (RET) super.save(doc, clusterName, iMode);
 				}
 			} else {
 				// UPDATE: CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
@@ -149,7 +148,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 					checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_UPDATE, doc.getClassName());
 			}
 
-			super.save(doc, iMode);
+			doc = super.save(doc, iMode);
 
 		} catch (OException e) {
 			// PASS THROUGH
@@ -158,7 +157,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 			OLogManager.instance().exception("Error on saving record %s of class '%s'", e, ODatabaseException.class,
 					iRecord.getIdentity(), (doc.getClassName() != null ? doc.getClassName() : "?"));
 		}
-		return this;
+		return (RET) doc;
 	}
 
 	/**
@@ -185,7 +184,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	@Override
-	public ODatabaseDocumentTx save(final ORecordInternal<?> iRecord, final String iClusterName) {
+	public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final String iClusterName) {
 		return save(iRecord, iClusterName, OPERATION_MODE.SYNCHRONOUS);
 	}
 
@@ -215,11 +214,11 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	@Override
-	public ODatabaseDocumentTx save(final ORecordInternal<?> iRecord, String iClusterName, final OPERATION_MODE iMode) {
+	public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, String iClusterName, final OPERATION_MODE iMode) {
 		if (!(iRecord instanceof ODocument))
-			return (ODatabaseDocumentTx) super.save(iRecord, iClusterName, iMode);
+			return (RET) super.save(iRecord, iClusterName, iMode);
 
-		final ODocument doc = (ODocument) iRecord;
+		ODocument doc = (ODocument) iRecord;
 
 		if (!doc.getIdentity().isValid()) {
 			if (doc.getClassName() != null)
@@ -258,8 +257,8 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 		doc.validate();
 		doc.convertAllMultiValuesToTrackedVersions();
 
-		super.save(doc, iClusterName, iMode);
-		return this;
+		doc = super.save(doc, iClusterName, iMode);
+		return (RET) doc;
 	}
 
 	/**

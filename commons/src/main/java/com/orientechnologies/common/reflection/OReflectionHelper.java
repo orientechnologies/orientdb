@@ -178,13 +178,37 @@ public class OReflectionHelper {
 				final ParameterizedType pt = (ParameterizedType) genericType;
 				if (pt.getActualTypeArguments() != null && pt.getActualTypeArguments().length > 0) {
 					if (((Class<?>) pt.getRawType()).isAssignableFrom(Map.class)) {
-						if (pt.getActualTypeArguments()[1] instanceof Class<?>)
+						if (pt.getActualTypeArguments()[1] instanceof Class<?>) {
 							return (Class<?>) pt.getActualTypeArguments()[1];
-					} else if (pt.getActualTypeArguments()[0] instanceof Class<?>)
+						} else if (pt.getActualTypeArguments()[1] instanceof ParameterizedType)
+							return (Class<?>) ((ParameterizedType) pt.getActualTypeArguments()[1]).getRawType();
+					} else if (pt.getActualTypeArguments()[0] instanceof Class<?>) {
 						return (Class<?>) pt.getActualTypeArguments()[0];
+					} else if (pt.getActualTypeArguments()[0] instanceof ParameterizedType)
+						return (Class<?>) ((ParameterizedType) pt.getActualTypeArguments()[0]).getRawType();
 				}
-			}
+			} else if (p.getType().isArray())
+				return p.getType().getComponentType();
 		}
 		return null;
+	}
+
+	/**
+	 * Checks if a class is a Java type: Map, Collection,arrays, Number (extensions and primitives), String, Boolean..
+	 * 
+	 * @param clazz
+	 *          Class<?> to examine
+	 * @return true if clazz is Java type, false otherwise
+	 */
+	public static boolean isJavaType(Class<?> clazz) {
+		if (clazz.isPrimitive())
+			return true;
+		else if (clazz.getName().startsWith("java.lang"))
+			return true;
+		else if (clazz.getName().startsWith("java.util"))
+			return true;
+		else if (clazz.isArray())
+			return true;
+		return false;
 	}
 }

@@ -27,7 +27,7 @@ import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
+import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -426,8 +426,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 		if (cls == null) {
 			// CHECK IF CAN AUTO-CREATE IT
 			final ODatabase ownerDb = getDatabase().getDatabaseOwner();
-			if (ownerDb instanceof ODatabaseObjectTx) {
-				final Class<?> javaClass = ((ODatabaseObjectTx) ownerDb).getEntityManager().getEntityClass(iClassName);
+			if (ownerDb instanceof ODatabaseObject) {
+				final Class<?> javaClass = ((ODatabaseObject) ownerDb).getEntityManager().getEntityClass(iClassName);
 
 				if (javaClass != null) {
 					// AUTO REGISTER THE CLASS AT FIRST USE

@@ -29,16 +29,16 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 
 @Test(groups = "db")
 public class DbCreationTest {
 	private String						url;
-	private ODatabaseObjectTx	database;
+	private OObjectDatabaseTx	database;
 
 	@Parameters(value = "url")
 	public DbCreationTest(String iURL) {
@@ -51,7 +51,14 @@ public class DbCreationTest {
 			OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(true);
 
 		if (!url.startsWith(OEngineRemote.NAME)) {
-			database = new ODatabaseObjectTx(url);
+			ODatabaseDocument db = new ODatabaseDocumentTx(url);
+			db.setProperty("security", Boolean.FALSE);
+
+			ODatabaseHelper.dropDatabase(db, "server");
+			ODatabaseHelper.createDatabase(db, url);
+			ODatabaseHelper.dropDatabase(db, "server");
+
+			database = new OObjectDatabaseTx(url);
 			database.setProperty("security", Boolean.FALSE);
 
 			ODatabaseHelper.dropDatabase(database, "server");
@@ -65,7 +72,7 @@ public class DbCreationTest {
 		if (url.startsWith(OEngineMemory.NAME))
 			OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(true);
 
-		ODatabaseHelper.createDatabase(new ODatabaseObjectTx(url), url);
+		ODatabaseHelper.createDatabase(new OObjectDatabaseTx(url), url);
 	}
 
 	@Test(dependsOnMethods = { "testDbCreationDefault" })
@@ -75,28 +82,28 @@ public class DbCreationTest {
 
 	@Test(dependsOnMethods = { "testDbExists" })
 	public void testDbOpen() {
-		database = new ODatabaseObjectTx(url);
+		database = new OObjectDatabaseTx(url);
 		database.open("admin", "admin");
 		database.close();
 	}
 
 	@Test(dependsOnMethods = { "testDbOpen" })
 	public void testDbOpenWithLastAsSlash() {
-		database = new ODatabaseObjectTx(url + "/");
+		database = new OObjectDatabaseTx(url + "/");
 		database.open("admin", "admin");
 		database.close();
 	}
 
 	@Test(dependsOnMethods = { "testDbOpenWithLastAsSlash" })
 	public void testDbOpenWithBackSlash() {
-		database = new ODatabaseObjectTx(url.replace('/', '\\'));
+		database = new OObjectDatabaseTx(url.replace('/', '\\'));
 		database.open("admin", "admin");
 		database.close();
 	}
 
 	@Test(dependsOnMethods = { "testDbOpenWithBackSlash" })
 	public void testChangeLocale() throws IOException {
-		database = new ODatabaseObjectTx(url);
+		database = new OObjectDatabaseTx(url);
 		database.open("admin", "admin");
 		database.getStorage().getConfiguration().localeLanguage = Locale.ENGLISH.getLanguage();
 		database.getStorage().getConfiguration().localeCountry = Locale.ENGLISH.getCountry();
@@ -106,7 +113,7 @@ public class DbCreationTest {
 
 	@Test(dependsOnMethods = { "testChangeLocale" })
 	public void testRoles() throws IOException {
-		database = new ODatabaseObjectTx(url);
+		database = new OObjectDatabaseTx(url);
 		database.open("admin", "admin");
 		database.query(new OSQLSynchQuery<ORole>("select from ORole where name = 'admin'"));
 		database.close();

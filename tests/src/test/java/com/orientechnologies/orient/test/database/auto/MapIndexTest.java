@@ -12,13 +12,13 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.domain.whiz.Collector;
 import com.orientechnologies.orient.test.domain.whiz.Mapper;
 
@@ -28,28 +28,28 @@ import com.orientechnologies.orient.test.domain.whiz.Mapper;
  */
 @Test(groups = { "index" })
 public class MapIndexTest {
-	private final ODatabaseObjectTx	database;
+	private final OObjectDatabaseTx	database;
 
 	@Parameters(value = "url")
 	public MapIndexTest(final String iURL) {
-		database = new ODatabaseObjectTx(iURL);
+		database = new OObjectDatabaseTx(iURL);
 	}
 
 	@BeforeClass
 	public void setupSchema() {
 		database.open("admin", "admin");
-		final OClass collector = database.getMetadata().getSchema().createClass("Mapper");
+		final OClass collector = database.getMetadata().getSchema().getClass("Mapper");
 		collector.createProperty("id", OType.STRING);
 		collector.createProperty("intMap", OType.EMBEDDEDMAP, OType.INTEGER);
 
 		collector.createIndex("mapIndexTestKey", OClass.INDEX_TYPE.NOTUNIQUE, "intMap");
 		collector.createIndex("mapIndexTestValue", OClass.INDEX_TYPE.NOTUNIQUE, "intMap by value");
 
-    final OClass movie = database.getMetadata().getSchema().createClass("MapIndexTestMovie");
-    movie.createProperty("title", OType.STRING);
-    movie.createProperty("thumbs", OType.EMBEDDEDMAP, OType.INTEGER);
+		final OClass movie = database.getMetadata().getSchema().createClass("MapIndexTestMovie");
+		movie.createProperty("title", OType.STRING);
+		movie.createProperty("thumbs", OType.EMBEDDEDMAP, OType.INTEGER);
 
-    movie.createIndex("indexForMap", OClass.INDEX_TYPE.NOTUNIQUE, "thumbs by key");
+		movie.createIndex("indexForMap", OClass.INDEX_TYPE.NOTUNIQUE, "thumbs by key");
 
 		database.getMetadata().getSchema().save();
 		database.close();
@@ -144,7 +144,7 @@ public class MapIndexTest {
 		}
 
 		final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-						.execute();
+				.execute();
 
 		Assert.assertNotNull(resultByValue);
 		Assert.assertEquals(resultByValue.size(), 2);
@@ -158,16 +158,15 @@ public class MapIndexTest {
 		}
 	}
 
-	
 	public void testIndexMapUpdateOne() {
-		final Mapper mapper = new Mapper();
+		Mapper mapper = new Mapper();
 		Map<String, Integer> mapOne = new HashMap<String, Integer>();
 
 		mapOne.put("key1", 10);
 		mapOne.put("key2", 20);
 
 		mapper.setIntMap(mapOne);
-		database.save(mapper);
+		mapper = database.save(mapper);
 
 		final Map<String, Integer> mapTwo = new HashMap<String, Integer>();
 
@@ -175,7 +174,7 @@ public class MapIndexTest {
 		mapTwo.put("key2", 20);
 
 		mapper.setIntMap(mapTwo);
-		database.save(mapper);
+		mapper = database.save(mapper);
 
 		final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
 
@@ -206,14 +205,14 @@ public class MapIndexTest {
 	}
 
 	public void testIndexMapUpdateOneTx() throws Exception {
-		final Mapper mapper = new Mapper();
+		Mapper mapper = new Mapper();
 		Map<String, Integer> mapOne = new HashMap<String, Integer>();
 
 		mapOne.put("key1", 10);
 		mapOne.put("key2", 20);
 
 		mapper.setIntMap(mapOne);
-		database.save(mapper);
+		mapper = database.save(mapper);
 
 		database.begin();
 		try {
@@ -223,7 +222,7 @@ public class MapIndexTest {
 			mapTwo.put("key2", 20);
 
 			mapper.setIntMap(mapTwo);
-			database.save(mapper);
+			mapper = database.save(mapper);
 			database.commit();
 		} catch (Exception e) {
 			database.rollback();
@@ -244,7 +243,7 @@ public class MapIndexTest {
 		}
 
 		final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-						.execute();
+				.execute();
 
 		Assert.assertNotNull(resultByValue);
 		Assert.assertEquals(resultByValue.size(), 2);
@@ -259,14 +258,14 @@ public class MapIndexTest {
 	}
 
 	public void testIndexMapUpdateOneTxRollback() throws Exception {
-		final Mapper mapper = new Mapper();
+		Mapper mapper = new Mapper();
 		Map<String, Integer> mapOne = new HashMap<String, Integer>();
 
 		mapOne.put("key1", 10);
 		mapOne.put("key2", 20);
 
 		mapper.setIntMap(mapOne);
-		database.save(mapper);
+		mapper = database.save(mapper);
 
 		database.begin();
 		final Map<String, Integer> mapTwo = new HashMap<String, Integer>();
@@ -275,7 +274,7 @@ public class MapIndexTest {
 		mapTwo.put("key2", 20);
 
 		mapper.setIntMap(mapTwo);
-		database.save(mapper);
+		mapper = database.save(mapper);
 		database.rollback();
 
 		final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
@@ -292,7 +291,7 @@ public class MapIndexTest {
 		}
 
 		final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-						.execute();
+				.execute();
 
 		Assert.assertNotNull(resultByValue);
 		Assert.assertEquals(resultByValue.size(), 2);
@@ -306,16 +305,15 @@ public class MapIndexTest {
 		}
 	}
 
-
 	public void testIndexMapAddItem() {
-		final Mapper mapper = new Mapper();
+		Mapper mapper = new Mapper();
 		Map<String, Integer> map = new HashMap<String, Integer>();
 
 		map.put("key1", 10);
 		map.put("key2", 20);
 
 		mapper.setIntMap(map);
-		database.save(mapper);
+		mapper = database.save(mapper);
 
 		database.command(new OCommandSQL("UPDATE " + mapper.getId() + " put intMap = 'key3', 30")).execute();
 
@@ -333,7 +331,7 @@ public class MapIndexTest {
 		}
 
 		final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-						.execute();
+				.execute();
 
 		Assert.assertNotNull(resultByValue);
 		Assert.assertEquals(resultByValue.size(), 3);
@@ -348,20 +346,20 @@ public class MapIndexTest {
 	}
 
 	public void testIndexMapAddItemTx() throws Exception {
-		final Mapper mapper = new Mapper();
+		Mapper mapper = new Mapper();
 		Map<String, Integer> map = new HashMap<String, Integer>();
 
 		map.put("key1", 10);
 		map.put("key2", 20);
 
 		mapper.setIntMap(map);
-		database.save(mapper);
+		mapper = database.save(mapper);
 
 		try {
 			database.begin();
-			final Mapper loadedMapper = (Mapper)database.load(new ORecordId(mapper.getId()));
+			Mapper loadedMapper = (Mapper) database.load(new ORecordId(mapper.getId()));
 			loadedMapper.getIntMap().put("key3", 30);
-			database.save(loadedMapper);
+			loadedMapper = database.save(loadedMapper);
 			database.commit();
 		} catch (Exception e) {
 			database.rollback();
@@ -382,7 +380,7 @@ public class MapIndexTest {
 		}
 
 		final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-						.execute();
+				.execute();
 
 		Assert.assertNotNull(resultByValue);
 		Assert.assertEquals(resultByValue.size(), 3);
@@ -397,19 +395,19 @@ public class MapIndexTest {
 	}
 
 	public void testIndexMapAddItemTxRollback() throws Exception {
-		final Mapper mapper = new Mapper();
+		Mapper mapper = new Mapper();
 		Map<String, Integer> map = new HashMap<String, Integer>();
 
 		map.put("key1", 10);
 		map.put("key2", 20);
 
 		mapper.setIntMap(map);
-		database.save(mapper);
+		mapper = database.save(mapper);
 
 		database.begin();
-		final Mapper loadedMapper = (Mapper) database.load(new ORecordId(mapper.getId()));
+		Mapper loadedMapper = (Mapper) database.load(new ORecordId(mapper.getId()));
 		loadedMapper.getIntMap().put("key3", 30);
-		database.save(loadedMapper);
+		loadedMapper = database.save(loadedMapper);
 		database.rollback();
 
 		final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
@@ -426,7 +424,7 @@ public class MapIndexTest {
 		}
 
 		final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-						.execute();
+				.execute();
 
 		Assert.assertNotNull(resultByValue);
 		Assert.assertEquals(resultByValue.size(), 2);
@@ -440,16 +438,15 @@ public class MapIndexTest {
 		}
 	}
 
-
 	public void testIndexMapUpdateItem() {
-		final Mapper mapper = new Mapper();
+		Mapper mapper = new Mapper();
 		Map<String, Integer> map = new HashMap<String, Integer>();
 
 		map.put("key1", 10);
 		map.put("key2", 20);
 
 		mapper.setIntMap(map);
-		database.save(mapper);
+		mapper = database.save(mapper);
 
 		database.command(new OCommandSQL("UPDATE " + mapper.getId() + " put intMap = 'key2', 40")).execute();
 
@@ -467,7 +464,7 @@ public class MapIndexTest {
 		}
 
 		final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-						.execute();
+				.execute();
 
 		Assert.assertNotNull(resultByValue);
 		Assert.assertEquals(resultByValue.size(), 2);
@@ -482,20 +479,20 @@ public class MapIndexTest {
 	}
 
 	public void testIndexMapUpdateItemInTx() throws Exception {
-		final Mapper mapper = new Mapper();
+		Mapper mapper = new Mapper();
 		Map<String, Integer> map = new HashMap<String, Integer>();
 
 		map.put("key1", 10);
 		map.put("key2", 20);
 
 		mapper.setIntMap(map);
-		database.save(mapper);
+		mapper = database.save(mapper);
 
-		try{
+		try {
 			database.begin();
-			final Mapper loadedMapper = (Mapper)database.load(new ORecordId(mapper.getId()));
+			Mapper loadedMapper = (Mapper) database.load(new ORecordId(mapper.getId()));
 			loadedMapper.getIntMap().put("key2", 40);
-			database.save(loadedMapper);
+			loadedMapper = database.save(loadedMapper);
 			database.commit();
 		} catch (Exception e) {
 			database.rollback();
@@ -515,7 +512,7 @@ public class MapIndexTest {
 		}
 
 		final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-						.execute();
+				.execute();
 
 		Assert.assertNotNull(resultByValue);
 		Assert.assertEquals(resultByValue.size(), 2);
@@ -530,19 +527,19 @@ public class MapIndexTest {
 	}
 
 	public void testIndexMapUpdateItemInTxRollback() throws Exception {
-		final Mapper mapper = new Mapper();
+		Mapper mapper = new Mapper();
 		Map<String, Integer> map = new HashMap<String, Integer>();
 
 		map.put("key1", 10);
 		map.put("key2", 20);
 
 		mapper.setIntMap(map);
-		database.save(mapper);
+		mapper = database.save(mapper);
 
 		database.begin();
-		final Mapper loadedMapper = (Mapper) database.load(new ORecordId(mapper.getId()));
+		Mapper loadedMapper = (Mapper) database.load(new ORecordId(mapper.getId()));
 		loadedMapper.getIntMap().put("key2", 40);
-		database.save(loadedMapper);
+		loadedMapper = database.save(loadedMapper);
 		database.rollback();
 
 		final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
@@ -559,7 +556,7 @@ public class MapIndexTest {
 		}
 
 		final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-						.execute();
+				.execute();
 
 		Assert.assertNotNull(resultByValue);
 		Assert.assertEquals(resultByValue.size(), 2);
@@ -574,7 +571,7 @@ public class MapIndexTest {
 	}
 
 	public void testIndexMapRemoveItem() {
-		final Mapper mapper = new Mapper();
+		Mapper mapper = new Mapper();
 		Map<String, Integer> map = new HashMap<String, Integer>();
 
 		map.put("key1", 10);
@@ -582,7 +579,7 @@ public class MapIndexTest {
 		map.put("key3", 30);
 
 		mapper.setIntMap(map);
-		database.save(mapper);
+		mapper = database.save(mapper);
 
 		database.command(new OCommandSQL("UPDATE " + mapper.getId() + " remove intMap = 'key2'")).execute();
 
@@ -600,7 +597,7 @@ public class MapIndexTest {
 		}
 
 		final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-						.execute();
+				.execute();
 
 		Assert.assertNotNull(resultByValue);
 		Assert.assertEquals(resultByValue.size(), 2);
@@ -615,7 +612,7 @@ public class MapIndexTest {
 	}
 
 	public void testIndexMapRemoveItemInTx() throws Exception {
-		final Mapper mapper = new Mapper();
+		Mapper mapper = new Mapper();
 		Map<String, Integer> map = new HashMap<String, Integer>();
 
 		map.put("key1", 10);
@@ -623,13 +620,13 @@ public class MapIndexTest {
 		map.put("key3", 30);
 
 		mapper.setIntMap(map);
-		database.save(mapper);
+		mapper = database.save(mapper);
 
 		try {
 			database.begin();
-			final Mapper loadedMapper = (Mapper)database.load(new ORecordId(mapper.getId()));
+			Mapper loadedMapper = (Mapper) database.load(new ORecordId(mapper.getId()));
 			loadedMapper.getIntMap().remove("key2");
-			database.save(loadedMapper);
+			loadedMapper = database.save(loadedMapper);
 			database.commit();
 		} catch (Exception e) {
 			database.rollback();
@@ -650,7 +647,7 @@ public class MapIndexTest {
 		}
 
 		final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-						.execute();
+				.execute();
 
 		Assert.assertNotNull(resultByValue);
 		Assert.assertEquals(resultByValue.size(), 2);
@@ -665,7 +662,7 @@ public class MapIndexTest {
 	}
 
 	public void testIndexMapRemoveItemInTxRollback() throws Exception {
-		final Mapper mapper = new Mapper();
+		Mapper mapper = new Mapper();
 		Map<String, Integer> map = new HashMap<String, Integer>();
 
 		map.put("key1", 10);
@@ -673,15 +670,13 @@ public class MapIndexTest {
 		map.put("key3", 30);
 
 		mapper.setIntMap(map);
-		database.save(mapper);
-
+		mapper = database.save(mapper);
 
 		database.begin();
-		final Mapper loadedMapper = (Mapper) database.load(new ORecordId(mapper.getId()));
+		Mapper loadedMapper = (Mapper) database.load(new ORecordId(mapper.getId()));
 		loadedMapper.getIntMap().remove("key2");
-		database.save(loadedMapper);
+		loadedMapper = database.save(loadedMapper);
 		database.rollback();
-
 
 		final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
 
@@ -697,7 +692,7 @@ public class MapIndexTest {
 		}
 
 		final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-						.execute();
+				.execute();
 
 		Assert.assertNotNull(resultByValue);
 		Assert.assertEquals(resultByValue.size(), 3);
@@ -711,16 +706,15 @@ public class MapIndexTest {
 		}
 	}
 
-	
 	public void testIndexMapRemove() {
-		final Mapper mapper = new Mapper();
+		Mapper mapper = new Mapper();
 		Map<String, Integer> map = new HashMap<String, Integer>();
 
 		map.put("key1", 10);
 		map.put("key2", 20);
 
 		mapper.setIntMap(map);
-		database.save(mapper);
+		mapper = database.save(mapper);
 		database.delete(mapper);
 
 		final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
@@ -736,15 +730,15 @@ public class MapIndexTest {
 	}
 
 	public void testIndexMapRemoveInTx() throws Exception {
-		final Mapper mapper = new Mapper();
+		Mapper mapper = new Mapper();
 		Map<String, Integer> map = new HashMap<String, Integer>();
 
 		map.put("key1", 10);
 		map.put("key2", 20);
 
 		mapper.setIntMap(map);
-		database.save(mapper);
-		
+		mapper = database.save(mapper);
+
 		try {
 			database.begin();
 			database.delete(mapper);
@@ -760,21 +754,21 @@ public class MapIndexTest {
 		Assert.assertEquals(resultByKey.size(), 0);
 
 		final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-						.execute();
+				.execute();
 
 		Assert.assertNotNull(resultByValue);
 		Assert.assertEquals(resultByValue.size(), 0);
 	}
 
 	public void testIndexMapRemoveInTxRollback() throws Exception {
-		final Mapper mapper = new Mapper();
+		Mapper mapper = new Mapper();
 		Map<String, Integer> map = new HashMap<String, Integer>();
 
 		map.put("key1", 10);
 		map.put("key2", 20);
 
 		mapper.setIntMap(map);
-		database.save(mapper);
+		mapper = database.save(mapper);
 
 		database.begin();
 		database.delete(mapper);
@@ -794,7 +788,7 @@ public class MapIndexTest {
 		}
 
 		final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-						.execute();
+				.execute();
 
 		Assert.assertNotNull(resultByValue);
 		Assert.assertEquals(resultByValue.size(), 2);
@@ -809,23 +803,23 @@ public class MapIndexTest {
 	}
 
 	public void testIndexMapSQL() {
-		final Mapper mapper = new Mapper();
+		Mapper mapper = new Mapper();
 		Map<String, Integer> map = new HashMap<String, Integer>();
 
 		map.put("key1", 10);
 		map.put("key2", 20);
 
 		mapper.setIntMap(map);
-		database.save(mapper);
+		mapper = database.save(mapper);
 
-		final List<Mapper> resultByKey = database.query(
-				new OSQLSynchQuery<Collector>("select * from Mapper where intMap containskey ?"), "key1");
+		final List<Mapper> resultByKey = database.query(new OSQLSynchQuery<Mapper>("select * from Mapper where intMap containskey ?"),
+				"key1");
 		Assert.assertNotNull(resultByKey);
 		Assert.assertEquals(resultByKey.size(), 1);
 
 		Assert.assertEquals(map, resultByKey.get(0).getIntMap());
 
-		final List<Mapper> resultByValue = database.query(new OSQLSynchQuery<Collector>(
+		final List<Mapper> resultByValue = database.query(new OSQLSynchQuery<Mapper>(
 				"select * from Mapper where intMap containsvalue ?"), 10);
 		Assert.assertNotNull(resultByValue);
 		Assert.assertEquals(resultByValue.size(), 1);

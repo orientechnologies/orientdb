@@ -1,0 +1,86 @@
+/*
+ *
+ * Copyright 2012 Luca Molino (molino.luca--AT--gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.orientechnologies.orient.core.entity;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
+/**
+ * @author luca.molino
+ * 
+ */
+public class OEntityManagerClassHandler {
+
+	private Map<String, Class<?>>	entityClasses	= new HashMap<String, Class<?>>();
+
+	/**
+	 * Returns the Java class by its name
+	 * 
+	 * @param iClassName
+	 *          Simple class name without the package
+	 * @return Returns the Java class by its name
+	 */
+	public Class<?> getEntityClass(final String iClassName) {
+		return entityClasses.get(iClassName);
+	}
+
+	public void registerEntityClass(final Class<?> iClass) {
+		entityClasses.put(iClass.getSimpleName(), iClass);
+	}
+
+	public void registerEntityClass(final String iClassName, final Class<?> iClass) {
+		entityClasses.put(iClassName, iClass);
+	}
+
+	public void deregisterEntityClass(final String iClassName) {
+		entityClasses.remove(iClassName);
+	}
+
+	public void deregisterEntityClass(final Class<?> iClass) {
+		entityClasses.remove(iClass.getSimpleName());
+	}
+
+	public Set<Entry<String, Class<?>>> getClassesEntrySet() {
+		return entityClasses.entrySet();
+	}
+
+	public Object createInstance(final Class<?> iClass) throws InstantiationException, IllegalAccessException,
+			InvocationTargetException {
+		Constructor<?> defaultConstructor = null;
+		for (Constructor<?> c : iClass.getConstructors()) {
+			if (c.getParameterTypes().length == 0) {
+				defaultConstructor = c;
+				break;
+			}
+		}
+
+		if (defaultConstructor == null)
+			throw new IllegalArgumentException("Cannot create an object of class '" + iClass.getName()
+					+ "' because it has no default constructor. Please define the method: " + iClass.getSimpleName() + "()");
+
+		if (!defaultConstructor.isAccessible())
+			// OVERRIDE PROTECTION
+			defaultConstructor.setAccessible(true);
+
+		return defaultConstructor.newInstance();
+	}
+
+}

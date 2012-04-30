@@ -60,26 +60,26 @@ public class Profile {
 	}
 
 	public Profile addFollower(Profile iFollower) {
-		followers.add(iFollower);
-		iFollower.followings.add(this);
+		getFollowers().add(iFollower);
+		iFollower.getFollowings().add(this);
 		return this;
 	}
 
 	public Profile removeFollower(Profile iFollower) {
-		followers.remove(iFollower);
-		iFollower.followings.remove(this);
+		getFollowers().remove(iFollower);
+		iFollower.getFollowings().remove(this);
 		return this;
 	}
 
 	public Profile addFollowing(Profile iFollowing) {
-		followings.add(iFollowing);
-		iFollowing.followers.add(this);
+		getFollowings().add(iFollowing);
+		iFollowing.getFollowers().add(this);
 		return this;
 	}
 
 	public Profile removeFollowing(Profile iFollowing) {
-		followings.remove(iFollowing);
-		iFollowing.followers.remove(this);
+		getFollowings().remove(iFollowing);
+		iFollowing.getFollowers().remove(this);
 		return this;
 	}
 
