@@ -30,8 +30,6 @@ import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
 
-import javassist.util.proxy.Proxy;
-
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
@@ -43,7 +41,6 @@ import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
-import com.orientechnologies.orient.console.LinkedElement.LinkedElementMap;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandManager;
@@ -60,8 +57,6 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -71,7 +66,6 @@ import com.orientechnologies.orient.core.iterator.OIdentifiableIterator;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -89,10 +83,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.impl.local.ODataHoleInfo;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
-import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.enterprise.command.OCommandExecutorScript;
-import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
 	protected ODatabaseDocument		currentDatabase;
@@ -285,190 +276,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 		out.println("Database created successfully.");
 		out.println("\nCurrent database is: " + iDatabaseURL);
-	}
-
-	public void test() {
-		OObjectDatabaseTx db = new OObjectDatabaseTx("local:/home/molino/Scrivania/test/linkedTest").create();
-		try {
-			db.close();
-			db.open("admin", "admin");
-			db.query(new OSQLSynchQuery<ORole>("select from ORole where name = 'admin'"));
-			db.getEntityManager().registerEntityClass(LinkedElement.class);
-			db.getEntityManager().registerEntityClass(LinkedElementMap.class);
-			LinkedElement<String> root = db.newInstance(LinkedElement.class, "root", null, -1);
-			root.setData(new Date());
-			root.setDecimale(-1d);
-			db.save(root);
-
-			int limit = 500; // works with 500 elements, fails with 1000
-			addElements(db, root, limit);
-
-			verifyElements(root, limit);
-
-			System.out.println("close & reopen");
-			db.close();
-			db.open("admin", "admin");
-			db.getEntityManager().registerEntityClass(LinkedElement.class);
-			db.getEntityManager().registerEntityClass(LinkedElementMap.class);
-			System.out.println("load");
-			root = (LinkedElement<String>) db.reload(root, "*:0", false); // <- what's the correct fetch plan?
-			verifyElements(root, limit);
-			ORID rid = db.getIdentity(root);
-			System.out.println("close & reopen");
-			db.close();
-			db.open("admin", "admin");
-			db.getEntityManager().registerEntityClass(LinkedElement.class);
-			db.getEntityManager().registerEntityClass(LinkedElementMap.class);
-			System.out.println("load");
-			root = (LinkedElement<String>) db.load(rid); // <- what's the correct fetch plan?
-			verifyElements(root, limit);
-			editElements(db, root, limit);
-			verifyModifiedElements(root, limit);
-			System.out.println("close & reopen");
-			db.close();
-			db.open("admin", "admin");
-			db.getEntityManager().registerEntityClass(LinkedElement.class);
-			db.getEntityManager().registerEntityClass(LinkedElementMap.class);
-			System.out.println("load");
-			root = (LinkedElement<String>) db.load(rid); // <- what's the correct fetch plan?
-			verifyModifiedElements(root, limit);
-		} finally {
-			db.drop();
-		}
-	}
-
-	private void addElements(OObjectDatabaseTx db, LinkedElement<String> root, int limit) {
-		LinkedElement<String> parent = root;
-		db.setSaveOnlyDirty(true);
-		for (int i = 0; i < limit; i++) {
-			System.out.println("Adding " + i);
-			LinkedElement<String> child = db.newInstance(LinkedElement.class);
-			child.setValue(String.valueOf(i));
-			child.setData(new Date());
-			child.setDecimale(Double.valueOf(i).doubleValue());
-			child.setValore(i);
-			// child.setArray(new LinkedElementMap[3]);
-			parent.setNext(child);
-			for (int j = 0; j < 10; j++) {
-				child.getLista().add(db.newInstance(LinkedElementMap.class));
-				child.getLista().get(j).setValue("" + j);
-				LinkedElementMap setValue = db.newInstance(LinkedElementMap.class);
-				setValue.setValue("" + j);
-				child.getSet().add(setValue);
-				child.getLista().get(j).setValue("" + j);
-				child.getListaInt().add(j);
-				child.getListaString().add("" + j);
-				child.getMappa().put("" + j, db.newInstance(LinkedElementMap.class));
-				child.getMappa().get("" + j).setValue("" + j);
-				if (j < 3) {
-					// child.getArray()[j] = db.newInstance(LinkedElementMap.class);
-					// child.getArray()[j].setValue("" + j);
-				}
-			}
-			try {
-				db.begin(TXTYPE.OPTIMISTIC);
-				db.setDirty(parent);
-				db.save(parent);
-				db.commit();
-			} catch (OTransactionException e) {
-				db.rollback();
-				e.printStackTrace();
-			}
-			parent = child;
-		}
-		db.setSaveOnlyDirty(false);
-	}
-
-	private void verifyElements(LinkedElement<String> root, int limit) {
-		LinkedElement<String> element = root.getNext();
-		int counter = 0;
-		while (element != null) {
-			counter++;
-			System.out.printf("\nLoaded -id:%s,  val: %s; next: %s; valore: %d; decimale:%f; data: %d\n", OObjectEntitySerializer
-					.getDocument((Proxy) element).getIdentity(), element.getValue(), element.getNext() != null, element.getValore(), element
-					.getDecimale(), element.getData().getTime());
-			Iterator<LinkedElement<String>.LinkedElementMap> iterator = element.getSet().iterator();
-			for (int j = 0; j < 10; j++) {
-				String set = "";
-				if (iterator.hasNext()) {
-					LinkedElementMap nextElement = iterator.next();
-					set = "[" + OObjectEntitySerializer.getDocument((Proxy) nextElement).getIdentity() + "-" + nextElement.getValue() + "]";
-				}
-				String lista = "[" + OObjectEntitySerializer.getDocument((Proxy) element.getLista().get(j)).getIdentity() + "-"
-						+ element.getLista().get(j).getValue() + "] - [" + element.getListaInt().get(j) + "-" + element.getListaString().get(j)
-						+ "]";
-				String mappa = element.getMappa().get("" + j).getValue();
-				String array = "NN";
-				// if (j < 3) {
-				// array = "[" + OObjectEnhancerHelper.getDocument((Proxy) element.getLista().get(j)).getIdentity() + "-"
-				// + element.getArray()[j].getValue() + "]";
-				// } else
-				array = "NA";
-				System.out.printf("indice: %s; lista: %s; set: %s; array: %s; mappa:%s; \n", j, lista, set, array, mappa);
-			}
-			element = element.getNext();
-		}
-	}
-
-	private void editElements(OObjectDatabaseTx db, LinkedElement<String> root, int limit) {
-		LinkedElement<String> element = root.getNext();
-		while (element != null) {
-			element.getLista().remove(5);
-			element.getMappa().remove("" + 5);
-			Iterator<LinkedElement<String>.LinkedElementMap> it = element.getSet().iterator();
-			it.next();
-			it.remove();
-			element = element.getNext();
-		}
-		try {
-			db.begin(TXTYPE.OPTIMISTIC);
-			db.setDirty(root);
-			db.save(root);
-			db.commit();
-		} catch (OTransactionException e) {
-			db.rollback();
-			e.printStackTrace();
-		}
-	}
-
-	private void verifyModifiedElements(LinkedElement<String> root, int limit) {
-		LinkedElement<String> element = root.getNext();
-		int counter = 0;
-		while (element != null) {
-			counter++;
-			System.out.printf("\nLoaded -id:%s,  val: %s; next: %s; valore: %d; decimale:%f; data: %d\n", OObjectEntitySerializer
-					.getDocument((Proxy) element).getIdentity(), element.getValue(), element.getNext() != null, element.getValore(), element
-					.getDecimale(), element.getData().getTime());
-			Iterator<LinkedElement<String>.LinkedElementMap> iterator = element.getSet().iterator();
-			for (int j = 0; j < 10; j++) {
-				String set = "";
-				String lista = "";
-				String mappa;
-				String array = "NN";
-				if (j == 5) {
-					mappa = "" + (element.getMappa().get("" + j) == null);
-				} else {
-					if (iterator.hasNext()) {
-						LinkedElementMap nextElement = iterator.next();
-						set = "[" + OObjectEntitySerializer.getDocument((Proxy) nextElement).getIdentity() + "-" + nextElement.getValue() + "]";
-					}
-					if (j == 9)
-						lista = "Elemento Eliminato";
-					else
-						lista = "[" + OObjectEntitySerializer.getDocument((Proxy) element.getLista().get(j)).getIdentity() + "-"
-								+ element.getLista().get(j).getValue() + "] - [" + element.getListaInt().get(j) + "-"
-								+ element.getListaString().get(j) + "]";
-					mappa = element.getMappa().get("" + j).getValue();
-					// if (j < 3) {
-					// array = "[" + OObjectEnhancerHelper.getDocument((Proxy) element.getLista().get(j)).getIdentity() + "-"
-					// + element.getArray()[j].getValue() + "]";
-					// } else
-					array = "NA";
-				}
-				System.out.printf("indice: %s; lista: %s; set: %s; array: %s; mappa:%s; \n", j, lista, set, array, mappa);
-			}
-			element = element.getNext();
-		}
 	}
 
 	@ConsoleCommand(description = "List all the databases available on the connected server")
