@@ -43,81 +43,81 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
  */
 public abstract class OServerCommandAuthenticatedDbAbstract extends OServerCommandAbstract {
 
-	public static final char		DBNAME_DIR_SEPARATOR		= '$';
-	public static final String	SESSIONID_UNAUTHORIZED	= "-";
-	public static final String	SESSIONID_LOGOUT				= "!";
+  public static final char   DBNAME_DIR_SEPARATOR   = '$';
+  public static final String SESSIONID_UNAUTHORIZED = "-";
+  public static final String SESSIONID_LOGOUT       = "!";
 
-	@Override
-	public boolean beforeExecute(final OHttpRequest iRequest) throws IOException {
-		final String[] urlParts = iRequest.url.substring(1).split("/");
-		if (urlParts.length < 2)
-			throw new OHttpRequestException("Syntax error in URL. Expected is: <command>/<database>[/...]");
+  @Override
+  public boolean beforeExecute(final OHttpRequest iRequest) throws IOException {
+    final String[] urlParts = iRequest.url.substring(1).split("/");
+    if (urlParts.length < 2)
+      throw new OHttpRequestException("Syntax error in URL. Expected is: <command>/<database>[/...]");
 
-		iRequest.databaseName = urlParts[1];
+    iRequest.databaseName = urlParts[1];
 
-		iRequest.databaseName = iRequest.databaseName.replace(DBNAME_DIR_SEPARATOR, '/');
+    iRequest.databaseName = iRequest.databaseName.replace(DBNAME_DIR_SEPARATOR, '/');
 
-		if (iRequest.sessionId == null || (iRequest.sessionId != null && iRequest.sessionId.length() == 1)) {
-			// NO SESSION
-			if (iRequest.authorization == null || SESSIONID_LOGOUT.equals(iRequest.sessionId)) {
-				sendAuthorizationRequest(iRequest, iRequest.databaseName);
-				return false;
-			} else
-				return authenticate(iRequest, iRequest.databaseName);
+    if (iRequest.sessionId == null || (iRequest.sessionId != null && iRequest.sessionId.length() == 1)) {
+      // NO SESSION
+      if (iRequest.authorization == null || SESSIONID_LOGOUT.equals(iRequest.sessionId)) {
+        sendAuthorizationRequest(iRequest, iRequest.databaseName);
+        return false;
+      } else
+        return authenticate(iRequest, iRequest.databaseName);
 
-		} else {
-			// CHECK THE SESSION VALIDITY
-			if (iRequest.sessionId.length() > 1 && OHttpSessionManager.getInstance().getSession(iRequest.sessionId) == null) {
-				// SESSION EXPIRED
-				sendAuthorizationRequest(iRequest, iRequest.databaseName);
-				return false;
-			}
-			return true;
-		}
-	}
+    } else {
+      // CHECK THE SESSION VALIDITY
+      if (iRequest.sessionId.length() > 1 && OHttpSessionManager.getInstance().getSession(iRequest.sessionId) == null) {
+        // SESSION EXPIRED
+        sendAuthorizationRequest(iRequest, iRequest.databaseName);
+        return false;
+      }
+      return true;
+    }
+  }
 
-	private boolean authenticate(final OHttpRequest iRequest, final String iDatabaseName) throws IOException {
-		ODatabaseDocumentTx db = null;
-		try {
-			final List<String> parts = OStringSerializerHelper.split(iRequest.authorization, ':');
+  protected boolean authenticate(final OHttpRequest iRequest, final String iDatabaseName) throws IOException {
+    ODatabaseDocumentTx db = null;
+    try {
+      final List<String> parts = OStringSerializerHelper.split(iRequest.authorization, ':');
 
-			db = OSharedDocumentDatabase.acquire(iDatabaseName, parts.get(0), parts.get(1));
+      db = OSharedDocumentDatabase.acquire(iDatabaseName, parts.get(0), parts.get(1));
 
-			// AUTHENTICATED: CREATE THE SESSION
-			iRequest.sessionId = OHttpSessionManager.getInstance().createSession(iDatabaseName, parts.get(0));
-			return true;
+      // AUTHENTICATED: CREATE THE SESSION
+      iRequest.sessionId = OHttpSessionManager.getInstance().createSession(iDatabaseName, parts.get(0));
+      return true;
 
-		} catch (OSecurityAccessException e) {
-			// WRONG USER/PASSWD
-		} catch (OLockException e) {
-			OLogManager.instance().error(this, "Cannot access to the database '" + iDatabaseName + "'", ODatabaseException.class, e);
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			OLogManager.instance().error(this, "Cannot access to the database '" + iDatabaseName + "'", ODatabaseException.class, e);
-		} finally {
-			if (db != null)
-				OSharedDocumentDatabase.release(db);
-			else
-				// WRONG USER/PASSWD
-				sendAuthorizationRequest(iRequest, iDatabaseName);
-		}
-		return false;
-	}
+    } catch (OSecurityAccessException e) {
+      // WRONG USER/PASSWD
+    } catch (OLockException e) {
+      OLogManager.instance().error(this, "Cannot access to the database '" + iDatabaseName + "'", ODatabaseException.class, e);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      OLogManager.instance().error(this, "Cannot access to the database '" + iDatabaseName + "'", ODatabaseException.class, e);
+    } finally {
+      if (db != null)
+        OSharedDocumentDatabase.release(db);
+      else
+        // WRONG USER/PASSWD
+        sendAuthorizationRequest(iRequest, iDatabaseName);
+    }
+    return false;
+  }
 
-	private void sendAuthorizationRequest(final OHttpRequest iRequest, final String iDatabaseName) throws IOException {
-		// UNAUTHORIZED
-		iRequest.sessionId = SESSIONID_UNAUTHORIZED;
-		sendTextContent(iRequest, OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION,
-				"WWW-Authenticate: Basic realm=\"OrientDB db-" + iDatabaseName + "\"", OHttpUtils.CONTENT_TEXT_PLAIN, "401 Unauthorized.",
-				false);
-	}
+  protected void sendAuthorizationRequest(final OHttpRequest iRequest, final String iDatabaseName) throws IOException {
+    // UNAUTHORIZED
+    iRequest.sessionId = SESSIONID_UNAUTHORIZED;
+    sendTextContent(iRequest, OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION,
+        "WWW-Authenticate: Basic realm=\"OrientDB db-" + iDatabaseName + "\"", OHttpUtils.CONTENT_TEXT_PLAIN, "401 Unauthorized.",
+        false);
+  }
 
-	protected ODatabaseDocumentTx getProfiledDatabaseInstance(final OHttpRequest iRequest) throws InterruptedException {
-		if (iRequest.authorization == null)
-			throw new OSecurityAccessException(iRequest.databaseName, "No user and password received");
+  protected ODatabaseDocumentTx getProfiledDatabaseInstance(final OHttpRequest iRequest) throws InterruptedException {
+    if (iRequest.authorization == null)
+      throw new OSecurityAccessException(iRequest.databaseName, "No user and password received");
 
-		final List<String> parts = OStringSerializerHelper.split(iRequest.authorization, ':');
+    final List<String> parts = OStringSerializerHelper.split(iRequest.authorization, ':');
 
-		return OSharedDocumentDatabase.acquire(iRequest.databaseName, parts.get(0), parts.get(1));
-	}
+    return OSharedDocumentDatabase.acquire(iRequest.databaseName, parts.get(0), parts.get(1));
+  }
 }
