@@ -308,7 +308,8 @@ public class ObjectTreeTest {
 		database.getEntityManager().registerEntityClass(CustomClass.class);
 		database.getEntityManager().registerEntityClass(CustomType.class);
 
-		database.getMetadata().getSchema().createClass("CustomClass");
+		if (!database.getMetadata().getSchema().existsClass("CustomClass"))
+			database.getMetadata().getSchema().createClass("CustomClass");
 
 		List<CustomType> customTypesList = new ArrayList<CustomType>();
 		customTypesList.add(new CustomType(102L));

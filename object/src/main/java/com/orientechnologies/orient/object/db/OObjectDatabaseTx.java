@@ -571,8 +571,8 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 	@Override
 	public ODocument getRecordByUserObject(Object iPojo, boolean iCreateIfNotAvailable) {
 		if (iPojo instanceof Proxy)
-			return ((OObjectProxyMethodHandler) ((ProxyObject) iPojo).getHandler()).getDoc();
-		return ((OObjectProxyMethodHandler) ((ProxyObject) OObjectEntitySerializer.serializeObject(iPojo, this)).getHandler()).getDoc();
+			return OObjectEntitySerializer.getDocument((Proxy) iPojo);
+		return OObjectEntitySerializer.getDocument((Proxy) OObjectEntitySerializer.serializeObject(iPojo, this));
 	}
 
 	@Override

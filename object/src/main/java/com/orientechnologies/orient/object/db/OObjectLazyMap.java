@@ -167,6 +167,10 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
 			sourceRecord.setDirty();
 	}
 
+	public Map<Object, OIdentifiable> getUnderlying() {
+		return underlying;
+	}
+
 	/**
 	 * Assure that the requested key is converted.
 	 */

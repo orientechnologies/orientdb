@@ -62,7 +62,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
-import com.orientechnologies.orient.object.db.OLazyObjectMap;
+import com.orientechnologies.orient.object.db.OObjectLazyMap;
 import com.orientechnologies.orient.object.serialization.OObjectSerializationThreadLocal;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 
@@ -112,6 +112,28 @@ public class OObjectEntitySerializer {
 	 */
 	public static ODocument getDocument(Proxy proxiedObject) {
 		return ((OObjectProxyMethodHandler) ((ProxyObject) proxiedObject).getHandler()).getDoc();
+	}
+
+	/**
+	 * Method that given a proxied entity returns the associated ODocument RID
+	 * 
+	 * @param proxiedObject
+	 *          - the proxied entity object
+	 * @return The ORID of associated ODocument
+	 */
+	public static ORID getRid(Proxy proxiedObject) {
+		return getDocument(proxiedObject).getIdentity();
+	}
+
+	/**
+	 * Method that given a proxied entity returns the associated ODocument version
+	 * 
+	 * @param proxiedObject
+	 *          - the proxied entity object
+	 * @return The version of associated ODocument
+	 */
+	public static int getVersion(Proxy proxiedObject) {
+		return getDocument(proxiedObject).getVersion();
 	}
 
 	public static boolean isTransientField(Class<?> iClass, String iField) {
@@ -708,8 +730,8 @@ public class OObjectEntitySerializer {
 				((List<Object>) result).add(typeToStream(((List<?>) sourceValues).get(i), linkedType, db, null));
 			}
 		} else {
-			if (iMultiValue instanceof OLazyObjectMap<?>) {
-				result = ((OLazyObjectMap<?>) iMultiValue).getUnderlying();
+			if (iMultiValue instanceof OObjectLazyMap<?>) {
+				result = ((OObjectLazyMap<?>) iMultiValue).getUnderlying();
 			} else {
 				if (isToSerialize(firstValue.getClass()))
 					result = new HashMap<Object, Object>();
