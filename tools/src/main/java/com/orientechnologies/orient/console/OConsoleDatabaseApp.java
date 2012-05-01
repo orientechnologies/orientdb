@@ -1152,7 +1152,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 			serverAdmin.stopReplication(iDatabaseName, iRemoteName);
 
-			out.println("Replication started for database '" + iDatabaseName + "' against the server '" + iRemoteName + "'");
+			out.println("Replication ended for database '" + iDatabaseName + "' against the server '" + iRemoteName + "'");
 
 		} catch (Exception e) {
 			printError(e);
