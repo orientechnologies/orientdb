@@ -15,26 +15,27 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.common.factory.ODynamicFactory;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+
 public interface OIndexFactory {
-	
-    /**
-     * @return List of supported indexes of this factory
-     */
-    Set<String> getTypes();
-    
-    /**
-     * 
-     * @param iDatabase
-     * @param iIndexType index type
-     * @return OIndexInternal
-     * @throws OConfigurationException if index creation failed
-     */
-    OIndexInternal createIndex(ODatabaseRecord iDatabase, String iIndexType) throws OConfigurationException;
-    
+
+  /**
+   * @return List of supported indexes of this factory
+   */
+  Set<String> getTypes();
+
+  /**
+   * 
+   * @param iDatabase
+   * @param iIndexType
+   *          index type
+   * @return OIndexInternal
+   * @throws OConfigurationException
+   *           if index creation failed
+   */
+  OIndexInternal<?> createIndex(ODatabaseRecord iDatabase, String iIndexType) throws OConfigurationException;
+
 }

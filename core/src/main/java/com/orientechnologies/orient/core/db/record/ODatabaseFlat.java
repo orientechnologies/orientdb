@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
-import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 
 /**
  * Delegates all the CRUD operations to the current transaction.
@@ -25,37 +24,37 @@ import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
  */
 public class ODatabaseFlat extends ODatabaseRecordTx {
 
-	public ODatabaseFlat(String iURL) {
-		super(iURL, ORecordFlat.RECORD_TYPE);
-	}
+  public ODatabaseFlat(String iURL) {
+    super(iURL, ORecordFlat.RECORD_TYPE);
+  }
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public ORecordIteratorCluster<ORecordFlat> browseCluster(final String iClusterName) {
-		return super.browseCluster(iClusterName, ORecordFlat.class);
-	}
+  @SuppressWarnings("unchecked")
+  @Override
+  public ORecordIteratorCluster<ORecordFlat> browseCluster(final String iClusterName) {
+    return super.browseCluster(iClusterName, ORecordFlat.class);
+  }
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public ORecordFlat newInstance() {
-		return new ORecordFlat();
-	}
+  @SuppressWarnings("unchecked")
+  @Override
+  public ORecordFlat newInstance() {
+    return new ORecordFlat();
+  }
 
-	@Override
-	public ODatabaseRecord commit() {
-		try {
-			return super.commit();
-		} finally {
-			getTransaction().close();
-		}
-	}
+  @Override
+  public ODatabaseRecord commit() {
+    try {
+      return super.commit();
+    } finally {
+      getTransaction().close();
+    }
+  }
 
-	@Override
-	public ODatabaseRecord rollback() {
-		try {
-			return super.rollback();
-		} finally {
-			getTransaction().close();
-		}
-	}
+  @Override
+  public ODatabaseRecord rollback() {
+    try {
+      return super.rollback();
+    } finally {
+      getTransaction().close();
+    }
+  }
 }

@@ -103,8 +103,6 @@
 			</classpath>
 			<sysproperty key="url" value="local:../${orient.path}/databases/demo" />
 			<jvmarg value="-server" />
-			<jvmarg value="-XX:+AggressiveOpts" />
-			<jvmarg value="-XX:CompileThreshold=200" />
 		</java>
 
 		<echo>MASSIVE INSERT 1,000,000 DOCUMENT RECORDS</echo>
@@ -129,8 +127,6 @@
 			</classpath>
 			<sysproperty key="url" value="local:../${orient.path}/databases/demo" />
 			<jvmarg value="-server" />
-			<jvmarg value="-XX:+AggressiveOpts" />
-			<jvmarg value="-XX:CompileThreshold=200" />
 		</java>
 				
 	</target>

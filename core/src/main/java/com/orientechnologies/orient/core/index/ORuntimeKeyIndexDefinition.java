@@ -35,101 +35,101 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  * 
  */
 public class ORuntimeKeyIndexDefinition extends ODocumentWrapperNoClass implements OIndexDefinition {
-	private OBinarySerializer	serializer;
+  private OBinarySerializer<?> serializer;
 
-	public ORuntimeKeyIndexDefinition(final byte iId) {
-		super(new ODocument());
-		serializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(iId);
-		if (serializer == null)
-			throw new OConfigurationException("Runtime index definition cannot find binary serializer with id=" + iId
-					+ ". Assure to plug custom serializer into the server.");
-	}
+  public ORuntimeKeyIndexDefinition(final byte iId) {
+    super(new ODocument());
+    serializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(iId);
+    if (serializer == null)
+      throw new OConfigurationException("Runtime index definition cannot find binary serializer with id=" + iId
+          + ". Assure to plug custom serializer into the server.");
+  }
 
-	public ORuntimeKeyIndexDefinition() {
-	}
+  public ORuntimeKeyIndexDefinition() {
+  }
 
-	public List<String> getFields() {
-		return Collections.emptyList();
-	}
+  public List<String> getFields() {
+    return Collections.emptyList();
+  }
 
-	public String getClassName() {
-		return null;
-	}
+  public String getClassName() {
+    return null;
+  }
 
-	public Comparable<?> createValue(final List<?> params) {
-		return (Comparable<?>) params.get(0);
-	}
+  public Comparable<?> createValue(final List<?> params) {
+    return (Comparable<?>) params.get(0);
+  }
 
-	public Comparable<?> createValue(final Object... params) {
-		return createValue(Arrays.asList(params));
-	}
+  public Comparable<?> createValue(final Object... params) {
+    return createValue(Arrays.asList(params));
+  }
 
-	public int getParamCount() {
-		return 1;
-	}
+  public int getParamCount() {
+    return 1;
+  }
 
-	public OType[] getTypes() {
-		return null;
-	}
+  public OType[] getTypes() {
+    return null;
+  }
 
-	@Override
-	public ODocument toStream() {
-		document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-		try {
-			document.field("keySerializerId", serializer.getId());
-			return document;
-		} finally {
-			document.setInternalStatus(ORecordElement.STATUS.LOADED);
-		}
-	}
+  @Override
+  public ODocument toStream() {
+    document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+    try {
+      document.field("keySerializerId", serializer.getId());
+      return document;
+    } finally {
+      document.setInternalStatus(ORecordElement.STATUS.LOADED);
+    }
+  }
 
-	@Override
-	protected void fromStream() {
-		final byte keySerializerId = ((Number) document.field("keySerializerId")).byteValue();
-		serializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(keySerializerId);
-	}
+  @Override
+  protected void fromStream() {
+    final byte keySerializerId = ((Number) document.field("keySerializerId")).byteValue();
+    serializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(keySerializerId);
+  }
 
-	public Object getDocumentValueToIndex(final ODocument iDocument) {
-		throw new OIndexException("This method is not supported in given index definition.");
-	}
+  public Object getDocumentValueToIndex(final ODocument iDocument) {
+    throw new OIndexException("This method is not supported in given index definition.");
+  }
 
-	@Override
-	public boolean equals(final Object o) {
-		if (this == o)
-			return true;
-		if (o == null || getClass() != o.getClass())
-			return false;
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
 
-		final ORuntimeKeyIndexDefinition that = (ORuntimeKeyIndexDefinition) o;
-		return serializer.equals(that.serializer);
-	}
+    final ORuntimeKeyIndexDefinition that = (ORuntimeKeyIndexDefinition) o;
+    return serializer.equals(that.serializer);
+  }
 
-	@Override
-	public int hashCode() {
-		int result = super.hashCode();
-		result = 31 * result + serializer.getId();
-		return result;
-	}
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + serializer.getId();
+    return result;
+  }
 
-	@Override
-	public String toString() {
-		return "ORuntimeKeyIndexDefinition{" + "serializer=" + serializer.getId() + '}';
-	}
+  @Override
+  public String toString() {
+    return "ORuntimeKeyIndexDefinition{" + "serializer=" + serializer.getId() + '}';
+  }
 
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * @param indexName
-	 * @param indexType
-	 */
-	public String toCreateIndexDDL(final String indexName, final String indexType) {
-		final StringBuilder ddl = new StringBuilder("create index ");
-		ddl.append(indexName).append(" ").append(indexType).append(" ");
-		ddl.append("runtime ").append(serializer.getId());
-		return ddl.toString();
-	}
+  /**
+   * {@inheritDoc}
+   * 
+   * @param indexName
+   * @param indexType
+   */
+  public String toCreateIndexDDL(final String indexName, final String indexType) {
+    final StringBuilder ddl = new StringBuilder("create index ");
+    ddl.append(indexName).append(" ").append(indexType).append(" ");
+    ddl.append("runtime ").append(serializer.getId());
+    return ddl.toString();
+  }
 
-	public OBinarySerializer getSerializer() {
-		return serializer;
-	}
+  public OBinarySerializer<?> getSerializer() {
+    return serializer;
+  }
 }

@@ -67,20 +67,20 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
  */
 @SuppressWarnings({ "unchecked", "serial" })
 public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Iterable<Entry<String, Object>>, ODetachable {
-  public static final byte                               RECORD_TYPE      = 'd';
-  protected Map<String, Object>                          _fieldValues;
-  protected Map<String, Object>                          _fieldOriginalValues;
-  protected Map<String, OType>                           _fieldTypes;
-  protected Map<String, OSimpleMultiValueChangeListener> _fieldChangeListeners;
-  protected Map<String, OMultiValueChangeTimeLine>       _fieldCollectionChangeTimeLines;
+  public static final byte                                               RECORD_TYPE      = 'd';
+  protected Map<String, Object>                                          _fieldValues;
+  protected Map<String, Object>                                          _fieldOriginalValues;
+  protected Map<String, OType>                                           _fieldTypes;
+  protected Map<String, OSimpleMultiValueChangeListener<String, Object>> _fieldChangeListeners;
+  protected Map<String, OMultiValueChangeTimeLine>                       _fieldCollectionChangeTimeLines;
 
-  protected boolean                                      _trackingChanges = true;
-  protected boolean                                      _ordered         = true;
-  protected boolean                                      _lazyLoad        = true;
+  protected boolean                                                      _trackingChanges = true;
+  protected boolean                                                      _ordered         = true;
+  protected boolean                                                      _lazyLoad        = true;
 
-  protected List<WeakReference<ORecordElement>>          _owners          = null;
+  protected List<WeakReference<ORecordElement>>                          _owners          = null;
 
-  protected static final String[]                        EMPTY_STRINGS    = new String[] {};
+  protected static final String[]                                        EMPTY_STRINGS    = new String[] {};
 
   /**
    * Internal constructor used on unmarshalling.
@@ -1271,10 +1271,11 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     final OTrackedMultiValue multiValue = (OTrackedMultiValue) fieldValue;
 
     if (_fieldChangeListeners == null)
-      _fieldChangeListeners = new HashMap<String, OSimpleMultiValueChangeListener>();
+      _fieldChangeListeners = new HashMap<String, OSimpleMultiValueChangeListener<String, Object>>();
 
     if (!_fieldChangeListeners.containsKey(fieldName)) {
-      final OSimpleMultiValueChangeListener listener = new OSimpleMultiValueChangeListener(fieldName);
+      final OSimpleMultiValueChangeListener<String, Object> listener = new OSimpleMultiValueChangeListener<String, Object>(
+          fieldName);
       multiValue.addChangeListener(listener);
       _fieldChangeListeners.put(fieldName, listener);
     }
@@ -1303,7 +1304,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     if (_fieldChangeListeners == null)
       return;
 
-    final OMultiValueChangeListener changeListener = _fieldChangeListeners.remove(fieldName);
+    final OMultiValueChangeListener<String, Object> changeListener = _fieldChangeListeners.remove(fieldName);
 
     final Object fieldValue;
     if (_fieldValues == null)

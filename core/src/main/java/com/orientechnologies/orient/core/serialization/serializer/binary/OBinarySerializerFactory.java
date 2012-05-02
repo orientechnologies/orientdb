@@ -104,7 +104,7 @@ public class OBinarySerializerFactory {
 	 *          is serializes identifier.
 	 * @return OBinarySerializer instance.
 	 */
-	public OBinarySerializer getObjectSerializer(final byte identifier) {
+	public OBinarySerializer<?> getObjectSerializer(final byte identifier) {
 		OBinarySerializer<?> impl = serializerIdMap.get(identifier);
 		if (impl == null) {
 			final Class<? extends OBinarySerializer<?>> cls = serializerClassesIdMap.get(identifier);
@@ -125,7 +125,7 @@ public class OBinarySerializerFactory {
 	 *          is the OType to obtain serializer algorithm for
 	 * @return OBinarySerializer instance
 	 */
-	public OBinarySerializer getObjectSerializer(final OType type) {
+	public OBinarySerializer<?> getObjectSerializer(final OType type) {
 		return serializerTypeMap.get(type);
 	}
 }
