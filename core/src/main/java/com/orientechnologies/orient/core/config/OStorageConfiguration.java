@@ -314,7 +314,7 @@ public class OStorageConfiguration implements OSerializableStream {
         // @COMPATIBILITY 0.9.25
         int pos = fileName.indexOf("/databases");
         if (pos > -1) {
-          fileName = "${" + Orient.getHomePath() + "}" + fileName.substring(pos);
+          fileName = "${" + Orient.ORIENTDB_HOME + "}" + fileName.substring(pos);
         }
       }
 

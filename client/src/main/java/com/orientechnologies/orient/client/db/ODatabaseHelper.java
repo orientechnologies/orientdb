@@ -86,7 +86,7 @@ public class ODatabaseHelper {
     if (!file.exists())
       file = new File("../" + iDirectory + "/config/orientdb-server-config.xml");
     if (!file.exists())
-      file = new File(OSystemVariableResolver.resolveSystemVariables("${" + Orient.getHomePath()
+      file = new File(OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME
           + "}/config/orientdb-server-config.xml"));
     if (!file.exists())
       throw new OConfigurationException("Cannot load file orientdb-server-config.xml to execute remote tests");
