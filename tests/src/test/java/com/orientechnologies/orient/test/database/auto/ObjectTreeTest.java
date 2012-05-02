@@ -33,6 +33,7 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializer;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -288,7 +289,7 @@ public class ObjectTreeTest {
 		}
 	}
 
-	@Test
+	@Test(dependsOnMethods = "testPool")
 	public void testCustomTypes() {
 		OObjectSerializerContext serializerContext = new OObjectSerializerContext();
 		serializerContext.bind(new OObjectSerializer<CustomType, Long>() {
@@ -333,15 +334,78 @@ public class ObjectTreeTest {
 
 		pojo.getCustom();
 		Assert.assertEquals(unserialized, 1);
+		Assert.assertTrue(pojo.getCustom() instanceof CustomType);
 
 		pojo.getCustomTypeList().iterator().next();
 		Assert.assertEquals(unserialized, 2);
+		Assert.assertTrue(pojo.getCustomTypeList().iterator().next() instanceof CustomType);
+		unserialized--;
 
 		pojo.getCustomTypeSet().iterator().next();
 		Assert.assertEquals(unserialized, 3);
+		Assert.assertTrue(pojo.getCustomTypeSet().iterator().next() instanceof CustomType);
+		unserialized--;
 
 		pojo.getCustomTypeMap().get(1L);
 		Assert.assertEquals(serialized, 4);
 		Assert.assertEquals(unserialized, 4);
+		Assert.assertTrue(pojo.getCustomTypeMap().get(1L) instanceof CustomType);
+	}
+
+	@Test(dependsOnMethods = "testCustomTypes")
+	public void testCustomTypesDatabaseNewInstance() {
+		OObjectDatabaseTx database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+		ORID rid = null;
+		try {
+			// init counters
+			serialized = 0;
+			unserialized = 0;
+
+			List<CustomType> customTypesList = new ArrayList<CustomType>();
+			customTypesList.add(new CustomType(102L));
+
+			Set<CustomType> customTypeSet = new HashSet<CustomType>();
+			customTypeSet.add(new CustomType(103L));
+
+			Map<Long, CustomType> customTypeMap = new HashMap<Long, CustomType>();
+			customTypeMap.put(1L, new CustomType(104L));
+
+			CustomClass pojo = database.newInstance(CustomClass.class, "test", 33L, new CustomType(101L), customTypesList, customTypeSet,
+					customTypeMap);
+			Assert.assertEquals(serialized, 4);
+			Assert.assertEquals(unserialized, 0);
+
+			pojo = database.save(pojo);
+
+			rid = database.getIdentity(pojo);
+
+			database.close();
+
+			database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
+			pojo = database.load(rid);
+			Assert.assertEquals(unserialized, 0);
+
+			pojo.getCustom();
+			Assert.assertEquals(unserialized, 1);
+			Assert.assertTrue(pojo.getCustom() instanceof CustomType);
+
+			pojo.getCustomTypeList().iterator().next();
+			Assert.assertEquals(unserialized, 2);
+			Assert.assertTrue(pojo.getCustomTypeList().iterator().next() instanceof CustomType);
+			unserialized--;
+
+			pojo.getCustomTypeSet().iterator().next();
+			Assert.assertEquals(unserialized, 3);
+			Assert.assertTrue(pojo.getCustomTypeSet().iterator().next() instanceof CustomType);
+			unserialized--;
+
+			pojo.getCustomTypeMap().get(1L);
+			Assert.assertEquals(serialized, 4);
+			Assert.assertEquals(unserialized, 4);
+			Assert.assertTrue(pojo.getCustomTypeMap().get(1L) instanceof CustomType);
+		} finally {
+			database.close();
+		}
 	}
 }

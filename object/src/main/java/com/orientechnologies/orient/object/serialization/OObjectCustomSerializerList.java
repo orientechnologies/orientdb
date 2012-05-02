@@ -22,12 +22,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-import com.orientechnologies.orient.core.db.object.OLazyObjectMultivalueElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 
 @SuppressWarnings({ "unchecked" })
-public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OLazyObjectMultivalueElement, Serializable {
+public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OLazyObjectCustomSerializer, Serializable {
 	private static final long				serialVersionUID	= -8541477416577361792L;
 
 	private ORecord<?>							sourceRecord;

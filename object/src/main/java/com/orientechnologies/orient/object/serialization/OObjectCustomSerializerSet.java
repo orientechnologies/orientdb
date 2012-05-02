@@ -21,7 +21,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.db.object.OLazyObjectMultivalueElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 
@@ -33,7 +32,7 @@ import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements OLazyObjectMultivalueElement, Serializable {
+public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements OLazyObjectCustomSerializer, Serializable {
 	private static final long	serialVersionUID	= -7698875159671927472L;
 
 	private final ORecord<?>	sourceRecord;

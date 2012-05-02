@@ -72,15 +72,15 @@ import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper
  */
 public class OObjectEntitySerializer {
 
-	private static Set<Class<?>>														classes							= new HashSet<Class<?>>();
-	private static HashMap<Class<?>, List<String>>					embeddedFields			= new HashMap<Class<?>, List<String>>();
-	private static HashMap<Class<?>, List<String>>					directAccessFields	= new HashMap<Class<?>, List<String>>();
-	private static HashMap<Class<?>, Field>									boundDocumentFields	= new HashMap<Class<?>, Field>();
-	private static HashMap<Class<?>, List<String>>					transientFields			= new HashMap<Class<?>, List<String>>();
-	private static HashMap<Class<?>, Map<Field, Class<?>>>	serializedFields		= new HashMap<Class<?>, Map<Field, Class<?>>>();
-	private static HashMap<Class<?>, Field>									fieldIds						= new HashMap<Class<?>, Field>();
-	private static HashMap<Class<?>, Field>									fieldVersions				= new HashMap<Class<?>, Field>();
-	private static HashMap<String, Method>									callbacks						= new HashMap<String, Method>();
+	private static final Set<Class<?>>														classes							= new HashSet<Class<?>>();
+	private static final HashMap<Class<?>, List<String>>					embeddedFields			= new HashMap<Class<?>, List<String>>();
+	private static final HashMap<Class<?>, List<String>>					directAccessFields	= new HashMap<Class<?>, List<String>>();
+	private static final HashMap<Class<?>, Field>									boundDocumentFields	= new HashMap<Class<?>, Field>();
+	private static final HashMap<Class<?>, List<String>>					transientFields			= new HashMap<Class<?>, List<String>>();
+	private static final HashMap<Class<?>, Map<Field, Class<?>>>	serializedFields		= new HashMap<Class<?>, Map<Field, Class<?>>>();
+	private static final HashMap<Class<?>, Field>									fieldIds						= new HashMap<Class<?>, Field>();
+	private static final HashMap<Class<?>, Field>									fieldVersions				= new HashMap<Class<?>, Field>();
+	private static final HashMap<String, Method>									callbacks						= new HashMap<String, Method>();
 
 	/**
 	 * Method that given an object serialize it an creates a proxy entity, in case the object isn't generated using the
@@ -151,8 +151,11 @@ public class OObjectEntitySerializer {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static void registerClass(Class<?> iClass) {
-		if (ODatabaseRecordThreadLocal.INSTANCE.get() != null && !ODatabaseRecordThreadLocal.INSTANCE.get().isClosed()
+	public static synchronized void registerClass(Class<?> iClass) {
+		if (classes.contains(iClass))
+			return;
+
+		if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && !ODatabaseRecordThreadLocal.INSTANCE.get().isClosed()
 				&& !ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().existsClass(iClass.getSimpleName()))
 			ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().createClass(iClass.getSimpleName());
 
@@ -324,6 +327,7 @@ public class OObjectEntitySerializer {
 	}
 
 	public static Object serializeFieldValue(final Class<?> type, final Object iFieldValue) {
+
 		for (Class<?> classContext : OObjectSerializerHelper.serializerContexts.keySet()) {
 			if (classContext != null && classContext.isAssignableFrom(type)) {
 				return OObjectSerializerHelper.serializerContexts.get(classContext).serializeFieldValue(type, iFieldValue);

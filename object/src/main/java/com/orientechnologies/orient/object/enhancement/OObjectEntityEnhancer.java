@@ -20,6 +20,12 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javassist.util.proxy.MethodFilter;
 import javassist.util.proxy.MethodHandler;
@@ -33,6 +39,9 @@ import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerList;
+import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerMap;
+import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerSet;
 
 /**
  * @author luca.molino
@@ -236,25 +245,42 @@ public class OObjectEntityEnhancer {
 		return false;
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	protected void initDocument(Class<?> iClass, Object iInstance, ODocument iDocument, ODatabaseObject db)
 			throws IllegalArgumentException, IllegalAccessException {
 		for (Class<?> currentClass = iClass; currentClass != Object.class;) {
 			for (Field f : currentClass.getDeclaredFields()) {
 				if (f.getName().equals("this$0"))
 					continue;
-				boolean accessModified = false;
 				if (!f.isAccessible()) {
 					f.setAccessible(true);
-					accessModified = true;
 				}
 				Object o = f.get(iInstance);
 				if (o != null) {
-					if (OObjectEntitySerializer.isToSerialize(o.getClass()))
-						o = OObjectEntitySerializer.serializeFieldValue(o.getClass(), o);
-					iDocument.field(f.getName(), OObjectEntitySerializer.typeToStream(o, OType.getTypeByClass(f.getType()), db, iDocument));
+					if (OObjectEntitySerializer.isSerializedType(f)) {
+						if (o instanceof List<?>) {
+							List<?> list = new ArrayList();
+							iDocument.field(f.getName(), list);
+							o = new OObjectCustomSerializerList(OObjectEntitySerializer.getSerializedType(f), iDocument, list, (List<?>) o);
+							f.set(iInstance, o);
+						} else if (o instanceof Set<?>) {
+							Set<?> set = new HashSet();
+							iDocument.field(f.getName(), set);
+							o = new OObjectCustomSerializerSet(OObjectEntitySerializer.getSerializedType(f), iDocument, set, (Set<?>) o);
+							f.set(iInstance, o);
+						} else if (o instanceof Map<?, ?>) {
+							Map<?, ?> map = new HashMap();
+							iDocument.field(f.getName(), map);
+							o = new OObjectCustomSerializerMap(OObjectEntitySerializer.getSerializedType(f), iDocument, map, (Map<?, ?>) o);
+							f.set(iInstance, o);
+						} else {
+							o = OObjectEntitySerializer.serializeFieldValue(o.getClass(), o);
+							iDocument.field(f.getName(), o);
+						}
+					} else {
+						iDocument.field(f.getName(), OObjectEntitySerializer.typeToStream(o, OType.getTypeByClass(f.getType()), db, iDocument));
+					}
 				}
-				if (accessModified)
-					f.setAccessible(false);
 			}
 			currentClass = currentClass.getSuperclass();
 		}

@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.object.db.OObjectLazyList;
 import com.orientechnologies.orient.object.db.OObjectLazyMap;
 import com.orientechnologies.orient.object.db.OObjectLazySet;
+import com.orientechnologies.orient.object.serialization.OLazyObjectCustomSerializer;
 import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerList;
 import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerMap;
 import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerSet;
@@ -118,11 +119,12 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 					value = lazyLoadField(self, fieldName, docValue);
 				}
 			} else {
-				if (((value instanceof Collection<?> || value instanceof Map<?, ?>)) || value.getClass().isArray()
-						&& !(value instanceof OLazyObjectMultivalueElement)) {
+				if (((value instanceof Collection<?> || value instanceof Map<?, ?>) && !(value instanceof OLazyObjectMultivalueElement))
+						|| value.getClass().isArray()) {
 					Class<?> genericMultiValueType = OReflectionHelper.getGenericMultivalueType(getField(fieldName, self.getClass()));
 					if (genericMultiValueType != null && !OReflectionHelper.isJavaType(genericMultiValueType)) {
-						if (OObjectEntitySerializer.isSerializedType(getField(fieldName, self.getClass()))) {
+						if (OObjectEntitySerializer.isSerializedType(getField(fieldName, self.getClass()))
+								&& !(value instanceof OLazyObjectCustomSerializer)) {
 							manageSerializedCollections(self, fieldName, value);
 						} else {
 							value = manageObjectCollections(self, fieldName, value);
@@ -360,6 +362,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 			}
 		}
 		args[0] = valueToSet;
+		loadedFields.put(fieldName, doc.getVersion());
 		return proceed.invoke(self, args);
 	}
 

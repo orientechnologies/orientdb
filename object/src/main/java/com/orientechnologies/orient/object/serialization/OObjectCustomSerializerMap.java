@@ -21,11 +21,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.db.object.OLazyObjectMultivalueElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 
-public class OObjectCustomSerializerMap<TYPE> extends HashMap<Object, Object> implements Serializable, OLazyObjectMultivalueElement {
+public class OObjectCustomSerializerMap<TYPE> extends HashMap<Object, Object> implements Serializable, OLazyObjectCustomSerializer {
 	private static final long					serialVersionUID	= -8606432090996808181L;
 
 	private final ORecord<?>					sourceRecord;
