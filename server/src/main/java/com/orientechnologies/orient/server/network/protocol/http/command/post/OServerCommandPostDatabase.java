@@ -90,7 +90,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
   protected String getStoragePath(final String databaseName, final String storageMode) {
     final String path;
     if (storageMode.equals(OEngineLocal.NAME)) {
-      path = storageMode + ":${" + Orient.getHomePath() + "}/databases/" + databaseName;
+      path = storageMode + ":${" + Orient.ORIENTDB_HOME + "}/databases/" + databaseName;
     } else if (storageMode.equals(OEngineMemory.NAME)) {
       path = storageMode + ":" + databaseName;
     } else {

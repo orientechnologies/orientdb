@@ -43,134 +43,159 @@ import com.orientechnologies.orient.server.clustering.OClusterLogger.TYPE;
  * </code><br/>
  */
 public class OOperationLog extends OSingleFileSegment {
-	public static final String		EXTENSION				= ".dol";
-	private static final int			DEF_START_SIZE	= 262144;
+  public static final String   EXTENSION      = ".dol";
+  private static final int     DEF_START_SIZE = 262144;
 
-	private static final int			OFFSET_SERIAL		= 0;
-	private static final int			OFFSET_OPERAT		= OFFSET_SERIAL + OBinaryProtocol.SIZE_LONG;
-	private static final int			OFFSET_RID			= OFFSET_OPERAT + OBinaryProtocol.SIZE_BYTE;
-	private static final int			RECORD_SIZE			= OFFSET_RID + ORecordId.PERSISTENT_SIZE;
+  private static final int     OFFSET_SERIAL  = 0;
+  private static final int     OFFSET_OPERAT  = OFFSET_SERIAL + OBinaryProtocol.SIZE_LONG;
+  private static final int     OFFSET_RID     = OFFSET_OPERAT + OBinaryProtocol.SIZE_BYTE;
+  private static final int     RECORD_SIZE    = OFFSET_RID + ORecordId.PERSISTENT_SIZE;
 
-	private long									serial;
-	private final String					nodeId;
-	private final boolean					synchEnabled;
-	private final OClusterLogger	logger					= new OClusterLogger();
+  private long                 serial;
+  private final String         nodeId;
+  private final boolean        synchEnabled;
+  private final OClusterLogger logger         = new OClusterLogger();
 
-	public OOperationLog(final String iNodeId, final String iDatabase, final boolean iReset) throws IOException {
-		super(OReplicator.DIRECTORY_NAME + "/" + iDatabase + "/" + iNodeId.replace('.', '_').replace(':', '-') + EXTENSION,
-				OGlobalConfiguration.DISTRIBUTED_LOG_TYPE.getValueAsString());
-		nodeId = iNodeId;
-		synchEnabled = OGlobalConfiguration.DISTRIBUTED_LOG_SYNCH.getValueAsBoolean();
+  public OOperationLog(final String iNodeId, final String iDatabase, final boolean iReset) throws IOException {
+    super(OReplicator.DIRECTORY_NAME + "/" + iDatabase + "/" + iNodeId.replace('.', '_').replace(':', '-') + EXTENSION,
+        OGlobalConfiguration.DISTRIBUTED_LOG_TYPE.getValueAsString());
+    nodeId = iNodeId;
+    synchEnabled = OGlobalConfiguration.DISTRIBUTED_LOG_SYNCH.getValueAsBoolean();
 
-		logger.setNode(nodeId);
-		logger.setDatabase(iDatabase);
+    logger.setNode(nodeId);
+    logger.setDatabase(iDatabase);
 
-		file.setFailCheck(false);
-		if (exists()) {
-			if (iReset) {
-				delete();
-				create(DEF_START_SIZE);
-			} else
-				open();
-		} else
-			create(DEF_START_SIZE);
+    file.setFailCheck(false);
+    if (exists()) {
+      if (iReset) {
+        reset();
+      } else
+        open();
+    } else
+      create(DEF_START_SIZE);
+  }
 
-		serial = getLastOperationId() + 1;
-	}
+  @Override
+  public boolean open() throws IOException {
+    final boolean result = super.open();
+    serial = getLastOperationId() + 1;
+    return result;
+  }
 
-	/**
-	 * Appends a log entry to the log file managed locally.
-	 */
-	public long appendLocalLog(final byte iOperation, final ORecordId iRID) throws IOException {
+  @Override
+  public void create(final int iStartSize) throws IOException {
+    super.create(iStartSize);
+    serial = 0;
+  }
 
-		acquireExclusiveLock();
-		try {
-			appendLog(serial, iOperation, iRID);
-			return serial++;
+  /**
+   * Resets previous logs
+   */
+  public void reset() throws IOException {
+    acquireExclusiveLock();
+    try {
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+      delete();
+      create(DEF_START_SIZE);
 
-	/**
-	 * Appends a log entry.
-	 */
-	public void appendLog(final long iSerial, final byte iOperation, final ORecordId iRID) throws IOException {
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 
-		acquireExclusiveLock();
-		try {
+  /**
+   * Appends a log entry to the log file managed locally.
+   */
+  public long appendLocalLog(final byte iOperation, final ORecordId iRID) throws IOException {
 
-			logger.log(this, Level.FINE, TYPE.REPLICATION, DIRECTION.NONE, "Journaled operation #%d as %s against record %s", iSerial,
-					ORecordOperation.getName(iOperation), iRID);
+    acquireExclusiveLock();
+    try {
+      appendLog(serial, iOperation, iRID);
+      return serial++;
 
-			int offset = file.allocateSpace(RECORD_SIZE);
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 
-			file.writeLong(offset, iSerial);
-			offset += OBinaryProtocol.SIZE_LONG;
+  /**
+   * Appends a log entry.
+   */
+  public void appendLog(final long iSerial, final byte iOperation, final ORecordId iRID) throws IOException {
 
-			file.writeByte(offset, iOperation);
-			offset += OBinaryProtocol.SIZE_BYTE;
+    acquireExclusiveLock();
+    try {
 
-			file.writeShort(offset, (short) iRID.clusterId);
-			offset += OBinaryProtocol.SIZE_SHORT;
+      logger.log(this, Level.FINE, TYPE.REPLICATION, DIRECTION.NONE, "Journaled operation #%d as %s against record %s", iSerial,
+          ORecordOperation.getName(iOperation), iRID);
 
-			file.writeLong(offset, iRID.clusterPosition);
-			offset += OBinaryProtocol.SIZE_LONG;
+      int offset = file.allocateSpace(RECORD_SIZE);
 
-			if (synchEnabled)
-				file.synch();
+      file.writeLong(offset, iSerial);
+      offset += OBinaryProtocol.SIZE_LONG;
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+      file.writeByte(offset, iOperation);
+      offset += OBinaryProtocol.SIZE_BYTE;
 
-	public String getNodeId() {
-		return nodeId;
-	}
+      file.writeShort(offset, (short) iRID.clusterId);
+      offset += OBinaryProtocol.SIZE_SHORT;
 
-	public int findOperationId(final long iOperationId) throws IOException {
-		if (iOperationId == -1)
-			// SYNCH THE ENTIRE FILE
-			return totalEntries() - 1;
+      file.writeLong(offset, iRID.clusterPosition);
+      offset += OBinaryProtocol.SIZE_LONG;
 
-		for (int i = totalEntries() - 1; i > -1; --i) {
-			final long serial = file.readLong(i * RECORD_SIZE);
-			if (serial == iOperationId)
-				return i;
-		}
-		return -1;
-	}
+      if (synchEnabled)
+        file.synch();
 
-	public ORecordOperation getEntry(final int iPosition, final ORecordOperation iEntry) throws IOException {
-		final int pos = iPosition * RECORD_SIZE;
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 
-		iEntry.serial = file.readLong(pos);
-		iEntry.type = file.readByte(pos + OFFSET_OPERAT);
-		iEntry.record = new ORecordId(file.readShort(pos + OFFSET_RID), file.readLong(pos + OFFSET_RID + OBinaryProtocol.SIZE_SHORT));
-		return iEntry;
-	}
+  public String getNodeId() {
+    return nodeId;
+  }
 
-	public long getFirstOperationId() throws IOException {
-		if (isEmpty())
-			return -1;
+  public int findOperationId(final long iOperationId) throws IOException {
+    if (iOperationId == -1)
+      // SYNCH THE ENTIRE FILE
+      return totalEntries() - 1;
 
-		return file.readLong(0);
-	}
+    for (int i = totalEntries() - 1; i > -1; --i) {
+      final long serial = file.readLong(i * RECORD_SIZE);
+      if (serial == iOperationId)
+        return i;
+    }
+    return -1;
+  }
 
-	public long getLastOperationId() throws IOException {
-		if (isEmpty())
-			return -1;
+  public ORecordOperation getEntry(final int iPosition, final ORecordOperation iEntry) throws IOException {
+    final int pos = iPosition * RECORD_SIZE;
 
-		return file.readLong(file.getFilledUpTo() - RECORD_SIZE);
-	}
+    iEntry.serial = file.readLong(pos);
+    iEntry.type = file.readByte(pos + OFFSET_OPERAT);
+    iEntry.record = new ORecordId(file.readShort(pos + OFFSET_RID), file.readLong(pos + OFFSET_RID + OBinaryProtocol.SIZE_SHORT));
+    return iEntry;
+  }
 
-	public boolean isEmpty() {
-		return file.getFilledUpTo() == 0;
-	}
+  public long getFirstOperationId() throws IOException {
+    if (isEmpty())
+      return -1;
 
-	public int totalEntries() {
-		return file.getFilledUpTo() / RECORD_SIZE;
-	}
+    return file.readLong(0);
+  }
+
+  public long getLastOperationId() throws IOException {
+    if (isEmpty())
+      return -1;
+
+    return file.readLong(file.getFilledUpTo() - RECORD_SIZE);
+  }
+
+  public boolean isEmpty() {
+    return file.getFilledUpTo() == 0;
+  }
+
+  public int totalEntries() {
+    return file.getFilledUpTo() / RECORD_SIZE;
+  }
 }

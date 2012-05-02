@@ -247,12 +247,12 @@ public class OServer {
 
     if (dbPath == null) {
       // SEARCH IN DEFAULT DATABASE DIRECTORY
-      dbPath = OSystemVariableResolver.resolveSystemVariables("${" + Orient.getHomePath() + "}/databases/" + name + "/");
+      dbPath = OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME + "}/databases/" + name + "/");
       File f = new File(dbPath + "default.odh");
       if (!f.exists())
         throw new OConfigurationException("Database '" + name + "' is not configured on server");
 
-      dbPath = "local:${" + Orient.getHomePath() + "}/databases/" + name;
+      dbPath = "local:${" + Orient.ORIENTDB_HOME + "}/databases/" + name;
     }
 
     return dbPath;
@@ -279,7 +279,7 @@ public class OServer {
   }
 
   public String getDatabaseDirectory() {
-    return OSystemVariableResolver.resolveSystemVariables("${" + Orient.getHomePath() + "}/databases/");
+    return OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME + "}/databases/");
   }
 
   public ThreadGroup getServerThreadGroup() {

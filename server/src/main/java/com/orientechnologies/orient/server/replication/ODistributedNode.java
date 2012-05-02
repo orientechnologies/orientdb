@@ -42,232 +42,243 @@ import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo.
  * 
  */
 public class ODistributedNode {
-	private final OReplicator											replicator;
-	private final String													id;
-	public String																	networkAddress;
-	public int																		networkPort;
-	public Date																		connectedOn;
-	private Map<String, ODistributedDatabaseInfo>	databases	= new HashMap<String, ODistributedDatabaseInfo>();
-	protected OClusterLogger											logger		= new OClusterLogger();
+  private final OReplicator                     replicator;
+  private final String                          id;
+  public String                                 networkAddress;
+  public int                                    networkPort;
+  public Date                                   connectedOn;
+  private Map<String, ODistributedDatabaseInfo> databases = new HashMap<String, ODistributedDatabaseInfo>();
+  protected OClusterLogger                      logger    = new OClusterLogger();
 
-	public ODistributedNode(final OReplicator iReplicator, final String iId) throws IOException {
-		replicator = iReplicator;
-		id = iId;
+  public ODistributedNode(final OReplicator iReplicator, final String iId) throws IOException {
+    replicator = iReplicator;
+    id = iId;
 
-		final String[] parts = iId.split(":");
-		networkAddress = parts[0];
-		networkPort = Integer.parseInt(parts[1]);
-		logger.setNode(iId);
-	}
+    final String[] parts = iId.split(":");
+    networkAddress = parts[0];
+    networkPort = Integer.parseInt(parts[1]);
+    logger.setNode(iId);
+  }
 
-	public ODistributedDatabaseInfo getDatabase(final String iDatabaseName) {
-		return databases.get(iDatabaseName);
-	}
+  public ODistributedDatabaseInfo getDatabase(final String iDatabaseName) {
+    return databases.get(iDatabaseName);
+  }
 
-	public ODistributedDatabaseInfo getOrCreateDatabaseEntry(final String iDatabaseName) throws IOException {
-		ODistributedDatabaseInfo db = databases.get(iDatabaseName);
-		if (db == null)
-			db = createDatabaseEntry(iDatabaseName, SYNCH_TYPE.SYNCH);
-		return db;
-	}
+  public ODistributedDatabaseInfo removeDatabase(final String iDatabaseName) throws IOException {
+    final ODistributedDatabaseInfo db = databases.remove(iDatabaseName);
+    if (db != null)
+      db.close();
+    return db;
+  }
 
-	protected ODistributedDatabaseInfo createDatabaseEntry(final String dbName, SYNCH_TYPE iSynchType) throws IOException {
-		final ODistributedDatabaseInfo obj = new ODistributedDatabaseInfo(id, dbName, replicator.getReplicatorUser().name,
-				replicator.getReplicatorUser().password, iSynchType, STATUS_TYPE.OFFLINE);
-		databases.put(dbName, obj);
-		return obj;
-	}
+  public ODistributedDatabaseInfo getOrCreateDatabaseEntry(final String iDatabaseName) throws IOException {
+    ODistributedDatabaseInfo db = databases.get(iDatabaseName);
+    if (db == null)
+      db = createDatabaseEntry(iDatabaseName, SYNCH_TYPE.SYNCH);
+    return db;
+  }
 
-	public void startDatabaseReplication(final ODistributedDatabaseInfo iDatabase) throws IOException {
-		if (iDatabase == null)
-			throw new IllegalArgumentException("Database is null");
+  protected ODistributedDatabaseInfo createDatabaseEntry(final String dbName, SYNCH_TYPE iSynchType) throws IOException {
+    ODistributedDatabaseInfo obj = databases.get(dbName);
+    if (obj != null) {
+      // CLOSE AND REMOVE IT BEFORE TO RESTART
+      obj.close();
+      databases.remove(dbName);
+    }
+    
+    obj = new ODistributedDatabaseInfo(id, dbName, replicator.getReplicatorUser().name, replicator.getReplicatorUser().password,
+        iSynchType, STATUS_TYPE.OFFLINE);
+    databases.put(dbName, obj);
+    
+    return obj;
+  }
 
-		logger.setDatabase(iDatabase.databaseName);
+  public void startDatabaseReplication(final ODistributedDatabaseInfo iDatabase) throws IOException {
+    if (iDatabase == null)
+      throw new IllegalArgumentException("Database is null");
 
-		synchronized (this) {
-			logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.OUT, "starting replication against distributed node");
+    logger.setDatabase(iDatabase.databaseName);
 
-			try {
-				databases.put(iDatabase.databaseName, iDatabase);
+    synchronized (this) {
+      logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.OUT, "starting replication against distributed node");
 
-				if (iDatabase.connection == null)
-					iDatabase.connection = new ONodeConnection(replicator, id, replicator.getConflictResolver());
+      try {
+        databases.put(iDatabase.databaseName, iDatabase);
 
-				iDatabase.connection.synchronize(iDatabase.databaseName, replicator.getLocalDatabaseConfiguration(iDatabase.databaseName));
-				iDatabase.setOnline();
+        if (iDatabase.connection == null)
+          iDatabase.connection = new ONodeConnection(replicator, id, replicator.getConflictResolver());
 
-			} catch (Exception e) {
-				iDatabase.setOffline();
-				iDatabase.close();
-				databases.remove(iDatabase.databaseName);
-				logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.NONE,
-						"cannot find database on remote server. Removing it from shared list", e);
-			}
-		}
-	}
+        iDatabase.connection.synchronize(iDatabase.databaseName, replicator.getLocalDatabaseConfiguration(iDatabase.databaseName));
+        iDatabase.setOnline();
 
-	public void stopDatabaseReplication(final ODistributedDatabaseInfo iDatabase) {
-		synchronized (this) {
-			logger.setDatabase(iDatabase.databaseName);
+      } catch (Exception e) {
+        removeDatabase(iDatabase.databaseName);
+        logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.NONE,
+            "cannot find database on remote server. Removing it from shared list", e);
+      }
+    }
+  }
 
-			iDatabase.setOffline();
+  public void stopDatabaseReplication(final ODistributedDatabaseInfo iDatabase) {
+    synchronized (this) {
+      logger.setDatabase(iDatabase.databaseName);
 
-			logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.OUT, "stopped replication against distributed node");
-		}
-	}
+      iDatabase.setOffline();
 
-	public void startDatabaseAlignment(final ODistributedDatabaseInfo iDatabase, final String iOptions) throws IOException {
-		if (iDatabase == null)
-			throw new IllegalArgumentException("Database is null");
+      logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.OUT, "stopped replication against distributed node");
+    }
+  }
 
-		logger.setDatabase(iDatabase.databaseName);
+  public void startDatabaseAlignment(final ODistributedDatabaseInfo iDatabase, final String iOptions) throws IOException {
+    if (iDatabase == null)
+      throw new IllegalArgumentException("Database is null");
 
-		synchronized (this) {
-			if (!iDatabase.isOnline())
-				throw new IllegalArgumentException("Database '" + iDatabase.databaseName + "' is not replicated");
+    logger.setDatabase(iDatabase.databaseName);
 
-			logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.OUT, "starting alignment against distributed node");
+    synchronized (this) {
+      if (!iDatabase.isOnline())
+        throw new IllegalArgumentException("Database '" + iDatabase.databaseName + "' is not replicated");
 
-			try {
-				databases.put(iDatabase.databaseName, iDatabase);
+      logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.OUT, "starting alignment against distributed node");
 
-				if (iDatabase.connection == null)
-					iDatabase.connection = new ONodeConnection(replicator, id, replicator.getConflictResolver());
+      try {
+        databases.put(iDatabase.databaseName, iDatabase);
 
-				iDatabase.setSynchronizing();
-				iDatabase.connection.align(iDatabase.databaseName, iOptions);
-				iDatabase.setOnline();
+        if (iDatabase.connection == null)
+          iDatabase.connection = new ONodeConnection(replicator, id, replicator.getConflictResolver());
 
-			} catch (Exception e) {
-				iDatabase.setOffline();
-				iDatabase.close();
-				databases.remove(iDatabase.databaseName);
-				logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.NONE,
-						"cannot find database on remote server. Removing it from shared list", e);
-			}
-		}
-	}
+        iDatabase.setSynchronizing();
+        iDatabase.connection.align(iDatabase.databaseName, iOptions);
+        iDatabase.setOnline();
 
-	public void propagateChange(final ORecordOperation iRequest, final SYNCH_TYPE iRequestType) throws IOException {
-		final ORecordInternal<?> record = iRequest.getRecord();
-		if (record == null)
-			// RECORD DOESN'T EXIST ANYMORE
-			return;
+      } catch (Exception e) {
+        removeDatabase(iDatabase.databaseName);
+        logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.NONE,
+            "cannot find database on remote server. Removing it from shared list", e);
+      }
+    }
+  }
 
-		final ODistributedDatabaseInfo databaseEntry = databases.get(record.getDatabase().getName());
-		if (databaseEntry == null)
-			return;
+  public void propagateChange(final ORecordOperation iRequest, final SYNCH_TYPE iRequestType) throws IOException {
+    final ORecordInternal<?> record = iRequest.getRecord();
+    if (record == null)
+      // RECORD DOESN'T EXIST ANYMORE
+      return;
 
-		try {
-			databaseEntry.connection.propagateChange(databaseEntry, iRequest, iRequestType, record);
+    final ODistributedDatabaseInfo databaseEntry = databases.get(record.getDatabase().getName());
+    if (databaseEntry == null)
+      return;
 
-		} catch (Exception e) {
-			handleError(iRequest, iRequestType, e);
-		}
-	}
+    try {
+      databaseEntry.connection.propagateChange(databaseEntry, iRequest, iRequestType, record);
 
-	public ORecord<?> requestRecord(final String iDatabaseName, final ORecordId rid) {
-		final ODistributedDatabaseInfo databaseEntry = databases.get(iDatabaseName);
-		if (databaseEntry != null)
-			try {
-				return databaseEntry.connection.requestRecord(databaseEntry, rid);
+    } catch (Exception e) {
+      handleError(iRequest, iRequestType, e);
+    }
+  }
 
-			} catch (Exception e) {
-				logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "Error on retrieving record %s from remote server", rid);
-			}
-		return null;
-	}
+  public ORecord<?> requestRecord(final String iDatabaseName, final ORecordId rid) {
+    final ODistributedDatabaseInfo databaseEntry = databases.get(iDatabaseName);
+    if (databaseEntry != null)
+      try {
+        return databaseEntry.connection.requestRecord(databaseEntry, rid);
 
-	public ODistributedDatabaseInfo copyDatabase(final ODatabaseRecord iDb, final String iRemoteEngine) throws IOException {
-		ODistributedDatabaseInfo db = getDatabase(iDb.getName());
+      } catch (Exception e) {
+        logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "Error on retrieving record %s from remote server", rid);
+      }
+    return null;
+  }
 
-		if (db != null)
-			throw new ODistributedSynchronizationException("Database '" + iDb.getName() + "' is already shared on remote server node '"
-					+ id + "'");
+  public ODistributedDatabaseInfo copyDatabase(final ODatabaseRecord iDb, final String iRemoteEngine) throws IOException {
+    ODistributedDatabaseInfo db = getDatabase(iDb.getName());
 
-		final long time = System.currentTimeMillis();
+    if (db != null && db.isOnline())
+      throw new ODistributedSynchronizationException("Database '" + iDb.getName() + "' is already shared on remote server node '"
+          + id + "'");
 
-		db = createDatabaseEntry(iDb.getName(), SYNCH_TYPE.SYNCH);
+    db = createDatabaseEntry(iDb.getName(), SYNCH_TYPE.SYNCH);
 
-		try {
-			logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT,
-					"copying database to the remote server via streaming across the network...");
+    final long time = System.currentTimeMillis();
 
-			db.setSynchronizing();
-			db.connection = new ONodeConnection(replicator, id, replicator.getConflictResolver());
-			db.connection.copy(iDb, db.databaseName, db.userName, db.userPassword, iRemoteEngine);
+    try {
+      logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT,
+          "copying database to the remote server via streaming across the network...");
 
-		} catch (IOException e) {
-			// ERROR
-			databases.remove(iDb.getName());
-			throw e;
+      db.setSynchronizing();
+      db.connection = new ONodeConnection(replicator, id, replicator.getConflictResolver());
+      db.connection.copy(iDb, db.databaseName, db.userName, db.userPassword, iRemoteEngine);
 
-		} catch (Exception e) {
-			// ERROR
-			databases.remove(iDb.getName());
+    } catch (IOException e) {
+      // ERROR
+      removeDatabase(iDb.getName());
+      throw e;
 
-			logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "Error on copying database");
-			throw new OIOException("Error on copying database", e);
-		}
+    } catch (Exception e) {
+      // ERROR
+      removeDatabase(iDb.getName());
 
-		logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.NONE, "sharing completed (%dms)", System.currentTimeMillis() - time);
+      logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "Error on copying database");
+      throw new OIOException("Error on copying database", e);
+    }
 
-		return db;
-	}
+    logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.NONE, "sharing completed (%dms)", System.currentTimeMillis() - time);
 
-	@Override
-	public String toString() {
-		return id;
-	}
+    return db;
+  }
 
-	public String getName() {
-		return id;
-	}
+  @Override
+  public String toString() {
+    return id;
+  }
 
-	/**
-	 * Closes all the opened databases.
-	 */
-	public void disconnect() {
-		for (ODistributedDatabaseInfo db : databases.values()) {
-			if (db.connection != null)
-				db.connection.disconnect();
-		}
-		databases.clear();
-	}
+  public String getName() {
+    return id;
+  }
 
-	public long[] getLogRange(final String iDatabaseName) throws IOException {
-		return new long[] { databases.get(iDatabaseName).getLog().getFirstOperationId(),
-				databases.get(iDatabaseName).getLog().getLastOperationId() };
-	}
+  /**
+   * Closes all the opened databases.
+   */
+  public void disconnect() {
+    for (ODistributedDatabaseInfo db : databases.values()) {
+      if (db.connection != null)
+        db.connection.disconnect();
+    }
+    databases.clear();
+  }
 
-	protected void handleError(final ORecordOperation iRequest, final SYNCH_TYPE iRequestType, final Exception iException)
-			throws RuntimeException {
+  public long[] getLogRange(final String iDatabaseName) throws IOException {
+    return new long[] { databases.get(iDatabaseName).getLog().getFirstOperationId(),
+        databases.get(iDatabaseName).getLog().getLastOperationId() };
+  }
 
-		final Set<ODistributedDatabaseInfo> currentDbList = new HashSet<ODistributedDatabaseInfo>(databases.values());
+  protected void handleError(final ORecordOperation iRequest, final SYNCH_TYPE iRequestType, final Exception iException)
+      throws RuntimeException {
 
-		disconnect();
+    final Set<ODistributedDatabaseInfo> currentDbList = new HashSet<ODistributedDatabaseInfo>(databases.values());
 
-		// ERROR
-		logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.NONE, "seems down, retrying to connect...");
+    disconnect();
 
-		// RECONNECT ALL DATABASES
-		try {
-			for (ODistributedDatabaseInfo dbEntry : currentDbList) {
-				startDatabaseReplication(dbEntry);
-			}
-		} catch (IOException e) {
-			// IO ERROR: THE NODE SEEMED ALWAYS MORE DOWN: START TO COLLECT DATA FOR IT WAITING FOR A FUTURE RE-CONNECTION
-			logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.NONE, "is down, remove it from replication");
-		}
+    // ERROR
+    logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.NONE, "seems down, retrying to connect...");
 
-		if (iRequestType == SYNCH_TYPE.SYNCH) {
-			// SYNCHRONOUS CASE: RE-THROW THE EXCEPTION NOW TO BEING PROPAGATED UP TO THE CLIENT
-			if (iException instanceof RuntimeException)
-				throw (RuntimeException) iException;
-		}
-	}
+    // RECONNECT ALL DATABASES
+    try {
+      for (ODistributedDatabaseInfo dbEntry : currentDbList) {
+        startDatabaseReplication(dbEntry);
+      }
+    } catch (IOException e) {
+      // IO ERROR: THE NODE SEEMED ALWAYS MORE DOWN: START TO COLLECT DATA FOR IT WAITING FOR A FUTURE RE-CONNECTION
+      logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.NONE, "is down, remove it from replication");
+    }
 
-	public void registerDatabase(final ODistributedDatabaseInfo iDatabaseEntry) throws IOException {
-		databases.put(iDatabaseEntry.databaseName, iDatabaseEntry);
-	}
+    if (iRequestType == SYNCH_TYPE.SYNCH) {
+      // SYNCHRONOUS CASE: RE-THROW THE EXCEPTION NOW TO BEING PROPAGATED UP TO THE CLIENT
+      if (iException instanceof RuntimeException)
+        throw (RuntimeException) iException;
+    }
+  }
+
+  public void registerDatabase(final ODistributedDatabaseInfo iDatabaseEntry) throws IOException {
+    databases.put(iDatabaseEntry.databaseName, iDatabaseEntry);
+  }
 }

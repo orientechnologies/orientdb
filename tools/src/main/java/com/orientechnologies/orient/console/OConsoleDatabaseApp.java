@@ -1136,9 +1136,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       if (serverAdmin == null)
         throw new IllegalStateException("You must be connected to a remote server to start the replication");
 
+      out.println("Starting replication for database '" + iDatabaseName + "' between server '" + serverAdmin.getURL() + "' and '"
+          + iRemoteName + "'...");
+
       serverAdmin.startReplication(iDatabaseName, iRemoteName);
 
-      out.println("Replication started for database '" + iDatabaseName + "' against the server '" + iRemoteName + "'");
+      out.println("Replication successfully started");
 
     } catch (Exception e) {
       printError(e);
