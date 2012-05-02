@@ -193,14 +193,16 @@ public class ObjectDetachingTest {
 
 		database.begin();
 		Country loaded = (Country) database.load((ORecordId) country.getId());
-		Assert.assertEquals(loaded, country);
+		Assert.assertEquals(loaded.getId(), country.getId());
+		Assert.assertEquals(loaded.getVersion(), country.getVersion());
+		Assert.assertEquals(database.getRecordByUserObject(loaded, false), database.getRecordByUserObject(country, false));
 		String newName = "ShouldBeChanged";
 		loaded.setName(newName);
 		loaded = (Country) database.save(loaded);
 		database.commit();
 
 		loaded = (Country) database.load((ORecordId) country.getId());
-		Assert.assertTrue(loaded.equals(country));
+		Assert.assertEquals(database.getRecordByUserObject(loaded, false), database.getRecordByUserObject(country, false));
 		Assert.assertEquals(loaded.getId(), country.getId());
 		Assert.assertEquals(loaded.getVersion(), new Integer(initVersion + 1));
 		Assert.assertEquals(loaded.getName(), newName);
@@ -219,14 +221,16 @@ public class ObjectDetachingTest {
 
 		database.begin();
 		Country loaded = (Country) database.load((ORecordId) country.getId());
-		Assert.assertEquals(loaded, country);
+		Assert.assertEquals(loaded.getId(), country.getId());
+		Assert.assertEquals(loaded.getVersion(), country.getVersion());
+		Assert.assertEquals(database.getRecordByUserObject(loaded, false), database.getRecordByUserObject(country, false));
 		String newName = "ShouldNotBeChanged";
 		loaded.setName(newName);
 		loaded = (Country) database.save(loaded);
 		database.rollback();
 
 		loaded = (Country) database.load((ORecordId) country.getId());
-		Assert.assertNotSame(loaded, country);
+		Assert.assertNotSame(database.getRecordByUserObject(loaded, false), database.getRecordByUserObject(country, false));
 		Assert.assertEquals(loaded.getVersion(), initVersion);
 		Assert.assertEquals(loaded.getName(), initialCountryName);
 	}
