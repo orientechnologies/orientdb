@@ -648,9 +648,9 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
         }
       }
 
-    if (iFieldType != null)
-      setFieldType(iFieldName, iFieldType);
-    else if (_clazz != null) {
+    setFieldType(iFieldName, iFieldType);
+
+    if (iFieldType == null && _clazz != null) {
       // SCHEMAFULL?
       final OProperty prop = _clazz.getProperty(iFieldName);
       if (prop != null)
