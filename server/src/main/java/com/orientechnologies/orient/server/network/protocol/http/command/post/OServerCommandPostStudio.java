@@ -38,293 +38,290 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 
 @SuppressWarnings("unchecked")
 public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstract {
-	private static final String[]	NAMES	= { "POST|studio/*" };
+  private static final String[] NAMES = { "POST|studio/*" };
 
-	public boolean execute(final OHttpRequest iRequest) throws Exception {
-		ODatabaseDocumentTx db = null;
+  public boolean execute(final OHttpRequest iRequest) throws Exception {
+    ODatabaseDocumentTx db = null;
 
-		try {
-			final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: studio/<database>/<context>");
+    try {
+      final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: studio/<database>/<context>");
 
-			db = getProfiledDatabaseInstance(iRequest);
+      db = getProfiledDatabaseInstance(iRequest);
 
-			final String req = iRequest.content;
+      final String req = iRequest.content;
 
-			// PARSE PARAMETERS
-			String operation = null;
-			String rid = null;
-			String className = null;
+      // PARSE PARAMETERS
+      String operation = null;
+      String rid = null;
+      String className = null;
 
-			final Map<String, String> fields = new HashMap<String, String>();
+      final Map<String, String> fields = new HashMap<String, String>();
 
-			final String[] params = req.split("&");
-			String value;
+      final String[] params = req.split("&");
+      String value;
 
-			for (String p : params) {
-				String[] pairs = p.split("=");
-				value = pairs.length == 1 ? null : pairs[1];
+      for (String p : params) {
+        String[] pairs = p.split("=");
+        value = pairs.length == 1 ? null : pairs[1];
 
-				if ("oper".equals(pairs[0]))
-					operation = value;
-				else if ("0".equals(pairs[0]))
-					rid = value;
-				else if ("1".equals(pairs[0]))
-					className = value;
-				else if (pairs[0].startsWith(ODocumentHelper.ATTRIBUTE_CLASS))
-					className = value;
-				else if (pairs[0].startsWith("@") || pairs[0].equals("id"))
-					continue;
-				else {
-					fields.put(pairs[0], value);
-				}
-			}
+        if ("oper".equals(pairs[0]))
+          operation = value;
+        else if ("0".equals(pairs[0]))
+          rid = value;
+        else if ("1".equals(pairs[0]))
+          className = value;
+        else if (pairs[0].startsWith(ODocumentHelper.ATTRIBUTE_CLASS))
+          className = value;
+        else if (pairs[0].startsWith("@") || pairs[0].equals("id"))
+          continue;
+        else {
+          fields.put(pairs[0], value);
+        }
+      }
 
-			String context = urlParts[2];
-			if ("document".equals(context))
-				executeDocument(iRequest, db, operation, rid, className, fields);
-			else if ("classes".equals(context))
-				executeClasses(iRequest, db, operation, rid, className, fields);
-			else if ("clusters".equals(context))
-				executeClusters(iRequest, db, operation, rid, className, fields);
-			else if ("classProperties".equals(context))
-				executeClassProperties(iRequest, db, operation, rid, className, fields);
-			else if ("classIndexes".equals(context))
-				executeClassIndexes(iRequest, db, operation, rid, className, fields);
+      String context = urlParts[2];
+      if ("document".equals(context))
+        executeDocument(iRequest, db, operation, rid, className, fields);
+      else if ("classes".equals(context))
+        executeClasses(iRequest, db, operation, rid, className, fields);
+      else if ("clusters".equals(context))
+        executeClusters(iRequest, db, operation, rid, className, fields);
+      else if ("classProperties".equals(context))
+        executeClassProperties(iRequest, db, operation, rid, className, fields);
+      else if ("classIndexes".equals(context))
+        executeClassIndexes(iRequest, db, operation, rid, className, fields);
 
-		} finally {
-			if (db != null)
-				OSharedDocumentDatabase.release(db);
-		}
-		return false;
-	}
+    } finally {
+      if (db != null)
+        OSharedDocumentDatabase.release(db);
+    }
+    return false;
+  }
 
-	private void executeClassProperties(final OHttpRequest iRequest, final ODatabaseDocumentTx db, final String operation,
-			final String rid, final String className, final Map<String, String> fields) throws IOException {
-		// GET THE TARGET CLASS
-		final OClass cls = db.getMetadata().getSchema().getClass(rid);
-		if (cls == null) {
-			sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Class '"
-					+ rid + "' not found.");
-			return;
-		}
+  private void executeClassProperties(final OHttpRequest iRequest, final ODatabaseDocumentTx db, final String operation,
+      final String rid, final String className, final Map<String, String> fields) throws IOException {
+    // GET THE TARGET CLASS
+    final OClass cls = db.getMetadata().getSchema().getClass(rid);
+    if (cls == null) {
+      sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN,
+          "Error: Class '" + rid + "' not found.");
+      return;
+    }
 
-		if ("add".equals(operation)) {
-			iRequest.data.commandInfo = "Studio add property";
+    if ("add".equals(operation)) {
+      iRequest.data.commandInfo = "Studio add property";
 
-			try {
-				OType type = OType.valueOf(fields.get("type"));
+      try {
+        OType type = OType.valueOf(fields.get("type"));
 
-				OPropertyImpl prop;
-				if (type == OType.LINK || type == OType.LINKLIST || type == OType.LINKSET || type == OType.LINKMAP)
-					prop = (OPropertyImpl) cls.createProperty(fields.get("name"), type,
-							db.getMetadata().getSchema().getClass(fields.get("linkedClass")));
-				else
-					prop = (OPropertyImpl) cls.createProperty(fields.get("name"), type);
+        OPropertyImpl prop;
+        if (type == OType.LINK || type == OType.LINKLIST || type == OType.LINKSET || type == OType.LINKMAP)
+          prop = (OPropertyImpl) cls.createProperty(fields.get("name"), type,
+              db.getMetadata().getSchema().getClass(fields.get("linkedClass")));
+        else
+          prop = (OPropertyImpl) cls.createProperty(fields.get("name"), type);
 
-				if (fields.get("linkedType") != null)
-					prop.setLinkedType(OType.valueOf(fields.get("linkedType")));
-				if (fields.get("mandatory") != null)
-					prop.setMandatory("on".equals(fields.get("mandatory")));
-				if (fields.get("notNull") != null)
-					prop.setNotNull("on".equals(fields.get("notNull")));
-				if (fields.get("min") != null)
-					prop.setMin(fields.get("min"));
-				if (fields.get("max") != null)
-					prop.setMax(fields.get("max"));
+        if (fields.get("linkedType") != null)
+          prop.setLinkedType(OType.valueOf(fields.get("linkedType")));
+        if (fields.get("mandatory") != null)
+          prop.setMandatory("on".equals(fields.get("mandatory")));
+        if (fields.get("notNull") != null)
+          prop.setNotNull("on".equals(fields.get("notNull")));
+        if (fields.get("min") != null)
+          prop.setMin(fields.get("min"));
+        if (fields.get("max") != null)
+          prop.setMax(fields.get("max"));
 
-				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN,
-						"Property " + fields.get("name") + " created successfully");
+        sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN,
+            "Property " + fields.get("name") + " created successfully");
 
-			} catch (Exception e) {
-				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on creating a new property in class " + rid + ": " + e,
-						null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating a new property in class " + rid + ": " + e);
-			}
-		} else if ("del".equals(operation)) {
-			iRequest.data.commandInfo = "Studio delete property";
+      } catch (Exception e) {
+        sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on creating a new property in class " + rid + ": "
+            + e, null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating a new property in class " + rid + ": " + e);
+      }
+    } else if ("del".equals(operation)) {
+      iRequest.data.commandInfo = "Studio delete property";
 
-			cls.dropProperty(className);
+      cls.dropProperty(className);
 
-			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN,
-					"Property " + fields.get("name") + " deleted successfully.");
-		}
-	}
+      sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN,
+          "Property " + fields.get("name") + " deleted successfully.");
+    }
+  }
 
-	private void executeClasses(final OHttpRequest iRequest, final ODatabaseDocumentTx db, final String operation, final String rid,
-			final String className, final Map<String, String> fields) throws IOException {
-		if ("add".equals(operation)) {
-			iRequest.data.commandInfo = "Studio add class";
+  private void executeClasses(final OHttpRequest iRequest, final ODatabaseDocumentTx db, final String operation, final String rid,
+      final String className, final Map<String, String> fields) throws IOException {
+    if ("add".equals(operation)) {
+      iRequest.data.commandInfo = "Studio add class";
 
-			// int defCluster = fields.get("defaultCluster") != null ? Integer.parseInt(fields.get("defaultCluster")) : db
-			// .getDefaultClusterId();
+      // int defCluster = fields.get("defaultCluster") != null ? Integer.parseInt(fields.get("defaultCluster")) : db
+      // .getDefaultClusterId();
 
-			try {
-				final String superClassName = fields.get("superClass");
-				final OClass superClass;
-				if (superClassName != null)
-					superClass = db.getMetadata().getSchema().getClass(superClassName);
-				else
-					superClass = null;
+      try {
+        final String superClassName = fields.get("superClass");
+        final OClass superClass;
+        if (superClassName != null)
+          superClass = db.getMetadata().getSchema().getClass(superClassName);
+        else
+          superClass = null;
 
-				final OClass cls = db.getMetadata().getSchema().createClass(fields.get("name"), superClass);
+        final OClass cls = db.getMetadata().getSchema().createClass(fields.get("name"), superClass);
 
-				final String alias = fields.get("alias");
-				if (alias != null)
-					cls.setShortName(alias);
+        final String alias = fields.get("alias");
+        if (alias != null)
+          cls.setShortName(alias);
 
-				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Class '" + rid
-						+ "' created successfully with id=" + db.getMetadata().getSchema().getClasses().size());
+        sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Class '" + rid
+            + "' created successfully with id=" + db.getMetadata().getSchema().getClasses().size());
 
-			} catch (Exception e) {
-				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on creating the new class '" + rid + "': " + e, null,
-						OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating the new class '" + rid + "': " + e);
-			}
-		} else if ("del".equals(operation)) {
-			iRequest.data.commandInfo = "Studio delete class";
+      } catch (Exception e) {
+        sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on creating the new class '" + rid + "': " + e,
+            null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating the new class '" + rid + "': " + e);
+      }
+    } else if ("del".equals(operation)) {
+      iRequest.data.commandInfo = "Studio delete class";
 
-			db.getMetadata().getSchema().dropClass(rid);
+      db.getMetadata().getSchema().dropClass(rid);
 
-			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Class '" + rid
-					+ "' deleted successfully.");
-		}
-	}
+      sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Class '" + rid
+          + "' deleted successfully.");
+    }
+  }
 
-	private void executeClusters(final OHttpRequest iRequest, final ODatabaseDocumentTx db, final String operation, final String rid,
-			final String iClusterName, final Map<String, String> fields) throws IOException {
-		if ("add".equals(operation)) {
-			iRequest.data.commandInfo = "Studio add cluster";
+  private void executeClusters(final OHttpRequest iRequest, final ODatabaseDocumentTx db, final String operation, final String rid,
+      final String iClusterName, final Map<String, String> fields) throws IOException {
+    if ("add".equals(operation)) {
+      iRequest.data.commandInfo = "Studio add cluster";
 
-		} else if ("del".equals(operation)) {
-			iRequest.data.commandInfo = "Studio delete cluster";
-		}
-	}
+    } else if ("del".equals(operation)) {
+      iRequest.data.commandInfo = "Studio delete cluster";
+    }
+  }
 
-	private void executeDocument(final OHttpRequest iRequest, final ODatabaseDocumentTx db, final String operation, final String rid,
-			final String className, final Map<String, String> fields) throws IOException {
-		if ("edit".equals(operation)) {
-			iRequest.data.commandInfo = "Studio edit document";
+  private void executeDocument(final OHttpRequest iRequest, final ODatabaseDocumentTx db, final String operation, final String rid,
+      final String className, final Map<String, String> fields) throws IOException {
+    if ("edit".equals(operation)) {
+      iRequest.data.commandInfo = "Studio edit document";
 
-			if (rid == null)
-				throw new IllegalArgumentException("Record ID not found in request");
+      if (rid == null)
+        throw new IllegalArgumentException("Record ID not found in request");
 
-			ODocument doc = new ODocument(className, new ORecordId(rid));
-			doc.reload(null, true);
+      ODocument doc = new ODocument(className, new ORecordId(rid));
+      doc.reload(null, true);
 
-			// BIND ALL CHANGED FIELDS
-			for (Entry<String, String> f : fields.entrySet()) {
-				final Object oldValue = doc.rawField(f.getKey());
-				String userValue = f.getValue();
+      // BIND ALL CHANGED FIELDS
+      for (Entry<String, String> f : fields.entrySet()) {
+        final Object oldValue = doc.rawField(f.getKey());
+        String userValue = f.getValue();
 
-				if (userValue.equals("undefined"))
-					continue;
+        if (userValue.equals("undefined"))
+          continue;
 
-				Object newValue = ORecordSerializerStringAbstract.getTypeValue(userValue);
+        Object newValue = ORecordSerializerStringAbstract.getTypeValue(userValue);
 
-				if (newValue != null) {
-					if (newValue instanceof Collection) {
-						final ArrayList<Object> array = new ArrayList<Object>();
-						for (String s : (Collection<String>) newValue) {
-							Object v = ORecordSerializerStringAbstract.getTypeValue(s);
-							array.add(v);
-						}
-						newValue = array;
-					}
-				}
+        if (newValue != null) {
+          if (newValue instanceof Collection) {
+            final ArrayList<Object> array = new ArrayList<Object>();
+            for (String s : (Collection<String>) newValue) {
+              Object v = ORecordSerializerStringAbstract.getTypeValue(s);
+              array.add(v);
+            }
+            newValue = array;
+          }
+        }
 
-				if (oldValue != null && oldValue.equals(userValue))
-					// NO CHANGES
-					continue;
+        if (oldValue != null && oldValue.equals(userValue))
+          // NO CHANGES
+          continue;
 
-				doc.field(f.getKey(), newValue);
-			}
+        doc.field(f.getKey(), newValue);
+      }
 
-			doc.save();
-			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid
-					+ " updated successfully.");
-		} else if ("add".equals(operation)) {
-			iRequest.data.commandInfo = "Studio create document";
+      doc.save();
+      sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid
+          + " updated successfully.");
+    } else if ("add".equals(operation)) {
+      iRequest.data.commandInfo = "Studio create document";
 
-			final ODocument doc = new ODocument(className);
+      final ODocument doc = new ODocument(className);
 
-			// BIND ALL CHANGED FIELDS
-			for (Entry<String, String> f : fields.entrySet())
-				doc.field(f.getKey(), f.getValue());
+      // BIND ALL CHANGED FIELDS
+      for (Entry<String, String> f : fields.entrySet())
+        doc.field(f.getKey(), f.getValue());
 
-			doc.save();
-			sendTextContent(iRequest, 201, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + doc.getIdentity()
-					+ " updated successfully.");
+      doc.save();
+      sendTextContent(iRequest, 201, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + doc.getIdentity()
+          + " updated successfully.");
 
-		} else if ("del".equals(operation)) {
-			iRequest.data.commandInfo = "Studio delete document";
+    } else if ("del".equals(operation)) {
+      iRequest.data.commandInfo = "Studio delete document";
 
-			if (rid == null)
-				throw new IllegalArgumentException("Record ID not found in request");
+      if (rid == null)
+        throw new IllegalArgumentException("Record ID not found in request");
 
-			final ODocument doc = new ODocument(new ORecordId(rid));
-			doc.load();
-			doc.delete();
-			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid
-					+ " deleted successfully.");
+      final ODocument doc = new ODocument(new ORecordId(rid));
+      doc.load();
+      doc.delete();
+      sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid
+          + " deleted successfully.");
 
-		} else
-			sendTextContent(iRequest, 500, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Operation not supported");
-	}
+    } else
+      sendTextContent(iRequest, 500, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Operation not supported");
+  }
 
-	private void executeClassIndexes(final OHttpRequest iRequest, final ODatabaseDocumentTx db, final String operation,
-			final String rid, final String className, final Map<String, String> fields) throws IOException {
-		// GET THE TARGET CLASS
-		final OClass cls = db.getMetadata().getSchema().getClass(rid);
-		if (cls == null) {
-			sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Class '"
-					+ rid + "' not found.");
-			return;
-		}
+  private void executeClassIndexes(final OHttpRequest iRequest, final ODatabaseDocumentTx db, final String operation,
+      final String rid, final String className, final Map<String, String> fields) throws IOException {
+    // GET THE TARGET CLASS
+    final OClass cls = db.getMetadata().getSchema().getClass(rid);
+    if (cls == null) {
+      sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN,
+          "Error: Class '" + rid + "' not found.");
+      return;
+    }
 
-		if ("add".equals(operation)) {
-			iRequest.data.commandInfo = "Studio add index";
+    if ("add".equals(operation)) {
+      iRequest.data.commandInfo = "Studio add index";
 
-			try {
-				final String[] fieldNames = fields.get("fields").trim().split("\\s*,\\s*");
-				final OClass.INDEX_TYPE indexType;
-				if (fields.get("type").equals("Unique"))
-					indexType = OClass.INDEX_TYPE.UNIQUE;
-				else
-					indexType = OClass.INDEX_TYPE.NOTUNIQUE;
+      try {
+        final String[] fieldNames = fields.get("fields").trim().split("\\s*,\\s*");
+        final String indexType = fields.get("type");
 
-				cls.createIndex(fields.get("name"), indexType, fieldNames);
+        cls.createIndex(fields.get("name"), indexType, fieldNames);
 
-				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN,
-						"Index " + fields.get("name") + " created successfully");
+        sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN,
+            "Index " + fields.get("name") + " created successfully");
 
-			} catch (Exception e) {
-				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on creating a new index for class " + rid + ": " + e,
-						null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating a new index for class " + rid + ": " + e);
-			}
-		} else if ("del".equals(operation)) {
-			iRequest.data.commandInfo = "Studio delete index";
+      } catch (Exception e) {
+        sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE,
+            "Error on creating a new index for class " + rid + ": " + e, null, OHttpUtils.CONTENT_TEXT_PLAIN,
+            "Error on creating a new index for class " + rid + ": " + e);
+      }
+    } else if ("del".equals(operation)) {
+      iRequest.data.commandInfo = "Studio delete index";
 
-			try {
-				final OIndex<?> index = cls.getClassIndex(className);
-				if (index == null) {
-					sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Index '"
-							+ className + "' not found in class '" + rid + "'.");
-					return;
-				}
+      try {
+        final OIndex<?> index = cls.getClassIndex(className);
+        if (index == null) {
+          sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN,
+              "Error: Index '" + className + "' not found in class '" + rid + "'.");
+          return;
+        }
 
-				db.getMetadata().getIndexManager().dropIndex(index.getName());
+        db.getMetadata().getIndexManager().dropIndex(index.getName());
 
-				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Index " + className
-						+ " deleted successfully.");
-			} catch (Exception e) {
-				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on deletion index '" + className + "' for class " + rid
-						+ ": " + e, null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error on deletion index '" + className + "' for class " + rid + ": "
-						+ e);
-			}
-		} else
-			sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN,
-					"Operation not supported");
-	}
+        sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Index " + className
+            + " deleted successfully.");
+      } catch (Exception e) {
+        sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on deletion index '" + className + "' for class "
+            + rid + ": " + e, null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error on deletion index '" + className + "' for class " + rid
+            + ": " + e);
+      }
+    } else
+      sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN,
+          "Operation not supported");
+  }
 
-	public String[] getNames() {
-		return NAMES;
-	}
+  public String[] getNames() {
+    return NAMES;
+  }
 }
