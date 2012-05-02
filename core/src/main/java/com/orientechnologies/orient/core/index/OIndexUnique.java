@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.ORecord;
 
 /**
  * Index implementation that allows only one value for a key.
@@ -25,34 +26,37 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
  * 
  */
 public class OIndexUnique extends OIndexOneValue {
-    
-    public static final String TYPE_ID = OClass.INDEX_TYPE.UNIQUE.toString();
-    
-	public OIndexUnique() {
-		super(TYPE_ID);
-	}
 
-	public OIndexOneValue put(final Object iKey, final OIdentifiable iSingleValue) {
-		acquireExclusiveLock();
-		try {
-			checkForKeyType(iKey);
+  public static final String TYPE_ID = OClass.INDEX_TYPE.UNIQUE.toString();
 
-			final OIdentifiable value = map.get(iKey);
+  public OIndexUnique() {
+    super(TYPE_ID);
+  }
 
-			if (value != null) {
-				// CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
-				if (!value.equals(iSingleValue))
-					throw new OIndexException("Found duplicated key '" + iKey + "' on unique index '" + name + "' for record "
-							+ iSingleValue.getIdentity() + ". The record already present in the index is " + value.getIdentity());
-				else
-					return this;
-			}
+  public OIndexOneValue put(final Object iKey, final OIdentifiable iSingleValue) {
+    acquireExclusiveLock();
+    try {
+      checkForKeyType(iKey);
 
-			map.put(iKey, iSingleValue);
-			return this;
+      final OIdentifiable value = map.get(iKey);
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+      if (value != null) {
+        // CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
+        if (!value.equals(iSingleValue))
+          throw new OIndexException("Found duplicated key '" + iKey + "' on unique index '" + name + "' for record "
+              + iSingleValue.getIdentity() + ". The record already present in the index is " + value.getIdentity());
+        else
+          return this;
+      }
+
+      if (!iSingleValue.getIdentity().isValid())
+        ((ORecord<?>) iSingleValue).save();
+
+      map.put(iKey, iSingleValue.getIdentity());
+      return this;
+
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 }

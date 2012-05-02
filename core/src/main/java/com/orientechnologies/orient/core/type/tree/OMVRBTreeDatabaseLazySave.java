@@ -30,100 +30,99 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
  */
 @SuppressWarnings("serial")
 public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> {
-	protected int			maxUpdatesBeforeSave;
-	protected int			updates							= 0;
-	protected boolean	transactionRunning	= false;
+  protected int     maxUpdatesBeforeSave;
+  protected int     updates            = 0;
+  protected boolean transactionRunning = false;
 
-	public OMVRBTreeDatabaseLazySave(ODatabaseRecord iDatabase, ORID iRID) {
-		super(iDatabase, iRID);
-	}
+  public OMVRBTreeDatabaseLazySave(ODatabaseRecord iDatabase, ORID iRID) {
+    super(iDatabase, iRID);
+  }
 
-	public OMVRBTreeDatabaseLazySave(String iClusterName, OBinarySerializer iKeySerializer,
-																	 OStreamSerializer iValueSerializer, int keySize) {
-		super(iClusterName, iKeySerializer, iValueSerializer, keySize);
-	}
+  public OMVRBTreeDatabaseLazySave(String iClusterName, OBinarySerializer<?> iKeySerializer, OStreamSerializer iValueSerializer,
+      int keySize) {
+    super(iClusterName, iKeySerializer, iValueSerializer, keySize);
+  }
 
-	/**
-	 * Do nothing since all the changes will be committed expressly at lazySave() time or on closing.
-	 */
-	@Override
-	public synchronized int commitChanges() {
-		return commitChanges(false);
-	}
+  /**
+   * Do nothing since all the changes will be committed expressly at lazySave() time or on closing.
+   */
+  @Override
+  public synchronized int commitChanges() {
+    return commitChanges(false);
+  }
 
-	public synchronized int commitChanges(boolean force) {
-		if (transactionRunning || maxUpdatesBeforeSave == 0 ||
-						(maxUpdatesBeforeSave > 0 && ++updates >= maxUpdatesBeforeSave) || force) {
-			updates = 0;
-			return lazySave();
-		}
-		return 0;
-	}
+  public synchronized int commitChanges(boolean force) {
+    if (transactionRunning || maxUpdatesBeforeSave == 0 || (maxUpdatesBeforeSave > 0 && ++updates >= maxUpdatesBeforeSave) || force) {
+      updates = 0;
+      return lazySave();
+    }
+    return 0;
+  }
 
-	@Override
-	public void clear() {
-		super.clear();
-		lazySave();
-	}
+  @Override
+  public void clear() {
+    super.clear();
+    lazySave();
+  }
 
-	public int lazySave() {
-		return super.commitChanges();
-	}
+  public int lazySave() {
+    return super.commitChanges();
+  }
 
-	@Override
-	public int optimize(final boolean iForce) {
-		if (optimization == -1)
-			// IS ALREADY RUNNING
-			return 0;
+  @Override
+  public int optimize(final boolean iForce) {
+    if (optimization == -1)
+      // IS ALREADY RUNNING
+      return 0;
 
-		if (!iForce && optimization == 0)
-			// NO OPTIMIZATION IS NEEDED
-			return 0;
+    if (!iForce && optimization == 0)
+      // NO OPTIMIZATION IS NEEDED
+      return 0;
 
-		optimization = iForce ? 2 : 1;
+    optimization = iForce ? 2 : 1;
 
-		lazySave();
-		return super.optimize(iForce);
-	}
+    lazySave();
+    return super.optimize(iForce);
+  }
 
-	/**
-	 * Returns the maximum updates to save the map persistently.
-	 * 
-	 * @return 0 means no automatic save, 1 means non-lazy map (save each operation) and > 1 is lazy.
-	 */
-	public int getMaxUpdatesBeforeSave() {
-		return maxUpdatesBeforeSave;
-	}
+  /**
+   * Returns the maximum updates to save the map persistently.
+   * 
+   * @return 0 means no automatic save, 1 means non-lazy map (save each operation) and > 1 is lazy.
+   */
+  public int getMaxUpdatesBeforeSave() {
+    return maxUpdatesBeforeSave;
+  }
 
-	/**
-	 * Sets the maximum updates to save the map persistently.
-	 * 
-	 * @param iValue
-	 *          0 means no automatic save, 1 means non-lazy map (save each operation) and > 1 is lazy.
-	 */
-	public void setMaxUpdatesBeforeSave(final int iValue) {
-		this.maxUpdatesBeforeSave = iValue;
-	}
+  /**
+   * Sets the maximum updates to save the map persistently.
+   * 
+   * @param iValue
+   *          0 means no automatic save, 1 means non-lazy map (save each operation) and > 1 is lazy.
+   */
+  public void setMaxUpdatesBeforeSave(final int iValue) {
+    this.maxUpdatesBeforeSave = iValue;
+  }
 
-	@Override
-	protected void config() {
-		super.config();
-		maxUpdatesBeforeSave = OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.getValueAsInteger();
-	}
+  @Override
+  protected void config() {
+    super.config();
+    maxUpdatesBeforeSave = OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.getValueAsInteger();
+  }
 
-	/**
-	 * Change the transaction running mode.
-	 * 
-	 * @param iTxRunning
-	 *          true if a transaction is running, otherwise false
-	 */
-	public void setRunningTransaction(final boolean iTxRunning) {
-		transactionRunning = iTxRunning;
+  /**
+   * Change the transaction running mode.
+   * 
+   * @param iTxRunning
+   *          true if a transaction is running, otherwise false
+   */
+  public void setRunningTransaction(final boolean iTxRunning) {
+    transactionRunning = iTxRunning;
 
-		if (iTxRunning) {
-			// ASSURE ALL PENDING CHANGES ARE COMMITTED BEFORE TO START A TX
-			updates = 0;
-			lazySave();
-		}
-	}
+    if (iTxRunning) {
+      // ASSURE ALL PENDING CHANGES ARE COMMITTED BEFORE TO START A TX
+      updates = 0;
+      lazySave();
+    }
+  }
 }

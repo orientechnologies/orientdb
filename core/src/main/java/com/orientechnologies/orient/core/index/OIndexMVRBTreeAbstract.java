@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog.Listener;
@@ -215,7 +216,17 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
         clustersToIndex.addAll(clusters);
 
       map = new OMVRBTreeDatabaseLazySave<Object, T>(getDatabase(), rid);
-      map.load();
+      try {
+        map.load();
+      } catch (Exception e) {
+        if (onCorruptionRepairDatabase(null, "load", "Index will be rebuilt")) {
+          if (isAutomatic())
+            // AUTOMATIC REBUILD IT
+            OLogManager.instance().warn(this, "Cannot load index '%s' from storage (rid=%s): rebuilt it from scratch", getName(),
+                rid);
+          rebuild();
+        }
+      }
 
       installHooks(iConfig.getDatabase());
 
@@ -330,14 +341,17 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
    * Populates the index with all the existent records. Uses the massive insert intent to speed up and keep the consumed memory low.
    */
   public long rebuild(final OProgressListener iProgressListener) {
-    clear();
-
     long documentIndexed = 0;
 
     final boolean intentInstalled = getDatabase().declareIntent(new OIntentMassiveInsert());
 
     acquireExclusiveLock();
     try {
+      try {
+        map.clear();
+      } catch (Exception e) {
+        // IGNORE EXCEPTION: IF THE REBUILD WAS LAUNCHED IN CASE OF RID INVALID CLEAR ALWAYS GOES IN ERROR
+      }
 
       int documentNum = 0;
       long documentTotal = 0;
@@ -352,6 +366,11 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
         for (final ORecord<?> record : getDatabase().browseCluster(clusterName)) {
           if (record instanceof ODocument) {
             final ODocument doc = (ODocument) record;
+
+            if (indexDefinition == null)
+              throw new OConfigurationException("Index '" + name + "' cannot be rebuilt because has no a valid definition ("
+                  + indexDefinition + ")");
+
             final Object fieldValue = indexDefinition.getDocumentValueToIndex(doc);
 
             if (fieldValue != null) {
@@ -380,7 +399,11 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
       if (iProgressListener != null)
         iProgressListener.onCompletition(this, false);
 
-      clear();
+      try {
+        map.clear();
+      } catch (Exception e2) {
+        // IGNORE EXCEPTION: IF THE REBUILD WAS LAUNCHED IN CASE OF RID INVALID CLEAR ALWAYS GOES IN ERROR
+      }
 
       throw new OIndexException("Error on rebuilding the index for clusters: " + clustersToIndex, e);
 
@@ -725,6 +748,8 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   }
 
   public boolean onCorruptionRepairDatabase(final ODatabase iDatabase, final String iReason, String iWhatWillbeFixed) {
+    if (iReason.equals("load"))
+      return true;
     return false;
   }
 
