@@ -108,8 +108,8 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 		checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, iClassName);
 
 		try {
-			RET enhanced = (RET) OObjectEntityEnhancer.getInstance().getProxiedInstance(entityManager.getEntityClass(iClassName),
-					iEnclosingClass, underlying.newInstance(iClassName), iArgs);
+			RET enhanced = (RET) OObjectEntityEnhancer.getInstance().getProxiedInstance(entityManager.getEntityClass(iClassName), iEnclosingClass, underlying.newInstance(iClassName),
+					iArgs);
 			return (RET) enhanced;
 		} catch (Exception e) {
 			OLogManager.instance().error(this, "Error on creating object of class " + iClassName, e, ODatabaseException.class);
@@ -123,13 +123,11 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 	 * 
 	 * @see OEntityManager.registerEntityClasses(String)
 	 */
-	public <RET extends Object> RET newInstance(final String iClassName, final Object iEnclosingClass, ODocument iDocument,
-			Object... iArgs) {
+	public <RET extends Object> RET newInstance(final String iClassName, final Object iEnclosingClass, ODocument iDocument, Object... iArgs) {
 		checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, iClassName);
 
 		try {
-			RET enhanced = (RET) OObjectEntityEnhancer.getInstance().getProxiedInstance(entityManager.getEntityClass(iClassName),
-					iEnclosingClass, iDocument, iArgs);
+			RET enhanced = (RET) OObjectEntityEnhancer.getInstance().getProxiedInstance(entityManager.getEntityClass(iClassName), iEnclosingClass, iDocument, iArgs);
 			return (RET) enhanced;
 		} catch (Exception e) {
 			OLogManager.instance().error(this, "Error on creating object of class " + iClassName, e, ODatabaseException.class);
@@ -163,8 +161,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 		checkOpeness();
 		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
-		return (OObjectIteratorCluster<RET>) new OObjectIteratorCluster<Object>(this, (ODatabaseRecordAbstract) getUnderlying()
-				.getUnderlying(), getClusterIdByName(iClusterName));
+		return (OObjectIteratorCluster<RET>) new OObjectIteratorCluster<Object>(this, (ODatabaseRecordAbstract) getUnderlying().getUnderlying(), getClusterIdByName(iClusterName));
 	}
 
 	public <RET> RET load(final Object iPojo) {
@@ -230,11 +227,6 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 			if (record == null)
 				return null;
 		}
-
-		Object result = records2Objects.get(record);
-		if (result != null)
-			// FOUND: JUST RETURN IT
-			return (RET) result;
 
 		return OObjectEntityEnhancer.getInstance().getProxiedInstance(record.getClassName(), entityManager, record);
 	}
@@ -371,20 +363,17 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 				// UPDATE ID & VERSION FOR ALL THE RECORDS
 				Object pojo = null;
 				for (ORecordOperation entry : getTransaction().getAllRecordEntries()) {
-					pojo = records2Objects.get(entry.getRecord());
+					switch (entry.type) {
+					case ORecordOperation.CREATED:
+						rid2Records.put(entry.getRecord().getIdentity(), (ODocument) entry.getRecord());
 
-					if (pojo != null)
-						switch (entry.type) {
-						case ORecordOperation.CREATED:
-							rid2Records.put(entry.getRecord().getIdentity(), (ODocument) entry.getRecord());
+					case ORecordOperation.UPDATED:
+						break;
 
-						case ORecordOperation.UPDATED:
-							break;
-
-						case ORecordOperation.DELETED:
-							unregisterPojo(pojo, (ODocument) entry.getRecord());
-							break;
-						}
+					case ORecordOperation.DELETED:
+						unregisterPojo(pojo, (ODocument) entry.getRecord());
+						break;
+					}
 				}
 			}
 		} finally {
@@ -410,30 +399,14 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 			// BY PASS DOCUMENT DB
 			((ODatabaseRecordTx) underlying.getUnderlying()).rollback();
 
-			if (newEntries != null) {
-				Object pojo = null;
-				for (ORecordOperation entry : newEntries) {
-					pojo = records2Objects.get(entry.getRecord());
-
-					OObjectSerializerHelper.setObjectID(null, pojo);
-					OObjectSerializerHelper.setObjectVersion(null, pojo);
-				}
-			}
-
 			if (getTransaction().getCurrentRecordEntries() != null)
 				for (ORecordOperation recordEntry : getTransaction().getCurrentRecordEntries()) {
 					rid2Records.remove(recordEntry.getRecord().getIdentity());
-					final Object pojo = records2Objects.remove(recordEntry.getRecord());
-					if (pojo != null)
-						objects2Records.remove(pojo);
 				}
 
 			if (getTransaction().getAllRecordEntries() != null)
 				for (ORecordOperation recordEntry : getTransaction().getAllRecordEntries()) {
 					rid2Records.remove(recordEntry.getRecord().getIdentity());
-					final Object pojo = records2Objects.remove(recordEntry.getRecord());
-					if (pojo != null)
-						objects2Records.remove(pojo);
 				}
 
 		} finally {
@@ -515,14 +488,12 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 		if (iPojo instanceof ProxyObject) {
 			return ((OObjectProxyMethodHandler) ((ProxyObject) iPojo).getHandler()).getDoc();
 		}
-		return OObjectSerializerHelper.toStream(iPojo, iRecord, getEntityManager(),
-				getMetadata().getSchema().getClass(iPojo.getClass().getSimpleName()), this, this, saveOnlyDirty);
+		return OObjectSerializerHelper.toStream(iPojo, iRecord, getEntityManager(), getMetadata().getSchema().getClass(iPojo.getClass().getSimpleName()), this, this, saveOnlyDirty);
 	}
 
 	@Override
 	public Object stream2pojo(ODocument iRecord, final Object iPojo, final String iFetchPlan) {
 		return stream2pojo(iRecord, iPojo, iFetchPlan, false);
-		// return OObjectSerializerHelper.fromStream(iRecord, iPojo, getEntityManager(), this, iFetchPlan, lazyLoading);
 	}
 
 	public Object stream2pojo(ODocument iRecord, final Object iPojo, final String iFetchPlan, boolean iReload) {
@@ -541,7 +512,6 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 			return OObjectEntityEnhancer.getInstance().getProxiedInstance(iPojo.getClass(), iRecord);
 		else
 			return iPojo;
-		// return OObjectSerializerHelper.fromStream(iRecord, iPojo, getEntityManager(), this, iFetchPlan, lazyLoading);
 	}
 
 	public boolean isLazyLoading() {
@@ -602,15 +572,19 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 		final ODocument doc = (ODocument) iRecord;
 
 		if (retainObjects) {
-			if (iObject != null) {
-				objects2Records.put(iObject, doc);
-				records2Objects.put(doc, iObject);
-
-			}
 
 			final ORID rid = iRecord.getIdentity();
 			if (rid.isValid())
 				rid2Records.put(rid, doc);
+		}
+	}
+
+	@Override
+	public void unregisterPojo(final Object iObject, final ODocument iRecord) {
+		if (iRecord != null) {
+			final ORID rid = iRecord.getIdentity();
+			if (rid.isValid())
+				rid2Records.remove(rid);
 		}
 	}
 }

@@ -23,12 +23,13 @@ import java.util.Set;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.OLazyObjectMapInterface;
+import com.orientechnologies.orient.core.db.object.OLazyObjectMultivalueElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @Deprecated
-public class OLazyObjectMap<TYPE> extends HashMap<Object, Object> implements Serializable, OLazyObjectMapInterface<TYPE> {
+public class OLazyObjectMap<TYPE> extends HashMap<Object, Object> implements Serializable, OLazyObjectMultivalueElement, OLazyObjectMapInterface<TYPE> {
 	private static final long					serialVersionUID	= 4146521893082733694L;
 
 	private final ORecord<?>					sourceRecord;

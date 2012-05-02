@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.object.OLazyObjectMultivalueElement;
 import com.orientechnologies.orient.core.db.object.OLazyObjectSetInterface;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
@@ -40,7 +41,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 @Deprecated
 @SuppressWarnings("unchecked")
-public class OLazyObjectSet<TYPE> implements OLazyObjectSetInterface<TYPE>, Serializable {
+public class OLazyObjectSet<TYPE> implements OLazyObjectSetInterface<TYPE>, OLazyObjectMultivalueElement, Serializable {
 	private static final long					serialVersionUID	= -2497274705163041241L;
 
 	private final ORecord<?>					sourceRecord;
@@ -178,8 +179,7 @@ public class OLazyObjectSet<TYPE> implements OLazyObjectSetInterface<TYPE>, Seri
 		for (Object e : copy) {
 			if (e != null) {
 				if (e instanceof ORID)
-					add(database.getUserObjectByRecord(
-							(ORecordInternal<?>) ((ODatabaseRecord) getDatabase().getUnderlying()).load((ORID) e, fetchPlan), fetchPlan));
+					add(database.getUserObjectByRecord((ORecordInternal<?>) ((ODatabaseRecord) getDatabase().getUnderlying()).load((ORID) e, fetchPlan), fetchPlan));
 				else if (e instanceof ODocument)
 					add(database.getUserObjectByRecord((ORecordInternal<?>) e, fetchPlan));
 				else

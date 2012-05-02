@@ -25,6 +25,7 @@ import java.util.ListIterator;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.object.OLazyObjectListInterface;
+import com.orientechnologies.orient.core.db.object.OLazyObjectMultivalueElement;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -33,7 +34,7 @@ import com.orientechnologies.orient.object.enhancement.OObjectEntityEnhancer;
 
 @Deprecated
 @SuppressWarnings({ "unchecked" })
-public class OLazyObjectList<TYPE> implements OLazyObjectListInterface<TYPE>, Serializable {
+public class OLazyObjectList<TYPE> implements OLazyObjectListInterface<TYPE>, OLazyObjectMultivalueElement, Serializable {
 	private static final long				serialVersionUID	= 289711963195698937L;
 	private ORecord<?>							sourceRecord;
 	private final ArrayList<Object>	list							= new ArrayList<Object>();
@@ -55,9 +56,7 @@ public class OLazyObjectList<TYPE> implements OLazyObjectListInterface<TYPE>, Se
 	}
 
 	public Iterator<TYPE> iterator() {
-		return new OLazyObjectIterator<TYPE>(
-				(ODatabasePojoAbstract<TYPE>) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner(), sourceRecord, list.iterator(),
-				convertToRecord);
+		return new OLazyObjectIterator<TYPE>((ODatabasePojoAbstract<TYPE>) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner(), sourceRecord, list.iterator(), convertToRecord);
 	}
 
 	public boolean contains(final Object o) {
@@ -235,10 +234,7 @@ public class OLazyObjectList<TYPE> implements OLazyObjectListInterface<TYPE>, Se
 			} else if (o instanceof ODocument) {
 				doc = (ODocument) o;
 			}
-			list.set(
-					iIndex,
-					OObjectEntityEnhancer.getInstance().getProxiedInstance(doc.getClassName(),
-							((ODatabaseObject) database.getDatabaseOwner()).getEntityManager(), doc));
+			list.set(iIndex, OObjectEntityEnhancer.getInstance().getProxiedInstance(doc.getClassName(), ((ODatabaseObject) database.getDatabaseOwner()).getEntityManager(), doc));
 		}
 	}
 

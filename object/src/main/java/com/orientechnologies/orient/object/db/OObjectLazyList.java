@@ -54,14 +54,13 @@ public class OObjectLazyList<TYPE> implements OLazyObjectListInterface<TYPE>, OL
 		}
 	}
 
-	public OObjectLazyList(final ORecord<?> iSourceRecord, final List<OIdentifiable> iRecordList,
-			final Collection<? extends TYPE> iSourceList) {
+	public OObjectLazyList(final ORecord<?> iSourceRecord, final List<OIdentifiable> iRecordList, final Collection<? extends TYPE> iSourceList) {
 		this.sourceRecord = iSourceRecord;
 		this.recordList = iRecordList;
-		addAll(iSourceList);
-		for (int i = iSourceList.size(); i < iRecordList.size(); i++) {
+		for (int i = 0; i < iRecordList.size(); i++) {
 			list.add(i, null);
 		}
+		addAll(iSourceList);
 	}
 
 	public Iterator<TYPE> iterator() {
@@ -117,8 +116,7 @@ public class OObjectLazyList<TYPE> implements OLazyObjectListInterface<TYPE>, OL
 		TYPE o = (TYPE) list.get(index);
 		if (o == null) {
 			OIdentifiable record = (OIdentifiable) recordList.get(index);
-			o = OObjectEntityEnhancer.getInstance().getProxiedInstance(((ODocument) record.getRecord()).getClassName(),
-					getDatabase().getEntityManager(), (ODocument) record.getRecord());
+			o = OObjectEntityEnhancer.getInstance().getProxiedInstance(((ODocument) record.getRecord()).getClassName(), getDatabase().getEntityManager(), (ODocument) record.getRecord());
 			list.set(index, o);
 		}
 		return o;
@@ -183,7 +181,7 @@ public class OObjectLazyList<TYPE> implements OLazyObjectListInterface<TYPE>, OL
 	public boolean addAll(Collection<? extends TYPE> c) {
 		boolean dirty = false;
 		for (TYPE element : c) {
-			dirty = dirty || add(element);
+			dirty = add(element) || dirty;
 		}
 		if (dirty)
 			setDirty();
@@ -203,7 +201,7 @@ public class OObjectLazyList<TYPE> implements OLazyObjectListInterface<TYPE>, OL
 	public boolean removeAll(Collection<?> c) {
 		boolean dirty = true;
 		for (Object o : c) {
-			dirty = dirty || remove(o);
+			dirty = remove(o) || dirty;
 		}
 		if (dirty)
 			setDirty();
@@ -249,8 +247,8 @@ public class OObjectLazyList<TYPE> implements OLazyObjectListInterface<TYPE>, OL
 		if (indexLoaded(index)) {
 			element = (TYPE) list.remove(index);
 		} else {
-			element = OObjectEntityEnhancer.getInstance().getProxiedInstance(((ODocument) record.getRecord()).getClassName(),
-					getDatabase().getEntityManager(), (ODocument) record.getRecord());
+			element = OObjectEntityEnhancer.getInstance().getProxiedInstance(((ODocument) record.getRecord()).getClassName(), getDatabase().getEntityManager(),
+					(ODocument) record.getRecord());
 		}
 		setDirty();
 		return element;
@@ -330,8 +328,7 @@ public class OObjectLazyList<TYPE> implements OLazyObjectListInterface<TYPE>, OL
 			} else {
 				doc = (ODocument) o;
 			}
-			list.set(iIndex,
-					OObjectEntityEnhancer.getInstance().getProxiedInstance(doc.getClassName(), getDatabase().getEntityManager(), doc));
+			list.set(iIndex, OObjectEntityEnhancer.getInstance().getProxiedInstance(doc.getClassName(), getDatabase().getEntityManager(), doc));
 		}
 	}
 

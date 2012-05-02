@@ -139,22 +139,35 @@ public class OObjectEntitySerializer {
 	public static boolean isTransientField(Class<?> iClass, String iField) {
 		if (!classes.contains(iClass))
 			registerClass(iClass);
-		List<String> classTransientFields = transientFields.get(iClass);
-		return classTransientFields != null && classTransientFields.contains(iField);
+		boolean isTransientField = false;
+		for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
+				&& !currentClass.equals(ODocument.class) && !isTransientField;) {
+			List<String> classEmbeddedFields = transientFields.get(iClass);
+			isTransientField = classEmbeddedFields != null && classEmbeddedFields.contains(iField);
+			currentClass = currentClass.getSuperclass();
+		}
+		return isTransientField;
 	}
 
 	public static boolean isEmbeddedField(Class<?> iClass, String iField) {
 		if (!classes.contains(iClass))
 			registerClass(iClass);
-		List<String> classEmbeddedFields = embeddedFields.get(iClass);
-		return classEmbeddedFields != null && classEmbeddedFields.contains(iField);
+		boolean isEmbeddedField = false;
+		for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
+				&& !currentClass.equals(ODocument.class) && !isEmbeddedField;) {
+			List<String> classEmbeddedFields = embeddedFields.get(iClass);
+			isEmbeddedField = classEmbeddedFields != null && classEmbeddedFields.contains(iField);
+			currentClass = currentClass.getSuperclass();
+		}
+		return isEmbeddedField;
 	}
 
 	/**
 	 * Registers the class informations that will be used in serialization, deserialization and lazy loading of it. If already
 	 * registered does nothing.
 	 * 
-	 * @param iClass:- the Class<?> to register
+	 * @param iClass
+	 *          :- the Class<?> to register
 	 */
 	@SuppressWarnings("unchecked")
 	public static synchronized void registerClass(Class<?> iClass) {
@@ -176,18 +189,18 @@ public class OObjectEntitySerializer {
 					continue;
 
 				if (f.getName().equals("this$0")) {
-					if (transientFields.get(iClass) == null)
-						transientFields.put(iClass, new ArrayList<String>());
-					transientFields.get(iClass).add(f.getName());
+					if (transientFields.get(currentClass) == null)
+						transientFields.put(currentClass, new ArrayList<String>());
+					transientFields.get(currentClass).add(f.getName());
 				}
 
 				if (OObjectSerializerHelper.jpaTransientClass != null) {
 					Annotation ann = f.getAnnotation(OObjectSerializerHelper.jpaTransientClass);
 					if (ann != null) {
 						// @Transient DEFINED
-						if (transientFields.get(iClass) == null)
-							transientFields.put(iClass, new ArrayList<String>());
-						transientFields.get(iClass).add(f.getName());
+						if (transientFields.get(currentClass) == null)
+							transientFields.put(currentClass, new ArrayList<String>());
+						transientFields.get(currentClass).add(f.getName());
 					}
 				}
 
@@ -215,25 +228,25 @@ public class OObjectEntitySerializer {
 					}
 				}
 				if (directBinding) {
-					if (directAccessFields.get(iClass) == null)
-						directAccessFields.put(iClass, new ArrayList<String>());
-					directAccessFields.get(iClass).add(f.getName());
+					if (directAccessFields.get(currentClass) == null)
+						directAccessFields.put(currentClass, new ArrayList<String>());
+					directAccessFields.get(currentClass).add(f.getName());
 				}
 
 				if (f.getAnnotation(ODocumentInstance.class) != null)
 					// BOUND DOCUMENT ON IT
-					boundDocumentFields.put(iClass, f);
+					boundDocumentFields.put(currentClass, f);
 
 				boolean idFound = false;
 				if (f.getAnnotation(OId.class) != null) {
 					// RECORD ID
-					fieldIds.put(iClass, f);
+					fieldIds.put(currentClass, f);
 					idFound = true;
 				}
 				// JPA 1+ AVAILABLE?
 				else if (OObjectSerializerHelper.jpaIdClass != null && f.getAnnotation(OObjectSerializerHelper.jpaIdClass) != null) {
 					// RECORD ID
-					fieldIds.put(iClass, f);
+					fieldIds.put(currentClass, f);
 					idFound = true;
 				}
 				if (idFound) {
@@ -250,14 +263,14 @@ public class OObjectEntitySerializer {
 				boolean vFound = false;
 				if (f.getAnnotation(OVersion.class) != null) {
 					// RECORD ID
-					fieldVersions.put(iClass, f);
+					fieldVersions.put(currentClass, f);
 					vFound = true;
 				}
 				// JPA 1+ AVAILABLE?
 				else if (OObjectSerializerHelper.jpaVersionClass != null
 						&& f.getAnnotation(OObjectSerializerHelper.jpaVersionClass) != null) {
 					// RECORD ID
-					fieldVersions.put(iClass, f);
+					fieldVersions.put(currentClass, f);
 					vFound = true;
 				}
 				if (vFound) {
@@ -272,19 +285,19 @@ public class OObjectEntitySerializer {
 
 				// JPA 1+ AVAILABLE?
 				if (OObjectSerializerHelper.jpaEmbeddedClass != null && f.getAnnotation(OObjectSerializerHelper.jpaEmbeddedClass) != null) {
-					if (embeddedFields.get(iClass) == null)
-						embeddedFields.put(iClass, new ArrayList<String>());
-					embeddedFields.get(iClass).add(f.getName());
+					if (embeddedFields.get(currentClass) == null)
+						embeddedFields.put(currentClass, new ArrayList<String>());
+					embeddedFields.get(currentClass).add(f.getName());
 				}
 
 			}
 
-			registerCallbacks(iClass);
+			registerCallbacks(currentClass);
 
 			String iClassName = iClass.getSimpleName();
 			currentClass = currentClass.getSuperclass();
 
-			if (currentClass.equals(ODocument.class))
+			if (currentClass == null || currentClass.equals(ODocument.class))
 				// POJO EXTENDS ODOCUMENT: SPECIAL CASE: AVOID TO CONSIDER
 				// ODOCUMENT FIELDS
 				currentClass = Object.class;
@@ -404,21 +417,48 @@ public class OObjectEntitySerializer {
 		if (!classes.contains(iClass)) {
 			registerClass(iClass);
 		}
-		return boundDocumentFields.get(iClass) != null;
+		boolean hasBoundedField = false;
+		for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
+				&& !currentClass.equals(ODocument.class) && !hasBoundedField;) {
+			hasBoundedField = boundDocumentFields.get(currentClass) != null;
+			currentClass = currentClass.getSuperclass();
+		}
+		return hasBoundedField;
 	}
 
 	public static Field getBoundedDocumentField(final Class<?> iClass) {
 		if (!classes.contains(iClass)) {
 			registerClass(iClass);
 		}
-		return boundDocumentFields.get(iClass);
+		for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
+				&& !currentClass.equals(ODocument.class);) {
+			Field f = boundDocumentFields.get(currentClass);
+			if (f != null)
+				return f;
+			currentClass = currentClass.getSuperclass();
+		}
+		return null;
 	}
 
 	public static boolean isIdField(final Class<?> iClass, String iFieldName) {
 		if (!classes.contains(iClass)) {
 			registerClass(iClass);
 		}
-		return fieldIds.get(iClass) != null && fieldIds.get(iClass).getName().equals(iFieldName);
+		boolean isIdField = false;
+		for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
+				&& !currentClass.equals(ODocument.class) && !isIdField;) {
+			Field f = fieldIds.get(currentClass);
+			isIdField = f != null && f.getName().equals(iFieldName);
+			currentClass = currentClass.getSuperclass();
+		}
+		return isIdField;
+	}
+
+	public static boolean isIdField(Field iField) {
+		if (!classes.contains(iField.getDeclaringClass())) {
+			registerClass(iField.getDeclaringClass());
+		}
+		return fieldIds.containsValue(iField);
 	}
 
 	public static void setIdField(final Class<?> iClass, Object iObject, ORID iValue) throws IllegalArgumentException,
@@ -426,20 +466,36 @@ public class OObjectEntitySerializer {
 		if (!classes.contains(iClass)) {
 			registerClass(iClass);
 		}
-		Field f = fieldIds.get(iClass);
-		if (f.getType().equals(String.class))
-			setFieldValue(f, iObject, iValue.toString());
-		else if (f.getType().equals(Long.class))
-			setFieldValue(f, iObject, Long.valueOf(iValue.getClusterPosition()));
-		else if (f.getType().equals(Object.class))
-			setFieldValue(f, iObject, iValue);
+		Field f = null;
+		for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
+				&& !currentClass.equals(ODocument.class);) {
+			f = fieldIds.get(currentClass);
+			if (f != null)
+				break;
+			currentClass = currentClass.getSuperclass();
+		}
+		if (f != null) {
+			if (f.getType().equals(String.class))
+				setFieldValue(f, iObject, iValue.toString());
+			else if (f.getType().equals(Long.class))
+				setFieldValue(f, iObject, Long.valueOf(iValue.getClusterPosition()));
+			else if (f.getType().equals(Object.class))
+				setFieldValue(f, iObject, iValue);
+		}
 	}
 
 	public static boolean isVersionField(final Class<?> iClass, String iFieldName) {
 		if (!classes.contains(iClass)) {
 			registerClass(iClass);
 		}
-		return fieldVersions.get(iClass) != null && fieldVersions.get(iClass).getName().equals(iFieldName);
+		boolean isVersionField = false;
+		for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
+				&& !currentClass.equals(ODocument.class) && !isVersionField;) {
+			Field f = fieldVersions.get(currentClass);
+			isVersionField = f != null && f.getName().equals(iFieldName);
+			currentClass = currentClass.getSuperclass();
+		}
+		return isVersionField;
 	}
 
 	public static void setVersionField(final Class<?> iClass, Object iObject, int iValue) throws IllegalArgumentException,
@@ -447,8 +503,16 @@ public class OObjectEntitySerializer {
 		if (!classes.contains(iClass)) {
 			registerClass(iClass);
 		}
-		Field f = fieldVersions.get(iClass);
-		setFieldValue(f, iObject, iValue);
+		Field f = null;
+		for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
+				&& !currentClass.equals(ODocument.class);) {
+			f = fieldVersions.get(currentClass);
+			if (f != null)
+				break;
+			currentClass = currentClass.getSuperclass();
+		}
+		if (f != null)
+			setFieldValue(f, iObject, iValue);
 	}
 
 	public static Object getFieldValue(Field iField, Object iInstance) throws IllegalArgumentException, IllegalAccessException {

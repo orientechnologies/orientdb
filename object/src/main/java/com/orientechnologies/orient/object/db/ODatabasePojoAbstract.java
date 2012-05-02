@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseSchemaAware;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.object.OLazyObjectMultivalueElement;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -53,8 +54,7 @@ import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 
 @SuppressWarnings("unchecked")
-public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseWrapperAbstract<ODatabaseDocumentTx> implements
-		ODatabaseSchemaAware<T> {
+public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseWrapperAbstract<ODatabaseDocumentTx> implements ODatabaseSchemaAware<T> {
 	protected IdentityHashMap<Object, ODocument>	objects2Records	= new IdentityHashMap<Object, ODocument>();
 	protected IdentityHashMap<ODocument, T>				records2Objects	= new IdentityHashMap<ODocument, T>();
 	protected HashMap<ORID, ODocument>						rid2Records			= new HashMap<ORID, ODocument>();
@@ -388,18 +388,13 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 		}
 	}
 
-	@SuppressWarnings("rawtypes")
 	public Object detach(final Object iPojo) {
 		checkOpeness();
 
 		for (Field field : iPojo.getClass().getDeclaredFields()) {
 			final Object value = OObjectSerializerHelper.getFieldValue(iPojo, field.getName());
-			if (value instanceof OLazyObjectList<?>)
-				((OLazyObjectList) value).detach();
-			else if (value instanceof OLazyObjectSet<?>)
-				((OLazyObjectSet) value).detach();
-			else if (value instanceof OLazyObjectMap<?>)
-				((OLazyObjectMap) value).detach();
+			if (value instanceof OLazyObjectMultivalueElement)
+				((OLazyObjectMultivalueElement) value).detach();
 		}
 
 		return iPojo;
