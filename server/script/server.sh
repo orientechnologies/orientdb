@@ -55,6 +55,6 @@ LOG_FILE_LEVEL=fine
 WWW_PATH=$ORIENTDB_HOME/www
 #UNCOMMENT BELOW TO DISABLE THE CACHE
 #ORIENTDB_SETTINGS=-Dcache.level1.enabled=false -Dcache.level2.enabled=false
-JAVA_OPTS=-XX:+HeapDumpOnOutOfMemoryError
+JAVA_OPTS_SCRIPT=-XX:+HeapDumpOnOutOfMemoryError
 
-java -server $JAVA_OPTS $ORIENTDB_SETTINGS -Djava.util.logging.config.file="$LOG_FILE" -Dorientdb.config.file="$CONFIG_FILE" -Dorientdb.www.path="$WWW_PATH" -Dorientdb.build.number="@BUILD@" -cp "$ORIENTDB_HOME/lib/orientdb-server-@VERSION@.jar:$ORIENTDB_HOME/lib/*" com.orientechnologies.orient.server.OServerMain
+java -server $JAVA_OPTS $JAVA_OPTS_SCRIPT $ORIENTDB_SETTINGS -Djava.util.logging.config.file="$LOG_FILE" -Dorientdb.config.file="$CONFIG_FILE" -Dorientdb.www.path="$WWW_PATH" -Dorientdb.build.number="@BUILD@" -cp "$ORIENTDB_HOME/lib/orientdb-server-@VERSION@.jar:$ORIENTDB_HOME/lib/*" com.orientechnologies.orient.server.OServerMain
