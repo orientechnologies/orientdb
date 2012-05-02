@@ -23,80 +23,82 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 
 public class ODatabaseHelper {
-	public static void createDatabase(ODatabase database, final String iURL) throws IOException {
-		createDatabase(database, iURL, "server");
-	}
+  public static void createDatabase(ODatabase database, final String iURL) throws IOException {
+    createDatabase(database, iURL, "server");
+  }
 
-	public static void createDatabase(ODatabase database, final String iURL, String iDirectory) throws IOException {
-		if (iURL.startsWith(OEngineRemote.NAME)) {
-			new OServerAdmin(iURL).connect("root", getServerRootPassword(iDirectory)).createDatabase("document", "local").close();
-		} else {
-			database.create();
-			database.close();
-		}
-	}
+  public static void createDatabase(ODatabase database, final String iURL, String iDirectory) throws IOException {
+    if (iURL.startsWith(OEngineRemote.NAME)) {
+      new OServerAdmin(iURL).connect("root", getServerRootPassword(iDirectory)).createDatabase("document", "local").close();
+    } else {
+      database.create();
+      database.close();
+    }
+  }
 
-	public static void deleteDatabase(final ODatabase database) throws IOException {
-		deleteDatabase(database, "server");
-	}
+  public static void deleteDatabase(final ODatabase database) throws IOException {
+    deleteDatabase(database, "server");
+  }
 
-	@Deprecated
-	public static void deleteDatabase(final ODatabase database, final String iDirectory) throws IOException {
-		dropDatabase(database, iDirectory);
-	}
+  @Deprecated
+  public static void deleteDatabase(final ODatabase database, final String iDirectory) throws IOException {
+    dropDatabase(database, iDirectory);
+  }
 
-	public static void dropDatabase(final ODatabase database) throws IOException {
-		dropDatabase(database, "server");
-	}
+  public static void dropDatabase(final ODatabase database) throws IOException {
+    dropDatabase(database, "server");
+  }
 
-	public static void dropDatabase(final ODatabase database, final String iDirectory) throws IOException {
-		if (database.getURL().startsWith("remote:")) {
-			new OServerAdmin(database.getURL()).connect("root", getServerRootPassword(iDirectory)).dropDatabase();
-		} else {
-			if (existsDatabase(database)) {
-				if (database.isClosed())
-					database.open("admin", "admin");
-				database.drop();
-			}
-		}
-	}
+  public static void dropDatabase(final ODatabase database, final String iDirectory) throws IOException {
+    if (database.getURL().startsWith("remote:")) {
+      new OServerAdmin(database.getURL()).connect("root", getServerRootPassword(iDirectory)).dropDatabase();
+    } else {
+      if (existsDatabase(database)) {
+        if (database.isClosed())
+          database.open("admin", "admin");
+        database.drop();
+      }
+    }
+  }
 
-	public static boolean existsDatabase(final ODatabase database) throws IOException {
-		if (database.getURL().startsWith("remote")) {
-			return new OServerAdmin(database.getURL()).connect("root", getServerRootPassword()).existsDatabase();
-		} else {
-			return database.exists();
-		}
-	}
+  public static boolean existsDatabase(final ODatabase database) throws IOException {
+    if (database.getURL().startsWith("remote")) {
+      return new OServerAdmin(database.getURL()).connect("root", getServerRootPassword()).existsDatabase();
+    } else {
+      return database.exists();
+    }
+  }
 
-	protected static String getServerRootPassword() throws IOException {
-		return getServerRootPassword("server");
-	}
+  protected static String getServerRootPassword() throws IOException {
+    return getServerRootPassword("server");
+  }
 
-	protected static String getServerRootPassword(final String iDirectory) throws IOException {
-		// LOAD SERVER CONFIG FILE TO EXTRACT THE ROOT'S PASSWORD
-		File file = new File("../releases/" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
-		if (!file.exists())
-			file = new File(iDirectory + "/config/orientdb-server-config.xml");
-		if (!file.exists())
-			file = new File("../" + iDirectory + "/config/orientdb-server-config.xml");
-		if (!file.exists())
-			file = new File(OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/orientdb-server-config.xml"));
-		if (!file.exists())
-			throw new OConfigurationException("Cannot load file orientdb-server-config.xml to execute remote tests");
+  protected static String getServerRootPassword(final String iDirectory) throws IOException {
+    // LOAD SERVER CONFIG FILE TO EXTRACT THE ROOT'S PASSWORD
+    File file = new File("../releases/" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
+    if (!file.exists())
+      file = new File(iDirectory + "/config/orientdb-server-config.xml");
+    if (!file.exists())
+      file = new File("../" + iDirectory + "/config/orientdb-server-config.xml");
+    if (!file.exists())
+      file = new File(OSystemVariableResolver.resolveSystemVariables("${" + Orient.getHomePath()
+          + "}/config/orientdb-server-config.xml"));
+    if (!file.exists())
+      throw new OConfigurationException("Cannot load file orientdb-server-config.xml to execute remote tests");
 
-		FileReader f = new FileReader(file);
-		final char[] buffer = new char[(int) file.length()];
-		f.read(buffer);
-		f.close();
+    FileReader f = new FileReader(file);
+    final char[] buffer = new char[(int) file.length()];
+    f.read(buffer);
+    f.close();
 
-		String fileContent = new String(buffer);
-		int pos = fileContent.indexOf("password=\"");
-		pos += "password=\"".length();
-		return fileContent.substring(pos, fileContent.indexOf('"', pos));
-	}
+    String fileContent = new String(buffer);
+    int pos = fileContent.indexOf("password=\"");
+    pos += "password=\"".length();
+    return fileContent.substring(pos, fileContent.indexOf('"', pos));
+  }
 }
