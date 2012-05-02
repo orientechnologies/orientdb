@@ -29,58 +29,57 @@ import java.util.Set;
  */
 public class OEntityManagerClassHandler {
 
-	private Map<String, Class<?>>	entityClasses	= new HashMap<String, Class<?>>();
+  private Map<String, Class<?>> entityClasses = new HashMap<String, Class<?>>();
 
-	/**
-	 * Returns the Java class by its name
-	 * 
-	 * @param iClassName
-	 *          Simple class name without the package
-	 * @return Returns the Java class by its name
-	 */
-	public Class<?> getEntityClass(final String iClassName) {
-		return entityClasses.get(iClassName);
-	}
+  /**
+   * Returns the Java class by its name
+   * 
+   * @param iClassName
+   *          Simple class name without the package
+   * @return Returns the Java class by its name
+   */
+  public synchronized Class<?> getEntityClass(final String iClassName) {
+    return entityClasses.get(iClassName);
+  }
 
-	public void registerEntityClass(final Class<?> iClass) {
-		entityClasses.put(iClass.getSimpleName(), iClass);
-	}
+  public synchronized void registerEntityClass(final Class<?> iClass) {
+    entityClasses.put(iClass.getSimpleName(), iClass);
+  }
 
-	public void registerEntityClass(final String iClassName, final Class<?> iClass) {
-		entityClasses.put(iClassName, iClass);
-	}
+  public synchronized void registerEntityClass(final String iClassName, final Class<?> iClass) {
+    entityClasses.put(iClassName, iClass);
+  }
 
-	public void deregisterEntityClass(final String iClassName) {
-		entityClasses.remove(iClassName);
-	}
+  public synchronized void deregisterEntityClass(final String iClassName) {
+    entityClasses.remove(iClassName);
+  }
 
-	public void deregisterEntityClass(final Class<?> iClass) {
-		entityClasses.remove(iClass.getSimpleName());
-	}
+  public synchronized void deregisterEntityClass(final Class<?> iClass) {
+    entityClasses.remove(iClass.getSimpleName());
+  }
 
-	public Set<Entry<String, Class<?>>> getClassesEntrySet() {
-		return entityClasses.entrySet();
-	}
+  public synchronized Set<Entry<String, Class<?>>> getClassesEntrySet() {
+    return entityClasses.entrySet();
+  }
 
-	public Object createInstance(final Class<?> iClass) throws InstantiationException, IllegalAccessException,
-			InvocationTargetException {
-		Constructor<?> defaultConstructor = null;
-		for (Constructor<?> c : iClass.getConstructors()) {
-			if (c.getParameterTypes().length == 0) {
-				defaultConstructor = c;
-				break;
-			}
-		}
+  public synchronized Object createInstance(final Class<?> iClass) throws InstantiationException, IllegalAccessException,
+      InvocationTargetException {
+    Constructor<?> defaultConstructor = null;
+    for (Constructor<?> c : iClass.getConstructors()) {
+      if (c.getParameterTypes().length == 0) {
+        defaultConstructor = c;
+        break;
+      }
+    }
 
-		if (defaultConstructor == null)
-			throw new IllegalArgumentException("Cannot create an object of class '" + iClass.getName()
-					+ "' because it has no default constructor. Please define the method: " + iClass.getSimpleName() + "()");
+    if (defaultConstructor == null)
+      throw new IllegalArgumentException("Cannot create an object of class '" + iClass.getName()
+          + "' because it has no default constructor. Please define the method: " + iClass.getSimpleName() + "()");
 
-		if (!defaultConstructor.isAccessible())
-			// OVERRIDE PROTECTION
-			defaultConstructor.setAccessible(true);
+    if (!defaultConstructor.isAccessible())
+      // OVERRIDE PROTECTION
+      defaultConstructor.setAccessible(true);
 
-		return defaultConstructor.newInstance();
-	}
-
+    return defaultConstructor.newInstance();
+  }
 }
