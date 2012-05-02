@@ -54,9 +54,9 @@
 										</tr>
 									</table>
 								</td>
-								<td valign="top" class="help hidden-phone">Select the class to display the properties associated. Each class can store its records into one or
-									multiple <b>Clusters</b> (see "Structure" tab). A class can be <b>schema-less</b> (has no properties), <b>schema-full</b> (all properties as
-									mandatories) or with a <b>partial schema</b>.
+								<td valign="top" class="help hidden-phone">Select the class to display the properties associated. Each class can store its records into
+									one or multiple <b>Clusters</b> (see "Structure" tab). A class can be <b>schema-less</b> (has no properties), <b>schema-full</b> (all
+									properties as mandatories) or with a <b>partial schema</b>.
 								</td>
 							</tr>
 							<tr>
@@ -153,9 +153,9 @@
 		<div id="tab-db-structure">
 			<table style="width: 100%;" cellpadding="5">
 				<tr>
-					<td valign="top" class="help hidden-phone"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Cluster">Clusters</a> </b> are sets of records
-						grouped by a mean. Any mean you want to assign. You can use a Cluster like a Table of the Relational DBMS world, namely to group records of the
-						same type. Or you could want to group records by different logics. <br /> <br /> There are two kinds of clusters: <b><a
+					<td valign="top" class="help hidden-phone"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Cluster">Clusters</a> </b> are sets of
+						records grouped by a mean. Any mean you want to assign. You can use a Cluster like a Table of the Relational DBMS world, namely to group records
+						of the same type. Or you could want to group records by different logics. <br /> <br /> There are two kinds of clusters: <b><a
 							href="http://code.google.com/p/orient/wiki/Concepts#Local_Physical_Cluster">Physical</a> </b> and <b><a
 							href="http://code.google.com/p/orient/wiki/Concepts#Logical_Cluster">Logical</a> </b>. The first one uses ad-hoc files to speed up the I/O while
 						the second one saves more space but it's slower. The suggestion is to use Physical Clusters for the records accessed often and where you need
@@ -191,8 +191,8 @@
 					</td>
 				</tr>
 				<tr>
-					<td valign="top" class="help hidden-phone"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Data_Segment">Data segments</a> </b> are the
-						segments that contain data pointed by Clusters.</td>
+					<td valign="top" class="help hidden-phone"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Data_Segment">Data segments</a> </b>
+						are the segments that contain data pointed by Clusters.</td>
 				</tr>
 				<tr>
 					<td valign="top" width="500">
@@ -301,8 +301,8 @@
 							<td valign="top">
 								<button id="exportDatabase" class="ui-button-text exportButton" style="text-align: left; width: 100%;">Export Database</button>
 							</td>
-							<td valign="top" class="help hidden-phone">Orient server can export databases as JSON data. Click the <b>Export Database</b> button to download a gzip
-								compressed file containing said JSON file.
+							<td valign="top" class="help hidden-phone">Orient server can export databases as JSON data. Click the <b>Export Database</b> button to
+								download a gzip compressed file containing said JSON file.
 							</td>
 						</tr>
 						<tr>
@@ -614,7 +614,7 @@
 					+ databaseInfo['classes'][cls].name;
 		}
 
-		$($('#classProperties')).jqGrid('GridUnload');
+		$('#classProperties').jqGrid('GridUnload');
 		fillDynaTable(
 				$('#classProperties'),
 				"Properties",
@@ -708,6 +708,7 @@
 									'editGridRow',
 									"new",
 									{
+										width : 400,
 										height : 320,
 										reloadAfterSubmit : false,
 										closeOnEscape : true,
@@ -753,65 +754,69 @@
 								alert("Please select the property to delete!");
 						});
 
-		$($('#classIndexes')).jqGrid('GridUnload');
-		fillDynaTable($('#classIndexes'), "Indexes", [ 'name', 'type',
-				'properties' ], [
-				{
-					name : 'name',
-					index : 'name',
-					width : 180,
-					editable : true,
-					editrules : {
-						required : true
-					},
-					formoptions : {
-						elmprefix : '(*)'
-					}
-				},
-				{
-					name : 'type',
-					index : 'type',
-					width : 100,
-					edittype : "select",
-					editoptions : {
-						value : ":;Unique:Unique;Not unique:Not Unique"
-					},
-					editable : true,
-					editrules : {
-						required : true
-					},
-					formoptions : {
-						elmprefix : '(*)'
-					}
-				},
-				{
-					name : 'fields',
-					width : 200,
-					editable : true,
-					editrules : {
-						required : true
-					},
-					editoptions : {
-						dataInit : function(elem) {
-							$(elem).attr("title",
-									"Add properties using comma as separator");
-							$(elem).tooltip({
-								// place tooltip on the right edge
-								position : "center right",
-								// a little tweaking of the position
-								offset : [ -2, 10 ],
-								// use the built-in fadeIn/fadeOut effect
-								effect : "fade"
-							});
-						}
-					},
-					formoptions : {
-						elmprefix : '(*)'
-					}
-				} ], null, {
-			editurl : getStudioURL('classIndexes'),
-			sortname : 'name'
-		});
+		$('#classIndexes').jqGrid('GridUnload');
+		fillDynaTable(
+				$('#classIndexes'),
+				"Indexes",
+				[ 'name', 'type', 'properties' ],
+				[
+						{
+							name : 'name',
+							index : 'name',
+							width : 180,
+							editable : true,
+							editrules : {
+								required : true
+							},
+							formoptions : {
+								elmprefix : '(*)'
+							}
+						},
+						{
+							name : 'type',
+							index : 'type',
+							width : 100,
+							edittype : "select",
+							editoptions : {
+								value : "Unique:UNIQUE;Not Unique:NOTUNIQUE;Full Text:FULLTEXT;Dictionary:DICTIONARY"
+							},
+							editable : true,
+							editrules : {
+								required : true
+							},
+							formoptions : {
+								elmprefix : '(*)'
+							}
+						},
+						{
+							name : 'fields',
+							width : 200,
+							editable : true,
+							editrules : {
+								required : true
+							},
+							editoptions : {
+								dataInit : function(elem) {
+									$(elem)
+											.attr("title",
+													"Add properties using comma as separator");
+									$(elem).tooltip({
+										// place tooltip on the right edge
+										position : "center right",
+										// a little tweaking of the position
+										offset : [ -2, 10 ],
+										// use the built-in fadeIn/fadeOut effect
+										effect : "fade"
+									});
+								}
+							},
+							formoptions : {
+								elmprefix : '(*)'
+							}
+						} ], null, {
+					editurl : getStudioURL('classIndexes'),
+					sortname : 'name'
+				});
 
 		var addIndexDialogId;
 		$("#addIndex")
@@ -827,6 +832,7 @@
 											'editGridRow',
 											"new",
 											{
+												width : 400,
 												height : 200,
 												reloadAfterSubmit : false,
 												closeOnEscape : true,
@@ -967,7 +973,8 @@
 
 		$("#addClass").click(function() {
 			$("#databaseClasses").jqGrid('editGridRow', "new", {
-				height : 320,
+				width : 400,
+				height : 200,
 				reloadAfterSubmit : false,
 				closeOnEscape : true,
 				closeAfterAdd : true,
