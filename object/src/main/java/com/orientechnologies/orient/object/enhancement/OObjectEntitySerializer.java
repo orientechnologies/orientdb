@@ -150,6 +150,12 @@ public class OObjectEntitySerializer {
 		return classEmbeddedFields != null && classEmbeddedFields.contains(iField);
 	}
 
+	/**
+	 * Registers the class informations that will be used in serialization, deserialization and lazy loading of it. If already
+	 * registered does nothing.
+	 * 
+	 * @param iClass:- the Class<?> to register
+	 */
 	@SuppressWarnings("unchecked")
 	public static synchronized void registerClass(Class<?> iClass) {
 		if (classes.contains(iClass))
