@@ -28,46 +28,46 @@ import com.orientechnologies.orient.test.domain.business.Account;
 
 @Test(enabled = false)
 public class LocalCreateObjectSpeedTest extends OrientMonoThreadTest {
-	private OObjectDatabaseTx	database;
-	private Account						account;
-	private Date							date	= new Date();
+  private OObjectDatabaseTx database;
+  private Account           account;
+  private Date              date = new Date();
 
-	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-		LocalCreateObjectSpeedTest test = new LocalCreateObjectSpeedTest();
-		test.data.go(test);
-	}
+  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
+    LocalCreateObjectSpeedTest test = new LocalCreateObjectSpeedTest();
+    test.data.go(test);
+  }
 
-	public LocalCreateObjectSpeedTest() throws InstantiationException, IllegalAccessException {
-		super(100000);
-	}
+  public LocalCreateObjectSpeedTest() throws InstantiationException, IllegalAccessException {
+    super(1000000);
+  }
 
-	@Override
-	public void init() {
-		OProfiler.getInstance().startRecording();
+  @Override
+  public void init() {
+    OProfiler.getInstance().startRecording();
 
-		database = new OObjectDatabaseTx(System.getProperty("url")).open("admin", "admin");
+    database = new OObjectDatabaseTx(System.getProperty("url")).open("admin", "admin");
+    database.getEntityManager().registerEntityClass(Account.class);
+    database.declareIntent(new OIntentMassiveInsert());
+    database.begin(TXTYPE.NOTX);
+  }
 
-		database.declareIntent(new OIntentMassiveInsert());
-		database.begin(TXTYPE.NOTX);
-	}
+  @Override
+  public void cycle() {
+    account = new Account((int) data.getCyclesDone(), "Luca", "Garulli");
+    account.setBirthDate(date);
+    account.setSalary(3000f + data.getCyclesDone());
 
-	@Override
-	public void cycle() {
-		account = new Account((int) data.getCyclesDone(), "Luca", "Garulli");
-		account.setBirthDate(date);
-		account.setSalary(3000f + data.getCyclesDone());
+    database.save(account);
 
-		database.save(account);
+    if (data.getCyclesDone() == data.getCycles() - 1)
+      database.commit();
 
-		if (data.getCyclesDone() == data.getCycles() - 1)
-			database.commit();
+    account = null;
+  }
 
-		account = null;
-	}
-
-	@Override
-	public void deinit() {
-		database.close();
-		super.deinit();
-	}
+  @Override
+  public void deinit() {
+    database.close();
+    super.deinit();
+  }
 }
