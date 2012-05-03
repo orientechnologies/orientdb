@@ -17,6 +17,7 @@
 package com.orientechnologies.orient.core.fetch.json;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Stack;
@@ -90,6 +91,8 @@ public class OJSONFetchContext implements OFetchContext {
 				appendType(typesStack.peek(), iFieldName, 't');
 			else if (iFieldValue instanceof Byte || iFieldValue instanceof byte[])
 				appendType(typesStack.peek(), iFieldName, 'b');
+			else if (iFieldValue instanceof BigDecimal)
+				appendType(typesStack.peek(), iFieldName, 'c');
 			// typesStack.add(buffer);
 		}
 	}

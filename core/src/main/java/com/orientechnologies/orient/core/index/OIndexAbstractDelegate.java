@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.index;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -242,5 +243,9 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
 
 	public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
 		delegate.checkEntry(iRecord, iKey);
+	}
+
+	public Set<String> getClusters() {
+		return delegate.getClusters();
 	}
 }

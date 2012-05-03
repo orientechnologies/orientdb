@@ -1206,9 +1206,18 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @ConsoleCommand(description = "Compare two databases")
   public void compareDatabases(@ConsoleParameter(name = "db1-url", description = "URL of the first database") final String iDb1URL,
-      @ConsoleParameter(name = "db2-url", description = "URL of the second database") final String iDb2URL) throws IOException {
+      @ConsoleParameter(name = "db2-url", description = "URL of the second database") final String iDb2URL,
+			@ConsoleParameter(name = "user-name", description = "User name", optional = true) final String iUserName,
+			@ConsoleParameter(name = "user-password", description = "User password", optional = true) final String iUserPassword
+			) throws IOException {
     try {
-      new ODatabaseCompare(iDb1URL, iDb2URL, this).compare();
+			final ODatabaseCompare compare;
+			if(iUserName == null)
+				compare = new ODatabaseCompare(iDb1URL, iDb2URL, this);
+			else
+				compare = new ODatabaseCompare(iDb1URL, iDb1URL, iUserName, iUserPassword, this);
+
+      compare.compare();
     } catch (ODatabaseExportException e) {
       printError(e);
     }

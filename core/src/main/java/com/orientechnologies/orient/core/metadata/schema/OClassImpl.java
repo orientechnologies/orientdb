@@ -582,6 +582,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 		this.overSize = overSize;
 	}
 
+	public float getOverSizeInternal() {
+		return overSize;
+	}
+
 	public boolean isStrictMode() {
 		return strictMode;
 	}

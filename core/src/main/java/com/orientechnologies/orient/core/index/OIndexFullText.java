@@ -139,9 +139,9 @@ public class OIndexFullText extends OIndexMultiValues {
 				if (recs != null && !recs.isEmpty()) {
 					if (recs.remove(value)) {
 						if (recs.isEmpty())
-							map.remove(iKey);
+							map.remove(word);
 						else
-							map.put(iKey, recs);
+							map.put(word, recs);
 						removed = true;
 					}
 				}

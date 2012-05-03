@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
@@ -114,21 +115,21 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
         for (final int id : iClusterIdsToIndex)
           clustersToIndex.add(iDatabase.getClusterNameById(id));
 
-      if (indexDefinition != null) {
-        if (indexDefinition instanceof ORuntimeKeyIndexDefinition) {
-          map = new OMVRBTreeDatabaseLazySave<Object, T>(iClusterIndexName,
-              ((ORuntimeKeyIndexDefinition) indexDefinition).getSerializer(), iValueSerializer, 1);
-        } else {
-          final OBinarySerializer<?> keySerializer;
-          if (indexDefinition.getTypes().length > 1) {
-            keySerializer = OCompositeKeySerializer.INSTANCE;
-          } else {
-            keySerializer = new OSimpleKeySerializer(indexDefinition.getTypes()[0]);
-          }
-          map = new OMVRBTreeDatabaseLazySave<Object, T>(iClusterIndexName, keySerializer, iValueSerializer,
-              indexDefinition.getTypes().length);
-        }
-
+			if (indexDefinition != null) {
+				if (indexDefinition instanceof ORuntimeKeyIndexDefinition) {
+					map = new OMVRBTreeDatabaseLazySave<Object, T>(iClusterIndexName,
+							((ORuntimeKeyIndexDefinition) indexDefinition).getSerializer(), iValueSerializer, 1);
+				} else {
+					final OBinarySerializer keySerializer;
+					if (indexDefinition.getTypes().length > 1) {
+						keySerializer = OCompositeKeySerializer.INSTANCE;
+					} else {
+						keySerializer =
+                                OBinarySerializerFactory.INSTANCE.getObjectSerializer(indexDefinition.getTypes()[0]);
+					}
+					map = new OMVRBTreeDatabaseLazySave<Object, T>(iClusterIndexName, keySerializer, iValueSerializer,
+							indexDefinition.getTypes().length);
+				}
       } else
         map = new OMVRBTreeDatabaseLazySave<Object, T>(iClusterIndexName, new OSimpleKeySerializer(), iValueSerializer, 1);
 

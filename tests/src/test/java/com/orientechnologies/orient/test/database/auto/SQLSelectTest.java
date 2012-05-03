@@ -1103,7 +1103,8 @@ public class SQLSelectTest {
 			oc = db1.createVertexType("vertexA");
 		if (!oc.existsProperty("name"))
 			oc.createProperty("name", OType.STRING);
-		oc.createIndex("vertexA_name_idx", OClass.INDEX_TYPE.UNIQUE, "name");
+		if(oc.getClassIndex("vertexA_name_idx") == null)
+			oc.createIndex("vertexA_name_idx", OClass.INDEX_TYPE.UNIQUE, "name");
 
 		OClass ocb = db1.getVertexType("vertexB");
 		if (ocb == null)

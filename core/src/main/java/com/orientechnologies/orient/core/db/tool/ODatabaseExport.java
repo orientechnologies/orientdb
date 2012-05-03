@@ -20,9 +20,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.zip.GZIPOutputStream;
 
@@ -32,29 +30,28 @@ import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider;
 
 /**
  * Export data from a database to a file.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public class ODatabaseExport extends ODatabaseImpExpAbstract {
-	private OJSONWriter			writer;
-	private long						recordExported;
-	public static final int	VERSION	= 2;
+	private OJSONWriter writer;
+	private long recordExported;
+	public static final int VERSION = 3;
 
 	public ODatabaseExport(final ODatabaseRecord iDatabase, final String iFileName, final OCommandOutputListener iListener)
-			throws IOException {
+					throws IOException {
 		super(iDatabase, iFileName, iListener);
 
 		if (!fileName.endsWith(".gz")) {
@@ -72,7 +69,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 	}
 
 	public ODatabaseExport(final ODatabaseRecord iDatabase, final OutputStream iOutputStream, final OCommandOutputListener iListener)
-			throws IOException {
+					throws IOException {
 		super(iDatabase, "streaming", iListener);
 
 		writer = new OJSONWriter(new OutputStreamWriter(iOutputStream));
@@ -100,6 +97,10 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 						exportSchema();
 					if (includeRecords)
 						exportRecords();
+					if (includeIndexDefinitions)
+						exportIndexDefinitions();
+					if (includeManualIndexes)
+						exportManualIndexes();
 
 					listener.onMessage("\n\nDatabase export completed in " + (System.currentTimeMillis() - time) + "ms");
 
@@ -152,7 +153,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
 			long recordNum = 0;
 			if (clusterName != null)
-				for (ORecordIteratorCluster<ORecordInternal<?>> it = database.browseCluster(clusterName); it.hasNext();) {
+				for (ORecordIteratorCluster<ORecordInternal<?>> it = database.browseCluster(clusterName); it.hasNext(); ) {
 
 					ORecordInternal<?> rec = null;
 
@@ -184,11 +185,11 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 							final byte[] buffer = rec.toStream();
 
 							OLogManager
-									.instance()
-									.error(
-											this,
-											"\nError on exporting record %s. It seems corrupted; size: %d bytes, raw content (as string):\n==========\n%s\n==========",
-											t, rec.getIdentity(), buffer.length, new String(buffer));
+											.instance()
+											.error(
+															this,
+															"\nError on exporting record %s. It seems corrupted; size: %d bytes, raw content (as string):\n==========\n%s\n==========",
+															t, rec.getIdentity(), buffer.length, new String(buffer));
 						}
 					}
 				}
@@ -283,6 +284,111 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 		listener.onMessage("OK");
 	}
 
+	private void exportIndexDefinitions() throws IOException {
+		listener.onMessage("\nExporting index info...");
+		writer.beginCollection(1, true, "indexes");
+
+		final OIndexManagerProxy indexManager = database.getMetadata().getIndexManager();
+		indexManager.reload();
+
+		final Collection<? extends OIndex> indexes = indexManager.getIndexes();
+
+
+		for (OIndex index : indexes) {
+			listener.onMessage("\nIndex " + index.getName() + "...");
+			writer.beginObject(2, true, null);
+			writer.writeAttribute(3, true, "name", index.getName());
+			writer.writeAttribute(3, true, "type", index.getType());
+
+			if (!index.getClusters().isEmpty())
+				writer.writeAttribute(3, true, "clustersToIndex", index.getClusters());
+
+			if (index.getDefinition() != null) {
+				writer.beginObject(4, true, "definition");
+
+				writer.writeAttribute(5, true, "defClass", index.getDefinition().getClass().getName());
+				writer.writeAttribute(5, true, "stream", index.getDefinition().toStream());
+
+				writer.endObject(4, true);
+			}
+
+			writer.endObject(2, true);
+			listener.onMessage("OK");
+		}
+
+		writer.endCollection(1, true);
+		listener.onMessage("OK (" + indexes.size() + " indexes)");
+	}
+
+	private void exportManualIndexes() throws IOException {
+		listener.onMessage("\nExporting manual indexes content...");
+
+		final OIndexManagerProxy indexManager = database.getMetadata().getIndexManager();
+		indexManager.reload();
+
+		final Collection<? extends OIndex> indexes = indexManager.getIndexes();
+
+		ODocument exportEntry = new ODocument();
+
+		int manualIndexes = 0;
+		writer.beginCollection(1, true, "manualIndexes");
+		for (OIndex index : indexes) {
+			if (!index.isAutomatic()) {
+				listener.onMessage("\nExporting index " + index.getName() + " ...");
+
+				writer.beginObject(2, true, null);
+				writer.writeAttribute(3, true, "name", index.getName());
+
+				List<ODocument> indexContent = database.query(
+								new OSQLSynchQuery<ODocument>("select from index:" + index.getName()));
+
+				writer.beginCollection(3, true, "content");
+
+				int i = 0;
+				for (ODocument indexEntry : indexContent) {
+					if (i > 0)
+						writer.append(",");
+
+					final OIndexDefinition indexDefinition = index.getDefinition();
+
+					exportEntry.reset();
+					if (indexDefinition instanceof ORuntimeKeyIndexDefinition &&
+									((ORuntimeKeyIndexDefinition) indexDefinition).getSerializer() != null) {
+						final OBinarySerializer binarySerializer =
+										((ORuntimeKeyIndexDefinition) indexDefinition).getSerializer();
+
+						int dataSize = binarySerializer.getObjectSize(indexEntry.field("key"));
+						byte[] binaryContent = new byte[dataSize];
+						binarySerializer.serialize(indexEntry.field("key"), binaryContent, 0);
+
+						exportEntry.field("binary", true);
+						exportEntry.field("key", binaryContent);
+					} else {
+						exportEntry.field("binary", false);
+						exportEntry.field("key", indexEntry.field("key"));
+					}
+
+					exportEntry.field("rid", indexEntry.field("rid"));
+
+					i++;
+
+					writer.append(exportEntry.toJSON());
+
+					final long percent = indexContent.size() / 10;
+					if (percent > 0 && (i % percent) == 0)
+						listener.onMessage(".");
+				}
+				writer.endCollection(3, true);
+
+				writer.endObject(2, true);
+				listener.onMessage("\nExport of " + index.getName() + " index was completed.");
+				manualIndexes++;
+			}
+		}
+		writer.endCollection(1, true);
+		listener.onMessage("\nOK (" + manualIndexes + " manual indexes)");
+	}
+
 	private void exportSchema() throws IOException {
 		listener.onMessage("\nExporting schema...");
 
@@ -301,6 +407,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 				writer.writeAttribute(0, false, "name", cls.getName());
 				writer.writeAttribute(0, false, "default-cluster-id", cls.getDefaultClusterId());
 				writer.writeAttribute(0, false, "cluster-ids", cls.getClusterIds());
+				writer.writeAttribute(0, false, "oversize", ((OClassImpl) cls).getOverSizeInternal());
+				writer.writeAttribute(0, false, "strictMode", cls.isStrictMode());
 				if (cls.getSuperClass() != null)
 					writer.writeAttribute(0, false, "super-class", cls.getSuperClass().getName());
 				if (cls.getShortName() != null)
@@ -326,6 +434,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 							writer.writeAttribute(0, false, "min", p.getMin());
 						if (p.getMax() != null)
 							writer.writeAttribute(0, false, "max", p.getMax());
+						if (((OPropertyImpl) p).getCustomInternal() != null)
+							writer.writeAttribute(0, false, "customFields", ((OPropertyImpl) p).getCustomInternal());
 						writer.endObject(0, false);
 					}
 					writer.endCollection(4, true);

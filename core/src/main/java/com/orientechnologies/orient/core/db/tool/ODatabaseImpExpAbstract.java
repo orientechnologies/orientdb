@@ -39,6 +39,9 @@ public abstract class ODatabaseImpExpAbstract {
 	protected boolean									includeSchema		= true;
 	protected boolean									includeSecurity	= false;
 	protected boolean									includeRecords	= true;
+	protected boolean                 includeIndexDefinitions = true;
+	protected boolean                 includeManualIndexes = true;
+
 	protected OCommandOutputListener	listener;
 
 	protected final static String			DEFAULT_EXT			= ".json";
@@ -46,8 +49,10 @@ public abstract class ODatabaseImpExpAbstract {
 	public ODatabaseImpExpAbstract(final ODatabaseRecord iDatabase, final String iFileName, final OCommandOutputListener iListener) {
 		database = iDatabase;
 		fileName = iFileName;
-		if (fileName.indexOf('.') == -1)
+
+		if (fileName != null && fileName.indexOf('.') == -1)
 			fileName += DEFAULT_EXT;
+
 		listener = iListener;
 		excludeClusters = new LinkedHashSet<String>();
 		excludeClusters.add("index");
@@ -115,5 +120,21 @@ public abstract class ODatabaseImpExpAbstract {
 
 	public void setIncludeRecords(boolean includeRecords) {
 		this.includeRecords = includeRecords;
+	}
+
+	public boolean isIncludeIndexDefinitions() {
+		return includeIndexDefinitions;
+	}
+
+	public void setIncludeIndexDefinitions(boolean includeIndexDefinitions) {
+		this.includeIndexDefinitions = includeIndexDefinitions;
+	}
+
+	public boolean isIncludeManualIndexes() {
+		return includeManualIndexes;
+	}
+
+	public void setIncludeManualIndexes(boolean includeManualIndexes) {
+		this.includeManualIndexes = includeManualIndexes;
 	}
 }

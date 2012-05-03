@@ -35,9 +35,12 @@ public class DbCompareTest implements OCommandOutputListener {
 		testPath = iTestPath;
 	}
 
-    @Test(enabled = false)
+  @Test
 	public void testCompareDatabases() throws IOException {
-		Assert.assertTrue(new ODatabaseCompare(url, "local:" + testPath + "/" + DbImportExportTest.NEW_DB_URL, this).compare());
+		final ODatabaseCompare databaseCompare = new ODatabaseCompare(url, "local:" + testPath + "/" + DbImportExportTest.NEW_DB_URL,
+						"admin", "admin", this);
+		databaseCompare.setCompareEntriesForAutomaticIndexes(true);
+		Assert.assertTrue(databaseCompare.compare());
 	}
 
 	@Test(enabled = false)

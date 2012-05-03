@@ -75,7 +75,9 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
 
 		final String key = iKey.toString();
 
-		convertLink2Record(key);
+		if (autoConvertToRecord)
+			convertLink2Record(key);
+
 		return super.get(key);
 	}
 

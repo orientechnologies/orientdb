@@ -15,9 +15,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -45,6 +43,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 	protected OIndexDefinition		indexDefinition;
 	protected String							name;
 	protected ODocument						configuration;
+	protected Set<String>         clustersToIndex;
 
 	protected final static String	QUERY_ENTRIES																			= "select key, rid from index:%s";
 
@@ -79,12 +78,13 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 	public static final String		QUERY_GET_VALUES_LIMIT														= " limit ";
 
 	public OIndexRemote(final String iName, final String iWrappedType, final ORID iRid, final OIndexDefinition iIndexDefinition,
-			final ODocument iConfiguration) {
+			final ODocument iConfiguration, final Set<String> clustersToIndex) {
 		this.name = iName;
 		this.wrappedType = iWrappedType;
 		this.rid = iRid;
 		this.indexDefinition = iIndexDefinition;
 		this.configuration = iConfiguration;
+		this.clustersToIndex = new HashSet<String>(clustersToIndex);
 	}
 
 	public OIndexRemote<T> create(final String iName, final OIndexDefinition iIndexDefinition, final ODatabaseRecord iDatabase,
@@ -240,7 +240,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 	}
 
 	public boolean isAutomatic() {
-		return false;
+		return indexDefinition != null && indexDefinition.getClassName() != null;
 	}
 
 	public String getName() {
@@ -458,6 +458,10 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 		final OCommandRequest cmd = formatCommand(QUERY_GET_ENTRIES + QUERY_GET_VALUES_LIMIT + maxEntriesToFetch, name,
 				params.toString());
 		return (Collection<ODocument>) getDatabase().command(cmd).execute(iKeys.toArray());
+	}
+
+	public Set<String> getClusters() {
+		return Collections.unmodifiableSet(clustersToIndex);
 	}
 
 	public void checkEntry(final OIdentifiable iRecord, final Object iKey) {

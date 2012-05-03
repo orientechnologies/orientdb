@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.index;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -367,4 +368,10 @@ public interface OIndex<T> {
 	public Collection<ODocument> getEntries(Collection<?> iKeys, int maxEntriesToFetch);
 
 	public OIndexDefinition getDefinition();
+
+	/**
+	 * Returns Names of clusters that will be indexed.
+	 * @return Names of clusters that will be indexed.
+	 */
+	public Set<String> getClusters();
 }

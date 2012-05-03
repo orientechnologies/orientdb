@@ -37,9 +37,9 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 	protected OIndex<?> getIndexInstance(final OIndex<?> iIndex) {
 		if (iIndex instanceof OIndexMultiValues)
 			return new OIndexRemoteMultiValue(iIndex.getName(), iIndex.getType(), iIndex.getIdentity(), iIndex.getDefinition(),
-					getConfiguration());
+					getConfiguration(), iIndex.getClusters());
 		return new OIndexRemoteOneValue(iIndex.getName(), iIndex.getType(), iIndex.getIdentity(), iIndex.getDefinition(),
-				getConfiguration());
+				getConfiguration(), iIndex.getClusters());
 	}
 
 	public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,

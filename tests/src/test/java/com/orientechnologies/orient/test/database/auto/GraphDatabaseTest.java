@@ -183,9 +183,14 @@ public class GraphDatabaseTest {
 	}
 
 	public void testNotDuplicatedIndexTxChanges() throws IOException {
-		OClass oc = database.createVertexType("vertexA");
-		oc.createProperty("name", OType.STRING);
-		oc.createIndex("vertexA_name_idx", OClass.INDEX_TYPE.UNIQUE, "name");
+		OClass oc = database.getVertexType("vertexA");
+		if (oc == null)
+			oc = database.createVertexType("vertexA");
+		if (!oc.existsProperty("name"))
+			oc.createProperty("name", OType.STRING);
+
+		if(oc.getClassIndex("vertexA_name_idx") == null)
+			oc.createIndex("vertexA_name_idx", OClass.INDEX_TYPE.UNIQUE, "name");
 
 		// FIRST: create a couple of records
 		ODocument docA = database.createVertex("vertexA");
