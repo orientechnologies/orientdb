@@ -1489,7 +1489,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
 		final long timer = OProfiler.getInstance().startChrono();
 
-		lock.acquireSharedLock();
+		lock.acquireExclusiveLock();
 
 		try {
 			lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
@@ -1561,7 +1561,7 @@ public class OStorageLocal extends OStorageEmbedded {
 			OLogManager.instance().error(this, "Error on updating record " + iRid + " (cluster: " + iClusterSegment + ")", e);
 
 		} finally {
-			lock.releaseSharedLock();
+			lock.releaseExclusiveLock();
 
 			OProfiler.getInstance().stopChrono(PROFILER_UPDATE_RECORD, timer);
 		}
