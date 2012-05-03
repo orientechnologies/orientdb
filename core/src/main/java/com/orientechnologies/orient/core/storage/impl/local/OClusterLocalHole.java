@@ -34,139 +34,139 @@ import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
  * = 8 bytes<br/>
  */
 public class OClusterLocalHole extends OSingleFileSegment {
-	private static final int	DEF_START_SIZE	= 262144;
-	private static final int	RECORD_SIZE			= 8;
+  private static final int DEF_START_SIZE = 262144;
+  private static final int RECORD_SIZE    = 8;
 
-	private OClusterLocal			owner;
+  private OClusterLocal    owner;
 
-	public OClusterLocalHole(final OClusterLocal iClusterLocal, final OStorageLocal iStorage, final OStorageFileConfiguration iConfig)
-			throws IOException {
-		super(iStorage, iConfig);
-		owner = iClusterLocal;
-	}
+  public OClusterLocalHole(final OClusterLocal iClusterLocal, final OStorageLocal iStorage, final OStorageFileConfiguration iConfig)
+      throws IOException {
+    super(iStorage, iConfig);
+    owner = iClusterLocal;
+  }
 
-	/**
-	 * TODO Check values removing dirty entries (equals to -1)
-	 */
-	public void defrag() throws IOException {
-		OLogManager.instance().debug(this, "Starting to defragment the segment %s of size=%d and filled=%d", file, file.getFileSize(),
-				file.getFilledUpTo());
+  /**
+   * TODO Check values removing dirty entries (equals to -1)
+   */
+  public void defrag() throws IOException {
+    OLogManager.instance().debug(this, "Starting to defragment the segment %s of size=%d and filled=%d", file, file.getFileSize(),
+        file.getFilledUpTo());
 
-		OLogManager.instance().debug(this, "Defragmentation ended for segment %s. Current size=%d and filled=%d", file,
-				file.getFileSize(), file.getFilledUpTo());
-	}
+    OLogManager.instance().debug(this, "Defragmentation ended for segment %s. Current size=%d and filled=%d", file,
+        file.getFileSize(), file.getFilledUpTo());
+  }
 
-	public void create() throws IOException {
-		file.create(DEF_START_SIZE);
-	}
+  public void create() throws IOException {
+    file.create(DEF_START_SIZE);
+  }
 
-	/**
-	 * Append the hole to the end of segment
-	 * 
-	 * @throws IOException
-	 */
-	public long pushPosition(final long iPosition) throws IOException {
-		final int position = getHoles() * RECORD_SIZE;
-		file.allocateSpace(RECORD_SIZE);
+  /**
+   * Append the hole to the end of segment
+   * 
+   * @throws IOException
+   */
+  public long pushPosition(final long iPosition) throws IOException {
+    final int position = getHoles() * RECORD_SIZE;
+    file.allocateSpace(RECORD_SIZE);
 
-		file.writeLong(position, iPosition);
+    file.writeLong(position, iPosition);
 
-		if (OLogManager.instance().isDebugEnabled())
-			OLogManager.instance().debug(this, "Pushed new hole %s/#%d -> #%d:%d", owner.getName(), position / RECORD_SIZE,
-					owner.getId(), iPosition);
+    if (OLogManager.instance().isDebugEnabled())
+      OLogManager.instance().debug(this, "Pushed new hole %s/#%d -> #%d:%d", owner.getName(), position / RECORD_SIZE,
+          owner.getId(), iPosition);
 
-		return position;
-	}
+    return position;
+  }
 
-	/**
-	 * Returns and remove the recycled position if any.
-	 * 
-	 * @return the recycled position if found, otherwise -1 that usually means to request more space.
-	 * @throws IOException
-	 */
-	public long popLastEntryPosition() throws IOException {
-		// BROWSE IN ASCENDING ORDER UNTIL A GOOD POSITION IS FOUND (!=-1)
-		for (int pos = getHoles() - 1; pos >= 0; --pos) {
-			final long recycledPosition = file.readLong(pos * RECORD_SIZE);
+  /**
+   * Returns and remove the recycled position if any.
+   * 
+   * @return the recycled position if found, otherwise -1 that usually means to request more space.
+   * @throws IOException
+   */
+  public long popLastEntryPosition() throws IOException {
+    // BROWSE IN ASCENDING ORDER UNTIL A GOOD POSITION IS FOUND (!=-1)
+    for (int pos = getHoles() - 1; pos >= 0; --pos) {
+      final long recycledPosition = file.readLong(pos * RECORD_SIZE);
 
-			if (recycledPosition > -1) {
-				if (OLogManager.instance().isDebugEnabled())
-					OLogManager.instance().debug(this, "Recycled hole %s/#%d -> #%d:%d", owner.getName(), pos, owner.getId(),
-							recycledPosition);
+      if (recycledPosition > -1) {
+        if (OLogManager.instance().isDebugEnabled())
+          OLogManager.instance().debug(this, "Recycled hole %s/#%d -> #%d:%d", owner.getName(), pos, owner.getId(),
+              recycledPosition);
 
-				// SHRINK THE FILE
-				file.removeTail((getHoles() - pos) * RECORD_SIZE);
+        // SHRINK THE FILE
+        file.removeTail((getHoles() - pos) * RECORD_SIZE);
 
-				return recycledPosition;
-			}
-		}
+        return recycledPosition;
+      }
+    }
 
-		return -1;
-	}
+    return -1;
+  }
 
-	/**
-	 * Returns the recycled position if any.
-	 * 
-	 * @return the recycled position if found, otherwise -1 that usually means to request more space.
-	 * @throws IOException
-	 */
-	public long getEntryPosition(final int iPosition) throws IOException {
-		return file.readLong(iPosition * RECORD_SIZE);
-	}
+  /**
+   * Returns the recycled position if any.
+   * 
+   * @return the recycled position if found, otherwise -1 that usually means to request more space.
+   * @throws IOException
+   */
+  public long getEntryPosition(final int iPosition) throws IOException {
+    return file.readLong(iPosition * RECORD_SIZE);
+  }
 
-	/**
-	 * Removes a hole. Called on transaction recover to invalidate a delete for a record. Try to shrink the file if the invalidated
-	 * entry is not in the middle of valid entries.
-	 * 
-	 * @param iPosition
-	 *          Record position to find and invalidate
-	 * @return
-	 * @throws IOException
-	 */
-	public boolean removeEntryWithPosition(final long iPosition) throws IOException {
-		// BROWSE IN ASCENDING ORDER UNTIL THE REQUESTED POSITION IS FOUND
-		boolean canShrink = true;
-		for (int pos = getHoles() - 1; pos >= 0; --pos) {
-			final long recycledPosition = file.readLong(pos * RECORD_SIZE);
+  /**
+   * Removes a hole. Called on transaction recover to invalidate a delete for a record. Try to shrink the file if the invalidated
+   * entry is not in the middle of valid entries.
+   * 
+   * @param iPosition
+   *          Record position to find and invalidate
+   * @return
+   * @throws IOException
+   */
+  public boolean removeEntryWithPosition(final long iPosition) throws IOException {
+    // BROWSE IN ASCENDING ORDER UNTIL THE REQUESTED POSITION IS FOUND
+    boolean canShrink = true;
+    for (int pos = getHoles() - 1; pos >= 0; --pos) {
+      final long recycledPosition = file.readLong(pos * RECORD_SIZE);
 
-			if (recycledPosition == iPosition) {
-				if (OLogManager.instance().isDebugEnabled())
-					OLogManager.instance().debug(this, "Removing hole #%d containing the position #%d:%d", pos, owner.getId(),
-							recycledPosition);
+      if (recycledPosition == iPosition) {
+        if (OLogManager.instance().isDebugEnabled())
+          OLogManager.instance().debug(this, "Removing hole #%d containing the position #%d:%d", pos, owner.getId(),
+              recycledPosition);
 
-				file.writeLong(pos * RECORD_SIZE, -1);
-				if (canShrink)
-					// SHRINK THE FILE
-					file.removeTail((getHoles() - pos) * RECORD_SIZE);
+        file.writeLong(pos * RECORD_SIZE, -1);
+        if (canShrink)
+          // SHRINK THE FILE
+          file.removeTail((getHoles() - pos) * RECORD_SIZE);
 
-				return true;
+        return true;
 
-			} else if (iPosition != -1)
-				// NO NULL ENTRY: CAN'T SHRINK WITHOUT LOST OF ENTRIES
-				canShrink = false;
-		}
-		return false;
-	}
+      } else if (iPosition != -1)
+        // NO NULL ENTRY: CAN'T SHRINK WITHOUT LOST OF ENTRIES
+        canShrink = false;
+    }
+    return false;
+  }
 
-	public void rename(String iOldName, String iNewName) {
-		final String osFileName = file.getName();
-		if (osFileName.startsWith(iOldName)) {
-			final File newFile = new File(storage.getStoragePath() + "/" + iNewName
-					+ osFileName.substring(osFileName.lastIndexOf(iOldName) + iOldName.length()));
-			boolean renamed = file.renameTo(newFile);
-			while (!renamed) {
-				OMemoryWatchDog.freeMemory(100);
-				renamed = file.renameTo(newFile);
-			}
-		}
-	}
+  public void rename(String iOldName, String iNewName) {
+    final String osFileName = file.getName();
+    if (osFileName.startsWith(iOldName)) {
+      final File newFile = new File(storage.getStoragePath() + "/" + iNewName
+          + osFileName.substring(osFileName.lastIndexOf(iOldName) + iOldName.length()));
+      boolean renamed = file.renameTo(newFile);
+      while (!renamed) {
+        OMemoryWatchDog.freeMemory(100);
+        renamed = file.renameTo(newFile);
+      }
+    }
+  }
 
-	/**
-	 * Computes the number of holes. Note that not all the holes could be valid.
-	 * 
-	 * @return
-	 */
-	public int getHoles() {
-		return file.getFilledUpTo() / RECORD_SIZE;
-	}
+  /**
+   * Computes the number of holes. Note that not all the holes could be valid.
+   * 
+   * @return
+   */
+  public int getHoles() {
+    return file.getFilledUpTo() / RECORD_SIZE;
+  }
 }
