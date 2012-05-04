@@ -182,25 +182,29 @@ public class OObjectEntitySerializer {
 			classes.add(currentClass);
 
 			Class<?> fieldType;
-			int fieldModifier;
 			for (Field f : currentClass.getDeclaredFields()) {
-				fieldModifier = f.getModifiers();
+				final String fieldName = f.getName();
+				final int fieldModifier = f.getModifiers();
 				if (Modifier.isStatic(fieldModifier) || Modifier.isNative(fieldModifier) || Modifier.isTransient(fieldModifier))
 					continue;
 
-				if (f.getName().equals("this$0")) {
-					if (transientFields.get(currentClass) == null)
-						transientFields.put(currentClass, new ArrayList<String>());
-					transientFields.get(currentClass).add(f.getName());
+				if (fieldName.equals("this$0")) {
+					List<String> classTransientFields = transientFields.get(currentClass);
+					if (classTransientFields == null)
+						classTransientFields = new ArrayList<String>();
+					classTransientFields.add(fieldName);
+					transientFields.put(currentClass, classTransientFields);
 				}
 
 				if (OObjectSerializerHelper.jpaTransientClass != null) {
 					Annotation ann = f.getAnnotation(OObjectSerializerHelper.jpaTransientClass);
 					if (ann != null) {
 						// @Transient DEFINED
-						if (transientFields.get(currentClass) == null)
-							transientFields.put(currentClass, new ArrayList<String>());
-						transientFields.get(currentClass).add(f.getName());
+						List<String> classTransientFields = transientFields.get(currentClass);
+						if (classTransientFields == null)
+							classTransientFields = new ArrayList<String>();
+						classTransientFields.add(fieldName);
+						transientFields.put(currentClass, classTransientFields);
 					}
 				}
 
@@ -228,9 +232,11 @@ public class OObjectEntitySerializer {
 					}
 				}
 				if (directBinding) {
-					if (directAccessFields.get(currentClass) == null)
-						directAccessFields.put(currentClass, new ArrayList<String>());
-					directAccessFields.get(currentClass).add(f.getName());
+					List<String> classDirectAccessFields = directAccessFields.get(currentClass);
+					if (classDirectAccessFields == null)
+						classDirectAccessFields = new ArrayList<String>();
+					classDirectAccessFields.add(fieldName);
+					directAccessFields.put(currentClass, classDirectAccessFields);
 				}
 
 				if (f.getAnnotation(ODocumentInstance.class) != null)
@@ -285,9 +291,10 @@ public class OObjectEntitySerializer {
 
 				// JPA 1+ AVAILABLE?
 				if (OObjectSerializerHelper.jpaEmbeddedClass != null && f.getAnnotation(OObjectSerializerHelper.jpaEmbeddedClass) != null) {
-					if (embeddedFields.get(currentClass) == null)
-						embeddedFields.put(currentClass, new ArrayList<String>());
-					embeddedFields.get(currentClass).add(f.getName());
+					List<String> classEmbeddedFields = embeddedFields.get(currentClass);
+					if (classEmbeddedFields == null)
+						classEmbeddedFields = new ArrayList<String>();
+					classEmbeddedFields.add(fieldName);
 				}
 
 			}
@@ -324,8 +331,8 @@ public class OObjectEntitySerializer {
 	public static boolean isSerializedType(final Field iField) {
 		if (!classes.contains(iField.getDeclaringClass()))
 			registerCallbacks(iField.getDeclaringClass());
-		return serializedFields.get(iField.getDeclaringClass()) != null
-				&& serializedFields.get(iField.getDeclaringClass()).get(iField) != null;
+		Map<Field, Class<?>> serializerFields = serializedFields.get(iField.getDeclaringClass());
+		return serializerFields != null && serializerFields.get(iField) != null;
 	}
 
 	public static Class<?> getSerializedType(final Field iField) {
@@ -632,37 +639,54 @@ public class OObjectEntitySerializer {
 		// CALL BEFORE MARSHALLING
 		invokeCallback(pojoClass, iProxiedPojo, iRecord, OBeforeSerialization.class);
 
-		for (Field p : pojoClass.getDeclaredFields()) {
-			fieldName = p.getName();
+		Class<?> currentClass = pojoClass;
 
-			if ((idField != null && fieldName.equals(idField.getName()) || (vField != null && fieldName.equals(vField.getName())) || (transientFields
-					.get(pojoClass) != null && transientFields.get(pojoClass).contains(fieldName))))
-				continue;
+		while (!currentClass.equals(Object.class) && classes.contains(pojoClass)) {
+			for (Field p : currentClass.getDeclaredFields()) {
+				if (Modifier.isStatic(p.getModifiers()) || Modifier.isNative(p.getModifiers()) || Modifier.isTransient(p.getModifiers()))
+					continue;
 
-			fieldValue = serializeFieldValue(p.getType(), getFieldValue(p, iPojo));
+				fieldName = p.getName();
 
-			schemaProperty = iRecord.getSchemaClass() != null ? iRecord.getSchemaClass().getProperty(fieldName) : null;
+				List<String> classTransientFields = transientFields.get(pojoClass);
 
-			if (fieldValue != null) {
-				if (isEmbeddedObject(p)) {
-					// AUTO CREATE SCHEMA PROPERTY
-					if (iRecord.getSchemaClass() == null) {
-						db.getMetadata().getSchema().createClass(iPojo.getClass());
-						iRecord.setClassNameIfExists(iPojo.getClass().getSimpleName());
-					}
+				if ((idField != null && fieldName.equals(idField.getName()) || (vField != null && fieldName.equals(vField.getName())) || (classTransientFields != null && classTransientFields
+						.contains(fieldName))))
+					continue;
 
-					if (schemaProperty == null) {
-						OType t = OType.getTypeByClass(fieldValue.getClass());
-						if (t == null)
-							t = OType.EMBEDDED;
-						schemaProperty = iRecord.getSchemaClass().createProperty(fieldName, t);
+				fieldValue = serializeFieldValue(p.getType(), getFieldValue(p, iPojo));
+
+				schemaProperty = schemaClass != null ? schemaClass.getProperty(fieldName) : null;
+
+				if (fieldValue != null) {
+					if (isEmbeddedObject(p)) {
+						// AUTO CREATE SCHEMA PROPERTY
+						if (iRecord.getSchemaClass() == null) {
+							db.getMetadata().getSchema().createClass(iPojo.getClass());
+							iRecord.setClassNameIfExists(iPojo.getClass().getSimpleName());
+						}
+
+						if (schemaProperty == null) {
+							OType t = OType.getTypeByClass(fieldValue.getClass());
+							if (t == null)
+								t = OType.EMBEDDED;
+							schemaProperty = iRecord.getSchemaClass().createProperty(fieldName, t);
+						}
 					}
 				}
+
+				fieldValue = typeToStream(fieldValue, schemaProperty != null ? schemaProperty.getType() : null, db, iRecord);
+
+				iRecord.field(fieldName, fieldValue);
 			}
 
-			fieldValue = typeToStream(fieldValue, schemaProperty != null ? schemaProperty.getType() : null, db, iRecord);
+			currentClass = currentClass.getSuperclass();
 
-			iRecord.field(fieldName, fieldValue);
+			if (currentClass == null || currentClass.equals(ODocument.class))
+				// POJO EXTENDS ODOCUMENT: SPECIAL CASE: AVOID TO CONSIDER
+				// ODOCUMENT FIELDS
+				currentClass = Object.class;
+
 		}
 
 		// CALL AFTER MARSHALLING
