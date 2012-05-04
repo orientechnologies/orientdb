@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
+import java.util.Random;
+
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
@@ -26,9 +28,10 @@ import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 
 @Test(enabled = false)
 public class LocalCreateBinarySpeedTest extends OrientMonoThreadTest {
-  private ODatabaseFlat database;
-  private ORecordBytes  record;
-  private long          date = System.currentTimeMillis();
+  private ODatabaseFlat    database;
+  private ORecordBytes     record;
+  private final static int RECORD_SIZE = 512;
+  private byte[]           recordContent;
 
   public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
     LocalCreateBinarySpeedTest test = new LocalCreateBinarySpeedTest();
@@ -48,13 +51,15 @@ public class LocalCreateBinarySpeedTest extends OrientMonoThreadTest {
 
     database.declareIntent(new OIntentMassiveInsert());
     database.begin(TXTYPE.NOTX);
+    Random rnd = new Random();
+    recordContent = new byte[RECORD_SIZE];
+    for (int i = 0; i < RECORD_SIZE; ++i)
+      recordContent[i] = (byte) rnd.nextInt(256);
   }
 
   @Override
   public void cycle() {
-    record.reset(
-        ("Account@id:" + data.getCyclesDone() + ",name:'Luca',surname:'Garulli',birthDate:" + date + "salary:"
-            + (data.getCyclesDone() + 3000) + ".00").getBytes()).save("binary");
+    record.reset(recordContent).save("binary");
 
     if (data.getCyclesDone() == data.getCycles() - 1)
       database.commit();
