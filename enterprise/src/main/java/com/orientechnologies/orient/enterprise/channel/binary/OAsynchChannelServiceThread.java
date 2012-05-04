@@ -29,54 +29,56 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OAsynchChannelServiceThread extends OSoftThread {
-	private OChannelBinaryClient				network;
-	private int													sessionId;
-	private ORemoteServerEventListener	remoteServerEventListener;
-	private static AtomicInteger				sessionIdSerial	= new AtomicInteger(Integer.MIN_VALUE);
+  private OChannelBinaryClient       network;
+  private int                        sessionId;
+  private ORemoteServerEventListener remoteServerEventListener;
+  private static AtomicInteger       sessionIdSerial = new AtomicInteger(Integer.MIN_VALUE);
 
-	public OAsynchChannelServiceThread(final ORemoteServerEventListener iRemoteServerEventListener,
-			final OChannelBinaryClient iFirstChannel, final String iThreadName) {
-		super(Orient.getThreadGroup(), iThreadName);
-		sessionId = sessionIdSerial.getAndIncrement();
-		remoteServerEventListener = iRemoteServerEventListener;
-		network = iFirstChannel;
-		start();
-	}
+  public OAsynchChannelServiceThread(final ORemoteServerEventListener iRemoteServerEventListener,
+      final OChannelBinaryClient iFirstChannel, final String iThreadName) {
+    super(Orient.getThreadGroup(), iThreadName);
+    sessionId = sessionIdSerial.getAndIncrement();
+    remoteServerEventListener = iRemoteServerEventListener;
+    network = iFirstChannel;
+    start();
+  }
 
-	@Override
-	protected void execute() throws Exception {
-		try {
-			try {
-				network.beginResponse(sessionId);
-				final byte request = network.readByte();
+  @Override
+  protected void execute() throws Exception {
+    try {
+      try {
+        network.beginResponse(sessionId);
+        final byte request = network.readByte();
 
-				Object obj = null;
+        Object obj = null;
 
-				switch (request) {
-				case OChannelBinaryProtocol.REQUEST_PUSH_RECORD:
-					obj = (ORecordInternal<?>) OChannelBinaryProtocol.readIdentifiable(network);
-					break;
+        switch (request) {
+        case OChannelBinaryProtocol.REQUEST_PUSH_RECORD:
+          obj = (ORecordInternal<?>) OChannelBinaryProtocol.readIdentifiable(network);
+          break;
 
-				case OChannelBinaryProtocol.PUSH_NODE2CLIENT_DB_CONFIG:
-					obj = new ODocument().fromStream(network.readBytes());
-					break;
-				}
+        case OChannelBinaryProtocol.PUSH_NODE2CLIENT_DB_CONFIG:
+          obj = new ODocument().fromStream(network.readBytes());
+          break;
+        }
 
-				if (remoteServerEventListener != null)
-					remoteServerEventListener.onRequest(request, obj);
+        if (remoteServerEventListener != null)
+          remoteServerEventListener.onRequest(request, obj);
 
-			} catch (IOException ioe) {
-				// EXCEPTION RECEIVED (THE SOCKET HAS BEEN CLOSED?) ASSURE TO UNLOCK THE READ AND EXIT THIS THREAD
-				sendShutdown();
-				network.close();
+      } catch (IOException ioe) {
+        // EXCEPTION RECEIVED (THE SOCKET HAS BEEN CLOSED?) ASSURE TO UNLOCK THE READ AND EXIT THIS THREAD
+        sendShutdown();
+        network.close();
+        network = null;
 
-			} finally {
-				network.endResponse();
-			}
+      } finally {
+        if (network != null)
+          network.endResponse();
+      }
 
-		} catch (Exception e) {
-			// OLogManager.instance().error(this, "Error in service thread", e);
-			sendShutdown();
-		}
-	}
+    } catch (Exception e) {
+      // OLogManager.instance().error(this, "Error in service thread", e);
+      sendShutdown();
+    }
+  }
 }

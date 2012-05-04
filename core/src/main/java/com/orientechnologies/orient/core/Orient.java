@@ -393,4 +393,8 @@ public class Orient extends OSharedResourceAbstract {
 
     return v;
   }
+
+  public void setClusterFactory(OClusterFactory clusterFactory) {
+    this.clusterFactory = clusterFactory;
+  }
 }

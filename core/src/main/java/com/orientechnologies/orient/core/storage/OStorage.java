@@ -187,8 +187,6 @@ public interface OStorage extends OSharedContainer {
 	 */
 	public long[] getClusterDataRange(int currentClusterId);
 
-	public void renameCluster(String iOldName, String iNewName);
-
 	public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock);
 
 	public ODataSegment getDataSegmentById(int iDataSegmentId);

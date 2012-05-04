@@ -25,11 +25,19 @@ import com.orientechnologies.orient.core.record.ORecord;
  */
 public class ODefaultDataSegmentStrategy implements ODataSegmentStrategy {
 
-	public int assignDataSegmentId(final ODatabase iDatabase, final ORecord<?> iRecord) {
-		final String dsName = iRecord.getDataSegmentName();
-		if (dsName != null)
-			return iDatabase.getDataSegmentIdByName(dsName);
-		return 0;
-	}
+  public int assignDataSegmentId(final ODatabase iDatabase, final ORecord<?> iRecord) {
+    // GET THE DATASEGMENT SPECIFIED IN THE RECORD IF ANY
+    final String dsName = iRecord.getDataSegmentName();
+    if (dsName != null)
+      return iDatabase.getDataSegmentIdByName(dsName);
+
+    // GET THE DATA SEGMENT CONFIGURED IN THE CLUSTER IF ANY
+    final int clusterId = iRecord.getIdentity().getClusterId();
+    if (clusterId >= 0)
+      return iDatabase.getStorage().getClusterById(clusterId).getDataSegmentId();
+
+    // RETURN 0 AS DEFAULT ONE
+    return 0;
+  }
 
 }

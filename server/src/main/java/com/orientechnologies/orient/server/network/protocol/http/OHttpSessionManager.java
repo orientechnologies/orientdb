@@ -33,104 +33,105 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  * @author Luca Garulli
  */
 public class OHttpSessionManager extends OSharedResourceAbstract {
-	private static final OHttpSessionManager	instance	= new OHttpSessionManager();
-	private Map<String, OHttpSession>					sessions	= new HashMap<String, OHttpSession>();
-	private int																expirationTime;
-	private Random														random		= new Random();
+  private static final OHttpSessionManager instance = new OHttpSessionManager();
+  private Map<String, OHttpSession>        sessions = new HashMap<String, OHttpSession>();
+  private int                              expirationTime;
+  private Random                           random   = new Random();
 
-	protected OHttpSessionManager() {
-		expirationTime = OGlobalConfiguration.NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT.getValueAsInteger() * 1000;
+  protected OHttpSessionManager() {
+    expirationTime = OGlobalConfiguration.NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT.getValueAsInteger() * 1000;
 
-		Orient.getTimer().schedule(new TimerTask() {
-			@Override
-			public void run() {
-				final int expired = checkSessionsValidity();
-				OLogManager.instance().debug(this, "Removed %d session because expired", expired);
-			}
-		}, expirationTime, expirationTime);
-	}
+    Orient.getTimer().schedule(new TimerTask() {
+      @Override
+      public void run() {
+        final int expired = checkSessionsValidity();
+        if (expired > 0)
+          OLogManager.instance().debug(this, "Removed %d session because expired", expired);
+      }
+    }, expirationTime, expirationTime);
+  }
 
-	public int checkSessionsValidity() {
-		int expired = 0;
+  public int checkSessionsValidity() {
+    int expired = 0;
 
-		acquireExclusiveLock();
-		try {
-			final long now = System.currentTimeMillis();
+    acquireExclusiveLock();
+    try {
+      final long now = System.currentTimeMillis();
 
-			Entry<String, OHttpSession> s;
-			for (Iterator<Map.Entry<String, OHttpSession>> it = sessions.entrySet().iterator(); it.hasNext();) {
-				s = it.next();
+      Entry<String, OHttpSession> s;
+      for (Iterator<Map.Entry<String, OHttpSession>> it = sessions.entrySet().iterator(); it.hasNext();) {
+        s = it.next();
 
-				if (now - s.getValue().getUpdatedOn() > expirationTime) {
-					// REMOVE THE SESSION
-					it.remove();
-					expired++;
-				}
-			}
+        if (now - s.getValue().getUpdatedOn() > expirationTime) {
+          // REMOVE THE SESSION
+          it.remove();
+          expired++;
+        }
+      }
 
-		} finally {
-			releaseExclusiveLock();
-		}
+    } finally {
+      releaseExclusiveLock();
+    }
 
-		return expired;
-	}
+    return expired;
+  }
 
-	public OHttpSession[] getSessions() {
-		acquireSharedLock();
-		try {
+  public OHttpSession[] getSessions() {
+    acquireSharedLock();
+    try {
 
-			return (OHttpSession[]) sessions.values().toArray(new OHttpSession[sessions.size()]);
+      return (OHttpSession[]) sessions.values().toArray(new OHttpSession[sessions.size()]);
 
-		} finally {
-			releaseSharedLock();
-		}
-	}
+    } finally {
+      releaseSharedLock();
+    }
+  }
 
-	public OHttpSession getSession(final String iId) {
-		acquireSharedLock();
-		try {
+  public OHttpSession getSession(final String iId) {
+    acquireSharedLock();
+    try {
 
-			final OHttpSession sess = sessions.get(iId);
-			if (sess != null)
-				sess.updateLastUpdatedOn();
-			return sess;
+      final OHttpSession sess = sessions.get(iId);
+      if (sess != null)
+        sess.updateLastUpdatedOn();
+      return sess;
 
-		} finally {
-			releaseSharedLock();
-		}
-	}
+    } finally {
+      releaseSharedLock();
+    }
+  }
 
-	public String createSession(final String iDatabaseName, final String iUserName) {
-		acquireExclusiveLock();
-		try {
-			final String id = "OS" + System.currentTimeMillis() + random.nextLong();
-			sessions.put(id, new OHttpSession(id, iDatabaseName, iUserName));
-			return id;
+  public String createSession(final String iDatabaseName, final String iUserName) {
+    acquireExclusiveLock();
+    try {
+      final String id = "OS" + System.currentTimeMillis() + random.nextLong();
+      sessions.put(id, new OHttpSession(id, iDatabaseName, iUserName));
+      return id;
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 
-	public OHttpSession removeSession(final String iSessionId) {
-		acquireExclusiveLock();
-		try {
-			return sessions.remove(iSessionId);
+  public OHttpSession removeSession(final String iSessionId) {
+    acquireExclusiveLock();
+    try {
+      return sessions.remove(iSessionId);
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 
-	public int getExpirationTime() {
-		return expirationTime;
-	}
+  public int getExpirationTime() {
+    return expirationTime;
+  }
 
-	public void setExpirationTime(int expirationTime) {
-		this.expirationTime = expirationTime;
-	}
+  public void setExpirationTime(int expirationTime) {
+    this.expirationTime = expirationTime;
+  }
 
-	public static OHttpSessionManager getInstance() {
-		return instance;
-	}
+  public static OHttpSessionManager getInstance() {
+    return instance;
+  }
 }

@@ -1277,7 +1277,7 @@ public class OStorageLocal extends OStorageEmbedded {
     lock.acquireSharedLock();
     try {
 
-      return clusters.length;
+      return clusterMap.size();
 
     } finally {
       lock.releaseSharedLock();
@@ -1492,7 +1492,7 @@ public class OStorageLocal extends OStorageEmbedded {
     // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
     lock.acquireExclusiveLock();
     try {
-      
+
       // lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
       // try {
       final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));

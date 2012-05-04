@@ -26,34 +26,33 @@ import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
 import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemory;
 
 public class ODefaultClusterFactory implements OClusterFactory {
-	private static final String[]	TYPES	= { "PHYSICAL", "MEMORY" };
+  protected static final String[] TYPES = { OClusterLocal.TYPE, OClusterMemory.TYPE };
 
-	public OCluster createCluster(final String iType) {
-		if (iType.equalsIgnoreCase("PHYSICAL"))
-			return new OClusterLocal();
-		else if (iType.equalsIgnoreCase("MEMORY"))
-			return new OClusterMemory();
-		else
-			OLogManager.instance().exception(
-					"Cluster type '" + iType + "' is not supported. Supported types are: " + Arrays.toString(TYPES), null,
-					OStorageException.class);
-		return null;
-	}
+  public OCluster createCluster(final String iType) {
+    if (iType.equalsIgnoreCase(OClusterLocal.TYPE))
+      return new OClusterLocal();
+    else if (iType.equalsIgnoreCase(OClusterMemory.TYPE))
+      return new OClusterMemory();
+    else
+      OLogManager.instance().exception(
+          "Cluster type '" + iType + "' is not supported. Supported types are: " + Arrays.toString(TYPES), null,
+          OStorageException.class);
+    return null;
+  }
 
-	public OCluster createCluster(final OStorageClusterConfiguration iConfig) {
-		if (iConfig instanceof OStoragePhysicalClusterConfiguration)
-			return new OClusterLocal();
-		else if (iConfig instanceof OStorageMemoryClusterConfiguration)
-			return new OClusterMemory();
-		else
-			OLogManager.instance().exception(
-					"Cluster type '" + iConfig + "' is not supported. Supported types are: " + Arrays.toString(TYPES), null,
-					OStorageException.class);
-		return null;
-	}
+  public OCluster createCluster(final OStorageClusterConfiguration iConfig) {
+    if (iConfig instanceof OStoragePhysicalClusterConfiguration)
+      return new OClusterLocal();
+    else if (iConfig instanceof OStorageMemoryClusterConfiguration)
+      return new OClusterMemory();
+    else
+      OLogManager.instance().exception(
+          "Cluster type '" + iConfig + "' is not supported. Supported types are: " + Arrays.toString(TYPES), null,
+          OStorageException.class);
+    return null;
+  }
 
-	public String[] getSupported() {
-		return TYPES;
-	}
-
+  public String[] getSupported() {
+    return TYPES;
+  }
 }
