@@ -71,10 +71,12 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   protected int                      clientTxId;
   protected OServerUserConfiguration serverUser;
   private final Level                logClientExceptions;
+  private final boolean              logClientFullStackTrace;
 
   public OBinaryNetworkProtocolAbstract(final String iThreadName) {
     super(Orient.getThreadGroup(), iThreadName);
-    logClientExceptions = Level.parse(OGlobalConfiguration.SERVER_LOG_CLIENT_EXCEPTION_LEVEL.getValueAsString());
+    logClientExceptions = Level.parse(OGlobalConfiguration.SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL.getValueAsString());
+    logClientFullStackTrace = OGlobalConfiguration.SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE.getValueAsBoolean();
   }
 
   /**
@@ -189,8 +191,12 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       channel.flush();
 
       if (OLogManager.instance().isLevelEnabled(logClientExceptions)) {
-        OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", current,
-            channel.socket.getRemoteSocketAddress(), t);
+        if (logClientFullStackTrace)
+          OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", t,
+              channel.socket.getRemoteSocketAddress(), t.toString());
+        else
+          OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", null,
+              channel.socket.getRemoteSocketAddress(), t.toString());
       }
 
     } finally {

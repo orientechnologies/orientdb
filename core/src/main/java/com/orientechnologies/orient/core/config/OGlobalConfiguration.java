@@ -294,13 +294,13 @@ public enum OGlobalConfiguration {
 
   SERVER_CACHE_FILE_STATIC("server.cache.staticFile", "Cache static resources loading", Boolean.class, false),
 
-  SERVER_LOG_CLIENT_EXCEPTION_LEVEL(
-      "server.log.clientExceptionLevel",
+  SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL(
+      "server.log.dumpClientExceptionLevel",
       "Logs client exceptions. Use any level supported by Java java.util.logging.Level class: OFF, FINE, CONFIG, INFO, WARNING, SEVERE",
       Level.class, Level.FINE),
 
-  SERVER_LOG_CLIENT_EXCEPTION_FULLSTACKTRACE("server.log.clientExceptionFullStackTrace",
-      "Logs client exceptions with the full stack trace", Level.class, Boolean.TRUE),
+  SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE("server.log.dumpClientExceptionFullStackTrace",
+      "Dumps the full stack trace of the exception to sent to the client", Level.class, Boolean.FALSE),
 
   // DISTRIBUTED SERVERS
   DISTRIBUTED_ASYNC_TIME_DELAY("distributed.async.timeDelay",
