@@ -376,406 +376,72 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       super.searchInClasses();
   }
 
-  @SuppressWarnings("rawtypes")
-  private boolean searchForIndexes(final OClass iSchemaClass) {
-    final ODatabaseRecord database = getDatabase();
-    database.checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, iSchemaClass.getName().toLowerCase());
-
-    // Create set that is sorted by amount of fields in OIndexSearchResult items
-    // so the most specific restrictions will be processed first.
-    final List<OIndexSearchResult> indexSearchResults = new ArrayList<OIndexSearchResult>();
-
-    // fetch all possible variants of subqueries that can be used in indexes.
-    analyzeQueryBranch(iSchemaClass, compiledFilter.getRootCondition(), indexSearchResults);
-
-    // most specific will be processed first
-    Collections.sort(indexSearchResults, new Comparator<OIndexSearchResult>() {
-      public int compare(final OIndexSearchResult searchResultOne, final OIndexSearchResult searchResultTwo) {
-        return searchResultTwo.getFieldCount() - searchResultOne.getFieldCount();
-      }
-    });
-
-    // go through all variants to choose which one can be used for index search.
-    for (final OIndexSearchResult searchResult : indexSearchResults) {
-      final int searchResultFieldsCount = searchResult.fields().size();
-
-      final List<OIndex<?>> involvedIndexes = getInvolvedIndexes(iSchemaClass, searchResult);
-      Collections.sort(involvedIndexes, new Comparator<OIndex>() {
-        public int compare(final OIndex indexOne, final OIndex indexTwo) {
-          return indexOne.getDefinition().getParamCount() - indexTwo.getDefinition().getParamCount();
-        }
-      });
-
-      // go through all possible index for given set of fields.
-      for (final OIndex index : involvedIndexes) {
-        final OIndexDefinition indexDefinition = index.getDefinition();
-        final OQueryOperator operator = searchResult.lastOperator;
-
-        // we need to test that last field in query subset and field in index that has the same position
-        // are equals.
-        if (!(operator instanceof OQueryOperatorEquals)) {
-          final String lastFiled = searchResult.lastField.getItemName(searchResult.lastField.getItemCount() - 1);
-          final String relatedIndexField = indexDefinition.getFields().get(searchResult.fieldValuePairs.size());
-          if (!lastFiled.equals(relatedIndexField))
-            continue;
-        }
-
-        final List<Object> keyParams = new ArrayList<Object>(searchResultFieldsCount);
-        // We get only subset contained in processed sub query.
-        for (final String fieldName : indexDefinition.getFields().subList(0, searchResultFieldsCount)) {
-          final Object fieldValue = searchResult.fieldValuePairs.get(fieldName);
-          if (fieldValue != null)
-            keyParams.add(fieldValue);
-          else
-            keyParams.add(searchResult.lastValue);
-        }
-
-        final OIndex internalIndex = index.getInternal();
-        final boolean indexCanBeUsedInEqualityOperators = (internalIndex instanceof OIndexUnique || internalIndex instanceof OIndexNotUnique);
-
-        if (indexDefinition.getParamCount() == 1) {
-          if (indexCanBeUsedInEqualityOperators && operator instanceof OQueryOperatorBetween) {
-            final Object[] betweenKeys = (Object[]) keyParams.get(0);
-
-            final Object keyOne = indexDefinition.createValue(Collections.singletonList(OSQLHelper.getValue(betweenKeys[0])));
-            final Object keyTwo = indexDefinition.createValue(Collections.singletonList(OSQLHelper.getValue(betweenKeys[2])));
-
-            if (keyOne == null || keyTwo == null)
-              continue;
-
-            final Collection<OIdentifiable> result;
-            if (fetchLimit > -1)
-              result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
-            else
-              result = index.getValuesBetween(keyOne, true, keyTwo, true);
-
-            fillSearchIndexResultSet(result);
-            return true;
-          }
-
-          if (indexCanBeUsedInEqualityOperators && operator instanceof OQueryOperatorIn) {
-            final List<Object> inParams = (List<Object>) keyParams.get(0);
-            final List<Object> inKeys = new ArrayList<Object>();
-
-            boolean containsNotCompatibleKey = false;
-            for (final Object keyValue : inParams) {
-              final Object key = indexDefinition.createValue(OSQLHelper.getValue(keyValue));
-              if (key == null) {
-                containsNotCompatibleKey = true;
-                break;
-              }
-
-              inKeys.add(key);
-
-            }
-            if (containsNotCompatibleKey)
-              continue;
-
-            final Collection<OIdentifiable> result;
-            if (fetchLimit > -1)
-              result = index.getValues(inKeys, fetchLimit);
-            else
-              result = index.getValues(inKeys);
-
-            fillSearchIndexResultSet(result);
-            return true;
-          }
-
-          final Object key;
-          if (indexDefinition instanceof OIndexDefinitionMultiValue)
-            key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
-          else
-            key = indexDefinition.createValue(keyParams);
-
-          if (key == null)
-            continue;
-
-          if (internalIndex instanceof OIndexFullText && operator instanceof OQueryOperatorContainsText) {
-            fillSearchIndexResultSet(index.get(key));
-            return true;
-          }
-
-          if (!indexCanBeUsedInEqualityOperators)
-            continue;
-
-          if (operator instanceof OQueryOperatorEquals) {
-            fillSearchIndexResultSet(index.get(key));
-            return true;
-          }
-
-          if (operator instanceof OQueryOperatorContainsKey) {
-            if ((index.getDefinition() instanceof OPropertyMapIndexDefinition)
-                && ((OPropertyMapIndexDefinition) index.getDefinition()).getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.KEY) {
-              fillSearchIndexResultSet(index.get(key));
-              return true;
-            }
-            continue;
-          }
-
-          if (operator instanceof OQueryOperatorContainsValue) {
-            if ((index.getDefinition() instanceof OPropertyMapIndexDefinition)
-                && ((OPropertyMapIndexDefinition) index.getDefinition()).getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.VALUE) {
-              fillSearchIndexResultSet(index.get(key));
-              return true;
-            }
-            continue;
-          }
-
-          if (operator instanceof OQueryOperatorContains) {
-            fillSearchIndexResultSet(index.get(key));
-            return true;
-          }
-
-          if (operator instanceof OQueryOperatorMajor) {
-            final Collection<OIdentifiable> result;
-            if (fetchLimit > -1)
-              result = index.getValuesMajor(key, false, fetchLimit);
-            else
-              result = index.getValuesMajor(key, false);
-
-            fillSearchIndexResultSet(result);
-            return true;
-          }
-
-          if (operator instanceof OQueryOperatorMajorEquals) {
-            final Collection<OIdentifiable> result;
-            if (fetchLimit > -1)
-              result = index.getValuesMajor(key, true, fetchLimit);
-            else
-              result = index.getValuesMajor(key, true);
-
-            fillSearchIndexResultSet(result);
-            return true;
-          }
-
-          if (operator instanceof OQueryOperatorMinor) {
-            final Collection<OIdentifiable> result;
-            if (fetchLimit > -1)
-              result = index.getValuesMinor(key, false, fetchLimit);
-            else
-              result = index.getValuesMinor(key, false);
-
-            fillSearchIndexResultSet(result);
-            return true;
-          }
-
-          if (operator instanceof OQueryOperatorMinorEquals) {
-            final Collection<OIdentifiable> result;
-            if (fetchLimit > -1)
-              result = index.getValuesMinor(key, true, fetchLimit);
-            else
-              result = index.getValuesMinor(key, true);
-
-            fillSearchIndexResultSet(result);
-            return true;
-          }
-        } else {
-          if (!indexCanBeUsedInEqualityOperators)
-            continue;
-
-          if (operator instanceof OQueryOperatorBetween) {
-            final Object[] betweenKeys = (Object[]) keyParams.get(keyParams.size() - 1);
-
-            final Object betweenKeyOne = OSQLHelper.getValue(betweenKeys[0]);
-
-            if (betweenKeyOne == null)
-              continue;
-
-            final Object betweenKeyTwo = OSQLHelper.getValue(betweenKeys[2]);
-
-            if (betweenKeyTwo == null)
-              continue;
-
-            final List<Object> betweenKeyOneParams = new ArrayList<Object>(keyParams.size());
-            betweenKeyOneParams.addAll(keyParams.subList(0, keyParams.size() - 1));
-            betweenKeyOneParams.add(betweenKeyOne);
-
-            final List<Object> betweenKeyTwoParams = new ArrayList<Object>(keyParams.size());
-            betweenKeyTwoParams.addAll(keyParams.subList(0, keyParams.size() - 1));
-            betweenKeyTwoParams.add(betweenKeyTwo);
-
-            final Object keyOne = indexDefinition.createValue(betweenKeyOneParams);
-
-            if (keyOne == null)
-              continue;
-
-            final Object keyTwo = indexDefinition.createValue(betweenKeyTwoParams);
-
-            if (keyTwo == null)
-              continue;
-
-            final Collection<OIdentifiable> result;
-            if (fetchLimit > -1)
-              result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
-            else
-              result = index.getValuesBetween(keyOne, true, keyTwo, true);
-
-            fillSearchIndexResultSet(result);
-
-            if (OProfiler.getInstance().isRecording()) {
-              OProfiler.getInstance().updateCounter("Query.compositeIndexUsage", 1);
-              OProfiler.getInstance().updateCounter("Query.compositeIndexUsage." + indexDefinition.getParamCount(), 1);
-            }
-
-            return true;
-          }
-
-          if (operator instanceof OQueryOperatorEquals) {
-            // in case of composite keys several items can be returned in case of we perform search
-            // using part of composite key stored in index.
-
-            final Object keyOne = indexDefinition.createValue(keyParams);
-
-            if (keyOne == null)
-              continue;
-
-            final Object keyTwo = indexDefinition.createValue(keyParams);
-
-            final Collection<OIdentifiable> result;
-            if (fetchLimit > -1)
-              result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
-            else
-              result = index.getValuesBetween(keyOne, true, keyTwo, true);
-
-            fillSearchIndexResultSet(result);
-
-            if (OProfiler.getInstance().isRecording()) {
-              OProfiler.getInstance().updateCounter("Query.compositeIndexUsage", 1);
-              OProfiler.getInstance().updateCounter("Query.compositeIndexUsage." + indexDefinition.getParamCount(), 1);
-            }
-            return true;
-          }
-
-          if (operator instanceof OQueryOperatorMajor) {
-            // if we have situation like "field1 = 1 AND field2 > 2"
-            // then we fetch collection which left not included boundary is the smallest composite key in the
-            // index that contains keys with values field1=1 and field2=2 and which right included boundary
-            // is the biggest composite key in the index that contains key with value field1=1.
-
-            final Object keyOne = indexDefinition.createValue(keyParams);
-
-            if (keyOne == null)
-              continue;
-
-            final Object keyTwo = indexDefinition.createValue(keyParams.subList(0, keyParams.size() - 1));
-
-            if (keyTwo == null)
-              continue;
-
-            final Collection<OIdentifiable> result;
-            if (fetchLimit > -1)
-              result = index.getValuesBetween(keyOne, false, keyTwo, true, fetchLimit);
-            else
-              result = index.getValuesBetween(keyOne, false, keyTwo, true);
-
-            fillSearchIndexResultSet(result);
-
-            if (OProfiler.getInstance().isRecording()) {
-              OProfiler.getInstance().updateCounter("Query.compositeIndexUsage", 1);
-              OProfiler.getInstance().updateCounter("Query.compositeIndexUsage." + indexDefinition.getParamCount(), 1);
-            }
-            return true;
-          }
-
-          if (operator instanceof OQueryOperatorMajorEquals) {
-            // if we have situation like "field1 = 1 AND field2 >= 2"
-            // then we fetch collection which left included boundary is the smallest composite key in the
-            // index that contains keys with values field1=1 and field2=2 and which right included boundary
-            // is the biggest composite key in the index that contains key with value field1=1.
-
-            final Object keyOne = indexDefinition.createValue(keyParams);
-
-            if (keyOne == null)
-              continue;
-
-            final Object keyTwo = indexDefinition.createValue(keyParams.subList(0, keyParams.size() - 1));
-
-            if (keyTwo == null)
-              continue;
-
-            final Collection<OIdentifiable> result;
-            if (fetchLimit > -1)
-              result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
-            else
-              result = index.getValuesBetween(keyOne, true, keyTwo, true);
-
-            fillSearchIndexResultSet(result);
-
-            if (OProfiler.getInstance().isRecording()) {
-              OProfiler.getInstance().updateCounter("Query.compositeIndexUsage", 1);
-              OProfiler.getInstance().updateCounter("Query.compositeIndexUsage." + indexDefinition.getParamCount(), 1);
-            }
-            return true;
-          }
-
-          if (operator instanceof OQueryOperatorMinor) {
-            // if we have situation like "field1 = 1 AND field2 < 2"
-            // then we fetch collection which left included boundary is the smallest composite key in the
-            // index that contains key with value field1=1 and which right not included boundary
-            // is the biggest composite key in the index that contains key with values field1=1 and field2=2.
-
-            final Object keyOne = indexDefinition.createValue(keyParams.subList(0, keyParams.size() - 1));
-
-            if (keyOne == null)
-              continue;
-
-            final Object keyTwo = indexDefinition.createValue(keyParams);
-
-            if (keyTwo == null)
-              continue;
-
-            final Collection<OIdentifiable> result;
-            if (fetchLimit > -1)
-              result = index.getValuesBetween(keyOne, true, keyTwo, false, fetchLimit);
-            else
-              result = index.getValuesBetween(keyOne, true, keyTwo, false);
-
-            fillSearchIndexResultSet(result);
-
-            if (OProfiler.getInstance().isRecording()) {
-              OProfiler.getInstance().updateCounter("Query.compositeIndexUsage", 1);
-              OProfiler.getInstance().updateCounter("Query.compositeIndexUsage." + indexDefinition.getParamCount(), 1);
-            }
-            return true;
-          }
-
-          if (operator instanceof OQueryOperatorMinorEquals) {
-            // if we have situation like "field1 = 1 AND field2 <= 2"
-            // then we fetch collection which left included boundary is the smallest composite key in the
-            // index that contains key with value field1=1 and which right not included boundary
-            // is the biggest composite key in the index that contains key with value field1=1 and field2=2.
-
-            final Object keyOne = indexDefinition.createValue(keyParams.subList(0, keyParams.size() - 1));
-
-            if (keyOne == null)
-              continue;
-
-            final Object keyTwo = indexDefinition.createValue(keyParams);
-
-            if (keyTwo == null)
-              continue;
-
-            final Collection<OIdentifiable> result;
-            if (fetchLimit > -1)
-              result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
-            else
-              result = index.getValuesBetween(keyOne, true, keyTwo, true);
-
-            fillSearchIndexResultSet(result);
-
-            if (OProfiler.getInstance().isRecording()) {
-              OProfiler.getInstance().updateCounter("Query.compositeIndexUsage", 1);
-              OProfiler.getInstance().updateCounter("Query.compositeIndexUsage." + indexDefinition.getParamCount(), 1);
-            }
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
-
-  private List<OIndex<?>> getInvolvedIndexes(OClass iSchemaClass, OIndexSearchResult searchResultFields) {
+	@SuppressWarnings("rawtypes")
+	private boolean searchForIndexes(final OClass iSchemaClass) {
+		final ODatabaseRecord database = getDatabase();
+		database.checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, iSchemaClass.getName().toLowerCase());
+
+		// Create set that is sorted by amount of fields in OIndexSearchResult items
+		// so the most specific restrictions will be processed first.
+		final List<OIndexSearchResult> indexSearchResults = new ArrayList<OIndexSearchResult>();
+
+		// fetch all possible variants of subqueries that can be used in indexes.
+		analyzeQueryBranch(iSchemaClass, compiledFilter.getRootCondition(), indexSearchResults);
+
+		// most specific will be processed first
+		Collections.sort(indexSearchResults, new Comparator<OIndexSearchResult>() {
+			public int compare(final OIndexSearchResult searchResultOne, final OIndexSearchResult searchResultTwo) {
+				return searchResultTwo.getFieldCount() - searchResultOne.getFieldCount();
+			}
+		});
+
+		// go through all variants to choose which one can be used for index search.
+		for (final OIndexSearchResult searchResult : indexSearchResults) {
+			final int searchResultFieldsCount = searchResult.fields().size();
+
+			final List<OIndex<?>> involvedIndexes = getInvolvedIndexes(iSchemaClass, searchResult);
+			Collections.sort(involvedIndexes, new Comparator<OIndex>() {
+				public int compare(final OIndex indexOne, final OIndex indexTwo) {
+					return indexOne.getDefinition().getParamCount() - indexTwo.getDefinition().getParamCount();
+				}
+			});
+
+			// go through all possible index for given set of fields.
+			for (final OIndex index : involvedIndexes) {
+				final OIndexDefinition indexDefinition = index.getDefinition();
+				final OQueryOperator operator = searchResult.lastOperator;
+
+				// we need to test that last field in query subset and field in index that has the same position
+				// are equals.
+				if (!(operator instanceof OQueryOperatorEquals)) {
+					final String lastFiled = searchResult.lastField.getItemName(searchResult.lastField.getItemCount() - 1);
+					final String relatedIndexField = indexDefinition.getFields().get(searchResult.fieldValuePairs.size());
+					if (!lastFiled.equals(relatedIndexField))
+						continue;
+				}
+
+				final List<Object> keyParams = new ArrayList<Object>(searchResultFieldsCount);
+				// We get only subset contained in processed sub query.
+				for (final String fieldName : indexDefinition.getFields().subList(0, searchResultFieldsCount)) {
+					final Object fieldValue = searchResult.fieldValuePairs.get(fieldName);
+					if (fieldValue != null)
+						keyParams.add(fieldValue);
+					else
+						keyParams.add(searchResult.lastValue);
+				}
+
+				final Collection<OIdentifiable> result = operator.executeIndexQuery(index, keyParams, fetchLimit);
+				if (result == null)
+					continue;
+
+				fillSearchIndexResultSet(result);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private List<OIndex<?>> getInvolvedIndexes(OClass iSchemaClass, OIndexSearchResult searchResultFields) {
     final Set<OIndex<?>> involvedIndexes = iSchemaClass.getInvolvedIndexes(searchResultFields.fields());
 
     final List<OIndex<?>> result = new ArrayList<OIndex<?>>(involvedIndexes.size());

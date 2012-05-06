@@ -24,7 +24,9 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
@@ -91,6 +93,43 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 	@Override
 	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
 		return OIndexReuseType.INDEX_METHOD;
+	}
+
+	@Override
+	public Collection<OIdentifiable> executeIndexQuery(OIndex<?> index, List<Object> keyParams, int fetchLimit) {
+		final OIndexDefinition indexDefinition = index.getDefinition();
+		final Collection<OIdentifiable> result;
+
+		final OIndexInternal internalIndex = index.getInternal();
+		if(!internalIndex.canBeUsedInEqualityOperators())
+			return null;
+
+		if(indexDefinition.getParamCount() == 1) {
+			final List<Object> inParams = (List<Object>) keyParams.get(0);
+			final List<Object> inKeys = new ArrayList<Object>();
+
+			boolean containsNotCompatibleKey = false;
+			for (final Object keyValue : inParams) {
+				final Object key = indexDefinition.createValue(OSQLHelper.getValue(keyValue));
+				if (key == null) {
+					containsNotCompatibleKey = true;
+					break;
+				}
+
+				inKeys.add(key);
+
+			}
+			if (containsNotCompatibleKey)
+				return null;
+
+			if (fetchLimit > -1)
+				result = index.getValues(inKeys, fetchLimit);
+			else
+				result = index.getValues(inKeys);
+		} else
+			return null;
+
+		return result;
 	}
 
 	@Override

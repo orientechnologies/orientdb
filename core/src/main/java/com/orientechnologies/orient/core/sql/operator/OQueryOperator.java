@@ -15,11 +15,14 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import java.util.Collection;
 import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorDivide;
 import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMinus;
@@ -29,71 +32,70 @@ import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorPlus;
 
 /**
  * Query Operators. Remember to handle the operator in OQueryItemCondition.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public abstract class OQueryOperator {
-    
-    public static enum ORDER{
-            /**
-             * Used when order compared to other operator can not be evaluated
-             * or has no consequences.
-             */
-            UNKNOWNED,
-            /**
-             * Used when this operator must be before the other one
-             */
-            BEFORE,
-            /**
-             * Used when this operator must be after the other one
-             */
-            AFTER,
-            /**
-             * Used when this operator is equal the other one
-             */
-            EQUAL
-        }
-                
-        /**
-         * Default operator order. can be used by additional operator
-         * to locate themself relatively to default ones.
-         * 
-         * WARNING: ORDER IS IMPORTANT TO AVOID SUB-STRING LIKE "IS" and AND "INSTANCEOF": INSTANCEOF MUST BE PLACED BEFORE! AND ALSO FOR
-         * PERFORMANCE (MOST USED BEFORE)
-         */
-        protected static final Class[] DEFAULT_OPERATORS_ORDER = {
-            OQueryOperatorEquals.class,
-            OQueryOperatorAnd.class, 
-            OQueryOperatorOr.class, 
-            OQueryOperatorNotEquals.class, 
-            OQueryOperatorNot.class,
-            OQueryOperatorMinorEquals.class, 
-            OQueryOperatorMinor.class, 
-            OQueryOperatorMajorEquals.class, 
-            OQueryOperatorContainsAll.class,
-            OQueryOperatorMajor.class, 
-            OQueryOperatorLike.class, 
-            OQueryOperatorMatches.class, 
-            OQueryOperatorInstanceof.class,
-            OQueryOperatorIs.class, 
-            OQueryOperatorIn.class, 
-            OQueryOperatorContainsKey.class, 
-            OQueryOperatorContainsValue.class,
-            OQueryOperatorContainsText.class, 
-            OQueryOperatorContains.class,
-            OQueryOperatorTraverse.class, 
-            OQueryOperatorBetween.class, 
-            OQueryOperatorPlus.class, 
-            OQueryOperatorMinus.class,
-            OQueryOperatorMultiply.class, 
-            OQueryOperatorDivide.class, 
-            OQueryOperatorMod.class};
-    
-	public final String		keyword;
-	public final int			precedence;
-	public final int			expectedRightWords;
-	public final boolean	unary;
+
+	public static enum ORDER {
+		/**
+		 * Used when order compared to other operator can not be evaluated
+		 * or has no consequences.
+		 */
+		UNKNOWNED,
+		/**
+		 * Used when this operator must be before the other one
+		 */
+		BEFORE,
+		/**
+		 * Used when this operator must be after the other one
+		 */
+		AFTER,
+		/**
+		 * Used when this operator is equal the other one
+		 */
+		EQUAL
+	}
+
+	/**
+	 * Default operator order. can be used by additional operator
+	 * to locate themself relatively to default ones.
+	 * <p/>
+	 * WARNING: ORDER IS IMPORTANT TO AVOID SUB-STRING LIKE "IS" and AND "INSTANCEOF": INSTANCEOF MUST BE PLACED BEFORE! AND ALSO FOR
+	 * PERFORMANCE (MOST USED BEFORE)
+	 */
+	protected static final Class[] DEFAULT_OPERATORS_ORDER = {
+					OQueryOperatorEquals.class,
+					OQueryOperatorAnd.class,
+					OQueryOperatorOr.class,
+					OQueryOperatorNotEquals.class,
+					OQueryOperatorNot.class,
+					OQueryOperatorMinorEquals.class,
+					OQueryOperatorMinor.class,
+					OQueryOperatorMajorEquals.class,
+					OQueryOperatorContainsAll.class,
+					OQueryOperatorMajor.class,
+					OQueryOperatorLike.class,
+					OQueryOperatorMatches.class,
+					OQueryOperatorInstanceof.class,
+					OQueryOperatorIs.class,
+					OQueryOperatorIn.class,
+					OQueryOperatorContainsKey.class,
+					OQueryOperatorContainsValue.class,
+					OQueryOperatorContainsText.class,
+					OQueryOperatorContains.class,
+					OQueryOperatorTraverse.class,
+					OQueryOperatorBetween.class,
+					OQueryOperatorPlus.class,
+					OQueryOperatorMinus.class,
+					OQueryOperatorMultiply.class,
+					OQueryOperatorDivide.class,
+					OQueryOperatorMod.class};
+
+	public final String keyword;
+	public final int precedence;
+	public final int expectedRightWords;
+	public final boolean unary;
 
 	protected OQueryOperator(final String iKeyword, final int iPrecedence, final boolean iUnary) {
 		keyword = iKeyword;
@@ -110,9 +112,37 @@ public abstract class OQueryOperator {
 	}
 
 	public abstract Object evaluateRecord(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-			final Object iRight, OCommandContext iContext);
+																				final Object iRight, OCommandContext iContext);
 
+	/**
+	 * Returns hint how index can be used to calculate result of operator execution.
+	 *
+	 * @param iLeft  Value of left query parameter.
+	 * @param iRight Value of right query parameter.
+	 * @return Hint how index can be used to calculate result of operator execution.
+	 */
 	public abstract OIndexReuseType getIndexReuseType(Object iLeft, Object iRight);
+
+	/**
+	 * Performs index query to calculate result of execution of given operator.
+	 * <p/>
+	 * Query that should be executed can be presented like:
+	 * [[property0 = keyParam0] and [property1 = keyParam1] and] propertyN operator keyParamN.
+	 * <p/>
+	 * It is supped that index which passed in as parameter is used to index properties listed above and responsibility of
+	 * given method execute query using given parameters.
+	 * <p/>
+	 * Multiple parameters are passed in to implement composite indexes support.
+	 *
+	 * @param index      Instance of index that will be used to calculate result of operator execution.
+	 * @param keyParams  Parameters of query is used to calculate query result.
+	 * @param fetchLimit Maximum amount of items to be fetched, corresponds to LIMIT operator in SQL query.
+	 * @return Result of execution of given operator or {@code null} if given index
+	 *         can not be used to calculate operator result.
+	 */
+	public Collection<OIdentifiable> executeIndexQuery(OIndex<?> index, final List<Object> keyParams, final int fetchLimit) {
+		return null;
+	}
 
 	@Override
 	public String toString() {
@@ -121,7 +151,7 @@ public abstract class OQueryOperator {
 
 	/**
 	 * Default State-less implementation: does not save parameters and just return itself
-	 * 
+	 *
 	 * @param iParams
 	 * @return
 	 */
@@ -140,41 +170,42 @@ public abstract class OQueryOperator {
 	public boolean isUnary() {
 		return unary;
 	}
-        
-        /**
-         * Check priority of this operator compare to given operator.
-         * @param other
-         * @return ORDER place of this operator compared to given operator
-         */
-        public ORDER compare(OQueryOperator other){
-            final Class thisClass = this.getClass();
-            final Class otherClass = other.getClass();
-            
-            int thisPosition = -1;
-            int otherPosition = -1;
-            for(int i=0; i<DEFAULT_OPERATORS_ORDER.length; i++){
-                //subclass of default operators inherit their parent ordering
-                final Class clazz = DEFAULT_OPERATORS_ORDER[i];
-                if(clazz.isAssignableFrom(thisClass)){
-                    thisPosition = i;
-                }
-                if(clazz.isAssignableFrom(otherClass)){
-                    otherPosition = i;
-                }
-            }
-            
-            if(thisPosition == -1 || otherPosition == -1){
-                //can not decide which comes first
-                return ORDER.UNKNOWNED;
-            }
-            
-            if(thisPosition > otherPosition){
-                return ORDER.AFTER;
-            }else if(thisPosition < otherPosition){
-                return ORDER.BEFORE;
-            }
-            
-            return ORDER.EQUAL;                        
-        }
-        
+
+	/**
+	 * Check priority of this operator compare to given operator.
+	 *
+	 * @param other
+	 * @return ORDER place of this operator compared to given operator
+	 */
+	public ORDER compare(OQueryOperator other) {
+		final Class thisClass = this.getClass();
+		final Class otherClass = other.getClass();
+
+		int thisPosition = -1;
+		int otherPosition = -1;
+		for (int i = 0; i < DEFAULT_OPERATORS_ORDER.length; i++) {
+			//subclass of default operators inherit their parent ordering
+			final Class clazz = DEFAULT_OPERATORS_ORDER[i];
+			if (clazz.isAssignableFrom(thisClass)) {
+				thisPosition = i;
+			}
+			if (clazz.isAssignableFrom(otherClass)) {
+				otherPosition = i;
+			}
+		}
+
+		if (thisPosition == -1 || otherPosition == -1) {
+			//can not decide which comes first
+			return ORDER.UNKNOWNED;
+		}
+
+		if (thisPosition > otherPosition) {
+			return ORDER.AFTER;
+		} else if (thisPosition < otherPosition) {
+			return ORDER.BEFORE;
+		}
+
+		return ORDER.EQUAL;
+	}
+
 }

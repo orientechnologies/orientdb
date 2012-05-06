@@ -15,15 +15,20 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * MAJOR operator.
@@ -54,7 +59,60 @@ public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
 		return OIndexReuseType.INDEX_METHOD;
 	}
 
-  @Override
+	@Override
+	public Collection<OIdentifiable> executeIndexQuery(OIndex<?> index, List<Object> keyParams, int fetchLimit) {
+		final OIndexDefinition indexDefinition = index.getDefinition();
+
+    final OIndexInternal internalIndex = index.getInternal();
+		if(!internalIndex.canBeUsedInEqualityOperators())
+			return null;
+		final Collection<OIdentifiable> result;
+
+		if(indexDefinition.getParamCount() == 1) {
+			final Object key;
+			if (indexDefinition instanceof OIndexDefinitionMultiValue)
+				key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
+			else
+				key = indexDefinition.createValue(keyParams);
+
+			if (key == null)
+				return null;
+
+			if (fetchLimit > -1)
+				result = index.getValuesMajor(key, false, fetchLimit);
+			else
+				result = index.getValuesMajor(key, false);
+		} else {
+			// if we have situation like "field1 = 1 AND field2 > 2"
+			// then we fetch collection which left not included boundary is the smallest composite key in the
+			// index that contains keys with values field1=1 and field2=2 and which right included boundary
+			// is the biggest composite key in the index that contains key with value field1=1.
+
+			final Object keyOne = indexDefinition.createValue(keyParams);
+
+			if (keyOne == null)
+				return null;
+
+			final Object keyTwo = indexDefinition.createValue(keyParams.subList(0, keyParams.size() - 1));
+
+			if (keyTwo == null)
+				return null;
+
+			if (fetchLimit > -1)
+				result = index.getValuesBetween(keyOne, false, keyTwo, true, fetchLimit);
+			else
+				result = index.getValuesBetween(keyOne, false, keyTwo, true);
+
+			if (OProfiler.getInstance().isRecording()) {
+				OProfiler.getInstance().updateCounter("Query.compositeIndexUsage", 1);
+				OProfiler.getInstance().updateCounter("Query.compositeIndexUsage." + indexDefinition.getParamCount(), 1);
+			}
+		}
+
+		return result;
+	}
+
+	@Override
   public ORID getBeginRidRange(final Object iLeft,final Object iRight) {
       if (iLeft instanceof OSQLFilterItemField &&
             ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iLeft).getRoot()))

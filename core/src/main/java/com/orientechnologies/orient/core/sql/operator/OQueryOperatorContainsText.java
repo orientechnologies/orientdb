@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.sql.operator;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -99,8 +100,25 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
 		return OIndexReuseType.INDEX_METHOD;
 	}
 
+	@Override
+	public Collection<OIdentifiable> executeIndexQuery(OIndex<?> index, List<Object> keyParams, int fetchLimit) {
+		final OIndexDefinition indexDefinition = index.getDefinition();
+		if (indexDefinition.getParamCount() > 1)
+			return null;
 
-  @Override
+		final OIndex internalIndex = index.getInternal();
+
+		if (internalIndex instanceof OIndexFullText)  {
+			final Object indexResult = index.get(indexDefinition.createValue(keyParams));
+			if(indexResult instanceof Collection)
+				return (Collection<OIdentifiable>)indexResult;
+
+			return Collections.singletonList((OIdentifiable) indexResult);
+		}
+		return null;
+	}
+
+	@Override
   public ORID getBeginRidRange(Object iLeft, Object iRight) {
     return null;
   }

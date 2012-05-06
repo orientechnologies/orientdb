@@ -18,7 +18,12 @@ package com.orientechnologies.orient.core.sql.operator;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * CONTAINS operator.
@@ -88,6 +93,33 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 			return OIndexReuseType.INDEX_METHOD;
 
 		return OIndexReuseType.NO_INDEX;
+	}
+
+	@Override
+	public Collection<OIdentifiable> executeIndexQuery(OIndex<?> index, List<Object> keyParams, int fetchLimit) {
+		final OIndexDefinition indexDefinition = index.getDefinition();
+
+		final OIndexInternal internalIndex = index.getInternal();
+		if (!internalIndex.canBeUsedInEqualityOperators())
+			return null;
+
+		if (indexDefinition.getParamCount() == 1) {
+			final Object key;
+			if (indexDefinition instanceof OIndexDefinitionMultiValue)
+				key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
+			else
+				key = indexDefinition.createValue(keyParams);
+
+			if (key == null)
+				return null;
+
+			final Object indexResult = index.get(key);
+			if (indexResult instanceof Collection)
+				return (Collection<OIdentifiable>) indexResult;
+
+			return Collections.singletonList((OIdentifiable) indexResult);
+		}
+		return null;
 	}
 
 	@Override

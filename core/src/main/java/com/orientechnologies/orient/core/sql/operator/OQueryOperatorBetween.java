@@ -15,14 +15,18 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.Iterator;
+import java.util.*;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 
@@ -76,7 +80,75 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
 		return OIndexReuseType.INDEX_METHOD;
 	}
 
-  @Override
+	@Override
+	public Collection<OIdentifiable> executeIndexQuery(OIndex<?> index, List<Object> keyParams, int fetchLimit) {
+		final OIndexDefinition indexDefinition = index.getDefinition();
+		final Collection<OIdentifiable> result;
+
+		final OIndexInternal internalIndex = index.getInternal();
+		if(!internalIndex.canBeUsedInEqualityOperators())
+			return null;
+
+		if(indexDefinition.getParamCount() == 1) {
+			final Object[] betweenKeys = (Object[]) keyParams.get(0);
+
+			final Object keyOne = indexDefinition.createValue(Collections.singletonList(OSQLHelper.getValue(betweenKeys[0])));
+			final Object keyTwo = indexDefinition.createValue(Collections.singletonList(OSQLHelper.getValue(betweenKeys[2])));
+
+			if (keyOne == null || keyTwo == null)
+				return null;
+
+
+			if (fetchLimit > -1)
+				result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
+			else
+				result = index.getValuesBetween(keyOne, true, keyTwo, true);
+		} else {
+			final Object[] betweenKeys = (Object[]) keyParams.get(keyParams.size() - 1);
+
+			final Object betweenKeyOne = OSQLHelper.getValue(betweenKeys[0]);
+
+			if (betweenKeyOne == null)
+				return null;
+
+			final Object betweenKeyTwo = OSQLHelper.getValue(betweenKeys[2]);
+
+			if (betweenKeyTwo == null)
+				return null;
+
+			final List<Object> betweenKeyOneParams = new ArrayList<Object>(keyParams.size());
+			betweenKeyOneParams.addAll(keyParams.subList(0, keyParams.size() - 1));
+			betweenKeyOneParams.add(betweenKeyOne);
+
+			final List<Object> betweenKeyTwoParams = new ArrayList<Object>(keyParams.size());
+			betweenKeyTwoParams.addAll(keyParams.subList(0, keyParams.size() - 1));
+			betweenKeyTwoParams.add(betweenKeyTwo);
+
+			final Object keyOne = indexDefinition.createValue(betweenKeyOneParams);
+
+			if (keyOne == null)
+				return null;
+
+			final Object keyTwo = indexDefinition.createValue(betweenKeyTwoParams);
+
+			if (keyTwo == null)
+				return null;
+
+			if (fetchLimit > -1)
+				result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
+			else
+				result = index.getValuesBetween(keyOne, true, keyTwo, true);
+
+			if (OProfiler.getInstance().isRecording()) {
+				OProfiler.getInstance().updateCounter("Query.compositeIndexUsage", 1);
+				OProfiler.getInstance().updateCounter("Query.compositeIndexUsage." + indexDefinition.getParamCount(), 1);
+			}
+		}
+
+		return result;
+	}
+
+	@Override
   public ORID getBeginRidRange(final Object iLeft, final Object iRight) {
     validate(iRight);
 

@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.common.exception.OException;
@@ -23,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -99,6 +103,37 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
 			return OIndexReuseType.INDEX_METHOD;
 
 		return OIndexReuseType.NO_INDEX;
+	}
+
+	@Override
+	public Collection<OIdentifiable> executeIndexQuery(OIndex<?> index, List<Object> keyParams, int fetchLimit) {
+		final OIndexDefinition indexDefinition = index.getDefinition();
+
+		if (!((index.getDefinition() instanceof OPropertyMapIndexDefinition)
+						&& ((OPropertyMapIndexDefinition) index.getDefinition()).getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.VALUE))
+			return null;
+
+		final OIndexInternal internalIndex = index.getInternal();
+		if (!internalIndex.canBeUsedInEqualityOperators())
+			return null;
+
+		if (indexDefinition.getParamCount() == 1) {
+			final Object key;
+			if (indexDefinition instanceof OIndexDefinitionMultiValue)
+				key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
+			else
+				key = indexDefinition.createValue(keyParams);
+
+			if (key == null)
+				return null;
+
+			final Object indexResult = index.get(key);
+			if (indexResult instanceof Collection)
+				return (Collection<OIdentifiable>) indexResult;
+
+			return Collections.singletonList((OIdentifiable) indexResult);
+		}
+		return null;
 	}
 
 	@Override

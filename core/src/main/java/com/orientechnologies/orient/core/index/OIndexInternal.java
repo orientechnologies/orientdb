@@ -82,4 +82,15 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
 	 * @return Current index instance.
 	 */
 	public OIndex<T> removeCluster(final String iClusterName);
+
+	/**
+	 * Indicates whether given index can be used to calculate result of
+	 * {@link com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquality} operators.
+	 *
+	 * @return {@code true} if given index can be used to calculate result of
+	 * {@link com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquality} operators.
+	 *
+	 * @see com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals#executeIndexQuery(OIndex, java.util.List, int)
+	 */
+	public boolean canBeUsedInEqualityOperators();
 }

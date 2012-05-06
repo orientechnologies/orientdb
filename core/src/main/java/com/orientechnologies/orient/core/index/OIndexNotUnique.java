@@ -30,4 +30,8 @@ public class OIndexNotUnique extends OIndexMultiValues {
 	public OIndexNotUnique() {
 		super(TYPE_ID);
 	}
+
+	public boolean canBeUsedInEqualityOperators() {
+		return true;
+	}
 }

@@ -56,4 +56,8 @@ public class OIndexDictionary extends OIndexOneValue {
 	@Override
 	public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
 	}
+
+	public boolean canBeUsedInEqualityOperators() {
+		return true;
+	}
 }

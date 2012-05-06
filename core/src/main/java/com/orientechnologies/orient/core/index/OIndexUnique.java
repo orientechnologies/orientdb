@@ -59,4 +59,8 @@ public class OIndexUnique extends OIndexOneValue {
       releaseExclusiveLock();
     }
   }
+
+	public boolean canBeUsedInEqualityOperators() {
+		return true;
+	}
 }

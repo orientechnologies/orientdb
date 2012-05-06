@@ -229,4 +229,8 @@ public class OIndexFullText extends OIndexMultiValues {
 
 		return result;
 	}
+
+	public boolean canBeUsedInEqualityOperators() {
+		return false;
+	}
 }

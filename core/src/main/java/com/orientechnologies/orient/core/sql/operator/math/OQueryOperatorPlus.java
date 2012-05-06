@@ -66,8 +66,6 @@ public class OQueryOperatorPlus extends OQueryOperator {
 
     @Override
   public OIndexReuseType getIndexReuseType(Object iLeft, Object iRight) {
-      if (iLeft instanceof Number && iRight instanceof Number)
-          return OIndexReuseType.INDEX_KEY;
       return OIndexReuseType.NO_INDEX;
   }
 
