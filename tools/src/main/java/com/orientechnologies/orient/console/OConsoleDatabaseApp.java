@@ -1132,10 +1132,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       @ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName)
       throws IOException {
 
-    try {
-      if (serverAdmin == null)
-        throw new IllegalStateException("You must be connected to a remote server to start the replication");
+    checkForRemoteServer();
 
+    try {
       out.println("Starting replication for database '" + iDatabaseName + "' between server '" + serverAdmin.getURL() + "' and '"
           + iRemoteName + "'...");
 
@@ -1153,13 +1152,26 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       @ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName)
       throws IOException {
 
-    try {
-      if (serverAdmin == null)
-        throw new IllegalStateException("You must be connected to a remote server to stop the replication");
+    checkForRemoteServer();
 
+    try {
       serverAdmin.stopReplication(iDatabaseName, iRemoteName);
 
       out.println("Replication ended for database '" + iDatabaseName + "' against the server '" + iRemoteName + "'");
+
+    } catch (Exception e) {
+      printError(e);
+    }
+  }
+
+  @ConsoleCommand(description = "Displays the status of the cluster nodes")
+  public void clusterStatus() throws IOException {
+
+    checkForRemoteServer();
+    try {
+
+      out.println("Cluster status:");
+      out.println(serverAdmin.clusterStatus());
 
     } catch (Exception e) {
       printError(e);
@@ -1207,15 +1219,15 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(description = "Compare two databases")
   public void compareDatabases(@ConsoleParameter(name = "db1-url", description = "URL of the first database") final String iDb1URL,
       @ConsoleParameter(name = "db2-url", description = "URL of the second database") final String iDb2URL,
-			@ConsoleParameter(name = "user-name", description = "User name", optional = true) final String iUserName,
-			@ConsoleParameter(name = "user-password", description = "User password", optional = true) final String iUserPassword
-			) throws IOException {
+      @ConsoleParameter(name = "user-name", description = "User name", optional = true) final String iUserName,
+      @ConsoleParameter(name = "user-password", description = "User password", optional = true) final String iUserPassword)
+      throws IOException {
     try {
-			final ODatabaseCompare compare;
-			if(iUserName == null)
-				compare = new ODatabaseCompare(iDb1URL, iDb2URL, this);
-			else
-				compare = new ODatabaseCompare(iDb1URL, iDb1URL, iUserName, iUserPassword, this);
+      final ODatabaseCompare compare;
+      if (iUserName == null)
+        compare = new ODatabaseCompare(iDb1URL, iDb2URL, this);
+      else
+        compare = new ODatabaseCompare(iDb1URL, iDb1URL, iUserName, iUserPassword, this);
 
       compare.compare();
     } catch (ODatabaseExportException e) {

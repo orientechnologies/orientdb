@@ -22,16 +22,16 @@ package com.orientechnologies.orient.server.handler.distributed;
  * 
  */
 public class OClusterProtocol {
-	public static final short	CURRENT_PROTOCOL_VERSION												= 0;
+  public static final short CURRENT_PROTOCOL_VERSION                       = 0;
 
-	public static final byte	REQUEST_NODE2NODE_CONNECT												= 80;
-	public static final byte	REQUEST_LEADER2PEER_CONNECT											= 81;
-	public static final byte	REQUEST_LEADER2PEER_HEARTBEAT										= 82;
-	public static final byte	REQUEST_NODE2NODE_DB_COPY												= 83;
-	public static final byte	REQUEST_NODE2NODE_REPLICATION_SYNCHRONIZE				= 84;
-	public static final byte	REQUEST_NODE2NODE_REPLICATION_RECORD_PROPAGATE	= 85;
-	public static final byte	REQUEST_NODE2NODE_REPLICATION_RECORD_REQUEST		= 86;
-	public static final byte	REQUEST_NODE2NODE_REPLICATION_ALIGN							= 87;
+  public static final byte  REQUEST_NODE2NODE_CONNECT                      = 100;
+  public static final byte  REQUEST_LEADER2PEER_CONNECT                    = 101;
+  public static final byte  REQUEST_LEADER2PEER_HEARTBEAT                  = 102;
+  public static final byte  REQUEST_NODE2NODE_DB_COPY                      = 103;
+  public static final byte  REQUEST_NODE2NODE_REPLICATION_SYNCHRONIZE      = 104;
+  public static final byte  REQUEST_NODE2NODE_REPLICATION_RECORD_PROPAGATE = 105;
+  public static final byte  REQUEST_NODE2NODE_REPLICATION_RECORD_REQUEST   = 106;
+  public static final byte  REQUEST_NODE2NODE_REPLICATION_ALIGN            = 107;
 
-	public static final byte	PUSH_LEADER_AVAILABLE_DBS												= 100;
+  public static final byte  PUSH_LEADER_AVAILABLE_DBS                      = 127;
 }

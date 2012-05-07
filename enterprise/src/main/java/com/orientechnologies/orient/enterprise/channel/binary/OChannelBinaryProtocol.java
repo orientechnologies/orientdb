@@ -29,77 +29,79 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
  * 
  */
 public class OChannelBinaryProtocol {
-	// OUTGOING
-	public static final byte	REQUEST_SHUTDOWN							= 1;
-	public static final byte	REQUEST_CONNECT								= 2;
+  // OUTGOING
+  public static final byte  REQUEST_SHUTDOWN              = 1;
+  public static final byte  REQUEST_CONNECT               = 2;
 
-	public static final byte	REQUEST_DB_OPEN								= 3;
-	public static final byte	REQUEST_DB_CREATE							= 4;
-	public static final byte	REQUEST_DB_CLOSE							= 5;
-	public static final byte	REQUEST_DB_EXIST							= 6;
-	public static final byte	REQUEST_DB_DROP								= 7;
-	public static final byte	REQUEST_DB_SIZE								= 8;
-	public static final byte	REQUEST_DB_COUNTRECORDS				= 9;
+  public static final byte  REQUEST_DB_OPEN               = 3;
+  public static final byte  REQUEST_DB_CREATE             = 4;
+  public static final byte  REQUEST_DB_CLOSE              = 5;
+  public static final byte  REQUEST_DB_EXIST              = 6;
+  public static final byte  REQUEST_DB_DROP               = 7;
+  public static final byte  REQUEST_DB_SIZE               = 8;
+  public static final byte  REQUEST_DB_COUNTRECORDS       = 9;
 
-	public static final byte	REQUEST_DATACLUSTER_ADD				= 10;
-	public static final byte	REQUEST_DATACLUSTER_DROP			= 11;
-	public static final byte	REQUEST_DATACLUSTER_COUNT			= 12;
-	public static final byte	REQUEST_DATACLUSTER_DATARANGE	= 13;
-	public static final byte	REQUEST_DATACLUSTER_COPY			= 14;
+  public static final byte  REQUEST_DATACLUSTER_ADD       = 10;
+  public static final byte  REQUEST_DATACLUSTER_DROP      = 11;
+  public static final byte  REQUEST_DATACLUSTER_COUNT     = 12;
+  public static final byte  REQUEST_DATACLUSTER_DATARANGE = 13;
+  public static final byte  REQUEST_DATACLUSTER_COPY      = 14;
 
-	public static final byte	REQUEST_DATASEGMENT_ADD				= 20;
-	public static final byte	REQUEST_DATASEGMENT_DROP			= 21;
+  public static final byte  REQUEST_DATASEGMENT_ADD       = 20;
+  public static final byte  REQUEST_DATASEGMENT_DROP      = 21;
 
-	public static final byte	REQUEST_RECORD_LOAD						= 30;
-	public static final byte	REQUEST_RECORD_CREATE					= 31;
-	public static final byte	REQUEST_RECORD_UPDATE					= 32;
-	public static final byte	REQUEST_RECORD_DELETE					= 33;
-	public static final byte	REQUEST_RECORD_COPY						= 34;
+  public static final byte  REQUEST_RECORD_LOAD           = 30;
+  public static final byte  REQUEST_RECORD_CREATE         = 31;
+  public static final byte  REQUEST_RECORD_UPDATE         = 32;
+  public static final byte  REQUEST_RECORD_DELETE         = 33;
+  public static final byte  REQUEST_RECORD_COPY           = 34;
 
-	public static final byte	REQUEST_COUNT									= 40; // DEPRECATED: USE REQUEST_DATACLUSTER_COUNT
-	public static final byte	REQUEST_COMMAND								= 41;
+  public static final byte  REQUEST_COUNT                 = 40; // DEPRECATED: USE REQUEST_DATACLUSTER_COUNT
+  public static final byte  REQUEST_COMMAND               = 41;
 
-	public static final byte	REQUEST_TX_COMMIT							= 60;
+  public static final byte  REQUEST_TX_COMMIT             = 60;
 
-	public static final byte	REQUEST_CONFIG_GET						= 70;
-	public static final byte	REQUEST_CONFIG_SET						= 71;
-	public static final byte	REQUEST_CONFIG_LIST						= 72;
-	public static final byte	REQUEST_DB_RELOAD							= 73; // SINCE 1.0rc4
-	public static final byte	REQUEST_DB_LIST								= 74; // SINCE 1.0rc6
-	public static final byte	REQUEST_DB_COPY								= 75; // SINCE 1.0rc8
-	public static final byte	REQUEST_DB_REPLICATION				= 76; // SINCE 1.0
-	public static final byte	REQUEST_DB_ALIGN							= 77; // SINCE 1.0
+  public static final byte  REQUEST_CONFIG_GET            = 70;
+  public static final byte  REQUEST_CONFIG_SET            = 71;
+  public static final byte  REQUEST_CONFIG_LIST           = 72;
+  public static final byte  REQUEST_DB_RELOAD             = 73; // SINCE 1.0rc4
+  public static final byte  REQUEST_DB_LIST               = 74; // SINCE 1.0rc6
 
-	public static final byte	REQUEST_PUSH_RECORD						= 79;
-	public static final byte	PUSH_NODE2CLIENT_DB_CONFIG		= 80;
+  public static final byte  REQUEST_PUSH_RECORD           = 79;
+  public static final byte  PUSH_NODE2CLIENT_DB_CONFIG    = 80;
 
-	// INCOMING
-	public static final byte	RESPONSE_STATUS_OK						= 0;
-	public static final byte	RESPONSE_STATUS_ERROR					= 1;
-	public static final byte	PUSH_DATA											= 3;
+  // DISTRIBUTED
+  public static final byte  REQUEST_DB_COPY               = 90; // SINCE 1.0rc8
+  public static final byte  REQUEST_REPLICATION           = 91; // SINCE 1.0
+  public static final byte  REQUEST_CLUSTER               = 92; // SINCE 1.0
 
-	// CONSTANTS
-	public static final short	RECORD_NULL										= -2;
-	public static final short	RECORD_RID										= -3;
-	public static final int		CURRENT_PROTOCOL_VERSION			= 12; // SENT AS SHORT AS FIRST PACKET AFTER SOCKET CONNECTION
+  // INCOMING
+  public static final byte  RESPONSE_STATUS_OK            = 0;
+  public static final byte  RESPONSE_STATUS_ERROR         = 1;
+  public static final byte  PUSH_DATA                     = 3;
 
-	public static OIdentifiable readIdentifiable(final OChannelBinaryClient network) throws IOException {
-		final int classId = network.readShort();
-		if (classId == RECORD_NULL)
-			return null;
+  // CONSTANTS
+  public static final short RECORD_NULL                   = -2;
+  public static final short RECORD_RID                    = -3;
+  public static final int   CURRENT_PROTOCOL_VERSION      = 12; // SENT AS SHORT AS FIRST PACKET AFTER SOCKET CONNECTION
 
-		if (classId == RECORD_RID) {
-			return network.readRID();
-		} else {
-			final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(network.readByte());
+  public static OIdentifiable readIdentifiable(final OChannelBinaryClient network) throws IOException {
+    final int classId = network.readShort();
+    if (classId == RECORD_NULL)
+      return null;
 
-			if (record instanceof ORecordSchemaAware<?>)
-				((ORecordSchemaAware<?>) record).fill(network.readRID(), network.readInt(), network.readBytes(), false);
-			else
-				// DISCARD CLASS ID
-				record.fill(network.readRID(), network.readInt(), network.readBytes(), false);
+    if (classId == RECORD_RID) {
+      return network.readRID();
+    } else {
+      final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(network.readByte());
 
-			return record;
-		}
-	}
+      if (record instanceof ORecordSchemaAware<?>)
+        ((ORecordSchemaAware<?>) record).fill(network.readRID(), network.readInt(), network.readBytes(), false);
+      else
+        // DISCARD CLASS ID
+        record.fill(network.readRID(), network.readInt(), network.readBytes(), false);
+
+      return record;
+    }
+  }
 }

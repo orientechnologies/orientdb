@@ -36,462 +36,478 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
  * Remote administration class of OrientDB Server instances.
  */
 public class OServerAdmin {
-	private OStorageRemote	storage;
-	private int							sessionId	= -1;
-
-	/**
-	 * Creates the object passing a remote URL to connect.
-	 * 
-	 * @param iURL
-	 *          URL to connect. It supports only the "remote" storage type.
-	 * @throws IOException
-	 */
-	public OServerAdmin(String iURL) throws IOException {
-		if (iURL.startsWith(OEngineRemote.NAME))
-			iURL = iURL.substring(OEngineRemote.NAME.length() + 1);
-
-		if (!iURL.contains("/"))
-			iURL += "/";
-
-		storage = new OStorageRemote(null, iURL, "");
-	}
-
-	/**
-	 * Creates the object starting from an existent remote storage.
-	 * 
-	 * @param iStorage
-	 */
-	public OServerAdmin(final OStorageRemote iStorage) {
-		storage = iStorage;
-	}
-
-	/**
-	 * Connects to a remote server.
-	 * 
-	 * @param iUserName
-	 *          Server's user name
-	 * @param iUserPassword
-	 *          Server's password for the user name used
-	 * @return The instance itself. Useful to execute method in chain
-	 * @throws IOException
-	 */
-	public synchronized OServerAdmin connect(final String iUserName, final String iUserPassword) throws IOException {
-		storage.createConnectionPool();
-		storage.setSessionId(-1);
-
-		try {
-			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONNECT);
-
-			storage.sendClientInfo(network);
-
-			try {
-				network.writeString(iUserName);
-				network.writeString(iUserPassword);
-			} finally {
-				storage.endRequest(network);
-			}
-
-			try {
-				storage.beginResponse(network);
-				sessionId = network.readInt();
-				storage.setSessionId(sessionId);
-			} finally {
-				storage.endResponse(network);
-			}
-
-		} catch (Exception e) {
-			OLogManager.instance().error(this, "Cannot connect to the remote server: " + storage.getName(), e, OStorageException.class);
-			storage.close(true);
-		}
-		return this;
-	}
-
-	/**
-	 * List the databases on a remote server.
-	 * 
-	 * @param iUserName
-	 *          Server's user name
-	 * @param iUserPassword
-	 *          Server's password for the user name used
-	 * @return The instance itself. Useful to execute method in chain
-	 * @throws IOException
-	 */
-	@SuppressWarnings("unchecked")
-	public synchronized Map<String, String> listDatabases() throws IOException {
-		storage.checkConnection();
-		final ODocument result = new ODocument();
-		try {
-			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_LIST);
-			storage.endRequest(network);
-
-			try {
-				storage.beginResponse(network);
-				result.fromStream(network.readBytes());
-			} finally {
-				storage.endResponse(network);
-			}
-
-		} catch (Exception e) {
-			OLogManager.instance().exception("Cannot retrieve the configuration list", e, OStorageException.class);
-			storage.close(true);
-		}
-		return (Map<String, String>) result.field("databases");
-	}
-
-	public int getSessionId() {
-		return sessionId;
-	}
-
-	/**
-	 * Deprecated. Use the {@link #createDatabase(String, String)} instead.
-	 */
-	@Deprecated
-	public synchronized OServerAdmin createDatabase(final String iStorageMode) throws IOException {
-		return createDatabase("document", iStorageMode);
-	}
-
-	/**
-	 * Creates a database in a remote server.
-	 * 
-	 * @param iDatabaseType
-	 *          'document' or 'graph'
-	 * @param iStorageMode
-	 *          local or memory
-	 * @return The instance itself. Useful to execute method in chain
-	 * @throws IOException
-	 */
-	public synchronized OServerAdmin createDatabase(final String iDatabaseType, String iStorageMode) throws IOException {
-		storage.checkConnection();
-
-		try {
-			if (storage.getName() == null || storage.getName().length() <= 0) {
-				OLogManager.instance().error(this, "Cannot create unnamed remote storage. Check your syntax", OStorageException.class);
-			} else {
-				if (iStorageMode == null)
-					iStorageMode = "csv";
-
-				final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_CREATE);
-				try {
-					network.writeString(storage.getName());
-					if (network.getSrvProtocolVersion() >= 8)
-						network.writeString(iDatabaseType);
-					network.writeString(iStorageMode);
-				} finally {
-					storage.endRequest(network);
-				}
-
-				storage.getResponse(network);
-
-			}
-
-		} catch (Exception e) {
-			OLogManager.instance().error(this, "Cannot create the remote storage: " + storage.getName(), e, OStorageException.class);
-			storage.close(true);
-		}
-		return this;
-	}
-
-	/**
-	 * Checks if a database exists in the remote server.
-	 * 
-	 * @return true if exists, otherwise false
-	 * @throws IOException
-	 */
-	public synchronized boolean existsDatabase() throws IOException {
-		storage.checkConnection();
-
-		try {
-			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_EXIST);
-			try {
-				network.writeString(storage.getName());
-			} finally {
-				storage.endRequest(network);
-			}
-
-			try {
-				storage.beginResponse(network);
-				return network.readByte() == 1;
-			} finally {
-				storage.endResponse(network);
-			}
-
-		} catch (Exception e) {
-			OLogManager.instance().exception("Error on checking existence of the remote storage: " + storage.getName(), e,
-					OStorageException.class);
-			storage.close(true);
-		}
-		return false;
-	}
-
-	/**
-	 * Deprecated. Use dropDatabase() instead.
-	 * 
-	 * @return The instance itself. Useful to execute method in chain
-	 * @see #dropDatabase()
-	 * @throws IOException
-	 */
-	@Deprecated
-	public OServerAdmin deleteDatabase() throws IOException {
-		return dropDatabase();
-	}
-
-	/**
-	 * Drops a database from a remote server instance.
-	 * 
-	 * @return The instance itself. Useful to execute method in chain
-	 * @throws IOException
-	 */
-	public synchronized OServerAdmin dropDatabase() throws IOException {
-		storage.checkConnection();
-
-		try {
-
-			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_DROP);
-			try {
-				network.writeString(storage.getName());
-			} finally {
-				storage.endRequest(network);
-			}
-
-			storage.getResponse(network);
-
-		} catch (Exception e) {
-			OLogManager.instance().exception("Cannot delete the remote storage: " + storage.getName(), e, OStorageException.class);
-		}
-
-		for (OStorage s : Orient.instance().getStorages()) {
-			if (s.getURL().startsWith(getURL())) {
-				s.removeResource(OSchema.class.getSimpleName());
-				s.removeResource(OIndexManager.class.getSimpleName());
-				s.removeResource(OSecurity.class.getSimpleName());
-			}
-		}
-
-		ODatabaseRecordThreadLocal.INSTANCE.set(null);
-
-		return this;
-	}
-
-	/**
-	 * Starts the replication between two servers.
-	 * 
-	 * @param iDatabaseName
-	 *          database name to replicate
-	 * @param iRemoteServer
-	 *          remote server alias as IP+address
-	 * @return The instance itself. Useful to execute method in chain
-	 * @throws IOException
-	 */
-	public synchronized OServerAdmin startReplication(final String iDatabaseName, final String iRemoteServer) throws IOException {
-		try {
-
-			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_REPLICATION);
-			try {
-				network.writeString("start");
-				network.writeString(iDatabaseName);
-				network.writeString(iRemoteServer);
-			} finally {
-				storage.endRequest(network);
-			}
-
-			storage.getResponse(network);
-
-			OLogManager.instance().debug(this, "Started replication of database '%s' from server '%s' to '%s'", iDatabaseName,
-					storage.getURL(), iRemoteServer);
-
-		} catch (Exception e) {
-			OLogManager.instance().exception("Cannot start the replication of database: " + iDatabaseName, e, OStorageException.class);
-		}
-
-		return this;
-	}
-
-	/**
-	 * Aligns a database between two servers
-	 * 
-	 * @param iDatabaseName
-	 *          database name to align
-	 * @param iRemoteServer
-	 *          remote server alias as IP+address
-	 * @param iOptions
-	 *          options
-	 * @return
-	 * @return The instance itself. Useful to execute method in chain
-	 * @throws IOException
-	 */
-	public OServerAdmin alignDatabase(final String iDatabaseName, final String iRemoteServer, final String iOptions) {
-		try {
-			OLogManager.instance().debug(this, "Started the alignment of database '%s' from server '%s' to '%s' with options %s",
-					iDatabaseName, storage.getURL(), iRemoteServer, iOptions);
-
-			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_ALIGN);
-			try {
-				network.writeString(iDatabaseName);
-				network.writeString(iRemoteServer);
-				network.writeString(iOptions);
-			} finally {
-				storage.endRequest(network);
-			}
-
-			storage.getResponse(network);
-
-			OLogManager.instance().debug(this, "Alignment finished");
-
-		} catch (Exception e) {
-			OLogManager.instance().exception("Cannot align database: " + iDatabaseName, e, OStorageException.class);
-		}
-
-		return this;
-	}
-
-	/**
-	 * Stops the replication between two servers.
-	 * 
-	 * @param iDatabaseName
-	 *          database name to replicate
-	 * @param iRemoteServer
-	 *          remote server alias as IP+address
-	 * @return The instance itself. Useful to execute method in chain
-	 * @throws IOException
-	 */
-	public synchronized OServerAdmin stopReplication(final String iDatabaseName, final String iRemoteServer) throws IOException {
-		try {
-
-			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_REPLICATION);
-			try {
-				network.writeString("stop");
-				network.writeString(iDatabaseName);
-				network.writeString(iRemoteServer);
-			} finally {
-				storage.endRequest(network);
-			}
-
-			storage.getResponse(network);
-
-			OLogManager.instance().debug(this, "Stopped replication of database '%s' from server '%s' to '%s'", iDatabaseName,
-					storage.getURL(), iRemoteServer);
-
-		} catch (Exception e) {
-			OLogManager.instance().exception("Cannot stop the replication of database: " + iDatabaseName, e, OStorageException.class);
-		}
-
-		return this;
-	}
-
-	/**
-	 * Copies a database to a remote server instance.
-	 * 
-	 * @param iDatabaseName
-	 * @param iDatabaseUserName
-	 * @param iDatabaseUserPassword
-	 * @param iRemoteName
-	 * @param iRemoteEngine
-	 * @return The instance itself. Useful to execute method in chain
-	 * @throws IOException
-	 */
-	public synchronized OServerAdmin copyDatabase(final String iDatabaseName, final String iDatabaseUserName,
-			final String iDatabaseUserPassword, final String iRemoteName, final String iRemoteEngine) throws IOException {
-		storage.checkConnection();
-
-		try {
-
-			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_COPY);
-			try {
-				network.writeString(iDatabaseName);
-				network.writeString(iDatabaseUserName);
-				network.writeString(iDatabaseUserPassword);
-				network.writeString(iRemoteName);
-				network.writeString(iRemoteEngine);
-			} finally {
-				storage.endRequest(network);
-			}
-
-			storage.getResponse(network);
-
-			OLogManager.instance().debug(this, "Database '%s' has been copied to the server '%s'", iDatabaseName, iRemoteName);
-
-		} catch (Exception e) {
-			OLogManager.instance().exception("Cannot copy the database: " + iDatabaseName, e, OStorageException.class);
-		}
-
-		return this;
-	}
-
-	public synchronized Map<String, String> getGlobalConfigurations() throws IOException {
-		storage.checkConnection();
-
-		final Map<String, String> config = new HashMap<String, String>();
-
-		try {
-			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_LIST);
-			storage.endRequest(network);
-
-			try {
-				storage.beginResponse(network);
-				final int num = network.readShort();
-				for (int i = 0; i < num; ++i)
-					config.put(network.readString(), network.readString());
-			} finally {
-				storage.endResponse(network);
-			}
-
-		} catch (Exception e) {
-			OLogManager.instance().exception("Cannot retrieve the configuration list", e, OStorageException.class);
-			storage.close(true);
-		}
-		return config;
-	}
-
-	public synchronized String getGlobalConfiguration(final OGlobalConfiguration iConfig) throws IOException {
-		storage.checkConnection();
-
-		try {
-			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_GET);
-			network.writeString(iConfig.getKey());
-
-			try {
-				storage.beginResponse(network);
-				return network.readString();
-			} finally {
-				storage.endResponse(network);
-			}
-
-		} catch (Exception e) {
-			OLogManager.instance().exception("Cannot retrieve the configuration value: " + iConfig.getKey(), e, OStorageException.class);
-			storage.close(true);
-		}
-		return null;
-	}
-
-	public synchronized OServerAdmin setGlobalConfiguration(final OGlobalConfiguration iConfig, final Object iValue)
-			throws IOException {
-		storage.checkConnection();
-
-		try {
-			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_SET);
-			network.writeString(iConfig.getKey());
-			network.writeString(iValue != null ? iValue.toString() : "");
-			storage.getResponse(network);
-
-		} catch (Exception e) {
-			OLogManager.instance().exception("Cannot set the configuration value: " + iConfig.getKey(), e, OStorageException.class);
-			storage.close(true);
-		}
-		return this;
-	}
-
-	/**
-	 * Close the connection if open.
-	 */
-	public synchronized void close() {
-		storage.close();
-	}
-
-	public synchronized void close(boolean iForce) {
-		storage.close(iForce);
-	}
-
-	public synchronized String getURL() {
-		return storage != null ? storage.getURL() : null;
-	}
+  private OStorageRemote storage;
+  private int            sessionId = -1;
+
+  /**
+   * Creates the object passing a remote URL to connect.
+   * 
+   * @param iURL
+   *          URL to connect. It supports only the "remote" storage type.
+   * @throws IOException
+   */
+  public OServerAdmin(String iURL) throws IOException {
+    if (iURL.startsWith(OEngineRemote.NAME))
+      iURL = iURL.substring(OEngineRemote.NAME.length() + 1);
+
+    if (!iURL.contains("/"))
+      iURL += "/";
+
+    storage = new OStorageRemote(null, iURL, "");
+  }
+
+  /**
+   * Creates the object starting from an existent remote storage.
+   * 
+   * @param iStorage
+   */
+  public OServerAdmin(final OStorageRemote iStorage) {
+    storage = iStorage;
+  }
+
+  /**
+   * Connects to a remote server.
+   * 
+   * @param iUserName
+   *          Server's user name
+   * @param iUserPassword
+   *          Server's password for the user name used
+   * @return The instance itself. Useful to execute method in chain
+   * @throws IOException
+   */
+  public synchronized OServerAdmin connect(final String iUserName, final String iUserPassword) throws IOException {
+    storage.createConnectionPool();
+    storage.setSessionId(-1);
+
+    try {
+      final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONNECT);
+
+      storage.sendClientInfo(network);
+
+      try {
+        network.writeString(iUserName);
+        network.writeString(iUserPassword);
+      } finally {
+        storage.endRequest(network);
+      }
+
+      try {
+        storage.beginResponse(network);
+        sessionId = network.readInt();
+        storage.setSessionId(sessionId);
+      } finally {
+        storage.endResponse(network);
+      }
+
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "Cannot connect to the remote server: " + storage.getName(), e, OStorageException.class);
+      storage.close(true);
+    }
+    return this;
+  }
+
+  /**
+   * List the databases on a remote server.
+   * 
+   * @param iUserName
+   *          Server's user name
+   * @param iUserPassword
+   *          Server's password for the user name used
+   * @return The instance itself. Useful to execute method in chain
+   * @throws IOException
+   */
+  @SuppressWarnings("unchecked")
+  public synchronized Map<String, String> listDatabases() throws IOException {
+    storage.checkConnection();
+    final ODocument result = new ODocument();
+    try {
+      final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_LIST);
+      storage.endRequest(network);
+
+      try {
+        storage.beginResponse(network);
+        result.fromStream(network.readBytes());
+      } finally {
+        storage.endResponse(network);
+      }
+
+    } catch (Exception e) {
+      OLogManager.instance().exception("Cannot retrieve the configuration list", e, OStorageException.class);
+      storage.close(true);
+    }
+    return (Map<String, String>) result.field("databases");
+  }
+
+  public int getSessionId() {
+    return sessionId;
+  }
+
+  /**
+   * Deprecated. Use the {@link #createDatabase(String, String)} instead.
+   */
+  @Deprecated
+  public synchronized OServerAdmin createDatabase(final String iStorageMode) throws IOException {
+    return createDatabase("document", iStorageMode);
+  }
+
+  /**
+   * Creates a database in a remote server.
+   * 
+   * @param iDatabaseType
+   *          'document' or 'graph'
+   * @param iStorageMode
+   *          local or memory
+   * @return The instance itself. Useful to execute method in chain
+   * @throws IOException
+   */
+  public synchronized OServerAdmin createDatabase(final String iDatabaseType, String iStorageMode) throws IOException {
+    storage.checkConnection();
+
+    try {
+      if (storage.getName() == null || storage.getName().length() <= 0) {
+        OLogManager.instance().error(this, "Cannot create unnamed remote storage. Check your syntax", OStorageException.class);
+      } else {
+        if (iStorageMode == null)
+          iStorageMode = "csv";
+
+        final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_CREATE);
+        try {
+          network.writeString(storage.getName());
+          if (network.getSrvProtocolVersion() >= 8)
+            network.writeString(iDatabaseType);
+          network.writeString(iStorageMode);
+        } finally {
+          storage.endRequest(network);
+        }
+
+        storage.getResponse(network);
+
+      }
+
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "Cannot create the remote storage: " + storage.getName(), e, OStorageException.class);
+      storage.close(true);
+    }
+    return this;
+  }
+
+  /**
+   * Checks if a database exists in the remote server.
+   * 
+   * @return true if exists, otherwise false
+   * @throws IOException
+   */
+  public synchronized boolean existsDatabase() throws IOException {
+    storage.checkConnection();
+
+    try {
+      final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_EXIST);
+      try {
+        network.writeString(storage.getName());
+      } finally {
+        storage.endRequest(network);
+      }
+
+      try {
+        storage.beginResponse(network);
+        return network.readByte() == 1;
+      } finally {
+        storage.endResponse(network);
+      }
+
+    } catch (Exception e) {
+      OLogManager.instance().exception("Error on checking existence of the remote storage: " + storage.getName(), e,
+          OStorageException.class);
+      storage.close(true);
+    }
+    return false;
+  }
+
+  /**
+   * Deprecated. Use dropDatabase() instead.
+   * 
+   * @return The instance itself. Useful to execute method in chain
+   * @see #dropDatabase()
+   * @throws IOException
+   */
+  @Deprecated
+  public OServerAdmin deleteDatabase() throws IOException {
+    return dropDatabase();
+  }
+
+  /**
+   * Drops a database from a remote server instance.
+   * 
+   * @return The instance itself. Useful to execute method in chain
+   * @throws IOException
+   */
+  public synchronized OServerAdmin dropDatabase() throws IOException {
+    storage.checkConnection();
+
+    try {
+
+      final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_DROP);
+      try {
+        network.writeString(storage.getName());
+      } finally {
+        storage.endRequest(network);
+      }
+
+      storage.getResponse(network);
+
+    } catch (Exception e) {
+      OLogManager.instance().exception("Cannot delete the remote storage: " + storage.getName(), e, OStorageException.class);
+    }
+
+    for (OStorage s : Orient.instance().getStorages()) {
+      if (s.getURL().startsWith(getURL())) {
+        s.removeResource(OSchema.class.getSimpleName());
+        s.removeResource(OIndexManager.class.getSimpleName());
+        s.removeResource(OSecurity.class.getSimpleName());
+      }
+    }
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(null);
+
+    return this;
+  }
+
+  /**
+   * Gets the cluster status.
+   * 
+   * @return the JSON containing the current cluster structure
+   */
+  public ODocument clusterStatus() {
+    final ODocument response = sendRequest(OChannelBinaryProtocol.REQUEST_CLUSTER, new ODocument().field("operation", "status"),
+        "Cluster status");
+
+    OLogManager.instance().debug(this, "Cluster status %s", response);
+    return response;
+  }
+
+  /**
+   * Adds a node in the cluster.
+   * 
+   * @return The current cluster status.
+   */
+  public ODocument clusterAddNode(final String iRemoteNode) {
+    final ODocument response = sendRequest(OChannelBinaryProtocol.REQUEST_CLUSTER, new ODocument().field("operation", "addNode")
+        .field("node", iRemoteNode), "Cluster add node");
+
+    OLogManager.instance().debug(this, "Added node '%s' to the cluster", iRemoteNode);
+    return response;
+  }
+
+  /**
+   * Removes a node from the cluster.
+   * 
+   * @return The current cluster status.
+   */
+  public ODocument clusterRemoveNode(final String iRemoteNode) {
+    final ODocument response = sendRequest(OChannelBinaryProtocol.REQUEST_CLUSTER, new ODocument().field("operation", "removeNode")
+        .field("node", iRemoteNode), "Cluster remove node");
+
+    OLogManager.instance().debug(this, "Removed node '%s' from the cluster", iRemoteNode);
+    return response;
+  }
+
+  /**
+   * Starts the replication between two servers.
+   * 
+   * @param iDatabaseName
+   *          database name to replicate
+   * @param iRemoteServer
+   *          remote server alias as IP+address
+   * @return The instance itself. Useful to execute method in chain
+   * @throws IOException
+   */
+  public synchronized OServerAdmin startReplication(final String iDatabaseName, final String iRemoteServer) throws IOException {
+    final ODocument response = sendRequest(OChannelBinaryProtocol.REQUEST_REPLICATION, new ODocument().field("operation", "start")
+        .field("node", iRemoteServer).field("db", iDatabaseName), "Start replication");
+
+    OLogManager.instance().debug(this, "Started replication of database '%s' from server '%s' to '%s'", iDatabaseName,
+        storage.getURL(), iRemoteServer);
+
+    return this;
+  }
+
+  /**
+   * Stops the replication between two servers.
+   * 
+   * @param iDatabaseName
+   *          database name to replicate
+   * @param iRemoteServer
+   *          remote server alias as IP+address
+   * @return The instance itself. Useful to execute method in chain
+   * @throws IOException
+   */
+  public synchronized OServerAdmin stopReplication(final String iDatabaseName, final String iRemoteServer) throws IOException {
+    final ODocument response = sendRequest(OChannelBinaryProtocol.REQUEST_REPLICATION, new ODocument().field("operation", "stop")
+        .field("node", iRemoteServer).field("db", iDatabaseName), "Stop replication");
+
+    OLogManager.instance().debug(this, "Stopped replication of database '%s' from server '%s' to '%s'", iDatabaseName,
+        storage.getURL(), iRemoteServer);
+    return this;
+  }
+
+  /**
+   * Aligns a database between two servers
+   * 
+   * @param iDatabaseName
+   *          database name to align
+   * @param iRemoteServer
+   *          remote server alias as IP+address
+   * @param iOptions
+   *          options
+   * @return
+   * @return The instance itself. Useful to execute method in chain
+   * @throws IOException
+   */
+  public OServerAdmin alignDatabase(final String iDatabaseName, final String iRemoteServer, final String iOptions) {
+    OLogManager.instance().debug(this, "Started the alignment of database '%s' from server '%s' to '%s' with options %s",
+        iDatabaseName, storage.getURL(), iRemoteServer, iOptions);
+
+    final ODocument response = sendRequest(OChannelBinaryProtocol.REQUEST_REPLICATION, new ODocument().field("operation", "align")
+        .field("node", iRemoteServer).field("db", iDatabaseName).field("options", iOptions), "Align databases");
+
+    OLogManager.instance().debug(this, "Alignment finished");
+
+    return this;
+  }
+
+  /**
+   * Copies a database to a remote server instance.
+   * 
+   * @param iDatabaseName
+   * @param iDatabaseUserName
+   * @param iDatabaseUserPassword
+   * @param iRemoteName
+   * @param iRemoteEngine
+   * @return The instance itself. Useful to execute method in chain
+   * @throws IOException
+   */
+  public synchronized OServerAdmin copyDatabase(final String iDatabaseName, final String iDatabaseUserName,
+      final String iDatabaseUserPassword, final String iRemoteName, final String iRemoteEngine) throws IOException {
+    storage.checkConnection();
+
+    try {
+
+      final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_COPY);
+      try {
+        network.writeString(iDatabaseName);
+        network.writeString(iDatabaseUserName);
+        network.writeString(iDatabaseUserPassword);
+        network.writeString(iRemoteName);
+        network.writeString(iRemoteEngine);
+      } finally {
+        storage.endRequest(network);
+      }
+
+      storage.getResponse(network);
+
+      OLogManager.instance().debug(this, "Database '%s' has been copied to the server '%s'", iDatabaseName, iRemoteName);
+
+    } catch (Exception e) {
+      OLogManager.instance().exception("Cannot copy the database: " + iDatabaseName, e, OStorageException.class);
+    }
+
+    return this;
+  }
+
+  public synchronized Map<String, String> getGlobalConfigurations() throws IOException {
+    storage.checkConnection();
+
+    final Map<String, String> config = new HashMap<String, String>();
+
+    try {
+      final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_LIST);
+      storage.endRequest(network);
+
+      try {
+        storage.beginResponse(network);
+        final int num = network.readShort();
+        for (int i = 0; i < num; ++i)
+          config.put(network.readString(), network.readString());
+      } finally {
+        storage.endResponse(network);
+      }
+
+    } catch (Exception e) {
+      OLogManager.instance().exception("Cannot retrieve the configuration list", e, OStorageException.class);
+      storage.close(true);
+    }
+    return config;
+  }
+
+  public synchronized String getGlobalConfiguration(final OGlobalConfiguration iConfig) throws IOException {
+    storage.checkConnection();
+
+    try {
+      final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_GET);
+      network.writeString(iConfig.getKey());
+
+      try {
+        storage.beginResponse(network);
+        return network.readString();
+      } finally {
+        storage.endResponse(network);
+      }
+
+    } catch (Exception e) {
+      OLogManager.instance().exception("Cannot retrieve the configuration value: " + iConfig.getKey(), e, OStorageException.class);
+      storage.close(true);
+    }
+    return null;
+  }
+
+  public synchronized OServerAdmin setGlobalConfiguration(final OGlobalConfiguration iConfig, final Object iValue)
+      throws IOException {
+    storage.checkConnection();
+
+    try {
+      final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_SET);
+      network.writeString(iConfig.getKey());
+      network.writeString(iValue != null ? iValue.toString() : "");
+      storage.getResponse(network);
+
+    } catch (Exception e) {
+      OLogManager.instance().exception("Cannot set the configuration value: " + iConfig.getKey(), e, OStorageException.class);
+      storage.close(true);
+    }
+    return this;
+  }
+
+  /**
+   * Close the connection if open.
+   */
+  public synchronized void close() {
+    storage.close();
+  }
+
+  public synchronized void close(boolean iForce) {
+    storage.close(iForce);
+  }
+
+  public synchronized String getURL() {
+    return storage != null ? storage.getURL() : null;
+  }
+
+  protected ODocument sendRequest(final byte iRequest, final ODocument iPayLoad, final String iActivity) {
+    try {
+
+      final OChannelBinaryClient network = storage.beginRequest(iRequest);
+      try {
+        network.writeBytes(iPayLoad.toStream());
+      } finally {
+        storage.endRequest(network);
+      }
+
+      storage.getResponse(network);
+      new ODocument(network.readBytes());
+
+    } catch (Exception e) {
+      OLogManager.instance().exception("Error on executing '%s'", e, OStorageException.class, iActivity);
+    }
+    return null;
+  }
 }

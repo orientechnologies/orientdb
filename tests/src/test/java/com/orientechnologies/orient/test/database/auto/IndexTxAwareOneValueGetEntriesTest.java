@@ -110,7 +110,7 @@ public class IndexTxAwareOneValueGetEntriesTest {
   public void testClearAndPut() {
     database.begin();
     final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetEntriesTest");
-    System.out.println("index intstanceof " + index == null ? "null" : index.getClass());
+    System.out.println("index intstanceof " + (index == null ? "null" : index.getClass()));
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
     final int clusterId = database.getDefaultClusterId();

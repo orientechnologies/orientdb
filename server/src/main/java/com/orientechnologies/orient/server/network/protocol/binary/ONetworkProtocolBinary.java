@@ -194,12 +194,12 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       copyDatabase();
       break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_REPLICATION:
+    case OChannelBinaryProtocol.REQUEST_REPLICATION:
       replicationDatabase();
       break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_ALIGN:
-      alignDatabase();
+    case OChannelBinaryProtocol.REQUEST_CLUSTER:
+      cluster();
       break;
 
     case OChannelBinaryProtocol.REQUEST_DATASEGMENT_ADD:
@@ -530,50 +530,49 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void replicationDatabase() throws IOException {
     setDataCommandInfo("Replication command");
 
-    final String action = channel.readString();
-    final String dbName = channel.readString();
-    final String remoteServer = channel.readString();
+    final ODocument request = new ODocument(channel.readBytes());
 
     final ODistributedServerManager manager = OServerMain.server().getHandler(ODistributedServerManager.class);
-    final ODistributedNode node = manager.getReplicator().getOrCreateDistributedNode(remoteServer);
+    final ODistributedNode node = manager.getReplicator().getOrCreateDistributedNode((String) request.field("node"));
 
-    final ODistributedDatabaseInfo db = node.getOrCreateDatabaseEntry(dbName);
+    final ODistributedDatabaseInfo db = node.getOrCreateDatabaseEntry((String) request.field("db"));
 
-    if (action.equals("start")) {
+    ODocument response = null;
+
+    final String operation = request.field("operation");
+    if (operation.equals("start")) {
       checkServerAccess("server.replication.start");
       node.startDatabaseReplication(db);
-    } else if (action.equals("stop")) {
+    } else if (operation.equals("stop")) {
       checkServerAccess("server.replication.stop");
       node.stopDatabaseReplication(db);
+    } else if (operation.equals("align")) {
+      checkServerAccess("server.replication.align");
+      node.startDatabaseAlignment(node.getOrCreateDatabaseEntry(db.databaseName), (String) request.field("options"));
     }
 
-    beginResponse();
-    try {
-      sendOk(clientTxId);
-    } finally {
-      endResponse();
-    }
+    sendResponse(response);
   }
 
-  protected void alignDatabase() throws IOException {
-    setDataCommandInfo("Align database command");
+  protected void cluster() throws IOException {
+    setDataCommandInfo("Cluster status");
 
-    final String dbName = channel.readString();
-    final String remoteServer = channel.readString();
-    final String options = channel.readString();
+    final ODocument req = new ODocument(channel.readBytes());
 
     final ODistributedServerManager manager = OServerMain.server().getHandler(ODistributedServerManager.class);
-    final ODistributedNode node = manager.getReplicator().getOrCreateDistributedNode(remoteServer);
 
-    checkServerAccess("server.align");
-    node.startDatabaseAlignment(node.getOrCreateDatabaseEntry(dbName), options);
+    ODocument response = null;
 
-    beginResponse();
-    try {
-      sendOk(clientTxId);
-    } finally {
-      endResponse();
-    }
+    final String operation = req.field("operation");
+    if (operation == null)
+      throw new IllegalArgumentException("Cluster operation is null");
+    else if (operation.equals("status")) {
+      if (manager.isLeader())
+        response = manager.getLeader().getClusteredConfiguration();
+    } else
+      throw new IllegalArgumentException("Cluster operation '" + operation + "' is not supported");
+
+    sendResponse(response);
   }
 
   protected void countDatabaseRecords() throws IOException {
@@ -1160,5 +1159,15 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
   public String getType() {
     return "binary";
+  }
+
+  protected void sendResponse(final ODocument iResponse) throws IOException {
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+      channel.writeBytes(iResponse != null ? iResponse.toStream() : null);
+    } finally {
+      endResponse();
+    }
   }
 }
