@@ -95,7 +95,7 @@ public class OStorageLocalTxExecuter {
 			final int iVersion, final byte iRecordType) {
 		try {
 			// READ CURRENT RECORD CONTENT
-			final ORawBuffer buffer = storage.readRecord(iClusterSegment, iRid, false);
+			final ORawBuffer buffer = storage.readRecord(iClusterSegment, iRid, true);
 
 			// SAVE INTO THE LOG THE POSITION OF THE OLD RECORD JUST DELETED. IF TX FAILS AT THIS POINT AS ABOVE
 			txSegment.addLog(OTxSegment.OPERATION_UPDATE, iTxId, iRid.clusterId, iRid.clusterPosition, iRecordType, buffer.version,
@@ -120,7 +120,7 @@ public class OStorageLocalTxExecuter {
 			final ORecordId rid = new ORecordId(iClusterSegment.getId(), iPosition);
 
 			// READ CURRENT RECORD CONTENT
-			final ORawBuffer buffer = storage.readRecord(iClusterSegment, rid, false);
+			final ORawBuffer buffer = storage.readRecord(iClusterSegment, rid, true);
 
 			// SAVE INTO THE LOG THE OLD RECORD
 			txSegment.addLog(OTxSegment.OPERATION_DELETE, iTxId, iClusterSegment.getId(), iPosition, buffer.recordType, buffer.version,

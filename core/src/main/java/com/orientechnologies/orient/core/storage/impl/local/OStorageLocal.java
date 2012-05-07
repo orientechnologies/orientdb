@@ -195,8 +195,6 @@ public class OStorageLocal extends OStorageEmbedded {
         }
       }
 
-      loadVersion();
-
       txManager.open();
 
     } catch (Exception e) {
@@ -280,8 +278,6 @@ public class OStorageLocal extends OStorageEmbedded {
         return;
 
       status = STATUS.CLOSING;
-
-      saveVersion();
 
       for (OCluster cluster : clusters)
         if (cluster != null)
@@ -1022,7 +1018,6 @@ public class OStorageLocal extends OStorageEmbedded {
         txManager.clearLogEntries(iTx);
         txManager.commitAllPendingRecords(iTx);
 
-        incrementVersion();
         if (OGlobalConfiguration.TX_COMMIT_SYNCH.getValueAsBoolean())
           synch();
 
@@ -1066,8 +1061,6 @@ public class OStorageLocal extends OStorageEmbedded {
 
     lock.acquireExclusiveLock();
     try {
-      saveVersion();
-
       for (OCluster cluster : clusters)
         if (cluster != null)
           cluster.synch();
@@ -1096,8 +1089,6 @@ public class OStorageLocal extends OStorageEmbedded {
 
     lock.acquireExclusiveLock();
     try {
-      saveVersion();
-
       cluster.synch();
 
       final ODataLocal data = getDataSegmentById(ppos.dataSegmentId);
@@ -1404,22 +1395,26 @@ public class OStorageLocal extends OStorageEmbedded {
       final OPhysicalPosition ppos = new OPhysicalPosition(-1, -1, iRecordType);
 
       iClusterSegment.addPhysicalPosition(ppos);
-
       iRid.clusterPosition = ppos.clusterPosition;
 
-      ppos.dataSegmentId = iDataSegment.getId();
-      ppos.dataSegmentPos = iDataSegment.addRecord(iRid, iContent);
+      lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+      try {
 
-      // UPDATE THE POSITION IN CLUSTER WITH THE POSITION OF RECORD IN DATA
-      iClusterSegment.updateDataSegmentPosition(ppos.clusterPosition, ppos.dataSegmentId, ppos.dataSegmentPos);
+        ppos.dataSegmentId = iDataSegment.getId();
+        ppos.dataSegmentPos = iDataSegment.addRecord(iRid, iContent);
 
-      incrementVersion();
+        // UPDATE THE POSITION IN CLUSTER WITH THE POSITION OF RECORD IN DATA
+        iClusterSegment.updateDataSegmentPosition(ppos.clusterPosition, ppos.dataSegmentId, ppos.dataSegmentPos);
 
-      return ppos;
+        return ppos;
+      } finally {
+        lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+      }
     } catch (IOException e) {
 
       OLogManager.instance().error(this, "Error on creating record in cluster: " + iClusterSegment, e);
       return null;
+
     } finally {
       lock.releaseSharedLock();
 
@@ -1441,7 +1436,6 @@ public class OStorageLocal extends OStorageEmbedded {
     // OUTSIDE.
     if (iAtomicLock)
       lock.acquireSharedLock();
-
     try {
 
       lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
@@ -1489,74 +1483,76 @@ public class OStorageLocal extends OStorageEmbedded {
 
     final long timer = OProfiler.getInstance().startChrono();
 
-    // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
     lock.acquireExclusiveLock();
     try {
 
-      // lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
-      // try {
-      final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
-      if (!checkForRecordValidity(ppos))
-        // DELETED
-        return null;
+      // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
+      lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+      try {
 
-      // VERSION CONTROL CHECK
-      switch (iVersion) {
-      // DOCUMENT UPDATE, NO VERSION CONTROL
-      case -1:
-        ++ppos.recordVersion;
-        iClusterSegment.updateVersion(iRid.clusterPosition, ppos.recordVersion);
-        break;
+        // UPDATE IT
+        final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
+        if (!checkForRecordValidity(ppos))
+          // DELETED
+          return null;
 
-      // DOCUMENT UPDATE, NO VERSION CONTROL, NO VERSION UPDATE
-      case -2:
-        break;
-
-      default:
-        // MVCC CONTROL AND RECORD UPDATE OR WRONG VERSION VALUE
-        if (iVersion > -1) {
-          // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-          if (iVersion != ppos.recordVersion)
-            throw new OConcurrentModificationException(
-                "Cannot update record "
-                    + iRid
-                    + " in storage '"
-                    + name
-                    + "' because the version is not the latest. Probably you are updating an old record or it has been modified by another user (db=v"
-                    + ppos.recordVersion + " your=v" + iVersion + ")", iRid, ppos.recordVersion, iVersion);
+        // VERSION CONTROL CHECK
+        switch (iVersion) {
+        // DOCUMENT UPDATE, NO VERSION CONTROL
+        case -1:
           ++ppos.recordVersion;
           iClusterSegment.updateVersion(iRid.clusterPosition, ppos.recordVersion);
-        } else {
-          // DOCUMENT ROLLBACKED
-          ppos.recordVersion = iVersion - Integer.MIN_VALUE;
-          iClusterSegment.updateVersion(iRid.clusterPosition, ppos.recordVersion);
+          break;
+
+        // DOCUMENT UPDATE, NO VERSION CONTROL, NO VERSION UPDATE
+        case -2:
+          break;
+
+        default:
+          // MVCC CONTROL AND RECORD UPDATE OR WRONG VERSION VALUE
+          if (iVersion > -1) {
+            // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
+            if (iVersion != ppos.recordVersion)
+              throw new OConcurrentModificationException(
+                  "Cannot update record "
+                      + iRid
+                      + " in storage '"
+                      + name
+                      + "' because the version is not the latest. Probably you are updating an old record or it has been modified by another user (db=v"
+                      + ppos.recordVersion + " your=v" + iVersion + ")", iRid, ppos.recordVersion, iVersion);
+            ++ppos.recordVersion;
+            iClusterSegment.updateVersion(iRid.clusterPosition, ppos.recordVersion);
+          } else {
+            // DOCUMENT ROLLBACKED
+            ppos.recordVersion = iVersion - Integer.MIN_VALUE;
+            iClusterSegment.updateVersion(iRid.clusterPosition, ppos.recordVersion);
+          }
+
         }
 
+        if (ppos.recordType != iRecordType)
+          iClusterSegment.updateRecordType(iRid.clusterPosition, iRecordType);
+
+        final long newDataSegmentOffset;
+
+        if (ppos.dataSegmentPos == -1)
+          // WAS EMPTY FIRST TIME, CREATE IT NOW
+          newDataSegmentOffset = getDataSegmentById(ppos.dataSegmentId).addRecord(iRid, iContent);
+        else
+          newDataSegmentOffset = getDataSegmentById(ppos.dataSegmentId).setRecord(ppos.dataSegmentPos, iRid, iContent);
+
+        if (newDataSegmentOffset != ppos.dataSegmentPos) {
+          // UPDATE DATA SEGMENT OFFSET WITH THE NEW PHYSICAL POSITION
+          iClusterSegment.updateDataSegmentPosition(ppos.clusterPosition, ppos.dataSegmentId, newDataSegmentOffset);
+          ppos.dataSegmentPos = newDataSegmentOffset;
+        }
+
+        return ppos;
+
+      } finally {
+        lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
       }
 
-      if (ppos.recordType != iRecordType)
-        iClusterSegment.updateRecordType(iRid.clusterPosition, iRecordType);
-
-      final long newDataSegmentOffset;
-      if (ppos.dataSegmentPos == -1)
-        // WAS EMPTY FIRST TIME, CREATE IT NOW
-        newDataSegmentOffset = getDataSegmentById(ppos.dataSegmentId).addRecord(iRid, iContent);
-      else
-        // UPDATE IT
-        newDataSegmentOffset = getDataSegmentById(ppos.dataSegmentId).setRecord(ppos.dataSegmentPos, iRid, iContent);
-
-      if (newDataSegmentOffset != ppos.dataSegmentPos)
-        // UPDATE DATA SEGMENT OFFSET WITH THE NEW PHYSICAL POSITION
-        iClusterSegment.updateDataSegmentPosition(ppos.clusterPosition, ppos.dataSegmentId, newDataSegmentOffset);
-
-      incrementVersion();
-
-      ppos.dataSegmentPos = newDataSegmentOffset;
-      return ppos;
-
-      // } finally {
-      // lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
-      // }
     } catch (IOException e) {
 
       OLogManager.instance().error(this, "Error on updating record " + iRid + " (cluster: " + iClusterSegment + ")", e);
@@ -1600,8 +1596,6 @@ public class OStorageLocal extends OStorageEmbedded {
 
         iClusterSegment.removePhysicalPosition(iRid.clusterPosition);
 
-        incrementVersion();
-
         return ppos;
 
       } finally {
@@ -1618,42 +1612,6 @@ public class OStorageLocal extends OStorageEmbedded {
     }
 
     return null;
-  }
-
-  /***
-   * Save the version number to disk
-   * 
-   * @throws IOException
-   */
-  private void saveVersion() throws IOException {
-    lock.acquireExclusiveLock();
-    try {
-
-      if (dataSegments.length > 0)
-        dataSegments[0].saveVersion(version.get());
-
-    } finally {
-      lock.releaseExclusiveLock();
-    }
-  }
-
-  /**
-   * Read the storage version from disk;
-   * 
-   * @return Long as serial version number
-   * @throws IOException
-   */
-  private long loadVersion() throws IOException {
-    lock.acquireExclusiveLock();
-    try {
-
-      final long v = dataSegments[0].loadVersion();
-      version.set(v);
-      return v;
-
-    } finally {
-      lock.releaseExclusiveLock();
-    }
   }
 
   private void installProfilerHooks() {

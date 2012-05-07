@@ -27,289 +27,278 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 public class OClusterMemory extends OSharedResourceAbstract implements OCluster {
-	public static final String			TYPE		= "MEMORY";
-
-	private OStorage								storage;
-	private int											id;
-	private String									name;
-	private int											dataSegmentId;
-	private List<OPhysicalPosition>	entries	= new ArrayList<OPhysicalPosition>();
-	private List<OPhysicalPosition>	removed	= new ArrayList<OPhysicalPosition>();
+  public static final String      TYPE    = "MEMORY";
+
+  private OStorage                storage;
+  private int                     id;
+  private String                  name;
+  private int                     dataSegmentId;
+  private List<OPhysicalPosition> entries = new ArrayList<OPhysicalPosition>();
+  private List<OPhysicalPosition> removed = new ArrayList<OPhysicalPosition>();
 
-	public OClusterMemory() {
-	}
-
-	public void configure(final OStorage iStorage, final OStorageClusterConfiguration iConfig) throws IOException {
-		configure(iStorage, iConfig.getId(), iConfig.getName(), iConfig.getLocation(), iConfig.getDataSegmentId());
-	}
-
-	public void configure(final OStorage iStorage, final int iId, final String iClusterName, final String iLocation,
-			final int iDataSegmentId, final Object... iParameters) {
-		this.storage = iStorage;
-		this.id = iId;
-		this.name = iClusterName;
-		this.dataSegmentId = iDataSegmentId;
-	}
-
-	public int getDataSegmentId() {
-		acquireSharedLock();
-		try {
-
-			return dataSegmentId;
-
-		} finally {
-			releaseSharedLock();
-		}
-	}
-
-	public OClusterPositionIterator absoluteIterator() {
-		return new OClusterPositionIterator(this);
-	}
-
-	public OClusterPositionIterator absoluteIterator(final long iBeginRange, final long iEndRange) throws IOException {
-		return new OClusterPositionIterator(this, iBeginRange, iEndRange);
-	}
-
-	public void close() {
-		acquireExclusiveLock();
-		try {
-
-			entries.clear();
-			removed.clear();
-
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
-
-	public void open() throws IOException {
-	}
-
-	public void create(final int iStartSize) throws IOException {
-	}
-
-	public void delete() throws IOException {
-		acquireExclusiveLock();
-		try {
+  public OClusterMemory() {
+  }
+
+  public void configure(final OStorage iStorage, final OStorageClusterConfiguration iConfig) throws IOException {
+    configure(iStorage, iConfig.getId(), iConfig.getName(), iConfig.getLocation(), iConfig.getDataSegmentId());
+  }
+
+  public void configure(final OStorage iStorage, final int iId, final String iClusterName, final String iLocation,
+      final int iDataSegmentId, final Object... iParameters) {
+    this.storage = iStorage;
+    this.id = iId;
+    this.name = iClusterName;
+    this.dataSegmentId = iDataSegmentId;
+  }
+
+  public int getDataSegmentId() {
+    acquireSharedLock();
+    try {
+
+      return dataSegmentId;
+
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  public OClusterPositionIterator absoluteIterator() {
+    return new OClusterPositionIterator(this);
+  }
+
+  public OClusterPositionIterator absoluteIterator(final long iBeginRange, final long iEndRange) throws IOException {
+    return new OClusterPositionIterator(this, iBeginRange, iEndRange);
+  }
+
+  public void close() {
+    acquireExclusiveLock();
+    try {
+
+      entries.clear();
+      removed.clear();
+
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  public void open() throws IOException {
+  }
+
+  public void create(final int iStartSize) throws IOException {
+  }
+
+  public void delete() throws IOException {
+    acquireExclusiveLock();
+    try {
 
-			close();
-			entries.clear();
-
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
-
-	public void truncate() throws IOException {
-		acquireExclusiveLock();
-		try {
+      close();
+      entries.clear();
+
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  public void truncate() throws IOException {
+    acquireExclusiveLock();
+    try {
 
-			entries.clear();
-			removed.clear();
-
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+      entries.clear();
+      removed.clear();
+
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 
-	public void set(ATTRIBUTES iAttribute, Object iValue) throws IOException {
-		if (iAttribute == null)
-			throw new IllegalArgumentException("attribute is null");
+  public void set(ATTRIBUTES iAttribute, Object iValue) throws IOException {
+    if (iAttribute == null)
+      throw new IllegalArgumentException("attribute is null");
 
-		final String stringValue = iValue != null ? iValue.toString() : null;
-
-		switch (iAttribute) {
-		case NAME:
-			name = stringValue;
-			break;
-
-		case DATASEGMENT:
-			dataSegmentId = storage.getDataSegmentIdByName(stringValue);
-			break;
-		}
-	}
+    final String stringValue = iValue != null ? iValue.toString() : null;
+
+    switch (iAttribute) {
+    case NAME:
+      name = stringValue;
+      break;
+
+    case DATASEGMENT:
+      dataSegmentId = storage.getDataSegmentIdByName(stringValue);
+      break;
+    }
+  }
 
-	public long getEntries() {
-		acquireSharedLock();
-		try {
+  public long getEntries() {
+    acquireSharedLock();
+    try {
 
-			return entries.size() - removed.size();
+      return entries.size() - removed.size();
 
-		} finally {
-			releaseSharedLock();
-		}
-	}
+    } finally {
+      releaseSharedLock();
+    }
+  }
 
-	public long getRecordsSize() {
-		acquireSharedLock();
-		try {
+  public long getRecordsSize() {
+    acquireSharedLock();
+    try {
 
-			long size = 0;
-			for (OPhysicalPosition e : entries)
-				if (e != null)
-					size += e.recordSize;
-			return size;
+      long size = 0;
+      for (OPhysicalPosition e : entries)
+        if (e != null)
+          size += e.recordSize;
+      return size;
 
-		} finally {
-			releaseSharedLock();
-		}
-	}
+    } finally {
+      releaseSharedLock();
+    }
+  }
 
-	public long getFirstEntryPosition() {
-		acquireSharedLock();
-		try {
+  public long getFirstEntryPosition() {
+    acquireSharedLock();
+    try {
 
-			return entries.size() == 0 ? -1 : 0;
+      return entries.size() == 0 ? -1 : 0;
 
-		} finally {
-			releaseSharedLock();
-		}
-	}
+    } finally {
+      releaseSharedLock();
+    }
+  }
 
-	public long getLastEntryPosition() {
-		acquireSharedLock();
-		try {
+  public long getLastEntryPosition() {
+    acquireSharedLock();
+    try {
 
-			return entries.size() - 1;
+      return entries.size() - 1;
 
-		} finally {
-			releaseSharedLock();
-		}
-	}
+    } finally {
+      releaseSharedLock();
+    }
+  }
 
-	public int getId() {
-		return id;
-	}
+  public int getId() {
+    return id;
+  }
 
-	public String getName() {
-		return name;
-	}
+  public String getName() {
+    return name;
+  }
 
-	public long getAvailablePosition() throws IOException {
-		acquireSharedLock();
-		try {
+  public long getAvailablePosition() throws IOException {
+    acquireSharedLock();
+    try {
 
-			return entries.size();
+      return entries.size();
 
-		} finally {
-			releaseSharedLock();
-		}
-	}
+    } finally {
+      releaseSharedLock();
+    }
+  }
 
-	public void addPhysicalPosition(final OPhysicalPosition iPPosition) {
-		acquireExclusiveLock();
-		try {
+  public void addPhysicalPosition(final OPhysicalPosition iPPosition) {
+    acquireExclusiveLock();
+    try {
 
-			if (!removed.isEmpty()) {
-				final OPhysicalPosition recycledPosition = removed.remove(removed.size() - 1);
+      if (!removed.isEmpty()) {
+        final OPhysicalPosition recycledPosition = removed.remove(removed.size() - 1);
 
-				// OVERWRITE DATA
-				iPPosition.clusterPosition = recycledPosition.clusterPosition;
-				iPPosition.recordVersion = recycledPosition.recordVersion + 1;
+        // OVERWRITE DATA
+        iPPosition.clusterPosition = recycledPosition.clusterPosition;
+        iPPosition.recordVersion = recycledPosition.recordVersion + 1;
 
-				entries.set((int) recycledPosition.clusterPosition, iPPosition);
+        entries.set((int) recycledPosition.clusterPosition, iPPosition);
 
-			} else {
-				iPPosition.clusterPosition = entries.size();
-				iPPosition.recordVersion = 0;
-				entries.add(iPPosition);
-			}
+      } else {
+        iPPosition.clusterPosition = entries.size();
+        iPPosition.recordVersion = 0;
+        entries.add(iPPosition);
+      }
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 
-	public void updateRecordType(final long iPosition, final byte iRecordType) throws IOException {
-		acquireExclusiveLock();
-		try {
+  public void updateRecordType(final long iPosition, final byte iRecordType) throws IOException {
+    acquireExclusiveLock();
+    try {
 
-			entries.get((int) iPosition).recordType = iRecordType;
+      entries.get((int) iPosition).recordType = iRecordType;
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 
-	public void updateVersion(long iPosition, int iVersion) throws IOException {
-		acquireExclusiveLock();
-		try {
+  public void updateVersion(long iPosition, int iVersion) throws IOException {
+    acquireExclusiveLock();
+    try {
 
-			entries.get((int) iPosition).recordVersion = iVersion;
+      entries.get((int) iPosition).recordVersion = iVersion;
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 
-	public OPhysicalPosition getPhysicalPosition(final OPhysicalPosition iPPosition) {
-		acquireSharedLock();
-		try {
+  public OPhysicalPosition getPhysicalPosition(final OPhysicalPosition iPPosition) {
+    acquireSharedLock();
+    try {
 
-			return entries.get((int) iPPosition.clusterPosition);
+      return entries.get((int) iPPosition.clusterPosition);
 
-		} finally {
-			releaseSharedLock();
-		}
-	}
+    } finally {
+      releaseSharedLock();
+    }
+  }
 
-	public void removePhysicalPosition(final long iPosition) {
-		acquireExclusiveLock();
-		try {
+  public void removePhysicalPosition(final long iPosition) {
+    acquireExclusiveLock();
+    try {
 
-			final OPhysicalPosition ppos = entries.get((int) iPosition);
+      final OPhysicalPosition ppos = entries.get((int) iPosition);
 
-			// ADD AS HOLE
-			removed.add(ppos);
+      // ADD AS HOLE
+      removed.add(ppos);
 
-			entries.set((int) iPosition, null);
+      entries.set((int) iPosition, null);
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 
-	public void updateDataSegmentPosition(final long iPosition, final int iDataSegmentId, final long iDataPosition) {
-		acquireExclusiveLock();
-		try {
+  public void updateDataSegmentPosition(final long iPosition, final int iDataSegmentId, final long iDataPosition) {
+    acquireExclusiveLock();
+    try {
 
-			final OPhysicalPosition ppos = entries.get((int) iPosition);
-			ppos.dataSegmentId = iDataSegmentId;
-			ppos.dataSegmentPos = iDataPosition;
+      final OPhysicalPosition ppos = entries.get((int) iPosition);
+      ppos.dataSegmentId = iDataSegmentId;
+      ppos.dataSegmentPos = iDataPosition;
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 
-	public void setPhysicalPosition(final OPhysicalPosition iPosition) {
-		acquireExclusiveLock();
-		try {
+  public void synch() {
+  }
 
-			entries.set((int) iPosition.clusterPosition, iPosition);
+  public void lock() {
+    acquireSharedLock();
+  }
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+  public void unlock() {
+    releaseSharedLock();
+  }
 
-	public void synch() {
-	}
+  public String getType() {
+    return TYPE;
+  }
 
-	public void lock() {
-		acquireSharedLock();
-	}
-
-	public void unlock() {
-		releaseSharedLock();
-	}
-
-	public String getType() {
-		return TYPE;
-	}
-
-	@Override
-	public String toString() {
-		return "OClusterMemory [name=" + name + ", id=" + id + ", entries=" + entries.size() + ", removed=" + removed + "]";
-	}
+  @Override
+  public String toString() {
+    return "OClusterMemory [name=" + name + ", id=" + id + ", entries=" + entries.size() + ", removed=" + removed + "]";
+  }
 }

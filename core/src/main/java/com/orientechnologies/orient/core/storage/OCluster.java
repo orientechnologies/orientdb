@@ -32,115 +32,107 @@ import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
  */
 public interface OCluster {
 
-	public static enum ATTRIBUTES {
-		NAME, DATASEGMENT
-	}
+  public static enum ATTRIBUTES {
+    NAME, DATASEGMENT
+  }
 
-	public void configure(OStorage iStorage, int iId, String iClusterName, final String iLocation, int iDataSegmentId,
-			Object... iParameters) throws IOException;
+  public void configure(OStorage iStorage, int iId, String iClusterName, final String iLocation, int iDataSegmentId,
+      Object... iParameters) throws IOException;
 
-	public void configure(OStorage iStorage, OStorageClusterConfiguration iConfig) throws IOException;
+  public void configure(OStorage iStorage, OStorageClusterConfiguration iConfig) throws IOException;
 
-	public void create(int iStartSize) throws IOException;
+  public void create(int iStartSize) throws IOException;
 
-	public void open() throws IOException;
+  public void open() throws IOException;
 
-	public void close() throws IOException;
+  public void close() throws IOException;
 
-	public void delete() throws IOException;
+  public void delete() throws IOException;
 
-	public void set(ATTRIBUTES iAttribute, Object iValue) throws IOException;
+  public void set(ATTRIBUTES iAttribute, Object iValue) throws IOException;
 
-	/**
-	 * Truncates the cluster content. All the entries will be removed.
-	 * 
-	 * @throws IOException
-	 */
-	public void truncate() throws IOException;
+  /**
+   * Truncates the cluster content. All the entries will be removed.
+   * 
+   * @throws IOException
+   */
+  public void truncate() throws IOException;
 
-	public String getType();
+  public String getType();
 
-	public int getDataSegmentId();
+  public int getDataSegmentId();
 
-	/**
-	 * Adds a new entry.
-	 */
-	public void addPhysicalPosition(OPhysicalPosition iPPosition) throws IOException;
+  /**
+   * Adds a new entry.
+   */
+  public void addPhysicalPosition(OPhysicalPosition iPPosition) throws IOException;
 
-	/**
-	 * Fills and return the PhysicalPosition object received as parameter with the physical position of logical record iPosition
-	 * 
-	 * @throws IOException
-	 */
-	public OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) throws IOException;
+  /**
+   * Fills and return the PhysicalPosition object received as parameter with the physical position of logical record iPosition
+   * 
+   * @throws IOException
+   */
+  public OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) throws IOException;
 
-	/**
-	 * Updates position in data segment (usually on defrag).
-	 */
+  /**
+   * Updates position in data segment (usually on defrag).
+   */
 
-	public void updateDataSegmentPosition(long iPosition, int iDataSegmentId, long iDataPosition) throws IOException;
+  public void updateDataSegmentPosition(long iPosition, int iDataSegmentId, long iDataPosition) throws IOException;
 
-	/**
-	 * Changes the PhysicalPosition of the logical record iPosition.
-	 * 
-	 * @param iVersion
-	 *          TODO
-	 */
-	public void setPhysicalPosition(OPhysicalPosition iPPosition) throws IOException;
+  /**
+   * Removes the Logical Position entry.
+   */
+  public void removePhysicalPosition(long iPosition) throws IOException;
 
-	/**
-	 * Removes the Logical Position entry.
-	 */
-	public void removePhysicalPosition(long iPosition) throws IOException;
+  public void updateRecordType(long iPosition, final byte iRecordType) throws IOException;
 
-	public void updateRecordType(long iPosition, final byte iRecordType) throws IOException;
+  public void updateVersion(long iPosition, int iVersion) throws IOException;
 
-	public void updateVersion(long iPosition, int iVersion) throws IOException;
+  public long getEntries();
 
-	public long getEntries();
+  public long getFirstEntryPosition();
 
-	public long getFirstEntryPosition();
+  public long getLastEntryPosition();
 
-	public long getLastEntryPosition();
+  /**
+   * Lets to an external actor to lock the cluster in shared mode. Useful for range queries to avoid atomic locking.
+   * 
+   * @see #unlock();
+   */
+  public void lock();
 
-	/**
-	 * Lets to an external actor to lock the cluster in shared mode. Useful for range queries to avoid atomic locking.
-	 * 
-	 * @see #unlock();
-	 */
-	public void lock();
+  /**
+   * Lets to an external actor to unlock the shared mode lock acquired by the lock().
+   * 
+   * @see #lock();
+   */
+  public void unlock();
 
-	/**
-	 * Lets to an external actor to unlock the shared mode lock acquired by the lock().
-	 * 
-	 * @see #lock();
-	 */
-	public void unlock();
+  public int getId();
 
-	public int getId();
+  public void synch() throws IOException;
 
-	public void synch() throws IOException;
+  public String getName();
 
-	public String getName();
+  /**
+   * Returns the size of the records contained in the cluster in bytes.
+   * 
+   * @return
+   */
+  public long getRecordsSize();
 
-	/**
-	 * Returns the size of the records contained in the cluster in bytes.
-	 * 
-	 * @return
-	 */
-	public long getRecordsSize();
+  public OClusterPositionIterator absoluteIterator();
 
-	public OClusterPositionIterator absoluteIterator();
-
-	/**
-	 * Creates an iterator setting a range.
-	 * 
-	 * @param iBeginRange
-	 *          Lower range
-	 * @param iEndRange
-	 *          Upper range
-	 * @return
-	 * @throws IOException
-	 */
-	public OClusterPositionIterator absoluteIterator(long iBeginRange, long iEndRange) throws IOException;
+  /**
+   * Creates an iterator setting a range.
+   * 
+   * @param iBeginRange
+   *          Lower range
+   * @param iEndRange
+   *          Upper range
+   * @return
+   * @throws IOException
+   */
+  public OClusterPositionIterator absoluteIterator(long iBeginRange, long iEndRange) throws IOException;
 }

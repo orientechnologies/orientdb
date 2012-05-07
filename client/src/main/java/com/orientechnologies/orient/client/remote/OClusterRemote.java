@@ -172,18 +172,6 @@ public class OClusterRemote implements OCluster {
   /*
    * (non-Javadoc)
    * 
-   * @see
-   * com.orientechnologies.orient.core.storage.OCluster#setPhysicalPosition(com.orientechnologies.orient.core.storage.OPhysicalPosition
-   * )
-   */
-  public void setPhysicalPosition(OPhysicalPosition iPPosition) throws IOException {
-    // TODO Auto-generated method stub
-
-  }
-
-  /*
-   * (non-Javadoc)
-   * 
    * @see com.orientechnologies.orient.core.storage.OCluster#removePhysicalPosition(long)
    */
   public void removePhysicalPosition(long iPosition) throws IOException {

@@ -171,15 +171,21 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
 
     final String stringValue = iValue != null ? iValue.toString() : null;
 
-    switch (iAttribute) {
-    case NAME:
-      setNameInternal(stringValue);
-      break;
-    case DATASEGMENT:
-      setDataSegmentInternal(stringValue);
-      break;
-    }
+    acquireExclusiveLock();
+    try {
 
+      switch (iAttribute) {
+      case NAME:
+        setNameInternal(stringValue);
+        break;
+      case DATASEGMENT:
+        setDataSegmentInternal(stringValue);
+        break;
+      }
+
+    } finally {
+      releaseExclusiveLock();
+    }
   }
 
   /**
@@ -210,32 +216,6 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
   }
 
   /**
-   * Changes the PhysicalPosition of the logical record iPosition.
-   * 
-   * @throws IOException
-   */
-  public void setPhysicalPosition(final OPhysicalPosition iPosition) throws IOException {
-    final long filePosition = iPosition.clusterPosition * RECORD_SIZE;
-
-    acquireSharedLock();
-    try {
-
-      final long[] pos = fileSegment.getRelativePosition(filePosition);
-
-      final OFile f = fileSegment.files[(int) pos[0]];
-      long p = pos[1];
-
-      f.writeShort(p, (short) iPosition.dataSegmentId);
-      f.writeLong(p += OBinaryProtocol.SIZE_SHORT, iPosition.dataSegmentPos);
-      f.writeByte(p += OBinaryProtocol.SIZE_LONG, iPosition.recordType);
-      f.writeInt(p += OBinaryProtocol.SIZE_BYTE, iPosition.recordVersion);
-
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  /**
    * Update position in data segment (usually on defrag)
    * 
    * @throws IOException
@@ -244,7 +224,7 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
       throws IOException {
     iPosition = iPosition * RECORD_SIZE;
 
-    acquireSharedLock();
+    acquireExclusiveLock();
     try {
 
       final long[] pos = fileSegment.getRelativePosition(iPosition);
@@ -256,14 +236,14 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
       f.writeLong(p += OBinaryProtocol.SIZE_SHORT, iDataSegmentPosition);
 
     } finally {
-      releaseSharedLock();
+      releaseExclusiveLock();
     }
   }
 
   public void updateVersion(long iPosition, final int iVersion) throws IOException {
     iPosition = iPosition * RECORD_SIZE;
 
-    acquireSharedLock();
+    acquireExclusiveLock();
     try {
 
       final long[] pos = fileSegment.getRelativePosition(iPosition);
@@ -272,14 +252,14 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
           + OBinaryProtocol.SIZE_BYTE, iVersion);
 
     } finally {
-      releaseSharedLock();
+      releaseExclusiveLock();
     }
   }
 
   public void updateRecordType(long iPosition, final byte iRecordType) throws IOException {
     iPosition = iPosition * RECORD_SIZE;
 
-    acquireSharedLock();
+    acquireExclusiveLock();
     try {
 
       final long[] pos = fileSegment.getRelativePosition(iPosition);
@@ -287,7 +267,7 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
       fileSegment.files[(int) pos[0]].writeByte(pos[1] + OBinaryProtocol.SIZE_SHORT + OBinaryProtocol.SIZE_LONG, iRecordType);
 
     } finally {
-      releaseSharedLock();
+      releaseExclusiveLock();
     }
   }
 
@@ -365,12 +345,6 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
         offset = fileSegment.getAbsolutePosition(pos);
         recycled = false;
       }
-    } finally {
-      releaseExclusiveLock();
-    }
-
-    acquireSharedLock();
-    try {
 
       final OFile file = fileSegment.files[(int) pos[0]];
       long p = pos[1];
@@ -392,7 +366,7 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
       updateBoundsAfterInsertion(iPPosition.clusterPosition);
 
     } finally {
-      releaseSharedLock();
+      releaseExclusiveLock();
     }
   }
 
@@ -508,7 +482,14 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
   }
 
   public void synch() throws IOException {
-    fileSegment.synch();
+    acquireSharedLock();
+    try {
+
+      fileSegment.synch();
+
+    } finally {
+      releaseSharedLock();
+    }
   }
 
   public String getName() {
@@ -522,37 +503,30 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
   private void setNameInternal(final String iNewName) {
     if (storage.getClusterIdByName(iNewName) > -1)
       throw new IllegalArgumentException("Cluster with name '" + iNewName + "' already exists");
-    acquireExclusiveLock();
-    try {
 
-      for (int i = 0; i < fileSegment.files.length; i++) {
-        final String osFileName = fileSegment.files[i].getName();
-        if (osFileName.startsWith(name)) {
-          final File newFile = new File(storage.getStoragePath() + "/" + iNewName
-              + osFileName.substring(osFileName.lastIndexOf(name) + name.length()));
-          for (OStorageFileConfiguration conf : config.infoFiles) {
-            if (conf.parent.name.equals(name))
-              conf.parent.name = iNewName;
-            if (conf.path.endsWith(osFileName))
-              conf.path = new String(conf.path.replace(osFileName, newFile.getName()));
-          }
-          boolean renamed = fileSegment.files[i].renameTo(newFile);
-          while (!renamed) {
-            OMemoryWatchDog.freeMemory(100);
-            renamed = fileSegment.files[i].renameTo(newFile);
-          }
+    for (int i = 0; i < fileSegment.files.length; i++) {
+      final String osFileName = fileSegment.files[i].getName();
+      if (osFileName.startsWith(name)) {
+        final File newFile = new File(storage.getStoragePath() + "/" + iNewName
+            + osFileName.substring(osFileName.lastIndexOf(name) + name.length()));
+        for (OStorageFileConfiguration conf : config.infoFiles) {
+          if (conf.parent.name.equals(name))
+            conf.parent.name = iNewName;
+          if (conf.path.endsWith(osFileName))
+            conf.path = new String(conf.path.replace(osFileName, newFile.getName()));
+        }
+        boolean renamed = fileSegment.files[i].renameTo(newFile);
+        while (!renamed) {
+          OMemoryWatchDog.freeMemory(100);
+          renamed = fileSegment.files[i].renameTo(newFile);
         }
       }
-      config.name = iNewName;
-      holeSegment.rename(name, iNewName);
-      storage.renameCluster(name, iNewName);
-      name = iNewName;
-      storage.getConfiguration().update();
-      
-    } finally {
-      releaseExclusiveLock();
     }
-
+    config.name = iNewName;
+    holeSegment.rename(name, iNewName);
+    storage.renameCluster(name, iNewName);
+    name = iNewName;
+    storage.getConfiguration().update();
   }
 
   /**
@@ -562,16 +536,9 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
    *          Data-segment's name
    */
   private void setDataSegmentInternal(final String iName) {
-    acquireExclusiveLock();
-    try {
-
-      final int dataId = storage.getDataSegmentIdByName(iName);
-      config.setDataSegmentId(dataId);
-      storage.getConfiguration().update();
-
-    } finally {
-      releaseExclusiveLock();
-    }
+    final int dataId = storage.getDataSegmentIdByName(iName);
+    config.setDataSegmentId(dataId);
+    storage.getConfiguration().update();
   }
 
   protected void updateBoundsAfterInsertion(final long iPosition) throws IOException {

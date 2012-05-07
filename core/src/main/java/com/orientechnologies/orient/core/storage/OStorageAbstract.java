@@ -31,160 +31,153 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 public abstract class OStorageAbstract extends OSharedContainerImpl implements OStorage {
-	protected final String										url;
-	protected final String										mode;
-	protected OStorageConfiguration						configuration;
-	protected String													name;
-	protected AtomicLong											version	= new AtomicLong();
-	protected OLevel2RecordCache							level2Cache;
+  protected final String                    url;
+  protected final String                    mode;
+  protected OStorageConfiguration           configuration;
+  protected String                          name;
+  protected AtomicLong                      version = new AtomicLong();
+  protected OLevel2RecordCache              level2Cache;
 
-	protected volatile STATUS									status	= STATUS.CLOSED;
-	protected OSharedResourceAdaptiveExternal	lock		= new OSharedResourceAdaptiveExternal(
-																												OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), 0, true);
+  protected volatile STATUS                 status  = STATUS.CLOSED;
+  protected OSharedResourceAdaptiveExternal lock    = new OSharedResourceAdaptiveExternal(
+                                                        OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), 0, true);
 
-	protected enum STATUS {
-		CLOSED, OPEN, CLOSING
-	}
+  protected enum STATUS {
+    CLOSED, OPEN, CLOSING
+  }
 
-	public OStorageAbstract(final String iName, final String iURL, final String iMode) {
-		if (OStringSerializerHelper.contains(iName, '/'))
-			name = iName.substring(iName.lastIndexOf("/") + 1);
-		else
-			name = iName;
+  public OStorageAbstract(final String iName, final String iURL, final String iMode) {
+    if (OStringSerializerHelper.contains(iName, '/'))
+      name = iName.substring(iName.lastIndexOf("/") + 1);
+    else
+      name = iName;
 
-		if (OStringSerializerHelper.contains(iName, ','))
-			throw new IllegalArgumentException("Invalid character in storage name: " + name);
+    if (OStringSerializerHelper.contains(iName, ','))
+      throw new IllegalArgumentException("Invalid character in storage name: " + name);
 
-		level2Cache = new OLevel2RecordCache(this);
-		level2Cache.startup();
+    level2Cache = new OLevel2RecordCache(this);
+    level2Cache.startup();
 
-		url = iURL;
-		mode = iMode;
-	}
+    url = iURL;
+    mode = iMode;
+  }
 
-	public OStorageConfiguration getConfiguration() {
-		return configuration;
-	}
+  public OStorageConfiguration getConfiguration() {
+    return configuration;
+  }
 
-	public boolean isClosed() {
-		return status == STATUS.CLOSED;
-	}
+  public boolean isClosed() {
+    return status == STATUS.CLOSED;
+  }
 
-	public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
-		return ppos != null && ppos.recordVersion > -1;
-	}
+  public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
+    return ppos != null && ppos.recordVersion > -1;
+  }
 
-	public String getName() {
-		return name;
-	}
+  public String getName() {
+    return name;
+  }
 
-	/**
-	 * Returns the configured local Level-2 cache component. Cache component is always created even if not used.
-	 * 
-	 * @return
-	 */
-	public OLevel2RecordCache getLevel2Cache() {
-		return level2Cache;
-	}
+  /**
+   * Returns the configured local Level-2 cache component. Cache component is always created even if not used.
+   * 
+   * @return
+   */
+  public OLevel2RecordCache getLevel2Cache() {
+    return level2Cache;
+  }
 
-	public String getURL() {
-		return url;
-	}
+  public String getURL() {
+    return url;
+  }
 
-	public void close() {
-		close(false);
-	}
+  public void close() {
+    close(false);
+  }
 
-	public void close(final boolean iForce) {
-		if (!checkForClose(iForce))
-			return;
+  public void close(final boolean iForce) {
+    if (!checkForClose(iForce))
+      return;
 
-		for (Object resource : sharedResources.values()) {
-			if (resource instanceof OSharedResource)
-				((OSharedResource) resource).releaseExclusiveLock();
+    for (Object resource : sharedResources.values()) {
+      if (resource instanceof OSharedResource)
+        ((OSharedResource) resource).releaseExclusiveLock();
 
-			if (resource instanceof OCloseable)
-				((OCloseable) resource).close();
-		}
-		sharedResources.clear();
+      if (resource instanceof OCloseable)
+        ((OCloseable) resource).close();
+    }
+    sharedResources.clear();
 
-		Orient.instance().unregisterStorage(this);
-	}
+    Orient.instance().unregisterStorage(this);
+  }
 
-	/**
-	 * Returns current storage's version as serial.
-	 */
-	public long getVersion() {
-		return version.get();
-	}
+  /**
+   * Returns current storage's version as serial.
+   */
+  public long getVersion() {
+    return version.get();
+  }
 
-	/**
-	 * Update the storage's version
-	 */
-	protected void incrementVersion() {
-		version.incrementAndGet();
-	}
+  public boolean dropCluster(final String iClusterName) {
+    return dropCluster(getClusterIdByName(iClusterName));
+  }
 
-	public boolean dropCluster(final String iClusterName) {
-		return dropCluster(getClusterIdByName(iClusterName));
-	}
+  protected boolean checkForClose(final boolean iForce) {
+    if (status == STATUS.CLOSED)
+      return false;
 
-	protected boolean checkForClose(final boolean iForce) {
-		if (status == STATUS.CLOSED)
-			return false;
+    final int remainingUsers = getUsers() > 0 ? removeUser() : 0;
 
-		final int remainingUsers = getUsers() > 0 ? removeUser() : 0;
+    return iForce || (!OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean() && remainingUsers == 0);
+  }
 
-		return iForce || (!OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean() && remainingUsers == 0);
-	}
+  public int getUsers() {
+    return lock.getUsers();
+  }
 
-	public int getUsers() {
-		return lock.getUsers();
-	}
+  public int addUser() {
+    return lock.addUser();
+  }
 
-	public int addUser() {
-		return lock.addUser();
-	}
+  public int removeUser() {
+    return lock.removeUser();
+  }
 
-	public int removeUser() {
-		return lock.removeUser();
-	}
+  public OSharedResourceAdaptive getLock() {
+    return lock;
+  }
 
-	public OSharedResourceAdaptive getLock() {
-		return lock;
-	}
+  public long countRecords() {
+    long tot = 0;
 
-	public long countRecords() {
-		long tot = 0;
+    for (OCluster c : getClusterInstances())
+      if (c != null)
+        tot += c.getEntries();
 
-		for (OCluster c : getClusterInstances())
-			if (c != null)
-				tot += c.getEntries();
+    return tot;
+  }
 
-		return tot;
-	}
+  public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
+    if (iExclusiveLock)
+      lock.acquireExclusiveLock();
+    else
+      lock.acquireSharedLock();
+    try {
+      return iCallable.call();
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new OException("Error on nested call in lock", e);
+    } finally {
+      if (iExclusiveLock)
+        lock.releaseExclusiveLock();
+      else
+        lock.releaseSharedLock();
+    }
+  }
 
-	public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
-		if (iExclusiveLock)
-			lock.acquireExclusiveLock();
-		else
-			lock.acquireSharedLock();
-		try {
-			return iCallable.call();
-		} catch (RuntimeException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new OException("Error on nested call in lock", e);
-		} finally {
-			if (iExclusiveLock)
-				lock.releaseExclusiveLock();
-			else
-				lock.releaseSharedLock();
-		}
-	}
-
-	@Override
-	public String toString() {
-		return url != null ? url : "?";
-	}
+  @Override
+  public String toString() {
+    return url != null ? url : "?";
+  }
 }
