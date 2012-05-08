@@ -654,7 +654,9 @@ public class OObjectEntitySerializer {
 						.contains(fieldName))))
 					continue;
 
-				fieldValue = serializeFieldValue(p.getType(), getFieldValue(p, iPojo));
+				fieldValue = getFieldValue(p, iPojo);
+				if (isSerializedType(p))
+					fieldValue = serializeFieldValue(p.getType(), fieldValue);
 
 				schemaProperty = schemaClass != null ? schemaClass.getProperty(fieldName) : null;
 

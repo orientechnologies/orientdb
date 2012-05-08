@@ -37,6 +37,7 @@ import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.business.Address;
 import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Country;
+import com.orientechnologies.orient.test.domain.business.JavaObjectTestClass;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 
 @Test(groups = { "crud", "object" })
@@ -99,6 +100,32 @@ public class CRUDObjectPhysicalTest {
 		Assert.assertNotNull(database.getMetadata().getSchema().getClass(Dummy.class.getSimpleName()));
 
 		database.close();
+	}
+
+	public void testSimpleTypes() {
+		database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+		JavaObjectTestClass javaObj = database.newInstance(JavaObjectTestClass.class);
+		javaObj.setText("test");
+		javaObj.setNumberSimple(12345);
+		javaObj.setDoubleSimple(12.34d);
+		javaObj.setFloatSimple(123.45f);
+		javaObj.setLongSimple(12345678l);
+		javaObj.setByteSimple((byte) 1);
+		javaObj.setFlagSimple(true);
+
+		JavaObjectTestClass savedJavaObj = database.save(javaObj);
+		ORecordId id = (ORecordId) savedJavaObj.getId();
+		database.close();
+
+		database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+		JavaObjectTestClass loadedJavaObj = (JavaObjectTestClass) database.load(id);
+		Assert.assertEquals(loadedJavaObj.getText(), "test");
+		Assert.assertEquals(loadedJavaObj.getNumberSimple(), 12345);
+		Assert.assertEquals(loadedJavaObj.getDoubleSimple(), 12.34d);
+		Assert.assertEquals(loadedJavaObj.getFloatSimple(), 123.45f);
+		Assert.assertEquals(loadedJavaObj.getLongSimple(), 12345678l);
+		Assert.assertEquals(loadedJavaObj.getByteSimple(), (byte) 1);
+		Assert.assertEquals(loadedJavaObj.getFlagSimple(), true);
 	}
 
 	@Test(dependsOnMethods = "testAutoCreateClass")
