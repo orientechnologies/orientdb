@@ -41,6 +41,7 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
 
 	public void reuse(final Object iOwner, final Object[] iAdditionalArgs) {
 		ownerPool = (ODatabaseDocumentPool) iOwner;
+		getLevel1Cache().invalidate();
 		getMetadata().reload();
 	}
 

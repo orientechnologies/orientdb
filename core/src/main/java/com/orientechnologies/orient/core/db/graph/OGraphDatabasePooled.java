@@ -44,6 +44,7 @@ public class OGraphDatabasePooled extends OGraphDatabase implements ODatabasePoo
 		ownerPool = (OGraphDatabasePool) iOwner;
 		if (isClosed())
 			open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
+		getLevel1Cache().invalidate();
 		getMetadata().reload();
 		checkForGraphSchema();
 	}

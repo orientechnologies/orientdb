@@ -49,6 +49,7 @@ public class ODatabaseObjectTxPooled extends ODatabaseObjectTx implements ODatab
 		if (isClosed())
 			open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
 		init();
+		getLevel1Cache().invalidate();
 		getMetadata().reload();
 	}
 
