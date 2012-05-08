@@ -153,8 +153,12 @@ public class OLeaderNode {
       }
     }
 
-    logger.error(this, TYPE.CLUSTER, DIRECTION.NONE, "cannot connect to distributed server node using addresses %s:%d and %s:%d",
-        lastException, null, iServerAddresses[0], iServerPort, iServerAddresses[1], iServerPort);
+    if (iServerAddresses.length > 1)
+      logger.error(this, TYPE.CLUSTER, DIRECTION.NONE, "cannot connect to distributed server node using addresses %s:%d and %s:%d",
+          lastException, null, iServerAddresses[0], iServerPort, iServerAddresses[1], iServerPort);
+    else
+      logger.error(this, TYPE.CLUSTER, DIRECTION.NONE, "cannot connect to distributed server node using addresses %s:%d",
+          lastException, null, iServerAddresses[0], iServerPort);
   }
 
   /**
@@ -177,6 +181,12 @@ public class OLeaderNode {
     }
 
     removePeer(iNode);
+  }
+
+  public ORemotePeer getPeerNode(final String iName) {
+    synchronized (this) {
+      return nodes.get(iName);
+    }
   }
 
   public List<ORemotePeer> getPeerNodeList() {
@@ -280,7 +290,7 @@ public class OLeaderNode {
    * 
    * @param iNode
    */
-  protected void removePeer(final ORemotePeer iNode) {
+  public void removePeer(final ORemotePeer iNode) {
     synchronized (this) {
       nodes.remove(iNode.getId());
       for (Object cfg : clusterDbConfigurations.fieldValues()) {

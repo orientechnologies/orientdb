@@ -1178,6 +1178,38 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
   }
 
+  @ConsoleCommand(description = "Add a new server node to the current cluster")
+  public void clusterAddNode(
+      @ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iServerNode)
+      throws IOException {
+
+    checkForRemoteServer();
+    try {
+
+      out.println("Adding new server node '" + iServerNode + "' to the curret cluster...");
+      out.println(serverAdmin.clusterAddNode(iServerNode));
+
+    } catch (Exception e) {
+      printError(e);
+    }
+  }
+
+  @ConsoleCommand(description = "Remove a server node from the current cluster")
+  public void clusterRemoveNode(
+      @ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iServerNode)
+      throws IOException {
+
+    checkForRemoteServer();
+    try {
+
+      out.println("Removing server node '" + iServerNode + "' from the curret cluster...");
+      out.println(serverAdmin.clusterRemoveNode(iServerNode));
+
+    } catch (Exception e) {
+      printError(e);
+    }
+  }
+
   @ConsoleCommand(description = "Align two databases in different servers")
   public void alignDatabase(@ConsoleParameter(name = "db-name", description = "Name of the database") final String iDatabaseName,
       @ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName,

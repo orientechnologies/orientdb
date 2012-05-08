@@ -63,6 +63,7 @@ import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
+import com.orientechnologies.orient.server.clustering.leader.ORemotePeer;
 import com.orientechnologies.orient.server.handler.OServerHandlerHelper;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo;
@@ -563,12 +564,25 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     ODocument response = null;
 
+    if (!manager.isLeader())
+      throw new IllegalArgumentException("Current node is not the leader. Repeat this command against the leader node");
+
     final String operation = req.field("operation");
     if (operation == null)
       throw new IllegalArgumentException("Cluster operation is null");
-    else if (operation.equals("status")) {
-      if (manager.isLeader())
-        response = manager.getLeader().getClusteredConfiguration();
+
+    if (operation.equals("status"))
+      response = manager.getLeader().getClusteredConfiguration();
+
+    else if (operation.equals("addNode")) {
+      final String node = req.field("node");
+      final String[] nodeParts = node.split(":");
+      manager.getLeader().connect2Peer(new String[] { nodeParts[0] }, Integer.parseInt(nodeParts[1]));
+
+    } else if (operation.equals("removeNode")) {
+      final ORemotePeer peerNode = manager.getLeader().getPeerNode((String) req.field("node"));
+      if (peerNode != null)
+        manager.getLeader().removePeer(peerNode);
     } else
       throw new IllegalArgumentException("Cluster operation '" + operation + "' is not supported");
 
