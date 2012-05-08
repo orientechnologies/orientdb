@@ -394,6 +394,9 @@ public class OProfiler implements OProfilerMBean {
   }
 
   public void registerHookValue(final String iName, final OProfilerHookValue iHookValue) {
+    if (recording < 0)
+      return;
+
     synchronized (hooks) {
       for (Map.Entry<OProfilerHookValue, String> entry : hooks.entrySet()) {
         if (entry.getValue().equals(iName)) {
@@ -407,6 +410,9 @@ public class OProfiler implements OProfilerMBean {
   }
 
   public void unregisterHookValue(final String iName) {
+    if (recording < 0)
+      return;
+
     synchronized (hooks) {
       for (Map.Entry<OProfilerHookValue, String> entry : hooks.entrySet()) {
         if (entry.getValue().equals(iName)) {
