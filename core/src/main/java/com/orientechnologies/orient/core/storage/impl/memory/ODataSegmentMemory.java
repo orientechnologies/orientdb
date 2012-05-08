@@ -19,112 +19,114 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
+import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.ODataSegment;
 
-public class ODataSegmentMemory extends OSharedResourceAbstract implements ODataSegment {
-	private final String				name;
-	private final int						id;
+public class ODataSegmentMemory extends OSharedResourceAdaptive implements ODataSegment {
+  private final String       name;
+  private final int          id;
 
-	private final List<byte[]>	entries	= new ArrayList<byte[]>();
+  private final List<byte[]> entries = new ArrayList<byte[]>();
 
-	public ODataSegmentMemory(final String iDataSegmentName, int iId) {
-		name = iDataSegmentName;
-		id = iId;
-	}
+  public ODataSegmentMemory(final String iDataSegmentName, int iId) {
+    super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
+    name = iDataSegmentName;
+    id = iId;
+  }
 
-	public void close() {
-		acquireExclusiveLock();
-		try {
+  public void close() {
+    acquireExclusiveLock();
+    try {
 
-			entries.clear();
+      entries.clear();
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 
-	public void drop() throws IOException {
-		close();
-	}
+  public void drop() throws IOException {
+    close();
+  }
 
-	public int count() {
-		acquireSharedLock();
-		try {
+  public int count() {
+    acquireSharedLock();
+    try {
 
-			return entries.size();
+      return entries.size();
 
-		} finally {
-			releaseSharedLock();
-		}
-	}
+    } finally {
+      releaseSharedLock();
+    }
+  }
 
-	public long getSize() {
-		acquireSharedLock();
-		try {
+  public long getSize() {
+    acquireSharedLock();
+    try {
 
-			long size = 0;
-			for (byte[] e : entries)
-				if (e != null)
-					size += e.length;
+      long size = 0;
+      for (byte[] e : entries)
+        if (e != null)
+          size += e.length;
 
-			return size;
+      return size;
 
-		} finally {
-			releaseSharedLock();
-		}
-	}
+    } finally {
+      releaseSharedLock();
+    }
+  }
 
-	public long createRecord(byte[] iContent) {
-		acquireExclusiveLock();
-		try {
+  public long createRecord(byte[] iContent) {
+    acquireExclusiveLock();
+    try {
 
-			entries.add(iContent);
-			return entries.size() - 1;
+      entries.add(iContent);
+      return entries.size() - 1;
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 
-	public void deleteRecord(final long iRecordPosition) {
-		acquireExclusiveLock();
-		try {
+  public void deleteRecord(final long iRecordPosition) {
+    acquireExclusiveLock();
+    try {
 
-			entries.set((int) iRecordPosition, null);
+      entries.set((int) iRecordPosition, null);
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 
-	public byte[] readRecord(final long iRecordPosition) {
-		acquireSharedLock();
-		try {
+  public byte[] readRecord(final long iRecordPosition) {
+    acquireSharedLock();
+    try {
 
-			return entries.get((int) iRecordPosition);
+      return entries.get((int) iRecordPosition);
 
-		} finally {
-			releaseSharedLock();
-		}
-	}
+    } finally {
+      releaseSharedLock();
+    }
+  }
 
-	public void updateRecord(final long iRecordPosition, final byte[] iContent) {
-		acquireExclusiveLock();
-		try {
+  public void updateRecord(final long iRecordPosition, final byte[] iContent) {
+    acquireExclusiveLock();
+    try {
 
-			entries.set((int) iRecordPosition, iContent);
+      entries.set((int) iRecordPosition, iContent);
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 
-	public String getName() {
-		return name;
-	}
+  public String getName() {
+    return name;
+  }
 
-	public int getId() {
-		return id;
-	}
+  public int getId() {
+    return id;
+  }
 }

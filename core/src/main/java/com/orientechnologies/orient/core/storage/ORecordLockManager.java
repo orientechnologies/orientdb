@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.storage;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.id.ORID;
 
 /**
@@ -26,12 +27,12 @@ import com.orientechnologies.orient.core.id.ORID;
  */
 public class ORecordLockManager extends OLockManager<ORID, Runnable> {
 
-	public ORecordLockManager(final int iAcquireTimeout) {
-		super(iAcquireTimeout);
-	}
+  public ORecordLockManager(final int iAcquireTimeout) {
+    super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), iAcquireTimeout);
+  }
 
-	@Override
-	protected ORID getImmutableResourceId(ORID iResourceId) {
-		return iResourceId.copy();
-	}
+  @Override
+  protected ORID getImmutableResourceId(ORID iResourceId) {
+    return iResourceId.copy();
+  }
 }

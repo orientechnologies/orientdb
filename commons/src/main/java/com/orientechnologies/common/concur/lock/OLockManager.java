@@ -20,110 +20,118 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
-	public enum LOCK {
-		SHARED, EXCLUSIVE
-	}
+  public enum LOCK {
+    SHARED, EXCLUSIVE
+  }
 
-	protected long																	acquireTimeout;
-	protected HashMap<RESOURCE_TYPE, CountableLock>	map	= new HashMap<RESOURCE_TYPE, CountableLock>();
+  protected long                                  acquireTimeout;
+  protected HashMap<RESOURCE_TYPE, CountableLock> map = new HashMap<RESOURCE_TYPE, CountableLock>();
+  private final boolean                           enabled;
 
-	@SuppressWarnings("serial")
-	protected static class CountableLock extends ReentrantReadWriteLock {
-		protected int	countLocks	= 0;
+  @SuppressWarnings("serial")
+  protected static class CountableLock extends ReentrantReadWriteLock {
+    protected int countLocks = 0;
 
-		public CountableLock(final boolean iFair) {
-			super(false);
-		}
-	}
+    public CountableLock(final boolean iFair) {
+      super(false);
+    }
+  }
 
-	public OLockManager(final int iAcquireTimeout) {
-		acquireTimeout = iAcquireTimeout;
-	}
+  public OLockManager(final boolean iEnabled, final int iAcquireTimeout) {
+    acquireTimeout = iAcquireTimeout;
+    enabled = iEnabled;
+  }
 
-	public void acquireLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType) {
-		acquireLock(iRequester, iResourceId, iLockType, acquireTimeout);
-	}
+  public void acquireLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType) {
+    acquireLock(iRequester, iResourceId, iLockType, acquireTimeout);
+  }
 
-	public void acquireLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType, long iTimeout) {
-		CountableLock lock;
-		synchronized (map) {
-			lock = map.get(iResourceId);
-			if (lock == null) {
-				lock = new CountableLock(iTimeout > 0);
-				map.put(getImmutableResourceId(iResourceId), lock);
-			}
-			lock.countLocks++;
-		}
+  public void acquireLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType, long iTimeout) {
+    if( !enabled)
+      return;
+    
+    CountableLock lock;
+    synchronized (map) {
+      lock = map.get(iResourceId);
+      if (lock == null) {
+        lock = new CountableLock(iTimeout > 0);
+        map.put(getImmutableResourceId(iResourceId), lock);
+      }
+      lock.countLocks++;
+    }
 
-		try {
-			if (iTimeout <= 0) {
-				if (iLockType == LOCK.SHARED)
-					lock.readLock().lock();
-				else
-					lock.writeLock().lock();
-			} else {
-				try {
-					if (iLockType == LOCK.SHARED) {
-						if (!lock.readLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
-							throw new OLockException("Timeout on acquiring resource '" + iResourceId + "' because is locked from another thread");
-					} else {
-						if (!lock.writeLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
-							throw new OLockException("Timeout on acquiring resource '" + iResourceId + "' because is locked from another thread");
-					}
-				} catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
-					throw new OLockException("Thread interrupted while waiting for resource '" + iResourceId + "'");
-				}
-			}
-		} catch (RuntimeException e) {
-			synchronized (map) {
-				lock.countLocks--;
-				if (lock.countLocks == 0)
-					map.remove(iResourceId);
-			}
-			throw e;
-		}
+    try {
+      if (iTimeout <= 0) {
+        if (iLockType == LOCK.SHARED)
+          lock.readLock().lock();
+        else
+          lock.writeLock().lock();
+      } else {
+        try {
+          if (iLockType == LOCK.SHARED) {
+            if (!lock.readLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
+              throw new OLockException("Timeout on acquiring resource '" + iResourceId + "' because is locked from another thread");
+          } else {
+            if (!lock.writeLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
+              throw new OLockException("Timeout on acquiring resource '" + iResourceId + "' because is locked from another thread");
+          }
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw new OLockException("Thread interrupted while waiting for resource '" + iResourceId + "'");
+        }
+      }
+    } catch (RuntimeException e) {
+      synchronized (map) {
+        lock.countLocks--;
+        if (lock.countLocks == 0)
+          map.remove(iResourceId);
+      }
+      throw e;
+    }
 
-	}
+  }
 
-	public void releaseLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType)
-			throws OLockException {
-		final CountableLock lock;
-		synchronized (map) {
-			lock = map.get(iResourceId);
-			if (lock == null)
-				throw new OLockException("Error on releasing a non acquired lock by the requester '" + iRequester
-						+ "' against the resource: '" + iResourceId + "'");
+  public void releaseLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType)
+      throws OLockException {
+    if( !enabled)
+      return;
 
-			lock.countLocks--;
-			if (lock.countLocks == 0)
-				map.remove(iResourceId);
-		}
-		if (iLockType == LOCK.SHARED)
-			lock.readLock().unlock();
-		else
-			lock.writeLock().unlock();
+    final CountableLock lock;
+    synchronized (map) {
+      lock = map.get(iResourceId);
+      if (lock == null)
+        throw new OLockException("Error on releasing a non acquired lock by the requester '" + iRequester
+            + "' against the resource: '" + iResourceId + "'");
 
-	}
+      lock.countLocks--;
+      if (lock.countLocks == 0)
+        map.remove(iResourceId);
+    }
+    if (iLockType == LOCK.SHARED)
+      lock.readLock().unlock();
+    else
+      lock.writeLock().unlock();
 
-	public void clear() {
-		synchronized (map) {
-			map.clear();
-		}
-	}
+  }
 
-	public void setAcquireTimeout(long iAcquireTimeout) {
-		acquireTimeout = iAcquireTimeout;
-	}
+  public void clear() {
+    synchronized (map) {
+      map.clear();
+    }
+  }
 
-	// For tests purposes.
-	public int getCountCurrentLocks() {
-		synchronized (map) {
-			return map.size();
-		}
-	}
+  public void setAcquireTimeout(long iAcquireTimeout) {
+    acquireTimeout = iAcquireTimeout;
+  }
 
-	protected RESOURCE_TYPE getImmutableResourceId(final RESOURCE_TYPE iResourceId) {
-		return iResourceId;
-	}
+  // For tests purposes.
+  public int getCountCurrentLocks() {
+    synchronized (map) {
+      return map.size();
+    }
+  }
+
+  protected RESOURCE_TYPE getImmutableResourceId(final RESOURCE_TYPE iResourceId) {
+    return iResourceId;
+  }
 }

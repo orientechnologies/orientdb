@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
+import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -46,21 +46,23 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
  * = 14+? bytes<br/>
  */
 public class ODataLocal extends OMultiFileSegment implements ODataSegment {
-  static final String             DEF_EXTENSION   = ".oda";
-  public static final int         RECORD_FIX_SIZE = 14;
-  protected final int             id;
-  protected final ODataLocalHole  holeSegment;
-  protected int                   defragMaxHoleDistance;
-  protected int                   defragStrategy;
-  protected long                  defStartSize;
+  static final String                           DEF_EXTENSION   = ".oda";
+  public static final int                       RECORD_FIX_SIZE = 14;
+  protected final int                           id;
+  protected final ODataLocalHole                holeSegment;
+  protected int                                 defragMaxHoleDistance;
+  protected int                                 defragStrategy;
+  protected long                                defStartSize;
 
-  private final String            PROFILER_HOLE_FIND_CLOSER;
-  private final String            PROFILER_UPDATE_REUSED_ALL;
-  private final String            PROFILER_UPDATE_REUSED_PARTIAL;
-  private final String            PROFILER_UPDATE_NOT_REUSED;
-  private final String            PROFILER_MOVE_RECORD;
-  private final String            PROFILER_HOLE_HANDLE;
-  private OSharedResourceExternal lock            = new OSharedResourceExternal();
+  private final String                          PROFILER_HOLE_FIND_CLOSER;
+  private final String                          PROFILER_UPDATE_REUSED_ALL;
+  private final String                          PROFILER_UPDATE_REUSED_PARTIAL;
+  private final String                          PROFILER_UPDATE_NOT_REUSED;
+  private final String                          PROFILER_MOVE_RECORD;
+  private final String                          PROFILER_HOLE_HANDLE;
+  private final OSharedResourceAdaptiveExternal lock            = new OSharedResourceAdaptiveExternal(
+                                                                    OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
+                                                                    0, true);
 
   public ODataLocal(final OStorageLocal iStorage, final OStorageDataConfiguration iConfig, final int iId) throws IOException {
     super(iStorage, iConfig, DEF_EXTENSION, 0);

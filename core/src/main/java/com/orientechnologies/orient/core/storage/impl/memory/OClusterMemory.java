@@ -19,14 +19,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
+import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-public class OClusterMemory extends OSharedResourceAbstract implements OCluster {
+public class OClusterMemory extends OSharedResourceAdaptive implements OCluster {
   public static final String      TYPE    = "MEMORY";
 
   private OStorage                storage;
@@ -37,6 +38,7 @@ public class OClusterMemory extends OSharedResourceAbstract implements OCluster 
   private List<OPhysicalPosition> removed = new ArrayList<OPhysicalPosition>();
 
   public OClusterMemory() {
+    super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
   }
 
   public void configure(final OStorage iStorage, final OStorageClusterConfiguration iConfig) throws IOException {

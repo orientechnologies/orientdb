@@ -181,7 +181,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
 
     json.beginCollection(1, false, "users");
     OUser user;
-    for (ODocument doc : db.getMetadata().getSecurity().getUsers()) {
+    for (ODocument doc : db.getMetadata().getSecurity().getAllUsers()) {
       user = new OUser(doc);
       json.beginObject(2, true, null);
       json.writeAttribute(3, false, "name", user.getName());
@@ -192,7 +192,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
 
     json.beginCollection(1, true, "roles");
     ORole role;
-    for (ODocument doc : db.getMetadata().getSecurity().getRoles()) {
+    for (ODocument doc : db.getMetadata().getSecurity().getAllRoles()) {
       role = new ORole(doc);
       json.beginObject(2, true, null);
       json.writeAttribute(3, false, "name", role.getName());

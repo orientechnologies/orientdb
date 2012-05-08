@@ -32,41 +32,51 @@ import com.orientechnologies.orient.core.id.ORecordId;
  * 
  */
 public abstract class OStorageEmbedded extends OStorageAbstract {
-	protected final ORecordLockManager	lockManager;
+  protected final ORecordLockManager lockManager;
 
-	public OStorageEmbedded(final String iName, final String iFilePath, final String iMode) {
-		super(iName, iFilePath, iMode);
-		lockManager = new ORecordLockManager(OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT.getValueAsInteger());
-	}
+  public OStorageEmbedded(final String iName, final String iFilePath, final String iMode) {
+    super(iName, iFilePath, iMode);
+    lockManager = new ORecordLockManager(OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT.getValueAsInteger());
+  }
 
-	protected abstract ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock);
+  protected abstract ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock);
 
-	public abstract OCluster getClusterByName(final String iClusterName);
+  public abstract OCluster getClusterByName(final String iClusterName);
 
-	/**
-	 * Executes the command request and return the result back.
-	 */
-	public Object command(final OCommandRequestText iCommand) {
-		final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
-		executor.setProgressListener(iCommand.getProgressListener());
-		executor.parse(iCommand);
-		try {
-			final Object result = executor.execute(iCommand.getParameters());
-			iCommand.setContext( executor.getContext() );
-			return result;
-		} catch (OException e) {
-			// PASS THROUGHT
-			throw e;
-		} catch (Exception e) {
-			throw new OCommandExecutionException("Error on execution of command: " + iCommand, e);
-		}
-	}
+  /**
+   * Closes the storage freeing the lock manager first.
+   */
+  @Override
+  public void close(final boolean iForce) {
+    if (checkForClose(iForce))
+      lockManager.clear();
+    super.close(iForce);
+  }
 
-	/**
-	 * Checks if the storage is open. If it's closed an exception is raised.
-	 */
-	protected void checkOpeness() {
-		if (status != STATUS.OPEN)
-			throw new OStorageException("Storage " + name + " is not opened.");
-	}
+  /**
+   * Executes the command request and return the result back.
+   */
+  public Object command(final OCommandRequestText iCommand) {
+    final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
+    executor.setProgressListener(iCommand.getProgressListener());
+    executor.parse(iCommand);
+    try {
+      final Object result = executor.execute(iCommand.getParameters());
+      iCommand.setContext(executor.getContext());
+      return result;
+    } catch (OException e) {
+      // PASS THROUGHT
+      throw e;
+    } catch (Exception e) {
+      throw new OCommandExecutionException("Error on execution of command: " + iCommand, e);
+    }
+  }
+
+  /**
+   * Checks if the storage is open. If it's closed an exception is raised.
+   */
+  protected void checkOpeness() {
+    if (status != STATUS.OPEN)
+      throw new OStorageException("Storage " + name + " is not opened.");
+  }
 }

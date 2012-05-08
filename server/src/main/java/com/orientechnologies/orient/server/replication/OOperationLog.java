@@ -16,8 +16,10 @@
 package com.orientechnologies.orient.server.replication;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 
+import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -43,18 +45,21 @@ import com.orientechnologies.orient.server.clustering.OClusterLogger.TYPE;
  * </code><br/>
  */
 public class OOperationLog extends OSingleFileSegment {
-  public static final String   EXTENSION      = ".dol";
-  private static final int     DEF_START_SIZE = 262144;
+  public static final String              EXTENSION      = ".dol";
+  private static final int                DEF_START_SIZE = 262144;
 
-  private static final int     OFFSET_SERIAL  = 0;
-  private static final int     OFFSET_OPERAT  = OFFSET_SERIAL + OBinaryProtocol.SIZE_LONG;
-  private static final int     OFFSET_RID     = OFFSET_OPERAT + OBinaryProtocol.SIZE_BYTE;
-  private static final int     RECORD_SIZE    = OFFSET_RID + ORecordId.PERSISTENT_SIZE;
+  private static final int                OFFSET_SERIAL  = 0;
+  private static final int                OFFSET_OPERAT  = OFFSET_SERIAL + OBinaryProtocol.SIZE_LONG;
+  private static final int                OFFSET_RID     = OFFSET_OPERAT + OBinaryProtocol.SIZE_BYTE;
+  private static final int                RECORD_SIZE    = OFFSET_RID + ORecordId.PERSISTENT_SIZE;
 
-  private long                 serial;
-  private final String         nodeId;
-  private final boolean        synchEnabled;
-  private final OClusterLogger logger         = new OClusterLogger();
+  private AtomicLong                      serial         = new AtomicLong();
+  private final String                    nodeId;
+  private final boolean                   synchEnabled;
+  private final OClusterLogger            logger         = new OClusterLogger();
+  private OSharedResourceAdaptiveExternal lock           = new OSharedResourceAdaptiveExternal(
+                                                             OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), 0,
+                                                             true);
 
   public OOperationLog(final String iNodeId, final String iDatabase, final boolean iReset) throws IOException {
     super(OReplicator.DIRECTORY_NAME + "/" + iDatabase + "/" + iNodeId.replace('.', '_').replace(':', '-') + EXTENSION,
@@ -78,52 +83,37 @@ public class OOperationLog extends OSingleFileSegment {
   @Override
   public boolean open() throws IOException {
     final boolean result = super.open();
-    serial = getLastOperationId() + 1;
+    serial.set(getLastOperationId() + 1);
     return result;
   }
 
   @Override
   public void create(final int iStartSize) throws IOException {
     super.create(iStartSize);
-    serial = 0;
+    serial.set(0);
   }
 
   /**
    * Resets previous logs
    */
   public void reset() throws IOException {
-    acquireExclusiveLock();
-    try {
-
-      delete();
-      create(DEF_START_SIZE);
-
-    } finally {
-      releaseExclusiveLock();
-    }
+    delete();
+    create(DEF_START_SIZE);
   }
 
   /**
    * Appends a log entry to the log file managed locally.
    */
   public long appendLocalLog(final byte iOperation, final ORecordId iRID) throws IOException {
-
-    acquireExclusiveLock();
-    try {
-      appendLog(serial, iOperation, iRID);
-      return serial++;
-
-    } finally {
-      releaseExclusiveLock();
-    }
+    return appendLog(serial.getAndIncrement(), iOperation, iRID);
   }
 
   /**
    * Appends a log entry.
    */
-  public void appendLog(final long iSerial, final byte iOperation, final ORecordId iRID) throws IOException {
+  public long appendLog(final long iSerial, final byte iOperation, final ORecordId iRID) throws IOException {
 
-    acquireExclusiveLock();
+    lock.acquireExclusiveLock();
     try {
 
       logger.log(this, Level.FINE, TYPE.REPLICATION, DIRECTION.NONE, "Journaled operation #%d as %s against record %s", iSerial,
@@ -147,8 +137,9 @@ public class OOperationLog extends OSingleFileSegment {
         file.synch();
 
     } finally {
-      releaseExclusiveLock();
+      lock.releaseExclusiveLock();
     }
+    return iSerial;
   }
 
   public String getNodeId() {

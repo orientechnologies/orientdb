@@ -18,8 +18,9 @@ package com.orientechnologies.orient.core.storage.impl.local;
 import java.io.File;
 import java.io.IOException;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
+import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.io.OIOException;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterHoleConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
@@ -45,7 +46,7 @@ import com.orientechnologies.orient.core.storage.fs.OMMapManager;
  * = 15 bytes
  * </code><br/>
  */
-public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
+public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
   public static final int                      RECORD_SIZE     = 15;
   public static final String                   TYPE            = "PHYSICAL";
   private static final String                  DEF_EXTENSION   = ".ocl";
@@ -60,6 +61,10 @@ public class OClusterLocal extends OSharedResourceAbstract implements OCluster {
   private OStoragePhysicalClusterConfiguration config;
   private OStorageLocal                        storage;
   private String                               name;
+
+  public OClusterLocal() {
+    super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
+  }
 
   public void configure(final OStorage iStorage, OStorageClusterConfiguration iConfig) throws IOException {
     config = (OStoragePhysicalClusterConfiguration) iConfig;

@@ -69,12 +69,12 @@ public class OSecurityProxy extends OProxedResource<OSecurity> implements OSecur
     return delegate.createRole(iRoleName, iParent, iAllowMode);
   }
 
-  public List<ODocument> getUsers() {
-    return delegate.getUsers();
+  public List<ODocument> getAllUsers() {
+    return delegate.getAllUsers();
   }
 
-  public List<ODocument> getRoles() {
-    return delegate.getRoles();
+  public List<ODocument> getAllRoles() {
+    return delegate.getAllRoles();
   }
 
   public String toString() {

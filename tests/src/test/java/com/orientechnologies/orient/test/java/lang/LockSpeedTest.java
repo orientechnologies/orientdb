@@ -18,38 +18,38 @@ package com.orientechnologies.orient.test.java.lang;
 import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
 
 public class LockSpeedTest {
-	private static final long	MAX	= 10000000;
+  private static final long MAX = 10000000;
 
-	public static final void main(String[] args) {
+  public static final void main(String[] args) {
 
-		OSharedResourceExternal lock = new OSharedResourceExternal();
+    OSharedResourceExternal lock = new OSharedResourceExternal();
 
-		long timer = System.currentTimeMillis();
-		for (int i = 0; i < MAX; ++i) {
-		}
-		final long fixed = System.currentTimeMillis() - timer;
+    long timer = System.currentTimeMillis();
+    for (int i = 0; i < MAX; ++i) {
+    }
+    final long fixed = System.currentTimeMillis() - timer;
 
-		for (int i = 0; i < MAX; ++i) {
-			lock.acquireSharedLock();
-			lock.releaseSharedLock();
-		}
+    for (int i = 0; i < MAX; ++i) {
+      lock.acquireSharedLock();
+      lock.releaseSharedLock();
+    }
 
-		System.out.println("Read Locks: " + (System.currentTimeMillis() - timer - fixed));
-		timer = System.currentTimeMillis();
+    System.out.println("Read Locks: " + (System.currentTimeMillis() - timer - fixed));
+    timer = System.currentTimeMillis();
 
-		for (int i = 0; i < MAX; ++i) {
-			lock.acquireExclusiveLock();
-			lock.releaseExclusiveLock();
-		}
+    for (int i = 0; i < MAX; ++i) {
+      lock.acquireExclusiveLock();
+      lock.releaseExclusiveLock();
+    }
 
-		System.out.println("Write Locks: " + (System.currentTimeMillis() - timer - fixed));
-		timer = System.currentTimeMillis();
+    System.out.println("Write Locks: " + (System.currentTimeMillis() - timer - fixed));
+    timer = System.currentTimeMillis();
 
-		for (int i = 0; i < MAX; ++i) {
-			synchronized (lock) {
-			}
-		}
-		System.out.println("Simple Locks: " + (System.currentTimeMillis() - timer - fixed));
+    for (int i = 0; i < MAX; ++i) {
+      synchronized (lock) {
+      }
+    }
+    System.out.println("Simple Locks: " + (System.currentTimeMillis() - timer - fixed));
 
-	}
+  }
 }

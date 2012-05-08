@@ -46,9 +46,9 @@ public interface OSecurity {
 
 	public boolean dropRole(String iRoleName);
 
-	public List<ODocument> getUsers();
+	public List<ODocument> getAllUsers();
 
-	public List<ODocument> getRoles();
+	public List<ODocument> getAllRoles();
 
 	public OUser repair();
 

@@ -17,119 +17,86 @@ package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.IOException;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 
-public class OSingleFileSegment extends OSharedResourceAdaptive {
-	protected OStorageLocal							storage;
-	protected OFile											file;
-	protected OStorageFileConfiguration	config;
+public class OSingleFileSegment {
+  protected OStorageLocal             storage;
+  protected OFile                     file;
+  protected OStorageFileConfiguration config;
 
-	public OSingleFileSegment(final String iPath, final String iType) throws IOException {
-		super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), 0, true);
-		file = OFileFactory.instance().create(iType, OSystemVariableResolver.resolveSystemVariables(iPath), "rw");
-	}
+  public OSingleFileSegment(final String iPath, final String iType) throws IOException {
+    file = OFileFactory.instance().create(iType, OSystemVariableResolver.resolveSystemVariables(iPath), "rw");
+  }
 
-	public OSingleFileSegment(final OStorageLocal iStorage, final OStorageFileConfiguration iConfig) throws IOException {
-		this(iStorage, iConfig, iConfig.type);
-	}
+  public OSingleFileSegment(final OStorageLocal iStorage, final OStorageFileConfiguration iConfig) throws IOException {
+    this(iStorage, iConfig, iConfig.type);
+  }
 
-	public OSingleFileSegment(final OStorageLocal iStorage, final OStorageFileConfiguration iConfig, final String iType)
-			throws IOException {
-		super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
+  public OSingleFileSegment(final OStorageLocal iStorage, final OStorageFileConfiguration iConfig, final String iType)
+      throws IOException {
+    config = iConfig;
+    storage = iStorage;
+    file = OFileFactory.instance().create(iType, iStorage.getVariableParser().resolveVariables(iConfig.path), iStorage.getMode());
+    file.setMaxSize((int) OFileUtils.getSizeAsNumber(iConfig.maxSize));
+    file.setIncrementSize((int) OFileUtils.getSizeAsNumber(iConfig.incrementSize));
+  }
 
-		config = iConfig;
-		storage = iStorage;
-		file = OFileFactory.instance().create(iType, iStorage.getVariableParser().resolveVariables(iConfig.path), iStorage.getMode());
-		file.setMaxSize((int) OFileUtils.getSizeAsNumber(iConfig.maxSize));
-		file.setIncrementSize((int) OFileUtils.getSizeAsNumber(iConfig.incrementSize));
-	}
+  public boolean open() throws IOException {
+    boolean softClosed = file.open();
+    if (!softClosed) {
+      // LAST TIME THE FILE WAS NOT CLOSED IN SOFT WAY
+      OLogManager.instance().warn(this,
+          "file " + file.getAbsolutePath() + " was not closed correctly last time. Checking segments...");
+    }
 
-	public boolean open() throws IOException {
-		acquireExclusiveLock();
-		try {
-			boolean softClosed = file.open();
-			if (!softClosed) {
-				// LAST TIME THE FILE WAS NOT CLOSED IN SOFT WAY
-				OLogManager.instance().warn(this,
-						"file " + file.getAbsolutePath() + " was not closed correctly last time. Checking segments...");
-			}
+    return softClosed;
+  }
 
-			return softClosed;
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+  public void create(final int iStartSize) throws IOException {
+    file.create(iStartSize);
+  }
 
-	public void create(final int iStartSize) throws IOException {
-		acquireExclusiveLock();
-		try {
-			file.create(iStartSize);
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+  public void close() throws IOException {
+    if (file != null)
+      file.close();
+  }
 
-	public void close() throws IOException {
-		acquireExclusiveLock();
-		try {
-			if (file != null)
-				file.close();
+  public void delete() throws IOException {
+    if (file != null) {
+      file.delete();
+      OMMapManager.removeFile(file);
+      file = null;
+    }
+  }
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+  public void truncate() throws IOException {
+    // SHRINK TO 0
+    file.shrink(0);
+  }
 
-	public void delete() throws IOException {
-		acquireExclusiveLock();
-		try {
-			if (file != null) {
-				file.delete();
-				OMMapManager.removeFile(file);
-				file = null;
-			}
+  public boolean exists() {
+    return file.exists();
+  }
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+  public long getSize() {
+    return file.getFileSize();
+  }
 
-	public void truncate() throws IOException {
-		acquireExclusiveLock();
-		try {
-			// SHRINK TO 0
-			file.shrink(0);
+  public long getFilledUpTo() {
+    return file.getFilledUpTo();
+  }
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+  public OStorageFileConfiguration getConfig() {
+    return config;
+  }
 
-	public boolean exists() {
-		return file.exists();
-	}
-
-	public long getSize() {
-		return file.getFileSize();
-	}
-
-	public long getFilledUpTo() {
-		return file.getFilledUpTo();
-	}
-
-	public OStorageFileConfiguration getConfig() {
-		return config;
-	}
-
-	public OFile getFile() {
-		return file;
-	}
+  public OFile getFile() {
+    return file;
+  }
 }

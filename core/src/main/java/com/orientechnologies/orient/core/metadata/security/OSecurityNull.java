@@ -54,11 +54,11 @@ public class OSecurityNull implements OSecurity {
     return null;
   }
 
-  public List<ODocument> getUsers() {
+  public List<ODocument> getAllUsers() {
     return null;
   }
 
-  public List<ODocument> getRoles() {
+  public List<ODocument> getAllRoles() {
     return null;
   }
 
