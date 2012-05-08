@@ -15,14 +15,12 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.stream;
 
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
-
 import java.io.IOException;
 
 public interface OStreamSerializer {
-	public byte[] toStream(Object iObject) throws IOException;
+  public byte[] toStream(Object iObject) throws IOException;
 
-	public Object fromStream(byte[] iStream) throws IOException;
+  public Object fromStream(byte[] iStream) throws IOException;
 
-	public String getName();
+  public String getName();
 }

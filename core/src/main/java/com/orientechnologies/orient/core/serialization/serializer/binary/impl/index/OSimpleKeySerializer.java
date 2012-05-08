@@ -26,63 +26,64 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
  * @author Andrey Lomakin
  * @since 31.03.12
  */
-public class OSimpleKeySerializer implements OBinarySerializer<Comparable> {
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySerializer<T> {
 
-	private OType								type;
-	private OBinarySerializer		binarySerializer;
+  private OType              type;
+  private OBinarySerializer  binarySerializer;
 
-	public static final byte		ID		= 15;
-	public static final String	NAME	= "bsks";
+  public static final byte   ID   = 15;
+  public static final String NAME = "bsks";
 
-	public OSimpleKeySerializer() {
-	}
+  public OSimpleKeySerializer() {
+  }
 
-	public OSimpleKeySerializer(final OType iType) {
-		type = iType;
-		binarySerializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(type);
-	}
+  public OSimpleKeySerializer(final OType iType) {
+    type = iType;
+    binarySerializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(type);
+  }
 
-	public int getObjectSize(Comparable key) {
-		init(key);
-		return OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE + binarySerializer.getObjectSize(key);
-	}
+  public int getObjectSize(T key) {
+    init(key);
+    return OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE + binarySerializer.getObjectSize(key);
+  }
 
-	public void serialize(Comparable key, byte[] stream, int startPosition) {
-		init(key);
-		stream[startPosition] = binarySerializer.getId();
-		startPosition += OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE;
-		binarySerializer.serialize(key, stream, startPosition);
-		startPosition += binarySerializer.getObjectSize(key);
-	}
+  public void serialize(T key, byte[] stream, int startPosition) {
+    init(key);
+    stream[startPosition] = binarySerializer.getId();
+    startPosition += OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE;
+    binarySerializer.serialize(key, stream, startPosition);
+    startPosition += binarySerializer.getObjectSize(key);
+  }
 
-	public Comparable deserialize(byte[] stream, int startPosition) {
-		final byte typeId = stream[startPosition];
-		startPosition += OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE;
+  public T deserialize(byte[] stream, int startPosition) {
+    final byte typeId = stream[startPosition];
+    startPosition += OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE;
 
-		init(typeId);
-		return (Comparable) binarySerializer.deserialize(stream, startPosition);
-	}
+    init(typeId);
+    return (T) binarySerializer.deserialize(stream, startPosition);
+  }
 
-	public int getObjectSize(byte[] stream, int startPosition) {
-		final byte serializerId = stream[startPosition];
-		init(serializerId);
-		return OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE
-				+ binarySerializer.getObjectSize(stream, startPosition + OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE);
-	}
+  public int getObjectSize(byte[] stream, int startPosition) {
+    final byte serializerId = stream[startPosition];
+    init(serializerId);
+    return OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE
+        + binarySerializer.getObjectSize(stream, startPosition + OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE);
+  }
 
-	public byte getId() {
-		return ID;
-	}
+  public byte getId() {
+    return ID;
+  }
 
-	protected void init(Comparable key) {
-		if (binarySerializer == null) {
-			type = OType.getTypeByClass(key.getClass());
-			binarySerializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(type);
-		}
-	}
+  protected void init(T key) {
+    if (binarySerializer == null) {
+      type = OType.getTypeByClass(key.getClass());
+      binarySerializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(type);
+    }
+  }
 
-	protected void init(byte serializerId) {
-		if (binarySerializer == null)
-			binarySerializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(serializerId);
-	}
+  protected void init(byte serializerId) {
+    if (binarySerializer == null)
+      binarySerializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(serializerId);
+  }
 }

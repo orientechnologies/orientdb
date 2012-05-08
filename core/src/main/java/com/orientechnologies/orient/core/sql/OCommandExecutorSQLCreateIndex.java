@@ -195,6 +195,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
   /**
    * Execute the CREATE INDEX.
    */
+  @SuppressWarnings("rawtypes")
   public Object execute(final Map<Object, Object> iArgs) {
     if (indexName == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");

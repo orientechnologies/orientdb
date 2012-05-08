@@ -32,33 +32,33 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider
 @SuppressWarnings("serial")
 public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
 
-	public OMVRBTreeDatabase(final ODatabaseRecord iDatabase, final ORID iRID) {
-		super(new OMVRBTreeMapProvider<K, V>(null, iDatabase.getClusterNameById(iRID.getClusterId()), iRID));
-	}
+  public OMVRBTreeDatabase(final ODatabaseRecord iDatabase, final ORID iRID) {
+    super(new OMVRBTreeMapProvider<K, V>(null, iDatabase.getClusterNameById(iRID.getClusterId()), iRID));
+  }
 
-	public OMVRBTreeDatabase(String iClusterName, final OBinarySerializer iKeySerializer,
-													 final OStreamSerializer iValueSerializer, int keySize) {
-		super(new OMVRBTreeMapProvider<K, V>(null, iClusterName, iKeySerializer, iValueSerializer), keySize);
-	}
+  public OMVRBTreeDatabase(String iClusterName, final OBinarySerializer<K> iKeySerializer,
+      final OStreamSerializer iValueSerializer, int keySize) {
+    super(new OMVRBTreeMapProvider<K, V>(null, iClusterName, iKeySerializer, iValueSerializer), keySize);
+  }
 
-	public void onAfterTxCommit() {
-		final Set<ORID> nodesInMemory = getAllNodesInCache();
+  public void onAfterTxCommit() {
+    final Set<ORID> nodesInMemory = getAllNodesInCache();
 
-		if (nodesInMemory.isEmpty())
-			return;
+    if (nodesInMemory.isEmpty())
+      return;
 
-		// FIX THE CACHE CONTENT WITH FINAL RECORD-IDS
-		final Set<ORID> keys = new HashSet<ORID>(nodesInMemory);
-		OMVRBTreeEntryPersistent<K, V> entry;
-		for (ORID rid : keys) {
-			if (rid.getClusterPosition() < -1) {
-				// FIX IT IN CACHE
-				entry = (OMVRBTreeEntryPersistent<K, V>) searchNodeInCache(rid);
+    // FIX THE CACHE CONTENT WITH FINAL RECORD-IDS
+    final Set<ORID> keys = new HashSet<ORID>(nodesInMemory);
+    OMVRBTreeEntryPersistent<K, V> entry;
+    for (ORID rid : keys) {
+      if (rid.getClusterPosition() < -1) {
+        // FIX IT IN CACHE
+        entry = (OMVRBTreeEntryPersistent<K, V>) searchNodeInCache(rid);
 
-				// OVERWRITE IT WITH THE NEW RID
-				removeNodeFromCache(rid);
-				addNodeInCache(entry);
-			}
-		}
-	}
+        // OVERWRITE IT WITH THE NEW RID
+        removeNodeFromCache(rid);
+        addNodeInCache(entry);
+      }
+    }
+  }
 }

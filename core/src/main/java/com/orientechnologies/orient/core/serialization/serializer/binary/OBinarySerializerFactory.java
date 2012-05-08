@@ -48,84 +48,85 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
  */
 public class OBinarySerializerFactory {
 
-	private final Map<Byte, OBinarySerializer<?>>										serializerIdMap					= new HashMap<Byte, OBinarySerializer<?>>();
-	private final Map<Byte, Class<? extends OBinarySerializer<?>>>	serializerClassesIdMap	= new HashMap<Byte, Class<? extends OBinarySerializer<?>>>();
-	private final Map<OType, OBinarySerializer<?>>									serializerTypeMap				= new HashMap<OType, OBinarySerializer<?>>();
+  private final Map<Byte, OBinarySerializer<?>>                  serializerIdMap        = new HashMap<Byte, OBinarySerializer<?>>();
+  private final Map<Byte, Class<? extends OBinarySerializer<?>>> serializerClassesIdMap = new HashMap<Byte, Class<? extends OBinarySerializer<?>>>();
+  private final Map<OType, OBinarySerializer<?>>                 serializerTypeMap      = new HashMap<OType, OBinarySerializer<?>>();
 
-	/**
-	 * Instance of the factory
-	 */
-	public static final OBinarySerializerFactory										INSTANCE								= new OBinarySerializerFactory();
-	/**
-	 * Size of the type identifier block size
-	 */
-	public static final int																					TYPE_IDENTIFIER_SIZE		= 1;
+  /**
+   * Instance of the factory
+   */
+  public static final OBinarySerializerFactory                   INSTANCE               = new OBinarySerializerFactory();
+  /**
+   * Size of the type identifier block size
+   */
+  public static final int                                        TYPE_IDENTIFIER_SIZE   = 1;
 
-	private OBinarySerializerFactory() {
+  private OBinarySerializerFactory() {
 
-		// STATELESS SERIALIER
-		registerSerializer(new ONullSerializer(), null);
+    // STATELESS SERIALIER
+    registerSerializer(new ONullSerializer(), null);
 
-		registerSerializer(OBooleanSerializer.INSTANCE, OType.BOOLEAN);
-		registerSerializer(OIntegerSerializer.INSTANCE, OType.INTEGER);
-		registerSerializer(OShortSerializer.INSTANCE, OType.SHORT);
-		registerSerializer(OLongSerializer.INSTANCE, OType.LONG);
-		registerSerializer(OFloatSerializer.INSTANCE, OType.FLOAT);
-		registerSerializer(ODoubleSerializer.INSTANCE, OType.DOUBLE);
-		registerSerializer(ODateTimeSerializer.INSTANCE, OType.DATETIME);
-		registerSerializer(OCharSerializer.INSTANCE, null);
-		registerSerializer(OStringSerializer.INSTANCE, OType.STRING);
-		registerSerializer(OByteSerializer.INSTANCE, OType.BYTE);
-		registerSerializer(ODateSerializer.INSTANCE, OType.DATE);
-		registerSerializer(OLinkSerializer.INSTANCE, OType.LINK);
-		registerSerializer(OCompositeKeySerializer.INSTANCE, null);
-		registerSerializer(OStreamSerializerRID.INSTANCE, null);
-		registerSerializer(OBinaryTypeSerializer.INSTANCE, OType.BINARY);
-		registerSerializer(ODecimalSerializer.INSTANCE, OType.DECIMAL);
+    registerSerializer(OBooleanSerializer.INSTANCE, OType.BOOLEAN);
+    registerSerializer(OIntegerSerializer.INSTANCE, OType.INTEGER);
+    registerSerializer(OShortSerializer.INSTANCE, OType.SHORT);
+    registerSerializer(OLongSerializer.INSTANCE, OType.LONG);
+    registerSerializer(OFloatSerializer.INSTANCE, OType.FLOAT);
+    registerSerializer(ODoubleSerializer.INSTANCE, OType.DOUBLE);
+    registerSerializer(ODateTimeSerializer.INSTANCE, OType.DATETIME);
+    registerSerializer(OCharSerializer.INSTANCE, null);
+    registerSerializer(OStringSerializer.INSTANCE, OType.STRING);
+    registerSerializer(OByteSerializer.INSTANCE, OType.BYTE);
+    registerSerializer(ODateSerializer.INSTANCE, OType.DATE);
+    registerSerializer(OLinkSerializer.INSTANCE, OType.LINK);
+    registerSerializer(OCompositeKeySerializer.INSTANCE, null);
+    registerSerializer(OStreamSerializerRID.INSTANCE, null);
+    registerSerializer(OBinaryTypeSerializer.INSTANCE, OType.BINARY);
+    registerSerializer(ODecimalSerializer.INSTANCE, OType.DECIMAL);
 
-		// STATEFUL SERIALIER
-		registerSerializer(OSimpleKeySerializer.ID, OSimpleKeySerializer.class);
-	}
+    // STATEFUL SERIALIER
+    registerSerializer(OSimpleKeySerializer.ID, OSimpleKeySerializer.class);
+  }
 
-	public void registerSerializer(final OBinarySerializer<?> iInstance, final OType iType) {
-		serializerIdMap.put(iInstance.getId(), iInstance);
-		if (iType != null)
-			serializerTypeMap.put(iType, iInstance);
-	}
+  public void registerSerializer(final OBinarySerializer<?> iInstance, final OType iType) {
+    serializerIdMap.put(iInstance.getId(), iInstance);
+    if (iType != null)
+      serializerTypeMap.put(iType, iInstance);
+  }
 
-	public void registerSerializer(final byte iId, final Class<? extends OBinarySerializer<?>> iClass) {
-		serializerClassesIdMap.put(iId, iClass);
-	}
+  @SuppressWarnings({ "unchecked", "rawtypes" })
+  public void registerSerializer(final byte iId, final Class<? extends OBinarySerializer> iClass) {
+    serializerClassesIdMap.put(iId, (Class<? extends OBinarySerializer<?>>) iClass);
+  }
 
-	/**
-	 * Obtain OBinarySerializer instance by it's id.
-	 * 
-	 * @param identifier
-	 *          is serializes identifier.
-	 * @return OBinarySerializer instance.
-	 */
-	public OBinarySerializer<?> getObjectSerializer(final byte identifier) {
-		OBinarySerializer<?> impl = serializerIdMap.get(identifier);
-		if (impl == null) {
-			final Class<? extends OBinarySerializer<?>> cls = serializerClassesIdMap.get(identifier);
-			if (cls != null)
-				try {
-					impl = cls.newInstance();
-				} catch (Exception e) {
-					OLogManager.instance().error(this, "Cannot create an instance of class %s invoking the empty constructor", cls);
-				}
-		}
-		return impl;
-	}
+  /**
+   * Obtain OBinarySerializer instance by it's id.
+   * 
+   * @param identifier
+   *          is serializes identifier.
+   * @return OBinarySerializer instance.
+   */
+  public OBinarySerializer<?> getObjectSerializer(final byte identifier) {
+    OBinarySerializer<?> impl = serializerIdMap.get(identifier);
+    if (impl == null) {
+      final Class<? extends OBinarySerializer<?>> cls = serializerClassesIdMap.get(identifier);
+      if (cls != null)
+        try {
+          impl = cls.newInstance();
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Cannot create an instance of class %s invoking the empty constructor", cls);
+        }
+    }
+    return impl;
+  }
 
-	/**
-	 * Obtain OBinarySerializer realization for the OType
-	 * 
-	 * @param type
-	 *          is the OType to obtain serializer algorithm for
-	 * @return OBinarySerializer instance
-	 */
-	public OBinarySerializer<?> getObjectSerializer(final OType type) {
-		return serializerTypeMap.get(type);
-	}
+  /**
+   * Obtain OBinarySerializer realization for the OType
+   * 
+   * @param type
+   *          is the OType to obtain serializer algorithm for
+   * @return OBinarySerializer instance
+   */
+  public OBinarySerializer<?> getObjectSerializer(final OType type) {
+    return serializerTypeMap.get(type);
+  }
 }

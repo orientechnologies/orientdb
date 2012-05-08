@@ -31,44 +31,45 @@ import com.orientechnologies.orient.core.command.OCommandResultListener;
  * @see OSQLSynchQuery
  */
 public class OSQLAsynchQuery<T extends Object> extends OSQLQuery<T> implements OCommandRequestAsynch {
-	protected int	resultCount	= 0;
+  private static final long serialVersionUID = 1L;
+  protected int             resultCount      = 0;
 
-	/**
-	 * Empty constructor for unmarshalling.
-	 */
-	public OSQLAsynchQuery() {
-	}
+  /**
+   * Empty constructor for unmarshalling.
+   */
+  public OSQLAsynchQuery() {
+  }
 
-	public OSQLAsynchQuery(final String iText) {
-		this(iText, null);
-	}
+  public OSQLAsynchQuery(final String iText) {
+    this(iText, null);
+  }
 
-	public OSQLAsynchQuery(final String iText, final OCommandResultListener iResultListener) {
-		this(iText, -1, iResultListener);
-	}
+  public OSQLAsynchQuery(final String iText, final OCommandResultListener iResultListener) {
+    this(iText, -1, iResultListener);
+  }
 
-	public OSQLAsynchQuery(final String iText, final int iLimit, final OCommandResultListener iResultListener) {
-		super(iText);
-		limit = iLimit;
-		resultListener = iResultListener;
-	}
+  public OSQLAsynchQuery(final String iText, final int iLimit, final OCommandResultListener iResultListener) {
+    super(iText);
+    limit = iLimit;
+    resultListener = iResultListener;
+  }
 
-	@SuppressWarnings("unchecked")
-	public <RET> RET execute2(final String iText, final Object... iArgs) {
-		text = iText;
-		return (RET) execute(iArgs);
-	}
+  @SuppressWarnings("unchecked")
+  public <RET> RET execute2(final String iText, final Object... iArgs) {
+    text = iText;
+    return (RET) execute(iArgs);
+  }
 
-	public T executeFirst() {
-		execute(1);
-		return null;
-	}
+  public T executeFirst() {
+    execute(1);
+    return null;
+  }
 
-	public OCommandContext getContext() {
-		return null;
-	}
+  public OCommandContext getContext() {
+    return null;
+  }
 
-	public OCommandRequestText setContext(OCommandContext iContext) {
-		return this;
-	}
+  public OCommandRequestText setContext(OCommandContext iContext) {
+    return this;
+  }
 }

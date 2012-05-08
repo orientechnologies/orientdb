@@ -9,6 +9,7 @@ import java.util.Map;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -31,7 +32,7 @@ public class OPropertyListIndexDefinitionTest {
 
 		Assert.assertTrue(result instanceof Collection);
 
-		final Collection collectionResult = (Collection) result;
+		final Collection<?> collectionResult = (Collection<?>) result;
 		Assert.assertEquals(collectionResult.size(), 2);
 
 		Assert.assertTrue(collectionResult.contains(12));
@@ -43,7 +44,7 @@ public class OPropertyListIndexDefinitionTest {
 
 		Assert.assertTrue(result instanceof Collection);
 
-		final Collection collectionResult = (Collection) result;
+		final Collection<?> collectionResult = (Collection<?>) result;
 		Assert.assertEquals(collectionResult.size(), 2);
 
 		Assert.assertTrue(collectionResult.contains(12));
@@ -60,7 +61,7 @@ public class OPropertyListIndexDefinitionTest {
 
 		Assert.assertTrue(result instanceof Collection);
 
-		final Collection collectionResult = (Collection) result;
+		final Collection<?> collectionResult = (Collection<?>) result;
 		Assert.assertEquals(collectionResult.size(), 2);
 
 		Assert.assertTrue(collectionResult.contains(12));
@@ -72,7 +73,7 @@ public class OPropertyListIndexDefinitionTest {
 
 		Assert.assertTrue(result instanceof Collection);
 
-		final Collection collectionResult = (Collection) result;
+		final Collection<?> collectionResult = (Collection<?>) result;
 		Assert.assertEquals(collectionResult.size(), 2);
 
 		Assert.assertTrue(collectionResult.contains(12));
@@ -93,7 +94,7 @@ public class OPropertyListIndexDefinitionTest {
 		final Object result = propertyIndex.getDocumentValueToIndex(document);
 		Assert.assertTrue(result instanceof Collection);
 
-		final Collection collectionResult = (Collection) result;
+		final Collection<?> collectionResult = (Collection<?>) result;
 		Assert.assertEquals(collectionResult.size(), 2);
 
 		Assert.assertTrue(collectionResult.contains(12));
@@ -113,7 +114,7 @@ public class OPropertyListIndexDefinitionTest {
 	public void testProcessChangeEventAddOnce() {
 		final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
 		final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
-		final OMultiValueChangeEvent multiValueChangeEvent = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 0, 42);
+    final OMultiValueChangeEvent<Integer, Integer> multiValueChangeEvent = new OMultiValueChangeEvent<Integer, Integer>(OMultiValueChangeEvent.OChangeType.ADD, 0, 42);
 		propertyIndex.processChangeEvent(multiValueChangeEvent, keysToAdd, keysToRemove);
 
 		final Map<Object, Integer> addedKeys = new HashMap<Object, Integer>();
@@ -128,7 +129,7 @@ public class OPropertyListIndexDefinitionTest {
 	public void testProcessChangeEventAddOnceWithConversion() {
 		final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
 		final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
-		final OMultiValueChangeEvent multiValueChangeEvent = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 0, "42");
+		final OMultiValueChangeEvent<Integer, String> multiValueChangeEvent = new OMultiValueChangeEvent<Integer, String>(OMultiValueChangeEvent.OChangeType.ADD, 0, "42");
 		propertyIndex.processChangeEvent(multiValueChangeEvent, keysToAdd, keysToRemove);
 
 		final Map<Object, Integer> addedKeys = new HashMap<Object, Integer>();
@@ -144,8 +145,8 @@ public class OPropertyListIndexDefinitionTest {
 	public void testProcessChangeEventAddTwoTimes() {
 		final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
 		final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
-		final OMultiValueChangeEvent multiValueChangeEventOne = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 0, 42);
-		final OMultiValueChangeEvent multiValueChangeEventTwo = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 1, 42);
+		final OMultiValueChangeEvent<Integer, Integer> multiValueChangeEventOne = new OMultiValueChangeEvent<Integer, Integer>(OMultiValueChangeEvent.OChangeType.ADD, 0, 42);
+		final OMultiValueChangeEvent<Integer, Integer> multiValueChangeEventTwo = new OMultiValueChangeEvent<Integer, Integer>(OMultiValueChangeEvent.OChangeType.ADD, 1, 42);
 
 		propertyIndex.processChangeEvent(multiValueChangeEventOne, keysToAdd, keysToRemove);
 		propertyIndex.processChangeEvent(multiValueChangeEventTwo, keysToAdd, keysToRemove);
@@ -162,8 +163,8 @@ public class OPropertyListIndexDefinitionTest {
 	public void testProcessChangeEventAddTwoValues() {
 		final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
 		final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
-		final OMultiValueChangeEvent multiValueChangeEventOne = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 0, 42);
-		final OMultiValueChangeEvent multiValueChangeEventTwo = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 1, 43);
+		final OMultiValueChangeEvent<Integer, Integer> multiValueChangeEventOne = new OMultiValueChangeEvent<Integer, Integer>(OMultiValueChangeEvent.OChangeType.ADD, 0, 42);
+		final OMultiValueChangeEvent<Integer, Integer> multiValueChangeEventTwo = new OMultiValueChangeEvent<Integer, Integer>(OMultiValueChangeEvent.OChangeType.ADD, 1, 43);
 
 		propertyIndex.processChangeEvent(multiValueChangeEventOne, keysToAdd, keysToRemove);
 		propertyIndex.processChangeEvent(multiValueChangeEventTwo, keysToAdd, keysToRemove);
@@ -181,7 +182,7 @@ public class OPropertyListIndexDefinitionTest {
 	public void testProcessChangeEventRemoveOnce() {
 		final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
 		final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
-		final OMultiValueChangeEvent multiValueChangeEvent = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.REMOVE, 0, null, 42);
+		final OMultiValueChangeEvent<Integer, Integer> multiValueChangeEvent = new OMultiValueChangeEvent<Integer, Integer>(OMultiValueChangeEvent.OChangeType.REMOVE, 0, null, 42);
 
 		propertyIndex.processChangeEvent(multiValueChangeEvent, keysToAdd, keysToRemove);
 
@@ -197,7 +198,7 @@ public class OPropertyListIndexDefinitionTest {
 	public void testProcessChangeEventRemoveOnceWithConversion() {
 		final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
 		final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
-		final OMultiValueChangeEvent multiValueChangeEvent = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.REMOVE, 0, null, "42");
+		final OMultiValueChangeEvent<Integer, String> multiValueChangeEvent = new OMultiValueChangeEvent<Integer, String>(OMultiValueChangeEvent.OChangeType.REMOVE, 0, null, "42");
 
 		propertyIndex.processChangeEvent(multiValueChangeEvent, keysToAdd, keysToRemove);
 
@@ -213,8 +214,8 @@ public class OPropertyListIndexDefinitionTest {
 	public void testProcessChangeEventRemoveTwoTimes() {
 		final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
 		final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
-		final OMultiValueChangeEvent multiValueChangeEventOne = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.REMOVE, 0, null, 42);
-		final OMultiValueChangeEvent multiValueChangeEventTwo = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.REMOVE, 1, null, 42);
+		final OMultiValueChangeEvent<Integer, Integer> multiValueChangeEventOne = new OMultiValueChangeEvent<Integer, Integer>(OMultiValueChangeEvent.OChangeType.REMOVE, 0, null, 42);
+		final OMultiValueChangeEvent<Integer, Integer> multiValueChangeEventTwo = new OMultiValueChangeEvent<Integer, Integer>(OMultiValueChangeEvent.OChangeType.REMOVE, 1, null, 42);
 
 		propertyIndex.processChangeEvent(multiValueChangeEventOne, keysToAdd, keysToRemove);
 		propertyIndex.processChangeEvent(multiValueChangeEventTwo, keysToAdd, keysToRemove);
@@ -231,8 +232,8 @@ public class OPropertyListIndexDefinitionTest {
 	public void testProcessChangeEventAddTwoTimesInvValue() {
 		final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
 		final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
-		final OMultiValueChangeEvent multiValueChangeEventOne = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 0, 42);
-		final OMultiValueChangeEvent multiValueChangeEventTwo = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 1, "ttry");
+		final OMultiValueChangeEvent<Integer, Integer> multiValueChangeEventOne = new OMultiValueChangeEvent<Integer, Integer>(OMultiValueChangeEvent.OChangeType.ADD, 0, 42);
+		final OMultiValueChangeEvent<Integer, String> multiValueChangeEventTwo = new OMultiValueChangeEvent<Integer, String>(OMultiValueChangeEvent.OChangeType.ADD, 1, "ttry");
 
 		propertyIndex.processChangeEvent(multiValueChangeEventOne, keysToAdd, keysToRemove);
 		propertyIndex.processChangeEvent(multiValueChangeEventTwo, keysToAdd, keysToRemove);
@@ -250,8 +251,8 @@ public class OPropertyListIndexDefinitionTest {
 	public void testProcessChangeEventAddRemove() {
 		final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
 		final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
-		final OMultiValueChangeEvent multiValueChangeEventOne = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 0, 42);
-		final OMultiValueChangeEvent multiValueChangeEventTwo = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.REMOVE, 0, null, 42);
+		final OMultiValueChangeEvent<Integer, Integer> multiValueChangeEventOne = new OMultiValueChangeEvent<Integer, Integer>(OMultiValueChangeEvent.OChangeType.ADD, 0, 42);
+		final OMultiValueChangeEvent<Integer, Integer> multiValueChangeEventTwo = new OMultiValueChangeEvent<Integer, Integer>(OMultiValueChangeEvent.OChangeType.REMOVE, 0, null, 42);
 
 		propertyIndex.processChangeEvent(multiValueChangeEventOne, keysToAdd, keysToRemove);
 		propertyIndex.processChangeEvent(multiValueChangeEventTwo, keysToAdd, keysToRemove);
@@ -266,8 +267,8 @@ public class OPropertyListIndexDefinitionTest {
 	public void testProcessChangeEventAddRemoveInvValue() {
 		final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
 		final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
-		final OMultiValueChangeEvent multiValueChangeEventOne = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 0, 42);
-		final OMultiValueChangeEvent multiValueChangeEventTwo = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.REMOVE, 0, null, "ttv");
+		final OMultiValueChangeEvent<Integer, Integer> multiValueChangeEventOne = new OMultiValueChangeEvent<Integer, Integer>(OMultiValueChangeEvent.OChangeType.ADD, 0, 42);
+		final OMultiValueChangeEvent<Integer, String> multiValueChangeEventTwo = new OMultiValueChangeEvent<Integer, String>(OMultiValueChangeEvent.OChangeType.REMOVE, 0, null, "ttv");
 
 		propertyIndex.processChangeEvent(multiValueChangeEventOne, keysToAdd, keysToRemove);
 		propertyIndex.processChangeEvent(multiValueChangeEventTwo, keysToAdd, keysToRemove);
@@ -283,9 +284,9 @@ public class OPropertyListIndexDefinitionTest {
 	public void testProcessChangeEventAddTwiceRemoveOnce() {
 		final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
 		final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
-		final OMultiValueChangeEvent multiValueChangeEventOne = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 0, 42);
-		final OMultiValueChangeEvent multiValueChangeEventTwo = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 1, 42);
-		final OMultiValueChangeEvent multiValueChangeEventThree = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.REMOVE, 0, null, 42);
+		final OMultiValueChangeEvent<Integer, Integer> multiValueChangeEventOne = new OMultiValueChangeEvent<Integer, Integer>(OMultiValueChangeEvent.OChangeType.ADD, 0, 42);
+		final OMultiValueChangeEvent<Integer, Integer> multiValueChangeEventTwo = new OMultiValueChangeEvent<Integer, Integer>(OMultiValueChangeEvent.OChangeType.ADD, 1, 42);
+		final OMultiValueChangeEvent<Integer, Integer> multiValueChangeEventThree = new OMultiValueChangeEvent<Integer, Integer>(OMultiValueChangeEvent.OChangeType.REMOVE, 0, null, 42);
 
 		propertyIndex.processChangeEvent(multiValueChangeEventOne, keysToAdd, keysToRemove);
 		propertyIndex.processChangeEvent(multiValueChangeEventTwo, keysToAdd, keysToRemove);
@@ -303,9 +304,9 @@ public class OPropertyListIndexDefinitionTest {
 	public void testProcessChangeEventAddOnceRemoveTwice() {
 		final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
 		final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
-		final OMultiValueChangeEvent multiValueChangeEventOne = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.REMOVE, 0, null, 42);
-		final OMultiValueChangeEvent multiValueChangeEventTwo = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 0, 42);
-		final OMultiValueChangeEvent multiValueChangeEventThree = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.REMOVE, 0, null, 42);
+		final OMultiValueChangeEvent<Integer, Integer> multiValueChangeEventOne = new OMultiValueChangeEvent<Integer, Integer>(OMultiValueChangeEvent.OChangeType.REMOVE, 0, null, 42);
+		final OMultiValueChangeEvent<Integer, Integer> multiValueChangeEventTwo = new OMultiValueChangeEvent<Integer, Integer>(OMultiValueChangeEvent.OChangeType.ADD, 0, 42);
+		final OMultiValueChangeEvent<Integer, Integer> multiValueChangeEventThree = new OMultiValueChangeEvent<Integer, Integer>(OMultiValueChangeEvent.OChangeType.REMOVE, 0, null, 42);
 
 		propertyIndex.processChangeEvent(multiValueChangeEventOne, keysToAdd, keysToRemove);
 		propertyIndex.processChangeEvent(multiValueChangeEventTwo, keysToAdd, keysToRemove);
@@ -323,9 +324,9 @@ public class OPropertyListIndexDefinitionTest {
 	public void testProcessChangeEventRemoveTwoTimesAddOnce() {
 		final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
 		final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
-		final OMultiValueChangeEvent multiValueChangeEventOne = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.REMOVE, 0, null, 42);
-		final OMultiValueChangeEvent multiValueChangeEventTwo = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.REMOVE, 1, null, 42);
-		final OMultiValueChangeEvent multiValueChangeEventThree = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 1, 42);
+		final OMultiValueChangeEvent<Integer, Integer> multiValueChangeEventOne = new OMultiValueChangeEvent<Integer, Integer>(OMultiValueChangeEvent.OChangeType.REMOVE, 0, null, 42);
+		final OMultiValueChangeEvent<Integer, Integer> multiValueChangeEventTwo = new OMultiValueChangeEvent<Integer, Integer>(OMultiValueChangeEvent.OChangeType.REMOVE, 1, null, 42);
+		final OMultiValueChangeEvent<Integer, Integer> multiValueChangeEventThree = new OMultiValueChangeEvent<Integer, Integer>(OMultiValueChangeEvent.OChangeType.ADD, 1, 42);
 
 
 		propertyIndex.processChangeEvent(multiValueChangeEventOne, keysToAdd, keysToRemove);
@@ -344,7 +345,7 @@ public class OPropertyListIndexDefinitionTest {
 	public void testProcessChangeEventUpdate() {
 		final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
 		final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
-		final OMultiValueChangeEvent multiValueChangeEvent = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.UPDATE, 0, 41, 42);
+		final OMultiValueChangeEvent<Integer, Integer> multiValueChangeEvent = new OMultiValueChangeEvent<Integer, Integer>(OMultiValueChangeEvent.OChangeType.UPDATE, 0, 41, 42);
 
 		propertyIndex.processChangeEvent(multiValueChangeEvent, keysToAdd, keysToRemove);
 
@@ -362,7 +363,7 @@ public class OPropertyListIndexDefinitionTest {
 	public void testProcessChangeEventUpdateConvertValues() {
 		final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
 		final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
-		final OMultiValueChangeEvent multiValueChangeEvent = new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.UPDATE, 0, "41", "42");
+		final OMultiValueChangeEvent<Integer, String> multiValueChangeEvent = new OMultiValueChangeEvent<Integer, String>(OMultiValueChangeEvent.OChangeType.UPDATE, 0, "41", "42");
 
 		propertyIndex.processChangeEvent(multiValueChangeEvent, keysToAdd, keysToRemove);
 

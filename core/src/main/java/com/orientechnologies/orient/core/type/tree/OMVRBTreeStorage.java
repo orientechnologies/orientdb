@@ -32,17 +32,17 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
 @SuppressWarnings("serial")
 public class OMVRBTreeStorage<K, V> extends OMVRBTreePersistent<K, V> {
 
-	public OMVRBTreeStorage(OMVRBTreeProvider<K, V> iProvider) {
-		super(iProvider);
-	}
+  public OMVRBTreeStorage(OMVRBTreeProvider<K, V> iProvider) {
+    super(iProvider);
+  }
 
-	public OMVRBTreeStorage(final OStorageLocal iStorage, final String iClusterName, final ORID iRID) {
-		super(new OMVRBTreeMapProvider<K, V>(iStorage, iClusterName, iRID));
-	}
+  public OMVRBTreeStorage(final OStorageLocal iStorage, final String iClusterName, final ORID iRID) {
+    super(new OMVRBTreeMapProvider<K, V>(iStorage, iClusterName, iRID));
+  }
 
-	public OMVRBTreeStorage(final OStorageLocal iStorage, String iClusterName, final OBinarySerializer iKeySerializer,
-			final OStreamSerializer iValueSerializer) {
-		super(new OMVRBTreeMapProvider<K, V>(iStorage, iClusterName, iKeySerializer, iValueSerializer));
-	}
+  public OMVRBTreeStorage(final OStorageLocal iStorage, String iClusterName, final OBinarySerializer<K> iKeySerializer,
+      final OStreamSerializer iValueSerializer) {
+    super(new OMVRBTreeMapProvider<K, V>(iStorage, iClusterName, iKeySerializer, iValueSerializer));
+  }
 
 }

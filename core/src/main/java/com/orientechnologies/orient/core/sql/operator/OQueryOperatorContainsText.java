@@ -36,89 +36,90 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
  * 
  */
 public class OQueryOperatorContainsText extends OQueryTargetOperator {
-	private boolean	ignoreCase	= true;
+  private boolean ignoreCase = true;
 
-	public OQueryOperatorContainsText(final boolean iIgnoreCase) {
-		super("CONTAINSTEXT", 5, false);
-		ignoreCase = iIgnoreCase;
-	}
+  public OQueryOperatorContainsText(final boolean iIgnoreCase) {
+    super("CONTAINSTEXT", 5, false);
+    ignoreCase = iIgnoreCase;
+  }
 
-	public OQueryOperatorContainsText() {
-		super("CONTAINSTEXT", 5, false);
-	}
+  public OQueryOperatorContainsText() {
+    super("CONTAINSTEXT", 5, false);
+  }
 
-	@Override
-	public String getSyntax() {
-		return "<left> CONTAINSTEXT[( noignorecase ] )] <right>";
-	}
+  @Override
+  public String getSyntax() {
+    return "<left> CONTAINSTEXT[( noignorecase ] )] <right>";
+  }
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public Collection<OIdentifiable> filterRecords(final ODatabaseComplex<?> iDatabase, final List<String> iTargetClasses,
-			final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
+  @SuppressWarnings({ "unchecked", "deprecation" })
+  @Override
+  public Collection<OIdentifiable> filterRecords(final ODatabaseComplex<?> iDatabase, final List<String> iTargetClasses,
+      final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
 
-		final String fieldName;
-		if (iCondition.getLeft() instanceof OSQLFilterItemField)
-			fieldName = iCondition.getLeft().toString();
-		else
-			fieldName = iCondition.getRight().toString();
+    final String fieldName;
+    if (iCondition.getLeft() instanceof OSQLFilterItemField)
+      fieldName = iCondition.getLeft().toString();
+    else
+      fieldName = iCondition.getRight().toString();
 
-		final String fieldValue;
-		if (iCondition.getLeft() instanceof OSQLFilterItemField)
-			fieldValue = iCondition.getRight().toString();
-		else
-			fieldValue = iCondition.getLeft().toString();
+    final String fieldValue;
+    if (iCondition.getLeft() instanceof OSQLFilterItemField)
+      fieldValue = iCondition.getRight().toString();
+    else
+      fieldValue = iCondition.getLeft().toString();
 
-		final String className = iTargetClasses.get(0);
+    final String className = iTargetClasses.get(0);
 
-		final OProperty prop = iDatabase.getMetadata().getSchema().getClass(className).getProperty(fieldName);
-		if (prop == null)
-			// NO PROPERTY DEFINED
-			return null;
+    final OProperty prop = iDatabase.getMetadata().getSchema().getClass(className).getProperty(fieldName);
+    if (prop == null)
+      // NO PROPERTY DEFINED
+      return null;
 
-        OIndex fullTextIndex = null;
-        for (final OIndex indexDefinition : prop.getIndexes()) {
-            if (indexDefinition instanceof OIndexFullText) {
-                fullTextIndex = indexDefinition;
-                break;
-            }
-        }
+    OIndex<?> fullTextIndex = null;
+    for (final OIndex<?> indexDefinition : prop.getIndexes()) {
+      if (indexDefinition instanceof OIndexFullText) {
+        fullTextIndex = indexDefinition;
+        break;
+      }
+    }
 
-        if (fullTextIndex == null) {
-            return null;
-        }
+    if (fullTextIndex == null) {
+      return null;
+    }
 
-		return (Collection<OIdentifiable>) fullTextIndex.get(fieldValue);
-	}
+    return (Collection<OIdentifiable>) fullTextIndex.get(fieldValue);
+  }
 
-	public boolean isIgnoreCase() {
-		return ignoreCase;
-	}
+  public boolean isIgnoreCase() {
+    return ignoreCase;
+  }
 
-	@Override
-	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
-		return OIndexReuseType.INDEX_METHOD;
-	}
+  @Override
+  public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
+    return OIndexReuseType.INDEX_METHOD;
+  }
 
-	@Override
-	public Collection<OIdentifiable> executeIndexQuery(OIndex<?> index, List<Object> keyParams, int fetchLimit) {
-		final OIndexDefinition indexDefinition = index.getDefinition();
-		if (indexDefinition.getParamCount() > 1)
-			return null;
+  @SuppressWarnings("unchecked")
+  @Override
+  public Collection<OIdentifiable> executeIndexQuery(OIndex<?> index, List<Object> keyParams, int fetchLimit) {
+    final OIndexDefinition indexDefinition = index.getDefinition();
+    if (indexDefinition.getParamCount() > 1)
+      return null;
 
-		final OIndex internalIndex = index.getInternal();
+    final OIndex<?> internalIndex = index.getInternal();
 
-		if (internalIndex instanceof OIndexFullText)  {
-			final Object indexResult = index.get(indexDefinition.createValue(keyParams));
-			if(indexResult instanceof Collection)
-				return (Collection<OIdentifiable>)indexResult;
+    if (internalIndex instanceof OIndexFullText) {
+      final Object indexResult = index.get(indexDefinition.createValue(keyParams));
+      if (indexResult instanceof Collection)
+        return (Collection<OIdentifiable>) indexResult;
 
-			return Collections.singletonList((OIdentifiable) indexResult);
-		}
-		return null;
-	}
+      return Collections.singletonList((OIdentifiable) indexResult);
+    }
+    return null;
+  }
 
-	@Override
+  @Override
   public ORID getBeginRidRange(Object iLeft, Object iRight) {
     return null;
   }

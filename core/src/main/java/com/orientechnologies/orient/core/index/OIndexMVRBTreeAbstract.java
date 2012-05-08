@@ -101,6 +101,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
    *          Cluster name where to place the TreeMap
    * @param iProgressListener
    */
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   public OIndexInternal<?> create(final String iName, final OIndexDefinition iIndexDefinition, final ODatabaseRecord iDatabase,
       final String iClusterIndexName, final int[] iClusterIdsToIndex, final OProgressListener iProgressListener,
       final OStreamSerializer iValueSerializer) {
@@ -121,14 +122,14 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
           map = new OMVRBTreeDatabaseLazySave<Object, T>(iClusterIndexName,
               ((ORuntimeKeyIndexDefinition) indexDefinition).getSerializer(), iValueSerializer, 1);
         } else {
-          final OBinarySerializer keySerializer;
+          final OBinarySerializer<?> keySerializer;
           if (indexDefinition.getTypes().length > 1) {
             keySerializer = OCompositeKeySerializer.INSTANCE;
           } else {
             keySerializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(indexDefinition.getTypes()[0]);
           }
-          map = new OMVRBTreeDatabaseLazySave<Object, T>(iClusterIndexName, keySerializer, iValueSerializer,
-              indexDefinition.getTypes().length);
+          map = new OMVRBTreeDatabaseLazySave<Object, T>(iClusterIndexName, (OBinarySerializer<Object>) keySerializer,
+              iValueSerializer, indexDefinition.getTypes().length);
         }
       } else
         map = new OMVRBTreeDatabaseLazySave<Object, T>(iClusterIndexName, new OSimpleKeySerializer(), iValueSerializer, 1);

@@ -23,7 +23,11 @@ import java.util.Map;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
+import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
 /**
@@ -34,65 +38,66 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
  */
 public class OQueryOperatorContainsKey extends OQueryOperatorEqualityNotNulls {
 
-	public OQueryOperatorContainsKey() {
-		super("CONTAINSKEY", 5, false);
-	}
+  public OQueryOperatorContainsKey() {
+    super("CONTAINSKEY", 5, false);
+  }
 
-	@Override
-	@SuppressWarnings("unchecked")
-	protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-			final Object iRight, OCommandContext iContext) {
+  @Override
+  @SuppressWarnings("unchecked")
+  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+      final Object iRight, OCommandContext iContext) {
 
-		if (iLeft instanceof Map<?, ?>) {
+    if (iLeft instanceof Map<?, ?>) {
 
-			final Map<String, ?> map = (Map<String, ?>) iLeft;
-			return map.containsKey(iRight);
-		} else if (iRight instanceof Map<?, ?>) {
+      final Map<String, ?> map = (Map<String, ?>) iLeft;
+      return map.containsKey(iRight);
+    } else if (iRight instanceof Map<?, ?>) {
 
-			final Map<String, ?> map = (Map<String, ?>) iRight;
-			return map.containsKey(iLeft);
-		}
-		return false;
-	}
+      final Map<String, ?> map = (Map<String, ?>) iRight;
+      return map.containsKey(iLeft);
+    }
+    return false;
+  }
 
-	@Override
-	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
+  @Override
+  public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
     return OIndexReuseType.INDEX_METHOD;
-	}
+  }
 
-	@Override
-	public Collection<OIdentifiable> executeIndexQuery(OIndex<?> index, List<Object> keyParams, int fetchLimit) {
-		final OIndexDefinition indexDefinition = index.getDefinition();
+  @SuppressWarnings("unchecked")
+  @Override
+  public Collection<OIdentifiable> executeIndexQuery(OIndex<?> index, List<Object> keyParams, int fetchLimit) {
+    final OIndexDefinition indexDefinition = index.getDefinition();
 
-		if (!((index.getDefinition() instanceof OPropertyMapIndexDefinition)
-						&& ((OPropertyMapIndexDefinition) index.getDefinition()).getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.KEY))
-			return null;
+    if (!((index.getDefinition() instanceof OPropertyMapIndexDefinition) && ((OPropertyMapIndexDefinition) index.getDefinition())
+        .getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.KEY))
+      return null;
 
-		final OIndexInternal internalIndex = index.getInternal();
-		if(!internalIndex.canBeUsedInEqualityOperators())
-			return null;
+    final OIndexInternal<?> internalIndex = index.getInternal();
+    if (!internalIndex.canBeUsedInEqualityOperators())
+      return null;
 
-		if(indexDefinition.getParamCount() == 1) {
-			final Object key;
-			if (indexDefinition instanceof OIndexDefinitionMultiValue)
-				key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
-			else
-				key = indexDefinition.createValue(keyParams);
+    if (indexDefinition.getParamCount() == 1) {
+      final Object key;
+      if (indexDefinition instanceof OIndexDefinitionMultiValue)
+        key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
+      else
+        key = indexDefinition.createValue(keyParams);
 
-			if (key == null)
-				return null;
+      if (key == null)
+        return null;
 
-			final Object indexResult = index.get(key);
-			if(indexResult instanceof Collection)
-				return (Collection<OIdentifiable>)indexResult;
+      final Object indexResult = index.get(key);
+      if (indexResult instanceof Collection)
+        return (Collection<OIdentifiable>) indexResult;
 
-			return Collections.singletonList((OIdentifiable) indexResult);
-		}
+      return Collections.singletonList((OIdentifiable) indexResult);
+    }
 
-		return null;
-	}
+    return null;
+  }
 
-	@Override
+  @Override
   public ORID getBeginRidRange(Object iLeft, Object iRight) {
     return null;
   }

@@ -38,7 +38,7 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> {
     super(iDatabase, iRID);
   }
 
-  public OMVRBTreeDatabaseLazySave(String iClusterName, OBinarySerializer<?> iKeySerializer, OStreamSerializer iValueSerializer,
+  public OMVRBTreeDatabaseLazySave(String iClusterName, OBinarySerializer<K> iKeySerializer, OStreamSerializer iValueSerializer,
       int keySize) {
     super(iClusterName, iKeySerializer, iValueSerializer, keySize);
   }

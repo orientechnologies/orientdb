@@ -34,12 +34,13 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ORuntimeKeyIndexDefinition extends ODocumentWrapperNoClass implements OIndexDefinition {
-  private OBinarySerializer<?> serializer;
+public class ORuntimeKeyIndexDefinition<T> extends ODocumentWrapperNoClass implements OIndexDefinition {
+  private OBinarySerializer<T> serializer;
 
+  @SuppressWarnings("unchecked")
   public ORuntimeKeyIndexDefinition(final byte iId) {
     super(new ODocument());
-    serializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(iId);
+    serializer = (OBinarySerializer<T>) OBinarySerializerFactory.INSTANCE.getObjectSerializer(iId);
     if (serializer == null)
       throw new OConfigurationException("Runtime index definition cannot find binary serializer with id=" + iId
           + ". Assure to plug custom serializer into the server.");
@@ -83,10 +84,11 @@ public class ORuntimeKeyIndexDefinition extends ODocumentWrapperNoClass implemen
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   protected void fromStream() {
     final byte keySerializerId = ((Number) document.field("keySerializerId")).byteValue();
-    serializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(keySerializerId);
+    serializer = (OBinarySerializer<T>) OBinarySerializerFactory.INSTANCE.getObjectSerializer(keySerializerId);
   }
 
   public Object getDocumentValueToIndex(final ODocument iDocument) {
@@ -100,7 +102,7 @@ public class ORuntimeKeyIndexDefinition extends ODocumentWrapperNoClass implemen
     if (o == null || getClass() != o.getClass())
       return false;
 
-    final ORuntimeKeyIndexDefinition that = (ORuntimeKeyIndexDefinition) o;
+    final ORuntimeKeyIndexDefinition<?> that = (ORuntimeKeyIndexDefinition<?>) o;
     return serializer.equals(that.serializer);
   }
 
@@ -129,7 +131,7 @@ public class ORuntimeKeyIndexDefinition extends ODocumentWrapperNoClass implemen
     return ddl.toString();
   }
 
-  public OBinarySerializer<?> getSerializer() {
+  public OBinarySerializer<T> getSerializer() {
     return serializer;
   }
 }

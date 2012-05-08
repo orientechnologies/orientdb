@@ -238,7 +238,8 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 		}
 	}
 
-	public Collection<OIdentifiable> getValues(final Collection<?> iKeys, final int maxValuesToSearch) {
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+  public Collection<OIdentifiable> getValues(final Collection<?> iKeys, final int maxValuesToSearch) {
 		final List<Comparable> sortedKeys = new ArrayList<Comparable>((Collection<? extends Comparable>) iKeys);
 		Collections.sort(sortedKeys);
 
@@ -393,7 +394,8 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 
 	}
 
-	public Collection<ODocument> getEntries(final Collection<?> iKeys, final int maxEntriesToFetch) {
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+  public Collection<ODocument> getEntries(final Collection<?> iKeys, final int maxEntriesToFetch) {
 		final List<Comparable> sortedKeys = new ArrayList<Comparable>((Collection<? extends Comparable>) iKeys);
 		Collections.sort(sortedKeys);
 

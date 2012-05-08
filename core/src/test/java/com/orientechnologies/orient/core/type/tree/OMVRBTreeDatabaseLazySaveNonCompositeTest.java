@@ -15,42 +15,42 @@ import com.orientechnologies.orient.core.storage.OStorage;
 
 @Test
 public class OMVRBTreeDatabaseLazySaveNonCompositeTest extends OMVRBTreeNonCompositeTest {
-	private ODatabaseDocumentTx	database;
-	private int									oldPageSize;
-	private int									oldEntryPoints;
+  private ODatabaseDocumentTx database;
+  private int                 oldPageSize;
+  private int                 oldEntryPoints;
 
-	@BeforeClass
-	public void beforeClass() {
-		database = new ODatabaseDocumentTx("memory:mvrbtreeindextest").create();
-		database.addCluster("indextestclsuter", OStorage.CLUSTER_TYPE.MEMORY);
-	}
+  @BeforeClass
+  public void beforeClass() {
+    database = new ODatabaseDocumentTx("memory:mvrbtreeindextest").create();
+    database.addCluster("indextestclsuter", OStorage.CLUSTER_TYPE.MEMORY);
+  }
 
-	@BeforeMethod
-	@Override
-	public void beforeMethod() throws Exception {
-		oldPageSize = OGlobalConfiguration.MVRBTREE_NODE_PAGE_SIZE.getValueAsInteger();
-		OGlobalConfiguration.MVRBTREE_NODE_PAGE_SIZE.setValue(4);
+  @BeforeMethod
+  @Override
+  public void beforeMethod() throws Exception {
+    oldPageSize = OGlobalConfiguration.MVRBTREE_NODE_PAGE_SIZE.getValueAsInteger();
+    OGlobalConfiguration.MVRBTREE_NODE_PAGE_SIZE.setValue(4);
 
-		oldEntryPoints = OGlobalConfiguration.MVRBTREE_ENTRYPOINTS.getValueAsInteger();
-		OGlobalConfiguration.MVRBTREE_ENTRYPOINTS.setValue(1);
+    oldEntryPoints = OGlobalConfiguration.MVRBTREE_ENTRYPOINTS.getValueAsInteger();
+    OGlobalConfiguration.MVRBTREE_ENTRYPOINTS.setValue(1);
 
-		tree = new OMVRBTreeDatabaseLazySave<Double, Double>("indextestclsuter", new OSimpleKeySerializer(OType.DOUBLE),
-				OStreamSerializerLiteral.INSTANCE, 1);
+    tree = new OMVRBTreeDatabaseLazySave<Double, Double>("indextestclsuter", new OSimpleKeySerializer<Double>(OType.DOUBLE),
+        OStreamSerializerLiteral.INSTANCE, 1);
 
-		for (double i = 1; i < 10; i++) {
-			tree.put(i, i);
-		}
+    for (double i = 1; i < 10; i++) {
+      tree.put(i, i);
+    }
 
-		((OMVRBTreeDatabaseLazySave) tree).save();
-		((OMVRBTreeDatabaseLazySave) tree).optimize(true);
-	}
+    ((OMVRBTreeDatabaseLazySave<Double, Double>) tree).save();
+    ((OMVRBTreeDatabaseLazySave<Double, Double>) tree).optimize(true);
+  }
 
-	@AfterClass
-	public void afterClass() {
-		database.drop();
+  @AfterClass
+  public void afterClass() {
+    database.drop();
 
-		OGlobalConfiguration.MVRBTREE_NODE_PAGE_SIZE.setValue(oldPageSize);
-		OGlobalConfiguration.MVRBTREE_ENTRYPOINTS.setValue(oldEntryPoints);
-	}
+    OGlobalConfiguration.MVRBTREE_NODE_PAGE_SIZE.setValue(oldPageSize);
+    OGlobalConfiguration.MVRBTREE_ENTRYPOINTS.setValue(oldEntryPoints);
+  }
 
 }

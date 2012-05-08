@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OI
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 
+@SuppressWarnings("unchecked")
 public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderAbstract<K, V> {
   /**
    * Current version of serialization format for single MVRBTree node. Versions have negative numbers for backward compatibility
@@ -47,7 +48,6 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
 
   private byte[]            buffer;
 
-  @SuppressWarnings("unchecked")
   public OMVRBTreeMapEntryProvider(final OMVRBTreeMapProvider<K, V> iTreeDataProvider) {
     super(iTreeDataProvider, OMemoryStream.DEF_SIZE);
     keys = (K[]) new Object[pageSize];
@@ -60,7 +60,6 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     super(iTreeDataProvider, iRID);
   }
 
-  @SuppressWarnings("unchecked")
   public K getKeyAt(final int iIndex) {
     K k = keys[iIndex];
     if (k == null)
@@ -82,7 +81,6 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     return k;
   }
 
-  @SuppressWarnings("unchecked")
   public V getValueAt(final int iIndex) {
     V v = values[iIndex];
     if (v == null)
@@ -182,7 +180,6 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     return setDirty();
   }
 
-  @SuppressWarnings("unchecked")
   public boolean copyFrom(final OMVRBTreeEntryDataProvider<K, V> iSource) {
     final OMVRBTreeMapEntryProvider<K, V> source = (OMVRBTreeMapEntryProvider<K, V>) iSource;
 

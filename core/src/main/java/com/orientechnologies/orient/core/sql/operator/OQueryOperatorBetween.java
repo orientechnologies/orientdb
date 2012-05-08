@@ -15,16 +15,21 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -38,28 +43,28 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
  */
 public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
 
-	public OQueryOperatorBetween() {
-		super("BETWEEN", 5, false, 3);
-	}
+  public OQueryOperatorBetween() {
+    super("BETWEEN", 5, false, 3);
+  }
 
-	@Override
-	@SuppressWarnings("unchecked")
-	protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-			final Object iRight, OCommandContext iContext) {
+  @Override
+  @SuppressWarnings("unchecked")
+  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+      final Object iRight, OCommandContext iContext) {
     validate(iRight);
 
     final Iterator<?> valueIterator = OMultiValue.getMultiValueIterator(iRight);
 
-		final Object right1 = OType.convert(valueIterator.next(), iLeft.getClass());
-		if (right1 == null)
-			return false;
-		valueIterator.next();
-		final Object right2 = OType.convert(valueIterator.next(), iLeft.getClass());
-		if (right2 == null)
-			return false;
+    final Object right1 = OType.convert(valueIterator.next(), iLeft.getClass());
+    if (right1 == null)
+      return false;
+    valueIterator.next();
+    final Object right2 = OType.convert(valueIterator.next(), iLeft.getClass());
+    if (right2 == null)
+      return false;
 
-		return ((Comparable<Object>) iLeft).compareTo(right1) >= 0 && ((Comparable<Object>) iLeft).compareTo(right2) <= 0;
-	}
+    return ((Comparable<Object>) iLeft).compareTo(right1) >= 0 && ((Comparable<Object>) iLeft).compareTo(right2) <= 0;
+  }
 
   private void validate(Object iRight) {
     if (!OMultiValue.isMultiValue(iRight.getClass())) {
@@ -71,111 +76,108 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-	public String getSyntax() {
-		return "<left> " + keyword + " <minRange> AND <maxRange>";
-	}
+  public String getSyntax() {
+    return "<left> " + keyword + " <minRange> AND <maxRange>";
+  }
 
-	@Override
-	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
-		return OIndexReuseType.INDEX_METHOD;
-	}
+  @Override
+  public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
+    return OIndexReuseType.INDEX_METHOD;
+  }
 
-	@Override
-	public Collection<OIdentifiable> executeIndexQuery(OIndex<?> index, List<Object> keyParams, int fetchLimit) {
-		final OIndexDefinition indexDefinition = index.getDefinition();
-		final Collection<OIdentifiable> result;
+  @Override
+  public Collection<OIdentifiable> executeIndexQuery(OIndex<?> index, List<Object> keyParams, int fetchLimit) {
+    final OIndexDefinition indexDefinition = index.getDefinition();
+    final Collection<OIdentifiable> result;
 
-		final OIndexInternal internalIndex = index.getInternal();
-		if(!internalIndex.canBeUsedInEqualityOperators())
-			return null;
+    final OIndexInternal<?> internalIndex = index.getInternal();
+    if (!internalIndex.canBeUsedInEqualityOperators())
+      return null;
 
-		if(indexDefinition.getParamCount() == 1) {
-			final Object[] betweenKeys = (Object[]) keyParams.get(0);
+    if (indexDefinition.getParamCount() == 1) {
+      final Object[] betweenKeys = (Object[]) keyParams.get(0);
 
-			final Object keyOne = indexDefinition.createValue(Collections.singletonList(OSQLHelper.getValue(betweenKeys[0])));
-			final Object keyTwo = indexDefinition.createValue(Collections.singletonList(OSQLHelper.getValue(betweenKeys[2])));
+      final Object keyOne = indexDefinition.createValue(Collections.singletonList(OSQLHelper.getValue(betweenKeys[0])));
+      final Object keyTwo = indexDefinition.createValue(Collections.singletonList(OSQLHelper.getValue(betweenKeys[2])));
 
-			if (keyOne == null || keyTwo == null)
-				return null;
+      if (keyOne == null || keyTwo == null)
+        return null;
 
+      if (fetchLimit > -1)
+        result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
+      else
+        result = index.getValuesBetween(keyOne, true, keyTwo, true);
+    } else {
+      final Object[] betweenKeys = (Object[]) keyParams.get(keyParams.size() - 1);
 
-			if (fetchLimit > -1)
-				result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
-			else
-				result = index.getValuesBetween(keyOne, true, keyTwo, true);
-		} else {
-			final Object[] betweenKeys = (Object[]) keyParams.get(keyParams.size() - 1);
+      final Object betweenKeyOne = OSQLHelper.getValue(betweenKeys[0]);
 
-			final Object betweenKeyOne = OSQLHelper.getValue(betweenKeys[0]);
+      if (betweenKeyOne == null)
+        return null;
 
-			if (betweenKeyOne == null)
-				return null;
+      final Object betweenKeyTwo = OSQLHelper.getValue(betweenKeys[2]);
 
-			final Object betweenKeyTwo = OSQLHelper.getValue(betweenKeys[2]);
+      if (betweenKeyTwo == null)
+        return null;
 
-			if (betweenKeyTwo == null)
-				return null;
+      final List<Object> betweenKeyOneParams = new ArrayList<Object>(keyParams.size());
+      betweenKeyOneParams.addAll(keyParams.subList(0, keyParams.size() - 1));
+      betweenKeyOneParams.add(betweenKeyOne);
 
-			final List<Object> betweenKeyOneParams = new ArrayList<Object>(keyParams.size());
-			betweenKeyOneParams.addAll(keyParams.subList(0, keyParams.size() - 1));
-			betweenKeyOneParams.add(betweenKeyOne);
+      final List<Object> betweenKeyTwoParams = new ArrayList<Object>(keyParams.size());
+      betweenKeyTwoParams.addAll(keyParams.subList(0, keyParams.size() - 1));
+      betweenKeyTwoParams.add(betweenKeyTwo);
 
-			final List<Object> betweenKeyTwoParams = new ArrayList<Object>(keyParams.size());
-			betweenKeyTwoParams.addAll(keyParams.subList(0, keyParams.size() - 1));
-			betweenKeyTwoParams.add(betweenKeyTwo);
+      final Object keyOne = indexDefinition.createValue(betweenKeyOneParams);
 
-			final Object keyOne = indexDefinition.createValue(betweenKeyOneParams);
+      if (keyOne == null)
+        return null;
 
-			if (keyOne == null)
-				return null;
+      final Object keyTwo = indexDefinition.createValue(betweenKeyTwoParams);
 
-			final Object keyTwo = indexDefinition.createValue(betweenKeyTwoParams);
+      if (keyTwo == null)
+        return null;
 
-			if (keyTwo == null)
-				return null;
+      if (fetchLimit > -1)
+        result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
+      else
+        result = index.getValuesBetween(keyOne, true, keyTwo, true);
 
-			if (fetchLimit > -1)
-				result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
-			else
-				result = index.getValuesBetween(keyOne, true, keyTwo, true);
+      if (OProfiler.getInstance().isRecording()) {
+        OProfiler.getInstance().updateCounter("Query.compositeIndexUsage", 1);
+        OProfiler.getInstance().updateCounter("Query.compositeIndexUsage." + indexDefinition.getParamCount(), 1);
+      }
+    }
 
-			if (OProfiler.getInstance().isRecording()) {
-				OProfiler.getInstance().updateCounter("Query.compositeIndexUsage", 1);
-				OProfiler.getInstance().updateCounter("Query.compositeIndexUsage." + indexDefinition.getParamCount(), 1);
-			}
-		}
+    return result;
+  }
 
-		return result;
-	}
-
-	@Override
+  @Override
   public ORID getBeginRidRange(final Object iLeft, final Object iRight) {
     validate(iRight);
 
-    if (iLeft instanceof OSQLFilterItemField &&
-            ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iLeft).getRoot())) {
+    if (iLeft instanceof OSQLFilterItemField && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iLeft).getRoot())) {
       final Iterator<?> valueIterator = OMultiValue.getMultiValueIterator(iRight);
 
       final Object right1 = valueIterator.next();
       if (right1 != null)
-        return (ORID)right1;
+        return (ORID) right1;
 
       valueIterator.next();
 
-      return (ORID)valueIterator.next();
+      return (ORID) valueIterator.next();
     }
 
     return null;
   }
 
   @Override
-  public ORID getEndRidRange(final Object iLeft,final Object iRight) {
+  public ORID getEndRidRange(final Object iLeft, final Object iRight) {
     validate(iRight);
 
     validate(iRight);
 
-    if(iLeft instanceof OSQLFilterItemField &&
-            ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iLeft).getRoot())) {
+    if (iLeft instanceof OSQLFilterItemField && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iLeft).getRoot())) {
       final Iterator<?> valueIterator = OMultiValue.getMultiValueIterator(iRight);
 
       final Object right1 = valueIterator.next();
@@ -184,10 +186,10 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
 
       final Object right2 = valueIterator.next();
 
-      if(right2 == null)
-        return (ORID)right1;
+      if (right2 == null)
+        return (ORID) right1;
 
-      return (ORID)right2;
+      return (ORID) right2;
     }
 
     return null;

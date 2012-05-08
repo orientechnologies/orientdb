@@ -118,6 +118,7 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
     }
   }
 
+  @SuppressWarnings("unchecked")
   public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
     final long timer = OProfiler.getInstance().startChrono();
     try {
@@ -176,6 +177,7 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
     return this;
   }
 
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   public OBinarySerializer<K> createRelatedSerializer(final OStreamSerializer streamKeySerializer) {
     if (streamKeySerializer instanceof OBinarySerializer)
       return (OBinarySerializer<K>) streamKeySerializer;

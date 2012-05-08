@@ -26,7 +26,11 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
+import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -39,110 +43,111 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
  */
 public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls {
 
-	public OQueryOperatorContainsValue() {
-		super("CONTAINSVALUE", 5, false);
-	}
+  public OQueryOperatorContainsValue() {
+    super("CONTAINSVALUE", 5, false);
+  }
 
-	@Override
-	@SuppressWarnings("unchecked")
-	protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-			final Object iRight, OCommandContext iContext) {
-		final OSQLFilterCondition condition;
-		if (iCondition.getLeft() instanceof OSQLFilterCondition)
-			condition = (OSQLFilterCondition) iCondition.getLeft();
-		else if (iCondition.getRight() instanceof OSQLFilterCondition)
-			condition = (OSQLFilterCondition) iCondition.getRight();
-		else
-			condition = null;
+  @Override
+  @SuppressWarnings("unchecked")
+  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+      final Object iRight, OCommandContext iContext) {
+    final OSQLFilterCondition condition;
+    if (iCondition.getLeft() instanceof OSQLFilterCondition)
+      condition = (OSQLFilterCondition) iCondition.getLeft();
+    else if (iCondition.getRight() instanceof OSQLFilterCondition)
+      condition = (OSQLFilterCondition) iCondition.getRight();
+    else
+      condition = null;
 
-		if (iLeft instanceof Map<?, ?>) {
-			final Map<String, ?> map = (Map<String, ?>) iLeft;
+    if (iLeft instanceof Map<?, ?>) {
+      final Map<String, ?> map = (Map<String, ?>) iLeft;
 
-			if (condition != null) {
-				// CHECK AGAINST A CONDITION
-				for (Object o : map.values()) {
-					o = loadIfNeed(o);
-					if ((Boolean) condition.evaluate((ORecordSchemaAware<?>) o, iContext))
-						return true;
-				}
-			} else
-				return map.containsValue(iRight);
+      if (condition != null) {
+        // CHECK AGAINST A CONDITION
+        for (Object o : map.values()) {
+          o = loadIfNeed(o);
+          if ((Boolean) condition.evaluate((ORecordSchemaAware<?>) o, iContext))
+            return true;
+        }
+      } else
+        return map.containsValue(iRight);
 
-		} else if (iRight instanceof Map<?, ?>) {
-			final Map<String, ?> map = (Map<String, ?>) iRight;
+    } else if (iRight instanceof Map<?, ?>) {
+      final Map<String, ?> map = (Map<String, ?>) iRight;
 
-			if (condition != null)
-				// CHECK AGAINST A CONDITION
-				for (Object o : map.values()) {
-					o = loadIfNeed(o);
-					if ((Boolean) condition.evaluate((ORecordSchemaAware<?>) o, iContext))
-						return true;
-					else
-						return map.containsValue(iLeft);
-				}
-		}
-		return false;
-	}
+      if (condition != null)
+        // CHECK AGAINST A CONDITION
+        for (Object o : map.values()) {
+          o = loadIfNeed(o);
+          if ((Boolean) condition.evaluate((ORecordSchemaAware<?>) o, iContext))
+            return true;
+          else
+            return map.containsValue(iLeft);
+        }
+    }
+    return false;
+  }
 
-	@SuppressWarnings("unchecked")
-	private Object loadIfNeed(Object o) {
-		final ORecord<?> record = (ORecord<?>) o;
-		if (record.getRecord().getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
-			try {
-				o = record.<ORecord> load();
-			} catch (ORecordNotFoundException e) {
-				throw new OException("Error during loading record with id : " + record.getIdentity());
-			}
-		}
-		return o;
-	}
+  @SuppressWarnings({ "unchecked", "rawtypes" })
+  private Object loadIfNeed(Object o) {
+    final ORecord<?> record = (ORecord<?>) o;
+    if (record.getRecord().getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+      try {
+        o = record.<ORecord> load();
+      } catch (ORecordNotFoundException e) {
+        throw new OException("Error during loading record with id : " + record.getIdentity());
+      }
+    }
+    return o;
+  }
 
-	@Override
-	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
-		if (!(iRight instanceof OSQLFilterCondition) && !(iLeft instanceof OSQLFilterCondition))
-			return OIndexReuseType.INDEX_METHOD;
+  @Override
+  public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
+    if (!(iRight instanceof OSQLFilterCondition) && !(iLeft instanceof OSQLFilterCondition))
+      return OIndexReuseType.INDEX_METHOD;
 
-		return OIndexReuseType.NO_INDEX;
-	}
+    return OIndexReuseType.NO_INDEX;
+  }
 
-	@Override
-	public Collection<OIdentifiable> executeIndexQuery(OIndex<?> index, List<Object> keyParams, int fetchLimit) {
-		final OIndexDefinition indexDefinition = index.getDefinition();
+  @SuppressWarnings("unchecked")
+  @Override
+  public Collection<OIdentifiable> executeIndexQuery(OIndex<?> index, List<Object> keyParams, int fetchLimit) {
+    final OIndexDefinition indexDefinition = index.getDefinition();
 
-		if (!((index.getDefinition() instanceof OPropertyMapIndexDefinition)
-						&& ((OPropertyMapIndexDefinition) index.getDefinition()).getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.VALUE))
-			return null;
+    if (!((index.getDefinition() instanceof OPropertyMapIndexDefinition) && ((OPropertyMapIndexDefinition) index.getDefinition())
+        .getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.VALUE))
+      return null;
 
-		final OIndexInternal internalIndex = index.getInternal();
-		if (!internalIndex.canBeUsedInEqualityOperators())
-			return null;
+    final OIndexInternal<?> internalIndex = index.getInternal();
+    if (!internalIndex.canBeUsedInEqualityOperators())
+      return null;
 
-		if (indexDefinition.getParamCount() == 1) {
-			final Object key;
-			if (indexDefinition instanceof OIndexDefinitionMultiValue)
-				key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
-			else
-				key = indexDefinition.createValue(keyParams);
+    if (indexDefinition.getParamCount() == 1) {
+      final Object key;
+      if (indexDefinition instanceof OIndexDefinitionMultiValue)
+        key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
+      else
+        key = indexDefinition.createValue(keyParams);
 
-			if (key == null)
-				return null;
+      if (key == null)
+        return null;
 
-			final Object indexResult = index.get(key);
-			if (indexResult instanceof Collection)
-				return (Collection<OIdentifiable>) indexResult;
+      final Object indexResult = index.get(key);
+      if (indexResult instanceof Collection)
+        return (Collection<OIdentifiable>) indexResult;
 
-			return Collections.singletonList((OIdentifiable) indexResult);
-		}
-		return null;
-	}
+      return Collections.singletonList((OIdentifiable) indexResult);
+    }
+    return null;
+  }
 
-	@Override
-	public ORID getBeginRidRange(Object iLeft, Object iRight) {
-		return null;
-	}
+  @Override
+  public ORID getBeginRidRange(Object iLeft, Object iRight) {
+    return null;
+  }
 
-	@Override
-	public ORID getEndRidRange(Object iLeft, Object iRight) {
-		return null;
-	}
+  @Override
+  public ORID getEndRidRange(Object iLeft, Object iRight) {
+    return null;
+  }
 }

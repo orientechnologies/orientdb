@@ -52,7 +52,7 @@ public class OMVRBTreeDatabaseLazySaveCompositeTest extends OMVRBTreeCompositeTe
 				tree.put(compositeKey, i * 4 + j);
 			}
 		}
-		((OMVRBTreeDatabaseLazySave) tree).save();
-		((OMVRBTreeDatabaseLazySave) tree).optimize(true);
+		((OMVRBTreeDatabaseLazySave<OCompositeKey, Double>) tree).save();
+		((OMVRBTreeDatabaseLazySave<OCompositeKey, Double>) tree).optimize(true);
 	}
 }

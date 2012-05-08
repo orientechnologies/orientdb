@@ -52,120 +52,120 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
  */
 public class OFindReferenceHelper {
 
-	public static List<ODocument> findReferences(final Set<ORID> iRecordIds, final String classList) {
-		final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+  public static List<ODocument> findReferences(final Set<ORID> iRecordIds, final String classList) {
+    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
-		final Map<ORID, Set<ORID>> map = new HashMap<ORID, Set<ORID>>();
-		for (ORID rid : iRecordIds) {
-			map.put(rid, new HashSet<ORID>());
-		}
+    final Map<ORID, Set<ORID>> map = new HashMap<ORID, Set<ORID>>();
+    for (ORID rid : iRecordIds) {
+      map.put(rid, new HashSet<ORID>());
+    }
 
-		if (classList == null || classList.isEmpty()) {
-			for (String clusterName : db.getClusterNames()) {
-				browseCluster(db, iRecordIds, map, clusterName);
-			}
-		} else {
-			final List<String> classes = OStringSerializerHelper.smartSplit(classList, ',');
-			for (String clazz : classes) {
-				if (clazz.startsWith("CLUSTER:")) {
-					browseCluster(db, iRecordIds, map, clazz.substring(clazz.indexOf("CLUSTER:") + "CLUSTER:".length()));
-				} else {
-					browseClass(db, iRecordIds, map, clazz);
-				}
-			}
-		}
+    if (classList == null || classList.isEmpty()) {
+      for (String clusterName : db.getClusterNames()) {
+        browseCluster(db, iRecordIds, map, clusterName);
+      }
+    } else {
+      final List<String> classes = OStringSerializerHelper.smartSplit(classList, ',');
+      for (String clazz : classes) {
+        if (clazz.startsWith("CLUSTER:")) {
+          browseCluster(db, iRecordIds, map, clazz.substring(clazz.indexOf("CLUSTER:") + "CLUSTER:".length()));
+        } else {
+          browseClass(db, iRecordIds, map, clazz);
+        }
+      }
+    }
 
-		final List<ODocument> result = new ArrayList<ODocument>();
-		for (Entry<ORID, Set<ORID>> entry : map.entrySet()) {
-			final ODocument doc = new ODocument();
-			result.add(doc);
+    final List<ODocument> result = new ArrayList<ODocument>();
+    for (Entry<ORID, Set<ORID>> entry : map.entrySet()) {
+      final ODocument doc = new ODocument();
+      result.add(doc);
 
-			doc.field("rid", entry.getKey());
-			doc.field("referredBy", entry.getValue());
-		}
+      doc.field("rid", entry.getKey());
+      doc.field("referredBy", entry.getValue());
+    }
 
-		return result;
-	}
+    return result;
+  }
 
-	private static void browseCluster(final ODatabaseRecord iDatabase, final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map,
-			final String iClusterName) {
-		for (ORecordInternal<?> record : iDatabase.browseCluster(iClusterName)) {
-			if (record instanceof ODocument) {
-				try {
-					for (String fieldName : ((ODocument) record).fieldNames()) {
-						Object value = ((ODocument) record).field(fieldName);
-						checkObject(iSourceRIDs, map, value, (ODocument) record);
-					}
-				} catch (Exception e) {
-					OLogManager.instance().debug(null, "Error reading record " + record.getIdentity(), e);
-				}
-			}
-		}
-	}
+  private static void browseCluster(final ODatabaseRecord iDatabase, final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map,
+      final String iClusterName) {
+    for (ORecordInternal<?> record : iDatabase.browseCluster(iClusterName)) {
+      if (record instanceof ODocument) {
+        try {
+          for (String fieldName : ((ODocument) record).fieldNames()) {
+            Object value = ((ODocument) record).field(fieldName);
+            checkObject(iSourceRIDs, map, value, (ODocument) record);
+          }
+        } catch (Exception e) {
+          OLogManager.instance().debug(null, "Error reading record " + record.getIdentity(), e);
+        }
+      }
+    }
+  }
 
-	private static void browseClass(final ODatabaseRecord db, Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map,
-			final String iClassName) {
-		final OClass clazz = db.getMetadata().getSchema().getClass(iClassName);
+  private static void browseClass(final ODatabaseRecord db, Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map,
+      final String iClassName) {
+    final OClass clazz = db.getMetadata().getSchema().getClass(iClassName);
 
-		if (clazz == null)
-			throw new OCommandExecutionException("Class '" + iClassName + "' was not found");
+    if (clazz == null)
+      throw new OCommandExecutionException("Class '" + iClassName + "' was not found");
 
-		for (int i : clazz.getClusterIds()) {
-			browseCluster(db, iSourceRIDs, map, db.getClusterNameById(i));
-		}
-	}
+    for (int i : clazz.getClusterIds()) {
+      browseCluster(db, iSourceRIDs, map, db.getClusterNameById(i));
+    }
+  }
 
-	private static void checkObject(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final Object value,
-			final ORecord<?> iRootObject) {
-		if (value instanceof OIdentifiable) {
-			checkRecord(iSourceRIDs, map, (OIdentifiable) value, iRootObject);
-		} else if (value instanceof Collection<?>) {
-			checkCollection(iSourceRIDs, map, (Collection<?>) value, iRootObject);
-		} else if (value instanceof Map<?, ?>) {
-			checkMap(iSourceRIDs, map, (Map<?, ?>) value, iRootObject);
-		}
-	}
+  private static void checkObject(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final Object value,
+      final ORecord<?> iRootObject) {
+    if (value instanceof OIdentifiable) {
+      checkRecord(iSourceRIDs, map, (OIdentifiable) value, iRootObject);
+    } else if (value instanceof Collection<?>) {
+      checkCollection(iSourceRIDs, map, (Collection<?>) value, iRootObject);
+    } else if (value instanceof Map<?, ?>) {
+      checkMap(iSourceRIDs, map, (Map<?, ?>) value, iRootObject);
+    }
+  }
 
-	private static void checkCollection(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final Collection<?> values,
-			final ORecord<?> iRootObject) {
-		final Iterator<?> it;
-		if (values instanceof OLazyObjectListInterface<?>) {
-			((OLazyObjectListInterface<?>) values).setConvertToRecord(false);
-			it = ((OLazyObjectListInterface<?>) values).listIterator();
-		} else if (values instanceof OLazyObjectSetInterface) {
-			((OLazyObjectSetInterface) values).setConvertToRecord(false);
-			it = ((OLazyObjectSetInterface) values).iterator();
-		} else if (values instanceof ORecordLazyList) {
-			it = ((ORecordLazyList) values).rawIterator();
-		} else if (values instanceof OMVRBTreeRIDSet) {
-			it = ((OMVRBTreeRIDSet) values).iterator();
-		} else {
-			it = values.iterator();
-		}
-		while (it.hasNext()) {
-			checkObject(iSourceRIDs, map, it.next(), iRootObject);
-		}
-	}
+  private static void checkCollection(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final Collection<?> values,
+      final ORecord<?> iRootObject) {
+    final Iterator<?> it;
+    if (values instanceof OLazyObjectListInterface<?>) {
+      ((OLazyObjectListInterface<?>) values).setConvertToRecord(false);
+      it = ((OLazyObjectListInterface<?>) values).listIterator();
+    } else if (values instanceof OLazyObjectSetInterface) {
+      ((OLazyObjectSetInterface<?>) values).setConvertToRecord(false);
+      it = ((OLazyObjectSetInterface<?>) values).iterator();
+    } else if (values instanceof ORecordLazyList) {
+      it = ((ORecordLazyList) values).rawIterator();
+    } else if (values instanceof OMVRBTreeRIDSet) {
+      it = ((OMVRBTreeRIDSet) values).iterator();
+    } else {
+      it = values.iterator();
+    }
+    while (it.hasNext()) {
+      checkObject(iSourceRIDs, map, it.next(), iRootObject);
+    }
+  }
 
-	private static void checkMap(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final Map<?, ?> values,
-			final ORecord<?> iRootObject) {
-		final Iterator<?> it;
-		if (values instanceof OLazyObjectMapInterface<?>) {
-			((OLazyObjectMapInterface<?>) values).setConvertToRecord(false);
-			it = ((OLazyObjectMapInterface<?>) values).values().iterator();
-		} else if (values instanceof ORecordLazyMap) {
-			it = ((ORecordLazyMap) values).rawIterator();
-		} else {
-			it = values.values().iterator();
-		}
-		while (it.hasNext()) {
-			checkObject(iSourceRIDs, map, it.next(), iRootObject);
-		}
-	}
+  private static void checkMap(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final Map<?, ?> values,
+      final ORecord<?> iRootObject) {
+    final Iterator<?> it;
+    if (values instanceof OLazyObjectMapInterface<?>) {
+      ((OLazyObjectMapInterface<?>) values).setConvertToRecord(false);
+      it = ((OLazyObjectMapInterface<?>) values).values().iterator();
+    } else if (values instanceof ORecordLazyMap) {
+      it = ((ORecordLazyMap) values).rawIterator();
+    } else {
+      it = values.values().iterator();
+    }
+    while (it.hasNext()) {
+      checkObject(iSourceRIDs, map, it.next(), iRootObject);
+    }
+  }
 
-	private static void checkRecord(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final OIdentifiable value,
-			final ORecord<?> iRootObject) {
-		if (iSourceRIDs.contains(value.getIdentity()))
-			map.get(value.getIdentity()).add(iRootObject.getIdentity());
-	}
+  private static void checkRecord(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final OIdentifiable value,
+      final ORecord<?> iRootObject) {
+    if (iSourceRIDs.contains(value.getIdentity()))
+      map.get(value.getIdentity()).add(iRootObject.getIdentity());
+  }
 }

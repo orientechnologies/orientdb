@@ -90,7 +90,7 @@ public class ORecordBytesTest {
 		return field.get(source);
 	}
 
-	private static Field getField(Class clazz, String fieldName) throws NoSuchFieldException {
+	private static Field getField(Class<?> clazz, String fieldName) throws NoSuchFieldException {
 		if (clazz == null) {
 			throw new NoSuchFieldException(fieldName);
 		}
