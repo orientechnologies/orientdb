@@ -90,8 +90,8 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
 
           cfgField = cfgField.substring(pos + 1);
 
-          fields.add(cfgField);
         }
+        fields.add(cfgField);
       }
     }
 
