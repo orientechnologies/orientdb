@@ -15,15 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.*;
-import java.util.Map.Entry;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
@@ -44,6 +35,14 @@ import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.*;
+import java.util.Map.Entry;
 
 @Test(groups = { "index" })
 public class IndexTest {
@@ -1264,4 +1263,62 @@ public class IndexTest {
 		Assert.assertTrue(result.isEmpty());
 
 	}
+
+    public void createInheritanceIndex(){
+      ODatabaseDocument db = new ODatabaseDocumentTx(database.getURL());
+      try{
+        db.open("admin", "admin");
+
+        if (!db.getMetadata().getSchema().existsClass("BaseTestClass")) {
+          OClass baseClass = db.getMetadata().getSchema().createClass("BaseTestClass");
+          OClass childClass = db.getMetadata().getSchema().createClass("ChildTestClass");
+          OClass anotherChildClass = db.getMetadata().getSchema().createClass("AnotherChildTestClass");
+
+          if (!baseClass.isSuperClassOf(childClass))
+            childClass.setSuperClass(baseClass);
+          if (!baseClass.isSuperClassOf(anotherChildClass))
+            anotherChildClass.setSuperClass(baseClass);
+
+          baseClass.createProperty("testParentProperty", OType.LONG).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+          db.getMetadata().getSchema().save();
+        }
+
+        ODocument childClassDocument = db.newInstance("ChildTestClass");
+        childClassDocument.field("testParentProperty", 10L);
+        childClassDocument.save();
+
+        ODocument anotherChildClassDocument = db.newInstance("AnotherChildTestClass");
+        anotherChildClassDocument.field("testParentProperty", 11L);
+        anotherChildClassDocument.save();
+
+        Assert.assertFalse(new ORecordId(-1,-1).equals(childClassDocument));
+        Assert.assertFalse(new ORecordId(-1,-1).equals(anotherChildClassDocument));
+      } finally {
+        db.close();
+      }
+    }
+
+    @Test(dependsOnMethods = "createInheritanceIndex")
+    public void testIndexReturnOnlySpecifiedClass() throws Exception {
+      List<ODocument> result;
+
+      ODatabaseDocument db = database.getUnderlying();
+
+
+
+      result = db.command(new OSQLSynchQuery("select * from ChildTestClass where testParentProperty = 10")).execute();
+      Assert.assertNotNull(result);
+      Assert.assertEquals(1, result.size());
+      Assert.assertEquals(10L, result.get(0).field("testParentProperty"));
+
+      result = db.command(new OCommandSQL("select * from AnotherChildTestClass where testParentProperty = 11")).execute();
+      Assert.assertNotNull(result);
+      Assert.assertEquals(1, result.size());
+      Assert.assertEquals(11L, result.get(0).field("testParentProperty"));
+
+
+
+    }
 }
+
