@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.WeakHashMap;
 
 /**
  * Profiling utility class. Handles chronos (times), statistics and counters. By default it's used as Singleton but you can create
@@ -420,7 +421,7 @@ public class OProfiler implements OProfilerMBean {
     counters = new HashMap<String, Long>();
     chronos = new HashMap<String, OProfilerEntry>();
     stats = new HashMap<String, OProfilerEntry>();
-    hooks = new HashMap<OProfiler.OProfilerHookValue, String>();
+    hooks = new WeakHashMap<OProfiler.OProfilerHookValue, String>();
 
     lastReset = new Date();
   }
