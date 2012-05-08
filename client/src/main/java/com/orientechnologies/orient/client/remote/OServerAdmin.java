@@ -281,7 +281,7 @@ public class OServerAdmin {
     final ODocument response = sendRequest(OChannelBinaryProtocol.REQUEST_CLUSTER, new ODocument().field("operation", "status"),
         "Cluster status");
 
-    OLogManager.instance().debug(this, "Cluster status %s", response);
+    OLogManager.instance().debug(this, "Cluster status %s", response.toJSON());
     return response;
   }
 
@@ -502,8 +502,12 @@ public class OServerAdmin {
         storage.endRequest(network);
       }
 
-      storage.getResponse(network);
-      new ODocument(network.readBytes());
+      storage.beginResponse(network);
+      try {
+        return new ODocument(network.readBytes());
+      } finally {
+        storage.endResponse(network);
+      }
 
     } catch (Exception e) {
       OLogManager.instance().exception("Error on executing '%s'", e, OStorageException.class, iActivity);

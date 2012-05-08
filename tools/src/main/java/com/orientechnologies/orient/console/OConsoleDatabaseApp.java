@@ -1171,7 +1171,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     try {
 
       out.println("Cluster status:");
-      out.println(serverAdmin.clusterStatus());
+      out.println(serverAdmin.clusterStatus().toJSON("attribSameRow,alwaysFetchEmbedded,fetchPlan:*:0"));
 
     } catch (Exception e) {
       printError(e);
