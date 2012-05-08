@@ -45,12 +45,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
-import com.orientechnologies.orient.core.index.OIndexFullText;
 import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.index.OIndexNotUnique;
-import com.orientechnologies.orient.core.index.OIndexUnique;
-import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -67,10 +62,6 @@ import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContains;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsKey;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsText;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsValue;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
@@ -170,11 +161,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       return result;
     }
 
-    if (target == null)
-      assignTarget(null);
-
-    if (subiterator == null)
-      subiterator = (Iterator<OIdentifiable>) target.iterator();
+    if (subiterator == null) {
+      executeSearch(null);
+      if (target == null)
+        // GET THE RESULT
+        subiterator = getResult().iterator();
+      else
+        subiterator = (Iterator<OIdentifiable>) target.iterator();
+    }
 
     // RESUME THE LAST POSITION
     while (subiterator.hasNext()) {
@@ -199,16 +193,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   public Object execute(final Map<Object, Object> iArgs) {
     fetchLimit = getQueryFetchLimit();
 
-    if (!assignTarget(iArgs)) {
-      if (compiledFilter.getTargetIndex() != null)
-        searchInIndex();
-      else
-        throw new OQueryParsingException("No source found in query: specify class, cluster(s), index or single record(s). Use "
-            + getSyntax());
-    }
-
-    executeSearch();
-
+    executeSearch(iArgs);
     applyFlatten();
     applyProjections();
     applyOrderBy();
@@ -217,7 +202,15 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return handleResult();
   }
 
-  protected void executeSearch() {
+  protected void executeSearch(final Map<Object, Object> iArgs) {
+    if (!assignTarget(iArgs)) {
+      if (compiledFilter.getTargetIndex() != null)
+        searchInIndex();
+      else
+        throw new OQueryParsingException("No source found in query: specify class, cluster(s), index or single record(s). Use "
+            + getSyntax());
+    }
+
     if (target == null)
       // SEARCH WITHOUT USING TARGET (USUALLY WHEN INDEXES ARE INVOLVED)
       return;
@@ -263,8 +256,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           tempResult = new ArrayList<OIdentifiable>();
 
         tempResult.add(lastRecord);
-      } else {
-        // CALL THE LISTENER NOW
+      } else if (subiterator == null) {
+        // CALL THE LISTENER NOW BECAUSE IS NTO BROWSING (subiterator==null)
         if (request.getResultListener() != null)
           request.getResultListener().result(lastRecord);
       }
@@ -376,72 +369,72 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       super.searchInClasses();
   }
 
-	@SuppressWarnings("rawtypes")
-	private boolean searchForIndexes(final OClass iSchemaClass) {
-		final ODatabaseRecord database = getDatabase();
-		database.checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, iSchemaClass.getName().toLowerCase());
+  @SuppressWarnings("rawtypes")
+  private boolean searchForIndexes(final OClass iSchemaClass) {
+    final ODatabaseRecord database = getDatabase();
+    database.checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, iSchemaClass.getName().toLowerCase());
 
-		// Create set that is sorted by amount of fields in OIndexSearchResult items
-		// so the most specific restrictions will be processed first.
-		final List<OIndexSearchResult> indexSearchResults = new ArrayList<OIndexSearchResult>();
+    // Create set that is sorted by amount of fields in OIndexSearchResult items
+    // so the most specific restrictions will be processed first.
+    final List<OIndexSearchResult> indexSearchResults = new ArrayList<OIndexSearchResult>();
 
-		// fetch all possible variants of subqueries that can be used in indexes.
-		analyzeQueryBranch(iSchemaClass, compiledFilter.getRootCondition(), indexSearchResults);
+    // fetch all possible variants of subqueries that can be used in indexes.
+    analyzeQueryBranch(iSchemaClass, compiledFilter.getRootCondition(), indexSearchResults);
 
-		// most specific will be processed first
-		Collections.sort(indexSearchResults, new Comparator<OIndexSearchResult>() {
-			public int compare(final OIndexSearchResult searchResultOne, final OIndexSearchResult searchResultTwo) {
-				return searchResultTwo.getFieldCount() - searchResultOne.getFieldCount();
-			}
-		});
+    // most specific will be processed first
+    Collections.sort(indexSearchResults, new Comparator<OIndexSearchResult>() {
+      public int compare(final OIndexSearchResult searchResultOne, final OIndexSearchResult searchResultTwo) {
+        return searchResultTwo.getFieldCount() - searchResultOne.getFieldCount();
+      }
+    });
 
-		// go through all variants to choose which one can be used for index search.
-		for (final OIndexSearchResult searchResult : indexSearchResults) {
-			final int searchResultFieldsCount = searchResult.fields().size();
+    // go through all variants to choose which one can be used for index search.
+    for (final OIndexSearchResult searchResult : indexSearchResults) {
+      final int searchResultFieldsCount = searchResult.fields().size();
 
-			final List<OIndex<?>> involvedIndexes = getInvolvedIndexes(iSchemaClass, searchResult);
-			Collections.sort(involvedIndexes, new Comparator<OIndex>() {
-				public int compare(final OIndex indexOne, final OIndex indexTwo) {
-					return indexOne.getDefinition().getParamCount() - indexTwo.getDefinition().getParamCount();
-				}
-			});
+      final List<OIndex<?>> involvedIndexes = getInvolvedIndexes(iSchemaClass, searchResult);
+      Collections.sort(involvedIndexes, new Comparator<OIndex>() {
+        public int compare(final OIndex indexOne, final OIndex indexTwo) {
+          return indexOne.getDefinition().getParamCount() - indexTwo.getDefinition().getParamCount();
+        }
+      });
 
-			// go through all possible index for given set of fields.
-			for (final OIndex index : involvedIndexes) {
-				final OIndexDefinition indexDefinition = index.getDefinition();
-				final OQueryOperator operator = searchResult.lastOperator;
+      // go through all possible index for given set of fields.
+      for (final OIndex index : involvedIndexes) {
+        final OIndexDefinition indexDefinition = index.getDefinition();
+        final OQueryOperator operator = searchResult.lastOperator;
 
-				// we need to test that last field in query subset and field in index that has the same position
-				// are equals.
-				if (!(operator instanceof OQueryOperatorEquals)) {
-					final String lastFiled = searchResult.lastField.getItemName(searchResult.lastField.getItemCount() - 1);
-					final String relatedIndexField = indexDefinition.getFields().get(searchResult.fieldValuePairs.size());
-					if (!lastFiled.equals(relatedIndexField))
-						continue;
-				}
+        // we need to test that last field in query subset and field in index that has the same position
+        // are equals.
+        if (!(operator instanceof OQueryOperatorEquals)) {
+          final String lastFiled = searchResult.lastField.getItemName(searchResult.lastField.getItemCount() - 1);
+          final String relatedIndexField = indexDefinition.getFields().get(searchResult.fieldValuePairs.size());
+          if (!lastFiled.equals(relatedIndexField))
+            continue;
+        }
 
-				final List<Object> keyParams = new ArrayList<Object>(searchResultFieldsCount);
-				// We get only subset contained in processed sub query.
-				for (final String fieldName : indexDefinition.getFields().subList(0, searchResultFieldsCount)) {
-					final Object fieldValue = searchResult.fieldValuePairs.get(fieldName);
-					if (fieldValue != null)
-						keyParams.add(fieldValue);
-					else
-						keyParams.add(searchResult.lastValue);
-				}
+        final List<Object> keyParams = new ArrayList<Object>(searchResultFieldsCount);
+        // We get only subset contained in processed sub query.
+        for (final String fieldName : indexDefinition.getFields().subList(0, searchResultFieldsCount)) {
+          final Object fieldValue = searchResult.fieldValuePairs.get(fieldName);
+          if (fieldValue != null)
+            keyParams.add(fieldValue);
+          else
+            keyParams.add(searchResult.lastValue);
+        }
 
-				final Collection<OIdentifiable> result = operator.executeIndexQuery(index, keyParams, fetchLimit);
-				if (result == null)
-					continue;
+        final Collection<OIdentifiable> result = operator.executeIndexQuery(index, keyParams, fetchLimit);
+        if (result == null)
+          continue;
 
-				fillSearchIndexResultSet(result);
-				return true;
-			}
-		}
-		return false;
-	}
+        fillSearchIndexResultSet(result);
+        return true;
+      }
+    }
+    return false;
+  }
 
-	private List<OIndex<?>> getInvolvedIndexes(OClass iSchemaClass, OIndexSearchResult searchResultFields) {
+  private List<OIndex<?>> getInvolvedIndexes(OClass iSchemaClass, OIndexSearchResult searchResultFields) {
     final Set<OIndex<?>> involvedIndexes = iSchemaClass.getInvolvedIndexes(searchResultFields.fields());
 
     final List<OIndex<?>> result = new ArrayList<OIndex<?>>(involvedIndexes.size());
@@ -543,23 +536,21 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (indexResult != null) {
       if (indexResult instanceof Collection<?>) {
         Collection<OIdentifiable> indexResultSet = (Collection<OIdentifiable>) indexResult;
-        if (!indexResultSet.isEmpty()) {
-          // FOUND USING INDEXES
-          for (OIdentifiable identifiable : indexResultSet) {
-            ORecord<?> record = identifiable.getRecord();
-            if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
-              try {
-                record = record.<ORecord> load();
-              } catch (ORecordNotFoundException e) {
-                throw new OException("Error during loading record with id : " + record.getIdentity());
-              }
-            }
 
-            if (filter((ORecordInternal<?>) record)) {
-              final boolean continueResultParsing = addResult(record);
-              if (!continueResultParsing)
-                break;
+        for (OIdentifiable identifiable : indexResultSet) {
+          ORecord<?> record = identifiable.getRecord();
+          if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+            try {
+              record = record.<ORecord> load();
+            } catch (ORecordNotFoundException e) {
+              throw new OException("Error during loading record with id : " + record.getIdentity());
             }
+          }
+
+          if (filter((ORecordInternal<?>) record)) {
+            final boolean continueResultParsing = addResult(record);
+            if (!continueResultParsing)
+              break;
           }
         }
       } else {
@@ -860,7 +851,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       }
 
-      final OIndexInternal indexInternal = index.getInternal();
+      final OIndexInternal<?> indexInternal = index.getInternal();
       if (indexInternal instanceof OSharedResource)
         ((OSharedResource) indexInternal).acquireExclusiveLock();
 
