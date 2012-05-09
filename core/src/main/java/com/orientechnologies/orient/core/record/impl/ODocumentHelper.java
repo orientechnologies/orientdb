@@ -72,7 +72,8 @@ public class ODocumentHelper {
   public static final String ATTRIBUTE_RAW     = "@raw";
 
   public static void sort(List<OIdentifiable> ioResultSet, List<OPair<String, String>> iOrderCriteria) {
-    Collections.sort(ioResultSet, new ODocumentComparator(iOrderCriteria));
+    if (ioResultSet != null)
+      Collections.sort(ioResultSet, new ODocumentComparator(iOrderCriteria));
   }
 
   @SuppressWarnings("unchecked")
