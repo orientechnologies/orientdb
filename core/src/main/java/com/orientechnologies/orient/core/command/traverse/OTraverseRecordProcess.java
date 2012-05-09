@@ -37,6 +37,9 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
   }
 
   public OIdentifiable process() {
+    if (target == null)
+      return drop();
+    
     if (command.getContext().isAlreadyTraversed(target))
       // ALREADY EVALUATED, DON'T GO IN DEEP
       return drop();
