@@ -71,7 +71,6 @@ public class OSingleFileSegment {
     if (file != null) {
       file.delete();
       OMMapManager.removeFile(file);
-      file = null;
     }
   }
 

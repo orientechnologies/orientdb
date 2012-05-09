@@ -34,219 +34,216 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
  * <br/>
  */
 public class OFileClassic extends OAbstractFile {
-	public final static String	NAME								= "classic";
-	protected ByteBuffer				internalWriteBuffer	= ByteBuffer.allocate(OBinaryProtocol.SIZE_LONG);
+  public final static String NAME                = "classic";
+  protected ByteBuffer       internalWriteBuffer = ByteBuffer.allocate(OBinaryProtocol.SIZE_LONG);
 
-	public OFileClassic init(String iFileName, String iMode) {
-		super.init(iFileName, iMode);
-		return this;
-	}
+  public OFileClassic init(String iFileName, String iMode) {
+    super.init(iFileName, iMode);
+    return this;
+  }
 
-	@Override
-	public void close() throws IOException {
-		if (channel != null)
-			setSoftlyClosed(true);
+  @Override
+  public void close() throws IOException {
+    if (channel != null)
+      setSoftlyClosed(true);
 
-		if (internalWriteBuffer != null)
-			internalWriteBuffer = null;
+    super.close();
+  }
 
-		super.close();
-	}
+  @Override
+  public void read(long iOffset, byte[] iDestBuffer, int iLenght) throws IOException {
+    iOffset = checkRegions(iOffset, iLenght);
 
-	@Override
-	public void read(long iOffset, byte[] iDestBuffer, int iLenght) throws IOException {
-		iOffset = checkRegions(iOffset, iLenght);
+    ByteBuffer buffer = ByteBuffer.wrap(iDestBuffer);
+    channel.read(buffer, iOffset);
+  }
 
-		ByteBuffer buffer = ByteBuffer.wrap(iDestBuffer);
-		channel.read(buffer, iOffset);
-	}
+  @Override
+  public int readInt(long iOffset) throws IOException {
+    iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_INT);
+    return readData(iOffset, OBinaryProtocol.SIZE_INT).getInt();
+  }
 
-	@Override
-	public int readInt(long iOffset) throws IOException {
-		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_INT);
-		return readData(iOffset, OBinaryProtocol.SIZE_INT).getInt();
-	}
+  @Override
+  public long readLong(long iOffset) throws IOException {
+    iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_LONG);
+    return readData(iOffset, OBinaryProtocol.SIZE_LONG).getLong();
+  }
 
-	@Override
-	public long readLong(long iOffset) throws IOException {
-		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_LONG);
-		return readData(iOffset, OBinaryProtocol.SIZE_LONG).getLong();
-	}
+  @Override
+  public short readShort(long iOffset) throws IOException {
+    iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_SHORT);
+    return readData(iOffset, OBinaryProtocol.SIZE_SHORT).getShort();
+  }
 
-	@Override
-	public short readShort(long iOffset) throws IOException {
-		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_SHORT);
-		return readData(iOffset, OBinaryProtocol.SIZE_SHORT).getShort();
-	}
+  @Override
+  public byte readByte(long iOffset) throws IOException {
+    iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_BYTE);
+    return readData(iOffset, OBinaryProtocol.SIZE_BYTE).get();
+  }
 
-	@Override
-	public byte readByte(long iOffset) throws IOException {
-		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_BYTE);
-		return readData(iOffset, OBinaryProtocol.SIZE_BYTE).get();
-	}
+  @Override
+  public void writeInt(long iOffset, final int iValue) throws IOException {
+    setDirty();
+    iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_INT);
+    final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_INT);
+    buffer.putInt(iValue);
+    writeBuffer(buffer, iOffset);
+    setDirty();
+  }
 
-	@Override
-	public void writeInt(long iOffset, final int iValue) throws IOException {
-		setDirty();
-		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_INT);
-		final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_INT);
-		buffer.putInt(iValue);
-		writeBuffer(buffer, iOffset);
-		setDirty();
-	}
+  @Override
+  public void writeLong(long iOffset, final long iValue) throws IOException {
+    iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_LONG);
+    final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_LONG);
+    buffer.putLong(iValue);
+    writeBuffer(buffer, iOffset);
+    setDirty();
+  }
 
-	@Override
-	public void writeLong(long iOffset, final long iValue) throws IOException {
-		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_LONG);
-		final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_LONG);
-		buffer.putLong(iValue);
-		writeBuffer(buffer, iOffset);
-		setDirty();
-	}
+  @Override
+  public void writeShort(long iOffset, final short iValue) throws IOException {
+    iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_INT);
+    final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_SHORT);
+    buffer.putShort(iValue);
+    writeBuffer(buffer, iOffset);
+    setDirty();
+  }
 
-	@Override
-	public void writeShort(long iOffset, final short iValue) throws IOException {
-		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_INT);
-		final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_SHORT);
-		buffer.putShort(iValue);
-		writeBuffer(buffer, iOffset);
-		setDirty();
-	}
+  @Override
+  public void writeByte(long iOffset, final byte iValue) throws IOException {
+    iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_BYTE);
+    final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_BYTE);
+    buffer.put(iValue);
+    writeBuffer(buffer, iOffset);
+    setDirty();
+  }
 
-	@Override
-	public void writeByte(long iOffset, final byte iValue) throws IOException {
-		iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_BYTE);
-		final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_BYTE);
-		buffer.put(iValue);
-		writeBuffer(buffer, iOffset);
-		setDirty();
-	}
+  @Override
+  public void write(long iOffset, final byte[] iSourceBuffer) throws IOException {
+    if (iSourceBuffer != null) {
+      iOffset = checkRegions(iOffset, iSourceBuffer.length);
+      channel.write(ByteBuffer.wrap(iSourceBuffer), iOffset);
+      setDirty();
+    }
+  }
 
-	@Override
-	public void write(long iOffset, final byte[] iSourceBuffer) throws IOException {
-		if (iSourceBuffer != null) {
-			iOffset = checkRegions(iOffset, iSourceBuffer.length);
-			channel.write(ByteBuffer.wrap(iSourceBuffer), iOffset);
-			setDirty();
-		}
-	}
+  /**
+   * Synchronizes the buffered changes to disk.
+   * 
+   * @throws IOException
+   * 
+   * @see OFileMMapSecure
+   */
+  @Override
+  public void synch() throws IOException {
+    flushHeader();
+  }
 
-	/**
-	 * Synchronizes the buffered changes to disk.
-	 * 
-	 * @throws IOException
-	 * 
-	 * @see OFileMMapSecure
-	 */
-	@Override
-	public void synch() throws IOException {
-		flushHeader();
-	}
+  protected void flushHeader() throws IOException {
+    if (headerDirty || dirty) {
+      headerDirty = dirty = false;
+      channel.force(false);
+    }
+  }
 
-	protected void flushHeader() throws IOException {
-		if (headerDirty || dirty) {
-			headerDirty = dirty = false;
-			channel.force(false);
-		}
-	}
+  @Override
+  protected void init() throws IOException {
+    size = readData(SIZE_OFFSET, OBinaryProtocol.SIZE_INT).getInt();
+    filledUpTo = readData(FILLEDUPTO_OFFSET, OBinaryProtocol.SIZE_INT).getInt();
+  }
 
-	@Override
-	protected void init() throws IOException {
-		size = readData(SIZE_OFFSET, OBinaryProtocol.SIZE_INT).getInt();
-		filledUpTo = readData(FILLEDUPTO_OFFSET, OBinaryProtocol.SIZE_INT).getInt();
-	}
+  @Override
+  protected void setFilledUpTo(final int iValue) throws IOException {
+    if (iValue != filledUpTo) {
+      filledUpTo = iValue;
+      final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_INT);
+      buffer.putInt(filledUpTo);
+      writeBuffer(buffer, FILLEDUPTO_OFFSET);
+      setHeaderDirty();
+    }
+  }
 
-	@Override
-	protected void setFilledUpTo(final int iValue) throws IOException {
-		if (iValue != filledUpTo) {
-			filledUpTo = iValue;
-			final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_INT);
-			buffer.putInt(filledUpTo);
-			writeBuffer(buffer, FILLEDUPTO_OFFSET);
-			setHeaderDirty();
-		}
-	}
+  @Override
+  public void setSize(final int iSize) throws IOException {
+    if (iSize != size) {
+      super.checkSize(iSize);
 
-	@Override
-	public void setSize(final int iSize) throws IOException {
-		if (iSize != size) {
-			super.checkSize(iSize);
+      size = iSize;
+      final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_INT);
+      buffer.putInt(size);
+      writeBuffer(buffer, SIZE_OFFSET);
+      setHeaderDirty();
 
-			size = iSize;
-			final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_INT);
-			buffer.putInt(size);
-			writeBuffer(buffer, SIZE_OFFSET);
-			setHeaderDirty();
+      try {
+        synch();
+        channel.close();
+        openChannel(iSize);
 
-			try {
-				synch();
-				channel.close();
-				openChannel(iSize);
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "Error on changing the file size to " + iSize + " bytes", e, OIOException.class);
+      }
 
-			} catch (IOException e) {
-				OLogManager.instance().error(this, "Error on changing the file size to " + iSize + " bytes", e, OIOException.class);
-			}
+    }
+  }
 
-		}
-	}
+  @Override
+  public void writeHeaderLong(final int iPosition, final long iValue) throws IOException {
+    final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_LONG);
+    buffer.putLong(iValue);
+    writeBuffer(buffer, HEADER_DATA_OFFSET + iPosition);
+    setHeaderDirty();
+  }
 
-	@Override
-	public void writeHeaderLong(final int iPosition, final long iValue) throws IOException {
-		final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_LONG);
-		buffer.putLong(iValue);
-		writeBuffer(buffer, HEADER_DATA_OFFSET + iPosition);
-		setHeaderDirty();
-	}
+  @Override
+  public long readHeaderLong(final int iPosition) throws IOException {
+    return readData(HEADER_DATA_OFFSET + iPosition, OBinaryProtocol.SIZE_LONG).getLong();
+  }
 
-	@Override
-	public long readHeaderLong(final int iPosition) throws IOException {
-		return readData(HEADER_DATA_OFFSET + iPosition, OBinaryProtocol.SIZE_LONG).getLong();
-	}
+  @Override
+  public boolean isSoftlyClosed() throws IOException {
+    return readData(SOFTLY_CLOSED_OFFSET, OBinaryProtocol.SIZE_BYTE).get() == 1;
+  }
 
-	@Override
-	public boolean isSoftlyClosed() throws IOException {
-		return readData(SOFTLY_CLOSED_OFFSET, OBinaryProtocol.SIZE_BYTE).get() == 1;
-	}
+  @Override
+  protected void setSoftlyClosed(final boolean iValue) throws IOException {
+    final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_BYTE);
+    buffer.put((byte) (iValue ? 1 : 0));
+    writeBuffer(buffer, SOFTLY_CLOSED_OFFSET);
+    setHeaderDirty();
+    synch();
+  }
 
-	@Override
-	protected void setSoftlyClosed(final boolean iValue) throws IOException {
-		final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_BYTE);
-		buffer.put((byte) (iValue ? 1 : 0));
-		writeBuffer(buffer, SOFTLY_CLOSED_OFFSET);
-		setHeaderDirty();
-		synch();
-	}
+  /**
+   * ALWAYS ADD THE HEADER SIZE BECAUSE ON THIS TYPE IS ALWAYS NEEDED
+   */
+  @Override
+  protected long checkRegions(final long iOffset, final int iLength) {
+    return super.checkRegions(iOffset, iLength) + HEADER_SIZE;
+  }
 
-	/**
-	 * ALWAYS ADD THE HEADER SIZE BECAUSE ON THIS TYPE IS ALWAYS NEEDED
-	 */
-	@Override
-	protected long checkRegions(final long iOffset, final int iLength) {
-		return super.checkRegions(iOffset, iLength) + HEADER_SIZE;
-	}
+  private ByteBuffer readData(final long iOffset, final int iSize) throws IOException {
+    ByteBuffer buffer = getBuffer(iSize);
+    channel.read(buffer, iOffset);
+    buffer.rewind();
+    return buffer;
+  }
 
-	private ByteBuffer readData(final long iOffset, final int iSize) throws IOException {
-		ByteBuffer buffer = getBuffer(iSize);
-		channel.read(buffer, iOffset);
-		buffer.rewind();
-		return buffer;
-	}
+  private void writeBuffer(final ByteBuffer iBuffer, final long iOffset) throws IOException {
+    iBuffer.rewind();
+    channel.write(iBuffer, iOffset);
+  }
 
-	private void writeBuffer(final ByteBuffer iBuffer, final long iOffset) throws IOException {
-		iBuffer.rewind();
-		channel.write(iBuffer, iOffset);
-	}
+  private ByteBuffer getBuffer(final int iLenght) {
+    return ByteBuffer.allocate(iLenght);
+  }
 
-	private ByteBuffer getBuffer(final int iLenght) {
-		return ByteBuffer.allocate(iLenght);
-	}
+  private ByteBuffer getWriteBuffer(final int iLenght) {
+    setDirty();
+    if (iLenght <= OBinaryProtocol.SIZE_LONG)
+      // RECYCLE WRITE BYTE BUFFER SINCE WRITES ARE SYNCHRONIZED
+      return (ByteBuffer) internalWriteBuffer.rewind();
 
-	private ByteBuffer getWriteBuffer(final int iLenght) {
-		setDirty();
-		if (iLenght <= OBinaryProtocol.SIZE_LONG)
-			// RECYCLE WRITE BYTE BUFFER SINCE WRITES ARE SYNCHRONIZED
-			return (ByteBuffer) internalWriteBuffer.rewind();
-
-		return getBuffer(iLenght);
-	}
+    return getBuffer(iLenght);
+  }
 }
