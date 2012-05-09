@@ -60,325 +60,308 @@ import com.orientechnologies.orient.server.replication.conflict.OReplicationConf
  */
 public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutputListener {
 
-	private final OReplicationConflictResolver	conflictResolver;
-	protected final ExecutorService							asynchExecutor;
-	protected final OReplicator									replicator;
+  private final OReplicationConflictResolver conflictResolver;
+  protected final ExecutorService            asynchExecutor;
+  protected final OReplicator                replicator;
 
-	public ONodeConnection(final OReplicator iReplicator, final String iNodeId, final OReplicationConflictResolver iConflictResolver)
-			throws IOException {
-		super(iNodeId.split(":")[0], Integer.parseInt(iNodeId.split(":")[1]));
+  public ONodeConnection(final OReplicator iReplicator, final String iNodeId, final OReplicationConflictResolver iConflictResolver)
+      throws IOException {
+    super(iNodeId.split(":")[0], Integer.parseInt(iNodeId.split(":")[1]));
 
-		replicator = iReplicator;
-		logger.setNode(iNodeId);
+    replicator = iReplicator;
+    logger.setNode(iNodeId);
 
-		connect();
+    connect();
 
-		conflictResolver = iConflictResolver;
-		asynchExecutor = Executors.newSingleThreadExecutor();
-	}
+    conflictResolver = iConflictResolver;
+    asynchExecutor = Executors.newSingleThreadExecutor();
+  }
 
-	public void synchronize(final String iDatabaseName, final Set<ODocument> iDbCfg) {
-		logger.setDatabase(iDatabaseName);
-		logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "synchronization started. Storing delta of updates...");
+  public void synchronize(final String iDatabaseName, final Set<ODocument> iDbCfg) {
+    logger.setDatabase(iDatabaseName);
+    logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "synchronization started. Storing delta of updates...");
 
-		try {
-			ODocument cfg = new ODocument().field("nodes", iDbCfg, OType.EMBEDDEDSET);
+    try {
+      ODocument cfg = new ODocument().field("nodes", iDbCfg, OType.EMBEDDEDSET);
 
-			connect();
+      connect();
 
-			// SEND CURRENT CONFIGURATION FOR CURRENT DATABASE
-			final OChannelBinaryClient network = beginRequest(OClusterProtocol.REQUEST_NODE2NODE_REPLICATION_SYNCHRONIZE);
+      // SEND CURRENT CONFIGURATION FOR CURRENT DATABASE
+      final OChannelBinaryClient network = beginRequest(OClusterProtocol.REQUEST_NODE2NODE_REPLICATION_SYNCHRONIZE);
 
-			try {
-				network.writeString(iDatabaseName);
-				network.writeBytes(cfg.toStream());
-				network.flush();
-			} finally {
-				endRequest();
-			}
+      try {
+        network.writeString(iDatabaseName);
+        network.writeBytes(cfg.toStream());
+        network.flush();
+      } finally {
+        endRequest();
+      }
 
-			beginResponse();
-			try {
-			} finally {
-				endResponse();
-			}
+      parseResponse();
 
-		} catch (OException e) {
-			// PASS THROUGH
-			throw e;
-		} catch (Exception e) {
-			throw new OIOException("REPL DB (" + iDatabaseName + ") error on synchronization", e);
-		}
-	}
+    } catch (OException e) {
+      // PASS THROUGH
+      throw e;
+    } catch (Exception e) {
+      throw new OIOException("REPL DB (" + iDatabaseName + ") error on synchronization", e);
+    }
+  }
 
-	public void align(final String iDatabaseName, final String iOptions) {
-		logger.setDatabase(iDatabaseName);
-		logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "alignment started with options %s", iOptions);
+  public void align(final String iDatabaseName, final String iOptions) {
+    logger.setDatabase(iDatabaseName);
+    logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "alignment started with options %s", iOptions);
 
-		try {
-			connect();
+    try {
+      connect();
 
-			final String path = OServerMain.server().getStoragePath(iDatabaseName);
-			final ODatabaseComplex<?> database = OServerMain.server().openDatabase("document", path, replicator.getReplicatorUser().name,
-					replicator.getReplicatorUser().password);
+      final String path = OServerMain.server().getStoragePath(iDatabaseName);
+      final ODatabaseComplex<?> database = OServerMain.server().openDatabase("document", path, replicator.getReplicatorUser().name,
+          replicator.getReplicatorUser().password);
 
-			final int blockSize = OGlobalConfiguration.DISTRIBUTED_ALIGN_RECORD_BLOCK.getValueAsInteger();
+      final int blockSize = OGlobalConfiguration.DISTRIBUTED_ALIGN_RECORD_BLOCK.getValueAsInteger();
 
-			final ODocument cfg = new ODocument();
-			cfg.field("db", iDatabaseName);
+      final ODocument cfg = new ODocument();
+      cfg.field("db", iDatabaseName);
 
-			final ODocument block = new ODocument().addOwner(cfg);
-			cfg.field("block", block);
+      final ODocument block = new ODocument().addOwner(cfg);
+      cfg.field("block", block);
 
-			int current = 0;
+      int current = 0;
 
-			final OPhysicalPosition ppos = new OPhysicalPosition();
-			for (OCluster cluster : database.getStorage().getClusterInstances()) {
-				final OClusterPositionIterator iterator = cluster.absoluteIterator();
-				while (iterator.hasNext()) {
-					ppos.clusterPosition = iterator.next();
-					try {
-						cluster.getPhysicalPosition(ppos);
+      final OPhysicalPosition ppos = new OPhysicalPosition();
+      for (OCluster cluster : database.getStorage().getClusterInstances()) {
+        final OClusterPositionIterator iterator = cluster.absoluteIterator();
+        while (iterator.hasNext()) {
+          ppos.clusterPosition = iterator.next();
+          try {
+            cluster.getPhysicalPosition(ppos);
 
-						block.field(cluster.getId() + "_" + ppos.clusterPosition, ppos.recordVersion);
+            block.field(cluster.getId() + "_" + ppos.clusterPosition, ppos.recordVersion);
 
-						if (++current % blockSize == 0) {
-							// SEND THE BLOCK
-							sendAlignmentBlock(cfg);
-							current = 0;
-						}
-					} catch (Exception e) {
-						logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "Error on loading record %d:%d because: %s",
-								cluster.getId(), ppos.clusterPosition, e.toString());
-					}
-				}
-			}
+            if (++current % blockSize == 0) {
+              // SEND THE BLOCK
+              sendAlignmentBlock(cfg);
+              current = 0;
+            }
+          } catch (Exception e) {
+            logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "Error on loading record %d:%d because: %s",
+                cluster.getId(), ppos.clusterPosition, e.toString());
+          }
+        }
+      }
 
-			if (current > 0)
-				// SEND THE LAST BLOCK
-				sendAlignmentBlock(cfg);
+      if (current > 0)
+        // SEND THE LAST BLOCK
+        sendAlignmentBlock(cfg);
 
-		} catch (OException e) {
-			// PASS THROUGH
-			throw e;
-		} catch (Exception e) {
-			throw new OIOException("REPL DB (" + iDatabaseName + ") error on alignment", e);
-		}
-	}
+    } catch (OException e) {
+      // PASS THROUGH
+      throw e;
+    } catch (Exception e) {
+      throw new OIOException("REPL DB (" + iDatabaseName + ") error on alignment", e);
+    }
+  }
 
-	protected void sendAlignmentBlock(final ODocument cfg) throws IOException {
-		final OChannelBinaryClient network = beginRequest(OClusterProtocol.REQUEST_NODE2NODE_REPLICATION_ALIGN);
-		try {
-			network.writeBytes(cfg.toStream());
-			network.flush();
-		} finally {
-			endRequest();
-			((ODocument) cfg.field("block")).clear();
-		}
+  protected void sendAlignmentBlock(final ODocument cfg) throws IOException {
+    final OChannelBinaryClient network = beginRequest(OClusterProtocol.REQUEST_NODE2NODE_REPLICATION_ALIGN);
+    try {
+      network.writeBytes(cfg.toStream());
+      network.flush();
+    } finally {
+      endRequest();
+      ((ODocument) cfg.field("block")).clear();
+    }
 
-		beginResponse();
-		try {
-		} finally {
-			endResponse();
-		}
-	}
+    parseResponse();
+  }
 
-	public ORecord<?> requestRecord(final ODistributedDatabaseInfo databaseEntry, final ORecordId rid) {
-		logger.setNode(databaseEntry.serverId);
-		logger.setDatabase(databaseEntry.databaseName);
+  public ORecord<?> requestRecord(final ODistributedDatabaseInfo databaseEntry, final ORecordId rid) {
+    logger.setNode(databaseEntry.serverId);
+    logger.setDatabase(databaseEntry.databaseName);
 
-		if (OLogManager.instance().isInfoEnabled())
-			logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "%s record", rid);
+    if (OLogManager.instance().isInfoEnabled())
+      logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "%s record", rid);
 
-		do {
-			try {
-				final OChannelBinaryClient network = beginRequest(OClusterProtocol.REQUEST_NODE2NODE_REPLICATION_RECORD_REQUEST);
-				try {
-					network.writeString(databaseEntry.databaseName);
-					network.writeRID(rid);
+    do {
+      try {
+        final OChannelBinaryClient network = beginRequest(OClusterProtocol.REQUEST_NODE2NODE_REPLICATION_RECORD_REQUEST);
+        try {
+          network.writeString(databaseEntry.databaseName);
+          network.writeRID(rid);
 
-				} finally {
-					endRequest();
-				}
+        } finally {
+          endRequest();
+        }
 
-				try {
-					beginResponse();
+        beginResponse();
+        try {
 
-					final byte recordType = network.readByte();
-					if (recordType > -1) {
-						final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
-						record.fill(rid, network.readInt(), network.readBytes(), false);
-						return record;
-					} else
-						return null;
+          final byte recordType = network.readByte();
+          if (recordType > -1) {
+            final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
+            record.fill(rid, network.readInt(), network.readBytes(), false);
+            return record;
+          } else
+            return null;
 
-				} finally {
-					endResponse();
-				}
-			} catch (OException e) {
-				// PASS THROUGH
-				throw e;
-			} catch (Exception e) {
-				throw new OIOException("REPL <" + databaseEntry.databaseName + "> error on reading record: " + rid, e);
-			}
-		} while (true);
-	}
+        } finally {
+          endResponse();
+        }
+      } catch (OException e) {
+        // PASS THROUGH
+        throw e;
+      } catch (Exception e) {
+        throw new OIOException("REPL <" + databaseEntry.databaseName + "> error on reading record: " + rid, e);
+      }
+    } while (true);
+  }
 
-	public void propagateChange(final ODistributedDatabaseInfo databaseEntry, final ORecordOperation iRequest,
-			final SYNCH_TYPE iRequestType, final ORecordInternal<?> iRecord) {
+  public void propagateChange(final ODistributedDatabaseInfo databaseEntry, final ORecordOperation iRequest,
+      final SYNCH_TYPE iRequestType, final ORecordInternal<?> iRecord) {
 
-		if (OLogManager.instance().isInfoEnabled())
-			logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "%s record %s in %s mode",
-					ORecordOperation.getName(iRequest.type), iRecord.getIdentity(), iRequestType);
+    if (OLogManager.instance().isInfoEnabled())
+      logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "%s record %s in %s mode",
+          ORecordOperation.getName(iRequest.type), iRecord.getIdentity(), iRequestType);
 
-		if (conflictResolver.searchForConflict(iRecord.getIdentity()) != null) {
-			// ALREADY IN CONFLICT
-			if (OLogManager.instance().isDebugEnabled())
-				logger.log(this, Level.FINEST, TYPE.REPLICATION, DIRECTION.OUT, "record %s is in conflict, avoid propagation",
-						iRecord.getIdentity());
-			return;
-		}
+    if (conflictResolver.searchForConflict(iRecord.getIdentity()) != null) {
+      // ALREADY IN CONFLICT
+      if (OLogManager.instance().isDebugEnabled())
+        logger.log(this, Level.FINEST, TYPE.REPLICATION, DIRECTION.OUT, "record %s is in conflict, avoid propagation",
+            iRecord.getIdentity());
+      return;
+    }
 
-		logger.setNode(databaseEntry.serverId);
-		logger.setDatabase(databaseEntry.databaseName);
+    logger.setNode(databaseEntry.serverId);
+    logger.setDatabase(databaseEntry.databaseName);
 
-		do {
-			try {
-				final OChannelBinaryClient network = beginRequest(OClusterProtocol.REQUEST_NODE2NODE_REPLICATION_RECORD_PROPAGATE);
-				try {
-					network.writeString(databaseEntry.databaseName);
-					network.writeByte(iRequest.type);
-					network.writeLong(iRequest.serial); // OPERATION ID
-					network.writeRID(iRecord.getIdentity());
-					network.writeBytes(iRecord.toStream());
-					network.writeInt(iRecord.getVersion());
-					network.writeByte(iRecord.getRecordType());
+    do {
+      try {
+        final OChannelBinaryClient network = beginRequest(OClusterProtocol.REQUEST_NODE2NODE_REPLICATION_RECORD_PROPAGATE);
+        try {
+          network.writeString(databaseEntry.databaseName);
+          network.writeByte(iRequest.type);
+          network.writeLong(iRequest.serial); // OPERATION ID
+          network.writeRID(iRecord.getIdentity());
+          network.writeBytes(iRecord.toStream());
+          network.writeInt(iRecord.getVersion());
+          network.writeByte(iRecord.getRecordType());
 
-				} finally {
-					endRequest();
-				}
+        } finally {
+          endRequest();
+        }
 
-				if (iRequestType == SYNCH_TYPE.SYNCH)
-					try {
-						beginResponse();
-						handleRemoteResponse(iRequest.type, iRequestType, iRecord, network.readLong());
-					} finally {
-						endResponse();
-					}
-				else {
-					Callable<Object> response = new Callable<Object>() {
-						public Object call() throws Exception {
-							beginResponse();
-							try {
-								handleRemoteResponse(iRequest.type, iRequestType, iRecord, network.readLong());
-							} finally {
-								endResponse();
-							}
-							return null;
-						}
+        if (iRequestType == SYNCH_TYPE.SYNCH) {
+          beginResponse();
+          try {
+            handleRemoteResponse(iRequest.type, iRequestType, iRecord, network.readLong());
+          } finally {
+            endResponse();
+          }
+        } else {
+          Callable<Object> response = new Callable<Object>() {
+            public Object call() throws Exception {
+              beginResponse();
+              try {
+                handleRemoteResponse(iRequest.type, iRequestType, iRecord, network.readLong());
+              } finally {
+                endResponse();
+              }
+              return null;
+            }
 
-					};
-					asynchExecutor.submit(new FutureTask<Object>(response));
-				}
-				return;
-			} catch (OConcurrentModificationException e) {
-				conflictResolver.handleUpdateConflict(iRequest.type, iRequestType, iRecord, e.getRecordVersion(), e.getDatabaseVersion());
-				return;
-			} catch (ODatabaseException e) {
-				conflictResolver.handleUpdateConflict(iRequest.type, iRequestType, iRecord, iRecord.getVersion(), -1);
-				return;
-			} catch (OException e) {
-				// PASS THROUGH
-				throw e;
-			} catch (Exception e) {
-				throw new OIOException("REPL <" + databaseEntry.databaseName + "> error on distribute record: " + iRecord.getIdentity(), e);
+          };
+          asynchExecutor.submit(new FutureTask<Object>(response));
+        }
+        return;
+      } catch (OConcurrentModificationException e) {
+        conflictResolver.handleUpdateConflict(iRequest.type, iRequestType, iRecord, e.getRecordVersion(), e.getDatabaseVersion());
+        return;
+      } catch (ODatabaseException e) {
+        conflictResolver.handleUpdateConflict(iRequest.type, iRequestType, iRecord, iRecord.getVersion(), -1);
+        return;
+      } catch (OException e) {
+        // PASS THROUGH
+        throw e;
+      } catch (Exception e) {
+        throw new OIOException("REPL <" + databaseEntry.databaseName + "> error on distribute record: " + iRecord.getIdentity(), e);
 
-			}
-		} while (true);
-	}
+      }
+    } while (true);
+  }
 
-	public void copy(final ODatabaseRecord iDatabase, final String dbName, final String iDbUser, final String iDbPasswd,
-			final String iEngineName) throws IOException {
-		checkConnection();
+  public void copy(final ODatabaseRecord iDatabase, final String dbName, final String iDbUser, final String iDbPasswd,
+      final String iEngineName) throws IOException {
+    checkConnection();
 
-		final OChannelBinaryClient network = beginRequest(OClusterProtocol.REQUEST_NODE2NODE_DB_COPY);
+    final OChannelBinaryClient network = beginRequest(OClusterProtocol.REQUEST_NODE2NODE_DB_COPY);
 
-		try {
-			network.writeString(dbName);
-			network.writeString(iDbUser);
-			network.writeString(iDbPasswd);
-			network.writeString(iDatabase.getType());
-			network.writeString(iEngineName);
+    try {
+      network.writeString(dbName);
+      network.writeString(iDbUser);
+      network.writeString(iDbPasswd);
+      network.writeString(iDatabase.getType());
+      network.writeString(iEngineName);
 
-			// START THE EXPORT GIVING AS OUTPUTSTREAM THE CHANNEL TO STREAM THE EXPORT
-			new ODatabaseExport(iDatabase, new OChannelBinaryOutputStream(network), this).exportDatabase();
+      // START THE EXPORT GIVING AS OUTPUTSTREAM THE CHANNEL TO STREAM THE EXPORT
+      new ODatabaseExport(iDatabase, new OChannelBinaryOutputStream(network), this).exportDatabase();
 
-		} finally {
-			endRequest();
-		}
+    } finally {
+      endRequest();
+    }
 
-		try {
-			beginResponse();
-		} finally {
-			endResponse();
-		}
+    parseResponse();
+    disconnect();
+  }
 
-		disconnect();
-	}
+  private void handleRemoteResponse(final byte iOperation, final SYNCH_TYPE iRequestType, final ORecordInternal<?> iRecord,
+      final long iResponse) {
 
-	private void handleRemoteResponse(final byte iOperation, final SYNCH_TYPE iRequestType, final ORecordInternal<?> iRecord,
-			final long iResponse) {
+    switch (iOperation) {
+    case ORecordOperation.CREATED:
+      if (iResponse != iRecord.getIdentity().getClusterPosition())
+        conflictResolver.handleCreateConflict(ORecordOperation.CREATED, iRequestType, iRecord, iResponse);
+      break;
+    case ORecordOperation.UPDATED:
+      if ((int) iResponse != iRecord.getVersion())
+        conflictResolver.handleUpdateConflict(ORecordOperation.UPDATED, iRequestType, iRecord, iRecord.getVersion(),
+            (int) iResponse);
+      break;
+    case ORecordOperation.DELETED:
+      if ((int) iResponse == 0)
+        conflictResolver.handleDeleteConflict(ORecordOperation.DELETED, iRequestType, iRecord);
+      break;
+    }
+  }
 
-		switch (iOperation) {
-		case ORecordOperation.CREATED:
-			if (iResponse != iRecord.getIdentity().getClusterPosition())
-				conflictResolver.handleCreateConflict(ORecordOperation.CREATED, iRequestType, iRecord, iResponse);
-			break;
-		case ORecordOperation.UPDATED:
-			if ((int) iResponse != iRecord.getVersion())
-				conflictResolver.handleUpdateConflict(ORecordOperation.UPDATED, iRequestType, iRecord, iRecord.getVersion(),
-						(int) iResponse);
-			break;
-		case ORecordOperation.DELETED:
-			if ((int) iResponse == 0)
-				conflictResolver.handleDeleteConflict(ORecordOperation.DELETED, iRequestType, iRecord);
-			break;
-		}
-	}
+  public void onMessage(final String iText) {
+  }
 
-	public void onMessage(final String iText) {
-	}
+  protected void connect() throws IOException {
+    if (channel != null)
+      return;
 
-	protected void connect() throws IOException {
-		if (channel != null)
-			return;
+    logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "connecting...", getId());
 
-		logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "connecting...", getId());
+    channel = new OChannelBinaryClient(networkAddress, networkPort, new OContextConfiguration(),
+        OClusterProtocol.CURRENT_PROTOCOL_VERSION);
 
-		channel = new OChannelBinaryClient(networkAddress, networkPort, new OContextConfiguration(),
-				OClusterProtocol.CURRENT_PROTOCOL_VERSION);
+    beginRequest(OClusterProtocol.REQUEST_NODE2NODE_CONNECT);
 
-		beginRequest(OClusterProtocol.REQUEST_NODE2NODE_CONNECT);
+    try {
+      // CONNECT TO THE SERVER
+      channel.writeString(replicator.getManager().getId());
+      channel.writeString(replicator.getReplicatorUser().name);
+      channel.writeString(replicator.getReplicatorUser().password);
+    } finally {
+      endRequest();
+    }
 
-		try {
-			// CONNECT TO THE SERVER
-			channel.writeString(replicator.getManager().getId());
-			channel.writeString(replicator.getReplicatorUser().name);
-			channel.writeString(replicator.getReplicatorUser().password);
-		} finally {
-			endRequest();
-		}
+    parseResponse();
 
-		try {
-			beginResponse();
-		} finally {
-			endResponse();
-		}
+    logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "connected");
 
-		logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "connected");
-
-		serviceThread = new OAsynchChannelServiceThread(new ODistributedRemoteAsynchEventListener(replicator.getManager(),
-				new ODistributedRemoteAsynchEventListener(replicator.getManager(), null, getId()), getId()), channel,
-				"OrientDB <- Asynch Node/" + getId());
-	}
+    serviceThread = new OAsynchChannelServiceThread(new ODistributedRemoteAsynchEventListener(replicator.getManager(),
+        new ODistributedRemoteAsynchEventListener(replicator.getManager(), null, getId()), getId()), channel,
+        "OrientDB <- Asynch Node/" + getId());
+  }
 }

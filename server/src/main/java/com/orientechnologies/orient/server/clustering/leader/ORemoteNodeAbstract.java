@@ -28,75 +28,82 @@ import com.orientechnologies.orient.server.clustering.OClusterLogger;
  * 
  */
 public class ORemoteNodeAbstract {
-	protected String											id;
-	protected String											networkAddress;
-	protected int													networkPort;
-	protected Date												connectedOn;
-	protected OChannelBinaryClient				channel;
-	protected final int										sessionId	= 0;
-	protected OAsynchChannelServiceThread	serviceThread;
-	protected OClusterLogger							logger		= new OClusterLogger();
+  protected String                      id;
+  protected String                      networkAddress;
+  protected int                         networkPort;
+  protected Date                        connectedOn;
+  protected OChannelBinaryClient        channel;
+  protected final int                   sessionId = 0;
+  protected OAsynchChannelServiceThread serviceThread;
+  protected OClusterLogger              logger    = new OClusterLogger();
 
-	public ORemoteNodeAbstract(final String iServerAddress, final int iServerPort) {
-		networkAddress = iServerAddress;
-		networkPort = iServerPort;
-		connectedOn = new Date();
-		id = networkAddress + ":" + networkPort;
-	}
+  public ORemoteNodeAbstract(final String iServerAddress, final int iServerPort) {
+    networkAddress = iServerAddress;
+    networkPort = iServerPort;
+    connectedOn = new Date();
+    id = networkAddress + ":" + networkPort;
+  }
 
-	public OChannelBinaryClient beginRequest(final byte iRequestType) throws IOException {
-		channel.beginRequest();
-		channel.writeByte(iRequestType);
-		channel.writeInt(sessionId);
-		return channel;
-	}
+  public OChannelBinaryClient beginRequest(final byte iRequestType) throws IOException {
+    channel.beginRequest();
+    channel.writeByte(iRequestType);
+    channel.writeInt(sessionId);
+    return channel;
+  }
 
-	public void endRequest() throws IOException {
-		if (channel != null)
-			channel.endRequest();
-	}
+  public void endRequest() throws IOException {
+    if (channel != null)
+      channel.endRequest();
+  }
 
-	public void beginResponse() throws IOException {
-		if (channel != null)
-			channel.beginResponse(sessionId);
-	}
+  public void parseResponse() throws IOException {
+    if (channel != null) {
+      channel.beginResponse(sessionId);
+      channel.endResponse();
+    }
+  }
 
-	public void endResponse() {
-		if (channel != null)
-			channel.endResponse();
-	}
+  public void beginResponse() throws IOException {
+    if (channel != null)
+      channel.beginResponse(sessionId);
+  }
 
-	/**
-	 * Check if a remote node is really connected.
-	 * 
-	 * @return true if it's connected, otherwise false
-	 */
-	public boolean checkConnection() {
-		boolean connected = false;
+  public void endResponse() {
+    if (channel != null)
+      channel.endResponse();
+  }
 
-		if (channel != null && channel.socket != null)
-			try {
-				connected = channel.socket.isConnected();
-			} catch (Exception e) {
-			}
+  /**
+   * Check if a remote node is really connected.
+   * 
+   * @return true if it's connected, otherwise false
+   */
+  public boolean checkConnection() {
+    boolean connected = false;
 
-		return connected;
-	}
+    if (channel != null && channel.socket != null)
+      try {
+        connected = channel.socket.isConnected();
+      } catch (Exception e) {
+      }
 
-	public void disconnect() {
-		if (channel != null)
-			channel.close();
-		channel = null;
-		if (serviceThread != null)
-			serviceThread.sendShutdown();
-	}
+    return connected;
+  }
 
-	@Override
-	public String toString() {
-		return id;
-	}
+  public void disconnect() {
+    if (channel != null)
+      channel.close();
+    channel = null;
+    if (serviceThread != null)
+      serviceThread.sendShutdown();
+  }
 
-	public String getId() {
-		return id;
-	}
+  @Override
+  public String toString() {
+    return id;
+  }
+
+  public String getId() {
+    return id;
+  }
 }
