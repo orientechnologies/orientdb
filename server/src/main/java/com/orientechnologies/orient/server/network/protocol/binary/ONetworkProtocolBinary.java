@@ -514,13 +514,13 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkServerAccess("database.copy");
 
-    connection.database = (ODatabaseDocumentTx) OServerMain.server()
-        .openDatabase(ODatabaseDocument.TYPE, dbUrl, dbUser, dbPassword);
-
+    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) OServerMain.server().openDatabase(ODatabaseDocument.TYPE, dbUrl, dbUser,
+        dbPassword);
+    
     final ODistributedServerManager manager = OServerMain.server().getHandler(ODistributedServerManager.class);
     final ODistributedNode node = manager.getReplicator().getOrCreateDistributedNode(remoteServerName);
 
-    node.copyDatabase(connection.database, remoteServerEngine);
+    node.copyDatabase(db, remoteServerEngine);
 
     beginResponse();
     try {
@@ -561,15 +561,17 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     } else if (operation.equals("getJournal")) {
       checkServerAccess("server.replication.getJournal");
 
-      response = new ODocument();
       final ORecordOperation op = new ORecordOperation();
       final OOperationLog log = manager.getReplicator().getOperationLog((String) request.field("node"),
           (String) request.field("db"));
-      final int tot = log.totalEntries();
-      for (int i = 0; i < tot; ++i) {
-        log.getEntry(i, op);
-        final String value = String.valueOf(op.type) + '-' + op.record.getIdentity() + '-' + op.date;
-        response.field(String.valueOf(op.serial), value);
+      if (log != null) {
+        response = new ODocument();
+        final int tot = log.totalEntries();
+        for (int i = 0; i < tot; ++i) {
+          log.getEntry(i, op);
+          final String value = String.valueOf(op.type) + '-' + op.record.getIdentity() + '-' + op.date;
+          response.field(String.valueOf(op.serial), value);
+        }
       }
 
     } else if (operation.equals("resetJournal")) {
@@ -580,6 +582,15 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           (String) request.field("db"));
       response.field("removedEntries", log.totalEntries());
       log.reset();
+
+    } else if (operation.equals("getConflicts")) {
+      checkServerAccess("server.replication.getConflicts");
+
+      final ODatabaseDocumentTx db = (ODatabaseDocumentTx) OServerMain.server().openDatabase(ODatabaseDocument.TYPE,
+          (String) request.field("dbUrl"), manager.getReplicator().getReplicatorUser().name,
+          manager.getReplicator().getReplicatorUser().password);
+
+      response = manager.getReplicator().getConflictResolver().getAllConflicts(db);
     }
 
     sendResponse(response);

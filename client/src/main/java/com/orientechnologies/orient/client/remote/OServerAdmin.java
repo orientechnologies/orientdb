@@ -400,6 +400,29 @@ public class OServerAdmin {
   }
 
   /**
+   * Gets the replication conflicts for a database.
+   * 
+   * @param iDatabaseName
+   *          database name to replicate
+   * @param iRemoteName
+   * @return The records in conflict as a JSON with key the serial number of the entry and as key the operation type id and the RID
+   *         involved. Example {"10022":"1#10:3"}
+   * @throws IOException
+   */
+  public synchronized ODocument getReplicationConflicts(final String iDatabaseName) throws IOException {
+    OLogManager.instance().debug(this, "Retrieving the replication conflicts for database '%s' from server '%s'...", iDatabaseName,
+        storage.getURL());
+
+    final ODocument response = sendRequest(OChannelBinaryProtocol.REQUEST_REPLICATION,
+        new ODocument().field("operation", "getAllConflicts").field("db", iDatabaseName), "Retrieve all replication conflicts");
+
+    OLogManager.instance().debug(this, "Returned %d replication log entries for the database '%s' from server '%s'",
+        response.fields(), iDatabaseName, storage.getURL());
+
+    return response;
+  }
+
+  /**
    * Aligns a database between two servers
    * 
    * @param iDatabaseName

@@ -1183,19 +1183,19 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
         out.println("Replication journal for database '" + iDatabaseName + "'\n");
-        out.printf("+-----------+--------+---------------+-------------------------+\n");
-        out.printf("| SERIAL    | TYPE   | RECORD ID     | WHEN                    |\n");
-        out.printf("+-----------+--------+---------------+-------------------------+\n");
+        out.printf("+-----------+-----------+---------------+-------------------------+\n");
+        out.printf("| SERIAL    | OPERATION | RECORD ID     | DATE                    |\n");
+        out.printf("+-----------+-----------+---------------+-------------------------+\n");
         for (String k : response.fieldNames()) {
           final long opSerial = Long.parseLong(k);
 
           final String[] split = ((String) response.field(k)).split("-");
           final byte opType = Byte.valueOf((byte) Integer.parseInt(split[0]));
           final String opRID = split[1];
-          final String when = split[2];
+          final String date = split[2];
 
-          out.printf("| %-10d| %6s | %-14s| %23s |\n", opSerial, ORecordOperation.getName(opType), opRID,
-              format.format(new Date(Long.parseLong(when))));
+          out.printf("| %-10d| %9s | %-14s| %23s |\n", opSerial, ORecordOperation.getName(opType), opRID,
+              format.format(new Date(Long.parseLong(date))));
         }
         out.printf("+-----------+--------+---------------+-------------------------+\n");
       }
@@ -1218,6 +1218,39 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       final ODocument response = serverAdmin.resetReplicationJournal(iDatabaseName, iRemoteName);
       out.println("Reset replication journal for database '" + iDatabaseName + "': removed " + response.field("removedEntries")
           + " entries");
+
+    } catch (Exception e) {
+      printError(e);
+    }
+  }
+
+  @ConsoleCommand(description = "Gets the replication conflicts for a database against a remote server")
+  public void replicationGetConflicts(
+      @ConsoleParameter(name = "db-name", description = "Name of the database") final String iDatabaseName) throws IOException {
+
+    checkForRemoteServer();
+
+    try {
+      final ODocument response = serverAdmin.getReplicationConflicts(iDatabaseName);
+      final List<ODocument> entries = response.field("entries");
+
+      if (entries == null || entries.size() == 0)
+        out.println("There are not replication conflicts for database '" + iDatabaseName + "'");
+      else {
+        final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+
+        out.println("Replication conflicts for database '" + iDatabaseName + "'\n");
+        out.printf("+---------------+-----------+-------------------------+--------------+---------------+-------------------+\n");
+        out.printf("| RECORD ID     | OPERATION | DATE                    | CURR VERSION | OTHER VERSION | OTHER CLUSTER POS |\n");
+        out.printf("+---------------+-----------+-------------------------+--------------+---------------+-------------------+\n");
+        for (ODocument doc : entries) {
+          out.printf("| %-14s| %9s | %23s | %-12d | %-13d | %-15d |\n", doc.field("record"),
+              ORecordOperation.getName((Integer) doc.field("operation")), format.format((Date) doc.field("date")),
+              doc.field("currentVersion"), doc.field("otherVersion"), doc.field("otherClusterPos"));
+        }
+        out.printf("+---------------+-----------+-------------------------+--------------+---------------+-------------------+\n");
+      }
+      out.println();
 
     } catch (Exception e) {
       printError(e);
