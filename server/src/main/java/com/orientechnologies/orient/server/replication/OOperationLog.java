@@ -35,13 +35,13 @@ import com.orientechnologies.orient.server.clustering.OClusterLogger.TYPE;
  * <br/>
  * Record structure:<br/>
  * <code>
- * +------------------------------------------------+<br/>
- * |........... FIXED SIZE AREA = 19 bytes .........|<br/>
- * +---------+--------+------------+----------------+<br/>
- * | SERIAL  | OPERAT | CLUSTER ID | CLUSTER OFFSET |<br/>
- * | 8 bytes | 1 byte | 2 bytes .. | 8 bytes ...... |<br/>
- * +---------+--------|------------+----------------+<br/>
- * = 19 bytes
+ * +----------------------------------------------------------+<br/>
+ * |.................. FIXED SIZE AREA = 27 bytes ............|<br/>
+ * +---------+--------+------------+----------------+---------+<br/>
+ * | SERIAL  | OPERAT | CLUSTER ID | CLUSTER OFFSET | DATE .. |<br/>
+ * | 8 bytes | 1 byte | 2 bytes .. | 8 bytes ...... | 8 bytes |<br/>
+ * +---------+--------|------------+----------------+---------+<br/>
+ * = 27 bytes
  * </code><br/>
  */
 public class OOperationLog extends OSingleFileSegment {
@@ -51,7 +51,8 @@ public class OOperationLog extends OSingleFileSegment {
   private static final int                OFFSET_SERIAL  = 0;
   private static final int                OFFSET_OPERAT  = OFFSET_SERIAL + OBinaryProtocol.SIZE_LONG;
   private static final int                OFFSET_RID     = OFFSET_OPERAT + OBinaryProtocol.SIZE_BYTE;
-  private static final int                RECORD_SIZE    = OFFSET_RID + ORecordId.PERSISTENT_SIZE;
+  private static final int                OFFSET_DATE    = OFFSET_RID + ORecordId.PERSISTENT_SIZE;
+  private static final int                RECORD_SIZE    = OFFSET_DATE + OBinaryProtocol.SIZE_LONG;
 
   private AtomicLong                      serial         = new AtomicLong();
   private final String                    nodeId;
@@ -133,6 +134,8 @@ public class OOperationLog extends OSingleFileSegment {
       file.writeLong(offset, iRID.clusterPosition);
       offset += OBinaryProtocol.SIZE_LONG;
 
+      file.writeLong(offset, System.currentTimeMillis());
+
       if (synchEnabled)
         file.synch();
 
@@ -165,6 +168,7 @@ public class OOperationLog extends OSingleFileSegment {
     iEntry.serial = file.readLong(pos);
     iEntry.type = file.readByte(pos + OFFSET_OPERAT);
     iEntry.record = new ORecordId(file.readShort(pos + OFFSET_RID), file.readLong(pos + OFFSET_RID + OBinaryProtocol.SIZE_SHORT));
+    iEntry.date = file.readLong(pos + OFFSET_DATE);
     return iEntry;
   }
 

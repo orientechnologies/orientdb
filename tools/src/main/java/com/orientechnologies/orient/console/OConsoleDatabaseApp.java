@@ -19,6 +19,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Array;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -51,6 +52,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
@@ -315,7 +317,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     updateDatabaseInfo();
   }
 
-  @ConsoleCommand(description = "Create a new cluster in the current database. The cluster can be physical or logical")
+  @ConsoleCommand(description = "Create a new cluster in the current database. The cluster can be physical or memory")
   public void createCluster(
       @ConsoleParameter(name = "cluster-name", description = "The name of the cluster to create") String iClusterName,
       @ConsoleParameter(name = "cluster-type", description = "Cluster type: 'physical' or 'memory'") String iClusterType,
@@ -339,7 +341,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     updateDatabaseInfo();
   }
 
-  @ConsoleCommand(description = "Remove a cluster in the current database. The cluster can be physical or logical")
+  @ConsoleCommand(description = "Remove a cluster in the current database. The cluster can be physical or memory")
   public void dropCluster(
       @ConsoleParameter(name = "cluster-name", description = "The name or the id of the cluster to remove") String iClusterName) {
     checkForDatabase();
@@ -366,7 +368,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     updateDatabaseInfo();
   }
 
-  @ConsoleCommand(splitInWords = false, description = "Alters a cluster in the current database. The cluster can be physical or logical")
+  @ConsoleCommand(splitInWords = false, description = "Alters a cluster in the current database. The cluster can be physical or memory")
   public void alterCluster(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
     sqlCommand("alter", iCommandText, "\nCluster updated successfully\n", false);
     updateDatabaseInfo();
@@ -1127,7 +1129,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   @ConsoleCommand(description = "Start the replication of a database against a remote server")
-  public void startReplication(
+  public void replicationStart(
       @ConsoleParameter(name = "db-name", description = "Name of the database") final String iDatabaseName,
       @ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName)
       throws IOException {
@@ -1138,7 +1140,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       out.println("Starting replication for database '" + iDatabaseName + "' between server '" + serverAdmin.getURL() + "' and '"
           + iRemoteName + "'...");
 
-      serverAdmin.startReplication(iDatabaseName, iRemoteName);
+      serverAdmin.replicationStart(iDatabaseName, iRemoteName);
 
       out.println("Replication successfully started");
 
@@ -1148,16 +1150,74 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   @ConsoleCommand(description = "Stop the replication of a database against a remote server")
-  public void stopReplication(@ConsoleParameter(name = "db-name", description = "Name of the database") final String iDatabaseName,
+  public void replicationStop(@ConsoleParameter(name = "db-name", description = "Name of the database") final String iDatabaseName,
       @ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName)
       throws IOException {
 
     checkForRemoteServer();
 
     try {
-      serverAdmin.stopReplication(iDatabaseName, iRemoteName);
+      serverAdmin.replicationStop(iDatabaseName, iRemoteName);
 
       out.println("Replication ended for database '" + iDatabaseName + "' against the server '" + iRemoteName + "'");
+
+    } catch (Exception e) {
+      printError(e);
+    }
+  }
+
+  @ConsoleCommand(description = "Gets the replication journal for a database against a remote server")
+  public void replicationGetJournal(
+      @ConsoleParameter(name = "db-name", description = "Name of the database") final String iDatabaseName,
+      @ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName)
+      throws IOException {
+
+    checkForRemoteServer();
+
+    try {
+      final ODocument response = serverAdmin.getReplicationJournal(iDatabaseName, iRemoteName);
+
+      if (response.fieldNames().length == 0)
+        out.println("Replication journal for database '" + iDatabaseName + "' is empty");
+      else {
+        final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+
+        out.println("Replication journal for database '" + iDatabaseName + "'\n");
+        out.printf("+-----------+--------+---------------+-------------------------+\n");
+        out.printf("| SERIAL    | TYPE   | RECORD ID     | WHEN                    |\n");
+        out.printf("+-----------+--------+---------------+-------------------------+\n");
+        for (String k : response.fieldNames()) {
+          final long opSerial = Long.parseLong(k);
+
+          final String[] split = ((String) response.field(k)).split("-");
+          final byte opType = Byte.valueOf((byte) Integer.parseInt(split[0]));
+          final String opRID = split[1];
+          final String when = split[2];
+
+          out.printf("| %-10d| %6s | %-14s| %23s |\n", opSerial, ORecordOperation.getName(opType), opRID,
+              format.format(new Date(Long.parseLong(when))));
+        }
+        out.printf("+-----------+--------+---------------+-------------------------+\n");
+      }
+      out.println();
+
+    } catch (Exception e) {
+      printError(e);
+    }
+  }
+
+  @ConsoleCommand(description = "Resets the replication journal for a database against a remote server")
+  public void replicationResetJournal(
+      @ConsoleParameter(name = "db-name", description = "Name of the database") final String iDatabaseName,
+      @ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName)
+      throws IOException {
+
+    checkForRemoteServer();
+
+    try {
+      final ODocument response = serverAdmin.resetReplicationJournal(iDatabaseName, iRemoteName);
+      out.println("Reset replication journal for database '" + iDatabaseName + "': removed " + response.field("removedEntries")
+          + " entries");
 
     } catch (Exception e) {
       printError(e);
@@ -1211,7 +1271,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   @ConsoleCommand(description = "Align two databases in different servers")
-  public void alignDatabase(@ConsoleParameter(name = "db-name", description = "Name of the database") final String iDatabaseName,
+  public void replicationAlign(
+      @ConsoleParameter(name = "db-name", description = "Name of the database") final String iDatabaseName,
       @ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName,
       @ConsoleParameter(name = "options", description = "Alignment options", optional = true) final String iOptions)
       throws IOException {
@@ -1220,7 +1281,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       if (serverAdmin == null)
         throw new IllegalStateException("You must be connected to a remote server to align database");
 
-      serverAdmin.alignDatabase(iDatabaseName, iRemoteName, iOptions);
+      serverAdmin.replicationAlign(iDatabaseName, iRemoteName, iOptions);
 
       out.println("Alignment started for database '" + iDatabaseName + "' against the server '" + iRemoteName + "'");
 

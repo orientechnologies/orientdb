@@ -135,7 +135,7 @@ public class OReplicator {
     if (db.connection == null)
       db.connection = new ONodeConnection(this, nodeId, getConflictResolver());
 
-    createLocalLog(dbName);
+    getOrCreateLocalLog(dbName);
     return db.status != STATUS_TYPE.ONLINE;
   }
 
@@ -323,6 +323,9 @@ public class OReplicator {
   }
 
   public ODistributedNode getOrCreateDistributedNode(final String nodeId) throws IOException {
+    if (manager.itsMe(nodeId))
+      throw new IllegalArgumentException("Cannot create a remote node with the id of the current server: " + nodeId);
+
     synchronized (this) {
       ODistributedNode dNode = nodes.get(nodeId);
       if (dNode == null) {
@@ -351,7 +354,7 @@ public class OReplicator {
   public OOperationLog getOperationLog(final String iNodeId, final String iDatabaseName) throws IOException {
     synchronized (this) {
       if (manager.itsMe(iNodeId))
-        return localLogs.get(iDatabaseName);
+        return getOrCreateLocalLog(iDatabaseName);
 
       final ODistributedNode node = nodes.get(iNodeId);
       if (node != null) {
@@ -388,12 +391,15 @@ public class OReplicator {
     return replicatorUser;
   }
 
-  private void createLocalLog(final String dbName) throws IOException {
+  private OOperationLog getOrCreateLocalLog(final String dbName) throws IOException {
     synchronized (this) {
-      final OOperationLog log = localLogs.get(dbName);
-      if (log == null)
+      OOperationLog log = localLogs.get(dbName);
+      if (log == null) {
         // INITIALIZING OPERATION LOG
-        localLogs.put(dbName, new OOperationLog(manager.getId(), dbName, false));
+        log = new OOperationLog(manager.getId(), dbName, false);
+        localLogs.put(dbName, log);
+      }
+      return log;
     }
   }
 }

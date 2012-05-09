@@ -30,108 +30,109 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  */
 public class ORecordOperation implements OSerializableStream {
 
-	private static final long	serialVersionUID	= 1L;
+  private static final long serialVersionUID = 1L;
 
-	public static final byte	LOADED						= 0;
-	public static final byte	UPDATED						= 1;
-	public static final byte	DELETED						= 2;
-	public static final byte	CREATED						= 3;
+  public static final byte  LOADED           = 0;
+  public static final byte  UPDATED          = 1;
+  public static final byte  DELETED          = 2;
+  public static final byte  CREATED          = 3;
 
-	public long								serial;
-	public byte								type;
-	public OIdentifiable			record;
+  public long               serial;
+  public byte               type;
+  public OIdentifiable      record;
+  public long               date;
 
-	public int								dataSegmentId			= 0;	// DEFAULT ONE
+  public int                dataSegmentId    = 0; // DEFAULT ONE
 
-	public ORecordOperation() {
-	}
+  public ORecordOperation() {
+  }
 
-	public ORecordOperation(final OIdentifiable iRecord, final byte iStatus) {
-		// CLONE RECORD AND CONTENT
-		this.record = iRecord;
-		this.type = iStatus;
-	}
+  public ORecordOperation(final OIdentifiable iRecord, final byte iStatus) {
+    // CLONE RECORD AND CONTENT
+    this.record = iRecord;
+    this.type = iStatus;
+  }
 
-	@Override
-	public int hashCode() {
-		return record.getIdentity().hashCode();
-	}
+  @Override
+  public int hashCode() {
+    return record.getIdentity().hashCode();
+  }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (!(obj instanceof ORecordOperation))
-			return false;
+  @Override
+  public boolean equals(final Object obj) {
+    if (!(obj instanceof ORecordOperation))
+      return false;
 
-		return record.equals(((ORecordOperation) obj).record);
-	}
+    return record.equals(((ORecordOperation) obj).record);
+  }
 
-	@Override
-	public String toString() {
-		return new StringBuilder().append("ORecordOperation [record=").append(record).append(", type=").append(getName(type))
-				.append("]").toString();
-	}
+  @Override
+  public String toString() {
+    return new StringBuilder().append("ORecordOperation [record=").append(record).append(", type=").append(getName(type))
+        .append("]").toString();
+  }
 
-	public ORecordInternal<?> getRecord() {
-		return (ORecordInternal<?>) (record != null ? record.getRecord() : null);
-	}
+  public ORecordInternal<?> getRecord() {
+    return (ORecordInternal<?>) (record != null ? record.getRecord() : null);
+  }
 
-	public byte[] toStream() throws OSerializationException {
-		try {
-			final OMemoryStream stream = new OMemoryStream();
-			stream.set(serial);
-			stream.set(type);
-			((ORecordId) record.getIdentity()).toStream(stream);
+  public byte[] toStream() throws OSerializationException {
+    try {
+      final OMemoryStream stream = new OMemoryStream();
+      stream.set(serial);
+      stream.set(type);
+      ((ORecordId) record.getIdentity()).toStream(stream);
 
-			switch (type) {
-			case CREATED:
-			case UPDATED:
-				stream.set(((ORecordInternal<?>) record.getRecord()).getRecordType());
-				stream.set(((ORecordInternal<?>) record.getRecord()).toStream());
-				break;
-			}
+      switch (type) {
+      case CREATED:
+      case UPDATED:
+        stream.set(((ORecordInternal<?>) record.getRecord()).getRecordType());
+        stream.set(((ORecordInternal<?>) record.getRecord()).toStream());
+        break;
+      }
 
-			return stream.toByteArray();
+      return stream.toByteArray();
 
-		} catch (Exception e) {
-			throw new OSerializationException("Cannot serialize record operation", e);
-		}
-	}
+    } catch (Exception e) {
+      throw new OSerializationException("Cannot serialize record operation", e);
+    }
+  }
 
-	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
-		try {
-			final OMemoryStream stream = new OMemoryStream(iStream);
-			serial = stream.getAsLong();
-			type = stream.getAsByte();
-			final ORecordId rid = new ORecordId().fromStream(stream);
+  public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
+    try {
+      final OMemoryStream stream = new OMemoryStream(iStream);
+      serial = stream.getAsLong();
+      type = stream.getAsByte();
+      final ORecordId rid = new ORecordId().fromStream(stream);
 
-			switch (type) {
-			case CREATED:
-			case UPDATED:
-				record = Orient.instance().getRecordFactoryManager().newInstance(stream.getAsByte());
-				((ORecordInternal<?>) record).fill(rid, 0, stream.getAsByteArray(), true);
-				break;
-			}
+      switch (type) {
+      case CREATED:
+      case UPDATED:
+        record = Orient.instance().getRecordFactoryManager().newInstance(stream.getAsByte());
+        ((ORecordInternal<?>) record).fill(rid, 0, stream.getAsByteArray(), true);
+        break;
+      }
 
-			return this;
+      return this;
 
-		} catch (Exception e) {
-			throw new OSerializationException("Cannot deserialize record operation", e);
-		}
-	}
+    } catch (Exception e) {
+      throw new OSerializationException("Cannot deserialize record operation", e);
+    }
+  }
 
-	public static String getName(final int type) {
-		String operation = "?";
-		switch (type) {
-		case ORecordOperation.CREATED:
-			operation = "CREATE";
-			break;
-		case ORecordOperation.UPDATED:
-			operation = "UPDATE";
-			break;
-		case ORecordOperation.DELETED:
-			operation = "DELETE";
-			break;
-		}
-		return operation;
-	}
+  public static String getName(final int type) {
+    String operation = "?";
+    switch (type) {
+    case ORecordOperation.CREATED:
+      operation = "CREATE";
+      break;
+    case ORecordOperation.UPDATED:
+      operation = "UPDATE";
+      break;
+    case ORecordOperation.DELETED:
+      operation = "DELETE";
+      break;
+    }
+    return operation;
+  }
 }

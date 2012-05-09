@@ -321,7 +321,7 @@ public class OServerAdmin {
    * @return The instance itself. Useful to execute method in chain
    * @throws IOException
    */
-  public synchronized OServerAdmin startReplication(final String iDatabaseName, final String iRemoteServer) throws IOException {
+  public synchronized OServerAdmin replicationStart(final String iDatabaseName, final String iRemoteServer) throws IOException {
     final ODocument response = sendRequest(OChannelBinaryProtocol.REQUEST_REPLICATION, new ODocument().field("operation", "start")
         .field("node", iRemoteServer).field("db", iDatabaseName), "Start replication");
 
@@ -341,13 +341,62 @@ public class OServerAdmin {
    * @return The instance itself. Useful to execute method in chain
    * @throws IOException
    */
-  public synchronized OServerAdmin stopReplication(final String iDatabaseName, final String iRemoteServer) throws IOException {
+  public synchronized OServerAdmin replicationStop(final String iDatabaseName, final String iRemoteServer) throws IOException {
     final ODocument response = sendRequest(OChannelBinaryProtocol.REQUEST_REPLICATION, new ODocument().field("operation", "stop")
         .field("node", iRemoteServer).field("db", iDatabaseName), "Stop replication");
 
     OLogManager.instance().debug(this, "Stopped replication of database '%s' from server '%s' to '%s'", iDatabaseName,
         storage.getURL(), iRemoteServer);
     return this;
+  }
+
+  /**
+   * Gets the replication journal for a database.
+   * 
+   * @param iDatabaseName
+   *          database name to replicate
+   * @param iRemoteName
+   * @return The journal composed as a JSON with key the serial number of the entry and as key the operation type id and the RID
+   *         involved. Example {"10022":"1#10:3"}
+   * @throws IOException
+   */
+  public synchronized ODocument getReplicationJournal(final String iDatabaseName, final String iRemoteServer) throws IOException {
+    OLogManager.instance().debug(this, "Retrieving the replication log for database '%s' from server '%s'...", iDatabaseName,
+        storage.getURL());
+
+    final ODocument response = sendRequest(OChannelBinaryProtocol.REQUEST_REPLICATION,
+        new ODocument().field("operation", "getJournal").field("node", iRemoteServer).field("db", iDatabaseName),
+        "Retrieve replication log");
+
+    OLogManager.instance().debug(this,
+        "Returned %d replication log entries for the database '%s' from server '%s' against server '%s'", response.fields(),
+        iDatabaseName, storage.getURL(), iRemoteServer);
+
+    return response;
+  }
+
+  /**
+   * Resets the replication Journal for a database.
+   * 
+   * @param iDatabaseName
+   *          database name to replicate
+   * @param iRemoteName
+   * @return A JSON containing in the field "removedEntries" the removed log entries. Example {"removedEntries":342}
+   * @throws IOException
+   */
+  public synchronized ODocument resetReplicationJournal(final String iDatabaseName, final String iRemoteServer) throws IOException {
+    OLogManager.instance().debug(this, "Resetting replication log for database '%s' from server '%s'...", iDatabaseName,
+        storage.getURL());
+
+    final ODocument response = sendRequest(OChannelBinaryProtocol.REQUEST_REPLICATION,
+        new ODocument().field("operation", "resetJournal").field("node", iRemoteServer).field("db", iDatabaseName),
+        "Reset replication queue");
+
+    OLogManager.instance().debug(this,
+        "Returned %d replication log entries for the database '%s' from server '%s' against server '%s'", response.fields(),
+        iDatabaseName, storage.getURL(), iRemoteServer);
+
+    return response;
   }
 
   /**
@@ -363,7 +412,7 @@ public class OServerAdmin {
    * @return The instance itself. Useful to execute method in chain
    * @throws IOException
    */
-  public OServerAdmin alignDatabase(final String iDatabaseName, final String iRemoteServer, final String iOptions) {
+  public OServerAdmin replicationAlign(final String iDatabaseName, final String iRemoteServer, final String iOptions) {
     OLogManager.instance().debug(this, "Started the alignment of database '%s' from server '%s' to '%s' with options %s",
         iDatabaseName, storage.getURL(), iRemoteServer, iOptions);
 

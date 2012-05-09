@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
@@ -68,6 +69,7 @@ import com.orientechnologies.orient.server.handler.OServerHandlerHelper;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo;
 import com.orientechnologies.orient.server.replication.ODistributedNode;
+import com.orientechnologies.orient.server.replication.OOperationLog;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
@@ -200,7 +202,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       break;
 
     case OChannelBinaryProtocol.REQUEST_CLUSTER:
-      cluster();
+      distributedCluster();
       break;
 
     case OChannelBinaryProtocol.REQUEST_DATASEGMENT_ADD:
@@ -534,28 +536,56 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final ODocument request = new ODocument(channel.readBytes());
 
     final ODistributedServerManager manager = OServerMain.server().getHandler(ODistributedServerManager.class);
-    final ODistributedNode node = manager.getReplicator().getOrCreateDistributedNode((String) request.field("node"));
-
-    final ODistributedDatabaseInfo db = node.getOrCreateDatabaseEntry((String) request.field("db"));
 
     ODocument response = null;
 
     final String operation = request.field("operation");
     if (operation.equals("start")) {
       checkServerAccess("server.replication.start");
+      final ODistributedNode node = manager.getReplicator().getOrCreateDistributedNode((String) request.field("node"));
+      final ODistributedDatabaseInfo db = node.getOrCreateDatabaseEntry((String) request.field("db"));
       node.startDatabaseReplication(db);
+
     } else if (operation.equals("stop")) {
       checkServerAccess("server.replication.stop");
+      final ODistributedNode node = manager.getReplicator().getOrCreateDistributedNode((String) request.field("node"));
+      final ODistributedDatabaseInfo db = node.getOrCreateDatabaseEntry((String) request.field("db"));
       node.stopDatabaseReplication(db);
+
     } else if (operation.equals("align")) {
       checkServerAccess("server.replication.align");
+      final ODistributedNode node = manager.getReplicator().getOrCreateDistributedNode((String) request.field("node"));
+      final ODistributedDatabaseInfo db = node.getOrCreateDatabaseEntry((String) request.field("db"));
       node.startDatabaseAlignment(node.getOrCreateDatabaseEntry(db.databaseName), (String) request.field("options"));
+
+    } else if (operation.equals("getJournal")) {
+      checkServerAccess("server.replication.getJournal");
+
+      response = new ODocument();
+      final ORecordOperation op = new ORecordOperation();
+      final OOperationLog log = manager.getReplicator().getOperationLog((String) request.field("node"),
+          (String) request.field("db"));
+      final int tot = log.totalEntries();
+      for (int i = 0; i < tot; ++i) {
+        log.getEntry(i, op);
+        final String value = String.valueOf(op.type) + '-' + op.record.getIdentity() + '-' + op.date;
+        response.field(String.valueOf(op.serial), value);
+      }
+
+    } else if (operation.equals("resetJournal")) {
+      checkServerAccess("server.replication.resetJournal");
+
+      response = new ODocument();
+      final OOperationLog log = manager.getReplicator().getOperationLog((String) request.field("node"),
+          (String) request.field("db"));
+      response.field("removedEntries", log.totalEntries());
+      log.reset();
     }
 
     sendResponse(response);
   }
 
-  protected void cluster() throws IOException {
+  protected void distributedCluster() throws IOException {
     setDataCommandInfo("Cluster status");
 
     final ODocument req = new ODocument(channel.readBytes());
@@ -800,6 +830,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
   }
 
+  @SuppressWarnings("unchecked")
   protected void command() throws IOException {
     setDataCommandInfo("Execute remote command");
 
@@ -1161,6 +1192,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   protected void checkDatabase() {
+    if (connection == null)
+      throw new OStorageException("Connection with remote server has been lost");
+
     if (connection.database == null)
       throw new OSecurityAccessException("You need to authenticate before to execute the requested operation");
   }
