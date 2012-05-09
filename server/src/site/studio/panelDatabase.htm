@@ -157,9 +157,7 @@
 						records grouped by a mean. Any mean you want to assign. You can use a Cluster like a Table of the Relational DBMS world, namely to group records
 						of the same type. Or you could want to group records by different logics. <br /> <br /> There are two kinds of clusters: <b><a
 							href="http://code.google.com/p/orient/wiki/Concepts#Local_Physical_Cluster">Physical</a> </b> and <b><a
-							href="http://code.google.com/p/orient/wiki/Concepts#Logical_Cluster">Logical</a> </b>. The first one uses ad-hoc files to speed up the I/O while
-						the second one saves more space but it's slower. The suggestion is to use Physical Clusters for the records accessed often and where you need
-						light speed.</td>
+							href="http://code.google.com/p/orient/wiki/Concepts#In-Memory_cluster">In-memory</a> </b>. The first one is persistent, the second one is volatile.</td>
 				</tr>
 				<tr>
 					<td valign="top" width="500">
@@ -177,8 +175,8 @@
 									</button>
 								</td>
 								<td>
-									<button id="addLogicalCluster" class="btn" style="text-align: left">
-										Add Logical Cluster <img border="0" alt="Add Logical Cluster" src="images/add.png" align="top" />
+									<button id="addMemoryCluster" class="btn" style="text-align: left">
+										Add In-Memory Cluster <img border="0" alt="Add Memory Cluster" src="images/add.png" align="top" />
 									</button>
 								</td>
 								<td>
@@ -440,7 +438,7 @@
 		});
 
 		$("#addPhysicalCluster").click(function() {
-			$("#databaseClusters").jqGrid('editGridRow', "newp", {
+			$("#databaseClusters").jqGrid('editGridRow', "new", {
 				height : 320,
 				reloadAfterSubmit : false,
 				closeOnEscape : true,
@@ -452,8 +450,8 @@
 				}
 			});
 		});
-		$("#addLogicalCluster").click(function() {
-			$("#databaseClusters").jqGrid('editGridRow', "newl", {
+		$("#addMemoryCluster").click(function() {
+			$("#databaseClusters").jqGrid('editGridRow', "new", {
 				height : 320,
 				reloadAfterSubmit : false,
 				closeOnEscape : true,
