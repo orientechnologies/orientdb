@@ -258,6 +258,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       @ConsoleParameter(name = "storage-type", description = "The type of the storage. Either 'local' for disk-based database and 'memory' for in-memory database") String iStorageType,
       @ConsoleParameter(name = "db-type", optional = true, description = "The type of the database used between 'document' and 'graph'. By default is document.") String iDatabaseType)
       throws IOException {
+
+    if (iDatabaseType == null)
+      iDatabaseType = "document";
+
     out.println("Creating database [" + iDatabaseURL + "] using the storage type [" + iStorageType + "]...");
 
     currentDatabaseUserName = iUserName;
@@ -271,7 +275,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     } else {
       // LOCAL CONNECTION
-      currentDatabase = new ODatabaseDocumentTx(iDatabaseURL);
+      currentDatabase = Orient.instance().getDatabaseFactory().createDatabase(iDatabaseType, iDatabaseURL);
       currentDatabase.create();
       currentDatabaseName = currentDatabase.getName();
     }
