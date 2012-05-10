@@ -15,13 +15,6 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -34,6 +27,15 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
   private boolean              usingLog;
@@ -60,6 +62,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         public Void call() throws Exception {
           final List<String> involvedIndexes = getInvolvedIndexes();
 
+          if (involvedIndexes != null)
+            Collections.sort(involvedIndexes);
+
           // LOCK INVOLVED INDEXES
           List<OIndexMVRBTreeAbstract<?>> lockedIndexes = null;
           try {
@@ -76,12 +81,22 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
             // SEARCH FOR INDEX BASED ON DOCUMENT TOUCHED
             final Collection<? extends OIndex<?>> indexes = database.getMetadata().getIndexManager().getIndexes();
-            if (indexes != null && !indexes.isEmpty())
+            List<? extends OIndex<?>> indexesToLock = null;
+            if (indexes != null) {
+              indexesToLock = new ArrayList<OIndex<?>>(indexes);
+              Collections.sort(indexesToLock, new Comparator<OIndex<?>>() {
+                public int compare(final OIndex<?> indexOne, final OIndex<?> indexTwo) {
+                  return indexOne.getName().compareTo(indexTwo.getName());
+                }
+              });
+            }
+
+            if (indexesToLock != null && !indexesToLock.isEmpty())
               for (Entry<ORID, ORecordOperation> entry : recordEntries.entrySet()) {
                 final ORecord<?> record = entry.getValue().record.getRecord();
                 if (record instanceof ODocument) {
                   ODocument doc = (ODocument) record;
-                  for (OIndex<?> index : indexes) {
+                  for (OIndex<?> index : indexesToLock) {
                     if (doc.getSchemaClass() != null && doc.getSchemaClass().isSubClassOf(index.getDefinition().getClassName())) {
                       ((OIndexMVRBTreeAbstract<?>) index.getInternal()).acquireExclusiveLock();
                       if (lockedIndexes == null)
