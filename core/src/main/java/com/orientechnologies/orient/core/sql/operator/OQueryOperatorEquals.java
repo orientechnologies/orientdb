@@ -116,7 +116,10 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
       if (indexResult instanceof Collection)
         return (Collection<OIdentifiable>) indexResult;
 
-      return Collections.singletonList((OIdentifiable) indexResult);
+      if( indexResult == null )
+        return null;
+      
+      return indexResult == null ? null : Collections.singletonList((OIdentifiable) indexResult);
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.

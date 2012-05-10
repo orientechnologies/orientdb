@@ -114,7 +114,7 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
       if (indexResult instanceof Collection)
         return (Collection<OIdentifiable>) indexResult;
 
-      return Collections.singletonList((OIdentifiable) indexResult);
+      return indexResult == null ? null : Collections.singletonList((OIdentifiable) indexResult);
     }
     return null;
   }
