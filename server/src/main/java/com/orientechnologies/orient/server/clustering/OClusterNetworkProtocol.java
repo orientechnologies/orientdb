@@ -201,7 +201,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
       logger.setDatabase(dbName);
       logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "received synchronization request");
 
-      getOrOpenDatabase(dbName);
+      ODatabaseRecord db = getOrOpenDatabase(dbName);
 
       beginResponse();
       try {
@@ -216,6 +216,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 
       // SEND ALL THE LOGS
       final ODistributedNode replicationNode = manager.getReplicator().getNode(remoteNodeId);
+      manager.getReplicator().getConflictResolver().init( db );
       final ORecordOperation op = new ORecordOperation();
 
       // SYNCHRONIZE ALL THE NODES

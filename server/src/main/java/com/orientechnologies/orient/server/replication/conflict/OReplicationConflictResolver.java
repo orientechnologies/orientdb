@@ -17,6 +17,7 @@ package com.orientechnologies.orient.server.replication.conflict;
 
 import java.util.Map;
 
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -33,6 +34,11 @@ import com.orientechnologies.orient.server.replication.OReplicator;
 public interface OReplicationConflictResolver {
 
   public abstract void config(final OReplicator iReplicator, Map<String, String> iConfig);
+
+  /**
+   * Initializes the replication for a database
+   */
+  public abstract void init(ODatabaseComplex<?> iDatabase);
 
   public abstract OIdentifiable searchForConflict(OIdentifiable iRecord);
 

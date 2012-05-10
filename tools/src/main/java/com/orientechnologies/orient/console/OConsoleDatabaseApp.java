@@ -68,6 +68,7 @@ import com.orientechnologies.orient.core.iterator.OIdentifiableIterator;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -1248,8 +1249,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         out.printf("| RECORD ID     | OPERATION | DATE                    | CURR VERSION | OTHER VERSION | OTHER CLUSTER POS |\n");
         out.printf("+---------------+-----------+-------------------------+--------------+---------------+-------------------+\n");
         for (ODocument doc : entries) {
-          out.printf("| %-14s| %9s | %23s | %-12d | %-13d | %-15d |\n", doc.field("record"),
-              ORecordOperation.getName((Integer) doc.field("operation")), format.format((Date) doc.field("date")),
+          out.printf("| %-14s| %-9s | %23s | %-12d | %-13d | %-17d |\n", doc.field("record", OType.LINK),
+              ORecordOperation.getName((Byte) doc.field("operation")), format.format((Date) doc.field("date")),
               doc.field("currentVersion"), doc.field("otherVersion"), doc.field("otherClusterPos"));
         }
         out.printf("+---------------+-----------+-------------------------+--------------+---------------+-------------------+\n");

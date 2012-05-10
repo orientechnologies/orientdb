@@ -86,19 +86,27 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
 
       connect();
 
-      // SEND CURRENT CONFIGURATION FOR CURRENT DATABASE
-      final OChannelBinaryClient network = beginRequest(OClusterProtocol.REQUEST_NODE2NODE_REPLICATION_SYNCHRONIZE);
-
+      final ODatabaseComplex<?> database = OServerMain.server().openDatabase("document", iDatabaseName,
+          replicator.getReplicatorUser().name, replicator.getReplicatorUser().password);
       try {
-        network.writeString(iDatabaseName);
-        network.writeBytes(cfg.toStream());
-        network.flush();
+        conflictResolver.init(database);
+
+        // SEND CURRENT CONFIGURATION FOR CURRENT DATABASE
+        final OChannelBinaryClient network = beginRequest(OClusterProtocol.REQUEST_NODE2NODE_REPLICATION_SYNCHRONIZE);
+
+        try {
+          network.writeString(iDatabaseName);
+          network.writeBytes(cfg.toStream());
+          network.flush();
+        } finally {
+          endRequest();
+        }
+
+        parseResponse();
+        
       } finally {
-        endRequest();
+        database.close();
       }
-
-      parseResponse();
-
     } catch (OException e) {
       // PASS THROUGH
       throw e;
@@ -118,41 +126,48 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
       final ODatabaseComplex<?> database = OServerMain.server().openDatabase("document", path, replicator.getReplicatorUser().name,
           replicator.getReplicatorUser().password);
 
-      final int blockSize = OGlobalConfiguration.DISTRIBUTED_ALIGN_RECORD_BLOCK.getValueAsInteger();
+      try {
+        conflictResolver.init(database);
 
-      final ODocument cfg = new ODocument();
-      cfg.field("db", iDatabaseName);
+        final int blockSize = OGlobalConfiguration.DISTRIBUTED_ALIGN_RECORD_BLOCK.getValueAsInteger();
 
-      final ODocument block = new ODocument().addOwner(cfg);
-      cfg.field("block", block);
+        final ODocument cfg = new ODocument();
+        cfg.field("db", iDatabaseName);
 
-      int current = 0;
+        final ODocument block = new ODocument().addOwner(cfg);
+        cfg.field("block", block);
 
-      final OPhysicalPosition ppos = new OPhysicalPosition();
-      for (OCluster cluster : database.getStorage().getClusterInstances()) {
-        final OClusterPositionIterator iterator = cluster.absoluteIterator();
-        while (iterator.hasNext()) {
-          ppos.clusterPosition = iterator.next();
-          try {
-            cluster.getPhysicalPosition(ppos);
+        int current = 0;
 
-            block.field(cluster.getId() + "_" + ppos.clusterPosition, ppos.recordVersion);
+        final OPhysicalPosition ppos = new OPhysicalPosition();
+        for (OCluster cluster : database.getStorage().getClusterInstances()) {
+          final OClusterPositionIterator iterator = cluster.absoluteIterator();
+          while (iterator.hasNext()) {
+            ppos.clusterPosition = iterator.next();
+            try {
+              cluster.getPhysicalPosition(ppos);
 
-            if (++current % blockSize == 0) {
-              // SEND THE BLOCK
-              sendAlignmentBlock(cfg);
-              current = 0;
+              block.field(cluster.getId() + "_" + ppos.clusterPosition, ppos.recordVersion);
+
+              if (++current % blockSize == 0) {
+                // SEND THE BLOCK
+                sendAlignmentBlock(cfg);
+                current = 0;
+              }
+            } catch (Exception e) {
+              logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "Error on loading record %d:%d because: %s",
+                  cluster.getId(), ppos.clusterPosition, e.toString());
             }
-          } catch (Exception e) {
-            logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "Error on loading record %d:%d because: %s",
-                cluster.getId(), ppos.clusterPosition, e.toString());
           }
         }
-      }
 
-      if (current > 0)
-        // SEND THE LAST BLOCK
-        sendAlignmentBlock(cfg);
+        if (current > 0)
+          // SEND THE LAST BLOCK
+          sendAlignmentBlock(cfg);
+
+      } finally {
+        database.close();
+      }
 
     } catch (OException e) {
       // PASS THROUGH

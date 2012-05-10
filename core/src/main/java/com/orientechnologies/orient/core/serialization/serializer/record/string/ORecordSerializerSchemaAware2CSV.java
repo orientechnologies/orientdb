@@ -178,6 +178,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
                 else
                   type = OType.LINKLIST;
               } else if (ODatabaseRecordThreadLocal.INSTANCE.isDefined()
+                  && (firstValue instanceof ODocument && !((ODocument) firstValue).isEmbedded())
                   && (firstValue instanceof ORecord<?> || (ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE
                       .get().getDatabaseOwner()).getEntityManager().getEntityClass(getClassName(firstValue)) != null))) {
                 linkedClass = getLinkInfo(ODatabaseRecordThreadLocal.INSTANCE.get(), getClassName(firstValue));

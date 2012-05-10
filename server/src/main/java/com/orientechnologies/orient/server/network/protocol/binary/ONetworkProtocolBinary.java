@@ -583,11 +583,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       response.field("removedEntries", log.totalEntries());
       log.reset();
 
-    } else if (operation.equals("getConflicts")) {
-      checkServerAccess("server.replication.getConflicts");
+    } else if (operation.equals("getAllConflicts")) {
+      checkServerAccess("server.replication.getAllConflicts");
 
       final ODatabaseDocumentTx db = (ODatabaseDocumentTx) OServerMain.server().openDatabase(ODatabaseDocument.TYPE,
-          (String) request.field("dbUrl"), manager.getReplicator().getReplicatorUser().name,
+          (String) request.field("db"), manager.getReplicator().getReplicatorUser().name,
           manager.getReplicator().getReplicatorUser().password);
 
       response = manager.getReplicator().getConflictResolver().getAllConflicts(db);

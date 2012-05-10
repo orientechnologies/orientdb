@@ -238,11 +238,17 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     switch (iType) {
 
     case LINK: {
-      final Object link = linkToStream(iOutput, iRecord, iValue);
-      if (link != null)
-        // OVERWRITE CONTENT
-        iRecord.field(iName, link);
-      OProfiler.getInstance().stopChrono("serializer.rec.str.link2string", timer);
+      if (!iRecord.getIdentity().isValid() && iRecord instanceof ODocument && ((ODocument) iRecord).isEmbedded()) {
+        // WRONG: IT'S EMBEDDED!
+        fieldToStream(iRecord, iOutput, iObjHandler, OType.EMBEDDED, iLinkedClass, iLinkedType, iName, iValue, iMarshalledRecords,
+            iSaveOnlyDirty);
+      } else {
+        final Object link = linkToStream(iOutput, iRecord, iValue);
+        if (link != null)
+          // OVERWRITE CONTENT
+          iRecord.field(iName, link);
+        OProfiler.getInstance().stopChrono("serializer.rec.str.link2string", timer);
+      }
       break;
     }
 
