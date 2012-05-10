@@ -15,6 +15,15 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -26,16 +35,8 @@ import com.orientechnologies.orient.core.index.OIndexMVRBTreeAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
   private boolean              usingLog;
@@ -175,7 +176,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     addRecord(iRecord, ORecordOperation.DELETED, null);
   }
 
-  public void saveRecord(final ORecordInternal<?> iRecord, final String iClusterName, final OPERATION_MODE iMode) {
+  public void saveRecord(final ORecordInternal<?> iRecord, final String iClusterName, final OPERATION_MODE iMode,
+      final ORecordCallback<? extends Number> iCallback) {
     addRecord(iRecord, iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED, iClusterName);
   }
 
@@ -183,16 +185,12 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     checkTransaction();
 
     if ((status == OTransaction.TXSTATUS.COMMITTING) && database.getStorage() instanceof OStorageEmbedded) {
-      // && iRecord.getIdentity().isValid() && allEntries.containsKey(iRecord.getIdentity())) {
-      // if ((OStorage.CLUSTER_INDEX_NAME.equals(iClusterName) || iRecord.getIdentity().getClusterId() == database.getStorage()
-      // .getClusterIdByName(OStorage.CLUSTER_INDEX_NAME)) && database.getStorage() instanceof OStorageEmbedded) {
-
       // I'M COMMITTING: BYPASS LOCAL BUFFER
       switch (iStatus) {
       case ORecordOperation.CREATED:
       case ORecordOperation.UPDATED:
-        database
-            .executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iRecord.getRecordType(), OPERATION_MODE.SYNCHRONOUS);
+        database.executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iRecord.getRecordType(),
+            OPERATION_MODE.SYNCHRONOUS, null);
         break;
       case ORecordOperation.DELETED:
         database.executeDeleteRecord(iRecord, iRecord.getVersion(), false, OPERATION_MODE.SYNCHRONOUS);

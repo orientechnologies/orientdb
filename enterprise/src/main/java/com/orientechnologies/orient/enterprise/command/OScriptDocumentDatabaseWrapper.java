@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 /**
@@ -50,321 +51,322 @@ import com.orientechnologies.orient.core.tx.OTransaction;
  * 
  */
 public class OScriptDocumentDatabaseWrapper {
-	private ODatabaseDocumentTx	database;
-
-	public OScriptDocumentDatabaseWrapper(final ODatabaseDocumentTx database) {
-		this.database = database;
-	}
-
-	public OScriptDocumentDatabaseWrapper(final ODatabaseRecordTx database) {
-		this.database = new ODatabaseDocumentTx(database);
-	}
-
-	public OScriptDocumentDatabaseWrapper(final String iURL) {
-		this.database = new ODatabaseDocumentTx(iURL);
-	}
-
-	public List<OIdentifiable> query(final String iText) {
-		return database.query(new OSQLSynchQuery<Object>(iText));
-	}
-
-	public Object command(final String iText) {
-		return database.command(new OCommandSQL(iText));
-	}
-
-	public boolean exists() {
-		return database.exists();
-	}
-
-	public ODocument newInstance() {
-		return database.newInstance();
-	}
-
-	public void reload() {
-		database.reload();
-	}
-
-	public ODocument newInstance(String iClassName) {
-		return database.newInstance(iClassName);
-	}
-
-	public ORecordIteratorClass<ODocument> browseClass(String iClassName) {
-		return database.browseClass(iClassName);
-	}
-
-	public STATUS getStatus() {
-		return database.getStatus();
-	}
-
-	public ORecordIteratorClass<ODocument> browseClass(String iClassName, boolean iPolymorphic) {
-		return database.browseClass(iClassName, iPolymorphic);
-	}
-
-	public <THISDB extends ODatabase> THISDB setStatus(STATUS iStatus) {
-		return database.setStatus(iStatus);
-	}
-
-	public void drop() {
-		database.drop();
-	}
-
-	public String getName() {
-		return database.getName();
-	}
-
-	public int addCluster(String iType, String iClusterName, String iLocation, String iDataSegmentName, Object... iParameters) {
-		return database.addCluster(iType, iClusterName, iLocation, iDataSegmentName, iParameters);
-	}
-
-	public String getURL() {
-		return database.getURL();
-	}
-
-	public ORecordIteratorCluster<ODocument> browseCluster(String iClusterName) {
-		return database.browseCluster(iClusterName);
-	}
-
-	public boolean isClosed() {
-		return database.isClosed();
-	}
-
-	public <THISDB extends ODatabase> THISDB open(String iUserName, String iUserPassword) {
-		return database.open(iUserName, iUserPassword);
-	}
-
-	public ODocument save(ORecordInternal<?> iRecord) {
-		return database.save(iRecord);
-	}
-
-	public boolean dropCluster(String iClusterName) {
-		return database.dropCluster(iClusterName);
-	}
-
-	public <THISDB extends ODatabase> THISDB create() {
-		return database.create();
-	}
-
-	public boolean dropCluster(int iClusterId) {
-		return database.dropCluster(iClusterId);
-	}
-
-	public void close() {
-		database.close();
-	}
-
-	public int getClusters() {
-		return database.getClusters();
-	}
-
-	public Collection<String> getClusterNames() {
-		return database.getClusterNames();
-	}
-
-	public int addDataSegment(String iName, String iLocation) {
-		return database.addDataSegment(iName, iLocation);
-	}
-
-	public String getClusterType(String iClusterName) {
-		return database.getClusterType(iClusterName);
-	}
-
-	public OTransaction getTransaction() {
-		return database.getTransaction();
-	}
-
-	public int getDataSegmentIdByName(String iDataSegmentName) {
-		return database.getDataSegmentIdByName(iDataSegmentName);
-	}
-
-	public ODatabaseComplex<ORecordInternal<?>> begin() {
-		return database.begin();
-	}
-
-	public String getDataSegmentNameById(int iDataSegmentId) {
-		return database.getDataSegmentNameById(iDataSegmentId);
-	}
-
-	public int getClusterIdByName(String iClusterName) {
-		return database.getClusterIdByName(iClusterName);
-	}
-
-	public boolean isMVCC() {
-		return database.isMVCC();
-	}
-
-	public String getClusterNameById(int iClusterId) {
-		return database.getClusterNameById(iClusterId);
-	}
-
-	public <RET extends ODatabaseComplex<?>> RET setMVCC(boolean iValue) {
-		return database.setMVCC(iValue);
-	}
-
-	public long getClusterRecordSizeById(int iClusterId) {
-		return database.getClusterRecordSizeById(iClusterId);
-	}
-
-	public boolean isValidationEnabled() {
-		return database.isValidationEnabled();
-	}
-
-	public long getClusterRecordSizeByName(String iClusterName) {
-		return database.getClusterRecordSizeByName(iClusterName);
-	}
-
-	public <RET extends ODatabaseRecord> RET setValidationEnabled(boolean iValue) {
-		return database.setValidationEnabled(iValue);
-	}
-
-	public OUser getUser() {
-		return database.getUser();
-	}
-
-	public ODocument save(ORecordInternal<?> iRecord, OPERATION_MODE iMode) {
-		return database.save(iRecord, iMode);
-	}
-
-	public OMetadata getMetadata() {
-		return database.getMetadata();
-	}
-
-	public ODictionary<ORecordInternal<?>> getDictionary() {
-		return database.getDictionary();
-	}
-
-	public byte getRecordType() {
-		return database.getRecordType();
-	}
-
-	public ODatabaseComplex<ORecordInternal<?>> delete(ORID iRid) {
-		return database.delete(iRid);
-	}
-
-	public boolean dropDataSegment(String name) {
-		return database.dropDataSegment(name);
-	}
-
-	public <RET extends ORecordInternal<?>> RET load(ORID iRecordId) {
-		return database.load(iRecordId);
-	}
-
-	public <RET extends ORecordInternal<?>> RET load(ORID iRecordId, String iFetchPlan) {
-		return database.load(iRecordId, iFetchPlan);
-	}
-
-	public <RET extends ORecordInternal<?>> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache) {
-		return database.load(iRecordId, iFetchPlan, iIgnoreCache);
-	}
-
-	public <RET extends ORecordInternal<?>> RET getRecord(OIdentifiable iIdentifiable) {
-		return database.getRecord(iIdentifiable);
-	}
-
-	public int getDefaultClusterId() {
-		return database.getDefaultClusterId();
-	}
-
-	public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iRecord) {
-		return database.load(iRecord);
-	}
-
-	public boolean declareIntent(OIntent iIntent) {
-		return database.declareIntent(iIntent);
-	}
-
-	public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iRecord, String iFetchPlan) {
-		return database.load(iRecord, iFetchPlan);
-	}
-
-	public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iRecord, String iFetchPlan, boolean iIgnoreCache) {
-		return database.load(iRecord, iFetchPlan, iIgnoreCache);
-	}
-
-	public ODatabaseComplex<?> setDatabaseOwner(ODatabaseComplex<?> iOwner) {
-		return database.setDatabaseOwner(iOwner);
-	}
-
-	public void reload(ORecordInternal<?> iRecord) {
-		database.reload(iRecord);
-	}
-
-	public void reload(ORecordInternal<?> iRecord, String iFetchPlan, boolean iIgnoreCache) {
-		database.reload(iRecord, iFetchPlan, iIgnoreCache);
-	}
-
-	public Object setProperty(String iName, Object iValue) {
-		return database.setProperty(iName, iValue);
-	}
-
-	public ODocument save(ORecordInternal<?> iRecord, String iClusterName) {
-		return database.save(iRecord, iClusterName);
-	}
-
-	public Object getProperty(String iName) {
-		return database.getProperty(iName);
-	}
-
-	public Iterator<Entry<String, Object>> getProperties() {
-		return database.getProperties();
-	}
-
-	public Object get(ATTRIBUTES iAttribute) {
-		return database.get(iAttribute);
-	}
-
-	public <THISDB extends ODatabase> THISDB set(ATTRIBUTES attribute, Object iValue) {
-		return database.set(attribute, iValue);
-	}
-
-	public void setInternal(ATTRIBUTES attribute, Object iValue) {
-		database.setInternal(attribute, iValue);
-	}
-
-	public boolean isRetainRecords() {
-		return database.isRetainRecords();
-	}
-
-	public ODatabaseRecord setRetainRecords(boolean iValue) {
-		return database.setRetainRecords(iValue);
-	}
-
-	public long getSize() {
-		return database.getSize();
-	}
-
-	public ORecordInternal<?> getRecordByUserObject(Object iUserObject, boolean iCreateIfNotAvailable) {
-		return database.getRecordByUserObject(iUserObject, iCreateIfNotAvailable);
-	}
-
-	public ODocument save(ORecordInternal<?> iRecord, String iClusterName, OPERATION_MODE iMode) {
-		return database.save(iRecord, iClusterName, iMode);
-	}
-
-	public ODataSegmentStrategy getDataSegmentStrategy() {
-		return database.getDataSegmentStrategy();
-	}
-
-	public void setDataSegmentStrategy(ODataSegmentStrategy dataSegmentStrategy) {
-		database.setDataSegmentStrategy(dataSegmentStrategy);
-	}
-
-	public ODatabaseDocumentTx delete(ODocument iRecord) {
-		return database.delete(iRecord);
-	}
-
-	public long countClass(String iClassName) {
-		return database.countClass(iClassName);
-	}
-
-	public ODatabaseComplex<ORecordInternal<?>> commit() {
-		return database.commit();
-	}
-
-	public ODatabaseComplex<ORecordInternal<?>> rollback() {
-		return database.rollback();
-	}
-
-	public String getType() {
-		return database.getType();
-	}
+  private ODatabaseDocumentTx database;
+
+  public OScriptDocumentDatabaseWrapper(final ODatabaseDocumentTx database) {
+    this.database = database;
+  }
+
+  public OScriptDocumentDatabaseWrapper(final ODatabaseRecordTx database) {
+    this.database = new ODatabaseDocumentTx(database);
+  }
+
+  public OScriptDocumentDatabaseWrapper(final String iURL) {
+    this.database = new ODatabaseDocumentTx(iURL);
+  }
+
+  public List<OIdentifiable> query(final String iText) {
+    return database.query(new OSQLSynchQuery<Object>(iText));
+  }
+
+  public Object command(final String iText) {
+    return database.command(new OCommandSQL(iText));
+  }
+
+  public boolean exists() {
+    return database.exists();
+  }
+
+  public ODocument newInstance() {
+    return database.newInstance();
+  }
+
+  public void reload() {
+    database.reload();
+  }
+
+  public ODocument newInstance(String iClassName) {
+    return database.newInstance(iClassName);
+  }
+
+  public ORecordIteratorClass<ODocument> browseClass(String iClassName) {
+    return database.browseClass(iClassName);
+  }
+
+  public STATUS getStatus() {
+    return database.getStatus();
+  }
+
+  public ORecordIteratorClass<ODocument> browseClass(String iClassName, boolean iPolymorphic) {
+    return database.browseClass(iClassName, iPolymorphic);
+  }
+
+  public <THISDB extends ODatabase> THISDB setStatus(STATUS iStatus) {
+    return database.setStatus(iStatus);
+  }
+
+  public void drop() {
+    database.drop();
+  }
+
+  public String getName() {
+    return database.getName();
+  }
+
+  public int addCluster(String iType, String iClusterName, String iLocation, String iDataSegmentName, Object... iParameters) {
+    return database.addCluster(iType, iClusterName, iLocation, iDataSegmentName, iParameters);
+  }
+
+  public String getURL() {
+    return database.getURL();
+  }
+
+  public ORecordIteratorCluster<ODocument> browseCluster(String iClusterName) {
+    return database.browseCluster(iClusterName);
+  }
+
+  public boolean isClosed() {
+    return database.isClosed();
+  }
+
+  public <THISDB extends ODatabase> THISDB open(String iUserName, String iUserPassword) {
+    return database.open(iUserName, iUserPassword);
+  }
+
+  public ODocument save(ORecordInternal<?> iRecord) {
+    return database.save(iRecord);
+  }
+
+  public boolean dropCluster(String iClusterName) {
+    return database.dropCluster(iClusterName);
+  }
+
+  public <THISDB extends ODatabase> THISDB create() {
+    return database.create();
+  }
+
+  public boolean dropCluster(int iClusterId) {
+    return database.dropCluster(iClusterId);
+  }
+
+  public void close() {
+    database.close();
+  }
+
+  public int getClusters() {
+    return database.getClusters();
+  }
+
+  public Collection<String> getClusterNames() {
+    return database.getClusterNames();
+  }
+
+  public int addDataSegment(String iName, String iLocation) {
+    return database.addDataSegment(iName, iLocation);
+  }
+
+  public String getClusterType(String iClusterName) {
+    return database.getClusterType(iClusterName);
+  }
+
+  public OTransaction getTransaction() {
+    return database.getTransaction();
+  }
+
+  public int getDataSegmentIdByName(String iDataSegmentName) {
+    return database.getDataSegmentIdByName(iDataSegmentName);
+  }
+
+  public ODatabaseComplex<ORecordInternal<?>> begin() {
+    return database.begin();
+  }
+
+  public String getDataSegmentNameById(int iDataSegmentId) {
+    return database.getDataSegmentNameById(iDataSegmentId);
+  }
+
+  public int getClusterIdByName(String iClusterName) {
+    return database.getClusterIdByName(iClusterName);
+  }
+
+  public boolean isMVCC() {
+    return database.isMVCC();
+  }
+
+  public String getClusterNameById(int iClusterId) {
+    return database.getClusterNameById(iClusterId);
+  }
+
+  public <RET extends ODatabaseComplex<?>> RET setMVCC(boolean iValue) {
+    return database.setMVCC(iValue);
+  }
+
+  public long getClusterRecordSizeById(int iClusterId) {
+    return database.getClusterRecordSizeById(iClusterId);
+  }
+
+  public boolean isValidationEnabled() {
+    return database.isValidationEnabled();
+  }
+
+  public long getClusterRecordSizeByName(String iClusterName) {
+    return database.getClusterRecordSizeByName(iClusterName);
+  }
+
+  public <RET extends ODatabaseRecord> RET setValidationEnabled(boolean iValue) {
+    return database.setValidationEnabled(iValue);
+  }
+
+  public OUser getUser() {
+    return database.getUser();
+  }
+
+  public ODocument save(ORecordInternal<?> iRecord, OPERATION_MODE iMode, final ORecordCallback<? extends Number> iCallback) {
+    return database.save(iRecord, iMode, iCallback);
+  }
+
+  public OMetadata getMetadata() {
+    return database.getMetadata();
+  }
+
+  public ODictionary<ORecordInternal<?>> getDictionary() {
+    return database.getDictionary();
+  }
+
+  public byte getRecordType() {
+    return database.getRecordType();
+  }
+
+  public ODatabaseComplex<ORecordInternal<?>> delete(ORID iRid) {
+    return database.delete(iRid);
+  }
+
+  public boolean dropDataSegment(String name) {
+    return database.dropDataSegment(name);
+  }
+
+  public <RET extends ORecordInternal<?>> RET load(ORID iRecordId) {
+    return database.load(iRecordId);
+  }
+
+  public <RET extends ORecordInternal<?>> RET load(ORID iRecordId, String iFetchPlan) {
+    return database.load(iRecordId, iFetchPlan);
+  }
+
+  public <RET extends ORecordInternal<?>> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache) {
+    return database.load(iRecordId, iFetchPlan, iIgnoreCache);
+  }
+
+  public <RET extends ORecordInternal<?>> RET getRecord(OIdentifiable iIdentifiable) {
+    return database.getRecord(iIdentifiable);
+  }
+
+  public int getDefaultClusterId() {
+    return database.getDefaultClusterId();
+  }
+
+  public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iRecord) {
+    return database.load(iRecord);
+  }
+
+  public boolean declareIntent(OIntent iIntent) {
+    return database.declareIntent(iIntent);
+  }
+
+  public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iRecord, String iFetchPlan) {
+    return database.load(iRecord, iFetchPlan);
+  }
+
+  public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iRecord, String iFetchPlan, boolean iIgnoreCache) {
+    return database.load(iRecord, iFetchPlan, iIgnoreCache);
+  }
+
+  public ODatabaseComplex<?> setDatabaseOwner(ODatabaseComplex<?> iOwner) {
+    return database.setDatabaseOwner(iOwner);
+  }
+
+  public void reload(ORecordInternal<?> iRecord) {
+    database.reload(iRecord);
+  }
+
+  public void reload(ORecordInternal<?> iRecord, String iFetchPlan, boolean iIgnoreCache) {
+    database.reload(iRecord, iFetchPlan, iIgnoreCache);
+  }
+
+  public Object setProperty(String iName, Object iValue) {
+    return database.setProperty(iName, iValue);
+  }
+
+  public ODocument save(ORecordInternal<?> iRecord, String iClusterName) {
+    return database.save(iRecord, iClusterName);
+  }
+
+  public Object getProperty(String iName) {
+    return database.getProperty(iName);
+  }
+
+  public Iterator<Entry<String, Object>> getProperties() {
+    return database.getProperties();
+  }
+
+  public Object get(ATTRIBUTES iAttribute) {
+    return database.get(iAttribute);
+  }
+
+  public <THISDB extends ODatabase> THISDB set(ATTRIBUTES attribute, Object iValue) {
+    return database.set(attribute, iValue);
+  }
+
+  public void setInternal(ATTRIBUTES attribute, Object iValue) {
+    database.setInternal(attribute, iValue);
+  }
+
+  public boolean isRetainRecords() {
+    return database.isRetainRecords();
+  }
+
+  public ODatabaseRecord setRetainRecords(boolean iValue) {
+    return database.setRetainRecords(iValue);
+  }
+
+  public long getSize() {
+    return database.getSize();
+  }
+
+  public ORecordInternal<?> getRecordByUserObject(Object iUserObject, boolean iCreateIfNotAvailable) {
+    return database.getRecordByUserObject(iUserObject, iCreateIfNotAvailable);
+  }
+
+  public ODocument save(ORecordInternal<?> iRecord, String iClusterName, OPERATION_MODE iMode,
+      final ORecordCallback<? extends Number> iCallback) {
+    return database.save(iRecord, iClusterName, iMode, iCallback);
+  }
+
+  public ODataSegmentStrategy getDataSegmentStrategy() {
+    return database.getDataSegmentStrategy();
+  }
+
+  public void setDataSegmentStrategy(ODataSegmentStrategy dataSegmentStrategy) {
+    database.setDataSegmentStrategy(dataSegmentStrategy);
+  }
+
+  public ODatabaseDocumentTx delete(ODocument iRecord) {
+    return database.delete(iRecord);
+  }
+
+  public long countClass(String iClassName) {
+    return database.countClass(iClassName);
+  }
+
+  public ODatabaseComplex<ORecordInternal<?>> commit() {
+    return database.commit();
+  }
+
+  public ODatabaseComplex<ORecordInternal<?>> rollback() {
+    return database.rollback();
+  }
+
+  public String getType() {
+    return database.getType();
+  }
 }

@@ -44,7 +44,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 
 	public OChannelBinaryAsynch(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
 		super(iSocket, iConfig);
-		maxUnreadResponses = OGlobalConfiguration.NETWORK_BINARY_READ_RESPONSE_MAX_TIME.getValueAsInteger();
+		maxUnreadResponses = OGlobalConfiguration.NETWORK_BINARY_READ_RESPONSE_MAX_TIMES.getValueAsInteger();
 	}
 
 	public void beginRequest() {

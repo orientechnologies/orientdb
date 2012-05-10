@@ -516,7 +516,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     final ODatabaseDocumentTx db = (ODatabaseDocumentTx) OServerMain.server().openDatabase(ODatabaseDocument.TYPE, dbUrl, dbUser,
         dbPassword);
-    
+
     final ODistributedServerManager manager = OServerMain.server().getHandler(ODistributedServerManager.class);
     final ODistributedNode node = manager.getReplicator().getOrCreateDistributedNode(remoteServerName);
 
@@ -976,7 +976,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     final int result = deleteRecord(connection.database, rid, version);
 
-    if (mode == 0) {
+    if (mode < 2) {
       beginResponse();
       try {
         sendOk(clientTxId);
@@ -1010,7 +1010,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     final int newVersion = updateRecord(connection.database, rid, buffer, version, recordType);
 
-    if (mode == 0) {
+    if (mode < 2) {
       beginResponse();
       try {
         sendOk(clientTxId);
@@ -1034,8 +1034,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     final ORecord<?> record = createRecord(connection.database, rid, buffer, recordType, dataSegmentId);
 
-    if (mode == 0) {
-
+    if (mode < 2) {
       beginResponse();
       try {
         sendOk(clientTxId);

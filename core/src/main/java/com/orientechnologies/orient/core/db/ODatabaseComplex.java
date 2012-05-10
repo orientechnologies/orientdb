@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
@@ -30,6 +31,7 @@ import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.query.OQuery;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
@@ -48,7 +50,7 @@ import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
  */
 public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObject2RecordHandler {
   public enum OPERATION_MODE {
-    SYNCHRONOUS, ASYNCHRONOUS
+    SYNCHRONOUS, ASYNCHRONOUS, ASYNCHRONOUS_NOANSWER
   }
 
   /**
@@ -169,9 +171,11 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    *          The entity to save
    * @param iMode
    *          Mode of save: synchronous (default) or asynchronous
+   * @param iCallback
+   *          Callback to call once the save is made
    * @return The saved entity.
    */
-  public <RET extends T> RET save(T iObject, OPERATION_MODE iMode);
+  public <RET extends T> RET save(T iObject, OPERATION_MODE iMode, ORecordCallback<? extends Number> iCallback);
 
   /**
    * Saves an entity in the specified cluster in synchronous mode. If the entity is not dirty, then the operation will be ignored.
@@ -195,9 +199,11 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    *          Name of the cluster where to save
    * @param iMode
    *          Mode of save: synchronous (default) or asynchronous
+   * @param iCallback
+   *          Callback to call once the save is made
    * @return The saved entity.
    */
-  public <RET extends T> RET save(T iObject, String iClusterName, OPERATION_MODE iMode);
+  public <RET extends T> RET save(T iObject, String iClusterName, OPERATION_MODE iMode, ORecordCallback<? extends Number> iCallback);
 
   /**
    * Deletes an entity from the database in synchronous mode.

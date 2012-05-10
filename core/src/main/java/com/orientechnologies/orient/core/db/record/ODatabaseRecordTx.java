@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXSTATUS;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
@@ -197,25 +198,26 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
   }
 
   @Override
-  public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final OPERATION_MODE iMode) {
-    return save(iContent, (String) null, iMode);
+  public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final OPERATION_MODE iMode,
+      final ORecordCallback<? extends Number> iCallback) {
+    return save(iContent, (String) null, iMode, iCallback);
   }
 
   @Override
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent) {
-    return save(iContent, (String) null, OPERATION_MODE.SYNCHRONOUS);
+    return save(iContent, (String) null, OPERATION_MODE.SYNCHRONOUS, null);
   }
 
   @Override
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final String iClusterName) {
-    return save(iContent, iClusterName, OPERATION_MODE.SYNCHRONOUS);
+    return save(iContent, iClusterName, OPERATION_MODE.SYNCHRONOUS, null);
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final String iClusterName,
-      final OPERATION_MODE iMode) {
-    currentTx.saveRecord(iContent, iClusterName, iMode);
+      final OPERATION_MODE iMode, ORecordCallback<? extends Number> iCallback) {
+    currentTx.saveRecord(iContent, iClusterName, iMode, iCallback);
     return (RET) iContent;
   }
 

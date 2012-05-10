@@ -901,6 +901,8 @@ public class OStorageLocal extends OStorageEmbedded {
       ppos = createRecord(dataSegment, cluster, iContent, iRecordType, iRid);
       if (OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
         synchRecordUpdate(cluster, ppos);
+      if (iCallback != null)
+        iCallback.call(iRid, ppos.clusterPosition);
     }
 
     return ppos;
@@ -926,10 +928,12 @@ public class OStorageLocal extends OStorageEmbedded {
       if (ppos != null && OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
         synchRecordUpdate(cluster, ppos);
 
-      if (ppos != null)
-        return ppos.recordVersion;
+      final int returnValue = (int) (ppos != null ? ppos.recordVersion : -1);
 
-      return -1;
+      if (iCallback != null)
+        iCallback.call(iRid, returnValue);
+
+      return returnValue;
     }
   }
 
@@ -945,7 +949,12 @@ public class OStorageLocal extends OStorageEmbedded {
       if (ppos != null && OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
         synchRecordUpdate(cluster, ppos);
 
-      return ppos != null;
+      final boolean returnValue = ppos != null;
+
+      if (iCallback != null)
+        iCallback.call(iRid, returnValue);
+
+      return returnValue;
     }
   }
 
@@ -1492,9 +1501,13 @@ public class OStorageLocal extends OStorageEmbedded {
 
         // UPDATE IT
         final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
-        if (!checkForRecordValidity(ppos))
-          // DELETED
-          return null;
+        if (!checkForRecordValidity(ppos)) {
+      //    if (iVersion >= -2)
+            // DELETED
+            return null;
+        //  else
+        //    System.out.println("LLL");
+        }
 
         // VERSION CONTROL CHECK
         switch (iVersion) {

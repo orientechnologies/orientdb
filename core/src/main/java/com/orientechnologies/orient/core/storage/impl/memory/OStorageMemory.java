@@ -278,6 +278,9 @@ public class OStorageMemory extends OStorageEmbedded {
       cluster.addPhysicalPosition(ppos);
       iRid.clusterPosition = ppos.clusterPosition;
 
+      if (iCallback != null)
+        iCallback.call(iRid, iRid.clusterPosition);
+
       return ppos;
     } catch (IOException e) {
       throw new OStorageException("Error on create record in cluster: " + iRid.clusterId, e);
@@ -341,8 +344,11 @@ public class OStorageMemory extends OStorageEmbedded {
       try {
 
         final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
-        if (ppos == null)
+        if (ppos == null) {
+          if (iCallback != null)
+            iCallback.call(iRid, -1);
           return -1;
+        }
 
         if (iVersion != -1) {
           if (iVersion > -1) {
@@ -361,6 +367,9 @@ public class OStorageMemory extends OStorageEmbedded {
 
         final ODataSegmentMemory dataSegment = (ODataSegmentMemory) getDataSegmentById(ppos.dataSegmentId);
         dataSegment.updateRecord(ppos.dataSegmentPos, iContent);
+
+        if (iCallback != null)
+          iCallback.call(null, ppos.recordVersion);
 
         return ppos.recordVersion;
 
@@ -389,8 +398,11 @@ public class OStorageMemory extends OStorageEmbedded {
 
         final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
 
-        if (ppos == null)
+        if (ppos == null) {
+          if (iCallback != null)
+            iCallback.call(iRid, false);
           return false;
+        }
 
         // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
         if (iVersion > -1 && ppos.recordVersion != iVersion)
@@ -404,6 +416,9 @@ public class OStorageMemory extends OStorageEmbedded {
 
         final ODataSegmentMemory dataSegment = (ODataSegmentMemory) getDataSegmentById(ppos.dataSegmentId);
         dataSegment.deleteRecord(ppos.dataSegmentPos);
+
+        if (iCallback != null)
+          iCallback.call(null, true);
 
         return true;
 

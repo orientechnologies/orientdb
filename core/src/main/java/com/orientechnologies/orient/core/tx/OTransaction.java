@@ -25,69 +25,71 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
 
 public interface OTransaction {
-	public enum TXTYPE {
-		NOTX, OPTIMISTIC, PESSIMISTIC
-	}
+  public enum TXTYPE {
+    NOTX, OPTIMISTIC, PESSIMISTIC
+  }
 
-	public enum TXSTATUS {
-		INVALID, BEGUN, COMMITTING, ROLLBACKING
-	}
+  public enum TXSTATUS {
+    INVALID, BEGUN, COMMITTING, ROLLBACKING
+  }
 
-	public void begin();
+  public void begin();
 
-	public void commit();
+  public void commit();
 
-	public void rollback();
+  public void rollback();
 
-	public ODatabaseRecordTx getDatabase();
+  public ODatabaseRecordTx getDatabase();
 
-	public void clearRecordEntries();
+  public void clearRecordEntries();
 
-	public ORecordInternal<?> loadRecord(ORID iRid, ORecordInternal<?> iRecord, String iFetchPlan);
+  public ORecordInternal<?> loadRecord(ORID iRid, ORecordInternal<?> iRecord, String iFetchPlan);
 
-	public void saveRecord(ORecordInternal<?> iContent, String iClusterName, OPERATION_MODE iMode);
+  public void saveRecord(ORecordInternal<?> iContent, String iClusterName, OPERATION_MODE iMode,
+      ORecordCallback<? extends Number> iCallback);
 
-	public void deleteRecord(ORecordInternal<?> iRecord, OPERATION_MODE iMode);
+  public void deleteRecord(ORecordInternal<?> iRecord, OPERATION_MODE iMode);
 
-	public int getId();
+  public int getId();
 
-	public TXSTATUS getStatus();
+  public TXSTATUS getStatus();
 
-	public Iterable<? extends ORecordOperation> getCurrentRecordEntries();
+  public Iterable<? extends ORecordOperation> getCurrentRecordEntries();
 
-	public Iterable<? extends ORecordOperation> getAllRecordEntries();
+  public Iterable<? extends ORecordOperation> getAllRecordEntries();
 
-	public List<ORecordOperation> getRecordEntriesByClass(String iClassName);
+  public List<ORecordOperation> getRecordEntriesByClass(String iClassName);
 
-	public List<ORecordOperation> getRecordEntriesByClusterIds(int[] iIds);
+  public List<ORecordOperation> getRecordEntriesByClusterIds(int[] iIds);
 
-	public ORecordInternal<?> getRecord(ORID iRid);
+  public ORecordInternal<?> getRecord(ORID iRid);
 
-	public ORecordOperation getRecordEntry(ORID rid);
+  public ORecordOperation getRecordEntry(ORID rid);
 
-	public List<String> getInvolvedIndexes();
+  public List<String> getInvolvedIndexes();
 
-	public ODocument getIndexChanges();
+  public ODocument getIndexChanges();
 
-	public void addIndexEntry(OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iStatus,
-			final Object iKey, final OIdentifiable iValue);
+  public void addIndexEntry(OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iStatus,
+      final Object iKey, final OIdentifiable iValue);
 
-	public void clearIndexEntries();
+  public void clearIndexEntries();
 
-	public OTransactionIndexChanges getIndexChanges(String iName);
+  public OTransactionIndexChanges getIndexChanges(String iName);
 
-	/**
-	 * Tells if the transaction is active.
-	 * 
-	 * @return
-	 */
-	public boolean isActive();
+  /**
+   * Tells if the transaction is active.
+   * 
+   * @return
+   */
+  public boolean isActive();
 
-	public boolean isUsingLog();
+  public boolean isUsingLog();
 
-	public void setUsingLog(boolean useLog);
+  public void setUsingLog(boolean useLog);
 
-	public void close();
+  public void close();
 }

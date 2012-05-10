@@ -68,7 +68,7 @@ public class LocalCreateAsynchDocumentSpeedTest extends OrientMonoThreadTest {
 		record.field("birthDate", date);
 		record.field("salary", 3000f + data.getCyclesDone());
 
-		database.save(record, OPERATION_MODE.ASYNCHRONOUS);
+		database.save(record, OPERATION_MODE.ASYNCHRONOUS, null);
 
 		if (data.getCyclesDone() == data.getCycles() - 1)
 			database.commit();

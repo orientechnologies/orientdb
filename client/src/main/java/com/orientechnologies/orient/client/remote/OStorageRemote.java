@@ -128,7 +128,7 @@ public class OStorageRemote extends OStorageAbstract {
     asynchEventListener = new OStorageRemoteAsynchEventListener(this);
     parseServerURLs();
 
-    asynchExecutor = Executors.newSingleThreadExecutor();
+    asynchExecutor = Executors.newSingleThreadScheduledExecutor();
   }
 
   public int getSessionId() {
@@ -289,6 +289,10 @@ public class OStorageRemote extends OStorageAbstract {
       final byte iRecordType, int iMode, final ORecordCallback<Long> iCallback) {
     checkConnection();
 
+    if (iMode == 1 && iCallback == null)
+      // ASYNCHRONOUS MODE NO ANSWER
+      iMode = 2;
+
     final OPhysicalPosition ppos = new OPhysicalPosition(iDataSegmentId, -1, iRecordType);
 
     do {
@@ -307,10 +311,9 @@ public class OStorageRemote extends OStorageAbstract {
           endRequest(network);
         }
 
-        if (iMode == 1)
-          return ppos;
-
-        if (iCallback == null)
+        switch (iMode) {
+        case 0:
+          // SYNCHRONOUS
           try {
             beginResponse(network);
             iRid.clusterPosition = network.readLong();
@@ -323,24 +326,36 @@ public class OStorageRemote extends OStorageAbstract {
           } finally {
             endResponse(network);
           }
-        else {
-          Callable<Object> response = new Callable<Object>() {
-            public Object call() throws Exception {
-              final Long result;
 
-              try {
-                beginResponse(network);
-                result = network.readLong();
-              } finally {
-                endResponse(network);
+        case 1:
+          // ASYNCHRONOUS
+          if (iCallback != null) {
+            final int sessionId = getSessionId();
+            Callable<Object> response = new Callable<Object>() {
+              public Object call() throws Exception {
+                final Long result;
+
+                try {
+                  OStorageRemoteThreadLocal.INSTANCE.get().sessionId = sessionId;
+                  System.out.println("BEGIN ASYNCH READ " + OStorageRemoteThreadLocal.INSTANCE.get().sessionId);
+                  beginResponse(network);
+                  result = network.readLong();
+                  if (network.getSrvProtocolVersion() >= 11)
+                    network.readInt();
+                } finally {
+                  endResponse(network);
+                  System.out.println("END   ASYNCH READ " + OStorageRemoteThreadLocal.INSTANCE.get().sessionId);
+                  OStorageRemoteThreadLocal.INSTANCE.get().sessionId = -1;
+                }
+                iCallback.call(iRid, result);
+                return null;
               }
-              iCallback.call(result);
-              return null;
-            }
 
-          };
-          asynchExecutor.submit(new FutureTask<Object>(response));
+            };
+            asynchExecutor.submit(new FutureTask<Object>(response));
+          }
         }
+        return ppos;
 
       } catch (Exception e) {
         handleException("Error on create record in cluster: " + iRid.clusterId, e);
@@ -401,9 +416,13 @@ public class OStorageRemote extends OStorageAbstract {
     } while (true);
   }
 
-  public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType, final int iMode,
+  public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType, int iMode,
       final ORecordCallback<Integer> iCallback) {
     checkConnection();
+
+    if (iMode == 1 && iCallback == null)
+      // ASYNCHRONOUS MODE NO ANSWER
+      iMode = 2;
 
     do {
       try {
@@ -419,35 +438,43 @@ public class OStorageRemote extends OStorageAbstract {
           endRequest(network);
         }
 
-        if (iMode == 1)
-          return iVersion;
-
-        if (iCallback == null)
+        switch (iMode) {
+        case 0:
+          // SYNCHRONOUS
           try {
             beginResponse(network);
             return network.readInt();
           } finally {
             endResponse(network);
           }
-        else {
-          Callable<Object> response = new Callable<Object>() {
-            public Object call() throws Exception {
-              int result;
 
-              try {
-                beginResponse(network);
-                result = network.readInt();
-              } finally {
-                endResponse(network);
+        case 1:
+          // ASYNCHRONOUS
+          if (iCallback != null) {
+            final int sessionId = getSessionId();
+            Callable<Object> response = new Callable<Object>() {
+              public Object call() throws Exception {
+                int result;
+
+                try {
+                  OStorageRemoteThreadLocal.INSTANCE.get().sessionId = sessionId;
+                  beginResponse(network);
+                  result = network.readInt();
+                } finally {
+                  endResponse(network);
+                  OStorageRemoteThreadLocal.INSTANCE.get().sessionId = -1;
+                }
+
+                iCallback.call(iRid, result);
+                return null;
               }
 
-              iCallback.call(result);
-              return null;
-            }
-
-          };
-          asynchExecutor.submit(new FutureTask<Object>(response));
+            };
+            asynchExecutor.submit(new FutureTask<Object>(response));
+          }
         }
+        return iVersion;
+
       } catch (Exception e) {
         handleException("Error on update record " + iRid, e);
 
@@ -455,8 +482,12 @@ public class OStorageRemote extends OStorageAbstract {
     } while (true);
   }
 
-  public boolean deleteRecord(final ORecordId iRid, final int iVersion, final int iMode, final ORecordCallback<Boolean> iCallback) {
+  public boolean deleteRecord(final ORecordId iRid, final int iVersion, int iMode, final ORecordCallback<Boolean> iCallback) {
     checkConnection();
+
+    if (iMode == 1 && iCallback == null)
+      // ASYNCHRONOUS MODE NO ANSWER
+      iMode = 2;
 
     do {
       try {
@@ -471,35 +502,41 @@ public class OStorageRemote extends OStorageAbstract {
           endRequest(network);
         }
 
-        if (iMode == 1)
-          return false;
-
-        if (iCallback == null)
+        switch (iMode) {
+        case 0:
+          // SYNCHRONOUS
           try {
             beginResponse(network);
             return network.readByte() == 1;
           } finally {
             endResponse(network);
           }
-        else {
-          Callable<Object> response = new Callable<Object>() {
-            public Object call() throws Exception {
-              Boolean result;
 
-              try {
-                beginResponse(network);
-                result = network.readByte() == 1;
-              } finally {
-                endResponse(network);
+        case 1:
+          // ASYNCHRONOUS
+          if (iCallback != null) {
+            final int sessionId = getSessionId();
+            Callable<Object> response = new Callable<Object>() {
+              public Object call() throws Exception {
+                Boolean result;
+
+                try {
+                  OStorageRemoteThreadLocal.INSTANCE.get().sessionId = sessionId;
+                  beginResponse(network);
+                  result = network.readByte() == 1;
+                } finally {
+                  endResponse(network);
+                  OStorageRemoteThreadLocal.INSTANCE.get().sessionId = -1;
+                }
+
+                iCallback.call(iRid, result);
+                return null;
               }
-
-              iCallback.call(result);
-              return null;
-            }
-
-          };
-          asynchExecutor.submit(new FutureTask<Object>(response));
+            };
+            asynchExecutor.submit(new FutureTask<Object>(response));
+          }
         }
+        return false;
       } catch (Exception e) {
         handleException("Error on delete record " + iRid, e);
 

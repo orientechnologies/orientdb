@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.storage;
 
+import com.orientechnologies.orient.core.id.ORecordId;
 
 /**
  * Callback to handle response against record operations.
@@ -23,9 +24,9 @@ package com.orientechnologies.orient.core.storage;
  * 
  */
 public interface ORecordCallback<T> {
-	public enum OPERATION {
-		CREATE, READ, UPDATE, DELETE
-	}
+  public enum OPERATION {
+    CREATE, READ, UPDATE, DELETE
+  }
 
-	public void call(T iParameter);
+  public void call(ORecordId iRID, T iParameter);
 }

@@ -136,7 +136,7 @@ public class OStorageRemoteThread implements OStorage {
   public OPhysicalPosition createRecord(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent,
       final byte iRecordType, final int iMode, ORecordCallback<Long> iCallback) {
     delegate.setSessionId(sessionId);
-    return delegate.createRecord(iDataSegmentId, iRid, iContent, iRecordType, iMode, null);
+    return delegate.createRecord(iDataSegmentId, iRid, iContent, iRecordType, iMode, iCallback);
   }
 
   public ORawBuffer readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
@@ -148,12 +148,12 @@ public class OStorageRemoteThread implements OStorage {
   public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType, final int iMode,
       ORecordCallback<Integer> iCallback) {
     delegate.setSessionId(sessionId);
-    return delegate.updateRecord(iRid, iContent, iVersion, iRecordType, iMode, null);
+    return delegate.updateRecord(iRid, iContent, iVersion, iRecordType, iMode, iCallback);
   }
 
   public boolean deleteRecord(final ORecordId iRid, final int iVersion, final int iMode, ORecordCallback<Boolean> iCallback) {
     delegate.setSessionId(sessionId);
-    return delegate.deleteRecord(iRid, iVersion, iMode, null);
+    return delegate.deleteRecord(iRid, iVersion, iMode, iCallback);
   }
 
   public long count(final int iClusterId) {
