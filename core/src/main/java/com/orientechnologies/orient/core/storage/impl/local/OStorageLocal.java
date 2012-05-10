@@ -895,10 +895,11 @@ public class OStorageLocal extends OStorageEmbedded {
 
     final OPhysicalPosition ppos;
     if (txManager.isCommitting()) {
-      ppos = txManager.createRecord(txManager.getCurrentTransaction().getId(), dataSegment, cluster, iRid, iContent, iRecordType);
+      ppos = txManager.createRecord(txManager.getCurrentTransaction().getId(), dataSegment, cluster, iRid, iContent, iRecordType,
+          iDataSegmentId);
       iRid.clusterPosition = ppos.clusterPosition;
     } else {
-      ppos = createRecord(dataSegment, cluster, iContent, iRecordType, iRid);
+      ppos = createRecord(dataSegment, cluster, iContent, iRecordType, iRid, 0);
       if (OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
         synchRecordUpdate(cluster, ppos);
       if (iCallback != null)
@@ -1391,7 +1392,7 @@ public class OStorageLocal extends OStorageEmbedded {
   }
 
   protected OPhysicalPosition createRecord(final ODataLocal iDataSegment, final OCluster iClusterSegment, final byte[] iContent,
-      final byte iRecordType, final ORecordId iRid) {
+      final byte iRecordType, final ORecordId iRid, int recordVersion) {
     checkOpeness();
 
     if (iContent == null)
@@ -1414,6 +1415,10 @@ public class OStorageLocal extends OStorageEmbedded {
 
         // UPDATE THE POSITION IN CLUSTER WITH THE POSITION OF RECORD IN DATA
         iClusterSegment.updateDataSegmentPosition(ppos.clusterPosition, ppos.dataSegmentId, ppos.dataSegmentPos);
+
+        if (recordVersion != 0) {
+          iClusterSegment.updateVersion(iRid.clusterPosition, recordVersion);
+        }
 
         return ppos;
       } finally {
@@ -1502,9 +1507,7 @@ public class OStorageLocal extends OStorageEmbedded {
         // UPDATE IT
         final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
         if (!checkForRecordValidity(ppos)) {
-          //if (iVersion >= -2)
-            // DELETED
-            return null;
+          return null;
         }
 
         // VERSION CONTROL CHECK

@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -34,6 +30,10 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class OStorageLocalTxExecuter {
   private final OStorageLocal storage;
@@ -61,14 +61,15 @@ public class OStorageLocalTxExecuter {
   }
 
   protected OPhysicalPosition createRecord(final int iTxId, final ODataLocal iDataSegment, final OCluster iClusterSegment,
-      final ORecordId iRid, final byte[] iContent, final byte iRecordType) {
+      final ORecordId iRid, final byte[] iContent, final byte iRecordType, int dataSegmentId) {
     iRid.clusterPosition = -1;
 
     try {
-      final OPhysicalPosition ppos = storage.createRecord(iDataSegment, iClusterSegment, iContent, iRecordType, iRid);
+      final OPhysicalPosition ppos = storage.createRecord(iDataSegment, iClusterSegment, iContent, iRecordType, iRid, 0);
 
       // SAVE INTO THE LOG THE POSITION OF THE RECORD JUST CREATED. IF TX FAILS AT THIS POINT A GHOST RECORD IS CREATED UNTIL DEFRAG
-      txSegment.addLog(OTxSegment.OPERATION_CREATE, iTxId, iRid.clusterId, iRid.clusterPosition, iRecordType, 0, null);
+      txSegment.addLog(OTxSegment.OPERATION_CREATE, iTxId, iRid.clusterId, iRid.clusterPosition, iRecordType, 0, null,
+          dataSegmentId);
 
       return ppos;
     } catch (IOException e) {
@@ -99,7 +100,7 @@ public class OStorageLocalTxExecuter {
 
       // SAVE INTO THE LOG THE POSITION OF THE OLD RECORD JUST DELETED. IF TX FAILS AT THIS POINT AS ABOVE
       txSegment.addLog(OTxSegment.OPERATION_UPDATE, iTxId, iRid.clusterId, iRid.clusterPosition, iRecordType, buffer.version,
-          buffer.buffer);
+          buffer.buffer, -1);
 
       final OPhysicalPosition ppos = storage.updateRecord(iClusterSegment, iRid, iContent, iVersion, iRecordType);
       if (ppos != null)
@@ -124,8 +125,9 @@ public class OStorageLocalTxExecuter {
 
       if (buffer != null) {
         // SAVE INTO THE LOG THE OLD RECORD
+        final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iPosition));
         txSegment.addLog(OTxSegment.OPERATION_DELETE, iTxId, iClusterSegment.getId(), iPosition, buffer.recordType, buffer.version,
-            buffer.buffer);
+            buffer.buffer, ppos.dataSegmentId);
 
         return storage.deleteRecord(iClusterSegment, rid, iVersion) != null;
       }
@@ -229,7 +231,8 @@ public class OStorageLocalTxExecuter {
       if (rid.isNew()) {
         final OPhysicalPosition ppos;
         if (iUseLog)
-          ppos = createRecord(iTx.getId(), dataSegment, cluster, rid, stream, txEntry.getRecord().getRecordType());
+          ppos = createRecord(iTx.getId(), dataSegment, cluster, rid, stream, txEntry.getRecord().getRecordType(),
+              txEntry.dataSegmentId);
         else
           ppos = iTx.getDatabase().getStorage()
               .createRecord(txEntry.dataSegmentId, rid, stream, txEntry.getRecord().getRecordType(), (byte) 0, null);

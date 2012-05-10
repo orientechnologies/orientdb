@@ -15,18 +15,19 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.tx.OTransaction;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Handles the records that wait to be committed. This class is not synchronized because the caller is responsible of it.<br/>
@@ -58,8 +59,8 @@ public class OTxSegment extends OSingleFileSegment {
   private static final int                DEF_START_SIZE        = 262144;
 
   private static final int                OFFSET_TX_ID          = 2;
-  private static final int                OFFSET_RECORD_SIZE    = 21;
-  private static final int                OFFSET_RECORD_CONTENT = 25;
+  private static final int                OFFSET_RECORD_SIZE    = 25;
+  private static final int                OFFSET_RECORD_CONTENT = 29;
   private final boolean                   synchEnabled;
   private OSharedResourceAdaptiveExternal lock                  = new OSharedResourceAdaptiveExternal(
                                                                     OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
@@ -107,7 +108,7 @@ public class OTxSegment extends OSingleFileSegment {
    * Appends a log entry
    */
   public void addLog(final byte iOperation, final int iTxId, final int iClusterId, final long iClusterOffset,
-      final byte iRecordType, final int iRecordVersion, final byte[] iRecordContent) throws IOException {
+      final byte iRecordType, final int iRecordVersion, final byte[] iRecordContent, int dataSegmentId) throws IOException {
 
     final int contentSize = iRecordContent != null ? iRecordContent.length : 0;
     final int size = OFFSET_RECORD_CONTENT + contentSize;
@@ -138,6 +139,9 @@ public class OTxSegment extends OSingleFileSegment {
       file.writeInt(offset, iRecordVersion);
       offset += OBinaryProtocol.SIZE_INT;
 
+      file.writeInt(offset, dataSegmentId);
+      offset += OBinaryProtocol.SIZE_INT;
+
       file.writeInt(offset, contentSize);
       offset += OBinaryProtocol.SIZE_INT;
 
@@ -155,8 +159,6 @@ public class OTxSegment extends OSingleFileSegment {
   /**
    * Clears the entire file.
    * 
-   * @param iReqId
-   *          The id of requester
    * @param iTxId
    *          The id of transaction
    * 
@@ -256,17 +258,16 @@ public class OTxSegment extends OSingleFileSegment {
   /**
    * Recover a transaction.
    * 
-   * @param iReqId
    * @param iTxId
    * @return Number of records recovered
    * 
    * @throws IOException
    */
   private int recoverTransaction(final int iTxId) throws IOException {
-    final OPhysicalPosition ppos = new OPhysicalPosition();
-
     int recordsRecovered = 0;
     final ORecordId rid = new ORecordId();
+
+    final List<Long> txRecordPositions = new ArrayList<Long>();
 
     // BROWSE ALL THE ENTRIES
     for (long beginEntry = 0; eof(beginEntry); beginEntry = nextEntry(beginEntry)) {
@@ -277,52 +278,68 @@ public class OTxSegment extends OSingleFileSegment {
 
       if (status != STATUS_FREE) {
         // DIRTY TX LOG ENTRY
-        final byte operation = file.readByte(offset);
         offset += OBinaryProtocol.SIZE_BYTE;
 
         final int txId = file.readInt(offset);
-
         if (txId == iTxId) {
-          // TX ID FOUND
-          offset += OBinaryProtocol.SIZE_INT;
-
-          rid.clusterId = file.readShort(offset);
-          offset += OBinaryProtocol.SIZE_SHORT;
-
-          rid.clusterPosition = file.readLong(offset);
-          offset += OBinaryProtocol.SIZE_LONG;
-
-          final byte recordType = file.readByte(offset);
-          offset += OBinaryProtocol.SIZE_BYTE;
-
-          final int recordVersion = file.readInt(offset);
-          offset += OBinaryProtocol.SIZE_INT;
-
-          final int recordSize = file.readInt(offset);
-          offset += OBinaryProtocol.SIZE_INT;
-
-          final byte[] buffer;
-          if (recordSize > 0) {
-            buffer = new byte[recordSize];
-            file.read(offset, buffer, recordSize);
-            offset += recordSize;
-          } else
-            buffer = null;
-
-          recoverTransactionEntry(status, operation, txId, rid, recordType, recordVersion, buffer, ppos);
-          recordsRecovered++;
-
-          // CLEAR THE ENTRY BY WRITING '0'
-          file.writeByte(beginEntry, STATUS_FREE);
+          txRecordPositions.add(beginEntry);
         }
       }
     }
+
+    for (int i = txRecordPositions.size() - 1; i >= 0; i--) {
+      final long beginEntry = txRecordPositions.get(i);
+      long offset = beginEntry;
+
+      final byte status = file.readByte(offset);
+      offset += OBinaryProtocol.SIZE_BYTE;
+
+      // DIRTY TX LOG ENTRY
+      final byte operation = file.readByte(offset);
+      offset += OBinaryProtocol.SIZE_BYTE;
+
+      // TX ID FOUND
+      final int txId = file.readInt(offset);
+      offset += OBinaryProtocol.SIZE_INT;
+
+      rid.clusterId = file.readShort(offset);
+      offset += OBinaryProtocol.SIZE_SHORT;
+
+      rid.clusterPosition = file.readLong(offset);
+      offset += OBinaryProtocol.SIZE_LONG;
+
+      final byte recordType = file.readByte(offset);
+      offset += OBinaryProtocol.SIZE_BYTE;
+
+      final int recordVersion = file.readInt(offset);
+      offset += OBinaryProtocol.SIZE_INT;
+
+      final int dataSegmentId = file.readInt(offset);
+      offset += OBinaryProtocol.SIZE_INT;
+
+      final int recordSize = file.readInt(offset);
+      offset += OBinaryProtocol.SIZE_INT;
+
+      final byte[] buffer;
+      if (recordSize > 0) {
+        buffer = new byte[recordSize];
+        file.read(offset, buffer, recordSize);
+        offset += recordSize;
+      } else
+        buffer = null;
+
+      recoverTransactionEntry(status, operation, txId, rid, recordType, recordVersion, buffer, dataSegmentId);
+      recordsRecovered++;
+
+      // CLEAR THE ENTRY BY WRITING '0'
+      file.writeByte(beginEntry, STATUS_FREE);
+    }
+
     return recordsRecovered;
   }
 
   private void recoverTransactionEntry(final byte iStatus, final byte iOperation, final int iTxId, final ORecordId iRid,
-      final byte iRecordType, final int iRecordVersion, final byte[] iRecordContent, final OPhysicalPosition ppos)
-      throws IOException {
+      final byte iRecordType, final int iRecordVersion, final byte[] iRecordContent, int dataSegmentId) throws IOException {
 
     final OClusterLocal cluster = (OClusterLocal) storage.getClusterById(iRid.clusterId);
 
@@ -344,12 +361,8 @@ public class OTxSegment extends OSingleFileSegment {
       break;
 
     case OPERATION_DELETE:
-      // REMOVE THE HOLE
-      cluster.removeHole(iRid.clusterPosition);
-      cluster.updateBoundsAfterInsertion(iRid.clusterPosition);
-
-      // RESTORE OLD CONTENT
-      storage.updateRecord(cluster, iRid, iRecordContent, Integer.MIN_VALUE + iRecordVersion, iRecordType);
+      final ODataLocal dataSegment = storage.getDataSegmentById(dataSegmentId);
+      storage.createRecord(dataSegment, cluster, iRecordContent, iRecordType, iRid, iRecordVersion);
       break;
     }
   }
