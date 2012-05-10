@@ -41,7 +41,7 @@ Specification-Vendor: Orient Technologies
 Bundle-Name: OrientDB Tools
 Created-By: Apache Maven Bundle Plugin
 Bundle-Vendor: Orient Technologies
-Bundle-Version: 1.0.0.SNAPSHOT
+Bundle-Version: 1.0.0.qualifier
 Build-Jdk: 1.6.0_30
 Bnd-LastModified: 1333567019002
 Bundle-ManifestVersion: 2
