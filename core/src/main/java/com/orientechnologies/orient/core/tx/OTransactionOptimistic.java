@@ -15,6 +15,14 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -28,15 +36,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
   private boolean              usingLog;
@@ -90,15 +89,16 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         }
 
         if (indexesToLock != null && !indexesToLock.isEmpty())
-          for (Entry<ORID, ORecordOperation> entry : recordEntries.entrySet()) {
-            final ORecord<?> record = entry.getValue().record.getRecord();
-            if (record instanceof ODocument) {
-              ODocument doc = (ODocument) record;
-              for (OIndex<?> index : indexesToLock) {
-                if (doc.getSchemaClass() != null && doc.getSchemaClass().isSubClassOf(index.getDefinition().getClassName())) {
+					if (lockedIndexes == null)
+						lockedIndexes = new ArrayList<OIndexMVRBTreeAbstract<?>>();
+
+          for (OIndex<?> index : indexesToLock) {
+            for (Entry<ORID, ORecordOperation> entry : recordEntries.entrySet()) {
+              final ORecord<?> record = entry.getValue().record.getRecord();
+              if (record instanceof ODocument) {
+                ODocument doc = (ODocument) record;
+                if (!lockedIndexes.contains(index.getInternal()) && doc.getSchemaClass() != null && doc.getSchemaClass().isSubClassOf(index.getDefinition().getClassName())) {
                   ((OIndexMVRBTreeAbstract<?>) index.getInternal()).acquireExclusiveLock();
-                  if (lockedIndexes == null)
-                    lockedIndexes = new ArrayList<OIndexMVRBTreeAbstract<?>>();
                   lockedIndexes.add((OIndexMVRBTreeAbstract<?>) index.getInternal());
                 }
               }
