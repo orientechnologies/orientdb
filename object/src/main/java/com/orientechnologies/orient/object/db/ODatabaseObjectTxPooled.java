@@ -35,78 +35,78 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 @SuppressWarnings("unchecked")
 public class ODatabaseObjectTxPooled extends ODatabaseObjectTx implements ODatabasePooled {
 
-	private ODatabaseObjectPool	ownerPool;
+  private ODatabaseObjectPool ownerPool;
 
-	public ODatabaseObjectTxPooled(final ODatabaseObjectPool iOwnerPool, final String iURL, final String iUserName,
-			final String iUserPassword) {
-		super(iURL);
-		ownerPool = iOwnerPool;
-		super.open(iUserName, iUserPassword);
-	}
+  public ODatabaseObjectTxPooled(final ODatabaseObjectPool iOwnerPool, final String iURL, final String iUserName,
+      final String iUserPassword) {
+    super(iURL);
+    ownerPool = iOwnerPool;
+    super.open(iUserName, iUserPassword);
+  }
 
-	public void reuse(final Object iOwner, final Object[] iAdditionalArgs) {
-		ownerPool = (ODatabaseObjectPool) iOwner;
-		if (isClosed())
-			open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
-		init();
-		getLevel1Cache().invalidate();
-		getMetadata().reload();
-	}
+  public void reuse(final Object iOwner, final Object[] iAdditionalArgs) {
+    ownerPool = (ODatabaseObjectPool) iOwner;
+    if (isClosed())
+      open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
+    init();
+    getLevel1Cache().invalidate();
+    getMetadata().reload();
+  }
 
-	@Override
-	public ODatabaseObjectTxPooled open(String iUserName, String iUserPassword) {
-		throw new UnsupportedOperationException(
-				"Database instance was retrieved from a pool. You cannot open the database in this way. Please use directly ODatabaseObjectTx.open()");
-	}
+  @Override
+  public ODatabaseObjectTxPooled open(String iUserName, String iUserPassword) {
+    throw new UnsupportedOperationException(
+        "Database instance was retrieved from a pool. You cannot open the database in this way. Use directly a ODatabaseObjectTx instance if you want to manually open the connection");
+  }
 
-	@Override
-	public ODatabaseObjectTxPooled create() {
-		throw new UnsupportedOperationException(
-				"Database instance was retrieved from a pool. You cannot create the database in this way. Please use directly ODatabaseObjectTx.create()");
-	}
+  @Override
+  public ODatabaseObjectTxPooled create() {
+    throw new UnsupportedOperationException(
+        "Database instance was retrieved from a pool. You cannot open the database in this way. Use directly a ODatabaseObjectTx instance if you want to manually open the connection");
+  }
 
-	@Override
-	public boolean isClosed() {
-		return ownerPool == null || super.isClosed();
-	}
+  @Override
+  public boolean isClosed() {
+    return ownerPool == null || super.isClosed();
+  }
 
-	/**
-	 * Avoid to close it but rather release itself to the owner pool.
-	 */
-	@Override
-	public void close() {
-		if (isClosed())
-			return;
+  /**
+   * Avoid to close it but rather release itself to the owner pool.
+   */
+  @Override
+  public void close() {
+    if (isClosed())
+      return;
 
-		objects2Records.clear();
-		records2Objects.clear();
-		rid2Records.clear();
+    objects2Records.clear();
+    records2Objects.clear();
+    rid2Records.clear();
 
-		checkOpeness();
-		rollback();
+    checkOpeness();
+    rollback();
 
-		getMetadata().close();
-		((ODatabaseRaw) ((ODatabaseRecord) underlying.getUnderlying()).getUnderlying()).callOnCloseListeners();
-		getLevel1Cache().clear();
+    getMetadata().close();
+    ((ODatabaseRaw) ((ODatabaseRecord) underlying.getUnderlying()).getUnderlying()).callOnCloseListeners();
+    getLevel1Cache().clear();
 
-		ownerPool.release(this);
-		ownerPool = null;
-	}
+    ownerPool.release(this);
+    ownerPool = null;
+  }
 
-	public void forceClose() {
-		super.close();
-	}
+  public void forceClose() {
+    super.close();
+  }
 
-	@Override
-	protected void checkOpeness() {
-		if (ownerPool == null)
-			throw new ODatabaseException(
-					"Database instance has been released to the pool. Get another database instance from the pool with the right username and password");
+  @Override
+  protected void checkOpeness() {
+    if (ownerPool == null)
+      throw new ODatabaseException(
+          "Database instance has been released to the pool. Get another database instance from the pool with the right username and password");
 
-		super.checkOpeness();
-	}
+    super.checkOpeness();
+  }
 
-	public boolean isUnderlyingOpen() {
-		return !super.isClosed();
-	}
+  public boolean isUnderlyingOpen() {
+    return !super.isClosed();
+  }
 }

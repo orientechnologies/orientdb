@@ -30,65 +30,65 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements ODatabasePooled {
 
-	private ODatabaseDocumentPool	ownerPool;
+  private ODatabaseDocumentPool ownerPool;
 
-	public ODatabaseDocumentTxPooled(final ODatabaseDocumentPool iOwnerPool, final String iURL, final String iUserName,
-			final String iUserPassword) {
-		super(iURL);
-		ownerPool = iOwnerPool;
-		super.open(iUserName, iUserPassword);
-	}
+  public ODatabaseDocumentTxPooled(final ODatabaseDocumentPool iOwnerPool, final String iURL, final String iUserName,
+      final String iUserPassword) {
+    super(iURL);
+    ownerPool = iOwnerPool;
+    super.open(iUserName, iUserPassword);
+  }
 
-	public void reuse(final Object iOwner, final Object[] iAdditionalArgs) {
-		ownerPool = (ODatabaseDocumentPool) iOwner;
-		getLevel1Cache().invalidate();
-		getMetadata().reload();
-	}
+  public void reuse(final Object iOwner, final Object[] iAdditionalArgs) {
+    ownerPool = (ODatabaseDocumentPool) iOwner;
+    getLevel1Cache().invalidate();
+    getMetadata().reload();
+  }
 
-	@Override
-	public ODatabaseDocumentTxPooled open(final String iUserName, final String iUserPassword) {
-		throw new UnsupportedOperationException(
-				"Database instance was retrieved from a pool. You cannot open the database in this way. Please use directly ODatabaseDocumentTx.open()");
-	}
+  @Override
+  public ODatabaseDocumentTxPooled open(final String iUserName, final String iUserPassword) {
+    throw new UnsupportedOperationException(
+        "Database instance was retrieved from a pool. You cannot open the database in this way. Use directly a ODatabaseDocumentTx instance if you want to manually open the connection");
+  }
 
-	@Override
-	public ODatabaseDocumentTxPooled create() {
-		throw new UnsupportedOperationException(
-				"Database instance was retrieved from a pool. You cannot create the database in this way. Please use directly ODatabaseDocumentTx.create()");
-	}
+  @Override
+  public ODatabaseDocumentTxPooled create() {
+    throw new UnsupportedOperationException(
+        "Database instance was retrieved from a pool. You cannot open the database in this way. Use directly a ODatabaseDocumentTx instance if you want to manually open the connection");
+  }
 
-	public boolean isUnderlyingOpen() {
-		return !super.isClosed();
-	}
+  public boolean isUnderlyingOpen() {
+    return !super.isClosed();
+  }
 
-	@Override
-	public boolean isClosed() {
-		return ownerPool == null || super.isClosed();
-	}
+  @Override
+  public boolean isClosed() {
+    return ownerPool == null || super.isClosed();
+  }
 
-	/**
-	 * Avoid to close it but rather release itself to the owner pool.
-	 */
-	@Override
-	public void close() {
-		rollback();
-		getLevel1Cache().clear();
+  /**
+   * Avoid to close it but rather release itself to the owner pool.
+   */
+  @Override
+  public void close() {
+    rollback();
+    getLevel1Cache().clear();
 
-		final ODatabaseDocumentPool pool = ownerPool;
-		ownerPool = null;
-		pool.release(this);
-	}
+    final ODatabaseDocumentPool pool = ownerPool;
+    ownerPool = null;
+    pool.release(this);
+  }
 
-	public void forceClose() {
-		super.close();
-	}
+  public void forceClose() {
+    super.close();
+  }
 
-	@Override
-	protected void checkOpeness() {
-		if (ownerPool == null)
-			throw new ODatabaseException(
-					"Database instance has been released to the pool. Get another database instance from the pool with the right username and password");
+  @Override
+  protected void checkOpeness() {
+    if (ownerPool == null)
+      throw new ODatabaseException(
+          "Database instance has been released to the pool. Get another database instance from the pool with the right username and password");
 
-		super.checkOpeness();
-	}
+    super.checkOpeness();
+  }
 }
