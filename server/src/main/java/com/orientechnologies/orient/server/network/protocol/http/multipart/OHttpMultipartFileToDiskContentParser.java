@@ -16,8 +16,10 @@
 package com.orientechnologies.orient.server.network.protocol.http.multipart;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.util.Map;
@@ -31,7 +33,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
  * @author luca.molino
  * 
  */
-public class OHttpMultipartFileToDiskContentParser implements OHttpMultipartContentParser<StringWriter> {
+public class OHttpMultipartFileToDiskContentParser implements OHttpMultipartContentParser<InputStream> {
 
 	protected String	path;
 
@@ -40,7 +42,7 @@ public class OHttpMultipartFileToDiskContentParser implements OHttpMultipartCont
 	}
 
 	@Override
-	public StringWriter parse(final OHttpRequest iRequest, final Map<String, String> headers,
+	public InputStream parse(final OHttpRequest iRequest, final Map<String, String> headers,
 			final OHttpMultipartContentInputStream in, ODatabaseRecord database) throws IOException {
 		final StringWriter buffer = new StringWriter();
 		final OJSONWriter json = new OJSONWriter(buffer);
@@ -68,7 +70,7 @@ public class OHttpMultipartFileToDiskContentParser implements OHttpMultipartCont
 		json.writeAttribute(1, true, "type", headers.get(OHttpUtils.MULTIPART_CONTENT_TYPE));
 		json.writeAttribute(1, true, "size", fileSize);
 		json.endObject();
-		return buffer;
+		return new ByteArrayInputStream(buffer.toString().getBytes());
 	}
 
 }
