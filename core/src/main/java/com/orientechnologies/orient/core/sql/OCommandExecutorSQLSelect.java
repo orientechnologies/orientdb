@@ -162,11 +162,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
 
     if (subiterator == null) {
-      executeSearch(null);
-      if (target == null)
+      if (target == null) {
         // GET THE RESULT
+        executeSearch(null);
         subiterator = getResult().iterator();
-      else
+      } else
         subiterator = (Iterator<OIdentifiable>) target.iterator();
     }
 
@@ -203,13 +203,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   protected void executeSearch(final Map<Object, Object> iArgs) {
-    if (!assignTarget(iArgs)) {
-      if (compiledFilter.getTargetIndex() != null)
-        searchInIndex();
-      else
-        throw new OQueryParsingException("No source found in query: specify class, cluster(s), index or single record(s). Use "
-            + getSyntax());
-    }
+    assignTarget(iArgs);
 
     if (target == null)
       // SEARCH WITHOUT USING TARGET (USUALLY WHEN INDEXES ARE INVOLVED)
@@ -219,6 +213,18 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     for (OIdentifiable id : target)
       if (!executeSearchRecord(id))
         break;
+  }
+
+  @Override
+  protected boolean assignTarget(Map<Object, Object> iArgs) {
+    if (!super.assignTarget(iArgs)) {
+      if (compiledFilter.getTargetIndex() != null)
+        searchInIndex();
+      else
+        throw new OQueryParsingException("No source found in query: specify class, cluster(s), index or single record(s). Use "
+            + getSyntax());
+    }
+    return true;
   }
 
   protected boolean executeSearchRecord(final OIdentifiable id) {
