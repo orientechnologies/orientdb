@@ -42,6 +42,7 @@ VERSION 1.0 - (May, 14th 2012)
 - Query: new context variables
 - Console: new check database command
 - Studio: improved Graph management
+- Improved OSGi support
 - Fixed more than 40 bugs
 
 Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.0
