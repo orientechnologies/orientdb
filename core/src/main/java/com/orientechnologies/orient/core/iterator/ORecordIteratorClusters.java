@@ -325,7 +325,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     if (txEntries != null)
       // ADJUST TOTAL ELEMENT BASED ON CURRENT TRANSACTION'S ENTRIES
       for (ORecordOperation entry : txEntries) {
-        if (entry.getRecord().getIdentity().isTemporary())
+        if (entry.getRecord().getIdentity().isTemporary() && entry.type != ORecordOperation.DELETED)
           totalAvailableRecords++;
         else if (entry.type == ORecordOperation.DELETED)
           totalAvailableRecords--;

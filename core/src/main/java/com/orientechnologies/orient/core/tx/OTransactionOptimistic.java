@@ -222,10 +222,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       ORecordOperation txEntry = getRecordEntry(rid);
 
       if (txEntry == null) {
-        // NEW ENTRY: JUST REGISTER IT
-        txEntry = new ORecordOperation(iRecord, iStatus);
-
-        recordEntries.put(rid, txEntry);
+        if (!(rid.isTemporary() && iStatus != ORecordOperation.CREATED)) {
+          // NEW ENTRY: JUST REGISTER IT
+          txEntry = new ORecordOperation(iRecord, iStatus);
+          recordEntries.put(rid, txEntry);
+        }
       } else {
         // UPDATE PREVIOUS STATUS
         txEntry.record = iRecord;
