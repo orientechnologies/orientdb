@@ -15,20 +15,20 @@
  */
 package com.orientechnologies.orient.core.storage.fs;
 
-import java.io.IOException;
-import java.nio.BufferOverflowException;
-import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.fs.OMMapManager.OPERATION_TYPE;
+
+import java.io.IOException;
+import java.nio.BufferOverflowException;
+import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * OFile implementation that use the Memory Mapping techniques to get faster access on read/write. The Memory Mapping is handled by
@@ -46,8 +46,7 @@ import com.orientechnologies.orient.core.storage.fs.OMMapManager.OPERATION_TYPE;
 public class OFileMMap extends OAbstractFile {
 	public final static String									NAME							= "mmap";
 	protected MappedByteBuffer									headerBuffer;
-	protected int																bufferBeginOffset	= -1;
-	protected static List<ByteBuffer>						bufferPool				= new ArrayList<ByteBuffer>(10);
+	protected static final Queue<ByteBuffer> bufferPool				= new ConcurrentLinkedQueue<ByteBuffer>();
 
 	private static int													BYTEBUFFER_POOLABLE_SIZE;
 	private static OMMapManager.ALLOC_STRATEGY	strategy;
@@ -289,8 +288,7 @@ public class OFileMMap extends OAbstractFile {
 
 	/**
 	 * Synchronizes buffered changes to the file.
-	 * 
-	 * @see OFileMMapSecure
+	 *
 	 */
 	@Override
 	public void synch() {
@@ -356,7 +354,7 @@ public class OFileMMap extends OAbstractFile {
 	/**
 	 * Acquires a byte buffer to use in read/write operations. If the requested size is minor-equals to BYTEBUFFER_POOLABLE_SIZE
 	 * bytes, then is returned from the bufferPool if any. Buffer bigger than BYTEBUFFER_POOLABLE_SIZE bytes.
-	 * 
+	 *
 	 * @param iSize
 	 *          The requested size
 	 * @return A buffer in the pool if any and if size is compatible, otherwise a new one
@@ -375,35 +373,30 @@ public class OFileMMap extends OAbstractFile {
 		}
 
 		final ByteBuffer buffer;
-
-		synchronized (bufferPool) {
-			if (bufferPool.isEmpty()) {
-				buffer = ByteBuffer.allocateDirect(BYTEBUFFER_POOLABLE_SIZE);
-				OProfiler.getInstance().updateStat("MMap.pooledBufferSize", BYTEBUFFER_POOLABLE_SIZE);
-			} else {
-				// POP THE FIRST AVAILABLE
-				buffer = bufferPool.remove(0);
-				OProfiler.getInstance().updateCounter("MMap.pooledBuffers", -1);
-			}
-		}
+    if (bufferPool.isEmpty()) {
+      buffer = ByteBuffer.allocateDirect(BYTEBUFFER_POOLABLE_SIZE);
+      OProfiler.getInstance().updateStat("MMap.pooledBufferSize", BYTEBUFFER_POOLABLE_SIZE);
+    } else {
+      // POP THE FIRST AVAILABLE
+      buffer = bufferPool.poll();
+      OProfiler.getInstance().updateCounter("MMap.pooledBuffers", -1);
+    }
 
 		buffer.limit(iSize);
 
 		return buffer;
 	}
 
-	protected synchronized void releaseByteBuffer(final ByteBuffer iBuffer) {
+	protected void releaseByteBuffer(final ByteBuffer iBuffer) {
 		if (iBuffer.limit() > BYTEBUFFER_POOLABLE_SIZE)
 			// DISCARD: IT'S TOO BIG TO KEEP IT IN MEMORY
 			return;
 
 		iBuffer.rewind();
 
-		// PUSH INTO THE POOL
-		synchronized (bufferPool) {
-			bufferPool.add(iBuffer);
-			OProfiler.getInstance().updateCounter("MMap.pooledBuffers", +1);
-		}
+    // PUSH INTO THE POOL
+    bufferPool.add(iBuffer);
+    OProfiler.getInstance().updateCounter("MMap.pooledBuffers", +1);
 	}
 
 	@Override
