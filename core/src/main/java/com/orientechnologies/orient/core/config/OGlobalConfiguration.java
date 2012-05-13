@@ -316,7 +316,9 @@ public enum OGlobalConfiguration {
       Boolean.class, Boolean.FALSE),
 
   DISTRIBUTED_ALIGN_RECORD_BLOCK("distributed.align.recordBlock",
-      "Number of records to send in block to the remote server during alignment", Integer.class, 200);
+      "Number of records to send in block to the remote server during alignment", Integer.class, 200),
+
+  DISTRIBUTED_SOCKET_TIMEOUT("distributed.socketTimeout", "TCP/IP Socket timeout in ms", Integer.class, 2000);
 
   private final String                 key;
   private final Object                 defValue;

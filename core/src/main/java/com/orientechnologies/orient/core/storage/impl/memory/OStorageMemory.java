@@ -263,7 +263,7 @@ public class OStorageMemory extends OStorageEmbedded {
   }
 
   public OPhysicalPosition createRecord(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent,
-      final byte iRecordType, final int iMode, ORecordCallback<Long> iCallback) {
+      int iRecordVersion, final byte iRecordType, final int iMode, ORecordCallback<Long> iCallback) {
     final long timer = OProfiler.getInstance().startChrono();
 
     lock.acquireSharedLock();
@@ -713,8 +713,8 @@ public class OStorageMemory extends OStorageEmbedded {
             stream = txEntry.getRecord().toStream();
 
           txEntry.getRecord().onBeforeIdentityChanged(rid);
-          final OPhysicalPosition ppos = createRecord(txEntry.dataSegmentId, rid, stream, txEntry.getRecord().getRecordType(), 0,
-              null);
+          final OPhysicalPosition ppos = createRecord(txEntry.dataSegmentId, rid, stream, 0, txEntry.getRecord().getRecordType(),
+              0, null);
           txEntry.getRecord().setVersion(ppos.recordVersion);
           txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
 

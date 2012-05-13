@@ -286,7 +286,7 @@ public class OStorageRemote extends OStorageAbstract {
   }
 
   public OPhysicalPosition createRecord(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent,
-      final byte iRecordType, int iMode, final ORecordCallback<Long> iCallback) {
+      int iRecordVersion, final byte iRecordType, int iMode, final ORecordCallback<Long> iCallback) {
     checkConnection();
 
     if (iMode == 1 && iCallback == null)

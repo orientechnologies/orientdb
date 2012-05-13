@@ -17,6 +17,7 @@ package com.orientechnologies.orient.server.clustering.leader;
 import java.io.IOException;
 import java.util.Date;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.enterprise.channel.binary.OAsynchChannelServiceThread;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.server.clustering.OClusterLogger;
@@ -27,7 +28,7 @@ import com.orientechnologies.orient.server.clustering.OClusterLogger;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ORemoteNodeAbstract {
+public abstract class ORemoteNodeAbstract {
   protected String                      id;
   protected String                      networkAddress;
   protected int                         networkPort;
@@ -36,15 +37,22 @@ public class ORemoteNodeAbstract {
   protected final int                   sessionId = 0;
   protected OAsynchChannelServiceThread serviceThread;
   protected OClusterLogger              logger    = new OClusterLogger();
+  protected final int                   timeout;
 
   public ORemoteNodeAbstract(final String iServerAddress, final int iServerPort) {
     networkAddress = iServerAddress;
     networkPort = iServerPort;
     connectedOn = new Date();
     id = networkAddress + ":" + networkPort;
+    timeout = OGlobalConfiguration.DISTRIBUTED_SOCKET_TIMEOUT.getValueAsInteger();
   }
 
+  protected abstract void connect() throws IOException;
+
   public OChannelBinaryClient beginRequest(final byte iRequestType) throws IOException {
+    if (!checkConnection())
+      connect();
+
     channel.beginRequest();
     channel.writeByte(iRequestType);
     channel.writeInt(sessionId);
@@ -65,7 +73,7 @@ public class ORemoteNodeAbstract {
 
   public void beginResponse() throws IOException {
     if (channel != null)
-      channel.beginResponse(sessionId);
+      channel.beginResponse(sessionId, timeout);
   }
 
   public void endResponse() {

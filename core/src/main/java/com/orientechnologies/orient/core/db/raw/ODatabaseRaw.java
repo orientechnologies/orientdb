@@ -235,7 +235,8 @@ public class ODatabaseRaw implements ODatabase {
     try {
       if (iRid.clusterPosition < 0) {
         // CREATE
-        return storage.createRecord(iDataSegmentId, iRid, iContent, iRecordType, iMode, (ORecordCallback<Long>) iCallBack).recordVersion;
+        return storage
+            .createRecord(iDataSegmentId, iRid, iContent, iVersion, iRecordType, iMode, (ORecordCallback<Long>) iCallBack).recordVersion;
 
       } else {
         // UPDATE

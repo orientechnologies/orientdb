@@ -36,148 +36,152 @@ import com.orientechnologies.orient.server.replication.ODistributedRemoteAsynchE
  * 
  */
 public class ORemotePeer extends ORemoteNodeAbstract {
-	public enum STATUS {
-		DISCONNECTED, CONNECTING, CONNECTED, UNREACHABLE, SYNCHRONIZING
-	}
+  public enum STATUS {
+    DISCONNECTED, CONNECTING, CONNECTED, UNREACHABLE, SYNCHRONIZING
+  }
 
-	private OLeaderNode						leader;
-	private OContextConfiguration	configuration;
-	private volatile STATUS				status	= STATUS.DISCONNECTED;
+  private OLeaderNode           leader;
+  private OContextConfiguration configuration;
+  private volatile STATUS       status = STATUS.DISCONNECTED;
 
-	public ORemotePeer(final OLeaderNode iNode, final String iServerAddress, final int iServerPort) {
-		super(iServerAddress, iServerPort);
-		leader = iNode;
-		configuration = new OContextConfiguration();
-		setStatus(STATUS.CONNECTING);
+  public ORemotePeer(final OLeaderNode iNode, final String iServerAddress, final int iServerPort) {
+    super(iServerAddress, iServerPort);
+    leader = iNode;
+    configuration = new OContextConfiguration();
+    setStatus(STATUS.CONNECTING);
 
-		logger.setNode(iServerAddress);
-	}
+    logger.setNode(iServerAddress);
+  }
 
-	/**
-	 * Connects the current leader to a remote node peer.
-	 * 
-	 * @param iTimeout
-	 * @param iClusterName
-	 * @param iSecurityKey
-	 * @return true if the node has been connected, otherwise false. False is the case the other node is a Leader too and wins the
-	 *         conflicts.
-	 * @throws IOException
-	 */
-	public boolean connect(final int iTimeout, final String iClusterName, final SecretKey iSecurityKey) throws IOException {
-		configuration.setValue(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT, iTimeout);
+  @Override
+  protected void connect() throws IOException {
+  }
 
-		channel = new OChannelBinaryClient(networkAddress, networkPort, configuration, OClusterProtocol.CURRENT_PROTOCOL_VERSION);
+  /**
+   * Connects the current leader to a remote node peer.
+   * 
+   * @param iTimeout
+   * @param iClusterName
+   * @param iSecurityKey
+   * @return true if the node has been connected, otherwise false. False is the case the other node is a Leader too and wins the
+   *         conflicts.
+   * @throws IOException
+   */
+  public boolean connect(final int iTimeout, final String iClusterName, final SecretKey iSecurityKey) throws IOException {
+    configuration.setValue(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT, iTimeout);
 
-		logger.log(this, Level.WARNING, TYPE.CLUSTER, DIRECTION.IN,
-				"received joining request from peer node. Checking authorizations...");
+    channel = new OChannelBinaryClient(networkAddress, networkPort, configuration, OClusterProtocol.CURRENT_PROTOCOL_VERSION);
 
-		// CONNECT TO THE SERVER
-		channel.writeByte(OClusterProtocol.REQUEST_LEADER2PEER_CONNECT);
-		channel.writeInt(sessionId);
+    logger.log(this, Level.WARNING, TYPE.CLUSTER, DIRECTION.IN,
+        "received joining request from peer node. Checking authorizations...");
 
-		final ODocument doc = new ODocument();
-		doc.field("clusterName", iClusterName);
-		doc.field("clusterKey", iSecurityKey.getEncoded());
-		doc.field("leaderNodeAddress", leader.getManager().getId());
-		doc.field("leaderNodeRunningSince", leader.getManager().getRunningSince());
-		channel.writeBytes(doc.toStream());
-		channel.flush();
+    // CONNECT TO THE SERVER
+    channel.writeByte(OClusterProtocol.REQUEST_LEADER2PEER_CONNECT);
+    channel.writeInt(sessionId);
 
-		final ODocument cfg;
+    final ODocument doc = new ODocument();
+    doc.field("clusterName", iClusterName);
+    doc.field("clusterKey", iSecurityKey.getEncoded());
+    doc.field("leaderNodeAddress", leader.getManager().getId());
+    doc.field("leaderNodeRunningSince", leader.getManager().getRunningSince());
+    channel.writeBytes(doc.toStream());
+    channel.flush();
 
-		beginResponse();
-		try {
-			final byte connectedAsPeer = channel.readByte();
-			if (connectedAsPeer == 0) {
-				logger.log(this, Level.WARNING, TYPE.CLUSTER, DIRECTION.IN,
-						"remote server node has refused the connection because it's the new Leader. Switching to be a Peer Node...");
-				leader.getManager().becomePeer(null);
-				disconnect();
-				return false;
-			}
+    final ODocument cfg;
 
-			logger.log(this, Level.INFO, TYPE.CLUSTER, DIRECTION.IN, "joined peer node");
+    beginResponse();
+    try {
+      final byte connectedAsPeer = channel.readByte();
+      if (connectedAsPeer == 0) {
+        logger.log(this, Level.WARNING, TYPE.CLUSTER, DIRECTION.IN,
+            "remote server node has refused the connection because it's the new Leader. Switching to be a Peer Node...");
+        leader.getManager().becomePeer(null);
+        disconnect();
+        return false;
+      }
 
-			// READ PEER DATABASES
-			cfg = new ODocument().fromStream(channel.readBytes());
-		} finally {
-			endResponse();
-		}
+      logger.log(this, Level.INFO, TYPE.CLUSTER, DIRECTION.IN, "joined peer node");
 
-		// SEND BACK THE LIST OF NODES HANDLING ITS DATABASE
-		final ODocument answer = leader.updatePeerDatabases(id, cfg);
-		channel.writeBytes(answer.toStream());
-		channel.flush();
+      // READ PEER DATABASES
+      cfg = new ODocument().fromStream(channel.readBytes());
+    } finally {
+      endResponse();
+    }
 
-		setStatus(STATUS.CONNECTED);
+    // SEND BACK THE LIST OF NODES HANDLING ITS DATABASE
+    final ODocument answer = leader.updatePeerDatabases(id, cfg);
+    channel.writeBytes(answer.toStream());
+    channel.flush();
 
-		serviceThread = new OAsynchChannelServiceThread(new ODistributedRemoteAsynchEventListener(leader.getManager(), null, id),
-				channel, "OrientDB <- Asynch Node/" + id);
+    setStatus(STATUS.CONNECTED);
 
-		return true;
-	}
+    serviceThread = new OAsynchChannelServiceThread(new ODistributedRemoteAsynchEventListener(leader.getManager(), null, id),
+        channel, "OrientDB <- Asynch Node/" + id);
 
-	public boolean sendHeartBeat(final int iNetworkTimeout) throws InterruptedException {
-		if (channel == null)
-			return false;
+    return true;
+  }
 
-		if (status != STATUS.CONNECTED)
-			return false;
+  public boolean sendHeartBeat(final int iNetworkTimeout) throws InterruptedException {
+    if (channel == null)
+      return false;
 
-		configuration.setValue(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT, iNetworkTimeout);
-		logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.OUT, "Sending heartbeat message...");
+    if (status != STATUS.CONNECTED)
+      return false;
 
-		try {
-			channel.beginRequest();
-			try {
-				channel.writeByte(OClusterProtocol.REQUEST_LEADER2PEER_HEARTBEAT);
-				channel.writeInt(sessionId);
-			} finally {
-				channel.endRequest();
-			}
+    configuration.setValue(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT, iNetworkTimeout);
+    logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.OUT, "Sending heartbeat message...");
 
-			logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.IN, "Waiting for the heartbeat response...");
+    try {
+      channel.beginRequest();
+      try {
+        channel.writeByte(OClusterProtocol.REQUEST_LEADER2PEER_HEARTBEAT);
+        channel.writeInt(sessionId);
+      } finally {
+        channel.endRequest();
+      }
 
-			channel.beginResponse(sessionId, 2000);
-			channel.endResponse();
+      logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.IN, "Waiting for the heartbeat response...");
 
-			logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.IN, "Received heartbeat ACK");
+      channel.beginResponse(sessionId, 2000);
+      channel.endResponse();
 
-		} catch (Exception e) {
-			logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.OUT, "Error on sending heartbeat to server node", e);
-			return false;
-		}
+      logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.IN, "Received heartbeat ACK");
 
-		return true;
-	}
+    } catch (Exception e) {
+      logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.OUT, "Error on sending heartbeat to server node", e);
+      return false;
+    }
 
-	/**
-	 * Check if a remote node is really connected.
-	 * 
-	 * @return true if it's connected, otherwise false
-	 */
-	@Override
-	public boolean checkConnection() {
-		final boolean connected = super.checkConnection();
+    return true;
+  }
 
-		if (!connected)
-			setStatus(STATUS.DISCONNECTED);
+  /**
+   * Check if a remote node is really connected.
+   * 
+   * @return true if it's connected, otherwise false
+   */
+  @Override
+  public boolean checkConnection() {
+    final boolean connected = super.checkConnection();
 
-		return connected;
-	}
+    if (!connected)
+      setStatus(STATUS.DISCONNECTED);
 
-	@Override
-	public void disconnect() {
-		super.disconnect();
-		setStatus(STATUS.DISCONNECTED);
-	}
+    return connected;
+  }
 
-	public STATUS getStatus() {
-		return status;
-	}
+  @Override
+  public void disconnect() {
+    super.disconnect();
+    setStatus(STATUS.DISCONNECTED);
+  }
 
-	private void setStatus(final STATUS iStatus) {
-		logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.NONE, "peer changed status %s -> %s", status, iStatus);
-		status = iStatus;
-	}
+  public STATUS getStatus() {
+    return status;
+  }
+
+  private void setStatus(final STATUS iStatus) {
+    logger.log(this, Level.FINE, TYPE.CLUSTER, DIRECTION.NONE, "peer changed status %s -> %s", status, iStatus);
+    status = iStatus;
+  }
 }

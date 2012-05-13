@@ -180,7 +180,7 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
 				((ORecordId) record.getIdentity()).clusterId = treeDataProvider.clusterId;
 
 			final OPhysicalPosition ppos = iSt.createRecord(0, (ORecordId) record.getIdentity(), record.toStream(),
-					record.getRecordType(), (byte) 0, null);
+					0, record.getRecordType(), (byte) 0, null);
 
 			record.setIdentity(record.getIdentity().getClusterId(), ppos.clusterPosition);
 			record.setVersion(ppos.recordVersion);

@@ -15,6 +15,10 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -30,10 +34,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class OStorageLocalTxExecuter {
   private final OStorageLocal storage;
@@ -61,11 +61,12 @@ public class OStorageLocalTxExecuter {
   }
 
   protected OPhysicalPosition createRecord(final int iTxId, final ODataLocal iDataSegment, final OCluster iClusterSegment,
-      final ORecordId iRid, final byte[] iContent, final byte iRecordType, int dataSegmentId) {
+      final ORecordId iRid, final byte[] iContent, final int iRecordVersion, final byte iRecordType, int dataSegmentId) {
     iRid.clusterPosition = -1;
 
     try {
-      final OPhysicalPosition ppos = storage.createRecord(iDataSegment, iClusterSegment, iContent, iRecordType, iRid, 0);
+      final OPhysicalPosition ppos = storage.createRecord(iDataSegment, iClusterSegment, iContent, iRecordType, iRid,
+          iRecordVersion);
 
       // SAVE INTO THE LOG THE POSITION OF THE RECORD JUST CREATED. IF TX FAILS AT THIS POINT A GHOST RECORD IS CREATED UNTIL DEFRAG
       txSegment.addLog(OTxSegment.OPERATION_CREATE, iTxId, iRid.clusterId, iRid.clusterPosition, iRecordType, 0, null,
@@ -231,11 +232,11 @@ public class OStorageLocalTxExecuter {
       if (rid.isNew()) {
         final OPhysicalPosition ppos;
         if (iUseLog)
-          ppos = createRecord(iTx.getId(), dataSegment, cluster, rid, stream, txEntry.getRecord().getRecordType(),
-              txEntry.dataSegmentId);
+          ppos = createRecord(iTx.getId(), dataSegment, cluster, rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord()
+              .getRecordType(), txEntry.dataSegmentId);
         else
           ppos = iTx.getDatabase().getStorage()
-              .createRecord(txEntry.dataSegmentId, rid, stream, txEntry.getRecord().getRecordType(), (byte) 0, null);
+              .createRecord(txEntry.dataSegmentId, rid, stream, 0, txEntry.getRecord().getRecordType(), (byte) 0, null);
 
         rid.clusterPosition = ppos.clusterPosition;
         txEntry.getRecord().setVersion(ppos.recordVersion);

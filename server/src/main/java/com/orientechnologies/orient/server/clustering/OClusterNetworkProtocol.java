@@ -26,6 +26,7 @@ import java.util.logging.Level;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -498,6 +499,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
       databases.put(dbName, db);
     }
 
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     return db;
   }
 

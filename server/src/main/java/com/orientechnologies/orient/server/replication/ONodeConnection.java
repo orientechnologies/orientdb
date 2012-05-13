@@ -325,7 +325,6 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
     }
 
     parseResponse();
-    disconnect();
   }
 
   private void handleRemoteResponse(final byte iOperation, final SYNCH_TYPE iRequestType, final ORecordInternal<?> iRecord,

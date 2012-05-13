@@ -36,162 +36,162 @@ import com.orientechnologies.orient.core.tx.OTransaction;
  * 
  */
 public interface OStorage extends OSharedContainer {
-	public static final String	CLUSTER_INTERNAL_NAME	= "internal";
-	public static final String	CLUSTER_INDEX_NAME		= "index";
-	public static final String	CLUSTER_DEFAULT_NAME	= "default";
-	public static final String	DATA_DEFAULT_NAME			= "default";
+  public static final String CLUSTER_INTERNAL_NAME = "internal";
+  public static final String CLUSTER_INDEX_NAME    = "index";
+  public static final String CLUSTER_DEFAULT_NAME  = "default";
+  public static final String DATA_DEFAULT_NAME     = "default";
 
-	public enum CLUSTER_TYPE {
-		PHYSICAL, MEMORY
-	}
+  public enum CLUSTER_TYPE {
+    PHYSICAL, MEMORY
+  }
 
-	public enum SIZE {
-		TINY, MEDIUM, LARGE, HUGE
-	}
+  public enum SIZE {
+    TINY, MEDIUM, LARGE, HUGE
+  }
 
-	public void open(String iUserName, String iUserPassword, final Map<String, Object> iProperties);
+  public void open(String iUserName, String iUserPassword, final Map<String, Object> iProperties);
 
-	public void create(Map<String, Object> iProperties);
+  public void create(Map<String, Object> iProperties);
 
-	public boolean exists();
+  public boolean exists();
 
-	public void reload();
+  public void reload();
 
-	public void delete();
+  public void delete();
 
-	public void close();
+  public void close();
 
-	public void close(boolean iForce);
+  public void close(boolean iForce);
 
-	public boolean isClosed();
+  public boolean isClosed();
 
-	/**
-	 * Returns the level1 cache. Cannot be null.
-	 * 
-	 * @return Current cache.
-	 */
-	public OLevel2RecordCache getLevel2Cache();
+  /**
+   * Returns the level1 cache. Cannot be null.
+   * 
+   * @return Current cache.
+   */
+  public OLevel2RecordCache getLevel2Cache();
 
-	// CRUD OPERATIONS
-	public OPhysicalPosition createRecord(int iDataSegmentId, ORecordId iRecordId, byte[] iContent, byte iRecordType, int iMode,
-			ORecordCallback<Long> iCallback);
+  // CRUD OPERATIONS
+  public OPhysicalPosition createRecord(int iDataSegmentId, ORecordId iRecordId, byte[] iContent, int iRecordVersion,
+      byte iRecordType, int iMode, ORecordCallback<Long> iCallback);
 
-	public ORawBuffer readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache, ORecordCallback<ORawBuffer> iCallback);
+  public ORawBuffer readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache, ORecordCallback<ORawBuffer> iCallback);
 
-	public int updateRecord(ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType, int iMode,
-			ORecordCallback<Integer> iCallback);
+  public int updateRecord(ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType, int iMode,
+      ORecordCallback<Integer> iCallback);
 
-	public boolean deleteRecord(ORecordId iRecordId, int iVersion, int iMode, ORecordCallback<Boolean> iCallback);
+  public boolean deleteRecord(ORecordId iRecordId, int iVersion, int iMode, ORecordCallback<Boolean> iCallback);
 
-	// TX OPERATIONS
-	public void commit(OTransaction iTx);
+  // TX OPERATIONS
+  public void commit(OTransaction iTx);
 
-	// TX OPERATIONS
-	public void rollback(OTransaction iTx);
+  // TX OPERATIONS
+  public void rollback(OTransaction iTx);
 
-	// MISC
-	public OStorageConfiguration getConfiguration();
+  // MISC
+  public OStorageConfiguration getConfiguration();
 
-	public int getClusters();
+  public int getClusters();
 
-	public Set<String> getClusterNames();
+  public Set<String> getClusterNames();
 
-	public OCluster getClusterById(int iId);
+  public OCluster getClusterById(int iId);
 
-	public Collection<? extends OCluster> getClusterInstances();
+  public Collection<? extends OCluster> getClusterInstances();
 
-	/**
-	 * Add a new cluster into the storage.
-	 * 
-	 * @param iClusterType
-	 *          Cluster type. Type depends by the implementation.
-	 * @param iClusterName
-	 *          name of the cluster
-	 * @param iLocation
-	 *          Location where to store the cluster
-	 * @param iDataSegmentName
-	 *          Name of the data-segment to use. null means 'default'
-	 * @param iParameters
-	 *          Additional parameters to configure the cluster
-	 * 
-	 * @throws IOException
-	 */
-	public int addCluster(String iClusterType, String iClusterName, String iLocation, String iDataSegmentName, Object... iParameters);
+  /**
+   * Add a new cluster into the storage.
+   * 
+   * @param iClusterType
+   *          Cluster type. Type depends by the implementation.
+   * @param iClusterName
+   *          name of the cluster
+   * @param iLocation
+   *          Location where to store the cluster
+   * @param iDataSegmentName
+   *          Name of the data-segment to use. null means 'default'
+   * @param iParameters
+   *          Additional parameters to configure the cluster
+   * 
+   * @throws IOException
+   */
+  public int addCluster(String iClusterType, String iClusterName, String iLocation, String iDataSegmentName, Object... iParameters);
 
-	public boolean dropCluster(String iClusterName);
+  public boolean dropCluster(String iClusterName);
 
-	/**
-	 * Drops a cluster.
-	 * 
-	 * @param iId
-	 * @return true if has been removed, otherwise false
-	 */
-	public boolean dropCluster(int iId);
+  /**
+   * Drops a cluster.
+   * 
+   * @param iId
+   * @return true if has been removed, otherwise false
+   */
+  public boolean dropCluster(int iId);
 
-	/**
-	 * Add a new data segment in the default segment directory and with filename equals to the cluster name.
-	 */
-	public int addDataSegment(String iDataSegmentName);
+  /**
+   * Add a new data segment in the default segment directory and with filename equals to the cluster name.
+   */
+  public int addDataSegment(String iDataSegmentName);
 
-	public int addDataSegment(String iSegmentName, String iDirectory);
+  public int addDataSegment(String iSegmentName, String iDirectory);
 
-	public long count(int iClusterId);
+  public long count(int iClusterId);
 
-	public long count(int[] iClusterIds);
+  public long count(int[] iClusterIds);
 
-	/**
-	 * Returns the size of the database.
-	 */
-	public long getSize();
+  /**
+   * Returns the size of the database.
+   */
+  public long getSize();
 
-	/**
-	 * Returns the total number of records.
-	 */
-	public long countRecords();
+  /**
+   * Returns the total number of records.
+   */
+  public long countRecords();
 
-	public int getDefaultClusterId();
+  public int getDefaultClusterId();
 
-	public int getClusterIdByName(String iClusterName);
+  public int getClusterIdByName(String iClusterName);
 
-	public String getClusterTypeByName(String iClusterName);
+  public String getClusterTypeByName(String iClusterName);
 
-	public String getPhysicalClusterNameById(int iClusterId);
+  public String getPhysicalClusterNameById(int iClusterId);
 
-	public boolean checkForRecordValidity(OPhysicalPosition ppos);
+  public boolean checkForRecordValidity(OPhysicalPosition ppos);
 
-	public String getName();
+  public String getName();
 
-	public String getURL();
+  public String getURL();
 
-	public long getVersion();
+  public long getVersion();
 
-	public void synch();
+  public void synch();
 
-	public int getUsers();
+  public int getUsers();
 
-	public int addUser();
+  public int addUser();
 
-	public int removeUser();
+  public int removeUser();
 
-	/**
-	 * Execute the command request and return the result back.
-	 */
-	public Object command(OCommandRequestText iCommand);
+  /**
+   * Execute the command request and return the result back.
+   */
+  public Object command(OCommandRequestText iCommand);
 
-	/**
-	 * Returns a pair of long values telling the begin and end positions of data in the requested cluster. Useful to know the range of
-	 * the records.
-	 * 
-	 * @param iCurrentClusterId
-	 *          Cluster id
-	 */
-	public long[] getClusterDataRange(int currentClusterId);
+  /**
+   * Returns a pair of long values telling the begin and end positions of data in the requested cluster. Useful to know the range of
+   * the records.
+   * 
+   * @param iCurrentClusterId
+   *          Cluster id
+   */
+  public long[] getClusterDataRange(int currentClusterId);
 
-	public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock);
+  public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock);
 
-	public ODataSegment getDataSegmentById(int iDataSegmentId);
+  public ODataSegment getDataSegmentById(int iDataSegmentId);
 
-	public int getDataSegmentIdByName(String iDataSegmentName);
+  public int getDataSegmentIdByName(String iDataSegmentName);
 
-	public boolean dropDataSegment(String iName);
+  public boolean dropDataSegment(String iName);
 }

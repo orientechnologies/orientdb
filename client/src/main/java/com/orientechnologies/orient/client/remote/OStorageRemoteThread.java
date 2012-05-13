@@ -134,9 +134,9 @@ public class OStorageRemoteThread implements OStorage {
   }
 
   public OPhysicalPosition createRecord(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent,
-      final byte iRecordType, final int iMode, ORecordCallback<Long> iCallback) {
+      int iRecordVersion, final byte iRecordType, final int iMode, ORecordCallback<Long> iCallback) {
     delegate.setSessionId(sessionId);
-    return delegate.createRecord(iDataSegmentId, iRid, iContent, iRecordType, iMode, iCallback);
+    return delegate.createRecord(iDataSegmentId, iRid, iContent, 0, iRecordType, iMode, iCallback);
   }
 
   public ORawBuffer readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,

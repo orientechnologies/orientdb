@@ -597,7 +597,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       // SAVE THE RECORD
       if (record.getIdentity().getClusterPosition() < nextAvailablePos) {
-        // REWRITE PREVIOUS RECORD
+        // REWRITE PREVIOUS RECORD WITH THE SAME VERSION, SO USE A NEGATIVE NUMBER
+        record.setVersion(Integer.MIN_VALUE + record.getVersion());
+
         if (record instanceof ODocument)
           record.save();
         else

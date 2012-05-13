@@ -651,7 +651,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       }
 
       // GET THE LATEST VERSION. IT COULD CHANGE BECAUSE THE RECORD COULD BE BEEN LINKED FROM OTHERS
-      final int realVersion = iVersion == -1 || !mvcc ? -1 : iRecord.getVersion();
+      final int realVersion = iVersion == -1 ? -1 : iRecord.getVersion();
 
       final int dataSegmentId = dataSegmentStrategy.assignDataSegmentId(this, iRecord);
 
