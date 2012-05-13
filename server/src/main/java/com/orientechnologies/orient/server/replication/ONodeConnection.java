@@ -355,7 +355,7 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
   }
 
   protected void connect() throws IOException {
-    if (channel != null)
+    if (checkConnection())
       return;
 
     logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.OUT, "connecting...", getId());

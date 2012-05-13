@@ -193,7 +193,7 @@ public class OReplicator {
               dbEntry.status);
         else
           // SEND THE REQUEST
-          node.propagateChange(iTransactionEntry, dbEntry.synchType);
+          node.propagateChange(iTransactionEntry, dbEntry.synchType, true);
       }
     }
   }

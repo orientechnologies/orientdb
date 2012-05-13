@@ -82,14 +82,13 @@ public class ODistributedNode {
     ODistributedDatabaseInfo obj = databases.get(dbName);
     if (obj != null) {
       // CLOSE AND REMOVE IT BEFORE TO RESTART
-      obj.close();
-      databases.remove(dbName);
+      removeDatabase(dbName);
     }
-    
+
     obj = new ODistributedDatabaseInfo(id, dbName, replicator.getReplicatorUser().name, replicator.getReplicatorUser().password,
         iSynchType, STATUS_TYPE.OFFLINE);
     databases.put(dbName, obj);
-    
+
     return obj;
   }
 
@@ -159,7 +158,8 @@ public class ODistributedNode {
     }
   }
 
-  public void propagateChange(final ORecordOperation iRequest, final SYNCH_TYPE iRequestType) throws IOException {
+  public void propagateChange(final ORecordOperation iRequest, final SYNCH_TYPE iRequestType, final boolean iResume)
+      throws IOException {
     final ORecordInternal<?> record = iRequest.getRecord();
     if (record == null)
       // RECORD DOESN'T EXIST ANYMORE
@@ -173,7 +173,7 @@ public class ODistributedNode {
       databaseEntry.connection.propagateChange(databaseEntry, iRequest, iRequestType, record);
 
     } catch (Exception e) {
-      handleError(iRequest, iRequestType, e);
+      handleError(iRequest, iRequestType, e, iResume);
     }
   }
 
@@ -205,7 +205,8 @@ public class ODistributedNode {
           "copying database to the remote server via streaming across the network...");
 
       db.setSynchronizing();
-      db.connection = new ONodeConnection(replicator, id, replicator.getConflictResolver());
+      if (db.connection == null)
+        db.connection = new ONodeConnection(replicator, id, replicator.getConflictResolver());
       db.connection.copy(iDb, db.databaseName, db.userName, db.userPassword, iRemoteEngine);
 
     } catch (IOException e) {
@@ -236,10 +237,13 @@ public class ODistributedNode {
   }
 
   /**
-   * Closes all the opened databases.
+   * Closes all the opened databases
+   * 
+   * @throws IOException
    */
-  public void disconnect() {
+  public void disconnect() throws IOException {
     for (ODistributedDatabaseInfo db : databases.values()) {
+      db.close();
       if (db.connection != null)
         db.connection.disconnect();
     }
@@ -251,8 +255,8 @@ public class ODistributedNode {
         databases.get(iDatabaseName).getLog().getLastOperationId() };
   }
 
-  protected void handleError(final ORecordOperation iRequest, final SYNCH_TYPE iRequestType, final Exception iException)
-      throws RuntimeException {
+  protected void handleError(final ORecordOperation iRequest, final SYNCH_TYPE iRequestType, final Exception iException,
+      final boolean iResume) throws RuntimeException, IOException {
 
     final Set<ODistributedDatabaseInfo> currentDbList = new HashSet<ODistributedDatabaseInfo>(databases.values());
 
@@ -262,14 +266,15 @@ public class ODistributedNode {
     logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.NONE, "seems down, retrying to connect...");
 
     // RECONNECT ALL DATABASES
-    try {
-      for (ODistributedDatabaseInfo dbEntry : currentDbList) {
-        startDatabaseReplication(dbEntry);
+    if (iResume)
+      try {
+        for (ODistributedDatabaseInfo dbEntry : currentDbList) {
+          startDatabaseReplication(dbEntry);
+        }
+      } catch (IOException e) {
+        // IO ERROR: THE NODE SEEMED ALWAYS MORE DOWN: START TO COLLECT DATA FOR IT WAITING FOR A FUTURE RE-CONNECTION
+        logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.NONE, "is down, remove it from replication");
       }
-    } catch (IOException e) {
-      // IO ERROR: THE NODE SEEMED ALWAYS MORE DOWN: START TO COLLECT DATA FOR IT WAITING FOR A FUTURE RE-CONNECTION
-      logger.log(this, Level.WARNING, TYPE.REPLICATION, DIRECTION.NONE, "is down, remove it from replication");
-    }
 
     if (iRequestType == SYNCH_TYPE.SYNCH) {
       // SYNCHRONOUS CASE: RE-THROW THE EXCEPTION NOW TO BEING PROPAGATED UP TO THE CLIENT

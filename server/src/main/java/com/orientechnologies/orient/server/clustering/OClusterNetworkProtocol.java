@@ -217,7 +217,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
 
       // SEND ALL THE LOGS
       final ODistributedNode replicationNode = manager.getReplicator().getNode(remoteNodeId);
-      manager.getReplicator().getConflictResolver().init( db );
+      manager.getReplicator().getConflictResolver().init(db);
       final ORecordOperation op = new ORecordOperation();
 
       // SYNCHRONIZE ALL THE NODES
@@ -246,7 +246,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
               opLog.getEntry(i, op);
 
               try {
-                replicationNode.propagateChange(op, SYNCH_TYPE.SYNCH);
+                replicationNode.propagateChange(op, SYNCH_TYPE.SYNCH, false);
                 sent++;
 
                 logger.log(this, Level.INFO, TYPE.REPLICATION, DIRECTION.IN, "#%d operation %d with RID %s", sent, op.serial,
@@ -307,7 +307,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
           // LOCAL IS DELETED
           if (remoteVersion > -1)
             // DELETE REMOTE RECORD
-            remoteNode.propagateChange(new ORecordOperation(rid, ORecordOperation.DELETED), SYNCH_TYPE.SYNCH);
+            remoteNode.propagateChange(new ORecordOperation(rid, ORecordOperation.DELETED), SYNCH_TYPE.SYNCH, false);
 
         } else if (remoteVersion == -1) {
           // REMOTE IS DELETED
@@ -320,7 +320,7 @@ public class OClusterNetworkProtocol extends OBinaryNetworkProtocolAbstract impl
           logger.log(this, Level.FINE, TYPE.REPLICATION, DIRECTION.IN, "Sending record %s to remote: my version %d > remote %d",
               rid, localRecord.version, remoteVersion);
 
-          remoteNode.propagateChange(new ORecordOperation(rid, ORecordOperation.UPDATED), SYNCH_TYPE.SYNCH);
+          remoteNode.propagateChange(new ORecordOperation(rid, ORecordOperation.UPDATED), SYNCH_TYPE.SYNCH, false);
 
         } else if (localRecord.version < remoteVersion) {
           // REMOTE WINS
