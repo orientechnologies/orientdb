@@ -372,14 +372,13 @@ public class OFileMMap extends OAbstractFile {
       }
     }
 
-    final ByteBuffer buffer;
-    if (bufferPool.isEmpty()) {
+    // POP THE FIRST AVAILABLE
+    ByteBuffer buffer = bufferPool.poll();
+    if (buffer != null)
+      OProfiler.getInstance().updateCounter("MMap.pooledBuffers", -1);
+    else {
       buffer = ByteBuffer.allocateDirect(BYTEBUFFER_POOLABLE_SIZE);
       OProfiler.getInstance().updateStat("MMap.pooledBufferSize", BYTEBUFFER_POOLABLE_SIZE);
-    } else {
-      // POP THE FIRST AVAILABLE
-      buffer = bufferPool.poll();
-      OProfiler.getInstance().updateCounter("MMap.pooledBuffers", -1);
     }
 
     buffer.limit(iSize);
