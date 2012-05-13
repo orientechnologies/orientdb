@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
@@ -103,7 +104,7 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
         }
 
         parseResponse();
-        
+
       } finally {
         database.close();
       }
@@ -249,6 +250,8 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
     logger.setNode(databaseEntry.serverId);
     logger.setDatabase(databaseEntry.databaseName);
 
+    final ODatabaseRecord localDatabase = ODatabaseRecordThreadLocal.INSTANCE.get();
+
     do {
       try {
         final OChannelBinaryClient network = beginRequest(OClusterProtocol.REQUEST_NODE2NODE_REPLICATION_RECORD_PROPAGATE);
@@ -275,6 +278,7 @@ public class ONodeConnection extends ORemoteNodeAbstract implements OCommandOutp
         } else {
           Callable<Object> response = new Callable<Object>() {
             public Object call() throws Exception {
+              ODatabaseRecordThreadLocal.INSTANCE.set(localDatabase);
               beginResponse();
               try {
                 handleRemoteResponse(iRequest.type, iRequestType, iRecord, network.readLong());

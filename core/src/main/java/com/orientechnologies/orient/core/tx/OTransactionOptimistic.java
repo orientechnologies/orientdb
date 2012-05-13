@@ -89,21 +89,22 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         }
 
         if (indexesToLock != null && !indexesToLock.isEmpty())
-					if (lockedIndexes == null)
-						lockedIndexes = new ArrayList<OIndexMVRBTreeAbstract<?>>();
+          if (lockedIndexes == null)
+            lockedIndexes = new ArrayList<OIndexMVRBTreeAbstract<?>>();
 
-          for (OIndex<?> index : indexesToLock) {
-            for (Entry<ORID, ORecordOperation> entry : recordEntries.entrySet()) {
-              final ORecord<?> record = entry.getValue().record.getRecord();
-              if (record instanceof ODocument) {
-                ODocument doc = (ODocument) record;
-                if (!lockedIndexes.contains(index.getInternal()) && doc.getSchemaClass() != null && doc.getSchemaClass().isSubClassOf(index.getDefinition().getClassName())) {
-                  ((OIndexMVRBTreeAbstract<?>) index.getInternal()).acquireExclusiveLock();
-                  lockedIndexes.add((OIndexMVRBTreeAbstract<?>) index.getInternal());
-                }
+        for (OIndex<?> index : indexesToLock) {
+          for (Entry<ORID, ORecordOperation> entry : recordEntries.entrySet()) {
+            final ORecord<?> record = entry.getValue().record.getRecord();
+            if (record instanceof ODocument) {
+              ODocument doc = (ODocument) record;
+              if (!lockedIndexes.contains(index.getInternal()) && doc.getSchemaClass() != null && index.getDefinition() != null
+                  && doc.getSchemaClass().isSubClassOf(index.getDefinition().getClassName())) {
+                ((OIndexMVRBTreeAbstract<?>) index.getInternal()).acquireExclusiveLock();
+                lockedIndexes.add((OIndexMVRBTreeAbstract<?>) index.getInternal());
               }
             }
           }
+        }
 
         database.getStorage().callInLock(new Callable<Void>() {
 
