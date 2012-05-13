@@ -157,16 +157,31 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     System.arraycopy(parent.keys, iStartPosition, keys, 0, size);
     System.arraycopy(parent.values, iStartPosition, values, 0, size);
 
-    if (buffer == null && parent.buffer == null)
+    if (buffer == null && parent.buffer == null) {
+      stream = null;
       return setDirty();
+    }
 
-    if (parent.buffer == null)
+    if (parent.buffer == null) {
+      buffer = null;
+      stream = null;
       return setDirty();
+    }
 
     if (buffer == null || buffer.length < parent.buffer.length)
       buffer = new byte[parent.buffer.length];
 
     System.arraycopy(parent.buffer, 0, buffer, 0, parent.buffer.length);
+
+    if (buffer == null)
+      stream = null;
+    else {
+      if (stream != null)
+        stream.setSource(buffer);
+      else
+        stream = new OMemoryStream(buffer);
+    }
+
     return setDirty();
   }
 
@@ -197,16 +212,30 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
 
     size = source.size;
 
-    if (buffer == null && source.buffer == null)
+    if (buffer == null && source.buffer == null) {
+      stream = null;
       return setDirty();
+    }
 
-    if (source.buffer == null)
+    if (source.buffer == null) {
+      buffer = null;
+      stream = null;
       return setDirty();
+    }
 
     if (buffer == null || buffer.length < source.buffer.length)
       buffer = new byte[source.buffer.length];
 
     System.arraycopy(source.buffer, 0, buffer, 0, source.buffer.length);
+
+    if (buffer == null)
+      stream = null;
+    else {
+      if (stream != null)
+        stream.setSource(buffer);
+      else
+        stream = new OMemoryStream(buffer);
+    }
 
     return setDirty();
   }
