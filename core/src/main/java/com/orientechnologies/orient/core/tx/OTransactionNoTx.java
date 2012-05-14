@@ -161,7 +161,10 @@ public class OTransactionNoTx extends OTransactionAbstract {
       break;
 
     case REMOVE:
-      delegate.remove(iKey, iValue);
+      if (iKey == null)
+        delegate.remove(iValue);
+      else
+        delegate.remove(iKey, iValue);
       break;
     }
   }

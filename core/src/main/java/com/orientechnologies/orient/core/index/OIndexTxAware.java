@@ -34,77 +34,77 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTran
  * 
  */
 public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
-	protected ODatabaseRecord	database;
+  protected ODatabaseRecord     database;
 
-	public OIndexTxAware(final ODatabaseRecord iDatabase, final OIndex<T> iDelegate) {
-		super(iDelegate);
-		database = iDatabase;
-	}
+  public OIndexTxAware(final ODatabaseRecord iDatabase, final OIndex<T> iDelegate) {
+    super(iDelegate);
+    database = iDatabase;
+  }
 
-	@Override
-	public long getSize() {
-		long tot = delegate.getSize();
+  @Override
+  public long getSize() {
+    long tot = delegate.getSize();
 
-		final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
-		if (indexChanges != null) {
-			if (indexChanges.cleared)
-				// BEGIN FROM 0
-				tot = 0;
+    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+    if (indexChanges != null) {
+      if (indexChanges.cleared)
+        // BEGIN FROM 0
+        tot = 0;
 
-			for (final Entry<Object, OTransactionIndexChangesPerKey> entry : indexChanges.changesPerKey.entrySet()) {
-				for (final OTransactionIndexEntry e : entry.getValue().entries) {
-					if (e.operation == OPERATION.REMOVE) {
-						if (e.value == null)
-							// KEY REMOVED
-							tot--;
-					} else if (e.operation == OPERATION.PUT) {
-					}
-				}
-			}
-		}
+      for (final Entry<Object, OTransactionIndexChangesPerKey> entry : indexChanges.changesPerKey.entrySet()) {
+        for (final OTransactionIndexEntry e : entry.getValue().entries) {
+          if (e.operation == OPERATION.REMOVE) {
+            if (e.value == null)
+              // KEY REMOVED
+              tot--;
+          } else if (e.operation == OPERATION.PUT) {
+          }
+        }
+      }
+    }
 
-		return tot;
-	}
+    return tot;
+  }
 
-	@Override
-	public OIndexTxAware<T> put(final Object iKey, final OIdentifiable iValue) {
-		final ORID rid = iValue.getIdentity();
+  @Override
+  public OIndexTxAware<T> put(final Object iKey, final OIdentifiable iValue) {
+    final ORID rid = iValue.getIdentity();
 
-		if (!rid.isValid())
-			// EARLY SAVE IT
-			((ORecord<?>) iValue).save();
+    if (!rid.isValid())
+      // EARLY SAVE IT
+      ((ORecord<?>) iValue).save();
 
-		database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.PUT, iKey, rid);
-		return this;
-	}
+    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.PUT, iKey, rid);
+    return this;
+  }
 
-	@Override
-	public boolean remove(final Object iKey) {
-		database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, iKey, null);
-		return true;
-	}
+  @Override
+  public boolean remove(final Object iKey) {
+    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, iKey, null);
+    return true;
+  }
 
-	@Override
-	public boolean remove(final Object iKey, final OIdentifiable iRID) {
-		database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, iKey, iRID);
-		return true;
-	}
+  @Override
+  public boolean remove(final Object iKey, final OIdentifiable iRID) {
+    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, iKey, iRID);
+    return true;
+  }
 
-	@Override
-	public int remove(final OIdentifiable iRID) {
-		database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, "*", iRID);
-		return 1;
-	}
+  @Override
+  public int remove(final OIdentifiable iRID) {
+    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, null, iRID);
+    return 1;
+  }
 
-	@Override
-	public OIndexTxAware<T> clear() {
-		database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.CLEAR, null, null);
-		return this;
-	}
+  @Override
+  public OIndexTxAware<T> clear() {
+    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.CLEAR, null, null);
+    return this;
+  }
 
-	@Override
-	public void unload() {
-		database.getTransaction().clearIndexEntries();
-		super.unload();
-	}
+  @Override
+  public void unload() {
+    database.getTransaction().clearIndexEntries();
+    super.unload();
+  }
 }

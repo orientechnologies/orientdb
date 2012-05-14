@@ -96,32 +96,6 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     return result;
   }
 
-  protected OIdentifiable filterIndexChanges(final OTransactionIndexChanges indexChanges, final Object key, OIdentifiable iValue,
-      final Set<Object> keysToRemove) {
-    OIdentifiable keyResult = iValue;
-    if (indexChanges != null && indexChanges.containsChangesPerKey(key)) {
-      final OTransactionIndexChangesPerKey value = indexChanges.getChangesPerKey(key);
-      if (value != null) {
-        for (final OTransactionIndexEntry entry : value.entries) {
-          if (entry.operation == OPERATION.REMOVE) {
-            if (entry.value == null || entry.value.equals(keyResult)) {
-              // REMOVE THE ENTIRE KEY, SO RESULT SET IS EMPTY
-              if (keysToRemove != null)
-                keysToRemove.add(key);
-              keyResult = null;
-            }
-          } else if (entry.operation == OPERATION.PUT) {
-            // ADD ALSO THIS RID
-            if (keysToRemove != null)
-              keysToRemove.add(key);
-            keyResult = entry.value;
-          }
-        }
-      }
-    }
-    return keyResult;
-  }
-
   @Override
   public Collection<ODocument> getEntries(final Collection<?> iKeys) {
     final Collection<?> keys = new ArrayList<Object>(iKeys);
@@ -153,5 +127,57 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     if (!keys.isEmpty())
       result.addAll(super.getEntries(keys));
     return result;
+  }
+
+  protected OIdentifiable filterIndexChanges(final OTransactionIndexChanges indexChanges, final Object key, OIdentifiable iValue,
+      final Set<Object> keysToRemove) {
+    if (indexChanges == null)
+      return iValue;
+
+    OIdentifiable keyResult = iValue;
+    // CHECK FOR THE RECEIVED KEY
+    if (indexChanges.containsChangesPerKey(key)) {
+      final OTransactionIndexChangesPerKey value = indexChanges.getChangesPerKey(key);
+      if (value != null) {
+        for (final OTransactionIndexEntry entry : value.entries) {
+          if (entry.operation == OPERATION.REMOVE) {
+            if (entry.value == null || entry.value.equals(keyResult)) {
+              // REMOVE THE ENTIRE KEY, SO RESULT SET IS EMPTY
+              if (keysToRemove != null)
+                keysToRemove.add(key);
+              keyResult = null;
+            }
+          } else if (entry.operation == OPERATION.PUT) {
+            // ADD ALSO THIS RID
+            if (keysToRemove != null)
+              keysToRemove.add(key);
+            keyResult = entry.value;
+          }
+        }
+      }
+    }
+
+    // CHECK FOR ANY KEYS
+    if (indexChanges.containsChangesCrossKey()) {
+      final OTransactionIndexChangesPerKey value = indexChanges.getChangesCrossKey();
+      if (value != null) {
+        for (final OTransactionIndexEntry entry : value.entries) {
+          if (entry.operation == OPERATION.REMOVE) {
+            if (entry.value == null || entry.value.equals(keyResult)) {
+              // REMOVE THE ENTIRE KEY, SO RESULT SET IS EMPTY
+              if (keysToRemove != null)
+                keysToRemove.add(key);
+              keyResult = null;
+            }
+          } else if (entry.operation == OPERATION.PUT) {
+            // ADD ALSO THIS RID
+            if (keysToRemove != null)
+              keysToRemove.add(key);
+            keyResult = entry.value;
+          }
+        }
+      }
+    }
+    return keyResult;
   }
 }

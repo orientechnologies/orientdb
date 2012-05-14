@@ -246,8 +246,10 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 
     if (iOperation == OPERATION.CLEAR)
       indexEntry.setCleared();
-    else
+    else if (iKey != null)
       indexEntry.getChangesPerKey(iKey).add(iValue, iOperation);
+    else
+      indexEntry.getChangesCrossKey().add(iValue, iOperation);
   }
 
   protected void checkTransaction() {

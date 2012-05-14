@@ -142,8 +142,31 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
 
   protected Collection<OIdentifiable> filterIndexChanges(final OTransactionIndexChanges indexChanges, final Object key,
       final Collection<OIdentifiable> keyResult) {
-    if (indexChanges != null && indexChanges.containsChangesPerKey(key)) {
+    if (indexChanges == null)
+      return keyResult;
+
+    if (indexChanges.containsChangesPerKey(key)) {
       final OTransactionIndexChangesPerKey value = indexChanges.getChangesPerKey(key);
+      if (value != null) {
+        for (final OTransactionIndexEntry entry : value.entries) {
+          if (entry.operation == OPERATION.REMOVE) {
+            if (entry.value == null) {
+              // REMOVE THE ENTIRE KEY, SO RESULT SET IS EMPTY
+              keyResult.clear();
+              break;
+            } else
+              // REMOVE ONLY THIS RID
+              keyResult.remove(entry.value);
+          } else if (entry.operation == OPERATION.PUT) {
+            // ADD ALSO THIS RID
+            keyResult.add(entry.value);
+          }
+        }
+      }
+    }
+
+    if (indexChanges.containsChangesCrossKey()) {
+      final OTransactionIndexChangesPerKey value = indexChanges.getChangesCrossKey();
       if (value != null) {
         for (final OTransactionIndexEntry entry : value.entries) {
           if (entry.operation == OPERATION.REMOVE) {
