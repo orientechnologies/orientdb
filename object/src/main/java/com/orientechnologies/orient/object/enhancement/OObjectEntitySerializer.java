@@ -17,6 +17,7 @@
 package com.orientechnologies.orient.object.enhancement;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -385,12 +386,17 @@ public class OObjectEntitySerializer {
 		if (iFieldValue instanceof Proxy)
 			return getDocument((Proxy) iFieldValue);
 
-		if (!OType.isSimpleType(iFieldValue)) {
+		if (!OType.isSimpleType(iFieldValue) || iFieldValue.getClass().isArray()) {
 			Class<?> fieldClass = iFieldValue.getClass();
 
 			if (fieldClass.isArray()) {
 				// ARRAY
-				iFieldValue = multiValueToStream(Arrays.asList(iFieldValue), iType, db, iRecord);
+				final int arrayLength = Array.getLength(iFieldValue);
+				final List<Object> arrayList = new ArrayList<Object>();
+				for(int i = 0; i <arrayLength; i++)
+					arrayList.add(Array.get(iFieldValue, i));
+
+				iFieldValue = multiValueToStream(arrayList, iType, db, iRecord);
 			} else if (Collection.class.isAssignableFrom(fieldClass)) {
 				// COLLECTION (LIST OR SET)
 				iFieldValue = multiValueToStream(iFieldValue, iType, db, iRecord);
