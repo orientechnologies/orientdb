@@ -506,7 +506,7 @@ public class ODatabaseRaw implements ODatabase {
       it.next().onClose(getDatabaseOwner());
 
     // WAKE UP LISTENERS
-    for (ODatabaseListener listener : listeners)
+    for (ODatabaseListener listener : new ArrayList<ODatabaseListener>(listeners))
       try {
         listener.onClose(getDatabaseOwner());
       } catch (Throwable t) {
