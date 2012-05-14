@@ -58,6 +58,8 @@ public class OTransactionIndexChanges {
   }
 
   public OTransactionIndexChangesPerKey getChangesCrossKey() {
+    if (changesCrossKey == null)
+      changesCrossKey = new OTransactionIndexChangesPerKey(null);
     return changesCrossKey;
   }
 }

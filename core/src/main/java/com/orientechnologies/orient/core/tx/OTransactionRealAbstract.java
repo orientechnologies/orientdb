@@ -167,7 +167,6 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   }
 
   public ODocument getIndexChanges() {
-    final StringBuilder value = new StringBuilder();
 
     final ODocument result = new ODocument();
 
@@ -181,42 +180,12 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       final List<ODocument> entries = new ArrayList<ODocument>();
       indexDoc.field("entries", entries, OType.EMBEDDEDLIST);
 
+      if (indexEntry.getValue().changesCrossKey != null)
+        serializeIndexChangeEntry(indexEntry.getValue().changesCrossKey, indexDoc, entries);
+
       // STORE INDEX ENTRIES
-      for (OTransactionIndexChangesPerKey entry : indexEntry.getValue().changesPerKey.values()) {
-        // SERIALIZE KEY
-        value.setLength(0);
-        if (entry.key != null) {
-          if (entry.key instanceof OCompositeKey) {
-            final List<Comparable<?>> keys = ((OCompositeKey) entry.key).getKeys();
-            ORecordSerializerStringAbstract.fieldTypeToString(value, OType.EMBEDDEDLIST, keys);
-          } else
-            ORecordSerializerStringAbstract.fieldTypeToString(value, OType.getTypeByClass(entry.key.getClass()), entry.key);
-        } else
-          value.append('*');
-        String key = value.toString();
-
-        final List<ODocument> operations = new ArrayList<ODocument>();
-
-        // SERIALIZE VALUES
-        if (entry.entries != null && !entry.entries.isEmpty()) {
-          for (OTransactionIndexEntry e : entry.entries) {
-            final ODocument changeDoc = new ODocument().addOwner(indexDoc);
-
-            // SERIALIZE OPERATION
-            changeDoc.field("o", e.operation.ordinal());
-
-            if (e.value instanceof ORecord<?> && e.value.getIdentity().isNew())
-              ((ORecord<?>) e.value).save();
-
-            changeDoc.field("v", e.value != null ? e.value.getIdentity() : null);
-
-            operations.add(changeDoc);
-          }
-        }
-
-        entries.add(new ODocument().addOwner(indexDoc).field("k", OStringSerializerHelper.encode(key))
-            .field("ops", operations, OType.EMBEDDEDLIST));
-      }
+      for (OTransactionIndexChangesPerKey entry : indexEntry.getValue().changesPerKey.values())
+        serializeIndexChangeEntry(entry, indexDoc, entries);
     }
 
     indexEntries.clear();
@@ -255,5 +224,42 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   protected void checkTransaction() {
     if (status == TXSTATUS.INVALID)
       throw new OTransactionException("Invalid state of the transaction. The transaction must be begun.");
+  }
+
+  protected void serializeIndexChangeEntry(OTransactionIndexChangesPerKey entry, final ODocument indexDoc,
+      final List<ODocument> entries) {
+    // SERIALIZE KEY
+    final StringBuilder value = new StringBuilder();
+    if (entry.key != null) {
+      if (entry.key instanceof OCompositeKey) {
+        final List<Comparable<?>> keys = ((OCompositeKey) entry.key).getKeys();
+        ORecordSerializerStringAbstract.fieldTypeToString(value, OType.EMBEDDEDLIST, keys);
+      } else
+        ORecordSerializerStringAbstract.fieldTypeToString(value, OType.getTypeByClass(entry.key.getClass()), entry.key);
+    } else
+      value.append('*');
+    String key = value.toString();
+
+    final List<ODocument> operations = new ArrayList<ODocument>();
+
+    // SERIALIZE VALUES
+    if (entry.entries != null && !entry.entries.isEmpty()) {
+      for (OTransactionIndexEntry e : entry.entries) {
+        final ODocument changeDoc = new ODocument().addOwner(indexDoc);
+
+        // SERIALIZE OPERATION
+        changeDoc.field("o", e.operation.ordinal());
+
+        if (e.value instanceof ORecord<?> && e.value.getIdentity().isNew())
+          ((ORecord<?>) e.value).save();
+
+        changeDoc.field("v", e.value != null ? e.value.getIdentity() : null);
+
+        operations.add(changeDoc);
+      }
+    }
+
+    entries.add(new ODocument().addOwner(indexDoc).field("k", OStringSerializerHelper.encode(key))
+        .field("ops", operations, OType.EMBEDDEDLIST));
   }
 }
