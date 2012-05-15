@@ -77,11 +77,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     InputStream inStream;
     final BufferedInputStream bf = new BufferedInputStream(new FileInputStream(fileName));
-		bf.mark(1024);
+    bf.mark(1024);
     try {
       inStream = new GZIPInputStream(bf);
     } catch (Exception e) {
-			bf.reset();
+      bf.reset();
       inStream = bf;
     }
 
