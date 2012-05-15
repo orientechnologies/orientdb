@@ -48,15 +48,15 @@ import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 
 /**
- * DEPRECATED -- USE {@link OObjectDatabaseTx} instead
+ * DEPRECATED -- USE {@link OObjectDatabase} instead
  * 
  * Object Database instance. It's a wrapper to the class ODatabaseDocumentTx but handle the conversion between ODocument instances
  * and POJOs.
  * 
- * @see ODatabaseDocumentTx
+ * @see OObjectDatabase
  * @author Luca Garulli
  */
-@Deprecated()
+@Deprecated
 @SuppressWarnings("unchecked")
 public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements ODatabaseObject, OUserObject2RecordHandler {
 
