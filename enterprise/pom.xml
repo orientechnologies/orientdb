@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.orientechnologies</groupId>
     <artifactId>orientdb-parent</artifactId>
-    <version>1.0</version>
+    <version>1.0.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>orientdb-enterprise</artifactId>

@@ -4,7 +4,7 @@
 
   <groupId>com.orientechnologies</groupId>
   <artifactId>orientdb-parent</artifactId>
-  <version>1.0</version>
+  <version>1.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>OrientDB</name>
@@ -195,7 +195,7 @@
         <plugin>
           <groupId>org.eclipse.m2e</groupId>
           <artifactId>lifecycle-mapping</artifactId>
-          <version>1.0.0</version>
+          <version>1.0</version>
           <configuration>
             <lifecycleMappingMetadata>
               <pluginExecutions>
@@ -302,7 +302,7 @@
             <Bundle-Name>${project.name}</Bundle-Name>
             <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
             <Bundle-Description>${project.description}</Bundle-Description>
-	    <Bundle-Version>1.0.0.qualifier</Bundle-Version>
+	    	<Bundle-Version>1.0.1.qualifier</Bundle-Version>
             <Export-Package>${osgi.export}</Export-Package>
             <Private-Package>${osgi.private}</Private-Package>
             <Import-Package>${osgi.import}</Import-Package>
@@ -423,6 +423,32 @@
   </reporting>
 
   <profiles>
+    <profile>
+      <id>release-sign-artifacts</id>
+      <activation>
+        <property>
+          <name>performRelease</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
     <profile>
       <id>release</id>
       <build>
