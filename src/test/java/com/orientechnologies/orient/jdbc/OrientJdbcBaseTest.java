@@ -16,50 +16,50 @@ import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.loadDB;
 
 public abstract class OrientJdbcBaseTest {
 
-    protected OrientJdbcConnection conn;
+	protected OrientJdbcConnection conn;
 
-    @BeforeClass
-    public static void loadDriver() throws ClassNotFoundException {
-        forName(OrientJdbcDriver.class.getName());
+	@BeforeClass
+	public static void loadDriver() throws ClassNotFoundException {
+		forName(OrientJdbcDriver.class.getName());
 
-    }
+	}
 
-    @Before
-    public void prepareDatabase() throws Exception {
-        String dbUrl = "local:./working/db/test";
-        dbUrl = "memory:test";
+	@Before
+	public void prepareDatabase() throws Exception {
+		String dbUrl = "local:./working/db/test";
+		dbUrl = "memory:test";
 
-        ODatabaseDocumentPool.global().close();
+		ODatabaseDocumentPool.global().close();
 
-        ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
+		ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
 
-        String username = "admin";
-        String password = "admin";
+		String username = "admin";
+		String password = "admin";
 
-        if (db.exists()) {
-            db.open(username, password);
-            db.drop();
-            db.close();
-        }
+		if (db.exists()) {
+			db.open(username, password);
+			db.drop();
+			db.close();
+		}
 
-        db.create();
+		db.create();
 
-        createSchemaDB(db);
-        loadDB(db, 20);
+		createSchemaDB(db);
+		loadDB(db, 20);
 
-        db.close();
+		db.close();
 
-        Properties info = new Properties();
-        info.put("user", username);
-        info.put("password", password);
+		Properties info = new Properties();
+		info.put("user", username);
+		info.put("password", password);
 
-        conn = (OrientJdbcConnection) DriverManager.getConnection("jdbc:orient:" + dbUrl, info);
+		conn = (OrientJdbcConnection) DriverManager.getConnection("jdbc:orient:" + dbUrl, info);
 
-    }
+	}
 
-    @After
-    public void closeConnection() throws Exception {
-        if (conn != null && !conn.isClosed()) conn.close();
-    }
+	@After
+	public void closeConnection() throws Exception {
+		if (conn != null && !conn.isClosed()) conn.close();
+	}
 
 }

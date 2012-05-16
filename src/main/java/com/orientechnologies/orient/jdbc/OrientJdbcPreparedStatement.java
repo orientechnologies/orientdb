@@ -46,8 +46,8 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 /**
- * TODO Add authors
  *
+ * @author Roberto Franchini (CELI Srl - franchini@celi.it)
  * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci@gmail.com)
  */
 public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements PreparedStatement {

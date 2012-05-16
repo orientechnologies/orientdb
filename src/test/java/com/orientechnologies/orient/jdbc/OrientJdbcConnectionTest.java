@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.jdbc;
 
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.junit.Test;
@@ -14,38 +16,46 @@ import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
 
 public class OrientJdbcConnectionTest extends OrientJdbcBaseTest {
 
-    @Test
-    public void shouldCreateStatement() throws Exception {
-        Statement stmt = conn.createStatement();
-        assertNotNull(stmt);
-        stmt.close();
-    }
+	@Test
+	public void shouldCreateStatement() throws Exception {
+		Statement stmt = conn.createStatement();
+		assertNotNull(stmt);
+		stmt.close();
+	}
 
-    @Test
-    public void checkSomePrecondition() throws Exception {
+	@Test
+	public void test() throws SQLException {
 
-        assertFalse(conn.isClosed());
-        conn.isReadOnly();
+		conn = (OrientJdbcConnection) DriverManager.getConnection("jdbc:orient:remote:artemide/bookmarks");
 
-        conn.isValid(0);
-        conn.setAutoCommit(true);
-        assertTrue(conn.getAutoCommit());
-        // conn.setTransactionIsolation(Connection.TRANSACTION_NONE);
-        // assertEquals(Connection.TRANSACTION_NONE,
-        // conn.getTransactionIsolation());
-    }
+		Statement createStatement = conn.createStatement();
+	}
 
-    @Test
-    public void shouldCreateDifferentTypeOfStatement() throws Exception {
-        Statement stmt = conn.createStatement();
-        assertNotNull(stmt);
+	@Test
+	public void checkSomePrecondition() throws Exception {
 
-        stmt = conn.createStatement(TYPE_FORWARD_ONLY, CONCUR_READ_ONLY);
-        assertNotNull(stmt);
+		assertFalse(conn.isClosed());
+		conn.isReadOnly();
 
-        stmt = conn.createStatement(TYPE_FORWARD_ONLY, CONCUR_READ_ONLY, HOLD_CURSORS_OVER_COMMIT);
-        assertNotNull(stmt);
+		conn.isValid(0);
+		conn.setAutoCommit(true);
+		assertTrue(conn.getAutoCommit());
+		// conn.setTransactionIsolation(Connection.TRANSACTION_NONE);
+		// assertEquals(Connection.TRANSACTION_NONE,
+		// conn.getTransactionIsolation());
+	}
 
-    }
+	@Test
+	public void shouldCreateDifferentTypeOfStatement() throws Exception {
+		Statement stmt = conn.createStatement();
+		assertNotNull(stmt);
+
+		stmt = conn.createStatement(TYPE_FORWARD_ONLY, CONCUR_READ_ONLY);
+		assertNotNull(stmt);
+
+		stmt = conn.createStatement(TYPE_FORWARD_ONLY, CONCUR_READ_ONLY, HOLD_CURSORS_OVER_COMMIT);
+		assertNotNull(stmt);
+
+	}
 
 }
