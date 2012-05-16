@@ -38,7 +38,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLAbstract {
+public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLEarlyResultsetAbstract {
   public static final String KEYWORD_FIND       = "FIND";
   public static final String KEYWORD_REFERENCES = "REFERENCES";
 
