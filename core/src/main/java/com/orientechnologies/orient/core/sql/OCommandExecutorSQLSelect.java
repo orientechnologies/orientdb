@@ -37,10 +37,8 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -537,7 +535,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return new OIndexSearchResult(iCondition.getOperator(), item.getFieldChain(), value);
   }
 
-  @SuppressWarnings("rawtypes")
   private void fillSearchIndexResultSet(final Object indexResult) {
     if (indexResult != null) {
       if (indexResult instanceof Collection<?>) {
@@ -545,13 +542,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         for (OIdentifiable identifiable : indexResultSet) {
           ORecord<?> record = identifiable.getRecord();
-          if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
-            try {
-              record = record.<ORecord> load();
-            } catch (ORecordNotFoundException e) {
-              throw new OException("Error during loading record with id : " + record.getIdentity());
-            }
-          }
+          if (record == null)
+            throw new OException("Error during loading record with id : " + identifiable.getIdentity());
 
           if (filter((ORecordInternal<?>) record)) {
             final boolean continueResultParsing = addResult(record);
