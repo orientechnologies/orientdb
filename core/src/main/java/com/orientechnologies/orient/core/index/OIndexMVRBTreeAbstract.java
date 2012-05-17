@@ -23,6 +23,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import com.orientechnologies.common.collection.OCompositeKey;
@@ -365,31 +366,35 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
         iProgressListener.onBegin(this, documentTotal);
 
       for (final String clusterName : clustersToIndex)
-        for (final ORecord<?> record : getDatabase().browseCluster(clusterName)) {
-          if (record instanceof ODocument) {
-            final ODocument doc = (ODocument) record;
+        try {
+          for (final ORecord<?> record : getDatabase().browseCluster(clusterName)) {
+            if (record instanceof ODocument) {
+              final ODocument doc = (ODocument) record;
 
-            if (indexDefinition == null)
-              throw new OConfigurationException("Index '" + name + "' cannot be rebuilt because has no a valid definition ("
-                  + indexDefinition + ")");
+              if (indexDefinition == null)
+                throw new OConfigurationException("Index '" + name + "' cannot be rebuilt because has no a valid definition ("
+                    + indexDefinition + ")");
 
-            final Object fieldValue = indexDefinition.getDocumentValueToIndex(doc);
+              final Object fieldValue = indexDefinition.getDocumentValueToIndex(doc);
 
-            if (fieldValue != null) {
-              if (fieldValue instanceof Collection) {
-                for (final Object fieldValueItem : (Collection<?>) fieldValue) {
-                  put(fieldValueItem, doc);
-                }
-              } else
-                put(fieldValue, doc);
+              if (fieldValue != null) {
+                if (fieldValue instanceof Collection) {
+                  for (final Object fieldValueItem : (Collection<?>) fieldValue) {
+                    put(fieldValueItem, doc);
+                  }
+                } else
+                  put(fieldValue, doc);
 
-              ++documentIndexed;
+                ++documentIndexed;
+              }
             }
-          }
-          documentNum++;
+            documentNum++;
 
-          if (iProgressListener != null)
-            iProgressListener.onProgress(this, documentNum, documentNum * 100f / documentTotal);
+            if (iProgressListener != null)
+              iProgressListener.onProgress(this, documentNum, documentNum * 100f / documentTotal);
+          }
+        } catch (NoSuchElementException e) {
+          // END OF CLUSTER REACHED, IGNORE IT
         }
 
       lazySave();
