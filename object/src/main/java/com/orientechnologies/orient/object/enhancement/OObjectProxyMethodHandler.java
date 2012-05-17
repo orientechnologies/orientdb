@@ -152,9 +152,9 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
 						}
 						else if (!loadedFields.containsKey(fieldName)) {
-							value = docValue;
+							value = manageArrayFieldObject(fieldName,self, value);
 							Method setMethod = getSetMethod(self.getClass().getSuperclass(), getSetterFieldName(fieldName), value);
-							setMethod.invoke(self, manageArrayFieldObject(fieldName,self, value));
+							setMethod.invoke(self, value);
 						} else if ((value instanceof Set || value instanceof Map) && loadedFields.get(fieldName).intValue() < doc.getVersion()) {
 							if (value instanceof Set)
 								value = new OObjectLazySet(doc, (Set<?>) docValue);
