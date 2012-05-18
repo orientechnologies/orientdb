@@ -285,8 +285,8 @@ public class OStorageRemote extends OStorageAbstract {
     }
   }
 
-  public OPhysicalPosition createRecord(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent,
-      int iRecordVersion, final byte iRecordType, int iMode, final ORecordCallback<Long> iCallback) {
+  public OPhysicalPosition createRecord(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent, int iRecordVersion,
+      final byte iRecordType, int iMode, final ORecordCallback<Long> iCallback) {
     checkConnection();
 
     if (iMode == 1 && iCallback == null)
@@ -680,9 +680,10 @@ public class OStorageRemote extends OStorageAbstract {
     final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
 
     do {
-      OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting = true;
 
+      OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting = true;
       try {
+
         final OCommandRequestText aquery = iCommand;
 
         final boolean asynch = iCommand instanceof OCommandRequestAsynch;
@@ -786,6 +787,8 @@ public class OStorageRemote extends OStorageAbstract {
 
     do {
       try {
+        OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting = true;
+
         OChannelBinaryClient network = null;
         try {
           network = beginRequest(OChannelBinaryProtocol.REQUEST_TX_COMMIT);
@@ -860,6 +863,9 @@ public class OStorageRemote extends OStorageAbstract {
 
       } catch (Exception e) {
         handleException("Error on commit", e);
+
+      } finally {
+        OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting = false;
 
       }
     } while (true);

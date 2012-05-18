@@ -180,6 +180,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
   public void saveRecord(final ORecordInternal<?> iRecord, final String iClusterName, final OPERATION_MODE iMode,
       final ORecordCallback<? extends Number> iCallback) {
+    if (iRecord == null)
+      return;
     addRecord(iRecord, iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED, iClusterName);
   }
 
@@ -200,6 +202,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       database.callbackHooks(TYPE.BEFORE_DELETE, iRecord);
       break;
     }
+
+    if (iRecord.getIdentity().isTemporary())
+      temp2persistent.put(iRecord.getIdentity().copy(), iRecord);
 
     if ((status == OTransaction.TXSTATUS.COMMITTING) && database.getStorage() instanceof OStorageEmbedded) {
       // I'M COMMITTING: BYPASS LOCAL BUFFER

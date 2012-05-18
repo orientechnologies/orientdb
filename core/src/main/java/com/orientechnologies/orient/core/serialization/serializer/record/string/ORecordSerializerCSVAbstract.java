@@ -711,7 +711,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         } else
           database.save((ORecordInternal<?>) record);
 
-        rid = record.getIdentity();
+        if (record != null)
+          rid = record.getIdentity();
         resultRid = rid;
       }
     } else {
