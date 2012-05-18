@@ -232,8 +232,13 @@ public class Orient extends OSharedResourceAbstract {
 
     acquireExclusiveLock();
     try {
-      for (OOrientListener l : listeners)
+      // UNREGISTER ALL THE LISTENER ONE BY ONE AVOIDING SELF-RECURSION BY REMOVING FROM THE LIST
+      final ArrayList<OOrientListener> listenerCopy = new ArrayList<OOrientListener>(listeners);
+      for (Iterator<OOrientListener> it = listenerCopy.iterator(); it.hasNext();) {
+        final OOrientListener l = it.next();
+        it.remove();
         l.onStorageUnregistered(iStorage);
+      }
 
       for (Entry<String, OStorage> s : storages.entrySet()) {
         if (s.getValue() == iStorage) {
