@@ -74,7 +74,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
       // EARLY SAVE IT
       ((ORecord<?>) iValue).save();
 
-    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.PUT, iKey, rid);
+    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.PUT, iKey, iValue);
     return this;
   }
 

@@ -74,7 +74,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 		if (iRecord != null)
 			// RESET ALL THE FIELDS
-			iRecord.reset();
+			iRecord.clear();
 
 		iSource = iSource.substring(1, iSource.length() - 1).trim();
 

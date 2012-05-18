@@ -623,6 +623,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   public void close() {
     classes.clear();
-    document.reset();
+    document.clear();
   }
 }

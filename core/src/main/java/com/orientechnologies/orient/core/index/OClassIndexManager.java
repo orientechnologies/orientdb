@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -53,6 +54,9 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   public void onRecordAfterCreate(ODocument iRecord) {
     iRecord = checkForLoading(iRecord);
 
+    // STORE THE RECORD IF NEW, OTHERWISE ITS RID 
+    final OIdentifiable rid = iRecord.getIdentity().isPersistent() ? iRecord.placeholder() : iRecord;
+
     final OClass cls = iRecord.getSchemaClass();
     if (cls != null) {
       final Collection<OIndex<?>> indexes = cls.getIndexes();
@@ -62,9 +66,9 @@ public class OClassIndexManager extends ODocumentHookAbstract {
         if (key instanceof Collection) {
           for (final Object keyItem : (Collection<?>) key)
             if (keyItem != null)
-              index.put(keyItem, iRecord.placeholder());
+              index.put(keyItem, rid);
         } else if (key != null)
-          index.put(key, iRecord.placeholder());
+          index.put(key, rid);
       }
     }
   }

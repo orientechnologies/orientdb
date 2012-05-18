@@ -23,7 +23,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -184,8 +183,6 @@ public class OStorageLocalTxExecuter {
 
     final ORecordId rid = (ORecordId) txEntry.getRecord().getIdentity();
 
-    final boolean wasNew = rid.isNew();
-
     if (rid.clusterId == ORID.CLUSTER_ID_INVALID && txEntry.getRecord() instanceof ODocument
         && ((ODocument) txEntry.getRecord()).getSchemaClass() != null) {
       // TRY TO FIX CLUSTER ID TO THE DEFAULT CLUSTER ID DEFINED IN SCHEMA CLASS
@@ -214,16 +211,6 @@ public class OStorageLocalTxExecuter {
       // CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
       byte[] stream = txEntry.getRecord().toStream();
 
-      if (wasNew) {
-        if (iTx.getDatabase().callbackHooks(ORecordHook.TYPE.BEFORE_CREATE, txEntry.getRecord()))
-          // RECORD CHANGED: RE-STREAM IT
-          stream = txEntry.getRecord().toStream();
-      } else {
-        if (iTx.getDatabase().callbackHooks(ORecordHook.TYPE.BEFORE_UPDATE, txEntry.getRecord()))
-          // RECORD CHANGED: RE-STREAM IT
-          stream = txEntry.getRecord().toStream();
-      }
-
       if (rid.isNew()) {
         txEntry.getRecord().onBeforeIdentityChanged(rid);
         rid.clusterId = cluster.getId();
@@ -242,7 +229,6 @@ public class OStorageLocalTxExecuter {
         txEntry.getRecord().setVersion(ppos.recordVersion);
 
         txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
-        iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_CREATE, txEntry.getRecord());
       } else {
         if (iUseLog)
           txEntry.getRecord()
@@ -263,10 +249,6 @@ public class OStorageLocalTxExecuter {
     case ORecordOperation.UPDATED: {
       byte[] stream = txEntry.getRecord().toStream();
 
-      if (iTx.getDatabase().callbackHooks(ORecordHook.TYPE.BEFORE_UPDATE, txEntry.getRecord()))
-        // RECORD CHANGED: RE-STREAM IT
-        stream = txEntry.getRecord().toStream();
-
       if (iUseLog)
         txEntry.getRecord().setVersion(
             updateRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType()));
@@ -274,20 +256,14 @@ public class OStorageLocalTxExecuter {
         txEntry.getRecord().setVersion(
             iTx.getDatabase().getStorage()
                 .updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), (byte) 0, null));
-
-      iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, txEntry.getRecord());
       break;
     }
 
     case ORecordOperation.DELETED: {
-      iTx.getDatabase().callbackHooks(ORecordHook.TYPE.BEFORE_DELETE, txEntry.getRecord());
-
       if (iUseLog)
         deleteRecord(iTx.getId(), cluster, rid.clusterPosition, txEntry.getRecord().getVersion());
       else
         iTx.getDatabase().getStorage().deleteRecord(rid, txEntry.getRecord().getVersion(), (byte) 0, null);
-
-      iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_DELETE, txEntry.getRecord());
     }
       break;
     }

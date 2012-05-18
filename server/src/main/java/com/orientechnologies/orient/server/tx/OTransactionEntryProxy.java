@@ -21,8 +21,9 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 
 public class OTransactionEntryProxy extends ORecordOperation {
+  private static final long serialVersionUID = 1L;
 
-	public OTransactionEntryProxy(final byte iRecordType) throws IOException {
-		super(Orient.instance().getRecordFactoryManager().newInstance(iRecordType), (byte) 0);
-	}
+  public OTransactionEntryProxy(final byte iRecordType) throws IOException {
+    super(Orient.instance().getRecordFactoryManager().newInstance(iRecordType), (byte) 0);
+  }
 }

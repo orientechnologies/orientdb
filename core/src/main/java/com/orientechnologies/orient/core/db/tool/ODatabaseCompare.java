@@ -304,7 +304,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
           if (indexTwoValue == null) {
             ok = false;
-            listener.onMessage("\n- ERR: Entree with key " + key + " is absent in index " + indexOne.getName() + " for DB2.");
+            listener.onMessage("\n- ERR: Entry with key " + key + " is absent in index " + indexOne.getName() + " for DB2.");
             ++differences;
             continue;
           }
@@ -549,7 +549,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
   }
 
   private void reportIndexDiff(OIndex<?> indexOne, Object key, final Object indexOneValue, final Object indexTwoValue) {
-    listener.onMessage("\n- ERR: Entree values for key '" + key + "' are different for index " + indexOne.getName());
+    listener.onMessage("\n- ERR: Entry values for key '" + key + "' are different for index " + indexOne.getName());
     listener.onMessage("\n--- DB1: " + makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<String>() {
       public String call() {
         return indexOneValue.toString();

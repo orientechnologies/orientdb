@@ -270,7 +270,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    * Updates the record without checking the version.
    */
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent) {
-    return executeSaveRecord(iContent, null, iContent.getVersion(), iContent.getRecordType(), OPERATION_MODE.SYNCHRONOUS, null);
+    return executeSaveRecord(iContent, null, iContent.getVersion(), iContent.getRecordType(), true, OPERATION_MODE.SYNCHRONOUS,
+        null);
   }
 
   /**
@@ -280,15 +281,15 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    */
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final OPERATION_MODE iMode,
       final ORecordCallback<? extends Number> iCallback) {
-    return executeSaveRecord(iContent, null, iContent.getVersion(), iContent.getRecordType(), iMode, iCallback);
+    return executeSaveRecord(iContent, null, iContent.getVersion(), iContent.getRecordType(), true, iMode, iCallback);
   }
 
   /**
    * Updates the record in the requested cluster without checking the version.
    */
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final String iClusterName) {
-    return executeSaveRecord(iContent, iClusterName, iContent.getVersion(), iContent.getRecordType(), OPERATION_MODE.SYNCHRONOUS,
-        null);
+    return executeSaveRecord(iContent, iClusterName, iContent.getVersion(), iContent.getRecordType(), true,
+        OPERATION_MODE.SYNCHRONOUS, null);
   }
 
   /**
@@ -298,14 +299,14 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    */
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final String iClusterName,
       final OPERATION_MODE iMode, final ORecordCallback<? extends Number> iCallback) {
-    return executeSaveRecord(iContent, iClusterName, iContent.getVersion(), iContent.getRecordType(), iMode, iCallback);
+    return executeSaveRecord(iContent, iClusterName, iContent.getVersion(), iContent.getRecordType(), true, iMode, iCallback);
   }
 
   /**
    * Deletes the record without checking the version.
    */
   public ODatabaseRecord delete(final ORID iRecord) {
-    executeDeleteRecord(iRecord, -1, true, OPERATION_MODE.SYNCHRONOUS);
+    executeDeleteRecord(iRecord, -1, true, true, OPERATION_MODE.SYNCHRONOUS);
     return this;
   }
 
@@ -313,7 +314,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    * Deletes the record without checking the version.
    */
   public ODatabaseRecord delete(final ORID iRecord, final OPERATION_MODE iMode) {
-    executeDeleteRecord(iRecord, -1, true, iMode);
+    executeDeleteRecord(iRecord, -1, true, true, iMode);
     return this;
   }
 
@@ -321,7 +322,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    * Deletes the record without checking the version.
    */
   public ODatabaseRecord delete(final ORecordInternal<?> iRecord) {
-    executeDeleteRecord(iRecord, -1, true, OPERATION_MODE.SYNCHRONOUS);
+    executeDeleteRecord(iRecord, -1, true, true, OPERATION_MODE.SYNCHRONOUS);
     return this;
   }
 
@@ -329,7 +330,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    * Deletes the record without checking the version.
    */
   public ODatabaseRecord delete(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {
-    executeDeleteRecord(iRecord, -1, true, iMode);
+    executeDeleteRecord(iRecord, -1, true, true, iMode);
     return this;
   }
 
@@ -593,7 +594,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   }
 
   public <RET extends ORecordInternal<?>> RET executeSaveRecord(final ORecordInternal<?> iRecord, String iClusterName,
-      final int iVersion, final byte iRecordType, final OPERATION_MODE iMode, final ORecordCallback<? extends Number> iCallback) {
+      final int iVersion, final byte iRecordType, final boolean iCallTriggers, final OPERATION_MODE iMode,
+      final ORecordCallback<? extends Number> iCallback) {
     checkOpeness();
 
     if (!iRecord.isDirty())
@@ -628,19 +630,20 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         iClusterName = getClusterNameById(rid.clusterId);
 
       if (stream != null && stream.length > 0) {
-        if (wasNew) {
-          // CHECK ACCESS ON CLUSTER
-          checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
-          if (callbackHooks(TYPE.BEFORE_CREATE, iRecord))
-            // RECORD CHANGED IN TRIGGER, REACQUIRE IT
-            stream = iRecord.toStream();
-        } else {
-          // CHECK ACCESS ON CLUSTER
-          checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
-          if (callbackHooks(TYPE.BEFORE_UPDATE, iRecord))
-            // RECORD CHANGED IN TRIGGER, REACQUIRE IT
-            stream = iRecord.toStream();
-        }
+        if (iCallTriggers)
+          if (wasNew) {
+            // CHECK ACCESS ON CLUSTER
+            checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
+            if (callbackHooks(TYPE.BEFORE_CREATE, iRecord))
+              // RECORD CHANGED IN TRIGGER, REACQUIRE IT
+              stream = iRecord.toStream();
+          } else {
+            // CHECK ACCESS ON CLUSTER
+            checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
+            if (callbackHooks(TYPE.BEFORE_UPDATE, iRecord))
+              // RECORD CHANGED IN TRIGGER, REACQUIRE IT
+              stream = iRecord.toStream();
+          }
 
         if (!iRecord.isDirty()) {
           // RECORD SAVED DURING PREVIOUS STREAMING PHASE: THIS HAPPENS FOR CIRCULAR REFERENCED RECORDS
@@ -671,7 +674,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         iRecord.fill(rid, version, stream, stream == null || stream.length == 0);
       }
 
-      callbackHooks(wasNew ? TYPE.AFTER_CREATE : TYPE.AFTER_UPDATE, iRecord);
+      if (iCallTriggers)
+        callbackHooks(wasNew ? TYPE.AFTER_CREATE : TYPE.AFTER_UPDATE, iRecord);
 
       if (stream != null && stream.length > 0)
         // ADD/UPDATE IT IN CACHE IF IT'S ACTIVE
@@ -689,7 +693,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   }
 
   public void executeDeleteRecord(final OIdentifiable iRecord, final int iVersion, final boolean iRequired,
-      final OPERATION_MODE iMode) {
+      boolean iCallTriggers, final OPERATION_MODE iMode) {
     checkOpeness();
     final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
@@ -707,11 +711,13 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     try {
       // if cache is switched off record will be unreachable after delete.
       ORecord<?> rec = iRecord.getRecord();
-      callbackHooks(TYPE.BEFORE_DELETE, rec);
+      if (iCallTriggers)
+        callbackHooks(TYPE.BEFORE_DELETE, rec);
 
       underlying.delete(rid, iVersion, iRequired, (byte) iMode.ordinal());
 
-      callbackHooks(TYPE.AFTER_DELETE, rec);
+      if (iCallTriggers)
+        callbackHooks(TYPE.AFTER_DELETE, rec);
 
       // REMOVE THE RECORD FROM 1 AND 2 LEVEL CACHES
       getLevel1Cache().deleteRecord(rid);

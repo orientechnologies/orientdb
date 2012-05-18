@@ -305,7 +305,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     final Collection<? extends OIndex<?>> indexes = indexManager.getIndexes();
 
     for (OIndex<?> index : indexes) {
-      listener.onMessage("\nIndex " + index.getName() + "...");
+      listener.onMessage("\n- Index " + index.getName() + "...");
       writer.beginObject(2, true, null);
       writer.writeAttribute(3, true, "name", index.getName());
       writer.writeAttribute(3, true, "type", index.getType());
@@ -345,7 +345,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     writer.beginCollection(1, true, "manualIndexes");
     for (OIndex<?> index : indexes) {
       if (!index.isAutomatic()) {
-        listener.onMessage("\nExporting index " + index.getName() + " ...");
+        listener.onMessage("\n- Exporting index " + index.getName() + " ...");
 
         writer.beginObject(2, true, null);
         writer.writeAttribute(3, true, "name", index.getName());
@@ -390,7 +390,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         writer.endCollection(3, true);
 
         writer.endObject(2, true);
-        listener.onMessage("\nExport of " + index.getName() + " index was completed.");
+        listener.onMessage("OK (entries=" + index.getSize() + ")");
         manualIndexes++;
       }
     }

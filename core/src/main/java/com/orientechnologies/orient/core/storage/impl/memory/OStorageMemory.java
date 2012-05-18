@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -262,8 +261,8 @@ public class OStorageMemory extends OStorageEmbedded {
     return addDataSegment(iSegmentName);
   }
 
-  public OPhysicalPosition createRecord(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent,
-      int iRecordVersion, final byte iRecordType, final int iMode, ORecordCallback<Long> iCallback) {
+  public OPhysicalPosition createRecord(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent, int iRecordVersion,
+      final byte iRecordType, final int iMode, ORecordCallback<Long> iCallback) {
     final long timer = OProfiler.getInstance().startChrono();
 
     lock.acquireSharedLock();
@@ -708,18 +707,11 @@ public class OStorageMemory extends OStorageEmbedded {
         byte[] stream = txEntry.getRecord().toStream();
 
         if (rid.isNew()) {
-          if (iTx.getDatabase().callbackHooks(ORecordHook.TYPE.BEFORE_CREATE, txEntry.getRecord()))
-            // RECORD CHANGED: RE-STREAM IT
-            stream = txEntry.getRecord().toStream();
-
           txEntry.getRecord().onBeforeIdentityChanged(rid);
           final OPhysicalPosition ppos = createRecord(txEntry.dataSegmentId, rid, stream, 0, txEntry.getRecord().getRecordType(),
               0, null);
           txEntry.getRecord().setVersion(ppos.recordVersion);
           txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
-
-          iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_CREATE, txEntry.getRecord());
-
         } else {
           txEntry.getRecord().setVersion(
               updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), 0, null));
@@ -730,19 +722,12 @@ public class OStorageMemory extends OStorageEmbedded {
     case ORecordOperation.UPDATED:
       byte[] stream = txEntry.getRecord().toStream();
 
-      if (iTx.getDatabase().callbackHooks(ORecordHook.TYPE.BEFORE_UPDATE, txEntry.getRecord()))
-        // RECORD CHANGED: RE-STREAM IT
-        stream = txEntry.getRecord().toStream();
-
       txEntry.getRecord().setVersion(
           updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), 0, null));
-      iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, txEntry.getRecord());
       break;
 
     case ORecordOperation.DELETED:
-      iTx.getDatabase().callbackHooks(ORecordHook.TYPE.BEFORE_DELETE, txEntry.getRecord());
       deleteRecord(rid, txEntry.getRecord().getVersion(), 0, null);
-      iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_DELETE, txEntry.getRecord());
       break;
     }
 

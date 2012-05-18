@@ -49,8 +49,8 @@ public class OIndexUnique extends OIndexOneValue {
           return this;
       }
 
-      if (!iSingleValue.getIdentity().isValid())
-        ((ORecord<?>) iSingleValue).save();
+      if (!iSingleValue.getIdentity().isPersistent())
+        ((ORecord<?>) iSingleValue.getRecord()).save();
 
       map.put(iKey, iSingleValue.getIdentity());
       return this;

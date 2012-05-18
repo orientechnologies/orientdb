@@ -1037,15 +1037,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   @Override
   public ODocument unload() {
     super.unload();
-
-    removeAllCollectionChangeListeners();
-
-    if (_fieldCollectionChangeTimeLines != null)
-      _fieldCollectionChangeTimeLines.clear();
-
-    if (_fieldValues != null)
-      _fieldValues.clear();
-
+    internalReset();
     return this;
   }
 
@@ -1055,37 +1047,37 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   @Override
   public ODocument clear() {
     super.clear();
-
-    removeAllCollectionChangeListeners();
-
-    if (_fieldCollectionChangeTimeLines != null)
-      _fieldCollectionChangeTimeLines.clear();
-
-    if (_fieldValues != null)
-      _fieldValues.clear();
-
+    internalReset();
     _owners = null;
     return this;
   }
 
   /**
-   * Resets the record values and class type to being reused.
+   * Resets the record values and class type to being reused. This can be used only if no transactions are begun.
    */
   @Override
   public ODocument reset() {
-    super.reset();
-    removeAllCollectionChangeListeners();
+    ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    if (db != null && db.getTransaction().isActive())
+      throw new IllegalStateException("Cannot reset documents during a transaction. Create a new one each time");
 
-    if (_fieldValues != null)
-      _fieldValues.clear();
+    super.reset();
+    internalReset();
 
     if (_fieldOriginalValues != null)
       _fieldOriginalValues.clear();
+    _owners = null;
+    return this;
+  }
+
+  protected void internalReset() {
+    removeAllCollectionChangeListeners();
 
     if (_fieldCollectionChangeTimeLines != null)
       _fieldCollectionChangeTimeLines.clear();
 
-    return this;
+    if (_fieldValues != null)
+      _fieldValues.clear();
   }
 
   /**

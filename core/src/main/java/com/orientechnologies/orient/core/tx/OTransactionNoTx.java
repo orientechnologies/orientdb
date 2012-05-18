@@ -69,7 +69,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
   public void saveRecord(final ORecordInternal<?> iRecord, final String iClusterName, final OPERATION_MODE iMode,
       final ORecordCallback<? extends Number> iCallback) {
     try {
-      database.executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iRecord.getRecordType(), iMode, iCallback);
+      database.executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iRecord.getRecordType(), true, iMode, iCallback);
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();
@@ -90,7 +90,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
       return;
 
     try {
-      database.executeDeleteRecord(iRecord, iRecord.getVersion(), true, iMode);
+      database.executeDeleteRecord(iRecord, iRecord.getVersion(), true, true, iMode);
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();
