@@ -35,6 +35,12 @@
 			<version>3.16.1-GA</version>
 			<type>jar</type>
 		</dependency>
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>5.14.1</version>
+            <scope>test</scope>
+        </dependency>
 	</dependencies>
 	<build>
 		<plugins>

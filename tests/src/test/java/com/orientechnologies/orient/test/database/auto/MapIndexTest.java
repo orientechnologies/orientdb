@@ -38,12 +38,12 @@ public class MapIndexTest {
 	@BeforeClass
 	public void setupSchema() {
 		database.open("admin", "admin");
-		final OClass collector = database.getMetadata().getSchema().getClass("Mapper");
-		collector.createProperty("id", OType.STRING);
-		collector.createProperty("intMap", OType.EMBEDDEDMAP, OType.INTEGER);
+		final OClass mapper = database.getMetadata().getSchema().getClass("Mapper");
+		mapper.createProperty("id", OType.STRING);
+		mapper.createProperty("intMap", OType.EMBEDDEDMAP, OType.INTEGER);
 
-		collector.createIndex("mapIndexTestKey", OClass.INDEX_TYPE.NOTUNIQUE, "intMap");
-		collector.createIndex("mapIndexTestValue", OClass.INDEX_TYPE.NOTUNIQUE, "intMap by value");
+		mapper.createIndex("mapIndexTestKey", OClass.INDEX_TYPE.NOTUNIQUE, "intMap");
+		mapper.createIndex("mapIndexTestValue", OClass.INDEX_TYPE.NOTUNIQUE, "intMap by value");
 
 		final OClass movie = database.getMetadata().getSchema().createClass("MapIndexTestMovie");
 		movie.createProperty("title", OType.STRING);
