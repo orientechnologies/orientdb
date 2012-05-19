@@ -69,8 +69,8 @@ set LOG_CONSOLE_LEVEL=info
 set LOG_FILE_LEVEL=fine
 set WWW_PATH=%ORIENTDB_HOME%/www
 REM UNCOMMENT BELOW TO DISABLE THE CACHE
-REM set ORIENTDB_SETTINGS=-Dcache.level1.enabled=false -Dcache.level2.enabled=false
-REM set JAVA_OPTS_SCRIPT=-XX:+HeapDumpOnOutOfMemoryError
+set ORIENTDB_SETTINGS=-Dcache.level1.enabled=false
+set JAVA_OPTS_SCRIPT=-XX:+HeapDumpOnOutOfMemoryError
 
 call %JAVA% -server %JAVA_OPTS% %JAVA_OPTS_SCRIPT% %ORIENTDB_SETTINGS% -Djava.util.logging.config.file="%LOG_FILE%" -Dorientdb.config.file="%CONFIG_FILE%" -Dorientdb.www.path="%WWW_PATH%" -Dorientdb.build.number="@BUILD@" -cp "%ORIENTDB_HOME%\lib\*;" com.orientechnologies.orient.server.OServerMain %CMD_LINE_ARGS%
 
