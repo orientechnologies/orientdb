@@ -39,7 +39,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.exception.OTransactionAbortedException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
@@ -836,7 +836,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         connection.database.rollback();
         sendError(clientTxId, e);
       }
-    } catch (OTransactionException e) {
+    } catch (OTransactionAbortedException e) {
       // TX ABORTED BY THE CLIENT
     }
   }

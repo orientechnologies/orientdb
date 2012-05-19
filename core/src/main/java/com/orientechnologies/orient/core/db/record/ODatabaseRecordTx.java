@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
+import com.orientechnologies.orient.core.exception.OTransactionBlockedException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -83,7 +84,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
       try {
         listener.onBeforeTxBegin(underlying);
       } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error before the transaction begin", t, OTransactionException.class);
+        OLogManager.instance().error(this, "Error before the transaction begin", t, OTransactionBlockedException.class);
       }
 
     currentTx = iTx;
@@ -104,7 +105,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
         } catch (Exception e) {
         }
         OLogManager.instance().debug(this, "Cannot commit the transaction: caught exception on execution of %s.onBeforeTxCommit()",
-            t, OTransactionException.class, listener.getClass());
+            t, OTransactionBlockedException.class, listener.getClass());
       }
 
     try {
@@ -139,7 +140,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
             .debug(
                 this,
                 "Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of %s.onAfterTxCommit()",
-                t, OTransactionException.class, listener.getClass());
+                t, OTransactionBlockedException.class, listener.getClass());
       }
 
     return this;

@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.exception.OTransactionAbortedException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -117,7 +118,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
       if (lastTxStatus == -1)
         // ABORT TX
-        throw new OTransactionException("Transaction aborted by the client");
+        throw new OTransactionAbortedException("Transaction aborted by the client");
 
       remoteIndexEntries = new ODocument(channel.readBytes());
 
