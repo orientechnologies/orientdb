@@ -155,6 +155,8 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
     final ORecordAbstract<?> record = (ORecordAbstract<?>) iRecord;
 
     if (record.getIdentity().isValid()) {
+      // RESET VERSION TO DISABLE MVCC AVOIDING THE CONCURRENT EXCEPTION IF LOCAL CACHE IS NOT UPDATED
+      record.setVersion(-1);
       record.delete();
       recordCount++;
       return true;
