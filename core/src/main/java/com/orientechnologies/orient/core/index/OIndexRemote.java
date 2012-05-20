@@ -176,7 +176,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
 	public boolean contains(final Object iKey) {
 		final OCommandRequest cmd = formatCommand(QUERY_CONTAINS, name);
-		final List<ODocument> result = getDatabase().command(cmd).execute();
+		final List<ODocument> result = getDatabase().command(cmd).execute(iKey);
 		return (Long) result.get(0).field("size") > 0;
 	}
 
