@@ -273,6 +273,8 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
         iInVertex.field(VERTEX_FIELD_IN, in);
       }
       in.add(edge);
+      
+      edge.setDirty();
 
       if (safeMode) {
         save(edge);
