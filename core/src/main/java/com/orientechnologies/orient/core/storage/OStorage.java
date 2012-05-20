@@ -49,6 +49,10 @@ public interface OStorage extends OSharedContainer {
     TINY, MEDIUM, LARGE, HUGE
   }
 
+  public enum STATUS {
+    CLOSED, OPEN, CLOSING
+  }
+
   public void open(String iUserName, String iUserPassword, final Map<String, Object> iProperties);
 
   public void create(Map<String, Object> iProperties);
@@ -194,4 +198,11 @@ public interface OStorage extends OSharedContainer {
   public int getDataSegmentIdByName(String iDataSegmentName);
 
   public boolean dropDataSegment(String iName);
+
+  /**
+   * Returns the current storage's status
+   * 
+   * @return
+   */
+  public STATUS getStatus();
 }

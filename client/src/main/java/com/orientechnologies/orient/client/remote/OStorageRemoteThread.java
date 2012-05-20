@@ -133,8 +133,8 @@ public class OStorageRemoteThread implements OStorage {
     return delegate.getClusterNames();
   }
 
-  public OPhysicalPosition createRecord(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent,
-      int iRecordVersion, final byte iRecordType, final int iMode, ORecordCallback<Long> iCallback) {
+  public OPhysicalPosition createRecord(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent, int iRecordVersion,
+      final byte iRecordType, final int iMode, ORecordCallback<Long> iCallback) {
     delegate.setSessionId(sessionId);
     return delegate.createRecord(iDataSegmentId, iRid, iContent, 0, iRecordType, iMode, iCallback);
   }
@@ -364,5 +364,9 @@ public class OStorageRemoteThread implements OStorage {
 
   public static int getNextConnectionId() {
     return sessionSerialId.decrementAndGet();
+  }
+
+  public STATUS getStatus() {
+    return delegate.getStatus();
   }
 }

@@ -42,10 +42,6 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
   protected OSharedResourceAdaptiveExternal lock    = new OSharedResourceAdaptiveExternal(
                                                         OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), 0, true);
 
-  protected enum STATUS {
-    CLOSED, OPEN, CLOSING
-  }
-
   public OStorageAbstract(final String iName, final String iURL, final String iMode) {
     if (OStringSerializerHelper.contains(iName, '/'))
       name = iName.substring(iName.lastIndexOf("/") + 1);
@@ -179,5 +175,9 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
   @Override
   public String toString() {
     return url != null ? url : "?";
+  }
+
+  public STATUS getStatus() {
+    return status;
   }
 }
