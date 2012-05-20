@@ -63,7 +63,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 	private final static String		QUERY_REMOVE																			= "delete from index:%s where key = %s";
 	private final static String		QUERY_REMOVE2																			= "delete from index:%s where key = %s and rid = %s";
 	private final static String		QUERY_REMOVE3																			= "delete from index:%s where rid = ?";
-	private final static String		QUERY_CONTAINS																		= "select count(*) as size from	index:%s where key = ?";
+	private final static String		QUERY_CONTAINS																		= "select count(*) as size from index:%s where key = ?";
 	private final static String		QUERY_SIZE																				= "select count(*) as size from index:%s";
 	private final static String		QUERY_KEYS																				= "select key from index:%s";
 	private final static String		QUERY_REBUILD																			= "rebuild index %s";
