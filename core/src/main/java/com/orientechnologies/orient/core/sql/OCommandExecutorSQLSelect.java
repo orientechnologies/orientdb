@@ -163,7 +163,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (target == null) {
         // GET THE RESULT
         executeSearch(null);
-        subiterator = getResult().iterator();
+        subiterator = new ArrayList<OIdentifiable>(getResult()).iterator();
+        tempResult = null;
       } else
         subiterator = (Iterator<OIdentifiable>) target.iterator();
     }
