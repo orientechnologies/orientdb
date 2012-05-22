@@ -25,63 +25,66 @@ import java.util.concurrent.TimeUnit;
 import com.orientechnologies.common.concur.lock.OLockException;
 
 public class OResourcePool<K, V> {
-	private final Semaphore							sem;
-	private final Queue<V>							resources	= new ConcurrentLinkedQueue<V>();
-	private final Collection<V>					unmodifiableresources;
-	private OResourcePoolListener<K, V>	listener;
+  private final Semaphore             sem;
+  private final Queue<V>              resources = new ConcurrentLinkedQueue<V>();
+  private final Collection<V>         unmodifiableresources;
+  private OResourcePoolListener<K, V> listener;
 
-	public OResourcePool(final int iMaxResources, final OResourcePoolListener<K, V> iListener) {
-		listener = iListener;
-		sem = new Semaphore(iMaxResources + 1, true);
-		unmodifiableresources = Collections.unmodifiableCollection(resources);
-	}
+  public OResourcePool(final int iMaxResources, final OResourcePoolListener<K, V> iListener) {
+    listener = iListener;
+    sem = new Semaphore(iMaxResources + 1, true);
+    unmodifiableresources = Collections.unmodifiableCollection(resources);
+  }
 
-	public V getResource(K iKey, final long iMaxWaitMillis, Object... iAdditionalArgs) throws OLockException {
+  public V getResource(K iKey, final long iMaxWaitMillis, Object... iAdditionalArgs) throws OLockException {
 
-		// First, get permission to take or create a resource
-		try {
-			if (!sem.tryAcquire(iMaxWaitMillis, TimeUnit.MILLISECONDS))
-				throw new OLockException("Cannot acquire lock on requested resource: " + iKey);
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			throw new OLockException("Cannot acquire lock on requested resource: " + iKey, e);
-		}
+    // First, get permission to take or create a resource
+    try {
+      if (!sem.tryAcquire(iMaxWaitMillis, TimeUnit.MILLISECONDS))
+        throw new OLockException("Cannot acquire lock on requested resource: " + iKey);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new OLockException("Cannot acquire lock on requested resource: " + iKey, e);
+    }
 
-		V res;
-		do {
-			// POP A RESOURCE
-			res = resources.poll();
-			if (res != null) {
-				// TRY TO REUSE IT
-				if (listener.reuseResource(iKey, iAdditionalArgs, res))
-					// OK: REUSE IT
-					return res;
+    V res;
+    do {
+      // POP A RESOURCE
+      res = resources.poll();
+      if (res != null) {
+        // TRY TO REUSE IT
+        if (listener.reuseResource(iKey, iAdditionalArgs, res))
+          // OK: REUSE IT
+          return res;
 
-				// UNABLE TO REUSE IT: THE RESOURE WILL BE DISCARDED AND TRY WITH THE NEXT ONE, IF ANY
-			}
-		} while (!resources.isEmpty());
+        // UNABLE TO REUSE IT: THE RESOURE WILL BE DISCARDED AND TRY WITH THE NEXT ONE, IF ANY
+      }
+    } while (!resources.isEmpty());
 
-		// NO AVAILABLE RESOURCES: CREATE A NEW ONE
-		try {
-			res = listener.createNewResource(iKey, iAdditionalArgs);
-			return res;
-		} catch (Exception e) {
-			// Don't hog the permit if we failed to create a resource!
-			sem.release();
-			throw new OLockException("Error on creation of the new resource in the pool", e);
-		}
-	}
+    // NO AVAILABLE RESOURCES: CREATE A NEW ONE
+    try {
+      res = listener.createNewResource(iKey, iAdditionalArgs);
+      return res;
+    } catch (RuntimeException e) {
+      sem.release();
+      // PROPAGATE IT
+      throw e;
+    } catch (Exception e) {
+      sem.release();
+      throw new OLockException("Error on creation of the new resource in the pool", e);
+    }
+  }
 
-	public void returnResource(final V res) {
-		resources.add(res);
-		sem.release();
-	}
+  public void returnResource(final V res) {
+    resources.add(res);
+    sem.release();
+  }
 
-	public Collection<V> getResources() {
-		return unmodifiableresources;
-	}
+  public Collection<V> getResources() {
+    return unmodifiableresources;
+  }
 
-	public void close() {
-		sem.drainPermits();
-	}
+  public void close() {
+    sem.drainPermits();
+  }
 }

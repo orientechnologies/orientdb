@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.common.parser.OStringParser;
+import com.orientechnologies.common.types.OBinary;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -661,6 +662,8 @@ public abstract class OStringSerializerHelper {
   public static byte[] getBinaryContent(final Object iValue) {
     if (iValue == null)
       return null;
+    else if (iValue instanceof OBinary)
+      return ((OBinary) iValue).toByteArray();
     else if (iValue instanceof byte[])
       return (byte[]) iValue;
     else if (iValue instanceof String) {
