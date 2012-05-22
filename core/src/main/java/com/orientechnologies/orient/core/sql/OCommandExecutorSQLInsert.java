@@ -37,7 +37,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  * SQL INSERT command.
  * 
  * @author Luca Garulli
- * 
+ * @author Johann Sorel (Geomatys)
  */
 public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware {
   public static final String  KEYWORD_INSERT = "INSERT";
@@ -47,7 +47,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware {
   private String              className      = null;
   private String              clusterName    = null;
   private String              indexName      = null;
-  private Map<String, Object> fields;
+  private List<Map<String, Object>> newRecords;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLInsert parse(final OCommandRequest iRequest) {
@@ -57,7 +57,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware {
     init(((OCommandRequestText) iRequest).getText());
 
     className = null;
-    fields = null;
+    newRecords = null;
 
     StringBuilder word = new StringBuilder();
 
@@ -101,10 +101,12 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware {
       throw new OCommandSQLParsingException("Set of fields is missed. Example: (name, surname) or SET name = 'Bill'. Use "
           + getSyntax(), text, pos);
 
+    newRecords = new ArrayList<Map<String, Object>>();
     if (text.charAt(beginFields) == '(') {
       parseBracesFields(word, beginFields);
     } else {
-      fields = new LinkedHashMap<String, Object>();
+      final LinkedHashMap<String,Object> fields = new LinkedHashMap<String, Object>();
+      newRecords.add(fields);
       pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
       parseSetFields(word, pos, fields);
     }
@@ -131,39 +133,94 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware {
     if (pos == -1 || !word.toString().equals(KEYWORD_VALUES))
       throw new OCommandSQLParsingException("Missed VALUES keyword. Use " + getSyntax(), text, endFields);
 
-    final int beginValues = OStringParser.jumpWhiteSpaces(text, pos);
-    if (pos == -1 || text.charAt(beginValues) != '(')
+    int beginValues = OStringParser.jumpWhiteSpaces(text, pos);
+    if (pos == -1 || text.charAt(beginValues) != '('){
       throw new OCommandSQLParsingException("Set of values is missed. Example: ('Bill', 'Stuart', 300). Use " + getSyntax(), text,
           pos);
+    }
 
-    final int endValues = text.lastIndexOf(')');
-    if (endValues == -1)
-      throw new OCommandSQLParsingException("Missed closed brace. Use " + getSyntax(), text, beginValues);
+    final int textEnd = text.lastIndexOf(')');
+    
+    int blockStart = beginValues;
+    int blockEnd = beginValues;
+    while(blockStart != textEnd){
+        //skip coma between records
+        blockStart = text.indexOf('(', blockStart-1);
+        
+        blockEnd = findRecordEnd(text, '(', ')', blockStart);
+        if (blockEnd == -1)
+          throw new OCommandSQLParsingException("Missed closed brace. Use " + getSyntax(), text, blockStart);
+                
+        final List<String> values = OStringSerializerHelper.smartSplit(text, new char[] { ',' }, blockStart+1, blockEnd-1, true);
 
-    final List<String> values = OStringSerializerHelper.smartSplit(text, new char[] { ',' }, beginValues + 1, endValues - 1, true);
+        if (values.isEmpty()){
+          throw new OCommandSQLParsingException("Set of values is empty. Example: ('Bill', 'Stuart', 300). Use " + getSyntax(), text,
+              blockStart);
+        }
 
-    if (values.size() == 0)
-      throw new OCommandSQLParsingException("Set of values is empty. Example: ('Bill', 'Stuart', 300). Use " + getSyntax(), text,
-          beginValues);
+        if (values.size() != fieldNames.size()){
+          throw new OCommandSQLParsingException("Fields not match with values", text, blockStart);
+        }
 
-    if (values.size() != fieldNames.size())
-      throw new OCommandSQLParsingException("Fields not match with values", text, beginValues);
-
-    // TRANSFORM FIELD VALUES
-    final Object[] fieldValues = new Object[values.size()];
-    for (int i = 0; i < values.size(); ++i)
-      fieldValues[i] = OSQLHelper.parseValue(this, OStringSerializerHelper.decode(values.get(i).trim()), context);
-
-    fields = new LinkedHashMap<String, Object>();
-    for (int i = 0; i < fieldNames.size(); ++i)
-      fields.put(fieldNames.get(i), fieldValues[i]);
+        // TRANSFORM FIELD VALUES
+        final Map<String,Object> fields = new LinkedHashMap<String, Object>();
+        for (int i = 0; i < values.size(); ++i){
+          fields.put(fieldNames.get(i), OSQLHelper.parseValue(this, OStringSerializerHelper.decode(values.get(i).trim()), context));
+        }
+        newRecords.add(fields);
+        blockStart = blockEnd;
+    }
+    
   }
 
+  /**
+   * Find closing character, skips text elements.
+   */
+  private static final int findRecordEnd(String candidate, char start, char end, int startIndex){
+      int inc=0;
+      
+      for(int i=startIndex;i<candidate.length();i++){
+          char c = candidate.charAt(i);
+          if(c == '\''){
+              //skip to text end
+              int tend = i;
+              while(true){
+                tend = candidate.indexOf('\'', tend+1);
+                if(tend<0){
+                    throw new OCommandSQLParsingException("Could not find end of text area.");
+                }
+                
+                if(candidate.charAt(tend-1) == '\\'){
+                    //inner quote, skip it
+                    continue;
+                }else{
+                    break;
+                }
+              }
+              i=tend;
+              continue;
+          }
+          
+          if(c!=start && c!=end) continue;
+          
+          if(c==start){
+              inc++;
+          }else if(c== end){
+              inc--;
+              if(inc==0){
+                  return i;
+              }
+          }          
+      }
+      
+      return -1;
+  }
+  
   /**
    * Execute the INSERT and return the ODocument object created.
    */
   public Object execute(final Map<Object, Object> iArgs) {
-    if (fields == null)
+    if (newRecords == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
     if (indexName != null) {
@@ -171,26 +228,39 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware {
       if (index == null)
         throw new OCommandExecutionException("Target index '" + indexName + "' not found");
 
-      // BIND VALUES
-      index.put(fields.get(KEYWORD_KEY), (OIdentifiable) fields.get(KEYWORD_RID));
+        // BIND VALUES
+        for(Map<String,Object> candidate : newRecords){
+          index.put(candidate.get(KEYWORD_KEY), (OIdentifiable) candidate.get(KEYWORD_RID));
+        }
+      
       return null;
     } else {
-      // CREATE NEW DOCUMENT
-      ODocument doc = className != null ? new ODocument(className) : new ODocument();
+        
+      // CREATE NEW DOCUMENTS
+      final List<ODocument> docs = new ArrayList<ODocument>();
+      for(Map<String,Object> candidate : newRecords){
+        final ODocument doc = className != null ? new ODocument(className) : new ODocument();
+        OSQLHelper.bindParameters(doc, candidate, new OCommandParameters(iArgs));
 
-      OSQLHelper.bindParameters(doc, fields, new OCommandParameters(iArgs));
-
-      if (clusterName != null)
-        doc.save(clusterName);
-      else
-        doc.save();
-      return doc;
+        if (clusterName != null){
+          doc.save(clusterName);
+        }else{
+          doc.save();
+        }
+        docs.add(doc);
+      }
+      
+      if(docs.size()==1){
+          return docs.get(0);
+      }else{
+          return docs;
+      }
     }
   }
 
   @Override
   public String getSyntax() {
-    return "INSERT INTO <Class>|cluster:<cluster>|index:<index> [(<field>[,]*) VALUES (<expression>[,]*)]|[SET <field> = <expression>[,]*]";
+    return "INSERT INTO <Class>|cluster:<cluster>|index:<index> [(<field>[,]*) VALUES (<expression>[,]*)[,]*]|[SET <field> = <expression>[,]*]";
   }
 
 }
