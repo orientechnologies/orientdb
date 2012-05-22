@@ -29,6 +29,15 @@
 This document enlist the last changes to the OrientDB project.
 
 -------------------------------------------------------------------------------
+VERSION 1.0.1 - (May, 22nd 2012)
+-------------------------------------------------------------------------------
+- support for TinkerPop 2.0 technology stack
+- new OBinary type to index binary field
+- Bug fixed
+
+Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.0.1
+
+-------------------------------------------------------------------------------
 VERSION 1.0 - (May, 14th 2012)
 -------------------------------------------------------------------------------
 - new Multi-Master Replication architecture
