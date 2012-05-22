@@ -1829,7 +1829,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     final Object result = new OCommandSQL(iReceivedCommand).setProgressListener(this).execute();
 
-    if (result != null && iIncludeResult)
+    if (iIncludeResult)
       out.printf(iMessage, result, (float) (System.currentTimeMillis() - start) / 1000);
     else
       out.printf(iMessage, (float) (System.currentTimeMillis() - start) / 1000);

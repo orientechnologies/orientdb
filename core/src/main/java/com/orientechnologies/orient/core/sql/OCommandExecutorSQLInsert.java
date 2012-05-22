@@ -40,13 +40,13 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  * @author Johann Sorel (Geomatys)
  */
 public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware {
-  public static final String  KEYWORD_INSERT = "INSERT";
-  private static final String KEYWORD_VALUES = "VALUES";
-  private static final String KEYWORD_INTO   = "INTO";
-  private static final String KEYWORD_SET    = "SET";
-  private String              className      = null;
-  private String              clusterName    = null;
-  private String              indexName      = null;
+  public static final String        KEYWORD_INSERT = "INSERT";
+  private static final String       KEYWORD_VALUES = "VALUES";
+  private static final String       KEYWORD_INTO   = "INTO";
+  private static final String       KEYWORD_SET    = "SET";
+  private String                    className      = null;
+  private String                    clusterName    = null;
+  private String                    indexName      = null;
   private List<Map<String, Object>> newRecords;
 
   @SuppressWarnings("unchecked")
@@ -105,7 +105,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware {
     if (text.charAt(beginFields) == '(') {
       parseBracesFields(word, beginFields);
     } else {
-      final LinkedHashMap<String,Object> fields = new LinkedHashMap<String, Object>();
+      final LinkedHashMap<String, Object> fields = new LinkedHashMap<String, Object>();
       newRecords.add(fields);
       pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
       parseSetFields(word, pos, fields);
@@ -134,88 +134,89 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware {
       throw new OCommandSQLParsingException("Missed VALUES keyword. Use " + getSyntax(), text, endFields);
 
     int beginValues = OStringParser.jumpWhiteSpaces(text, pos);
-    if (pos == -1 || text.charAt(beginValues) != '('){
+    if (pos == -1 || text.charAt(beginValues) != '(') {
       throw new OCommandSQLParsingException("Set of values is missed. Example: ('Bill', 'Stuart', 300). Use " + getSyntax(), text,
           pos);
     }
 
     final int textEnd = text.lastIndexOf(')');
-    
+
     int blockStart = beginValues;
     int blockEnd = beginValues;
-    while(blockStart != textEnd){
-        //skip coma between records
-        blockStart = text.indexOf('(', blockStart-1);
-        
-        blockEnd = findRecordEnd(text, '(', ')', blockStart);
-        if (blockEnd == -1)
-          throw new OCommandSQLParsingException("Missed closed brace. Use " + getSyntax(), text, blockStart);
-                
-        final List<String> values = OStringSerializerHelper.smartSplit(text, new char[] { ',' }, blockStart+1, blockEnd-1, true);
+    while (blockStart != textEnd) {
+      // skip coma between records
+      blockStart = text.indexOf('(', blockStart - 1);
 
-        if (values.isEmpty()){
-          throw new OCommandSQLParsingException("Set of values is empty. Example: ('Bill', 'Stuart', 300). Use " + getSyntax(), text,
-              blockStart);
-        }
+      blockEnd = findRecordEnd(text, '(', ')', blockStart);
+      if (blockEnd == -1)
+        throw new OCommandSQLParsingException("Missed closed brace. Use " + getSyntax(), text, blockStart);
 
-        if (values.size() != fieldNames.size()){
-          throw new OCommandSQLParsingException("Fields not match with values", text, blockStart);
-        }
+      final List<String> values = OStringSerializerHelper.smartSplit(text, new char[] { ',' }, blockStart + 1, blockEnd - 1, true);
 
-        // TRANSFORM FIELD VALUES
-        final Map<String,Object> fields = new LinkedHashMap<String, Object>();
-        for (int i = 0; i < values.size(); ++i){
-          fields.put(fieldNames.get(i), OSQLHelper.parseValue(this, OStringSerializerHelper.decode(values.get(i).trim()), context));
-        }
-        newRecords.add(fields);
-        blockStart = blockEnd;
+      if (values.isEmpty()) {
+        throw new OCommandSQLParsingException("Set of values is empty. Example: ('Bill', 'Stuart', 300). Use " + getSyntax(), text,
+            blockStart);
+      }
+
+      if (values.size() != fieldNames.size()) {
+        throw new OCommandSQLParsingException("Fields not match with values", text, blockStart);
+      }
+
+      // TRANSFORM FIELD VALUES
+      final Map<String, Object> fields = new LinkedHashMap<String, Object>();
+      for (int i = 0; i < values.size(); ++i) {
+        fields.put(fieldNames.get(i), OSQLHelper.parseValue(this, OStringSerializerHelper.decode(values.get(i).trim()), context));
+      }
+      newRecords.add(fields);
+      blockStart = blockEnd;
     }
-    
+
   }
 
   /**
    * Find closing character, skips text elements.
    */
-  private static final int findRecordEnd(String candidate, char start, char end, int startIndex){
-      int inc=0;
-      
-      for(int i=startIndex;i<candidate.length();i++){
-          char c = candidate.charAt(i);
-          if(c == '\''){
-              //skip to text end
-              int tend = i;
-              while(true){
-                tend = candidate.indexOf('\'', tend+1);
-                if(tend<0){
-                    throw new OCommandSQLParsingException("Could not find end of text area.");
-                }
-                
-                if(candidate.charAt(tend-1) == '\\'){
-                    //inner quote, skip it
-                    continue;
-                }else{
-                    break;
-                }
-              }
-              i=tend;
-              continue;
+  private static final int findRecordEnd(String candidate, char start, char end, int startIndex) {
+    int inc = 0;
+
+    for (int i = startIndex; i < candidate.length(); i++) {
+      char c = candidate.charAt(i);
+      if (c == '\'') {
+        // skip to text end
+        int tend = i;
+        while (true) {
+          tend = candidate.indexOf('\'', tend + 1);
+          if (tend < 0) {
+            throw new OCommandSQLParsingException("Could not find end of text area.");
           }
-          
-          if(c!=start && c!=end) continue;
-          
-          if(c==start){
-              inc++;
-          }else if(c== end){
-              inc--;
-              if(inc==0){
-                  return i;
-              }
-          }          
+
+          if (candidate.charAt(tend - 1) == '\\') {
+            // inner quote, skip it
+            continue;
+          } else {
+            break;
+          }
+        }
+        i = tend;
+        continue;
       }
-      
-      return -1;
+
+      if (c != start && c != end)
+        continue;
+
+      if (c == start) {
+        inc++;
+      } else if (c == end) {
+        inc--;
+        if (inc == 0) {
+          return i;
+        }
+      }
+    }
+
+    return -1;
   }
-  
+
   /**
    * Execute the INSERT and return the ODocument object created.
    */
@@ -228,32 +229,35 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware {
       if (index == null)
         throw new OCommandExecutionException("Target index '" + indexName + "' not found");
 
-        // BIND VALUES
-        for(Map<String,Object> candidate : newRecords){
-          index.put(candidate.get(KEYWORD_KEY), (OIdentifiable) candidate.get(KEYWORD_RID));
-        }
-      
-      return null;
+      // BIND VALUES
+      Map<String, Object> result = null;
+      for (Map<String, Object> candidate : newRecords) {
+        index.put(candidate.get(KEYWORD_KEY), (OIdentifiable) candidate.get(KEYWORD_RID));
+        result = candidate;
+      }
+
+      // RETURN LAST ENTRY
+      return new ODocument(result);
     } else {
-        
+
       // CREATE NEW DOCUMENTS
       final List<ODocument> docs = new ArrayList<ODocument>();
-      for(Map<String,Object> candidate : newRecords){
+      for (Map<String, Object> candidate : newRecords) {
         final ODocument doc = className != null ? new ODocument(className) : new ODocument();
         OSQLHelper.bindParameters(doc, candidate, new OCommandParameters(iArgs));
 
-        if (clusterName != null){
+        if (clusterName != null) {
           doc.save(clusterName);
-        }else{
+        } else {
           doc.save();
         }
         docs.add(doc);
       }
-      
-      if(docs.size()==1){
-          return docs.get(0);
-      }else{
-          return docs;
+
+      if (docs.size() == 1) {
+        return docs.get(0);
+      } else {
+        return docs;
       }
     }
   }
