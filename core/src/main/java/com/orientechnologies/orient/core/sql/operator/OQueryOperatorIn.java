@@ -149,15 +149,9 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
     } else
       return null;
 
-    final List<ORID> rids = new ArrayList<ORID>(ridSize);
-    for (final Object rid : ridCollection) {
-      if (rid instanceof ORID)
-        rids.add((ORID) rid);
-      else if (rid instanceof OSQLFilterItemParameter && ((OSQLFilterItemParameter) rid).getValue(null, null) instanceof ORID)
-        rids.add((ORID) ((OSQLFilterItemParameter) rid).getValue(null, null));
-    }
+    final List<ORID> rids = addRangeResults(ridCollection, ridSize);
 
-    return Collections.min(rids);
+    return rids == null ? null : Collections.min(rids);
   }
 
   @Override
@@ -174,14 +168,27 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
     } else
       return null;
 
-    final List<ORID> rids = new ArrayList<ORID>(ridSize);
-    for (final Object rid : ridCollection) {
-      if (rid instanceof ORID)
-        rids.add((ORID) rid);
-      else if (rid instanceof OSQLFilterItemParameter && ((OSQLFilterItemParameter) rid).getValue(null, null) instanceof ORID)
-        rids.add((ORID) ((OSQLFilterItemParameter) rid).getValue(null, null));
-    }
+    final List<ORID> rids = addRangeResults(ridCollection, ridSize);
 
-    return Collections.max(rids);
+    return rids == null ? null : Collections.max(rids);
+  }
+
+  protected List<ORID> addRangeResults(final Iterable<?> ridCollection, final int ridSize) {
+    List<ORID> rids = null;
+    for (Object rid : ridCollection) {
+      if (rid instanceof OSQLFilterItemParameter)
+        rid = ((OSQLFilterItemParameter) rid).getValue(null, null);
+
+      if (rid instanceof OIdentifiable) {
+        final ORID r = ((OIdentifiable) rid).getIdentity();
+        if (r.isPersistent()) {
+          if (rids == null)
+            // LAZY CREATE IT
+            rids = new ArrayList<ORID>(ridSize);
+          rids.add(r);
+        }
+      }
+    }
+    return rids;
   }
 }

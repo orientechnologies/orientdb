@@ -54,26 +54,13 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
   }
 
   public static boolean equals(final Object iLeft, final Object iRight) {
-    if (iLeft instanceof ORecord<?> && iRight instanceof ORID)
+    if (iLeft instanceof ORecord<?>) {
       // RECORD & ORID
-      return ((ORecord<?>) iLeft).getIdentity().equals(iRight);
-    else if (iRight instanceof ORecord<?> && iLeft instanceof ORID)
-      // ORID && RECORD
-      return ((ORecord<?>) iRight).getIdentity().equals(iLeft);
-    else if (iRight instanceof ODocument) {
-      // MATCH WITH ONE SINGLE DOCUMENT FIELD
-      final ODocument r = (ODocument) iRight;
-      if (!r.getIdentity().isPersistent() && r.fields() == 1) {
-        Object field = r.field(r.fieldNames()[0]);
-        return iLeft.equals(field);
-      }
-    } else if (iLeft instanceof ODocument) {
-      // MATCH WITH ONE SINGLE DOCUMENT FIELD
-      final ODocument r = (ODocument) iLeft;
-      if (!r.getIdentity().isPersistent() && r.fields() == 1) {
-        Object field = r.field(r.fieldNames()[0]);
-        return iRight.equals(field);
-      }
+      return comparesValues(iRight, (ORecord<?>) iLeft);
+
+    } else if (iRight instanceof ORecord<?>) {
+
+      return comparesValues(iLeft, (ORecord<?>) iRight);
     }
 
     // ALL OTHER CASES
@@ -81,6 +68,23 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
     if (right == null)
       return false;
     return iLeft.equals(right);
+  }
+
+  protected static boolean comparesValues(final Object iValue, final ORecord<?> iRecord) {
+    // ORID && RECORD
+    final ORID other = ((ORecord<?>) iRecord).getIdentity();
+
+    if (!other.isPersistent() && iRecord instanceof ODocument) {
+      // ODOCUMENT AS RESULT OF SUB-QUERY: GET THE FIRST FIELD IF ANY
+      final String[] firstFieldName = ((ODocument) iRecord).fieldNames();
+      if (firstFieldName.length > 0) {
+        Object fieldValue = ((ODocument) iRecord).field(firstFieldName[0]);
+        if (fieldValue != null)
+          return fieldValue.equals(iValue);
+      }
+      return false;
+    }
+    return other.equals(iValue);
   }
 
   @Override
@@ -116,9 +120,9 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
       if (indexResult instanceof Collection)
         return (Collection<OIdentifiable>) indexResult;
 
-      if( indexResult == null )
+      if (indexResult == null)
         return null;
-      
+
       return indexResult == null ? null : Collections.singletonList((OIdentifiable) indexResult);
     } else {
       // in case of composite keys several items can be returned in case of we perform search

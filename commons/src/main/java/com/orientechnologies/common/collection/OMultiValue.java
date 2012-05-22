@@ -162,6 +162,9 @@ public class OMultiValue {
   public static Iterable<Object> getMultiValueIterable(final Object iObject) {
     if (iObject == null)
       return null;
+    
+    if( iObject instanceof Iterable<?>)
+      return (Iterable<Object>) iObject;
 
     if (!isMultiValue(iObject))
       return null;
