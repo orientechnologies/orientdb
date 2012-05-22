@@ -9,8 +9,8 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
-import com.tinkerpop.blueprints.pgm.impls.orientdb.OrientGraph;
-import com.tinkerpop.blueprints.pgm.util.io.graphml.GraphMLReader;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.util.io.graphml.GraphMLReader;
 
 public class TestLoadGraph {
 	private static final String	INPUT_FILE	= "target/test-classes/graph-example-2.xml";
@@ -42,8 +42,6 @@ public class TestLoadGraph {
 		System.out.println("Importing graph from file '" + inputFile + "' into database: " + g + "...");
 
 		final long startTime = System.currentTimeMillis();
-
-		g.setMaxBufferSize(0);
 
 		GraphMLReader.inputGraph(g, new FileInputStream(inputFile), 100000, null, null, null);
 
