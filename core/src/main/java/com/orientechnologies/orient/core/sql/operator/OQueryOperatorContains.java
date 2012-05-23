@@ -17,7 +17,9 @@ package com.orientechnologies.orient.core.sql.operator;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -59,7 +61,19 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
       if (condition != null) {
         // CHECK AGAINST A CONDITION
         for (final Object o : iterable) {
-          if ((Boolean) condition.evaluate((OIdentifiable) o, iContext) == Boolean.TRUE)
+          final OIdentifiable id;
+          if (o instanceof OIdentifiable)
+            id = (OIdentifiable) o;
+          else if (o instanceof Map<?, ?>) {
+            final Iterator<OIdentifiable> iter = ((Map<?, OIdentifiable>) o).values().iterator();
+            id = iter.hasNext() ? iter.next() : null;
+          } else if (o instanceof Iterable<?>) {
+            final Iterator<OIdentifiable> iter = ((Iterable<OIdentifiable>) o).iterator();
+            id = iter.hasNext() ? iter.next() : null;
+          } else
+            continue;
+
+          if ((Boolean) condition.evaluate(id, iContext) == Boolean.TRUE)
             return true;
         }
       } else {

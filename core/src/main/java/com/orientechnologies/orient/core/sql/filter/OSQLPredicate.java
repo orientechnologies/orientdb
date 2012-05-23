@@ -66,7 +66,7 @@ public class OSQLPredicate extends OCommandToParse implements OCommandPredicate 
       textUpperCase = text.toUpperCase(Locale.ENGLISH);
       currentPos = 0;
       jumpWhiteSpaces();
-      
+
       rootCondition = (OSQLFilterCondition) extractConditions(null);
     } catch (OQueryParsingException e) {
       if (e.getText() == null)
@@ -349,7 +349,7 @@ public class OSQLPredicate extends OCommandToParse implements OCommandPredicate 
           // currentPos++;
           // break;
         }
-      } else if (c == ' ' && openBraces == 0) {
+      } else if (c == ' ' && openBraces == 0 && openBraket == 0) {
         break;
       } else if (!Character.isLetter(c) && !Character.isDigit(c) && c != '.' && c != '$' && c != ':' && c != '-' && c != '_'
           && c != '+' && c != '@' && openBraces == 0 && openBraket == 0) {

@@ -225,8 +225,12 @@ public class ODocumentHelper {
       }
 
       if (nextSeparator == '[') {
-        if (fieldName != null && fieldName.length() > 0)
-          value = getIdentifiableValue(currentRecord, fieldName);
+        if (fieldName != null && fieldName.length() > 0) {
+          if (currentRecord != null)
+            value = getIdentifiableValue(currentRecord, fieldName);
+          else if (value instanceof Map<?, ?>)
+            value = getMapEntry((Map<String, ?>) value, fieldName);
+        }
 
         if (value == null)
           return null;
@@ -276,9 +280,11 @@ public class ODocumentHelper {
           final List<String> indexCondition = OStringSerializerHelper.smartSplit(index, '=', ' ');
 
           if (indexParts.size() == 1 && indexRanges.size() == 1 && indexCondition.size() == 1) {
-
             // SINGLE VALUE
-            value = OMultiValue.getValue(value, Integer.parseInt(index));
+            if (value instanceof Map<?, ?>)
+              value = getMapEntry((Map<String, ?>) value, index);
+            else
+              value = OMultiValue.getValue(value, Integer.parseInt(index));
 
           } else if (indexParts.size() > 1) {
 
@@ -307,7 +313,7 @@ public class ODocumentHelper {
             if (conditionFieldValue instanceof String)
               conditionFieldValue = OStringSerializerHelper.getStringContent(conditionFieldValue);
 
-            final List<ODocument> values = new ArrayList<ODocument>();
+            final List<Object> values = new ArrayList<Object>();
             for (Object v : OMultiValue.getMultiValueIterable(value)) {
               if (v instanceof ODocument) {
                 final ODocument doc = (ODocument) v;
@@ -316,6 +322,14 @@ public class ODocumentHelper {
                 fieldValue = OType.convert(fieldValue, conditionFieldValue.getClass());
                 if (fieldValue != null && fieldValue.equals(conditionFieldValue)) {
                   values.add(doc);
+                }
+              } else if (v instanceof Map<?, ?>) {
+                final Map<String, ?> map = (Map<String, ?>) v;
+                Object fieldValue = getMapEntry(map, conditionFieldName);
+
+                fieldValue = OType.convert(fieldValue, conditionFieldValue.getClass());
+                if (fieldValue != null && fieldValue.equals(conditionFieldValue)) {
+                  values.add(map);
                 }
               }
             }
@@ -350,6 +364,40 @@ public class ODocumentHelper {
     } while (nextSeparatorPos < fieldNameLength && value != null);
 
     return (RET) value;
+  }
+
+  /**
+   * Retrieves the value crossing the map with the dotted notation
+   * 
+   * @param iName
+   *          Field(s) to retrieve. If are multiple fields, then the dot must be used as separator
+   * @return
+   */
+  @SuppressWarnings("unchecked")
+  public static Object getMapEntry(final Map<String, ?> iMap, final String iName) {
+    if (iMap == null || iName == null)
+      return null;
+
+    String fieldName;
+    int pos = iName.indexOf('.');
+    if (pos > -1)
+      fieldName = iName.substring(0, pos);
+    else
+      fieldName = iName;
+
+    final Object value = iMap.get(fieldName);
+    if (value == null)
+      return null;
+
+    if (pos > -1) {
+      final String restFieldName = iName.substring(pos + 1);
+      if (value instanceof ODocument)
+        return getFieldValue(value, restFieldName);
+      else if (value instanceof Map<?, ?>)
+        return getMapEntry((Map<String, ?>) value, restFieldName);
+    }
+
+    return value;
   }
 
   public static Object getIdentifiableValue(final OIdentifiable iCurrent, final String iFieldName) {
