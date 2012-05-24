@@ -350,10 +350,14 @@ public class ODocumentHelper {
           value = evaluateFunction(value, fieldName);
         else {
           // GET THE LINKED OBJECT IF ANY
-          value = getIdentifiableValue(currentRecord, fieldName);
-          if (value != null && value instanceof ORecord<?> && ((ORecord<?>) value).getInternalStatus() == STATUS.NOT_LOADED)
-            // RELOAD IT
-            ((ORecord<?>) value).reload();
+          if (currentRecord != null) {
+            value = getIdentifiableValue(currentRecord, fieldName);
+            if (value != null && value instanceof ORecord<?> && ((ORecord<?>) value).getInternalStatus() == STATUS.NOT_LOADED)
+              // RELOAD IT
+              ((ORecord<?>) value).reload();
+          } else if (value instanceof Map<?, ?>)
+            value = getMapEntry((Map<String, ?>) value, fieldName);
+
         }
       }
 
