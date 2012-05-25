@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.graph.gremlin;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientElementIterable;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
@@ -69,12 +71,14 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
         final ODocument document = (ODocument) iCurrentRecord;
         if (db.isVertex(document)) {
           // VERTEX TYPE, CREATE THE BLUEPRINTS'S WRAPPER
-          OrientVertex graphElement = new OrientVertex(iGraph, document);
+          OrientVertex graphElement = (OrientVertex) new OrientElementIterable<OrientVertex>(iGraph, Arrays
+              .asList(new ODocument[] { document })).iterator().next();
           iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("current", graphElement);
 
         } else if (db.isEdge(document)) {
           // EDGE TYPE, CREATE THE BLUEPRINTS'S WRAPPER
-          OrientEdge graphElement = new OrientEdge(iGraph, document);
+          OrientEdge graphElement = (OrientEdge) new OrientElementIterable<OrientEdge>(iGraph, Arrays
+              .asList(new ODocument[] { document })).iterator().next();
           iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("current", graphElement);
         } else
 
