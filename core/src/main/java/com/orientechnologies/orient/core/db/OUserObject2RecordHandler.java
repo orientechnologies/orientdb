@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
@@ -47,7 +48,7 @@ public interface OUserObject2RecordHandler {
 	 *          If the record is not loaded yet, use this as fetch plan
 	 * @return The user object associated
 	 */
-	public Object getUserObjectByRecord(ORecordInternal<?> iRecord, String iFetchPlan);
+	public Object getUserObjectByRecord(OIdentifiable iRecord, String iFetchPlan);
 
 	/**
 	 * Tells if e user object exists for a certain RecordId.

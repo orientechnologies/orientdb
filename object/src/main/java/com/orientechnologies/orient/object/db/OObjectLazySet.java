@@ -85,7 +85,7 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
 		underlying.toArray(a);
 		final ODatabasePojoAbstract<TYPE> database = getDatabase();
 		for (int i = 0; i < a.length; ++i)
-			a[i] = (T) database.getUserObjectByRecord((ORecordInternal<?>) a[i], fetchPlan);
+			a[i] = (T) database.getUserObjectByRecord((OIdentifiable) a[i], fetchPlan);
 		return a;
 	}
 

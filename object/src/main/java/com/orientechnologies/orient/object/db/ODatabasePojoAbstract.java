@@ -54,7 +54,8 @@ import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 
 @SuppressWarnings("unchecked")
-public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseWrapperAbstract<ODatabaseDocumentTx> implements ODatabaseSchemaAware<T> {
+public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseWrapperAbstract<ODatabaseDocumentTx> implements
+		ODatabaseSchemaAware<T> {
 	protected IdentityHashMap<Object, ODocument>	objects2Records	= new IdentityHashMap<Object, ODocument>();
 	protected IdentityHashMap<ODocument, T>				records2Objects	= new IdentityHashMap<ODocument, T>();
 	protected HashMap<ORID, ODocument>						rid2Records			= new HashMap<ORID, ODocument>();
@@ -339,11 +340,11 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 		return objects2Records.containsKey(iEntity);
 	}
 
-	public T getUserObjectByRecord(final ORecordInternal<?> iRecord, final String iFetchPlan) {
+	public T getUserObjectByRecord(final OIdentifiable iRecord, final String iFetchPlan) {
 		return getUserObjectByRecord(iRecord, iFetchPlan, true);
 	}
 
-	public T getUserObjectByRecord(final ORecordInternal<?> iRecord, final String iFetchPlan, final boolean iCreate) {
+	public T getUserObjectByRecord(final OIdentifiable iRecord, final String iFetchPlan, final boolean iCreate) {
 		if (!(iRecord instanceof ODocument))
 			return null;
 
@@ -359,7 +360,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 			checkOpeness();
 
 			try {
-				if (iRecord.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
+				if (iRecord.getRecord().getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
 					record = (ODocument) record.load();
 
 				pojo = newInstance(record.getClassName());
