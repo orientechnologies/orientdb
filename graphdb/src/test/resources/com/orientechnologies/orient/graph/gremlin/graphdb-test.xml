@@ -5,7 +5,7 @@
 		<classes>
 			<class name="com.orientechnologies.orient.graph.gremlin.TestLoadGraph" />
 			<class name="com.orientechnologies.orient.graph.gremlin.LocalGremlinTest" />
-			<class name="com.orientechnologies.orient.graph.gremlin.RemoteGremlinTest" />
+			<!-- <class name="com.orientechnologies.orient.graph.gremlin.RemoteGremlinTest" />  -->
 		</classes>
 	</test>
 </suite>
