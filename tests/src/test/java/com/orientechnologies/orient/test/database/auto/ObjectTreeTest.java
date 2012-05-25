@@ -307,7 +307,6 @@ public class ObjectTreeTest {
 		});
 		OObjectSerializerHelper.bindSerializerContext(null, serializerContext);
 		database.getEntityManager().registerEntityClass(CustomClass.class);
-		database.getEntityManager().registerEntityClass(CustomType.class);
 
 		if (!database.getMetadata().getSchema().existsClass("CustomClass"))
 			database.getMetadata().getSchema().createClass("CustomClass");
