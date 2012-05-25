@@ -418,38 +418,38 @@ public class GraphDatabaseTest {
     Assert.assertEquals(database.getOutEdges(doc1).size(), v1Edges + 1);
     Assert.assertEquals(database.getInEdges(doc2).size(), v2Edges + 1);
   }
-
-  @Test
-  public void sqlNestedQueries() {
-    ODocument sourceDoc1 = database.createVertex().field("driver", "John", OType.STRING).save();
-    ODocument targetDoc1 = database.createVertex().field("car", "ford", OType.STRING).save();
-    ODocument targetDoc2 = database.createVertex().field("car", "audi", OType.STRING).save();
-
-    database.createEdge(sourceDoc1, targetDoc1).field("color", "red", OType.STRING).field("action", "owns", OType.STRING).save();
-    database.createEdge(sourceDoc1, targetDoc2).field("color", "red", OType.STRING).field("action", "wants", OType.STRING).save();
-
-    String query1 = "select driver from V where out.in.car = 'ford'";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query1));
-    Assert.assertEquals(result.size(), 1);
-
-    String query2 = "select driver from V where out[color='red'].in.car = 'ford'";
-    result = database.query(new OSQLSynchQuery<ODocument>(query2));
-    Assert.assertEquals(result.size(), 1);
-
-    String query3 = "select driver from V where out[action='owns'].in.car = 'ford'";
-    result = database.query(new OSQLSynchQuery<ODocument>(query3));
-    Assert.assertEquals(result.size(), 1);
-
-    String query4 = "select driver from V where out[color='red'][action='owns'].in.car = 'ford'";
-    result = database.query(new OSQLSynchQuery<ODocument>(query4));
-    Assert.assertEquals(result.size(), 1);
-
-    for (int i = 0; i < result.size(); i++)
-      System.out.println(result.get(i));
-
-    database.removeVertex(sourceDoc1);
-    database.removeVertex(targetDoc1);
-    database.removeVertex(targetDoc2);
-
-  }
+//
+//  @Test
+//  public void sqlNestedQueries() {
+//    ODocument sourceDoc1 = database.createVertex().field("driver", "John", OType.STRING).save();
+//    ODocument targetDoc1 = database.createVertex().field("car", "ford", OType.STRING).save();
+//    ODocument targetDoc2 = database.createVertex().field("car", "audi", OType.STRING).save();
+//
+//    database.createEdge(sourceDoc1, targetDoc1).field("color", "red", OType.STRING).field("action", "owns", OType.STRING).save();
+//    database.createEdge(sourceDoc1, targetDoc2).field("color", "red", OType.STRING).field("action", "wants", OType.STRING).save();
+//
+//    String query1 = "select driver from V where out.in.car = 'ford'";
+//    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query1));
+//    Assert.assertEquals(result.size(), 1);
+//
+//    String query2 = "select driver from V where out[color='red'].in.car = 'ford'";
+//    result = database.query(new OSQLSynchQuery<ODocument>(query2));
+//    Assert.assertEquals(result.size(), 1);
+//
+//    String query3 = "select driver from V where out[action='owns'].in.car = 'ford'";
+//    result = database.query(new OSQLSynchQuery<ODocument>(query3));
+//    Assert.assertEquals(result.size(), 1);
+//
+//    String query4 = "select driver from V where out[color='red'][action='owns'].in.car = 'ford'";
+//    result = database.query(new OSQLSynchQuery<ODocument>(query4));
+//    Assert.assertEquals(result.size(), 1);
+//
+//    for (int i = 0; i < result.size(); i++)
+//      System.out.println(result.get(i));
+//
+//    database.removeVertex(sourceDoc1);
+//    database.removeVertex(targetDoc1);
+//    database.removeVertex(targetDoc2);
+//
+//  }
 }
