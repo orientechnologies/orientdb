@@ -378,6 +378,23 @@ public class JSONTest {
 		Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
 		database.close();
 	}
+	
+	 public void testLongTypes() {
+	    ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
+	    database.open("admin", "admin");
+
+	    ODocument newDoc = new ODocument();
+
+	    newDoc
+	        .fromJSON("{\"@type\": \"d\",\"@class\": \"Track\",\"type\": \"LineString\",\"coordinates\": [ [ 32874387347347,  0 ],  [ -23736753287327, 1 ] ]}");
+
+	    newDoc.save();
+
+	    ODocument loadedDoc = database.load(newDoc.getIdentity());
+
+	    Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
+	    database.close();
+	  }
 
 	public void testSpecialChars() {
 		ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
