@@ -75,7 +75,7 @@
     <module>server</module>
     <module>tools</module>
     <module>tests</module>
-    <!--module>blueprints</module-->
+    <module>blueprints</module>
     <module>graphdb</module>
   </modules>
 
