@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
-import com.tinkerpop.blueprints.impls.orient.OrientElement;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
@@ -67,20 +66,20 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 
       @Override
       public boolean call(ScriptEngine iEngine, OrientGraph iGraph) {
-        final OrientElement graphElement;
-
         final ODocument document = (ODocument) iCurrentRecord;
-        if (db.isVertex(document))
+        if (db.isVertex(document)) {
           // VERTEX TYPE, CREATE THE BLUEPRINTS'S WRAPPER
-          graphElement = new OrientVertex(iGraph, document);
-        else if (db.isEdge(document))
+          OrientVertex graphElement = new OrientVertex(iGraph, document);
+          iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("current", graphElement);
+
+        } else if (db.isEdge(document)) {
           // EDGE TYPE, CREATE THE BLUEPRINTS'S WRAPPER
-          graphElement = new OrientEdge(iGraph, document);
-        else
+          OrientEdge graphElement = new OrientEdge(iGraph, document);
+          iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("current", graphElement);
+        } else
+
           // UNKNOWN CLASS: IGNORE IT
           return false;
-
-        iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("current", graphElement);
 
         return true;
       }
