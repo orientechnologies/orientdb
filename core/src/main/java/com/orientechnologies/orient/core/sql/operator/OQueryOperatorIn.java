@@ -89,7 +89,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
       }
     }
 
-    return false;
+    return iLeft.equals(iRight);
   }
 
   @Override
