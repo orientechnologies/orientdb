@@ -171,7 +171,8 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
                       // ADD SINGLE ITEMS AS FLAT COLLECTION
                       for (Object subO : OMultiValue.getMultiValueIterable(o))
                         newColl.add(subO);
-                    }
+                    } else
+                      newColl.add(o);
                   }
                   ioResult = newColl;
                 } else if (ioResult instanceof ODocument)
