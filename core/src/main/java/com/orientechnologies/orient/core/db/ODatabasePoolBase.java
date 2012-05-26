@@ -28,6 +28,19 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
  */
 public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
   protected ODatabasePoolAbstract<DB> dbPool;
+  protected final String              url;
+  protected final String              userName;
+  protected final String              userPassword;
+
+  protected ODatabasePoolBase() {
+    url = userName = userPassword = null;
+  }
+
+  protected ODatabasePoolBase(final String iURL, final String iUserName, final String iUserPassword) {
+    url = iURL;
+    userName = iUserName;
+    userPassword = iUserPassword;
+  }
 
   public ODatabasePoolBase<DB> setup() {
     setup(1, 20);
@@ -72,6 +85,17 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
         }
       }
     return this;
+  }
+
+  /**
+   * Acquires a connection from the pool using the configured URL, user-name and user-password. If the pool is empty, then the
+   * caller thread will wait for it.
+   * 
+   * @return A pooled database instance
+   */
+  public DB acquire() {
+    setup();
+    return dbPool.acquire(url, userName, userPassword);
   }
 
   /**

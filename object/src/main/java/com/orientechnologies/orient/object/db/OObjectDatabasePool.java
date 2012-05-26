@@ -18,16 +18,24 @@ package com.orientechnologies.orient.object.db;
 import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 
 public class OObjectDatabasePool extends ODatabasePoolBase<OObjectDatabaseTx> {
-	private static OObjectDatabasePool	globalInstance	= new OObjectDatabasePool();
+  private static OObjectDatabasePool globalInstance = new OObjectDatabasePool();
 
-	public static OObjectDatabasePool global() {
-		globalInstance.setup();
-		return globalInstance;
-	}
+  public OObjectDatabasePool() {
+    super();
+  }
 
-	@Override
-	protected OObjectDatabaseTx createResource(final Object owner, final String iDatabaseName, final Object... iAdditionalArgs) {
-		return new OObjectDatabaseTxPooled((OObjectDatabasePool) owner, iDatabaseName, (String) iAdditionalArgs[0],
-				(String) iAdditionalArgs[1]);
-	}
+  public OObjectDatabasePool(final String iURL, final String iUserName, final String iUserPassword) {
+    super(iURL, iUserName, iUserPassword);
+  }
+
+  public static OObjectDatabasePool global() {
+    globalInstance.setup();
+    return globalInstance;
+  }
+
+  @Override
+  protected OObjectDatabaseTx createResource(final Object owner, final String iDatabaseName, final Object... iAdditionalArgs) {
+    return new OObjectDatabaseTxPooled((OObjectDatabasePool) owner, iDatabaseName, (String) iAdditionalArgs[0],
+        (String) iAdditionalArgs[1]);
+  }
 }

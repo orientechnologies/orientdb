@@ -755,7 +755,9 @@ public class CRUDDocumentPhysicalTest {
 
   @Test(dependsOnMethods = "cleanAll")
   public void asynchInsertion() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    ODatabaseDocumentPool pool = new ODatabaseDocumentPool(url, "admin", "admin");
+
+    database = pool.acquire();
 
     try {
       startRecordNumber = database.countClusterElements("Account");

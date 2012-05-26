@@ -19,17 +19,24 @@ import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 
 public class OGraphDatabasePool extends ODatabasePoolBase<OGraphDatabase> {
 
-	private static OGraphDatabasePool	globalInstance	= new OGraphDatabasePool();
+  private static OGraphDatabasePool globalInstance = new OGraphDatabasePool();
 
-	public static OGraphDatabasePool global() {
-		globalInstance.setup();
-		return globalInstance;
-	}
+  public OGraphDatabasePool() {
+    super();
+  }
 
-	@Override
-	protected OGraphDatabase createResource(Object owner, String iDatabaseName,
-			Object... iAdditionalArgs) {
-		return new OGraphDatabasePooled((OGraphDatabasePool) owner, iDatabaseName,
-				(String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
-	}
+  public OGraphDatabasePool(final String iURL, final String iUserName, final String iUserPassword) {
+    super(iURL, iUserName, iUserPassword);
+  }
+
+  public static OGraphDatabasePool global() {
+    globalInstance.setup();
+    return globalInstance;
+  }
+
+  @Override
+  protected OGraphDatabase createResource(Object owner, String iDatabaseName, Object... iAdditionalArgs) {
+    return new OGraphDatabasePooled((OGraphDatabasePool) owner, iDatabaseName, (String) iAdditionalArgs[0],
+        (String) iAdditionalArgs[1]);
+  }
 }

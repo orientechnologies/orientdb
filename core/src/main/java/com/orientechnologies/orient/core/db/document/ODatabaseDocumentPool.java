@@ -19,16 +19,24 @@ import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 
 public class ODatabaseDocumentPool extends ODatabasePoolBase<ODatabaseDocumentTx> {
 
-	private static ODatabaseDocumentPool	globalInstance	= new ODatabaseDocumentPool();
+  private static ODatabaseDocumentPool globalInstance = new ODatabaseDocumentPool();
 
-	public static ODatabaseDocumentPool global() {
-		globalInstance.setup();
-		return globalInstance;
-	}
+  public ODatabaseDocumentPool() {
+    super();
+  }
 
-	@Override
-	protected ODatabaseDocumentTx createResource(Object owner, String iDatabaseName, Object... iAdditionalArgs) {
-		return new ODatabaseDocumentTxPooled((ODatabaseDocumentPool) owner, iDatabaseName, (String) iAdditionalArgs[0],
-				(String) iAdditionalArgs[1]);
-	}
+  public ODatabaseDocumentPool(final String iURL, final String iUserName, final String iUserPassword) {
+    super(iURL, iUserName, iUserPassword);
+  }
+
+  public static ODatabaseDocumentPool global() {
+    globalInstance.setup();
+    return globalInstance;
+  }
+
+  @Override
+  protected ODatabaseDocumentTx createResource(Object owner, String iDatabaseName, Object... iAdditionalArgs) {
+    return new ODatabaseDocumentTxPooled((ODatabaseDocumentPool) owner, iDatabaseName, (String) iAdditionalArgs[0],
+        (String) iAdditionalArgs[1]);
+  }
 }

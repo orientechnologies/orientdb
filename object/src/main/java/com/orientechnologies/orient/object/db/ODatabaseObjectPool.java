@@ -21,6 +21,14 @@ import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 public class ODatabaseObjectPool extends ODatabasePoolBase<ODatabaseObjectTx> {
 	private static ODatabaseObjectPool	globalInstance	= new ODatabaseObjectPool();
 
+  public ODatabaseObjectPool() {
+    super();
+  }
+
+  public ODatabaseObjectPool(final String iURL, final String iUserName, final String iUserPassword) {
+    super(iURL, iUserName, iUserPassword);
+  }
+
 	public static ODatabaseObjectPool global() {
 		globalInstance.setup();
 		return globalInstance;
