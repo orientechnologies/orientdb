@@ -232,7 +232,8 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
    * 
    * @param iForceDirty
    *          Force disconnection also if the record it's dirty
-   * @param i
+   * @param iLevel
+   * @return count of nodes that has been disconnected
    */
   protected int disconnect(final boolean iForceDirty, final int iLevel) {
     if (dataProvider == null)
@@ -243,12 +244,7 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
 
     final ORID rid = dataProvider.getIdentity();
 
-    if ((!dataProvider.isEntryDirty() && !dataProvider.getIdentity().isTemporary() || iForceDirty) && !pTree.isNodeEntryPoint(this)) {
-      totalDisconnected = 1;
-      pTree.removeNodeFromMemory(this);
-      clear();
-    }
-
+    boolean disconnectedFromParent = false;
     if (parent != null) {
       // DISCONNECT RECURSIVELY THE PARENT NODE
       if (canDisconnectFrom(parent) || iForceDirty) {
@@ -262,9 +258,13 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
 
         totalDisconnected += parent.disconnect(iForceDirty, iLevel + 1);
         parent = null;
+        disconnectedFromParent = true;
       }
+    } else {
+      disconnectedFromParent = true;
     }
 
+    boolean disconnectedFromLeft = false;
     if (left != null) {
       // DISCONNECT RECURSIVELY THE LEFT NODE
       if (canDisconnectFrom(left) || iForceDirty) {
@@ -276,9 +276,13 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
 
         totalDisconnected += left.disconnect(iForceDirty, iLevel + 1);
         left = null;
+        disconnectedFromLeft = true;
       }
+    } else {
+      disconnectedFromLeft = true;
     }
 
+    boolean disconnectedFromRight = false;
     if (right != null) {
       // DISCONNECT RECURSIVELY THE RIGHT NODE
       if (canDisconnectFrom(right) || iForceDirty) {
@@ -290,8 +294,19 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
 
         totalDisconnected += right.disconnect(iForceDirty, iLevel + 1);
         right = null;
+        disconnectedFromRight = true;
       }
+    } else {
+      disconnectedFromLeft = true;
     }
+
+    if (disconnectedFromParent && disconnectedFromLeft && disconnectedFromRight)
+      if ((!dataProvider.isEntryDirty() && !dataProvider.getIdentity().isTemporary() || iForceDirty)
+          && !pTree.isNodeEntryPoint(this)) {
+        totalDisconnected++;
+        pTree.removeNodeFromMemory(this);
+        clear();
+      }
 
     return totalDisconnected;
   }
