@@ -108,6 +108,7 @@ public enum OGlobalConfiguration {
   TX_COMMIT_SYNCH("tx.commit.synch", "Synchronizes the storage after transaction commit", Boolean.class, false),
 
   // GRAPH
+  @Deprecated
   BLUEPRINTS_TX_MODE("blueprints.graph.txMode",
       "Transaction mode used in TinkerPop Blueprints implementation. 0 = Automatic (default), 1 = Manual", Integer.class, 0),
 
