@@ -31,6 +31,7 @@ import java.util.Set;
 import javassist.util.proxy.MethodHandler;
 import javassist.util.proxy.Proxy;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
@@ -373,18 +374,36 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 		Object valueToSet = args[0];
 		if (valueToSet == null) {
 			doc.field(fieldName, valueToSet);
-		} else if (valueToSet instanceof Proxy) {
-			doc.field(fieldName, OObjectEntitySerializer.getDocument((Proxy) valueToSet));
-		} else if (((valueToSet instanceof Collection<?> || valueToSet instanceof Map<?, ?>)) || valueToSet.getClass().isArray()) {
-			Class<?> genericMultiValueType = OReflectionHelper.getGenericMultivalueType(getField(fieldName, self.getClass()));
-			if (genericMultiValueType != null && !OReflectionHelper.isJavaType(genericMultiValueType)) {
-				if (!(valueToSet instanceof OLazyObjectMultivalueElement)) {
-					if (valueToSet instanceof Collection<?>) {
-						valueToSet = manageCollectionSave(fieldName, (Collection<?>) valueToSet);
-					} else if (valueToSet instanceof Map<?, ?>) {
-						valueToSet = manageMapSave(fieldName, (Map<?, ?>) valueToSet);
-					} else if (valueToSet.getClass().isArray()) {
-						valueToSet = manageArraySave(fieldName, (Object[]) valueToSet);
+		} else if (!valueToSet.getClass().isAnonymousClass()) {
+			if (valueToSet instanceof Proxy) {
+				doc.field(fieldName, OObjectEntitySerializer.getDocument((Proxy) valueToSet));
+			} else if (((valueToSet instanceof Collection<?> || valueToSet instanceof Map<?, ?>)) || valueToSet.getClass().isArray()) {
+				Class<?> genericMultiValueType = OReflectionHelper.getGenericMultivalueType(getField(fieldName, self.getClass()));
+				if (genericMultiValueType != null && !OReflectionHelper.isJavaType(genericMultiValueType)) {
+					if (!(valueToSet instanceof OLazyObjectMultivalueElement)) {
+						if (valueToSet instanceof Collection<?>) {
+							valueToSet = manageCollectionSave(fieldName, (Collection<?>) valueToSet);
+						} else if (valueToSet instanceof Map<?, ?>) {
+							valueToSet = manageMapSave(fieldName, (Map<?, ?>) valueToSet);
+						} else if (valueToSet.getClass().isArray()) {
+							valueToSet = manageArraySave(fieldName, (Object[]) valueToSet);
+						}
+					}
+				} else {
+					if (OObjectEntitySerializer.isToSerialize(valueToSet.getClass())) {
+						doc.field(fieldName,
+								OObjectEntitySerializer.serializeFieldValue(getField(fieldName, self.getClass()).getType(), valueToSet));
+					} else {
+						if (valueToSet.getClass().isArray()) {
+							OClass schemaClass = doc.getSchemaClass();
+							OProperty schemaProperty = null;
+							if (schemaClass != null)
+								schemaProperty = schemaClass.getProperty(fieldName);
+
+							doc.field(fieldName, OObjectEntitySerializer.typeToStream(valueToSet,
+									schemaProperty != null ? schemaProperty.getType() : null, getDatabase(), doc));
+						} else
+							doc.field(fieldName, valueToSet);
 					}
 				}
 			} else {
@@ -392,28 +411,16 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 					doc.field(fieldName,
 							OObjectEntitySerializer.serializeFieldValue(getField(fieldName, self.getClass()).getType(), valueToSet));
 				} else {
-					if (valueToSet.getClass().isArray()) {
-						OClass schemaClass = doc.getSchemaClass();
-						OProperty schemaProperty = null;
-						if (schemaClass != null)
-							schemaProperty = schemaClass.getProperty(fieldName);
-
-						doc.field(fieldName, OObjectEntitySerializer.typeToStream(valueToSet, schemaProperty != null ? schemaProperty.getType()
-								: null, getDatabase(), doc));
-					} else
-						doc.field(fieldName, valueToSet);
+					doc.field(fieldName, valueToSet);
 				}
 			}
+			args[0] = valueToSet;
+			loadedFields.put(fieldName, doc.getVersion());
 		} else {
-			if (OObjectEntitySerializer.isToSerialize(valueToSet.getClass())) {
-				doc.field(fieldName,
-						OObjectEntitySerializer.serializeFieldValue(getField(fieldName, self.getClass()).getType(), valueToSet));
-			} else {
-				doc.field(fieldName, valueToSet);
-			}
+			OLogManager.instance().warn(this,
+					"Setting property '%s' in proxied class '%s' with an anonymous class '%s'. The document won't have this property.",
+					fieldName, self.getClass().getName(), valueToSet.getClass().getName());
 		}
-		args[0] = valueToSet;
-		loadedFields.put(fieldName, doc.getVersion());
 		return proceed.invoke(self, args);
 	}
 

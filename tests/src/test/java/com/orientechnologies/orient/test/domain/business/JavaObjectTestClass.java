@@ -25,18 +25,25 @@ import javax.persistence.Version;
  */
 public class JavaObjectTestClass {
 	@Id
-	private Object		id;
+	private Object						id;
 	@Version
-	private Object		version;
+	private Object						version;
 
-	private String		text;
-	private EnumTest	enumeration;
-	private int				numberSimple	= 0;
-	private long			longSimple		= 0l;
-	private double		doubleSimple	= 0d;
-	private float			floatSimple		= 0f;
-	private byte			byteSimple		= 0;
-	private boolean		flagSimple		= false;
+	private String						text;
+	private EnumTest					enumeration;
+	private int								numberSimple	= 0;
+	private long							longSimple		= 0l;
+	private double						doubleSimple	= 0d;
+	private float							floatSimple		= 0f;
+	private byte							byteSimple		= 0;
+	private boolean						flagSimple		= false;
+	private JavaTestInterface	testAnonymous	= new JavaTestInterface() {
+
+																						public int getNumber() {
+																							// TODO Auto-generated method stub
+																							return -1;
+																						}
+																					};
 
 	public Object getId() {
 		return id;
@@ -116,6 +123,14 @@ public class JavaObjectTestClass {
 
 	public void setEnumeration(EnumTest enumeration) {
 		this.enumeration = enumeration;
+	}
+
+	public JavaTestInterface getTestAnonymous() {
+		return testAnonymous;
+	}
+
+	public void setTestAnonymous(JavaTestInterface testAnonymous) {
+		this.testAnonymous = testAnonymous;
 	}
 
 }

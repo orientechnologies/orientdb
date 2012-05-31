@@ -39,6 +39,7 @@ import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.business.EnumTest;
 import com.orientechnologies.orient.test.domain.business.JavaObjectTestClass;
+import com.orientechnologies.orient.test.domain.business.JavaTestInterface;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 
 @Test(groups = { "crud", "object" })
@@ -129,7 +130,15 @@ public class CRUDObjectPhysicalTest {
 		Assert.assertEquals(loadedJavaObj.getByteSimple(), (byte) 1);
 		Assert.assertEquals(loadedJavaObj.getFlagSimple(), true);
 		Assert.assertEquals(loadedJavaObj.getEnumeration(), EnumTest.ENUM1);
+		Assert.assertTrue(loadedJavaObj.getTestAnonymous() instanceof JavaTestInterface);
+		Assert.assertEquals(loadedJavaObj.getTestAnonymous().getNumber(), -1);
 		loadedJavaObj.setEnumeration(EnumTest.ENUM2);
+		loadedJavaObj.setTestAnonymous(new JavaTestInterface() {
+
+			public int getNumber() {
+				return 0;
+			}
+		});
 		database.save(loadedJavaObj);
 
 		database.close();
@@ -137,6 +146,8 @@ public class CRUDObjectPhysicalTest {
 		database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
 		loadedJavaObj = (JavaObjectTestClass) database.load(id);
 		Assert.assertEquals(loadedJavaObj.getEnumeration(), EnumTest.ENUM2);
+		Assert.assertTrue(loadedJavaObj.getTestAnonymous() instanceof JavaTestInterface);
+		Assert.assertEquals(loadedJavaObj.getTestAnonymous().getNumber(), -1);
 	}
 
 	@Test(dependsOnMethods = "testAutoCreateClass")
