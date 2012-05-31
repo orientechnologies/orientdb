@@ -35,6 +35,11 @@ import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.util.OArrays;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.imageio.spi.ServiceRegistry;
 
 public class OConsoleApplication {
 	protected InputStream					in								= System.in;											// System.in;
@@ -164,7 +169,8 @@ public class OConsoleApplication {
 
 		final String commandLowerCase = iCommand.toLowerCase();
 
-		for (Method m : getConsoleMethods()) {
+		for (Entry<Method,Object> entry : getConsoleMethods().entrySet()) {
+                        final Method m = entry.getKey();
 			final String methodName = m.getName();
 			final ConsoleCommand ann = m.getAnnotation(ConsoleCommand.class);
 
@@ -227,7 +233,7 @@ public class OConsoleApplication {
 			}
 
 			try {
-				m.invoke(this, methodArgs);
+				m.invoke(entry.getValue(), methodArgs);
 
 			} catch (IllegalArgumentException e) {
 				lastMethodInvoked = m;
@@ -295,28 +301,52 @@ public class OConsoleApplication {
 		out.println(buffer);
 	}
 
-	protected List<Method> getConsoleMethods() {
-		final Method[] methods = getClass().getMethods();
+        /**
+         * Returns a map of all console method and the object they can be called on.
+         * 
+         * @return Map<Method,Object>
+         */
+	protected Map<Method,Object> getConsoleMethods() {
+            
+            //search for declared command collections
+            final Iterator<OConsoleCommandCollection> ite = ServiceRegistry
+                    .lookupProviders(OConsoleCommandCollection.class);
+            final Collection<Object> candidates = new ArrayList<Object>();
+            candidates.add(this);
+            while(ite.hasNext()){
+                try {
+                    //make a copy and set it's context
+                    final OConsoleCommandCollection cc = ite.next().getClass().newInstance();
+                    cc.setContext(this);
+                    candidates.add(cc);
+                } catch (InstantiationException ex) {
+                    Logger.getLogger(OConsoleApplication.class.getName()).log(Level.WARNING, ex.getMessage());
+                } catch (IllegalAccessException ex) {
+                    Logger.getLogger(OConsoleApplication.class.getName()).log(Level.WARNING, ex.getMessage());
+                }
+            }
 
-		final List<Method> consoleMethods = new ArrayList<Method>();
+            final Map<Method,Object> consoleMethods = new TreeMap<Method, Object> (new Comparator<Method>() {
+                public int compare(Method o1, Method o2) {
+                    return o1.getName().compareTo(o2.getName());
+                }
+            });
+                
+            for(final Object candidate : candidates){
+                final Method[] methods = candidate.getClass().getMethods();
 
-		for (Method m : methods) {
-			if (Modifier.isAbstract(m.getModifiers()) || Modifier.isStatic(m.getModifiers()) || !Modifier.isPublic(m.getModifiers()))
-				continue;
-
-			if (m.getReturnType() != Void.TYPE)
-				continue;
-
-			Collections.sort(consoleMethods, new Comparator<Method>() {
-				public int compare(Method o1, Method o2) {
-					return o1.getName().compareTo(o2.getName());
-				}
-			});
-			consoleMethods.add(m);
-		}
-
-		return consoleMethods;
-	}
+                for (Method m : methods) {
+                    if (Modifier.isAbstract(m.getModifiers()) || Modifier.isStatic(m.getModifiers()) || !Modifier.isPublic(m.getModifiers())) {
+                        continue;
+                    }
+                    if (m.getReturnType() != Void.TYPE) {
+                        continue;
+                    }
+                    consoleMethods.put(m,candidate);
+                }
+            }
+            return consoleMethods;
+        }
 
 	protected Map<String, Object> addCommand(Map<String, Object> commandsTree, String commandLine) {
 		return commandsTree;
@@ -327,7 +357,7 @@ public class OConsoleApplication {
 		out.println("AVAILABLE COMMANDS:");
 		out.println();
 
-		for (Method m : getConsoleMethods()) {
+		for (Method m : getConsoleMethods().keySet()) {
 			com.orientechnologies.common.console.annotation.ConsoleCommand annotation = m
 					.getAnnotation(com.orientechnologies.common.console.annotation.ConsoleCommand.class);
 

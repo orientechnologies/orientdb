@@ -332,7 +332,7 @@ public class TTYConsoleReader implements OConsoleReader {
 
 	private StringBuffer writeHint(StringBuffer buffer) {
 		List<String> suggestions = new ArrayList<String>();
-		for (Method method : console.getConsoleMethods()) {
+		for (Method method : console.getConsoleMethods().keySet()) {
 			String command = OConsoleApplication.getClearName(method.getName());
 			if (command.startsWith(buffer.toString())) {
 				suggestions.add(command);

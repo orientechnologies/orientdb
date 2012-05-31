@@ -1587,7 +1587,38 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     out.println("+------------------------------------+--------------------------------+");
   }
 
-  protected void loadRecordInternal(String iRecordId, String iFetchPlan) {
+  /** Should be used only by console commands */
+  public ODatabaseDocument getCurrentDatabase() {
+    return currentDatabase;
+  }
+
+  /** Should be used only by console commands */
+  public String getCurrentDatabaseName() {
+    return currentDatabaseName;
+  }
+
+  /** Should be used only by console commands */
+  public String getCurrentDatabaseUserName() {
+    return currentDatabaseUserName;
+  }
+
+  /** Should be used only by console commands */
+  public String getCurrentDatabaseUserPassword() {
+    return currentDatabaseUserPassword;
+  }
+
+  /** Should be used only by console commands */
+  public ORecordInternal<?> getCurrentRecord() {
+    return currentRecord;
+  }
+
+  /** Should be used only by console commands */
+  public List<OIdentifiable> getCurrentResultSet() {
+    return currentResultSet;
+  }
+
+  /** Should be used only by console commands */
+  public void loadRecordInternal(String iRecordId, String iFetchPlan) {
     checkForDatabase();
 
     currentRecord = currentDatabase.load(new ORecordId(iRecordId), iFetchPlan);
@@ -1596,7 +1627,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     out.println("OK");
   }
 
-  protected void reloadRecordInternal(String iRecordId, String iFetchPlan) {
+  /** Should be used only by console commands */
+  public void reloadRecordInternal(String iRecordId, String iFetchPlan) {
     checkForDatabase();
 
     currentRecord = ((ODatabaseRecordAbstract) currentDatabase.getUnderlying()).executeReadRecord(new ORecordId(iRecordId), null,
@@ -1606,26 +1638,30 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     out.println("OK");
   }
 
-  protected void checkForRemoteServer() {
+  /** Should be used only by console commands */
+  public void checkForRemoteServer() {
     if (serverAdmin == null
         && (currentDatabase == null || !(currentDatabase.getStorage() instanceof OStorageRemoteThread) || currentDatabase
             .isClosed()))
       throw new OException("Remote server is not connected. Use 'connect remote:<host>[:<port>][/<database-name>]' to connect");
   }
 
-  protected void checkForDatabase() {
+  /** Should be used only by console commands */
+  public void checkForDatabase() {
     if (currentDatabase == null)
       throw new OException("Database not selected. Use 'connect <database-name>' to connect to a database.");
     if (currentDatabase.isClosed())
       throw new ODatabaseException("Database '" + currentDatabaseName + "' is closed");
   }
 
-  protected void checkCurrentObject() {
+  /** Should be used only by console commands */
+  public void checkCurrentObject() {
     if (currentRecord == null)
       throw new OException("The is no current object selected: create a new one or load it");
   }
 
-  protected void dumpRecordInTable(final int iIndex, final OIdentifiable iRecord, final List<String> iColumns) {
+  /** Should be used only by console commands */
+  public void dumpRecordInTable(final int iIndex, final OIdentifiable iRecord, final List<String> iColumns) {
     // CHECK IF HAVE TO ADD NEW COLUMN (BECAUSE IT CAN BE SCHEMA-LESS)
     final List<String> recordColumns = new ArrayList<String>();
     if (iRecord instanceof ODocument)
@@ -1635,7 +1671,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     dumpRecordInTable(iIndex, iRecord, recordColumns, iColumns);
   }
 
-  protected void dumpRecordInTable(final int iIndex, final OIdentifiable iRecord, final List<String> iRecordColumns,
+  /** Should be used only by console commands */
+  public void dumpRecordInTable(final int iIndex, final OIdentifiable iRecord, final List<String> iRecordColumns,
       final List<String> iColumns) {
     // CHECK IF HAVE TO ADD NEW COLUMN (BECAUSE IT CAN BE SCHEMA-LESS)
     for (String fieldName : iRecordColumns) {
