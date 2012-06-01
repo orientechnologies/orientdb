@@ -814,6 +814,7 @@ public class SQLSelectTest {
 		List<ODocument> resultset = database.query(query, last);
 
 		int iterationCount = 0;
+		Assert.assertTrue(!resultset.isEmpty());
 		while (!resultset.isEmpty()) {
 			Assert.assertTrue(resultset.size() <= 3);
 
@@ -1103,7 +1104,7 @@ public class SQLSelectTest {
 			oc = db1.createVertexType("vertexA");
 		if (!oc.existsProperty("name"))
 			oc.createProperty("name", OType.STRING);
-		if(oc.getClassIndex("vertexA_name_idx") == null)
+		if (oc.getClassIndex("vertexA_name_idx") == null)
 			oc.createIndex("vertexA_name_idx", OClass.INDEX_TYPE.UNIQUE, "name");
 
 		OClass ocb = db1.getVertexType("vertexB");

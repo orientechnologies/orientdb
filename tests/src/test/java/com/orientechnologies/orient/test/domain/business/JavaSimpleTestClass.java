@@ -23,7 +23,7 @@ import javax.persistence.Version;
  * @author luca.molino
  * 
  */
-public class JavaObjectTestClass {
+public class JavaSimpleTestClass {
 	@Id
 	private Object						id;
 	@Version
