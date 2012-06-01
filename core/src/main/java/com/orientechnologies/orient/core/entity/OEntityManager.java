@@ -119,11 +119,13 @@ public class OEntityManager {
 			throw new OException(e);
 		}
 		for (Class<?> c : classes) {
-			if (c.isAnonymousClass()) {
-				OLogManager.instance().warn(this, "Trying to register an anonymous class '%s'.", c.getName());
-				continue;
+			if (!classHandler.containsEntityClass(c)) {
+				if (c.isAnonymousClass()) {
+					OLogManager.instance().warn(this, "Trying to register an anonymous class '%s'.", c.getName());
+					continue;
+				}
+				classHandler.registerEntityClass(c);
 			}
-			classHandler.registerEntityClass(c);
 		}
 
 		if (OLogManager.instance().isDebugEnabled()) {
