@@ -109,16 +109,6 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 		}
 		Object value = proceed.invoke(self, args);
 
-		if (!idOrVersionField
-				&& value != null
-				&& ((Number.class.isAssignableFrom(value.getClass()) && ((Number) value).doubleValue() == 0d) || (Boolean.class
-						.isAssignableFrom(value.getClass())))) {
-			Object docValue = doc.field(fieldName);
-			if (docValue != null && !docValue.equals(value)) {
-				value = lazyLoadField(self, fieldName, docValue);
-			}
-		}
-
 		if (!idOrVersionField) {
 			if (value == null) {
 				Object docValue = doc.field(fieldName, OType.getTypeByClass(getField(fieldName, self.getClass()).getType()));
@@ -162,6 +152,11 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 							Method setMethod = getSetMethod(self.getClass().getSuperclass(), getSetterFieldName(fieldName), value);
 							setMethod.invoke(self, value);
 						}
+					}
+				} else if (!loadedFields.containsKey(fieldName)) {
+					Object docValue = doc.field(fieldName);
+					if (docValue != null && !docValue.equals(value)) {
+						value = lazyLoadField(self, fieldName, docValue);
 					}
 				}
 			}

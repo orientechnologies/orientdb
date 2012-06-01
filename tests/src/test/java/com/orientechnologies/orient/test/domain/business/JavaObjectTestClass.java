@@ -29,7 +29,7 @@ public class JavaObjectTestClass {
 	@Version
 	private Object						version;
 
-	private String						text;
+	private String						text					= "initTest";
 	private EnumTest					enumeration;
 	private int								numberSimple	= 0;
 	private long							longSimple		= 0l;

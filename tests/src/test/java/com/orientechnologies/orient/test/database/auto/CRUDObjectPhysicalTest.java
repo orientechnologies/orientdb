@@ -107,6 +107,7 @@ public class CRUDObjectPhysicalTest {
 	public void testSimpleTypes() {
 		database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
 		JavaObjectTestClass javaObj = database.newInstance(JavaObjectTestClass.class);
+		Assert.assertEquals(javaObj.getText(), "initTest");
 		javaObj.setText("test");
 		javaObj.setNumberSimple(12345);
 		javaObj.setDoubleSimple(12.34d);
