@@ -618,7 +618,7 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     id = iId;
 
     if (fileSegment == null) {
-      fileSegment = new OMultiFileSegment(storage, config, DEF_EXTENSION, DEF_SIZE);
+      fileSegment = new OMultiFileSegment(storage, config, DEF_EXTENSION, RECORD_SIZE);
 
       config.setHoleFile(new OStorageClusterHoleConfiguration(config, OStorageVariableParser.DB_PATH_VARIABLE + "/" + config.name,
           config.fileType, config.fileMaxSize));

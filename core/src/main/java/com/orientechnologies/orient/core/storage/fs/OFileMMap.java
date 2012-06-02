@@ -15,13 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.fs;
 
-import com.orientechnologies.common.io.OIOException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-import com.orientechnologies.orient.core.storage.fs.OMMapManager.OPERATION_TYPE;
-
 import java.io.IOException;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
@@ -29,6 +22,14 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.io.OIOException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.storage.fs.OMMapManager.OPERATION_TYPE;
 
 /**
  * OFile implementation that use the Memory Mapping techniques to get faster access on read/write. The Memory Mapping is handled by
@@ -415,6 +416,9 @@ public class OFileMMap extends OAbstractFile {
 
   @Override
   public void setSize(final int iSize) throws IOException {
+    if (maxSize > 0 && iSize > maxSize)
+      throw new IllegalArgumentException("Cannot extend the file to " + OFileUtils.getSizeAsString(iSize) + " because the max is "
+          + OFileUtils.getSizeAsString(maxSize));
     if (iSize != size) {
       checkSize(iSize);
       size = iSize;
