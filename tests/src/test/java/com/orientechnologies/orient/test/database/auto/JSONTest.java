@@ -519,4 +519,25 @@ public class JSONTest {
       database.close();
     }
   }
+
+  public void testNestedMultiLevelEmbeddedJson() {
+    ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
+    database.open("admin", "admin");
+
+    try {
+      if (!database.getMetadata().getSchema().existsClass("Device"))
+        database.getMetadata().getSchema().createClass("Device");
+
+      database.command(
+          new OCommandSQL("insert into device (domainset) values ({'domain' : { 'lvlone' : { 'value' : 'five' } } } )")).execute();
+
+      List<ODocument> result = database
+          .query(new OSQLSynchQuery<Object>("select from device where domainset.domain.lvlone.value in 'five'"));
+      Assert.assertTrue(result.size() > 0);
+
+    } finally {
+      database.close();
+    }
+  }
+
 }

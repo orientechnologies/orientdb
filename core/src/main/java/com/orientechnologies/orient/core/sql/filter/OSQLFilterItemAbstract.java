@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -146,44 +145,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
                 ioResult = ((OIdentifiable) ioResult).getRecord();
 
               if (ioResult != null) {
-                if (OMultiValue.isMultiValue(ioResult)) {
-                  final List<Object> newColl = new ArrayList<Object>();
-                  for (Object o : OMultiValue.getMultiValueIterable(ioResult)) {
-                    if (o instanceof OIdentifiable)
-                      try {
-                        final OIdentifiable doc = (OIdentifiable) o;
-                        final Object v = ODocumentHelper.getIdentifiableValue(doc, op.value.get(0));
-
-                        if (v != null)
-                          if (OMultiValue.isMultiValue(v))
-                            // ADD SINGLE ITEMS AS FLAT COLLECTION
-                            for (Object subO : OMultiValue.getMultiValueIterable(v))
-                              newColl.add(subO);
-                          else
-                            newColl.add(v);
-                      } catch (ORecordNotFoundException e) {
-                        ioResult = null;
-                      }
-                    else if (o instanceof Map<?, ?>) {
-                      newColl.add(ODocumentHelper.getFieldValue(o, op.value.get(0)));
-
-                    } else if (OMultiValue.isMultiValue(o)) {
-                      // ADD SINGLE ITEMS AS FLAT COLLECTION
-                      for (Object subO : OMultiValue.getMultiValueIterable(o))
-                        newColl.add(subO);
-                    } else
-                      newColl.add(o);
-                  }
-                  ioResult = newColl;
-                } else if (ioResult instanceof ODocument)
-                  try {
-                    ODocument doc = (ODocument) ioResult;
-                    ioResult = ioResult != null ? doc.rawField(op.value.get(0)) : null;
-                  } catch (ORecordNotFoundException e) {
-                    ioResult = null;
-                  }
-                else
-                  ioResult = null;
+                ioResult = ODocumentHelper.getFieldValue(ioResult, op.value.get(0));
               }
             }
 

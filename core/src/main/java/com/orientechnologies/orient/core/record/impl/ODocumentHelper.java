@@ -197,6 +197,23 @@ public class ODocumentHelper {
     if (value == null)
       return null;
 
+    if (value instanceof Collection || value.getClass().isArray()) {
+      final List<Object> tempResult = new ArrayList<Object>();
+      for (Object o : OMultiValue.getMultiValueIterable(value)) {
+        final Object result = ODocumentHelper.getFieldValue(o, iFieldName);
+        if (result != null)
+          tempResult.add(result);
+      }
+      return (RET) tempResult;
+    } else
+      return getSingleFieldValue(value, iFieldName);
+  }
+
+  @SuppressWarnings("unchecked")
+  protected static <RET> RET getSingleFieldValue(Object value, final String iFieldName) {
+    if (value == null)
+      return null;
+
     final int fieldNameLength = iFieldName.length();
     if (fieldNameLength == 0)
       return (RET) value;
