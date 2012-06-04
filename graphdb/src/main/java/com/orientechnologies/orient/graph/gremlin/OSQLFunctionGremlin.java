@@ -30,10 +30,10 @@ import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
-import com.tinkerpop.blueprints.impls.orientdb.OrientEdge;
-import com.tinkerpop.blueprints.impls.orientdb.OrientElementIterable;
-import com.tinkerpop.blueprints.impls.orientdb.OrientGraph;
-import com.tinkerpop.blueprints.impls.orientdb.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientElementIterable;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 /**
  * Executes a GREMLIN expression as function of SQL engine.

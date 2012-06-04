@@ -44,7 +44,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.tinkerpop.blueprints.impls.orientdb.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngineFactory;
 import com.tinkerpop.gremlin.java.GremlinPipeline;
 

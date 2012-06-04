@@ -9,7 +9,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
-import com.tinkerpop.blueprints.impls.orientdb.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLReader;
 
 public class TestLoadGraph {
