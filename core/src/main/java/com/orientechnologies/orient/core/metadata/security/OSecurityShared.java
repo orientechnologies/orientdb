@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OUser.STATUSES;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
@@ -113,7 +114,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     try {
 
       final Number removed = getDatabase().<OCommandRequest> command(
-          new OSQLSynchQuery<ODocument>("delete from OUser where name = '" + iUserName + "'")).execute();
+          new OCommandSQL("delete from OUser where name = '" + iUserName + "'")).execute();
 
       return removed != null && removed.intValue() > 0;
 
@@ -161,7 +162,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     try {
 
       final Number removed = getDatabase().<OCommandRequest> command(
-          new OSQLSynchQuery<ODocument>("delete from ORole where name = '" + iRoleName + "'")).execute();
+          new OCommandSQL("delete from ORole where name = '" + iRoleName + "'")).execute();
 
       return removed != null && removed.intValue() > 0;
 
