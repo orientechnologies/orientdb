@@ -1278,4 +1278,15 @@ public class SQLSelectTest {
 		bigger.setTime((Date) result.get(0).field("date", Date.class));
 		Assert.assertEquals(bigger.get(Calendar.YEAR), currentYear.get(Calendar.YEAR));
 	}
+
+	@Test
+	public void queryWithTwoRidInWhere() {
+		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
+				"select @rid.trim() as oid, name from Profile where (@rid in [#11:5] or @rid in [#11:25]) AND @rid > ? LIMIT 10000");
+		List<ODocument> resultset = database.query(query, new ORecordId(11, 7));
+
+		Assert.assertEquals(resultset.size(), 1);
+
+		Assert.assertEquals(resultset.get(0).field("oid"), new ORecordId(11, 25).toString());
+	}
 }
