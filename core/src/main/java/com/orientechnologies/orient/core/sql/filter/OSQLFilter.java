@@ -15,6 +15,11 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
@@ -29,9 +34,12 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.sql.*;
-
-import java.util.*;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.OCommandSQLResultset;
+import com.orientechnologies.orient.core.sql.OSQLHelper;
 
 /**
  * Parsed query. It's built once a query is parsed.
@@ -91,19 +99,22 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
 
   public boolean evaluate(final ORecord<?> iRecord, final OCommandContext iContext) {
 
-    ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware<?>) iRecord;
-    //check only classes that specified in query will go to result set
-    if ((targetClasses != null)&&(!targetClasses.isEmpty())){
-      for (OClass targetClass : targetClasses.keySet()){
-        if (!targetClass.isSuperClassOf(recordSchemaAware.getSchemaClass()))
-          return false;
+    if (iRecord instanceof ORecordSchemaAware<?>) {
+      // CHECK THE TARGET CLASS
+      final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware<?>) iRecord;
+      // check only classes that specified in query will go to result set
+      if ((targetClasses != null) && (!targetClasses.isEmpty())) {
+        for (OClass targetClass : targetClasses.keySet()) {
+          if (!targetClass.isSuperClassOf(recordSchemaAware.getSchemaClass()))
+            return false;
+        }
       }
     }
 
     if (rootCondition == null)
       return true;
 
-    return (Boolean) rootCondition.evaluate(recordSchemaAware, iContext);
+    return (Boolean) rootCondition.evaluate(iRecord, iContext);
   }
 
   @SuppressWarnings("unchecked")
