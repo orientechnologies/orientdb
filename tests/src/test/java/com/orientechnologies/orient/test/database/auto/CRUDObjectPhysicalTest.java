@@ -17,6 +17,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 import org.testng.Assert;
@@ -39,7 +40,7 @@ import com.orientechnologies.orient.test.domain.business.Child;
 import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.business.EnumTest;
-import com.orientechnologies.orient.test.domain.business.JavaMapsTestClass;
+import com.orientechnologies.orient.test.domain.business.JavaComplexTestClass;
 import com.orientechnologies.orient.test.domain.business.JavaSimpleTestClass;
 import com.orientechnologies.orient.test.domain.business.JavaTestInterface;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
@@ -253,7 +254,7 @@ public class CRUDObjectPhysicalTest {
 	public void mapObjectsTest() {
 		database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
 
-		JavaMapsTestClass p = database.newInstance(JavaMapsTestClass.class);
+		JavaComplexTestClass p = database.newInstance(JavaComplexTestClass.class);
 		p.setName("Silvester");
 
 		Child c = database.newInstance(Child.class);
@@ -261,13 +262,40 @@ public class CRUDObjectPhysicalTest {
 
 		p.getChildren().put("first", c);
 
+		p.getEnumList().add(EnumTest.ENUM1);
+		p.getEnumList().add(EnumTest.ENUM2);
+
+		p.getEnumSet().add(EnumTest.ENUM1);
+		p.getEnumSet().add(EnumTest.ENUM3);
+
+		p.getEnumMap().put("1", EnumTest.ENUM2);
+		p.getEnumMap().put("2", EnumTest.ENUM3);
+
 		database.save(p);
 
 		List<Child> cresult = database.query(new OSQLSynchQuery<Child>("select * from Child"));
 
 		Assert.assertTrue(cresult.size() > 0);
 
+		ORID rid = database.getRecordByUserObject(p, false).getIdentity();
+
 		database.close();
+
+		database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+		JavaComplexTestClass loaded = database.load(rid);
+
+		Assert.assertEquals(loaded.getEnumList().size(), 2);
+		Assert.assertEquals(loaded.getEnumList().get(0), EnumTest.ENUM1);
+		Assert.assertEquals(loaded.getEnumList().get(1), EnumTest.ENUM2);
+
+		Assert.assertEquals(loaded.getEnumSet().size(), 2);
+		Iterator<EnumTest> it = loaded.getEnumSet().iterator();
+		Assert.assertEquals(it.next(), EnumTest.ENUM1);
+		Assert.assertEquals(it.next(), EnumTest.ENUM3);
+
+		Assert.assertEquals(loaded.getEnumMap().size(), 2);
+		Assert.assertEquals(loaded.getEnumMap().get("1"), EnumTest.ENUM2);
+		Assert.assertEquals(loaded.getEnumMap().get("2"), EnumTest.ENUM3);
 	}
 
 	@Test(dependsOnMethods = "mapEnumAndInternalObjects")

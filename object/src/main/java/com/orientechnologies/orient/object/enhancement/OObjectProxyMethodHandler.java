@@ -50,6 +50,10 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.object.db.OObjectLazyList;
 import com.orientechnologies.orient.object.db.OObjectLazyMap;
 import com.orientechnologies.orient.object.db.OObjectLazySet;
+import com.orientechnologies.orient.object.enumerations.OLazyObjectEnumSerializer;
+import com.orientechnologies.orient.object.enumerations.OObjectEnumLazyList;
+import com.orientechnologies.orient.object.enumerations.OObjectEnumLazyMap;
+import com.orientechnologies.orient.object.enumerations.OObjectEnumLazySet;
 import com.orientechnologies.orient.object.serialization.OLazyObjectCustomSerializer;
 import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerList;
 import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerMap;
@@ -120,9 +124,11 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 						|| value.getClass().isArray()) {
 					Class<?> genericMultiValueType = OReflectionHelper.getGenericMultivalueType(getField(fieldName, self.getClass()));
 					if (genericMultiValueType != null && !OReflectionHelper.isJavaType(genericMultiValueType)) {
-						if (OObjectEntitySerializer.isSerializedType(getField(fieldName, self.getClass()))
-								&& !(value instanceof OLazyObjectCustomSerializer)) {
-							manageSerializedCollections(self, fieldName, value);
+						Field f = getField(fieldName, self.getClass());
+						if (OObjectEntitySerializer.isSerializedType(f) && !(value instanceof OLazyObjectCustomSerializer)) {
+							value = manageSerializedCollections(self, fieldName, value);
+						} else if (genericMultiValueType.isEnum() && !(value instanceof OLazyObjectEnumSerializer)) {
+							value = manageEnumCollections(self, f.getName(), genericMultiValueType, value);
 						} else {
 							value = manageObjectCollections(self, fieldName, value);
 						}
@@ -141,7 +147,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 								doc.field(fieldName, value);
 
 						} else if (!loadedFields.containsKey(fieldName)) {
-							value = manageArrayFieldObject(fieldName, self, docValue);
+							value = manageArrayFieldObject(getField(fieldName, self.getClass()), self, docValue);
 							Method setMethod = getSetMethod(self.getClass().getSuperclass(), getSetterFieldName(fieldName), value);
 							setMethod.invoke(self, value);
 						} else if ((value instanceof Set || value instanceof Map) && loadedFields.get(fieldName).intValue() < doc.getVersion()) {
@@ -217,6 +223,39 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 		return value;
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	protected Object manageEnumCollections(Object self, final String fieldName, final Class<?> enumClass, Object value)
+			throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+		if (value instanceof Collection<?>) {
+			if (value instanceof List) {
+				List<Object> docList = doc.field(fieldName);
+				if (docList == null) {
+					docList = new ArrayList<Object>();
+					doc.field(fieldName, docList);
+				}
+				value = new OObjectEnumLazyList(enumClass, doc, docList, (List<?>) value);
+			} else if (value instanceof Set) {
+				Set<Object> docSet = doc.field(fieldName, OType.LINKSET);
+				if (docSet == null) {
+					docSet = new HashSet<Object>();
+					doc.field(fieldName, docSet);
+				}
+				value = new OObjectEnumLazySet(enumClass, doc, docSet, (Set<?>) value);
+			}
+		} else if (value instanceof Map<?, ?>) {
+			Map<Object, Object> docMap = doc.field(fieldName);
+			if (docMap == null) {
+				docMap = new HashMap<Object, Object>();
+				doc.field(fieldName, docMap);
+			}
+			value = new OObjectEnumLazyMap(enumClass, doc, docMap, (Map<?, ?>) value);
+		} else if (value.getClass().isArray()) {
+			value = manageArraySave(fieldName, (Object[]) value);
+		}
+		OObjectEntitySerializer.setFieldValue(getField(fieldName, self.getClass()), self, value);
+		return value;
+	}
+
 	protected Object manageArraySave(String iFieldName, Object[] value) {
 		if (value.length > 0) {
 			Object o = ((Object[]) value)[0];
@@ -272,16 +311,16 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 	protected Object lazyLoadField(Object self, final String fieldName, Object docValue) throws NoSuchMethodException,
 			IllegalAccessException, InvocationTargetException {
 		boolean customSerialization = false;
-		if (OObjectEntitySerializer.isSerializedType(getField(fieldName, self.getClass()))) {
+		Field f = getField(fieldName, self.getClass());
+		if (OObjectEntitySerializer.isSerializedType(f)) {
 			customSerialization = true;
 		}
-		Field f = getField(fieldName, self.getClass());
 		if (docValue instanceof OIdentifiable) {
 			docValue = convertDocumentToObject((ODocument) ((OIdentifiable) docValue).getRecord());
 		} else if (docValue instanceof Collection<?>) {
-			docValue = manageCollectionLoad(fieldName, self, docValue, customSerialization);
+			docValue = manageCollectionLoad(f, self, docValue, customSerialization);
 		} else if (docValue instanceof Map<?, ?>) {
-			docValue = manageMapLoad(fieldName, self, docValue, customSerialization);
+			docValue = manageMapLoad(f, self, docValue, customSerialization);
 		} else if (docValue.getClass().isArray() && !docValue.getClass().getComponentType().isPrimitive()) {
 			docValue = manageArrayLoad(docValue);
 		} else if (customSerialization) {
@@ -290,7 +329,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 			if (f.getType().isEnum()) {
 				if (docValue instanceof Number)
 					docValue = ((Class<Enum>) f.getType()).getEnumConstants()[((Number) docValue).intValue()];
-				docValue = Enum.valueOf((Class<Enum>) f.getType(), docValue.toString());
+				else
+					docValue = Enum.valueOf((Class<Enum>) f.getType(), docValue.toString());
 			}
 		}
 		OObjectEntitySerializer.setFieldValue(f, self, docValue);
@@ -313,37 +353,43 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	protected Object manageMapLoad(String fieldName, Object self, Object value, boolean customSerialization) {
+	protected Object manageMapLoad(Field f, Object self, Object value, boolean customSerialization) {
+		final Class genericType = OReflectionHelper.getGenericMultivalueType(f);
 		if (value instanceof ORecordLazyMap) {
 			value = new OObjectLazyMap(doc, (ORecordLazyMap) value);
 		} else if (customSerialization) {
-			value = new OObjectCustomSerializerMap<TYPE>(OObjectEntitySerializer.getSerializedType(getField(fieldName, self.getClass())),
-					doc, (Map<Object, Object>) value);
+			value = new OObjectCustomSerializerMap<TYPE>(OObjectEntitySerializer.getSerializedType(f), doc, (Map<Object, Object>) value);
+		} else if (genericType.isEnum()) {
+			value = new OObjectEnumLazyMap(genericType, doc, (Map<Object, Object>) value);
 		}
 		return value;
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	protected Object manageCollectionLoad(String fieldName, Object self, Object value, boolean customSerialization) {
+	protected Object manageCollectionLoad(Field f, Object self, Object value, boolean customSerialization) {
+		final Class genericType = OReflectionHelper.getGenericMultivalueType(f);
 		if (value instanceof ORecordLazyList) {
 			value = new OObjectLazyList(doc, (ORecordLazyList) value);
 		} else if (value instanceof ORecordLazySet || value instanceof OMVRBTreeRIDSet) {
 			value = new OObjectLazySet(doc, (Set) value);
 		} else if (customSerialization) {
 			if (value instanceof List<?>) {
-				value = new OObjectCustomSerializerList(OObjectEntitySerializer.getSerializedType(getField(fieldName, self.getClass())),
-						doc, (List<Object>) value);
+				value = new OObjectCustomSerializerList(OObjectEntitySerializer.getSerializedType(f), doc, (List<Object>) value);
 			} else {
-				value = new OObjectCustomSerializerSet(OObjectEntitySerializer.getSerializedType(getField(fieldName, self.getClass())),
-						doc, (Set<Object>) value);
+				value = new OObjectCustomSerializerSet(OObjectEntitySerializer.getSerializedType(f), doc, (Set<Object>) value);
+			}
+		} else if (genericType.isEnum()) {
+			if (value instanceof List<?>) {
+				value = new OObjectEnumLazyList(genericType, doc, (List<Object>) value);
+			} else {
+				value = new OObjectEnumLazySet(genericType, doc, (Set<Object>) value);
 			}
 		}
 
-		return manageArrayFieldObject(fieldName, self, value);
+		return manageArrayFieldObject(f, self, value);
 	}
 
-	protected Object manageArrayFieldObject(String fieldName, Object self, Object value) {
-		final Field field = getField(fieldName, self.getClass());
+	protected Object manageArrayFieldObject(Field field, Object self, Object value) {
 		if (field.getType().isArray()) {
 			final Collection<?> collectionValue = ((Collection<?>) value);
 			final Object newArray = Array.newInstance(field.getType().getComponentType(), collectionValue.size());

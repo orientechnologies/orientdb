@@ -16,8 +16,12 @@
  */
 package com.orientechnologies.orient.test.domain.business;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.persistence.Id;
 import javax.persistence.Version;
@@ -26,14 +30,17 @@ import javax.persistence.Version;
  * @author luca.molino
  * 
  */
-public class JavaMapsTestClass {
+public class JavaComplexTestClass {
 	@Id
-	private Object							id;
+	private Object								id;
 	@Version
-	private Object							version;
+	private Object								version;
 
-	private String							name;
-	private Map<String, Child>	children	= new HashMap<String, Child>();
+	private String								name;
+	private Map<String, Child>		children	= new HashMap<String, Child>();
+	private List<EnumTest>				enumList	= new ArrayList<EnumTest>();
+	private Set<EnumTest>					enumSet		= new HashSet<EnumTest>();
+	private Map<String, EnumTest>	enumMap		= new HashMap<String, EnumTest>();
 
 	public String getName() {
 		return name;
@@ -67,4 +74,27 @@ public class JavaMapsTestClass {
 		this.version = version;
 	}
 
+	public List<EnumTest> getEnumList() {
+		return enumList;
+	}
+
+	public void setEnumList(List<EnumTest> enumList) {
+		this.enumList = enumList;
+	}
+
+	public Map<String, EnumTest> getEnumMap() {
+		return enumMap;
+	}
+
+	public void setEnumMap(Map<String, EnumTest> enumMap) {
+		this.enumMap = enumMap;
+	}
+
+	public Set<EnumTest> getEnumSet() {
+		return enumSet;
+	}
+
+	public void setEnumSet(Set<EnumTest> enumSet) {
+		this.enumSet = enumSet;
+	}
 }

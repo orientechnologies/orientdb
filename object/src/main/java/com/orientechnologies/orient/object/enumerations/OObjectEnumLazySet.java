@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.object.serialization;
+package com.orientechnologies.orient.object.enumerations;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -22,7 +22,6 @@ import java.util.Iterator;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 
 /**
  * 
@@ -30,32 +29,31 @@ import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements OLazyObjectCustomSerializer, Serializable {
+public class OObjectEnumLazySet<TYPE extends Enum> extends HashSet<TYPE> implements OLazyObjectEnumSerializer, Serializable {
 	private static final long	serialVersionUID	= -7698875159671927472L;
 
 	private final ORecord<?>	sourceRecord;
 	private final Set<Object>	underlying;
 	private boolean						converted					= false;
-	private final Class<?>		deserializeClass;
+	private final Class<Enum>	enumClass;
 
-	public OObjectCustomSerializerSet(final Class<?> iDeserializeClass, final ORecord<?> iSourceRecord,
-			final Set<Object> iRecordSource) {
+	public OObjectEnumLazySet(final Class<Enum> iEnumClass, final ORecord<?> iSourceRecord, final Set<Object> iRecordSource) {
 		this.sourceRecord = iSourceRecord;
 		this.underlying = iRecordSource;
-		this.deserializeClass = iDeserializeClass;
+		this.enumClass = iEnumClass;
 	}
 
-	public OObjectCustomSerializerSet(final Class<?> iDeserializeClass, final ORecord<?> iSourceRecord,
-			final Set<Object> iRecordSource, final Set<? extends TYPE> iSourceCollection) {
+	public OObjectEnumLazySet(final Class<Enum> iEnumClass, final ORecord<?> iSourceRecord, final Set<Object> iRecordSource,
+			final Set<? extends TYPE> iSourceCollection) {
 		this.sourceRecord = iSourceRecord;
 		this.underlying = iRecordSource;
-		this.deserializeClass = iDeserializeClass;
+		this.enumClass = iEnumClass;
 		convertAll();
 		addAll(iSourceCollection);
 	}
 
 	public Iterator<TYPE> iterator() {
-		return (Iterator<TYPE>) new OObjectCustomSerializerIterator<TYPE>(deserializeClass, sourceRecord, underlying.iterator());
+		return (Iterator<TYPE>) new OObjectEnumLazyIterator<TYPE>(enumClass, sourceRecord, underlying.iterator());
 	}
 
 	public int size() {
@@ -67,7 +65,7 @@ public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements O
 	}
 
 	public boolean contains(final Object o) {
-		boolean underlyingContains = underlying.contains(OObjectEntitySerializer.serializeFieldValue(deserializeClass, o));
+		boolean underlyingContains = underlying.contains(o.toString());
 		return underlyingContains || super.contains(o);
 	}
 
@@ -81,18 +79,18 @@ public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements O
 	}
 
 	public boolean add(final TYPE e) {
-		underlying.add(OObjectEntitySerializer.serializeFieldValue(deserializeClass, e));
+		underlying.add(e.toString());
 		return super.add(e);
 	}
 
 	public boolean remove(final Object e) {
-		underlying.remove(OObjectEntitySerializer.serializeFieldValue(deserializeClass, e));
+		underlying.remove(e.toString());
 		return super.remove(e);
 	}
 
 	public boolean containsAll(final Collection<?> c) {
 		for (Object o : c)
-			if (!super.contains(o) && !underlying.contains(OObjectEntitySerializer.serializeFieldValue(deserializeClass, o)))
+			if (!super.contains(o) && !underlying.contains(o.toString()))
 				return false;
 
 		return true;
@@ -127,7 +125,7 @@ public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements O
 		setDirty();
 		boolean modified = super.removeAll(c);
 		for (Object o : c) {
-			modified = modified || underlying.remove(OObjectEntitySerializer.serializeFieldValue(deserializeClass, o));
+			modified = modified || underlying.remove(o.toString());
 		}
 		return modified;
 	}
@@ -156,7 +154,11 @@ public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements O
 
 		super.clear();
 		for (Object o : underlying) {
-			super.add((TYPE) OObjectEntitySerializer.deserializeFieldValue(deserializeClass, o));
+			if (o instanceof Number)
+				o = enumClass.getEnumConstants()[((Number) o).intValue()];
+			else
+				o = Enum.valueOf(enumClass, o.toString());
+			super.add((TYPE) o);
 		}
 
 		converted = true;
