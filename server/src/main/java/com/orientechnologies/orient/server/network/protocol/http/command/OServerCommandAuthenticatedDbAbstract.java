@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestException;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpSession;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
@@ -53,38 +54,57 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     if (urlParts.length < 2)
       throw new OHttpRequestException("Syntax error in URL. Expected is: <command>/<database>[/...]");
 
-    iRequest.databaseName = urlParts[1];
+    iRequest.databaseName = urlParts[1].replace(DBNAME_DIR_SEPARATOR, '/');
+    final List<String> authenticationParts = iRequest.authorization != null ? OStringSerializerHelper.split(iRequest.authorization,
+        ':') : null;
 
-    iRequest.databaseName = iRequest.databaseName.replace(DBNAME_DIR_SEPARATOR, '/');
-
-    if (iRequest.sessionId == null || (iRequest.sessionId != null && iRequest.sessionId.length() == 1)) {
+    if (iRequest.sessionId == null || iRequest.sessionId.length() == 1) {
       // NO SESSION
       if (iRequest.authorization == null || SESSIONID_LOGOUT.equals(iRequest.sessionId)) {
         sendAuthorizationRequest(iRequest, iRequest.databaseName);
         return false;
       } else
-        return authenticate(iRequest, iRequest.databaseName);
+        return authenticate(iRequest, authenticationParts, iRequest.databaseName);
 
     } else {
       // CHECK THE SESSION VALIDITY
-      if (iRequest.sessionId.length() > 1 && OHttpSessionManager.getInstance().getSession(iRequest.sessionId) == null) {
+      final OHttpSession currentSession = OHttpSessionManager.getInstance().getSession(iRequest.sessionId);
+      if (currentSession == null) {
         // SESSION EXPIRED
         sendAuthorizationRequest(iRequest, iRequest.databaseName);
         return false;
+
+      } else if (!currentSession.getDatabaseName().equals(iRequest.databaseName)) {
+
+        // SECURITY PROBLEM: CROSS DATABASE REQUEST!
+        OLogManager.instance().warn(this,
+            "Session %s is trying to access to the database '%s', but has been authenticated against the database '%s'",
+            iRequest.sessionId, iRequest.databaseName, currentSession.getDatabaseName());
+        sendAuthorizationRequest(iRequest, iRequest.databaseName);
+        return false;
+
+      } else if (!currentSession.getUserName().equals(authenticationParts.get(0))) {
+
+        // SECURITY PROBLEM: CROSS DATABASE REQUEST!
+        OLogManager.instance().warn(this,
+            "Session %s is trying to access to the database '%s' with user '%s', but has been authenticated with user '%s'",
+            iRequest.sessionId, iRequest.databaseName, authenticationParts.get(0), currentSession.getUserName());
+        sendAuthorizationRequest(iRequest, iRequest.databaseName);
+        return false;
       }
+
       return true;
     }
   }
 
-  protected boolean authenticate(final OHttpRequest iRequest, final String iDatabaseName) throws IOException {
+  protected boolean authenticate(final OHttpRequest iRequest, final List<String> iAuthenticationParts, final String iDatabaseName)
+      throws IOException {
     ODatabaseDocumentTx db = null;
     try {
-      final List<String> parts = OStringSerializerHelper.split(iRequest.authorization, ':');
-
-      db = OSharedDocumentDatabase.acquire(iDatabaseName, parts.get(0), parts.get(1));
+      db = OSharedDocumentDatabase.acquire(iDatabaseName, iAuthenticationParts.get(0), iAuthenticationParts.get(1));
 
       // AUTHENTICATED: CREATE THE SESSION
-      iRequest.sessionId = OHttpSessionManager.getInstance().createSession(iDatabaseName, parts.get(0));
+      iRequest.sessionId = OHttpSessionManager.getInstance().createSession(iDatabaseName, iAuthenticationParts.get(0));
       return true;
 
     } catch (OSecurityAccessException e) {
