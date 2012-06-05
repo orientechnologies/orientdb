@@ -21,8 +21,15 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
@@ -84,15 +91,15 @@ public class OObjectEntitySerializer {
 	 *          - the object to serialize
 	 * @return the proxied object
 	 */
-  public static <T> T serializeObject(T o, ODatabaseObject db) {
-    if (o instanceof Proxy) {
-      final ODocument iRecord = getDocument((Proxy) o);
-      Class<?> pojoClass = o.getClass().getSuperclass();
-      invokeCallback(pojoClass, o, iRecord, OBeforeSerialization.class);
-      invokeCallback(pojoClass, o, iRecord, OAfterSerialization.class);
-      return o;
-    }
-			
+	public static <T> T serializeObject(T o, ODatabaseObject db) {
+		if (o instanceof Proxy) {
+			final ODocument iRecord = getDocument((Proxy) o);
+			Class<?> pojoClass = o.getClass().getSuperclass();
+			invokeCallback(pojoClass, o, iRecord, OBeforeSerialization.class);
+			invokeCallback(pojoClass, o, iRecord, OAfterSerialization.class);
+			return o;
+		}
+
 		Proxy proxiedObject = (Proxy) db.newInstance(o.getClass());
 		try {
 			return toStream(o, proxiedObject, db);
@@ -392,7 +399,7 @@ public class OObjectEntitySerializer {
 				// ARRAY
 				final int arrayLength = Array.getLength(iFieldValue);
 				final List<Object> arrayList = new ArrayList<Object>();
-				for(int i = 0; i <arrayLength; i++)
+				for (int i = 0; i < arrayLength; i++)
 					arrayList.add(Array.get(iFieldValue, i));
 
 				iFieldValue = multiValueToStream(arrayList, iType, db, iRecord);
@@ -707,73 +714,85 @@ public class OObjectEntitySerializer {
 		if (!classes.contains(iClass)) {
 			registerClass(iClass);
 		}
-		return fieldIds.get(iClass);
+		Field idField = null;
+		for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
+				&& !currentClass.equals(ODocument.class) && idField == null;) {
+			idField = fieldIds.get(currentClass);
+			currentClass = currentClass.getSuperclass();
+		}
+		return idField;
 	}
 
 	protected static Field getVersionField(final Class<?> iClass) {
 		if (!classes.contains(iClass)) {
 			registerClass(iClass);
 		}
-		return fieldVersions.get(iClass);
+		Field versionField = null;
+		for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
+				&& !currentClass.equals(ODocument.class) && versionField == null;) {
+			versionField = fieldVersions.get(currentClass);
+			currentClass = currentClass.getSuperclass();
+		}
+		return versionField;
 	}
 
 	protected static void invokeCallback(final Object iPojo, final ODocument iDocument, final Class<?> iAnnotation) {
 		invokeCallback(iPojo.getClass(), iPojo, iDocument, iAnnotation);
 	}
 
-  protected static void invokeCallback(final Class<?> iClass, final Object iPojo, final ODocument iDocument,
-      final Class<?> iAnnotation) {
-    final List<Method> methods = getCallbackMethods(iAnnotation, iClass);
-    if (methods != null && !methods.isEmpty())
+	protected static void invokeCallback(final Class<?> iClass, final Object iPojo, final ODocument iDocument,
+			final Class<?> iAnnotation) {
+		final List<Method> methods = getCallbackMethods(iAnnotation, iClass);
+		if (methods != null && !methods.isEmpty())
 
-      for (Method m : methods) {
-        try {
-          if (m.getParameterTypes().length > 0)
-            m.invoke(iPojo, iDocument);
-          else
-            m.invoke(iPojo);
-        } catch (Exception e) {
-          throw new OConfigurationException("Error on executing user callback '" + m.getName() + "' annotated with '"
-              + iAnnotation.getSimpleName() + "'", e);
-        }
-      }
-  }
+			for (Method m : methods) {
+				try {
+					if (m.getParameterTypes().length > 0)
+						m.invoke(iPojo, iDocument);
+					else
+						m.invoke(iPojo);
+				} catch (Exception e) {
+					throw new OConfigurationException("Error on executing user callback '" + m.getName() + "' annotated with '"
+							+ iAnnotation.getSimpleName() + "'", e);
+				}
+			}
+	}
 
-  protected static List<Method> getCallbackMethods(final Class<?> iAnnotation, final Class<?> iClass) {
-    if (!classes.contains(iClass)) {
-      registerClass(iClass);
-    }
+	protected static List<Method> getCallbackMethods(final Class<?> iAnnotation, final Class<?> iClass) {
+		if (!classes.contains(iClass)) {
+			registerClass(iClass);
+		}
 
 		List<Method> result = new ArrayList<Method>();
-    Class<?> currentClass = iClass;
-    while (classes.contains(currentClass)) {
-      List<Method> callbackMethods = callbacks.get(currentClass.getSimpleName() + "." + iAnnotation.getSimpleName());
-      if (callbackMethods != null && !callbackMethods.isEmpty())
-        result.addAll(callbackMethods);
-      if (currentClass != Object.class)
-        currentClass = currentClass.getSuperclass();
-    }
+		Class<?> currentClass = iClass;
+		while (classes.contains(currentClass)) {
+			List<Method> callbackMethods = callbacks.get(currentClass.getSimpleName() + "." + iAnnotation.getSimpleName());
+			if (callbackMethods != null && !callbackMethods.isEmpty())
+				result.addAll(callbackMethods);
+			if (currentClass != Object.class)
+				currentClass = currentClass.getSuperclass();
+		}
 
-    return result;
-  }
+		return result;
+	}
 
-  @SuppressWarnings({ "unchecked", "rawtypes" })
-  private static void registerCallbacks(final Class<?> iRootClass) {
-    // FIND KEY METHODS
-    for (Method m : iRootClass.getDeclaredMethods()) {
-      // SEARCH FOR CALLBACK ANNOTATIONS
-      for (Class annotationClass : OObjectSerializerHelper.callbackAnnotationClasses) {
-        final String key = iRootClass.getSimpleName() + "." + annotationClass.getSimpleName();
-        if (m.getAnnotation(annotationClass) != null) {
-          if (!callbacks.containsKey(key)) {
-            callbacks.put(key, new ArrayList<Method>(Arrays.asList(m)));
-          } else {
-            callbacks.get(key).add(m);
-          }
-        }
-      }
-    }
-  }
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private static void registerCallbacks(final Class<?> iRootClass) {
+		// FIND KEY METHODS
+		for (Method m : iRootClass.getDeclaredMethods()) {
+			// SEARCH FOR CALLBACK ANNOTATIONS
+			for (Class annotationClass : OObjectSerializerHelper.callbackAnnotationClasses) {
+				final String key = iRootClass.getSimpleName() + "." + annotationClass.getSimpleName();
+				if (m.getAnnotation(annotationClass) != null) {
+					if (!callbacks.containsKey(key)) {
+						callbacks.put(key, new ArrayList<Method>(Arrays.asList(m)));
+					} else {
+						callbacks.get(key).add(m);
+					}
+				}
+			}
+		}
+	}
 
 	@SuppressWarnings("unchecked")
 	private static Object multiValueToStream(final Object iMultiValue, OType iType, final ODatabaseObject db, final ODocument iRecord) {
