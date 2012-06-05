@@ -32,13 +32,12 @@
 Before to download, compile and install the latest version of Orient please
 assure to have the following tools installed:
 
-1.1 Java5
-Java SDK 5.0+. Previous releases don't works since Orient needs Java5 features
-such as Annotation and Typed Collection. But if you don't have constraints we
-suggest you to download the last update of Java6.
+1.1 Java
+OrientDB needs Java Run-Time (JRE/JDK) version 6 or major to run the Server. Clients
+need Java release 5 or major. We suggest to use Java version 7 because the
+performance improvement.
  
-You can download Java5 from here:
-> http://java.sun.com/j2se/1.5.0/download.jsp
+To download Java go to: http://www.java.com/en/download/
 
 Note: Please assure to download the JDK and not JRE.
 
