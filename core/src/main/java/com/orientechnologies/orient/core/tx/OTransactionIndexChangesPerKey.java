@@ -46,8 +46,8 @@ public class OTransactionIndexChangesPerKey {
     entries = new ArrayList<OTransactionIndexEntry>();
   }
 
-  public void add(final OIdentifiable iValue, final OPERATION iOperation) {
-    entries.add(new OTransactionIndexEntry(iValue, iOperation));
+  public void add(OIdentifiable iValue, final OPERATION iOperation) {
+    entries.add(new OTransactionIndexEntry(iValue != null ? iValue.getIdentity() : null, iOperation));
   }
 
   @Override
