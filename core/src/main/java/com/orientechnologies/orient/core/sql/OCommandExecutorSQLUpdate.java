@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -54,9 +55,9 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
   private static final String                KEYWORD_INCREMENT = "INCREMENT";
 
   private Map<String, Object>                setEntries        = new LinkedHashMap<String, Object>();
-  private Map<String, Object>                addEntries        = new LinkedHashMap<String, Object>();
+  private List<OPair<String, Object>>        addEntries        = new ArrayList<OPair<String, Object>>();
   private Map<String, OPair<String, Object>> putEntries        = new LinkedHashMap<String, OPair<String, Object>>();
-  private Map<String, Object>                removeEntries     = new LinkedHashMap<String, Object>();
+  private List<OPair<String, Object>>        removeEntries     = new ArrayList<OPair<String, Object>>();
   private Map<String, Number>                incrementEntries  = new LinkedHashMap<String, Number>();
 
   private OQuery<?>                          query;
@@ -184,7 +185,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     // BIND VALUES TO ADD
     Collection<Object> coll;
     Object fieldValue;
-    for (Map.Entry<String, Object> entry : addEntries.entrySet()) {
+    for (OPair<String, Object> entry : addEntries) {
       coll = null;
       if (!record.containsField(entry.getKey())) {
         // GET THE TYPE IF ANY
@@ -255,7 +256,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     }
 
     // REMOVE FIELD IF ANY
-    for (Map.Entry<String, Object> entry : removeEntries.entrySet()) {
+    for (OPair<String, Object> entry : removeEntries) {
       v = entry.getValue();
       if (v == EMPTY_VALUE) {
         record.removeField(entry.getKey());
@@ -316,7 +317,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
         pos = newPos;
 
       // INSERT TRANSFORMED FIELD VALUE
-      addEntries.put(fieldName, getFieldValueCountingParameters(fieldValue));
+      addEntries.add(new OPair<String, Object>(fieldName, getFieldValueCountingParameters(fieldValue)));
 
       pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
     }
@@ -427,7 +428,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
         value = EMPTY_VALUE;
 
       // INSERT FIELD NAME TO BE REMOVED
-      removeEntries.put(fieldName, value);
+      removeEntries.add(new OPair<String, Object>(fieldName, value));
 
       pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
     }
