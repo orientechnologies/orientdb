@@ -515,7 +515,7 @@ public class TransactionConsistencyTest {
     int chunkSize = 500;
     for (int initialValue = 0; initialValue < 10; initialValue++) {
       System.out.println("initialValue = " + initialValue);
-      Assert.assertEquals(db.countClusterElements("Fruit"), 0);
+      Assert.assertEquals(db.countClusterElements("MyFruit"), 0);
 
       // do insert
       Vector<ODocument> v = new Vector<ODocument>();
@@ -538,7 +538,7 @@ public class TransactionConsistencyTest {
       System.out.println("delete commit");
       db.commit();
 
-      Assert.assertEquals(db.countClusterElements("Fruit"), 0);
+      Assert.assertEquals(db.countClusterElements("MyFruit"), 0);
     }
 
     db.close();
