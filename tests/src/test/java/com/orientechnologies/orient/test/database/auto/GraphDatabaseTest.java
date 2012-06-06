@@ -447,6 +447,34 @@ public class GraphDatabaseTest {
     database.removeVertex(sourceDoc1);
     database.removeVertex(targetDoc1);
     database.removeVertex(targetDoc2);
+  }
 
+  public void nestedQuery() {
+    ODocument countryDoc1 = database.createVertex().field("name", "UK").field("area", "Europe").field("code", "2").save();
+    ODocument cityDoc1 = database.createVertex().field("name", "leicester").field("lat", "52.64640").field("long", "-1.13159")
+        .save();
+    ODocument cityDoc2 = database.createVertex().field("name", "manchester").field("lat", "53.47497").field("long", "-2.25769")
+        .save();
+    database.createEdge(countryDoc1, cityDoc1).field("label", "owns").save();
+    database.createEdge(countryDoc1, cityDoc2).field("label", "owns").save();
+
+    String subquery = "select flatten(out[label='owns'].in) from V where name = 'UK'";
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(subquery));
+
+    Assert.assertEquals(result.size(), 2);
+    for (int i = 0; i < result.size(); i++) {
+      System.out.println("uno: " + result.get(i));
+      Assert.assertTrue(result.get(i).containsField("lat"));
+    }
+
+    String query = "select name, lat, long, distance(lat,long,51.5,0.08) as distance from (select flatten(out[label='owns'].in) from V where name = 'UK') order by distance";
+    result = database.query(new OSQLSynchQuery<ODocument>(query));
+    
+    Assert.assertEquals(result.size(), 2);
+    for (int i = 0; i < result.size(); i++) {
+      System.out.println("dos: " + result.get(i));
+      Assert.assertTrue(result.get(i).containsField("lat"));
+      Assert.assertTrue(result.get(i).containsField("distance"));
+    }
   }
 }

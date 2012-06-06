@@ -67,7 +67,6 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-import java.util.*;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -92,7 +91,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private boolean                     anyFunctionAggregates = false;
   private int                         fetchLimit            = -1;
   private OIdentifiable               lastRecord;
-  private Iterator<OIdentifiable>     subiterator;
+  private Iterator<OIdentifiable>     subIterator;
 
   /**
    * Compile the filter conditions only the first time.
@@ -160,27 +159,27 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       return result;
     }
 
-    if (subiterator == null) {
+    if (subIterator == null) {
       if (target == null) {
         // GET THE RESULT
         executeSearch(null);
         applyFlatten();
         applyProjections();
 
-        subiterator = new ArrayList<OIdentifiable>(getResult()).iterator();
+        subIterator = new ArrayList<OIdentifiable>(getResult()).iterator();
+        lastRecord = null;
         tempResult = null;
       } else
-        subiterator = (Iterator<OIdentifiable>) target.iterator();
+        subIterator = (Iterator<OIdentifiable>) target.iterator();
     }
 
     // RESUME THE LAST POSITION
-    while (subiterator.hasNext()) {
-      if (!executeSearchRecord(subiterator.next()))
-        break;
-
-      if (lastRecord != null)
-        return lastRecord;
-    }
+    if (lastRecord == null && subIterator != null)
+      while (subIterator.hasNext()) {
+        lastRecord = subIterator.next();
+        if (lastRecord != null)
+          return lastRecord;
+      }
 
     return lastRecord;
   }
@@ -265,7 +264,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           tempResult = new ArrayList<OIdentifiable>();
 
         tempResult.add(lastRecord);
-      } else if (subiterator == null) {
+      } else if (subIterator == null) {
         // CALL THE LISTENER NOW BECAUSE IS NTO BROWSING (subiterator==null)
         if (request.getResultListener() != null)
           request.getResultListener().result(lastRecord);
@@ -398,7 +397,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     });
 
     final List<Collection<OIdentifiable>> results = new ArrayList<Collection<OIdentifiable>>();
-    
+
     // go through all variants to choose which one can be used for index search.
     for (final OIndexSearchResult searchResult : indexSearchResults) {
       final int searchResultFieldsCount = searchResult.fields().size();
@@ -442,45 +441,44 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         return true;
       }
     }
-    
-    
-//        results.add(result);
-//      }
-//    }
-//    
-//    if(results.size() == 1){
-//        fillSearchIndexResultSet(results.get(0));
-//        return true;
-//    }else if(!results.isEmpty()){
-//        //intersect index results
-//        //we use a treeset to keep oid sorted for paging
-//        final Set<OIdentifiable> sortedMergedResult = new TreeSet<OIdentifiable>();
-//        
-//        final Collection<OIdentifiable>[] array = results.toArray(new Collection[results.size()]);
-//        for(int i=0;i<array.length;i++){
-//            final Collection<OIdentifiable> result = array[i];
-//            
-//            oidLoop:
-//            for(OIdentifiable oid : result){
-//                //check if we already verified this oid
-//                if(sortedMergedResult.contains(oid)) continue oidLoop;
-//                
-//                //check this id is also in other indexes
-//                for(int k=0;k<array.length;k++){
-//                    if(k==i)continue; //skip the current collection
-//                    if(!array[i].contains(oid)){
-//                        continue oidLoop;
-//                    }
-//                }
-//                sortedMergedResult.add(oid);
-//            }
-//        }        
-//        
-//        fillSearchIndexResultSet(sortedMergedResult);
-//        return true;
-//    }
-//    
-    
+
+    // results.add(result);
+    // }
+    // }
+    //
+    // if(results.size() == 1){
+    // fillSearchIndexResultSet(results.get(0));
+    // return true;
+    // }else if(!results.isEmpty()){
+    // //intersect index results
+    // //we use a treeset to keep oid sorted for paging
+    // final Set<OIdentifiable> sortedMergedResult = new TreeSet<OIdentifiable>();
+    //
+    // final Collection<OIdentifiable>[] array = results.toArray(new Collection[results.size()]);
+    // for(int i=0;i<array.length;i++){
+    // final Collection<OIdentifiable> result = array[i];
+    //
+    // oidLoop:
+    // for(OIdentifiable oid : result){
+    // //check if we already verified this oid
+    // if(sortedMergedResult.contains(oid)) continue oidLoop;
+    //
+    // //check this id is also in other indexes
+    // for(int k=0;k<array.length;k++){
+    // if(k==i)continue; //skip the current collection
+    // if(!array[i].contains(oid)){
+    // continue oidLoop;
+    // }
+    // }
+    // sortedMergedResult.add(oid);
+    // }
+    // }
+    //
+    // fillSearchIndexResultSet(sortedMergedResult);
+    // return true;
+    // }
+    //
+
     return false;
   }
 
