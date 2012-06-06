@@ -17,17 +17,18 @@ public class OClassLoaderHelper {
 	 */
 	public static synchronized <T extends Object> Iterator<T> lookupProviderWithOrientClassLoader(Class<T> clazz) {
 
+		return lookupProviderWithOrientClassLoader(clazz,OClassLoaderHelper.class.getClassLoader());
+	}
+
+	public static synchronized <T extends Object> Iterator<T> lookupProviderWithOrientClassLoader(Class<T> clazz,ClassLoader orientClassLoader) {
+		
 		ClassLoader origClassLoader = Thread.currentThread().getContextClassLoader();
 
-		ClassLoader orientClassLoader = OClassLoaderHelper.class.getClassLoader();
 		Thread.currentThread().setContextClassLoader(orientClassLoader);
-
 		Iterator<T> lookupProviders = ServiceRegistry.lookupProviders(clazz);
-
 		Thread.currentThread().setContextClassLoader(origClassLoader);
 
 		return lookupProviders;
-
 	}
 
 }

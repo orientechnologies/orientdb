@@ -44,6 +44,8 @@ public class OSQLEngine {
 
 	protected static final OSQLEngine INSTANCE = new OSQLEngine();
 
+	private static ClassLoader orientClassLoader = OSQLEngine.class.getClassLoader();
+
 	protected OSQLEngine() {
 	}
 
@@ -146,7 +148,7 @@ public class OSQLEngine {
 	public static synchronized Iterator<OSQLFunctionFactory> getFunctionFactories() {
 		if (FUNCTION_FACTORIES == null) {
 
-			final Iterator<OSQLFunctionFactory> ite = lookupProviderWithOrientClassLoader(OSQLFunctionFactory.class);
+			final Iterator<OSQLFunctionFactory> ite = lookupProviderWithOrientClassLoader(OSQLFunctionFactory.class,orientClassLoader);
 
 			final Set<OSQLFunctionFactory> factories = new HashSet<OSQLFunctionFactory>();
 			while (ite.hasNext()) {
@@ -163,7 +165,7 @@ public class OSQLEngine {
 	public static synchronized Iterator<OQueryOperatorFactory> getOperatorFactories() {
 		if (OPERATOR_FACTORIES == null) {
 
-			final Iterator<OQueryOperatorFactory> ite = lookupProviderWithOrientClassLoader(OQueryOperatorFactory.class);
+			final Iterator<OQueryOperatorFactory> ite = lookupProviderWithOrientClassLoader(OQueryOperatorFactory.class,orientClassLoader);
 
 			final Set<OQueryOperatorFactory> factories = new HashSet<OQueryOperatorFactory>();
 			while (ite.hasNext()) {
@@ -180,7 +182,7 @@ public class OSQLEngine {
 	public static synchronized Iterator<OCommandExecutorSQLFactory> getCommandFactories() {
 		if (EXECUTOR_FACTORIES == null) {
 
-			final Iterator<OCommandExecutorSQLFactory> ite = lookupProviderWithOrientClassLoader(OCommandExecutorSQLFactory.class);
+			final Iterator<OCommandExecutorSQLFactory> ite = lookupProviderWithOrientClassLoader(OCommandExecutorSQLFactory.class,orientClassLoader);
 			final Set<OCommandExecutorSQLFactory> factories = new HashSet<OCommandExecutorSQLFactory>();
 			while (ite.hasNext()) {
 				factories.add(ite.next());
@@ -237,7 +239,6 @@ public class OSQLEngine {
 
 	public OCommandExecutorSQLAbstract getCommand(final String candidate) {
 		final Set<String> names = getCommandNames();
-
 		String commandName = candidate;
 		boolean found = names.contains(commandName);
 		int pos = -1;

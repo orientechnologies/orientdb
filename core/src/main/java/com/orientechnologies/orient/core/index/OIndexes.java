@@ -55,6 +55,7 @@ import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProvide
 public final class OIndexes {
 
 	private static Set<OIndexFactory> FACTORIES = null;
+	private static ClassLoader orientClassLoader = OIndexes.class.getClassLoader();
 
 	private OIndexes() {
 	}
@@ -68,7 +69,7 @@ public final class OIndexes {
 	private static synchronized Set<OIndexFactory> getFactories() {
 		if (FACTORIES == null) {
 
-			final Iterator<OIndexFactory> ite = lookupProviderWithOrientClassLoader(OIndexFactory.class);
+			final Iterator<OIndexFactory> ite = lookupProviderWithOrientClassLoader(OIndexFactory.class,orientClassLoader);
 
 			final Set<OIndexFactory> factories = new HashSet<OIndexFactory>();
 			while (ite.hasNext()) {
