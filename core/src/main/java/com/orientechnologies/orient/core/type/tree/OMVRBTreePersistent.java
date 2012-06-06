@@ -328,6 +328,10 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
         // DISCONNECT THE REMOVED NODES
         for (OMVRBTreeEntryPersistent<K, V> currentNode : entryPointsToRemove)
           totalDisconnected += currentNode.disconnectLinked(false);
+
+        cache.clear();
+        for (OMVRBTreeEntryPersistent<K, V> entry : entryPoints.values())
+          addNodeInCache(entry);
       }
 
       if (isRuntimeCheckEnabled()) {
