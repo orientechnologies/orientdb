@@ -19,7 +19,7 @@
 		<javac.target.version>1.6</javac.target.version>
 		<jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
 		<osgi.import>*</osgi.import>
-		<osgi.export>com.orientechnologies.orient.server.*</osgi.export>
+		<osgi.export>com.orientechnologies.orient.graph.*</osgi.export>
 	</properties>
 
 	<dependencies>
