@@ -14,12 +14,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.test.domain.business;
+package com.orientechnologies.orient.test.domain.base;
 
 /**
  * @author luca.molino
  * 
  */
-public enum EnumTest {
-	ENUM1, ENUM2, ENUM3
+public class Instrument extends IdObject {
+	private String	name;
+
+	public Instrument() {
+		super();
+	}
+
+	public Instrument(String aName) {
+		this();
+		this.setName(aName);
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	@Override
+	public String toString() {
+		return "Instrument [id=" + this.getId() + ", version=" + this.getVersion() + ", name=" + this.getName() + "]";
+	}
 }

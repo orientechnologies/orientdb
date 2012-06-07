@@ -480,6 +480,19 @@ public class OObjectEntitySerializer {
 		return fieldIds.containsValue(iField);
 	}
 
+	protected static Field getIdField(final Class<?> iClass) {
+		if (!classes.contains(iClass)) {
+			registerClass(iClass);
+		}
+		Field idField = null;
+		for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
+				&& !currentClass.equals(ODocument.class) && idField == null;) {
+			idField = fieldIds.get(currentClass);
+			currentClass = currentClass.getSuperclass();
+		}
+		return idField;
+	}
+
 	public static void setIdField(final Class<?> iClass, Object iObject, ORID iValue) throws IllegalArgumentException,
 			IllegalAccessException {
 		if (!classes.contains(iClass)) {
@@ -515,6 +528,19 @@ public class OObjectEntitySerializer {
 			currentClass = currentClass.getSuperclass();
 		}
 		return isVersionField;
+	}
+
+	protected static Field getVersionField(final Class<?> iClass) {
+		if (!classes.contains(iClass)) {
+			registerClass(iClass);
+		}
+		Field versionField = null;
+		for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
+				&& !currentClass.equals(ODocument.class) && versionField == null;) {
+			versionField = fieldVersions.get(currentClass);
+			currentClass = currentClass.getSuperclass();
+		}
+		return versionField;
 	}
 
 	public static void setVersionField(final Class<?> iClass, Object iObject, int iValue) throws IllegalArgumentException,
@@ -708,32 +734,6 @@ public class OObjectEntitySerializer {
 		OProfiler.getInstance().stopChrono("Object.toStream", timer);
 
 		return (T) iProxiedPojo;
-	}
-
-	protected static Field getIdField(final Class<?> iClass) {
-		if (!classes.contains(iClass)) {
-			registerClass(iClass);
-		}
-		Field idField = null;
-		for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
-				&& !currentClass.equals(ODocument.class) && idField == null;) {
-			idField = fieldIds.get(currentClass);
-			currentClass = currentClass.getSuperclass();
-		}
-		return idField;
-	}
-
-	protected static Field getVersionField(final Class<?> iClass) {
-		if (!classes.contains(iClass)) {
-			registerClass(iClass);
-		}
-		Field versionField = null;
-		for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
-				&& !currentClass.equals(ODocument.class) && versionField == null;) {
-			versionField = fieldVersions.get(currentClass);
-			currentClass = currentClass.getSuperclass();
-		}
-		return versionField;
 	}
 
 	protected static void invokeCallback(final Object iPojo, final ODocument iDocument, final Class<?> iAnnotation) {

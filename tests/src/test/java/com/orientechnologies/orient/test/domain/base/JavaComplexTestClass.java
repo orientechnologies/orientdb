@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.test.domain.business;
+package com.orientechnologies.orient.test.domain.base;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,6 +25,8 @@ import java.util.Set;
 
 import javax.persistence.Id;
 import javax.persistence.Version;
+
+import com.orientechnologies.orient.test.domain.business.Child;
 
 /**
  * @author luca.molino
