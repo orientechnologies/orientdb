@@ -79,7 +79,7 @@ public class OHazelcastPlugin extends OServerHandlerAbstract implements OServerC
           return;
         }
       } else if (param.name.equalsIgnoreCase("configuration"))
-        configFile = param.value;
+        configFile = OSystemVariableResolver.resolveSystemVariables(param.value);
       else if (param.name.startsWith("db."))
         databaseConfiguration.put(param.name.substring("db.".length()), (ODocument) new ODocument().fromJSON(param.value.trim()));
     }
