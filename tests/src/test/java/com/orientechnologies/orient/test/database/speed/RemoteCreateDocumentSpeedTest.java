@@ -20,6 +20,7 @@ import java.util.Date;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
@@ -39,7 +40,7 @@ public class RemoteCreateDocumentSpeedTest extends OrientMonoThreadTest {
   }
 
   public RemoteCreateDocumentSpeedTest() throws InstantiationException, IllegalAccessException {
-    super(1000000);
+    super(100000);
   }
 
   @Override
@@ -64,7 +65,7 @@ public class RemoteCreateDocumentSpeedTest extends OrientMonoThreadTest {
     record.field("birthDate", date);
     record.field("salary", 3000f + data.getCyclesDone());
 
-    record.save();
+    database.save( record, OPERATION_MODE.ASYNCHRONOUS_NOANSWER, null );
 
     if (data.getCyclesDone() == data.getCycles() - 1)
       database.commit();

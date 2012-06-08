@@ -74,6 +74,7 @@ public class OChannelBinaryProtocol {
   public static final byte  REQUEST_DB_COPY               = 90; // SINCE 1.0rc8
   public static final byte  REQUEST_REPLICATION           = 91; // SINCE 1.0
   public static final byte  REQUEST_CLUSTER               = 92; // SINCE 1.0
+  public static final byte  REQUEST_DB_TRANSFER           = 93; // SINCE 1.0.2
 
   // INCOMING
   public static final byte  RESPONSE_STATUS_OK            = 0;

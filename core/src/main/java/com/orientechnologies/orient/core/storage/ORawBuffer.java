@@ -20,45 +20,58 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import com.orientechnologies.orient.core.record.ORecordInternal;
+
 public class ORawBuffer implements Externalizable {
-	public byte[]	buffer;
-	public int		version;
-	public byte		recordType;
+  public byte[] buffer;
+  public int    version;
+  public byte   recordType;
 
-	/**
-	 * Constructor used by serialization.
-	 */
-	public ORawBuffer() {
-	}
+  /**
+   * Constructor used by serialization.
+   */
+  public ORawBuffer() {
+  }
 
-	public ORawBuffer(final byte[] buffer, final int version, final byte recordType) {
-		this.buffer = buffer;
-		this.version = version;
-		this.recordType = recordType;
-	}
+  public ORawBuffer(final byte[] buffer, final int version, final byte recordType) {
+    this.buffer = buffer;
+    this.version = version;
+    this.recordType = recordType;
+  }
 
-	public void readExternal(final ObjectInput iInput) throws IOException, ClassNotFoundException {
-		final int bufferLenght = iInput.readInt();
-		if (bufferLenght > 0) {
-			buffer = new byte[bufferLenght];
-			iInput.read(buffer);
-		} else
-			buffer = null;
-		version = iInput.readInt();
-		recordType = iInput.readByte();
-	}
+  /**
+   * Creates a new object by the record received.
+   * 
+   * @param iRecord
+   */
+  public ORawBuffer(final ORecordInternal<?> iRecord) {
+    this.buffer = iRecord.toStream();
+    this.version = iRecord.getVersion();
+    this.recordType = iRecord.getRecordType();
+  }
 
-	public void writeExternal(final ObjectOutput iOutput) throws IOException {
-		final int bufferLenght = buffer != null ? buffer.length : 0;
-		iOutput.writeInt(bufferLenght);
-		if (bufferLenght > 0)
-			iOutput.write(buffer);
-		iOutput.writeInt(version);
-		iOutput.write(recordType);
-	}
+  public void readExternal(final ObjectInput iInput) throws IOException, ClassNotFoundException {
+    final int bufferLenght = iInput.readInt();
+    if (bufferLenght > 0) {
+      buffer = new byte[bufferLenght];
+      iInput.read(buffer);
+    } else
+      buffer = null;
+    version = iInput.readInt();
+    recordType = iInput.readByte();
+  }
 
-	@Override
-	public String toString() {
-		return "size:" + (buffer != null ? buffer.length : "empty");
-	}
+  public void writeExternal(final ObjectOutput iOutput) throws IOException {
+    final int bufferLenght = buffer != null ? buffer.length : 0;
+    iOutput.writeInt(bufferLenght);
+    if (bufferLenght > 0)
+      iOutput.write(buffer);
+    iOutput.writeInt(version);
+    iOutput.write(recordType);
+  }
+
+  @Override
+  public String toString() {
+    return "size:" + (buffer != null ? buffer.length : "empty");
+  }
 }

@@ -28,91 +28,92 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OIndexManagerProxy extends OProxedResource<OIndexManager> implements OIndexManager {
 
-	public OIndexManagerProxy(final OIndexManager iDelegate, final ODatabaseRecord iDatabase) {
-		super(iDelegate, iDatabase);
-	}
+  public OIndexManagerProxy(final OIndexManager iDelegate, final ODatabaseRecord iDatabase) {
+    super(iDelegate, iDatabase);
+  }
 
-	public OIndexManager load() {
-		return this;
-	}
+  public OIndexManager load() {
+    return this;
+  }
 
-	/**
-	 * Force reloading of indexes.
-	 */
-	public OIndexManager reload() {
-		return delegate.load();
-	}
+  /**
+   * Force reloading of indexes.
+   */
+  public OIndexManager reload() {
+    return delegate.load();
+  }
 
-	public void create() {
-		delegate.create();
-	}
+  public void create() {
+    delegate.create();
+  }
 
-	public Collection<? extends OIndex<?>> getIndexes() {
-		return delegate.getIndexes();
-	}
+  public Collection<? extends OIndex<?>> getIndexes() {
+    return delegate.getIndexes();
+  }
 
-	public OIndex<?> getIndex(final String iName) {
-		return delegate.getIndex(iName);
-	}
+  public OIndex<?> getIndex(final String iName) {
+    return delegate.getIndex(iName);
+  }
 
-	public OIndex<?> getIndex(final ORID iRID) {
-		return delegate.getIndex(iRID);
-	}
+  public OIndex<?> getIndex(final ORID iRID) {
+    return delegate.getIndex(iRID);
+  }
 
-	public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
-			final int[] iClusterIdsToIndex, final OProgressListener iProgressListener) {
-		return delegate.createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, iProgressListener);
-	}
+  public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
+      final int[] iClusterIdsToIndex, final OProgressListener iProgressListener) {
+    return delegate.createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, iProgressListener);
+  }
 
-	public OIndex<?> getIndexInternal(final String iName) {
-		return ((OIndexManagerShared) delegate).getIndexInternal(iName);
-	}
+  public OIndex<?> getIndexInternal(final String iName) {
+    return ((OIndexManagerShared) delegate).getIndexInternal(iName);
+  }
 
-	public ODocument getConfiguration() {
-		return delegate.getConfiguration();
-	}
+  public ODocument getConfiguration() {
+    return delegate.getConfiguration();
+  }
 
-	public OIndexManager dropIndex(final String iIndexName) {
-		return delegate.dropIndex(iIndexName);
-	}
+  public OIndexManager dropIndex(final String iIndexName) {
+    return delegate.dropIndex(iIndexName);
+  }
 
-	public String getDefaultClusterName() {
-		return delegate.getDefaultClusterName();
-	}
+  public String getDefaultClusterName() {
+    return delegate.getDefaultClusterName();
+  }
 
-	public void setDefaultClusterName(final String defaultClusterName) {
-		delegate.setDefaultClusterName(defaultClusterName);
-	}
+  public void setDefaultClusterName(final String defaultClusterName) {
+    delegate.setDefaultClusterName(defaultClusterName);
+  }
 
-	public ODictionary<ORecordInternal<?>> getDictionary() {
-		return delegate.getDictionary();
-	}
+  public ODictionary<ORecordInternal<?>> getDictionary() {
+    return delegate.getDictionary();
+  }
 
-	public void flush() {
-		delegate.flush();
-	}
+  public void flush() {
+    if (delegate != null)
+      delegate.flush();
+  }
 
-	public Set<OIndex<?>> getClassInvolvedIndexes(final String className, final Collection<String> fields) {
-		return delegate.getClassInvolvedIndexes(className, fields);
-	}
+  public Set<OIndex<?>> getClassInvolvedIndexes(final String className, final Collection<String> fields) {
+    return delegate.getClassInvolvedIndexes(className, fields);
+  }
 
-	public Set<OIndex<?>> getClassInvolvedIndexes(final String className, final String... fields) {
-		return delegate.getClassInvolvedIndexes(className, fields);
-	}
+  public Set<OIndex<?>> getClassInvolvedIndexes(final String className, final String... fields) {
+    return delegate.getClassInvolvedIndexes(className, fields);
+  }
 
-	public boolean areIndexed(final String className, final Collection<String> fields) {
-		return delegate.areIndexed(className, fields);
-	}
+  public boolean areIndexed(final String className, final Collection<String> fields) {
+    return delegate.areIndexed(className, fields);
+  }
 
-	public boolean areIndexed(final String className, final String... fields) {
-		return delegate.areIndexed(className, fields);
-	}
+  public boolean areIndexed(final String className, final String... fields) {
+    return delegate.areIndexed(className, fields);
+  }
 
-	public Set<OIndex<?>> getClassIndexes(final String className) {
-		return delegate.getClassIndexes(className);
-	}
+  public Set<OIndex<?>> getClassIndexes(final String className) {
+    return delegate.getClassIndexes(className);
+  }
 
-	public OIndex<?> getClassIndex(final String className, final String indexName) {
-		return delegate.getClassIndex(className, indexName);
-	}
+  public OIndex<?> getClassIndex(final String className, final String indexName) {
+    return delegate.getClassIndex(className, indexName);
+  }
 }

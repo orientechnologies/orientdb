@@ -116,9 +116,9 @@ public class Orient extends OSharedResourceAbstract {
       pos = iURL.indexOf('?');
 
       Map<String, String> parameters = null;
-      String dbName = null;
+      String dbPath = null;
       if (pos > 0) {
-        dbName = iURL.substring(0, pos);
+        dbPath = iURL.substring(0, pos);
         iURL = iURL.substring(pos + 1);
 
         // PARSE PARAMETERS
@@ -133,7 +133,14 @@ public class Orient extends OSharedResourceAbstract {
           parameters.put(kv[0], kv[1]);
         }
       } else
-        dbName = iURL;
+        dbPath = iURL;
+
+      final String dbName;
+      pos = dbPath.lastIndexOf('/');
+      if (pos > -1)
+        dbName = dbPath.substring(pos + 1);
+      else
+        dbName = dbPath;
 
       OStorage storage;
       if (engine.isShared()) {
@@ -141,12 +148,12 @@ public class Orient extends OSharedResourceAbstract {
         storage = storages.get(dbName);
         if (storage == null) {
           // NOT FOUND: CREATE IT
-          storage = engine.createStorage(dbName, parameters);
+          storage = engine.createStorage(dbPath, parameters);
           storages.put(dbName, storage);
         }
       } else {
         // REGISTER IT WITH A SERIAL NAME TO AVOID BEING REUSED
-        storage = engine.createStorage(dbName, parameters);
+        storage = engine.createStorage(dbPath, parameters);
         storages.put(dbName + "__" + serialId.incrementAndGet(), storage);
       }
 
@@ -160,18 +167,19 @@ public class Orient extends OSharedResourceAbstract {
     }
   }
 
-  public void registerStorage(final OStorage iStorage) throws IOException {
+  public OStorage registerStorage(final OStorage iStorage) throws IOException {
     acquireExclusiveLock();
     try {
       for (OOrientListener l : listeners)
         l.onStorageRegistered(iStorage);
 
       if (!storages.containsKey(iStorage.getName()))
-        storages.put(iStorage.getURL(), iStorage);
+        storages.put(iStorage.getName(), iStorage);
 
     } finally {
       releaseExclusiveLock();
     }
+    return iStorage;
   }
 
   public OStorage getStorage(final String iDbName) {
@@ -393,6 +401,8 @@ public class Orient extends OSharedResourceAbstract {
 
   public static String getHomePath() {
     String v = System.getProperty("orient.home");
+    if (v == null)
+      v = System.getProperty(ORIENTDB_HOME);
     if (v == null)
       v = System.getenv(ORIENTDB_HOME);
 

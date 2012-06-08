@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
-import com.orientechnologies.orient.server.handler.distributed.OClusterProtocol;
 
 /**
  * Tests the right calls of all the db's listener API.
@@ -38,173 +37,170 @@ import com.orientechnologies.orient.server.handler.distributed.OClusterProtocol;
  * 
  */
 public class DbListenerTest {
-	protected ODatabaseDocumentTx	database;
+  protected ODatabaseDocumentTx database;
 
-	protected String							dbUrl;
+  protected String              dbUrl;
 
-	protected int									onAfterTxCommit								= 0;
-	protected int									onAfterTxRollback							= 0;
-	protected int									onBeforeTxBegin								= 0;
-	protected int									onBeforeTxCommit							= 0;
-	protected int									onBeforeTxRollback						= 0;
-	protected int									onClose												= 0;
-	protected int									onCreate											= 0;
-	protected int									onDelete											= 0;
-	protected int									onOpen												= 0;
-	protected int									onCorruption									= 0;
+  protected int                 onAfterTxCommit              = 0;
+  protected int                 onAfterTxRollback            = 0;
+  protected int                 onBeforeTxBegin              = 0;
+  protected int                 onBeforeTxCommit             = 0;
+  protected int                 onBeforeTxRollback           = 0;
+  protected int                 onClose                      = 0;
+  protected int                 onCreate                     = 0;
+  protected int                 onDelete                     = 0;
+  protected int                 onOpen                       = 0;
+  protected int                 onCorruption                 = 0;
 
-	protected int									onRecordPulled								= 0;
-	protected int									onClusterConfigurationChange	= 0;
-	protected int									onAvailableDatabaseChange			= 0;
+  protected int                 onRecordPulled               = 0;
+  protected int                 onClusterConfigurationChange = 0;
+  protected int                 onAvailableDatabaseChange    = 0;
 
-	public class DbListener implements ODatabaseListener {
-		public void onAfterTxCommit(ODatabase iDatabase) {
-			onAfterTxCommit++;
-		}
+  public class DbListener implements ODatabaseListener {
+    public void onAfterTxCommit(ODatabase iDatabase) {
+      onAfterTxCommit++;
+    }
 
-		public void onAfterTxRollback(ODatabase iDatabase) {
-			onAfterTxRollback++;
-		}
+    public void onAfterTxRollback(ODatabase iDatabase) {
+      onAfterTxRollback++;
+    }
 
-		public void onBeforeTxBegin(ODatabase iDatabase) {
-			onBeforeTxBegin++;
-		}
+    public void onBeforeTxBegin(ODatabase iDatabase) {
+      onBeforeTxBegin++;
+    }
 
-		public void onBeforeTxCommit(ODatabase iDatabase) {
-			onBeforeTxCommit++;
-		}
+    public void onBeforeTxCommit(ODatabase iDatabase) {
+      onBeforeTxCommit++;
+    }
 
-		public void onBeforeTxRollback(ODatabase iDatabase) {
-			onBeforeTxRollback++;
-		}
+    public void onBeforeTxRollback(ODatabase iDatabase) {
+      onBeforeTxRollback++;
+    }
 
-		public void onClose(ODatabase iDatabase) {
-			onClose++;
-		}
+    public void onClose(ODatabase iDatabase) {
+      onClose++;
+    }
 
-		public void onCreate(ODatabase iDatabase) {
-			onCreate++;
-		}
+    public void onCreate(ODatabase iDatabase) {
+      onCreate++;
+    }
 
-		public void onDelete(ODatabase iDatabase) {
-			onDelete++;
-		}
+    public void onDelete(ODatabase iDatabase) {
+      onDelete++;
+    }
 
-		public void onOpen(ODatabase iDatabase) {
-			onOpen++;
-		}
+    public void onOpen(ODatabase iDatabase) {
+      onOpen++;
+    }
 
-		public boolean onCorruptionRepairDatabase(ODatabase iDatabase, final String iReason, String iWhatWillbeFixed) {
-			onCorruption++;
-			return true;
-		}
-	}
+    public boolean onCorruptionRepairDatabase(ODatabase iDatabase, final String iReason, String iWhatWillbeFixed) {
+      onCorruption++;
+      return true;
+    }
+  }
 
-	@Parameters(value = "url")
-	public DbListenerTest(String iURL) {
-		dbUrl = iURL;
-		database = new ODatabaseDocumentTx(iURL);
-	}
+  @Parameters(value = "url")
+  public DbListenerTest(String iURL) {
+    dbUrl = iURL;
+    database = new ODatabaseDocumentTx(iURL);
+  }
 
-	@Test
-	public void testEmbeddedDbListeners() throws IOException {
-		if (database.getURL().startsWith("remote:"))
-			return;
+  @Test
+  public void testEmbeddedDbListeners() throws IOException {
+    if (database.getURL().startsWith("remote:"))
+      return;
 
-		if (database.exists())
-			ODatabaseHelper.deleteDatabase(database);
+    if (database.exists())
+      ODatabaseHelper.deleteDatabase(database);
 
-		database.registerListener(new DbListener());
+    database.registerListener(new DbListener());
 
-		ODatabaseHelper.createDatabase(database, dbUrl);
+    ODatabaseHelper.createDatabase(database, dbUrl);
 
-		Assert.assertEquals(onCreate, 1);
+    Assert.assertEquals(onCreate, 1);
 
-		database.close();
-		Assert.assertEquals(onClose, 1);
+    database.close();
+    Assert.assertEquals(onClose, 1);
 
-		database.registerListener(new DbListener());
+    database.registerListener(new DbListener());
 
-		database.open("admin", "admin");
-		Assert.assertEquals(onOpen, 1);
+    database.open("admin", "admin");
+    Assert.assertEquals(onOpen, 1);
 
-		database.begin(TXTYPE.OPTIMISTIC);
-		Assert.assertEquals(onBeforeTxBegin, 1);
+    database.begin(TXTYPE.OPTIMISTIC);
+    Assert.assertEquals(onBeforeTxBegin, 1);
 
-		database.newInstance().save();
-		database.commit();
-		Assert.assertEquals(onBeforeTxCommit, 1);
-		Assert.assertEquals(onAfterTxCommit, 1);
+    database.newInstance().save();
+    database.commit();
+    Assert.assertEquals(onBeforeTxCommit, 1);
+    Assert.assertEquals(onAfterTxCommit, 1);
 
-		database.begin(TXTYPE.OPTIMISTIC);
-		Assert.assertEquals(onBeforeTxBegin, 2);
+    database.begin(TXTYPE.OPTIMISTIC);
+    Assert.assertEquals(onBeforeTxBegin, 2);
 
-		database.newInstance().save();
-		database.rollback();
-		Assert.assertEquals(onBeforeTxRollback, 1);
-		Assert.assertEquals(onAfterTxRollback, 1);
+    database.newInstance().save();
+    database.rollback();
+    Assert.assertEquals(onBeforeTxRollback, 1);
+    Assert.assertEquals(onAfterTxRollback, 1);
 
-		ODatabaseHelper.deleteDatabase(database);
-		Assert.assertEquals(onClose, 2);
-		Assert.assertEquals(onDelete, 1);
-	}
+    ODatabaseHelper.deleteDatabase(database);
+    Assert.assertEquals(onClose, 2);
+    Assert.assertEquals(onDelete, 1);
+  }
 
-	@Test
-	public void testRemoteDbListeners() throws IOException {
-		if (!database.getURL().startsWith("remote:"))
-			return;
+  @Test
+  public void testRemoteDbListeners() throws IOException {
+    if (!database.getURL().startsWith("remote:"))
+      return;
 
-		database.registerListener(new DbListener());
+    database.registerListener(new DbListener());
 
-		database.open("admin", "admin");
-		Assert.assertEquals(onOpen, 1);
+    database.open("admin", "admin");
+    Assert.assertEquals(onOpen, 1);
 
-		database.begin(TXTYPE.OPTIMISTIC);
-		Assert.assertEquals(onBeforeTxBegin, 1);
+    database.begin(TXTYPE.OPTIMISTIC);
+    Assert.assertEquals(onBeforeTxBegin, 1);
 
-		database.newInstance().save();
-		database.commit();
-		Assert.assertEquals(onBeforeTxCommit, 1);
-		Assert.assertEquals(onAfterTxCommit, 1);
+    database.newInstance().save();
+    database.commit();
+    Assert.assertEquals(onBeforeTxCommit, 1);
+    Assert.assertEquals(onAfterTxCommit, 1);
 
-		database.begin(TXTYPE.OPTIMISTIC);
-		Assert.assertEquals(onBeforeTxBegin, 2);
+    database.begin(TXTYPE.OPTIMISTIC);
+    Assert.assertEquals(onBeforeTxBegin, 2);
 
-		database.newInstance().save();
-		database.rollback();
-		Assert.assertEquals(onBeforeTxRollback, 1);
-		Assert.assertEquals(onAfterTxRollback, 1);
+    database.newInstance().save();
+    database.rollback();
+    Assert.assertEquals(onBeforeTxRollback, 1);
+    Assert.assertEquals(onAfterTxRollback, 1);
 
-		database.close();
-		Assert.assertEquals(onClose, 1);
-	}
+    database.close();
+    Assert.assertEquals(onClose, 1);
+  }
 
-	@Test
-	public void testAsynchEventListeners() throws IOException {
-		if (!database.getURL().startsWith("remote:"))
-			return;
+  @Test
+  public void testAsynchEventListeners() throws IOException {
+    if (!database.getURL().startsWith("remote:"))
+      return;
 
-		database.open("admin", "admin");
+    database.open("admin", "admin");
 
-		((OStorageRemoteThread) database.getStorage()).setRemoteServerEventListener(new ORemoteServerEventListener() {
+    ((OStorageRemoteThread) database.getStorage()).setRemoteServerEventListener(new ORemoteServerEventListener() {
 
-			public void onRequest(byte iRequestCode, Object iObject) {
-				switch (iRequestCode) {
-				case OChannelBinaryProtocol.REQUEST_PUSH_RECORD:
-					onRecordPulled++;
-					break;
+      public void onRequest(byte iRequestCode, Object iObject) {
+        switch (iRequestCode) {
+        case OChannelBinaryProtocol.REQUEST_PUSH_RECORD:
+          onRecordPulled++;
+          break;
 
-				// case OBinaryProtocol.PUSH_NODE2CLIENT_DB_CONFIG:
-				// onClusterConfigurationChange++;
-				// break;
+        // case OBinaryProtocol.PUSH_NODE2CLIENT_DB_CONFIG:
+        // onClusterConfigurationChange++;
+        // break;
 
-				case OClusterProtocol.PUSH_LEADER_AVAILABLE_DBS:
-					onAvailableDatabaseChange++;
-					break;
-				}
-			}
-		});
+        }
+      }
+    });
 
-		database.close();
-	}
+    database.close();
+  }
 }

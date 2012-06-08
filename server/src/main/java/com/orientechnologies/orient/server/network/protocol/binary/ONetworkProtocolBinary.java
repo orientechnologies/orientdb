@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionAbortedException;
@@ -64,12 +63,10 @@ import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
-import com.orientechnologies.orient.server.clustering.leader.ORemotePeer;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
+import com.orientechnologies.orient.server.distributed.OServerCluster;
+import com.orientechnologies.orient.server.handler.OServerHandler;
 import com.orientechnologies.orient.server.handler.OServerHandlerHelper;
-import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.replication.ODistributedDatabaseInfo;
-import com.orientechnologies.orient.server.replication.ODistributedNode;
-import com.orientechnologies.orient.server.replication.OOperationLog;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
@@ -449,7 +446,12 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
         sendDatabaseInformation();
 
-        channel.writeBytes(null); // REMOVE IT
+        final OServerHandler plugin = OServerMain.server().getPlugin("cluster");
+        ODocument distributedCfg = null;
+        if (plugin != null && plugin instanceof OServerCluster)
+          distributedCfg = ((OServerCluster) plugin).getDatabaseConfiguration(getName());
+
+        channel.writeBytes(distributedCfg!=null ? distributedCfg.toStream():null);
 
       } finally {
         endResponse();
@@ -517,11 +519,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final ODatabaseDocumentTx db = (ODatabaseDocumentTx) OServerMain.server().openDatabase(ODatabaseDocument.TYPE, dbUrl, dbUser,
         dbPassword);
 
-    final ODistributedServerManager manager = OServerMain.server().getHandler(ODistributedServerManager.class);
-    final ODistributedNode node = manager.getReplicator().getOrCreateDistributedNode(remoteServerName);
-
-    node.copyDatabase(db, remoteServerEngine);
-
     beginResponse();
     try {
       sendOk(clientTxId);
@@ -535,62 +532,32 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     final ODocument request = new ODocument(channel.readBytes());
 
-    final ODistributedServerManager manager = OServerMain.server().getHandler(ODistributedServerManager.class);
-
     ODocument response = null;
 
     final String operation = request.field("operation");
     if (operation.equals("start")) {
       checkServerAccess("server.replication.start");
-      final ODistributedNode node = manager.getReplicator().getOrCreateDistributedNode((String) request.field("node"));
-      final ODistributedDatabaseInfo db = node.getOrCreateDatabaseEntry((String) request.field("db"));
-      node.startDatabaseReplication(db);
 
     } else if (operation.equals("stop")) {
       checkServerAccess("server.replication.stop");
-      final ODistributedNode node = manager.getReplicator().getOrCreateDistributedNode((String) request.field("node"));
-      final ODistributedDatabaseInfo db = node.getOrCreateDatabaseEntry((String) request.field("db"));
-      node.stopDatabaseReplication(db);
 
     } else if (operation.equals("align")) {
       checkServerAccess("server.replication.align");
-      final ODistributedNode node = manager.getReplicator().getOrCreateDistributedNode((String) request.field("node"));
-      final ODistributedDatabaseInfo db = node.getOrCreateDatabaseEntry((String) request.field("db"));
-      node.startDatabaseAlignment(node.getOrCreateDatabaseEntry(db.databaseName), (String) request.field("options"));
 
     } else if (operation.equals("getJournal")) {
       checkServerAccess("server.replication.getJournal");
 
-      final ORecordOperation op = new ORecordOperation();
-      final OOperationLog log = manager.getReplicator().getOperationLog((String) request.field("node"),
-          (String) request.field("db"));
-      if (log != null) {
-        response = new ODocument();
-        final int tot = log.totalEntries();
-        for (int i = 0; i < tot; ++i) {
-          log.getEntry(i, op);
-          final String value = String.valueOf(op.type) + '-' + op.record.getIdentity() + '-' + op.date;
-          response.field(String.valueOf(op.serial), value);
-        }
-      }
-
     } else if (operation.equals("resetJournal")) {
       checkServerAccess("server.replication.resetJournal");
-
-      response = new ODocument();
-      final OOperationLog log = manager.getReplicator().getOperationLog((String) request.field("node"),
-          (String) request.field("db"));
-      response.field("removedEntries", log.totalEntries());
-      log.reset();
 
     } else if (operation.equals("getAllConflicts")) {
       checkServerAccess("server.replication.getAllConflicts");
 
-      final ODatabaseDocumentTx db = (ODatabaseDocumentTx) OServerMain.server().openDatabase(ODatabaseDocument.TYPE,
-          (String) request.field("db"), manager.getReplicator().getReplicatorUser().name,
-          manager.getReplicator().getReplicatorUser().password);
+      final OServerUserConfiguration replicatorUser = OServerMain.server().getUser("replicator");
 
-      response = manager.getReplicator().getConflictResolver().getAllConflicts(db);
+      final ODatabaseDocumentTx db = (ODatabaseDocumentTx) OServerMain.server().openDatabase(ODatabaseDocument.TYPE,
+          (String) request.field("db"), replicatorUser.name, replicatorUser.password);
+
     }
 
     sendResponse(response);
@@ -601,29 +568,17 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     final ODocument req = new ODocument(channel.readBytes());
 
-    final ODistributedServerManager manager = OServerMain.server().getHandler(ODistributedServerManager.class);
-
     ODocument response = null;
-
-    if (!manager.isLeader())
-      throw new IllegalArgumentException("Current node is not the leader. Repeat this command against the leader node");
 
     final String operation = req.field("operation");
     if (operation == null)
       throw new IllegalArgumentException("Cluster operation is null");
 
-    if (operation.equals("status"))
-      response = manager.getLeader().getClusteredConfiguration();
+    if (operation.equals("status")) {
+      final OServerHandler plugin = OServerMain.server().getPlugin("cluster");
+      if (plugin != null && plugin instanceof OServerCluster)
+        response = ((OServerCluster) plugin).getClusterConfiguration();
 
-    else if (operation.equals("addNode")) {
-      final String node = req.field("node");
-      final String[] nodeParts = node.split(":");
-      manager.getLeader().connect2Peer(new String[] { nodeParts[0] }, Integer.parseInt(nodeParts[1]));
-
-    } else if (operation.equals("removeNode")) {
-      final ORemotePeer peerNode = manager.getLeader().getPeerNode((String) req.field("node"));
-      if (peerNode != null)
-        manager.getLeader().removePeer(peerNode);
     } else
       throw new IllegalArgumentException("Cluster operation '" + operation + "' is not supported");
 

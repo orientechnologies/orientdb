@@ -27,38 +27,38 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
  * 
  */
 public interface OServerHandler extends OService {
-	/**
-	 * Callback invoked when a client connection begins.
-	 */
-	public void onClientConnection(OClientConnection iConnection);
+  /**
+   * Callback invoked when a client connection begins.
+   */
+  public void onClientConnection(OClientConnection iConnection);
 
-	/**
-	 * Callback invoked when a client connection ends.
-	 */
-	public void onClientDisconnection(OClientConnection iConnection);
+  /**
+   * Callback invoked when a client connection ends.
+   */
+  public void onClientDisconnection(OClientConnection iConnection);
 
-	/**
-	 * Callback invoked before a client request is processed.
-	 */
-	public void onBeforeClientRequest(OClientConnection iConnection, byte iRequestType);
+  /**
+   * Callback invoked before a client request is processed.
+   */
+  public void onBeforeClientRequest(OClientConnection iConnection, byte iRequestType);
 
-	/**
-	 * Callback invoked after a client request is processed.
-	 */
-	public void onAfterClientRequest(OClientConnection iConnection, byte iRequestType);
+  /**
+   * Callback invoked after a client request is processed.
+   */
+  public void onAfterClientRequest(OClientConnection iConnection, byte iRequestType);
 
-	/**
-	 * Callback invoked when a client connection has errors.
-	 * 
-	 * @param iThrowable
-	 *          Throwable instance received
-	 */
-	public void onClientError(OClientConnection iConnection, Throwable iThrowable);
+  /**
+   * Callback invoked when a client connection has errors.
+   * 
+   * @param iThrowable
+   *          Throwable instance received
+   */
+  public void onClientError(OClientConnection iConnection, Throwable iThrowable);
 
-	/**
-	 * Configures the handler. Called at startup.
-	 */
-	public void config(OServer oServer, OServerParameterConfiguration[] iParams);
+  /**
+   * Configures the handler. Called at startup.
+   */
+  public void config(OServer oServer, OServerParameterConfiguration[] iParams);
 
-	public void sendShutdown();
+  public void sendShutdown();
 }

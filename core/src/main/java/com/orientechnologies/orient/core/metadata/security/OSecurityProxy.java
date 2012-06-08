@@ -42,7 +42,8 @@ public class OSecurityProxy extends OProxedResource<OSecurity> implements OSecur
   }
 
   public void close() {
-    delegate.close();
+    if (delegate != null)
+      delegate.close();
   }
 
   public OUser authenticate(final String iUsername, final String iUserPassword) {
