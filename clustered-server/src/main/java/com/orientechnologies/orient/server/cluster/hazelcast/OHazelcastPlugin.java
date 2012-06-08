@@ -140,7 +140,7 @@ public class OHazelcastPlugin extends OServerHandlerAbstract implements OServerC
   @Override
   public void onOpen(final ODatabase iDatabase) {
     final ODocument cfg = getDatabaseConfiguration(iDatabase.getName());
-    if (cfg.field("replication")) {
+    if ((Boolean) cfg.field("replication")) {
       createReplicator(iDatabase.getName());
 
       if (iDatabase instanceof ODatabaseComplex<?>)
