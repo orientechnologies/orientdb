@@ -88,7 +88,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 	}
 
 	public <RET> RET newInstance(String iClassName) {
-		return newInstance(iClassName, null, new Object[0]);
+		return (RET) newInstance(iClassName, null, new Object[0]);
 	}
 
 	@Override
@@ -169,11 +169,11 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 	}
 
 	public <RET> RET load(final Object iPojo) {
-		return load(iPojo, null);
+		return (RET) load(iPojo, null);
 	}
 
 	public <RET> RET reload(final Object iPojo) {
-		return reload(iPojo, null, true);
+		return (RET) reload(iPojo, null, true);
 	}
 
 	public <RET> RET reload(Object iPojo, final String iFetchPlan, final boolean iIgnoreCache) {
@@ -190,7 +190,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 	}
 
 	public <RET> RET load(final Object iPojo, final String iFetchPlan) {
-		return load(iPojo, iFetchPlan, false);
+		return (RET) load(iPojo, iFetchPlan, false);
 	}
 
 	public <RET> RET load(final Object iPojo, final String iFetchPlan, final boolean iIgnoreCache) {
@@ -212,7 +212,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 	}
 
 	public <RET> RET load(final ORID iRecordId) {
-		return load(iRecordId, null);
+		return (RET) load(iRecordId, null);
 	}
 
 	public <RET> RET load(final ORID iRecordId, final String iFetchPlan) {
