@@ -98,7 +98,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    */
   @Override
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord) {
-    return save(iRecord, OPERATION_MODE.SYNCHRONOUS, null);
+    return (RET) save(iRecord, OPERATION_MODE.SYNCHRONOUS, null);
   }
 
   /**
