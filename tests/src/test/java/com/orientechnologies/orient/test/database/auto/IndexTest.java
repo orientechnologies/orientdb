@@ -1316,9 +1316,6 @@ public class IndexTest {
       Assert.assertNotNull(result);
       Assert.assertEquals(1, result.size());
       Assert.assertEquals(11L, result.get(0).field("testParentProperty"));
-
-
-
     }
 }
 
