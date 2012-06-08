@@ -1,20 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <orient-server>
 	<handlers>
-		<handler class="com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager">
-			<parameters>
-				<parameter name="enabled" value="false" />
-				<parameter name="name" value="default" />
-				<parameter name="security.algorithm" value="Blowfish" />
-				<parameter name="network.multicast.address" value="235.1.1.1" />
-				<parameter name="network.multicast.port" value="2424" />
-				<parameter name="network.multicast.heartbeat" value="10" />
-				<parameter name="replication.conflictResolver.strategy" value="com.orientechnologies.orient.server.replication.conflict.ODefaultReplicationConflictResolver" />
-				<parameter name="replication.conflictResolver.ignoreIfSameContent" value="true" />
-				<parameter name="replication.conflictResolver.ignoreIfMergeOk" value="false" />
-				<parameter name="replication.conflictResolver.latestAlwaysWin" value="false" />
-			</parameters>
-		</handler>
 		<!-- AUTOMATIC BACKUP, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
 		<handler class="com.orientechnologies.orient.server.handler.OAutomaticBackup">
 			<parameters>
@@ -39,11 +25,9 @@
 			<!-- Default registered protocol. It reads commands using the HTTP protocol and write data locally -->
 			<protocol name="binary" implementation="com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary" />
 			<protocol name="http" implementation="com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb" />
-			<protocol name="cluster" implementation="com.orientechnologies.orient.server.clustering.OClusterNetworkProtocol" />
 		</protocols>
 		<listeners>
 			<listener protocol="binary" ip-address="0.0.0.0" port-range="2424-2430" />
-			<listener protocol="cluster" ip-address="0.0.0.0" port-range="2434-2440" />
 			<listener protocol="http" ip-address="0.0.0.0" port-range="2480-2490">
 				<parameters>
 					<!-- Connection's custom parameters. If not specified the global configuration will be taken -->
@@ -73,9 +57,6 @@
 	<users>
 	</users>
 	<properties>
-		<!-- Caches static contents. If enabled the files will be kept in memory the first time are loaded. Changes to the files will be taken on the next restart -->
-		<entry name="server.cache.file.static" value="false" />
-
 		<!-- Enable/Disable logging. Levels are: finer, fine, finest, info, warning -->
 		<entry name="log.console.level" value="info" />
 		<entry name="log.file.level" value="fine" />
