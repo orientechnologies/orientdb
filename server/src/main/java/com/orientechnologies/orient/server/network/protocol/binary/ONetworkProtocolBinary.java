@@ -318,7 +318,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     final int id = channel.readShort();
 
-    boolean result = connection.database.dropCluster(connection.database.getClusterNameById(id));
+    final String clusterName = connection.database.getClusterNameById(id);
+    if (clusterName == null)
+      throw new IllegalArgumentException("Cluster " + id + " doesn't exist anymore. Refresh the db structure or just reconnect to the database");
+
+    boolean result = connection.database.dropCluster(clusterName);
 
     beginResponse();
     try {
@@ -451,7 +455,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         if (plugin != null && plugin instanceof OServerCluster)
           distributedCfg = ((OServerCluster) plugin).getDatabaseConfiguration(getName());
 
-        channel.writeBytes(distributedCfg!=null ? distributedCfg.toStream():null);
+        channel.writeBytes(distributedCfg != null ? distributedCfg.toStream() : null);
 
       } finally {
         endResponse();
