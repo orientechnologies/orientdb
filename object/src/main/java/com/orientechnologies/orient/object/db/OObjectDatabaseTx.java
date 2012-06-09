@@ -216,7 +216,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 	}
 
 	public <RET> RET load(final ORID iRecordId, final String iFetchPlan) {
-		return load(iRecordId, iFetchPlan, false);
+		return (RET) load(iRecordId, iFetchPlan, false);
 	}
 
 	public <RET> RET load(final ORID iRecordId, final String iFetchPlan, final boolean iIgnoreCache) {
@@ -232,7 +232,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 				return null;
 		}
 
-		return OObjectEntityEnhancer.getInstance().getProxiedInstance(record.getClassName(), entityManager, record);
+		return (RET) OObjectEntityEnhancer.getInstance().getProxiedInstance(record.getClassName(), entityManager, record);
 	}
 
 	/**
@@ -242,7 +242,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 	 * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
 	 */
 	public <RET> RET save(final Object iContent) {
-		return save(iContent, (String) null, OPERATION_MODE.SYNCHRONOUS, null);
+		return (RET) save(iContent, (String) null, OPERATION_MODE.SYNCHRONOUS, null);
 	}
 
 	/**
@@ -252,7 +252,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 	 * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
 	 */
 	public <RET> RET save(final Object iContent, OPERATION_MODE iMode, final ORecordCallback<? extends Number> iCallback) {
-		return save(iContent, null, iMode, iCallback);
+		return (RET) save(iContent, null, iMode, iCallback);
 	}
 
 	/**
@@ -267,7 +267,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 	 * @see ORecordSchemaAware#validate()
 	 */
 	public <RET> RET save(final Object iPojo, final String iClusterName) {
-		return save(iPojo, iClusterName, OPERATION_MODE.SYNCHRONOUS, null);
+		return (RET) save(iPojo, iClusterName, OPERATION_MODE.SYNCHRONOUS, null);
 	}
 
 	/**

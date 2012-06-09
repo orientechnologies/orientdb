@@ -111,7 +111,7 @@ public class OScriptGraphDatabaseWrapper {
   }
 
   public <THISDB extends ODatabase> THISDB setStatus(STATUS iStatus) {
-    return database.setStatus(iStatus);
+    return (THISDB) database.setStatus(iStatus);
   }
 
   public void drop() {
@@ -139,7 +139,7 @@ public class OScriptGraphDatabaseWrapper {
   }
 
   public <THISDB extends ODatabase> THISDB open(String iUserName, String iUserPassword) {
-    return database.open(iUserName, iUserPassword);
+    return (THISDB) database.open(iUserName, iUserPassword);
   }
 
   public ODocument save(ORecordInternal<?> iRecord) {
@@ -151,7 +151,7 @@ public class OScriptGraphDatabaseWrapper {
   }
 
   public <THISDB extends ODatabase> THISDB create() {
-    return database.create();
+    return (THISDB) database.create();
   }
 
   public boolean dropCluster(int iClusterId) {
@@ -235,7 +235,7 @@ public class OScriptGraphDatabaseWrapper {
   }
 
   public <RET extends ODatabaseComplex<?>> RET setMVCC(boolean iValue) {
-    return database.setMVCC(iValue);
+    return (RET) database.setMVCC(iValue);
   }
 
   public ODocument createVertex() {
@@ -259,7 +259,7 @@ public class OScriptGraphDatabaseWrapper {
   }
 
   public <RET extends ODatabaseRecord> RET setValidationEnabled(boolean iValue) {
-    return database.setValidationEnabled(iValue);
+    return (RET) database.setValidationEnabled(iValue);
   }
 
   public ODocument createEdge(ORID iSourceVertexRid, ORID iDestVertexRid) {
@@ -303,19 +303,19 @@ public class OScriptGraphDatabaseWrapper {
   }
 
   public <RET extends ORecordInternal<?>> RET load(ORID iRecordId) {
-    return database.load(iRecordId);
+    return (RET) database.load(iRecordId);
   }
 
   public <RET extends ORecordInternal<?>> RET load(ORID iRecordId, String iFetchPlan) {
-    return database.load(iRecordId, iFetchPlan);
+    return (RET) database.load(iRecordId, iFetchPlan);
   }
 
   public <RET extends ORecordInternal<?>> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache) {
-    return database.load(iRecordId, iFetchPlan, iIgnoreCache);
+    return (RET) database.load(iRecordId, iFetchPlan, iIgnoreCache);
   }
 
   public <RET extends ORecordInternal<?>> RET getRecord(OIdentifiable iIdentifiable) {
-    return database.getRecord(iIdentifiable);
+    return (RET) database.getRecord(iIdentifiable);
   }
 
   public int getDefaultClusterId() {
@@ -323,7 +323,7 @@ public class OScriptGraphDatabaseWrapper {
   }
 
   public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iRecord) {
-    return database.load(iRecord);
+    return (RET) database.load(iRecord);
   }
 
   public void removeEdge(ODocument iEdge) {
@@ -335,11 +335,11 @@ public class OScriptGraphDatabaseWrapper {
   }
 
   public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iRecord, String iFetchPlan) {
-    return database.load(iRecord, iFetchPlan);
+    return (RET) database.load(iRecord, iFetchPlan);
   }
 
   public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iRecord, String iFetchPlan, boolean iIgnoreCache) {
-    return database.load(iRecord, iFetchPlan, iIgnoreCache);
+    return (RET) database.load(iRecord, iFetchPlan, iIgnoreCache);
   }
 
   public ODatabaseComplex<?> setDatabaseOwner(ODatabaseComplex<?> iOwner) {
@@ -383,7 +383,7 @@ public class OScriptGraphDatabaseWrapper {
   }
 
   public <THISDB extends ODatabase> THISDB set(ATTRIBUTES attribute, Object iValue) {
-    return database.set(attribute, iValue);
+    return (THISDB) database.set(attribute, iValue);
   }
 
   public void setInternal(ATTRIBUTES attribute, Object iValue) {
