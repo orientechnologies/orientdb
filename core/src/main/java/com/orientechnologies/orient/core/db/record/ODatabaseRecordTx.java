@@ -201,17 +201,17 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 	@Override
 	public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final OPERATION_MODE iMode,
 			final ORecordCallback<? extends Number> iCallback) {
-		return save(iContent, (String) null, iMode, iCallback);
+		return (RET) save(iContent, (String) null, iMode, iCallback);
 	}
 
 	@Override
 	public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent) {
-		return save(iContent, (String) null, OPERATION_MODE.SYNCHRONOUS, null);
+		return  (RET) save(iContent, (String) null, OPERATION_MODE.SYNCHRONOUS, null);
 	}
 
 	@Override
 	public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final String iClusterName) {
-		return save(iContent, iClusterName, OPERATION_MODE.SYNCHRONOUS, null);
+		return  (RET) save(iContent, iClusterName, OPERATION_MODE.SYNCHRONOUS, null);
 	}
 
 	@SuppressWarnings("unchecked")

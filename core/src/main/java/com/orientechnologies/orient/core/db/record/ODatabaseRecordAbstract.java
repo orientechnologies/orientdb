@@ -231,15 +231,15 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   }
 
   public <RET extends ORecordInternal<?>> RET reload(final ORecordInternal<?> iRecord) {
-    return executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, null, true);
+    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, null, true);
   }
 
   public <RET extends ORecordInternal<?>> RET reload(final ORecordInternal<?> iRecord, final String iFetchPlan) {
-    return executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, true);
+    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, true);
   }
 
   public <RET extends ORecordInternal<?>> RET reload(final ORecordInternal<?> iRecord, final String iFetchPlan, boolean iIgnoreCache) {
-    return executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache);
+    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache);
   }
 
   /**
@@ -270,7 +270,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    * Updates the record without checking the version.
    */
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent) {
-    return executeSaveRecord(iContent, null, iContent.getVersion(), iContent.getRecordType(), true, OPERATION_MODE.SYNCHRONOUS,
+    return (RET)  executeSaveRecord(iContent, null, iContent.getVersion(), iContent.getRecordType(), true, OPERATION_MODE.SYNCHRONOUS,
         null);
   }
 
@@ -281,14 +281,14 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    */
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final OPERATION_MODE iMode,
       final ORecordCallback<? extends Number> iCallback) {
-    return executeSaveRecord(iContent, null, iContent.getVersion(), iContent.getRecordType(), true, iMode, iCallback);
+    return (RET) executeSaveRecord(iContent, null, iContent.getVersion(), iContent.getRecordType(), true, iMode, iCallback);
   }
 
   /**
    * Updates the record in the requested cluster without checking the version.
    */
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final String iClusterName) {
-    return executeSaveRecord(iContent, iClusterName, iContent.getVersion(), iContent.getRecordType(), true,
+    return (RET) executeSaveRecord(iContent, iClusterName, iContent.getVersion(), iContent.getRecordType(), true,
         OPERATION_MODE.SYNCHRONOUS, null);
   }
 
@@ -299,7 +299,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    */
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final String iClusterName,
       final OPERATION_MODE iMode, final ORecordCallback<? extends Number> iCallback) {
-    return executeSaveRecord(iContent, iClusterName, iContent.getVersion(), iContent.getRecordType(), true, iMode, iCallback);
+    return (RET) executeSaveRecord(iContent, iClusterName, iContent.getVersion(), iContent.getRecordType(), true, iMode, iCallback);
   }
 
   /**

@@ -206,7 +206,7 @@ public class ODocumentHelper {
       }
       return (RET) tempResult;
     } else
-      return getSingleFieldValue(value, iFieldName);
+      return  (RET) getSingleFieldValue(value, iFieldName);
   }
 
   @SuppressWarnings("unchecked")
