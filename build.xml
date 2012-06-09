@@ -5,7 +5,7 @@
 	<property environment="env" />
 	<property name="vendor"            value="Orient Technologies" />
 	<property name="product"           value="OrientDB" />
-	<property name="version"           value="1.0.2-SNAPSHOT" />
+	<property name="version"           value="1.1.0-SNAPSHOT" />
 	<property name="global.release"    value="../releases/${version}" />
 	<property name="db.release"        value="../releases/${version}" />
 	<property name="graph.release"     value="../releases/G${version}" />
@@ -156,6 +156,10 @@
 		<copy todir="${db.release}/benchmarks" flatten="true">
 		  <fileset dir="." includes="server/benchmarks/*"/>
 		</copy>
+		
+		<delete includeEmptyDirs="true">
+		  <fileset dir="${db.release}/log/" includes="**"/>
+		</delete>
 	</target>
 	
 	<target name="installg" depends="install">
@@ -192,7 +196,10 @@
 		</copy>
 		
 		<delete includeEmptyDirs="true">
-		  <fileset dir="${graph.release}/databases/" includes="**"/>
+		  <fileset dir="${graph.release}/log/" includes="**"/>
+		</delete>
+		<delete includeEmptyDirs="true">
+		  <fileset dir="${graph.release}/databases/" includes="demo"/>
 		</delete>
 	</target>
 
@@ -226,7 +233,7 @@
 		</copy>
 		
 		<delete includeEmptyDirs="true">
-		  <fileset dir="${clustered.release}/databases/" includes="**"/>
+		  <fileset dir="${clustered.release}/log/" includes="**"/>
 		</delete>
 	</target>
 	
