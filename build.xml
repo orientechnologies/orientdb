@@ -3,13 +3,13 @@
   <!-- Copyright (c) 1999-2011 Luca Garulli - LICENSE: Apache 2.0 -->
   
 	<property environment="env" />
-	<property name="vendor"            value="Orient Technologies" />
+	<property name="vendor"            value="NuvolaBase Ltd" />
 	<property name="product"           value="OrientDB" />
 	<property name="version"           value="1.1.0-SNAPSHOT" />
-	<property name="global.release"    value="../releases/${version}" />
-	<property name="db.release"        value="../releases/${version}" />
-	<property name="graph.release"     value="../releases/G${version}" />
-	<property name="clustered.release" value="../releases/C${version}" />
+	<property name="global.release"    value="../releases/orientdb-${version}" />
+	<property name="db.release"        value="../releases/orientdb-${version}" />
+	<property name="graph.release"     value="../releases/orientdb-graphed-${version}" />
+	<property name="clustered.release" value="../releases/orientdb-clustered-${version}" />
 	
 	<property name="env.ORIENTDB_HOME" value="${db.release}" />
 	
@@ -70,10 +70,12 @@
     <echo>                 `                                        </echo>
     <echo>                                                          </echo>
   
-		<mkdir dir="${global.release}" />
-		<mkdir dir="${db.release}" />
-		<mkdir dir="${db.release}/log" />
-		<mkdir dir="${db.release}/databases" />
+	<mkdir dir="${global.release}" />
+	<mkdir dir="${db.release}" />
+	<mkdir dir="${db.release}/log" />
+	<mkdir dir="${graph.release}/log" />
+	<mkdir dir="${clustered.release}/log" />
+	<mkdir dir="${db.release}/databases" />
   </target>
 
 	<target name="clean" depends="init">
@@ -239,17 +241,17 @@
 	
 	<target name="md5" depends="init">
 		<checksum algorithm="MD5" fileext=".md5">
-      <fileset dir="${db.release}/lib">
-        <include name="*.jar"/>
-      </fileset>
-    </checksum>
-    
+		  <fileset dir="${db.release}/lib">
+			<include name="*.jar"/>
+		  </fileset>
+		</checksum>
+		
 		<checksum algorithm="SHA" fileext=".sha1">
-      <fileset dir="${db.release}/lib">
-        <include name="*.jar"/>
-      </fileset>
-    </checksum>
-  </target>
+		  <fileset dir="${db.release}/lib">
+			<include name="*.jar"/>
+		  </fileset>
+		</checksum>
+	</target>
 	
 	<target name="test" depends="install">
 		<subant target="test">
@@ -278,11 +280,15 @@
   <target name="release" depends="install">
 		<mkdir dir="${global.release}" />
 		<delete file="../releases/orientdb-${version}.zip" />
-		<zip destfile="../releases/orientdb-${version}.zip" basedir="${db.release}" level="9" update="false" excludes="**/*.log.*" />
+		<zip destfile="../releases/orientdb-${version}.zip" basedir="../releases" level="9" update="false" includes="orientdb-1*/" excludes="**/*.log.*" />
 		
 		<mkdir dir="${graph.release}" />
 		<delete file="../releases/orientdb-graphed-${version}.zip" />
-		<zip destfile="../releases/orientdb-graphed-${version}.zip" basedir="${graph.release}" level="9" update="false" excludes="**/*.log.*" />
+		<zip destfile="../releases/orientdb-graphed-${version}.zip" basedir="../releases" level="9" update="false" includes="orientdb-graphed-*/"  excludes="**/*.log.*" />
+		
+		<mkdir dir="${clustered.release}" />
+		<delete file="../releases/orientdb-clustered-${version}.zip" />
+		<zip destfile="../releases/orientdb-clustered-${version}.zip" basedir="../releases" level="9" update="false" includes="orientdb-clustered-*/"  excludes="**/*.log.*" />
 	</target>
     
 </project>

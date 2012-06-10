@@ -80,17 +80,17 @@ public class OReplicationTask implements Callable<Object>, DataSerializable {
       stg.open(null, null, null);
 
     if (operation == CREATE) {
-      OLogManager.instance().warn(this, "DISTRIBUTED <- creating record %s v.%d size=%s", rid, version,
+      OLogManager.instance().debug(this, "DISTRIBUTED <- creating record %s v.%d size=%s", rid, version,
           OFileUtils.getSizeAsString(content.length));
       return stg.createRecord(0, rid, content, version, recordType, 0, null);
 
     } else if (operation == UPDATE) {
-      OLogManager.instance().warn(this, "DISTRIBUTED <- updating record %s v.%d size=%s", rid, version,
+      OLogManager.instance().debug(this, "DISTRIBUTED <- updating record %s v.%d size=%s", rid, version,
           OFileUtils.getSizeAsString(content.length));
       return stg.updateRecord(rid, content, version, recordType, 0, null);
 
     } else if (operation == DELETE) {
-      OLogManager.instance().warn(this, "DISTRIBUTED <- deleting record %s v.%d size=%s", rid, version,
+      OLogManager.instance().debug(this, "DISTRIBUTED <- deleting record %s v.%d size=%s", rid, version,
           OFileUtils.getSizeAsString(content.length));
       return stg.deleteRecord(rid, version, 0, null);
     } else

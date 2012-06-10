@@ -185,7 +185,7 @@ public class OHazelcastPlugin extends OServerHandlerAbstract implements OServerC
     if (clusterMember == null)
       throw new ODistributedException("Remote node '" + iNodeId + "' is not configured");
 
-    OLogManager.instance().warn(this, "DISTRIBUTED -> %s %s %s{%s}", iNodeId, ORecordOperation.getName(iOperation), dbName, rid);
+    OLogManager.instance().debug(this, "DISTRIBUTED -> %s %s %s{%s}", iNodeId, ORecordOperation.getName(iOperation), dbName, rid);
 
     final DistributedTask<Object> task = new DistributedTask<Object>(new OReplicationTask(dbName, iOperation, rid, record.buffer,
         record.version, record.recordType), clusterMember);
@@ -211,7 +211,7 @@ public class OHazelcastPlugin extends OServerHandlerAbstract implements OServerC
         members.add(m);
     }
 
-    OLogManager.instance().warn(this, "DISTRIBUTED -> %s %s %s{%s}", members, ORecordOperation.getName(iOperation), dbName, rid);
+    OLogManager.instance().debug(this, "DISTRIBUTED -> %s %s %s{%s}", members, ORecordOperation.getName(iOperation), dbName, rid);
 
     final MultiTask<Object> task = new MultiTask<Object>(new OReplicationTask(dbName, iOperation, rid, record.buffer,
         record.version, record.recordType), members);

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <orient-server>
 	<handlers>
-		<handler class="com.nuvolabase.orientdb.server.cluster.hazelcast.OHazelcastPlugin">
+		<handler class="com.orientechnologies.orient.server.cluster.hazelcast.OHazelcastPlugin">
 			<parameters>
 				<parameter value="true" name="enabled" />
 				<parameter value="src/test/resources/hazelcast-1.xml" name="configuration" />

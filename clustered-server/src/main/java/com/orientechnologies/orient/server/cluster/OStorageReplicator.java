@@ -112,7 +112,8 @@ public class OStorageReplicator {
       }
 
       try {
-        log.resetIfEmpty(aligned);
+        // FORCE RESET
+        log.reset();
       } catch (IOException e) {
         OLogManager.instance().error(this, "DISTRIBUTED -> Error on reset log file: %s", log, e);
       }

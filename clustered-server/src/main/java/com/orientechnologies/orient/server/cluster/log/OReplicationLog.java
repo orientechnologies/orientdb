@@ -97,6 +97,10 @@ public class OReplicationLog extends OSingleFileSegment {
       file.shrink(0);
   }
 
+  public void reset() throws IOException {
+    file.shrink(0);
+  }
+
   /**
    * Appends a log entry until reach the configured limit if any (>-1)
    */
@@ -106,11 +110,15 @@ public class OReplicationLog extends OSingleFileSegment {
     try {
       final long serial = totalEntries();
 
-      if (limit > -1 && limit > serial)
+      if (limit > -1 && serial > limit)
         return -1;
 
-      OLogManager.instance().warn(this, "Journaled operation #%d as %s against record %s", serial,
-          ORecordOperation.getName(iOperation), iRID);
+      if (serial > 0)
+        OLogManager.instance().warn(this, "Journaled operation #%d as %s against record %s", serial,
+            ORecordOperation.getName(iOperation), iRID);
+      else
+        OLogManager.instance().debug(this, "Journaled operation #%d as %s against record %s", serial,
+            ORecordOperation.getName(iOperation), iRID);
 
       int offset = file.allocateSpace(RECORD_SIZE);
 
