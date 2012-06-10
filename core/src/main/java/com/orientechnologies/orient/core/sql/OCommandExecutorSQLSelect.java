@@ -703,6 +703,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             for (Object o : ((Collection<?>) fieldValue)) {
               if (o instanceof OIdentifiable)
                 finalResult.add(((OIdentifiable) o).getRecord());
+              else if (o instanceof List) {
+                List<OIdentifiable> list = (List<OIdentifiable>) o;
+                for (int i = 0; i < list.size(); i++)
+                  finalResult.add(list.get(i).getRecord());
+              }
             }
           } else
             finalResult.add((OIdentifiable) fieldValue);
