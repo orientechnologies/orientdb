@@ -15,15 +15,6 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -41,18 +32,43 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 public abstract class OTransactionRealAbstract extends OTransactionAbstract {
-  protected Map<ORID, ORecord<?>>                 temp2persistent  = new HashMap<ORID, ORecord<?>>();
-  protected Map<ORID, ORecordOperation>           allEntries       = new IdentityHashMap<ORID, ORecordOperation>();
-  protected Map<ORID, ORecordOperation>           recordEntries    = new LinkedHashMap<ORID, ORecordOperation>();
-  protected Map<String, OTransactionIndexChanges> indexEntries     = new LinkedHashMap<String, OTransactionIndexChanges>();
-  protected int                                   id;
-  protected int                                   newObjectCounter = -2;
+  protected Map<ORID, ORecord<?>>                             temp2persistent       = new HashMap<ORID, ORecord<?>>();
+  protected Map<ORID, ORecordOperation>                       allEntries            = new IdentityHashMap<ORID, ORecordOperation>();
+  protected Map<ORID, ORecordOperation>                       recordEntries         = new LinkedHashMap<ORID, ORecordOperation>();
+  protected Map<String, OTransactionIndexChanges>             indexEntries          = new LinkedHashMap<String, OTransactionIndexChanges>();
+  protected Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<ORID, List<OTransactionRecordIndexOperation>>();
+  protected int                                               id;
+  protected int                                               newObjectCounter      = -2;
 
   /**
    * USE THIS AS RESPONSE TO REPORT A DELETED RECORD IN TX
    */
-  public static final ORecordFlat                 DELETED_RECORD   = new ORecordFlat();
+  public static final ORecordFlat                             DELETED_RECORD        = new ORecordFlat();
+
+  /**
+   * Represents information for each index operation for each record in DB.
+   */
+  public static final class OTransactionRecordIndexOperation {
+    public OTransactionRecordIndexOperation(String index, Object key, OPERATION operation) {
+      this.index = index;
+      this.key = key;
+      this.operation = operation;
+    }
+
+    public String    index;
+    public Object    key;
+    public OPERATION operation;
+  }
 
   protected OTransactionRealAbstract(ODatabaseRecordTx iDatabase, int iId) {
     super(iDatabase);
@@ -64,6 +80,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     allEntries.clear();
     recordEntries.clear();
     indexEntries.clear();
+    recordIndexOperations.clear();
     newObjectCounter = -2;
     status = TXSTATUS.INVALID;
 
@@ -164,6 +181,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 
   public void clearIndexEntries() {
     indexEntries.clear();
+    recordIndexOperations.clear();
   }
 
   public List<String> getInvolvedIndexes() {
@@ -247,10 +265,50 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       OTransactionIndexChangesPerKey changes = iKey != null ? indexEntry.getChangesPerKey(iKey) : indexEntry.getChangesCrossKey();
 
       changes.add(iValue, iOperation);
+
+      if (iValue == null)
+        return;
+
+      List<OTransactionRecordIndexOperation> transactionIndexOperations = recordIndexOperations.get(iValue.getIdentity());
+
+      if (transactionIndexOperations == null) {
+        transactionIndexOperations = new ArrayList<OTransactionRecordIndexOperation>();
+        recordIndexOperations.put(iValue.getIdentity().copy(), transactionIndexOperations);
+      }
+
+      transactionIndexOperations.add(new OTransactionRecordIndexOperation(iIndexName, iKey, iOperation));
     }
   }
 
-  protected void checkTransaction() {
+  public void updateIndexIdentityAfterCommit(final ORID oldRid, final ORID newRid) {
+    List<OTransactionRecordIndexOperation> transactionIndexOperations = recordIndexOperations.get(oldRid);
+    if (transactionIndexOperations != null) {
+      for (final OTransactionRecordIndexOperation indexOperation : transactionIndexOperations) {
+        OTransactionIndexChanges indexEntryChanges = indexEntries.get(indexOperation.index);
+        if (indexEntryChanges == null)
+          continue;
+
+				final OTransactionIndexChangesPerKey changesPerKey;
+				if(indexOperation.key != null)
+         changesPerKey = indexEntryChanges.getChangesPerKey(indexOperation.key);
+				else
+				 changesPerKey = indexEntryChanges.changesCrossKey;
+
+				updateChangesIdentity(oldRid, newRid, changesPerKey);
+      }
+    }
+  }
+
+	private void updateChangesIdentity(ORID oldRid, ORID newRid, OTransactionIndexChangesPerKey changesPerKey) {
+		if (changesPerKey == null)
+			return;
+
+		for (final OTransactionIndexEntry indexEntry : changesPerKey.entries)
+			if (indexEntry.value.getIdentity().equals(oldRid))
+				indexEntry.value = newRid;
+	}
+
+	protected void checkTransaction() {
     if (status == TXSTATUS.INVALID)
       throw new OTransactionException("Invalid state of the transaction. The transaction must be begun.");
   }

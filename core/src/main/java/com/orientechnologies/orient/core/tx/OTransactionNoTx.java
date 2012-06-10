@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import java.util.Collection;
-import java.util.List;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -30,6 +27,9 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * No operation transaction.
@@ -183,4 +183,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
   public List<String> getInvolvedIndexes() {
     return null;
   }
+
+	public void updateIndexIdentityAfterCommit(ORID oldRid, ORID newRid) {
+	}
 }

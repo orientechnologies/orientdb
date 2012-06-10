@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -33,6 +29,10 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class OStorageLocalTxExecuter {
   private final OStorageLocal storage;
@@ -211,6 +211,8 @@ public class OStorageLocalTxExecuter {
       // CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
       byte[] stream = txEntry.getRecord().toStream();
 
+			final ORID oldRid = rid.copy();
+
       if (rid.isNew()) {
         txEntry.getRecord().onBeforeIdentityChanged(rid);
         rid.clusterId = cluster.getId();
@@ -229,6 +231,7 @@ public class OStorageLocalTxExecuter {
         txEntry.getRecord().setVersion(ppos.recordVersion);
 
         txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
+				iTx.updateIndexIdentityAfterCommit(oldRid, rid);
       } else {
         if (iUseLog)
           txEntry.getRecord()

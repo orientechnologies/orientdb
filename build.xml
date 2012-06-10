@@ -158,7 +158,7 @@
 		</copy>
 		
 		<delete includeEmptyDirs="true">
-		  <fileset dir="${db.release}/log/" includes="**"/>
+		  <fileset dir="${db.release}/log/" includes="**/*"/>
 		</delete>
 	</target>
 	
@@ -196,7 +196,7 @@
 		</copy>
 		
 		<delete includeEmptyDirs="true">
-		  <fileset dir="${graph.release}/log/" includes="**"/>
+		  <fileset dir="${graph.release}/log/" includes="**/*"/>
 		</delete>
 		<delete includeEmptyDirs="true">
 		  <fileset dir="${graph.release}/databases/" includes="demo"/>
@@ -233,7 +233,7 @@
 		</copy>
 		
 		<delete includeEmptyDirs="true">
-		  <fileset dir="${clustered.release}/log/" includes="**"/>
+		  <fileset dir="${clustered.release}/log/" includes="**/*"/>
 		</delete>
 	</target>
 	

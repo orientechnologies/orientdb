@@ -15,17 +15,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
@@ -51,6 +40,17 @@ import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @SuppressWarnings("serial")
 public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
@@ -296,9 +296,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
               final Long v = new Long(OStringSerializerHelper.getStringContent(iFieldValue));
               if (v.longValue() > 0) {
                 // POSITIVE NUMBER
-                if (v.compareTo(MAX_INT) < 0)
+                if (v.compareTo(MAX_INT) <= 0)
                   return v.intValue();
-              } else if (v.compareTo(MIN_INT) > 0)
+              } else if (v.compareTo(MIN_INT) >= 0)
                 // NEGATIVE NUMBER
                 return v.intValue();
 

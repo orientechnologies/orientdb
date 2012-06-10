@@ -15,18 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.exception.OException;
@@ -67,6 +55,18 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -396,8 +396,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
     });
 
-    final List<Collection<OIdentifiable>> results = new ArrayList<Collection<OIdentifiable>>();
-
     // go through all variants to choose which one can be used for index search.
     for (final OIndexSearchResult searchResult : indexSearchResults) {
       final int searchResultFieldsCount = searchResult.fields().size();
@@ -441,44 +439,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         return true;
       }
     }
-
-    // results.add(result);
-    // }
-    // }
-    //
-    // if(results.size() == 1){
-    // fillSearchIndexResultSet(results.get(0));
-    // return true;
-    // }else if(!results.isEmpty()){
-    // //intersect index results
-    // //we use a treeset to keep oid sorted for paging
-    // final Set<OIdentifiable> sortedMergedResult = new TreeSet<OIdentifiable>();
-    //
-    // final Collection<OIdentifiable>[] array = results.toArray(new Collection[results.size()]);
-    // for(int i=0;i<array.length;i++){
-    // final Collection<OIdentifiable> result = array[i];
-    //
-    // oidLoop:
-    // for(OIdentifiable oid : result){
-    // //check if we already verified this oid
-    // if(sortedMergedResult.contains(oid)) continue oidLoop;
-    //
-    // //check this id is also in other indexes
-    // for(int k=0;k<array.length;k++){
-    // if(k==i)continue; //skip the current collection
-    // if(!array[i].contains(oid)){
-    // continue oidLoop;
-    // }
-    // }
-    // sortedMergedResult.add(oid);
-    // }
-    // }
-    //
-    // fillSearchIndexResultSet(sortedMergedResult);
-    // return true;
-    // }
-    //
-
     return false;
   }
 
@@ -911,15 +871,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       } finally {
         if (indexInternal instanceof OSharedResource)
           ((OSharedResource) indexInternal).releaseExclusiveLock();
-      }
-    }
-
-    if (anyFunctionAggregates) {
-      for (final Entry<String, Object> projection : projections.entrySet()) {
-        if (projection.getValue() instanceof OSQLFunctionRuntime) {
-          final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection.getValue();
-          f.setResult(index.getSize());
-        }
       }
     }
   }
