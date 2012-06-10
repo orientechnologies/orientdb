@@ -1191,8 +1191,8 @@ public class IndexTest {
         "select from  index:TransactionUniqueIndexWithDotTest.label"));
     Assert.assertEquals(resultBeforeCommit.size(), 1);
 
+		long countClassBefore = db.countClass("TransactionUniqueIndexWithDotTest");
     db.begin();
-
     try {
       ODocument docTwo = new ODocument("TransactionUniqueIndexWithDotTest");
       docTwo.field("label", "A");
@@ -1202,6 +1202,9 @@ public class IndexTest {
       Assert.fail();
     } catch (OIndexException oie) {
     }
+
+		Assert.assertEquals(((List<ODocument>)
+						db.command(new OCommandSQL("select from TransactionUniqueIndexWithDotTest")).execute()).size(), countClassBefore);
 
     final List<ODocument> resultAfterCommit = db.query(new OSQLSynchQuery<ODocument>(
         "select from  index:TransactionUniqueIndexWithDotTest.label"));

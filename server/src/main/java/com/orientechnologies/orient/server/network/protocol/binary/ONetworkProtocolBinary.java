@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
-import java.io.IOException;
-import java.net.Socket;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -68,6 +60,14 @@ import com.orientechnologies.orient.server.distributed.OServerCluster;
 import com.orientechnologies.orient.server.handler.OServerHandler;
 import com.orientechnologies.orient.server.handler.OServerHandlerHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
+
+import java.io.IOException;
+import java.net.Socket;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -797,7 +797,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       }
     } catch (OTransactionAbortedException e) {
       // TX ABORTED BY THE CLIENT
-    }
+    } catch (Exception e) {
+			//Error during TX initialization, possibly index constraints violation.
+			tx.close();
+			sendError(clientTxId, e);
+		}
   }
 
   @SuppressWarnings("unchecked")
