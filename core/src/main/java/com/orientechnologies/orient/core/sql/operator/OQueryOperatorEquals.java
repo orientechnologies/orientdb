@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -34,6 +30,10 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * EQUALS operator.
@@ -120,11 +120,10 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
       if (indexResult instanceof Collection)
         return (Collection<OIdentifiable>) indexResult;
 
-      if (indexResult == null)
-        return null;
-
-      return indexResult == null ? null : Collections.singletonList((OIdentifiable) indexResult);
-    } else {
+			if(indexResult == null)
+				return Collections.emptyList();
+			return  Collections.singletonList((OIdentifiable) indexResult);
+		} else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
 

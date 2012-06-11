@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -28,6 +24,10 @@ import com.orientechnologies.orient.core.index.OIndexFullText;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * CONTAINS KEY operator.
@@ -114,8 +114,10 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
       if (indexResult instanceof Collection)
         return (Collection<OIdentifiable>) indexResult;
 
-      return indexResult == null ? null : Collections.singletonList((OIdentifiable) indexResult);
-    }
+			if(indexResult == null)
+				return Collections.emptyList();
+			return  Collections.singletonList((OIdentifiable) indexResult);
+		}
     return null;
   }
 

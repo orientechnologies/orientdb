@@ -15,11 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -34,6 +29,11 @@ import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * CONTAINS KEY operator.
@@ -136,8 +136,10 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
       if (indexResult instanceof Collection)
         return (Collection<OIdentifiable>) indexResult;
 
-      return indexResult == null ? null : Collections.singletonList((OIdentifiable) indexResult);
-    }
+			if(indexResult == null)
+				return Collections.emptyList();
+			return  Collections.singletonList((OIdentifiable) indexResult);
+		}
     return null;
   }
 
