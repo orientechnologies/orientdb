@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.client.db;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
@@ -26,6 +22,10 @@ import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 
 public class ODatabaseHelper {
   public static void createDatabase(ODatabase database, final String iURL) throws IOException {
@@ -80,7 +80,7 @@ public class ODatabaseHelper {
 
   protected static String getServerRootPassword(final String iDirectory) throws IOException {
     // LOAD SERVER CONFIG FILE TO EXTRACT THE ROOT'S PASSWORD
-    File file = new File("../releases/" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
+    File file = new File("../releases/orientdb-" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
     if (!file.exists())
       file = new File(iDirectory + "/config/orientdb-server-config.xml");
     if (!file.exists())
