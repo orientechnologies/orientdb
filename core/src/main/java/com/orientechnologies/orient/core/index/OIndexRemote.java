@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.*;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -29,6 +27,12 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Proxied abstract index.
@@ -65,6 +69,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 	private final static String		QUERY_REMOVE3																			= "delete from index:%s where rid = ?";
 	private final static String		QUERY_CONTAINS																		= "select count(*) as size from index:%s where key = ?";
 	private final static String		QUERY_SIZE																				= "select count(*) as size from index:%s";
+	private final static String		QUERY_KEY_SIZE																		= "select count(distinct( key )) as size from index:%s";
 	private final static String		QUERY_KEYS																				= "select key from index:%s";
 	private final static String		QUERY_REBUILD																			= "rebuild index %s";
 	private final static String		QUERY_CLEAR																				= "delete from index:%s";
@@ -232,6 +237,12 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
 	public long getSize() {
 		final OCommandRequest cmd = formatCommand(QUERY_SIZE, name);
+		final List<ODocument> result = getDatabase().command(cmd).execute();
+		return (Long) result.get(0).field("size");
+	}
+
+	public long getKeySize() {
+		final OCommandRequest cmd = formatCommand(QUERY_KEY_SIZE, name);
 		final List<ODocument> result = getDatabase().command(cmd).execute();
 		return (Long) result.get(0).field("size");
 	}

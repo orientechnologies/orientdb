@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMVRBTree;
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.common.listener.OProgressListener;
@@ -36,6 +28,14 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Abstract Index implementation that allows only one value for a key.
@@ -423,5 +423,23 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 			releaseExclusiveLock();
 		}
 
+	}
+
+	public long getSize() {
+		acquireSharedLock();
+		try {
+			return map.size();
+		} finally {
+			releaseSharedLock();
+		}
+	}
+
+	public long getKeySize() {
+		acquireSharedLock();
+		try {
+			return map.size();
+		} finally {
+			releaseSharedLock();
+		}
 	}
 }

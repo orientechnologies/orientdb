@@ -15,17 +15,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map.Entry;
-import java.util.NoSuchElementException;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.listener.OProgressListener;
@@ -57,6 +46,17 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProviderAbstract;
+
+import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map.Entry;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 /**
  * Handles indexing when records change.
@@ -504,18 +504,6 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 
     } finally {
       releaseExclusiveLock();
-    }
-  }
-
-  public long getSize() {
-
-    acquireSharedLock();
-    try {
-
-      return map.size();
-
-    } finally {
-      releaseSharedLock();
     }
   }
 

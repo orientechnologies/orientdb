@@ -48,10 +48,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 @Test(groups = { "index" })
 public class IndexTest {
@@ -938,7 +940,7 @@ public class IndexTest {
       whiz.save();
     }
 
-    Assert.assertEquals(idx.getSize(), 1);
+    Assert.assertEquals(idx.getSize(), 5);
 
     final List<ODocument> indexedResult = database.getUnderlying()
         .command(new OSQLSynchQuery<Profile>("select * from Whiz where account = ?")).execute(result.get(0).getRid());
@@ -1191,7 +1193,7 @@ public class IndexTest {
         "select from  index:TransactionUniqueIndexWithDotTest.label"));
     Assert.assertEquals(resultBeforeCommit.size(), 1);
 
-		long countClassBefore = db.countClass("TransactionUniqueIndexWithDotTest");
+    long countClassBefore = db.countClass("TransactionUniqueIndexWithDotTest");
     db.begin();
     try {
       ODocument docTwo = new ODocument("TransactionUniqueIndexWithDotTest");
@@ -1203,8 +1205,9 @@ public class IndexTest {
     } catch (OIndexException oie) {
     }
 
-		Assert.assertEquals(((List<ODocument>)
-						db.command(new OCommandSQL("select from TransactionUniqueIndexWithDotTest")).execute()).size(), countClassBefore);
+    Assert.assertEquals(
+        ((List<ODocument>) db.command(new OCommandSQL("select from TransactionUniqueIndexWithDotTest")).execute()).size(),
+        countClassBefore);
 
     final List<ODocument> resultAfterCommit = db.query(new OSQLSynchQuery<ODocument>(
         "select from  index:TransactionUniqueIndexWithDotTest.label"));
@@ -1355,37 +1358,74 @@ public class IndexTest {
 
     Assert.assertTrue(idx.contains(52));
     Assert.assertFalse(idx.contains(0));
-		Assert.assertTrue(idx.get(52).getIdentity().isPersistent());
-		Assert.assertEquals(idx.get(52).getIdentity(), v.getIdentity());
-	}
+    Assert.assertTrue(idx.get(52).getIdentity().isPersistent());
+    Assert.assertEquals(idx.get(52).getIdentity(), v.getIdentity());
+  }
 
-	public void testIndexCountPlusCondition() {
+  public void testIndexCountPlusCondition() {
+    OIndexManager idxManager = database.getMetadata().getIndexManager();
+    idxManager.createIndex("IndexCountPlusCondition", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null);
+
+    final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("IndexCountPlusCondition");
+
+    final Map<Integer, Long> keyDocsCount = new HashMap<Integer, Long>();
+    for (int i = 1; i < 100; i++) {
+      final Integer key = (int) Math.log(i);
+
+      final ODocument doc = new ODocument();
+      doc.save();
+
+      idx.put(key, doc);
+
+      if (keyDocsCount.containsKey(key))
+        keyDocsCount.put(key, keyDocsCount.get(key) + 1);
+      else
+        keyDocsCount.put(key, 1L);
+    }
+
+    for (Map.Entry<Integer, Long> entry : keyDocsCount.entrySet()) {
+      List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
+          "select count(*) from index:IndexCountPlusCondition where key = ?"), entry.getKey());
+      Assert.assertEquals(result.get(0).<Long> field("count"), entry.getValue());
+    }
+  }
+
+  public void testNotUniqueIndexKeySize() {
+    OIndexManager idxManager = database.getMetadata().getIndexManager();
+    idxManager.createIndex("IndexNotUniqueIndexKeySize", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null);
+
+    final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("IndexNotUniqueIndexKeySize");
+
+    final Set<Integer> keys = new HashSet<Integer>();
+    for (int i = 1; i < 100; i++) {
+      final Integer key = (int) Math.log(i);
+
+      final ODocument doc = new ODocument();
+      doc.save();
+
+      idx.put(key, doc);
+
+      keys.add(key);
+    }
+
+		Assert.assertEquals(idx.getKeySize(), keys.size());
+  }
+
+	public void testNotUniqueIndexSize() {
 		OIndexManager idxManager = database.getMetadata().getIndexManager();
-		idxManager.createIndex("IndexCountPlusCondition", "NOTUNIQUE",
-						new OSimpleKeyIndexDefinition(OType.INTEGER), null, null);
+		idxManager.createIndex("IndexNotUniqueIndexSize", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null);
 
-		final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("IndexCountPlusCondition");
+		final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("IndexNotUniqueIndexSize");
 
-		final Map<Integer, Long> keyDocsCount = new HashMap<Integer, Long>();
-		for(int i = 1; i < 100; i++) {
-			final Integer key = (int)Math.log(i);
+		for (int i = 1; i < 100; i++) {
+			final Integer key = (int) Math.log(i);
 
 			final ODocument doc = new ODocument();
 			doc.save();
 
 			idx.put(key, doc);
-
-			if(keyDocsCount.containsKey(key))
-				keyDocsCount.put(key, keyDocsCount.get(key) + 1);
-			else
-				keyDocsCount.put(key, 1L);
 		}
 
-		for(Map.Entry<Integer, Long> entry : keyDocsCount.entrySet()) {
-			List<ODocument> result = database.query(
-							new OSQLSynchQuery<ODocument>("select count(*) from index:IndexCountPlusCondition where key = ?"),
-							entry.getKey());
-			Assert.assertEquals(result.get(0).<Long>field("count"), entry.getValue());
-		}
+		Assert.assertEquals(idx.getSize(), 99);
 	}
 }

@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMVRBTree;
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.common.listener.OProgressListener;
@@ -32,6 +24,14 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Abstract index implementation that supports multi-values for the same key.
@@ -513,6 +513,46 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
       return result;
     } finally {
       releaseExclusiveLock();
+    }
+  }
+
+  public long getSize() {
+    if (map.size() == 0)
+      return 0;
+
+    acquireExclusiveLock();
+    try {
+      OMVRBTreeEntry<Object, Set<OIdentifiable>> rootEntry = map.getRoot();
+      long size = 0;
+
+      OMVRBTreeEntry<Object, Set<OIdentifiable>> currentEntry = rootEntry;
+      map.setPageIndex(0);
+
+      while (currentEntry != null) {
+        size += currentEntry.getValue().size();
+        currentEntry = OMVRBTree.next(currentEntry);
+      }
+
+      map.setPageIndex(0);
+      currentEntry = OMVRBTree.previous(rootEntry);
+
+      while (currentEntry != null) {
+        size += currentEntry.getValue().size();
+        currentEntry = OMVRBTree.previous(currentEntry);
+      }
+
+      return size;
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  public long getKeySize() {
+    acquireSharedLock();
+    try {
+      return map.size();
+    } finally {
+      releaseSharedLock();
     }
   }
 }

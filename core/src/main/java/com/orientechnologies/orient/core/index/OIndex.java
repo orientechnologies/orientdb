@@ -263,6 +263,12 @@ public interface OIndex<T> {
 	 */
 	public long getSize();
 
+
+	/**
+	 * @return Number of keys in index
+	 */
+	public long getKeySize();
+
 	/**
 	 * For unique indexes it will throw exception if passed in key is contained in index.
 	 * 

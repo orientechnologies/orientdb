@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
+import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
@@ -847,16 +848,19 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
 
     } else {
-      // for "select count(*) from index:" we do not need to fetch all index data.
-      if (anyFunctionAggregates && projections.entrySet().size() == 1) {
-        final Object projection = projections.values().iterator().next();
-        if (projection instanceof OSQLFunctionRuntime
-            && ((OSQLFunctionRuntime) projection).getRoot().equals(OSQLFunctionCount.NAME)) {
-          final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection;
-          f.setResult(index.getSize());
-          return;
-        }
-      }
+      if(isIndexSizeQuery()) {
+				final Object projection = projections.values().iterator().next();
+				final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection;
+				f.setResult(index.getSize());
+				return;
+			}
+
+			if(isIndexKeySizeQuery()) {
+				final Object projection = projections.values().iterator().next();
+				final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection;
+				f.setResult(index.getKeySize());
+				return;
+			}
 
       final OIndexInternal<?> indexInternal = index.getInternal();
       if (indexInternal instanceof OSharedResource)
@@ -879,6 +883,56 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
     }
   }
+
+	private boolean isIndexSizeQuery() {
+		if (!(anyFunctionAggregates && projections.entrySet().size() == 1))
+			return false;
+
+		final Object projection = projections.values().iterator().next();
+		if (!(projection instanceof OSQLFunctionRuntime))
+			return false;
+
+		final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection;
+		if(!f.getRoot().equals(OSQLFunctionCount.NAME))
+			return false;
+
+		if(!((f.configuredParameters == null || f.configuredParameters.length == 0) ||
+						(f.configuredParameters != null && f.configuredParameters.length == 1 && f.configuredParameters[0].equals("*"))))
+			return false;
+
+		return true;
+	}
+
+	private boolean isIndexKeySizeQuery() {
+		if (!(anyFunctionAggregates && projections.entrySet().size() == 1))
+			return false;
+
+		final Object projection = projections.values().iterator().next();
+		if (!(projection instanceof OSQLFunctionRuntime))
+			return false;
+
+		final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection;
+		if(!f.getRoot().equals(OSQLFunctionCount.NAME))
+			return false;
+
+		if(!(f.configuredParameters != null && f.configuredParameters.length == 1
+						&& f.configuredParameters[0] instanceof OSQLFunctionRuntime) )
+		return false;
+
+		final OSQLFunctionRuntime fConfigured = (OSQLFunctionRuntime) f.configuredParameters[0];
+		if(!fConfigured.getRoot().equals(OSQLFunctionDistinct.NAME))
+			return false;
+
+		if(!(fConfigured.configuredParameters != null && fConfigured.configuredParameters.length == 1
+						&& fConfigured.configuredParameters[0] instanceof OSQLFilterItemField))
+			return false;
+
+		final OSQLFilterItemField field = (OSQLFilterItemField)fConfigured.configuredParameters[0];
+		if(!field.getRoot().equals("key"))
+			return false;
+
+		return true;
+	}
 
   private Object getIndexKey(final OIndexDefinition indexDefinition, Object value) {
     if (indexDefinition instanceof OCompositeIndexDefinition) {
