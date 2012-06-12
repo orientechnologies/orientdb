@@ -30,7 +30,8 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.storage.OCluster;
 
 /**
- * SQL CREATE PROPERTY command: Creates a new property in the target class.
+ * SQL DROP CLASS command: Drops a class from the database. Cluster associated are removed too if are used exclusively by the
+ * deleting class.
  * 
  * @author Luca Garulli
  * 
