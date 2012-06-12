@@ -184,6 +184,11 @@ public class ODatabaseRaw implements ODatabase {
     return (DB) this;
   }
 
+  public <DB extends ODatabase> DB setDefaultClusterId(final int iDefClusterId) {
+    storage.setDefaultClusterId(iDefClusterId);
+    return (DB) this;
+  }
+
   public boolean exists() {
     if (status == STATUS.OPEN)
       return true;
@@ -272,7 +277,7 @@ public class ODatabaseRaw implements ODatabase {
   }
 
   public String getName() {
-    return storage != null ? storage.getName() : "<no-name>";
+    return storage != null ? storage.getName() : url;
   }
 
   public String getURL() {
@@ -490,6 +495,14 @@ public class ODatabaseRaw implements ODatabase {
     switch (iAttribute) {
     case STATUS:
       setStatus(STATUS.valueOf(stringValue.toUpperCase(Locale.ENGLISH)));
+      break;
+    case DEFAULTCLUSTERID:
+      if (iValue != null) {
+        if (iValue instanceof Number)
+          storage.setDefaultClusterId(((Number) iValue).intValue());
+        else
+          storage.setDefaultClusterId(storage.getClusterIdByName(iValue.toString()));
+      }
       break;
     }
 

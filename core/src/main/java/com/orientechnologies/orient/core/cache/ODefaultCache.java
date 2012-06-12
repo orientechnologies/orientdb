@@ -47,7 +47,7 @@ public class ODefaultCache implements OCache {
 
   protected OMemoryWatchDog.Listener            lowMemoryListener;
 
-  public ODefaultCache(final int initialLimit) {
+  public ODefaultCache(final String iName, final int initialLimit) {
     final int initialCapacity = initialLimit > 0 ? initialLimit : DEFAULT_LIMIT;
     limit = initialLimit;
     cache = new OLinkedHashMapCache(initialCapacity, 0.75f, limit);

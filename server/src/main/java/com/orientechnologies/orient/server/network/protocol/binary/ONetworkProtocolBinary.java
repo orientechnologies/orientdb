@@ -320,7 +320,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     final String clusterName = connection.database.getClusterNameById(id);
     if (clusterName == null)
-      throw new IllegalArgumentException("Cluster " + id + " doesn't exist anymore. Refresh the db structure or just reconnect to the database");
+      throw new IllegalArgumentException("Cluster " + id
+          + " doesn't exist anymore. Refresh the db structure or just reconnect to the database");
 
     boolean result = connection.database.dropCluster(clusterName);
 
@@ -798,10 +799,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     } catch (OTransactionAbortedException e) {
       // TX ABORTED BY THE CLIENT
     } catch (Exception e) {
-			//Error during TX initialization, possibly index constraints violation.
-			tx.close();
-			sendError(clientTxId, e);
-		}
+      // Error during TX initialization, possibly index constraints violation.
+      tx.close();
+      sendError(clientTxId, e);
+    }
   }
 
   @SuppressWarnings("unchecked")
@@ -817,6 +818,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     connection.data.commandDetail = command.getText();
 
+    // ENABLES THE CACHE TO IMPROVE PERFORMANCE OF COMPLEX COMMANDS LIKE TRAVERSE
+    //connection.database.getLevel1Cache().setEnable(true);
     beginResponse();
     try {
       if (asynch) {
@@ -902,6 +905,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       }
     } finally {
       endResponse();
+      //connection.database.getLevel1Cache().setEnable(false);
     }
   }
 

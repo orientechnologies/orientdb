@@ -8,12 +8,17 @@
 				<parameter name="configuration" value="${ORIENTDB_HOME}/config/hazelcast.xml" />
 				<parameter name="db.*"
 					value="{
-						'replication' : true,
-						'clusters' : {
-							'*' : { 'replication' : true, 'offlineMaxBuffer' : 1000000 },
-							'internal' : { 'replication' : false }
-						},
-						'classes':{}
+					    'servers' : {
+					      '*' : {
+							'replication' : true,
+							'clusters' : {
+								'*' : { 'replication' : true, 'offlineMaxBuffer' : 1000000 },
+								'internal' : { 'replication' : false },
+								'index' : { 'replication' : false }
+							},
+							'classes':{}
+							}
+						}
 					}" />
 			</parameters>
 		</handler>
@@ -73,6 +78,9 @@
 	<users>
 	</users>
 	<properties>
+		<!-- Uses the Hazelcast's distributed cache as 2nd level cache -->
+		<entry name="cache.level2.impl" value="com.orientechnologies.orient.server.cluster.hazelcast.OHazelcastCache" />
+
 		<!-- Enable/Disable logging. Levels are: finer, fine, finest, info, warning -->
 		<entry name="log.console.level" value="info" />
 		<entry name="log.file.level" value="fine" />

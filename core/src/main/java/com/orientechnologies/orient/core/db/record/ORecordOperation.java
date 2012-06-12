@@ -40,6 +40,7 @@ public class ORecordOperation implements OSerializableStream {
   public long               serial;
   public byte               type;
   public OIdentifiable      record;
+  public int                version;
   public long               date;
 
   public int                dataSegmentId    = 0; // DEFAULT ONE

@@ -83,7 +83,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
         sendAuthorizationRequest(iRequest, iRequest.databaseName);
         return false;
 
-      } else if (!currentSession.getUserName().equals(authenticationParts.get(0))) {
+      } else if (authenticationParts != null && !currentSession.getUserName().equals(authenticationParts.get(0))) {
 
         // SECURITY PROBLEM: CROSS DATABASE REQUEST!
         OLogManager.instance().warn(this,

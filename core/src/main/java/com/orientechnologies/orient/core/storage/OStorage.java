@@ -155,6 +155,8 @@ public interface OStorage extends OSharedContainer {
 
   public int getDefaultClusterId();
 
+  public void setDefaultClusterId(final int defaultClusterId);
+
   public int getClusterIdByName(String iClusterName);
 
   public String getClusterTypeByName(String iClusterName);

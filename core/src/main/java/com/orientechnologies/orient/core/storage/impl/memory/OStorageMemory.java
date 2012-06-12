@@ -754,4 +754,8 @@ public class OStorageMemory extends OStorageEmbedded {
       } catch (IOException e) {
       }
   }
+
+  public void setDefaultClusterId(int defaultClusterId) {
+    this.defaultClusterId = defaultClusterId;
+  }
 }

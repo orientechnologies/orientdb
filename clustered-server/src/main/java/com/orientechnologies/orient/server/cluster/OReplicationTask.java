@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.cluster.hazelcast;
+package com.orientechnologies.orient.server.cluster;
 
-import java.io.DataInput;
-import java.io.DataOutput;
+import java.io.Externalizable;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.concurrent.Callable;
 
-import com.hazelcast.nio.DataSerializable;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServerMain;
+import com.orientechnologies.orient.server.cluster.hazelcast.OHazelcastPhysicalPosition;
 
 /**
  * Distributed task used for replication
@@ -34,19 +35,19 @@ import com.orientechnologies.orient.server.OServerMain;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OReplicationTask implements Callable<Object>, DataSerializable {
+public class OReplicationTask implements Callable<Object>, Externalizable {
   private static final long serialVersionUID = 1L;
 
   public static final byte  UPDATE           = 1;
   public static final byte  DELETE           = 2;
   public static final byte  CREATE           = 3;
 
-  private String            databaseName;
-  private byte              operation;
-  private ORecordId         rid;
-  private byte[]            content;
-  private int               version;
-  private byte              recordType;
+  protected String          databaseName;
+  protected byte            operation;
+  protected ORecordId       rid;
+  protected byte[]          content;
+  protected int             version;
+  protected byte            recordType;
 
   public OReplicationTask() {
   }
@@ -82,7 +83,8 @@ public class OReplicationTask implements Callable<Object>, DataSerializable {
     if (operation == CREATE) {
       OLogManager.instance().debug(this, "DISTRIBUTED <- creating record %s v.%d size=%s", rid, version,
           OFileUtils.getSizeAsString(content.length));
-      return stg.createRecord(0, rid, content, version, recordType, 0, null);
+      // RETURNS THE WRAPPED PHY-POS TO OPTIMIZE SERIALIZATION USING HAZELCAST'S ONE
+      return new OHazelcastPhysicalPosition(stg.createRecord(0, rid, content, version, recordType, 0, null));
 
     } else if (operation == UPDATE) {
       OLogManager.instance().debug(this, "DISTRIBUTED <- updating record %s v.%d size=%s", rid, version,
@@ -100,7 +102,18 @@ public class OReplicationTask implements Callable<Object>, DataSerializable {
   }
 
   @Override
-  public void readData(final DataInput in) throws IOException {
+  public void writeExternal(ObjectOutput out) throws IOException {
+    out.writeUTF(databaseName);
+    out.write(operation);
+    out.writeUTF(rid.toString());
+    out.writeInt(content.length);
+    out.write(content);
+    out.writeInt(version);
+    out.write(recordType);
+  }
+
+  @Override
+  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
     databaseName = in.readUTF();
     operation = in.readByte();
     rid = new ORecordId(in.readUTF());
@@ -109,16 +122,5 @@ public class OReplicationTask implements Callable<Object>, DataSerializable {
     in.readFully(content);
     version = in.readInt();
     recordType = in.readByte();
-  }
-
-  @Override
-  public void writeData(final DataOutput out) throws IOException {
-    out.writeUTF(databaseName);
-    out.write(operation);
-    out.writeUTF(rid.toString());
-    out.writeInt(content.length);
-    out.write(content);
-    out.writeInt(version);
-    out.write(recordType);
   }
 }

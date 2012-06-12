@@ -30,17 +30,19 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
  */
 public interface OServerCluster {
 
-  public Object executeOperation(final String iNodeId, final byte op, final String dbName, final ORecordId rid,
+  public Object executeOperation(final String iNodeId, final byte op, final String dbName, final ORecordId rid, final int iVersion,
       final ORawBuffer record) throws ODistributedException;
 
   public Collection<Object> executeOperation(final Set<String> iNodeIds, final byte op, final String dbName, final ORecordId rid,
-      final ORawBuffer record) throws ODistributedException;
+      final int iVersion, final ORawBuffer record) throws ODistributedException;
 
   public String getLocalNodeId();
 
   public Set<String> getRemoteNodeIds();
 
   public ODocument getDatabaseConfiguration(final String iDatabaseName);
+
+  public ODocument getServerDatabaseConfiguration(final String iDatabaseName);
 
   public ODocument getClusterConfiguration();
 }

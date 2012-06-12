@@ -71,24 +71,25 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
 public class OServer {
-  protected ReentrantLock                                  lock         = new ReentrantLock();
+  protected ReentrantLock                                  lock               = new ReentrantLock();
 
-  protected volatile boolean                               running      = true;
+  protected volatile boolean                               running            = true;
   protected OServerConfigurationLoaderXml                  configurationLoader;
   protected OServerConfiguration                           configuration;
   protected OContextConfiguration                          contextConfiguration;
   protected OServerShutdownHook                            shutdownHook;
-  protected Map<String, OServerHandler>                    plugins     = new HashMap<String, OServerHandler>();
-  protected Map<String, Class<? extends ONetworkProtocol>> protocols    = new HashMap<String, Class<? extends ONetworkProtocol>>();
-  protected List<OServerNetworkListener>                   listeners    = new ArrayList<OServerNetworkListener>();
+  protected Map<String, OServerHandler>                    plugins            = new HashMap<String, OServerHandler>();
+  protected Map<String, Class<? extends ONetworkProtocol>> networkProtocols   = new HashMap<String, Class<? extends ONetworkProtocol>>();
+  protected List<OServerNetworkListener>                   networkListeners   = new ArrayList<OServerNetworkListener>();
+  protected List<OServerLifecycleListener>                 lifecycleListeners = new ArrayList<OServerLifecycleListener>();
   protected static ThreadGroup                             threadGroup;
 
   private OrientServer                                     managedServer;
-  private ObjectName                                       onProfiler   = new ObjectName("OrientDB:type=Profiler");
-  private ObjectName                                       onServer     = new ObjectName("OrientDB:type=Server");
-  private final CountDownLatch                             startupLatch = new CountDownLatch(1);
+  private ObjectName                                       onProfiler         = new ObjectName("OrientDB:type=Profiler");
+  private ObjectName                                       onServer           = new ObjectName("OrientDB:type=Server");
+  private final CountDownLatch                             startupLatch       = new CountDownLatch(1);
 
-  private Random                                           random       = new Random();
+  private Random                                           random             = new Random();
 
   public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
       InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
@@ -155,16 +156,22 @@ public class OServer {
 
   @SuppressWarnings("unchecked")
   public void activate() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+    for (OServerLifecycleListener l : lifecycleListeners)
+      l.onBeforeActivate();
+
     // REGISTER PROTOCOLS
     for (OServerNetworkProtocolConfiguration p : configuration.network.protocols)
-      protocols.put(p.name, (Class<? extends ONetworkProtocol>) Class.forName(p.implementation));
+      networkProtocols.put(p.name, (Class<? extends ONetworkProtocol>) Class.forName(p.implementation));
 
     // STARTUP LISTENERS
     for (OServerNetworkListenerConfiguration l : configuration.network.listeners)
-      listeners.add(new OServerNetworkListener(this, l.ipAddress, l.portRange, l.protocol, protocols.get(l.protocol), l.parameters,
-          l.commands));
+      networkListeners.add(new OServerNetworkListener(this, l.ipAddress, l.portRange, l.protocol, networkProtocols.get(l.protocol),
+          l.parameters, l.commands));
 
     registerPlugins();
+
+    for (OServerLifecycleListener l : lifecycleListeners)
+      l.onAfterActivate();
 
     OLogManager.instance().info(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " is active.");
     startupLatch.countDown();
@@ -177,6 +184,9 @@ public class OServer {
     running = false;
 
     shutdownHook.cancel();
+
+    for (OServerLifecycleListener l : lifecycleListeners)
+      l.onBeforeDeactivate();
 
     OLogManager.instance().info(this, "OrientDB Server is shutdowning...");
 
@@ -200,10 +210,10 @@ public class OServer {
         }
       }
 
-      if (protocols.size() > 0) {
+      if (networkProtocols.size() > 0) {
         // PROTOCOL SHUTDOWN
         OLogManager.instance().info(this, "Shutdowning protocols");
-        protocols.clear();
+        networkProtocols.clear();
       }
 
       try {
@@ -214,11 +224,11 @@ public class OServer {
         OLogManager.instance().error(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " unregisterMBean error.", e);
       }
 
-      if (listeners.size() > 0) {
+      if (networkListeners.size() > 0) {
         // SHUTDOWN LISTENERS
         OLogManager.instance().info(this, "Shutdowning listeners:");
         // SHUTDOWN LISTENERS
-        for (OServerNetworkListener l : listeners) {
+        for (OServerNetworkListener l : networkListeners) {
           OLogManager.instance().info(this, "- %s", l);
           try {
             l.shutdown();
@@ -230,6 +240,12 @@ public class OServer {
     } finally {
       lock.unlock();
     }
+
+    for (OServerLifecycleListener l : lifecycleListeners)
+      try {
+        l.onAfterDeactivate();
+      } catch (Exception e) {
+      }
 
     OLogManager.instance().info(this, "OrientDB Server shutdown complete");
     System.out.println();
@@ -353,17 +369,17 @@ public class OServer {
     configurationLoader.save(configuration);
   }
 
-  public Map<String, Class<? extends ONetworkProtocol>> getProtocols() {
-    return protocols;
+  public Map<String, Class<? extends ONetworkProtocol>> getNetworkProtocols() {
+    return networkProtocols;
   }
 
-  public List<OServerNetworkListener> getListeners() {
-    return listeners;
+  public List<OServerNetworkListener> getNetworkListeners() {
+    return networkListeners;
   }
 
   @SuppressWarnings("unchecked")
   public <RET extends OServerNetworkListener> RET getListenerByProtocol(final Class<? extends ONetworkProtocol> iProtocolClass) {
-    for (OServerNetworkListener l : listeners)
+    for (OServerNetworkListener l : networkListeners)
       if (l.getProtocolType().equals(iProtocolClass))
         return (RET) l;
 
@@ -517,6 +533,16 @@ public class OServer {
     saveConfiguration();
   }
 
+  public OServer registerLifecycleListener(final OServerLifecycleListener iListener) {
+    lifecycleListeners.add(iListener);
+    return this;
+  }
+
+  public OServer unregisterLifecycleListener(final OServerLifecycleListener iListener) {
+    lifecycleListeners.remove(iListener);
+    return this;
+  }
+
   protected void createAdminAndDbListerUsers() throws IOException {
     addUser(OServerConfiguration.SRV_ROOT_ADMIN, null, "*");
     addUser(OServerConfiguration.SRV_ROOT_GUEST, OServerConfiguration.SRV_ROOT_GUEST, "connect,server.listDatabases");
@@ -590,6 +616,9 @@ public class OServer {
           database.open(iUser, iPassword);
         }
       }
+
+    // ALWAYS DISABLE LEVEl1 CACHE IN SERVER. IT WILL BE ENABLED IF NEEDED BY SINGLE COMMANDS
+    //database.getLevel1Cache().setEnable(false);
 
     return database;
   }

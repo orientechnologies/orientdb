@@ -1179,6 +1179,10 @@ public class OStorageLocal extends OStorageEmbedded {
     }
   }
 
+  public void setDefaultClusterId(final int defaultClusterId) {
+    this.defaultClusterId = defaultClusterId;
+  }
+
   public String getPhysicalClusterNameById(final int iClusterId) {
     checkOpeness();
 

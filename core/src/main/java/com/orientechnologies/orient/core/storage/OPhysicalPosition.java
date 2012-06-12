@@ -21,41 +21,18 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
 @SuppressWarnings("serial")
 public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysicalPosition> {
-  public long              clusterPosition;                                                                                    // POSITION
-                                                                                                                                // IN
-                                                                                                                                // THE
-                                                                                                                                // CLUSTER
-  public int               dataSegmentId;                                                                                      // ID
-                                                                                                                                // OF
-                                                                                                                                // DATA
-                                                                                                                                // SEGMENT
-  public long              dataSegmentPos;                                                                                     // POSITION
-                                                                                                                                // OF
-                                                                                                                                // CHUNK
-                                                                                                                                // EXPRESSES
-                                                                                                                                // AS
-                                                                                                                                // OFFSET
-                                                                                                                                // IN
-                                                                                                                                // BYTES
-                                                                                                                                // INSIDE
-                                                                                                                                // THE
-                                                                                                                                // DATA
-                                                                                                                                // SEGMENT
-  public byte              recordType;                                                                                         // RECORD
+  // POSITION IN THE CLUSTER
+  public long              clusterPosition;
+  // ID OF DATA SEGMENT
+  public int               dataSegmentId;
+  // POSITION OF CHUNK EXPRESSES AS OFFSET IN BYTES INSIDE THE DATA SEGMENT
+  public long              dataSegmentPos;
   // TYPE
-  public int               recordVersion = 0;                                                                                  // RECORD
+  public byte              recordType;
   // VERSION
-
-  public int               recordSize;                                                                                         // SIZE
-                                                                                                                                // IN
-                                                                                                                                // BYTES
-                                                                                                                                // OF
-                                                                                                                                // THE
-                                                                                                                                // RECORD.
-                                                                                                                                // USED
-                                                                                                                                // ONLY
-                                                                                                                                // IN
-                                                                                                                                // MEMORY
+  public int               recordVersion = 0;
+  // SIZE IN BYTES OF THE RECORD. USED ONLY IN MEMORY
+  public int               recordSize;
 
   private static final int BINARY_SIZE   = OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_LONG
                                              + OBinaryProtocol.SIZE_BYTE + OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_INT;

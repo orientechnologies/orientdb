@@ -26,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.core.DistributedTask;
 import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MembershipEvent;
@@ -35,6 +36,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -64,10 +66,16 @@ public class OHazelcastPlugin extends OServerHandlerAbstract implements OServerC
     MembershipListener, ORecordHook {
   private boolean                         enabled               = true;
   private String                          configFile            = "hazelcast.xml";
+  private String                          alias                 = null;
   private long                            offlineBuffer         = -1;
   private Map<String, ODocument>          databaseConfiguration = new ConcurrentHashMap<String, ODocument>();
   private Map<String, OStorageReplicator> replicators           = new ConcurrentHashMap<String, OStorageReplicator>();
   private Map<String, Member>             clusterMembers        = new ConcurrentHashMap<String, Member>();
+  private static HazelcastInstance        hazelcastInstance;
+
+  public static HazelcastInstance getHazelcastInstance() {
+    return hazelcastInstance;
+  }
 
   @Override
   public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
@@ -80,6 +88,8 @@ public class OHazelcastPlugin extends OServerHandlerAbstract implements OServerC
         }
       } else if (param.name.equalsIgnoreCase("configuration"))
         configFile = OSystemVariableResolver.resolveSystemVariables(param.value);
+      else if (param.name.equalsIgnoreCase("alias"))
+        alias = param.value;
       else if (param.name.startsWith("db."))
         databaseConfiguration.put(param.name.substring("db.".length()), (ODocument) new ODocument().fromJSON(param.value.trim()));
     }
@@ -96,7 +106,7 @@ public class OHazelcastPlugin extends OServerHandlerAbstract implements OServerC
 
     super.startup();
     try {
-      Hazelcast.init(new FileSystemXmlConfig(configFile));
+      hazelcastInstance = Hazelcast.init(new FileSystemXmlConfig(configFile));
 
       // INIT THE STORAGE REPLICATORS
       replicators.clear();
@@ -139,12 +149,16 @@ public class OHazelcastPlugin extends OServerHandlerAbstract implements OServerC
    */
   @Override
   public void onOpen(final ODatabase iDatabase) {
-    final ODocument cfg = getDatabaseConfiguration(iDatabase.getName());
+    final ODocument cfg = getServerDatabaseConfiguration(iDatabase.getName());
     if ((Boolean) cfg.field("replication")) {
       createReplicator(iDatabase.getName());
 
       if (iDatabase instanceof ODatabaseComplex<?>)
         ((ODatabaseComplex<?>) iDatabase).registerHook(this);
+
+      Object defCluster = cfg.field("defaultCluster");
+      if (defCluster != null)
+        iDatabase.set(ATTRIBUTES.DEFAULTCLUSTERID, defCluster);
     }
   }
 
@@ -179,7 +193,7 @@ public class OHazelcastPlugin extends OServerHandlerAbstract implements OServerC
   }
 
   public Object executeOperation(final String iNodeId, final byte iOperation, final String dbName, final ORecordId rid,
-      final ORawBuffer record) {
+      final int iVersion, final ORawBuffer record) {
     final Member clusterMember = clusterMembers.get(iNodeId);
 
     if (clusterMember == null)
@@ -187,8 +201,8 @@ public class OHazelcastPlugin extends OServerHandlerAbstract implements OServerC
 
     OLogManager.instance().debug(this, "DISTRIBUTED -> %s %s %s{%s}", iNodeId, ORecordOperation.getName(iOperation), dbName, rid);
 
-    final DistributedTask<Object> task = new DistributedTask<Object>(new OReplicationTask(dbName, iOperation, rid, record.buffer,
-        record.version, record.recordType), clusterMember);
+    final DistributedTask<Object> task = new DistributedTask<Object>(new OHazelcastReplicationTask(dbName, iOperation, rid,
+        record != null ? record.buffer : null, iVersion, record != null ? record.recordType : null), clusterMember);
     Hazelcast.getExecutorService().execute(task);
 
     try {
@@ -200,7 +214,7 @@ public class OHazelcastPlugin extends OServerHandlerAbstract implements OServerC
   }
 
   public Collection<Object> executeOperation(final Set<String> iNodeIds, final byte iOperation, final String dbName,
-      final ORecordId rid, final ORawBuffer record) throws ODistributedException {
+      final ORecordId rid, final int iVersion, final ORawBuffer record) throws ODistributedException {
     final Set<Member> members = new HashSet<Member>();
     for (String nodeId : iNodeIds) {
       final Member m = clusterMembers.get(nodeId);
@@ -213,8 +227,8 @@ public class OHazelcastPlugin extends OServerHandlerAbstract implements OServerC
 
     OLogManager.instance().debug(this, "DISTRIBUTED -> %s %s %s{%s}", members, ORecordOperation.getName(iOperation), dbName, rid);
 
-    final MultiTask<Object> task = new MultiTask<Object>(new OReplicationTask(dbName, iOperation, rid, record.buffer,
-        record.version, record.recordType), members);
+    final MultiTask<Object> task = new MultiTask<Object>(new OHazelcastReplicationTask(dbName, iOperation, rid, record.buffer,
+        iVersion, record.recordType), members);
     Hazelcast.getExecutorService().execute(task);
     try {
       return task.get();
@@ -226,6 +240,9 @@ public class OHazelcastPlugin extends OServerHandlerAbstract implements OServerC
   }
 
   public String getLocalNodeId() {
+    if (alias != null)
+      return alias;
+
     return getNodeId(Hazelcast.getCluster().getLocalMember());
   }
 
@@ -250,8 +267,14 @@ public class OHazelcastPlugin extends OServerHandlerAbstract implements OServerC
     clusterMembers.put(nodeId, clusterMember);
 
     int aligned = 0;
-    for (OStorageReplicator r : replicators.values())
-      aligned += r.align(nodeId);
+    for (OStorageReplicator r : replicators.values()) {
+      OLogManager.instance().warn(this, "DISTRIBUTED -> storage %s: aligning records...", r.toString());
+      final int[] a = r.align(nodeId);
+      final int tot = a[0] + a[1] + a[2];
+      OLogManager.instance().warn(this, "DISTRIBUTED -> storage %s: aligned %d records (%d created, %d updated, %d deleted)",
+          r.toString(), tot, a[0], a[1], a[2]);
+      aligned += tot;
+    }
 
     OLogManager.instance().warn(this, "DISTRIBUTED -> alignment completed against cluster node %s. Total records: %d", nodeId,
         aligned);
@@ -293,6 +316,15 @@ public class OHazelcastPlugin extends OServerHandlerAbstract implements OServerC
       distributedConfiguration.put("db." + iDatabaseName, cfg.toJSON());
     }
     return cfg;
+  }
+
+  public ODocument getServerDatabaseConfiguration(final String iDatabaseName) {
+    final ODocument cfg = getDatabaseConfiguration(iDatabaseName);
+    Map<String, Object> perServerCfg = cfg.field("servers[" + getLocalNodeId() + "]");
+    if (perServerCfg == null)
+      // NOT FOUND: GET THE DEFAULT ONE
+      perServerCfg = cfg.field("servers[*]");
+    return new ODocument(perServerCfg);
   }
 
   public void setDefaultDatabaseConfiguration(final String iDatabaseName, final ODocument iConfiguration) {

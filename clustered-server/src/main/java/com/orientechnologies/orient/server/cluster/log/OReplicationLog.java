@@ -32,13 +32,13 @@ import com.orientechnologies.orient.core.storage.impl.local.OSingleFileSegment;
  * <br/>
  * Record structure:<br/>
  * <code>
- * +------------------------------------------------+<br/>
- * |.......... FIXED SIZE AREA = 19 bytes ..........|<br/>
- * +--------+------------+----------------+---------+<br/>
- * | OPERAT | CLUSTER ID | CLUSTER OFFSET | DATE .. |<br/>
- * | 1 byte | 2 bytes .. | 8 bytes ...... | 8 bytes |<br/>
- * +--------|------------+----------------+---------+<br/>
- * = 19 bytes
+ * +------------------------------------------------+---------+<br/>
+ * |.............. FIXED SIZE AREA = 23 bytes ................|<br/>
+ * +--------+------------+----------------+---------+---------+<br/>
+ * | OPERAT | CLUSTER ID | CLUSTER OFFSET | VERSION | DATE .. |<br/>
+ * | 1 byte | 2 bytes .. | 8 bytes ...... | 4 bytes | 8 bytes |<br/>
+ * +--------|------------+----------------+---------+---------+<br/>
+ * = 23 bytes
  * </code><br/>
  */
 public class OReplicationLog extends OSingleFileSegment {
@@ -51,7 +51,8 @@ public class OReplicationLog extends OSingleFileSegment {
 
   private static final int                OFFSET_OPERAT         = 0;
   private static final int                OFFSET_RID            = OFFSET_OPERAT + OBinaryProtocol.SIZE_BYTE;
-  private static final int                OFFSET_DATE           = OFFSET_RID + ORecordId.PERSISTENT_SIZE;
+  private static final int                OFFSET_VERSION        = OFFSET_RID + ORecordId.PERSISTENT_SIZE;
+  private static final int                OFFSET_DATE           = OFFSET_VERSION + OBinaryProtocol.SIZE_INT;
   private static final int                RECORD_SIZE           = OFFSET_DATE + OBinaryProtocol.SIZE_LONG;
 
   private boolean                         synchEnabled;
@@ -59,15 +60,11 @@ public class OReplicationLog extends OSingleFileSegment {
                                                                     OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
                                                                     0, true);
   private final long                      limit;
+  private long                            pendingLogs           = 0;
 
   public OReplicationLog(final String iNodeId, final String iDatabase, final long iLimit) throws IOException {
     super(REPLICATION_DIRECTORY + iDatabase + "/" + iNodeId.replace('.', '_').replace(':', '-') + EXTENSION,
         OGlobalConfiguration.DISTRIBUTED_LOG_TYPE.getValueAsString());
-    init();
-    limit = iLimit;
-  }
-
-  protected void init() throws IOException {
     synchEnabled = OGlobalConfiguration.DISTRIBUTED_LOG_SYNCH.getValueAsBoolean();
 
     file.setFailCheck(false);
@@ -75,6 +72,7 @@ public class OReplicationLog extends OSingleFileSegment {
       open();
     } else
       create(DEF_START_SIZE);
+    limit = iLimit;
   }
 
   @Override
@@ -91,20 +89,58 @@ public class OReplicationLog extends OSingleFileSegment {
   /**
    * Reset the file
    */
-  public void resetIfEmpty(final int iLast) throws IOException {
-    if (totalEntries() == iLast)
-      // NO CONCURRENT ENTRIES, RESET IT
-      file.shrink(0);
+  public void resetIfEmpty() throws IOException {
+    lock.acquireExclusiveLock();
+    try {
+
+      if (pendingLogs == 1)
+        // NO CONCURRENT ENTRIES, RESET IT
+        if (file.getFreeSpace() < RECORD_SIZE)
+          reset();
+        else
+          pendingLogs = 0;
+
+    } finally {
+      lock.releaseExclusiveLock();
+    }
+  }
+
+  /**
+   * Resets the current entry to avoid re-sending if align interrupts for any reason
+   * 
+   * @param iPosition
+   * @return
+   * @throws IOException
+   */
+  public long resetEntry(final int iPosition) throws IOException {
+    lock.acquireExclusiveLock();
+    try {
+
+      final int pos = iPosition * RECORD_SIZE;
+      file.writeByte(pos, (byte) -1);
+      return --pendingLogs;
+
+    } finally {
+      lock.releaseExclusiveLock();
+    }
   }
 
   public void reset() throws IOException {
-    file.shrink(0);
+    lock.acquireExclusiveLock();
+    try {
+
+      // file.shrink(0);
+      pendingLogs = 0;
+
+    } finally {
+      lock.releaseExclusiveLock();
+    }
   }
 
   /**
    * Appends a log entry until reach the configured limit if any (>-1)
    */
-  public long appendLog(final byte iOperation, final ORecordId iRID) throws IOException {
+  public long appendLog(final byte iOperation, final ORecordId iRID, final int iVersion) throws IOException {
 
     lock.acquireExclusiveLock();
     try {
@@ -113,9 +149,11 @@ public class OReplicationLog extends OSingleFileSegment {
       if (limit > -1 && serial > limit)
         return -1;
 
-      if (serial > 0)
-        OLogManager.instance().warn(this, "Journaled operation #%d as %s against record %s", serial,
-            ORecordOperation.getName(iOperation), iRID);
+      pendingLogs++;
+
+      if (pendingLogs > 1)
+        OLogManager.instance().warn(this, "Journaled operation #%d as %s against record %s. Remain to synchronize: %d", serial,
+            ORecordOperation.getName(iOperation), iRID, pendingLogs);
       else
         OLogManager.instance().debug(this, "Journaled operation #%d as %s against record %s", serial,
             ORecordOperation.getName(iOperation), iRID);
@@ -130,6 +168,9 @@ public class OReplicationLog extends OSingleFileSegment {
 
       file.writeLong(offset, iRID.clusterPosition);
       offset += OBinaryProtocol.SIZE_LONG;
+
+      file.writeInt(offset, iVersion);
+      offset += OBinaryProtocol.SIZE_INT;
 
       file.writeLong(offset, System.currentTimeMillis());
 
@@ -151,35 +192,13 @@ public class OReplicationLog extends OSingleFileSegment {
 
       iEntry.type = file.readByte(pos);
       iEntry.record = new ORecordId(file.readShort(pos + OFFSET_RID), file.readLong(pos + OFFSET_RID + OBinaryProtocol.SIZE_SHORT));
+      iEntry.version = file.readInt(pos + OFFSET_VERSION);
       iEntry.date = file.readLong(pos + OFFSET_DATE);
       return iEntry;
 
     } finally {
       lock.releaseExclusiveLock();
     }
-  }
-
-  /**
-   * Resets the current entry to avoid re-sending if align interrupts for any reason
-   * 
-   * @param iPosition
-   * @throws IOException
-   */
-  public void resetEntry(final int iPosition) throws IOException {
-    lock.acquireExclusiveLock();
-    try {
-
-      final int pos = iPosition * RECORD_SIZE;
-
-      file.writeByte(pos, (byte) -1);
-
-    } finally {
-      lock.releaseExclusiveLock();
-    }
-  }
-
-  public boolean isEmpty() {
-    return file.getFilledUpTo() == 0;
   }
 
   public int totalEntries() {

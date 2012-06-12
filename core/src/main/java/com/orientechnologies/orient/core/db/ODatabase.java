@@ -42,373 +42,373 @@ import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
  * 
  */
 public interface ODatabase {
-	public static enum OPTIONS {
-		SECURITY
-	}
+  public static enum OPTIONS {
+    SECURITY
+  }
 
-	public static enum STATUS {
-		OPEN, CLOSED, IMPORTING
-	}
+  public static enum STATUS {
+    OPEN, CLOSED, IMPORTING
+  }
 
-	public static enum ATTRIBUTES {
-		STATUS
-	}
+  public static enum ATTRIBUTES {
+    STATUS, DEFAULTCLUSTERID
+  }
 
-	/**
-	 * Opens a database using the user and password received as arguments.
-	 * 
-	 * @param iUserName
-	 *          Username to login
-	 * @param iUserPassword
-	 *          Password associated to the user
-	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
-	 */
-	public <DB extends ODatabase> DB open(final String iUserName, final String iUserPassword);
+  /**
+   * Opens a database using the user and password received as arguments.
+   * 
+   * @param iUserName
+   *          Username to login
+   * @param iUserPassword
+   *          Password associated to the user
+   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   */
+  public <DB extends ODatabase> DB open(final String iUserName, final String iUserPassword);
 
-	/**
-	 * Creates a new database.
-	 * 
-	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
-	 */
-	public <DB extends ODatabase> DB create();
+  /**
+   * Creates a new database.
+   * 
+   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   */
+  public <DB extends ODatabase> DB create();
 
-	/**
-	 * Reloads the database information like the cluster list.
-	 */
-	public void reload();
+  /**
+   * Reloads the database information like the cluster list.
+   */
+  public void reload();
 
-	/**
-	 * Drops a database.
-	 * 
-	 */
-	public void drop();
+  /**
+   * Drops a database.
+   * 
+   */
+  public void drop();
 
-	/**
-	 * Deletes a database.
-	 * 
-	 * @see #drop()
-	 */
-	@Deprecated
-	public void delete();
+  /**
+   * Deletes a database.
+   * 
+   * @see #drop()
+   */
+  @Deprecated
+  public void delete();
 
-	/**
-	 * Declares an intent to the database. Intents aim to optimize common use cases.
-	 * 
-	 * @param iIntent
-	 *          The intent
-	 */
-	public boolean declareIntent(final OIntent iIntent);
+  /**
+   * Declares an intent to the database. Intents aim to optimize common use cases.
+   * 
+   * @param iIntent
+   *          The intent
+   */
+  public boolean declareIntent(final OIntent iIntent);
 
-	/**
-	 * Checks if the database exists.
-	 * 
-	 * @return True if already exists, otherwise false.
-	 */
-	public boolean exists();
+  /**
+   * Checks if the database exists.
+   * 
+   * @return True if already exists, otherwise false.
+   */
+  public boolean exists();
 
-	/**
-	 * Closes an opened database.
-	 */
-	public void close();
+  /**
+   * Closes an opened database.
+   */
+  public void close();
 
-	/**
-	 * Returns the current status of database.
-	 */
-	public STATUS getStatus();
+  /**
+   * Returns the current status of database.
+   */
+  public STATUS getStatus();
 
-	/**
-	 * Returns the total size of database as the real used space.
-	 */
-	public long getSize();
+  /**
+   * Returns the total size of database as the real used space.
+   */
+  public long getSize();
 
-	/**
-	 * Returns the current status of database.
-	 */
-	public <DB extends ODatabase> DB setStatus(STATUS iStatus);
+  /**
+   * Returns the current status of database.
+   */
+  public <DB extends ODatabase> DB setStatus(STATUS iStatus);
 
-	/**
-	 * Returns the database name.
-	 * 
-	 * @return Name of the database
-	 */
-	public String getName();
+  /**
+   * Returns the database name.
+   * 
+   * @return Name of the database
+   */
+  public String getName();
 
-	/**
-	 * Returns the database URL.
-	 * 
-	 * @return URL of the database
-	 */
-	public String getURL();
+  /**
+   * Returns the database URL.
+   * 
+   * @return URL of the database
+   */
+  public String getURL();
 
-	/**
-	 * Returns the underlying storage implementation.
-	 * 
-	 * @return The underlying storage implementation
-	 * @see OStorage
-	 */
-	public OStorage getStorage();
+  /**
+   * Returns the underlying storage implementation.
+   * 
+   * @return The underlying storage implementation
+   * @see OStorage
+   */
+  public OStorage getStorage();
 
-	/**
-	 * Returns the level1 cache. Cannot be null.
-	 * 
-	 * @return Current cache.
-	 */
-	public OLevel1RecordCache getLevel1Cache();
+  /**
+   * Returns the level1 cache. Cannot be null.
+   * 
+   * @return Current cache.
+   */
+  public OLevel1RecordCache getLevel1Cache();
 
-	/**
-	 * Returns the level1 cache. Cannot be null.
-	 * 
-	 * @return Current cache.
-	 */
-	public OLevel2RecordCache getLevel2Cache();
+  /**
+   * Returns the level1 cache. Cannot be null.
+   * 
+   * @return Current cache.
+   */
+  public OLevel2RecordCache getLevel2Cache();
 
-	/**
-	 * Returns the data segment id by name.
-	 * 
-	 * @param iDataSegmentName
-	 *          Data segment name
-	 * @return The id of searched data segment.
-	 */
-	public int getDataSegmentIdByName(String iDataSegmentName);
+  /**
+   * Returns the data segment id by name.
+   * 
+   * @param iDataSegmentName
+   *          Data segment name
+   * @return The id of searched data segment.
+   */
+  public int getDataSegmentIdByName(String iDataSegmentName);
 
-	public String getDataSegmentNameById(int dataSegmentId);
+  public String getDataSegmentNameById(int dataSegmentId);
 
-	/**
-	 * Returns the default cluster id. If not specified all the new entities will be stored in the default cluster.
-	 * 
-	 * @return The default cluster id
-	 */
-	public int getDefaultClusterId();
+  /**
+   * Returns the default cluster id. If not specified all the new entities will be stored in the default cluster.
+   * 
+   * @return The default cluster id
+   */
+  public int getDefaultClusterId();
 
-	/**
-	 * Returns the number of clusters
-	 * 
-	 * @return Number of the clusters
-	 */
-	public int getClusters();
+  /**
+   * Returns the number of clusters
+   * 
+   * @return Number of the clusters
+   */
+  public int getClusters();
 
-	/**
-	 * Returns all the names of the clusters.
-	 * 
-	 * @return Collection of cluster names.
-	 */
-	public Collection<String> getClusterNames();
+  /**
+   * Returns all the names of the clusters.
+   * 
+   * @return Collection of cluster names.
+   */
+  public Collection<String> getClusterNames();
 
-	/**
-	 * Returns the cluster id by name.
-	 * 
-	 * @param iClusterName
-	 *          Cluster name
-	 * @return The id of searched cluster.
-	 */
-	public int getClusterIdByName(String iClusterName);
+  /**
+   * Returns the cluster id by name.
+   * 
+   * @param iClusterName
+   *          Cluster name
+   * @return The id of searched cluster.
+   */
+  public int getClusterIdByName(String iClusterName);
 
-	/**
-	 * Returns the cluster type.
-	 * 
-	 * @param iClusterName
-	 *          Cluster name
-	 * @return The cluster type as string
-	 */
-	public String getClusterType(String iClusterName);
+  /**
+   * Returns the cluster type.
+   * 
+   * @param iClusterName
+   *          Cluster name
+   * @return The cluster type as string
+   */
+  public String getClusterType(String iClusterName);
 
-	/**
-	 * Returns the cluster name by id.
-	 * 
-	 * @param iClusterId
-	 *          Cluster id
-	 * @return The name of searched cluster.
-	 */
-	public String getClusterNameById(int iClusterId);
+  /**
+   * Returns the cluster name by id.
+   * 
+   * @param iClusterId
+   *          Cluster id
+   * @return The name of searched cluster.
+   */
+  public String getClusterNameById(int iClusterId);
 
-	/**
-	 * Returns the total size of records contained in the cluster defined by its name.
-	 * 
-	 * @param iClusterName
-	 *          Cluster name
-	 * @return Total size of records contained.
-	 */
-	public long getClusterRecordSizeByName(String iClusterName);
+  /**
+   * Returns the total size of records contained in the cluster defined by its name.
+   * 
+   * @param iClusterName
+   *          Cluster name
+   * @return Total size of records contained.
+   */
+  public long getClusterRecordSizeByName(String iClusterName);
 
-	/**
-	 * Returns the total size of records contained in the cluster defined by its id.
-	 * 
-	 * @param iClusterId
-	 *          Cluster id
-	 * @return The name of searched cluster.
-	 */
-	public long getClusterRecordSizeById(int iClusterId);
+  /**
+   * Returns the total size of records contained in the cluster defined by its id.
+   * 
+   * @param iClusterId
+   *          Cluster id
+   * @return The name of searched cluster.
+   */
+  public long getClusterRecordSizeById(int iClusterId);
 
-	/**
-	 * Checks if the database is closed.
-	 * 
-	 * @return true if is closed, otherwise false.
-	 */
-	public boolean isClosed();
+  /**
+   * Checks if the database is closed.
+   * 
+   * @return true if is closed, otherwise false.
+   */
+  public boolean isClosed();
 
-	/**
-	 * Counts all the entities in the specified cluster id.
-	 * 
-	 * @param iCurrentClusterId
-	 *          Cluster id
-	 * @return Total number of entities contained in the specified cluster
-	 */
-	public long countClusterElements(int iCurrentClusterId);
+  /**
+   * Counts all the entities in the specified cluster id.
+   * 
+   * @param iCurrentClusterId
+   *          Cluster id
+   * @return Total number of entities contained in the specified cluster
+   */
+  public long countClusterElements(int iCurrentClusterId);
 
-	/**
-	 * Counts all the entities in the specified cluster ids.
-	 * 
-	 * @param iClusterIds
-	 *          Array of cluster ids Cluster id
-	 * @return Total number of entities contained in the specified clusters
-	 */
-	public long countClusterElements(int[] iClusterIds);
+  /**
+   * Counts all the entities in the specified cluster ids.
+   * 
+   * @param iClusterIds
+   *          Array of cluster ids Cluster id
+   * @return Total number of entities contained in the specified clusters
+   */
+  public long countClusterElements(int[] iClusterIds);
 
-	/**
-	 * Counts all the entities in the specified cluster name.
-	 * 
-	 * @param iClusterName
-	 *          Cluster name
-	 * @return Total number of entities contained in the specified cluster
-	 */
-	public long countClusterElements(String iClusterName);
+  /**
+   * Counts all the entities in the specified cluster name.
+   * 
+   * @param iClusterName
+   *          Cluster name
+   * @return Total number of entities contained in the specified cluster
+   */
+  public long countClusterElements(String iClusterName);
 
-	/**
-	 * Adds a new cluster.
-	 * 
-	 * @param iClusterName
-	 *          Cluster name
-	 * @param iType
-	 *          Cluster type between the defined ones
-	 * @param iParameters
-	 *          Additional parameters to pass to the factories
-	 * @return Cluster id
-	 */
-	public int addCluster(String iClusterName, CLUSTER_TYPE iType, Object... iParameters);
+  /**
+   * Adds a new cluster.
+   * 
+   * @param iClusterName
+   *          Cluster name
+   * @param iType
+   *          Cluster type between the defined ones
+   * @param iParameters
+   *          Additional parameters to pass to the factories
+   * @return Cluster id
+   */
+  public int addCluster(String iClusterName, CLUSTER_TYPE iType, Object... iParameters);
 
-	/**
-	 * Adds a new cluster.
-	 * 
-	 * @param iType
-	 *          Cluster type between the defined ones
-	 * @param iClusterName
-	 *          Cluster name
-	 * @param iDataSegmentName
-	 *          Data segment where to store record of this cluster. null means 'default'
-	 * @param iParameters
-	 *          Additional parameters to pass to the factories
-	 * 
-	 * @return Cluster id
-	 */
-	public int addCluster(String iType, String iClusterName, String iLocation, final String iDataSegmentName, Object... iParameters);
+  /**
+   * Adds a new cluster.
+   * 
+   * @param iType
+   *          Cluster type between the defined ones
+   * @param iClusterName
+   *          Cluster name
+   * @param iDataSegmentName
+   *          Data segment where to store record of this cluster. null means 'default'
+   * @param iParameters
+   *          Additional parameters to pass to the factories
+   * 
+   * @return Cluster id
+   */
+  public int addCluster(String iType, String iClusterName, String iLocation, final String iDataSegmentName, Object... iParameters);
 
-	/**
-	 * Adds a physical cluster. Physical clusters need separate files. Access is faster than the logical cluster but the database size
-	 * is higher and more files are requires. This matters in some OS where a single process has limitation for the number of files
-	 * can open. Most accessed entities should be stored inside a physical cluster.
-	 * 
-	 * @param iClusterName
-	 *          Cluster name
-	 * @param iLocation
-	 *          Location where to put the cluster
-	 * @param iStartSize
-	 *          This is not used anymore
-	 * @return Cluster id
-	 * @deprecated use the more generic addCluster that uses the cluster factory
-	 */
-	@Deprecated
-	public int addPhysicalCluster(String iClusterName, String iLocation, int iStartSize);
+  /**
+   * Adds a physical cluster. Physical clusters need separate files. Access is faster than the logical cluster but the database size
+   * is higher and more files are requires. This matters in some OS where a single process has limitation for the number of files
+   * can open. Most accessed entities should be stored inside a physical cluster.
+   * 
+   * @param iClusterName
+   *          Cluster name
+   * @param iLocation
+   *          Location where to put the cluster
+   * @param iStartSize
+   *          This is not used anymore
+   * @return Cluster id
+   * @deprecated use the more generic addCluster that uses the cluster factory
+   */
+  @Deprecated
+  public int addPhysicalCluster(String iClusterName, String iLocation, int iStartSize);
 
-	/**
-	 * 
-	 * Drops a cluster by its name. Physical clusters will be completely deleted
-	 * 
-	 * @param iClusterName
-	 * @return
-	 */
-	public boolean dropCluster(String iClusterName);
+  /**
+   * 
+   * Drops a cluster by its name. Physical clusters will be completely deleted
+   * 
+   * @param iClusterName
+   * @return
+   */
+  public boolean dropCluster(String iClusterName);
 
-	/**
-	 * Drops a cluster by its id. Physical clusters will be completely deleted.
-	 * 
-	 * @param iClusterId
-	 * @return true if has been removed, otherwise false
-	 */
-	public boolean dropCluster(int iClusterId);
+  /**
+   * Drops a cluster by its id. Physical clusters will be completely deleted.
+   * 
+   * @param iClusterId
+   * @return true if has been removed, otherwise false
+   */
+  public boolean dropCluster(int iClusterId);
 
-	/**
-	 * Adds a data segment where to store record content. Data segments contain the content of records. Cluster segments contain the
-	 * pointer to them.
-	 */
-	public int addDataSegment(String iSegmentName, String iLocation);
+  /**
+   * Adds a data segment where to store record content. Data segments contain the content of records. Cluster segments contain the
+   * pointer to them.
+   */
+  public int addDataSegment(String iSegmentName, String iLocation);
 
-	/**
-	 * Drop a data segment and all the contained data.
-	 * 
-	 * @param data
-	 *          segment name
-	 * @return true if the segment has been removed, otherwise false
-	 */
-	public boolean dropDataSegment(String name);
+  /**
+   * Drop a data segment and all the contained data.
+   * 
+   * @param data
+   *          segment name
+   * @return true if the segment has been removed, otherwise false
+   */
+  public boolean dropDataSegment(String name);
 
-	/**
-	 * Sets a property value
-	 * 
-	 * @param iName
-	 *          Property name
-	 * @param iValue
-	 *          new value to set
-	 * @return The previous value if any, otherwise null
-	 */
-	public Object setProperty(String iName, Object iValue);
+  /**
+   * Sets a property value
+   * 
+   * @param iName
+   *          Property name
+   * @param iValue
+   *          new value to set
+   * @return The previous value if any, otherwise null
+   */
+  public Object setProperty(String iName, Object iValue);
 
-	/**
-	 * Gets the property value.
-	 * 
-	 * @param iName
-	 *          Property name
-	 * @return The previous value if any, otherwise null
-	 */
-	public Object getProperty(String iName);
+  /**
+   * Gets the property value.
+   * 
+   * @param iName
+   *          Property name
+   * @return The previous value if any, otherwise null
+   */
+  public Object getProperty(String iName);
 
-	/**
-	 * Returns an iterator of the property entries
-	 */
-	public Iterator<Map.Entry<String, Object>> getProperties();
+  /**
+   * Returns an iterator of the property entries
+   */
+  public Iterator<Map.Entry<String, Object>> getProperties();
 
-	/**
-	 * Returns a database attribute value
-	 * 
-	 * @param iAttribute
-	 *          Attributes between #ATTRIBUTES enum
-	 * @return The attribute value
-	 */
-	public Object get(ATTRIBUTES iAttribute);
+  /**
+   * Returns a database attribute value
+   * 
+   * @param iAttribute
+   *          Attributes between #ATTRIBUTES enum
+   * @return The attribute value
+   */
+  public Object get(ATTRIBUTES iAttribute);
 
-	/**
-	 * Sets a database attribute value
-	 * 
-	 * @param iAttribute
-	 *          Attributes between #ATTRIBUTES enum
-	 * @param iValue
-	 *          Value to set
-	 * @return
-	 */
-	public <DB extends ODatabase> DB set(ATTRIBUTES iAttribute, Object iValue);
+  /**
+   * Sets a database attribute value
+   * 
+   * @param iAttribute
+   *          Attributes between #ATTRIBUTES enum
+   * @param iValue
+   *          Value to set
+   * @return
+   */
+  public <DB extends ODatabase> DB set(ATTRIBUTES iAttribute, Object iValue);
 
-	/**
-	 * Registers a listener to the database events.
-	 * 
-	 * @param iListener
-	 */
-	public void registerListener(ODatabaseListener iListener);
+  /**
+   * Registers a listener to the database events.
+   * 
+   * @param iListener
+   */
+  public void registerListener(ODatabaseListener iListener);
 
-	/**
-	 * Unregisters a listener to the database events.
-	 * 
-	 * @param iListener
-	 */
-	public void unregisterListener(ODatabaseListener iListener);
+  /**
+   * Unregisters a listener to the database events.
+   * 
+   * @param iListener
+   */
+  public void unregisterListener(ODatabaseListener iListener);
 
-	public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock);
+  public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock);
 }

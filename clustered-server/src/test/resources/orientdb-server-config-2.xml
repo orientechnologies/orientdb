@@ -7,12 +7,18 @@
 				<parameter value="src/test/resources/hazelcast-1.xml" name="configuration" />
 				<parameter name="db.*"
 					value="{
-						'replication' : true,
-						'clusters' : {
-							'*' : { 'replication' : true, 'offlineMaxBuffer' : 1000000 },
-							'internal' : { 'replication' : false }
-						},
-						'classes':{}
+					    'servers' : {
+					      '*' : {
+							'defaultCluster' : 2,
+							'replication' : true,
+							'clusters' : {
+								'*' : { 'replication' : true, 'offlineMaxBuffer' : 1000000 },
+								'internal' : { 'replication' : false },
+								'index' : { 'replication' : false }
+							},
+							'classes':{}
+							}
+						}
 					}" />
 			</parameters>
 		</handler>
@@ -63,6 +69,7 @@
 		<user resources="connect,server.listDatabases" password="guest" name="guest" />
 	</users>
 	<properties>
+		<entry value="com.orientechnologies.orient.server.cluster.hazelcast.OHazelcastCache" name="cache.level2.impl" />
 		<entry value="info" name="log.console.level" />
 		<entry value="fine" name="log.file.level" />
 	</properties>

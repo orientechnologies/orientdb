@@ -40,7 +40,7 @@ public class RemoteCreateDocumentSpeedTest extends OrientMonoThreadTest {
   }
 
   public RemoteCreateDocumentSpeedTest() throws InstantiationException, IllegalAccessException {
-    super(100000);
+    super(1000000);
   }
 
   @Override

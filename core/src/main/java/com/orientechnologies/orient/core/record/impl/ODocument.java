@@ -1233,6 +1233,16 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     return (ODocument) super.save(iClusterName);
   }
 
+  /*
+   * Initializes the object if has been unserialized
+   */
+  @Override
+  public void deserializeFields() {
+    if (_recordFormat == null)
+      setup();
+    super.deserializeFields();
+  }
+
   protected String checkFieldName(final String iFieldName) {
     final Character c = OSchemaShared.checkNameIfValid(iFieldName);
     if (c != null)

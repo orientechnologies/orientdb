@@ -1653,4 +1653,8 @@ public class OStorageRemote extends OStorageAbstract {
   public int getClusters() {
     return clusterMap.size();
   }
+
+  public void setDefaultClusterId(int defaultClusterId) {
+    this.defaultClusterId = defaultClusterId;
+  }
 }

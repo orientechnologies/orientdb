@@ -15,41 +15,45 @@
  */
 package com.orientechnologies.orient.core.cache;
 
-import com.orientechnologies.common.log.OLogManager;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.CACHE_LEVEL1_SIZE;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.CACHE_LEVEL2_IMPL;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.CACHE_LEVEL2_SIZE;
 
 import java.lang.reflect.Constructor;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.*;
+import com.orientechnologies.common.log.OLogManager;
 
 /**
  * Creates primary and secondary caches using configuration to look up for cache implementations in classpath.
  */
 public class OCacheLocator {
   public OCache primaryCache() {
-    return new ODefaultCache(CACHE_LEVEL1_SIZE.getValueAsInteger());
+    return new ODefaultCache(null, CACHE_LEVEL1_SIZE.getValueAsInteger());
   }
 
-  public OCache secondaryCache() {
+  public OCache secondaryCache(final String iStorageName) {
     String cacheClassName = CACHE_LEVEL2_IMPL.getValueAsString();
     try {
       Class<?> cacheClass = findByCanonicalName(cacheClassName);
       checkThatImplementsCacheInterface(cacheClass);
       Constructor<?> cons = getPublicConstructorWithLimitParameter(cacheClass);
 
-      return (OCache) cons.newInstance(CACHE_LEVEL2_SIZE.getValueAsInteger());
+      return (OCache) cons.newInstance(iStorageName, CACHE_LEVEL2_SIZE.getValueAsInteger());
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Can't initialize cache with implementation class [%s]. %s. Using default implementation [%s]",
-        cacheClassName, e.getMessage(), ODefaultCache.class.getCanonicalName());
+      OLogManager.instance().error(this,
+          "Cannot initialize cache with implementation class [%s]. %s. Using default implementation [%s]", cacheClassName,
+          e.getMessage(), ODefaultCache.class.getCanonicalName());
     }
-    return new ODefaultCache(CACHE_LEVEL2_SIZE.getValueAsInteger());
+    return new ODefaultCache(null, CACHE_LEVEL2_SIZE.getValueAsInteger());
   }
 
-  private void checkThatImplementsCacheInterface(Class<?> cacheClass) {
+  private void checkThatImplementsCacheInterface(final Class<?> cacheClass) {
     if (!OCache.class.isAssignableFrom(cacheClass))
-      throw new IllegalArgumentException("Class " + cacheClass.getCanonicalName() + " doesn't implement " + OCache.class.getCanonicalName() + " interface");
+      throw new IllegalArgumentException("Class " + cacheClass.getCanonicalName() + " doesn't implement "
+          + OCache.class.getCanonicalName() + " interface");
   }
 
-  private Class<?> findByCanonicalName(String cacheClassName) {
+  private Class<?> findByCanonicalName(final String cacheClassName) {
     try {
       return Class.forName(cacheClassName);
     } catch (ClassNotFoundException e) {
@@ -57,12 +61,12 @@ public class OCacheLocator {
     }
   }
 
-  private Constructor<?> getPublicConstructorWithLimitParameter(Class<?> cacheClass) {
-    Class<Integer> limitClass = int.class;
+  private Constructor<?> getPublicConstructorWithLimitParameter(final Class<?> cacheClass) {
     try {
-      return cacheClass.getConstructor(limitClass);
+      return cacheClass.getConstructor(String.class, int.class);
     } catch (NoSuchMethodException e) {
-      throw new IllegalArgumentException("Class has no public constructor with parameter of type ["+limitClass+"]", e);
+      throw new IllegalArgumentException("Class has no public constructor with parameter of type [" + String.class + ","
+          + int.class + "]", e);
     }
   }
 }

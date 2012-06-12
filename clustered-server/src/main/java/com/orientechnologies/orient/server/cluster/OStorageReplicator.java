@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServerMain;
-import com.orientechnologies.orient.server.cluster.hazelcast.OReplicationTask;
+import com.orientechnologies.orient.server.cluster.hazelcast.OHazelcastReplicationTask;
 import com.orientechnologies.orient.server.cluster.log.OReplicationLog;
 import com.orientechnologies.orient.server.distributed.OServerCluster;
 
@@ -56,7 +56,7 @@ public class OStorageReplicator {
     cluster = iCluster;
     storageName = iStorageName;
     storage = openStorage(iStorageName);
-    configuration = iCluster.getDatabaseConfiguration(iStorageName);
+    configuration = iCluster.getServerDatabaseConfiguration(iStorageName);
 
     final File replicationDirectory = new File(OSystemVariableResolver.resolveSystemVariables(OReplicationLog.REPLICATION_DIRECTORY
         + "/" + iStorageName));
@@ -71,55 +71,58 @@ public class OStorageReplicator {
     }
   }
 
-  public int align(final String iNodeId) {
+  public int[] align(final String iNodeId) {
     // ALIGN THE ALL THE COFNIGURED DATABASES
     final ORecordOperation op = new ORecordOperation();
 
-    synchronized (configuration) {
-      int aligned = 0;
-      final OReplicationLog log = getLog(iNodeId);
-      for (int i = 0; i < log.totalEntries(); ++i) {
-        // GET THE <I> LOG ENTRY
-        try {
-          log.getEntry(i, op);
-        } catch (IOException e) {
-          OLogManager.instance().error(this, "DISTRIBUTED -> align failed for log entry %d", e, i);
-          return aligned;
-        }
-
-        if (op.type < 0)
-          // RESET: SKIP IT
-          continue;
-
-        final ORecordId rid = (ORecordId) op.record.getIdentity();
-
-        // READ THE RECORD
-        final ORawBuffer record = storage.readRecord(rid, null, false, null);
-        if (record == null)
-          OLogManager.instance().warn(this, "DISTRIBUTED -> align failed for record %s because doesn't exist anymore", rid);
-        else {
-          // SEND THE RECORD TO THE REMOTE NODE
-          cluster.executeOperation(iNodeId, op.type, storageName, rid, record);
-
-          try {
-            log.resetEntry(i);
-          } catch (IOException e) {
-            OLogManager.instance().error(this, "DISTRIBUTED -> error on reset log entry %d", e, i);
-          }
-
-          aligned++;
-        }
-      }
-
+    int[] aligned = new int[3];
+    final OReplicationLog log = getLog(iNodeId);
+    for (int i = 0; i < log.totalEntries(); ++i) {
+      // GET THE <I> LOG ENTRY
       try {
-        // FORCE RESET
-        log.reset();
+        log.getEntry(i, op);
       } catch (IOException e) {
-        OLogManager.instance().error(this, "DISTRIBUTED -> Error on reset log file: %s", log, e);
+        OLogManager.instance().error(this, "DISTRIBUTED -> align failed for log entry %d", e, i);
+        return aligned;
       }
 
-      return aligned;
+      if (op.type < 0)
+        // RESET: SKIP IT
+        continue;
+
+      final ORecordId rid = (ORecordId) op.record.getIdentity();
+
+      // READ THE RECORD
+      final ORawBuffer record = storage.readRecord(rid, null, false, null);
+      if (record == null && op.type != ORecordOperation.DELETED)
+        OLogManager.instance().warn(this, "DISTRIBUTED -> align failed for record %s because doesn't exist anymore", rid);
+      else {
+        // SEND THE RECORD TO THE REMOTE NODE
+        cluster.executeOperation(iNodeId, op.type, storageName, rid, op.version, record);
+
+        try {
+          log.resetEntry(i);
+        } catch (IOException e) {
+          OLogManager.instance().error(this, "DISTRIBUTED -> error on reset log entry %d", e, i);
+        }
+
+        if (op.type == ORecordOperation.CREATED)
+          aligned[0]++;
+        else if (op.type == ORecordOperation.UPDATED)
+          aligned[1]++;
+        else if (op.type == ORecordOperation.DELETED)
+          aligned[2]++;
+      }
     }
+
+    try {
+      // FORCE RESET OF THE ENTIRE LOG
+      log.reset();
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "DISTRIBUTED -> Error on reset log file: %s", log, e);
+    }
+
+    return aligned;
   }
 
   public boolean distributeOperation(final TYPE iType, final ORecord<?> iRecord) {
@@ -130,13 +133,13 @@ public class OStorageReplicator {
     switch (iType) {
     // DETERMINE THE OPERATION TYPE
     case AFTER_CREATE:
-      operation = OReplicationTask.CREATE;
+      operation = OHazelcastReplicationTask.CREATE;
       break;
     case AFTER_UPDATE:
-      operation = OReplicationTask.UPDATE;
+      operation = OHazelcastReplicationTask.UPDATE;
       break;
     case AFTER_DELETE:
-      operation = OReplicationTask.DELETE;
+      operation = OHazelcastReplicationTask.DELETE;
       break;
     }
 
@@ -148,7 +151,7 @@ public class OStorageReplicator {
       for (OReplicationLog localLog : logs.values()) {
         // LOG THE OPERATION BEFORE ANY CHANGE
         try {
-          if (localLog.appendLog(operation, rid) == -1) {
+          if (localLog.appendLog(operation, rid, iRecord.getVersion()) == -1) {
             // LIMIT REACHED: PUT THE NODE OFFLINE
             OLogManager
                 .instance()
@@ -167,14 +170,14 @@ public class OStorageReplicator {
 
       final Set<String> members = cluster.getRemoteNodeIds();
       if (!members.isEmpty()) {
-        final Collection<Object> results = cluster.executeOperation(members, operation, storageName, rid, new ORawBuffer(
-            (ORecordInternal<?>) iRecord));
+        final Collection<Object> results = cluster.executeOperation(members, operation, storageName, rid, iRecord.getVersion(),
+            new ORawBuffer((ORecordInternal<?>) iRecord));
 
         // TODO MANAGE CONFLICTS
         for (String member : members) {
           final OReplicationLog log = getLog(member);
           try {
-            log.resetIfEmpty(1);
+            log.resetIfEmpty();
           } catch (IOException e) {
             OLogManager.instance().error(this, "DISTRIBUTED -> Error on reset log file: %s", e, log);
           }
@@ -187,13 +190,15 @@ public class OStorageReplicator {
 
   @SuppressWarnings("unchecked")
   private boolean isClusterReplicated(final String iClusterName) {
-    final Map<String, Object> clusters = configuration.field("clusters");
+    synchronized (configuration) {
+      final Map<String, Object> clusters = configuration.field("clusters");
 
-    Map<String, Object> cfg = (Map<String, Object>) clusters.get(iClusterName);
-    if (cfg == null)
-      cfg = (Map<String, Object>) clusters.get("*");
+      Map<String, Object> cfg = (Map<String, Object>) clusters.get(iClusterName);
+      if (cfg == null)
+        cfg = (Map<String, Object>) clusters.get("*");
 
-    return (Boolean) cfg.get("replication");
+      return (Boolean) cfg.get("replication");
+    }
   }
 
   protected OStorage openStorage(final String iName) {
@@ -213,7 +218,7 @@ public class OStorageReplicator {
       OReplicationLog localLog = logs.get(iNodeId);
       if (localLog == null) {
         try {
-          ODocument cfg = cluster.getDatabaseConfiguration(storageName);
+          ODocument cfg = cluster.getServerDatabaseConfiguration(storageName);
 
           Number limit = cfg.field("clusters['*'][offlineMaxBuffer]");
           if (limit == null)
@@ -228,5 +233,10 @@ public class OStorageReplicator {
       }
       return localLog;
     }
+  }
+
+  @Override
+  public String toString() {
+    return storageName;
   }
 }

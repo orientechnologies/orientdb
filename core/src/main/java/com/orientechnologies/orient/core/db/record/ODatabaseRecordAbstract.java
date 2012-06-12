@@ -83,6 +83,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
   public ODatabaseRecordAbstract(final String iURL, final byte iRecordType) {
     super(new ODatabaseRaw(iURL));
+    setCurrentDatabaseinThreadLocal();
+
     underlying.setOwner(this);
 
     unmodifiableHooks = Collections.unmodifiableSet(hooks);
@@ -94,8 +96,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     mvcc = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
     validation = OGlobalConfiguration.DB_VALIDATION.getValueAsBoolean();
-
-    setCurrentDatabaseinThreadLocal();
   }
 
   @Override
@@ -270,8 +270,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    * Updates the record without checking the version.
    */
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent) {
-    return (RET)  executeSaveRecord(iContent, null, iContent.getVersion(), iContent.getRecordType(), true, OPERATION_MODE.SYNCHRONOUS,
-        null);
+    return (RET) executeSaveRecord(iContent, null, iContent.getVersion(), iContent.getRecordType(), true,
+        OPERATION_MODE.SYNCHRONOUS, null);
   }
 
   /**
@@ -692,8 +692,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return (RET) iRecord;
   }
 
-  public void executeDeleteRecord(final OIdentifiable iRecord, final int iVersion, final boolean iRequired,
-      boolean iCallTriggers, final OPERATION_MODE iMode) {
+  public void executeDeleteRecord(final OIdentifiable iRecord, final int iVersion, final boolean iRequired, boolean iCallTriggers,
+      final OPERATION_MODE iMode) {
     checkOpeness();
     final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
@@ -767,6 +767,10 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     underlying.setStatus(status);
   }
 
+  public void setDefaultClusterIdInternal(final int iDefClusterId) {
+    getStorage().setDefaultClusterId(iDefClusterId);
+  }
+
   public void setInternal(final ATTRIBUTES iAttribute, final Object iValue) {
     if (iAttribute == null)
       throw new IllegalArgumentException("attribute is null");
@@ -776,6 +780,14 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     switch (iAttribute) {
     case STATUS:
       setStatusInternal(STATUS.valueOf(stringValue.toUpperCase(Locale.ENGLISH)));
+      break;
+    case DEFAULTCLUSTERID:
+      if (iValue != null) {
+        if (iValue instanceof Number)
+          getStorage().setDefaultClusterId(((Number) iValue).intValue());
+        else
+          getStorage().setDefaultClusterId(getStorage().getClusterIdByName(iValue.toString()));
+      }
       break;
     }
   }

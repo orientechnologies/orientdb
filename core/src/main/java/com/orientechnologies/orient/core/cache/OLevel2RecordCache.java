@@ -37,7 +37,7 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
 	}
 
 	public OLevel2RecordCache(final OStorage iStorage) {
-		super(new OCacheLocator().secondaryCache());
+		super(new OCacheLocator().secondaryCache(iStorage.getName()));
 		profilerPrefix = "storage." + iStorage.getName();
 		strategy = STRATEGY.values()[(CACHE_LEVEL2_STRATEGY.getValueAsInteger())];
 	}
