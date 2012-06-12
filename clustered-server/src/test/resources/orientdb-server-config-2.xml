@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <orient-server>
 	<handlers>
-		<handler class="com.orientechnologies.orient.server.cluster.hazelcast.OHazelcastPlugin">
+		<handler class="com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin">
 			<parameters>
+				<parameter name="alias" value="europe2" />
 				<parameter value="true" name="enabled" />
 				<parameter value="src/test/resources/hazelcast-1.xml" name="configuration" />
 				<parameter name="db.*"
@@ -12,7 +13,16 @@
 							'defaultCluster' : 2,
 							'replication' : true,
 							'clusters' : {
-								'*' : { 'replication' : true, 'offlineMaxBuffer' : 1000000 },
+							  '*' : {
+								'operations' : {
+						            'create' : { 'direction' : 'in-out', 'mode' : 'synchronous' },
+						            'read'   : { 'direction' : 'in' },
+						            'update' : { 'direction' : 'in-out', 'mode' : 'synchronous' },
+						            'delete' : { 'direction' : 'in-out', 'mode' : 'synchronous' }
+						        },
+						        'replication' : true, 
+                                'offlineMaxBuffer' : 1000000
+                                },
 								'internal' : { 'replication' : false },
 								'index' : { 'replication' : false }
 							},
@@ -69,7 +79,7 @@
 		<user resources="connect,server.listDatabases" password="guest" name="guest" />
 	</users>
 	<properties>
-		<entry value="com.orientechnologies.orient.server.cluster.hazelcast.OHazelcastCache" name="cache.level2.impl" />
+		<entry value="com.orientechnologies.orient.server.hazelcast.OHazelcastCache" name="cache.level2.impl" />
 		<entry value="info" name="log.console.level" />
 		<entry value="fine" name="log.file.level" />
 	</properties>

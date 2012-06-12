@@ -28,13 +28,17 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public interface OServerCluster {
+public interface ODistributedServerManager {
+
+  public enum EXECUTION_MODE {
+    SYNCHRONOUS, ASYNCHRONOUS, FIRE_AND_FORGET
+  }
 
   public Object executeOperation(final String iNodeId, final byte op, final String dbName, final ORecordId rid, final int iVersion,
-      final ORawBuffer record) throws ODistributedException;
+      final ORawBuffer record, final EXECUTION_MODE iMode) throws ODistributedException;
 
   public Collection<Object> executeOperation(final Set<String> iNodeIds, final byte op, final String dbName, final ORecordId rid,
-      final int iVersion, final ORawBuffer record) throws ODistributedException;
+      final int iVersion, final ORawBuffer record, final EXECUTION_MODE iMode) throws ODistributedException;
 
   public String getLocalNodeId();
 

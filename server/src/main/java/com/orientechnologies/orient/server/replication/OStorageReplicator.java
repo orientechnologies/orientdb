@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.cluster;
+package com.orientechnologies.orient.server.replication;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,9 +34,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServerMain;
-import com.orientechnologies.orient.server.cluster.hazelcast.OHazelcastReplicationTask;
-import com.orientechnologies.orient.server.cluster.log.OReplicationLog;
-import com.orientechnologies.orient.server.distributed.OServerCluster;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 
 /**
  * Manages replication across clustered nodes.
@@ -45,14 +44,14 @@ import com.orientechnologies.orient.server.distributed.OServerCluster;
  * 
  */
 public class OStorageReplicator {
-  private OServerCluster               cluster;
+  private ODistributedServerManager    cluster;
   private String                       storageName;
   private OStorage                     storage;
 
   private ODocument                    configuration = new ODocument();
   private Map<String, OReplicationLog> logs          = new HashMap<String, OReplicationLog>();
 
-  public OStorageReplicator(final OServerCluster iCluster, final String iStorageName) {
+  public OStorageReplicator(final ODistributedServerManager iCluster, final String iStorageName) {
     cluster = iCluster;
     storageName = iStorageName;
     storage = openStorage(iStorageName);
@@ -98,7 +97,7 @@ public class OStorageReplicator {
         OLogManager.instance().warn(this, "DISTRIBUTED -> align failed for record %s because doesn't exist anymore", rid);
       else {
         // SEND THE RECORD TO THE REMOTE NODE
-        cluster.executeOperation(iNodeId, op.type, storageName, rid, op.version, record);
+        cluster.executeOperation(iNodeId, op.type, storageName, rid, op.version, record, EXECUTION_MODE.SYNCHRONOUS);
 
         if (op.type == ORecordOperation.CREATED)
           aligned[0]++;
@@ -126,20 +125,30 @@ public class OStorageReplicator {
     switch (iType) {
     // DETERMINE THE OPERATION TYPE
     case AFTER_CREATE:
-      operation = OHazelcastReplicationTask.CREATE;
+      operation = OReplicationTask.CREATE;
       break;
     case AFTER_UPDATE:
-      operation = OHazelcastReplicationTask.UPDATE;
+      operation = OReplicationTask.UPDATE;
       break;
     case AFTER_DELETE:
-      operation = OHazelcastReplicationTask.DELETE;
+      operation = OReplicationTask.DELETE;
       break;
     }
 
     if (operation > -1) {
-      if (!isClusterReplicated(storage.getClusterById(rid.getClusterId()).getName()))
+      final String clusterName = storage.getClusterById(rid.getClusterId()).getName();
+      if (!canExecuteOperation(clusterName, operation, "out")) {
         // IGNORE THIS CLUSTER
+        OLogManager
+            .instance()
+            .debug(
+                this,
+                "DISTRIBUTED -> skip sending operation %s against cluster '%s' to remote nodes because of the distributed configuration",
+                OReplicationTask.getName(operation).toUpperCase(), clusterName);
         return false;
+      }
+
+      final EXECUTION_MODE mode = getOperationMode(clusterName, operation);
 
       for (OReplicationLog localLog : logs.values()) {
         // LOG THE OPERATION BEFORE ANY CHANGE
@@ -164,7 +173,7 @@ public class OStorageReplicator {
       final Set<String> members = cluster.getRemoteNodeIds();
       if (!members.isEmpty()) {
         final Collection<Object> results = cluster.executeOperation(members, operation, storageName, rid, iRecord.getVersion(),
-            new ORawBuffer((ORecordInternal<?>) iRecord));
+            new ORawBuffer((ORecordInternal<?>) iRecord), mode);
 
         // TODO MANAGE CONFLICTS
         for (String member : members) {
@@ -182,7 +191,7 @@ public class OStorageReplicator {
   }
 
   @SuppressWarnings("unchecked")
-  private boolean isClusterReplicated(final String iClusterName) {
+  private boolean canExecuteOperation(final String iClusterName, final byte iOperation, final String iDirection) {
     synchronized (configuration) {
       final Map<String, Object> clusters = configuration.field("clusters");
 
@@ -190,7 +199,41 @@ public class OStorageReplicator {
       if (cfg == null)
         cfg = (Map<String, Object>) clusters.get("*");
 
-      return (Boolean) cfg.get("replication");
+      final boolean replicationEnabled = (Boolean) cfg.get("replication");
+      if (!replicationEnabled)
+        return false;
+
+      Map<String, Object> operations = (Map<String, Object>) cfg.get("operations");
+      if (operations == null)
+        return true;
+
+      final Map<String, Object> operation = (Map<String, Object>) operations.get(OReplicationTask.getName(iOperation));
+      if (operation == null)
+        return true;
+
+      final String direction = (String) operation.get("direction");
+      return direction == null || direction.contains(iDirection);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private EXECUTION_MODE getOperationMode(final String iClusterName, final byte iOperation) {
+    synchronized (configuration) {
+      final Map<String, Object> clusters = configuration.field("clusters");
+
+      Map<String, Object> cfg = (Map<String, Object>) clusters.get(iClusterName);
+      if (cfg == null)
+        cfg = (Map<String, Object>) clusters.get("*");
+
+      Map<String, Object> operations = (Map<String, Object>) cfg.get("operations");
+      if (operations == null)
+        return EXECUTION_MODE.SYNCHRONOUS;
+
+      final Map<String, Object> operation = (Map<String, Object>) operations.get(OReplicationTask.getName(iOperation));
+      if (operation == null)
+        return EXECUTION_MODE.SYNCHRONOUS;
+
+      return EXECUTION_MODE.valueOf(((String) operation.get("mode")).toUpperCase());
     }
   }
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.cluster.conflict;
+package com.orientechnologies.orient.server.replication.conflict;
 
 import java.util.Date;
 import java.util.List;
@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.server.cluster.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 /**
  * Default conflict resolver.
@@ -54,7 +54,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
   private boolean             latestAlwaysWin;
   private OIndex<?>           index                      = null;
 
-  public void config(final OHazelcastPlugin iReplicator, final Map<String, String> iConfig) {
+  public void config(final ODistributedServerManager iReplicator, final Map<String, String> iConfig) {
     ignoreIfSameContent = Boolean.parseBoolean(iConfig.get("ignoreIfSameContent"));
     ignoreIfMergeOk = Boolean.parseBoolean(iConfig.get("ignoreIfMergeOk"));
     latestAlwaysWin = Boolean.parseBoolean(iConfig.get("latestAlwaysWin"));

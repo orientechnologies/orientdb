@@ -56,7 +56,7 @@ import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import com.orientechnologies.orient.server.distributed.OServerCluster;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.handler.OServerHandler;
 import com.orientechnologies.orient.server.handler.OServerHandlerHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
@@ -453,8 +453,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
         final OServerHandler plugin = OServerMain.server().getPlugin("cluster");
         ODocument distributedCfg = null;
-        if (plugin != null && plugin instanceof OServerCluster)
-          distributedCfg = ((OServerCluster) plugin).getDatabaseConfiguration(getName());
+        if (plugin != null && plugin instanceof ODistributedServerManager)
+          distributedCfg = ((ODistributedServerManager) plugin).getDatabaseConfiguration(getName());
 
         channel.writeBytes(distributedCfg != null ? distributedCfg.toStream() : null);
 
@@ -581,8 +581,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     if (operation.equals("status")) {
       final OServerHandler plugin = OServerMain.server().getPlugin("cluster");
-      if (plugin != null && plugin instanceof OServerCluster)
-        response = ((OServerCluster) plugin).getClusterConfiguration();
+      if (plugin != null && plugin instanceof ODistributedServerManager)
+        response = ((ODistributedServerManager) plugin).getClusterConfiguration();
 
     } else
       throw new IllegalArgumentException("Cluster operation '" + operation + "' is not supported");

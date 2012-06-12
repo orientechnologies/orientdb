@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.cluster.hazelcast;
+package com.orientechnologies.orient.server.hazelcast;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -21,7 +21,9 @@ import java.io.IOException;
 
 import com.hazelcast.nio.DataSerializable;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.server.cluster.OReplicationTask;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
+import com.orientechnologies.orient.server.replication.OReplicationTask;
 
 /**
  * Hazelcast implementation of the distributed task used for replication. it uses the Hazelcast serialization to improve
@@ -35,8 +37,18 @@ public class OHazelcastReplicationTask extends OReplicationTask implements DataS
   public OHazelcastReplicationTask() {
   }
 
-  public OHazelcastReplicationTask(String databaseName, byte iOperation, ORecordId rid, byte[] content, int version, byte recordType) {
-    super(databaseName, iOperation, rid, content, version, recordType);
+  public OHazelcastReplicationTask(String databaseName, byte iOperation, ORecordId rid, byte[] content, int version,
+      byte recordType, final EXECUTION_MODE iMode) {
+    super(databaseName, iOperation, rid, content, version, recordType, iMode);
+  }
+
+  @Override
+  public Object call() throws Exception {
+    Object result = super.call();
+    if (result instanceof OPhysicalPosition)
+      // WRAP IT TO IMPROVE PERFORMANCE
+      result = new OHazelcastPhysicalPosition((OPhysicalPosition) result);
+    return result;
   }
 
   @Override

@@ -2,17 +2,28 @@
 <orient-server>
 	<handlers>
 		<!-- CLUSTER PLUGIN, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
-		<handler class="com.orientechnologies.orient.server.cluster.hazelcast.OHazelcastPlugin">
+		<handler class="com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin">
 			<parameters>
+				<!-- <parameter name="alias" value="europe1" /> -->
 				<parameter name="enabled" value="true" />
 				<parameter name="configuration" value="${ORIENTDB_HOME}/config/hazelcast.xml" />
 				<parameter name="db.*"
 					value="{
 					    'servers' : {
 					      '*' : {
+							'defaultCluster' : 2,
 							'replication' : true,
 							'clusters' : {
-								'*' : { 'replication' : true, 'offlineMaxBuffer' : 1000000 },
+							  '*' : {
+								'operations' : {
+						            'create' : { 'direction' : 'in-out', 'mode' : 'synchronous' },
+						            'read'   : { 'direction' : 'in' },
+						            'update' : { 'direction' : 'in-out', 'mode' : 'synchronous' },
+						            'delete' : { 'direction' : 'in-out', 'mode' : 'synchronous' }
+						        },
+						        'replication' : true, 
+                                'offlineMaxBuffer' : 1000000
+                                },
 								'internal' : { 'replication' : false },
 								'index' : { 'replication' : false }
 							},
@@ -79,7 +90,7 @@
 	</users>
 	<properties>
 		<!-- Uses the Hazelcast's distributed cache as 2nd level cache -->
-		<entry name="cache.level2.impl" value="com.orientechnologies.orient.server.cluster.hazelcast.OHazelcastCache" />
+		<entry name="cache.level2.impl" value="com.orientechnologies.orient.server.hazelcast.OHazelcastCache" />
 
 		<!-- Enable/Disable logging. Levels are: finer, fine, finest, info, warning -->
 		<entry name="log.console.level" value="info" />
