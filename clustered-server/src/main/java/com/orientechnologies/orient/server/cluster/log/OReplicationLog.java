@@ -189,7 +189,7 @@ public class OReplicationLog extends OSingleFileSegment {
   public boolean needAlignment() {
     lock.acquireSharedLock();
     try {
-      return pendingLogs > 0;
+      return pendingLogs > 1;
     } finally {
       lock.releaseSharedLock();
     }
