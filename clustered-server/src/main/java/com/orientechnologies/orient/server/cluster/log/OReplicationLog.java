@@ -89,16 +89,13 @@ public class OReplicationLog extends OSingleFileSegment {
   /**
    * Reset the file
    */
-  public void resetIfEmpty() throws IOException {
+  public void success() throws IOException {
     lock.acquireExclusiveLock();
     try {
 
-      if (pendingLogs == 1)
-        // NO CONCURRENT ENTRIES, RESET IT
-        if (file.getFreeSpace() < RECORD_SIZE)
-          reset();
-        else
-          pendingLogs = 0;
+      pendingLogs--;
+      if (pendingLogs == 0 && file.getFreeSpace() < RECORD_SIZE)
+        file.shrink(0);
 
     } finally {
       lock.releaseExclusiveLock();
@@ -112,25 +109,13 @@ public class OReplicationLog extends OSingleFileSegment {
    * @return
    * @throws IOException
    */
-  public long resetEntry(final int iPosition) throws IOException {
+  public long alignedEntry(final int iPosition) throws IOException {
     lock.acquireExclusiveLock();
     try {
 
       final int pos = iPosition * RECORD_SIZE;
       file.writeByte(pos, (byte) -1);
       return --pendingLogs;
-
-    } finally {
-      lock.releaseExclusiveLock();
-    }
-  }
-
-  public void reset() throws IOException {
-    lock.acquireExclusiveLock();
-    try {
-
-      // file.shrink(0);
-      pendingLogs = 0;
 
     } finally {
       lock.releaseExclusiveLock();
@@ -201,7 +186,21 @@ public class OReplicationLog extends OSingleFileSegment {
     }
   }
 
+  public boolean needAlignment() {
+    lock.acquireSharedLock();
+    try {
+      return pendingLogs > 0;
+    } finally {
+      lock.releaseSharedLock();
+    }
+  }
+
   public int totalEntries() {
-    return file.getFilledUpTo() / RECORD_SIZE;
+    lock.acquireSharedLock();
+    try {
+      return file.getFilledUpTo() / RECORD_SIZE;
+    } finally {
+      lock.releaseSharedLock();
+    }
   }
 }

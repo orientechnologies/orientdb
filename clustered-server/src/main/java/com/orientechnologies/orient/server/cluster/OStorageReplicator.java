@@ -77,7 +77,7 @@ public class OStorageReplicator {
 
     int[] aligned = new int[3];
     final OReplicationLog log = getLog(iNodeId);
-    for (int i = 0; i < log.totalEntries(); ++i) {
+    for (int i = 0; log.needAlignment() && i < log.totalEntries(); ++i) {
       // GET THE <I> LOG ENTRY
       try {
         log.getEntry(i, op);
@@ -100,12 +100,6 @@ public class OStorageReplicator {
         // SEND THE RECORD TO THE REMOTE NODE
         cluster.executeOperation(iNodeId, op.type, storageName, rid, op.version, record);
 
-        try {
-          log.resetEntry(i);
-        } catch (IOException e) {
-          OLogManager.instance().error(this, "DISTRIBUTED -> error on reset log entry %d", e, i);
-        }
-
         if (op.type == ORecordOperation.CREATED)
           aligned[0]++;
         else if (op.type == ORecordOperation.UPDATED)
@@ -113,13 +107,12 @@ public class OStorageReplicator {
         else if (op.type == ORecordOperation.DELETED)
           aligned[2]++;
       }
-    }
 
-    try {
-      // FORCE RESET OF THE ENTIRE LOG
-      log.reset();
-    } catch (IOException e) {
-      OLogManager.instance().error(this, "DISTRIBUTED -> Error on reset log file: %s", log, e);
+      try {
+        log.alignedEntry(i);
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "DISTRIBUTED -> error on reset log entry %d", e, i);
+      }
     }
 
     return aligned;
@@ -177,7 +170,7 @@ public class OStorageReplicator {
         for (String member : members) {
           final OReplicationLog log = getLog(member);
           try {
-            log.resetIfEmpty();
+            log.success();
           } catch (IOException e) {
             OLogManager.instance().error(this, "DISTRIBUTED -> Error on reset log file: %s", e, log);
           }
