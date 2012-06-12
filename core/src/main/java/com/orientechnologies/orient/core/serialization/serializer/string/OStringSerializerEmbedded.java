@@ -15,16 +15,15 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.string;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OBase64Utils;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerHelper;
 
-public class OStringSerializerAnyStreamable implements OStringSerializer {
-  public static final OStringSerializerAnyStreamable INSTANCE = new OStringSerializerAnyStreamable();
-  public static final String                         NAME     = "st";
+public class OStringSerializerEmbedded implements OStringSerializer {
+  public static final OStringSerializerEmbedded INSTANCE = new OStringSerializerEmbedded();
+  public static final String                    NAME     = "em";
 
   /**
    * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
@@ -34,24 +33,8 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
       // NULL VALUE
       return null;
 
-    OSerializableStream instance = null;
-
-    int propertyPos = iStream.indexOf(':');
-    int pos = iStream.indexOf(OStreamSerializerHelper.SEPARATOR);
-    if (pos < 0 || propertyPos > -1 && pos > propertyPos) {
-      instance = new ODocument();
-      pos = -1;
-    } else {
-      final String className = iStream.substring(0, pos);
-      try {
-        final Class<?> clazz = Class.forName(className);
-        instance = (OSerializableStream) clazz.newInstance();
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "Error on unmarshalling content. Class: " + className, e, OSerializationException.class);
-      }
-    }
-
-    instance.fromStream(OBase64Utils.decode(iStream.substring(pos + 1)));
+    final OSerializableStream instance = new ODocument();
+    instance.fromStream(OBinaryProtocol.string2bytes(iStream));
     return instance;
   }
 
@@ -68,7 +51,7 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
       OSerializableStream stream = (OSerializableStream) iValue;
       iOutput.append(iValue.getClass().getName());
       iOutput.append(OStreamSerializerHelper.SEPARATOR);
-      iOutput.append(OBase64Utils.encodeBytes(stream.toStream()));
+      iOutput.append(OBinaryProtocol.bytes2string(stream.toStream()));
     }
     return iOutput;
   }
