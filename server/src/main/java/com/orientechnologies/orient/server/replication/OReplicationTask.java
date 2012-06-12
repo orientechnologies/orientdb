@@ -24,6 +24,7 @@ import java.util.concurrent.Callable;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServerMain;
@@ -37,11 +38,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
  */
 public class OReplicationTask implements Callable<Object>, Externalizable {
   private static final long serialVersionUID = 1L;
-
-  public static final byte  READ             = 0;
-  public static final byte  CREATE           = 1;
-  public static final byte  UPDATE           = 2;
-  public static final byte  DELETE           = 3;
 
   protected String          databaseName;
   protected byte            operation;
@@ -85,23 +81,23 @@ public class OReplicationTask implements Callable<Object>, Externalizable {
       stg.open(null, null, null);
 
     Object result = null;
-    if (operation == CREATE) {
+    if (operation == ORecordOperation.CREATED) {
       OLogManager.instance().debug(this, "DISTRIBUTED <- creating record %s v.%d size=%s", rid, version,
           OFileUtils.getSizeAsString(content.length));
       // RETURNS THE WRAPPED PHY-POS TO OPTIMIZE SERIALIZATION USING HAZELCAST'S ONE
       result = stg.createRecord(0, rid, content, version, recordType, 0, null);
 
-    } else if (operation == READ) {
+    } else if (operation == ORecordOperation.LOADED) {
       OLogManager.instance().debug(this, "DISTRIBUTED <- reading record %s v.%d size=%s", rid, version,
           OFileUtils.getSizeAsString(content.length));
       result = stg.readRecord(rid, null, false, null);
 
-    } else if (operation == UPDATE) {
+    } else if (operation == ORecordOperation.UPDATED) {
       OLogManager.instance().debug(this, "DISTRIBUTED <- updating record %s v.%d size=%s", rid, version,
           OFileUtils.getSizeAsString(content.length));
       result = stg.updateRecord(rid, content, version, recordType, 0, null);
 
-    } else if (operation == DELETE) {
+    } else if (operation == ORecordOperation.DELETED) {
       OLogManager.instance().debug(this, "DISTRIBUTED <- deleting record %s v.%d size=%s", rid, version,
           OFileUtils.getSizeAsString(content.length));
       result = stg.deleteRecord(rid, version, 0, null);
@@ -138,24 +134,5 @@ public class OReplicationTask implements Callable<Object>, Externalizable {
     version = in.readInt();
     recordType = in.readByte();
     mode = EXECUTION_MODE.values()[in.readByte()];
-  }
-
-  public static String getName(final int iOperation) {
-    String operation = "?";
-    switch (iOperation) {
-    case CREATE:
-      operation = "create";
-      break;
-    case READ:
-      operation = "read";
-      break;
-    case UPDATE:
-      operation = "update";
-      break;
-    case DELETE:
-      operation = "delete";
-      break;
-    }
-    return operation;
   }
 }

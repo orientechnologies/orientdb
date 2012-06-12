@@ -101,7 +101,7 @@ public class OStorageRemote extends OStorageAbstract {
   private int                               connectionRetryDelay;
 
   private static List<OChannelBinaryClient> networkPool       = new ArrayList<OChannelBinaryClient>();
-  protected List<String>                    serverURLs        = new ArrayList<String>();
+  protected final List<String>              serverURLs        = new ArrayList<String>();
   private OCluster[]                        clusters          = new OCluster[0];
   protected final Map<String, OCluster>     clusterMap        = new HashMap<String, OCluster>();
   private int                               defaultClusterId;
@@ -1172,10 +1172,6 @@ public class OStorageRemote extends OStorageAbstract {
       } catch (Throwable t) {
         // DO NOTHING BUT CONTINUE IN THE LOOP
       }
-
-      if (clusterConfiguration != null) {
-
-      }
     }
 
     // RECONNECTION FAILED: THROW+LOG THE ORIGINAL EXCEPTION
@@ -1234,6 +1230,22 @@ public class OStorageRemote extends OStorageAbstract {
 
           // READ CLUSTER CONFIGURATION
           clusterConfiguration = new ODocument(network.readBytes());
+
+          if (clientConfiguration != null) {
+            final List<ODocument> members = clusterConfiguration.field("cluster[members]");
+            if (members != null) {
+              for (ODocument m : members)
+                if (m != null && !serverURLs.contains((String) m.field("id"))) {
+                  for (Map<String, Object> listener : ((Collection<Map<String, Object>>) m.field("listeners"))) {
+                    if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
+                      String url = (String) listener.get("listen");
+                      if (!serverURLs.contains(url))
+                        serverURLs.add(url);
+                    }
+                  }
+                }
+            }
+          }
 
           defaultClusterId = clusterMap.get(OStorage.CLUSTER_DEFAULT_NAME).getId();
           status = STATUS.OPEN;
@@ -1336,7 +1348,12 @@ public class OStorageRemote extends OStorageAbstract {
       final String remoteHost = server.substring(0, sepPos);
       final int remotePort = Integer.parseInt(server.substring(sepPos + 1));
 
-      return new OChannelBinaryClient(remoteHost, remotePort, clientConfiguration, OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
+      try {
+        return new OChannelBinaryClient(remoteHost, remotePort, clientConfiguration,
+            OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
+      } catch (Exception e) {
+        // GET THE NEXT ONE IF ANY
+      }
     }
 
     final StringBuilder buffer = new StringBuilder();

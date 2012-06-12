@@ -44,9 +44,19 @@ public interface ODistributedServerManager {
 
   public Set<String> getRemoteNodeIds();
 
+  public ODocument getDatabaseStatus(final String iDatabaseName);
+
   public ODocument getDatabaseConfiguration(final String iDatabaseName);
 
-  public ODocument getServerDatabaseConfiguration(final String iDatabaseName);
+  public ODocument getLocalDatabaseConfiguration(final String iDatabaseName);
 
   public ODocument getClusterConfiguration();
+
+  /**
+   * Returns the offset in milliseconds as difference between the current date time and the central cluster time. This allows to
+   * have a quite precise idea about information on date times, such as logs to determine the youngest in case of conflict.
+   * 
+   * @return
+   */
+  public long getTimeOffset();
 }

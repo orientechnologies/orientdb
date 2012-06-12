@@ -15,16 +15,16 @@
 							'clusters' : {
 							  '*' : {
 								'operations' : {
-						            'create' : { 'direction' : 'in-out', 'mode' : 'synchronous' },
-						            'read'   : { 'direction' : 'in' },
-						            'update' : { 'direction' : 'in-out', 'mode' : 'synchronous' },
-						            'delete' : { 'direction' : 'in-out', 'mode' : 'synchronous' }
+						          'create' : { 'direction' : 'in-out', 'mode' : 'synchronous' },
+						          'read'   : { 'direction' : 'in' },
+						          'update' : { 'direction' : 'in-out', 'mode' : 'synchronous' },
+						          'delete' : { 'direction' : 'in-out', 'mode' : 'synchronous' }
 						        },
 						        'replication' : true, 
                                 'offlineMaxBuffer' : 1000000
-                                },
-								'internal' : { 'replication' : false },
-								'index' : { 'replication' : false }
+                              },
+						      'internal' : { 'replication' : false },
+							  'index' : { 'replication' : false }
 							},
 							'classes':{}
 							}

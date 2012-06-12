@@ -371,6 +371,13 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     return ODocumentHelper.hasSameContentOf(this, getDatabase(), iOther, getDatabase());
   }
 
+  @Override
+  public byte[] toStream() {
+    if (_recordFormat == null)
+      setup();
+    return super.toStream();
+  }
+
   /**
    * Dumps the instance as string.
    */

@@ -15,6 +15,14 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.io.IOException;
+import java.net.Socket;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -60,14 +68,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.handler.OServerHandler;
 import com.orientechnologies.orient.server.handler.OServerHandlerHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
-
-import java.io.IOException;
-import java.net.Socket;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -454,7 +454,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         final OServerHandler plugin = OServerMain.server().getPlugin("cluster");
         ODocument distributedCfg = null;
         if (plugin != null && plugin instanceof ODistributedServerManager)
-          distributedCfg = ((ODistributedServerManager) plugin).getDatabaseConfiguration(getName());
+          distributedCfg = ((ODistributedServerManager) plugin).getDatabaseStatus(getName());
 
         channel.writeBytes(distributedCfg != null ? distributedCfg.toStream() : null);
 
@@ -819,7 +819,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     connection.data.commandDetail = command.getText();
 
     // ENABLES THE CACHE TO IMPROVE PERFORMANCE OF COMPLEX COMMANDS LIKE TRAVERSE
-    //connection.database.getLevel1Cache().setEnable(true);
+    // connection.database.getLevel1Cache().setEnable(true);
     beginResponse();
     try {
       if (asynch) {
@@ -905,7 +905,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       }
     } finally {
       endResponse();
-      //connection.database.getLevel1Cache().setEnable(false);
+      // connection.database.getLevel1Cache().setEnable(false);
     }
   }
 

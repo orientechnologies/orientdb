@@ -55,7 +55,7 @@ public class OStorageReplicator {
     cluster = iCluster;
     storageName = iStorageName;
     storage = openStorage(iStorageName);
-    configuration = iCluster.getServerDatabaseConfiguration(iStorageName);
+    configuration = iCluster.getLocalDatabaseConfiguration(iStorageName);
 
     final File replicationDirectory = new File(OSystemVariableResolver.resolveSystemVariables(OReplicationLog.REPLICATION_DIRECTORY
         + "/" + iStorageName));
@@ -125,13 +125,13 @@ public class OStorageReplicator {
     switch (iType) {
     // DETERMINE THE OPERATION TYPE
     case AFTER_CREATE:
-      operation = OReplicationTask.CREATE;
+      operation = ORecordOperation.CREATED;
       break;
     case AFTER_UPDATE:
-      operation = OReplicationTask.UPDATE;
+      operation = ORecordOperation.UPDATED;
       break;
     case AFTER_DELETE:
-      operation = OReplicationTask.DELETE;
+      operation = ORecordOperation.DELETED;
       break;
     }
 
@@ -144,7 +144,7 @@ public class OStorageReplicator {
             .debug(
                 this,
                 "DISTRIBUTED -> skip sending operation %s against cluster '%s' to remote nodes because of the distributed configuration",
-                OReplicationTask.getName(operation).toUpperCase(), clusterName);
+                ORecordOperation.getName(operation).toUpperCase(), clusterName);
         return false;
       }
 
@@ -207,7 +207,7 @@ public class OStorageReplicator {
       if (operations == null)
         return true;
 
-      final Map<String, Object> operation = (Map<String, Object>) operations.get(OReplicationTask.getName(iOperation));
+      final Map<String, Object> operation = (Map<String, Object>) operations.get(ORecordOperation.getName(iOperation));
       if (operation == null)
         return true;
 
@@ -229,7 +229,7 @@ public class OStorageReplicator {
       if (operations == null)
         return EXECUTION_MODE.SYNCHRONOUS;
 
-      final Map<String, Object> operation = (Map<String, Object>) operations.get(OReplicationTask.getName(iOperation));
+      final Map<String, Object> operation = (Map<String, Object>) operations.get(ORecordOperation.getName(iOperation));
       if (operation == null)
         return EXECUTION_MODE.SYNCHRONOUS;
 
@@ -254,13 +254,13 @@ public class OStorageReplicator {
       OReplicationLog localLog = logs.get(iNodeId);
       if (localLog == null) {
         try {
-          ODocument cfg = cluster.getServerDatabaseConfiguration(storageName);
+          ODocument cfg = cluster.getLocalDatabaseConfiguration(storageName);
 
           Number limit = cfg.field("clusters['*'][offlineMaxBuffer]");
           if (limit == null)
             limit = (long) -1;
 
-          localLog = new OReplicationLog(iNodeId, storageName, limit.longValue());
+          localLog = new OReplicationLog(cluster, iNodeId, storageName, limit.longValue());
           logs.put(iNodeId, localLog);
         } catch (IOException e) {
           OLogManager.instance().error("DISTRIBUTED -> Error on creation replication log for storage '%s' node '%s'", storageName,

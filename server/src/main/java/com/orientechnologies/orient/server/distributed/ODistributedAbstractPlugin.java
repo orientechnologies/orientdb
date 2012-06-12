@@ -92,7 +92,7 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
    */
   @Override
   public void onOpen(final ODatabase iDatabase) {
-    final ODocument cfg = getServerDatabaseConfiguration(iDatabase.getName());
+    final ODocument cfg = getLocalDatabaseConfiguration(iDatabase.getName());
     if ((Boolean) cfg.field("replication")) {
       createReplicator(iDatabase.getName());
 
@@ -149,7 +149,7 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
     return cfg;
   }
 
-  public ODocument getServerDatabaseConfiguration(final String iDatabaseName) {
+  public ODocument getLocalDatabaseConfiguration(final String iDatabaseName) {
     final ODocument cfg = getDatabaseConfiguration(iDatabaseName);
     Map<String, Object> perServerCfg = cfg.field("servers[" + getLocalNodeId() + "]");
     if (perServerCfg == null)

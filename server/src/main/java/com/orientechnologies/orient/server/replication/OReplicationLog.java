@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.impl.local.OSingleFileSegment;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 /**
  * Write all the operation during server cluster.<br/>
@@ -61,11 +62,14 @@ public class OReplicationLog extends OSingleFileSegment {
                                                                     0, true);
   private final long                      limit;
   private long                            pendingLogs           = 0;
+  private final ODistributedServerManager manager;
 
-  public OReplicationLog(final String iNodeId, final String iDatabase, final long iLimit) throws IOException {
+  public OReplicationLog(final ODistributedServerManager iManager, final String iNodeId, final String iDatabase, final long iLimit)
+      throws IOException {
     super(REPLICATION_DIRECTORY + iDatabase + "/" + iNodeId.replace('.', '_').replace(':', '-') + EXTENSION,
         OGlobalConfiguration.DISTRIBUTED_LOG_TYPE.getValueAsString());
     synchEnabled = OGlobalConfiguration.DISTRIBUTED_LOG_SYNCH.getValueAsBoolean();
+    manager = iManager;
 
     file.setFailCheck(false);
     if (exists()) {
@@ -157,7 +161,8 @@ public class OReplicationLog extends OSingleFileSegment {
       file.writeInt(offset, iVersion);
       offset += OBinaryProtocol.SIZE_INT;
 
-      file.writeLong(offset, System.currentTimeMillis());
+      // WRITE THE TIME AS CLUSTER TIME (COMPUTE THE OFFSET)
+      file.writeLong(offset, System.currentTimeMillis() + manager.getTimeOffset());
 
       if (synchEnabled)
         file.synch();

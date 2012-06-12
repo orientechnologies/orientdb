@@ -24,22 +24,29 @@ import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.server.OServer;
 
 public abstract class ONetworkProtocol extends OSoftThread {
-	protected OServer	server;
+  protected OServer server;
 
-	public ONetworkProtocol(ThreadGroup group, String name) {
-		super(group, name);
-	}
+  public ONetworkProtocol(ThreadGroup group, String name) {
+    super(group, name);
+  }
 
-	public abstract void config(OServer iServer, Socket iSocket, OContextConfiguration iConfiguration) throws IOException;
+  public abstract void config(OServer iServer, Socket iSocket, OContextConfiguration iConfiguration) throws IOException;
 
-	public abstract String getType();
+  public abstract String getType();
 
-	public abstract OChannel getChannel();
+  public abstract OChannel getChannel();
 
-	public void registerCommand(final Object iServerCommandInstance) {
-	}
+  public String getListeningAddress() {
+    final OChannel c = getChannel();
+    if (c != null)
+      return c.socket.getLocalAddress().getHostAddress();
+    return null;
+  }
 
-	public OServer getServer() {
-		return server;
-	}
+  public void registerCommand(final Object iServerCommandInstance) {
+  }
+
+  public OServer getServer() {
+    return server;
+  }
 }
