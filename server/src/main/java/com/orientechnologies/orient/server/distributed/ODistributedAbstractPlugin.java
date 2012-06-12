@@ -18,9 +18,6 @@ package com.orientechnologies.orient.server.distributed;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.IMap;
-import com.hazelcast.core.Member;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
@@ -142,32 +139,13 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
     return alias;
   }
 
-  protected String getNodeId(final Member iMember) {
-    return iMember.getInetSocketAddress().toString().substring(1);
-  }
-
-  public ODocument getClusterConfiguration() {
-    return new ODocument().field("result", Hazelcast.getCluster().toString().replace('\n', ' ').replace('\t', ' '));
-  }
-
   public ODocument getDatabaseConfiguration(final String iDatabaseName) {
-    // SEARCH IN THE CLUSTER'S DISTRIBUTED CONFIGURATION
-    final IMap<String, String> distributedConfiguration = Hazelcast.getMap("orientdb");
-    final String jsonCfg = distributedConfiguration.get("db." + iDatabaseName);
+    // NOT FOUND: GET BY CONFIGURATION ON LOCAL NODE
+    ODocument cfg = databaseConfiguration.get(iDatabaseName);
+    if (cfg == null)
+      // NOT FOUND: GET THE DEFAULT ONE
+      cfg = databaseConfiguration.get("*");
 
-    ODocument cfg = null;
-    if (jsonCfg != null)
-      cfg = new ODocument().fromJSON(jsonCfg);
-    else {
-      // NOT FOUND: GET BY CONFIGURATION ON LOCAL NODE
-      cfg = databaseConfiguration.get(iDatabaseName);
-      if (cfg == null)
-        // NOT FOUND: GET THE DEFAULT ONE
-        cfg = databaseConfiguration.get("*");
-
-      // STORE IT IN THE CLUSTER CONFIGURATION
-      distributedConfiguration.put("db." + iDatabaseName, cfg.toJSON());
-    }
     return cfg;
   }
 

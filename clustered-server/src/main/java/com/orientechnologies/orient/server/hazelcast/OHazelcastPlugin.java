@@ -29,6 +29,7 @@ import com.hazelcast.core.DistributedTask;
 import com.hazelcast.core.ExecutionCallback;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IMap;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
@@ -38,6 +39,7 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -188,11 +190,41 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return null;
   }
 
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin#getDatabaseConfiguration(java.lang.String)
+   */
+  @Override
+  public ODocument getDatabaseConfiguration(String iDatabaseName) {
+    // SEARCH IN THE CLUSTER'S DISTRIBUTED CONFIGURATION
+    final IMap<String, String> distributedConfiguration = Hazelcast.getMap("orientdb");
+    final String jsonCfg = distributedConfiguration.get("db." + iDatabaseName);
+
+    ODocument cfg = null;
+    if (jsonCfg != null)
+      cfg = new ODocument().fromJSON(jsonCfg);
+    else {
+      cfg = super.getDatabaseConfiguration(iDatabaseName);
+      // STORE IT IN THE CLUSTER CONFIGURATION
+      distributedConfiguration.put("db." + iDatabaseName, cfg.toJSON());
+    }
+    return cfg;
+  }
+
   public String getLocalNodeId() {
     if (alias != null)
       return alias;
 
     return getNodeId(Hazelcast.getCluster().getLocalMember());
+  }
+
+  protected String getNodeId(final Member iMember) {
+    return iMember.getInetSocketAddress().toString().substring(1);
+  }
+
+  public ODocument getClusterConfiguration() {
+    return new ODocument().field("result", Hazelcast.getCluster().toString().replace('\n', ' ').replace('\t', ' '));
   }
 
   public Set<String> getRemoteNodeIds() {
