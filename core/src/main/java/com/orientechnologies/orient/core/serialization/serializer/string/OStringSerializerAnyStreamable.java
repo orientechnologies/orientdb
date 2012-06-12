@@ -38,7 +38,7 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
 
 		int propertyPos = iStream.indexOf(':');
 		int pos = iStream.indexOf(OStreamSerializerHelper.SEPARATOR);
-		if (pos < 0 || pos > propertyPos) {
+		if (pos < 0 || propertyPos > -1 && pos > propertyPos) {
 			instance = new ODocument();
 			pos = -1;
 		} else {

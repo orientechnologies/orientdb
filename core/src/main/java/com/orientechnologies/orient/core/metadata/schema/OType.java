@@ -373,9 +373,10 @@ public enum OType {
         return iValue.toString();
     } catch (Exception e) {
       OLogManager.instance().debug(OType.class, "Error in conversion of value '%s' to type '%s'", iValue, iTargetClass);
+      return null;
     }
 
-    return null;
+    return iValue;
   }
 
   public Class<?> getDefaultJavaType() {
