@@ -223,19 +223,19 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       break;
 
     case EMBEDDEDSET:
-      ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedCollectionToStream(ODatabaseRecordThreadLocal.INSTANCE.get(), null,
+      ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedCollectionToStream(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined(), null,
           iBuffer, null, null, iValue, null, true);
       OProfiler.getInstance().stopChrono("serializer.rec.str.embedSet2string", timer);
       break;
 
     case EMBEDDEDLIST:
-      ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedCollectionToStream(ODatabaseRecordThreadLocal.INSTANCE.get(), null,
+      ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedCollectionToStream(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined(), null,
           iBuffer, null, null, iValue, null, true);
       OProfiler.getInstance().stopChrono("serializer.rec.str.embedList2string", timer);
       break;
 
     case EMBEDDEDMAP:
-      ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapToStream(ODatabaseRecordThreadLocal.INSTANCE.get(), null, iBuffer, null,
+      ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapToStream(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined(), null, iBuffer, null,
           null, iValue, null, true);
       OProfiler.getInstance().stopChrono("serializer.rec.str.embedMap2string", timer);
       break;
