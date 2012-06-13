@@ -68,7 +68,7 @@ public class OChannelBinaryProtocol {
   public static final byte  REQUEST_DB_LIST               = 74; // SINCE 1.0rc6
 
   public static final byte  REQUEST_PUSH_RECORD           = 79;
-  public static final byte  PUSH_NODE2CLIENT_DB_CONFIG    = 80;
+  public static final byte  REQUEST_PUSH_DISTRIB_CONFIG   = 80;
 
   // DISTRIBUTED
   public static final byte  REQUEST_DB_COPY               = 90; // SINCE 1.0rc8

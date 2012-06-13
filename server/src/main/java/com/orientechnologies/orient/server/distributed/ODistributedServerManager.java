@@ -21,6 +21,7 @@ import java.util.Set;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.server.distributed.ODistributedTask.OPERATION;
 
 /**
  * Server cluster interface to abstract cluster behavior.
@@ -34,11 +35,11 @@ public interface ODistributedServerManager {
     SYNCHRONOUS, ASYNCHRONOUS, FIRE_AND_FORGET
   }
 
-  public Object executeOperation(final String iNodeId, final byte op, final String dbName, final ORecordId rid, final int iVersion,
-      final ORawBuffer record, final EXECUTION_MODE iMode) throws ODistributedException;
-
-  public Collection<Object> executeOperation(final Set<String> iNodeIds, final byte op, final String dbName, final ORecordId rid,
+  public Object executeOperation(final String iNodeId, final OPERATION op, final String dbName, final ORecordId rid,
       final int iVersion, final ORawBuffer record, final EXECUTION_MODE iMode) throws ODistributedException;
+
+  public Collection<Object> executeOperation(final Set<String> iNodeIds, final OPERATION op, final String dbName,
+      final ORecordId rid, final int iVersion, final ORawBuffer record, final EXECUTION_MODE iMode) throws ODistributedException;
 
   public String getLocalNodeId();
 
@@ -51,6 +52,8 @@ public interface ODistributedServerManager {
   public ODocument getLocalDatabaseConfiguration(final String iDatabaseName);
 
   public ODocument getClusterConfiguration();
+
+  public ODocument getLocalNodeConfiguration();
 
   /**
    * Returns the offset in milliseconds as difference between the current date time and the central cluster time. This allows to

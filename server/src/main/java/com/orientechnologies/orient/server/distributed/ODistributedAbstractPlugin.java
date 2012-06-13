@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
-import com.orientechnologies.orient.server.replication.OStorageReplicator;
 
 /**
  * Abstract plugin to manage the distributed environment.
@@ -42,11 +41,11 @@ import com.orientechnologies.orient.server.replication.OStorageReplicator;
  */
 public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract implements ODistributedServerManager,
     ODatabaseLifecycleListener, ORecordHook {
-  protected boolean                         enabled               = true;
-  protected String                          alias                 = null;
-  protected long                            offlineBuffer         = -1;
-  protected Map<String, ODocument>          databaseConfiguration = new ConcurrentHashMap<String, ODocument>();
-  protected Map<String, OStorageReplicator> replicators           = new ConcurrentHashMap<String, OStorageReplicator>();
+  protected boolean                           enabled               = true;
+  protected String                            alias                 = null;
+  protected long                              offlineBuffer         = -1;
+  protected Map<String, ODocument>            databaseConfiguration = new ConcurrentHashMap<String, ODocument>();
+  protected Map<String, OStorageSynchronizer> replicators           = new ConcurrentHashMap<String, OStorageSynchronizer>();
 
   @Override
   public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
@@ -93,8 +92,9 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
   @Override
   public void onOpen(final ODatabase iDatabase) {
     final ODocument cfg = getLocalDatabaseConfiguration(iDatabase.getName());
-    if ((Boolean) cfg.field("replication")) {
-      createReplicator(iDatabase.getName());
+    final Boolean synch = (Boolean) cfg.field("synchronization");
+    if (synch == null || synch) {
+      createDatabaseSynchronizer(iDatabase.getName());
 
       if (iDatabase instanceof ODatabaseComplex<?>)
         ((ODatabaseComplex<?>) iDatabase).registerHook(this);
@@ -118,7 +118,7 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
   public boolean onTrigger(final TYPE iType, final ORecord<?> iRecord) {
     final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
-    final OStorageReplicator replicator = replicators.get(db.getName());
+    final OStorageSynchronizer replicator = replicators.get(db.getName());
     if (replicator != null)
       return replicator.distributeOperation(iType, iRecord);
 
@@ -170,8 +170,8 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
     this.offlineBuffer = offlineBuffer;
   }
 
-  protected void createReplicator(final String iDatabaseName) {
+  protected void createDatabaseSynchronizer(final String iDatabaseName) {
     if (!replicators.containsKey(iDatabaseName))
-      replicators.put(iDatabaseName, new OStorageReplicator(this, iDatabaseName));
+      replicators.put(iDatabaseName, new OStorageSynchronizer(this, iDatabaseName));
   }
 }

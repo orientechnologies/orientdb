@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.replication;
+package com.orientechnologies.orient.server.distributed;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -24,34 +24,37 @@ import java.util.concurrent.Callable;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 
 /**
- * Distributed task used for replication
+ * Distributed task used for synchronization.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OReplicationTask implements Callable<Object>, Externalizable {
+public class ODistributedTask implements Callable<Object>, Externalizable {
   private static final long serialVersionUID = 1L;
 
-  protected String          databaseName;
-  protected byte            operation;
-  protected ORecordId       rid;
-  protected byte[]          content;
-  protected int             version;
-  protected byte            recordType;
-  protected EXECUTION_MODE  mode;
-
-  public OReplicationTask() {
+  public enum OPERATION {
+    RECORD_CREATE, RECORD_READ, RECORD_UPDATE, RECORD_DELETE, COMMAND
   }
 
-  public OReplicationTask(String databaseName, byte iOperation, ORecordId rid, byte[] content, int version, byte recordType,
-      final EXECUTION_MODE iMode) {
+  protected String         databaseName;
+  protected OPERATION      operation;
+  protected ORecordId      rid;
+  protected byte[]         content;
+  protected int            version;
+  protected byte           recordType;
+  protected EXECUTION_MODE mode;
+
+  public ODistributedTask() {
+  }
+
+  public ODistributedTask(final String databaseName, final OPERATION iOperation, final ORecordId rid, final byte[] content,
+      final int version, final byte recordType, final EXECUTION_MODE iMode) {
     this.databaseName = databaseName;
     this.operation = iOperation;
     this.rid = rid;
@@ -81,28 +84,38 @@ public class OReplicationTask implements Callable<Object>, Externalizable {
       stg.open(null, null, null);
 
     Object result = null;
-    if (operation == ORecordOperation.CREATED) {
+    switch (operation) {
+    case RECORD_CREATE:
       OLogManager.instance().debug(this, "DISTRIBUTED <- creating record %s v.%d size=%s", rid, version,
           OFileUtils.getSizeAsString(content.length));
       // RETURNS THE WRAPPED PHY-POS TO OPTIMIZE SERIALIZATION USING HAZELCAST'S ONE
       result = stg.createRecord(0, rid, content, version, recordType, 0, null);
+      break;
 
-    } else if (operation == ORecordOperation.LOADED) {
+    case RECORD_READ:
       OLogManager.instance().debug(this, "DISTRIBUTED <- reading record %s v.%d size=%s", rid, version,
           OFileUtils.getSizeAsString(content.length));
       result = stg.readRecord(rid, null, false, null);
+      break;
 
-    } else if (operation == ORecordOperation.UPDATED) {
+    case RECORD_UPDATE:
       OLogManager.instance().debug(this, "DISTRIBUTED <- updating record %s v.%d size=%s", rid, version,
           OFileUtils.getSizeAsString(content.length));
       result = stg.updateRecord(rid, content, version, recordType, 0, null);
+      break;
 
-    } else if (operation == ORecordOperation.DELETED) {
+    case RECORD_DELETE:
       OLogManager.instance().debug(this, "DISTRIBUTED <- deleting record %s v.%d size=%s", rid, version,
           OFileUtils.getSizeAsString(content.length));
       result = stg.deleteRecord(rid, version, 0, null);
-    } else
-      OLogManager.instance().error(this, "DISTRIBUTED <- received invalid operation code %d", operation);
+      break;
+
+    case COMMAND:
+      OLogManager.instance().debug(this, "DISTRIBUTED <- deleting record %s v.%d size=%s", rid, version,
+          OFileUtils.getSizeAsString(content.length));
+      result = stg.deleteRecord(rid, version, 0, null);
+      break;
+    }
 
     if (mode != EXECUTION_MODE.FIRE_AND_FORGET)
       return result;
@@ -112,9 +125,9 @@ public class OReplicationTask implements Callable<Object>, Externalizable {
   }
 
   @Override
-  public void writeExternal(ObjectOutput out) throws IOException {
+  public void writeExternal(final ObjectOutput out) throws IOException {
     out.writeUTF(databaseName);
-    out.write(operation);
+    out.writeByte(operation.ordinal());
     out.writeUTF(rid.toString());
     out.writeInt(content.length);
     out.write(content);
@@ -124,9 +137,9 @@ public class OReplicationTask implements Callable<Object>, Externalizable {
   }
 
   @Override
-  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     databaseName = in.readUTF();
-    operation = in.readByte();
+    operation = OPERATION.values()[in.readByte()];
     rid = new ORecordId(in.readUTF());
     final int contentSize = in.readInt();
     content = new byte[contentSize];

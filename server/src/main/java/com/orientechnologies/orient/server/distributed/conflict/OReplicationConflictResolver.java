@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.orientechnologies.orient.server.replication.conflict;
+package com.orientechnologies.orient.server.distributed.conflict;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;

@@ -10,26 +10,40 @@
 					value="{
 					    'servers' : {
 					      '*' : {
+							'synchronization' : true,
 							'defaultCluster' : 2,
-							'replication' : true,
 							'clusters' : {
 							  '*' : {
 								'operations' : {
-						          'create' : { 'direction' : 'in-out', 'mode' : 'synchronous' },
-						          'read'   : { 'direction' : 'in' },
-						          'update' : { 'direction' : 'in-out', 'mode' : 'synchronous' },
-						          'delete' : { 'direction' : 'in-out', 'mode' : 'synchronous' }
+						            'record_create' : { 'direction' : 'in-out', 'mode' : 'fire_and_forget' },
+						            'record_read'   : { 'direction' : 'in' },
+						            'record_update' : { 'direction' : 'in-out', 'mode' : 'synchronous' },
+						            'record_delete' : { 'direction' : 'in-out', 'mode' : 'synchronous' },
+						            'command'       : { 'direction' : 'in-out', 'mode' : 'synchronous' }
 						        },
-						        'replication' : true, 
+						        'synchronization' : true, 
                                 'offlineMaxBuffer' : 1000000
-                              },
-						      'internal' : { 'replication' : false },
-							  'index' : { 'replication' : false }
+                                },
+								'internal' : { 'synchronization' : false },
+								'index' : { 'synchronization' : false }
 							},
-							'classes':{}
+							'classes':{
 							}
-						}
-					}" />
+                          },
+					      'europe1' : {
+							'defaultCluster' : 'default',
+							'classes':{
+							  'account' : { 'defaultCluster' : 'account' }
+							}
+					      },
+					      'europe2' : {
+							'defaultCluster' : 'default-2',
+							'classes':{
+							  'account' : { 'defaultCluster' : 'account2' }
+							}
+					      }
+					    }
+					  }" />
 			</parameters>
 		</handler>
 		<handler class="com.orientechnologies.orient.server.handler.OAutomaticBackup">

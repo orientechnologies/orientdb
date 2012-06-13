@@ -23,7 +23,7 @@ import com.hazelcast.nio.DataSerializable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
-import com.orientechnologies.orient.server.replication.OReplicationTask;
+import com.orientechnologies.orient.server.distributed.ODistributedTask;
 
 /**
  * Hazelcast implementation of the distributed task used for replication. it uses the Hazelcast serialization to improve
@@ -32,12 +32,12 @@ import com.orientechnologies.orient.server.replication.OReplicationTask;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OHazelcastReplicationTask extends OReplicationTask implements DataSerializable {
+public class OHazelcastReplicationTask extends ODistributedTask implements DataSerializable {
 
   public OHazelcastReplicationTask() {
   }
 
-  public OHazelcastReplicationTask(String databaseName, byte iOperation, ORecordId rid, byte[] content, int version,
+  public OHazelcastReplicationTask(String databaseName, OPERATION iOperation, ORecordId rid, byte[] content, int version,
       byte recordType, final EXECUTION_MODE iMode) {
     super(databaseName, iOperation, rid, content, version, recordType, iMode);
   }
@@ -54,7 +54,7 @@ public class OHazelcastReplicationTask extends OReplicationTask implements DataS
   @Override
   public void readData(final DataInput in) throws IOException {
     databaseName = in.readUTF();
-    operation = in.readByte();
+    operation = OPERATION.values()[in.readByte()];
     rid = new ORecordId(in.readUTF());
     final int contentSize = in.readInt();
     content = new byte[contentSize];
@@ -66,7 +66,7 @@ public class OHazelcastReplicationTask extends OReplicationTask implements DataS
   @Override
   public void writeData(final DataOutput out) throws IOException {
     out.writeUTF(databaseName);
-    out.write(operation);
+    out.writeByte(operation.ordinal());
     out.writeUTF(rid.toString());
     out.writeInt(content.length);
     out.write(content);

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.replication;
+package com.orientechnologies.orient.server.distributed;
 
 import java.io.IOException;
 
@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.impl.local.OSingleFileSegment;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ODistributedTask.OPERATION;
 
 /**
  * Write all the operation during server cluster.<br/>
@@ -42,7 +42,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
  * = 23 bytes
  * </code><br/>
  */
-public class OReplicationLog extends OSingleFileSegment {
+public class OSynchronizationLog extends OSingleFileSegment {
   /**
    * 
    */
@@ -63,11 +63,15 @@ public class OReplicationLog extends OSingleFileSegment {
   private final long                      limit;
   private long                            pendingLogs           = 0;
   private final ODistributedServerManager manager;
+  private final String                    databaseName;
+  private final String                    nodeId;
 
-  public OReplicationLog(final ODistributedServerManager iManager, final String iNodeId, final String iDatabase, final long iLimit)
-      throws IOException {
+  public OSynchronizationLog(final ODistributedServerManager iManager, final String iNodeId, final String iDatabase,
+      final long iLimit) throws IOException {
     super(REPLICATION_DIRECTORY + iDatabase + "/" + iNodeId.replace('.', '_').replace(':', '-') + EXTENSION,
         OGlobalConfiguration.DISTRIBUTED_LOG_TYPE.getValueAsString());
+    databaseName = iDatabase;
+    nodeId = iNodeId;
     synchEnabled = OGlobalConfiguration.DISTRIBUTED_LOG_SYNCH.getValueAsBoolean();
     manager = iManager;
 
@@ -129,7 +133,7 @@ public class OReplicationLog extends OSingleFileSegment {
   /**
    * Appends a log entry until reach the configured limit if any (>-1)
    */
-  public long appendLog(final byte iOperation, final ORecordId iRID, final int iVersion) throws IOException {
+  public long appendLog(final OPERATION iOperation, final ORecordId iRID, final int iVersion) throws IOException {
 
     lock.acquireExclusiveLock();
     try {
@@ -141,15 +145,15 @@ public class OReplicationLog extends OSingleFileSegment {
       pendingLogs++;
 
       if (pendingLogs > 1)
-        OLogManager.instance().warn(this, "Journaled operation #%d as %s against record %s. Remain to synchronize: %d", serial,
-            ORecordOperation.getName(iOperation), iRID, pendingLogs);
+        OLogManager.instance().warn(this, "Journaled operation #%d as %s against %s/%s record %s. Remain to synchronize: %d",
+            serial, iOperation, nodeId, databaseName, iRID, pendingLogs);
       else
-        OLogManager.instance().debug(this, "Journaled operation #%d as %s against record %s", serial,
-            ORecordOperation.getName(iOperation), iRID);
+        OLogManager.instance().debug(this, "Journaled operation #%d as %s against %s/%s record %s", serial, iOperation, nodeId,
+            databaseName, iRID);
 
       int offset = file.allocateSpace(RECORD_SIZE);
 
-      file.writeByte(offset, iOperation);
+      file.writeByte(offset, (byte) iOperation.ordinal());
       offset += OBinaryProtocol.SIZE_BYTE;
 
       file.writeShort(offset, (short) iRID.clusterId);

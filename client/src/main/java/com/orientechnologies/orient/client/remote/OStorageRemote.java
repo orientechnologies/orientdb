@@ -84,15 +84,15 @@ import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEvent
  * This object is bound to each remote ODatabase instances.
  */
 public class OStorageRemote extends OStorageAbstract {
-  private static final String               DEFAULT_HOST      = "localhost";
-  private static final int                  DEFAULT_PORT      = 2424;
-  private static final String               ADDRESS_SEPARATOR = ";";
+  private static final String               DEFAULT_HOST         = "localhost";
+  private static final int                  DEFAULT_PORT         = 2424;
+  private static final String               ADDRESS_SEPARATOR    = ";";
 
-  public static final String                PARAM_MIN_POOL    = "minpool";
-  public static final String                PARAM_MAX_POOL    = "maxpool";
-  public static final String                PARAM_DB_TYPE     = "dbtype";
+  public static final String                PARAM_MIN_POOL       = "minpool";
+  public static final String                PARAM_MAX_POOL       = "maxpool";
+  public static final String                PARAM_DB_TYPE        = "dbtype";
 
-  private static final String               DRIVER_NAME       = "OrientDB Java";
+  private static final String               DRIVER_NAME          = "OrientDB Java";
 
   private final ExecutorService             asynchExecutor;
   private OAsynchChannelServiceThread       serviceThread;
@@ -100,16 +100,16 @@ public class OStorageRemote extends OStorageAbstract {
   private int                               connectionRetry;
   private int                               connectionRetryDelay;
 
-  private static List<OChannelBinaryClient> networkPool       = new ArrayList<OChannelBinaryClient>();
-  protected final List<String>              serverURLs        = new ArrayList<String>();
-  private OCluster[]                        clusters          = new OCluster[0];
-  protected final Map<String, OCluster>     clusterMap        = new HashMap<String, OCluster>();
+  private static List<OChannelBinaryClient> networkPool          = new ArrayList<OChannelBinaryClient>();
+  protected final List<String>              serverURLs           = new ArrayList<String>();
+  private OCluster[]                        clusters             = new OCluster[0];
+  protected final Map<String, OCluster>     clusterMap           = new HashMap<String, OCluster>();
   private int                               defaultClusterId;
-  private int                               networkPoolCursor = 0;
+  private int                               networkPoolCursor    = 0;
   private int                               minPool;
   private int                               maxPool;
-  private final boolean                     debug             = false;
-  private ODocument                         clusterConfiguration;
+  private final boolean                     debug                = false;
+  private ODocument                         clusterConfiguration = new ODocument();
   private ORemoteServerEventListener        asynchEventListener;
   private String                            connectionDbType;
   private String                            connectionUserName;
@@ -1136,13 +1136,15 @@ public class OStorageRemote extends OStorageAbstract {
 
     final int currentMaxRetry;
     final int currentRetryDelay;
-    if (clusterConfiguration != null && !clusterConfiguration.isEmpty()) {
-      // IN CLUSTER: NO RETRY AND 0 SLEEP TIME BETWEEN NODES
-      currentMaxRetry = 1;
-      currentRetryDelay = 0;
-    } else {
-      currentMaxRetry = connectionRetry;
-      currentRetryDelay = connectionRetryDelay;
+    synchronized (clusterConfiguration) {
+      if (!clusterConfiguration.isEmpty()) {
+        // IN CLUSTER: NO RETRY AND 0 SLEEP TIME BETWEEN NODES
+        currentMaxRetry = 1;
+        currentRetryDelay = 0;
+      } else {
+        currentMaxRetry = connectionRetry;
+        currentRetryDelay = connectionRetryDelay;
+      }
     }
 
     for (int retry = 0; retry < currentMaxRetry; ++retry) {
@@ -1229,23 +1231,7 @@ public class OStorageRemote extends OStorageAbstract {
           readDatabaseInformation(network);
 
           // READ CLUSTER CONFIGURATION
-          clusterConfiguration = new ODocument(network.readBytes());
-
-          if (clientConfiguration != null) {
-            final List<ODocument> members = clusterConfiguration.field("cluster[members]");
-            if (members != null) {
-              for (ODocument m : members)
-                if (m != null && !serverURLs.contains((String) m.field("id"))) {
-                  for (Map<String, Object> listener : ((Collection<Map<String, Object>>) m.field("listeners"))) {
-                    if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
-                      String url = (String) listener.get("listen");
-                      if (!serverURLs.contains(url))
-                        serverURLs.add(url);
-                    }
-                  }
-                }
-            }
-          }
+          updateClusterConfiguration(network.readBytes());
 
           defaultClusterId = clusterMap.get(OStorage.CLUSTER_DEFAULT_NAME).getId();
           status = STATUS.OPEN;
@@ -1534,15 +1520,30 @@ public class OStorageRemote extends OStorageAbstract {
     }
   }
 
-  public void updateClusterConfiguration(final ODocument obj) {
+  public void updateClusterConfiguration(final byte[] obj) {
     if (obj == null)
       return;
 
     // UPDATE IT
-    clusterConfiguration = obj;
+    synchronized (clusterConfiguration) {
+      clusterConfiguration.fromStream(obj);
 
-    if (OLogManager.instance().isDebugEnabled())
-      OLogManager.instance().debug(this, "Received new cluster configuration: %s", clusterConfiguration.toJSON(""));
+      final List<ODocument> members = clusterConfiguration.field("members");
+      if (members != null) {
+        //serverURLs.clear();
+
+        for (ODocument m : members)
+          if (m != null && !serverURLs.contains((String) m.field("id"))) {
+            for (Map<String, Object> listener : ((Collection<Map<String, Object>>) m.field("listeners"))) {
+              if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
+                String url = (String) listener.get("listen");
+                if (!serverURLs.contains(url))
+                  serverURLs.add(url);
+              }
+            }
+          }
+      }
+    }
   }
 
   private void commitEntry(final OChannelBinaryClient iNetwork, final ORecordOperation txEntry) throws IOException {

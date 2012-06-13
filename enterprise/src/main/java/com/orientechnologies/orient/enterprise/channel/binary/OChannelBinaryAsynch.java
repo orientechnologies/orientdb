@@ -57,7 +57,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
   }
 
   public void beginResponse(final int iRequesterId) throws IOException {
-    beginResponse(iRequesterId, 0);
+    beginResponse(iRequesterId, timeout);
   }
 
   public void beginResponse(final int iRequesterId, final long iTimeout) throws IOException {

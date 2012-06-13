@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.replication;
+package com.orientechnologies.orient.server.distributed;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -34,8 +33,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServerMain;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
+import com.orientechnologies.orient.server.distributed.ODistributedTask.OPERATION;
 
 /**
  * Manages replication across clustered nodes.
@@ -43,22 +42,22 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OStorageReplicator {
-  private ODistributedServerManager    cluster;
-  private String                       storageName;
-  private OStorage                     storage;
+public class OStorageSynchronizer {
+  private ODistributedServerManager        cluster;
+  private String                           storageName;
+  private OStorage                         storage;
 
-  private ODocument                    configuration = new ODocument();
-  private Map<String, OReplicationLog> logs          = new HashMap<String, OReplicationLog>();
+  private ODocument                        configuration = new ODocument();
+  private Map<String, OSynchronizationLog> logs          = new HashMap<String, OSynchronizationLog>();
 
-  public OStorageReplicator(final ODistributedServerManager iCluster, final String iStorageName) {
+  public OStorageSynchronizer(final ODistributedServerManager iCluster, final String iStorageName) {
     cluster = iCluster;
     storageName = iStorageName;
     storage = openStorage(iStorageName);
     configuration = iCluster.getLocalDatabaseConfiguration(iStorageName);
 
-    final File replicationDirectory = new File(OSystemVariableResolver.resolveSystemVariables(OReplicationLog.REPLICATION_DIRECTORY
-        + "/" + iStorageName));
+    final File replicationDirectory = new File(
+        OSystemVariableResolver.resolveSystemVariables(OSynchronizationLog.REPLICATION_DIRECTORY + "/" + iStorageName));
     if (!replicationDirectory.exists())
       replicationDirectory.mkdirs();
     else {
@@ -75,7 +74,7 @@ public class OStorageReplicator {
     final ORecordOperation op = new ORecordOperation();
 
     int[] aligned = new int[3];
-    final OReplicationLog log = getLog(iNodeId);
+    final OSynchronizationLog log = getLog(iNodeId);
     for (int i = 0; log.needAlignment() && i < log.totalEntries(); ++i) {
       // GET THE <I> LOG ENTRY
       try {
@@ -96,15 +95,24 @@ public class OStorageReplicator {
       if (record == null && op.type != ORecordOperation.DELETED)
         OLogManager.instance().warn(this, "DISTRIBUTED -> align failed for record %s because doesn't exist anymore", rid);
       else {
-        // SEND THE RECORD TO THE REMOTE NODE
-        cluster.executeOperation(iNodeId, op.type, storageName, rid, op.version, record, EXECUTION_MODE.SYNCHRONOUS);
+        final OPERATION operation = OPERATION.values()[op.type];
 
-        if (op.type == ORecordOperation.CREATED)
+        // SEND THE RECORD TO THE REMOTE NODE
+        cluster.executeOperation(iNodeId, operation, storageName, rid, op.version, record, EXECUTION_MODE.SYNCHRONOUS);
+
+        switch (operation) {
+        case RECORD_CREATE:
           aligned[0]++;
-        else if (op.type == ORecordOperation.UPDATED)
+          break;
+
+        case RECORD_UPDATE:
           aligned[1]++;
-        else if (op.type == ORecordOperation.DELETED)
+          break;
+
+        case RECORD_DELETE:
           aligned[2]++;
+          break;
+        }
       }
 
       try {
@@ -118,24 +126,24 @@ public class OStorageReplicator {
   }
 
   public boolean distributeOperation(final TYPE iType, final ORecord<?> iRecord) {
-    byte operation = -1;
-
-    final ORecordId rid = (ORecordId) iRecord.getIdentity();
+    OPERATION operation = null;
 
     switch (iType) {
     // DETERMINE THE OPERATION TYPE
     case AFTER_CREATE:
-      operation = ORecordOperation.CREATED;
+      operation = OPERATION.RECORD_CREATE;
       break;
     case AFTER_UPDATE:
-      operation = ORecordOperation.UPDATED;
+      operation = OPERATION.RECORD_UPDATE;
       break;
     case AFTER_DELETE:
-      operation = ORecordOperation.DELETED;
+      operation = OPERATION.RECORD_DELETE;
       break;
     }
 
-    if (operation > -1) {
+    if (operation != null) {
+      final ORecordId rid = (ORecordId) iRecord.getIdentity();
+
       final String clusterName = storage.getClusterById(rid.getClusterId()).getName();
       if (!canExecuteOperation(clusterName, operation, "out")) {
         // IGNORE THIS CLUSTER
@@ -144,13 +152,13 @@ public class OStorageReplicator {
             .debug(
                 this,
                 "DISTRIBUTED -> skip sending operation %s against cluster '%s' to remote nodes because of the distributed configuration",
-                ORecordOperation.getName(operation).toUpperCase(), clusterName);
+                operation, clusterName);
         return false;
       }
 
       final EXECUTION_MODE mode = getOperationMode(clusterName, operation);
 
-      for (OReplicationLog localLog : logs.values()) {
+      for (OSynchronizationLog localLog : logs.values()) {
         // LOG THE OPERATION BEFORE ANY CHANGE
         try {
           if (localLog.appendLog(operation, rid, iRecord.getVersion()) == -1) {
@@ -172,12 +180,12 @@ public class OStorageReplicator {
 
       final Set<String> members = cluster.getRemoteNodeIds();
       if (!members.isEmpty()) {
-        final Collection<Object> results = cluster.executeOperation(members, operation, storageName, rid, iRecord.getVersion(),
-            new ORawBuffer((ORecordInternal<?>) iRecord), mode);
+        cluster.executeOperation(members, operation, storageName, rid, iRecord.getVersion(), new ORawBuffer(
+            (ORecordInternal<?>) iRecord), mode);
 
         // TODO MANAGE CONFLICTS
         for (String member : members) {
-          final OReplicationLog log = getLog(member);
+          final OSynchronizationLog log = getLog(member);
           try {
             log.success();
           } catch (IOException e) {
@@ -191,7 +199,7 @@ public class OStorageReplicator {
   }
 
   @SuppressWarnings("unchecked")
-  private boolean canExecuteOperation(final String iClusterName, final byte iOperation, final String iDirection) {
+  private boolean canExecuteOperation(final String iClusterName, final OPERATION iOperation, final String iDirection) {
     synchronized (configuration) {
       final Map<String, Object> clusters = configuration.field("clusters");
 
@@ -199,15 +207,15 @@ public class OStorageReplicator {
       if (cfg == null)
         cfg = (Map<String, Object>) clusters.get("*");
 
-      final boolean replicationEnabled = (Boolean) cfg.get("replication");
-      if (!replicationEnabled)
+      final Boolean replicationEnabled = (Boolean) cfg.get("synchronization");
+      if (replicationEnabled != null && !replicationEnabled)
         return false;
 
-      Map<String, Object> operations = (Map<String, Object>) cfg.get("operations");
+      final Map<String, Object> operations = (Map<String, Object>) cfg.get("operations");
       if (operations == null)
         return true;
 
-      final Map<String, Object> operation = (Map<String, Object>) operations.get(ORecordOperation.getName(iOperation));
+      final Map<String, Object> operation = (Map<String, Object>) operations.get(iOperation.toString().toLowerCase());
       if (operation == null)
         return true;
 
@@ -217,7 +225,7 @@ public class OStorageReplicator {
   }
 
   @SuppressWarnings("unchecked")
-  private EXECUTION_MODE getOperationMode(final String iClusterName, final byte iOperation) {
+  private EXECUTION_MODE getOperationMode(final String iClusterName, final OPERATION iOperation) {
     synchronized (configuration) {
       final Map<String, Object> clusters = configuration.field("clusters");
 
@@ -229,7 +237,7 @@ public class OStorageReplicator {
       if (operations == null)
         return EXECUTION_MODE.SYNCHRONOUS;
 
-      final Map<String, Object> operation = (Map<String, Object>) operations.get(ORecordOperation.getName(iOperation));
+      final Map<String, Object> operation = (Map<String, Object>) operations.get(iOperation.toString().toLowerCase());
       if (operation == null)
         return EXECUTION_MODE.SYNCHRONOUS;
 
@@ -249,9 +257,9 @@ public class OStorageReplicator {
     return stg;
   }
 
-  protected OReplicationLog getLog(final String iNodeId) {
+  protected OSynchronizationLog getLog(final String iNodeId) {
     synchronized (logs) {
-      OReplicationLog localLog = logs.get(iNodeId);
+      OSynchronizationLog localLog = logs.get(iNodeId);
       if (localLog == null) {
         try {
           ODocument cfg = cluster.getLocalDatabaseConfiguration(storageName);
@@ -260,7 +268,7 @@ public class OStorageReplicator {
           if (limit == null)
             limit = (long) -1;
 
-          localLog = new OReplicationLog(cluster, iNodeId, storageName, limit.longValue());
+          localLog = new OSynchronizationLog(cluster, iNodeId, storageName, limit.longValue());
           logs.put(iNodeId, localLog);
         } catch (IOException e) {
           OLogManager.instance().error("DISTRIBUTED -> Error on creation replication log for storage '%s' node '%s'", storageName,
@@ -269,6 +277,16 @@ public class OStorageReplicator {
       }
       return localLog;
     }
+  }
+
+  protected OPERATION getOperation(final byte iRecordOperation) {
+    if (iRecordOperation == ORecordOperation.CREATED)
+      return OPERATION.RECORD_CREATE;
+    else if (iRecordOperation == ORecordOperation.UPDATED)
+      return OPERATION.RECORD_UPDATE;
+    else if (iRecordOperation == ORecordOperation.DELETED)
+      return OPERATION.RECORD_DELETE;
+    throw new IllegalArgumentException("Illegal operation read from log: " + iRecordOperation);
   }
 
   @Override

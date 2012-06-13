@@ -30,75 +30,75 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 public class OChannelBinaryClient extends OChannelBinaryAsynch {
-	final protected int				timeout;																			// IN MS
-	final private short				srvProtocolVersion;
-	final private List<Short>	srvProtocolVersions	= new ArrayList<Short>();
+  final protected int       socketTimeout;                               // IN MS
+  final private short       srvProtocolVersion;
+  final private List<Short> srvProtocolVersions = new ArrayList<Short>();
 
-	public OChannelBinaryClient(final String remoteHost, final int remotePort, final OContextConfiguration iConfig,
-			final int iProtocolVersion) throws IOException {
-		super(new Socket(), iConfig);
-		timeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
+  public OChannelBinaryClient(final String remoteHost, final int remotePort, final OContextConfiguration iConfig,
+      final int iProtocolVersion) throws IOException {
+    super(new Socket(), iConfig);
+    socketTimeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
 
-		socket.setPerformancePreferences(0, 2, 1);
+    socket.setPerformancePreferences(0, 2, 1);
 
-		socket.setKeepAlive(true);
-		socket.setSendBufferSize(socketBufferSize);
-		socket.setReceiveBufferSize(socketBufferSize);
-		try {
-			socket.connect(new InetSocketAddress(remoteHost, remotePort), timeout);
-		} catch (java.net.SocketTimeoutException e) {
-			throw new IOException("Cannot connect to host " + remoteHost + ":" + remotePort, e);
-		}
+    socket.setKeepAlive(true);
+    socket.setSendBufferSize(socketBufferSize);
+    socket.setReceiveBufferSize(socketBufferSize);
+    try {
+      socket.connect(new InetSocketAddress(remoteHost, remotePort), socketTimeout);
+    } catch (java.net.SocketTimeoutException e) {
+      throw new IOException("Cannot connect to host " + remoteHost + ":" + remotePort, e);
+    }
 
-		inStream = new BufferedInputStream(socket.getInputStream(), socketBufferSize);
-		outStream = new BufferedOutputStream(socket.getOutputStream(), socketBufferSize);
+    inStream = new BufferedInputStream(socket.getInputStream(), socketBufferSize);
+    outStream = new BufferedOutputStream(socket.getOutputStream(), socketBufferSize);
 
-		in = new DataInputStream(inStream);
-		out = new DataOutputStream(outStream);
+    in = new DataInputStream(inStream);
+    out = new DataOutputStream(outStream);
 
-		try {
-			srvProtocolVersion = readShort();
-//			if (srvProtocolVersion >= 10) {
-//				// READ ALL THE SUPPORTED VERSIONS
-//				short next;
-//				while ((next = readShort()) > -1)
-//					srvProtocolVersions.add(next);
-//			}
-		} catch (IOException e) {
-			throw new ONetworkProtocolException("Cannot read protocol version from remote server " + socket.getRemoteSocketAddress()
-					+ ": " + e);
-		}
+    try {
+      srvProtocolVersion = readShort();
+      // if (srvProtocolVersion >= 10) {
+      // // READ ALL THE SUPPORTED VERSIONS
+      // short next;
+      // while ((next = readShort()) > -1)
+      // srvProtocolVersions.add(next);
+      // }
+    } catch (IOException e) {
+      throw new ONetworkProtocolException("Cannot read protocol version from remote server " + socket.getRemoteSocketAddress()
+          + ": " + e);
+    }
 
-		if (Math.abs(srvProtocolVersion - iProtocolVersion) > 2) {
-			close();
-			throw new ONetworkProtocolException("Binary protocol is incompatible with the Server connected: client=" + iProtocolVersion
-					+ ", server=" + srvProtocolVersion);
-		}
+    if (Math.abs(srvProtocolVersion - iProtocolVersion) > 2) {
+      close();
+      throw new ONetworkProtocolException("Binary protocol is incompatible with the Server connected: client=" + iProtocolVersion
+          + ", server=" + srvProtocolVersion);
+    }
 
-	}
+  }
 
-	public void reconnect() throws IOException {
-		SocketAddress address = socket.getRemoteSocketAddress();
-		socket.close();
-		socket.connect(address, timeout);
-	}
+  public void reconnect() throws IOException {
+    SocketAddress address = socket.getRemoteSocketAddress();
+    socket.close();
+    socket.connect(address, socketTimeout);
+  }
 
-	/**
-	 * Tells if the channel is connected.
-	 * 
-	 * @return true if it's connected, otherwise false.
-	 */
-	public boolean isConnected() {
-		if (socket != null && socket.isConnected() && !socket.isInputShutdown() && !socket.isOutputShutdown())
-			return true;
-		return false;
-	}
+  /**
+   * Tells if the channel is connected.
+   * 
+   * @return true if it's connected, otherwise false.
+   */
+  public boolean isConnected() {
+    if (socket != null && socket.isConnected() && !socket.isInputShutdown() && !socket.isOutputShutdown())
+      return true;
+    return false;
+  }
 
-	/**
-	 * Gets the major supported protocol version
-	 * 
-	 */
-	public short getSrvProtocolVersion() {
-		return srvProtocolVersion;
-	}
+  /**
+   * Gets the major supported protocol version
+   * 
+   */
+  public short getSrvProtocolVersion() {
+    return srvProtocolVersion;
+  }
 }

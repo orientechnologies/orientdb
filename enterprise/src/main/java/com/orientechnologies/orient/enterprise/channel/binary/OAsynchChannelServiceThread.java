@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.orientechnologies.common.thread.OSoftThread;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Service thread that catches internal messages sent by the server
@@ -46,7 +45,7 @@ public class OAsynchChannelServiceThread extends OSoftThread {
   @Override
   protected void execute() throws Exception {
     try {
-      network.beginResponse(sessionId);
+      network.beginResponse(sessionId, 0);
       try {
         final byte request = network.readByte();
 
@@ -57,8 +56,8 @@ public class OAsynchChannelServiceThread extends OSoftThread {
           obj = (ORecordInternal<?>) OChannelBinaryProtocol.readIdentifiable(network);
           break;
 
-        case OChannelBinaryProtocol.PUSH_NODE2CLIENT_DB_CONFIG:
-          obj = new ODocument().fromStream(network.readBytes());
+        case OChannelBinaryProtocol.REQUEST_PUSH_DISTRIB_CONFIG:
+          obj = network.readBytes();
           break;
         }
 

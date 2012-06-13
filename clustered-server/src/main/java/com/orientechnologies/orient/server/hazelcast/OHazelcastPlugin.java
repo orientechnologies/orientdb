@@ -39,20 +39,21 @@ import com.hazelcast.core.MembershipListener;
 import com.hazelcast.core.MultiTask;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedTask.OPERATION;
+import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
+import com.orientechnologies.orient.server.distributed.OSynchronizationLog;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-import com.orientechnologies.orient.server.replication.OReplicationLog;
-import com.orientechnologies.orient.server.replication.OStorageReplicator;
 
 /**
  * Hazelcast implementation for clustering.
@@ -61,8 +62,8 @@ import com.orientechnologies.orient.server.replication.OStorageReplicator;
  * 
  */
 public class OHazelcastPlugin extends ODistributedAbstractPlugin implements MembershipListener {
-  private String                   configFile     = "hazelcast.xml";
-  private Map<String, Member>      clusterMembers = new ConcurrentHashMap<String, Member>();
+  private String                   configFile         = "hazelcast.xml";
+  private Map<String, Member>      remoteClusterNodes = new ConcurrentHashMap<String, Member>();
   private long                     timeOffset;
   private static HazelcastInstance hazelcastInstance;
 
@@ -96,16 +97,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       // INIT THE STORAGE REPLICATORS
       replicators.clear();
       final File replicationDirectory = new File(
-          OSystemVariableResolver.resolveSystemVariables(OReplicationLog.REPLICATION_DIRECTORY));
+          OSystemVariableResolver.resolveSystemVariables(OSynchronizationLog.REPLICATION_DIRECTORY));
       if (!replicationDirectory.exists())
         replicationDirectory.mkdirs();
       else if (replicationDirectory.isDirectory()) {
         for (File f : replicationDirectory.listFiles())
-          createReplicator(f.getName());
+          createDatabaseSynchronizer(f.getName());
       }
 
       // REGISTER CURRENT MEMBERS
-      clusterMembers.clear();
+      remoteClusterNodes.clear();
       Hazelcast.getCluster().addMembershipListener(this);
       for (Member m : Hazelcast.getCluster().getMembers())
         addMember(m);
@@ -124,18 +125,18 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     super.shutdown();
 
-    clusterMembers.clear();
+    remoteClusterNodes.clear();
     Hazelcast.getCluster().removeMembershipListener(this);
   }
 
-  public Object executeOperation(final String iNodeId, final byte iOperation, final String dbName, final ORecordId rid,
+  public Object executeOperation(final String iNodeId, final OPERATION iOperation, final String dbName, final ORecordId rid,
       final int iVersion, final ORawBuffer record, final EXECUTION_MODE iMode) {
-    final Member clusterMember = clusterMembers.get(iNodeId);
+    final Member clusterMember = remoteClusterNodes.get(iNodeId);
 
     if (clusterMember == null)
       throw new ODistributedException("Remote node '" + iNodeId + "' is not configured");
 
-    OLogManager.instance().debug(this, "DISTRIBUTED -> %s %s %s{%s}", iNodeId, ORecordOperation.getName(iOperation), dbName, rid);
+    OLogManager.instance().debug(this, "DISTRIBUTED -> %s %s %s{%s}", iNodeId, iOperation, dbName, rid);
 
     final DistributedTask<Object> task = new DistributedTask<Object>(new OHazelcastReplicationTask(dbName, iOperation, rid,
         record != null ? record.buffer : null, iVersion, record != null ? record.recordType : null, iMode), clusterMember);
@@ -150,11 +151,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   @SuppressWarnings("unchecked")
-  public Collection<Object> executeOperation(final Set<String> iNodeIds, final byte iOperation, final String dbName,
+  public Collection<Object> executeOperation(final Set<String> iNodeIds, final OPERATION iOperation, final String dbName,
       final ORecordId rid, final int iVersion, final ORawBuffer record, final EXECUTION_MODE iMode) throws ODistributedException {
     final Set<Member> members = new HashSet<Member>();
     for (String nodeId : iNodeIds) {
-      final Member m = clusterMembers.get(nodeId);
+      final Member m = remoteClusterNodes.get(nodeId);
       if (m == null)
         OLogManager.instance().warn(this, "DISTRIBUTED -> cannot execute operation on remote member %s because is disconnected",
             nodeId);
@@ -162,7 +163,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         members.add(m);
     }
 
-    OLogManager.instance().debug(this, "DISTRIBUTED -> %s %s %s{%s}", members, ORecordOperation.getName(iOperation), dbName, rid);
+    OLogManager.instance().debug(this, "DISTRIBUTED -> %s %s %s{%s}", members, iOperation, dbName, rid);
 
     final MultiTask<Object> task = new MultiTask<Object>(new OHazelcastReplicationTask(dbName, iOperation, rid, record.buffer,
         iVersion, record.recordType, iMode), members);
@@ -217,12 +218,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   @Override
-  public ODocument getDatabaseStatus(String iDatabaseName) {
+  public ODocument getDatabaseStatus(final String iDatabaseName) {
     final ODocument status = new ODocument();
     status.field("configuration", getDatabaseConfiguration(iDatabaseName), OType.EMBEDDED);
+    status.field("cluster", getClusterConfiguration(), OType.EMBEDDED);
+    return status;
+  }
 
+  @Override
+  public ODocument getClusterConfiguration() {
     final ODocument cluster = new ODocument();
-    status.field("cluster", cluster, OType.EMBEDDED);
 
     final HazelcastInstance instance = getHazelcastInstance();
 
@@ -232,11 +237,31 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     // INSERT MEMBERS
     final List<ODocument> members = new ArrayList<ODocument>();
     cluster.field("members", members, OType.EMBEDDEDLIST);
-    for (Member member : instance.getCluster().getMembers()) {
+    members.add(getLocalNodeConfiguration());
+    for (Member member : remoteClusterNodes.values()) {
       members.add((ODocument) getConfigurationMap().get("node." + getNodeId(member)));
     }
 
-    return status;
+    return cluster;
+  }
+
+  @Override
+  public ODocument getLocalNodeConfiguration() {
+    final ODocument nodeCfg = new ODocument();
+
+    nodeCfg.field("id", getLocalNodeId());
+
+    List<Map<String, Object>> listeners = new ArrayList<Map<String, Object>>();
+    nodeCfg.field("listeners", listeners, OType.EMBEDDEDLIST);
+
+    for (OServerNetworkListener listener : OServerMain.server().getNetworkListeners()) {
+      final Map<String, Object> listenerCfg = new HashMap<String, Object>();
+      listeners.add(listenerCfg);
+
+      listenerCfg.put("protocol", listener.getProtocolType().getSimpleName());
+      listenerCfg.put("listen", listener.getListeningAddress());
+    }
+    return nodeCfg;
   }
 
   public String getLocalNodeId() {
@@ -254,12 +279,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return iMember.getInetSocketAddress().toString().substring(1);
   }
 
-  public ODocument getClusterConfiguration() {
-    return new ODocument().field("result", Hazelcast.getCluster().toString().replace('\n', ' ').replace('\t', ' '));
-  }
-
   public Set<String> getRemoteNodeIds() {
-    return clusterMembers.keySet();
+    return remoteClusterNodes.keySet();
   }
 
   @Override
@@ -277,10 +298,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     OLogManager.instance().warn(this, "DISTRIBUTED -> connected cluster node %s, start aligning...", nodeId);
 
-    clusterMembers.put(nodeId, clusterMember);
+    remoteClusterNodes.put(nodeId, clusterMember);
 
     int aligned = 0;
-    for (OStorageReplicator r : replicators.values()) {
+    for (OStorageSynchronizer r : replicators.values()) {
       OLogManager.instance().warn(this, "DISTRIBUTED -> storage %s: aligning records...", r.toString());
       final int[] a = r.align(nodeId);
       final int tot = a[0] + a[1] + a[2];
@@ -291,25 +312,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     OLogManager.instance().warn(this, "DISTRIBUTED -> alignment completed against cluster node %s. Total records: %d", nodeId,
         aligned);
-  }
 
-  protected void publishNodeConfiguration() {
-    final ODocument nodeCfg = new ODocument();
-
-    nodeCfg.field("id", getLocalNodeId());
-
-    List<Map<String, Object>> listeners = new ArrayList<Map<String, Object>>();
-    nodeCfg.field("listeners", listeners, OType.EMBEDDEDLIST);
-
-    for (OServerNetworkListener listener : OServerMain.server().getNetworkListeners()) {
-      final Map<String, Object> listenerCfg = new HashMap<String, Object>();
-      listeners.add(listenerCfg);
-
-      listenerCfg.put("protocol", listener.getProtocolType().getSimpleName());
-      listenerCfg.put("listen", listener.getListeningAddress());
-    }
-
-    getConfigurationMap().put("node." + getLocalNodeId(), nodeCfg);
+    OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
   }
 
   @Override
@@ -318,11 +322,17 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     final String nodeId = getNodeId(clusterMember);
 
     OLogManager.instance().warn(this, "DISTRIBUTED -> disconnected cluster node %s", nodeId);
-    clusterMembers.remove(nodeId);
+    remoteClusterNodes.remove(nodeId);
+
+    OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
   }
 
   public long getTimeOffset() {
     return timeOffset;
+  }
+
+  protected void publishNodeConfiguration() {
+    getConfigurationMap().put("node." + getLocalNodeId(), getLocalNodeConfiguration());
   }
 
   protected IMap<String, Object> getConfigurationMap() {

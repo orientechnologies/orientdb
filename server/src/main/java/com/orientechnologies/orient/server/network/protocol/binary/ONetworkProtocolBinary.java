@@ -454,7 +454,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         final OServerHandler plugin = OServerMain.server().getPlugin("cluster");
         ODocument distributedCfg = null;
         if (plugin != null && plugin instanceof ODistributedServerManager)
-          distributedCfg = ((ODistributedServerManager) plugin).getDatabaseStatus(getName());
+          distributedCfg = ((ODistributedServerManager) plugin).getClusterConfiguration();
 
         channel.writeBytes(distributedCfg != null ? distributedCfg.toStream() : null);
 
