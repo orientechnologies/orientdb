@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityReso
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
@@ -303,12 +304,20 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
       if (newPos == -1 || text.charAt(newPos) != '=')
         throw new OCommandSQLParsingException("Character '=' was expected. Use " + getSyntax(), text, pos);
 
-      pos = newPos;
-      newPos = OSQLHelper.nextWord(text, textUpperCase, pos + 1, word, false, " =><");
+      pos = newPos + 1;
+      newPos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false, " =><");
       if (pos == -1)
         throw new OCommandSQLParsingException("Value expected. Use " + getSyntax(), text, pos);
 
       fieldValue = word.toString();
+
+      if (fieldValue.startsWith("{") || fieldValue.startsWith("[") || fieldValue.startsWith("[")) {
+        newPos = OStringParser.jumpWhiteSpaces(text, pos);
+        final StringBuilder buffer = new StringBuilder();
+        newPos = OStringSerializerHelper.parse(text, buffer, newPos, -1, OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true,
+            OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
+        fieldValue = buffer.toString();
+      }
 
       if (fieldValue.endsWith(",")) {
         pos = newPos - 1;
@@ -373,6 +382,14 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
         throw new OCommandSQLParsingException("Value expected. Use " + getSyntax(), text, pos);
 
       fieldValue = word.toString();
+
+      if (fieldValue.startsWith("{") || fieldValue.startsWith("[") || fieldValue.startsWith("[")) {
+        newPos = OStringParser.jumpWhiteSpaces(text, pos);
+        final StringBuilder buffer = new StringBuilder();
+        newPos = OStringSerializerHelper.parse(text, buffer, newPos, -1, OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true,
+            OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
+        fieldValue = buffer.toString();
+      }
 
       if (fieldValue.endsWith(",")) {
         pos = newPos - 1;
