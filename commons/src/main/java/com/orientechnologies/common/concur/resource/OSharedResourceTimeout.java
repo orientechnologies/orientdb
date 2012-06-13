@@ -28,40 +28,46 @@ import com.orientechnologies.common.concur.OTimeoutException;
  * 
  */
 public abstract class OSharedResourceTimeout {
-	protected final ReadWriteLock	lock	= new ReentrantReadWriteLock();
-	protected int									timeout;
+  protected final ReadWriteLock lock = new ReentrantReadWriteLock();
+  protected int                 timeout;
 
-	public OSharedResourceTimeout(final int timeout) {
-		this.timeout = timeout;
-	}
+  public OSharedResourceTimeout(final int timeout) {
+    this.timeout = timeout;
+  }
 
-	protected void acquireSharedLock() throws OTimeoutException {
-		try {
-			if (lock.readLock().tryLock(timeout, TimeUnit.MILLISECONDS))
-				// OK
-				return;
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-		}
-		throw new OTimeoutException("Timeout on acquiring shared lock against resource: " + this);
-	}
+  protected void acquireSharedLock() throws OTimeoutException {
+    try {
+      if (timeout == 0) {
+        lock.readLock().lock();
+        return;
+      } else if (lock.readLock().tryLock(timeout, TimeUnit.MILLISECONDS))
+        // OK
+        return;
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    throw new OTimeoutException("Timeout on acquiring shared lock against resource: " + this);
+  }
 
-	protected void releaseSharedLock() {
-		lock.readLock().unlock();
-	}
+  protected void releaseSharedLock() {
+    lock.readLock().unlock();
+  }
 
-	protected void acquireExclusiveLock() throws OTimeoutException {
-		try {
-			if (lock.writeLock().tryLock(timeout, TimeUnit.MILLISECONDS))
-				// OK
-				return;
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-		}
-		throw new OTimeoutException("Timeout on acquiring exclusive lock against resource: " + this);
-	}
+  protected void acquireExclusiveLock() throws OTimeoutException {
+    try {
+      if (timeout == 0) {
+        lock.writeLock().lock();
+        return;
+      } else if (lock.writeLock().tryLock(timeout, TimeUnit.MILLISECONDS))
+        // OK
+        return;
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    throw new OTimeoutException("Timeout on acquiring exclusive lock against resource: " + this);
+  }
 
-	protected void releaseExclusiveLock() {
-		lock.writeLock().unlock();
-	}
+  protected void releaseExclusiveLock() {
+    lock.writeLock().unlock();
+  }
 }
