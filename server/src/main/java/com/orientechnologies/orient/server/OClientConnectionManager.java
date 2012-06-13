@@ -207,6 +207,8 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
           channel.flush();
 
           pushed.add(c.getRemoteAddress());
+          OLogManager.instance().info(this, "Sent updated cluster configuration to the remote client %s", c.getRemoteAddress());
+
         } catch (IOException e) {
           OLogManager.instance().warn(this, "Cannot push cluster configuration to client %s", c.getRemoteAddress());
         } finally {

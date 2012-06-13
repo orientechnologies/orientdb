@@ -29,6 +29,8 @@ import java.util.concurrent.Future;
 
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.core.DistributedTask;
+import com.hazelcast.core.EntryEvent;
+import com.hazelcast.core.EntryListener;
 import com.hazelcast.core.ExecutionCallback;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
@@ -61,7 +63,7 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OHazelcastPlugin extends ODistributedAbstractPlugin implements MembershipListener {
+public class OHazelcastPlugin extends ODistributedAbstractPlugin implements MembershipListener, EntryListener<String, Object> {
   private String                   configFile         = "hazelcast.xml";
   private Map<String, Member>      remoteClusterNodes = new ConcurrentHashMap<String, Member>();
   private long                     timeOffset;
@@ -312,8 +314,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     OLogManager.instance().warn(this, "DISTRIBUTED -> alignment completed against cluster node %s. Total records: %d", nodeId,
         aligned);
-
-    OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
   }
 
   @Override
@@ -323,8 +323,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     OLogManager.instance().warn(this, "DISTRIBUTED -> disconnected cluster node %s", nodeId);
     remoteClusterNodes.remove(nodeId);
-
-    OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
   }
 
   public long getTimeOffset() {
@@ -332,10 +330,35 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   protected void publishNodeConfiguration() {
-    getConfigurationMap().put("node." + getLocalNodeId(), getLocalNodeConfiguration());
+    final IMap<String, Object> map = getConfigurationMap();
+    map.addEntryListener(this, true);
+
+    map.put("node." + getLocalNodeId(), getLocalNodeConfiguration());
   }
 
   protected IMap<String, Object> getConfigurationMap() {
-    return Hazelcast.getMap("orientdb");
+    return getHazelcastInstance().getMap("orientdb");
+  }
+
+  @Override
+  public void entryAdded(EntryEvent<String, Object> event) {
+    if (event.getKey().startsWith("node."))
+      OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
+  }
+
+  @Override
+  public void entryRemoved(EntryEvent<String, Object> event) {
+    if (event.getKey().startsWith("node."))
+      OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
+  }
+
+  @Override
+  public void entryUpdated(EntryEvent<String, Object> event) {
+    if (event.getKey().startsWith("node."))
+      OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
+  }
+
+  @Override
+  public void entryEvicted(EntryEvent<String, Object> event) {
   }
 }

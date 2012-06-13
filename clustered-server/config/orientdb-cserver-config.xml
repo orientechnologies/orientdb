@@ -12,20 +12,20 @@
 					    'servers' : {
 					      '*' : {
 							'defaultCluster' : 2,
-							'replication' : true,
+							'synchronization' : true,
 							'clusters' : {
 							  '*' : {
+						        'synchronization' : true, 
 								'operations' : {
 						            'create' : { 'direction' : 'in-out', 'mode' : 'synchronous' },
 						            'read'   : { 'direction' : 'in' },
 						            'update' : { 'direction' : 'in-out', 'mode' : 'synchronous' },
 						            'delete' : { 'direction' : 'in-out', 'mode' : 'synchronous' }
 						        },
-						        'replication' : true, 
                                 'offlineMaxBuffer' : 1000000
                                 },
-								'internal' : { 'replication' : false },
-								'index' : { 'replication' : false }
+								'internal' : { 'synchronization' : false },
+								'index' : { 'synchronization' : false }
 							},
 							'classes':{}
 							}
@@ -90,7 +90,7 @@
 	</users>
 	<properties>
 		<!-- Uses the Hazelcast's distributed cache as 2nd level cache -->
-		<entry name="cache.level2.impl" value="com.orientechnologies.orient.server.hazelcast.OHazelcastCache" />
+		<!-- <entry name="cache.level2.impl" value="com.orientechnologies.orient.server.hazelcast.OHazelcastCache" /> -->
 
 		<!-- Enable/Disable logging. Levels are: finer, fine, finest, info, warning -->
 		<entry name="log.console.level" value="info" />

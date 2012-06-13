@@ -15,7 +15,7 @@
 							'clusters' : {
 							  '*' : {
 								'operations' : {
-						            'record_create' : { 'direction' : 'in-out', 'mode' : 'fire_and_forget' },
+						            'record_create' : { 'direction' : 'in-out', 'mode' : 'synchronous' },
 						            'record_read'   : { 'direction' : 'in' },
 						            'record_update' : { 'direction' : 'in-out', 'mode' : 'synchronous' },
 						            'record_delete' : { 'direction' : 'in-out', 'mode' : 'synchronous' },
@@ -93,7 +93,7 @@
 		<user resources="connect,server.listDatabases" password="guest" name="guest" />
 	</users>
 	<properties>
-		<entry value="com.orientechnologies.orient.server.hazelcast.OHazelcastCache" name="cache.level2.impl" />
+		<!-- <entry value="com.orientechnologies.orient.server.hazelcast.OHazelcastCache" name="cache.level2.impl" /> -->
 		<entry value="info" name="log.console.level" />
 		<entry value="fine" name="log.file.level" />
 	</properties>

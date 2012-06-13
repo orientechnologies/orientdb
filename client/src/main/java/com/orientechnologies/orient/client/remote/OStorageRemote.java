@@ -1160,11 +1160,11 @@ public class OStorageRemote extends OStorageAbstract {
 
       try {
         if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance().debug(this, "Retrying to connect to remote server #" + retry + "/" + currentMaxRetry + "...");
+          OLogManager.instance().debug(this, "Retrying to connect to remote server #" + (retry + 1) + "/" + currentMaxRetry + "...");
 
         openRemoteDatabase();
 
-        OLogManager.instance().info(this,
+        OLogManager.instance().warn(this,
             "Connection re-acquired transparently after %dms and %d retries: no errors will be thrown at application level",
             System.currentTimeMillis() - lostConnectionTime, retry + 1);
 
@@ -1308,6 +1308,9 @@ public class OStorageRemote extends OStorageAbstract {
    * Registers the remote server with port.
    */
   protected String addHost(String host) {
+    if (host.startsWith("localhost"))
+      host = "127.0.0.1" + host.substring("localhost".length());
+
     // REGISTER THE REMOTE SERVER+PORT
     if (host.indexOf(":") == -1)
       host += ":" + getDefaultPort();
@@ -1530,7 +1533,7 @@ public class OStorageRemote extends OStorageAbstract {
 
       final List<ODocument> members = clusterConfiguration.field("members");
       if (members != null) {
-        //serverURLs.clear();
+        // serverURLs.clear();
 
         for (ODocument m : members)
           if (m != null && !serverURLs.contains((String) m.field("id"))) {
@@ -1538,7 +1541,7 @@ public class OStorageRemote extends OStorageAbstract {
               if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
                 String url = (String) listener.get("listen");
                 if (!serverURLs.contains(url))
-                  serverURLs.add(url);
+                  addHost(url);
               }
             }
           }
@@ -1608,7 +1611,6 @@ public class OStorageRemote extends OStorageAbstract {
         networkPool.add(firstChannel);
         serviceThread = new OAsynchChannelServiceThread(asynchEventListener, firstChannel, "OrientDB <- Asynch Client ("
             + firstChannel.socket.getRemoteSocketAddress() + ")");
-
       }
 
       // CREATE THE MINIMUM POOL
