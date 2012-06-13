@@ -417,7 +417,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 			doc.field(fieldName, valueToSet);
 		} else if (!valueToSet.getClass().isAnonymousClass()) {
 			if (valueToSet instanceof Proxy) {
-				doc.field(fieldName, OObjectEntitySerializer.getDocument((Proxy) valueToSet));
+				ODocument docToSet = OObjectEntitySerializer.getDocument((Proxy) valueToSet);
+				if (OObjectEntitySerializer.isEmbeddedField(self.getClass(), fieldName))
+					docToSet.addOwner(doc);
+				doc.field(fieldName, docToSet);
 			} else if (((valueToSet instanceof Collection<?> || valueToSet instanceof Map<?, ?>)) || valueToSet.getClass().isArray()) {
 				Class<?> genericMultiValueType = OReflectionHelper.getGenericMultivalueType(getField(fieldName, self.getClass()));
 				if (genericMultiValueType != null && !OReflectionHelper.isJavaType(genericMultiValueType)) {

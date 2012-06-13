@@ -38,6 +38,7 @@ import com.orientechnologies.orient.object.db.OObjectDatabasePool;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
+import com.orientechnologies.orient.test.domain.base.EmbeddedChild;
 import com.orientechnologies.orient.test.domain.base.EnumTest;
 import com.orientechnologies.orient.test.domain.base.IdObject;
 import com.orientechnologies.orient.test.domain.base.Instrument;
@@ -45,6 +46,7 @@ import com.orientechnologies.orient.test.domain.base.JavaComplexTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaSimpleTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaTestInterface;
 import com.orientechnologies.orient.test.domain.base.Musician;
+import com.orientechnologies.orient.test.domain.base.Parent;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.business.Address;
 import com.orientechnologies.orient.test.domain.business.Child;
@@ -726,6 +728,54 @@ public class CRUDObjectPhysicalTest {
 		man = (Musician) list3.get(0);
 		man.setName("Big Jack");
 		db.save(man); // here is the exception
+		db.close();
+	}
+
+	public void testEmbeddedDeletion() throws Exception {
+		OObjectDatabaseTx db = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
+		Parent parent = db.newInstance(Parent.class);
+		parent.setName("Big Parent");
+
+		EmbeddedChild embedded = db.newInstance(EmbeddedChild.class);
+		embedded.setName("Little Child");
+
+		parent.setEmbeddedChild(embedded);
+
+		parent = db.save(parent);
+
+		List<Parent> presult = db.query(new OSQLSynchQuery<Parent>("select from Parent"));
+		List<EmbeddedChild> cresult = db.query(new OSQLSynchQuery<EmbeddedChild>("select from EmbeddedChild"));
+		Assert.assertEquals(presult.size(), 1);
+		Assert.assertEquals(cresult.size(), 0);
+
+		EmbeddedChild child = db.newInstance(EmbeddedChild.class);
+		child.setName("Little Child");
+		parent.setChild(child);
+
+		parent = db.save(parent);
+
+		presult = db.query(new OSQLSynchQuery<Parent>("select from Parent"));
+		cresult = db.query(new OSQLSynchQuery<EmbeddedChild>("select from EmbeddedChild"));
+		Assert.assertEquals(presult.size(), 1);
+		Assert.assertEquals(cresult.size(), 1);
+
+		db.delete(parent);
+
+		presult = db.query(new OSQLSynchQuery<Parent>("select * from Parent"));
+		cresult = db.query(new OSQLSynchQuery<EmbeddedChild>("select * from EmbeddedChild"));
+
+		Assert.assertEquals(presult.size(), 0);
+		Assert.assertEquals(cresult.size(), 1);
+
+		db.delete(child);
+
+		presult = db.query(new OSQLSynchQuery<Parent>("select * from Parent"));
+		cresult = db.query(new OSQLSynchQuery<EmbeddedChild>("select * from EmbeddedChild"));
+
+		Assert.assertEquals(presult.size(), 0);
+		Assert.assertEquals(cresult.size(), 0);
+
 		db.close();
 	}
 

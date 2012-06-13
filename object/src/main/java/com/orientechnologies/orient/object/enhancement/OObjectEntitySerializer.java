@@ -144,8 +144,7 @@ public class OObjectEntitySerializer {
 	}
 
 	public static boolean isTransientField(Class<?> iClass, String iField) {
-		if (!classes.contains(iClass))
-			registerClass(iClass);
+		checkClassRegistration(iClass);
 		boolean isTransientField = false;
 		for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
 				&& !currentClass.equals(ODocument.class) && !isTransientField;) {
@@ -157,16 +156,20 @@ public class OObjectEntitySerializer {
 	}
 
 	public static boolean isEmbeddedField(Class<?> iClass, String iField) {
-		if (!classes.contains(iClass))
-			registerClass(iClass);
+		checkClassRegistration(iClass);
 		boolean isEmbeddedField = false;
 		for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
 				&& !currentClass.equals(ODocument.class) && !isEmbeddedField;) {
-			List<String> classEmbeddedFields = embeddedFields.get(iClass);
+			List<String> classEmbeddedFields = embeddedFields.get(currentClass);
 			isEmbeddedField = classEmbeddedFields != null && classEmbeddedFields.contains(iField);
 			currentClass = currentClass.getSuperclass();
 		}
 		return isEmbeddedField;
+	}
+
+	protected static void checkClassRegistration(Class<?> iClass) {
+		if (!classes.contains(iClass) && !(Proxy.class.isAssignableFrom(iClass)))
+			registerClass(iClass);
 	}
 
 	/**
@@ -302,6 +305,7 @@ public class OObjectEntitySerializer {
 					if (classEmbeddedFields == null)
 						classEmbeddedFields = new ArrayList<String>();
 					classEmbeddedFields.add(fieldName);
+					embeddedFields.put(currentClass, classEmbeddedFields);
 				}
 
 			}
