@@ -15,20 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -43,6 +29,19 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Test(groups = { "crud", "record-vobject" }, sequential = true)
 public class CRUDDocumentPhysicalTest {
@@ -700,7 +699,7 @@ public class CRUDDocumentPhysicalTest {
     database.close();
   }
 
-  @Test
+	@Test(dependsOnMethods = "testCreate")
   public void testBrowseClassHasNextTwice() {
     database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
@@ -722,7 +721,7 @@ public class CRUDDocumentPhysicalTest {
     database.close();
   }
 
-  @Test
+	@Test(dependsOnMethods = "testCreate")
   public void nonPolymorphicQuery() {
     database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
