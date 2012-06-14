@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.object.db.OObjectLazyList;
@@ -316,7 +317,18 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 			customSerialization = true;
 		}
 		if (docValue instanceof OIdentifiable) {
-			docValue = convertDocumentToObject((ODocument) ((OIdentifiable) docValue).getRecord());
+			if (OIdentifiable.class.isAssignableFrom(f.getType())) {
+				if (ORecordAbstract.class.isAssignableFrom(f.getType())) {
+					ORecordAbstract record = ((OIdentifiable) docValue).getRecord();
+					OObjectEntitySerializer.setFieldValue(f, self, record);
+					return record;
+				} else {
+					OObjectEntitySerializer.setFieldValue(f, self, docValue);
+					return docValue;
+				}
+			} else {
+				docValue = convertDocumentToObject((ODocument) ((OIdentifiable) docValue).getRecord());
+			}
 		} else if (docValue instanceof Collection<?>) {
 			docValue = manageCollectionLoad(f, self, docValue, customSerialization);
 		} else if (docValue instanceof Map<?, ?>) {
@@ -421,6 +433,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 				if (OObjectEntitySerializer.isEmbeddedField(self.getClass(), fieldName))
 					docToSet.addOwner(doc);
 				doc.field(fieldName, docToSet);
+			} else if (valueToSet instanceof OIdentifiable) {
+				if (valueToSet instanceof ODocument && OObjectEntitySerializer.isEmbeddedField(self.getClass(), fieldName))
+					((ODocument) valueToSet).addOwner(doc);
+				doc.field(fieldName, valueToSet);
 			} else if (((valueToSet instanceof Collection<?> || valueToSet instanceof Map<?, ?>)) || valueToSet.getClass().isArray()) {
 				Class<?> genericMultiValueType = OReflectionHelper.getGenericMultivalueType(getField(fieldName, self.getClass()));
 				if (genericMultiValueType != null && !OReflectionHelper.isJavaType(genericMultiValueType)) {

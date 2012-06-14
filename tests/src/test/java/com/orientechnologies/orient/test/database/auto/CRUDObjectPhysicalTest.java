@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -26,12 +28,14 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.object.OLazyObjectSetInterface;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.ODatabaseObjectTx;
 import com.orientechnologies.orient.object.db.OObjectDatabasePool;
@@ -305,6 +309,66 @@ public class CRUDObjectPhysicalTest {
 		Assert.assertEquals(loaded.getEnumMap().size(), 2);
 		Assert.assertEquals(loaded.getEnumMap().get("1"), EnumTest.ENUM2);
 		Assert.assertEquals(loaded.getEnumMap().get("2"), EnumTest.ENUM3);
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "mapObjectsTest")
+	public void oidentifableFieldsTest() {
+		database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
+		JavaComplexTestClass p = database.newInstance(JavaComplexTestClass.class);
+		p.setName("Dean Winchester");
+
+		ODocument testEmbeddedDocument = new ODocument();
+		testEmbeddedDocument.field("testEmbeddedField", "testEmbeddedValue");
+
+		p.setEmbeddedDocument(testEmbeddedDocument);
+
+		ODocument testDocument = new ODocument();
+		testDocument.field("testField", "testValue");
+
+		p.setDocument(testDocument);
+
+		ORecordBytes testRecordBytes = new ORecordBytes(
+				"this is a bytearray test. if you read this Object database has stored it correctly".getBytes());
+
+		p.setByteArray(testRecordBytes);
+
+		database.save(p);
+
+		ORID rid = database.getRecordByUserObject(p, false).getIdentity();
+
+		database.close();
+
+		database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+		JavaComplexTestClass loaded = database.load(rid);
+
+		Assert.assertTrue(loaded.getByteArray() instanceof ORecordBytes);
+		try {
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			try {
+				loaded.getByteArray().toOutputStream(out);
+				Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctly".getBytes(),
+						out.toByteArray());
+				Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctly",
+						new String(out.toByteArray()));
+			} finally {
+				out.close();
+			}
+		} catch (IOException ioe) {
+			Assert.assertTrue(false);
+			OLogManager.instance().error(this, "Error reading byte[]", ioe);
+		}
+		Assert.assertTrue(loaded.getDocument() instanceof ODocument);
+		Assert.assertEquals("testValue", loaded.getDocument().field("testField"));
+		Assert.assertTrue(loaded.getDocument().getIdentity().isPersistent());
+
+		Assert.assertTrue(loaded.getEmbeddedDocument() instanceof ODocument);
+		Assert.assertEquals("testEmbeddedValue", loaded.getEmbeddedDocument().field("testEmbeddedField"));
+		Assert.assertTrue(!loaded.getEmbeddedDocument().getIdentity().isValid());
+
+		database.close();
 	}
 
 	@Test(dependsOnMethods = "mapEnumAndInternalObjects")
@@ -731,6 +795,7 @@ public class CRUDObjectPhysicalTest {
 		db.close();
 	}
 
+	@Test(dependsOnMethods = "oidentifableFieldsTest")
 	public void testEmbeddedDeletion() throws Exception {
 		OObjectDatabaseTx db = OObjectDatabasePool.global().acquire(url, "admin", "admin");
 

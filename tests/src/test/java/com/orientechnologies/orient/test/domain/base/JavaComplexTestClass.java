@@ -23,9 +23,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.persistence.Embedded;
 import javax.persistence.Id;
 import javax.persistence.Version;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.test.domain.business.Child;
 
 /**
@@ -38,6 +41,10 @@ public class JavaComplexTestClass {
 	@Version
 	private Object								version;
 
+	@Embedded
+	private ODocument							embeddedDocument;
+	private ODocument							document;
+	private ORecordBytes					byteArray;
 	private String								name;
 	private Map<String, Child>		children	= new HashMap<String, Child>();
 	private List<EnumTest>				enumList	= new ArrayList<EnumTest>();
@@ -98,5 +105,29 @@ public class JavaComplexTestClass {
 
 	public void setEnumSet(Set<EnumTest> enumSet) {
 		this.enumSet = enumSet;
+	}
+
+	public ODocument getEmbeddedDocument() {
+		return embeddedDocument;
+	}
+
+	public void setEmbeddedDocument(ODocument embeddedDocument) {
+		this.embeddedDocument = embeddedDocument;
+	}
+
+	public ORecordBytes getByteArray() {
+		return byteArray;
+	}
+
+	public void setByteArray(ORecordBytes byteArray) {
+		this.byteArray = byteArray;
+	}
+
+	public ODocument getDocument() {
+		return document;
+	}
+
+	public void setDocument(ODocument document) {
+		this.document = document;
 	}
 }

@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
@@ -501,6 +502,10 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 
 	public String getType() {
 		return TYPE;
+	}
+
+	public void registerUserObjectAfterLinkSave(ORecordInternal<?> iRecord) {
+		registerUserObject(getUserObjectByRecord(iRecord, null), iRecord);
 	}
 
 	protected void init() {

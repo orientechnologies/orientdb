@@ -261,6 +261,11 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 			getDatabaseOwner().registerUserObject(iObject, iRecord);
 	}
 
+	public void registerUserObjectAfterLinkSave(ORecordInternal<?> iRecord) {
+		if (databaseOwner != this)
+			getDatabaseOwner().registerUserObjectAfterLinkSave(iRecord);
+	}
+
 	public Object getUserObjectByRecord(final OIdentifiable iRecord, final String iFetchPlan) {
 		if (databaseOwner != this)
 			return databaseOwner.getUserObjectByRecord(iRecord, iFetchPlan);

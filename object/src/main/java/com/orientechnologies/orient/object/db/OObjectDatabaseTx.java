@@ -585,6 +585,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 		}
 	}
 
+	public void registerUserObjectAfterLinkSave(ORecordInternal<?> iRecord) {
+	}
+
 	@Override
 	public void unregisterPojo(final Object iObject, final ODocument iRecord) {
 		if (iRecord != null) {

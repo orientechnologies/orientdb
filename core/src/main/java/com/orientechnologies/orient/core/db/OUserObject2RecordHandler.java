@@ -64,4 +64,14 @@ public interface OUserObject2RecordHandler {
 	 *          record
 	 */
 	public void registerUserObject(final Object iUserObject, final ORecordInternal<?> iRecord);
+
+	/**
+	 * Registers the saved linked record. Needed only to make the old object database implementation work
+	 * 
+	 * @param iUserObject
+	 *          User object
+	 * @param iRecord
+	 *          record
+	 */
+	public void registerUserObjectAfterLinkSave(final ORecordInternal<?> iRecord);
 }
