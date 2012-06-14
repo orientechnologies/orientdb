@@ -80,11 +80,11 @@ public class ODefaultCache implements OCache {
     if (!isEnabled())
       return null;
 
-    lock.acquireSharedLock();
+    lock.acquireExclusiveLock();
     try {
       return cache.get(id);
     } finally {
-      lock.releaseSharedLock();
+      lock.releaseExclusiveLock();
     }
   }
 
@@ -138,11 +138,11 @@ public class ODefaultCache implements OCache {
   }
 
   public Collection<ORID> keys() {
-    lock.acquireSharedLock();
+    lock.acquireExclusiveLock();
     try {
       return new ArrayList<ORID>(cache.keySet());
     } finally {
-      lock.releaseSharedLock();
+      lock.releaseExclusiveLock();
     }
   }
 
