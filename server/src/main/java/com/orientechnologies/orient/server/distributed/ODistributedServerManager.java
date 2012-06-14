@@ -35,21 +35,21 @@ public interface ODistributedServerManager {
     SYNCHRONOUS, ASYNCHRONOUS, FIRE_AND_FORGET
   }
 
-  public Object executeOperation(final String iNodeId, final OPERATION op, final String dbName, final ORecordId rid,
-      final int iVersion, final ORawBuffer record, final EXECUTION_MODE iMode) throws ODistributedException;
+  public Object executeOperation(String iNodeId, OPERATION op, String dbName, ORecordId rid, int iVersion, ORawBuffer record,
+      EXECUTION_MODE iMode) throws ODistributedException;
 
-  public Collection<Object> executeOperation(final Set<String> iNodeIds, final OPERATION op, final String dbName,
-      final ORecordId rid, final int iVersion, final ORawBuffer record, final EXECUTION_MODE iMode) throws ODistributedException;
+  public Collection<Object> executeOperation(Set<String> iNodeIds, OPERATION op, String dbName, ORecordId rid, int iVersion,
+      ORawBuffer record, EXECUTION_MODE iMode) throws ODistributedException;
 
   public String getLocalNodeId();
 
   public Set<String> getRemoteNodeIds();
 
-  public ODocument getDatabaseStatus(final String iDatabaseName);
+  public ODocument getDatabaseStatus(String iDatabaseName);
 
-  public ODocument getDatabaseConfiguration(final String iDatabaseName);
+  public ODocument getDatabaseConfiguration(String iDatabaseName);
 
-  public ODocument getLocalDatabaseConfiguration(final String iDatabaseName);
+  public ODocument getLocalDatabaseConfiguration(String iDatabaseName);
 
   public ODocument getClusterConfiguration();
 
@@ -62,4 +62,6 @@ public interface ODistributedServerManager {
    * @return
    */
   public long getTimeOffset();
+
+  public OStorageSynchronizer getDatabaseSynchronizer(String iDatabaseName, String iNodeId);
 }

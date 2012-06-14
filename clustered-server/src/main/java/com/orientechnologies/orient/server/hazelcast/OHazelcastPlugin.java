@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -54,7 +53,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugi
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedTask.OPERATION;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
-import com.orientechnologies.orient.server.distributed.OSynchronizationLog;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 
 /**
@@ -64,12 +62,22 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
  * 
  */
 public class OHazelcastPlugin extends ODistributedAbstractPlugin implements MembershipListener, EntryListener<String, Object> {
-  private String                   configFile         = "hazelcast.xml";
-  private Map<String, Member>      remoteClusterNodes = new ConcurrentHashMap<String, Member>();
-  private long                     timeOffset;
-  private static HazelcastInstance hazelcastInstance;
+  private String                            localNodeId;
+  private String                            configFile         = "hazelcast.xml";
+  private Map<String, Member>               remoteClusterNodes = new ConcurrentHashMap<String, Member>();
+  private long                              timeOffset;
+  private volatile static HazelcastInstance hazelcastInstance;
 
   public static HazelcastInstance getHazelcastInstance() {
+    while (hazelcastInstance == null) {
+      // WAIT UNTIL THE INSTANCE IS READY
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        break;
+      }
+    }
     return hazelcastInstance;
   }
 
@@ -90,34 +98,28 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     try {
       hazelcastInstance = Hazelcast.init(new FileSystemXmlConfig(configFile));
-
-      // COMPUTE THE DELTA BETWEEN LOCAL AND CENTRAL CLUSTER TIMES
-      timeOffset = System.currentTimeMillis() - getHazelcastInstance().getCluster().getClusterTime();
-
-      publishNodeConfiguration();
-
-      // INIT THE STORAGE REPLICATORS
-      replicators.clear();
-      final File replicationDirectory = new File(
-          OSystemVariableResolver.resolveSystemVariables(OSynchronizationLog.REPLICATION_DIRECTORY));
-      if (!replicationDirectory.exists())
-        replicationDirectory.mkdirs();
-      else if (replicationDirectory.isDirectory()) {
-        for (File f : replicationDirectory.listFiles())
-          createDatabaseSynchronizer(f.getName());
-      }
-
-      // REGISTER CURRENT MEMBERS
-      remoteClusterNodes.clear();
-      Hazelcast.getCluster().addMembershipListener(this);
-      for (Member m : Hazelcast.getCluster().getMembers())
-        addMember(m);
-
-      super.startup();
-
     } catch (FileNotFoundException e) {
       throw new OConfigurationException("Error on creating Hazelcast instance", e);
     }
+
+    localNodeId = getNodeId(hazelcastInstance.getCluster().getLocalMember());
+
+    // COMPUTE THE DELTA BETWEEN LOCAL AND CENTRAL CLUSTER TIMES
+    timeOffset = System.currentTimeMillis() - getHazelcastInstance().getCluster().getClusterTime();
+
+    publishNodeConfiguration();
+
+    // INIT THE STORAGE REPLICATORS
+    synchronizers.clear();
+
+    // REGISTER CURRENT MEMBERS
+    remoteClusterNodes.clear();
+    Hazelcast.getCluster().addMembershipListener(this);
+    for (Member m : Hazelcast.getCluster().getMembers())
+      addMember(m);
+
+    super.startup();
+
   }
 
   @Override
@@ -140,8 +142,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     OLogManager.instance().debug(this, "DISTRIBUTED -> %s %s %s{%s}", iNodeId, iOperation, dbName, rid);
 
-    final DistributedTask<Object> task = new DistributedTask<Object>(new OHazelcastReplicationTask(dbName, iOperation, rid,
-        record != null ? record.buffer : null, iVersion, record != null ? record.recordType : null, iMode), clusterMember);
+    final DistributedTask<Object> task = new DistributedTask<Object>(new OHazelcastReplicationTask(localNodeId, dbName, iOperation,
+        rid, record != null ? record.buffer : null, iVersion, record != null ? record.recordType : null, iMode), clusterMember);
     Hazelcast.getExecutorService().execute(task);
 
     try {
@@ -167,8 +169,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     OLogManager.instance().debug(this, "DISTRIBUTED -> %s %s %s{%s}", members, iOperation, dbName, rid);
 
-    final MultiTask<Object> task = new MultiTask<Object>(new OHazelcastReplicationTask(dbName, iOperation, rid, record.buffer,
-        iVersion, record.recordType, iMode), members);
+    final MultiTask<Object> task = new MultiTask<Object>(new OHazelcastReplicationTask(localNodeId, dbName, iOperation, rid,
+        record.buffer, iVersion, record.recordType, iMode), members);
 
     if (iMode == EXECUTION_MODE.SYNCHRONOUS)
       try {
@@ -183,6 +185,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     else if (iMode == EXECUTION_MODE.ASYNCHRONOUS)
       try {
         task.setExecutionCallback(new ExecutionCallback<Collection<Object>>() {
+          @SuppressWarnings("unused")
           @Override
           public void done(Future<Collection<Object>> future) {
             try {
@@ -267,7 +270,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   public String getLocalNodeId() {
-    return getNodeId(Hazelcast.getCluster().getLocalMember());
+    return localNodeId;
   }
 
   public String getLocalNodeAlias() {
@@ -303,7 +306,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     remoteClusterNodes.put(nodeId, clusterMember);
 
     int aligned = 0;
-    for (OStorageSynchronizer r : replicators.values()) {
+    for (OStorageSynchronizer r : synchronizers.values()) {
       OLogManager.instance().warn(this, "DISTRIBUTED -> storage %s: aligning records...", r.toString());
       final int[] a = r.align(nodeId);
       final int tot = a[0] + a[1] + a[2];
@@ -323,6 +326,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     OLogManager.instance().warn(this, "DISTRIBUTED -> disconnected cluster node %s", nodeId);
     remoteClusterNodes.remove(nodeId);
+
+    getConfigurationMap().remove("node." + getLocalNodeId());
   }
 
   public long getTimeOffset() {

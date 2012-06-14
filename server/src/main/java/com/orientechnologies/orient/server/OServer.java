@@ -90,6 +90,7 @@ public class OServer {
   private final CountDownLatch                             startupLatch       = new CountDownLatch(1);
 
   private Random                                           random             = new Random();
+  private Map<String, Object>                              variables          = new HashMap<String, Object>();
 
   public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
       InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
@@ -423,6 +424,18 @@ public class OServer {
     return (RET) plugins.get(iName);
   }
 
+  public Object getVariable(final String iName) {
+    return variables.get(iName);
+  }
+
+  public OServer setVariable(final String iName, final Object iValue) {
+    if (iValue == null)
+      variables.remove(iName);
+    else
+      variables.put(iName, iValue);
+    return this;
+  }
+
   protected void loadConfiguration(final OServerConfiguration iConfiguration) {
     try {
       configuration = iConfiguration;
@@ -618,7 +631,7 @@ public class OServer {
       }
 
     // ALWAYS DISABLE LEVEl1 CACHE IN SERVER. IT WILL BE ENABLED IF NEEDED BY SINGLE COMMANDS
-    //database.getLevel1Cache().setEnable(false);
+    // database.getLevel1Cache().setEnable(false);
 
     return database;
   }

@@ -42,6 +42,7 @@ public class ODistributedTask implements Callable<Object>, Externalizable {
     RECORD_CREATE, RECORD_READ, RECORD_UPDATE, RECORD_DELETE, COMMAND
   }
 
+  protected String         nodeSource;
   protected String         databaseName;
   protected OPERATION      operation;
   protected ORecordId      rid;
@@ -53,8 +54,9 @@ public class ODistributedTask implements Callable<Object>, Externalizable {
   public ODistributedTask() {
   }
 
-  public ODistributedTask(final String databaseName, final OPERATION iOperation, final ORecordId rid, final byte[] content,
-      final int version, final byte recordType, final EXECUTION_MODE iMode) {
+  public ODistributedTask(final String nodeSource, final String databaseName, final OPERATION iOperation, final ORecordId rid,
+      final byte[] content, final int version, final byte recordType, final EXECUTION_MODE iMode) {
+    this.nodeSource = nodeSource;
     this.databaseName = databaseName;
     this.operation = iOperation;
     this.rid = rid;
@@ -82,6 +84,10 @@ public class ODistributedTask implements Callable<Object>, Externalizable {
 
     if (stg.isClosed())
       stg.open(null, null, null);
+
+    // ASSURE THE LOG IS CREATED
+    ((ODistributedServerManager) OServerMain.server().getVariable("ODistributedAbstractPlugin")).getDatabaseSynchronizer(databaseName,
+        nodeSource);
 
     Object result = null;
     switch (operation) {
@@ -111,9 +117,8 @@ public class ODistributedTask implements Callable<Object>, Externalizable {
       break;
 
     case COMMAND:
-      OLogManager.instance().debug(this, "DISTRIBUTED <- deleting record %s v.%d size=%s", rid, version,
-          OFileUtils.getSizeAsString(content.length));
-      result = stg.deleteRecord(rid, version, 0, null);
+      final String cmd = new String(content);
+      OLogManager.instance().debug(this, "DISTRIBUTED <- command: %s", cmd);
       break;
     }
 
@@ -126,6 +131,7 @@ public class ODistributedTask implements Callable<Object>, Externalizable {
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
+    out.writeUTF(nodeSource);
     out.writeUTF(databaseName);
     out.writeByte(operation.ordinal());
     out.writeUTF(rid.toString());
@@ -138,6 +144,7 @@ public class ODistributedTask implements Callable<Object>, Externalizable {
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+    nodeSource = in.readUTF();
     databaseName = in.readUTF();
     operation = OPERATION.values()[in.readByte()];
     rid = new ORecordId(in.readUTF());

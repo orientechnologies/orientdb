@@ -15,6 +15,17 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
@@ -41,17 +52,6 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 @SuppressWarnings("serial")
 public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
@@ -67,6 +67,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
   @Override
   public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord) {
+    return fromString(iSource, iRecord, null);
+  }
+
+  public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord, final String iOptions) {
     if (iSource == null)
       throw new OSerializationException("Error on unmarshalling JSON content: content is null");
 
@@ -79,6 +83,15 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       iRecord.clear();
 
     iSource = iSource.substring(1, iSource.length() - 1).trim();
+
+    // PARSE OPTIONS
+    boolean noMap = false;
+    if (iOptions != null) {
+      final String[] format = iOptions.split(",");
+      for (String f : format)
+        if (f.equals("noMap"))
+          noMap = true;
+    }
 
     final List<String> fields = OStringSerializerHelper
         .smartSplit(iSource, PARAMETER_SEPARATOR, 0, -1, true, ' ', '\n', '\r', '\t');
@@ -148,7 +161,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             }
           } else {
             if (iRecord instanceof ODocument) {
-              final Object v = getValue((ODocument) iRecord, fieldName, fieldValue, fieldValueAsString, null, null, fieldTypes);
+              final Object v = getValue((ODocument) iRecord, fieldName, fieldValue, fieldValueAsString, null, null, fieldTypes,
+                  noMap, iOptions);
 
               if (v != null)
                 if (v instanceof Collection<?> && !((Collection<?>) v).isEmpty()) {
@@ -187,7 +201,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
   @SuppressWarnings("unchecked")
   private Object getValue(final ODocument iRecord, String iFieldName, String iFieldValue, String iFieldValueAsString, OType iType,
-      OType iLinkedType, final Map<String, Character> iFieldTypes) {
+      OType iLinkedType, final Map<String, Character> iFieldTypes, final boolean iNoMap, final String iOptions) {
     if (iFieldValue.equals("null"))
       return null;
 
@@ -208,9 +222,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         // EMPTY, RETURN an EMPTY HASHMAP
         return new HashMap<String, Object>();
 
-      if (hasTypeField(fields)) {
+      if (iNoMap || hasTypeField(fields)) {
         // OBJECT
-        final ORecordInternal<?> recordInternal = fromString(iFieldValue, null);
+        final ORecordInternal<?> recordInternal = fromString(iFieldValue, new ODocument(), iOptions);
         if (recordInternal instanceof ODocument)
           ((ODocument) recordInternal).addOwner(iRecord);
         return recordInternal;
@@ -229,7 +243,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           iFieldValue = fields[i + 1];
           iFieldValueAsString = OStringSerializerHelper.getStringContent(iFieldValue);
 
-          embeddedMap.put(iFieldName, getValue(iRecord, null, iFieldValue, iFieldValueAsString, iLinkedType, null, iFieldTypes));
+          embeddedMap.put(iFieldName,
+              getValue(iRecord, null, iFieldValue, iFieldValueAsString, iLinkedType, null, iFieldTypes, iNoMap, iOptions));
         }
         return embeddedMap;
       }
@@ -257,7 +272,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           iFieldValue = item.trim();
           iFieldValueAsString = iFieldValue.length() >= 2 ? iFieldValue.substring(1, iFieldValue.length() - 1) : iFieldValue;
 
-          collectionItem = getValue(iRecord, null, iFieldValue, iFieldValueAsString, iLinkedType, null, iFieldTypes);
+          collectionItem = getValue(iRecord, null, iFieldValue, iFieldValueAsString, iLinkedType, null, iFieldTypes, iNoMap,
+              iOptions);
 
           if (collectionItem instanceof ODocument && iRecord instanceof ODocument)
             // SET THE OWNER
@@ -484,7 +500,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     }
   }
 
-  private boolean hasTypeField(String[] fields) {
+  private boolean hasTypeField(final String[] fields) {
     for (int i = 0; i < fields.length; i = i + 2) {
       if (fields[i].equals("\"@type\"") || fields[i].equals("'@type'")) {
         return true;

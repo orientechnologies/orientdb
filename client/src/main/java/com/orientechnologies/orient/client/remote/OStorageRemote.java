@@ -1523,6 +1523,7 @@ public class OStorageRemote extends OStorageAbstract {
     }
   }
 
+  @SuppressWarnings("unchecked")
   public void updateClusterConfiguration(final byte[] obj) {
     if (obj == null)
       return;

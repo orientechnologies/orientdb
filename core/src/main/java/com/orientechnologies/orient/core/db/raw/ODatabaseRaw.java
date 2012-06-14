@@ -84,6 +84,8 @@ public class ODatabaseRaw implements ODatabase {
         storage = Orient.instance().loadStorage(url);
       storage.open(iUserName, iUserPassword, properties);
 
+      status = STATUS.OPEN;
+
       // WAKE UP DB LIFECYCLE LISTENER
       for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
         it.next().onOpen(getDatabaseOwner());
@@ -95,7 +97,6 @@ public class ODatabaseRaw implements ODatabase {
         } catch (Throwable t) {
         }
 
-      status = STATUS.OPEN;
     } catch (OException e) {
       // PASS THROUGH
       throw e;

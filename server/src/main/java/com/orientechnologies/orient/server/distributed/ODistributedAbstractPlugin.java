@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -27,8 +28,11 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
@@ -45,10 +49,12 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
   protected String                            alias                 = null;
   protected long                              offlineBuffer         = -1;
   protected Map<String, ODocument>            databaseConfiguration = new ConcurrentHashMap<String, ODocument>();
-  protected Map<String, OStorageSynchronizer> replicators           = new ConcurrentHashMap<String, OStorageSynchronizer>();
+  protected Map<String, OStorageSynchronizer> synchronizers         = new HashMap<String, OStorageSynchronizer>();
 
   @Override
   public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
+    oServer.setVariable("ODistributedAbstractPlugin", this);
+
     for (OServerParameterConfiguration param : iParams) {
       if (param.name.equalsIgnoreCase("enabled")) {
         if (!Boolean.parseBoolean(param.value)) {
@@ -59,12 +65,14 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
       } else if (param.name.equalsIgnoreCase("alias"))
         alias = param.value;
       else if (param.name.startsWith("db."))
-        databaseConfiguration.put(param.name.substring("db.".length()), (ODocument) new ODocument().fromJSON(param.value.trim()));
+        databaseConfiguration.put(param.name.substring("db.".length()),
+            (ODocument) new ODocument().fromJSON(param.value.trim(), "noMap"));
     }
 
     // CHECK THE CONFIGURATION
     if (!databaseConfiguration.containsKey("*"))
-      throw new OConfigurationException("Invalid cluster configuration: cannot find settings for the default replication as 'db.*'");
+      throw new OConfigurationException(
+          "Invalid cluster configuration: cannot find settings for the default synchronization as 'db.*'");
   }
 
   @Override
@@ -92,16 +100,45 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
   @Override
   public void onOpen(final ODatabase iDatabase) {
     final ODocument cfg = getLocalDatabaseConfiguration(iDatabase.getName());
+    if (cfg == null)
+      return;
+
     final Boolean synch = (Boolean) cfg.field("synchronization");
     if (synch == null || synch) {
-      createDatabaseSynchronizer(iDatabase.getName());
-
-      if (iDatabase instanceof ODatabaseComplex<?>)
-        ((ODatabaseComplex<?>) iDatabase).registerHook(this);
+      getDatabaseSynchronizer(iDatabase.getName(), null);
 
       Object defCluster = cfg.field("defaultCluster");
       if (defCluster != null)
         iDatabase.set(ATTRIBUTES.DEFAULTCLUSTERID, defCluster);
+//
+//      final ODocument classes = cfg.field("classes");
+//      if (classes != null) {
+//        for (String className : classes.fieldNames()) {
+//          final ODocument clazz = classes.field(className);
+//          if (clazz != null) {
+//            final String defaultCluster = clazz.field("defaultCluster");
+//            int clusterId = ((ODatabaseComplex<?>) iDatabase).getClusterIdByName(defaultCluster);
+//
+//            if (clusterId == -1) {
+//              // CREATE THE NEW CLUSTER ID
+//              final CLUSTER_TYPE clusterType = iDatabase.getStorage() instanceof OStorageLocal ? CLUSTER_TYPE.PHYSICAL
+//                  : CLUSTER_TYPE.MEMORY;
+//              clusterId = ((ODatabaseComplex<?>) iDatabase).addCluster(defaultCluster, clusterType);
+//            }
+//
+//            OClass cls = ((ODatabaseComplex<?>) iDatabase).getMetadata().getSchema().getClass(className);
+//            if (cls == null)
+//              // CREATE THE CLASS WITH THE CLUSTER ID AS DEFAULT
+//              cls = ((ODatabaseComplex<?>) iDatabase).getMetadata().getSchema().createClass(className, clusterId);
+//            else
+//              cls.setDefaultClusterId(clusterId);
+//
+//          }
+//        }
+//      }
+
+      if (iDatabase instanceof ODatabaseComplex<?>)
+        ((ODatabaseComplex<?>) iDatabase).registerHook(this);
     }
   }
 
@@ -118,9 +155,12 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
   public boolean onTrigger(final TYPE iType, final ORecord<?> iRecord) {
     final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
-    final OStorageSynchronizer replicator = replicators.get(db.getName());
-    if (replicator != null)
-      return replicator.distributeOperation(iType, iRecord);
+    final OStorageSynchronizer synchronizer;
+    synchronized (synchronizers) {
+      synchronizer = synchronizers.get(db.getName());
+    }
+    if (synchronizer != null)
+      return synchronizer.distributeOperation(iType, iRecord);
 
     return false;
   }
@@ -151,11 +191,11 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
 
   public ODocument getLocalDatabaseConfiguration(final String iDatabaseName) {
     final ODocument cfg = getDatabaseConfiguration(iDatabaseName);
-    Map<String, Object> perServerCfg = cfg.field("servers[" + getLocalNodeId() + "]");
+    ODocument perServerCfg = cfg.field("servers[" + alias + "]");
     if (perServerCfg == null)
       // NOT FOUND: GET THE DEFAULT ONE
       perServerCfg = cfg.field("servers[*]");
-    return new ODocument(perServerCfg);
+    return perServerCfg;
   }
 
   public void setDefaultDatabaseConfiguration(final String iDatabaseName, final ODocument iConfiguration) {
@@ -170,8 +210,17 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
     this.offlineBuffer = offlineBuffer;
   }
 
-  protected void createDatabaseSynchronizer(final String iDatabaseName) {
-    if (!replicators.containsKey(iDatabaseName))
-      replicators.put(iDatabaseName, new OStorageSynchronizer(this, iDatabaseName));
+  public OStorageSynchronizer getDatabaseSynchronizer(final String iDatabaseName, final String iNodeId) {
+    synchronized (synchronizers) {
+      OStorageSynchronizer sync = synchronizers.get(iDatabaseName);
+      if (sync == null) {
+        sync = new OStorageSynchronizer(this, iDatabaseName);
+        synchronizers.put(iDatabaseName, sync);
+      }
+
+      if (iNodeId != null)
+        sync.getLog(iNodeId);
+      return sync;
+    }
   }
 }

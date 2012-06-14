@@ -195,6 +195,10 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
           // ALREADY SENT: JUMP IT
           continue;
 
+        if (!(c.protocol instanceof ONetworkProtocolBinary))
+          // INVOLVE ONLY BINAR PROTOCOLS
+          continue;
+
         final ONetworkProtocolBinary p = (ONetworkProtocolBinary) c.protocol;
         final OChannelBinary channel = (OChannelBinary) p.getChannel();
 

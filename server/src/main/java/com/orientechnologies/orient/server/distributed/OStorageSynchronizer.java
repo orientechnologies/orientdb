@@ -57,7 +57,7 @@ public class OStorageSynchronizer {
     configuration = iCluster.getLocalDatabaseConfiguration(iStorageName);
 
     final File replicationDirectory = new File(
-        OSystemVariableResolver.resolveSystemVariables(OSynchronizationLog.REPLICATION_DIRECTORY + "/" + iStorageName));
+        OSystemVariableResolver.resolveSystemVariables(OSynchronizationLog.SYNCHRONIZATION_DIRECTORY + "/" + iStorageName));
     if (!replicationDirectory.exists())
       replicationDirectory.mkdirs();
     else {
@@ -180,17 +180,21 @@ public class OStorageSynchronizer {
 
       final Set<String> members = cluster.getRemoteNodeIds();
       if (!members.isEmpty()) {
-        cluster.executeOperation(members, operation, storageName, rid, iRecord.getVersion(), new ORawBuffer(
-            (ORecordInternal<?>) iRecord), mode);
+        try {
+          cluster.executeOperation(members, operation, storageName, rid, iRecord.getVersion(), new ORawBuffer(
+              (ORecordInternal<?>) iRecord), mode);
 
-        // TODO MANAGE CONFLICTS
-        for (String member : members) {
-          final OSynchronizationLog log = getLog(member);
-          try {
-            log.success();
-          } catch (IOException e) {
-            OLogManager.instance().error(this, "DISTRIBUTED -> Error on reset log file: %s", e, log);
+          // TODO MANAGE CONFLICTS
+          for (String member : members) {
+            final OSynchronizationLog log = getLog(member);
+            try {
+              log.success();
+            } catch (IOException e) {
+              OLogManager.instance().error(this, "DISTRIBUTED -> Error on reset log file: %s", e, log);
+            }
           }
+        } catch (ODistributedException e) {
+          // IGNORE IT BECAUSE THE LOG
         }
       }
     }
@@ -198,50 +202,54 @@ public class OStorageSynchronizer {
     return false;
   }
 
-  @SuppressWarnings("unchecked")
   private boolean canExecuteOperation(final String iClusterName, final OPERATION iOperation, final String iDirection) {
     synchronized (configuration) {
-      final Map<String, Object> clusters = configuration.field("clusters");
+      final ODocument clusters = configuration.field("clusters");
 
-      Map<String, Object> cfg = (Map<String, Object>) clusters.get(iClusterName);
+      if (clusters == null)
+        return true;
+
+      ODocument cfg = clusters.field(iClusterName);
       if (cfg == null)
-        cfg = (Map<String, Object>) clusters.get("*");
+        cfg = clusters.field("*");
 
-      final Boolean replicationEnabled = (Boolean) cfg.get("synchronization");
+      final Boolean replicationEnabled = (Boolean) cfg.field("synchronization");
       if (replicationEnabled != null && !replicationEnabled)
         return false;
 
-      final Map<String, Object> operations = (Map<String, Object>) cfg.get("operations");
+      final ODocument operations = cfg.field("operations");
       if (operations == null)
         return true;
 
-      final Map<String, Object> operation = (Map<String, Object>) operations.get(iOperation.toString().toLowerCase());
+      final ODocument operation = operations.field(iOperation.toString().toLowerCase());
       if (operation == null)
         return true;
 
-      final String direction = (String) operation.get("direction");
+      final String direction = (String) operation.field("direction");
       return direction == null || direction.contains(iDirection);
     }
   }
 
-  @SuppressWarnings("unchecked")
   private EXECUTION_MODE getOperationMode(final String iClusterName, final OPERATION iOperation) {
     synchronized (configuration) {
-      final Map<String, Object> clusters = configuration.field("clusters");
+      final ODocument clusters = configuration.field("clusters");
 
-      Map<String, Object> cfg = (Map<String, Object>) clusters.get(iClusterName);
+      if (clusters == null)
+        return EXECUTION_MODE.SYNCHRONOUS;
+
+      ODocument cfg = clusters.field(iClusterName);
       if (cfg == null)
-        cfg = (Map<String, Object>) clusters.get("*");
+        cfg = clusters.field("*");
 
-      Map<String, Object> operations = (Map<String, Object>) cfg.get("operations");
+      ODocument operations = cfg.field("operations");
       if (operations == null)
         return EXECUTION_MODE.SYNCHRONOUS;
 
-      final Map<String, Object> operation = (Map<String, Object>) operations.get(iOperation.toString().toLowerCase());
+      final ODocument operation = operations.field(iOperation.toString().toLowerCase());
       if (operation == null)
         return EXECUTION_MODE.SYNCHRONOUS;
 
-      return EXECUTION_MODE.valueOf(((String) operation.get("mode")).toUpperCase());
+      return EXECUTION_MODE.valueOf(((String) operation.field("mode")).toUpperCase());
     }
   }
 

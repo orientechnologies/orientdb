@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.enterprise.channel.binary;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.common.thread.OSoftThread;
 import com.orientechnologies.orient.core.Orient;
@@ -31,12 +30,11 @@ public class OAsynchChannelServiceThread extends OSoftThread {
   private OChannelBinaryClient       network;
   private int                        sessionId;
   private ORemoteServerEventListener remoteServerEventListener;
-  private static AtomicInteger       sessionIdSerial = new AtomicInteger(Integer.MIN_VALUE);
 
   public OAsynchChannelServiceThread(final ORemoteServerEventListener iRemoteServerEventListener,
       final OChannelBinaryClient iFirstChannel, final String iThreadName) {
     super(Orient.getThreadGroup(), iThreadName);
-    sessionId = sessionIdSerial.getAndIncrement();
+    sessionId = Integer.MIN_VALUE;
     remoteServerEventListener = iRemoteServerEventListener;
     network = iFirstChannel;
     start();

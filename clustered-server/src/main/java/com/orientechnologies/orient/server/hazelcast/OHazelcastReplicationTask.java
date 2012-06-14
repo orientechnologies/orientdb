@@ -37,9 +37,9 @@ public class OHazelcastReplicationTask extends ODistributedTask implements DataS
   public OHazelcastReplicationTask() {
   }
 
-  public OHazelcastReplicationTask(String databaseName, OPERATION iOperation, ORecordId rid, byte[] content, int version,
-      byte recordType, final EXECUTION_MODE iMode) {
-    super(databaseName, iOperation, rid, content, version, recordType, iMode);
+  public OHazelcastReplicationTask(final String nodeSource, final String databaseName, final OPERATION iOperation,
+      final ORecordId rid, final byte[] content, final int version, final byte recordType, final EXECUTION_MODE iMode) {
+    super(nodeSource, databaseName, iOperation, rid, content, version, recordType, iMode);
   }
 
   @Override
@@ -53,6 +53,7 @@ public class OHazelcastReplicationTask extends ODistributedTask implements DataS
 
   @Override
   public void readData(final DataInput in) throws IOException {
+    nodeSource = in.readUTF();
     databaseName = in.readUTF();
     operation = OPERATION.values()[in.readByte()];
     rid = new ORecordId(in.readUTF());
@@ -65,6 +66,7 @@ public class OHazelcastReplicationTask extends ODistributedTask implements DataS
 
   @Override
   public void writeData(final DataOutput out) throws IOException {
+    out.writeUTF(nodeSource);
     out.writeUTF(databaseName);
     out.writeByte(operation.ordinal());
     out.writeUTF(rid.toString());

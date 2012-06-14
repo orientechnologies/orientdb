@@ -46,29 +46,30 @@ public class OSynchronizationLog extends OSingleFileSegment {
   /**
    * 
    */
-  public static final String              REPLICATION_DIRECTORY = "${" + Orient.ORIENTDB_HOME + "}/replication/";
-  public static final String              EXTENSION             = ".dol";
-  private static final int                DEF_START_SIZE        = 262144;
+  public static final String              SYNCHRONIZATION_DIRECTORY = "${" + Orient.ORIENTDB_HOME + "}/synchronization/";
+  public static final String              EXTENSION                 = ".dol";
+  private static final int                DEF_START_SIZE            = 262144;
 
-  private static final int                OFFSET_OPERAT         = 0;
-  private static final int                OFFSET_RID            = OFFSET_OPERAT + OBinaryProtocol.SIZE_BYTE;
-  private static final int                OFFSET_VERSION        = OFFSET_RID + ORecordId.PERSISTENT_SIZE;
-  private static final int                OFFSET_DATE           = OFFSET_VERSION + OBinaryProtocol.SIZE_INT;
-  private static final int                RECORD_SIZE           = OFFSET_DATE + OBinaryProtocol.SIZE_LONG;
+  private static final int                OFFSET_OPERAT             = 0;
+  private static final int                OFFSET_RID                = OFFSET_OPERAT + OBinaryProtocol.SIZE_BYTE;
+  private static final int                OFFSET_VERSION            = OFFSET_RID + ORecordId.PERSISTENT_SIZE;
+  private static final int                OFFSET_DATE               = OFFSET_VERSION + OBinaryProtocol.SIZE_INT;
+  private static final int                RECORD_SIZE               = OFFSET_DATE + OBinaryProtocol.SIZE_LONG;
 
   private boolean                         synchEnabled;
-  private OSharedResourceAdaptiveExternal lock                  = new OSharedResourceAdaptiveExternal(
-                                                                    OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
-                                                                    0, true);
+  private OSharedResourceAdaptiveExternal lock                      = new OSharedResourceAdaptiveExternal(
+                                                                        OGlobalConfiguration.ENVIRONMENT_CONCURRENT
+                                                                            .getValueAsBoolean(),
+                                                                        0, true);
   private final long                      limit;
-  private long                            pendingLogs           = 0;
+  private long                            pendingLogs               = 0;
   private final ODistributedServerManager manager;
   private final String                    databaseName;
   private final String                    nodeId;
 
   public OSynchronizationLog(final ODistributedServerManager iManager, final String iNodeId, final String iDatabase,
       final long iLimit) throws IOException {
-    super(REPLICATION_DIRECTORY + iDatabase + "/" + iNodeId.replace('.', '_').replace(':', '-') + EXTENSION,
+    super(SYNCHRONIZATION_DIRECTORY + iDatabase + "/" + iNodeId.replace('.', '_').replace(':', '-') + EXTENSION,
         OGlobalConfiguration.DISTRIBUTED_LOG_TYPE.getValueAsString());
     databaseName = iDatabase;
     nodeId = iNodeId;

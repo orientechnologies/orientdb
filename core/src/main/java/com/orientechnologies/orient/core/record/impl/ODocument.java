@@ -79,7 +79,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   protected boolean                                                      _ordered         = true;
   protected boolean                                                      _lazyLoad        = true;
 
-  protected List<WeakReference<ORecordElement>>                          _owners          = null;
+  protected transient List<WeakReference<ORecordElement>>                _owners          = null;
 
   protected static final String[]                                        EMPTY_STRINGS    = new String[] {};
 

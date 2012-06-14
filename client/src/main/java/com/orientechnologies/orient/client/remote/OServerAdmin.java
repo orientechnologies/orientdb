@@ -321,8 +321,9 @@ public class OServerAdmin {
    * @return The instance itself. Useful to execute method in chain
    * @throws IOException
    */
+
   public synchronized OServerAdmin replicationStart(final String iDatabaseName, final String iRemoteServer) throws IOException {
-    final ODocument response = sendRequest(OChannelBinaryProtocol.REQUEST_REPLICATION, new ODocument().field("operation", "start")
+    sendRequest(OChannelBinaryProtocol.REQUEST_REPLICATION, new ODocument().field("operation", "start")
         .field("node", iRemoteServer).field("db", iDatabaseName), "Start replication");
 
     OLogManager.instance().debug(this, "Started replication of database '%s' from server '%s' to '%s'", iDatabaseName,
@@ -342,8 +343,8 @@ public class OServerAdmin {
    * @throws IOException
    */
   public synchronized OServerAdmin replicationStop(final String iDatabaseName, final String iRemoteServer) throws IOException {
-    final ODocument response = sendRequest(OChannelBinaryProtocol.REQUEST_REPLICATION, new ODocument().field("operation", "stop")
-        .field("node", iRemoteServer).field("db", iDatabaseName), "Stop replication");
+    sendRequest(OChannelBinaryProtocol.REQUEST_REPLICATION, new ODocument().field("operation", "stop").field("node", iRemoteServer)
+        .field("db", iDatabaseName), "Stop replication");
 
     OLogManager.instance().debug(this, "Stopped replication of database '%s' from server '%s' to '%s'", iDatabaseName,
         storage.getURL(), iRemoteServer);
@@ -439,7 +440,7 @@ public class OServerAdmin {
     OLogManager.instance().debug(this, "Started the alignment of database '%s' from server '%s' to '%s' with options %s",
         iDatabaseName, storage.getURL(), iRemoteServer, iOptions);
 
-    final ODocument response = sendRequest(OChannelBinaryProtocol.REQUEST_REPLICATION, new ODocument().field("operation", "align")
+    sendRequest(OChannelBinaryProtocol.REQUEST_REPLICATION, new ODocument().field("operation", "align")
         .field("node", iRemoteServer).field("db", iDatabaseName).field("options", iOptions), "Align databases");
 
     OLogManager.instance().debug(this, "Alignment finished");
