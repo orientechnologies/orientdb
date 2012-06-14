@@ -95,7 +95,6 @@ public class CRUDDocumentPhysicalTest {
     try {
       startRecordNumber = database.countClusterElements("Account");
 
-      record.setClassName("Account");
 
       byte[] binary = new byte[100];
       for (int b = 0; b < binary.length; ++b)
@@ -108,17 +107,18 @@ public class CRUDDocumentPhysicalTest {
       for (long i = startRecordNumber; i < startRecordNumber + TOT_RECORDS; ++i) {
         record.reset();
 
+				record.setClassName("Account");
         record.field("id", i);
         record.field("name", "Gipsy");
         record.field("location", "Italy");
-        record.field("salary", (i + 300));
+        record.field("salary", (i + 300f));
         record.field("binary", binary);
         record.field("nonSchemaBinary", binary);
         record.field("testLong", 10000000000L); // TEST LONG
         record.field("extra", "This is an extra field not included in the schema");
         record.field("value", (byte) 10);
 
-        record.save("Account");
+        record.save();
         Assert.assertEquals(record.getIdentity().getClusterId(), accountClusterId);
       }
 
