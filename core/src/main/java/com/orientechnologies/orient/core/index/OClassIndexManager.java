@@ -16,26 +16,14 @@
 
 package com.orientechnologies.orient.core.index;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.*;
 
 /**
  * Handles indexing when records change.
@@ -121,7 +109,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
         throw new OConcurrentModificationException(
             "Cannot delete the record "
                 + iDocument.getIdentity()
-                + "' because the version is not the latest. Probably you are deleting an old record or it has been modified by another user (db=v"
+                + " because the version is not the latest. Probably you are deleting an old record or it has been modified by another user (db=v"
                 + iDocument.getVersion() + " your=v" + version + ")", iDocument.getIdentity(), iDocument.getVersion(), version);
     }
 
