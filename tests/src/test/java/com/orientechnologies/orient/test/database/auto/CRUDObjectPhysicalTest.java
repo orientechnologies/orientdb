@@ -74,7 +74,9 @@ public class CRUDObjectPhysicalTest {
 	@Test
 	public void create() {
 		database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
-		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain");
+		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
+		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
+		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.base");
 
 		startRecordNumber = database.countClusterElements("Account");
 
@@ -754,7 +756,9 @@ public class CRUDObjectPhysicalTest {
 	@SuppressWarnings("deprecation")
 	public void testOldObjectImplementation() {
 		ODatabaseObjectTx db = new ODatabaseObjectTx(url).open("admin", "admin");
-		db.getEntityManager().registerEntityClasses("com.e_soa.dbobjects");
+		db.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
+		db.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
+		db.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.base");
 		// insert some instruments
 		Instrument instr = new Instrument("Fender Stratocaster");
 		db.save(instr);

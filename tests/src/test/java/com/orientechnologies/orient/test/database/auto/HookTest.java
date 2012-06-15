@@ -45,7 +45,9 @@ public class HookTest extends ORecordHookAbstract {
 	public void testRegisterHook() throws IOException {
 		database.open("admin", "admin");
 		database.registerHook(this);
-		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain");
+		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
+		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
+		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.base");
 	}
 
 	@Test(dependsOnMethods = "testRegisterHook")

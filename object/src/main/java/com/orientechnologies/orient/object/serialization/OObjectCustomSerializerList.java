@@ -61,7 +61,8 @@ public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OLazyObjec
 	}
 
 	public boolean contains(final Object o) {
-		return list.contains(o);
+		boolean underlyingContains = serializedList.contains(OObjectEntitySerializer.serializeFieldValue(deserializeClass, o));
+		return underlyingContains || list.contains(o);
 	}
 
 	public boolean add(TYPE element) {

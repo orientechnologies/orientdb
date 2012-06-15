@@ -63,7 +63,9 @@ public class IndexTest {
   @BeforeMethod
   public void beforeMethod() {
     database.open("admin", "admin");
-    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain");
+		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
+		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
+		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.base");
   }
 
   @AfterMethod

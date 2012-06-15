@@ -45,6 +45,8 @@ import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper
 import com.orientechnologies.orient.test.domain.business.Address;
 import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Country;
+import com.orientechnologies.orient.test.domain.customserialization.Sec;
+import com.orientechnologies.orient.test.domain.customserialization.SecurityRole;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 
 @Test(groups = { "record-object" })
@@ -161,7 +163,9 @@ public class ObjectTreeTest {
 	@BeforeClass
 	public void open() {
 		database = new OObjectDatabaseTx(url);
-		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain");
+		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
+		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
+		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.base");
 		if ("memory:test".equals(database.getURL())) {
 			database.create();
 		} else {
@@ -403,6 +407,47 @@ public class ObjectTreeTest {
 			Assert.assertEquals(serialized, 4);
 			Assert.assertEquals(unserialized, 4);
 			Assert.assertTrue(pojo.getCustomTypeMap().get(1L) instanceof CustomType);
+		} finally {
+			database.close();
+		}
+	}
+
+	@Test(dependsOnMethods = "testCustomTypesDatabaseNewInstance")
+	public void testEnumListWithCustomTypes() {
+		OObjectDatabaseTx database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+		ORID rid = null;
+		try {
+			OObjectSerializerContext serializerContext = new OObjectSerializerContext();
+			serializerContext.bind(new OObjectSerializer<SecurityRole, String>() {
+
+				public Object serializeFieldValue(Class<?> type, SecurityRole role) {
+					return role.name();
+				}
+
+				public Object unserializeFieldValue(Class<?> type, String str) {
+					return SecurityRole.getByName(str);
+				}
+			});
+
+			OObjectSerializerHelper.bindSerializerContext(null, serializerContext);
+
+			database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.customserialization");
+
+			Sec s = new Sec();
+			s.getSecurityRoleList().add(SecurityRole.LOGIN);
+
+			Assert.assertTrue(s.getSecurityRoleList().contains(SecurityRole.LOGIN));
+
+			s = database.save(s);
+			rid = database.getRecordByUserObject(s, false).getIdentity();
+
+			database.close();
+
+			database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
+			s = database.load(rid);
+
+			Assert.assertTrue(s.getSecurityRoleList().contains(SecurityRole.LOGIN));
 		} finally {
 			database.close();
 		}
