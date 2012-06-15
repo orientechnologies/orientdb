@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.storage.fs;
 
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -238,9 +239,11 @@ public class OMMapManager {
 
   private static void freeResources() {
     final long memoryThreshold = (long) (maxMemory * 0.75);
+    final long startingMemory = totalMemory;
 
     if (OLogManager.instance().isDebugEnabled())
-      OLogManager.instance().debug(null, "Free mmmap blocks, at least %d MB...", (totalMemory - memoryThreshold) / 1000000);
+      OLogManager.instance().debug(null, "Freeing off-heap memory as mmmap blocks, target is %s...",
+          OFileUtils.getSizeAsString(startingMemory - memoryThreshold));
 
     // SORT AS LRU, FIRST = MOST USED
     Collections.sort(bufferPoolLRU, new Comparator<OMMapBufferEntry>() {
@@ -260,6 +263,10 @@ public class OMMapManager {
       if (totalMemory < memoryThreshold)
         break;
     }
+
+    if (OLogManager.instance().isDebugEnabled())
+      OLogManager.instance().debug(null, "Freed off-heap memory as mmmap blocks for %s...",
+          OFileUtils.getSizeAsString(startingMemory - totalMemory));
   }
 
   private static OMMapBufferEntry searchBetweenLastBlocks(final OFileMMap iFile, final long iBeginOffset, final int iSize) {
