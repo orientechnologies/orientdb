@@ -54,7 +54,7 @@ public class OStorageSynchronizer {
     cluster = iCluster;
     storageName = iStorageName;
     storage = openStorage(iStorageName);
-    configuration = iCluster.getLocalDatabaseConfiguration(iStorageName);
+    configuration = iCluster.getDatabaseConfiguration(iStorageName);
 
     final File replicationDirectory = new File(
         OSystemVariableResolver.resolveSystemVariables(OSynchronizationLog.SYNCHRONIZATION_DIRECTORY + "/" + iStorageName));
@@ -249,7 +249,11 @@ public class OStorageSynchronizer {
       if (operation == null)
         return EXECUTION_MODE.SYNCHRONOUS;
 
-      return EXECUTION_MODE.valueOf(((String) operation.field("mode")).toUpperCase());
+      final String mode = operation.field("mode");
+      if (mode == null)
+        return EXECUTION_MODE.SYNCHRONOUS;
+
+      return EXECUTION_MODE.valueOf(((String) mode).toUpperCase());
     }
   }
 
@@ -270,7 +274,7 @@ public class OStorageSynchronizer {
       OSynchronizationLog localLog = logs.get(iNodeId);
       if (localLog == null) {
         try {
-          ODocument cfg = cluster.getLocalDatabaseConfiguration(storageName);
+          ODocument cfg = cluster.getDatabaseConfiguration(storageName);
 
           Number limit = cfg.field("clusters['*'][offlineMaxBuffer]");
           if (limit == null)

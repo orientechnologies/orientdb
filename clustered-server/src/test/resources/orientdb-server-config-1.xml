@@ -8,42 +8,31 @@
 				<parameter value="src/test/resources/hazelcast-1.xml" name="configuration" />
 				<parameter name="db.*"
 					value="{
-					    'servers' : {
-					      '*' : {
 							'synchronization' : true,
-							'defaultCluster' : 2,
+							'autoAlign' : true,
+							'autoDeploy' : true,
 							'clusters' : {
+                              'internal' : { 'synchronization' : false },
+                              'index' : { 'synchronization' : false },
+                              'account' : { 'synchronization' : true,
+                                'operations' : {
+						          'record_create' : { 'nodes' : 'europe1', 'synch' : 2 },
+						          '*' : { 'nodes' : '*' }
+						        }
+                              },
 							  '*' : {
-								'operations' : {
-						            'record_create' : { 'direction' : 'in-out', 'mode' : 'synchronous' },
-						            'record_read'   : { 'direction' : 'in' },
-						            'record_update' : { 'direction' : 'in-out', 'mode' : 'synchronous' },
-						            'record_delete' : { 'direction' : 'in-out', 'mode' : 'synchronous' },
-						            'command'       : { 'direction' : 'in-out', 'mode' : 'synchronous' }
-						        },
 						        'synchronization' : true, 
-                                'offlineMaxBuffer' : 1000000
-                                },
-								'internal' : { 'synchronization' : false },
-								'index' : { 'synchronization' : false }
-							},
-							'classes':{
+                                'offlineMaxBuffer' : 1000000,
+								'operations' : {
+						            'record_create' : { 'nodes' : '*', 'synch' : 1 },
+						            'record_read'   : { 'nodes' : '*' },
+						            'record_update' : { 'nodes' : '*' },
+						            'record_delete' : { 'nodes' : '*' },
+						            'command'       : { 'nodes' : '*' }
+						        }
+                              }
 							}
-                          },
-					      'europe1' : {
-							'defaultCluster' : 'default',
-							'classes':{
-							  'account' : { 'defaultCluster' : 'account' }
-							}
-					      },
-					      'europe2' : {
-							'defaultCluster' : 'default-2',
-							'classes':{
-							  'account' : { 'defaultCluster' : 'account2' }
-							}
-					      }
-					    }
-					  }" />
+                          }" />
 			</parameters>
 		</handler>
 		<handler class="com.orientechnologies.orient.server.handler.OAutomaticBackup">

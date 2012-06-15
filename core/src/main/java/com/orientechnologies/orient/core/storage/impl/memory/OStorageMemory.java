@@ -179,7 +179,7 @@ public class OStorageMemory extends OStorageEmbedded {
         }
       }
 
-      final OClusterMemory cluster = new OClusterMemory();
+      final OClusterMemory cluster = (OClusterMemory) Orient.instance().getClusterFactory().createCluster(OClusterMemory.TYPE);
       cluster.configure(this, clusterId, iClusterName, iLocation, getDataSegmentIdByName(iDataSegmentName), iParameters);
 
       if (clusterId == clusters.size())

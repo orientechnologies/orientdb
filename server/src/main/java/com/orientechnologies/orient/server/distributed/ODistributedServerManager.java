@@ -49,8 +49,6 @@ public interface ODistributedServerManager {
 
   public ODocument getDatabaseConfiguration(String iDatabaseName);
 
-  public ODocument getLocalDatabaseConfiguration(String iDatabaseName);
-
   public ODocument getClusterConfiguration();
 
   public ODocument getLocalNodeConfiguration();

@@ -212,7 +212,7 @@ public class OClusterMemory extends OSharedResourceAdaptive implements OCluster 
         entries.set((int) recycledPosition.clusterPosition, iPPosition);
 
       } else {
-        iPPosition.clusterPosition = entries.size();
+        iPPosition.clusterPosition = allocateRecord(iPPosition);
         iPPosition.recordVersion = 0;
         entries.add(iPPosition);
       }
@@ -220,6 +220,10 @@ public class OClusterMemory extends OSharedResourceAdaptive implements OCluster 
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  protected long allocateRecord(final OPhysicalPosition iPPosition) {
+    return entries.size();
   }
 
   public void updateRecordType(final long iPosition, final byte iRecordType) throws IOException {

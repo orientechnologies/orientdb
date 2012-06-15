@@ -21,18 +21,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
@@ -65,8 +61,12 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
       } else if (param.name.equalsIgnoreCase("alias"))
         alias = param.value;
       else if (param.name.startsWith("db."))
-        databaseConfiguration.put(param.name.substring("db.".length()),
-            (ODocument) new ODocument().fromJSON(param.value.trim(), "noMap"));
+        try {
+          databaseConfiguration.put(param.name.substring("db.".length()),
+              (ODocument) new ODocument().fromJSON(param.value.trim(), "noMap"));
+        } catch (Exception e) {
+          throw new OConfigurationException("Error on loading distributed configuration for database '" + param.name + "'", e);
+        }
     }
 
     // CHECK THE CONFIGURATION
@@ -90,7 +90,6 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
       return;
 
     Orient.instance().removeDbLifecycleListener(this);
-
     super.shutdown();
   }
 
@@ -99,43 +98,13 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
    */
   @Override
   public void onOpen(final ODatabase iDatabase) {
-    final ODocument cfg = getLocalDatabaseConfiguration(iDatabase.getName());
+    final ODocument cfg = getDatabaseConfiguration(iDatabase.getName());
     if (cfg == null)
       return;
 
     final Boolean synch = (Boolean) cfg.field("synchronization");
     if (synch == null || synch) {
       getDatabaseSynchronizer(iDatabase.getName(), null);
-
-      Object defCluster = cfg.field("defaultCluster");
-      if (defCluster != null)
-        iDatabase.set(ATTRIBUTES.DEFAULTCLUSTERID, defCluster);
-//
-//      final ODocument classes = cfg.field("classes");
-//      if (classes != null) {
-//        for (String className : classes.fieldNames()) {
-//          final ODocument clazz = classes.field(className);
-//          if (clazz != null) {
-//            final String defaultCluster = clazz.field("defaultCluster");
-//            int clusterId = ((ODatabaseComplex<?>) iDatabase).getClusterIdByName(defaultCluster);
-//
-//            if (clusterId == -1) {
-//              // CREATE THE NEW CLUSTER ID
-//              final CLUSTER_TYPE clusterType = iDatabase.getStorage() instanceof OStorageLocal ? CLUSTER_TYPE.PHYSICAL
-//                  : CLUSTER_TYPE.MEMORY;
-//              clusterId = ((ODatabaseComplex<?>) iDatabase).addCluster(defaultCluster, clusterType);
-//            }
-//
-//            OClass cls = ((ODatabaseComplex<?>) iDatabase).getMetadata().getSchema().getClass(className);
-//            if (cls == null)
-//              // CREATE THE CLASS WITH THE CLUSTER ID AS DEFAULT
-//              cls = ((ODatabaseComplex<?>) iDatabase).getMetadata().getSchema().createClass(className, clusterId);
-//            else
-//              cls.setDefaultClusterId(clusterId);
-//
-//          }
-//        }
-//      }
 
       if (iDatabase instanceof ODatabaseComplex<?>)
         ((ODatabaseComplex<?>) iDatabase).registerHook(this);
@@ -155,11 +124,14 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
   public boolean onTrigger(final TYPE iType, final ORecord<?> iRecord) {
     final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
+    // GET THE SYNCHRONIZER
     final OStorageSynchronizer synchronizer;
     synchronized (synchronizers) {
       synchronizer = synchronizers.get(db.getName());
     }
+
     if (synchronizer != null)
+      // DISTRIBUTE THE OPERATION
       return synchronizer.distributeOperation(iType, iRecord);
 
     return false;
@@ -187,15 +159,6 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
       cfg = databaseConfiguration.get("*");
 
     return cfg;
-  }
-
-  public ODocument getLocalDatabaseConfiguration(final String iDatabaseName) {
-    final ODocument cfg = getDatabaseConfiguration(iDatabaseName);
-    ODocument perServerCfg = cfg.field("servers[" + alias + "]");
-    if (perServerCfg == null)
-      // NOT FOUND: GET THE DEFAULT ONE
-      perServerCfg = cfg.field("servers[*]");
-    return perServerCfg;
   }
 
   public void setDefaultDatabaseConfiguration(final String iDatabaseName, final ODocument iConfiguration) {
