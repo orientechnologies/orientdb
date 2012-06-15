@@ -37,7 +37,7 @@ import com.orientechnologies.orient.test.domain.business.Child;
  */
 public class JavaComplexTestClass {
 	@Id
-	private Object								id;
+	private String								id;
 	@Version
 	private Object								version;
 
@@ -67,11 +67,11 @@ public class JavaComplexTestClass {
 		this.children = children;
 	}
 
-	public Object getId() {
+	public String getId() {
 		return id;
 	}
 
-	public void setId(Object id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 

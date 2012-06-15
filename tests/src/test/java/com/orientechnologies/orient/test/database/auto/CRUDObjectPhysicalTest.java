@@ -290,7 +290,7 @@ public class CRUDObjectPhysicalTest {
 
 		Assert.assertTrue(cresult.size() > 0);
 
-		ORID rid = database.getRecordByUserObject(p, false).getIdentity();
+		ORID rid = new ORecordId(p.getId());
 
 		database.close();
 
