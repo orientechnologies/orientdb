@@ -289,12 +289,16 @@ public class ODatabaseRaw implements ODatabase {
     return storage.getDataSegmentIdByName(iDataSegmentName);
   }
 
-  public String getDataSegmentNameById(int dataSegmentId) {
+  public String getDataSegmentNameById(final int dataSegmentId) {
     return storage.getDataSegmentById(dataSegmentId).getName();
   }
 
   public int getClusters() {
     return storage.getClusters();
+  }
+
+  public boolean existsCluster(final String iClusterName) {
+    return storage.getClusterNames().contains(iClusterName);
   }
 
   public String getClusterType(final String iClusterName) {

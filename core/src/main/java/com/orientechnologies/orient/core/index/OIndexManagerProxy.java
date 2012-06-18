@@ -55,6 +55,10 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
     return delegate.getIndex(iName);
   }
 
+  public boolean existsIndex(final String iName) {
+    return delegate.existsIndex(iName);
+  }
+
   public OIndex<?> getIndex(final ORID iRID) {
     return delegate.getIndex(iRID);
   }

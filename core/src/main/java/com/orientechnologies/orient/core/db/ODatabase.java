@@ -181,11 +181,20 @@ public interface ODatabase {
   public int getDefaultClusterId();
 
   /**
-   * Returns the number of clusters
+   * Returns the number of clusters.
    * 
    * @return Number of the clusters
    */
   public int getClusters();
+
+  /**
+   * Returns true if the cluster exists, otherwise false.
+   * 
+   * @param iClusterName
+   *          Cluster name
+   * @return true if the cluster exists, otherwise false
+   */
+  public boolean existsCluster(String iClusterName);
 
   /**
    * Returns all the names of the clusters.

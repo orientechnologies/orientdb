@@ -30,285 +30,291 @@ import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements ODatabase {
-	protected DB									underlying;
-	protected ODatabaseComplex<?>	databaseOwner;
+  protected DB                  underlying;
+  protected ODatabaseComplex<?> databaseOwner;
 
-	public ODatabaseWrapperAbstract(final DB iDatabase) {
-		underlying = iDatabase;
-		databaseOwner = (ODatabaseComplex<?>) this;
-	}
+  public ODatabaseWrapperAbstract(final DB iDatabase) {
+    underlying = iDatabase;
+    databaseOwner = (ODatabaseComplex<?>) this;
+  }
 
-	@Override
-	public void finalize() {
-		// close();
-	}
+  @Override
+  public void finalize() {
+    // close();
+  }
 
-	public <THISDB extends ODatabase> THISDB open(final String iUserName, final String iUserPassword) {
-		underlying.open(iUserName, iUserPassword);
-		Orient.instance().getDatabaseFactory().register(databaseOwner);
-		return (THISDB) this;
-	}
+  public <THISDB extends ODatabase> THISDB open(final String iUserName, final String iUserPassword) {
+    underlying.open(iUserName, iUserPassword);
+    Orient.instance().getDatabaseFactory().register(databaseOwner);
+    return (THISDB) this;
+  }
 
-	public <THISDB extends ODatabase> THISDB create() {
-		underlying.create();
-		Orient.instance().getDatabaseFactory().register(databaseOwner);
-		return (THISDB) this;
-	}
+  public <THISDB extends ODatabase> THISDB create() {
+    underlying.create();
+    Orient.instance().getDatabaseFactory().register(databaseOwner);
+    return (THISDB) this;
+  }
 
-	public boolean exists() {
-		return underlying.exists();
-	}
+  public boolean exists() {
+    return underlying.exists();
+  }
 
-	public void reload() {
-		underlying.reload();
-	}
+  public void reload() {
+    underlying.reload();
+  }
 
-	public void close() {
-		underlying.close();
-		Orient.instance().getDatabaseFactory().unregister(databaseOwner);
-	}
+  public void close() {
+    underlying.close();
+    Orient.instance().getDatabaseFactory().unregister(databaseOwner);
+  }
 
-	/**
-	 * Uses drop() instead.
-	 */
-	@Deprecated
-	public void delete() {
-		drop();
-	}
+  /**
+   * Uses drop() instead.
+   */
+  @Deprecated
+  public void delete() {
+    drop();
+  }
 
-	public void drop() {
-		underlying.drop();
-		Orient.instance().getDatabaseFactory().unregister(databaseOwner);
-	}
+  public void drop() {
+    underlying.drop();
+    Orient.instance().getDatabaseFactory().unregister(databaseOwner);
+  }
 
-	public STATUS getStatus() {
-		return underlying.getStatus();
-	}
+  public STATUS getStatus() {
+    return underlying.getStatus();
+  }
 
-	public <THISDB extends ODatabase> THISDB setStatus(final STATUS iStatus) {
-		underlying.setStatus(iStatus);
-		return (THISDB) this;
-	}
+  public <THISDB extends ODatabase> THISDB setStatus(final STATUS iStatus) {
+    underlying.setStatus(iStatus);
+    return (THISDB) this;
+  }
 
-	public String getName() {
-		return underlying.getName();
-	}
+  public String getName() {
+    return underlying.getName();
+  }
 
-	public String getURL() {
-		return underlying.getURL();
-	}
+  public String getURL() {
+    return underlying.getURL();
+  }
 
-	public OStorage getStorage() {
-		return underlying.getStorage();
-	}
+  public OStorage getStorage() {
+    return underlying.getStorage();
+  }
 
-	public OLevel1RecordCache getLevel1Cache() {
-		checkOpeness();
-		return underlying.getLevel1Cache();
-	}
+  public OLevel1RecordCache getLevel1Cache() {
+    checkOpeness();
+    return underlying.getLevel1Cache();
+  }
 
-	public OLevel2RecordCache getLevel2Cache() {
-		checkOpeness();
-		return getStorage().getLevel2Cache();
-	}
+  public OLevel2RecordCache getLevel2Cache() {
+    checkOpeness();
+    return getStorage().getLevel2Cache();
+  }
 
-	public boolean isClosed() {
-		return underlying.isClosed();
-	}
+  public boolean isClosed() {
+    return underlying.isClosed();
+  }
 
-	public long countClusterElements(final int iClusterId) {
-		checkOpeness();
-		return underlying.countClusterElements(iClusterId);
-	}
+  public long countClusterElements(final int iClusterId) {
+    checkOpeness();
+    return underlying.countClusterElements(iClusterId);
+  }
 
-	public long countClusterElements(final int[] iClusterIds) {
-		checkOpeness();
-		return underlying.countClusterElements(iClusterIds);
-	}
+  public long countClusterElements(final int[] iClusterIds) {
+    checkOpeness();
+    return underlying.countClusterElements(iClusterIds);
+  }
 
-	public long countClusterElements(final String iClusterName) {
-		checkOpeness();
-		return underlying.countClusterElements(iClusterName);
-	}
+  public long countClusterElements(final String iClusterName) {
+    checkOpeness();
+    return underlying.countClusterElements(iClusterName);
+  }
 
-	public int getClusters() {
-		checkOpeness();
-		return underlying.getClusters();
-	}
+  public int getClusters() {
+    checkOpeness();
+    return underlying.getClusters();
+  }
 
-	public Collection<String> getClusterNames() {
-		checkOpeness();
-		return underlying.getClusterNames();
-	}
+  
+  public boolean existsCluster(String iClusterName) {
+    checkOpeness();
+    return underlying.existsCluster(iClusterName);
+  }
 
-	public String getClusterType(final String iClusterName) {
-		checkOpeness();
-		return underlying.getClusterType(iClusterName);
-	}
+  public Collection<String> getClusterNames() {
+    checkOpeness();
+    return underlying.getClusterNames();
+  }
 
-	public int getDataSegmentIdByName(final String iDataSegmentName) {
-		checkOpeness();
-		return underlying.getDataSegmentIdByName(iDataSegmentName);
-	}
+  public String getClusterType(final String iClusterName) {
+    checkOpeness();
+    return underlying.getClusterType(iClusterName);
+  }
 
-	public String getDataSegmentNameById(final int iDataSegmentId) {
-		checkOpeness();
-		return underlying.getDataSegmentNameById(iDataSegmentId);
-	}
+  public int getDataSegmentIdByName(final String iDataSegmentName) {
+    checkOpeness();
+    return underlying.getDataSegmentIdByName(iDataSegmentName);
+  }
 
-	public int getClusterIdByName(final String iClusterName) {
-		checkOpeness();
-		return underlying.getClusterIdByName(iClusterName);
-	}
+  public String getDataSegmentNameById(final int iDataSegmentId) {
+    checkOpeness();
+    return underlying.getDataSegmentNameById(iDataSegmentId);
+  }
 
-	public String getClusterNameById(final int iClusterId) {
-		checkOpeness();
-		return underlying.getClusterNameById(iClusterId);
-	}
+  public int getClusterIdByName(final String iClusterName) {
+    checkOpeness();
+    return underlying.getClusterIdByName(iClusterName);
+  }
 
-	public long getClusterRecordSizeById(int iClusterId) {
-		return underlying.getClusterRecordSizeById(iClusterId);
-	}
+  public String getClusterNameById(final int iClusterId) {
+    checkOpeness();
+    return underlying.getClusterNameById(iClusterId);
+  }
 
-	public long getClusterRecordSizeByName(String iClusterName) {
-		return underlying.getClusterRecordSizeByName(iClusterName);
-	}
+  public long getClusterRecordSizeById(int iClusterId) {
+    return underlying.getClusterRecordSizeById(iClusterId);
+  }
 
-	public int addCluster(final String iType, final String iClusterName, final String iLocation, final String iDataSegmentName,
-			final Object... iParameters) {
-		checkOpeness();
-		return underlying.addCluster(iType, iClusterName, iLocation, iDataSegmentName, iParameters);
-	}
+  public long getClusterRecordSizeByName(String iClusterName) {
+    return underlying.getClusterRecordSizeByName(iClusterName);
+  }
 
-	/**
-	 * @deprecated Use {@link #addCluster(String, String, String, String, Object...)} instead
-	 * @param iClusterName
-	 * @param iSize
-	 * @return
-	 */
-	@Deprecated
-	public int addPhysicalCluster(final String iClusterName, final String iLocation, final int iSize) {
-		checkOpeness();
-		return underlying.addCluster(CLUSTER_TYPE.PHYSICAL.toString(), iClusterName, iLocation, null);
-	}
+  public int addCluster(final String iType, final String iClusterName, final String iLocation, final String iDataSegmentName,
+      final Object... iParameters) {
+    checkOpeness();
+    return underlying.addCluster(iType, iClusterName, iLocation, iDataSegmentName, iParameters);
+  }
 
-	/**
-	 * @deprecated Use {@link #addCluster(String, String, String, String, Object...)} instead
-	 * @param iClusterName
-	 * @param iSize
-	 * @return
-	 */
-	@Deprecated
-	public int addPhysicalCluster(final String iClusterName) {
-		checkOpeness();
-		return underlying.addPhysicalCluster(iClusterName, null, -1);
-	}
+  /**
+   * @deprecated Use {@link #addCluster(String, String, String, String, Object...)} instead
+   * @param iClusterName
+   * @param iSize
+   * @return
+   */
+  @Deprecated
+  public int addPhysicalCluster(final String iClusterName, final String iLocation, final int iSize) {
+    checkOpeness();
+    return underlying.addCluster(CLUSTER_TYPE.PHYSICAL.toString(), iClusterName, iLocation, null);
+  }
 
-	public int addCluster(final String iClusterName, final CLUSTER_TYPE iType, final Object... iParameters) {
-		checkOpeness();
-		return underlying.addCluster(iType.toString(), iClusterName, null, null, iParameters);
-	}
+  /**
+   * @deprecated Use {@link #addCluster(String, String, String, String, Object...)} instead
+   * @param iClusterName
+   * @param iSize
+   * @return
+   */
+  @Deprecated
+  public int addPhysicalCluster(final String iClusterName) {
+    checkOpeness();
+    return underlying.addPhysicalCluster(iClusterName, null, -1);
+  }
 
-	public int addCluster(String iClusterName, CLUSTER_TYPE iType) {
-		checkOpeness();
-		return underlying.addCluster(iType.toString(), iClusterName, null, null);
-	}
+  public int addCluster(final String iClusterName, final CLUSTER_TYPE iType, final Object... iParameters) {
+    checkOpeness();
+    return underlying.addCluster(iType.toString(), iClusterName, null, null, iParameters);
+  }
 
-	public boolean dropDataSegment(String name) {
-		return underlying.dropDataSegment(name);
-	}
+  public int addCluster(String iClusterName, CLUSTER_TYPE iType) {
+    checkOpeness();
+    return underlying.addCluster(iType.toString(), iClusterName, null, null);
+  }
 
-	public boolean dropCluster(final String iClusterName) {
-		getLevel1Cache().freeCluster(getClusterIdByName(iClusterName));
-		return underlying.dropCluster(iClusterName);
-	}
+  public boolean dropDataSegment(String name) {
+    return underlying.dropDataSegment(name);
+  }
 
-	public boolean dropCluster(final int iClusterId) {
-		getLevel1Cache().freeCluster(iClusterId);
-		return underlying.dropCluster(iClusterId);
-	}
+  public boolean dropCluster(final String iClusterName) {
+    getLevel1Cache().freeCluster(getClusterIdByName(iClusterName));
+    return underlying.dropCluster(iClusterName);
+  }
 
-	public int addDataSegment(final String iSegmentName, final String iLocation) {
-		checkOpeness();
-		return underlying.addDataSegment(iSegmentName, iLocation);
-	}
+  public boolean dropCluster(final int iClusterId) {
+    getLevel1Cache().freeCluster(iClusterId);
+    return underlying.dropCluster(iClusterId);
+  }
 
-	public int getDefaultClusterId() {
-		checkOpeness();
-		return underlying.getDefaultClusterId();
-	}
+  public int addDataSegment(final String iSegmentName, final String iLocation) {
+    checkOpeness();
+    return underlying.addDataSegment(iSegmentName, iLocation);
+  }
 
-	public boolean declareIntent(final OIntent iIntent) {
-		checkOpeness();
-		return underlying.declareIntent(iIntent);
-	}
+  public int getDefaultClusterId() {
+    checkOpeness();
+    return underlying.getDefaultClusterId();
+  }
 
-	public <DBTYPE extends ODatabase> DBTYPE getUnderlying() {
-		return (DBTYPE) underlying;
-	}
+  public boolean declareIntent(final OIntent iIntent) {
+    checkOpeness();
+    return underlying.declareIntent(iIntent);
+  }
 
-	public ODatabaseComplex<?> getDatabaseOwner() {
-		return databaseOwner;
-	}
+  public <DBTYPE extends ODatabase> DBTYPE getUnderlying() {
+    return (DBTYPE) underlying;
+  }
 
-	public ODatabaseComplex<?> setDatabaseOwner(final ODatabaseComplex<?> iOwner) {
-		databaseOwner = iOwner;
-		return (ODatabaseComplex<?>) this;
-	}
+  public ODatabaseComplex<?> getDatabaseOwner() {
+    return databaseOwner;
+  }
 
-	@Override
-	public boolean equals(final Object iOther) {
-		if (!(iOther instanceof ODatabase))
-			return false;
+  public ODatabaseComplex<?> setDatabaseOwner(final ODatabaseComplex<?> iOwner) {
+    databaseOwner = iOwner;
+    return (ODatabaseComplex<?>) this;
+  }
 
-		final ODatabase other = (ODatabase) iOther;
+  @Override
+  public boolean equals(final Object iOther) {
+    if (!(iOther instanceof ODatabase))
+      return false;
 
-		return other.getName().equals(getName());
-	}
+    final ODatabase other = (ODatabase) iOther;
 
-	@Override
-	public String toString() {
-		return underlying.toString();
-	}
+    return other.getName().equals(getName());
+  }
 
-	public Object setProperty(final String iName, final Object iValue) {
-		return underlying.setProperty(iName, iValue);
-	}
+  @Override
+  public String toString() {
+    return underlying.toString();
+  }
 
-	public Object getProperty(final String iName) {
-		return underlying.getProperty(iName);
-	}
+  public Object setProperty(final String iName, final Object iValue) {
+    return underlying.setProperty(iName, iValue);
+  }
 
-	public Iterator<Entry<String, Object>> getProperties() {
-		return underlying.getProperties();
-	}
+  public Object getProperty(final String iName) {
+    return underlying.getProperty(iName);
+  }
 
-	public Object get(final ATTRIBUTES iAttribute) {
-		return underlying.get(iAttribute);
-	}
+  public Iterator<Entry<String, Object>> getProperties() {
+    return underlying.getProperties();
+  }
 
-	public <THISDB extends ODatabase> THISDB set(final ATTRIBUTES attribute, final Object iValue) {
-		return (THISDB) underlying.set(attribute, iValue);
-	}
+  public Object get(final ATTRIBUTES iAttribute) {
+    return underlying.get(iAttribute);
+  }
 
-	public void registerListener(final ODatabaseListener iListener) {
-		underlying.registerListener(iListener);
-	}
+  public <THISDB extends ODatabase> THISDB set(final ATTRIBUTES attribute, final Object iValue) {
+    return (THISDB) underlying.set(attribute, iValue);
+  }
 
-	public void unregisterListener(final ODatabaseListener iListener) {
-		underlying.unregisterListener(iListener);
-	}
+  public void registerListener(final ODatabaseListener iListener) {
+    underlying.registerListener(iListener);
+  }
 
-	public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock) {
-		return getStorage().callInLock(iCallable, iExclusiveLock);
-	}
+  public void unregisterListener(final ODatabaseListener iListener) {
+    underlying.unregisterListener(iListener);
+  }
 
-	public long getSize() {
-		return underlying.getSize();
-	}
+  public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock) {
+    return getStorage().callInLock(iCallable, iExclusiveLock);
+  }
 
-	protected void checkOpeness() {
-		if (isClosed())
-			throw new ODatabaseException("Database '" + getURL() + "' is closed");
-	}
+  public long getSize() {
+    return underlying.getSize();
+  }
+
+  protected void checkOpeness() {
+    if (isClosed())
+      throw new ODatabaseException("Database '" + getURL() + "' is closed");
+  }
 }

@@ -31,86 +31,88 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public interface OIndexManager {
-	public OIndexManager load();
+  public OIndexManager load();
 
-	public void create();
+  public void create();
 
-	public Collection<? extends OIndex<?>> getIndexes();
+  public Collection<? extends OIndex<?>> getIndexes();
 
-	public OIndex<?> getIndex(final String iName);
+  public OIndex<?> getIndex(final String iName);
 
-	public OIndex<?> getIndex(final ORID iRID);
+  public boolean existsIndex(final String iName);
 
-	public OIndex<?> createIndex(final String iName, final String iType, OIndexDefinition iIndexDefinition,
-			final int[] iClusterIdsToIndex, final OProgressListener iProgressListener);
+  public OIndex<?> getIndex(final ORID iRID);
 
-	public OIndexManager dropIndex(final String iIndexName);
+  public OIndex<?> createIndex(final String iName, final String iType, OIndexDefinition iIndexDefinition,
+      final int[] iClusterIdsToIndex, final OProgressListener iProgressListener);
 
-	public String getDefaultClusterName();
+  public OIndexManager dropIndex(final String iIndexName);
 
-	public void setDefaultClusterName(String defaultClusterName);
+  public String getDefaultClusterName();
 
-	public ODictionary<ORecordInternal<?>> getDictionary();
+  public void setDefaultClusterName(String defaultClusterName);
 
-	public void flush();
+  public ODictionary<ORecordInternal<?>> getDictionary();
 
-	public ODocument getConfiguration();
+  public void flush();
 
-	/**
-	 * Returns list of indexes that contain passed in fields names as their first keys. Order of fields does not matter.
-	 * <p/>
-	 * All indexes sorted by their count of parameters in ascending order. If there are indexes for the given set of fields in super
-	 * class they will be taken into account.
-	 * 
-	 * 
-	 * 
-	 * @param className
-	 *          name of class which is indexed.
-	 * @param fields
-	 *          Field names.
-	 * @return list of indexes that contain passed in fields names as their first keys.
-	 */
-	public Set<OIndex<?>> getClassInvolvedIndexes(String className, Collection<String> fields);
+  public ODocument getConfiguration();
 
-	/**
-	 * Returns list of indexes that contain passed in fields names as their first keys. Order of fields does not matter.
-	 * <p/>
-	 * All indexes sorted by their count of parameters in ascending order. If there are indexes for the given set of fields in super
-	 * class they will be taken into account.
-	 * 
-	 * 
-	 * 
-	 * @param className
-	 *          name of class which is indexed.
-	 * @param fields
-	 *          Field names.
-	 * @return list of indexes that contain passed in fields names as their first keys.
-	 */
-	public Set<OIndex<?>> getClassInvolvedIndexes(String className, String... fields);
+  /**
+   * Returns list of indexes that contain passed in fields names as their first keys. Order of fields does not matter.
+   * <p/>
+   * All indexes sorted by their count of parameters in ascending order. If there are indexes for the given set of fields in super
+   * class they will be taken into account.
+   * 
+   * 
+   * 
+   * @param className
+   *          name of class which is indexed.
+   * @param fields
+   *          Field names.
+   * @return list of indexes that contain passed in fields names as their first keys.
+   */
+  public Set<OIndex<?>> getClassInvolvedIndexes(String className, Collection<String> fields);
 
-	/**
-	 * Indicates whether given fields are contained as first key fields in class indexes. Order of fields does not matter. If there
-	 * are indexes for the given set of fields in super class they will be taken into account.
-	 * 
-	 * @param className
-	 *          name of class which contain {@code fields}.
-	 * @param fields
-	 *          Field names.
-	 * @return <code>true</code> if given fields are contained as first key fields in class indexes.
-	 */
-	public boolean areIndexed(String className, Collection<String> fields);
+  /**
+   * Returns list of indexes that contain passed in fields names as their first keys. Order of fields does not matter.
+   * <p/>
+   * All indexes sorted by their count of parameters in ascending order. If there are indexes for the given set of fields in super
+   * class they will be taken into account.
+   * 
+   * 
+   * 
+   * @param className
+   *          name of class which is indexed.
+   * @param fields
+   *          Field names.
+   * @return list of indexes that contain passed in fields names as their first keys.
+   */
+  public Set<OIndex<?>> getClassInvolvedIndexes(String className, String... fields);
 
-	/**
-	 * @param className
-	 *          name of class which contain {@code fields}.
-	 * @param fields
-	 *          Field names.
-	 * @return <code>true</code> if given fields are contained as first key fields in class indexes.
-	 * @see #areIndexed(String, java.util.Collection)
-	 */
-	public boolean areIndexed(String className, String... fields);
+  /**
+   * Indicates whether given fields are contained as first key fields in class indexes. Order of fields does not matter. If there
+   * are indexes for the given set of fields in super class they will be taken into account.
+   * 
+   * @param className
+   *          name of class which contain {@code fields}.
+   * @param fields
+   *          Field names.
+   * @return <code>true</code> if given fields are contained as first key fields in class indexes.
+   */
+  public boolean areIndexed(String className, Collection<String> fields);
 
-	public Set<OIndex<?>> getClassIndexes(String className);
+  /**
+   * @param className
+   *          name of class which contain {@code fields}.
+   * @param fields
+   *          Field names.
+   * @return <code>true</code> if given fields are contained as first key fields in class indexes.
+   * @see #areIndexed(String, java.util.Collection)
+   */
+  public boolean areIndexed(String className, String... fields);
 
-	public OIndex<?> getClassIndex(String className, String indexName);
+  public Set<OIndex<?>> getClassIndexes(String className);
+
+  public OIndex<?> getClassIndex(String className, String indexName);
 }

@@ -244,7 +244,7 @@ public class Orient extends OSharedResourceAbstract {
       final ArrayList<OOrientListener> listenerCopy = new ArrayList<OOrientListener>(listeners);
       for (Iterator<OOrientListener> it = listenerCopy.iterator(); it.hasNext();) {
         final OOrientListener l = it.next();
-        it.remove();
+        listeners.remove(l);
         l.onStorageUnregistered(iStorage);
       }
 

@@ -15,11 +15,11 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.concur.resource.OResourcePool;
@@ -31,11 +31,11 @@ import com.orientechnologies.orient.core.storage.OStorage;
 
 public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements OResourcePoolListener<String, DB>, OOrientListener {
 
-  private static final int                             DEF_WAIT_TIMEOUT = 5000;
-  private final Map<String, OResourcePool<String, DB>> pools            = new HashMap<String, OResourcePool<String, DB>>();
-  private int                                          maxSize;
-  private int                                          timeout          = DEF_WAIT_TIMEOUT;
-  protected Object                                     owner;
+  private static final int                                           DEF_WAIT_TIMEOUT = 5000;
+  private final ConcurrentHashMap<String, OResourcePool<String, DB>> pools            = new ConcurrentHashMap<String, OResourcePool<String, DB>>();
+  private int                                                        maxSize;
+  private int                                                        timeout          = DEF_WAIT_TIMEOUT;
+  protected Object                                                   owner;
 
   public ODatabasePoolAbstract(final Object iOwner, final int iMinSize, final int iMaxSize) {
     this(iOwner, iMinSize, iMaxSize, DEF_WAIT_TIMEOUT);
@@ -58,13 +58,8 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
 
     OResourcePool<String, DB> pool = pools.get(dbPooledName);
     if (pool == null) {
-      synchronized (pools) {
-        pool = pools.get(dbPooledName);
-        if (pool == null) {
-          pool = new OResourcePool<String, DB>(maxSize, this);
-          pools.put(dbPooledName, pool);
-        }
-      }
+      pool = new OResourcePool<String, DB>(maxSize, this);
+      pools.putIfAbsent(dbPooledName, pool);
     }
 
     return pool.getResource(iURL, timeout, iUserName, iUserPassword, iOptionalParams);
