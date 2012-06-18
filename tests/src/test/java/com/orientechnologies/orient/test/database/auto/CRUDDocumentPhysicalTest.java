@@ -46,6 +46,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Test(groups = { "crud", "record-vobject" }, sequential = true)
 public class CRUDDocumentPhysicalTest {
   protected static final int  TOT_RECORDS = 100;
+  protected static final int TOT_RECORDS_COMPANY = 10;
+
   protected long              startRecordNumber;
   private ODatabaseDocumentTx database;
   private ODocument           record;
@@ -107,7 +109,7 @@ public class CRUDDocumentPhysicalTest {
       for (long i = startRecordNumber; i < startRecordNumber + TOT_RECORDS; ++i) {
         record.reset();
 
-				record.setClassName("Account");
+		record.setClassName("Account");
         record.field("id", i);
         record.field("name", "Gipsy");
         record.field("location", "Italy");
@@ -122,6 +124,16 @@ public class CRUDDocumentPhysicalTest {
         Assert.assertEquals(record.getIdentity().getClusterId(), accountClusterId);
       }
 
+        long startRecordNumberL = database.countClusterElements("Company");
+        final ODocument doc = new ODocument();
+        for (long i = startRecordNumberL; i < startRecordNumberL + TOT_RECORDS_COMPANY; ++i) {
+            doc.setClassName("Company");
+            doc.field("id", i);
+            doc.field("name", "Microsoft" + i);
+            doc.field("employees", (int) (100000 + i));
+            database.save(doc);
+            doc.reset();
+        }
     } finally {
       database.close();
     }

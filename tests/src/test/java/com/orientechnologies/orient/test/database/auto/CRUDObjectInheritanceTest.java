@@ -15,13 +15,8 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.domain.business.Account;
@@ -29,103 +24,110 @@ import com.orientechnologies.orient.test.domain.business.Address;
 import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Company;
 import com.orientechnologies.orient.test.domain.business.Country;
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.List;
 
 @Test(groups = { "crud", "object" }, sequential = true)
 public class CRUDObjectInheritanceTest {
-	protected static final int	TOT_RECORDS	= 10;
-	protected long							startRecordNumber;
-	private OObjectDatabaseTx		database;
-	private City								redmond			= new City(new Country("Washington"), "Redmond");
+  protected static final int TOT_RECORDS = 10;
+  protected long             startRecordNumber;
+  private OObjectDatabaseTx  database;
+  private City               redmond     = new City(new Country("Washington"), "Redmond");
 
-	@Parameters(value = "url")
-	public CRUDObjectInheritanceTest(String iURL) {
-		database = new OObjectDatabaseTx(iURL);
-	}
+  @Parameters(value = "url")
+  public CRUDObjectInheritanceTest(String iURL) {
+    database = new OObjectDatabaseTx(iURL);
+  }
 
-	@Test
-	public void create() {
-		database.open("admin", "admin");
+  @Test
+  public void create() {
+    database.open("admin", "admin");
 
-		startRecordNumber = database.countClusterElements("Company");
+    database.command(new OCommandSQL("delete from Company")).execute();
 
-		Company company;
+    startRecordNumber = database.countClusterElements("Company");
 
-		for (long i = startRecordNumber; i < startRecordNumber + TOT_RECORDS; ++i) {
-			company = database.newInstance(Company.class, (int) i, "Microsoft" + i);
-			company.setEmployees((int) (100000 + i));
-			company.getAddresses().add(new Address("Headquarter", redmond, "WA 98073-9717"));
-			database.save(company);
-		}
+    Company company;
 
-		database.close();
-	}
+    for (long i = startRecordNumber; i < startRecordNumber + TOT_RECORDS; ++i) {
+      company = database.newInstance(Company.class, (int) i, "Microsoft" + i);
+      company.setEmployees((int) (100000 + i));
+      company.getAddresses().add(new Address("Headquarter", redmond, "WA 98073-9717"));
+      database.save(company);
+    }
 
-	@Test(dependsOnMethods = "create")
-	public void testCreate() {
-		database.open("admin", "admin");
+    database.close();
+  }
 
-		Assert.assertEquals(database.countClusterElements("Company") - startRecordNumber, TOT_RECORDS);
+  @Test(dependsOnMethods = "create")
+  public void testCreate() {
+    database.open("admin", "admin");
 
-		database.close();
-	}
+    Assert.assertEquals(database.countClusterElements("Company") - startRecordNumber, TOT_RECORDS);
 
-	@Test(dependsOnMethods = "testCreate")
-	public void queryByBaseType() {
-		database.open("admin", "admin");
+    database.close();
+  }
 
-		final List<Account> result = database.query(new OSQLSynchQuery<Account>("select from Company where name.length() > 0"));
+  @Test(dependsOnMethods = "testCreate")
+  public void queryByBaseType() {
+    database.open("admin", "admin");
 
-		Assert.assertTrue(result.size() > 0);
-		Assert.assertEquals(result.size(), TOT_RECORDS);
+    final List<Account> result = database.query(new OSQLSynchQuery<Account>("select from Company where name.length() > 0"));
 
-		int companyRecords = 0;
-		Account account;
-		for (int i = 0; i < result.size(); ++i) {
-			account = result.get(i);
+    Assert.assertTrue(result.size() > 0);
+    Assert.assertEquals(result.size(), TOT_RECORDS);
 
-			if (account instanceof Company)
-				companyRecords++;
+    int companyRecords = 0;
+    Account account;
+    for (int i = 0; i < result.size(); ++i) {
+      account = result.get(i);
 
-			Assert.assertNotSame(account.getName().length(), 0);
-		}
+      if (account instanceof Company)
+        companyRecords++;
 
-		Assert.assertEquals(companyRecords, TOT_RECORDS);
+      Assert.assertNotSame(account.getName().length(), 0);
+    }
 
-		database.close();
-	}
+    Assert.assertEquals(companyRecords, TOT_RECORDS);
 
-	@Test(dependsOnMethods = "queryByBaseType")
-	public void queryPerSuperType() {
-		database.open("admin", "admin");
+    database.close();
+  }
 
-		final List<Company> result = database.query(new OSQLSynchQuery<ODocument>("select * from Company where name.length() > 0"));
+  @Test(dependsOnMethods = "queryByBaseType")
+  public void queryPerSuperType() {
+    database.open("admin", "admin");
 
-		Assert.assertTrue(result.size() == TOT_RECORDS);
+    final List<Company> result = database.query(new OSQLSynchQuery<ODocument>("select * from Company where name.length() > 0"));
 
-		Company account;
-		for (int i = 0; i < result.size(); ++i) {
-			account = result.get(i);
-			Assert.assertNotSame(account.getName().length(), 0);
-		}
+    Assert.assertTrue(result.size() == TOT_RECORDS);
 
-		database.close();
-	}
+    Company account;
+    for (int i = 0; i < result.size(); ++i) {
+      account = result.get(i);
+      Assert.assertNotSame(account.getName().length(), 0);
+    }
 
-	@Test(dependsOnMethods = "queryPerSuperType")
-	public void deleteFirst() {
-		database.open("admin", "admin");
+    database.close();
+  }
 
-		startRecordNumber = database.countClusterElements("Company");
+  @Test(dependsOnMethods = "queryPerSuperType")
+  public void deleteFirst() {
+    database.open("admin", "admin");
 
-		// DELETE ALL THE RECORD IN THE CLUSTER
-		for (Object obj : database.browseCluster("Company")) {
-			database.delete(obj);
-			break;
-		}
+    startRecordNumber = database.countClusterElements("Company");
 
-		Assert.assertEquals(database.countClusterElements("Company"), startRecordNumber - 1);
+    // DELETE ALL THE RECORD IN THE CLUSTER
+    for (Object obj : database.browseCluster("Company")) {
+      database.delete(obj);
+      break;
+    }
 
-		database.close();
-	}
+    Assert.assertEquals(database.countClusterElements("Company"), startRecordNumber - 1);
+
+    database.close();
+  }
 
 }
