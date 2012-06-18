@@ -295,7 +295,7 @@ public class TTYConsoleReader implements OConsoleReader {
 				outStream.println();
 			}
 			outStream.print("\r");
-			outStream.print("> ");
+			outStream.print("orientdb> ");
 			return readLine();
 		} else {
 			return consoleInput;
@@ -404,7 +404,7 @@ public class TTYConsoleReader implements OConsoleReader {
 
 	private void rewriteConsole(StringBuffer buffer, boolean cleaner) {
 		outStream.print("\r");
-		outStream.print("> ");
+		outStream.print("orientdb> ");
 		if (currentPos < buffer.length() && buffer.length() > 0 && !cleaner) {
 			outStream.print("\033[0m" + buffer.substring(0, currentPos) + "\033[0;30;47m" + buffer.substring(currentPos, currentPos + 1)
 					+ "\033[0m" + buffer.substring(currentPos + 1) + "\033[0m");
