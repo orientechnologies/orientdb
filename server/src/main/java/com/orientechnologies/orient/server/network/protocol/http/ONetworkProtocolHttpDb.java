@@ -36,6 +36,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.get.OSe
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDocumentByClass;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetExportDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetFileDownload;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetGephi;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetIndex;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetListDatabases;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetQuery;
@@ -55,58 +56,59 @@ import com.orientechnologies.orient.server.network.protocol.http.command.put.OSe
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutIndex;
 
 public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
-	private static final String	ORIENT_SERVER_DB	= "OrientDB Server v." + OConstants.getVersion();
+  private static final String ORIENT_SERVER_DB = "OrientDB Server v." + OConstants.getVersion();
 
-	@Override
-	public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfiguration) throws IOException {
-		server = iServer;
-		setName("HTTP-DB");
+  @Override
+  public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfiguration) throws IOException {
+    server = iServer;
+    setName("HTTP-DB");
 
-		registerCommand(new OServerCommandGetConnect());
-		registerCommand(new OServerCommandGetDisconnect());
+    registerCommand(new OServerCommandGetConnect());
+    registerCommand(new OServerCommandGetDisconnect());
 
-		registerCommand(new OServerCommandGetClass());
-		registerCommand(new OServerCommandGetCluster());
-		registerCommand(new OServerCommandGetDatabase());
-		registerCommand(new OServerCommandGetDictionary());
-		registerCommand(new OServerCommandGetDocument());
-		registerCommand(new OServerCommandGetDocumentByClass());
-		registerCommand(new OServerCommandGetQuery());
-		registerCommand(new OServerCommandGetServer());
-		registerCommand(new OServerCommandGetStorageAllocation());
-		registerCommand(new OServerCommandGetFileDownload());
-		registerCommand(new OServerCommandGetIndex());
-		registerCommand(new OServerCommandGetListDatabases());
-		registerCommand(new OServerCommandGetExportDatabase());
+    registerCommand(new OServerCommandGetClass());
+    registerCommand(new OServerCommandGetCluster());
+    registerCommand(new OServerCommandGetDatabase());
+    registerCommand(new OServerCommandGetDictionary());
+    registerCommand(new OServerCommandGetDocument());
+    registerCommand(new OServerCommandGetDocumentByClass());
+    registerCommand(new OServerCommandGetQuery());
+    registerCommand(new OServerCommandGetServer());
+    registerCommand(new OServerCommandGetStorageAllocation());
+    registerCommand(new OServerCommandGetFileDownload());
+    registerCommand(new OServerCommandGetIndex());
+    registerCommand(new OServerCommandGetListDatabases());
+    registerCommand(new OServerCommandGetExportDatabase());
+    registerCommand(new OServerCommandGetGephi());
 
-		registerCommand(new OServerCommandPostClass());
-		registerCommand(new OServerCommandPostCommand());
-		registerCommand(new OServerCommandPostDatabase());
-		registerCommand(new OServerCommandPostDocument());
-		registerCommand(new OServerCommandPostProperty());
-		registerCommand(new OServerCommandPostStudio());
-		registerCommand(new OServerCommandPostUploadSingleFile());
-		registerCommand(new OServerCommandPostDatabase());
-		registerCommand(new OServerCommandPostImportRecords());
-		registerCommand(new OServerCommandPostImportDatabase());
+    registerCommand(new OServerCommandPostClass());
+    registerCommand(new OServerCommandPostCommand());
+    registerCommand(new OServerCommandPostDatabase());
+    registerCommand(new OServerCommandPostDocument());
+    registerCommand(new OServerCommandPostProperty());
+    registerCommand(new OServerCommandPostStudio());
+    registerCommand(new OServerCommandPostUploadSingleFile());
+    registerCommand(new OServerCommandPostDatabase());
+    registerCommand(new OServerCommandPostImportRecords());
+    registerCommand(new OServerCommandPostImportDatabase());
 
-		registerCommand(new OServerCommandPutDocument());
-		registerCommand(new OServerCommandPutIndex());
+    registerCommand(new OServerCommandPutDocument());
+    registerCommand(new OServerCommandPutIndex());
 
-		registerCommand(new OServerCommandDeleteClass());
-		registerCommand(new OServerCommandDropDatabase());
-		registerCommand(new OServerCommandDeleteDocument());
-		registerCommand(new OServerCommandDeleteProperty());
-		registerCommand(new OServerCommandDeleteIndex());
+    registerCommand(new OServerCommandDeleteClass());
+    registerCommand(new OServerCommandDropDatabase());
+    registerCommand(new OServerCommandDeleteDocument());
+    registerCommand(new OServerCommandDeleteProperty());
+    registerCommand(new OServerCommandDeleteIndex());
 
-		registerCommand(new OServerCommandOptions());
+    registerCommand(new OServerCommandOptions());
 
-		super.config(server, iSocket, iConfiguration);
-		connection.data.serverInfo = ORIENT_SERVER_DB;
-	}
+    super.config(server, iSocket, iConfiguration);
+    connection.data.serverInfo = ORIENT_SERVER_DB;
+  }
 
-	public String getType() {
-		return "http";
-	}
+  public String getType() {
+    return "http";
+  }
 
 }
