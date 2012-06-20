@@ -90,7 +90,7 @@ public class ODefaultCommandExecutorSQLFactory implements OCommandExecutorSQLFac
   /**
    * {@inheritDoc}
    */
-  public OCommandExecutorSQLAbstract createCommand(String name) throws OCommandExecutionException {
+  public OCommandExecutorSQLAbstract createCommand(final String name) throws OCommandExecutionException {
     final Class<? extends OCommandExecutorSQLAbstract> clazz = COMMANDS.get(name);
 
     if (clazz == null) {

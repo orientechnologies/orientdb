@@ -20,40 +20,43 @@ import com.orientechnologies.orient.core.fetch.OFetchHelper;
 
 @SuppressWarnings("serial")
 public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAbstract implements OQuery<T> {
-	protected String	fetchPlan;
+  protected String fetchPlan;
 
-	public OQueryAbstract() {
-	}
+  public OQueryAbstract() {
+  }
 
-	@SuppressWarnings("unchecked")
-	public <RET> RET execute(final Object... iArgs) {
-		return (RET) run(iArgs);
-	}
+  @SuppressWarnings("unchecked")
+  public <RET> RET execute(final Object... iArgs) {
+    return (RET) run(iArgs);
+  }
 
-	/**
-	 * Returns the current fetch plan.
-	 */
-	public String getFetchPlan() {
-		return fetchPlan;
-	}
+  /**
+   * Returns the current fetch plan.
+   */
+  public String getFetchPlan() {
+    return fetchPlan;
+  }
 
-	/**
-	 * Sets the fetch plan to use.
-	 */
-	public OQuery<T> setFetchPlan(final String fetchPlan) {
-		OFetchHelper.checkFetchPlanValid(fetchPlan);
-		if (fetchPlan != null && fetchPlan.length() == 0)
-			this.fetchPlan = null;
-		else
-			this.fetchPlan = fetchPlan;
-		return this;
-	}
+  /**
+   * Sets the fetch plan to use.
+   */
+  public OQuery<T> setFetchPlan(final String fetchPlan) {
+    OFetchHelper.checkFetchPlanValid(fetchPlan);
+    if (fetchPlan != null && fetchPlan.length() == 0)
+      this.fetchPlan = null;
+    else
+      this.fetchPlan = fetchPlan;
+    return this;
+  }
 
-	/**
-	 * Resets the query removing the result set. Call this to reuse the Query object preventing a pagination.
-	 */
-	@Override
-	public void reset() {
-	}
+  /**
+   * Resets the query removing the result set. Call this to reuse the Query object preventing a pagination.
+   */
+  @Override
+  public void reset() {
+  }
 
+  public boolean isIdempotent() {
+    return true;
+  }
 }

@@ -33,21 +33,26 @@ import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
  * @author Luca Garulli
  */
 public class OCommandGremlinExecutor extends OCommandExecutorAbstract {
-	private OGraphDatabase	db;
+  private OGraphDatabase db;
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public <RET extends OCommandExecutor> RET parse(OCommandRequest iRequest) {
-		text = ((OCommandRequestText) iRequest).getText();
-		db = OGremlinHelper.getGraphDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
-		return (RET) this;
-	}
+  @SuppressWarnings("unchecked")
+  @Override
+  public <RET extends OCommandExecutor> RET parse(OCommandRequest iRequest) {
+    text = ((OCommandRequestText) iRequest).getText();
+    db = OGremlinHelper.getGraphDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
+    return (RET) this;
+  }
 
-	@Override
-	public Object execute(final Map<Object, Object> iArgs) {
-		parameters = iArgs;
-		final List<Object> result = new ArrayList<Object>();
-		final Object scriptResult = OGremlinHelper.execute(db, text, parameters, new HashMap<Object, Object>(), result, null, null);
-		return scriptResult != null ? scriptResult : result;
-	}
+  @Override
+  public Object execute(final Map<Object, Object> iArgs) {
+    parameters = iArgs;
+    final List<Object> result = new ArrayList<Object>();
+    final Object scriptResult = OGremlinHelper.execute(db, text, parameters, new HashMap<Object, Object>(), result, null, null);
+    return scriptResult != null ? scriptResult : result;
+  }
+
+  @Override
+  public boolean isIdempotent() {
+    return false;
+  }
 }

@@ -30,39 +30,43 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  */
 @SuppressWarnings("serial")
 public class OCommandScript extends OCommandRequestTextAbstract {
-	private String	language;
+  private String language;
 
-	public OCommandScript() {
-	}
+  public OCommandScript() {
+  }
 
-	public OCommandScript(final String iLanguage, final String iText) {
-		super(iText);
-		language = iLanguage;
-	}
+  public OCommandScript(final String iLanguage, final String iText) {
+    super(iText);
+    language = iLanguage;
+  }
 
-	public OCommandScript(final String iText) {
-		super(iText);
-	}
+  public OCommandScript(final String iText) {
+    super(iText);
+  }
 
-	public String getLanguage() {
-		return language;
-	}
+  public boolean isIdempotent() {
+    return false;
+  }
 
-	public OCommandScript setLanguage(String language) {
-		this.language = language;
-		return this;
-	}
+  public String getLanguage() {
+    return language;
+  }
 
-	public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
-		final OMemoryStream buffer = new OMemoryStream(iStream);
-		language = buffer.getAsString();
-		fromStream(buffer);
-		return this;
-	}
+  public OCommandScript setLanguage(String language) {
+    this.language = language;
+    return this;
+  }
 
-	public byte[] toStream() throws OSerializationException {
-		final OMemoryStream buffer = new OMemoryStream();
-		buffer.set(language);
-		return toStream(buffer);
-	}
+  public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
+    final OMemoryStream buffer = new OMemoryStream(iStream);
+    language = buffer.getAsString();
+    fromStream(buffer);
+    return this;
+  }
+
+  public byte[] toStream() throws OSerializationException {
+    final OMemoryStream buffer = new OMemoryStream();
+    buffer.set(language);
+    return toStream(buffer);
+  }
 }

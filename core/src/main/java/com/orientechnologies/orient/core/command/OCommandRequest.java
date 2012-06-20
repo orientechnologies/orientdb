@@ -23,20 +23,25 @@ package com.orientechnologies.orient.core.command;
  * @param <T>
  */
 public interface OCommandRequest {
-	public <RET> RET execute(Object... iArgs);
+  public <RET> RET execute(Object... iArgs);
 
-	/**
-	 * Returns the limit of result set. -1 means no limits.
-	 * 
-	 */
-	public int getLimit();
+  /**
+   * Returns the limit of result set. -1 means no limits.
+   * 
+   */
+  public int getLimit();
 
-	/**
-	 * Sets the maximum items the command can returns. -1 means no limits.
-	 * 
-	 * @param iLimit
-	 *          -1 = no limit. 1 to N to limit the result set.
-	 * @return
-	 */
-	public OCommandRequest setLimit(final int iLimit);
+  /**
+   * Sets the maximum items the command can returns. -1 means no limits.
+   * 
+   * @param iLimit
+   *          -1 = no limit. 1 to N to limit the result set.
+   * @return
+   */
+  public OCommandRequest setLimit(final int iLimit);
+
+  /**
+   * Returns true if the command doesn't change the database, otherwise false.
+   */
+  public boolean isIdempotent();
 }

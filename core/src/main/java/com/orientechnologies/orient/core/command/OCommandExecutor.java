@@ -28,42 +28,47 @@ import com.orientechnologies.common.listener.OProgressListener;
  */
 public interface OCommandExecutor {
 
-	/**
-	 * Parse the request. Once parsed the command can be executed multiple times by using the execute() method.
-	 * 
-	 * @param iRequest
-	 *          Command request implementation.
-	 * @param iArgs
-	 *          Optional variable arguments to pass to the command.
-	 * 
-	 * @see #execute(Object...)
-	 * @return
-	 */
+  /**
+   * Parse the request. Once parsed the command can be executed multiple times by using the execute() method.
+   * 
+   * @param iRequest
+   *          Command request implementation.
+   * @param iArgs
+   *          Optional variable arguments to pass to the command.
+   * 
+   * @see #execute(Object...)
+   * @return
+   */
   public <RET extends OCommandExecutor> RET parse(OCommandRequest iRequest);
 
-	/**
-	 * Execute the requested command parsed previously.
-	 * 
-	 * @param iArgs
-	 *          Optional variable arguments to pass to the command.
-	 * 
-	 * @see #parse(OCommandRequest)
-	 * @return
-	 */
-	public Object execute(final Map<Object, Object> iArgs);
+  /**
+   * Execute the requested command parsed previously.
+   * 
+   * @param iArgs
+   *          Optional variable arguments to pass to the command.
+   * 
+   * @see #parse(OCommandRequest)
+   * @return
+   */
+  public Object execute(final Map<Object, Object> iArgs);
 
-	/**
-	 * Set the listener invoked while the command is executing.
-	 * 
-	 * @param progressListener
-	 *          OProgressListener implementation
-	 * @return
-	 */
-	public <RET extends OCommandExecutor> RET setProgressListener(OProgressListener progressListener);
+  /**
+   * Set the listener invoked while the command is executing.
+   * 
+   * @param progressListener
+   *          OProgressListener implementation
+   * @return
+   */
+  public <RET extends OCommandExecutor> RET setProgressListener(OProgressListener progressListener);
 
-	public <RET extends OCommandExecutor> RET setLimit(int iLimit);
+  public <RET extends OCommandExecutor> RET setLimit(int iLimit);
 
-	public Map<Object, Object> getParameters();
+  public Map<Object, Object> getParameters();
 
-	public OCommandContext getContext();
+  public OCommandContext getContext();
+
+  /**
+   * Returns true if the command doesn't change the database, otherwise false.
+   */
+  public boolean isIdempotent();
 }

@@ -25,10 +25,14 @@ import com.orientechnologies.orient.core.command.OCommandRequestTextAbstract;
  */
 @SuppressWarnings("serial")
 public class OCommandSQL extends OCommandRequestTextAbstract {
-	public OCommandSQL() {
-	}
+  public OCommandSQL() {
+  }
 
-	public OCommandSQL(final String iText) {
-		super(iText);
-	}
+  public OCommandSQL(final String iText) {
+    super(iText);
+  }
+
+  public boolean isIdempotent() {
+    return false;
+  }
 }

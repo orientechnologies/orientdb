@@ -24,19 +24,19 @@ import java.util.Set;
  * @author Johann Sorel (Geomatys)
  */
 public interface OCommandExecutorSQLFactory {
-    
-    /**
-     * @return Set of supported command names of this factory
-     */
-    Set<String> getCommandNames();
-    
-    /**
-     * Create command for the given name.
-     * returned command may be a new instance each time or a constant.
-     * @param name
-     * @return OCommandExecutorSQLAbstract : created command
-     * @throws OCommandExecutionException : when command creation fail
-     */
-    OCommandExecutorSQLAbstract createCommand(String name) throws OCommandExecutionException;
-    
+
+  /**
+   * @return Set of supported command names of this factory
+   */
+  public Set<String> getCommandNames();
+
+  /**
+   * Create command for the given name. returned command may be a new instance each time or a constant.
+   * 
+   * @param name
+   * @return OCommandExecutorSQLAbstract : created command
+   * @throws OCommandExecutionException
+   *           : when command creation fail
+   */
+  public OCommandExecutorSQLAbstract createCommand(String name) throws OCommandExecutionException;
 }

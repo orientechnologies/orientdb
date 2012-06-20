@@ -57,9 +57,6 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
     iRequest.data.commandInfo = "Gephi";
     iRequest.data.commandDetail = text;
 
-    if (!text.toLowerCase().startsWith("select"))
-      throw new IllegalArgumentException("Only SQL Select commands are valid using Query command");
-
     ODatabaseDocumentTx db = null;
 
     final List<OIdentifiable> response;

@@ -27,22 +27,26 @@ import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
  */
 public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstract {
 
-	public static final String	KEYWORD_FROM		= "FROM";
-	public static final String	KEYWORD_WHERE		= "WHERE";
-	public static final String	KEYWORD_LIMIT		= "LIMIT";
-	public static final String	KEYWORD_SKIP		= "SKIP";
-	public static final String	KEYWORD_KEY			= "key";
-	public static final String	KEYWORD_RID			= "rid";
-	public static final String	CLUSTER_PREFIX	= "CLUSTER:";
-	public static final String	CLASS_PREFIX		= "CLASS:";
-	public static final String	INDEX_PREFIX		= "INDEX:";
+  public static final String KEYWORD_FROM   = "FROM";
+  public static final String KEYWORD_WHERE  = "WHERE";
+  public static final String KEYWORD_LIMIT  = "LIMIT";
+  public static final String KEYWORD_SKIP   = "SKIP";
+  public static final String KEYWORD_KEY    = "key";
+  public static final String KEYWORD_RID    = "rid";
+  public static final String CLUSTER_PREFIX = "CLUSTER:";
+  public static final String CLASS_PREFIX   = "CLASS:";
+  public static final String INDEX_PREFIX   = "INDEX:";
 
-	@Override
-	public OCommandExecutorSQLAbstract init(String iText) {
-		iText = iText.trim();
-		textUpperCase = iText.toUpperCase(Locale.ENGLISH);
-		return (OCommandExecutorSQLAbstract) super.init(iText);
-	}
+  @Override
+  public OCommandExecutorSQLAbstract init(String iText) {
+    iText = iText.trim();
+    textUpperCase = iText.toUpperCase(Locale.ENGLISH);
+    return (OCommandExecutorSQLAbstract) super.init(iText);
+  }
 
-	public abstract String getSyntax();
+  public abstract String getSyntax();
+
+  public boolean isIdempotent() {
+    return false;
+  }
 }

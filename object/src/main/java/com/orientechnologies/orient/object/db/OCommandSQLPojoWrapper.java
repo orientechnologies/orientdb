@@ -29,53 +29,57 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class OCommandSQLPojoWrapper implements OCommandRequest {
-	private OCommandRequest						command;
-	private ODatabasePojoAbstract<?>	database;
+  private OCommandRequest          command;
+  private ODatabasePojoAbstract<?> database;
 
-	public OCommandSQLPojoWrapper(final ODatabasePojoAbstract<?> iDatabase, final OCommandRequest iCommand) {
-		database = iDatabase;
-		command = iCommand;
-	}
+  public OCommandSQLPojoWrapper(final ODatabasePojoAbstract<?> iDatabase, final OCommandRequest iCommand) {
+    database = iDatabase;
+    command = iCommand;
+  }
 
-	@SuppressWarnings("unchecked")
-	public <RET> RET execute(Object... iArgs) {
-		database.convertParameters(iArgs);
+  @SuppressWarnings("unchecked")
+  public <RET> RET execute(Object... iArgs) {
+    database.convertParameters(iArgs);
 
-		Object result = command.execute(iArgs);
+    Object result = command.execute(iArgs);
 
-		if (result instanceof Collection<?>) {
-			final List<Object> resultPojo = new ArrayList<Object>();
+    if (result instanceof Collection<?>) {
+      final List<Object> resultPojo = new ArrayList<Object>();
 
-			Object obj;
-			Collection<ODocument> coll = (Collection<ODocument>) result;
-			for (ODocument doc : coll) {
-				// GET THE ASSOCIATED DOCUMENT
-				if (doc.getClassName() == null)
-					obj = doc;
-				else
-					// CONVERT THE DOCUMENT INSIDE THE LIST
-					obj = database.getUserObjectByRecord(doc, null, true);
+      Object obj;
+      Collection<ODocument> coll = (Collection<ODocument>) result;
+      for (ODocument doc : coll) {
+        // GET THE ASSOCIATED DOCUMENT
+        if (doc.getClassName() == null)
+          obj = doc;
+        else
+          // CONVERT THE DOCUMENT INSIDE THE LIST
+          obj = database.getUserObjectByRecord(doc, null, true);
 
-				resultPojo.add(obj);
-			}
-			result = resultPojo;
+        resultPojo.add(obj);
+      }
+      result = resultPojo;
 
-		} else if (result instanceof ODocument) {
-			if (((ODocument) result).getClassName() != null)
-				// CONVERT THE SINGLE DOCUMENT
-				result = database.getUserObjectByRecord((ODocument) result, null, true);
-		}
+    } else if (result instanceof ODocument) {
+      if (((ODocument) result).getClassName() != null)
+        // CONVERT THE SINGLE DOCUMENT
+        result = database.getUserObjectByRecord((ODocument) result, null, true);
+    }
 
-		return (RET) result;
-	}
+    return (RET) result;
+  }
 
-	public int getLimit() {
-		return command.getLimit();
-	}
+  public int getLimit() {
+    return command.getLimit();
+  }
 
-	public OCommandRequest setLimit(final int iLimit) {
-		command.setLimit(iLimit);
-		return this;
-	}
+  public OCommandRequest setLimit(final int iLimit) {
+    command.setLimit(iLimit);
+    return this;
+  }
+
+  public boolean isIdempotent() {
+    return command.isIdempotent();
+  }
 
 }

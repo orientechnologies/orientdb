@@ -102,6 +102,11 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     return this;
   }
 
+  @Override
+  public boolean isIdempotent() {
+    return true;
+  }
+
   public List<OIdentifiable> getResult() {
     if (tempResult != null)
       return tempResult;
