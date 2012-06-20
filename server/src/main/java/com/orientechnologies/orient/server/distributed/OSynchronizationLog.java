@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.io.File;
 import java.io.IOException;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
@@ -25,7 +26,6 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.impl.local.OSingleFileSegment;
-import com.orientechnologies.orient.server.distributed.ODistributedTask.OPERATION;
 
 /**
  * Write all the operation during server cluster.<br/>
@@ -84,15 +84,44 @@ public class OSynchronizationLog extends OSingleFileSegment {
     limit = iLimit;
   }
 
+  public OSynchronizationLog(final ODistributedServerManager iManager, final File iFile, final String iDatabase, final long iLimit)
+      throws IOException {
+    super(iFile.getPath(), OGlobalConfiguration.DISTRIBUTED_LOG_TYPE.getValueAsString());
+    databaseName = iDatabase;
+    nodeId = iFile.getName().substring(0, iFile.getName().length() - EXTENSION.length()).replace('_', '.').replace('-', ':');
+    synchEnabled = OGlobalConfiguration.DISTRIBUTED_LOG_SYNCH.getValueAsBoolean();
+    manager = iManager;
+
+    file.setFailCheck(false);
+    if (exists()) {
+      open();
+    } else
+      create(DEF_START_SIZE);
+    limit = iLimit;
+  }
+
   @Override
   public boolean open() throws IOException {
     final boolean result = super.open();
+
+    final int tot = totalEntries();
+    for (int i = 0; i < tot; ++i) {
+      final byte operation = file.readByte(i * RECORD_SIZE);
+      if (operation > -1)
+        pendingLogs++;
+    }
+
+    if (pendingLogs > 0)
+      OLogManager.instance().warn(this, "Synchronization log %s/%s found %d records to align once the node is online again",
+          nodeId, databaseName, pendingLogs);
+
     return result;
   }
 
   @Override
   public void create(final int iStartSize) throws IOException {
     super.create(iStartSize);
+    pendingLogs = 0;
   }
 
   /**
@@ -134,7 +163,7 @@ public class OSynchronizationLog extends OSingleFileSegment {
   /**
    * Appends a log entry until reach the configured limit if any (>-1)
    */
-  public long appendLog(final OPERATION iOperation, final ORecordId iRID, final int iVersion) throws IOException {
+  public long appendLog(final byte iOperation, final ORecordId iRID, final int iVersion) throws IOException {
 
     lock.acquireExclusiveLock();
     try {
@@ -147,14 +176,14 @@ public class OSynchronizationLog extends OSingleFileSegment {
 
       if (pendingLogs > 1)
         OLogManager.instance().warn(this, "Journaled operation #%d as %s against %s/%s record %s. Remain to synchronize: %d",
-            serial, iOperation, nodeId, databaseName, iRID, pendingLogs);
+            serial, ORecordOperation.getName(iOperation), nodeId, databaseName, iRID, pendingLogs);
       else
-        OLogManager.instance().debug(this, "Journaled operation #%d as %s against %s/%s record %s", serial, iOperation, nodeId,
-            databaseName, iRID);
+        OLogManager.instance().debug(this, "Journaled operation #%d as %s against %s/%s record %s", serial,
+            ORecordOperation.getName(iOperation), nodeId, databaseName, iRID);
 
       int offset = file.allocateSpace(RECORD_SIZE);
 
-      file.writeByte(offset, (byte) iOperation.ordinal());
+      file.writeByte(offset, iOperation);
       offset += OBinaryProtocol.SIZE_BYTE;
 
       file.writeShort(offset, (short) iRID.clusterId);
@@ -173,6 +202,30 @@ public class OSynchronizationLog extends OSingleFileSegment {
         file.synch();
 
       return serial;
+
+    } finally {
+      lock.releaseExclusiveLock();
+    }
+  }
+
+  /**
+   * Updates last log entry. This makes sense only for new records because the RID is assigned only after the creation.
+   */
+  public void updateLog(final ORecordId iRID, final int iVersion) throws IOException {
+
+    lock.acquireExclusiveLock();
+    try {
+      if (OLogManager.instance().isDebugEnabled())
+        OLogManager.instance().debug(this, "Updated journaled operation #%d against %s/%s record %s version %d",
+            totalEntries() - 1, nodeId, databaseName, iRID, iVersion);
+
+      int offset = file.getFilledUpTo() - RECORD_SIZE;
+
+      file.writeLong(offset + OFFSET_RID + OBinaryProtocol.SIZE_SHORT, iRID.clusterPosition);
+      file.writeInt(offset + OFFSET_VERSION, iVersion);
+
+      if (synchEnabled)
+        file.synch();
 
     } finally {
       lock.releaseExclusiveLock();
@@ -199,7 +252,7 @@ public class OSynchronizationLog extends OSingleFileSegment {
   public boolean needAlignment() {
     lock.acquireSharedLock();
     try {
-      return pendingLogs > 1;
+      return pendingLogs > 0;
     } finally {
       lock.releaseSharedLock();
     }
@@ -212,5 +265,9 @@ public class OSynchronizationLog extends OSingleFileSegment {
     } finally {
       lock.releaseSharedLock();
     }
+  }
+
+  public String getNodeId() {
+    return nodeId;
   }
 }

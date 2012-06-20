@@ -68,6 +68,10 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
     Orient.instance().getDatabaseFactory().unregister(databaseOwner);
   }
 
+  public void replaceStorage(OStorage iNewStorage) {
+    underlying.replaceStorage(iNewStorage);
+  }
+
   /**
    * Uses drop() instead.
    */
@@ -136,7 +140,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
     return underlying.getClusters();
   }
 
-  
   public boolean existsCluster(String iClusterName) {
     checkOpeness();
     return underlying.existsCluster(iClusterName);

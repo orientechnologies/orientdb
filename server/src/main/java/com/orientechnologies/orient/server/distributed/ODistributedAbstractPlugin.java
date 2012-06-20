@@ -23,11 +23,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.hook.ORecordHook;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -40,7 +36,8 @@ import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
  * 
  */
 public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract implements ODistributedServerManager,
-    ODatabaseLifecycleListener, ORecordHook {
+    ODatabaseLifecycleListener {
+  protected OServer                           serverInstance;
   protected boolean                           enabled               = true;
   protected String                            alias                 = null;
   protected long                              offlineBuffer         = -1;
@@ -49,6 +46,7 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
 
   @Override
   public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
+    serverInstance = oServer;
     oServer.setVariable("ODistributedAbstractPlugin", this);
 
     for (OServerParameterConfiguration param : iParams) {
@@ -107,7 +105,8 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
       getDatabaseSynchronizer(iDatabase.getName(), null);
 
       if (iDatabase instanceof ODatabaseComplex<?>)
-        ((ODatabaseComplex<?>) iDatabase).registerHook(this);
+        ((ODatabaseComplex<?>) iDatabase).replaceStorage(new ODistributedStorage(this, ((ODatabaseComplex<?>) iDatabase)
+            .getStorage()));
     }
   }
 
@@ -116,25 +115,6 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
    */
   @Override
   public void onClose(final ODatabase iDatabase) {
-    if (iDatabase instanceof ODatabaseComplex<?>)
-      ((ODatabaseComplex<?>) iDatabase).unregisterHook(this);
-  }
-
-  @Override
-  public boolean onTrigger(final TYPE iType, final ORecord<?> iRecord) {
-    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
-
-    // GET THE SYNCHRONIZER
-    final OStorageSynchronizer synchronizer;
-    synchronized (synchronizers) {
-      synchronizer = synchronizers.get(db.getName());
-    }
-
-    if (synchronizer != null)
-      // DISTRIBUTE THE OPERATION
-      return synchronizer.distributeOperation(iType, iRecord);
-
-    return false;
   }
 
   @Override
@@ -181,7 +161,7 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
         synchronizers.put(iDatabaseName, sync);
       }
 
-      if (iNodeId != null)
+      if (iNodeId != null && !iNodeId.equals(getLocalNodeId()))
         sync.getLog(iNodeId);
       return sync;
     }

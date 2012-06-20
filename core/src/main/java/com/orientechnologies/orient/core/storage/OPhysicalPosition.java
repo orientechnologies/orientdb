@@ -15,12 +15,16 @@
  */
 package com.orientechnologies.orient.core.storage;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
-@SuppressWarnings("serial")
-public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysicalPosition> {
+public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysicalPosition>, Externalizable {
   // POSITION IN THE CLUSTER
   public long              clusterPosition;
   // ID OF DATA SEGMENT
@@ -65,8 +69,8 @@ public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysi
 
   @Override
   public String toString() {
-    return "cluster-pos=" + clusterPosition + " data-segment-id=" + dataSegmentId + " data-segment-pos=" + dataSegmentPos
-        + " record-type=" + recordType + " record-size=" + recordSize + " v=" + recordVersion;
+    return "cluster(?:" + clusterPosition + ") data(" + dataSegmentId + ":" + dataSegmentPos + ") record(type:" + recordType
+        + " size:" + recordSize + " v:" + recordVersion + ")";
   }
 
   public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
@@ -115,7 +119,36 @@ public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysi
     return buffer;
   }
 
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == null || !(obj instanceof OPhysicalPosition))
+      return false;
+
+    final OPhysicalPosition other = (OPhysicalPosition) obj;
+
+    return clusterPosition == other.clusterPosition && recordType == other.recordType && recordVersion == other.recordVersion
+        && recordSize == other.recordSize;
+  }
+
   public int compareTo(final OPhysicalPosition iOther) {
     return (int) (dataSegmentPos - iOther.dataSegmentPos);
+  }
+
+  public void writeExternal(final ObjectOutput out) throws IOException {
+    out.writeLong(clusterPosition);
+    out.writeInt(dataSegmentId);
+    out.writeLong(dataSegmentPos);
+    out.writeByte(recordType);
+    out.writeInt(recordSize);
+    out.writeInt(recordVersion);
+  }
+
+  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+    clusterPosition = in.readLong();
+    dataSegmentId = in.readInt();
+    dataSegmentPos = in.readLong();
+    recordType = in.readByte();
+    recordSize = in.readInt();
+    recordVersion = in.readInt();
   }
 }

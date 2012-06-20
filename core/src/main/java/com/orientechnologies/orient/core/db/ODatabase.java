@@ -149,6 +149,14 @@ public interface ODatabase {
   public OStorage getStorage();
 
   /**
+   * Internal only: replace the storage with a new one.
+   * 
+   * @param iNewStorage
+   *          The new storage to use. Usually it's a wrapped instance of the current cluster.
+   */
+  public void replaceStorage(OStorage iNewStorage);
+
+  /**
    * Returns the level1 cache. Cannot be null.
    * 
    * @return Current cache.

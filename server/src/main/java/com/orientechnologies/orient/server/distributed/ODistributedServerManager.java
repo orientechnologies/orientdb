@@ -17,11 +17,10 @@ package com.orientechnologies.orient.server.distributed;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.server.distributed.ODistributedTask.OPERATION;
+import com.orientechnologies.orient.server.distributed.task.OAbstractDistributedTask;
 
 /**
  * Server cluster interface to abstract cluster behavior.
@@ -35,21 +34,30 @@ public interface ODistributedServerManager {
     SYNCHRONOUS, ASYNCHRONOUS, FIRE_AND_FORGET
   }
 
-  public Object executeOperation(String iNodeId, OPERATION op, String dbName, ORecordId rid, int iVersion, ORawBuffer record,
-      EXECUTION_MODE iMode) throws ODistributedException;
+  public boolean isLocalNodeOwner(final Object iKey);
 
-  public Collection<Object> executeOperation(Set<String> iNodeIds, OPERATION op, String dbName, ORecordId rid, int iVersion,
-      ORawBuffer record, EXECUTION_MODE iMode) throws ODistributedException;
+  public String getOwnerNode(final Object iKey);
+
+  public Object routeOperation2Node(Object iKey, OAbstractDistributedTask<?> iTask) throws ExecutionException;
+
+  public Object sendOperation2Node(String iNodeId, OAbstractDistributedTask<?> iTask) throws ODistributedException;
+
+  public Collection<Object> sendOperation2Nodes(Set<String> iNodeIds, OAbstractDistributedTask<?> iTask)
+      throws ODistributedException;
 
   public String getLocalNodeId();
 
   public Set<String> getRemoteNodeIds();
+
+  public Set<String> getRemoteNodeIdsBut(String iNodeId);
 
   public ODocument getDatabaseStatus(String iDatabaseName);
 
   public ODocument getDatabaseConfiguration(String iDatabaseName);
 
   public ODocument getClusterConfiguration();
+
+  public ODocument getNodeConfiguration(String iNode);
 
   public ODocument getLocalNodeConfiguration();
 

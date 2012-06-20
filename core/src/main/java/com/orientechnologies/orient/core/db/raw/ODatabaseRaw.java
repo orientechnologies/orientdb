@@ -273,6 +273,10 @@ public class ODatabaseRaw implements ODatabase {
     return storage;
   }
 
+  public void replaceStorage(final OStorage iNewStorage) {
+    storage = iNewStorage;
+  }
+
   public boolean isClosed() {
     return status == STATUS.CLOSED || storage.isClosed();
   }

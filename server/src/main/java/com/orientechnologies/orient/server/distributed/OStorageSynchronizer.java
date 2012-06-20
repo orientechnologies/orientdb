@@ -25,16 +25,17 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.ODistributedTask.OPERATION;
+import com.orientechnologies.orient.server.distributed.task.OAbstractDistributedTask;
+import com.orientechnologies.orient.server.distributed.task.OCreateRecordDistributedTask;
+import com.orientechnologies.orient.server.distributed.task.ODeleteRecordDistributedTask;
+import com.orientechnologies.orient.server.distributed.task.OUpdateRecordDistributedTask;
 
 /**
  * Manages replication across clustered nodes.
@@ -47,14 +48,12 @@ public class OStorageSynchronizer {
   private String                           storageName;
   private OStorage                         storage;
 
-  private ODocument                        configuration = new ODocument();
-  private Map<String, OSynchronizationLog> logs          = new HashMap<String, OSynchronizationLog>();
+  private Map<String, OSynchronizationLog> logs = new HashMap<String, OSynchronizationLog>();
 
   public OStorageSynchronizer(final ODistributedServerManager iCluster, final String iStorageName) {
     cluster = iCluster;
     storageName = iStorageName;
     storage = openStorage(iStorageName);
-    configuration = iCluster.getDatabaseConfiguration(iStorageName);
 
     final File replicationDirectory = new File(
         OSystemVariableResolver.resolveSystemVariables(OSynchronizationLog.SYNCHRONIZATION_DIRECTORY + "/" + iStorageName));
@@ -65,6 +64,17 @@ public class OStorageSynchronizer {
         OLogManager.instance().warn(this, "DISTRIBUTED log directory is a file instead of a directory! Delete and recreate it");
         replicationDirectory.delete();
         replicationDirectory.mkdirs();
+      } else {
+        // OPEN ALL THE LOGS
+        for (File sub : replicationDirectory.listFiles()) {
+          OSynchronizationLog localLog;
+          try {
+            localLog = new OSynchronizationLog(cluster, sub, storageName, getLogLimit().longValue());
+            logs.put(localLog.getNodeId(), localLog);
+          } catch (IOException e) {
+            OLogManager.instance().error(this, "Cannot open distributed log file: " + sub, e);
+          }
+        }
       }
     }
   }
@@ -72,6 +82,8 @@ public class OStorageSynchronizer {
   public int[] align(final String iNodeId) {
     // ALIGN THE ALL THE COFNIGURED DATABASES
     final ORecordOperation op = new ORecordOperation();
+
+    final String currentNodeId = cluster.getLocalNodeId();
 
     int[] aligned = new int[3];
     final OSynchronizationLog log = getLog(iNodeId);
@@ -88,31 +100,59 @@ public class OStorageSynchronizer {
         // RESET: SKIP IT
         continue;
 
+      boolean alignedOperation = false;
+
       final ORecordId rid = (ORecordId) op.record.getIdentity();
+
+      if (rid.isNew())
+        // IT'S THE LAST RECORD, GET IT FROM THE CLUSTER
+        rid.clusterPosition = storage.getClusterDataRange(rid.clusterId)[1];
 
       // READ THE RECORD
       final ORawBuffer record = storage.readRecord(rid, null, false, null);
       if (record == null && op.type != ORecordOperation.DELETED)
         OLogManager.instance().warn(this, "DISTRIBUTED -> align failed for record %s because doesn't exist anymore", rid);
       else {
-        final OPERATION operation = OPERATION.values()[op.type];
+        final OAbstractDistributedTask<?> task = createTaskFromOperation(op.type, currentNodeId, EXECUTION_MODE.SYNCHRONOUS, rid,
+            record);
 
         // SEND THE RECORD TO THE REMOTE NODE
-        cluster.executeOperation(iNodeId, operation, storageName, rid, op.version, record, EXECUTION_MODE.SYNCHRONOUS);
+        final Object result = cluster.sendOperation2Node(iNodeId, task);
 
-        switch (operation) {
-        case RECORD_CREATE:
-          aligned[0]++;
+        // TODO: CHECK CONFLICTS
+        switch (op.type) {
+        case ORecordOperation.CREATED:
+          if (op.record.getIdentity().getClusterPosition() != ((OPhysicalPosition) result).clusterPosition)
+            OLogManager.instance().warn(this,
+                "DISTRIBUTED -> detected conflict on aligning journaled operation #%d %s RID local %s != remote #%d:%d", i,
+                ORecordOperation.getName(op.type), rid, rid.getClusterId(), ((OPhysicalPosition) result).clusterPosition);
+          else {
+            alignedOperation = true;
+            aligned[0]++;
+          }
           break;
 
-        case RECORD_UPDATE:
-          aligned[1]++;
+        case ORecordOperation.UPDATED:
+          if (op.record.getRecord().getVersion() != ((Integer) result))
+            OLogManager.instance().warn(this,
+                "DISTRIBUTED -> detected conflict on aligning journaled operation #%d %s record %s VERSION local %d != remote %d",
+                i, ORecordOperation.getName(op.type), rid, op.record.getRecord().getVersion(), result);
+          else {
+            alignedOperation = true;
+            aligned[1]++;
+          }
           break;
 
-        case RECORD_DELETE:
+        case ORecordOperation.DELETED:
+          alignedOperation = true;
           aligned[2]++;
           break;
         }
+      }
+
+      if (!alignedOperation) {
+        OLogManager.instance().error(this, "DISTRIBUTED -> error on alignment: databases are not synchronized");
+        break;
       }
 
       try {
@@ -125,43 +165,12 @@ public class OStorageSynchronizer {
     return aligned;
   }
 
-  public boolean distributeOperation(final TYPE iType, final ORecord<?> iRecord) {
-    OPERATION operation = null;
-
-    switch (iType) {
-    // DETERMINE THE OPERATION TYPE
-    case AFTER_CREATE:
-      operation = OPERATION.RECORD_CREATE;
-      break;
-    case AFTER_UPDATE:
-      operation = OPERATION.RECORD_UPDATE;
-      break;
-    case AFTER_DELETE:
-      operation = OPERATION.RECORD_DELETE;
-      break;
-    }
-
-    if (operation != null) {
-      final ORecordId rid = (ORecordId) iRecord.getIdentity();
-
-      final String clusterName = storage.getClusterById(rid.getClusterId()).getName();
-      if (!canExecuteOperation(clusterName, operation, "out")) {
-        // IGNORE THIS CLUSTER
-        OLogManager
-            .instance()
-            .debug(
-                this,
-                "DISTRIBUTED -> skip sending operation %s against cluster '%s' to remote nodes because of the distributed configuration",
-                operation, clusterName);
-        return false;
-      }
-
-      final EXECUTION_MODE mode = getOperationMode(clusterName, operation);
-
-      for (OSynchronizationLog localLog : logs.values()) {
-        // LOG THE OPERATION BEFORE ANY CHANGE
+  public void logOperation(final byte operation, final ORecordId rid, final int iVersion, final String iNodeSource) {
+    // WRITE TO ALL THE LOGS BUT THE SOURCE NODE
+    for (OSynchronizationLog localLog : logs.values()) {
+      if (!localLog.getNodeId().equals(iNodeSource))
         try {
-          if (localLog.appendLog(operation, rid, iRecord.getVersion()) == -1) {
+          if (localLog.appendLog(operation, rid, iVersion) == -1) {
             // LIMIT REACHED: PUT THE NODE OFFLINE
             OLogManager
                 .instance()
@@ -176,85 +185,75 @@ public class OStorageSynchronizer {
                   "DISTRIBUTED -> Error on appending log in file: %s. The coherence of the cluster is not more guaranteed", e,
                   localLog);
         }
-      }
+    }
+  }
 
-      final Set<String> members = cluster.getRemoteNodeIds();
-      if (!members.isEmpty()) {
+  public void updateOperationRid(final ORecordId iRid, final int iVersion, final String iNodeSource) {
+    for (OSynchronizationLog localLog : logs.values()) {
+      // UDPATE THE LAST LOG ENTRY
+      if (!localLog.getNodeId().equals(iNodeSource))
         try {
-          cluster.executeOperation(members, operation, storageName, rid, iRecord.getVersion(), new ORawBuffer(
-              (ORecordInternal<?>) iRecord), mode);
-
-          // TODO MANAGE CONFLICTS
-          for (String member : members) {
-            final OSynchronizationLog log = getLog(member);
-            try {
-              log.success();
-            } catch (IOException e) {
-              OLogManager.instance().error(this, "DISTRIBUTED -> Error on reset log file: %s", e, log);
-            }
-          }
-        } catch (ODistributedException e) {
-          // IGNORE IT BECAUSE THE LOG
+          localLog.updateLog(iRid, iVersion);
+        } catch (IOException e) {
+          OLogManager.instance().error(this,
+              "DISTRIBUTED -> Error on updating log in file: %s. The coherence of the cluster is not more guaranteed", e, localLog);
         }
+    }
+  }
+
+  public void distributeOperation(final byte operation, final ORecordId rid, final OAbstractDistributedTask<?> iTask) {
+    // CREATE THE RIGHT TASK
+    final String clusterName = storage.getClusterById(rid.getClusterId()).getName();
+    iTask.setMode(getOperationMode(clusterName, iTask.getName()));
+    final Set<String> targetNodes = cluster.getRemoteNodeIdsBut(iTask.getNodeSource());
+
+    if (!targetNodes.isEmpty()) {
+      // RESET THE SOURCE TO AVOID LOOPS
+      iTask.setNodeSource(cluster.getLocalNodeId());
+      iTask.setRedistribute(false);
+
+      try {
+        cluster.sendOperation2Nodes(targetNodes, iTask);
+
+        // TODO MANAGE CONFLICTS
+        for (String member : targetNodes) {
+          final OSynchronizationLog log = getLog(member);
+          try {
+            log.success();
+          } catch (IOException e) {
+            OLogManager.instance().error(this, "DISTRIBUTED -> Error on reset log file: %s", e, log);
+          }
+        }
+      } catch (ODistributedException e) {
+        // IGNORE IT BECAUSE THE LOG
+        OLogManager.instance().error(this, "DISTRIBUTED -> Error on distributing operation, start buffering changes", e);
       }
     }
-
-    return false;
   }
 
-  private boolean canExecuteOperation(final String iClusterName, final OPERATION iOperation, final String iDirection) {
-    synchronized (configuration) {
-      final ODocument clusters = configuration.field("clusters");
+  private EXECUTION_MODE getOperationMode(final String iClusterName, final String iOperation) {
+    final ODocument clusters = cluster.getDatabaseConfiguration(storageName).field("clusters");
 
-      if (clusters == null)
-        return true;
+    if (clusters == null)
+      return EXECUTION_MODE.SYNCHRONOUS;
 
-      ODocument cfg = clusters.field(iClusterName);
-      if (cfg == null)
-        cfg = clusters.field("*");
+    ODocument cfg = clusters.field(iClusterName);
+    if (cfg == null)
+      cfg = clusters.field("*");
 
-      final Boolean replicationEnabled = (Boolean) cfg.field("synchronization");
-      if (replicationEnabled != null && !replicationEnabled)
-        return false;
+    ODocument operations = cfg.field("operations");
+    if (operations == null)
+      return EXECUTION_MODE.SYNCHRONOUS;
 
-      final ODocument operations = cfg.field("operations");
-      if (operations == null)
-        return true;
+    final ODocument operation = operations.field(iOperation.toLowerCase());
+    if (operation == null)
+      return EXECUTION_MODE.SYNCHRONOUS;
 
-      final ODocument operation = operations.field(iOperation.toString().toLowerCase());
-      if (operation == null)
-        return true;
+    final String mode = operation.field("mode");
+    if (mode == null)
+      return EXECUTION_MODE.SYNCHRONOUS;
 
-      final String direction = (String) operation.field("direction");
-      return direction == null || direction.contains(iDirection);
-    }
-  }
-
-  private EXECUTION_MODE getOperationMode(final String iClusterName, final OPERATION iOperation) {
-    synchronized (configuration) {
-      final ODocument clusters = configuration.field("clusters");
-
-      if (clusters == null)
-        return EXECUTION_MODE.SYNCHRONOUS;
-
-      ODocument cfg = clusters.field(iClusterName);
-      if (cfg == null)
-        cfg = clusters.field("*");
-
-      ODocument operations = cfg.field("operations");
-      if (operations == null)
-        return EXECUTION_MODE.SYNCHRONOUS;
-
-      final ODocument operation = operations.field(iOperation.toString().toLowerCase());
-      if (operation == null)
-        return EXECUTION_MODE.SYNCHRONOUS;
-
-      final String mode = operation.field("mode");
-      if (mode == null)
-        return EXECUTION_MODE.SYNCHRONOUS;
-
-      return EXECUTION_MODE.valueOf(((String) mode).toUpperCase());
-    }
+    return EXECUTION_MODE.valueOf(((String) mode).toUpperCase());
   }
 
   protected OStorage openStorage(final String iName) {
@@ -274,11 +273,7 @@ public class OStorageSynchronizer {
       OSynchronizationLog localLog = logs.get(iNodeId);
       if (localLog == null) {
         try {
-          ODocument cfg = cluster.getDatabaseConfiguration(storageName);
-
-          Number limit = cfg.field("clusters['*'][offlineMaxBuffer]");
-          if (limit == null)
-            limit = (long) -1;
+          Number limit = getLogLimit();
 
           localLog = new OSynchronizationLog(cluster, iNodeId, storageName, limit.longValue());
           logs.put(iNodeId, localLog);
@@ -291,18 +286,46 @@ public class OStorageSynchronizer {
     }
   }
 
-  protected OPERATION getOperation(final byte iRecordOperation) {
-    if (iRecordOperation == ORecordOperation.CREATED)
-      return OPERATION.RECORD_CREATE;
-    else if (iRecordOperation == ORecordOperation.UPDATED)
-      return OPERATION.RECORD_UPDATE;
-    else if (iRecordOperation == ORecordOperation.DELETED)
-      return OPERATION.RECORD_DELETE;
-    throw new IllegalArgumentException("Illegal operation read from log: " + iRecordOperation);
+  protected Number getLogLimit() {
+    // ODocument cfg = cluster.getDatabaseConfiguration(storageName);
+    //
+    // Number limit = cfg.field("clusters['*'][offlineMaxBuffer]");
+    // if (limit == null)
+    // limit = (long) -1;
+    // return limit;
+    return 1000000;
   }
 
   @Override
   public String toString() {
     return storageName;
+  }
+
+  protected OAbstractDistributedTask<?> createTaskFromOperation(final byte iOperation, final String currentNodeId,
+      final EXECUTION_MODE iMode, final ORecordId rid, final ORawBuffer record) {
+    // CREATE THE RIGHT TASK
+
+    final OAbstractDistributedTask<?> task;
+
+    switch (iOperation) {
+    case ORecordOperation.CREATED:
+      task = new OCreateRecordDistributedTask(currentNodeId, storageName, iMode, rid, record.buffer, record.version,
+          record.recordType);
+      break;
+
+    case ORecordOperation.UPDATED:
+      task = new OUpdateRecordDistributedTask(currentNodeId, storageName, iMode, rid, record.buffer, record.version,
+          record.recordType);
+      break;
+
+    case ORecordOperation.DELETED:
+      task = new ODeleteRecordDistributedTask(currentNodeId, storageName, iMode, rid, record.version);
+      break;
+
+    default:
+      throw new ODistributedException("Error on creating distributed task: Found not supported operation with code " + iOperation);
+    }
+
+    return task.setRedistribute(false);
   }
 }

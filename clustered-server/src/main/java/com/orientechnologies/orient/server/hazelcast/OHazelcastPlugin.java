@@ -22,8 +22,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import com.hazelcast.config.FileSystemXmlConfig;
@@ -33,28 +36,27 @@ import com.hazelcast.core.EntryListener;
 import com.hazelcast.core.ExecutionCallback;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.ILock;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.Member;
+import com.hazelcast.core.MemberLeftException;
 import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
 import com.hazelcast.core.MultiTask;
+import com.hazelcast.util.ConcurrentHashSet;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedRecordClusterFactory;
-import com.orientechnologies.orient.server.distributed.ODistributedTask.OPERATION;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
+import com.orientechnologies.orient.server.distributed.task.OAbstractDistributedTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 
 /**
@@ -64,14 +66,15 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
  * 
  */
 public class OHazelcastPlugin extends ODistributedAbstractPlugin implements MembershipListener, EntryListener<String, Object> {
+  private int                               nodeNumber;
   private String                            localNodeId;
   private String                            configFile         = "hazelcast.xml";
   private Map<String, Member>               remoteClusterNodes = new ConcurrentHashMap<String, Member>();
   private long                              timeOffset;
+  private Set<String>                       aligningNodes      = new ConcurrentHashSet<String>();
   private volatile static HazelcastInstance hazelcastInstance;
 
   public OHazelcastPlugin() {
-    Orient.instance().setClusterFactory(new ODistributedRecordClusterFactory());
   }
 
   @Override
@@ -91,6 +94,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     remoteClusterNodes.clear();
     synchronizers.clear();
+    aligningNodes.clear();
+
+    initDistributedDatabases();
 
     try {
       hazelcastInstance = Hazelcast.init(new FileSystemXmlConfig(configFile));
@@ -99,16 +105,21 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     }
 
     localNodeId = getNodeId(hazelcastInstance.getCluster().getLocalMember());
+    // PUT ITSELF AS ALIGNING NODE
+    aligningNodes.add(getLocalNodeId());
 
     // COMPUTE THE DELTA BETWEEN LOCAL AND CENTRAL CLUSTER TIMES
     timeOffset = System.currentTimeMillis() - getHazelcastInstance().getCluster().getClusterTime();
 
-    publishNodeConfiguration();
-
     // REGISTER CURRENT MEMBERS
-    Hazelcast.getCluster().addMembershipListener(this);
-    for (Member m : Hazelcast.getCluster().getMembers())
+    hazelcastInstance.getCluster().addMembershipListener(this);
+    for (Member m : hazelcastInstance.getCluster().getMembers())
       registerAndAlignNode(m, true);
+
+    // END OF ALIGN
+    aligningNodes.remove(getLocalNodeId());
+
+    publishNodeConfiguration();
 
     super.startup();
   }
@@ -121,21 +132,19 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     super.shutdown();
 
     remoteClusterNodes.clear();
-    Hazelcast.getCluster().removeMembershipListener(this);
+    aligningNodes.clear();
+    hazelcastInstance.getCluster().removeMembershipListener(this);
   }
 
-  public Object executeOperation(final String iNodeId, final OPERATION iOperation, final String dbName, final ORecordId rid,
-      final int iVersion, final ORawBuffer record, final EXECUTION_MODE iMode) {
+  @SuppressWarnings("unchecked")
+  public Object sendOperation2Node(final String iNodeId, final OAbstractDistributedTask<? extends Object> iTask) {
     final Member clusterMember = remoteClusterNodes.get(iNodeId);
 
     if (clusterMember == null)
       throw new ODistributedException("Remote node '" + iNodeId + "' is not configured");
 
-    OLogManager.instance().debug(this, "DISTRIBUTED -> %s %s %s{%s}", iNodeId, iOperation, dbName, rid);
-
-    final DistributedTask<Object> task = new DistributedTask<Object>(new OHazelcastReplicationTask(localNodeId, dbName, iOperation,
-        rid, record != null ? record.buffer : null, iVersion, record != null ? record.recordType : null, iMode), clusterMember);
-    Hazelcast.getExecutorService().execute(task);
+    final DistributedTask<Object> task = new DistributedTask<Object>((Callable<Object>) iTask, clusterMember);
+    hazelcastInstance.getExecutorService().execute(task);
 
     try {
       return task.get();
@@ -146,8 +155,87 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   @SuppressWarnings("unchecked")
-  public Collection<Object> executeOperation(final Set<String> iNodeIds, final OPERATION iOperation, final String dbName,
-      final ORecordId rid, final int iVersion, final ORawBuffer record, final EXECUTION_MODE iMode) throws ODistributedException {
+  public Object routeOperation2Node(final Object iKey, final OAbstractDistributedTask<? extends Object> iTask)
+      throws ExecutionException {
+
+    final String nodeId = getOwnerNode(iKey);
+
+    if (isAligningNode(nodeId)) {
+      OLogManager.instance().warn(this, "DISTRIBUTED -> node %s is aligning. Waiting for completition...", nodeId);
+      while (isAligningNode(nodeId)) {
+        try {
+          Thread.sleep(200);
+        } catch (InterruptedException e) {
+          Thread.interrupted();
+        }
+      }
+      OLogManager.instance().warn(this, "DISTRIBUTED -> node %s is aligned. Flushing pending operations...", nodeId);
+    }
+
+    try {
+      if (isLocalNodeOwner(iKey)) {
+        // AVOID TO USE EXECUTORS
+        return iTask.call();
+      } else {
+        OLogManager.instance().warn(this, "DISTRIBUTED -> routing operation %s in %s mode against %s/%s...",
+            iTask.getName().toUpperCase(), EXECUTION_MODE.SYNCHRONOUS, nodeId, iTask.getDatabaseName());
+
+        try {
+          // EXECUTES ON THE TARGET NODE
+          final DistributedTask<Object> task = new DistributedTask<Object>((Callable<Object>) iTask, iKey);
+          final Object remoteResult = executeOperation(task, EXECUTION_MODE.SYNCHRONOUS, null);
+
+          // APPLY LOCALLY TOO
+          final Object localResult = iTask.setRedistribute(false).call();
+
+          if (remoteResult != null && localResult != null)
+            if (!remoteResult.equals(localResult))
+              OLogManager.instance().warn(this,
+                  "DISTRIBUTED -> detected conflict on %s in %s mode against %s/%s: remote {%s} != local {%s}",
+                  iTask.getName().toUpperCase(), EXECUTION_MODE.SYNCHRONOUS, nodeId, iTask.getDatabaseName(), remoteResult,
+                  localResult);
+
+          return localResult;
+
+        } catch (MemberLeftException e) {
+          // RETRY
+          OLogManager
+              .instance()
+              .warn(
+                  this,
+                  "DISTRIBUTED -> error on execution of operation in %s mode against node %s because node left. Re-route it in transparent way",
+                  e, EXECUTION_MODE.SYNCHRONOUS, nodeId);
+          return routeOperation2Node(iKey, iTask);
+        }
+      }
+    } catch (ExecutionException e) {
+      OLogManager.instance().error(this, "DISTRIBUTED -> error on execution of operation in %s mode against node %s", e,
+          EXECUTION_MODE.SYNCHRONOUS, nodeId);
+      throw e;
+    } catch (InterruptedException e) {
+      Thread.interrupted();
+
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "DISTRIBUTED -> error on execution of operation in %s mode against node " + nodeId, e,
+          EXECUTION_MODE.SYNCHRONOUS, nodeId);
+      throw new ExecutionException("error on execution of operation in " + EXECUTION_MODE.SYNCHRONOUS + " mode against node %s", e);
+    }
+
+    return null;
+  }
+
+  public boolean isLocalNodeOwner(final Object iKey) {
+    return hazelcastInstance.getPartitionService().getPartition(iKey).getOwner()
+        .equals(hazelcastInstance.getCluster().getLocalMember());
+  }
+
+  public String getOwnerNode(final Object iKey) {
+    return getNodeId(hazelcastInstance.getPartitionService().getPartition(iKey).getOwner());
+  }
+
+  @SuppressWarnings("unchecked")
+  public Collection<Object> sendOperation2Nodes(final Set<String> iNodeIds, final OAbstractDistributedTask<? extends Object> iTask)
+      throws ODistributedException {
     final Set<Member> members = new HashSet<Member>();
     for (String nodeId : iNodeIds) {
       final Member m = remoteClusterNodes.get(nodeId);
@@ -158,45 +246,37 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         members.add(m);
     }
 
-    OLogManager.instance().debug(this, "DISTRIBUTED -> %s %s %s{%s}", members, iOperation, dbName, rid);
+    final MultiTask<Object> task = new MultiTask<Object>((Callable<Object>) iTask, members);
 
-    final MultiTask<Object> task = new MultiTask<Object>(new OHazelcastReplicationTask(localNodeId, dbName, iOperation, rid,
-        record.buffer, iVersion, record.recordType, iMode), members);
-
-    if (iMode == EXECUTION_MODE.SYNCHRONOUS)
-      try {
-        Hazelcast.getExecutorService().execute(task);
-        // CHECK FOR CONFLICTS
-        Collection<Object> result = task.get();
-        return result;
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "DISTRIBUTED -> error on execution of SYNCH operation against nodes: %s", members, e);
-        throw new ODistributedException("Error on executing remote operation against nodes: " + members, e);
-      }
-    else if (iMode == EXECUTION_MODE.ASYNCHRONOUS)
-      try {
-        task.setExecutionCallback(new ExecutionCallback<Collection<Object>>() {
-          @SuppressWarnings("unused")
-          @Override
-          public void done(Future<Collection<Object>> future) {
-            try {
-              if (!future.isCancelled()) {
-                // CHECK FOR CONFLICTS
-                Collection<Object> result = future.get();
-              }
-            } catch (Exception e) {
-              OLogManager.instance().error(this, "DISTRIBUTED -> error on execution of ASYNCH operation against nodes: %s",
-                  members, e);
+    ExecutionCallback<Object> callback = null;
+    if (iTask.getMode() == EXECUTION_MODE.ASYNCHRONOUS)
+      callback = new ExecutionCallback<Object>() {
+        @SuppressWarnings("unused")
+        @Override
+        public void done(Future<Object> future) {
+          try {
+            if (!future.isCancelled()) {
+              // CHECK FOR CONFLICTS
+              Object result = future.get();
             }
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "DISTRIBUTED -> error on execution of operation in ASYNCH mode against nodes: %s",
+                members, e);
           }
-        });
-        Hazelcast.getExecutorService().execute(task);
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "DISTRIBUTED -> error on execution of operation against nodes: %s", members, e);
-        throw new ODistributedException("Error on executing remote operation against nodes: " + members, e);
-      }
+        }
+      };
 
-    return null;
+    Collection<Object> result = null;
+    try {
+      result = (Collection<Object>) executeOperation(task, iTask.getMode(), callback);
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "DISTRIBUTED -> error on execution of operation in %s mode against nodes: %s", e,
+          iTask.getMode(), members);
+      throw new ODistributedException("Error on executing remote operation in " + iTask.getMode() + " mode against nodes: "
+          + members, e);
+    }
+
+    return result;
   }
 
   @Override
@@ -235,10 +315,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     cluster.field("members", members, OType.EMBEDDEDLIST);
     members.add(getLocalNodeConfiguration());
     for (Member member : remoteClusterNodes.values()) {
-      members.add((ODocument) getConfigurationMap().get("node." + getNodeId(member)));
+      members.add(getNodeConfiguration(getNodeId(member)));
     }
 
     return cluster;
+  }
+
+  public ODocument getNodeConfiguration(final String iNode) {
+    return (ODocument) getConfigurationMap().get("node." + iNode);
   }
 
   @Override
@@ -290,17 +374,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         aligned);
   }
 
-  @Override
-  public void memberRemoved(final MembershipEvent iEvent) {
-    final Member clusterMember = iEvent.getMember();
-    final String nodeId = getNodeId(clusterMember);
-
-    OLogManager.instance().warn(this, "DISTRIBUTED -> disconnected cluster node %s", nodeId);
-    remoteClusterNodes.remove(nodeId);
-
-    getConfigurationMap().remove("node." + nodeId);
-  }
-
   public long getTimeOffset() {
     return timeOffset;
   }
@@ -324,21 +397,50 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return remoteClusterNodes.keySet();
   }
 
+  public Set<String> getRemoteNodeIdsBut(final String iNodeid) {
+    final Set<String> otherNodes = remoteClusterNodes.keySet();
+    final Set<String> set = new HashSet<String>(otherNodes.size());
+    for (String item : remoteClusterNodes.keySet()) {
+      if (!item.equals(iNodeid))
+        set.add(item);
+    }
+    return set;
+  }
+
   @Override
   public void memberAdded(final MembershipEvent iEvent) {
-    registerAndAlignNode(iEvent.getMember(), false);
+    aligningNodes.add(getNodeId(iEvent.getMember()));
+  }
+
+  /**
+   * Removes the node map entry.
+   */
+  @Override
+  public void memberRemoved(final MembershipEvent iEvent) {
+    final String nodeId = getNodeId(iEvent.getMember());
+    getConfigurationMap().remove("node." + nodeId);
+    remoteClusterNodes.remove(nodeId);
   }
 
   @Override
-  public void entryAdded(EntryEvent<String, Object> event) {
-    if (event.getKey().startsWith("node."))
+  public void entryAdded(EntryEvent<String, Object> iEvent) {
+    if (iEvent.getKey().startsWith("node.")) {
+      final String nodeId = ((ODocument) iEvent.getValue()).field("id");
+      registerAndAlignNode(iEvent.getMember(), false);
+      aligningNodes.remove(nodeId);
       OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
+    }
   }
 
   @Override
-  public void entryRemoved(EntryEvent<String, Object> event) {
-    if (event.getKey().startsWith("node."))
+  public void entryRemoved(EntryEvent<String, Object> iEvent) {
+    if (iEvent.getKey().startsWith("node.")) {
+      final String nodeId = ((ODocument) iEvent.getValue()).field("id");
+      OLogManager.instance().warn(this, "DISTRIBUTED -> disconnected cluster node %s", nodeId);
+      remoteClusterNodes.remove(nodeId);
+
       OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
+    }
   }
 
   @Override
@@ -349,6 +451,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   @Override
   public void entryEvicted(EntryEvent<String, Object> event) {
+  }
+
+  public boolean isAligningNode(final String iNodeId) {
+    return aligningNodes.contains(iNodeId);
+  }
+
+  public int getNodeNumber() {
+    return nodeNumber;
   }
 
   public static HazelcastInstance getHazelcastInstance() {
@@ -374,7 +484,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       throw new ODistributedException("Node '" + nodeName
           + "' is already configured in current cluster. Assure the node ids are different");
 
-    map.put(nodeName, getLocalNodeConfiguration());
+    final ODocument nodeConfiguration = getLocalNodeConfiguration();
+    map.put(nodeName, nodeConfiguration);
     map.addEntryListener(this, true);
 
     OLogManager.instance().warn(this, "DISTRIBUTED <> published node configuration for %s", getLocalNodeId());
@@ -382,5 +493,32 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   protected IMap<String, Object> getConfigurationMap() {
     return getHazelcastInstance().getMap("orientdb");
+  }
+
+  protected ILock getLock() {
+    return getHazelcastInstance().getLock("orientdb");
+  }
+
+  protected Object executeOperation(final DistributedTask<Object> task, final EXECUTION_MODE iMode,
+      final ExecutionCallback<Object> callback) throws ExecutionException, InterruptedException {
+    if (iMode == EXECUTION_MODE.ASYNCHRONOUS)
+      task.setExecutionCallback(callback);
+
+    hazelcastInstance.getExecutorService().execute(task);
+
+    if (iMode == EXECUTION_MODE.SYNCHRONOUS)
+      return task.get();
+
+    return null;
+  }
+
+  /**
+   * Initializes distributed databases.
+   */
+  protected void initDistributedDatabases() {
+    for (Entry<String, String> storageEntry : serverInstance.getAvailableStorageNames().entrySet()) {
+      OLogManager.instance().warn(this, "DISTRIBUTED <> opening database %s...", storageEntry.getKey());
+      getDatabaseSynchronizer(storageEntry.getKey(), null);
+    }
   }
 }

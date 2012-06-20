@@ -5,7 +5,7 @@
 			<parameters>
 				<parameter name="alias" value="europe2" />
 				<parameter value="true" name="enabled" />
-				<parameter value="src/test/resources/hazelcast-1.xml" name="configuration" />
+				<parameter value="src/test/resources/hazelcast-2.xml" name="configuration" />
 				<parameter name="db.*"
 					value="{
 					    'servers' : {
