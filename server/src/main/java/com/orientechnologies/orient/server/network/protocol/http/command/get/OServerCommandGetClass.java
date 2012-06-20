@@ -15,13 +15,13 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
+import java.io.IOException;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.List;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -29,55 +29,67 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandGetClass extends OServerCommandAuthenticatedDbAbstract {
-	private static final String[]	NAMES	= { "GET|class/*" };
+  private static final String[] NAMES = { "GET|class/*" };
 
-	@Override
-	public boolean execute(final OHttpRequest iRequest) throws Exception {
-		String[] urlParts = checkSyntax(
-				iRequest.url,
-				3,
-				"Syntax error: class/<database>/<class-name>[/<limit>]<br/>Limit is optional and is setted to 20 by default. Set expressely to 0 to have no limits.");
+  @Override
+  public boolean execute(final OHttpRequest iRequest) throws Exception {
+    String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: class/<database>/<class-name>");
 
-		iRequest.data.commandInfo = "Browse class";
-		iRequest.data.commandDetail = urlParts[2];
+    iRequest.data.commandInfo = "Returns the information of a class in the schema";
+    iRequest.data.commandDetail = urlParts[2];
 
-		ODatabaseDocumentTx db = null;
+    ODatabaseDocumentTx db = null;
 
-		try {
-			db = getProfiledDatabaseInstance(iRequest);
+    try {
+      db = getProfiledDatabaseInstance(iRequest);
 
-			if (db.getMetadata().getSchema().getClass(urlParts[2]) == null)
-				throw new IllegalArgumentException("Invalid class '" + urlParts[2] + "'");
+      if (db.getMetadata().getSchema().getClass(urlParts[2]) == null)
+        throw new IllegalArgumentException("Invalid class '" + urlParts[2] + "'");
 
-			final int limit = urlParts.length > 3 ? Integer.parseInt(urlParts[3]) : 20;
+      final StringWriter buffer = new StringWriter();
+      final OJSONWriter json = new OJSONWriter(buffer, JSON_FORMAT);
+      json.beginObject();
+      exportClassSchema(db, json, db.getMetadata().getSchema().getClass(urlParts[2]));
+      json.endObject();
+      sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
+    } finally {
+      if (db != null)
+        OSharedDocumentDatabase.release(db);
+    }
+    return false;
+  }
 
-			final List<OIdentifiable> response = new ArrayList<OIdentifiable>();
-			for (ORecord<?> rec : db.browseClass(urlParts[2])) {
-				if (limit > 0 && response.size() >= limit)
-					break;
+  public void exportClassSchema(final ODatabaseRecord db, final OJSONWriter json, final OClass cls) throws IOException {
+    if (cls == null)
+      return;
 
-				response.add(rec);
-			}
+    json.write(" \"class\": ");
+    json.beginObject(1, false, null);
+    json.writeAttribute(2, true, "name", cls.getName());
 
-			if (response != null && response.size() > 0) {
-				sendRecordsContent(iRequest, response);
-			} else {
-				final StringWriter buffer = new StringWriter();
-				final OJSONWriter json = new OJSONWriter(buffer, JSON_FORMAT);
-				json.beginObject();
-				exportClassSchema(db, json, db.getMetadata().getSchema().getClass(urlParts[2]));
-				json.endObject();
-				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
-			}
-		} finally {
-			if (db != null)
-				OSharedDocumentDatabase.release(db);
-		}
-		return false;
-	}
+    if (cls.properties() != null && cls.properties().size() > 0) {
+      json.beginObject(2, true, "properties");
+      for (OProperty prop : cls.properties()) {
+        json.beginObject(3, true, prop.getName());
+        json.writeAttribute(4, true, "name", prop.getName());
+        if (prop.getLinkedClass() != null)
+          json.writeAttribute(4, true, "linkedClass", prop.getLinkedClass().getName());
+        if (prop.getLinkedType() != null)
+          json.writeAttribute(4, true, "linkedType", prop.getLinkedType().toString());
+        json.writeAttribute(4, true, "type", prop.getType().toString());
+        json.writeAttribute(4, true, "mandatory", prop.isMandatory());
+        json.writeAttribute(4, true, "notNull", prop.isNotNull());
+        json.writeAttribute(4, true, "min", prop.getMin());
+        json.writeAttribute(4, true, "max", prop.getMax());
+        json.endObject(3, true);
+      }
+      json.endObject(2, true);
+    }
+    json.endObject(1, true);
+  }
 
-	@Override
-	public String[] getNames() {
-		return NAMES;
-	}
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
 }

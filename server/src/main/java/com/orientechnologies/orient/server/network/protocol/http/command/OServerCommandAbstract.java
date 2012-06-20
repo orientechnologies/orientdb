@@ -39,234 +39,205 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 public abstract class OServerCommandAbstract implements OServerCommand {
 
-	protected static final String	JSON_FORMAT		= "type,indent:2,rid,version,attribSameRow,class";
-	private static final char[]		URL_SEPARATOR	= { '/' };
+  protected static final String JSON_FORMAT   = "type,indent:2,rid,version,attribSameRow,class";
+  private static final char[]   URL_SEPARATOR = { '/' };
 
-	/**
-	 * Default constructor. Disable cache of content at HTTP level
-	 */
-	public OServerCommandAbstract() {
-	}
+  /**
+   * Default constructor. Disable cache of content at HTTP level
+   */
+  public OServerCommandAbstract() {
+  }
 
-	@Override
-	public boolean beforeExecute(final OHttpRequest iRequest) throws IOException {
-		return true;
-	}
+  @Override
+  public boolean beforeExecute(final OHttpRequest iRequest) throws IOException {
+    return true;
+  }
 
-	protected void sendTextContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iHeaders,
-			final String iContentType, final Object iContent) throws IOException {
-		sendTextContent(iRequest, iCode, iReason, iHeaders, iContentType, iContent, true);
-	}
+  protected void sendTextContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iHeaders,
+      final String iContentType, final Object iContent) throws IOException {
+    sendTextContent(iRequest, iCode, iReason, iHeaders, iContentType, iContent, true);
+  }
 
-	protected void sendTextContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iHeaders,
-			final String iContentType, final Object iContent, final boolean iKeepAlive) throws IOException {
-		final String content;
-		final String contentType;
-		if (iRequest.url.indexOf('?') > 0 && iRequest.url.indexOf(OHttpUtils.CALLBACK_PARAMETER_NAME, iRequest.url.indexOf('?')) > 0) {
-			String callbackFunction = iRequest.url.substring(iRequest.url.indexOf(OHttpUtils.CALLBACK_PARAMETER_NAME,
-					iRequest.url.indexOf('?'))
-					+ OHttpUtils.CALLBACK_PARAMETER_NAME.length());
-			if (callbackFunction.indexOf('&') > -1)
-				callbackFunction = callbackFunction.substring(0, callbackFunction.indexOf('&'));
-			content = callbackFunction + "(" + iContent + ")";
-			contentType = "text/javascript";
-		} else {
-			content = iContent != null ? iContent.toString() : null;
-			contentType = iContentType;
-		}
+  protected void sendTextContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iHeaders,
+      final String iContentType, final Object iContent, final boolean iKeepAlive) throws IOException {
+    final String content;
+    final String contentType;
+    if (iRequest.url.indexOf('?') > 0 && iRequest.url.indexOf(OHttpUtils.CALLBACK_PARAMETER_NAME, iRequest.url.indexOf('?')) > 0) {
+      String callbackFunction = iRequest.url.substring(iRequest.url.indexOf(OHttpUtils.CALLBACK_PARAMETER_NAME,
+          iRequest.url.indexOf('?'))
+          + OHttpUtils.CALLBACK_PARAMETER_NAME.length());
+      if (callbackFunction.indexOf('&') > -1)
+        callbackFunction = callbackFunction.substring(0, callbackFunction.indexOf('&'));
+      content = callbackFunction + "(" + iContent + ")";
+      contentType = "text/javascript";
+    } else {
+      content = iContent != null ? iContent.toString() : null;
+      contentType = iContentType;
+    }
 
-		final boolean empty = content == null || content.length() == 0;
+    final boolean empty = content == null || content.length() == 0;
 
-		sendStatus(iRequest, empty && iCode == 200 ? 204 : iCode, iReason);
-		sendResponseHeaders(iRequest, contentType, iKeepAlive);
-		if (iHeaders != null)
-			writeLine(iRequest, iHeaders);
+    sendStatus(iRequest, empty && iCode == 200 ? 204 : iCode, iReason);
+    sendResponseHeaders(iRequest, contentType, iKeepAlive);
+    if (iHeaders != null)
+      writeLine(iRequest, iHeaders);
 
-		final String sessId = iRequest.sessionId != null ? iRequest.sessionId : "-";
+    final String sessId = iRequest.sessionId != null ? iRequest.sessionId : "-";
 
-		writeLine(iRequest, "Set-Cookie: " + OHttpUtils.OSESSIONID + "=" + sessId + "; Path=/; HttpOnly");
+    writeLine(iRequest, "Set-Cookie: " + OHttpUtils.OSESSIONID + "=" + sessId + "; Path=/; HttpOnly");
 
-		final byte[] binaryContent = empty ? null : OBinaryProtocol.string2bytes(content);
+    final byte[] binaryContent = empty ? null : OBinaryProtocol.string2bytes(content);
 
-		writeLine(iRequest, OHttpUtils.HEADER_CONTENT_LENGTH + (empty ? 0 : binaryContent.length));
+    writeLine(iRequest, OHttpUtils.HEADER_CONTENT_LENGTH + (empty ? 0 : binaryContent.length));
 
-		writeLine(iRequest, null);
+    writeLine(iRequest, null);
 
-		if (binaryContent != null)
-			iRequest.channel.outStream.write(binaryContent);
-		iRequest.channel.flush();
-	}
+    if (binaryContent != null)
+      iRequest.channel.outStream.write(binaryContent);
+    iRequest.channel.flush();
+  }
 
-	protected void sendStatus(final OHttpRequest iRequest, final int iStatus, final String iReason) throws IOException {
-		writeLine(iRequest, iRequest.httpVersion + " " + iStatus + " " + iReason);
-	}
+  protected void sendStatus(final OHttpRequest iRequest, final int iStatus, final String iReason) throws IOException {
+    writeLine(iRequest, iRequest.httpVersion + " " + iStatus + " " + iReason);
+  }
 
-	protected void sendResponseHeaders(final OHttpRequest iRequest, final String iContentType) throws IOException {
-		sendResponseHeaders(iRequest, iContentType, true);
-	}
+  protected void sendResponseHeaders(final OHttpRequest iRequest, final String iContentType) throws IOException {
+    sendResponseHeaders(iRequest, iContentType, true);
+  }
 
-	protected void sendResponseHeaders(final OHttpRequest iRequest, final String iContentType, final boolean iKeepAlive)
-			throws IOException {
-		onBeforeResponseHeader(iRequest);
+  protected void sendResponseHeaders(final OHttpRequest iRequest, final String iContentType, final boolean iKeepAlive)
+      throws IOException {
+    onBeforeResponseHeader(iRequest);
 
-		writeLine(iRequest, "Date: " + new Date());
-		writeLine(iRequest, "Content-Type: " + iContentType + "; charset=" + iRequest.executor.getResponseCharSet());
-		writeLine(iRequest, "Server: " + iRequest.data.serverInfo);
-		writeLine(iRequest, "Connection: " + (iKeepAlive ? "Keep-Alive" : "close"));
+    writeLine(iRequest, "Date: " + new Date());
+    writeLine(iRequest, "Content-Type: " + iContentType + "; charset=" + iRequest.executor.getResponseCharSet());
+    writeLine(iRequest, "Server: " + iRequest.data.serverInfo);
+    writeLine(iRequest, "Connection: " + (iKeepAlive ? "Keep-Alive" : "close"));
 
-		onAfterResponseHeader(iRequest);
-	}
+    onAfterResponseHeader(iRequest);
+  }
 
-	protected void onBeforeResponseHeader(final OHttpRequest iRequest) throws IOException {
-		// DEFAULT = DON'T CACHE
-		writeLine(iRequest, "Cache-Control: no-cache, no-store, max-age=0, must-revalidate\r\nPragma: no-cache");
-	}
+  protected void onBeforeResponseHeader(final OHttpRequest iRequest) throws IOException {
+    // DEFAULT = DON'T CACHE
+    writeLine(iRequest, "Cache-Control: no-cache, no-store, max-age=0, must-revalidate\r\nPragma: no-cache");
+  }
 
-	protected void onAfterResponseHeader(final OHttpRequest iRequest) throws IOException {
-	}
+  protected void onAfterResponseHeader(final OHttpRequest iRequest) throws IOException {
+  }
 
-	protected void writeLine(final OHttpRequest iRequest, final String iContent) throws IOException {
-		writeContent(iRequest, iContent);
-		iRequest.channel.outStream.write(OHttpUtils.EOL);
-	}
+  protected void writeLine(final OHttpRequest iRequest, final String iContent) throws IOException {
+    writeContent(iRequest, iContent);
+    iRequest.channel.outStream.write(OHttpUtils.EOL);
+  }
 
-	protected void writeContent(final OHttpRequest iRequest, final String iContent) throws IOException {
-		if (iContent != null)
-			iRequest.channel.outStream.write(OBinaryProtocol.string2bytes(iContent));
-	}
+  protected void writeContent(final OHttpRequest iRequest, final String iContent) throws IOException {
+    if (iContent != null)
+      iRequest.channel.outStream.write(OBinaryProtocol.string2bytes(iContent));
+  }
 
-	protected Map<String, String> getParameters(final OHttpRequest iRequest) {
-		int begin = iRequest.url.indexOf("?");
-		if (begin > -1) {
-			Map<String, String> params = new HashMap<String, String>();
-			String parameters = iRequest.url.substring(begin + 1);
-			final String[] paramPairs = parameters.split("&");
-			for (String p : paramPairs) {
-				final String[] parts = p.split("=");
-				if (parts.length == 2)
-					params.put(parts[0], parts[1]);
-			}
-			return params;
-		}
-		return Collections.emptyMap();
-	}
+  protected Map<String, String> getParameters(final OHttpRequest iRequest) {
+    int begin = iRequest.url.indexOf("?");
+    if (begin > -1) {
+      Map<String, String> params = new HashMap<String, String>();
+      String parameters = iRequest.url.substring(begin + 1);
+      final String[] paramPairs = parameters.split("&");
+      for (String p : paramPairs) {
+        final String[] parts = p.split("=");
+        if (parts.length == 2)
+          params.put(parts[0], parts[1]);
+      }
+      return params;
+    }
+    return Collections.emptyMap();
+  }
 
-	protected String[] checkSyntax(String iURL, final int iArgumentCount, final String iSyntax) {
-		final int parametersPos = iURL.indexOf('?');
-		if (parametersPos > -1)
-			iURL = iURL.substring(0, parametersPos);
+  protected String[] checkSyntax(String iURL, final int iArgumentCount, final String iSyntax) {
+    final int parametersPos = iURL.indexOf('?');
+    if (parametersPos > -1)
+      iURL = iURL.substring(0, parametersPos);
 
-		final List<String> parts = OStringSerializerHelper.smartSplit(iURL, URL_SEPARATOR, 1, -1, true);
-		if (parts.size() < iArgumentCount)
-			throw new OHttpRequestException(iSyntax);
+    final List<String> parts = OStringSerializerHelper.smartSplit(iURL, URL_SEPARATOR, 1, -1, true);
+    if (parts.size() < iArgumentCount)
+      throw new OHttpRequestException(iSyntax);
 
-		final String[] array = new String[parts.size()];
-		return parts.toArray(array);
-	}
+    final String[] array = new String[parts.size()];
+    return parts.toArray(array);
+  }
 
-	protected void sendRecordsContent(final OHttpRequest iRequest, final List<OIdentifiable> iRecords) throws IOException {
-		sendRecordsContent(iRequest, iRecords, null);
-	}
+  protected void sendRecordsContent(final OHttpRequest iRequest, final List<OIdentifiable> iRecords) throws IOException {
+    sendRecordsContent(iRequest, iRecords, null);
+  }
 
-	protected void sendRecordsContent(final OHttpRequest iRequest, final List<OIdentifiable> iRecords, final String iFetchPlan)
-			throws IOException {
-		final StringWriter buffer = new StringWriter();
-		final OJSONWriter json = new OJSONWriter(buffer, JSON_FORMAT);
-		json.beginObject();
+  protected void sendRecordsContent(final OHttpRequest iRequest, final List<OIdentifiable> iRecords, final String iFetchPlan)
+      throws IOException {
+    final StringWriter buffer = new StringWriter();
+    final OJSONWriter json = new OJSONWriter(buffer, JSON_FORMAT);
+    json.beginObject();
 
-		final String format = iFetchPlan != null ? JSON_FORMAT + ",fetchPlan:" + iFetchPlan : JSON_FORMAT;
+    final String format = iFetchPlan != null ? JSON_FORMAT + ",fetchPlan:" + iFetchPlan : JSON_FORMAT;
 
-		// WRITE RECORDS
-		json.beginCollection(1, true, "result");
-		formatCollection(iRecords, buffer, format);
-		json.endCollection(1, true);
+    // WRITE RECORDS
+    json.beginCollection(1, true, "result");
+    formatCollection(iRecords, buffer, format);
+    json.endCollection(1, true);
 
-		json.endObject();
+    json.endObject();
 
-		sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
-	}
+    sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
+  }
 
-	protected void formatCollection(final List<OIdentifiable> iRecords, final StringWriter buffer, final String format) {
-		if (iRecords != null) {
-			int counter = 0;
-			String objectJson;
-			for (OIdentifiable rec : iRecords) {
-				if (rec != null)
-					try {
-						objectJson = rec.getRecord().toJSON(format);
+  protected void formatCollection(final List<OIdentifiable> iRecords, final StringWriter buffer, final String format) {
+    if (iRecords != null) {
+      int counter = 0;
+      String objectJson;
+      for (OIdentifiable rec : iRecords) {
+        if (rec != null)
+          try {
+            objectJson = rec.getRecord().toJSON(format);
 
-						if (counter++ > 0)
-							buffer.append(", ");
+            if (counter++ > 0)
+              buffer.append(", ");
 
-						buffer.append(objectJson);
-					} catch (Exception e) {
-						OLogManager.instance().error(this, "Error transforming record " + rec.getIdentity() + " to JSON", e);
-					}
-			}
-		}
-	}
+            buffer.append(objectJson);
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error transforming record " + rec.getIdentity() + " to JSON", e);
+          }
+      }
+    }
+  }
 
-	protected void sendRecordContent(final OHttpRequest iRequest, final ORecord<?> iRecord) throws IOException {
-		sendRecordContent(iRequest, iRecord, null);
-	}
+  protected void sendRecordContent(final OHttpRequest iRequest, final ORecord<?> iRecord) throws IOException {
+    sendRecordContent(iRequest, iRecord, null);
+  }
 
-	protected void sendRecordContent(final OHttpRequest iRequest, final ORecord<?> iRecord, String iFetchPlan) throws IOException {
-		final String format = iFetchPlan != null ? JSON_FORMAT + ",fetchPlan:" + iFetchPlan : JSON_FORMAT;
-		if (iRecord != null)
-			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, iRecord.toJSON(format));
-	}
+  protected void sendRecordContent(final OHttpRequest iRequest, final ORecord<?> iRecord, String iFetchPlan) throws IOException {
+    final String format = iFetchPlan != null ? JSON_FORMAT + ",fetchPlan:" + iFetchPlan : JSON_FORMAT;
+    if (iRecord != null)
+      sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, iRecord.toJSON(format));
+  }
 
-	protected void sendBinaryContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iContentType,
-			final InputStream iContent, final long iSize) throws IOException {
-		sendStatus(iRequest, iCode, iReason);
-		sendResponseHeaders(iRequest, iContentType);
-		writeLine(iRequest, OHttpUtils.HEADER_CONTENT_LENGTH + (iSize));
-		writeLine(iRequest, null);
+  protected void sendBinaryContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iContentType,
+      final InputStream iContent, final long iSize) throws IOException {
+    sendStatus(iRequest, iCode, iReason);
+    sendResponseHeaders(iRequest, iContentType);
+    writeLine(iRequest, OHttpUtils.HEADER_CONTENT_LENGTH + (iSize));
+    writeLine(iRequest, null);
 
-		if (iContent != null) {
-			int b;
-			while ((b = iContent.read()) > -1)
-				iRequest.channel.outStream.write(b);
-		}
+    if (iContent != null) {
+      int b;
+      while ((b = iContent.read()) > -1)
+        iRequest.channel.outStream.write(b);
+    }
 
-		iRequest.channel.flush();
-	}
+    iRequest.channel.flush();
+  }
 
-	public void exportClassSchema(final ODatabaseRecord db, final OJSONWriter json, final OClass cls) throws IOException {
-		if (cls == null)
-			return;
+  protected String nextChainUrl(final String iCurrentUrl) {
+    if (!iCurrentUrl.contains("/"))
+      return iCurrentUrl;
 
-		json.write(" \"schema\": ");
-		json.beginObject(1, false, null);
-		json.writeAttribute(2, true, "name", cls.getName());
-
-		if (cls.properties() != null && cls.properties().size() > 0) {
-			json.beginObject(2, true, "properties");
-			for (OProperty prop : cls.properties()) {
-				json.beginObject(3, true, prop.getName());
-				json.writeAttribute(4, true, "name", prop.getName());
-				if (prop.getLinkedClass() != null)
-					json.writeAttribute(4, true, "linkedClass", prop.getLinkedClass().getName());
-				if (prop.getLinkedType() != null)
-					json.writeAttribute(4, true, "linkedType", prop.getLinkedType().toString());
-				json.writeAttribute(4, true, "type", prop.getType().toString());
-				json.writeAttribute(4, true, "mandatory", prop.isMandatory());
-				json.writeAttribute(4, true, "notNull", prop.isNotNull());
-				json.writeAttribute(4, true, "min", prop.getMin());
-				json.writeAttribute(4, true, "max", prop.getMax());
-				json.endObject(3, true);
-			}
-			json.endObject(2, true);
-		}
-		json.endObject(1, true);
-	}
-
-	protected String nextChainUrl(final String iCurrentUrl) {
-		if (!iCurrentUrl.contains("/"))
-			return iCurrentUrl;
-
-		return iCurrentUrl.startsWith("/") ? iCurrentUrl.substring(iCurrentUrl.indexOf('/', 1)) : iCurrentUrl.substring(iCurrentUrl
-				.indexOf("/"));
-	}
+    return iCurrentUrl.startsWith("/") ? iCurrentUrl.substring(iCurrentUrl.indexOf('/', 1)) : iCurrentUrl.substring(iCurrentUrl
+        .indexOf("/"));
+  }
 
 }
