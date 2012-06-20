@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -25,6 +27,7 @@ import java.util.Locale;
 import java.util.Set;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
@@ -32,8 +35,6 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFactory;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorFactory;
-
-import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
 
 public class OSQLEngine {
 
@@ -192,7 +193,11 @@ public class OSQLEngine {
           orientClassLoader);
       final Set<OCommandExecutorSQLFactory> factories = new HashSet<OCommandExecutorSQLFactory>();
       while (ite.hasNext()) {
-        factories.add(ite.next());
+        try {
+          factories.add(ite.next());
+        } catch (Exception e) {
+          OLogManager.instance().warn(null, "Cannot load OCommandExecutorSQLFactory instance from service registry", e);
+        }
       }
 
       EXECUTOR_FACTORIES = Collections.unmodifiableSet(factories);
