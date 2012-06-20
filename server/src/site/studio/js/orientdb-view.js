@@ -100,7 +100,7 @@ function ODocumentView(name, component, doc, options) {
 
 		// BEGIN COMMANDS
 		component = "<div id='" + this.componentId + "_header' class='row'>";
-		component += "<div class='offset6 span6 btn-group'>"
+		component += "<div class='offset5 span7 btn-group'>"
 
 				+ this.generateButton('doc_graph', 'Graph', 'icon-picture',
 						"btn", "ODocumentView.graph('" + this.name + "')")

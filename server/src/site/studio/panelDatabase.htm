@@ -20,13 +20,13 @@
 			<li><a href="#tab-db-importExport"><span>Import\Export</span> </a></li>
 		</ul>
 		<div id="tab-db-schema">
-			<table style="width: 100%;">
+			<table style="width: 100%;" cellspacing="0" cellpadding="5">
 				<tr>
 					<td valign="top">
 						<table width="100%">
 							<tr>
-								<td width="500">
-									<table id="databaseClasses" cellspacing="0" cellpadding="5" border="1" width="100%">
+								<td width="550">
+									<table id="databaseClasses" border="1" width="100%">
 									</table>
 								</td>
 								<td valign="top" align="left" width="150">
@@ -47,6 +47,14 @@
 										</tr>
 										<tr>
 											<td>
+												<button id="addClass" class="btn" style="text-align: left">
+													Add class <img border="0" alt="New record" src="images/add.png" align="top" />
+												</button>
+											</td>
+											<td>
+										</tr>
+										<tr>
+											<td>
 												<button id="deleteClass" class="btn" style="text-align: left">
 													Delete class <img border="0" alt="Delete record" src="images/delete.png" align="top" />
 												</button>
@@ -57,20 +65,6 @@
 								<td valign="top" class="help hidden-phone">Select the class to display the properties associated. Each class can store its records into
 									one or multiple <b>Clusters</b> (see "Structure" tab). A class can be <b>schema-less</b> (has no properties), <b>schema-full</b> (all
 									properties as mandatories) or with a <b>partial schema</b>.
-								</td>
-							</tr>
-							<tr>
-								<td valign="top" align="left">
-									<table>
-										<tr>
-											<td>
-												<button id="addClass" class="btn" style="text-align: left">
-													Add class <img border="0" alt="New record" src="images/add.png" align="top" />
-												</button>
-											</td>
-											<td>
-										</tr>
-									</table>
 								</td>
 							</tr>
 						</table>
@@ -86,6 +80,9 @@
 								</td>
 								<td valign="top" align="left">
 									<table>
+										<tr>
+											<td align="center"><h3>Properties</h2></td>
+										</tr>
 										<tr>
 											<td>
 												<button id="addProperty" class="btn" style="text-align: left">
@@ -117,6 +114,9 @@
 								<td valign="top" align="left">
 									<table>
 										<tr>
+											<td align="center"><h3>Indexes</h2></td>
+										</tr>
+										<tr>
 											<td>
 												<button id="addIndex" class="btn" style="text-align: left">
 													Add index <img border="0" alt="Add index" src="images/add.png" align="top" />
@@ -141,20 +141,20 @@
 		<div id="tab-db-structure">
 			<table style="width: 100%;">
 				<tr>
-					<td valign="top" width="400" class="help hidden-phone"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Cluster">Clusters</a> </b>
+					<td valign="top" width="500" class="help hidden-phone"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Cluster">Clusters</a> </b>
 						are sets of records grouped by a mean. Any mean you want to assign. You can use a Cluster like a Table of the Relational DBMS world, namely to
 						group records of the same type. Or you could want to group records by different logics. <br /> <br /> There are two kinds of clusters: <b><a
 							href="http://code.google.com/p/orient/wiki/Concepts#Local_Physical_Cluster">Physical</a> </b> and <b><a
 							href="http://code.google.com/p/orient/wiki/Concepts#In-Memory_cluster">In-memory</a> </b>. The first one is persistent, the second one is volatile.</td>
 				</tr>
 				<tr>
-					<td valign="top" width="400">
+					<td valign="top" width="500">
 						<table id="databaseClusters" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
 						</table>
 					</td>
 				</tr>
 				<tr>
-					<td valign="top" width="400" align="left">
+					<td valign="top" width="500" align="left">
 						<table>
 							<tr>
 								<td>
@@ -177,21 +177,21 @@
 					</td>
 				</tr>
 				<tr>
-					<td valign="top" width="400" class="help hidden-phone"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Data_Segment">Data
+					<td valign="top" width="500" class="help hidden-phone"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Data_Segment">Data
 								segments</a> </b> are the segments that contain data pointed by Clusters.</td>
 				</tr>
 				<tr>
-					<td valign="top" width="400">
+					<td valign="top" width="500">
 						<table id="databaseDataSegments" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
 						</table>
 					</td>
 				</tr>
 				<tr>
-					<td valign="top" width="400" class="help hidden-phone"><b>Tx Segment</b> handles the transaction log for the entire database. It's used in
+					<td valign="top" width="500" class="help hidden-phone"><b>Tx Segment</b> handles the transaction log for the entire database. It's used in
 						Transactions.</td>
 				</tr>
 				<tr>
-					<td valign="top" width="400">
+					<td valign="top" width="500">
 						<table id="databaseTxSegment" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
 						</table>
 					</td>
@@ -245,11 +245,11 @@
 				<div id="tab-security-roles">
 					<table style="width: 100%;" cellpadding="5" cellspacing="0">
 						<tr>
-							<td>
+							<td width="300">
 								<table id="databaseRoles" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
 								</table>
 							</td>
-							<td>
+							<td width="500">
 								<table id="databaseRolesRules" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
 								</table>
 							</td>
@@ -343,7 +343,7 @@
 						</table>
 						<table style='width: auto;'>
 							<tr>
-								<td><label>Input</label> <textarea style='width: auto;' id="importRecordsContent" rows="20" cols="160"></textarea></td>
+								<td><label>Input</label> <textarea style='width: auto;' id="importRecordsContent" rows="20" cols="190"></textarea></td>
 							</tr>
 						</table>
 					</div>
@@ -557,28 +557,28 @@
 		}, {
 			name : 'create',
 			index : 'create',
-			width : '80px',
+			width : '100px',
 			formatter : 'checkbox',
 			edittype : 'checkbox',
 			editable : true
 		}, {
 			name : 'read',
 			index : 'read',
-			width : '80px',
+			width : '100px',
 			formatter : 'checkbox',
 			edittype : 'checkbox',
 			editable : true
 		}, {
 			name : 'update',
 			index : 'update',
-			width : '80px',
+			width : '100px',
 			formatter : 'checkbox',
 			edittype : 'checkbox',
 			editable : true
 		}, {
 			name : 'delete',
 			index : 'delete',
-			width : '80px',
+			width : '100px',
 			formatter : 'checkbox',
 			edittype : 'checkbox',
 			editable : true
@@ -684,7 +684,8 @@
 							editable : true
 						} ], null, {
 					editurl : getStudioURL('classProperties'),
-					sortname : 'name'
+					sortname : 'name',
+					height : 150
 				});
 
 		$("#addProperty")
@@ -806,7 +807,8 @@
 							}
 						} ], null, {
 					editurl : getStudioURL('classIndexes'),
-					sortname : 'name'
+					sortname : 'name',
+					height : 100
 				});
 
 		var addIndexDialogId;
