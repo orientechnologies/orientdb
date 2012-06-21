@@ -447,6 +447,13 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
           request.method = words[0];
           request.url = URLDecoder.decode(words[1], "UTF-8").trim();
+
+          final int parametersPos = request.url.indexOf('?');
+          if (parametersPos > -1) {
+            request.parameters = OHttpUtils.getParameters(request.url.substring(parametersPos));
+            request.url = request.url.substring(0, parametersPos);
+          }
+
           request.httpVersion = words[2];
           readAllContent(request);
 

@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
+import java.util.Map;
+
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
@@ -27,29 +29,30 @@ import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttp
  * 
  */
 public class OHttpRequest {
-	public OContextConfiguration					configuration;
-	public OChannelTextServer							channel;
-	public String													method;
-	public String													authorization;
-	public String													sessionId;
-	public String													url;
-	public String													httpVersion;
-	public String													contentType;
-	public String													content;
-	public OHttpMultipartBaseInputStream	multipartStream;
-	public String													boundary;
-	public String													databaseName;
-	public boolean												isMultipart;
-	public String													ifMatch;
+  public OContextConfiguration         configuration;
+  public OChannelTextServer            channel;
+  public String                        method;
+  public String                        authorization;
+  public String                        sessionId;
+  public String                        url;
+  public Map<String, String>           parameters;
+  public String                        httpVersion;
+  public String                        contentType;
+  public String                        content;
+  public OHttpMultipartBaseInputStream multipartStream;
+  public String                        boundary;
+  public String                        databaseName;
+  public boolean                       isMultipart;
+  public String                        ifMatch;
 
-	public ONetworkProtocolData						data;
-	public ONetworkProtocolHttpAbstract		executor;
+  public ONetworkProtocolData          data;
+  public ONetworkProtocolHttpAbstract  executor;
 
-	public OHttpRequest(final ONetworkProtocolHttpAbstract iExecutor, final OChannelTextServer iChannel,
-			final ONetworkProtocolData iData, final OContextConfiguration iConfiguration) {
-		executor = iExecutor;
-		channel = iChannel;
-		data = iData;
-		configuration = iConfiguration;
-	}
+  public OHttpRequest(final ONetworkProtocolHttpAbstract iExecutor, final OChannelTextServer iChannel,
+      final ONetworkProtocolData iData, final OContextConfiguration iConfiguration) {
+    executor = iExecutor;
+    channel = iChannel;
+    data = iData;
+    configuration = iConfiguration;
+  }
 }

@@ -15,13 +15,9 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
-import java.io.IOException;
 import java.io.StringWriter;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -48,44 +44,13 @@ public class OServerCommandGetClass extends OServerCommandAuthenticatedDbAbstrac
 
       final StringWriter buffer = new StringWriter();
       final OJSONWriter json = new OJSONWriter(buffer, JSON_FORMAT);
-      json.beginObject();
-      exportClassSchema(db, json, db.getMetadata().getSchema().getClass(urlParts[2]));
-      json.endObject();
+      OServerCommandGetConnect.exportClass(db, json, db.getMetadata().getSchema().getClass(urlParts[2]));
       sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
     } finally {
       if (db != null)
         OSharedDocumentDatabase.release(db);
     }
     return false;
-  }
-
-  public void exportClassSchema(final ODatabaseRecord db, final OJSONWriter json, final OClass cls) throws IOException {
-    if (cls == null)
-      return;
-
-    json.write(" \"class\": ");
-    json.beginObject(1, false, null);
-    json.writeAttribute(2, true, "name", cls.getName());
-
-    if (cls.properties() != null && cls.properties().size() > 0) {
-      json.beginObject(2, true, "properties");
-      for (OProperty prop : cls.properties()) {
-        json.beginObject(3, true, prop.getName());
-        json.writeAttribute(4, true, "name", prop.getName());
-        if (prop.getLinkedClass() != null)
-          json.writeAttribute(4, true, "linkedClass", prop.getLinkedClass().getName());
-        if (prop.getLinkedType() != null)
-          json.writeAttribute(4, true, "linkedType", prop.getLinkedType().toString());
-        json.writeAttribute(4, true, "type", prop.getType().toString());
-        json.writeAttribute(4, true, "mandatory", prop.isMandatory());
-        json.writeAttribute(4, true, "notNull", prop.isNotNull());
-        json.writeAttribute(4, true, "min", prop.getMin());
-        json.writeAttribute(4, true, "max", prop.getMax());
-        json.endObject(3, true);
-      }
-      json.endObject(2, true);
-    }
-    json.endObject(1, true);
   }
 
   @Override

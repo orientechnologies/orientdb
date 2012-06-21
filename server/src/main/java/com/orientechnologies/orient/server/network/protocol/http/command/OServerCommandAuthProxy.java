@@ -22,6 +22,7 @@ import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 /**
  * @author luca.molino
@@ -29,44 +30,44 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionMan
  */
 public class OServerCommandAuthProxy extends OServerCommandPatternAbstract {
 
-	public static final String	DATABASE_CONF			= "database";
-	public static final String	USERNAME_CONF			= "username";
-	public static final String	USERPASSWORD_CONF	= "userpassword";
+  public static final String DATABASE_CONF     = "database";
+  public static final String USERNAME_CONF     = "username";
+  public static final String USERPASSWORD_CONF = "userpassword";
 
-	private String							databaseName;
-	private String							userName;
-	private final String				authentication;
+  private String             databaseName;
+  private String             userName;
+  private final String       authentication;
 
-	public OServerCommandAuthProxy(OServerCommandConfiguration iConfig) {
-		super(iConfig);
-		if (iConfig.parameters.length != 3)
-			throw new OConfigurationException("AuthProxy Command requires database access data.");
+  public OServerCommandAuthProxy(OServerCommandConfiguration iConfig) {
+    super(iConfig);
+    if (iConfig.parameters.length != 3)
+      throw new OConfigurationException("AuthProxy Command requires database access data.");
 
-		userName = "";
-		String userpassword = "";
-		for (OServerEntryConfiguration conf : iConfig.parameters) {
-			if (conf.name.equals(USERNAME_CONF))
-				userName = conf.value;
-			else if (conf.name.equals(USERPASSWORD_CONF))
-				userpassword = conf.value;
-			else if (conf.name.equals(DATABASE_CONF))
-				databaseName = conf.value;
-		}
-		authentication = userName + ":" + userpassword;
-	}
+    userName = "";
+    String userpassword = "";
+    for (OServerEntryConfiguration conf : iConfig.parameters) {
+      if (conf.name.equals(USERNAME_CONF))
+        userName = conf.value;
+      else if (conf.name.equals(USERPASSWORD_CONF))
+        userpassword = conf.value;
+      else if (conf.name.equals(DATABASE_CONF))
+        databaseName = conf.value;
+    }
+    authentication = userName + ":" + userpassword;
+  }
 
-	@Override
-	public boolean execute(final OHttpRequest iRequest) throws Exception {
-		iRequest.authorization = authentication;
-		checkSyntax(iRequest.url, 3, "Syntax error: " + Arrays.toString(getNames()) + "/<nextCommand>/");
-		iRequest.url = nextChainUrl(iRequest.url);
+  @Override
+  public boolean execute(final OHttpRequest iRequest) throws Exception {
+    iRequest.authorization = authentication;
+    checkSyntax(iRequest.url, 3, "Syntax error: " + Arrays.toString(getNames()) + "/<nextCommand>/");
+    iRequest.url = OHttpUtils.nextChainUrl(iRequest.url);
 
-		// CHECK THE SESSION VALIDITY
-		if (iRequest.sessionId == null || OServerCommandAuthenticatedDbAbstract.SESSIONID_LOGOUT.equals(iRequest.sessionId)
-				|| iRequest.sessionId.length() > 1 && OHttpSessionManager.getInstance().getSession(iRequest.sessionId) == null)
-			// AUTHENTICATED: CREATE THE SESSION
-			iRequest.sessionId = OHttpSessionManager.getInstance().createSession(databaseName, userName);
+    // CHECK THE SESSION VALIDITY
+    if (iRequest.sessionId == null || OServerCommandAuthenticatedDbAbstract.SESSIONID_LOGOUT.equals(iRequest.sessionId)
+        || iRequest.sessionId.length() > 1 && OHttpSessionManager.getInstance().getSession(iRequest.sessionId) == null)
+      // AUTHENTICATED: CREATE THE SESSION
+      iRequest.sessionId = OHttpSessionManager.getInstance().createSession(databaseName, userName);
 
-		return true;
-	}
+    return true;
+  }
 }

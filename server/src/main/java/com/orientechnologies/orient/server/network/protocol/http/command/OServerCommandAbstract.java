@@ -18,17 +18,11 @@ package com.orientechnologies.orient.server.network.protocol.http.command;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
@@ -135,27 +129,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
       iRequest.channel.outStream.write(OBinaryProtocol.string2bytes(iContent));
   }
 
-  protected Map<String, String> getParameters(final OHttpRequest iRequest) {
-    int begin = iRequest.url.indexOf("?");
-    if (begin > -1) {
-      Map<String, String> params = new HashMap<String, String>();
-      String parameters = iRequest.url.substring(begin + 1);
-      final String[] paramPairs = parameters.split("&");
-      for (String p : paramPairs) {
-        final String[] parts = p.split("=");
-        if (parts.length == 2)
-          params.put(parts[0], parts[1]);
-      }
-      return params;
-    }
-    return Collections.emptyMap();
-  }
-
   protected String[] checkSyntax(String iURL, final int iArgumentCount, final String iSyntax) {
-    final int parametersPos = iURL.indexOf('?');
-    if (parametersPos > -1)
-      iURL = iURL.substring(0, parametersPos);
-
     final List<String> parts = OStringSerializerHelper.smartSplit(iURL, URL_SEPARATOR, 1, -1, true);
     if (parts.size() < iArgumentCount)
       throw new OHttpRequestException(iSyntax);
@@ -231,13 +205,4 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 
     iRequest.channel.flush();
   }
-
-  protected String nextChainUrl(final String iCurrentUrl) {
-    if (!iCurrentUrl.contains("/"))
-      return iCurrentUrl;
-
-    return iCurrentUrl.startsWith("/") ? iCurrentUrl.substring(iCurrentUrl.indexOf('/', 1)) : iCurrentUrl.substring(iCurrentUrl
-        .indexOf("/"));
-  }
-
 }
