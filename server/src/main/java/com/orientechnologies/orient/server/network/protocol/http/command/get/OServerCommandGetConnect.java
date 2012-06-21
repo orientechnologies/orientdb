@@ -23,6 +23,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -81,10 +82,21 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 
       final StringWriter buffer = new StringWriter();
       final OJSONWriter json = new OJSONWriter(buffer);
-
       json.beginObject();
+
+      json.beginObject(1, true, "server");
+      json.writeAttribute(2, true, "version", OConstants.ORIENT_VERSION);
+      if (OConstants.getBuildNumber() != null)
+        json.writeAttribute(2, true, "build", OConstants.getBuildNumber());
+      json.writeAttribute(2, true, "osName", System.getProperty("os.name"));
+      json.writeAttribute(2, true, "osVersion", System.getProperty("os.version"));
+      json.writeAttribute(2, true, "osArch", System.getProperty("os.arch"));
+      json.writeAttribute(2, true, "javaVendor", System.getProperty("java.vm.vendor"));
+      json.writeAttribute(2, true, "javaVersion", System.getProperty("java.vm.version"));
+      json.endObject(1, true);
+
       if (db.getMetadata().getSchema().getClasses() != null) {
-        json.beginCollection(1, false, "classes");
+        json.beginCollection(1, true, "classes");
         Set<String> exportedNames = new HashSet<String>();
         for (OClass cls : db.getMetadata().getSchema().getClasses()) {
           if (!exportedNames.contains(cls.getName()))
