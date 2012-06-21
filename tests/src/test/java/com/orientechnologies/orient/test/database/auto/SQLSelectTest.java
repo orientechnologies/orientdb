@@ -193,7 +193,7 @@ public class SQLSelectTest {
     Assert.assertEquals(resultset.size(), 1);
     Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
 
-    // doc.delete();
+    doc.delete();
   }
 
   @Test
