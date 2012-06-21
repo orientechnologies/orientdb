@@ -659,7 +659,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       final int dataSegmentId = dataSegmentStrategy.assignDataSegmentId(this, iRecord);
 
       // SAVE IT
-      final int version = underlying.save(dataSegmentId, rid, stream, realVersion, iRecord.getRecordType(), iMode.ordinal(),
+      final int version = underlying.save(dataSegmentId, rid, stream == null ? new byte[0] : stream, realVersion, iRecord.getRecordType(), iMode.ordinal(),
           iCallback);
 
       if (isNew) {

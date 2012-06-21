@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -41,6 +33,14 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstract {
   private static final long                            serialVersionUID = 1L;
@@ -467,4 +467,19 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
     return iRecord;
   }
+
+	@Override
+	public byte[] toStream(ORecordInternal<?> iRecord, boolean iOnlyDelta) {
+		byte[] result = super.toStream(iRecord, iOnlyDelta);
+		if(result == null || result.length > 0)
+			return result;
+
+		//Fix of nasty IBM JDK bug. In case of very depth recursive graph serialization
+		//ORecordSchemaAware#_source property may be initialized incorrectly.
+		final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware)iRecord;
+		if(recordSchemaAware.fields() > 0)
+			return null;
+
+		return result;
+	}
 }

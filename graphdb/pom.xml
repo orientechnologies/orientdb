@@ -115,6 +115,7 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
+                    <argLine>-Xss1024k</argLine> <!--IBM JDK StackOverflowException fix-->
 					<systemPropertyVariables>
 						<ORIENTDB_HOME>${project.build.directory}</ORIENTDB_HOME>
 					</systemPropertyVariables>
