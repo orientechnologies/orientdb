@@ -15,17 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
@@ -36,11 +25,7 @@ import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
-import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfiguration;
+import com.orientechnologies.orient.core.config.*;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -49,15 +34,14 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 import com.orientechnologies.orient.core.tx.OTransaction;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.*;
 
 public class OStorageLocal extends OStorageEmbedded {
   private final int                     DELETE_MAX_RETRIES;
@@ -1404,7 +1388,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
     final long timer = OProfiler.getInstance().startChrono();
 
-    lock.acquireSharedLock();
+    lock.acquireExclusiveLock();
     try {
       final OPhysicalPosition ppos = new OPhysicalPosition(-1, -1, iRecordType);
 
@@ -1435,7 +1419,7 @@ public class OStorageLocal extends OStorageEmbedded {
       return null;
 
     } finally {
-      lock.releaseSharedLock();
+      lock.releaseExclusiveLock();
 
       OProfiler.getInstance().stopChrono(PROFILER_CREATE_RECORD, timer);
     }
