@@ -17,13 +17,18 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
 
+import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test(groups = { "crud", "record-document" })
 public class CRUDDocumentValidationTest {
@@ -100,6 +105,94 @@ public class CRUDDocumentValidationTest {
 
 	@Test(dependsOnMethods = "validationStrictClass")
 	public void closeDb() {
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "closeDb")
+	public void createSchemaForMandatoryNullableTest() throws ParseException {
+		database.open("admin", "admin");
+		database.command(new OCommandSQL("CREATE CLASS MyTestClass")).execute();
+		database.command(new OCommandSQL("CREATE PROPERTY MyTestClass.keyField STRING")).execute();
+		database.command(new OCommandSQL("ALTER PROPERTY MyTestClass.keyField MANDATORY true")).execute();
+		database.command(new OCommandSQL("ALTER PROPERTY MyTestClass.keyField NOTNULL true")).execute();
+		database.command(new OCommandSQL("CREATE PROPERTY MyTestClass.dateTimeField DATETIME")).execute();
+		database.command(new OCommandSQL("ALTER PROPERTY MyTestClass.dateTimeField MANDATORY true")).execute();
+		database.command(new OCommandSQL("ALTER PROPERTY MyTestClass.dateTimeField NOTNULL false")).execute();
+		database.command(new OCommandSQL("CREATE PROPERTY MyTestClass.stringField STRING")).execute();
+		database.command(new OCommandSQL("ALTER PROPERTY MyTestClass.stringField MANDATORY true")).execute();
+		database.command(new OCommandSQL("ALTER PROPERTY MyTestClass.stringField NOTNULL false")).execute();
+		database.command(new OCommandSQL("INSERT INTO MyTestClass (keyField,dateTimeField,stringField) VALUES (\"K1\",null,null)"))
+				.execute();
+		database.reload();
+		database.getStorage().reload();
+		database.getMetadata().reload();
+		database.close();
+		database.open("admin", "admin");
+		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("SELECT FROM MyTestClass WHERE keyField = ?");
+		List<ODocument> result = database.query(query, "K1");
+		Assert.assertEquals(1, result.size());
+		ODocument doc = result.get(0);
+		Assert.assertTrue(doc.containsField("keyField"));
+		Assert.assertTrue(doc.containsField("dateTimeField"));
+		Assert.assertTrue(doc.containsField("stringField"));
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "createSchemaForMandatoryNullableTest")
+	public void testUpdateDocDefined() {
+		database.open("admin", "admin");
+		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("SELECT FROM MyTestClass WHERE keyField = ?");
+		List<ODocument> result = database.query(query, "K1");
+		Assert.assertEquals(1, result.size());
+		ODocument doc = result.get(0);
+		doc.field("keyField", "K1N");
+		doc.save();
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "testUpdateDocDefined")
+	public void validationMandatoryNullableCloseDb() throws ParseException {
+		database.open("admin", "admin");
+		ODocument doc = new ODocument("MyTestClass");
+		doc.field("keyField", "K2");
+		doc.field("dateTimeField", (Date) null);
+		doc.field("stringField", (String) null);
+		doc.save();
+
+		database.close();
+		database.open("admin", "admin");
+
+		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("SELECT FROM MyTestClass WHERE keyField = ?");
+		List<ODocument> result = database.query(query, "K2");
+		Assert.assertEquals(1, result.size());
+		doc = result.get(0);
+		doc.field("keyField", "K2N");
+		doc.save();
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "validationMandatoryNullableCloseDb")
+	public void validationMandatoryNullableNoCloseDb() throws ParseException {
+		database.open("admin", "admin");
+		ODocument doc = new ODocument("MyTestClass");
+		doc.field("keyField", "K3");
+		doc.field("dateTimeField", (Date) null);
+		doc.field("stringField", (String) null);
+		doc.save();
+
+		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("SELECT FROM MyTestClass WHERE keyField = ?");
+		List<ODocument> result = database.query(query, "K3");
+		Assert.assertEquals(1, result.size());
+		doc = result.get(0);
+		doc.field("keyField", "K3N");
+		doc.save();
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "validationMandatoryNullableNoCloseDb")
+	public void dropSchemaForMandatoryNullableTest() throws ParseException {
+		database.open("admin", "admin");
+		database.command(new OCommandSQL("DROP CLASS MyTestClass")).execute();
 		database.close();
 	}
 }
