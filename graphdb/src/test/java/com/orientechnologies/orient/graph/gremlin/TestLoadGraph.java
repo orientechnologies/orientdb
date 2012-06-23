@@ -9,7 +9,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientBatchGraph;
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLReader;
 
 public class TestLoadGraph {
@@ -37,13 +37,13 @@ public class TestLoadGraph {
     OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
     OGraphDatabase db = new OGraphDatabase(DBURL);
     ODatabaseHelper.deleteDatabase(db);
-    OrientGraph g = new OrientGraph(dbURL);
+    OrientBatchGraph g = new OrientBatchGraph(dbURL);
 
     System.out.println("Importing graph from file '" + inputFile + "' into database: " + g + "...");
 
     final long startTime = System.currentTimeMillis();
 
-    GraphMLReader.inputGraph(g, new FileInputStream(inputFile), 100000, null, null, null);
+    GraphMLReader.inputGraph(g, new FileInputStream(inputFile), 10000, null, null, null);
 
     System.out.println("Imported in " + (System.currentTimeMillis() - startTime) + "ms. Vertexes: "
         + g.getRawGraph().countVertexes() + ", Edges: " + g.getRawGraph().countEdges());
