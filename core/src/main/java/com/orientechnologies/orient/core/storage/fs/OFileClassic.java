@@ -174,12 +174,12 @@ public class OFileClassic extends OAbstractFile {
 
   @Override
   public void create(int iStartSize) throws IOException {
-    super.create(HEADER_DATA_OFFSET);
+    super.create(HEADER_SIZE);
   }
 
   @Override
   protected void init() throws IOException {
-    size = (int) (osFile.length() - HEADER_DATA_OFFSET);
+    size = (int) (osFile.length() - HEADER_SIZE);
   }
 
   @Override
@@ -189,7 +189,6 @@ public class OFileClassic extends OAbstractFile {
 
   @Override
   public void setSize(final int iSize) throws IOException {
-    size = iSize;
   }
 
   @Override

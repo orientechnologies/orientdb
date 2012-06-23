@@ -104,7 +104,7 @@ public class ODatabaseJournal {
    * Returns the last operation id.
    */
   public long[] getLastOperationId() throws IOException {
-    return getOperationId(file.getFilledUpTo());
+    return getOperationId(file.getFilledUpTo()-0);
   }
 
   /**
@@ -171,12 +171,12 @@ public class ODatabaseJournal {
       final int varSize = file.readInt(iOffsetEndOperation - OFFSET_BACK_SIZE);
       final long offset = iOffsetEndOperation - OFFSET_BACK_SIZE - varSize - OFFSET_VARDATA;
 
-      //file.writeByte(offset + OFFSET_STATUS, (byte) 1);
+      file.write(offset + OFFSET_STATUS, new byte[] { 1 });
 
       if (iRid != null)
         // UPDATE THE CLUSTER POSITION: THIS IS THE CASE OF CREATE RECORD
         file.writeLong(offset + OFFSET_VARDATA + OBinaryProtocol.SIZE_SHORT, iRid.clusterPosition);
-      
+
       file.synch();
 
     } finally {
