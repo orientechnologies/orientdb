@@ -368,7 +368,7 @@ public class OTxSegment extends OSingleFileSegment {
   }
 
   private boolean eof(final long iOffset) {
-    return iOffset < file.getFilledUpTo();
+    return iOffset + OFFSET_RECORD_CONTENT < file.getFilledUpTo();
   }
 
   private long nextEntry(final long iOffset) throws IOException {
