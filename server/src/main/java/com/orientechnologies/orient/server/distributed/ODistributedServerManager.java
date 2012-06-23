@@ -18,9 +18,10 @@ package com.orientechnologies.orient.server.distributed;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.distributed.task.OAbstractDistributedTask;
+import com.orientechnologies.orient.server.task.OAbstractDistributedTask;
 
 /**
  * Server cluster interface to abstract cluster behavior.
@@ -69,5 +70,9 @@ public interface ODistributedServerManager {
    */
   public long getTimeOffset();
 
-  public OStorageSynchronizer getDatabaseSynchronizer(String iDatabaseName, String iNodeId);
+  public long getRunId();
+
+  public long incrementDistributedSerial(final String iDatabaseName);
+
+  public OStorageSynchronizer getDatabaseSynchronizer(String iDatabaseName);
 }

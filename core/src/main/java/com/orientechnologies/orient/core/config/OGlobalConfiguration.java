@@ -300,26 +300,7 @@ public enum OGlobalConfiguration {
       Level.class, Level.FINE),
 
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE("server.log.dumpClientExceptionFullStackTrace",
-      "Dumps the full stack trace of the exception to sent to the client", Level.class, Boolean.FALSE),
-
-  // DISTRIBUTED SERVERS
-  DISTRIBUTED_ASYNC_TIME_DELAY("distributed.async.timeDelay",
-      "Delay time (in ms) for synchronization with slave nodes. 0 means early synchronization", Integer.class, 0),
-
-  DISTRIBUTED_SYNC_MAXRECORDS_BUFFER("distributed.sync.maxRecordsBuffer",
-      "Maximum number of records to buffer before transmitting to slave nodes", Integer.class, 100),
-
-  DISTRIBUTED_LOG_TYPE("distributed.log.fileType", "File type to handle server logs: mmap or classic", String.class, "classic"),
-
-  DISTRIBUTED_LOG_SYNCH(
-      "distributed.log.synch",
-      "Executes a synch against the file-system at every log entry. This slows down server operations, but guarantee transaction reliability on unreliable drives",
-      Boolean.class, Boolean.FALSE),
-
-  DISTRIBUTED_ALIGN_RECORD_BLOCK("distributed.align.recordBlock",
-      "Number of records to send in block to the remote server during alignment", Integer.class, 200),
-
-  DISTRIBUTED_SOCKET_TIMEOUT("distributed.socketTimeout", "TCP/IP Socket timeout in ms", Integer.class, 2000);
+      "Dumps the full stack trace of the exception to sent to the client", Level.class, Boolean.FALSE);
 
   private final String                 key;
   private final Object                 defValue;

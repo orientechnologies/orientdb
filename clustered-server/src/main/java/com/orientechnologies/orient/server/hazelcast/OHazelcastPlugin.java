@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.hazelcast;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -56,8 +57,9 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
-import com.orientechnologies.orient.server.distributed.task.OAbstractDistributedTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
+import com.orientechnologies.orient.server.task.OAbstractDistributedTask;
+import com.orientechnologies.orient.server.task.OAlignRequestDistributedTask;
 
 /**
  * Hazelcast implementation for clustering.
@@ -72,6 +74,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   private Map<String, Member>               remoteClusterNodes = new ConcurrentHashMap<String, Member>();
   private long                              timeOffset;
   private Set<String>                       aligningNodes      = new ConcurrentHashSet<String>();
+  private long                              runId              = -1;
   private volatile static HazelcastInstance hazelcastInstance;
 
   public OHazelcastPlugin() {
@@ -104,6 +107,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       throw new OConfigurationException("Error on creating Hazelcast instance", e);
     }
 
+    // REGISTER THE CLUSTER RUN ID IF NOT PRESENT
+    getConfigurationMap().putIfAbsent("runId", hazelcastInstance.getCluster().getClusterTime());
+    runId = (Long) getConfigurationMap().get("runId");
+
     localNodeId = getNodeId(hazelcastInstance.getCluster().getLocalMember());
     // PUT ITSELF AS ALIGNING NODE
     aligningNodes.add(getLocalNodeId());
@@ -112,9 +119,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     timeOffset = System.currentTimeMillis() - getHazelcastInstance().getCluster().getClusterTime();
 
     // REGISTER CURRENT MEMBERS
-    hazelcastInstance.getCluster().addMembershipListener(this);
-    for (Member m : hazelcastInstance.getCluster().getMembers())
-      registerAndAlignNode(m, true);
+    registerAndAlignNodes();
 
     // END OF ALIGN
     aligningNodes.remove(getLocalNodeId());
@@ -134,6 +139,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     remoteClusterNodes.clear();
     aligningNodes.clear();
     hazelcastInstance.getCluster().removeMembershipListener(this);
+  }
+
+  @Override
+  public long incrementDistributedSerial(final String iDatabaseName) {
+    return hazelcastInstance.getAtomicNumber("db." + iDatabaseName).incrementAndGet();
+  }
+
+  @Override
+  public long getRunId() {
+    return runId;
   }
 
   @SuppressWarnings("unchecked")
@@ -216,7 +231,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       Thread.interrupted();
 
     } catch (Exception e) {
-      OLogManager.instance().error(this, "DISTRIBUTED -> error on execution of operation in %s mode against node " + nodeId, e,
+      OLogManager.instance().error(this, "DISTRIBUTED -> error on execution of operation in %s mode against node %s", e,
           EXECUTION_MODE.SYNCHRONOUS, nodeId);
       throw new ExecutionException("error on execution of operation in " + EXECUTION_MODE.SYNCHRONOUS + " mode against node %s", e);
     }
@@ -345,33 +360,40 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return nodeCfg;
   }
 
-  public void registerAndAlignNode(final Member clusterMember, final boolean iAlreadyPresent) {
-    final String nodeId = getNodeId(clusterMember);
-    // ALIGN THE ALL THE CONFIGURED DATABASES
-    if (getLocalNodeId().equals(nodeId)) {
-      // IT'S ME
-      return;
+  public void registerAndAlignNodes() {
+    hazelcastInstance.getCluster().addMembershipListener(this);
+
+    for (Member clusterMember : hazelcastInstance.getCluster().getMembers()) {
+      final String nodeId = getNodeId(clusterMember);
+
+      // ALIGN THE ALL THE CONFIGURED DATABASES
+      if (getLocalNodeId().equals(nodeId)) {
+        // IT'S ME
+        continue;
+      }
+
+      remoteClusterNodes.put(nodeId, clusterMember);
     }
 
-    if (iAlreadyPresent)
-      OLogManager.instance().warn(this, "DISTRIBUTED -> detected running node %s, start aligning dbs...", nodeId);
-    else
-      OLogManager.instance().warn(this, "DISTRIBUTED -> connected node %s, start aligning dbs...", nodeId);
+    OLogManager.instance().warn(this, "DISTRIBUTED -> detected running nodes %s", remoteClusterNodes.keySet());
 
-    remoteClusterNodes.put(nodeId, clusterMember);
+    synchronized (synchronizers) {
+      for (Entry<String, OStorageSynchronizer> entry : synchronizers.entrySet()) {
+        final String dbName = entry.getKey();
 
-    int aligned = 0;
-    for (OStorageSynchronizer r : synchronizers.values()) {
-      OLogManager.instance().warn(this, "DISTRIBUTED -> * db %s: aligning records...", r.toString());
-      final int[] a = r.align(nodeId);
-      final int tot = a[0] + a[1] + a[2];
-      OLogManager.instance().warn(this, "DISTRIBUTED -> * db %s: aligned %d records (%d created, %d updated, %d deleted)",
-          r.toString(), tot, a[0], a[1], a[2]);
-      aligned += tot;
+        try {
+          final long[] lastOperationId = entry.getValue().getLog().getLastOperationId();
+
+          OLogManager.instance().warn(this, "DISTRIBUTED --> send align request for database %s", dbName);
+
+          sendOperation2Nodes(remoteClusterNodes.keySet(), new OAlignRequestDistributedTask(getLocalNodeId(), dbName,
+              EXECUTION_MODE.ASYNCHRONOUS, lastOperationId[0], lastOperationId[1]));
+
+        } catch (IOException e) {
+          OLogManager.instance().warn(this, "DISTRIBUTED -> error on retrieve last operation id from the log for db %s", dbName);
+        }
+      }
     }
-
-    OLogManager.instance().warn(this, "DISTRIBUTED -> alignment completed against cluster node %s. Total records: %d", nodeId,
-        aligned);
   }
 
   public long getTimeOffset() {
@@ -426,7 +448,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public void entryAdded(EntryEvent<String, Object> iEvent) {
     if (iEvent.getKey().startsWith("node.")) {
       final String nodeId = ((ODocument) iEvent.getValue()).field("id");
-      registerAndAlignNode(iEvent.getMember(), false);
+      remoteClusterNodes.put(nodeId, iEvent.getMember());
       aligningNodes.remove(nodeId);
       OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
     }
@@ -518,7 +540,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   protected void initDistributedDatabases() {
     for (Entry<String, String> storageEntry : serverInstance.getAvailableStorageNames().entrySet()) {
       OLogManager.instance().warn(this, "DISTRIBUTED <> opening database %s...", storageEntry.getKey());
-      getDatabaseSynchronizer(storageEntry.getKey(), null);
+      getDatabaseSynchronizer(storageEntry.getKey());
     }
   }
 }

@@ -13,55 +13,48 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.distributed.task;
+package com.orientechnologies.orient.server.task;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
+import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
 /**
- * Distributed create record task used for synchronization.
+ * Distributed updated record task used for synchronization.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OCreateRecordDistributedTask extends OAbstractRecordDistributedTask<OPhysicalPosition> {
+public class OUpdateRecordDistributedTask extends OAbstractRecordDistributedTask<Integer> {
   private static final long serialVersionUID = 1L;
 
   protected byte[]          content;
   protected byte            recordType;
 
-  public OCreateRecordDistributedTask() {
+  public OUpdateRecordDistributedTask() {
   }
 
-  public OCreateRecordDistributedTask(final String nodeSource, final String iDbName, final EXECUTION_MODE iMode,
+  public OUpdateRecordDistributedTask(final String iNodeSource, final String iDbName, final EXECUTION_MODE iMode,
       final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType) {
-    super(nodeSource, iDbName, iMode, iRid, iVersion);
+    super(iNodeSource, iDbName, iMode, iRid, iVersion);
     content = iContent;
     recordType = iRecordType;
-    OLogManager.instance().debug(this, "DISTRIBUTED -> route CREATE RECORD in %s mode to %s %s{%s} v.%d", iMode, nodeSource,
-        iDbName, iRid, iVersion);
+  }
+
+  public OUpdateRecordDistributedTask(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType) {
+    super(iRid, iVersion);
+    content = iContent;
+    recordType = iRecordType;
   }
 
   @Override
-  protected OPhysicalPosition executeOnLocalNode(final OStorageSynchronizer dbSynchronizer) {
-    final OPhysicalPosition result = getStorage().createRecord(0, rid, content, version, recordType, 0, null);
-
-    if (rid.getClusterPosition() != result.clusterPosition)
-      OLogManager.instance().warn(this, "DISTRIBUTED <- detected conflict against operation %s RID local %s != remote #%d:%d",
-          getName(), rid, rid.getClusterId(), result.clusterPosition);
-
-    if (isRedistribute())
-      // LOG THE OPERATION BEFORE TO SEND TO OTHER NODES
-      dbSynchronizer.updateOperationRid(rid, result.recordVersion, getNodeSource());
-
-    return result;
+  public Integer executeOnLocalNode(final OStorageSynchronizer dbSynchronizer) {
+    return getStorage().updateRecord(rid, content, version, recordType, 0, null);
   }
 
   @Override
@@ -87,6 +80,11 @@ public class OCreateRecordDistributedTask extends OAbstractRecordDistributedTask
 
   @Override
   public String getName() {
-    return "record_create";
+    return "record_update";
+  }
+
+  @Override
+  protected OPERATION_TYPES getOperationType() {
+    return OPERATION_TYPES.RECORD_UPDATE;
   }
 }

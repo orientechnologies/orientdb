@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.distributed.task;
+package com.orientechnologies.orient.server.task;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -113,9 +113,11 @@ public abstract class OAbstractDistributedTask<T> implements Callable<T>, Extern
   }
 
   protected OStorageSynchronizer getDatabaseSynchronizer() {
-    final ODistributedServerManager dManager = (ODistributedServerManager) OServerMain.server().getVariable(
-        "ODistributedAbstractPlugin");
-    return dManager.getDatabaseSynchronizer(databaseName, nodeSource);
+    return getDistributedServerManager().getDatabaseSynchronizer(databaseName);
+  }
+
+  protected ODistributedServerManager getDistributedServerManager() {
+    return (ODistributedServerManager) OServerMain.server().getVariable("ODistributedAbstractPlugin");
   }
 
   public boolean isRedistribute() {
@@ -125,5 +127,13 @@ public abstract class OAbstractDistributedTask<T> implements Callable<T>, Extern
   public OAbstractDistributedTask<T> setRedistribute(boolean redistribute) {
     this.redistribute = redistribute;
     return this;
+  }
+
+  public void setDatabaseName(String databaseName) {
+    this.databaseName = databaseName;
+  }
+
+  protected void setAsCompleted(final OStorageSynchronizer dbSynchronizer, long operationLogOffset) throws IOException {
+    dbSynchronizer.getLog().changeOperationStatus(operationLogOffset, null);
   }
 }

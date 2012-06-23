@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -102,7 +103,7 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
 
     final Boolean synch = (Boolean) cfg.field("synchronization");
     if (synch == null || synch) {
-      getDatabaseSynchronizer(iDatabase.getName(), null);
+      getDatabaseSynchronizer(iDatabase.getName());
 
       if (iDatabase instanceof ODatabaseComplex<?>)
         ((ODatabaseComplex<?>) iDatabase).replaceStorage(new ODistributedStorage(this, ((ODatabaseComplex<?>) iDatabase)
@@ -153,16 +154,17 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
     this.offlineBuffer = offlineBuffer;
   }
 
-  public OStorageSynchronizer getDatabaseSynchronizer(final String iDatabaseName, final String iNodeId) {
+  public OStorageSynchronizer getDatabaseSynchronizer(final String iDatabaseName) {
     synchronized (synchronizers) {
       OStorageSynchronizer sync = synchronizers.get(iDatabaseName);
       if (sync == null) {
-        sync = new OStorageSynchronizer(this, iDatabaseName);
+        try {
+          sync = new OStorageSynchronizer(this, iDatabaseName);
+        } catch (IOException e) {
+          throw new ODistributedException("Cannot get the storage synchronizer for database " + iDatabaseName, e);
+        }
         synchronizers.put(iDatabaseName, sync);
       }
-
-      if (iNodeId != null && !iNodeId.equals(getLocalNodeId()))
-        sync.getLog(iNodeId);
       return sync;
     }
   }

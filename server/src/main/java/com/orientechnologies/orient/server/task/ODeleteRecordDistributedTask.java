@@ -13,66 +13,68 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.distributed.task;
+package com.orientechnologies.orient.server.task;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.server.OServerMain;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
+import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
+import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
 /**
- * Distributed task used for synchronization.
+ * Distributed delete record task used for synchronization.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OCommandDistributedTask extends OAbstractDistributedTask<Object> {
+public class ODeleteRecordDistributedTask extends OAbstractRecordDistributedTask<Boolean> {
   private static final long serialVersionUID = 1L;
 
-  protected OCommandRequest command;
+  protected ORecordId       rid;
+  protected int             version;
 
-  public OCommandDistributedTask() {
+  public ODeleteRecordDistributedTask() {
   }
 
-  public OCommandDistributedTask(final String nodeSource, final String databaseName, final EXECUTION_MODE iMode,
-      final OCommandRequest iCommand) {
-    super(nodeSource, databaseName, iMode);
-    command = iCommand;
+  public ODeleteRecordDistributedTask(final String nodeSource, final String iDbName, final EXECUTION_MODE iMode,
+      final ORecordId iRid, final int iVersion) {
+    super(nodeSource, iDbName, iMode, iRid, iVersion);
+  }
+
+  public ODeleteRecordDistributedTask(final ORecordId iRid, final int iVersion) {
+    super(iRid);
+    version = iVersion;
   }
 
   @Override
-  public Object call() throws Exception {
-    // ASSURE THE LOG IS CREATED
-    ((ODistributedServerManager) OServerMain.server().getVariable("ODistributedAbstractPlugin")).getDatabaseSynchronizer(
-        databaseName, nodeSource);
-
-    OLogManager.instance().debug(this, "DISTRIBUTED <- command: %s", command.toString());
-
-    Object result = command.execute();
-    if (mode != EXECUTION_MODE.FIRE_AND_FORGET)
-      return result;
-
-    // FIRE AND FORGET MODE: AVOID THE PAYLOAD AS RESULT
-    return null;
+  protected Boolean executeOnLocalNode(final OStorageSynchronizer dbSynchronizer) {
+    return getStorage().deleteRecord(rid, version, 0, null);
   }
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
     super.writeExternal(out);
+    out.writeUTF(rid.toString());
+    out.writeInt(version);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     super.readExternal(in);
+    rid = new ORecordId(in.readUTF());
+    version = in.readInt();
   }
 
   @Override
   public String getName() {
-    return "command";
+    return "record_delete";
+  }
+
+  @Override
+  protected OPERATION_TYPES getOperationType() {
+    return OPERATION_TYPES.RECORD_DELETE;
   }
 }

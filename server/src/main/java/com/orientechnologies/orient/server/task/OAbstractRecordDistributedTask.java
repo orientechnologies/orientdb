@@ -13,13 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.distributed.task;
+package com.orientechnologies.orient.server.task;
+
+import java.io.IOException;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
+import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
 /**
  * Distributed create record task used for synchronization.
@@ -34,12 +38,23 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
   public OAbstractRecordDistributedTask() {
   }
 
-  public OAbstractRecordDistributedTask(String nodeSource, String iDbName, EXECUTION_MODE iMode, final ORecordId iRid,
-      final int iVersion) {
+  public OAbstractRecordDistributedTask(final String nodeSource, final String iDbName, final EXECUTION_MODE iMode,
+      final ORecordId iRid, final int iVersion) {
     super(nodeSource, iDbName, iMode);
     this.rid = iRid;
     this.version = iVersion;
   }
+
+  public OAbstractRecordDistributedTask(final ORecordId iRid, final int iVersion) {
+    this.rid = iRid;
+    this.version = iVersion;
+  }
+
+  public OAbstractRecordDistributedTask(final ORecordId iRid) {
+    this.rid = iRid;
+  }
+
+  protected abstract OPERATION_TYPES getOperationType();
 
   protected abstract T executeOnLocalNode(final OStorageSynchronizer dbSynchronizer);
 
@@ -48,12 +63,30 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
       OLogManager.instance().debug(this, "DISTRIBUTED <-[%s] %s %s v.%d", nodeSource, getName(), rid, version);
 
     final OStorageSynchronizer dbSynchronizer = getDatabaseSynchronizer();
-    if (isRedistribute())
-      // LOG THE OPERATION BEFORE TO SEND TO OTHER NODES
-      dbSynchronizer.logOperation(ORecordOperation.CREATED, rid, version, nodeSource);
+
+    final long runId = getDistributedServerManager().getRunId();
+    final long operationSerial = getDistributedServerManager().incrementDistributedSerial(databaseName);
+
+    // LOG THE OPERATION BEFORE TO SEND TO OTHER NODES
+    final long operationLogOffset;
+    try {
+      operationLogOffset = dbSynchronizer.getLog().journalOperation(runId, operationSerial, getOperationType(), this);
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "DISTRIBUTED <-[%s] error on logging operation %s %s v.%d", e, nodeSource, getName(), rid,
+          version);
+      throw new ODistributedException("Error on logging operation", e);
+    }
 
     // EXECUTE IT LOCALLY
     final T result = executeOnLocalNode(dbSynchronizer);
+
+    try {
+      setAsCompleted(dbSynchronizer, operationLogOffset);
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "DISTRIBUTED <-[%s] error on changing the log status for operation %s %s v.%d", e,
+          nodeSource, getName(), rid, version);
+      throw new ODistributedException("Error on changing the log status", e);
+    }
 
     if (isRedistribute())
       // SEND OPERATION ACROSS THE CLUSTER TO THE TARGET NODES
@@ -64,5 +97,21 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
 
     // FIRE AND FORGET MODE: AVOID THE PAYLOAD AS RESULT
     return null;
+  }
+
+  public ORecordId getRid() {
+    return rid;
+  }
+
+  public void setRid(ORecordId rid) {
+    this.rid = rid;
+  }
+
+  public int getVersion() {
+    return version;
+  }
+
+  public void setVersion(int version) {
+    this.version = version;
   }
 }

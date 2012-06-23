@@ -34,10 +34,10 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.task.OCreateRecordDistributedTask;
-import com.orientechnologies.orient.server.distributed.task.ODeleteRecordDistributedTask;
-import com.orientechnologies.orient.server.distributed.task.OReadRecordDistributedTask;
-import com.orientechnologies.orient.server.distributed.task.OUpdateRecordDistributedTask;
+import com.orientechnologies.orient.server.task.OCreateRecordDistributedTask;
+import com.orientechnologies.orient.server.task.ODeleteRecordDistributedTask;
+import com.orientechnologies.orient.server.task.OReadRecordDistributedTask;
+import com.orientechnologies.orient.server.task.OUpdateRecordDistributedTask;
 
 /**
  * Distributed storage implementation that routes to the owner node the request.

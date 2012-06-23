@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.distributed.task;
+package com.orientechnologies.orient.server.task;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
+import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
 /**
  * Distributed read record task used for synchronization.
@@ -40,6 +41,10 @@ public class OReadRecordDistributedTask extends OAbstractRecordDistributedTask<O
 
   public OReadRecordDistributedTask(final String nodeSource, final String iDbName, final ORecordId iRid) {
     super(nodeSource, iDbName, EXECUTION_MODE.SYNCHRONOUS, iRid, -1);
+  }
+
+  public OReadRecordDistributedTask(final ORecordId iRid) {
+    super(iRid);
   }
 
   @Override
@@ -62,5 +67,10 @@ public class OReadRecordDistributedTask extends OAbstractRecordDistributedTask<O
   @Override
   public String getName() {
     return "record_read";
+  }
+
+  @Override
+  protected OPERATION_TYPES getOperationType() {
+    return null;
   }
 }
