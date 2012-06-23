@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
@@ -98,19 +97,6 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
   }
 
   public boolean evaluate(final ORecord<?> iRecord, final OCommandContext iContext) {
-
-    if (iRecord instanceof ORecordSchemaAware<?>) {
-      // CHECK THE TARGET CLASS
-      final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware<?>) iRecord;
-      // check only classes that specified in query will go to result set
-      if ((targetClasses != null) && (!targetClasses.isEmpty())) {
-        for (OClass targetClass : targetClasses.keySet()) {
-          if (!targetClass.isSuperClassOf(recordSchemaAware.getSchemaClass()))
-            return false;
-        }
-      }
-    }
-
     if (rootCondition == null)
       return true;
 

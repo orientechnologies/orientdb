@@ -234,6 +234,19 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   }
 
   protected boolean filter(final ORecordInternal<?> iRecord) {
+    if (iRecord instanceof ORecordSchemaAware<?>) {
+      // CHECK THE TARGET CLASS
+      final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware<?>) iRecord;
+      Map<OClass, String> targetClasses = compiledFilter.getTargetClasses();
+      // check only classes that specified in query will go to result set
+      if ((targetClasses != null) && (!targetClasses.isEmpty())) {
+        for (OClass targetClass : targetClasses.keySet()) {
+          if (!targetClass.isSuperClassOf(recordSchemaAware.getSchemaClass()))
+            return false;
+        }
+      }
+    }
+
     return compiledFilter.evaluate(iRecord, context);
   }
 
