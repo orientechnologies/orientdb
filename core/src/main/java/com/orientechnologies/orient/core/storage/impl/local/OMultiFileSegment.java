@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
+import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 
 public class OMultiFileSegment extends OSegment {
   protected OStorageSegmentConfiguration config;

@@ -15,6 +15,17 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
@@ -25,7 +36,11 @@ import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.config.*;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
+import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfiguration;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -34,14 +49,15 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 import com.orientechnologies.orient.core.tx.OTransaction;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.*;
 
 public class OStorageLocal extends OStorageEmbedded {
   private final int                     DELETE_MAX_RETRIES;
@@ -270,7 +286,8 @@ public class OStorageLocal extends OStorageEmbedded {
       clusterMap.clear();
 
       for (ODataLocal data : dataSegments)
-        data.close();
+        if (data != null)
+          data.close();
       dataSegments = new ODataLocal[0];
 
       txManager.close();
@@ -478,6 +495,9 @@ public class OStorageLocal extends OStorageEmbedded {
           "\n\n(2) Checking data chunks integrity. In this phase data segments are scanned to check the back reference into the clusters.");
 
       for (ODataLocal d : dataSegments) {
+        if (d == null)
+          continue;
+
         formatMessage(iVerbose, iListener, "\n- data-segment %s (id=%d) size=%d/%d...", d.getName(), d.getId(), d.getFilledUpTo(),
             d.getSize(), d.getHoles());
 
@@ -653,7 +673,7 @@ public class OStorageLocal extends OStorageEmbedded {
     try {
 
       for (ODataLocal d : dataSegments) {
-        if (d.getName().equalsIgnoreCase(iDataSegmentName))
+        if (d != null && d.getName().equalsIgnoreCase(iDataSegmentName))
           return d.getId();
       }
       throw new IllegalArgumentException("Data segment '" + iDataSegmentName + "' does not exist in storage '" + name + "'");
@@ -794,12 +814,12 @@ public class OStorageLocal extends OStorageEmbedded {
       if (data == null)
         return false;
 
-      data.delete();
+      data.drop();
 
       dataSegments[id] = null;
 
       // UPDATE CONFIGURATION
-      configuration.dropCluster(id);
+      configuration.dropDataSegment(id);
 
       return true;
     } catch (Exception e) {
@@ -1301,21 +1321,33 @@ public class OStorageLocal extends OStorageEmbedded {
   protected int registerDataSegment(final OStorageDataConfiguration iConfig) throws IOException {
     checkOpeness();
 
-    int pos = 0;
-
     // CHECK FOR DUPLICATION OF NAMES
     for (ODataLocal data : dataSegments)
-      if (data.getName().equals(iConfig.name)) {
+      if (data != null && data.getName().equals(iConfig.name)) {
         // OVERWRITE CONFIG
         data.config = iConfig;
         return -1;
       }
-    pos = dataSegments.length;
+
+    int pos = -1;
+
+    for (int i = 0; i < dataSegments.length; ++i)
+      if (dataSegments[i] == null) {
+        // RECYCLE POSITION
+        pos = i;
+        break;
+      }
+
+    if (pos == -1)
+      // ASSIGN LATEST
+      pos = dataSegments.length;
 
     // CREATE AND ADD THE NEW REF SEGMENT
     final ODataLocal segment = new ODataLocal(this, iConfig, pos);
 
-    dataSegments = OArrays.copyOf(dataSegments, dataSegments.length + 1);
+    if (pos == dataSegments.length)
+      dataSegments = OArrays.copyOf(dataSegments, dataSegments.length + 1);
+
     dataSegments[pos] = segment;
 
     return pos;

@@ -248,9 +248,25 @@ public class OStorageMemory extends OStorageEmbedded {
   public int addDataSegment(final String iDataSegmentName) {
     lock.acquireExclusiveLock();
     try {
+      int pos = -1;
+      for (int i = 0; i < dataSegments.size(); ++i) {
+        if (dataSegments.get(i) == null) {
+          pos = i;
+          break;
+        }
+      }
 
-      dataSegments.add(new ODataSegmentMemory(iDataSegmentName, dataSegments.size()));
-      return dataSegments.size() - 1;
+      if (pos == -1)
+        pos = dataSegments.size();
+
+      final ODataSegmentMemory dataSegment = new ODataSegmentMemory(iDataSegmentName, pos);
+
+      if (pos == dataSegments.size())
+        dataSegments.add(dataSegment);
+      else
+        dataSegments.set(pos, dataSegment);
+      
+      return pos;
 
     } finally {
       lock.releaseExclusiveLock();
@@ -604,7 +620,7 @@ public class OStorageMemory extends OStorageEmbedded {
     try {
 
       for (ODataSegmentMemory d : dataSegments)
-        if (d.getName().equalsIgnoreCase(iDataSegmentName))
+        if (d != null && d.getName().equalsIgnoreCase(iDataSegmentName))
           return d.getId();
 
       throw new IllegalArgumentException("Data segment '" + iDataSegmentName + "' does not exist in storage '" + name + "'");

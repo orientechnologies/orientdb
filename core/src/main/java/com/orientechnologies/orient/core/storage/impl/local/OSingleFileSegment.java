@@ -68,10 +68,8 @@ public class OSingleFileSegment {
   }
 
   public void delete() throws IOException {
-    if (file != null) {
+    if (file != null)
       file.delete();
-      OMMapManager.removeFile(file);
-    }
   }
 
   public void truncate() throws IOException {

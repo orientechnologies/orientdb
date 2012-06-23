@@ -205,6 +205,7 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#delete()
    */
   public void delete() throws IOException {
+    OMMapManager.removeFile(this);
     close();
     if (osFile != null) {
       boolean deleted = osFile.delete();

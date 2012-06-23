@@ -223,7 +223,7 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
     return underlying.addCluster(iType.toString(), iClusterName, null, null);
   }
 
-  public boolean dropDataSegment(String name) {
+  public boolean dropDataSegment(final String name) {
     return underlying.dropDataSegment(name);
   }
 

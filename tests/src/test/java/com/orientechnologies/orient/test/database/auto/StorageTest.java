@@ -32,45 +32,64 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 @Test(groups = "db")
 public class StorageTest {
-	private String							url;
-	private ODatabaseDocumentTx	database;
+  private String              url;
+  private ODatabaseDocumentTx database;
 
-	@Parameters(value = "url")
-	public StorageTest(String iURL) {
-		url = iURL;
-	}
+  @Parameters(value = "url")
+  public StorageTest(String iURL) {
+    url = iURL;
+  }
 
-	@Test
-	public void testCreateDataSegment() throws IOException {
-		database = new ODatabaseDocumentTx(url);
-		if (!ODatabaseHelper.existsDatabase(database))
-			ODatabaseHelper.createDatabase(database, url);
+  @Test
+  public void testCreateDataSegment() throws IOException {
+    database = new ODatabaseDocumentTx(url);
+    if (!ODatabaseHelper.existsDatabase(database))
+      ODatabaseHelper.createDatabase(database, url);
 
-		database.open("admin", "admin");
+    database.open("admin", "admin");
 
-		File tempDir = new File(System.getProperty("java.io.tmpdir") + "/binary-Segment");
-		tempDir.mkdirs();
+    File tempDir = new File(System.getProperty("java.io.tmpdir") + "/binary-Segment");
+    tempDir.mkdirs();
 
-		final int segmentId = database.addDataSegment("binary", tempDir.toString());
-		Assert.assertEquals(segmentId, 1);
-		Assert.assertEquals(database.getStorage().getDataSegmentById(1).getSize(), 0);
+    final int segmentId = database.addDataSegment("binary", tempDir.toString());
+    Assert.assertEquals(segmentId, 1);
+    Assert.assertEquals(database.getStorage().getDataSegmentById(1).getSize(), 0);
 
-		if (database.getStorage() instanceof OStorageLocal) {
-			Assert.assertTrue(new File(tempDir.toString() + "/binary.0.oda").exists());
-			Assert.assertTrue(new File(tempDir.toString() + "/binary.odh").exists());
-		}
+    if (database.getStorage() instanceof OStorageLocal) {
+      Assert.assertTrue(new File(tempDir.toString() + "/binary.0.oda").exists());
+      Assert.assertTrue(new File(tempDir.toString() + "/binary.odh").exists());
+    }
 
-		database.setDataSegmentStrategy(new ODataSegmentStrategy() {
+    database.setDataSegmentStrategy(new ODataSegmentStrategy() {
 
-			public int assignDataSegmentId(ODatabase iDatabase, ORecord<?> iRecord) {
-				return 1;
-			}
-		});
+      public int assignDataSegmentId(ODatabase iDatabase, ORecord<?> iRecord) {
+        return 1;
+      }
+    });
 
-		ODocument record = database.newInstance().field("name", "data-segment-test").save();
-		Assert.assertNotNull(record);
-		Assert.assertTrue(database.getStorage().getDataSegmentById(1).getSize() > 0);
+    ODocument record = database.newInstance().field("name", "data-segment-test").save();
+    Assert.assertNotNull(record);
+    Assert.assertTrue(database.getStorage().getDataSegmentById(1).getSize() > 0);
 
-		record.delete();
-	}
+    record.delete();
+
+    database.dropDataSegment("binary");
+    try {
+      database.getDataSegmentIdByName("binary");
+      Assert.assertTrue(false);
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(true);
+    }
+
+    final int newSegmentId = database.addDataSegment("binary", tempDir.toString());
+    Assert.assertEquals(segmentId, newSegmentId);
+
+    database.dropDataSegment("binary");
+    try {
+      database.getDataSegmentIdByName("binary");
+      Assert.assertTrue(false);
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(true);
+    }
+  }
 }

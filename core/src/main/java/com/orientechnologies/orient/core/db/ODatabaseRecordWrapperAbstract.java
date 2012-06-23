@@ -100,6 +100,12 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     return super.addDataSegment(iName, iLocation);
   }
 
+  @Override
+  public boolean dropDataSegment(final String iName) {
+    checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
+    return super.dropDataSegment(iName);
+  }
+
   public OTransaction getTransaction() {
     return underlying.getTransaction();
   }
