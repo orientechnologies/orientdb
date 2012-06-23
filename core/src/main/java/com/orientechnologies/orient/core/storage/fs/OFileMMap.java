@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.storage.fs.OMMapManager.OPERATION_TYPE;
  */
 public class OFileMMap extends OAbstractFile {
   public final static String                 NAME       = "mmap";
+  protected int                              filledUpTo;                                          // PART OF HEADER (4 bytes)
   protected MappedByteBuffer                 headerBuffer;
   protected static final Queue<ByteBuffer>   bufferPool = new ConcurrentLinkedQueue<ByteBuffer>();
 
@@ -58,6 +59,14 @@ public class OFileMMap extends OAbstractFile {
     BYTEBUFFER_POOLABLE_SIZE = OGlobalConfiguration.FILE_MMAP_BUFFER_SIZE.getValueAsInteger();
     strategy = OMMapManager.ALLOC_STRATEGY.values()[OGlobalConfiguration.FILE_MMAP_STRATEGY.getValueAsInteger()];
     return this;
+  }
+
+  public int getFileSize() {
+    return size;
+  }
+
+  public int getFilledUpTo() {
+    return filledUpTo;
   }
 
   @Override
