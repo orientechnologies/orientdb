@@ -104,7 +104,7 @@ public class ODatabaseJournal {
    * Returns the last operation id.
    */
   public long[] getLastOperationId() throws IOException {
-    return getOperationId(file.getFilledUpTo()-0);
+    return getOperationId(file.getFilledUpTo());
   }
 
   /**
@@ -237,7 +237,8 @@ public class ODatabaseJournal {
       file.writeLong(offset + OFFSET_VARDATA + varSize + OBinaryProtocol.SIZE_INT, iRunId);
       file.writeLong(offset + OFFSET_VARDATA + varSize + OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_LONG, iOperationId);
 
-      file.synch();
+      if (synchEnabled)
+        file.synch();
 
       return offset + OFFSET_VARDATA + varSize + OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_LONG;
 

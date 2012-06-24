@@ -56,14 +56,18 @@ public class OAlignRequestDistributedTask extends OAbstractDistributedTask<Long>
     int aligned = 0;
 
     final ODistributedServerManager dManager = getDistributedServerManager();
+
+    final String localNode = dManager.getLocalNodeId();
+
     final OStorageSynchronizer synchronizer = getDatabaseSynchronizer();
     final ODatabaseJournal log = synchronizer.getLog();
+
     for (Iterator<Long> it = log.browse(new long[] { lastRunId, lastOperationId }); it.hasNext();) {
       final long pos = it.next();
 
       final OAbstractDistributedTask<?> operation = log.getOperation(pos);
 
-      operation.setNodeSource(dManager.getLocalNodeId());
+      operation.setNodeSource(localNode);
       operation.setDatabaseName(databaseName);
       operation.setMode(EXECUTION_MODE.SYNCHRONOUS);
 

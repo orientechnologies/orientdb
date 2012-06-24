@@ -18,7 +18,6 @@ package com.orientechnologies.orient.server.distributed;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicLong;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.task.OAbstractDistributedTask;
@@ -34,6 +33,12 @@ public interface ODistributedServerManager {
   public enum EXECUTION_MODE {
     SYNCHRONOUS, ASYNCHRONOUS, FIRE_AND_FORGET
   }
+
+  public String getStatus();
+
+  public void setStatus(final String iStatus);
+
+  public boolean isAligningNode(final String iNodeId);
 
   public boolean isLocalNodeOwner(final Object iKey);
 
