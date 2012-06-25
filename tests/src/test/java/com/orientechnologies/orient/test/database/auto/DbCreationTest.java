@@ -229,7 +229,7 @@ public class DbCreationTest {
       try {
         ODatabaseHelper.dropDatabase(db);
       } catch (OStorageException e) {
-        Assert.assertTrue(e.getCause().getMessage().equals("Database with name 'sub/subTest' doesn't exits."));
+        Assert.assertTrue(e.getCause().getMessage().contains("doesn't exits."));
       }
       ODatabaseHelper.createDatabase(db, ur);
       Assert.assertTrue(ODatabaseHelper.existsDatabase(db));
