@@ -27,15 +27,17 @@ import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
  */
 public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstract {
 
-  public static final String KEYWORD_FROM   = "FROM";
-  public static final String KEYWORD_WHERE  = "WHERE";
-  public static final String KEYWORD_LIMIT  = "LIMIT";
-  public static final String KEYWORD_SKIP   = "SKIP";
-  public static final String KEYWORD_KEY    = "key";
-  public static final String KEYWORD_RID    = "rid";
-  public static final String CLUSTER_PREFIX = "CLUSTER:";
-  public static final String CLASS_PREFIX   = "CLASS:";
-  public static final String INDEX_PREFIX   = "INDEX:";
+  public static final String        KEYWORD_FROM   = "FROM";
+  public static final String        KEYWORD_WHERE  = "WHERE";
+  public static final String        KEYWORD_LIMIT  = "LIMIT";
+  public static final String        KEYWORD_SKIP   = "SKIP";
+  public static final String        KEYWORD_KEY    = "key";
+  public static final String        KEYWORD_RID    = "rid";
+  public static final String        CLUSTER_PREFIX = "CLUSTER:";
+  public static final String        CLASS_PREFIX   = "CLASS:";
+  public static final String        INDEX_PREFIX   = "INDEX:";
+
+  protected transient StringBuilder tempParseWord  = new StringBuilder();
 
   @Override
   public OCommandExecutorSQLAbstract init(String iText) {
@@ -48,5 +50,31 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
   public boolean isIdempotent() {
     return false;
+  }
+
+  protected String parseOptionalWord(final boolean iUpperCase) {
+    currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, tempParseWord, iUpperCase);
+    return tempParseWord.toString();
+  }
+
+  protected String parseRequiredWord(final boolean iUpperCase) {
+    return parseRequiredWord(iUpperCase, "Syntax error");
+  }
+
+  protected String parseRequiredWord(final boolean iUpperCase, final String iCustomMessage) {
+    int newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, tempParseWord, iUpperCase);
+    if (newPos == -1)
+      throw new OCommandSQLParsingException(iCustomMessage + ". Use " + getSyntax(), text, currentPos);
+    currentPos = newPos;
+    return tempParseWord.toString();
+  }
+
+  protected void parseRequiredWords(final String... iWords) {
+    for (String w : iWords) {
+      int newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, tempParseWord, true);
+      if (newPos == -1 || !tempParseWord.toString().equals(w))
+        throw new OCommandSQLParsingException("Keyword " + w + " not found. Use " + getSyntax(), text, currentPos);
+      currentPos = newPos;
+    }
   }
 }

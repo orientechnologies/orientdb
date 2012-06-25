@@ -15,6 +15,23 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
@@ -38,22 +55,6 @@ import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 @Test(groups = { "index" })
 public class IndexTest {
@@ -63,9 +64,9 @@ public class IndexTest {
   @BeforeMethod
   public void beforeMethod() {
     database.open("admin", "admin");
-		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
-		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
-		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.base");
+    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
+    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
+    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.base");
   }
 
   @AfterMethod
@@ -1410,24 +1411,24 @@ public class IndexTest {
       keys.add(key);
     }
 
-		Assert.assertEquals(idx.getKeySize(), keys.size());
+    Assert.assertEquals(idx.getKeySize(), keys.size());
   }
 
-	public void testNotUniqueIndexSize() {
-		OIndexManager idxManager = database.getMetadata().getIndexManager();
-		idxManager.createIndex("IndexNotUniqueIndexSize", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null);
+  public void testNotUniqueIndexSize() {
+    OIndexManager idxManager = database.getMetadata().getIndexManager();
+    idxManager.createIndex("IndexNotUniqueIndexSize", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null);
 
-		final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("IndexNotUniqueIndexSize");
+    final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("IndexNotUniqueIndexSize");
 
-		for (int i = 1; i < 100; i++) {
-			final Integer key = (int) Math.log(i);
+    for (int i = 1; i < 100; i++) {
+      final Integer key = (int) Math.log(i);
 
-			final ODocument doc = new ODocument();
-			doc.save();
+      final ODocument doc = new ODocument();
+      doc.save();
 
-			idx.put(key, doc);
-		}
+      idx.put(key, doc);
+    }
 
-		Assert.assertEquals(idx.getSize(), 99);
-	}
+    Assert.assertEquals(idx.getSize(), 99);
+  }
 }

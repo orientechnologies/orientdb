@@ -31,33 +31,33 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
 
   protected int                 parameterCounter = 0;
 
-  protected int parseSetFields(final StringBuilder word, int pos, final Map<String, Object> fields) {
+  protected int parseSetFields(final Map<String, Object> fields) {
     String fieldName;
     String fieldValue;
-    int newPos = pos;
+    int newPos = currentPos;
 
-    while (pos != -1 && (fields.size() == 0 || word.toString().equals(","))) {
-      newPos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
+    while (currentPos != -1 && (fields.size() == 0 || tempParseWord.toString().equals(","))) {
+      newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, tempParseWord, false);
       if (newPos == -1)
-        throw new OCommandSQLParsingException("Field name expected", text, pos);
-      pos = newPos;
+        throw new OCommandSQLParsingException("Field name expected", text, currentPos);
+      currentPos = newPos;
 
-      fieldName = word.toString();
+      fieldName = tempParseWord.toString();
 
-      newPos = OStringParser.jumpWhiteSpaces(text, pos);
+      newPos = OStringParser.jumpWhiteSpaces(text, currentPos);
 
       if (newPos == -1 || text.charAt(newPos) != '=')
-        throw new OCommandSQLParsingException("Character '=' was expected", text, pos);
+        throw new OCommandSQLParsingException("Character '=' was expected", text, currentPos);
 
-      pos = newPos + 1;
-      newPos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false, " =><");
-      if (pos == -1)
-        throw new OCommandSQLParsingException("Value expected", text, pos);
+      currentPos = newPos + 1;
+      newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, tempParseWord, false, " =><");
+      if (currentPos == -1)
+        throw new OCommandSQLParsingException("Value expected", text, currentPos);
 
-      fieldValue = word.toString();
+      fieldValue = tempParseWord.toString();
 
       if (fieldValue.startsWith("{") || fieldValue.startsWith("[") || fieldValue.startsWith("[")) {
-        newPos = OStringParser.jumpWhiteSpaces(text, pos);
+        newPos = OStringParser.jumpWhiteSpaces(text, currentPos);
         final StringBuilder buffer = new StringBuilder();
         newPos = OStringSerializerHelper.parse(text, buffer, newPos, -1, OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true,
             OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
@@ -65,22 +65,22 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
       }
 
       if (fieldValue.endsWith(",")) {
-        pos = newPos - 1;
+        currentPos = newPos - 1;
         fieldValue = fieldValue.substring(0, fieldValue.length() - 1);
       } else
-        pos = newPos;
+        currentPos = newPos;
 
       // INSERT TRANSFORMED FIELD VALUE
       fields.put(fieldName, getFieldValueCountingParameters(fieldValue));
 
-      pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+      currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, tempParseWord, true);
     }
 
     if (fields.size() == 0)
       throw new OCommandSQLParsingException("Entries to set <field> = <value> are missed. Example: name = 'Bill', salary = 300.2",
-          text, pos);
+          text, currentPos);
 
-    return pos;
+    return currentPos;
   }
 
   protected Object getFieldValueCountingParameters(String fieldValue) {

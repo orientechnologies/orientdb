@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 
 public abstract class OStringSerializerHelper {
   public static final char                RECORD_SEPARATOR        = ',';
@@ -739,6 +740,50 @@ public abstract class OStringSerializerHelper {
           return i;
       }
     }
+    return -1;
+  }
+
+  /**
+   * Finds the end of a block delimited by 2 chars.
+   */
+  public static final int findEndBlock(final String iOrigin, final char iBeginChar, final char iEndChar, final int iBeginOffset) {
+    int inc = 0;
+
+    for (int i = iBeginOffset; i < iOrigin.length(); i++) {
+      char c = iOrigin.charAt(i);
+      if (c == '\'') {
+        // skip to text end
+        int tend = i;
+        while (true) {
+          tend = iOrigin.indexOf('\'', tend + 1);
+          if (tend < 0) {
+            throw new OCommandSQLParsingException("Could not find end of text area.");
+          }
+
+          if (iOrigin.charAt(tend - 1) == '\\') {
+            // inner quote, skip it
+            continue;
+          } else {
+            break;
+          }
+        }
+        i = tend;
+        continue;
+      }
+
+      if (c != iBeginChar && c != iEndChar)
+        continue;
+
+      if (c == iBeginChar) {
+        inc++;
+      } else if (c == iEndChar) {
+        inc--;
+        if (inc == 0) {
+          return i;
+        }
+      }
+    }
+
     return -1;
   }
 }
