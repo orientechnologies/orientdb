@@ -15,7 +15,9 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -25,10 +27,12 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
@@ -85,6 +89,30 @@ public class JSONTest {
 		Assert.assertEquals(d.field("name"), "Luca");
 		d = ((List<ODocument>) loadedDoc.field("embeddedList")).get(1);
 		Assert.assertEquals(d.field("name"), "Marcus");
+	}
+
+	@Test
+	public void testListToJSON() {
+
+		final ArrayList<ODocument> list = new ArrayList<ODocument>();
+		ODocument first = new ODocument().field("name", "Luca");
+		ODocument second = new ODocument().field("name", "Marcus");
+		list.add(first);
+		list.add(second);
+
+		try {
+			String jsonResult = OJSONWriter.listToJSON(list);
+			ODocument doc = new ODocument();
+			doc.fromJSON("{\"result\": " + jsonResult + "}");
+			Collection<ODocument> result = doc.field("result");
+			Assert.assertTrue(result instanceof Collection);
+			Assert.assertEquals(result.size(), 2);
+			for (ODocument resultDoc : result) {
+				Assert.assertTrue(first.hasSameContentOf(resultDoc) || second.hasSameContentOf(resultDoc));
+			}
+		} catch (IOException e) {
+			OLogManager.instance().error(this, "Error converting record list to JSON.", e);
+		}
 	}
 
 	@Test
