@@ -42,7 +42,6 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware {
   public static final String        KEYWORD_INSERT = "INSERT";
   private static final String       KEYWORD_VALUES = "VALUES";
-  private static final String       KEYWORD_INTO   = "INTO";
   private static final String       KEYWORD_SET    = "SET";
   private String                    className      = null;
   private String                    clusterName    = null;
@@ -59,7 +58,8 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware {
     className = null;
     newRecords = null;
 
-    parseRequiredWords("INSERT", "INTO");
+    parseRequiredKeyword("INSERT");
+    parseRequiredKeyword("INTO");
 
     String subjectName = parseRequiredWord(true, "Invalid subject name. Expected cluster, class or index");
     if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX))

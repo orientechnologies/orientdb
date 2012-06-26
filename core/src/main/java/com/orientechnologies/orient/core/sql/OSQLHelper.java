@@ -271,6 +271,9 @@ public class OSQLHelper {
 
   public static void bindParameters(final ODocument iDocument, final Map<String, Object> iFields,
       final OCommandParameters iArguments) {
+    if (iFields == null)
+      return;
+
     // BIND VALUES
     for (Entry<String, Object> field : iFields.entrySet())
       iDocument.field(field.getKey(), resolveFieldValue(iDocument, field.getKey(), field.getValue(), iArguments));

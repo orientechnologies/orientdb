@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.Arrays;
 import java.util.Locale;
 
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
@@ -54,6 +55,29 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
   protected String parseOptionalWord(final boolean iUpperCase) {
     currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, tempParseWord, iUpperCase);
+    if (currentPos == -1)
+      return null;
+    return tempParseWord.toString();
+  }
+
+  protected String parseOptionalWord(final boolean iUpperCase, final String... iWords) {
+    currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, tempParseWord, iUpperCase);
+
+    if (currentPos == -1)
+      return null;
+
+    boolean found = false;
+    for (String w : iWords) {
+      if (tempParseWord.toString().equals(w)) {
+        found = true;
+        break;
+      }
+    }
+
+    if (!found)
+      throw new OCommandSQLParsingException("Found unexpected keyword '" + tempParseWord + "' while it was expected '"
+          + Arrays.toString(iWords) + "'. Use " + getSyntax(), text, currentPos);
+
     return tempParseWord.toString();
   }
 
@@ -69,12 +93,24 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     return tempParseWord.toString();
   }
 
-  protected void parseRequiredWords(final String... iWords) {
+  protected void parseRequiredKeyword(final String... iWords) {
+    int newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, tempParseWord, true);
+    if (newPos == -1)
+      throw new OCommandSQLParsingException("Cannot find expected keyword '" + Arrays.toString(iWords) + "'. Use " + getSyntax(),
+          text, currentPos);
+
+    boolean found = false;
     for (String w : iWords) {
-      int newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, tempParseWord, true);
-      if (newPos == -1 || !tempParseWord.toString().equals(w))
-        throw new OCommandSQLParsingException("Keyword " + w + " not found. Use " + getSyntax(), text, currentPos);
-      currentPos = newPos;
+      if (tempParseWord.toString().equals(w)) {
+        found = true;
+        break;
+      }
     }
+
+    if (!found)
+      throw new OCommandSQLParsingException("Found unexpected keyword '" + tempParseWord + "' while it was expected '"
+          + Arrays.toString(iWords) + "'. Use " + getSyntax(), text, currentPos);
+
+    currentPos = newPos;
   }
 }

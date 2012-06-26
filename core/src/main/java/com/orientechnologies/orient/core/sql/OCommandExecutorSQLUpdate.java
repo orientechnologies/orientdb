@@ -83,7 +83,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     query = null;
     recordCount = 0;
 
-    parseRequiredWords("UPDATE");
+    parseRequiredKeyword("UPDATE");
 
     subjectName = parseRequiredWord(true, "Invalid target");
 
