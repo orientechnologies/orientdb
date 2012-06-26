@@ -412,6 +412,9 @@ public class OFetchHelper {
 
     iContext.onBeforeCollection(iRootRecord, fieldName, iUserObject, linked);
     for (OIdentifiable d : linked) {
+      if (d == null)
+        continue;
+      
       // GO RECURSIVELY
       final Integer fieldDepthLevel = parsedRecords.get(d.getIdentity());
       if (!d.getIdentity().isValid() || (fieldDepthLevel != null && fieldDepthLevel.intValue() == iLevelFromRoot)) {
