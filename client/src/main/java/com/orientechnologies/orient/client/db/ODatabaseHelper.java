@@ -82,6 +82,8 @@ public class ODatabaseHelper {
     // LOAD SERVER CONFIG FILE TO EXTRACT THE ROOT'S PASSWORD
     File file = new File("../releases/orientdb-" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
     if (!file.exists())
+      file = new File("../../releases/orientdb-" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
+    if (!file.exists())
       file = new File(iDirectory + "/config/orientdb-server-config.xml");
     if (!file.exists())
       file = new File("../" + iDirectory + "/config/orientdb-server-config.xml");
@@ -89,7 +91,9 @@ public class ODatabaseHelper {
       file = new File(OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME
           + "}/config/orientdb-server-config.xml"));
     if (!file.exists())
-      throw new OConfigurationException("Cannot load file orientdb-server-config.xml to execute remote tests");
+      throw new OConfigurationException(
+          "Cannot load file orientdb-server-config.xml to execute remote tests. Current directory is "
+              + new File(".").getAbsolutePath());
 
     FileReader f = new FileReader(file);
     final char[] buffer = new char[(int) file.length()];

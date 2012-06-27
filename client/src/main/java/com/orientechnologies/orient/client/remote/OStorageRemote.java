@@ -84,38 +84,39 @@ import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEvent
  * This object is bound to each remote ODatabase instances.
  */
 public class OStorageRemote extends OStorageAbstract {
-  private static final String               DEFAULT_HOST         = "localhost";
-  private static final int                  DEFAULT_PORT         = 2424;
-  private static final String               ADDRESS_SEPARATOR    = ";";
+  private static final String              DEFAULT_HOST         = "localhost";
+  private static final int                 DEFAULT_PORT         = 2424;
+  private static final String              ADDRESS_SEPARATOR    = ";";
 
-  public static final String                PARAM_MIN_POOL       = "minpool";
-  public static final String                PARAM_MAX_POOL       = "maxpool";
-  public static final String                PARAM_DB_TYPE        = "dbtype";
+  public static final String               PARAM_MIN_POOL       = "minpool";
+  public static final String               PARAM_MAX_POOL       = "maxpool";
+  public static final String               PARAM_DB_TYPE        = "dbtype";
 
-  private static final String               DRIVER_NAME          = "OrientDB Java";
+  private static final String              DRIVER_NAME          = "OrientDB Java";
 
-  private final ExecutorService             asynchExecutor;
-  private OAsynchChannelServiceThread       serviceThread;
-  private OContextConfiguration             clientConfiguration;
-  private int                               connectionRetry;
-  private int                               connectionRetryDelay;
+  private final ExecutorService            asynchExecutor;
+  private OAsynchChannelServiceThread      serviceThread;
+  private OContextConfiguration            clientConfiguration;
+  private int                              connectionRetry;
+  private int                              connectionRetryDelay;
 
-  private static List<OChannelBinaryClient> networkPool          = new ArrayList<OChannelBinaryClient>();
-  protected final List<String>              serverURLs           = new ArrayList<String>();
-  private OCluster[]                        clusters             = new OCluster[0];
-  protected final Map<String, OCluster>     clusterMap           = new HashMap<String, OCluster>();
-  private int                               defaultClusterId;
-  private int                               networkPoolCursor    = 0;
-  private int                               minPool;
-  private int                               maxPool;
-  private final boolean                     debug                = false;
-  private ODocument                         clusterConfiguration = new ODocument();
-  private ORemoteServerEventListener        asynchEventListener;
-  private String                            connectionDbType;
-  private String                            connectionUserName;
-  private String                            connectionUserPassword;
-  private Map<String, Object>               connectionOptions;
-  private final String                      clientId;
+  private final List<OChannelBinaryClient> networkPool          = new ArrayList<OChannelBinaryClient>();
+  private int                              networkPoolCursor    = 0;
+
+  protected final List<String>             serverURLs           = new ArrayList<String>();
+  private OCluster[]                       clusters             = new OCluster[0];
+  protected final Map<String, OCluster>    clusterMap           = new HashMap<String, OCluster>();
+  private int                              defaultClusterId;
+  private int                              minPool;
+  private int                              maxPool;
+  private final boolean                    debug                = false;
+  private ODocument                        clusterConfiguration = new ODocument();
+  private ORemoteServerEventListener       asynchEventListener;
+  private String                           connectionDbType;
+  private String                           connectionUserName;
+  private String                           connectionUserPassword;
+  private Map<String, Object>              connectionOptions;
+  private final String                     clientId;
 
   public OStorageRemote(final String iClientId, final String iURL, final String iMode) throws IOException {
     super(iURL, iURL, iMode);
@@ -227,14 +228,14 @@ public class OStorageRemote extends OStorageAbstract {
 
     OChannelBinaryClient network = null;
     try {
-      if (networkPool.size() > 0) {
-        try {
-          network = beginRequest(OChannelBinaryProtocol.REQUEST_DB_CLOSE);
-        } finally {
-          endRequest(network);
+      synchronized (networkPool) {
+        if (networkPool.size() > 0) {
+          try {
+            network = beginRequest(OChannelBinaryProtocol.REQUEST_DB_CLOSE);
+          } finally {
+            endRequest(network);
+          }
         }
-
-        // getResponse(network);
       }
 
       setSessionId(-1);
@@ -1160,7 +1161,8 @@ public class OStorageRemote extends OStorageAbstract {
 
       try {
         if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance().debug(this, "Retrying to connect to remote server #" + (retry + 1) + "/" + currentMaxRetry + "...");
+          OLogManager.instance()
+              .debug(this, "Retrying to connect to remote server #" + (retry + 1) + "/" + currentMaxRetry + "...");
 
         openRemoteDatabase();
 
@@ -1197,7 +1199,12 @@ public class OStorageRemote extends OStorageAbstract {
     setSessionId(-1);
     createConnectionPool();
 
-    while (!networkPool.isEmpty()) {
+    boolean availableConnections;
+    synchronized (networkPool) {
+      availableConnections = !networkPool.isEmpty();
+    }
+
+    while (availableConnections) {
       try {
 
         OChannelBinaryClient network = null;
@@ -1393,6 +1400,10 @@ public class OStorageRemote extends OStorageAbstract {
 
         if (networkPool.size() == 0)
           throw new ONetworkProtocolException("Connection pool closed");
+
+        if (networkPoolCursor >= networkPool.size())
+          // RESTART FROM THE FIRST ONE
+          networkPoolCursor = 0;
 
         network = networkPool.get(networkPoolCursor);
         if (network.getLockWrite().tryLock())
