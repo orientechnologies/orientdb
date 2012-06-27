@@ -210,6 +210,7 @@ public class OStorageConfiguration implements OSerializableStream {
     OStorageDataConfiguration data;
     for (int i = 0; i < size; ++i) {
       dataId = Integer.parseInt(read(values[index++]));
+      if (dataId == -1) continue;
       dataName = read(values[index++]);
 
       data = new OStorageDataConfiguration(this, dataName, dataId);
@@ -271,8 +272,10 @@ public class OStorageConfiguration implements OSerializableStream {
 
     write(buffer, dataSegments.size());
     for (OStorageDataConfiguration d : dataSegments) {
-      if (d == null)
+      if (d == null) {
+        write(buffer, -1);
         continue;
+      }
 
       write(buffer, d.id);
       write(buffer, d.name);

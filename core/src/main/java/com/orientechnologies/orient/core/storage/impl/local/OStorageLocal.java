@@ -147,6 +147,7 @@ public class OStorageLocal extends OStorageEmbedded {
       for (int i = 0; i < configuration.dataSegments.size(); ++i) {
         final OStorageDataConfiguration dataConfig = configuration.dataSegments.get(i);
 
+        if (dataConfig == null ) continue;
         pos = registerDataSegment(dataConfig);
         if (pos == -1) {
           // CLOSE AND REOPEN TO BE SURE ALL THE FILE SEGMENTS ARE
