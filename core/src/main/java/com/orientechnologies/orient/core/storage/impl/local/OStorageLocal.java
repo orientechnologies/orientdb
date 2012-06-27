@@ -698,9 +698,7 @@ public class OStorageLocal extends OStorageEmbedded {
     lock.acquireExclusiveLock();
     try {
 
-      final OStorageDataConfiguration conf = new OStorageDataConfiguration(configuration, iSegmentName,
-          configuration.dataSegments.size(), iDirectory);
-      configuration.dataSegments.add(conf);
+      final OStorageDataConfiguration conf = new OStorageDataConfiguration(configuration, iSegmentName, -1, iDirectory);
 
       final int pos = registerDataSegment(conf);
 
@@ -709,6 +707,13 @@ public class OStorageLocal extends OStorageEmbedded {
             + "'");
 
       dataSegments[pos].create(-1);
+
+      // UPDATE CONFIGURATION
+      conf.id = pos;
+      if (pos == configuration.dataSegments.size())
+        configuration.dataSegments.add(conf);
+      else
+        configuration.dataSegments.set(pos, conf);
       configuration.update();
 
       return pos;
