@@ -15,10 +15,21 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
@@ -56,18 +67,6 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -113,25 +112,23 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     optimize();
 
-    currentPos = compiledFilter.currentPos < 0 ? endPosition : compiledFilter.currentPos + pos;
+    parserSetCurrentPosition(compiledFilter.parserIsEnded() ? endPosition : compiledFilter.parserGetCurrentPosition() + pos);
 
-    if (currentPos > -1 && currentPos < text.length()) {
-      currentPos = OStringParser.jump(text, currentPos, " \r\n");
+    if (!parserIsEnded()) {
+      parserSkipWhiteSpaces();
 
-      final StringBuilder word = new StringBuilder();
-      String w;
+      while (!parserIsEnded()) {
+        parserNextWord(true);
 
-      while (currentPos > -1) {
-        currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
+        if (!parserIsEnded()) {
+          final String w = parserGetLastWord();
 
-        if (currentPos > -1) {
-          w = word.toString();
           if (w.equals(KEYWORD_ORDER))
-            parseOrderBy(word);
+            parseOrderBy(w);
           else if (w.equals(KEYWORD_LIMIT))
-            parseLimit(word);
+            parseLimit(w);
           else if (w.equals(KEYWORD_SKIP))
-            parseSkip(word);
+            parseSkip(w);
           else
             throw new OCommandSQLParsingException("Invalid keyword '" + w + "'");
         }
@@ -313,59 +310,40 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return orderedFields;
   }
 
-  protected void parseOrderBy(final StringBuilder word) {
-    int newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
+  protected void parseOrderBy(final String w) {
+    parserRequiredKeyword(KEYWORD_BY);
 
-    if (!KEYWORD_BY.equals(word.toString()))
-      throw new OQueryParsingException("Expected keyword " + KEYWORD_BY);
-
-    currentPos = newPos;
-
-    String fieldName;
-    String fieldOrdering;
+    String fieldOrdering = null;
 
     orderedFields = new ArrayList<OPair<String, String>>();
-    while (currentPos != -1) {
-      currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, false, " =><");
-      if (currentPos == -1)
-        throw new OCommandSQLParsingException("Field name expected", text, currentPos);
+    while (!parserIsEnded() && (orderedFields.size() == 0 || parserGetLastSeparator() == ',')) {
+      final String fieldName = parserRequiredWord(false, "Field name expected");
 
-      fieldName = word.toString();
+      parserOptionalWord(true);
 
-      currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
-      if (currentPos == -1 || word.toString().equals(KEYWORD_LIMIT))
-        // END/NEXT CLAUSE: SET AS ASC BY DEFAULT
+      final String word = parserGetLastWord();
+
+      if (word.length() == 0)
+        // END CLAUSE: SET AS ASC BY DEFAULT
         fieldOrdering = KEYWORD_ASC;
-      else {
-
-        if (word.toString().endsWith(",")) {
-          currentPos--;
-          word.deleteCharAt(word.length() - 1);
-        }
-
-        if (word.toString().equals(KEYWORD_ASC))
+      else if (word.equals(KEYWORD_LIMIT)) {
+        // NEXT CLAUSE: SET AS ASC BY DEFAULT
+        fieldOrdering = KEYWORD_ASC;
+        parserGoBack();
+      } else {
+        if (word.equals(KEYWORD_ASC))
           fieldOrdering = KEYWORD_ASC;
-        else if (word.toString().equals(KEYWORD_DESC))
+        else if (word.equals(KEYWORD_DESC))
           fieldOrdering = KEYWORD_DESC;
         else
-          throw new OCommandSQLParsingException("Ordering mode '" + word
-              + "' not supported. Valid is 'ASC', 'DESC' or nothing ('ASC' by default)", text, currentPos);
-
-        currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
+          throwParsingException("Ordering mode '" + word + "' not supported. Valid is 'ASC', 'DESC' or nothing ('ASC' by default)");
       }
 
       orderedFields.add(new OPair<String, String>(fieldName, fieldOrdering));
-
-      if (!word.toString().equals(",")) {
-        // GO BACK
-        currentPos -= word.length();
-        break;
-      }
     }
 
     if (orderedFields.size() == 0)
-      throw new OCommandSQLParsingException("Order by field set was missed. Example: ORDER BY name ASC, salary DESC", text,
-          currentPos);
+      throwParsingException("Order by field set was missed. Example: ORDER BY name ASC, salary DESC");
   }
 
   @Override
@@ -565,19 +543,15 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   protected int parseProjections() {
-    int currentPos = 0;
-    final StringBuilder word = new StringBuilder();
-
-    currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
-    if (!word.toString().equals(KEYWORD_SELECT))
+    if (!parserOptionalKeyword(KEYWORD_SELECT))
       return -1;
 
-    int fromPosition = textUpperCase.indexOf(KEYWORD_FROM_2FIND, currentPos);
+    int fromPosition = textUpperCase.indexOf(KEYWORD_FROM_2FIND, parserGetCurrentPosition());
     if (fromPosition == -1)
-      throw new OQueryParsingException("Missed " + KEYWORD_FROM, text, currentPos);
+      throwParsingException("Missed " + KEYWORD_FROM);
 
     Object projectionValue;
-    final String projectionString = text.substring(currentPos, fromPosition).trim();
+    final String projectionString = text.substring(parserGetCurrentPosition(), fromPosition).trim();
     if (projectionString.length() > 0 && !projectionString.equals("*")) {
       // EXTRACT PROJECTIONS
       projections = new LinkedHashMap<String, Object>();
@@ -643,9 +617,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
     }
 
-    currentPos = fromPosition + KEYWORD_FROM.length() + 1;
+    parserSetCurrentPosition(fromPosition + KEYWORD_FROM.length() + 1);
 
-    return currentPos;
+    return parserGetCurrentPosition();
   }
 
   protected int extractProjectionNameSubstringEndPosition(String projection) {
@@ -848,19 +822,19 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
 
     } else {
-      if(isIndexSizeQuery()) {
-				final Object projection = projections.values().iterator().next();
-				final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection;
-				f.setResult(index.getSize());
-				return;
-			}
+      if (isIndexSizeQuery()) {
+        final Object projection = projections.values().iterator().next();
+        final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection;
+        f.setResult(index.getSize());
+        return;
+      }
 
-			if(isIndexKeySizeQuery()) {
-				final Object projection = projections.values().iterator().next();
-				final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection;
-				f.setResult(index.getKeySize());
-				return;
-			}
+      if (isIndexKeySizeQuery()) {
+        final Object projection = projections.values().iterator().next();
+        final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection;
+        f.setResult(index.getKeySize());
+        return;
+      }
 
       final OIndexInternal<?> indexInternal = index.getInternal();
       if (indexInternal instanceof OSharedResource)
@@ -884,55 +858,53 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
   }
 
-	private boolean isIndexSizeQuery() {
-		if (!(anyFunctionAggregates && projections.entrySet().size() == 1))
-			return false;
+  private boolean isIndexSizeQuery() {
+    if (!(anyFunctionAggregates && projections.entrySet().size() == 1))
+      return false;
 
-		final Object projection = projections.values().iterator().next();
-		if (!(projection instanceof OSQLFunctionRuntime))
-			return false;
+    final Object projection = projections.values().iterator().next();
+    if (!(projection instanceof OSQLFunctionRuntime))
+      return false;
 
-		final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection;
-		if(!f.getRoot().equals(OSQLFunctionCount.NAME))
-			return false;
+    final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection;
+    if (!f.getRoot().equals(OSQLFunctionCount.NAME))
+      return false;
 
-		if(!((f.configuredParameters == null || f.configuredParameters.length == 0) ||
-						(f.configuredParameters != null && f.configuredParameters.length == 1 && f.configuredParameters[0].equals("*"))))
-			return false;
+    if (!((f.configuredParameters == null || f.configuredParameters.length == 0) || (f.configuredParameters != null
+        && f.configuredParameters.length == 1 && f.configuredParameters[0].equals("*"))))
+      return false;
 
-		return true;
-	}
+    return true;
+  }
 
-	private boolean isIndexKeySizeQuery() {
-		if (!(anyFunctionAggregates && projections.entrySet().size() == 1))
-			return false;
+  private boolean isIndexKeySizeQuery() {
+    if (!(anyFunctionAggregates && projections.entrySet().size() == 1))
+      return false;
 
-		final Object projection = projections.values().iterator().next();
-		if (!(projection instanceof OSQLFunctionRuntime))
-			return false;
+    final Object projection = projections.values().iterator().next();
+    if (!(projection instanceof OSQLFunctionRuntime))
+      return false;
 
-		final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection;
-		if(!f.getRoot().equals(OSQLFunctionCount.NAME))
-			return false;
+    final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection;
+    if (!f.getRoot().equals(OSQLFunctionCount.NAME))
+      return false;
 
-		if(!(f.configuredParameters != null && f.configuredParameters.length == 1
-						&& f.configuredParameters[0] instanceof OSQLFunctionRuntime) )
-		return false;
+    if (!(f.configuredParameters != null && f.configuredParameters.length == 1 && f.configuredParameters[0] instanceof OSQLFunctionRuntime))
+      return false;
 
-		final OSQLFunctionRuntime fConfigured = (OSQLFunctionRuntime) f.configuredParameters[0];
-		if(!fConfigured.getRoot().equals(OSQLFunctionDistinct.NAME))
-			return false;
+    final OSQLFunctionRuntime fConfigured = (OSQLFunctionRuntime) f.configuredParameters[0];
+    if (!fConfigured.getRoot().equals(OSQLFunctionDistinct.NAME))
+      return false;
 
-		if(!(fConfigured.configuredParameters != null && fConfigured.configuredParameters.length == 1
-						&& fConfigured.configuredParameters[0] instanceof OSQLFilterItemField))
-			return false;
+    if (!(fConfigured.configuredParameters != null && fConfigured.configuredParameters.length == 1 && fConfigured.configuredParameters[0] instanceof OSQLFilterItemField))
+      return false;
 
-		final OSQLFilterItemField field = (OSQLFilterItemField)fConfigured.configuredParameters[0];
-		if(!field.getRoot().equals("key"))
-			return false;
+    final OSQLFilterItemField field = (OSQLFilterItemField) fConfigured.configuredParameters[0];
+    if (!field.getRoot().equals("key"))
+      return false;
 
-		return true;
-	}
+    return true;
+  }
 
   private Object getIndexKey(final OIndexDefinition indexDefinition, Object value) {
     if (indexDefinition instanceof OCompositeIndexDefinition) {

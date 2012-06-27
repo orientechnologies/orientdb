@@ -25,330 +25,293 @@ import java.util.ArrayList;
  */
 public class OStringParser {
 
-	public static final String	WHITE_SPACE	= " ";
-	public static final String	COMMON_JUMP	= " \r\n";
+  public static final String WHITE_SPACE = " ";
+  public static final String COMMON_JUMP = " \r\n";
 
-	public static String getWordFromString(String iText, final int iBeginIndex, final String ioSeparatorChars) {
-		return getWord(iText, iBeginIndex, ioSeparatorChars);
-	}
+  public static String[] getWords(String iRecord, final String iSeparatorChars) {
+    return getWords(iRecord, iSeparatorChars, false);
+  }
 
-	public static String getWord(final CharSequence iText, final int iBeginIndex, final String ioSeparatorChars) {
-		final StringBuilder buffer = new StringBuilder();
-		char stringBeginChar = ' ';
-		char c;
+  public static String[] getWords(String iRecord, final String iSeparatorChars, final boolean iIncludeStringSep) {
+    return getWords(iRecord, iSeparatorChars, " \n\r\t", iIncludeStringSep);
+  }
 
-		for (int i = iBeginIndex; i < iText.length(); ++i) {
-			c = iText.charAt(i);
+  public static String[] getWords(String iText, final String iSeparatorChars, final String iJumpChars,
+      final boolean iIncludeStringSep) {
+    iText = iText.trim();
 
-			if (c == '\'' || c == '"') {
-				if (stringBeginChar != ' ') {
-					// CLOSE THE STRING?
-					if (stringBeginChar == c) {
-						// SAME CHAR AS THE BEGIN OF THE STRING: CLOSE IT AND PUSH
-						stringBeginChar = ' ';
-					}
-				} else {
-					// START STRING
-					stringBeginChar = c;
-				}
-			} else if (stringBeginChar == ' ') {
-				for (int sepIndex = 0; sepIndex < ioSeparatorChars.length(); ++sepIndex) {
-					if (ioSeparatorChars.charAt(sepIndex) == c && buffer.length() > 0)
-						// SEPARATOR (OUTSIDE A STRING): PUSH
-						return buffer.toString();
-				}
-			}
+    final ArrayList<String> fields = new ArrayList<String>();
+    final StringBuilder buffer = new StringBuilder();
+    char stringBeginChar = ' ';
+    char c;
+    int openBraket = 0;
+    int openGraph = 0;
+    boolean charFound;
+    boolean escape = false;
 
-			buffer.append(c);
-		}
+    for (int i = 0; i < iText.length(); ++i) {
+      c = iText.charAt(i);
 
-		return buffer.toString();
-	}
+      if (openBraket == 0 && openGraph == 0 && !escape && c == '\\' && ((i + 1) < iText.length())) {
+        // ESCAPE CHARS
+        final char nextChar = iText.charAt(i + 1);
 
-	public static String[] getWords(String iRecord, final String iSeparatorChars) {
-		return getWords(iRecord, iSeparatorChars, false);
-	}
+        if (nextChar == 'u') {
+          i = readUnicode(iText, i + 2, buffer);
+        } else if (nextChar == 'n') {
+          buffer.append("\n");
+          i++;
+        } else if (nextChar == 'r') {
+          buffer.append("\r");
+          i++;
+        } else if (nextChar == 't') {
+          buffer.append("\t");
+          i++;
+        } else if (nextChar == 'f') {
+          buffer.append("\f");
+          i++;
+        } else
+          escape = true;
 
-	public static String[] getWords(String iRecord, final String iSeparatorChars, final boolean iIncludeStringSep) {
-		return getWords(iRecord, iSeparatorChars, " \n\r\t", iIncludeStringSep);
-	}
+        continue;
+      }
 
-	public static String[] getWords(String iText, final String iSeparatorChars, final String iJumpChars,
-			final boolean iIncludeStringSep) {
-		iText = iText.trim();
+      if (openBraket == 0 && openGraph == 0 && !escape && (c == '\'' || c == '"')) {
+        if (stringBeginChar != ' ') {
+          // CLOSE THE STRING?
+          if (stringBeginChar == c) {
+            // SAME CHAR AS THE BEGIN OF THE STRING: CLOSE IT AND PUSH
+            stringBeginChar = ' ';
 
-		final ArrayList<String> fields = new ArrayList<String>();
-		final StringBuilder buffer = new StringBuilder();
-		char stringBeginChar = ' ';
-		char c;
-		int openBraket = 0;
-		int openGraph = 0;
-		boolean charFound;
-		boolean escape = false;
+            if (iIncludeStringSep)
+              buffer.append(c);
 
-		for (int i = 0; i < iText.length(); ++i) {
-			c = iText.charAt(i);
+            fields.add(buffer.toString());
+            buffer.setLength(0);
+            continue;
+          }
+        } else {
+          // START STRING
+          stringBeginChar = c;
+          if (iIncludeStringSep)
+            buffer.append(c);
 
-			if (openBraket == 0 && openGraph == 0 && !escape && c == '\\' && ((i + 1) < iText.length())) {
-				// ESCAPE CHARS
-				final char nextChar = iText.charAt(i + 1);
+          continue;
+        }
+      } else if (stringBeginChar == ' ') {
+        if (c == '[')
+          openBraket++;
+        else if (c == ']')
+          openBraket--;
+        if (c == '{')
+          openGraph++;
+        else if (c == '}')
+          openGraph--;
+        else if (openBraket == 0 && openGraph == 0) {
+          charFound = false;
+          for (int sepIndex = 0; sepIndex < iSeparatorChars.length(); ++sepIndex) {
+            if (iSeparatorChars.charAt(sepIndex) == c) {
+              charFound = true;
+              if (buffer.length() > 0) {
+                // SEPARATOR (OUTSIDE A STRING): PUSH
+                fields.add(buffer.toString());
+                buffer.setLength(0);
+              }
+              break;
+            }
+          }
 
-				if (nextChar == 'u') {
-					i = readUnicode(iText, i + 2, buffer);
-				} else if (nextChar == 'n') {
-					buffer.append("\n");
-					i++;
-				} else if (nextChar == 'r') {
-					buffer.append("\r");
-					i++;
-				} else if (nextChar == 't') {
-					buffer.append("\t");
-					i++;
-				} else if (nextChar == 'f') {
-					buffer.append("\f");
-					i++;
-				} else
-					escape = true;
+          if (charFound)
+            continue;
+        }
 
-				continue;
-			}
+        if (stringBeginChar == ' ') {
+          // CHECK FOR CHAR TO JUMP
+          charFound = false;
 
-			if (openBraket == 0 && openGraph == 0 && !escape && (c == '\'' || c == '"')) {
-				if (stringBeginChar != ' ') {
-					// CLOSE THE STRING?
-					if (stringBeginChar == c) {
-						// SAME CHAR AS THE BEGIN OF THE STRING: CLOSE IT AND PUSH
-						stringBeginChar = ' ';
+          for (int jumpIndex = 0; jumpIndex < iJumpChars.length(); ++jumpIndex) {
+            if (iJumpChars.charAt(jumpIndex) == c) {
+              charFound = true;
+              break;
+            }
+          }
 
-						if (iIncludeStringSep)
-							buffer.append(c);
+          if (charFound)
+            continue;
+        }
+      }
 
-						fields.add(buffer.toString());
-						buffer.setLength(0);
-						continue;
-					}
-				} else {
-					// START STRING
-					stringBeginChar = c;
-					if (iIncludeStringSep)
-						buffer.append(c);
+      buffer.append(c);
 
-					continue;
-				}
-			} else if (stringBeginChar == ' ') {
-				if (c == '[')
-					openBraket++;
-				else if (c == ']')
-					openBraket--;
-				if (c == '{')
-					openGraph++;
-				else if (c == '}')
-					openGraph--;
-				else if (openBraket == 0 && openGraph == 0) {
-					charFound = false;
-					for (int sepIndex = 0; sepIndex < iSeparatorChars.length(); ++sepIndex) {
-						if (iSeparatorChars.charAt(sepIndex) == c) {
-							charFound = true;
-							if (buffer.length() > 0) {
-								// SEPARATOR (OUTSIDE A STRING): PUSH
-								fields.add(buffer.toString());
-								buffer.setLength(0);
-							}
-							break;
-						}
-					}
+      if (escape)
+        escape = false;
+    }
 
-					if (charFound)
-						continue;
-				}
+    if (buffer.length() > 0)
+      // ADD THE LAST WORD IF ANY
+      fields.add(buffer.toString());
 
-				if (stringBeginChar == ' ') {
-					// CHECK FOR CHAR TO JUMP
-					charFound = false;
+    String[] result = new String[fields.size()];
+    fields.toArray(result);
+    return result;
+  }
 
-					for (int jumpIndex = 0; jumpIndex < iJumpChars.length(); ++jumpIndex) {
-						if (iJumpChars.charAt(jumpIndex) == c) {
-							charFound = true;
-							break;
-						}
-					}
+  public static String[] split(String iText, final char iSplitChar, String iJumpChars) {
+    iText = iText.trim();
 
-					if (charFound)
-						continue;
-				}
-			}
+    ArrayList<String> fields = new ArrayList<String>();
+    StringBuilder buffer = new StringBuilder();
+    char c;
+    char stringChar = ' ';
+    boolean escape = false;
+    boolean jumpSplitChar = false;
+    boolean charFound;
 
-			buffer.append(c);
+    for (int i = 0; i < iText.length(); i++) {
+      c = iText.charAt(i);
 
-			if (escape)
-				escape = false;
-		}
+      if (!escape && c == '\\' && ((i + 1) < iText.length())) {
+        if (iText.charAt(i + 1) == 'u') {
+          i = readUnicode(iText, i + 2, buffer);
+        } else {
+          escape = true;
+          buffer.append(c);
+        }
+        continue;
+      }
 
-		if (buffer.length() > 0)
-			// ADD THE LAST WORD IF ANY
-			fields.add(buffer.toString());
+      if (c == '\'' || c == '"') {
+        if (!jumpSplitChar) {
+          jumpSplitChar = true;
+          stringChar = c;
+        } else {
+          if (!escape && c == stringChar)
+            jumpSplitChar = false;
+        }
+      }
 
-		String[] result = new String[fields.size()];
-		fields.toArray(result);
-		return result;
-	}
+      if (c == iSplitChar) {
+        if (!jumpSplitChar) {
+          fields.add(buffer.toString());
+          buffer.setLength(0);
+          continue;
+        }
+      }
 
-	public static String[] split(String iText, final char iSplitChar, String iJumpChars) {
-		iText = iText.trim();
+      // CHECK IF IT MUST JUMP THE CHAR
+      if (buffer.length() == 0) {
+        charFound = false;
 
-		ArrayList<String> fields = new ArrayList<String>();
-		StringBuilder buffer = new StringBuilder();
-		char c;
-		char stringChar = ' ';
-		boolean escape = false;
-		boolean jumpSplitChar = false;
-		boolean charFound;
+        for (int jumpIndex = 0; jumpIndex < iJumpChars.length(); ++jumpIndex) {
+          if (iJumpChars.charAt(jumpIndex) == c) {
+            charFound = true;
+            break;
+          }
+        }
 
-		for (int i = 0; i < iText.length(); i++) {
-			c = iText.charAt(i);
+        if (charFound)
+          continue;
+      }
 
-			if (!escape && c == '\\' && ((i + 1) < iText.length())) {
-				if (iText.charAt(i + 1) == 'u') {
-					i = readUnicode(iText, i + 2, buffer);
-				} else {
-					escape = true;
-					buffer.append(c);
-				}
-				continue;
-			}
+      buffer.append(c);
 
-			if (c == '\'' || c == '"') {
-				if (!jumpSplitChar) {
-					jumpSplitChar = true;
-					stringChar = c;
-				} else {
-					if (!escape && c == stringChar)
-						jumpSplitChar = false;
-				}
-			}
+      if (escape)
+        escape = false;
+    }
 
-			if (c == iSplitChar) {
-				if (!jumpSplitChar) {
-					fields.add(buffer.toString());
-					buffer.setLength(0);
-					continue;
-				}
-			}
+    if (buffer.length() > 0) {
+      fields.add(buffer.toString());
+      buffer.setLength(0);
+    }
+    String[] result = new String[fields.size()];
+    fields.toArray(result);
+    return result;
+  }
 
-			// CHECK IF IT MUST JUMP THE CHAR
-			if (buffer.length() == 0) {
-				charFound = false;
+  /**
+   * Jump white spaces.
+   * 
+   * @param iText
+   *          String to analyze
+   * @param iCurrentPosition
+   *          Current position in text
+   * @return The new offset inside the string analyzed
+   */
+  public static int jumpWhiteSpaces(final CharSequence iText, final int iCurrentPosition) {
+    return jump(iText, iCurrentPosition, COMMON_JUMP);
+  }
 
-				for (int jumpIndex = 0; jumpIndex < iJumpChars.length(); ++jumpIndex) {
-					if (iJumpChars.charAt(jumpIndex) == c) {
-						charFound = true;
-						break;
-					}
-				}
+  /**
+   * Jump some characters reading from an offset of a String.
+   * 
+   * @param iText
+   *          String to analyze
+   * @param iCurrentPosition
+   *          Current position in text
+   * @param iJumpChars
+   *          String as char array of chars to jump
+   * @return The new offset inside the string analyzed
+   */
+  public static int jump(final CharSequence iText, int iCurrentPosition, final String iJumpChars) {
+    if (iCurrentPosition < 0)
+      return -1;
 
-				if (charFound)
-					continue;
-			}
+    final int size = iText.length();
+    final int jumpCharSize = iJumpChars.length();
+    boolean found = true;
+    char c;
+    for (; iCurrentPosition < size; ++iCurrentPosition) {
+      found = false;
+      c = iText.charAt(iCurrentPosition);
+      for (int jumpIndex = 0; jumpIndex < jumpCharSize; ++jumpIndex) {
+        if (iJumpChars.charAt(jumpIndex) == c) {
+          found = true;
+          break;
+        }
+      }
 
-			buffer.append(c);
+      if (!found)
+        break;
+    }
 
-			if (escape)
-				escape = false;
-		}
+    return iCurrentPosition >= size ? -1 : iCurrentPosition;
+  }
 
-		if (buffer.length() > 0) {
-			fields.add(buffer.toString());
-			buffer.setLength(0);
-		}
-		String[] result = new String[fields.size()];
-		fields.toArray(result);
-		return result;
-	}
+  public static int readUnicode(String iText, int position, StringBuilder buffer) {
+    // DECODE UNICODE CHAR
+    final StringBuilder buff = new StringBuilder();
+    final int lastPos = position + 4;
+    for (; position < lastPos; ++position)
+      buff.append(iText.charAt(position));
 
-	/**
-	 * Jump white spaces.
-	 * 
-	 * @param iText
-	 *          String to analyze
-	 * @param iCurrentPosition
-	 *          Current position in text
-	 * @return The new offset inside the string analyzed
-	 */
-	public static int jumpWhiteSpaces(final CharSequence iText, final int iCurrentPosition) {
-		return jump(iText, iCurrentPosition, COMMON_JUMP);
-	}
+    buffer.append((char) Integer.parseInt(buff.toString(), 16));
+    return position - 1;
+  }
 
-	/**
-	 * Jump some characters reading from an offset of a String.
-	 * 
-	 * @param iText
-	 *          String to analyze
-	 * @param iCurrentPosition
-	 *          Current position in text
-	 * @param iJumpChars
-	 *          String as char array of chars to jump
-	 * @return The new offset inside the string analyzed
-	 */
-	public static int jump(final CharSequence iText, int iCurrentPosition, final String iJumpChars) {
-		if (iCurrentPosition < 0)
-			return -1;
+  public static int readUnicode(char[] iText, int position, StringBuilder buffer) {
+    // DECODE UNICODE CHAR
+    final StringBuilder buff = new StringBuilder();
+    final int lastPos = position + 4;
+    for (; position < lastPos; ++position)
+      buff.append(iText[position]);
 
-		final int size = iText.length();
-		final int jumpCharSize = iJumpChars.length();
-		boolean found = true;
-		char c;
-		for (; iCurrentPosition < size; ++iCurrentPosition) {
-			found = false;
-			c = iText.charAt(iCurrentPosition);
-			for (int jumpIndex = 0; jumpIndex < jumpCharSize; ++jumpIndex) {
-				if (iJumpChars.charAt(jumpIndex) == c) {
-					found = true;
-					break;
-				}
-			}
+    buffer.append((char) Integer.parseInt(buff.toString(), 16));
+    return position - 1;
+  }
 
-			if (!found)
-				break;
-		}
-
-		return iCurrentPosition >= size ? -1 : iCurrentPosition;
-	}
-
-	public static int readUnicode(String iText, int position, StringBuilder buffer) {
-		// DECODE UNICODE CHAR
-		final StringBuilder buff = new StringBuilder();
-		final int lastPos = position + 4;
-		for (; position < lastPos; ++position)
-			buff.append(iText.charAt(position));
-
-		buffer.append((char) Integer.parseInt(buff.toString(), 16));
-		return position - 1;
-	}
-
-	public static int readUnicode(char[] iText, int position, StringBuilder buffer) {
-		// DECODE UNICODE CHAR
-		final StringBuilder buff = new StringBuilder();
-		final int lastPos = position + 4;
-		for (; position < lastPos; ++position)
-			buff.append(iText[position]);
-
-		buffer.append((char) Integer.parseInt(buff.toString(), 16));
-		return position - 1;
-	}
-
-	public static String replaceAll(String iText, String iToReplace, String iReplacement) {
-		if (iText == null || iText.length() <= 0 || iToReplace == null || iToReplace.length() <= 0)
-			return iText;
-		int pos = iText.indexOf(iToReplace);
-		int lastAppend = 0;
-		final StringBuffer buffer = new StringBuffer();
-		while (pos > -1) {
-			buffer.append(iText.substring(lastAppend, pos));
-			buffer.append(iReplacement);
-			lastAppend = pos + iToReplace.length();
-			pos = iText.indexOf(iToReplace, lastAppend);
-		}
-		buffer.append(iText.substring(lastAppend));
-		return buffer.toString();
-	}
+  public static String replaceAll(String iText, String iToReplace, String iReplacement) {
+    if (iText == null || iText.length() <= 0 || iToReplace == null || iToReplace.length() <= 0)
+      return iText;
+    int pos = iText.indexOf(iToReplace);
+    int lastAppend = 0;
+    final StringBuffer buffer = new StringBuffer();
+    while (pos > -1) {
+      buffer.append(iText.substring(lastAppend, pos));
+      buffer.append(iReplacement);
+      lastAppend = pos + iToReplace.length();
+      pos = iText.indexOf(iToReplace, lastAppend);
+    }
+    buffer.append(iText.substring(lastAppend));
+    return buffer.toString();
+  }
 }

@@ -17,9 +17,9 @@ package com.orientechnologies.orient.core.sql.functions;
 
 import java.util.List;
 
+import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
-import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -41,7 +41,7 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
 	public Object[]			configuredParameters;
 	public Object[]			runtimeParameters;
 
-	public OSQLFunctionRuntime(final OCommandToParse iQueryToParse, final String iText) {
+	public OSQLFunctionRuntime(final OBaseParser iQueryToParse, final String iText) {
 		super(iQueryToParse, iText);
 	}
 
@@ -93,7 +93,7 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
 	}
 
 	@Override
-	protected void setRoot(final OCommandToParse iQueryToParse, final String iText) {
+	protected void setRoot(final OBaseParser iQueryToParse, final String iText) {
 		final int beginParenthesis = iText.indexOf('(');
 
 		// SEARCH FOR THE FUNCTION

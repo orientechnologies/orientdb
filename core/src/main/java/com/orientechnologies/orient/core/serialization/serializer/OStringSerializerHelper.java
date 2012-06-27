@@ -183,7 +183,15 @@ public abstract class OStringSerializerHelper {
     final char[] buffer = new char[max - beginIndex];
     iSource.getChars(beginIndex, max, buffer, 0);
 
-    for (int i = 0; i < buffer.length; ++i) {
+    // JUMP FIRST CHARS
+    int i = 0;
+    for (; i < buffer.length; ++i) {
+      final char c = buffer[i];
+      if (!isCharPresent(c, iRecordSeparator))
+        break;
+    }
+
+    for (; i < buffer.length; ++i) {
       final char c = buffer[i];
 
       if (stringBeginChar == ' ') {

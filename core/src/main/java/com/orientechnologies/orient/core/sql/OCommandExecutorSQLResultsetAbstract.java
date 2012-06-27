@@ -177,28 +177,29 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   /**
    * Parses the limit keyword if found.
    * 
-   * @param word
-   *          StringBuilder to parse
+   * @param w
+   * 
    * @return
    * @return the limit found as integer, or -1 if no limit is found. -1 means no limits.
    * @throws OCommandSQLParsingException
    *           if no valid limit has been found
    */
-  protected int parseLimit(final StringBuilder word) throws OCommandSQLParsingException {
-    if (!word.toString().equals(KEYWORD_LIMIT))
+  protected int parseLimit(final String w) throws OCommandSQLParsingException {
+    if (!w.equals(KEYWORD_LIMIT))
       return -1;
 
-    currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
+    parserNextWord(true);
+    final String word = parserGetLastWord();
+
     try {
-      limit = Integer.parseInt(word.toString());
+      limit = Integer.parseInt(word);
     } catch (Exception e) {
-      throw new OCommandSQLParsingException("Invalid LIMIT value setted to '" + word
-          + "' but it should be a valid integer. Example: LIMIT 10", text, currentPos);
+      throwParsingException("Invalid LIMIT value setted to '" + word + "' but it should be a valid integer. Example: LIMIT 10");
     }
 
     if (limit < 0)
-      throw new OCommandSQLParsingException("Invalid LIMIT value setted to the negative number '" + word
-          + "'. Only positive numbers are valid. Example: LIMIT 10", text, currentPos);
+      throwParsingException("Invalid LIMIT value setted to the negative number '" + word
+          + "'. Only positive numbers are valid. Example: LIMIT 10");
 
     return limit;
   }
@@ -206,29 +207,31 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   /**
    * Parses the skip keyword if found.
    * 
-   * @param word
-   *          StringBuilder to parse
+   * @param w
+   * 
    * @return
    * @return the skip found as integer, or -1 if no skip is found. -1 means no skip.
    * @throws OCommandSQLParsingException
    *           if no valid skip has been found
    */
-  protected int parseSkip(final StringBuilder word) throws OCommandSQLParsingException {
-    if (!word.toString().equals(KEYWORD_SKIP))
+  protected int parseSkip(final String w) throws OCommandSQLParsingException {
+    if (!w.equals(KEYWORD_SKIP))
       return -1;
 
-    currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
+    parserNextWord(true);
+    final String word = parserGetLastWord();
+
     try {
-      skip = Integer.parseInt(word.toString());
+      skip = Integer.parseInt(word);
 
     } catch (Exception e) {
-      throw new OCommandSQLParsingException("Invalid SKIP value setted to '" + word
-          + "' but it should be a valid positive integer. Example: SKIP 10", text, currentPos);
+      throwParsingException("Invalid SKIP value setted to '" + word
+          + "' but it should be a valid positive integer. Example: SKIP 10");
     }
 
     if (skip < 0)
-      throw new OCommandSQLParsingException("Invalid SKIP value setted to the negative number '" + word
-          + "'. Only positive numbers are valid. Example: SKIP 10", text, currentPos);
+      throwParsingException("Invalid SKIP value setted to the negative number '" + word
+          + "'. Only positive numbers are valid. Example: SKIP 10");
 
     return skip;
   }

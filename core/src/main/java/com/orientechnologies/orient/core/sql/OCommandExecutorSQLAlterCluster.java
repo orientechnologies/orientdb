@@ -56,17 +56,17 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
     StringBuilder word = new StringBuilder();
 
     int oldPos = 0;
-    int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    int pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_ALTER))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found. Use " + getSyntax(), text, oldPos);
 
     oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_CLUSTER))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found. Use " + getSyntax(), text, oldPos);
 
     oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
+    pos = nextWord(text, textUpperCase, oldPos, word, false);
     if (pos == -1)
       throw new OCommandSQLParsingException("Expected <cluster-name>. Use " + getSyntax(), text, oldPos);
 
@@ -78,7 +78,7 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
       clusterId = Integer.parseInt(clusterName);
 
     oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1)
       throw new OCommandSQLParsingException("Missing cluster attribute to change. Use " + getSyntax(), text, oldPos);
 

@@ -18,7 +18,6 @@ package com.orientechnologies.orient.core.sql;
 
 import java.util.Map;
 
-import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 /**
@@ -31,56 +30,29 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
 
   protected int                 parameterCounter = 0;
 
-  protected int parseSetFields(final Map<String, Object> fields) {
+  protected void parseSetFields(final Map<String, Object> fields) {
     String fieldName;
     String fieldValue;
-    int newPos = currentPos;
 
-    while (currentPos != -1 && (fields.size() == 0 || tempParseWord.toString().equals(","))) {
-      newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, tempParseWord, false);
-      if (newPos == -1)
-        throw new OCommandSQLParsingException("Field name expected", text, currentPos);
-      currentPos = newPos;
-
-      fieldName = tempParseWord.toString();
-
-      newPos = OStringParser.jumpWhiteSpaces(text, currentPos);
-
-      if (newPos == -1 || text.charAt(newPos) != '=')
-        throw new OCommandSQLParsingException("Character '=' was expected", text, currentPos);
-
-      currentPos = newPos + 1;
-      newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, tempParseWord, false, " =><");
-      if (currentPos == -1)
-        throw new OCommandSQLParsingException("Value expected", text, currentPos);
-
-      fieldValue = tempParseWord.toString();
+    while (!parserIsEnded() && (fields.size() == 0 || parserGetLastSeparator() == ',')) {
+      fieldName = parserRequiredWord(false, "Field name expected");
+      parserRequiredKeyword("=");
+      fieldValue = parserRequiredWord(false, "Value expected", " =><,\r\n");
 
       if (fieldValue.startsWith("{") || fieldValue.startsWith("[") || fieldValue.startsWith("[")) {
-        newPos = OStringParser.jumpWhiteSpaces(text, currentPos);
         final StringBuilder buffer = new StringBuilder();
-        newPos = OStringSerializerHelper.parse(text, buffer, newPos, -1, OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true,
-            OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
+        parserSetCurrentPosition(OStringSerializerHelper.parse(text, buffer, parserGetPreviousPosition(), -1,
+            OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true, OStringSerializerHelper.DEFAULT_IGNORE_CHARS));
         fieldValue = buffer.toString();
+        parserSetLastSeparator(' ');
       }
-
-      if (fieldValue.endsWith(",")) {
-        currentPos = newPos - 1;
-        fieldValue = fieldValue.substring(0, fieldValue.length() - 1);
-      } else
-        currentPos = newPos;
 
       // INSERT TRANSFORMED FIELD VALUE
       fields.put(fieldName, getFieldValueCountingParameters(fieldValue));
-
-      currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, tempParseWord, true);
     }
 
     if (fields.size() == 0)
-      throw new OCommandSQLParsingException("Entries to set <field> = <value> are missed. Example: name = 'Bill', salary = 300.2",
-          text, currentPos);
-
-    return currentPos;
+      throwParsingException("Entries to set <field> = <value> are missed. Example: name = 'Bill', salary = 300.2");
   }
 
   protected Object getFieldValueCountingParameters(String fieldValue) {

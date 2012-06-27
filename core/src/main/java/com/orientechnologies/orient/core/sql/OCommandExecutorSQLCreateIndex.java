@@ -66,17 +66,17 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
     final StringBuilder word = new StringBuilder();
 
     int oldPos = 0;
-    int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    int pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found. Use " + getSyntax(), text, oldPos);
 
     oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_INDEX))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_INDEX + " not found. Use " + getSyntax(), text, oldPos);
 
     oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
+    pos = nextWord(text, textUpperCase, oldPos, word, false);
     if (pos == -1)
       throw new OCommandSQLParsingException("Expected index name. Use " + getSyntax(), text, oldPos);
 
@@ -84,7 +84,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
 
     final int namePos = oldPos;
     oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1)
       throw new OCommandSQLParsingException("Index type requested. Use " + getSyntax(), text, oldPos + 1);
 
@@ -94,7 +94,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
       }
 
       oldPos = pos;
-      pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+      pos = nextWord(text, textUpperCase, oldPos, word, true);
       if (pos == -1)
         throw new OCommandSQLParsingException("Expected class name. Use " + getSyntax(), text, oldPos);
       oldPos = pos;
@@ -129,7 +129,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
       propList.toArray(fields);
 
       oldPos = pos + 1;
-      pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+      pos = nextWord(text, textUpperCase, oldPos, word, true);
       if (pos == -1)
         throw new OCommandSQLParsingException("Index type requested. Use " + getSyntax(), text, oldPos + 1);
 
@@ -157,13 +157,13 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
       throw new OCommandSQLParsingException("Index type is null", text, oldPos);
 
     oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos != -1 && !word.toString().equalsIgnoreCase("NULL")) {
       final String typesString = textUpperCase.substring(oldPos).trim();
 
       if (word.toString().equalsIgnoreCase("RUNTIME")) {
         oldPos = pos;
-        pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+        pos = nextWord(text, textUpperCase, oldPos, word, true);
 
         serializerKeyId = Byte.parseByte(word.toString());
       } else {

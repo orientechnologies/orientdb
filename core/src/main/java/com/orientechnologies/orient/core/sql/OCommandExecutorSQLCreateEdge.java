@@ -18,7 +18,6 @@ package com.orientechnologies.orient.core.sql;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
@@ -52,13 +51,13 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
 
     String className = null;
 
-    parseRequiredKeyword("CREATE");
-    parseRequiredKeyword("EDGE");
+    parserRequiredKeyword("CREATE");
+    parserRequiredKeyword("EDGE");
     String temp = parseRequiredWord(true);
     if (temp != null && !temp.equals("FROM")) {
       // CLASS NAME
       className = temp;
-      parseRequiredKeyword("FROM");
+      parserRequiredKeyword("FROM");
     } else
       // ASSIGN DEFAULT CLASS
       className = "E";
@@ -67,12 +66,12 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
     clazz = database.getMetadata().getSchema().getClass(className);
 
     from = parseRequiredWord(false);
-    parseRequiredKeyword("TO");
+    parserRequiredKeyword("TO");
     to = parseRequiredWord(false);
-    temp = parseOptionalWord(true, "SET");
+    final boolean set = parserOptionalKeyword("SET");
 
-    final int beginFields = OStringParser.jumpWhiteSpaces(text, currentPos);
-    if (beginFields > -1 && temp.equals("SET")) {
+    parserSkipWhiteSpaces();
+    if (!parserIsEnded() && set) {
       fields = new LinkedHashMap<String, Object>();
       parseSetFields(fields);
     }

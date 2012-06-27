@@ -69,17 +69,17 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
     StringBuilder word = new StringBuilder();
 
     int oldPos = 0;
-    int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    int pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found. Use " + getSyntax(), text, oldPos);
 
     oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_LINK))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_LINK + " not found. Use " + getSyntax(), text, oldPos);
 
     oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
+    pos = nextWord(text, textUpperCase, oldPos, word, false);
     if (pos == -1)
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found. Use " + getSyntax(), text, oldPos);
 
@@ -91,12 +91,12 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
         throw new OCommandSQLParsingException("Link name '" + linkName + "' contains not valid characters", text, oldPos);
 
       oldPos = pos;
-      pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+      pos = nextWord(text, textUpperCase, oldPos, word, true);
     }
 
     if (word.toString().equalsIgnoreCase(KEYWORD_TYPE)) {
       oldPos = pos;
-      pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+      pos = nextWord(text, textUpperCase, pos, word, true);
 
       if (pos == -1)
         throw new OCommandSQLParsingException("Link type missed. Use " + getSyntax(), text, oldPos);
@@ -104,13 +104,13 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
       linkType = OType.valueOf(word.toString().toUpperCase(Locale.ENGLISH));
 
       oldPos = pos;
-      pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+      pos = nextWord(text, textUpperCase, pos, word, true);
     }
 
     if (pos == -1 || !word.toString().equals(KEYWORD_FROM))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found. Use " + getSyntax(), text, oldPos);
 
-    pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
+    pos = nextWord(text, textUpperCase, pos, word, false);
     if (pos == -1)
       throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, pos);
 
@@ -123,11 +123,11 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
       throw new OCommandSQLParsingException("Class not found", text, pos);
     sourceField = parts[1];
 
-    pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+    pos = nextWord(text, textUpperCase, pos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_TO))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_TO + " not found. Use " + getSyntax(), text, oldPos);
 
-    pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
+    pos = nextWord(text, textUpperCase, pos, word, false);
     if (pos == -1)
       throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, pos);
 
@@ -140,7 +140,7 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
       throw new OCommandSQLParsingException("Class not found", text, pos);
     destField = parts[1];
 
-    pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+    pos = nextWord(text, textUpperCase, pos, word, true);
     if (pos == -1)
       return this;
 

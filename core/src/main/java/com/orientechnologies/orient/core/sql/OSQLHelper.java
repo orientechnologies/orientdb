@@ -23,9 +23,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.orientechnologies.common.parser.OStringParser;
+import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -53,30 +52,6 @@ public class OSQLHelper {
   public static final String VALUE_NOT_PARSED = "_NOT_PARSED_";
   public static final String NOT_NULL         = "_NOT_NULL_";
   public static final String DEFINED          = "_DEFINED_";
-
-  public static int nextWord(final String iText, final String iTextUpperCase, int ioCurrentPosition, final StringBuilder ioWord,
-      final boolean iForceUpperCase) {
-    return nextWord(iText, iTextUpperCase, ioCurrentPosition, ioWord, iForceUpperCase, " =><()");
-  }
-
-  public static int nextWord(final String iText, final String iTextUpperCase, int ioCurrentPosition, final StringBuilder ioWord,
-      final boolean iForceUpperCase, final String iSeparatorChars) {
-    ioWord.setLength(0);
-
-    ioCurrentPosition = OStringParser.jumpWhiteSpaces(iText, ioCurrentPosition);
-    if (ioCurrentPosition < 0)
-      return -1;
-
-    final String word = OStringParser.getWordFromString(iForceUpperCase ? iTextUpperCase : iText, ioCurrentPosition,
-        iSeparatorChars);
-
-    if (word != null && word.length() > 0) {
-      ioWord.append(word);
-      ioCurrentPosition += word.length();
-    }
-
-    return ioCurrentPosition;
-  }
 
   /**
    * Convert fields from text to real value. Supports: String, RID, Boolean, Float, Integer and NULL.
@@ -182,7 +157,7 @@ public class OSQLHelper {
     return null;
   }
 
-  public static Object parseValue(final OSQLPredicate iSQLFilter, final OCommandToParse iCommand, final String iWord,
+  public static Object parseValue(final OSQLPredicate iSQLFilter, final OBaseParser iCommand, final String iWord,
       final OCommandContext iContext) {
     if (iWord.charAt(0) == OStringSerializerHelper.PARAMETER_POSITIONAL
         || iWord.charAt(0) == OStringSerializerHelper.PARAMETER_NAMED) {
@@ -194,7 +169,7 @@ public class OSQLHelper {
       return parseValue(iCommand, iWord, iContext);
   }
 
-  public static Object parseValue(final OCommandToParse iCommand, final String iWord, final OCommandContext iContext) {
+  public static Object parseValue(final OBaseParser iCommand, final String iWord, final OCommandContext iContext) {
     if (iWord.equals("*"))
       return "*";
 
@@ -216,7 +191,7 @@ public class OSQLHelper {
     return new OSQLFilterItemField(iCommand, iWord);
   }
 
-  public static Object getFunction(final OCommandToParse iCommand, final String iWord) {
+  public static Object getFunction(final OBaseParser iCommand, final String iWord) {
     final int separator = iWord.indexOf('.');
     final int beginParenthesis = iWord.indexOf(OStringSerializerHelper.EMBEDDED_BEGIN);
     if (beginParenthesis > -1 && (separator == -1 || separator > beginParenthesis)) {

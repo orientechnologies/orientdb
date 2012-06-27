@@ -47,17 +47,17 @@ public class OCommandExecutorSQLTruncateClass extends OCommandExecutorSQLAbstrac
     StringBuilder word = new StringBuilder();
 
     int oldPos = 0;
-    int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    int pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_TRUNCATE))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_TRUNCATE + " not found. Use " + getSyntax(), text, oldPos);
 
     oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_CLASS))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found. Use " + getSyntax(), text, oldPos);
 
     oldPos = pos;
-    pos = OSQLHelper.nextWord(text, text, oldPos, word, true);
+    pos = nextWord(text, text, oldPos, word, true);
     if (pos == -1)
       throw new OCommandSQLParsingException("Expected class name. Use " + getSyntax(), text, oldPos);
 

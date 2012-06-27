@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -83,41 +82,44 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     query = null;
     recordCount = 0;
 
-    parseRequiredKeyword("UPDATE");
+    parserRequiredKeyword("UPDATE");
 
-    subjectName = parseRequiredWord(true, "Invalid target");
+    subjectName = parserRequiredWord(true, "Invalid target");
 
-    final int newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, tempParseWord, true);
-    if (newPos == -1
-        || (!tempParseWord.toString().equals(KEYWORD_SET) && !tempParseWord.toString().equals(KEYWORD_ADD)
-            && !tempParseWord.toString().equals(KEYWORD_PUT) && !tempParseWord.toString().equals(KEYWORD_REMOVE) && !tempParseWord
-            .toString().equals(KEYWORD_INCREMENT)))
-      throw new OCommandSQLParsingException("Expected keyword " + KEYWORD_SET + "," + KEYWORD_ADD + "," + KEYWORD_PUT + ","
-          + KEYWORD_REMOVE + " or " + KEYWORD_INCREMENT + ". Use " + getSyntax(), text, currentPos);
+    parserNextWord(true);
+    String word = parserGetLastWord();
 
-    currentPos = newPos;
+    if (parserIsEnded()
+        || (!word.equals(KEYWORD_SET) && !word.equals(KEYWORD_ADD) && !word.equals(KEYWORD_PUT) && !word.equals(KEYWORD_REMOVE) && !word
+            .equals(KEYWORD_INCREMENT)))
+      throwSyntaxErrorException("Expected keyword " + KEYWORD_SET + "," + KEYWORD_ADD + "," + KEYWORD_PUT + "," + KEYWORD_REMOVE
+          + " or " + KEYWORD_INCREMENT);
 
-    while (currentPos != -1 && !tempParseWord.toString().equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)) {
-      if (tempParseWord.toString().equals(KEYWORD_SET))
-        currentPos = parseSetFields(setEntries);
-      else if (tempParseWord.toString().equals(KEYWORD_ADD))
-        currentPos = parseAddFields();
-      else if (tempParseWord.toString().equals(KEYWORD_PUT))
-        currentPos = parsePutFields();
-      else if (tempParseWord.toString().equals(KEYWORD_REMOVE))
-        currentPos = parseRemoveFields();
-      else if (tempParseWord.toString().equals(KEYWORD_INCREMENT))
-        currentPos = parseIncrementFields();
+    while (!parserIsEnded() && !parserGetLastWord().equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)) {
+      word = parserGetLastWord();
+
+      if (word.equals(KEYWORD_SET))
+        parseSetFields(setEntries);
+      else if (word.equals(KEYWORD_ADD))
+        parseAddFields();
+      else if (word.equals(KEYWORD_PUT))
+        parsePutFields();
+      else if (word.equals(KEYWORD_REMOVE))
+        parseRemoveFields();
+      else if (word.equals(KEYWORD_INCREMENT))
+        parseIncrementFields();
       else
         break;
+
+      parserNextWord(true);
     }
 
-    final String additionalStatement = tempParseWord.toString();
+    final String additionalStatement = parserGetLastWord();
 
     if (additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)
         || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT))
       query = new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + additionalStatement + " "
-          + text.substring(currentPos), this);
+          + text.substring(parserGetCurrentPosition()), this);
     else
       query = new OSQLAsynchQuery<ODocument>("select from " + subjectName, this);
 
@@ -276,227 +278,104 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     return true;
   }
 
-  private int parseAddFields() {
+  private void parseAddFields() {
     String fieldName;
     String fieldValue;
-    int newPos = currentPos;
 
-    while (currentPos != -1 && (addEntries.size() == 0 || tempParseWord.toString().equals(","))
-        && !tempParseWord.toString().equals(KEYWORD_WHERE)) {
-      newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, tempParseWord, false);
-      if (newPos == -1)
-        throw new OCommandSQLParsingException("Field name expected. Use " + getSyntax(), text, currentPos);
-      currentPos = newPos;
+    while (!parserIsEnded() && (addEntries.size() == 0 || parserGetLastSeparator() == ',')
+        && !parserGetLastWord().equals(KEYWORD_WHERE)) {
 
-      fieldName = tempParseWord.toString();
-
-      newPos = OStringParser.jumpWhiteSpaces(text, currentPos);
-
-      if (newPos == -1 || text.charAt(newPos) != '=')
-        throw new OCommandSQLParsingException("Character '=' was expected. Use " + getSyntax(), text, currentPos);
-
-      currentPos = newPos + 1;
-      newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, tempParseWord, false, " =><");
-      if (currentPos == -1)
-        throw new OCommandSQLParsingException("Value expected. Use " + getSyntax(), text, currentPos);
-
-      fieldValue = tempParseWord.toString();
-
-      if (fieldValue.startsWith("{") || fieldValue.startsWith("[") || fieldValue.startsWith("[")) {
-        newPos = OStringParser.jumpWhiteSpaces(text, currentPos);
-        final StringBuilder buffer = new StringBuilder();
-        newPos = OStringSerializerHelper.parse(text, buffer, newPos, -1, OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true,
-            OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
-        fieldValue = buffer.toString();
-      }
-
-      if (fieldValue.endsWith(",")) {
-        currentPos = newPos - 1;
-        fieldValue = fieldValue.substring(0, fieldValue.length() - 1);
-      } else
-        currentPos = newPos;
+      fieldName = parserRequiredWord(false, "Field name expected");
+      parserRequiredKeyword("=");
+      fieldValue = parserRequiredWord(false, "Value expected", " =><,\r\n");
 
       // INSERT TRANSFORMED FIELD VALUE
       addEntries.add(new OPair<String, Object>(fieldName, getFieldValueCountingParameters(fieldValue)));
-
-      currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, tempParseWord, true);
     }
 
     if (addEntries.size() == 0)
-      throw new OCommandSQLParsingException(
-          "Entries to add <field> = <value> are missed. Example: name = 'Bill', salary = 300.2. Use " + getSyntax(), text,
-          currentPos);
-
-    return currentPos;
+      throwSyntaxErrorException("Entries to add <field> = <value> are missed. Example: name = 'Bill', salary = 300.2.");
   }
 
-  private int parsePutFields() {
+  private void parsePutFields() {
     String fieldName;
     String fieldKey;
     String fieldValue;
-    int newPos = currentPos;
 
-    while (currentPos != -1 && (setEntries.size() == 0 || tempParseWord.toString().equals(","))
-        && !tempParseWord.toString().equals(KEYWORD_WHERE)) {
-      newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, tempParseWord, false);
-      if (newPos == -1)
-        throw new OCommandSQLParsingException("Field name expected. Use " + getSyntax(), text, currentPos);
-      currentPos = newPos;
+    while (!parserIsEnded() && (setEntries.size() == 0 || parserGetLastSeparator() == ',')
+        && !parserGetLastWord().equals(KEYWORD_WHERE)) {
 
-      fieldName = tempParseWord.toString();
-
-      newPos = OStringParser.jumpWhiteSpaces(text, currentPos);
-
-      if (newPos == -1 || text.charAt(newPos) != '=')
-        throw new OCommandSQLParsingException("Character '=' was expected. Use " + getSyntax(), text, currentPos);
-
-      currentPos = newPos;
-      newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos + 1, tempParseWord, false, " =><,");
-      if (currentPos == -1)
-        throw new OCommandSQLParsingException("Key expected. Use " + getSyntax(), text, currentPos);
-
-      fieldKey = tempParseWord.toString();
-
-      if (fieldKey.endsWith(",")) {
-        currentPos = newPos + 1;
-        fieldKey = fieldKey.substring(0, fieldKey.length() - 1);
-      } else {
-        currentPos = newPos;
-
-        newPos = OStringParser.jumpWhiteSpaces(text, currentPos);
-        if (newPos == -1 || text.charAt(currentPos) != ',')
-          throw new OCommandSQLParsingException("',' expected. Use " + getSyntax(), text, currentPos);
-
-        currentPos = newPos;
-      }
-
-      newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos + 1, tempParseWord, false, " =><,");
-      if (currentPos == -1)
-        throw new OCommandSQLParsingException("Value expected. Use " + getSyntax(), text, currentPos);
-
-      fieldValue = tempParseWord.toString();
-
-      if (fieldValue.startsWith("{") || fieldValue.startsWith("[") || fieldValue.startsWith("[")) {
-        newPos = OStringParser.jumpWhiteSpaces(text, currentPos);
-        final StringBuilder buffer = new StringBuilder();
-        newPos = OStringSerializerHelper.parse(text, buffer, newPos, -1, OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true,
-            OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
-        fieldValue = buffer.toString();
-      }
-
-      if (fieldValue.endsWith(",")) {
-        currentPos = newPos - 1;
-        fieldValue = fieldValue.substring(0, fieldValue.length() - 1);
-      } else
-        currentPos = newPos;
+      fieldName = parserRequiredWord(false, "Field name expected");
+      parserRequiredKeyword("=");
+      fieldKey = parserRequiredWord(false, "Key expected");
+      fieldValue = getBlock(parserRequiredWord(false, "Value expected", " =><,\r\n"));
 
       // INSERT TRANSFORMED FIELD VALUE
       putEntries.put(fieldName, new OPair<String, Object>((String) getFieldValueCountingParameters(fieldKey),
           getFieldValueCountingParameters(fieldValue)));
-
-      currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, tempParseWord, true);
     }
 
     if (putEntries.size() == 0)
-      throw new OCommandSQLParsingException("Entries to put <field> = <key>, <value> are missed. Example: name = 'Bill', 30. Use "
-          + getSyntax(), text, currentPos);
-
-    return currentPos;
+      throwSyntaxErrorException("Entries to put <field> = <key>, <value> are missed. Example: name = 'Bill', 30");
   }
 
-  private int parseRemoveFields() {
+  private void parseRemoveFields() {
     String fieldName;
     String fieldValue;
     Object value;
-    int newPos = currentPos;
 
-    while (currentPos != -1 && (removeEntries.size() == 0 || tempParseWord.toString().equals(","))
-        && !tempParseWord.toString().equals(KEYWORD_WHERE)) {
-      newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, tempParseWord, false);
-      if (newPos == -1)
-        throw new OCommandSQLParsingException("Field name expected. Use " + getSyntax(), text, currentPos);
+    while (!parserIsEnded() && (removeEntries.size() == 0 || parserGetLastSeparator() == ',')
+        && !parserGetLastWord().equals(KEYWORD_WHERE)) {
 
-      fieldName = tempParseWord.toString();
-
-      currentPos = OStringParser.jumpWhiteSpaces(text, newPos);
-
-      if (currentPos > -1 && text.charAt(currentPos) == '=') {
-        currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos + 1, tempParseWord, false, " =><,");
-        if (currentPos == -1)
-          throw new OCommandSQLParsingException("Value expected. Use " + getSyntax(), text, currentPos);
-
-        fieldValue = tempParseWord.toString();
-
-        if (fieldValue.endsWith(",")) {
-          currentPos = newPos - 1;
-          fieldValue = fieldValue.substring(0, fieldValue.length() - 1);
-        } else
-          currentPos = newPos;
-
+      fieldName = parserRequiredWord(false, "Field name expected");
+      final boolean equals = parserOptionalKeyword("=");
+      if (equals) {
+        fieldValue = getBlock(parserRequiredWord(false, "Value expected"));
         value = getFieldValueCountingParameters(fieldValue);
-
       } else
         value = EMPTY_VALUE;
 
       // INSERT FIELD NAME TO BE REMOVED
       removeEntries.add(new OPair<String, Object>(fieldName, value));
-
-      currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, tempParseWord, true);
     }
 
     if (removeEntries.size() == 0)
-      throw new OCommandSQLParsingException("Field(s) to remove are missed. Example: name, salary. Use " + getSyntax(), text,
-          currentPos);
-    return currentPos;
+      throwSyntaxErrorException("Field(s) to remove are missed. Example: name, salary");
   }
 
-  private int parseIncrementFields() {
+  private void parseIncrementFields() {
     String fieldName;
     String fieldValue;
-    int newPos = currentPos;
 
-    while (currentPos != -1 && (incrementEntries.size() == 0 || tempParseWord.toString().equals(","))
-        && !tempParseWord.toString().equals(KEYWORD_WHERE)) {
-      newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, tempParseWord, false);
-      if (newPos == -1)
-        throw new OCommandSQLParsingException("Field name expected. Use " + getSyntax(), text, currentPos);
-      currentPos = newPos;
+    while (!parserIsEnded() && (incrementEntries.size() == 0 || parserGetLastSeparator() == ',')
+        && !parserGetLastWord().equals(KEYWORD_WHERE)) {
 
-      fieldName = tempParseWord.toString();
-
-      newPos = OStringParser.jumpWhiteSpaces(text, currentPos);
-
-      if (newPos == -1 || text.charAt(newPos) != '=')
-        throw new OCommandSQLParsingException("Character '=' was expected. Use " + getSyntax(), text, currentPos);
-
-      currentPos = newPos;
-      newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos + 1, tempParseWord, false, " =><");
-      if (currentPos == -1)
-        throw new OCommandSQLParsingException("Value expected. Use " + getSyntax(), text, currentPos);
-
-      fieldValue = tempParseWord.toString();
-
-      if (fieldValue.endsWith(",")) {
-        currentPos = newPos - 1;
-        fieldValue = fieldValue.substring(0, fieldValue.length() - 1);
-      } else
-        currentPos = newPos;
+      fieldName = parserRequiredWord(false, "Field name expected");
+      parserRequiredKeyword("=");
+      fieldValue = getBlock(parserRequiredWord(false, "Value expected"));
 
       // INSERT TRANSFORMED FIELD VALUE
       incrementEntries.put(fieldName, (Number) getFieldValueCountingParameters(fieldValue));
-
-      currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, tempParseWord, true);
     }
 
     if (incrementEntries.size() == 0)
-      throw new OCommandSQLParsingException("Entries to increment <field> = <value> are missed. Example: salary = -100. Use "
-          + getSyntax(), text, currentPos);
-
-    return currentPos;
+      throwSyntaxErrorException("Entries to increment <field> = <value> are missed. Example: salary = -100");
   }
 
   @Override
   public String getSyntax() {
     return "UPDATE <class>|cluster:<cluster>> [SET|ADD|PUT|REMOVE|INCREMENT] [[,] <field-name> = <field-value>]* [WHERE <conditions>]";
   }
+
+  protected String getBlock(String fieldValue) {
+    if (fieldValue.startsWith("{") || fieldValue.startsWith("[") || fieldValue.startsWith("[")) {
+      parserSkipWhiteSpaces();
+      final StringBuilder buffer = new StringBuilder();
+      parserSetCurrentPosition(OStringSerializerHelper.parse(text, buffer, parserGetCurrentPosition(), -1,
+          OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true, OStringSerializerHelper.DEFAULT_IGNORE_CHARS));
+      fieldValue = buffer.toString();
+    }
+    return fieldValue;
+  }
+
 }

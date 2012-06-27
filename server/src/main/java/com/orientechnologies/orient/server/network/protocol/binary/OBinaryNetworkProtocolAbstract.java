@@ -275,7 +275,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       }
     }
 
-    OLogManager.instance().info(this, "Created database '%s' of type '%s'", iDatabase.getURL(),
+    OLogManager.instance().info(this, "Created database '%s' of type '%s'", iDatabase.getName(),
         iDatabase.getStorage() instanceof OStorageLocal ? "local" : "memory");
 
     // if (iDatabase.getStorage() instanceof OStorageLocal)

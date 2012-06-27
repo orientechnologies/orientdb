@@ -53,17 +53,17 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
     StringBuilder word = new StringBuilder();
 
     int oldPos = 0;
-    int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    int pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found", text, oldPos);
 
     oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found", text, oldPos);
 
     oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
+    pos = nextWord(text, textUpperCase, oldPos, word, false);
     if (pos == -1)
       throw new OCommandSQLParsingException("Expected <class>.<property>", text, oldPos);
 
@@ -77,14 +77,14 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
     fieldName = parts[1];
 
     oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1)
       throw new OCommandSQLParsingException("Missed property type", text, oldPos);
 
     type = OType.valueOf(word.toString());
 
     oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
+    pos = nextWord(text, textUpperCase, oldPos, word, false);
     if (pos == -1)
       return this;
 

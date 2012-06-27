@@ -53,15 +53,15 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
     final StringBuilder word = new StringBuilder();
 
     int oldPos = 0;
-    int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    int pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_DROP))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), text, oldPos);
 
-    pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+    pos = nextWord(text, textUpperCase, pos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found. Use " + getSyntax(), text, oldPos);
 
-    pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
+    pos = nextWord(text, textUpperCase, pos, word, false);
     if (pos == -1)
       throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, pos);
 
@@ -74,7 +74,7 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
       throw new OCommandSQLParsingException("Class not found", text, pos);
     fieldName = parts[1];
 
-    pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
+    pos = nextWord(text, textUpperCase, pos, word, false);
     if (pos != -1) {
       final String forceParameter = word.toString();
       if ("FORCE".equals(forceParameter)) {

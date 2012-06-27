@@ -46,15 +46,15 @@ public class OCommandExecutorSQLDropCluster extends OCommandExecutorSQLAbstract 
     final StringBuilder word = new StringBuilder();
 
     int oldPos = 0;
-    int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    int pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_DROP))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), text, oldPos);
 
-    pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+    pos = nextWord(text, textUpperCase, pos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_CLUSTER))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found. Use " + getSyntax(), text, oldPos);
 
-    pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
+    pos = nextWord(text, textUpperCase, pos, word, false);
     if (pos == -1)
       throw new OCommandSQLParsingException("Expected <cluster>. Use " + getSyntax(), text, pos);
 

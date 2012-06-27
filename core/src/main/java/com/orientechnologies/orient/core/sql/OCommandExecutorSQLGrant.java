@@ -46,31 +46,31 @@ public class OCommandExecutorSQLGrant extends OCommandExecutorSQLPermissionAbstr
     StringBuilder word = new StringBuilder();
 
     int oldPos = 0;
-    int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    int pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_GRANT))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_GRANT + " not found. Use " + getSyntax(), text, oldPos);
 
-    pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+    pos = nextWord(text, textUpperCase, pos, word, true);
     if (pos == -1)
       throw new OCommandSQLParsingException("Invalid privilege", text, oldPos);
 
     parsePrivilege(word, oldPos);
 
-    pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+    pos = nextWord(text, textUpperCase, pos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_ON))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_ON + " not found. Use " + getSyntax(), text, oldPos);
 
-    pos = OSQLHelper.nextWord(text, text, pos, word, true);
+    pos = nextWord(text, text, pos, word, true);
     if (pos == -1)
       throw new OCommandSQLParsingException("Invalid resource", text, oldPos);
 
     resource = word.toString();
 
-    pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+    pos = nextWord(text, textUpperCase, pos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_TO))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_TO + " not found. Use " + getSyntax(), text, oldPos);
 
-    pos = OSQLHelper.nextWord(text, text, pos, word, true);
+    pos = nextWord(text, text, pos, word, true);
     if (pos == -1)
       throw new OCommandSQLParsingException("Invalid role", text, oldPos);
 

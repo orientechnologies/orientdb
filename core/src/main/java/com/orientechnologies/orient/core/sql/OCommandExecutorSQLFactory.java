@@ -15,8 +15,9 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import java.util.Set;
+
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 
 /**
  * Factory to register new OCommandExecutorSQL.

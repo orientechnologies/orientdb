@@ -20,7 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
@@ -38,7 +37,6 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OCommandSQLResultset;
-import com.orientechnologies.orient.core.sql.OSQLHelper;
 
 /**
  * Parsed query. It's built once a query is parsed.
@@ -62,37 +60,31 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
       if (extractTargets()) {
         // IF WHERE EXISTS EXTRACT CONDITIONS
 
-        final StringBuilder word = new StringBuilder();
-        int newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
-        if (newPos > -1) {
-          if (word.toString().equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)) {
-            final int lastPos = newPos;
+        if (parserOptionalKeyword(OCommandExecutorSQLAbstract.KEYWORD_WHERE, OCommandExecutorSQLAbstract.KEYWORD_LIMIT,
+            OCommandExecutorSQLSelect.KEYWORD_ORDER, OCommandExecutorSQLSelect.KEYWORD_SKIP)) {
+          if (parserGetLastWord().equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)) {
+            final int lastPos = parserGetCurrentPosition();
             final String lastText = text;
             final String lastTextUpperCase = textUpperCase;
 
-            text(text.substring(newPos));
+            text(text.substring(lastPos));
 
-            if (currentPos > -1)
-              currentPos += lastPos;
             text = lastText;
             textUpperCase = lastTextUpperCase;
+            parserMoveCurrentPosition(lastPos);
 
-          } else if (word.toString().equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT)
-              || word.toString().equals(OCommandExecutorSQLSelect.KEYWORD_ORDER)
-              || word.toString().equals(OCommandExecutorSQLSelect.KEYWORD_SKIP))
-            return;
-          else
-            throw new OQueryParsingException("Found invalid keyword '" + word + "'", text, newPos);
+          } else
+            parserGoBack();
         }
       }
     } catch (OQueryParsingException e) {
       if (e.getText() == null)
         // QUERY EXCEPTION BUT WITHOUT TEXT: NEST IT
-        throw new OQueryParsingException("Error on parsing query", text, currentPos, e);
+        throw new OQueryParsingException("Error on parsing query", text, parserGetCurrentPosition(), e);
 
       throw e;
     } catch (Throwable t) {
-      throw new OQueryParsingException("Error on parsing query", text, currentPos, t);
+      throw new OQueryParsingException("Error on parsing query", text, parserGetCurrentPosition(), t);
     }
   }
 
@@ -105,25 +97,22 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
 
   @SuppressWarnings("unchecked")
   private boolean extractTargets() {
-    currentPos = OStringParser.jumpWhiteSpaces(text, currentPos);
+    parserSkipWhiteSpaces();
 
-    if (currentPos == -1)
+    if (parserIsEnded())
       throw new OQueryParsingException("No query target found", text, 0);
 
-    final char c = text.charAt(currentPos);
+    final char c = parserGetCurrentChar();
 
     if (c == '#' || Character.isDigit(c)) {
       // UNIQUE RID
-      final StringBuilder word = new StringBuilder();
-      currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
-
       targetRecords = new ArrayList<OIdentifiable>();
-      ((List<OIdentifiable>) targetRecords).add(new ORecordId(word.toString()));
+      ((List<OIdentifiable>) targetRecords).add(new ORecordId(parserRequiredWord(true, "No valid RID")));
 
     } else if (c == '(') {
       // SUB QUERY
       final StringBuilder subText = new StringBuilder();
-      currentPos = OStringSerializerHelper.getEmbedded(text, currentPos, -1, subText);
+      parserSetCurrentPosition(OStringSerializerHelper.getEmbedded(text, parserGetCurrentPosition(), -1, subText));
       final OCommandSQL subCommand = new OCommandSQLResultset(subText.toString());
 
       final OCommandExecutor executor = OCommandManager.instance().getExecutor(subCommand);
@@ -146,42 +135,25 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
     } else if (c == OStringSerializerHelper.COLLECTION_BEGIN) {
       // COLLECTION OF RIDS
       final List<String> rids = new ArrayList<String>();
-      currentPos = OStringSerializerHelper.getCollection(text, currentPos, rids);
+      parserSetCurrentPosition(OStringSerializerHelper.getCollection(text, parserGetCurrentPosition(), rids));
 
       targetRecords = new ArrayList<OIdentifiable>();
       for (String rid : rids)
         ((List<OIdentifiable>) targetRecords).add(new ORecordId(rid));
 
-      if (currentPos > -1)
-        currentPos++;
+      parserMoveCurrentPosition(1);
     } else {
-      String subjectName;
-      String alias;
-      String subjectToMatch;
-      int newPos;
 
-      final StringBuilder word = new StringBuilder();
-      currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
+      while (!parserIsEnded() && (targetClasses == null && targetClusters == null && targetIndex == null)) {
+        String subjectName = parserRequiredWord(true, "Target not found");
 
-      while (currentPos > -1 && (targetClasses == null && targetClusters == null && targetIndex == null)) {
-        subjectName = word.toString();
-
-        newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
-        if (newPos > -1 && word.toString().equals("AS")) {
-          currentPos = newPos;
-
-          newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
-          if (newPos == -1)
-            throw new OQueryParsingException("No alias found. Example: SELECT FROM Customer AS c", text, currentPos);
-
-          currentPos = newPos;
-
-          alias = word.toString();
-
-        } else
+        final String alias;
+        if (subjectName.equals("AS"))
+          alias = parserRequiredWord(true, "Alias not found");
+        else
           alias = subjectName;
 
-        subjectToMatch = subjectName;
+        final String subjectToMatch = subjectName;
         if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX)) {
           // REGISTER AS CLUSTER
           if (targetClusters == null)
@@ -209,7 +181,7 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
       }
     }
 
-    return currentPos > -1;
+    return !parserIsEnded();
   }
 
   public Map<String, String> getTargetClusters() {

@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.command;
 import java.util.Map;
 
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 
@@ -28,7 +29,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
  * 
  */
 @SuppressWarnings("unchecked")
-public abstract class OCommandExecutorAbstract extends OCommandToParse implements OCommandExecutor {
+public abstract class OCommandExecutorAbstract extends OBaseParser implements OCommandExecutor {
   protected OProgressListener   progressListener;
   protected int                 limit = -1;
   protected Map<Object, Object> parameters;

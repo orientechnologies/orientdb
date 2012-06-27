@@ -53,24 +53,24 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract {
     StringBuilder word = new StringBuilder();
 
     int oldPos = 0;
-    int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    int pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_ALTER))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found", text, oldPos);
 
     oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_CLASS))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found", text, oldPos);
 
     oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
+    pos = nextWord(text, textUpperCase, oldPos, word, false);
     if (pos == -1)
       throw new OCommandSQLParsingException("Expected <class>", text, oldPos);
 
     className = word.toString();
 
     oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1)
       throw new OCommandSQLParsingException("Missed the class's attribute to change", text, oldPos);
 

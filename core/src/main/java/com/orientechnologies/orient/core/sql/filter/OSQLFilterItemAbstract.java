@@ -26,8 +26,8 @@ import java.util.Map;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -47,7 +47,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
   protected List<OPair<Integer, List<String>>> operationsChain = null;
 
-  public OSQLFilterItemAbstract(final OCommandToParse iQueryToParse, final String iText) {
+  public OSQLFilterItemAbstract(final OBaseParser iQueryToParse, final String iText) {
     final List<String> parts = OStringSerializerHelper.smartSplit(iText, '.');
 
     setRoot(iQueryToParse, parts.get(0));
@@ -98,7 +98,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
   public abstract String getRoot();
 
-  protected abstract void setRoot(OCommandToParse iQueryToParse, final String iRoot);
+  protected abstract void setRoot(OBaseParser iQueryToParse, final String iRoot);
 
   public Object transformValue(final OIdentifiable iRecord, Object ioResult) {
     if (ioResult != null && operationsChain != null) {

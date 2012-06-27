@@ -53,17 +53,17 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
     StringBuilder word = new StringBuilder();
 
     int oldPos = 0;
-    int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    int pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_ALTER))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found. Use " + getSyntax(), text, oldPos);
 
     oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found. Use " + getSyntax(), text, oldPos);
 
     oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
+    pos = nextWord(text, textUpperCase, oldPos, word, false);
     if (pos == -1)
       throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, oldPos);
 
@@ -77,7 +77,7 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
     fieldName = parts[1];
 
     oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1)
       throw new OCommandSQLParsingException("Missing property attribute to change. Use " + getSyntax(), text, oldPos);
 

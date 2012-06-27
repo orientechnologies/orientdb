@@ -18,7 +18,6 @@ package com.orientechnologies.orient.core.sql;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
@@ -49,13 +48,15 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
 
     String className = null;
 
-    parseRequiredKeyword("CREATE");
-    parseRequiredKeyword("VERTEX");
-    String temp = parseOptionalWord(true);
-    if (temp != null && !temp.equals("SET")) {
+    parserRequiredKeyword("CREATE");
+    parserRequiredKeyword("VERTEX");
+    String temp = parserOptionalWord(true);
+    boolean set = temp != null && temp.equals("SET");
+
+    if (temp != null && !set) {
       // CLASS NAME
       className = temp;
-      temp = parseOptionalWord(true, "SET");
+      set = parserOptionalKeyword("SET");
     } else
       // ASSIGN DEFAULT CLASS
       className = "V";
@@ -65,8 +66,8 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
     if (clazz == null)
       throw new OCommandSQLParsingException("Class " + className + " was not found");
 
-    final int beginFields = OStringParser.jumpWhiteSpaces(text, currentPos);
-    if (beginFields > -1 && temp.equals("SET")) {
+    parserSkipWhiteSpaces();
+    if (!parserIsEnded() && set) {
       fields = new LinkedHashMap<String, Object>();
       parseSetFields(fields);
     }

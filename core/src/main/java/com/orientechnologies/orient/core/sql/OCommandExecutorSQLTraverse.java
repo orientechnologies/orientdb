@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -66,7 +65,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
       throw new OCommandSQLParsingException("Traverse must have the field list. Use " + getSyntax());
 
     int endPosition = text.length();
-    int endP = textUpperCase.indexOf(" " + OCommandExecutorSQLTraverse.KEYWORD_LIMIT, currentPos);
+    int endP = textUpperCase.indexOf(" " + OCommandExecutorSQLTraverse.KEYWORD_LIMIT, parserGetCurrentPosition());
     if (endP > -1 && endP < endPosition)
       endPosition = endP;
 
@@ -75,24 +74,16 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
 
     optimize();
 
-    currentPos = compiledFilter.currentPos < 0 ? endPosition : compiledFilter.currentPos + pos;
+    parserSetCurrentPosition(compiledFilter.parserIsEnded() ? endPosition : compiledFilter.parserGetCurrentPosition() + pos);
+    parserSkipWhiteSpaces();
 
-    if (currentPos > -1 && currentPos < text.length()) {
-      currentPos = OStringParser.jump(text, currentPos, " \r\n");
-
-      final StringBuilder word = new StringBuilder();
-      String w;
-
-      while (currentPos > -1) {
-        currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
-
-        if (currentPos > -1) {
-          w = word.toString();
-          if (w.equals(KEYWORD_LIMIT))
-            parseLimit(word);
-          else if (w.equals(KEYWORD_SKIP))
-            parseSkip(word);
-        }
+    if (!parserIsEnded()) {
+      if (parserOptionalKeyword(KEYWORD_LIMIT, KEYWORD_SKIP)) {
+        final String w = tempResult.toString();
+        if (w.equals(KEYWORD_LIMIT))
+          parseLimit(w);
+        else if (w.equals(KEYWORD_SKIP))
+          parseSkip(w);
       }
     }
 
@@ -160,7 +151,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     int currentPos = 0;
     final StringBuilder word = new StringBuilder();
 
-    currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
+    currentPos = nextWord(text, textUpperCase, currentPos, word, true);
     if (!word.toString().equals(KEYWORD_TRAVERSE))
       return -1;
 

@@ -15,8 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
+import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 
@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 public class OSQLFilterItemVariable extends OSQLFilterItemAbstract {
 	protected String	name;
 
-	public OSQLFilterItemVariable(final OCommandToParse iQueryToParse, final String iName) {
+	public OSQLFilterItemVariable(final OBaseParser iQueryToParse, final String iName) {
 		super(iQueryToParse, iName.substring(1));
 	}
 
@@ -47,7 +47,7 @@ public class OSQLFilterItemVariable extends OSQLFilterItemAbstract {
 		return name;
 	}
 
-	public void setRoot(final OCommandToParse iQueryToParse, final String iRoot) {
+	public void setRoot(final OBaseParser iQueryToParse, final String iRoot) {
 		this.name = iRoot;
 	}
 

@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -51,53 +50,34 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLEarlyR
 
     init(((OCommandRequestText) iRequest).getText());
 
-    final StringBuilder word = new StringBuilder();
+    parserRequiredKeyword(KEYWORD_FIND);
+    parserRequiredKeyword(KEYWORD_REFERENCES);
+    final String target = parserRequiredWord(true, "Expected <target>");
 
-    int oldPos = 0;
-    int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_FIND))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_FIND + " not found. Use " + getSyntax(), text, oldPos);
-
-    oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_REFERENCES))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_REFERENCES + " not found. Use " + getSyntax(), text, oldPos);
-
-    pos = OStringParser.jumpWhiteSpaces(text, pos);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Expected <target>. Use " + getSyntax(), text, oldPos);
-
-    oldPos = pos;
-    if (text.charAt(pos) == '(') {
+    if (target.charAt(0) == '(') {
       subQuery = new StringBuilder();
-      pos = OStringSerializerHelper.getEmbedded(text, oldPos, -1, subQuery);
+      parserSetCurrentPosition(OStringSerializerHelper.getEmbedded(text, parserGetPreviousPosition(), -1, subQuery));
     } else {
-      pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
-      if (pos == -1)
-        throw new OCommandSQLParsingException("Expected <recordId>. Use " + getSyntax(), text, oldPos);
-
-      final String recordIdString = word.toString();
-      if (recordIdString == null || recordIdString.equals(""))
-        throw new OCommandSQLParsingException("Record to search cannot be null. Use " + getSyntax(), text, pos);
       try {
-        final ORecordId rid = new ORecordId(recordIdString);
+        final ORecordId rid = new ORecordId(target);
         if (!rid.isValid())
-          throw new OCommandSQLParsingException("Record ID " + recordIdString + " is not valid", text, pos);
+          throwParsingException("Record ID " + target + " is not valid");
         recordIds.add(rid);
 
       } catch (IllegalArgumentException iae) {
-        throw new OCommandSQLParsingException("Error reading record Id", text, pos, iae);
+        throw new OCommandSQLParsingException("Error reading record Id", text, parserGetPreviousPosition(), iae);
       }
     }
 
-    oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-    if (pos != -1) {
-      // GET THE CLUSTER LIST TO SEARCH, IF NULL WILL SEARCH ENTIRE DATABASE
-      classList = word.toString().trim();
+    parserSkipWhiteSpaces();
+    classList = parserOptionalWord(true);
+    if (classList != null) {
+      classList = textUpperCase.substring(parserGetPreviousPosition());
+
       if (!classList.startsWith("[") || !classList.endsWith("]")) {
-        throw new OCommandSQLParsingException("Class list must be contained in []. Use " + getSyntax(), text, pos);
+        throwParsingException("Class list must be contained in []");
       }
+      // GET THE CLUSTER LIST TO SEARCH, IF NULL WILL SEARCH ENTIRE DATABASE
       classList = classList.substring(1, classList.length() - 1);
     }
 

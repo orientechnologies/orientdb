@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 
@@ -54,5 +55,10 @@ public class OCommandGremlinExecutor extends OCommandExecutorAbstract {
   @Override
   public boolean isIdempotent() {
     return false;
+  }
+
+  @Override
+  protected void throwSyntaxErrorException(String iText) {
+    throw new OCommandScriptException("Error on parsing of the script: " + iText);
   }
 }

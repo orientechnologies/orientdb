@@ -64,18 +64,18 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 
     StringBuilder word = new StringBuilder();
 
-    int pos = OSQLHelper.nextWord(text, textUpperCase, 0, word, true);
+    int pos = nextWord(text, textUpperCase, 0, word, true);
     if (pos == -1 || !word.toString().equals(OCommandExecutorSQLDelete.KEYWORD_DELETE))
       throw new OCommandSQLParsingException("Keyword " + OCommandExecutorSQLDelete.KEYWORD_DELETE + " not found. Use "
           + getSyntax(), text, 0);
 
     int oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_FROM))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found. Use " + getSyntax(), text, oldPos);
 
     oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1)
       throw new OCommandSQLParsingException("Invalid subject name. Expected cluster, class or index. Use " + getSyntax(), text,
           oldPos);

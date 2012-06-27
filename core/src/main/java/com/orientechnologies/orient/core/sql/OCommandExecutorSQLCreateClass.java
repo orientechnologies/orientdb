@@ -54,17 +54,17 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
     StringBuilder word = new StringBuilder();
 
     int oldPos = 0;
-    int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    int pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found. Use " + getSyntax(), text, oldPos);
 
     oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(text, textUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_CLASS))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found. Use " + getSyntax(), text, oldPos);
 
     oldPos = pos;
-    pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
+    pos = nextWord(text, textUpperCase, oldPos, word, false);
     if (pos == -1)
       throw new OCommandSQLParsingException("Expected <class>", text, oldPos);
 
@@ -74,11 +74,11 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
 
     oldPos = pos;
 
-    while ((pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true)) > -1) {
+    while ((pos = nextWord(text, textUpperCase, oldPos, word, true)) > -1) {
       final String k = word.toString();
       if (k.equals(KEYWORD_EXTENDS)) {
         oldPos = pos;
-        pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
+        pos = nextWord(text, textUpperCase, oldPos, word, false);
         if (pos == -1)
           throw new OCommandSQLParsingException("Syntax error after EXTENDS for class " + className
               + ". Expected the super-class name. Use " + getSyntax(), text, oldPos);
@@ -89,7 +89,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
         superClass = database.getMetadata().getSchema().getClass(word.toString());
       } else if (k.equals(KEYWORD_CLUSTER)) {
         oldPos = pos;
-        pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
+        pos = nextWord(text, textUpperCase, oldPos, word, false);
         if (pos == -1)
           throw new OCommandSQLParsingException("Syntax error after CLUSTER for class " + className
               + ". Expected the cluster id or name. Use " + getSyntax(), text, oldPos);

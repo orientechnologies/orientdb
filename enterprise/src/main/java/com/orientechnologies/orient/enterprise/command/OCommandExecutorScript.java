@@ -116,4 +116,9 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
   public boolean isIdempotent() {
     return false;
   }
+
+  @Override
+  protected void throwSyntaxErrorException(String iText) {
+    throw new OCommandScriptException("Error on execution of the script: " + iText, request.getText(), 0);
+  }
 }
