@@ -89,7 +89,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
         superClass = database.getMetadata().getSchema().getClass(word.toString());
       } else if (k.equals(KEYWORD_CLUSTER)) {
         oldPos = pos;
-        pos = nextWord(text, textUpperCase, oldPos, word, false);
+        pos = nextWord(text, textUpperCase, oldPos, word, false," =><()");
         if (pos == -1)
           throw new OCommandSQLParsingException("Syntax error after CLUSTER for class " + className
               + ". Expected the cluster id or name. Use " + getSyntax(), text, oldPos);
