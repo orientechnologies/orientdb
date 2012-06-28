@@ -223,7 +223,7 @@ public class DbCreationTest {
     }
 
     for (int i = 0; i < 3; ++i) {
-      String ur = u + "/" + i + "/db";
+      String ur = u + "/" + i + "$db";
       ODatabaseDocumentTx db = new ODatabaseDocumentTx(ur);
 
       try {
@@ -237,7 +237,7 @@ public class DbCreationTest {
     }
 
     for (int i = 0; i < 3; ++i) {
-      String ur = u + "/" + i + "/db";
+      String ur = u + "/" + i + "$db";
       ODatabaseDocumentTx db = new ODatabaseDocumentTx(ur);
       Assert.assertTrue(ODatabaseHelper.existsDatabase(db));
       ODatabaseHelper.dropDatabase(db);

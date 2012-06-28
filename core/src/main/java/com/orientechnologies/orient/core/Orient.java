@@ -145,11 +145,11 @@ public class Orient extends OSharedResourceAbstract {
       OStorage storage;
       if (engine.isShared()) {
         // SEARCH IF ALREADY USED
-        storage = storages.get(dbPath);
+        storage = storages.get(dbName);
         if (storage == null) {
           // NOT FOUND: CREATE IT
           storage = engine.createStorage(dbPath, parameters);
-          storages.put(dbPath, storage);
+          storages.put(dbName, storage);
         }
       } else {
         // REGISTER IT WITH A SERIAL NAME TO AVOID BEING REUSED

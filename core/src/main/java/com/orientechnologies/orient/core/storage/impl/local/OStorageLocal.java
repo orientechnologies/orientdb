@@ -1533,9 +1533,8 @@ public class OStorageLocal extends OStorageEmbedded {
 
         // UPDATE IT
         final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
-        if (!checkForRecordValidity(ppos)) {
+        if (!checkForRecordValidity(ppos))
           return null;
-        }
 
         // VERSION CONTROL CHECK
         switch (iVersion) {

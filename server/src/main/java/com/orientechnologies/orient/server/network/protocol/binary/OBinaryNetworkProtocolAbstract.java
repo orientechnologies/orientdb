@@ -292,7 +292,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     if (stg != null)
       path = stg.getURL();
     else if (iStorageType.equals(OEngineLocal.NAME)) {
-      path = iStorageType + ":" + server.getDatabaseDirectory() + iDbName;
+      path = iStorageType + ":${" + Orient.ORIENTDB_HOME + "}/databases/" + iDbName;
     } else if (iStorageType.equals(OEngineMemory.NAME)) {
       path = iStorageType + ":" + iDbName;
     } else
