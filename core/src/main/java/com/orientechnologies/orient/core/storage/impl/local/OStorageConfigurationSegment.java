@@ -28,74 +28,74 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
  */
 @SuppressWarnings("serial")
 public class OStorageConfigurationSegment extends OStorageConfiguration {
-	private static final int		START_SIZE	= 10000;
-	private OSingleFileSegment	segment;
+  private static final int   START_SIZE = 10000;
+  private OSingleFileSegment segment;
 
-	public OStorageConfigurationSegment(final OStorageLocal iStorage) throws IOException {
-		super(iStorage);
-		segment = new OSingleFileSegment((OStorageLocal) storage, new OStorageFileConfiguration(null, getDirectory() + "/database.ocf",
-				fileTemplate.fileType, fileTemplate.maxSize, fileTemplate.fileIncrementSize));
-	}
+  public OStorageConfigurationSegment(final OStorageLocal iStorage) throws IOException {
+    super(iStorage);
+    segment = new OSingleFileSegment((OStorageLocal) storage, new OStorageFileConfiguration(null, getDirectory() + "/database.ocf",
+        "classic", fileTemplate.maxSize, fileTemplate.fileIncrementSize));
+  }
 
-	public void close() throws IOException {
-		segment.close();
-	}
+  public void close() throws IOException {
+    segment.close();
+  }
 
-	public void create() throws IOException {
-		segment.create(START_SIZE);
-		super.create();
-	}
+  public void create() throws IOException {
+    segment.create(START_SIZE);
+    super.create();
+  }
 
-	@Override
-	public OStorageConfiguration load() throws OSerializationException {
-		try {
-			if (segment.getFile().exists())
-				segment.open();
-			else {
-				segment.create(START_SIZE);
+  @Override
+  public OStorageConfiguration load() throws OSerializationException {
+    try {
+      if (segment.getFile().exists())
+        segment.open();
+      else {
+        segment.create(START_SIZE);
 
-				// @COMPATIBILITY0.9.25
-				// CHECK FOR OLD VERSION OF DATABASE
-				final ORawBuffer rawRecord = storage.readRecord(CONFIG_RID, null, false, null);
-				if (rawRecord != null)
-					fromStream(rawRecord.buffer);
+        // @COMPATIBILITY0.9.25
+        // CHECK FOR OLD VERSION OF DATABASE
+        final ORawBuffer rawRecord = storage.readRecord(CONFIG_RID, null, false, null);
+        if (rawRecord != null)
+          fromStream(rawRecord.buffer);
 
-				update();
-				return this;
-			}
+        update();
+        return this;
+      }
 
-			final int size = segment.getFile().readInt(0);
-			byte[] buffer = new byte[size];
-			segment.getFile().read(OBinaryProtocol.SIZE_INT, buffer, size);
+      final int size = segment.getFile().readInt(0);
+      byte[] buffer = new byte[size];
+      segment.getFile().read(OBinaryProtocol.SIZE_INT, buffer, size);
 
-			fromStream(buffer);
-		} catch (Exception e) {
-			throw new OSerializationException("Cannot load database's configuration. The database seems to be corrupted.", e);
-		}
-		return this;
-	}
+      fromStream(buffer);
+    } catch (Exception e) {
+      throw new OSerializationException("Cannot load database's configuration. The database seems to be corrupted.", e);
+    }
+    return this;
+  }
 
-	@Override
-	public void update() throws OSerializationException {
-		try {
-			if (!segment.getFile().isOpen())
-				return;
+  @Override
+  public void update() throws OSerializationException {
+    try {
+      if (!segment.getFile().isOpen())
+        return;
 
-			final byte[] buffer = toStream();
+      final byte[] buffer = toStream();
 
-			final int len = buffer.length + OBinaryProtocol.SIZE_INT;
+      final int len = buffer.length + OBinaryProtocol.SIZE_INT;
 
-			if (len > segment.getFile().getFilledUpTo())
-				segment.getFile().allocateSpace(len - segment.getFile().getFilledUpTo());
-			
-			segment.getFile().writeInt(0, buffer.length);
-			segment.getFile().write(OBinaryProtocol.SIZE_INT, buffer);
-		} catch (Exception e) {
-			throw new OSerializationException("Error on update storage configuration", e);
-		}
-	}
+      if (len > segment.getFile().getFilledUpTo())
+        segment.getFile().allocateSpace(len - segment.getFile().getFilledUpTo());
 
-	public void synch() throws IOException {
-		segment.getFile().synch();
-	}
+      segment.getFile().writeInt(0, buffer.length);
+      segment.getFile().write(OBinaryProtocol.SIZE_INT, buffer);
+    } catch (Exception e) {
+      throw new OSerializationException("Error on update storage configuration", e);
+    }
+  }
+
+  public void synch() throws IOException {
+    segment.getFile().synch();
+  }
 }
