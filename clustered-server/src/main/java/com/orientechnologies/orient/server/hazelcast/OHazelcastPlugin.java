@@ -69,6 +69,10 @@ import com.orientechnologies.orient.server.task.OAlignRequestDistributedTask;
  * 
  */
 public class OHazelcastPlugin extends ODistributedAbstractPlugin implements MembershipListener, EntryListener<String, Object> {
+  /**
+   * 
+   */
+  private static final int                  SEND_RETRY_MAX     = 100;
   private int                               nodeNumber;
   private String                            localNodeId;
   private String                            configFile         = "hazelcast.xml";
@@ -115,7 +119,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     setStatus("aligning");
 
-    // REGISTER THE CLUSTER RUN ID IF NOT PRESENT
+    // GET AND REGISTER THE CLUSTER RUN ID IF NOT PRESENT
     configurationMap.putIfAbsent("runId", hazelcastInstance.getCluster().getClusterTime());
     runId = (Long) getConfigurationMap().get("runId");
 
@@ -171,7 +175,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public Object routeOperation2Node(final Object iKey, final OAbstractDistributedTask<? extends Object> iTask)
       throws ExecutionException {
 
-    final String nodeId = getOwnerNode(iKey);
+    String nodeId = getOwnerNode(iKey);
 
     if (isAligningNode(nodeId)) {
       OLogManager.instance().warn(this, "DISTRIBUTED -> node %s is aligning. Waiting for completition...", nodeId);
@@ -181,11 +185,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         } catch (InterruptedException e) {
           Thread.interrupted();
         }
+        // RE-READ THE KEY OWNER (IT COULD BE CHANGED DURING THE PAUSE)
+        nodeId = getOwnerNode(iKey);
       }
       OLogManager.instance().warn(this, "DISTRIBUTED -> node %s is aligned. Flushing pending operations...", nodeId);
     }
 
-    for (int retry = 0; retry < 10; ++retry) {
+    for (int retry = 0; retry < SEND_RETRY_MAX; ++retry) {
       try {
         if (isLocalNodeOwner(iKey)) {
           // AVOID TO USE EXECUTORS
@@ -209,16 +215,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
                     iTask.getName().toUpperCase(), EXECUTION_MODE.SYNCHRONOUS, nodeId, iTask.getDatabaseName(), remoteResult,
                     localResult);
 
+            // OK
             return localResult;
-
-          } catch (OServerOfflineException e) {
-            OLogManager.instance().warn(this, "DISTRIBUTED -> remote node %s is not online, retrying %d...", nodeId, retry + 1);
-            // WAIT A BIT
-            try {
-              Thread.sleep(200);
-            } catch (InterruptedException ex) {
-              Thread.interrupted();
-            }
 
           } catch (MemberLeftException e) {
             // RETRY
@@ -229,12 +227,25 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
                     "DISTRIBUTED -> error on execution of operation in %s mode against node %s because node left. Re-route it in transparent way",
                     e, EXECUTION_MODE.SYNCHRONOUS, nodeId);
             return routeOperation2Node(iKey, iTask);
+
+          } catch (ExecutionException e) {
+            if (e.getCause() instanceof OServerOfflineException) {
+              // RETRY
+              OLogManager.instance().warn(this, "DISTRIBUTED -> remote node %s is not online, retrying %d...", nodeId, retry + 1);
+              // WAIT A BIT
+              try {
+                Thread.sleep(200);
+              } catch (InterruptedException ex) {
+                Thread.interrupted();
+              }
+            } else {
+              OLogManager.instance().error(this, "DISTRIBUTED -> error on execution of operation in %s mode against node %s", e,
+                  EXECUTION_MODE.SYNCHRONOUS, nodeId);
+              throw e;
+            }
+
           }
         }
-      } catch (ExecutionException e) {
-        OLogManager.instance().error(this, "DISTRIBUTED -> error on execution of operation in %s mode against node %s", e,
-            EXECUTION_MODE.SYNCHRONOUS, nodeId);
-        throw e;
       } catch (InterruptedException e) {
         Thread.interrupted();
 
@@ -292,20 +303,42 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       };
 
     Collection<Object> result = null;
-    try {
-      result = (Collection<Object>) executeOperation(task, iTask.getMode(), callback);
-    } catch (Exception e) {
-      // PASS THROUGH
-      if (e instanceof ExecutionException && e.getCause() instanceof OServerOfflineException)
-        throw (RuntimeException) e.getCause();
 
-      OLogManager.instance().error(this, "DISTRIBUTED -> error on execution of operation in %s mode against nodes: %s", e,
-          iTask.getMode(), members);
-      throw new ODistributedException("Error on executing remote operation in " + iTask.getMode() + " mode against nodes: "
-          + members, e);
+    for (int retry = 0; retry < SEND_RETRY_MAX; ++retry) {
+      try {
+
+        result = (Collection<Object>) executeOperation(task, iTask.getMode(), callback);
+
+        // OK
+        return result;
+
+      } catch (ExecutionException e) {
+        if (e.getCause() instanceof OServerOfflineException) {
+          // RETRY
+          OLogManager.instance().warn(this, "DISTRIBUTED -> a remote node is not online, retrying %d...", retry + 1);
+          // WAIT A BIT
+          try {
+            Thread.sleep(200);
+          } catch (InterruptedException ex) {
+            Thread.interrupted();
+          }
+        } else {
+          OLogManager.instance().error(this, "DISTRIBUTED -> error on execution of operation in %s mode", e,
+              EXECUTION_MODE.SYNCHRONOUS);
+          throw new ODistributedException("Error on executing remote operation in " + iTask.getMode() + " mode against nodes: "
+              + members, e);
+        }
+
+      } catch (Exception e) {
+        // WRAP IT
+        OLogManager.instance().error(this, "DISTRIBUTED -> error on execution of operation in %s mode against nodes: %s", e,
+            iTask.getMode(), members);
+        throw new ODistributedException("Error on executing remote operation in " + iTask.getMode() + " mode against nodes: "
+            + members, e);
+      }
     }
 
-    return result;
+    throw new ODistributedException("Cannot complete the operation because the cluster is offline");
   }
 
   @Override

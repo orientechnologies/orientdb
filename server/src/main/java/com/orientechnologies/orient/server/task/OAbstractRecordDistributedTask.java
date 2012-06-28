@@ -61,6 +61,7 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
       OLogManager.instance().debug(this, "DISTRIBUTED <-[%s] %s %s v.%d", nodeSource, getName(), rid, version);
 
     if (status != STATUS.ALIGN && !getDistributedServerManager().checkStatus("online"))
+      // NODE NOT ONLINE, REFUSE THE OEPRATION
       throw new OServerOfflineException();
 
     final OStorageSynchronizer dbSynchronizer = getDatabaseSynchronizer();

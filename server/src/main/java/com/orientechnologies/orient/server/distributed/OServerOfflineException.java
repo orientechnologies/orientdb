@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+
 /**
  * Exception thrown during distributed operation and the server is not ready to execute an operation because it's not online.
  * 
