@@ -89,14 +89,13 @@ public class ODistributedStorage implements OStorage {
       ORecordCallback<Integer> iCallback) {
     Object result = null;
 
-    if (!dManager.isLocalNodeOwner(iRecordId))
-      try {
-        result = dManager.routeOperation2Node(iRecordId,
-            new OUpdateRecordDistributedTask(dManager.getLocalNodeId(), wrapped.getName(), updateRecordMode, iRecordId, iContent,
-                iVersion, iRecordType));
-      } catch (ExecutionException e) {
-        throw new OStorageException("Cannot route UPDATE_RECORD operation to the distributed node", e);
-      }
+    try {
+      result = dManager.routeOperation2Node(iRecordId,
+          new OUpdateRecordDistributedTask(dManager.getLocalNodeId(), wrapped.getName(), updateRecordMode, iRecordId, iContent,
+              iVersion, iRecordType));
+    } catch (ExecutionException e) {
+      throw new OStorageException("Cannot route UPDATE_RECORD operation to the distributed node", e);
+    }
 
     // UPDATE LOCALLY
     return (Integer) result;
