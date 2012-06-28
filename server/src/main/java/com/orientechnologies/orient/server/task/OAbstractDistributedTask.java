@@ -38,38 +38,67 @@ import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 public abstract class OAbstractDistributedTask<T> implements Callable<T>, Externalizable {
   private static final long serialVersionUID = 1L;
 
-  protected String          nodeSource;
-  protected String          databaseName;
-  protected EXECUTION_MODE  mode;
-  protected boolean         redistribute;
+  public enum STATUS {
+    DISTRIBUTE, REMOTE_EXEC, ALIGN, LOCAL_EXEC
+  }
+
+  protected String         nodeSource;
+  protected String         databaseName;
+  protected long           runId;
+  protected long           operationSerial;
+
+  protected EXECUTION_MODE mode;
+  protected STATUS         status;
 
   public abstract String getName();
 
+  /**
+   * Constructor used from unmarshalling.
+   */
   public OAbstractDistributedTask() {
-    redistribute = false;
+    status = STATUS.REMOTE_EXEC;
+  }
+
+  /**
+   * Constructor used on creation from log.
+   * 
+   * @param iRunId
+   * @param iOperationId
+   */
+  public OAbstractDistributedTask(final long iRunId, final long iOperationId) {
+    this.runId = iRunId;
+    this.operationSerial = iOperationId;
+    this.status = STATUS.ALIGN;
   }
 
   public OAbstractDistributedTask(final String nodeSource, final String databaseName, final EXECUTION_MODE iMode) {
     this.nodeSource = nodeSource;
     this.databaseName = databaseName;
     this.mode = iMode;
-    this.redistribute = true;
+    this.status = STATUS.DISTRIBUTE;
+
+    this.runId = getDistributedServerManager().getRunId();
+    this.operationSerial = getDistributedServerManager().incrementDistributedSerial(databaseName);
   }
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
     out.writeUTF(nodeSource);
     out.writeUTF(databaseName);
+    out.writeLong(runId);
+    out.writeLong(operationSerial);
     out.writeByte(mode.ordinal());
-    out.writeByte(redistribute ? 1 : 0);
+    out.writeByte(status.ordinal());
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     nodeSource = in.readUTF();
     databaseName = in.readUTF();
+    runId = in.readLong();
+    operationSerial = in.readLong();
     mode = EXECUTION_MODE.values()[in.readByte()];
-    redistribute = in.readByte() == 1;
+    status = STATUS.values()[in.readByte()];
   }
 
   public String getNodeSource() {
@@ -80,12 +109,29 @@ public abstract class OAbstractDistributedTask<T> implements Callable<T>, Extern
     return databaseName;
   }
 
+  public long getOperationSerial() {
+    return operationSerial;
+  }
+
+  public long getRunId() {
+    return runId;
+  }
+
   public EXECUTION_MODE getMode() {
     return mode;
   }
 
   public void setMode(final EXECUTION_MODE iMode) {
     mode = iMode;
+  }
+
+  public STATUS getStatus() {
+    return status;
+  }
+
+  public OAbstractDistributedTask<T> setStatus(final STATUS status) {
+    this.status = status;
+    return this;
   }
 
   public void setNodeSource(String nodeSource) {
@@ -120,17 +166,13 @@ public abstract class OAbstractDistributedTask<T> implements Callable<T>, Extern
     return (ODistributedServerManager) OServerMain.server().getVariable("ODistributedAbstractPlugin");
   }
 
-  public boolean isRedistribute() {
-    return redistribute;
-  }
-
-  public OAbstractDistributedTask<T> setRedistribute(boolean redistribute) {
-    this.redistribute = redistribute;
-    return this;
-  }
-
   public void setDatabaseName(String databaseName) {
     this.databaseName = databaseName;
+  }
+
+  @Override
+  public String toString() {
+    return getName();
   }
 
   protected void setAsCompleted(final OStorageSynchronizer dbSynchronizer, long operationLogOffset) throws IOException {

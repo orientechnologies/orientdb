@@ -34,8 +34,6 @@ import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TY
 public class OReadRecordDistributedTask extends OAbstractRecordDistributedTask<ORawBuffer> {
   private static final long serialVersionUID = 1L;
 
-  protected ORecordId       rid;
-
   public OReadRecordDistributedTask() {
   }
 
@@ -43,8 +41,8 @@ public class OReadRecordDistributedTask extends OAbstractRecordDistributedTask<O
     super(nodeSource, iDbName, EXECUTION_MODE.SYNCHRONOUS, iRid, -1);
   }
 
-  public OReadRecordDistributedTask(final ORecordId iRid) {
-    super(iRid);
+  public OReadRecordDistributedTask(final long iRunId, final long iOperationId, final ORecordId iRid) {
+    super(iRunId, iOperationId, iRid, -1);
   }
 
   @Override

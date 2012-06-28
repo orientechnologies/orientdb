@@ -28,6 +28,7 @@ import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal;
 import com.orientechnologies.orient.server.task.OAbstractDistributedTask;
+import com.orientechnologies.orient.server.task.OAbstractDistributedTask.STATUS;
 
 /**
  * Manages replication across clustered nodes.
@@ -62,7 +63,7 @@ public class OStorageSynchronizer {
     if (!targetNodes.isEmpty()) {
       // RESET THE SOURCE TO AVOID LOOPS
       iTask.setNodeSource(cluster.getLocalNodeId());
-      iTask.setRedistribute(false);
+      iTask.setStatus(STATUS.REMOTE_EXEC);
 
       cluster.sendOperation2Nodes(targetNodes, iTask);
 

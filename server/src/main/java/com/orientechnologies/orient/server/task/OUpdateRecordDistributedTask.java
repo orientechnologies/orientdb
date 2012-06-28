@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
@@ -44,16 +45,20 @@ public class OUpdateRecordDistributedTask extends OAbstractRecordDistributedTask
     super(iNodeSource, iDbName, iMode, iRid, iVersion);
     content = iContent;
     recordType = iRecordType;
+    OLogManager.instance().warn(this, "DISTRIBUTED -> route UPDATE RECORD in %s mode to %s %s{%s} v.%d", iMode, nodeSource,
+        iDbName, iRid, iVersion);
   }
 
-  public OUpdateRecordDistributedTask(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType) {
-    super(iRid, iVersion);
+  public OUpdateRecordDistributedTask(final long iRunId, final long iOperationId, final ORecordId iRid, final byte[] iContent,
+      final int iVersion, final byte iRecordType) {
+    super(iRunId, iOperationId, iRid, iVersion);
     content = iContent;
     recordType = iRecordType;
   }
 
   @Override
   public Integer executeOnLocalNode(final OStorageSynchronizer dbSynchronizer) {
+    OLogManager.instance().warn(this, "DISTRIBUTED <- UPDATE RECORD db %s %s{%s} v.%d", nodeSource, databaseName, rid, version);
     return getStorage().updateRecord(rid, content, version, recordType, 0, null);
   }
 

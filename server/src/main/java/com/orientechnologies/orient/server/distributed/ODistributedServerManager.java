@@ -36,6 +36,8 @@ public interface ODistributedServerManager {
 
   public String getStatus();
 
+  public boolean checkStatus(String string);
+
   public void setStatus(final String iStatus);
 
   public boolean isAligningNode(final String iNodeId);
@@ -80,4 +82,6 @@ public interface ODistributedServerManager {
   public long incrementDistributedSerial(final String iDatabaseName);
 
   public OStorageSynchronizer getDatabaseSynchronizer(String iDatabaseName);
+
+  public void endAlignment(String nodeSource, String databaseName);
 }

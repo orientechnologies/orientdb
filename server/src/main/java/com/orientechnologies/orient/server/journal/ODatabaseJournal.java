@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 import com.orientechnologies.orient.server.task.OAbstractDistributedTask;
+import com.orientechnologies.orient.server.task.OAbstractDistributedTask.STATUS;
 import com.orientechnologies.orient.server.task.OAbstractRecordDistributedTask;
 import com.orientechnologies.orient.server.task.OCreateRecordDistributedTask;
 import com.orientechnologies.orient.server.task.ODeleteRecordDistributedTask;
@@ -171,6 +172,9 @@ public class ODatabaseJournal {
       final int varSize = file.readInt(iOffsetEndOperation - OFFSET_BACK_SIZE);
       final long offset = iOffsetEndOperation - OFFSET_BACK_SIZE - varSize - OFFSET_VARDATA;
 
+      OLogManager.instance().warn(this, "Updating status operation #%d.%d rid %s",
+          file.readLong(iOffsetEndOperation - OFFSET_BACK_RUNID), file.readLong(iOffsetEndOperation - OFFSET_BACK_OPERATID), iRid);
+
       file.write(offset + OFFSET_STATUS, new byte[] { 1 });
 
       if (iRid != null)
@@ -207,7 +211,7 @@ public class ODatabaseJournal {
         final ORecordId rid = task.getRid();
 
         if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance().debug(this, "Journaled operation %s %s as #%d.%d", iOperationType.toString(), rid, iRunId,
+          OLogManager.instance().warn(this, "Journaled operation %s %s as #%d.%d", iOperationType.toString(), rid, iRunId,
               iOperationId);
 
         offset = writeOperationLogHeader(iOperationType, varSize);
@@ -224,7 +228,7 @@ public class ODatabaseJournal {
         varSize = cmdBinary.length;
 
         if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance().debug(this, "Journaled operation %s '%s' as #%d.%d", iOperationType.toString(), cmdText, iRunId,
+          OLogManager.instance().warn(this, "Journaled operation %s '%s' as #%d.%d", iOperationType.toString(), cmdText, iRunId,
               iOperationId);
 
         offset = writeOperationLogHeader(iOperationType, varSize);
@@ -261,6 +265,8 @@ public class ODatabaseJournal {
     lock.acquireExclusiveLock();
     try {
 
+      final long runId = file.readLong(iOffsetEndOperation - OFFSET_BACK_RUNID);
+      final long operationId = file.readLong(iOffsetEndOperation - OFFSET_BACK_OPERATID);
       final int varSize = file.readInt(iOffsetEndOperation - OFFSET_BACK_SIZE);
       final long offset = iOffsetEndOperation - OFFSET_BACK_SIZE - varSize - OFFSET_VARDATA;
 
@@ -277,7 +283,7 @@ public class ODatabaseJournal {
 
         final ORawBuffer record = storage.readRecord(rid, null, false, null);
         if (record != null)
-          task = new OCreateRecordDistributedTask(rid, record.buffer, record.version, record.recordType);
+          task = new OCreateRecordDistributedTask(runId, operationId, rid, record.buffer, record.version, record.recordType);
         break;
       }
 
@@ -287,7 +293,7 @@ public class ODatabaseJournal {
 
         final ORawBuffer record = storage.readRecord(rid, null, false, null);
         if (record != null)
-          task = new OUpdateRecordDistributedTask(rid, record.buffer, record.version, record.recordType);
+          task = new OUpdateRecordDistributedTask(runId, operationId, rid, record.buffer, record.version, record.recordType);
         break;
       }
 
@@ -296,19 +302,19 @@ public class ODatabaseJournal {
             + OBinaryProtocol.SIZE_SHORT));
         final ORawBuffer record = storage.readRecord(rid, null, false, null);
         if (record != null)
-          task = new ODeleteRecordDistributedTask(rid, record.version);
+          task = new ODeleteRecordDistributedTask(runId, operationId, rid, record.version);
         break;
       }
 
       case SQL_COMMAND: {
         final byte[] buffer = new byte[varSize];
         file.read(offset + OFFSET_VARDATA, buffer, buffer.length);
-        task = new OSQLCommandDistributedTask(new String(buffer));
+        task = new OSQLCommandDistributedTask(runId, operationId, new String(buffer));
         break;
       }
       }
 
-      task.setRedistribute(false);
+      task.setStatus(STATUS.ALIGN);
 
     } finally {
       lock.releaseExclusiveLock();

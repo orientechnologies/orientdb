@@ -41,8 +41,9 @@ public class OCreateRecordDistributedTask extends OAbstractRecordDistributedTask
   public OCreateRecordDistributedTask() {
   }
 
-  public OCreateRecordDistributedTask(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType) {
-    super(iRid, iVersion);
+  public OCreateRecordDistributedTask(final long iRunId, final long iOperationId, final ORecordId iRid, final byte[] iContent,
+      final int iVersion, final byte iRecordType) {
+    super(iRunId, iOperationId, iRid, iVersion);
     content = iContent;
     recordType = iRecordType;
   }
@@ -52,12 +53,13 @@ public class OCreateRecordDistributedTask extends OAbstractRecordDistributedTask
     super(nodeSource, iDbName, iMode, iRid, iVersion);
     content = iContent;
     recordType = iRecordType;
-    OLogManager.instance().debug(this, "DISTRIBUTED -> route CREATE RECORD in %s mode to %s %s{%s} v.%d", iMode, nodeSource,
+    OLogManager.instance().warn(this, "DISTRIBUTED -> route CREATE RECORD in %s mode to %s %s{%s} v.%d", iMode, nodeSource,
         iDbName, iRid, iVersion);
   }
 
   @Override
   protected OPhysicalPosition executeOnLocalNode(final OStorageSynchronizer dbSynchronizer) {
+    OLogManager.instance().warn(this, "DISTRIBUTED <- CREATE RECORD db %s %s{%s} v.%d", nodeSource, databaseName, rid, version);
     return getStorage().createRecord(0, rid, content, version, recordType, 0, null);
   }
 

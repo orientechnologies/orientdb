@@ -20,64 +20,52 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 
 /**
- * Distributed task used for synchronization.
+ * Distributed align response task to communicate the result of alignment.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OSQLCommandDistributedTask extends OAbstractDistributedTask<Object> {
+public class OAlignResponseDistributedTask extends OAbstractDistributedTask<Integer> {
   private static final long serialVersionUID = 1L;
 
-  protected String          text;
+  protected int             aligned;
 
-  public OSQLCommandDistributedTask() {
+  public OAlignResponseDistributedTask() {
   }
 
-  public OSQLCommandDistributedTask(final String nodeSource, final String databaseName, final EXECUTION_MODE iMode,
-      final String iCommand) {
-    super(nodeSource, databaseName, iMode);
-    text = iCommand;
-  }
-
-  public OSQLCommandDistributedTask(final long iRunId, final long iOperationId, final String iCommand) {
-    text = iCommand;
+  public OAlignResponseDistributedTask(final String nodeSource, final String iDbName, final EXECUTION_MODE iMode, final int iAligned) {
+    super(nodeSource, iDbName, iMode);
+    aligned = iAligned;
   }
 
   @Override
-  public Object call() throws Exception {
-    OLogManager.instance().debug(this, "DISTRIBUTED <- command: %s", text.toString());
+  public Integer call() throws Exception {
+    OLogManager.instance().warn(this, "DISTRIBUTED <- alignment ended from %s database %s: %d operations", nodeSource,
+        databaseName, aligned);
 
-    Object result = new OCommandSQL(text).execute();
-    if (mode != EXECUTION_MODE.FIRE_AND_FORGET)
-      return result;
-
-    // FIRE AND FORGET MODE: AVOID THE PAYLOAD AS RESULT
+    final ODistributedServerManager dManager = getDistributedServerManager();
+    dManager.endAlignment(nodeSource, databaseName);
     return null;
   }
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
     super.writeExternal(out);
-    out.writeUTF(text);
+    out.writeInt(aligned);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     super.readExternal(in);
-    text = in.readUTF();
+    aligned = in.readInt();
   }
 
   @Override
   public String getName() {
-    return "command_sql";
-  }
-
-  @Override
-  public String toString() {
-    return getName() + "(" + text + ")";
+    return "align_response";
   }
 }

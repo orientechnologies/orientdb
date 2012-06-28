@@ -32,7 +32,7 @@ import com.orientechnologies.orient.server.journal.ODatabaseJournal;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OAlignRequestDistributedTask extends OAbstractDistributedTask<Long> {
+public class OAlignRequestDistributedTask extends OAbstractDistributedTask<Integer> {
   private static final long serialVersionUID = 1L;
 
   protected long            lastRunId;
@@ -49,9 +49,9 @@ public class OAlignRequestDistributedTask extends OAbstractDistributedTask<Long>
   }
 
   @Override
-  public Long call() throws Exception {
-    OLogManager.instance().warn(this, "DISTRIBUTED <- align request from %s for database %s starting from %d.%d", nodeSource,
-        databaseName, lastRunId, lastOperationId);
+  public Integer call() throws Exception {
+    OLogManager.instance().warn(this, "DISTRIBUTED <-[%s/%s] align request starting from %d.%d", nodeSource, databaseName,
+        lastRunId, lastOperationId);
 
     int aligned = 0;
 
@@ -67,11 +67,13 @@ public class OAlignRequestDistributedTask extends OAbstractDistributedTask<Long>
 
       final OAbstractDistributedTask<?> operation = log.getOperation(pos);
 
+      OLogManager.instance().warn(this, "DISTRIBUTED ->[%s/%s] operation %s", nodeSource, databaseName, operation);
+
       operation.setNodeSource(localNode);
       operation.setDatabaseName(databaseName);
       operation.setMode(EXECUTION_MODE.SYNCHRONOUS);
 
-      // SEND TO THE REQESTER NODE THE TASK TO EXECUTE
+      // SEND TO THE REQUESTER NODE THE TASK TO EXECUTE
       dManager.sendOperation2Node(nodeSource, (OAbstractDistributedTask<?>) operation);
 
       operation.setAsCompleted(synchronizer, pos);
@@ -79,9 +81,13 @@ public class OAlignRequestDistributedTask extends OAbstractDistributedTask<Long>
       aligned++;
     }
 
-    OLogManager.instance().warn(this, "DISTRIBUTED <- aligned %d operations on database %s", aligned, databaseName);
+    OLogManager.instance().warn(this, "DISTRIBUTED ->[%s/%s] aligned %d operations", nodeSource, databaseName, aligned);
 
-    return null;
+    // SEND TO THE REQUESTER NODE THE TASK TO EXECUTE
+    dManager.sendOperation2Node(nodeSource, new OAlignResponseDistributedTask(localNode, databaseName,
+        EXECUTION_MODE.FIRE_AND_FORGET, aligned));
+
+    return aligned;
   }
 
   @Override
@@ -101,9 +107,5 @@ public class OAlignRequestDistributedTask extends OAbstractDistributedTask<Long>
   @Override
   public String getName() {
     return "align_request";
-  }
-
-  @Override
-  protected void setAsCompleted(OStorageSynchronizer dbSynchronizer, long operationLogOffset) throws IOException {
   }
 }

@@ -32,7 +32,8 @@ import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 public class RemoteCreateDocumentSpeedTest extends OrientMonoThreadTest {
   private ODatabaseDocument database;
   private ODocument         record;
-  private Date              date = new Date();
+  private Date              date  = new Date();
+  private final static long DELAY = 0;
 
   public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
     RemoteCreateDocumentSpeedTest test = new RemoteCreateDocumentSpeedTest();
@@ -69,6 +70,14 @@ public class RemoteCreateDocumentSpeedTest extends OrientMonoThreadTest {
 
     if (data.getCyclesDone() == data.getCycles() - 1)
       database.commit();
+
+    if (DELAY > 0)
+      try {
+        Thread.sleep(DELAY);
+      } catch (InterruptedException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
   }
 
   @Override

@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
+import com.orientechnologies.orient.server.distributed.OServerOfflineException;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
@@ -45,13 +46,10 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
     this.version = iVersion;
   }
 
-  public OAbstractRecordDistributedTask(final ORecordId iRid, final int iVersion) {
+  public OAbstractRecordDistributedTask(final long iRunId, final long iOperationId, final ORecordId iRid, final int iVersion) {
+    super(iRunId, iOperationId);
     this.rid = iRid;
     this.version = iVersion;
-  }
-
-  public OAbstractRecordDistributedTask(final ORecordId iRid) {
-    this.rid = iRid;
   }
 
   protected abstract OPERATION_TYPES getOperationType();
@@ -62,10 +60,10 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
     if (OLogManager.instance().isDebugEnabled())
       OLogManager.instance().debug(this, "DISTRIBUTED <-[%s] %s %s v.%d", nodeSource, getName(), rid, version);
 
-    final OStorageSynchronizer dbSynchronizer = getDatabaseSynchronizer();
+    if (status != STATUS.ALIGN && !getDistributedServerManager().checkStatus("online"))
+      throw new OServerOfflineException();
 
-    final long runId = getDistributedServerManager().getRunId();
-    final long operationSerial = getDistributedServerManager().incrementDistributedSerial(databaseName);
+    final OStorageSynchronizer dbSynchronizer = getDatabaseSynchronizer();
 
     // LOG THE OPERATION BEFORE TO SEND TO OTHER NODES
     final long operationLogOffset;
@@ -88,7 +86,7 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
       throw new ODistributedException("Error on changing the log status", e);
     }
 
-    if (isRedistribute())
+    if (status == STATUS.DISTRIBUTE)
       // SEND OPERATION ACROSS THE CLUSTER TO THE TARGET NODES
       dbSynchronizer.distributeOperation(ORecordOperation.CREATED, rid, this);
 
@@ -97,6 +95,11 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
 
     // FIRE AND FORGET MODE: AVOID THE PAYLOAD AS RESULT
     return null;
+  }
+
+  @Override
+  public String toString() {
+    return getName() + "(" + rid + " v." + version + ")";
   }
 
   public ORecordId getRid() {

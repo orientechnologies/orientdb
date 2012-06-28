@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
@@ -33,24 +34,23 @@ import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TY
 public class ODeleteRecordDistributedTask extends OAbstractRecordDistributedTask<Boolean> {
   private static final long serialVersionUID = 1L;
 
-  protected ORecordId       rid;
-  protected int             version;
-
   public ODeleteRecordDistributedTask() {
   }
 
   public ODeleteRecordDistributedTask(final String nodeSource, final String iDbName, final EXECUTION_MODE iMode,
       final ORecordId iRid, final int iVersion) {
     super(nodeSource, iDbName, iMode, iRid, iVersion);
+    OLogManager.instance().warn(this, "DISTRIBUTED -> route DELETE RECORD db %s %s{%s} v.%d", nodeSource, databaseName, rid,
+        version);
   }
 
-  public ODeleteRecordDistributedTask(final ORecordId iRid, final int iVersion) {
-    super(iRid);
-    version = iVersion;
+  public ODeleteRecordDistributedTask(final long iRunId, final long iOperationId, final ORecordId iRid, final int iVersion) {
+    super(iRunId, iOperationId, iRid, iVersion);
   }
 
   @Override
   protected Boolean executeOnLocalNode(final OStorageSynchronizer dbSynchronizer) {
+    OLogManager.instance().warn(this, "DISTRIBUTED <- DELETE RECORD db %s %s{%s} v.%d", nodeSource, databaseName, rid, version);
     return getStorage().deleteRecord(rid, version, 0, null);
   }
 
