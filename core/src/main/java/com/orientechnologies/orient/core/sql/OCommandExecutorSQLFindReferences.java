@@ -52,7 +52,7 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLEarlyR
 
     parserRequiredKeyword(KEYWORD_FIND);
     parserRequiredKeyword(KEYWORD_REFERENCES);
-    final String target = parserRequiredWord(true, "Expected <target>");
+    final String target = parserRequiredWord(true, "Expected <target>", " =><,\r\n");
 
     if (target.charAt(0) == '(') {
       subQuery = new StringBuilder();
