@@ -653,14 +653,14 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         }
       }
 
-      // GET THE LATEST VERSION. IT COULD CHANGE BECAUSE THE RECORD COULD BE BEEN LINKED FROM OTHERS
-      final int realVersion = iVersion == -1 ? -1 : iRecord.getVersion();
+      // CHECK IF ENABLE THE MVCC OR BYPASS IT
+      final int realVersion = mvcc || iVersion == -1 ? -1 : iRecord.getVersion();
 
       final int dataSegmentId = dataSegmentStrategy.assignDataSegmentId(this, iRecord);
 
       // SAVE IT
-      final int version = underlying.save(dataSegmentId, rid, stream == null ? new byte[0] : stream, realVersion, iRecord.getRecordType(), iMode.ordinal(),
-          iCallback);
+      final int version = underlying.save(dataSegmentId, rid, stream == null ? new byte[0] : stream, realVersion,
+          iRecord.getRecordType(), iMode.ordinal(), iCallback);
 
       if (isNew) {
         // UPDATE INFORMATION: CLUSTER ID+POSITION
@@ -714,7 +714,10 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       if (iCallTriggers)
         callbackHooks(TYPE.BEFORE_DELETE, rec);
 
-      underlying.delete(rid, iVersion, iRequired, (byte) iMode.ordinal());
+      // CHECK IF ENABLE THE MVCC OR BYPASS IT
+      final int realVersion = mvcc ? iVersion : -1;
+
+      underlying.delete(rid, realVersion, iRequired, (byte) iMode.ordinal());
 
       if (iCallTriggers)
         callbackHooks(TYPE.AFTER_DELETE, rec);

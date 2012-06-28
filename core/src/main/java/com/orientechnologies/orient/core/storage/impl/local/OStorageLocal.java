@@ -147,7 +147,8 @@ public class OStorageLocal extends OStorageEmbedded {
       for (int i = 0; i < configuration.dataSegments.size(); ++i) {
         final OStorageDataConfiguration dataConfig = configuration.dataSegments.get(i);
 
-        if (dataConfig == null ) continue;
+        if (dataConfig == null)
+          continue;
         pos = registerDataSegment(dataConfig);
         if (pos == -1) {
           // CLOSE AND REOPEN TO BE SURE ALL THE FILE SEGMENTS ARE
@@ -896,7 +897,7 @@ public class OStorageLocal extends OStorageEmbedded {
     }
   }
 
-  public OPhysicalPosition createRecord(int iDataSegmentId, final ORecordId iRid, final byte[] iContent, int iRecordVersion,
+  public OPhysicalPosition createRecord(int iDataSegmentId, final ORecordId iRid, final byte[] iContent, final int iRecordVersion,
       final byte iRecordType, final int iMode, ORecordCallback<Long> iCallback) {
     checkOpeness();
 
@@ -1418,7 +1419,7 @@ public class OStorageLocal extends OStorageEmbedded {
   }
 
   protected OPhysicalPosition createRecord(final ODataLocal iDataSegment, final OCluster iClusterSegment, final byte[] iContent,
-      final byte iRecordType, final ORecordId iRid, int recordVersion) {
+      final byte iRecordType, final ORecordId iRid, final int iRecordVersion) {
     checkOpeness();
 
     if (iContent == null)
@@ -1442,9 +1443,10 @@ public class OStorageLocal extends OStorageEmbedded {
         // UPDATE THE POSITION IN CLUSTER WITH THE POSITION OF RECORD IN DATA
         iClusterSegment.updateDataSegmentPosition(ppos.clusterPosition, ppos.dataSegmentId, ppos.dataSegmentPos);
 
-        if (recordVersion != 0) {
+        if (iRecordVersion > -1 && iRecordVersion > ppos.recordVersion) {
           // OVERWRITE THE VERSION
-          iClusterSegment.updateVersion(iRid.clusterPosition, recordVersion);
+          iClusterSegment.updateVersion(iRid.clusterPosition, iRecordVersion);
+          ppos.recordVersion = iRecordVersion;
         }
 
         return ppos;
