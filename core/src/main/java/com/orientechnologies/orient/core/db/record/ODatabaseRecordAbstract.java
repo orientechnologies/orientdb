@@ -654,7 +654,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       }
 
       // CHECK IF ENABLE THE MVCC OR BYPASS IT
-      final int realVersion = mvcc || iVersion == -1 ? -1 : iRecord.getVersion();
+      final int realVersion = !mvcc || iVersion == -1 ? -1 : iRecord.getVersion();
 
       final int dataSegmentId = dataSegmentStrategy.assignDataSegmentId(this, iRecord);
 
