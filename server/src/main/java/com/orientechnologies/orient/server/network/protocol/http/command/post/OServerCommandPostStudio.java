@@ -225,27 +225,28 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
         final Object oldValue = doc.rawField(f.getKey());
         String userValue = f.getValue();
 
-        if (userValue.equals("undefined"))
-          continue;
+        if (userValue != null && userValue.equals("undefined"))
+          doc.removeField(f.getKey());
+        else {
+          Object newValue = ORecordSerializerStringAbstract.getTypeValue(userValue);
 
-        Object newValue = ORecordSerializerStringAbstract.getTypeValue(userValue);
-
-        if (newValue != null) {
-          if (newValue instanceof Collection) {
-            final ArrayList<Object> array = new ArrayList<Object>();
-            for (String s : (Collection<String>) newValue) {
-              Object v = ORecordSerializerStringAbstract.getTypeValue(s);
-              array.add(v);
+          if (newValue != null) {
+            if (newValue instanceof Collection) {
+              final ArrayList<Object> array = new ArrayList<Object>();
+              for (String s : (Collection<String>) newValue) {
+                Object v = ORecordSerializerStringAbstract.getTypeValue(s);
+                array.add(v);
+              }
+              newValue = array;
             }
-            newValue = array;
           }
+
+          if (oldValue != null && oldValue.equals(userValue))
+            // NO CHANGES
+            continue;
+
+          doc.field(f.getKey(), newValue);
         }
-
-        if (oldValue != null && oldValue.equals(userValue))
-          // NO CHANGES
-          continue;
-
-        doc.field(f.getKey(), newValue);
       }
 
       doc.save();
