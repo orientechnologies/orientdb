@@ -27,9 +27,9 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.util.OByteBufferUtils;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-import com.orientechnologies.orient.core.storage.fs.OMMapManager.OPERATION_TYPE;
 
 /**
  * OFile implementation that use the Memory Mapping techniques to get faster access on read/write. The Memory Mapping is handled by
@@ -73,14 +73,25 @@ public class OFileMMap extends OAbstractFile {
   public void read(long iOffset, final byte[] iDestBuffer, final int iLenght) throws IOException {
     iOffset = checkRegions(iOffset, iLenght);
 
-    final OMMapBufferEntry entry = OMMapManager.acquire(this, iOffset, iLenght, OPERATION_TYPE.READ, strategy);
-    if (entry != null) {
+    final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, iLenght,
+        OMMapManager.OPERATION_TYPE.READ, strategy);
+    if (entries != null) {
       // MMAP READ
       try {
-        entry.buffer.position((int) (iOffset - entry.beginOffset));
-        entry.buffer.get(iDestBuffer, 0, iLenght);
+        int position = (int) (iOffset - entries[0].beginOffset);
+
+        int remaining;
+        int remainingLength = iLenght;
+        for (OMMapBufferEntry entry : entries) {
+          entry.buffer.position(position);
+          remaining = entry.buffer.remaining();
+          int toRead = Math.min(remaining, remainingLength);
+          entry.buffer.get(iDestBuffer, iLenght - remainingLength, toRead);
+          position = 0;
+          remainingLength -= toRead;
+        }
       } finally {
-        entry.release();
+        OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.READ);
       }
     } else {
       // DIRECT READ
@@ -95,13 +106,22 @@ public class OFileMMap extends OAbstractFile {
   @Override
   public int readInt(long iOffset) throws IOException {
     iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_INT);
-    final OMMapBufferEntry entry = OMMapManager.acquire(this, iOffset, OBinaryProtocol.SIZE_INT, OPERATION_TYPE.READ, strategy);
-    if (entry != null) {
+    final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, OBinaryProtocol.SIZE_INT,
+        OMMapManager.OPERATION_TYPE.READ, strategy);
+    if (entries != null) {
       // MMAP READ
       try {
-        return entry.buffer.getInt((int) (iOffset - entry.beginOffset));
+
+        if (entries.length == 1)
+          return entries[0].buffer.getInt((int) (iOffset - entries[0].beginOffset));
+        else {
+          entries[0].buffer.position((int) (iOffset - entries[0].beginOffset));
+          entries[1].buffer.position(0);
+          return OByteBufferUtils.mergeIntFromBuffers(entries[0].buffer, entries[1].buffer);
+        }
+
       } finally {
-        entry.release();
+        OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.READ);
       }
     } else {
       // DIRECT READ
@@ -117,13 +137,21 @@ public class OFileMMap extends OAbstractFile {
   @Override
   public long readLong(long iOffset) throws IOException {
     iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_LONG);
-    final OMMapBufferEntry entry = OMMapManager.acquire(this, iOffset, OBinaryProtocol.SIZE_LONG, OPERATION_TYPE.READ, strategy);
-    if (entry != null) {
+    final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, OBinaryProtocol.SIZE_LONG,
+        OMMapManager.OPERATION_TYPE.READ, strategy);
+    if (entries != null) {
       // MMAP READ
       try {
-        return entry.buffer.getLong((int) (iOffset - entry.beginOffset));
+        if (entries.length == 1)
+          return entries[0].buffer.getLong((int) (iOffset - entries[0].beginOffset));
+        else {
+          entries[0].buffer.position((int) (iOffset - entries[0].beginOffset));
+          entries[1].buffer.position(0);
+          return OByteBufferUtils.mergeLongFromBuffers(entries[0].buffer, entries[1].buffer);
+        }
+
       } finally {
-        entry.release();
+        OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.READ);
       }
     } else {
       // DIRECT READ
@@ -139,13 +167,22 @@ public class OFileMMap extends OAbstractFile {
   @Override
   public short readShort(long iOffset) throws IOException {
     iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_SHORT);
-    final OMMapBufferEntry entry = OMMapManager.acquire(this, iOffset, OBinaryProtocol.SIZE_SHORT, OPERATION_TYPE.READ, strategy);
-    if (entry != null) {
+    final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, OBinaryProtocol.SIZE_SHORT,
+        OMMapManager.OPERATION_TYPE.READ, strategy);
+    if (entries != null) {
       // MMAP READ
       try {
-        return entry.buffer.getShort((int) (iOffset - entry.beginOffset));
+        if (entries.length == 1) {
+          return entries[0].buffer.getShort((int) (iOffset - entries[0].beginOffset));
+        } else {
+          entries[0].buffer.position((int) (iOffset - entries[0].beginOffset));
+          entries[1].buffer.position(0);
+
+          return OByteBufferUtils.mergeShortFromBuffers(entries[0].buffer, entries[1].buffer);
+        }
+
       } finally {
-        entry.release();
+        OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.READ);
       }
     } else {
       // DIRECT READ
@@ -161,13 +198,14 @@ public class OFileMMap extends OAbstractFile {
   @Override
   public byte readByte(long iOffset) throws IOException {
     iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_BYTE);
-    final OMMapBufferEntry entry = OMMapManager.acquire(this, iOffset, OBinaryProtocol.SIZE_BYTE, OPERATION_TYPE.READ, strategy);
-    if (entry != null) {
+    final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, OBinaryProtocol.SIZE_BYTE,
+        OMMapManager.OPERATION_TYPE.READ, strategy);
+    if (entries != null) {
       // MMAP READ
       try {
-        return entry.buffer.get((int) (iOffset - entry.beginOffset));
+        return entries[0].buffer.get((int) (iOffset - entries[0].beginOffset));
       } finally {
-        entry.release();
+        OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.READ);
       }
     } else {
       // DIRECT READ
@@ -183,13 +221,21 @@ public class OFileMMap extends OAbstractFile {
   @Override
   public void writeInt(long iOffset, final int iValue) throws IOException {
     iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_INT);
-    final OMMapBufferEntry entry = OMMapManager.acquire(this, iOffset, OBinaryProtocol.SIZE_INT, OPERATION_TYPE.WRITE, strategy);
-    if (entry != null) {
+    final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, OBinaryProtocol.SIZE_INT,
+        OMMapManager.OPERATION_TYPE.WRITE, strategy);
+    if (entries != null) {
       // MMAP WRITE
       try {
-        entry.buffer.putInt((int) (iOffset - entry.beginOffset), iValue);
+        if (entries.length == 1)
+          entries[0].buffer.putInt((int) (iOffset - entries[0].beginOffset), iValue);
+        else {
+          entries[0].buffer.position((int) (iOffset - entries[0].beginOffset));
+          entries[1].buffer.position(0);
+
+          OByteBufferUtils.splitIntToBuffers(entries[0].buffer, entries[1].buffer, iValue);
+        }
       } finally {
-        entry.release();
+        OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.WRITE);
       }
     } else {
       // DIRECT WRITE
@@ -204,13 +250,21 @@ public class OFileMMap extends OAbstractFile {
   @Override
   public void writeLong(long iOffset, final long iValue) throws IOException {
     iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_LONG);
-    final OMMapBufferEntry entry = OMMapManager.acquire(this, iOffset, OBinaryProtocol.SIZE_LONG, OPERATION_TYPE.WRITE, strategy);
-    if (entry != null) {
+    final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, OBinaryProtocol.SIZE_LONG,
+        OMMapManager.OPERATION_TYPE.WRITE, strategy);
+    if (entries != null) {
       // MMAP WRITE
       try {
-        entry.buffer.putLong((int) (iOffset - entry.beginOffset), iValue);
+        if (entries.length == 1)
+          entries[0].buffer.putLong((int) (iOffset - entries[0].beginOffset), iValue);
+        else {
+          entries[0].buffer.position((int) (iOffset - entries[0].beginOffset));
+          entries[1].buffer.position(0);
+
+          OByteBufferUtils.splitLongToBuffers(entries[0].buffer, entries[1].buffer, iValue);
+        }
       } finally {
-        entry.release();
+        OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.WRITE);
       }
     } else {
       // DIRECT WRITE
@@ -225,13 +279,21 @@ public class OFileMMap extends OAbstractFile {
   @Override
   public void writeShort(long iOffset, final short iValue) throws IOException {
     iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_SHORT);
-    final OMMapBufferEntry entry = OMMapManager.acquire(this, iOffset, OBinaryProtocol.SIZE_SHORT, OPERATION_TYPE.WRITE, strategy);
-    if (entry != null) {
+    final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, OBinaryProtocol.SIZE_SHORT,
+        OMMapManager.OPERATION_TYPE.WRITE, strategy);
+    if (entries != null) {
       // MMAP WRITE
       try {
-        entry.buffer.putShort((int) (iOffset - entry.beginOffset), iValue);
+        if (entries.length == 1)
+          entries[0].buffer.putShort((int) (iOffset - entries[0].beginOffset), iValue);
+        else {
+          entries[0].buffer.position((int) (iOffset - entries[0].beginOffset));
+          entries[1].buffer.position(0);
+
+          OByteBufferUtils.splitShortToBuffers(entries[0].buffer, entries[1].buffer, iValue);
+        }
       } finally {
-        entry.release();
+        OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.WRITE);
       }
     } else {
       // DIRECT WRITE
@@ -246,13 +308,14 @@ public class OFileMMap extends OAbstractFile {
   @Override
   public void writeByte(long iOffset, final byte iValue) throws IOException {
     iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_BYTE);
-    final OMMapBufferEntry entry = OMMapManager.acquire(this, iOffset, OBinaryProtocol.SIZE_BYTE, OPERATION_TYPE.WRITE, strategy);
-    if (entry != null) {
+    final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, OBinaryProtocol.SIZE_BYTE,
+        OMMapManager.OPERATION_TYPE.WRITE, strategy);
+    if (entries != null) {
       // MMAP WRITE
       try {
-        entry.buffer.put((int) (iOffset - entry.beginOffset), iValue);
+        entries[0].buffer.put((int) (iOffset - entries[0].beginOffset), iValue);
       } finally {
-        entry.release();
+        OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.WRITE);
       }
     } else {
       // DIRECT WRITE
@@ -272,14 +335,27 @@ public class OFileMMap extends OAbstractFile {
     iOffset = checkRegions(iOffset, iSourceBuffer.length);
 
     try {
-      final OMMapBufferEntry entry = OMMapManager.acquire(this, iOffset, iSourceBuffer.length, OPERATION_TYPE.WRITE, strategy);
-      if (entry != null) {
+      final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, iSourceBuffer.length,
+          OMMapManager.OPERATION_TYPE.WRITE, strategy);
+      if (entries != null) {
         // MMAP WRITE
         try {
-          entry.buffer.position((int) (iOffset - entry.beginOffset));
-          entry.buffer.put(iSourceBuffer);
+
+          int position = (int) (iOffset - entries[0].beginOffset);
+
+          int remaining;
+          final int iLenght = iSourceBuffer.length;
+          int remainingLength = iLenght;
+          for (OMMapBufferEntry entry : entries) {
+            entry.buffer.position(position);
+            remaining = entry.buffer.remaining();
+            int toWrite = Math.min(remaining, remainingLength);
+            entry.buffer.put(iSourceBuffer, iLenght - remainingLength, toWrite);
+            position = 0;
+            remainingLength -= toWrite;
+          }
         } finally {
-          entry.release();
+          OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.WRITE);
         }
       } else {
         // DIRECT WRITE
@@ -303,7 +379,7 @@ public class OFileMMap extends OAbstractFile {
   @Override
   public void synch() {
     flushHeader();
-    OMMapManager.flushFile(this);
+    OMMapManagerLocator.getInstance().flushFile(this);
   }
 
   @Override
@@ -328,7 +404,7 @@ public class OFileMMap extends OAbstractFile {
 
     super.close();
 
-    OMMapManager.flush();
+    OMMapManagerLocator.getInstance().flush();
   }
 
   @Override

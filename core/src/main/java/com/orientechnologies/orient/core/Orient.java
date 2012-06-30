@@ -45,7 +45,7 @@ import com.orientechnologies.orient.core.record.ORecordFactoryManager;
 import com.orientechnologies.orient.core.storage.OClusterFactory;
 import com.orientechnologies.orient.core.storage.ODefaultClusterFactory;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.fs.OMMapManager;
+import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
 
 public class Orient extends OSharedResourceAbstract {
   /**
@@ -297,7 +297,7 @@ public class Orient extends OSharedResourceAbstract {
         stg.close(true);
       }
 
-      OMMapManager.shutdown();
+      OMMapManagerLocator.getInstance().shutdown();
 
       // STOP ALL THE PENDING THREADS
       threadGroup.interrupt();

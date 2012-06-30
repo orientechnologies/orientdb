@@ -27,47 +27,53 @@ import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 
 @Test(enabled = false)
 public class LocalCreateBinaryDocumentSpeedTest extends OrientMonoThreadTest {
-	private static final int	PAYLOAD_SIZE	= 2000;
-	private ODatabaseDocument	database;
-	private ORecordBytes			record;
-	private byte[]						payload;
+  private static final int  PAYLOAD_SIZE = 2000;
+  private ODatabaseDocument database;
+  private ORecordBytes      record;
+  private byte[]            payload;
 
-	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-		LocalCreateBinaryDocumentSpeedTest test = new LocalCreateBinaryDocumentSpeedTest();
-		test.data.go(test);
-	}
+  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
+    LocalCreateBinaryDocumentSpeedTest test = new LocalCreateBinaryDocumentSpeedTest();
+    test.data.go(test);
+  }
 
-	public LocalCreateBinaryDocumentSpeedTest() throws InstantiationException, IllegalAccessException {
-		super(50000);
-		payload = new byte[PAYLOAD_SIZE];
-		for (int i = 0; i < PAYLOAD_SIZE; ++i) {
-			payload[i] = (byte) i;
-		}
-	}
+  public LocalCreateBinaryDocumentSpeedTest() throws InstantiationException, IllegalAccessException {
+    super(50000);
+    payload = new byte[PAYLOAD_SIZE];
+    for (int i = 0; i < PAYLOAD_SIZE; ++i) {
+      payload[i] = (byte) i;
+    }
+  }
 
-	@Override
-	public void init() {
-		OProfiler.getInstance().startRecording();
+  @Override
+  public void init() {
+    OProfiler.getInstance().startRecording();
 
-		database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
+    database = new ODatabaseDocumentTx(System.getProperty("url"));
+    if (database.exists()) {
+      database.open("admin", "admin");
+      database.drop();
+    }
 
-		database.declareIntent(new OIntentMassiveInsert());
-		database.begin(TXTYPE.NOTX);
-	}
+    database.create();
 
-	@Override
-	public void cycle() {
-		record = new ORecordBytes(database, payload);
-		record.save();
+    database.declareIntent(new OIntentMassiveInsert());
+    database.begin(TXTYPE.NOTX);
+  }
 
-		if (data.getCyclesDone() == data.getCycles() - 1)
-			database.commit();
-	}
+  @Override
+  public void cycle() {
+    record = new ORecordBytes(database, payload);
+    record.save();
 
-	@Override
-	public void deinit() {
-		if (database != null)
-			database.close();
-		super.deinit();
-	}
+    if (data.getCyclesDone() == data.getCycles() - 1)
+      database.commit();
+  }
+
+  @Override
+  public void deinit() {
+    if (database != null)
+      database.close();
+    super.deinit();
+  }
 }

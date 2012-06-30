@@ -15,18 +15,23 @@
  */
 package com.orientechnologies.common.concur.lock;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 
 public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
   public enum LOCK {
     SHARED, EXCLUSIVE
   }
 
-  protected long                                  acquireTimeout;
-  protected HashMap<RESOURCE_TYPE, CountableLock> map = new HashMap<RESOURCE_TYPE, CountableLock>();
-  private final boolean                           enabled;
+  private static final int                                        DEFAULT_CONCURRENCY_LEVEL = 16;
+  protected long                                                  acquireTimeout;
+  protected final ConcurrentHashMap<RESOURCE_TYPE, CountableLock> map;
+  private final boolean                                           enabled;
+  private final int                                               shift;
+  private final int                                               mask;
+  private final Object[]                                          locks;
 
   @SuppressWarnings("serial")
   protected static class CountableLock extends ReentrantReadWriteLock {
@@ -38,6 +43,32 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
   }
 
   public OLockManager(final boolean iEnabled, final int iAcquireTimeout) {
+    this(iEnabled, iAcquireTimeout, defaultConcurrency());
+  }
+
+  private static int defaultConcurrency() {
+    return Runtime.getRuntime().availableProcessors() > DEFAULT_CONCURRENCY_LEVEL ? Runtime.getRuntime().availableProcessors()
+        : DEFAULT_CONCURRENCY_LEVEL;
+  }
+
+  public OLockManager(final boolean iEnabled, final int iAcquireTimeout, final int concurrencyLevel) {
+    int cL = 1;
+
+    int sh = 0;
+    while (cL < concurrencyLevel) {
+      cL <<= 1;
+      sh++;
+    }
+
+    shift = 32 - sh;
+    mask = cL - 1;
+
+    map = new ConcurrentHashMap<RESOURCE_TYPE, CountableLock>(cL);
+    locks = new Object[cL];
+    for (int i = 0; i < locks.length; i++) {
+      locks[i] = new Object();
+    }
+
     acquireTimeout = iAcquireTimeout;
     enabled = iEnabled;
   }
@@ -47,15 +78,18 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
   }
 
   public void acquireLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType, long iTimeout) {
-    if( !enabled)
+    if (!enabled)
       return;
-    
+
     CountableLock lock;
-    synchronized (map) {
+    final Object internalLock = internalLock(iResourceId);
+    synchronized (internalLock) {
       lock = map.get(iResourceId);
       if (lock == null) {
-        lock = new CountableLock(iTimeout > 0);
-        map.put(getImmutableResourceId(iResourceId), lock);
+        final CountableLock newLock = new CountableLock(iTimeout > 0);
+        lock = map.putIfAbsent(getImmutableResourceId(iResourceId), newLock);
+        if (lock == null)
+          lock = newLock;
       }
       lock.countLocks++;
     }
@@ -81,7 +115,7 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
         }
       }
     } catch (RuntimeException e) {
-      synchronized (map) {
+      synchronized (internalLock) {
         lock.countLocks--;
         if (lock.countLocks == 0)
           map.remove(iResourceId);
@@ -93,11 +127,12 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 
   public void releaseLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType)
       throws OLockException {
-    if( !enabled)
+    if (!enabled)
       return;
 
     final CountableLock lock;
-    synchronized (map) {
+    final Object internalLock = internalLock(iResourceId);
+    synchronized (internalLock) {
       lock = map.get(iResourceId);
       if (lock == null)
         throw new OLockException("Error on releasing a non acquired lock by the requester '" + iRequester
@@ -115,20 +150,18 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
   }
 
   public void clear() {
-    synchronized (map) {
-      map.clear();
-    }
-  }
-
-  public void setAcquireTimeout(long iAcquireTimeout) {
-    acquireTimeout = iAcquireTimeout;
+    map.clear();
   }
 
   // For tests purposes.
   public int getCountCurrentLocks() {
-    synchronized (map) {
-      return map.size();
-    }
+    return map.size();
+  }
+
+  private Object internalLock(final RESOURCE_TYPE iResourceId) {
+    final int hashCode = iResourceId.hashCode();
+    final int index = (hashCode >>> shift) & mask;
+    return locks[index];
   }
 
   protected RESOURCE_TYPE getImmutableResourceId(final RESOURCE_TYPE iResourceId) {

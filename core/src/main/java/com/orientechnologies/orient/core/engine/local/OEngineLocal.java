@@ -15,36 +15,68 @@
  */
 package com.orientechnologies.orient.core.engine.local;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OMemoryLockException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 public class OEngineLocal extends OEngineAbstract {
 
-	public static final String	NAME	= "local";
+  public static final String         NAME         = "local";
+  private static final AtomicBoolean memoryLocked = new AtomicBoolean(false);
 
-	public OStorage createStorage(final String iDbName, final Map<String, String> iConfiguration) {
-		try {
-			// GET THE STORAGE
-			return new OStorageLocal(iDbName, iDbName, getMode(iConfiguration));
+  public OStorage createStorage(final String iDbName, final Map<String, String> iConfiguration) {
 
-		} catch (Throwable t) {
-			OLogManager.instance().error(this,
-					"Error on opening database: " + iDbName + ". Current location is: " + new java.io.File(".").getAbsolutePath(), t,
-					ODatabaseException.class);
-		}
-		return null;
-	}
+    if (memoryLocked.compareAndSet(false, true)) {
+      lockMemory();
+    }
 
-	public String getName() {
-		return NAME;
-	}
+    try {
+      // GET THE STORAGE
+      return new OStorageLocal(iDbName, iDbName, getMode(iConfiguration));
 
-	public boolean isShared() {
-		return true;
-	}
+    } catch (Throwable t) {
+      OLogManager.instance().error(this,
+          "Error on opening database: " + iDbName + ". Current location is: " + new java.io.File(".").getAbsolutePath(), t,
+          ODatabaseException.class);
+    }
+    return null;
+  }
+
+  private void lockMemory() {
+    if (!OGlobalConfiguration.FILE_MMAP_USE_OLD_MANAGER.getValueAsBoolean()
+        && OGlobalConfiguration.FILE_MMAP_LOCK_MEMORY.getValueAsBoolean()) {
+      // lock memory
+      try {
+        Class<?> MemoryLocker = ClassLoader.getSystemClassLoader().loadClass("com.orientechnologies.nio.MemoryLocker");
+        Method lockMemory = MemoryLocker.getMethod("lockMemory", boolean.class);
+        lockMemory.invoke(null, OGlobalConfiguration.JNA_DISABLE_USE_SYSTEM_LIBRARY.getValueAsBoolean());
+      } catch (ClassNotFoundException e) {
+        OLogManager.instance().warn(null,
+            "[OEngineLocal.createStorage] Error on locking memory! It seems that orient-nio jar is not in classpath");
+      } catch (NoSuchMethodException e) {
+        throw new OMemoryLockException("Error while locking memory", e);
+      } catch (InvocationTargetException e) {
+        throw new OMemoryLockException("Error while locking memory", e);
+      } catch (IllegalAccessException e) {
+        throw new OMemoryLockException("Error while locking memory", e);
+      }
+    }
+  }
+
+  public String getName() {
+    return NAME;
+  }
+
+  public boolean isShared() {
+    return true;
+  }
 }

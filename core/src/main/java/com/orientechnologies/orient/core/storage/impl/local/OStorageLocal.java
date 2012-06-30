@@ -56,7 +56,7 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.core.storage.fs.OMMapManager;
+import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 public class OStorageLocal extends OStorageEmbedded {
@@ -299,7 +299,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
       level2Cache.shutdown();
 
-      OMMapManager.flush();
+      OMMapManagerLocator.getInstance().flush();
 
       super.close(iForce);
 

@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.storage;
 import java.io.IOException;
 import java.util.Iterator;
 
+
 public class OClusterPositionIterator implements Iterator<Long> {
   private final OCluster cluster;
   private long           current;

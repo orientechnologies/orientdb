@@ -28,7 +28,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.cache.ODefaultCache;
-import com.orientechnologies.orient.core.storage.fs.OMMapManager;
+import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -170,6 +170,13 @@ public enum OGlobalConfiguration {
       "Max distance in bytes between holes to cause their defrag. Set it to -1 to use dynamic size. Beware that if the db is huge moving blocks to defrag could be expensive",
       Integer.class, 32768),
 
+  FILE_MMAP_USE_OLD_MANAGER("file.mmap.useOldManager",
+      "Manager that will be used to handle mmap files. true = USE OLD MANAGER, false = USE NEW MANAGER", boolean.class, false),
+
+  FILE_MMAP_LOCK_MEMORY("file.mmap.lockMemory",
+      "When using new map manager this parameter specify prevent memory swap or not. true = LOCK MEMORY, false = NOT LOCK MEMORY",
+      boolean.class, true),
+
   FILE_MMAP_STRATEGY(
       "file.mmap.strategy",
       "Strategy to use with memory mapped files. 0 = USE MMAP ALWAYS, 1 = USE MMAP ON WRITES OR ON READ JUST WHEN THE BLOCK POOL IS FREE, 2 = USE MMAP ON WRITES OR ON READ JUST WHEN THE BLOCK IS ALREADY AVAILABLE, 3 = USE MMAP ONLY IF BLOCK IS ALREADY AVAILABLE, 4 = NEVER USE MMAP",
@@ -178,7 +185,7 @@ public enum OGlobalConfiguration {
   FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", "Size of the memory mapped block, default is 1Mb", Integer.class, 1048576,
       new OConfigurationChangeCallback() {
         public void change(final Object iCurrentValue, final Object iNewValue) {
-          OMMapManager.setBlockSize(((Number) iNewValue).intValue());
+          OMMapManagerLocator.getInstance().setBlockSize(((Number) iNewValue).intValue());
         }
       }),
 
@@ -190,7 +197,7 @@ public enum OGlobalConfiguration {
       "Max memory allocatable by memory mapping manager. Note that on 32bit operating systems, the limit is 2Gb but will vary between operating systems",
       Long.class, 134217728, new OConfigurationChangeCallback() {
         public void change(final Object iCurrentValue, final Object iNewValue) {
-          OMMapManager.setMaxMemory(OFileUtils.getSizeAsNumber(iNewValue));
+          OMMapManagerLocator.getInstance().setMaxMemory(OFileUtils.getSizeAsNumber(iNewValue));
         }
       }),
 
@@ -199,7 +206,7 @@ public enum OGlobalConfiguration {
       "Strategy to use when a request overlaps in-memory buffers: 0 = Use the channel access, 1 = force the in-memory buffer and use the channel access, 2 = always create an overlapped in-memory buffer (default)",
       Integer.class, 2, new OConfigurationChangeCallback() {
         public void change(final Object iCurrentValue, final Object iNewValue) {
-          OMMapManager.setOverlapStrategy((Integer) iNewValue);
+          OMMapManagerLocator.getInstance().setOverlapStrategy((Integer) iNewValue);
         }
       }),
 
@@ -209,6 +216,8 @@ public enum OGlobalConfiguration {
   FILE_MMAP_FORCE_RETRY("file.mmap.forceRetry", "Number of times the memory-mapped block will try to flush to disk", Integer.class,
       50),
 
+  JNA_DISABLE_USE_SYSTEM_LIBRARY("jna.disable.system.library",
+      "This property disable to using JNA installed in your system. And use JNA bundled with database.", boolean.class, true),
   // NETWORK
   NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", "TCP/IP Socket buffer size", Integer.class, 32768),
 
