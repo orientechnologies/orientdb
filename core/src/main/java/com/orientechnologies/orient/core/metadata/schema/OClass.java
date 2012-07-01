@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.index.*;
  */
 public interface OClass extends Comparable<OClass> {
 	public static enum ATTRIBUTES {
-		NAME, SHORTNAME, SUPERCLASS, OVERSIZE, STRICTMODE
+		NAME, SHORTNAME, SUPERCLASS, OVERSIZE, STRICTMODE, ADDCLUSTER, REMOVECLUSTER
 	}
 
 	public static enum INDEX_TYPE {
@@ -76,7 +76,7 @@ public interface OClass extends Comparable<OClass> {
 
 	public int[] getClusterIds();
 
-	public OClass addClusterId(final int iId);
+	public OClass addClusterIdInternal(final int iId);
 
 	public OClass removeClusterId(final int iId);
 

@@ -453,8 +453,17 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public OClass addClusterId(final int iId) {
+    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    final String cmd = String.format("alter class %s addcluster %d", name, iId);
+    getDatabase().command(new OCommandSQL(cmd)).execute();
+    addClusterIdInternal(iId);
+    return this;
+  }
+
+  public OClass addClusterIdInternal(final int iId) {
     for (int currId : clusterIds)
       if (currId == iId)
+        // ALREADY ADDED
         return this;
 
     clusterIds = OArrays.copyOf(clusterIds, clusterIds.length + 1);
@@ -465,6 +474,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public OClass removeClusterId(final int iId) {
+    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    final String cmd = String.format("alter class %s removecluster %d", name, iId);
+    getDatabase().command(new OCommandSQL(cmd)).execute();
+    addClusterIdInternal(iId);
+    return this;
+  }
+
+  public OClass removeClusterIdInternal(final int iId) {
     boolean found = false;
     for (int clusterId : clusterIds) {
       if (clusterId == iId) {
@@ -764,9 +781,33 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     case STRICTMODE:
       setStrictModeInternal(Boolean.parseBoolean(stringValue));
       break;
+    case ADDCLUSTER: {
+      int clId = getClusterId(stringValue);
+      if (clId == -1)
+        throw new IllegalArgumentException("Cluster id '" + stringValue + "' cannot be added");
+      addClusterIdInternal(clId);
+      break;
+    }
+    case REMOVECLUSTER: {
+      int clId = getClusterId(stringValue);
+      if (clId == -1)
+        throw new IllegalArgumentException("Cluster id '" + stringValue + "' cannot be removed");
+      removeClusterIdInternal(clId);
+      break;
+    }
     }
 
     saveInternal();
+  }
+
+  protected int getClusterId(final String stringValue) {
+    int clId;
+    try {
+      clId = Integer.parseInt(stringValue);
+    } catch (NumberFormatException e) {
+      clId = getDatabase().getClusterIdByName(stringValue);
+    }
+    return clId;
   }
 
   public OClass set(final ATTRIBUTES attribute, final Object iValue) {
@@ -790,6 +831,19 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       break;
     case STRICTMODE:
       setStrictMode(Boolean.parseBoolean(stringValue));
+      break;
+    case ADDCLUSTER: {
+      int clId = getClusterId(stringValue);
+      if (clId == -1)
+        throw new IllegalArgumentException("Cluster id '" + stringValue + "' cannot be added");
+      addClusterId(clId);
+      break;
+    }
+    case REMOVECLUSTER:
+      int clId = getClusterId(stringValue);
+      if (clId == -1)
+        throw new IllegalArgumentException("Cluster id '" + stringValue + "' cannot be added");
+      removeClusterId(clId);
       break;
     }
     return this;
@@ -950,9 +1004,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
       indexDefinition = new OPropertyListIndexDefinition(name, propertyToIndex.getName(), indexType);
     } else if (propertyToIndexType == OType.BINARY) {
-      
+
       throw new IllegalArgumentException("Cannot create index against type: " + propertyToIndexType);
-      
+
     } else
       indexDefinition = new OPropertyIndexDefinition(name, propertyToIndex.getName(), propertyToIndexType);
     return indexDefinition;
