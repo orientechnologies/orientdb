@@ -66,9 +66,10 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
     try {
       final String databaseName = urlParts[1];
       final String storageMode = urlParts[2];
-      final String path = getStoragePath(databaseName, storageMode);
-      if (path != null) {
-        ODatabaseDocumentTx database = new ODatabaseDocumentTx(path);
+      final String url = getStoragePath(databaseName, storageMode);
+      final String type = urlParts[3];
+      if (url != null) {
+        final ODatabaseDocumentTx database = Orient.instance().getDatabaseFactory().createDatabase(type, url);
         if (database.exists())
           throw new ODatabaseException("Database '" + database.getURL() + "' already exists");
 
@@ -76,7 +77,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
           if (stg.getName().equalsIgnoreCase(database.getName()) && stg.exists())
             throw new ODatabaseException("Database named '" + database.getName() + "' already exists: " + stg);
         }
-        OLogManager.instance().info(this, "Creating database " + path);
+        OLogManager.instance().info(this, "Creating database " + url);
         database.create();
         sendDatabaseInfo(iRequest, database);
       } else {
