@@ -54,7 +54,14 @@
 			<type>jar</type>
 			<scope>compile</scope>
 		</dependency>
-
+		
+		<dependency>
+			<groupId>com.orientechnologies</groupId>
+			<artifactId>orient-nio</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+		
 		<dependency>
 			<groupId>com.orientechnologies</groupId>
 			<artifactId>orient-commons</artifactId>
