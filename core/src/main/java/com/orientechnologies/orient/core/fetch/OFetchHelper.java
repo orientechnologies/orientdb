@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 
 /**
  * Helper class for fetching.
@@ -327,7 +328,7 @@ public class OFetchHelper {
       iListener.processStandardField(iRootRecord, null, fieldName, iContext, iUserObject);
     } else if (fieldValue instanceof OIdentifiable) {
       if (fieldValue instanceof ODocument && ((ODocument) fieldValue).getClassName() != null
-          && ((ODocument) fieldValue).getClassName().equals(OMVRBTreeRIDSet.OCLASS_NAME)) {
+          && ((ODocument) fieldValue).getClassName().equals(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME)) {
         fetchCollection(iRootRecord, iUserObject, iFetchPlan, fieldValue, fieldName, currentLevel, iLevelFromRoot, fieldDepthLevel,
             parsedRecords, iFieldPathFromRoot, iListener, iContext);
       } else {
@@ -414,7 +415,7 @@ public class OFetchHelper {
     for (OIdentifiable d : linked) {
       if (d == null)
         continue;
-      
+
       // GO RECURSIVELY
       final Integer fieldDepthLevel = parsedRecords.get(d.getIdentity());
       if (!d.getIdentity().isValid() || (fieldDepthLevel != null && fieldDepthLevel.intValue() == iLevelFromRoot)) {

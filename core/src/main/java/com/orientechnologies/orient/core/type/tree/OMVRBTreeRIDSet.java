@@ -40,8 +40,6 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerial
 
 	private final OMVRBTreeRID	tree;
 
-	public static final String	OCLASS_NAME				= "ORIDs";
-
 	public OMVRBTreeRIDSet() {
 		this(new OMVRBTreeRID());
 	}

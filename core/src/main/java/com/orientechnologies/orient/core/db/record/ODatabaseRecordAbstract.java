@@ -63,6 +63,7 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
+import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecord {
@@ -137,9 +138,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
       checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
 
-      if (!metadata.getSchema().existsClass("ORIDs"))
+      if (!metadata.getSchema().existsClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME))
         // @COMPATIBILITY 1.0RC9
-        metadata.getSchema().createClass("ORIDs");
+        metadata.getSchema().createClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
     } catch (OException e) {
       close();
       throw e;
@@ -172,9 +173,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
       user = getMetadata().getSecurity().getUser(OUser.ADMIN);
 
-      if (!metadata.getSchema().existsClass("ORIDs"))
+      if (!metadata.getSchema().existsClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME))
         // @COMPATIBILITY 1.0RC9
-        metadata.getSchema().createClass("ORIDs");
+        metadata.getSchema().createClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
 
     } catch (Exception e) {
       throw new ODatabaseException("Cannot create database", e);

@@ -35,286 +35,284 @@ import com.orientechnologies.orient.core.storage.OStorage;
 
 @Test(groups = "schema")
 public class SchemaTest {
-	private ODatabaseFlat	database;
-	private String				url;
+  private ODatabaseFlat database;
+  private String        url;
 
-	@Parameters(value = "url")
-	public SchemaTest(String iURL) {
-		url = iURL;
-	}
+  @Parameters(value = "url")
+  public SchemaTest(String iURL) {
+    url = iURL;
+  }
 
-	public void createSchema() throws IOException {
-		database = new ODatabaseFlat(url);
-		if (ODatabaseHelper.existsDatabase(database))
-			database.open("admin", "admin");
-		else
-			database.create();
+  public void createSchema() throws IOException {
+    database = new ODatabaseFlat(url);
+    if (ODatabaseHelper.existsDatabase(database))
+      database.open("admin", "admin");
+    else
+      database.create();
 
-		if (database.getMetadata().getSchema().existsClass("Account"))
-			return;
+    if (database.getMetadata().getSchema().existsClass("Account"))
+      return;
 
-		OClass rids = database.getMetadata().getSchema().getClass("ORIDs");
-		if (rids == null)
-			database.getMetadata().getSchema().createClass("ORIDs");
+    Assert.assertNotNull(database.getMetadata().getSchema().getClass("ORIDs"));
 
-		database.addCluster("csv", OStorage.CLUSTER_TYPE.PHYSICAL);
-		database.addCluster("flat", OStorage.CLUSTER_TYPE.PHYSICAL);
-		database.addCluster("binary", OStorage.CLUSTER_TYPE.PHYSICAL);
+    database.addCluster("csv", OStorage.CLUSTER_TYPE.PHYSICAL);
+    database.addCluster("flat", OStorage.CLUSTER_TYPE.PHYSICAL);
+    database.addCluster("binary", OStorage.CLUSTER_TYPE.PHYSICAL);
 
-		OClass account = database.getMetadata().getSchema()
-				.createClass("Account", database.addCluster("account", OStorage.CLUSTER_TYPE.PHYSICAL));
-		account.createProperty("id", OType.INTEGER);
-		account.createProperty("birthDate", OType.DATE);
-		account.createProperty("binary", OType.BINARY);
+    OClass account = database.getMetadata().getSchema()
+        .createClass("Account", database.addCluster("account", OStorage.CLUSTER_TYPE.PHYSICAL));
+    account.createProperty("id", OType.INTEGER);
+    account.createProperty("birthDate", OType.DATE);
+    account.createProperty("binary", OType.BINARY);
 
-		database.getMetadata().getSchema().createClass("Company", account);
+    database.getMetadata().getSchema().createClass("Company", account);
 
-		OClass profile = database.getMetadata().getSchema()
-				.createClass("Profile", database.addCluster("profile", OStorage.CLUSTER_TYPE.PHYSICAL));
-		profile.createProperty("nick", OType.STRING).setMin("3").setMax("30").createIndex(OClass.INDEX_TYPE.UNIQUE);
-		profile.createProperty("name", OType.STRING).setMin("3").setMax("30").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
-		profile.createProperty("surname", OType.STRING).setMin("3").setMax("30");
-		profile.createProperty("registeredOn", OType.DATETIME).setMin("2010-01-01 00:00:00");
-		profile.createProperty("lastAccessOn", OType.DATETIME).setMin("2010-01-01 00:00:00");
-		profile.createProperty("photo", OType.TRANSIENT);
+    OClass profile = database.getMetadata().getSchema()
+        .createClass("Profile", database.addCluster("profile", OStorage.CLUSTER_TYPE.PHYSICAL));
+    profile.createProperty("nick", OType.STRING).setMin("3").setMax("30").createIndex(OClass.INDEX_TYPE.UNIQUE);
+    profile.createProperty("name", OType.STRING).setMin("3").setMax("30").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+    profile.createProperty("surname", OType.STRING).setMin("3").setMax("30");
+    profile.createProperty("registeredOn", OType.DATETIME).setMin("2010-01-01 00:00:00");
+    profile.createProperty("lastAccessOn", OType.DATETIME).setMin("2010-01-01 00:00:00");
+    profile.createProperty("photo", OType.TRANSIENT);
 
-		OClass whiz = database.getMetadata().getSchema().createClass("Whiz");
-		whiz.createProperty("id", OType.INTEGER);
-		whiz.createProperty("account", OType.LINK, account);
-		whiz.createProperty("date", OType.DATE).setMin("2010-01-01");
-		whiz.createProperty("text", OType.STRING).setMandatory(true).setMin("1").setMax("140").createIndex(OClass.INDEX_TYPE.FULLTEXT);
-		whiz.createProperty("replyTo", OType.LINK, account);
+    OClass whiz = database.getMetadata().getSchema().createClass("Whiz");
+    whiz.createProperty("id", OType.INTEGER);
+    whiz.createProperty("account", OType.LINK, account);
+    whiz.createProperty("date", OType.DATE).setMin("2010-01-01");
+    whiz.createProperty("text", OType.STRING).setMandatory(true).setMin("1").setMax("140").createIndex(OClass.INDEX_TYPE.FULLTEXT);
+    whiz.createProperty("replyTo", OType.LINK, account);
 
-		OClass strictTest = database.getMetadata().getSchema().createClass("StrictTest");
-		strictTest.setStrictMode(true);
-		strictTest.createProperty("id", OType.INTEGER).isMandatory();
-		strictTest.createProperty("name", OType.STRING);
+    OClass strictTest = database.getMetadata().getSchema().createClass("StrictTest");
+    strictTest.setStrictMode(true);
+    strictTest.createProperty("id", OType.INTEGER).isMandatory();
+    strictTest.createProperty("name", OType.STRING);
 
-		OClass animalRace = database.getMetadata().getSchema().createClass("AnimalRace");
-		animalRace.createProperty("name", OType.STRING);
+    OClass animalRace = database.getMetadata().getSchema().createClass("AnimalRace");
+    animalRace.createProperty("name", OType.STRING);
 
-		OClass animal = database.getMetadata().getSchema().createClass("Animal");
-		animal.createProperty("races", OType.LINKSET, animalRace);
-		animal.createProperty("name", OType.STRING);
+    OClass animal = database.getMetadata().getSchema().createClass("Animal");
+    animal.createProperty("races", OType.LINKSET, animalRace);
+    animal.createProperty("name", OType.STRING);
 
-		database.close();
-	}
+    database.close();
+  }
 
-	@Test(dependsOnMethods = "createSchema")
-	public void checkSchema() {
-		database = new ODatabaseFlat(url);
-		database.open("admin", "admin");
+  @Test(dependsOnMethods = "createSchema")
+  public void checkSchema() {
+    database = new ODatabaseFlat(url);
+    database.open("admin", "admin");
 
-		OSchema schema = database.getMetadata().getSchema();
+    OSchema schema = database.getMetadata().getSchema();
 
-		assert schema != null;
-		assert schema.getClass("Profile") != null;
-		assert schema.getClass("Profile").getProperty("nick").getType() == OType.STRING;
-		assert schema.getClass("Profile").getProperty("name").getType() == OType.STRING;
-		assert schema.getClass("Profile").getProperty("surname").getType() == OType.STRING;
-		assert schema.getClass("Profile").getProperty("registeredOn").getType() == OType.DATETIME;
-		assert schema.getClass("Profile").getProperty("lastAccessOn").getType() == OType.DATETIME;
+    assert schema != null;
+    assert schema.getClass("Profile") != null;
+    assert schema.getClass("Profile").getProperty("nick").getType() == OType.STRING;
+    assert schema.getClass("Profile").getProperty("name").getType() == OType.STRING;
+    assert schema.getClass("Profile").getProperty("surname").getType() == OType.STRING;
+    assert schema.getClass("Profile").getProperty("registeredOn").getType() == OType.DATETIME;
+    assert schema.getClass("Profile").getProperty("lastAccessOn").getType() == OType.DATETIME;
 
-		assert schema.getClass("Whiz") != null;
-		assert schema.getClass("whiz").getProperty("account").getType() == OType.LINK;
-		assert schema.getClass("whiz").getProperty("account").getLinkedClass().getName().equalsIgnoreCase("Account");
-		assert schema.getClass("WHIZ").getProperty("date").getType() == OType.DATE;
-		assert schema.getClass("WHIZ").getProperty("text").getType() == OType.STRING;
-		assert schema.getClass("WHIZ").getProperty("text").isMandatory();
-		assert schema.getClass("WHIZ").getProperty("text").getMin().equals("1");
-		assert schema.getClass("WHIZ").getProperty("text").getMax().equals("140");
-		assert schema.getClass("whiz").getProperty("replyTo").getType() == OType.LINK;
-		assert schema.getClass("Whiz").getProperty("replyTo").getLinkedClass().getName().equalsIgnoreCase("Account");
+    assert schema.getClass("Whiz") != null;
+    assert schema.getClass("whiz").getProperty("account").getType() == OType.LINK;
+    assert schema.getClass("whiz").getProperty("account").getLinkedClass().getName().equalsIgnoreCase("Account");
+    assert schema.getClass("WHIZ").getProperty("date").getType() == OType.DATE;
+    assert schema.getClass("WHIZ").getProperty("text").getType() == OType.STRING;
+    assert schema.getClass("WHIZ").getProperty("text").isMandatory();
+    assert schema.getClass("WHIZ").getProperty("text").getMin().equals("1");
+    assert schema.getClass("WHIZ").getProperty("text").getMax().equals("140");
+    assert schema.getClass("whiz").getProperty("replyTo").getType() == OType.LINK;
+    assert schema.getClass("Whiz").getProperty("replyTo").getLinkedClass().getName().equalsIgnoreCase("Account");
 
-		database.close();
-	}
+    database.close();
+  }
 
-	@Test(dependsOnMethods = "checkSchema")
-	public void checkSchemaApi() {
-		database = new ODatabaseFlat(url);
-		database.open("admin", "admin");
+  @Test(dependsOnMethods = "checkSchema")
+  public void checkSchemaApi() {
+    database = new ODatabaseFlat(url);
+    database.open("admin", "admin");
 
-		OSchema schema = database.getMetadata().getSchema();
+    OSchema schema = database.getMetadata().getSchema();
 
-		try {
-			Assert.assertNull(schema.getClass("Animal33"));
-		} catch (OSchemaException e) {
-		}
+    try {
+      Assert.assertNull(schema.getClass("Animal33"));
+    } catch (OSchemaException e) {
+    }
 
-		database.close();
-	}
+    database.close();
+  }
 
-	@Test(dependsOnMethods = "checkSchemaApi")
-	public void checkClusters() {
-		database = new ODatabaseFlat(url);
-		database.open("admin", "admin");
+  @Test(dependsOnMethods = "checkSchemaApi")
+  public void checkClusters() {
+    database = new ODatabaseFlat(url);
+    database.open("admin", "admin");
 
-		for (OClass cls : database.getMetadata().getSchema().getClasses()) {
-			assert database.getClusterNameById(cls.getDefaultClusterId()) != null;
-		}
+    for (OClass cls : database.getMetadata().getSchema().getClasses()) {
+      assert database.getClusterNameById(cls.getDefaultClusterId()) != null;
+    }
 
-		database.close();
-	}
+    database.close();
+  }
 
-	@Test(dependsOnMethods = "createSchema")
-	public void checkDatabaseSize() {
-		database = new ODatabaseFlat(url);
-		database.open("admin", "admin");
+  @Test(dependsOnMethods = "createSchema")
+  public void checkDatabaseSize() {
+    database = new ODatabaseFlat(url);
+    database.open("admin", "admin");
 
-		Assert.assertTrue(database.getSize() > 0);
+    Assert.assertTrue(database.getSize() > 0);
 
-		database.close();
-	}
+    database.close();
+  }
 
-	@Test(dependsOnMethods = "createSchema")
-	public void checkTotalRecords() {
-		database = new ODatabaseFlat(url);
-		database.open("admin", "admin");
+  @Test(dependsOnMethods = "createSchema")
+  public void checkTotalRecords() {
+    database = new ODatabaseFlat(url);
+    database.open("admin", "admin");
 
-		Assert.assertTrue(database.getStorage().countRecords() > 0);
+    Assert.assertTrue(database.getStorage().countRecords() > 0);
 
-		database.close();
-	}
+    database.close();
+  }
 
-	@Test(expectedExceptions = OValidationException.class)
-	public void checkErrorOnUserNoPasswd() {
-		database = new ODatabaseFlat(url);
-		database.open("admin", "admin");
+  @Test(expectedExceptions = OValidationException.class)
+  public void checkErrorOnUserNoPasswd() {
+    database = new ODatabaseFlat(url);
+    database.open("admin", "admin");
 
-		database.getMetadata().getSecurity().createUser("error", null, null);
+    database.getMetadata().getSecurity().createUser("error", null, null);
 
-		database.close();
-	}
+    database.close();
+  }
 
-	@Test
-	public void testMultiThreadSchemaCreation() throws InterruptedException {
-		database = new ODatabaseFlat(url);
-		database.open("admin", "admin");
+  @Test
+  public void testMultiThreadSchemaCreation() throws InterruptedException {
+    database = new ODatabaseFlat(url);
+    database.open("admin", "admin");
 
-		Thread thread = new Thread(new Runnable() {
+    Thread thread = new Thread(new Runnable() {
 
-			public void run() {
-				ODatabaseRecordThreadLocal.INSTANCE.set(database);
-				ODocument doc = new ODocument("NewClass");
-				database.save(doc);
+      public void run() {
+        ODatabaseRecordThreadLocal.INSTANCE.set(database);
+        ODocument doc = new ODocument("NewClass");
+        database.save(doc);
 
-				doc.delete();
-				database.getMetadata().getSchema().dropClass("NewClass");
+        doc.delete();
+        database.getMetadata().getSchema().dropClass("NewClass");
 
-				database.close();
-			}
-		});
+        database.close();
+      }
+    });
 
-		thread.start();
-		thread.join();
-	}
+    thread.start();
+    thread.join();
+  }
 
-	@Test
-	public void createAndDropClassTestApi() {
-		database = new ODatabaseFlat(url);
-		database.open("admin", "admin");
-		final String testClassName = "dropTestClass";
-		final int clusterId;
-		OClass dropTestClass = database.getMetadata().getSchema().createClass(testClassName);
-		clusterId = dropTestClass.getDefaultClusterId();
-		database.getMetadata().getSchema().reload();
-		dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
-		Assert.assertNotNull(dropTestClass);
-		Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), clusterId);
-		Assert.assertNotNull(database.getClusterNameById(clusterId));
-		database.close();
-		database = null;
-		database = new ODatabaseFlat(url);
-		database.open("admin", "admin");
-		dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
-		Assert.assertNotNull(dropTestClass);
-		Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), clusterId);
-		Assert.assertNotNull(database.getClusterNameById(clusterId));
-		database.getMetadata().getSchema().dropClass(testClassName);
-		database.getMetadata().getSchema().reload();
-		dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
-		Assert.assertNull(dropTestClass);
-		Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), -1);
-		Assert.assertNull(database.getClusterNameById(clusterId));
-		database.close();
-		database = new ODatabaseFlat(url);
-		database.open("admin", "admin");
-		dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
-		Assert.assertNull(dropTestClass);
-		Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), -1);
-		Assert.assertNull(database.getClusterNameById(clusterId));
-		database.close();
-	}
+  @Test
+  public void createAndDropClassTestApi() {
+    database = new ODatabaseFlat(url);
+    database.open("admin", "admin");
+    final String testClassName = "dropTestClass";
+    final int clusterId;
+    OClass dropTestClass = database.getMetadata().getSchema().createClass(testClassName);
+    clusterId = dropTestClass.getDefaultClusterId();
+    database.getMetadata().getSchema().reload();
+    dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
+    Assert.assertNotNull(dropTestClass);
+    Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), clusterId);
+    Assert.assertNotNull(database.getClusterNameById(clusterId));
+    database.close();
+    database = null;
+    database = new ODatabaseFlat(url);
+    database.open("admin", "admin");
+    dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
+    Assert.assertNotNull(dropTestClass);
+    Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), clusterId);
+    Assert.assertNotNull(database.getClusterNameById(clusterId));
+    database.getMetadata().getSchema().dropClass(testClassName);
+    database.getMetadata().getSchema().reload();
+    dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
+    Assert.assertNull(dropTestClass);
+    Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), -1);
+    Assert.assertNull(database.getClusterNameById(clusterId));
+    database.close();
+    database = new ODatabaseFlat(url);
+    database.open("admin", "admin");
+    dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
+    Assert.assertNull(dropTestClass);
+    Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), -1);
+    Assert.assertNull(database.getClusterNameById(clusterId));
+    database.close();
+  }
 
-	@Test
-	public void createAndDropClassTestCommand() {
-		database = new ODatabaseFlat(url);
-		database.open("admin", "admin");
-		final String testClassName = "dropTestClass";
-		final int clusterId;
-		OClass dropTestClass = database.getMetadata().getSchema().createClass(testClassName);
-		clusterId = dropTestClass.getDefaultClusterId();
-		database.getMetadata().getSchema().reload();
-		dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
-		Assert.assertNotNull(dropTestClass);
-		Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), clusterId);
-		Assert.assertNotNull(database.getClusterNameById(clusterId));
-		database.close();
-		database = null;
-		database = new ODatabaseFlat(url);
-		database.open("admin", "admin");
-		dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
-		Assert.assertNotNull(dropTestClass);
-		Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), clusterId);
-		Assert.assertNotNull(database.getClusterNameById(clusterId));
-		database.command(new OCommandSQL("drop class " + testClassName)).execute();
-		database.reload();
-		dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
-		Assert.assertNull(dropTestClass);
-		Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), -1);
-		Assert.assertNull(database.getClusterNameById(clusterId));
-		database.close();
-		database = new ODatabaseFlat(url);
-		database.open("admin", "admin");
-		dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
-		Assert.assertNull(dropTestClass);
-		Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), -1);
-		Assert.assertNull(database.getClusterNameById(clusterId));
-		database.close();
-	}
+  @Test
+  public void createAndDropClassTestCommand() {
+    database = new ODatabaseFlat(url);
+    database.open("admin", "admin");
+    final String testClassName = "dropTestClass";
+    final int clusterId;
+    OClass dropTestClass = database.getMetadata().getSchema().createClass(testClassName);
+    clusterId = dropTestClass.getDefaultClusterId();
+    database.getMetadata().getSchema().reload();
+    dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
+    Assert.assertNotNull(dropTestClass);
+    Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), clusterId);
+    Assert.assertNotNull(database.getClusterNameById(clusterId));
+    database.close();
+    database = null;
+    database = new ODatabaseFlat(url);
+    database.open("admin", "admin");
+    dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
+    Assert.assertNotNull(dropTestClass);
+    Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), clusterId);
+    Assert.assertNotNull(database.getClusterNameById(clusterId));
+    database.command(new OCommandSQL("drop class " + testClassName)).execute();
+    database.reload();
+    dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
+    Assert.assertNull(dropTestClass);
+    Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), -1);
+    Assert.assertNull(database.getClusterNameById(clusterId));
+    database.close();
+    database = new ODatabaseFlat(url);
+    database.open("admin", "admin");
+    dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
+    Assert.assertNull(dropTestClass);
+    Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), -1);
+    Assert.assertNull(database.getClusterNameById(clusterId));
+    database.close();
+  }
 
-	@Test(dependsOnMethods = "createSchema")
-	public void customAttributes() {
-		database = new ODatabaseFlat(url);
-		database.open("admin", "admin");
+  @Test(dependsOnMethods = "createSchema")
+  public void customAttributes() {
+    database = new ODatabaseFlat(url);
+    database.open("admin", "admin");
 
-		// TEST CUSTOM PROPERTY CREATION
-		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").setCustom("stereotype", "icon");
+    // TEST CUSTOM PROPERTY CREATION
+    database.getMetadata().getSchema().getClass("Profile").getProperty("nick").setCustom("stereotype", "icon");
 
-		Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"), "icon");
+    Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"), "icon");
 
-		// TEST CUSTOM PROPERTY EXISTS EVEN AFTER REOPEN
-		database.close();
-		database.open("admin", "admin");
+    // TEST CUSTOM PROPERTY EXISTS EVEN AFTER REOPEN
+    database.close();
+    database.open("admin", "admin");
 
-		Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"), "icon");
+    Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"), "icon");
 
-		// TEST CUSTOM PROPERTY REMOVAL
-		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").setCustom("stereotype", null);
-		Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"), null);
+    // TEST CUSTOM PROPERTY REMOVAL
+    database.getMetadata().getSchema().getClass("Profile").getProperty("nick").setCustom("stereotype", null);
+    Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"), null);
 
-		// TEST CUSTOM PROPERTY UPDATE
-		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").setCustom("stereotype", "polygon");
-		Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"),
-				"polygon");
+    // TEST CUSTOM PROPERTY UPDATE
+    database.getMetadata().getSchema().getClass("Profile").getProperty("nick").setCustom("stereotype", "polygon");
+    Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"),
+        "polygon");
 
-		// TEST CUSTOM PROPERTY UDPATED EVEN AFTER REOPEN
-		database.close();
-		database.open("admin", "admin");
+    // TEST CUSTOM PROPERTY UDPATED EVEN AFTER REOPEN
+    database.close();
+    database.open("admin", "admin");
 
-		Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"),
-				"polygon");
+    Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"),
+        "polygon");
 
-		database.close();
-	}
+    database.close();
+  }
 }
