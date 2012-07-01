@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  * @author Lev Sivashov <a href="mailto:lsivashov@gmail.com">lsivashov@gmail.com</a>
  * @since 06.05.12
  *        <p/>
- *        This class in new realization of mmap manager that used OS swap mechanism to mmap files.
+ *        This class in new realization of mmap manager that uses OS swap mechanism to mmap files.
  */
 public class OMMapManagerNew extends OMMapManagerAbstract implements OMMapManager {
   private static final int                                            BINARY_SEARCH_THRESHOLD = 10;

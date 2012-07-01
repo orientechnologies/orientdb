@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.storage.fs;
 /**
  * @author Artem Loginov (logart) logart2007@gmail.com Date: 6/4/12 Time: 2:05 PM
  *         <p/>
- *         This class contains some basic method for all mmap managers. Fo example release mapped buffers.
+ *         This class contains some basic method for all mmap managers. For example release mapped buffers.
  */
 public abstract class OMMapManagerAbstract implements OMMapManager {
   /**

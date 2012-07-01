@@ -23,8 +23,8 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 /**
  * @author Artem Loginov (logart) logart2007@gmail.com Date: 5/17/12 Time: 5:33 PM
  *         <p/>
- *         This class is mmap manager singletone factory. It used for getting mmap manager instance from any part of tha system.
- *         This locator know how to create mmap manager. And if mmap manager already exist returns it.
+ *         This class is mmap manager singleton factory. It used for getting mmap manager instance from any part of the system. This
+ *         locator know how to create mmap manager. If mmap manager already exist returns it.
  */
 public class OMMapManagerLocator {
 

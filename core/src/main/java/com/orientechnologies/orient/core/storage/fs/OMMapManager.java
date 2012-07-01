@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.storage.fs;
 /**
  * @author Artem Loginov (logart) logart2007@gmail.com Date: 5/17/12 Time: 5:24 PM
  *         <p/>
- *         This is universal MMapManager interface. If you wold like implement your version of mmap manager, you should implement
+ *         This is universal MMapManager interface. If you would like implement your version of mmap manager, you should implement
  *         this interface.
  */
 public interface OMMapManager {
@@ -30,7 +30,7 @@ public interface OMMapManager {
   void init();
 
   /**
-   * Types of operation on files that was mmaped.
+   * Types of operation on files that was mmapped.
    */
   public enum OPERATION_TYPE {
     READ, WRITE
@@ -44,7 +44,7 @@ public interface OMMapManager {
   }
 
   /**
-   * Strategy that determine what should manager do if mmaped files overlaps. This API is deprecated and used only in old mmap
+   * Strategy that determine what should manager do if mmapped files overlaps. This API is deprecated and used only in old mmap
    * manager.
    */
   @Deprecated
@@ -56,7 +56,7 @@ public interface OMMapManager {
    * This method tries to mmap file. If mapping is impossible method returns null.
    * 
    * @param iFile
-   *          file that will be mmaped.
+   *          file that will be mmapped.
    * @param iBeginOffset
    *          position in file that should be mapped.
    * @param iSize
