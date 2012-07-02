@@ -33,9 +33,8 @@ package com.orientechnologies.common.util;
 
 import java.nio.ByteBuffer;
 
-
 /**
- * This class is utility class for split primitive types to separate byte buffers and vise versa. This class is used because we use
+ * This class is utility class for split primitive types to separate byte buffers and vice versa. This class is used because we use
  * many byte buffers for mmap and there is situation when we need to write value on border of two buffers.
  * 
  * @author Artem Loginov (logart) logart2007@gmail.com Date: 5/25/12 Time: 6:37 AM
