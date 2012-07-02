@@ -24,7 +24,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>OrientDB NativeSpecificCode</name>
+    <name>OrientDB Native OS Code</name>
 
     <organization>
         <name>Orient Technologies</name>
@@ -36,7 +36,7 @@
         <javac.target.version>1.6</javac.target.version>
     </properties>
 
-    <artifactId>orient-nio</artifactId>
+    <artifactId>orientdb-nativeos</artifactId>
 
     <dependencies>
         <dependency>

@@ -69,7 +69,7 @@
     <modules>
         <module>client</module>
         <module>commons</module>
-        <module>nio</module>
+        <module>nativeos</module>
         <module>core</module>
         <module>distribution</module>
         <module>enterprise</module>
