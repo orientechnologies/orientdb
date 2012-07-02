@@ -192,13 +192,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   public Object execute(final Map<Object, Object> iArgs) {
     fetchLimit = getQueryFetchLimit();
-
+    
     executeSearch(iArgs);
     applyFlatten();
     applyProjections();
     applyOrderBy();
-    applyLimit();
-
+    applyLimitAndSkip();
     return handleResult();
   }
 
@@ -244,12 +243,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   protected boolean addResult(final OIdentifiable iRecord) {
     lastRecord = null;
-
-    if (skip > 0) {
+    
+ 	if (orderedFields == null && skip > 0) {
       skip--;
       return true;
     }
-
+    
     lastRecord = iRecord instanceof ORecord<?> ? ((ORecord<?>) iRecord).copy() : iRecord.getIdentity().copy();
     lastRecord = applyProjections(lastRecord);
 
@@ -268,7 +267,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           request.getResultListener().result(lastRecord);
       }
 
-    if (fetchLimit > -1 && resultCount >= fetchLimit)
+    if (orderedFields == null && fetchLimit > -1 && resultCount >= fetchLimit)
       // BREAK THE EXECUTION
       return false;
 

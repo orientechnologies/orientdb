@@ -640,6 +640,32 @@ public class SQLSelectTest {
       Assert.assertEquals(page.get(i), result.get(10 + i));
     }
   }
+  
+  
+  @Test
+  public void queryPaginationWithOrderBySkipAndLimit() {
+    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile order by name")).execute();
+
+    List<ODocument> page = database.command(new OSQLSynchQuery<ODocument>("select from Profile order by name limit 10 skip 10")).execute();
+    Assert.assertEquals(page.size(), 10);
+
+    for (int i = 0; i < page.size(); ++i) {
+      Assert.assertEquals(page.get(i), result.get(10 + i));
+    }
+  }
+  
+  
+  @Test
+  public void queryPaginationWithOrderByDescSkipAndLimit() {
+    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile order by name desc")).execute();
+
+    List<ODocument> page = database.command(new OSQLSynchQuery<ODocument>("select from Profile order by name desc limit 10 skip 10")).execute();
+    Assert.assertEquals(page.size(), 10);
+
+    for (int i = 0; i < page.size(); ++i) {
+      Assert.assertEquals(page.get(i), result.get(10 + i));
+    }
+  }
 
   @Test
   public void queryOrderByAndLimit() {
