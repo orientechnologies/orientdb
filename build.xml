@@ -1,298 +1,295 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project basedir="." default="install" name="orient-ant">
-    <!-- Copyright (c) 1999-2011 Luca Garulli - LICENSE: Apache 2.0 -->
+  <!-- Copyright (c) 1999-2011 Luca Garulli - LICENSE: Apache 2.0 -->
+  
+	<property environment="env" />
+	<property name="vendor"            value="NuvolaBase Ltd" />
+	<property name="product"           value="OrientDB" />
+	<property name="version"           value="1.1.0-SNAPSHOT" />
+	<property name="global.release"    value="../releases/orientdb-${version}" />
+	<property name="db.release"        value="../releases/orientdb-${version}" />
+	<property name="graph.release"     value="../releases/orientdb-graphed-${version}" />
+	<property name="clustered.release" value="../releases/orientdb-clustered-${version}" />
+	
+	<property name="env.ORIENTDB_HOME" value="${db.release}" />
+	
+	<buildnumber file="build.number"/>
+	
+  <macrodef name="delegate">
+		<attribute name="target"/>
+		<sequential>
+      <subant target="@{target}">
+        <property name="global.lib" value="../${db.release}/lib"/>
+        <property name="version" value="${version}"/>
+        
+		  	<fileset dir="commons"          includes="build.xml" />
+		  	<fileset dir="core"             includes="build.xml" />
+		  	<fileset dir="nativeos"         includes="build.xml" />
+      		<fileset dir="object"           includes="build.xml" />
+		  	<fileset dir="enterprise"       includes="build.xml" />
+		  	<fileset dir="client"           includes="build.xml" />
+		  	<fileset dir="server"           includes="build.xml" />
+		  	<fileset dir="clustered-server" includes="build.xml" />
+		  	<fileset dir="tools"            includes="build.xml" />
+		  	<fileset dir="tests"            includes="build.xml" />
+	    </subant>
+	    
+      <echo>   ___   ___  ____    _  </echo>  
+   		<echo> .'   `.|_  ||_  _|  | | </echo>
+  		<echo>/  .-.  \ | |_/ /    | | </echo>
+  		<echo>| |   | | |  __'.    |_| </echo>
+  		<echo>\  `-'  /_| |  \ \_   _  </echo>
+  		<echo> `.___.'|____||____| (_) </echo>
+    </sequential>
+    
+  </macrodef>
+  
+	<target name="init">
+    <echo>           .                                              </echo>
+    <echo>          .`        `                                     </echo>
+    <echo>          ,      `:.                                      </echo>
+    <echo>         `,`    ,:`                                       </echo>
+    <echo>         .,.   :,,                                        </echo>
+    <echo>         .,,  ,,,                                         </echo>
+    <echo>    .    .,.:::::  ````                                   </echo>
+    <echo>    ,`   .::,,,,::.,,,,,,`;;                      .:      </echo>
+    <echo>    `,.  ::,,,,,,,:.,,.`  `                       .:      </echo>
+    <echo>     ,,:,:,,,,,,,,::.   `        `         ``     .:      </echo>
+    <echo>      ,,:.,,,,,,,,,: `::, ,,   ::,::`   : :,::`  ::::     </echo>
+    <echo>       ,:,,,,,,,,,,::,:   ,,  :.    :   ::    :   .:      </echo>
+    <echo>        :,,,,,,,,,,:,::   ,,  :      :  :     :   .:      </echo>
+    <echo>  `     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:      </echo>
+    <echo>  `,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:      </echo>
+    <echo>    .,,,,::,,,,,,,:  `: , ,,  :     `   :     :   .:      </echo>
+    <echo>      ...,::,,,,::.. `:  .,,  :,    :   :     :   .:      </echo>
+    <echo>           ,::::,,,. `:   ,,   :::::    :     :   .:      </echo>
+    <echo>           ,,:` `,,.                                      </echo>
+    <echo>          ,,,    .,`                                      </echo>
+    <echo>         ,,.     `,                 D A T A B A S E       </echo>
+    <echo>       ``        `.                                       </echo>
+    <echo>                 ``                                       </echo>
+    <echo>                 `                                        </echo>
+    <echo>                                                          </echo>
+  
+	<mkdir dir="${global.release}" />
+	<mkdir dir="${db.release}" />
+	<mkdir dir="${db.release}/log" />
+	<mkdir dir="${graph.release}/log" />
+	<mkdir dir="${clustered.release}/log" />
+	<mkdir dir="${db.release}/databases" />
+  </target>
 
-    <property environment="env"/>
-    <property name="vendor" value="NuvolaBase Ltd"/>
-    <property name="product" value="OrientDB"/>
-    <property name="version" value="1.1.0-SNAPSHOT"/>
-    <property name="global.release" value="../releases/orientdb-${version}"/>
-    <property name="db.release" value="../releases/orientdb-${version}"/>
-    <property name="graph.release" value="../releases/orientdb-graphed-${version}"/>
-    <property name="clustered.release" value="../releases/orientdb-clustered-${version}"/>
+	<target name="clean" depends="init">
+		<delegate target="clean"/>
+    <delete dir="${db.release}" />
+	</target>
 
-    <property name="env.ORIENTDB_HOME" value="${db.release}"/>
-
-    <buildnumber file="build.number"/>
-
-    <macrodef name="delegate">
-        <attribute name="target"/>
-        <sequential>
-            <subant target="@{target}">
-                <property name="global.lib" value="../${db.release}/lib"/>
-                <property name="version" value="${version}"/>
-
-                <fileset dir="commons" includes="build.xml"/>
-                <fileset dir="nio" includes="build.xml"/>
-                <fileset dir="core" includes="build.xml"/>
-                <fileset dir="object" includes="build.xml"/>
-                <fileset dir="enterprise" includes="build.xml"/>
-                <fileset dir="client" includes="build.xml"/>
-                <fileset dir="server" includes="build.xml"/>
-                <fileset dir="clustered-server" includes="build.xml"/>
-                <fileset dir="tools" includes="build.xml"/>
-                <fileset dir="tests" includes="build.xml"/>
-            </subant>
-
-            <echo>___ ___ ____ _</echo>
-            <echo>.' `.|_ ||_ _| | |</echo>
-            <echo>/ .-. \ | |_/ / | |</echo>
-            <echo>| | | | | __'. |_|</echo>
-            <echo>\ `-' /_| | \ \_ _</echo>
-            <echo>`.___.'|____||____| (_)</echo>
-        </sequential>
-
-    </macrodef>
-
-    <target name="init">
-        <echo>.</echo>
-        <echo>.` `</echo>
-        <echo>, `:.</echo>
-        <echo>`,` ,:`</echo>
-        <echo>.,. :,,</echo>
-        <echo>.,, ,,,</echo>
-        <echo>. .,.::::: ````</echo>
-        <echo>,` .::,,,,::.,,,,,,`;; .:</echo>
-        <echo>`,. ::,,,,,,,:.,,.` ` .:</echo>
-        <echo>,,:,:,,,,,,,,::. ` ` `` .:</echo>
-        <echo>,,:.,,,,,,,,,: `::, ,, ::,::` : :,::` ::::</echo>
-        <echo>,:,,,,,,,,,,::,: ,, :. : :: : .:</echo>
-        <echo>:,,,,,,,,,,:,:: ,, : : : : .:</echo>
-        <echo>` :,,,,,,,,,,:,::, ,, .:::::::: : : .:</echo>
-        <echo>`,...,,:,,,,,,,,,: .:,. ,, ,, : : .:</echo>
-        <echo>.,,,,::,,,,,,,: `: , ,, : ` : : .:</echo>
-        <echo>...,::,,,,::.. `: .,, :, : : : .:</echo>
-        <echo>,::::,,,. `: ,, ::::: : : .:</echo>
-        <echo>,,:` `,,.</echo>
-        <echo>,,, .,`</echo>
-        <echo>,,. `, D A T A B A S E</echo>
-        <echo>`` `.</echo>
-        <echo>``</echo>
-        <echo>`</echo>
-        <echo></echo>
-
-        <mkdir dir="${global.release}"/>
-        <mkdir dir="${db.release}"/>
-        <mkdir dir="${db.release}/log"/>
-        <mkdir dir="${graph.release}/log"/>
-        <mkdir dir="${clustered.release}/log"/>
-        <mkdir dir="${db.release}/databases"/>
-    </target>
-
-    <target name="clean" depends="init">
-        <delegate target="clean"/>
-        <delete dir="${db.release}"/>
-    </target>
-
-    <target name="compile" depends="init">
-        <delegate target="compile"/>
-    </target>
+	<target name="compile" depends="init">
+		<delegate target="compile"/>
+	</target>
 
 
-    <target name="javadoc" depends="init">
-        <!-- YOU NEED TO INSTALL GRAPH-VIZ TO GENERATE UML DIAGRAMS, OTHERWISE DISABLE IT TO HAVE PLAIN JAVADOCS -->
-        <copy todir="${global.release}/javadoc" file="_base/images/orient_db.png"/>
-        <javadoc sourcepath="." packagenames="com.orientechnologies.*" destdir="${global.release}/javadoc" public="true"
-                 useexternalfile="yes" linksource="yes" author="true" version="true" use="yes" verbose="no"
-                 windowtitle="OrientDB v. ${version} Javadocs"
-                 header="&lt;a target='_parent' href='http://www.orientdb.org/orient-db.htm' &gt;&lt;img src='http://www.orientdb.org/images/orientdb_small.png' border='0' /&gt;&lt;/a&gt;"
-                 bottom="&lt;center&gt;Copyrights 2010-2012 (c) Luca Garulli. All Rights Reserved. This software is released as Open Source using the &lt;a target='_parent' href='http://www.apache.org/licenses/LICENSE-2.0'&gt;Apache 2.0 license&lt;/a&gt;.&lt;/center&gt;"
-                 overview="overview.html">
-            <classpath>
-                <fileset dir=".">
-                    <include name="object/lib/persistence-api-1.0.jar"/>
-                </fileset>
-            </classpath>
-            <packageset dir="." defaultexcludes="yes">
-                <include name="commons/src/main/java/**"/>
-                <include name="core/src/main/java/**"/>
-                <include name="object/src/main/java/**/*.java"/>
-            </packageset>
-            <fileset dir="." defaultexcludes="yes">
-                <include name="commons/src/main/java/**/*.java"/>
-                <include name="core/src/main/java/**/*.java"/>
-                <include name="client/src/main/java/**/*.java"/>
-                <include name="enterprise/src/main/java/**/*.java"/>
-                <include name="object/src/main/java/**/*.java"/>
-            </fileset>
-            <doclet name="org.umlgraph.doclet.UmlGraphDoc" path="_base/lib/UmlGraph.jar">
-                <param name="-hide" value="java.*"/>
-                <param name="-collpackages" value="java.util.*"/>
-                <param name="-qualify"/>
-                <param name="-inferrel"/>
+	<target name="javadoc" depends="init">
+		<!-- YOU NEED TO INSTALL GRAPH-VIZ TO GENERATE UML DIAGRAMS, OTHERWISE DISABLE IT TO HAVE PLAIN JAVADOCS -->
+		<copy todir="${global.release}/javadoc" file="_base/images/orient_db.png" />
+		<javadoc sourcepath="." packagenames="com.orientechnologies.*" destdir="${global.release}/javadoc" public="true"
+             useexternalfile="yes" linksource="yes" author="true" version="true" use="yes" verbose="no"
+			 windowtitle="OrientDB v. ${version} Javadocs"
+             header="&lt;a target='_parent' href='http://www.orientdb.org/orient-db.htm' &gt;&lt;img src='http://www.orientdb.org/images/orientdb_small.png' border='0' /&gt;&lt;/a&gt;"
+             bottom="&lt;center&gt;Copyrights 2010-2012 (c) Luca Garulli. All Rights Reserved. This software is released as Open Source using the &lt;a target='_parent' href='http://www.apache.org/licenses/LICENSE-2.0'&gt;Apache 2.0 license&lt;/a&gt;.&lt;/center&gt;"
+             overview="overview.html">
+			<classpath>
+				<fileset dir=".">
+					<include name="object/lib/persistence-api-1.0.jar" />
+				</fileset>
+			</classpath>
+			<packageset dir="." defaultexcludes="yes">
+				<include name="commons/src/main/java/**"/>
+				<include name="core/src/main/java/**"/>
+				<include name="object/src/main/java/**/*.java"/>
+			</packageset>
+			<fileset dir="." defaultexcludes="yes">
+				<include name="commons/src/main/java/**/*.java"/>
+				<include name="core/src/main/java/**/*.java"/>
+				<include name="client/src/main/java/**/*.java"/>
+				<include name="enterprise/src/main/java/**/*.java"/>
+				<include name="object/src/main/java/**/*.java"/>
+			</fileset>
+			<doclet name="org.umlgraph.doclet.UmlGraphDoc" path="_base/lib/UmlGraph.jar">
+				<param name="-hide" value="java.*" />
+				<param name="-collpackages" value="java.util.*" />
+				<param name="-qualify" />
+				<param name="-inferrel"/>
                 <param name="-inferdep"/>
-                <param name="-postfixpackage"/>
-                <param name="-nodefontsize" value="9"/>
-                <param name="-nodefontpackagesize" value="7"/>
-                <param name="-nodefontabstractname" value="Sans Not-Rotated"/>
-                <param name="-nodefontclassabstractname" value="Sans Not-Rotated"/>
-                <!--     -->
-                <param name="-link" value="http://java.sun.com/j2se/1.5.0/docs/guide/javadoc/doclet/spec"/>
-                <param name="-link" value="http://java.sun.com/j2se/1.5/docs/api"/>
-            </doclet>
-        </javadoc>
-    </target>
+				<param name="-postfixpackage" />
+				<param name="-nodefontsize" value="9" />
+				<param name="-nodefontpackagesize" value="7" />
+				<param name="-nodefontabstractname" value="Sans Not-Rotated" />
+				<param name="-nodefontclassabstractname" value="Sans Not-Rotated" />
+				<!--     -->
+				<param name="-link" value="http://java.sun.com/j2se/1.5.0/docs/guide/javadoc/doclet/spec" />
+				<param name="-link" value="http://java.sun.com/j2se/1.5/docs/api" />
+			</doclet>
+		</javadoc>
+	</target>
 
-    <target name="install" depends="init">
-        <delegate target="install"/>
+  <target name="install" depends="init">
+		<delegate target="install"/>
+		
+		<copy todir="${db.release}"                   file="license.txt" />
+		<copy tofile="${db.release}/readme.txt"       file="readme.txt" />
+		<copy tofile="${db.release}/history.txt"      file="history.txt" />
 
-        <copy todir="${db.release}" file="license.txt"/>
-        <copy tofile="${db.release}/readme.txt" file="readme.txt"/>
-        <copy tofile="${db.release}/history.txt" file="history.txt"/>
+		<copy todir="${db.release}/bin/" flatten="true">
+		  <fileset dir="." includes="tools/script/*.sh tools/script/*.bat server/script/*.sh server/script/*.bat" />
+		  <filterset>
+			<filter token="VERSION" value="${version}"/>
+			<filter token="BUILD" value="${build.number}"/>
+		  </filterset>
+		</copy>
 
-        <copy todir="${db.release}/bin/" flatten="true">
-            <fileset dir="." includes="tools/script/*.sh tools/script/*.bat server/script/*.sh server/script/*.bat"/>
-            <filterset>
-                <filter token="VERSION" value="${version}"/>
-                <filter token="BUILD" value="${build.number}"/>
-            </filterset>
-        </copy>
+		<copy todir="${db.release}/www/">
+		  <fileset dir="server/src/site"/>
+		</copy>
+		
+		<copy todir="${db.release}/config/" flatten="true">
+		  <fileset dir="." includes="server/config/*" />
+		</copy>
+		
+		<copy todir="${db.release}/benchmarks" flatten="true">
+		  <fileset dir="." includes="server/benchmarks/*"/>
+		</copy>
+		
+		<delete includeEmptyDirs="true">
+		  <fileset dir="${db.release}/log/" includes="**/*"/>
+		</delete>
+	</target>
+	
+	<target name="installg" depends="install">
+		<subant target="install">
+		  <property name="global.lib" value="../${graph.release}/lib"/>
+		  <property name="version" value="${version}"/>
+		  
+			<fileset dir="graphdb"      includes="build.xml" />
+		</subant>
 
-        <copy todir="${db.release}/www/">
-            <fileset dir="server/src/site"/>
-        </copy>
+		<copy todir="${graph.release}">
+		  <fileset dir="${db.release}">
+			<exclude name="**/*.log.*"/>
+		  </fileset>
+		</copy>
+	  
+		<copy todir="${graph.release}/www/">
+		  <fileset dir="graphdb/src/site"/>
+		</copy>
+	  
+		<copy todir="${graph.release}/bin/" flatten="true" overwrite="true">
+		  <fileset dir="graphdb/script" includes="*.sh *.bat" />
+		  <filterset>
+			<filter token="VERSION" value="${version}"/>
+		  </filterset>
+		</copy>
 
-        <copy todir="${db.release}/config/" flatten="true">
-            <fileset dir="." includes="server/config/*"/>
-        </copy>
+		<copy todir="${graph.release}/config" flatten="true" overwrite="true">
+		  <fileset dir="graphdb/config" includes="*.xml"/>
+		</copy>
+		
+		<copy todir="${graph.release}/lib" flatten="true">
+		  <fileset dir="graphdb/lib" includes="*.jar"/>
+		</copy>
+		
+		<delete includeEmptyDirs="true">
+		  <fileset dir="${graph.release}/log/" includes="**/*"/>
+		</delete>
+		<delete includeEmptyDirs="true">
+		  <fileset dir="${graph.release}/databases/" includes="demo"/>
+		</delete>
+	</target>
 
-        <copy todir="${db.release}/benchmarks" flatten="true">
-            <fileset dir="." includes="server/benchmarks/*"/>
-        </copy>
+	<target name="installc" depends="install">
+		<subant target="install">
+		  <property name="global.lib" value="../${clustered.release}/lib"/>
+		  <property name="version" value="${version}"/>
+		  
+			<fileset dir="clustered-server"      includes="build.xml" />
+		</subant>
 
-        <delete includeEmptyDirs="true">
-            <fileset dir="${db.release}/log/" includes="**/*"/>
-        </delete>
-    </target>
+		<copy todir="${clustered.release}">
+		  <fileset dir="${db.release}">
+			<exclude name="**/*.log.*"/>
+		  </fileset>
+		</copy>
+	  
+		<copy todir="${clustered.release}/bin/" flatten="true" overwrite="true">
+		  <fileset dir="clustered-server/script" includes="*.sh *.bat" />
+		  <filterset>
+			<filter token="VERSION" value="${version}"/>
+		  </filterset>
+		</copy>
 
-    <target name="installg" depends="install">
-        <subant target="install">
-            <property name="global.lib" value="../${graph.release}/lib"/>
-            <property name="version" value="${version}"/>
+		<copy todir="${clustered.release}/config" flatten="true" overwrite="true">
+		  <fileset dir="clustered-server/config" includes="*.xml"/>
+		</copy>
+		
+		<copy todir="${clustered.release}/lib" flatten="true">
+		  <fileset dir="clustered-server/lib" includes="*.jar"/>
+		</copy>
+		
+		<delete includeEmptyDirs="true">
+		  <fileset dir="${clustered.release}/log/" includes="**/*"/>
+		</delete>
+	</target>
+	
+	<target name="md5" depends="init">
+		<checksum algorithm="MD5" fileext=".md5">
+		  <fileset dir="${db.release}/lib">
+			<include name="*.jar"/>
+		  </fileset>
+		</checksum>
+		
+		<checksum algorithm="SHA" fileext=".sha1">
+		  <fileset dir="${db.release}/lib">
+			<include name="*.jar"/>
+		  </fileset>
+		</checksum>
+	</target>
+	
+	<target name="test" depends="install">
+		<subant target="test">
+			<property name="global.lib"  value="../${db.release}/lib"/>
+			<property name="orient.path" value="${db.release}"/>
+		  	<fileset dir="tests"        includes="build.xml" />
+	    </subant>
+	</target>
+	
+	<target name="test-remote" depends="install">
+		<subant target="test-remote">
+			<property name="global.lib"  value="../${db.release}/lib"/>
+			<property name="orient.path" value="${db.release}"/>
+		  	<fileset dir="tests"        includes="build.xml" />
+	    </subant>
+	</target>
 
-            <fileset dir="graphdb" includes="build.xml"/>
-        </subant>
+	<target name="stress-test">
+    <subant target="stress-test">
+        <property name="global.lib"  value="../${db.release}/lib"/>
+        <property name="orient.path" value="${db.release}"/>
+		  	<fileset dir="tests"        includes="build.xml" />
+	    </subant>
+	</target>
 
-        <copy todir="${graph.release}">
-            <fileset dir="${db.release}">
-                <exclude name="**/*.log.*"/>
-            </fileset>
-        </copy>
-
-        <copy todir="${graph.release}/www/">
-            <fileset dir="graphdb/src/site"/>
-        </copy>
-
-        <copy todir="${graph.release}/bin/" flatten="true" overwrite="true">
-            <fileset dir="graphdb/script" includes="*.sh *.bat"/>
-            <filterset>
-                <filter token="VERSION" value="${version}"/>
-            </filterset>
-        </copy>
-
-        <copy todir="${graph.release}/config" flatten="true" overwrite="true">
-            <fileset dir="graphdb/config" includes="*.xml"/>
-        </copy>
-
-        <copy todir="${graph.release}/lib" flatten="true">
-            <fileset dir="graphdb/lib" includes="*.jar"/>
-        </copy>
-
-        <delete includeEmptyDirs="true">
-            <fileset dir="${graph.release}/log/" includes="**/*"/>
-        </delete>
-        <delete includeEmptyDirs="true">
-            <fileset dir="${graph.release}/databases/" includes="demo"/>
-        </delete>
-    </target>
-
-    <target name="installc" depends="install">
-        <subant target="install">
-            <property name="global.lib" value="../${clustered.release}/lib"/>
-            <property name="version" value="${version}"/>
-
-            <fileset dir="clustered-server" includes="build.xml"/>
-        </subant>
-
-        <copy todir="${clustered.release}">
-            <fileset dir="${db.release}">
-                <exclude name="**/*.log.*"/>
-            </fileset>
-        </copy>
-
-        <copy todir="${clustered.release}/bin/" flatten="true" overwrite="true">
-            <fileset dir="clustered-server/script" includes="*.sh *.bat"/>
-            <filterset>
-                <filter token="VERSION" value="${version}"/>
-            </filterset>
-        </copy>
-
-        <copy todir="${clustered.release}/config" flatten="true" overwrite="true">
-            <fileset dir="clustered-server/config" includes="*.xml"/>
-        </copy>
-
-        <copy todir="${clustered.release}/lib" flatten="true">
-            <fileset dir="clustered-server/lib" includes="*.jar"/>
-        </copy>
-
-        <delete includeEmptyDirs="true">
-            <fileset dir="${clustered.release}/log/" includes="**/*"/>
-        </delete>
-    </target>
-
-    <target name="md5" depends="init">
-        <checksum algorithm="MD5" fileext=".md5">
-            <fileset dir="${db.release}/lib">
-                <include name="*.jar"/>
-            </fileset>
-        </checksum>
-
-        <checksum algorithm="SHA" fileext=".sha1">
-            <fileset dir="${db.release}/lib">
-                <include name="*.jar"/>
-            </fileset>
-        </checksum>
-    </target>
-
-    <target name="test" depends="install">
-        <subant target="test">
-            <property name="global.lib" value="../${db.release}/lib"/>
-            <property name="orient.path" value="${db.release}"/>
-            <fileset dir="tests" includes="build.xml"/>
-        </subant>
-    </target>
-
-    <target name="test-remote" depends="install">
-        <subant target="test-remote">
-            <property name="global.lib" value="../${db.release}/lib"/>
-            <property name="orient.path" value="${db.release}"/>
-            <fileset dir="tests" includes="build.xml"/>
-        </subant>
-    </target>
-
-    <target name="stress-test">
-        <subant target="stress-test">
-            <property name="global.lib" value="../${db.release}/lib"/>
-            <property name="orient.path" value="${db.release}"/>
-            <fileset dir="tests" includes="build.xml"/>
-        </subant>
-    </target>
-
-    <target name="release" depends="install">
-        <mkdir dir="${global.release}"/>
-        <delete file="../releases/orientdb-${version}.zip"/>
-        <zip destfile="../releases/orientdb-${version}.zip" basedir="../releases" level="9" update="false"
-             includes="orientdb-1*/" excludes="**/*.log.*"/>
-
-        <mkdir dir="${graph.release}"/>
-        <delete file="../releases/orientdb-graphed-${version}.zip"/>
-        <zip destfile="../releases/orientdb-graphed-${version}.zip" basedir="../releases" level="9" update="false"
-             includes="orientdb-graphed-*/" excludes="**/*.log.*"/>
-
-        <mkdir dir="${clustered.release}"/>
-        <delete file="../releases/orientdb-clustered-${version}.zip"/>
-        <zip destfile="../releases/orientdb-clustered-${version}.zip" basedir="../releases" level="9" update="false"
-             includes="orientdb-clustered-*/" excludes="**/*.log.*"/>
-    </target>
-
+  <target name="release" depends="install">
+		<mkdir dir="${global.release}" />
+		<delete file="../releases/orientdb-${version}.zip" />
+		<zip destfile="../releases/orientdb-${version}.zip" basedir="../releases" level="9" update="false" includes="orientdb-1*/" excludes="**/*.log.*" />
+		
+		<mkdir dir="${graph.release}" />
+		<delete file="../releases/orientdb-graphed-${version}.zip" />
+		<zip destfile="../releases/orientdb-graphed-${version}.zip" basedir="../releases" level="9" update="false" includes="orientdb-graphed-*/"  excludes="**/*.log.*" />
+		
+		<mkdir dir="${clustered.release}" />
+		<delete file="../releases/orientdb-clustered-${version}.zip" />
+		<zip destfile="../releases/orientdb-clustered-${version}.zip" basedir="../releases" level="9" update="false" includes="orientdb-clustered-*/"  excludes="**/*.log.*" />
+	</target>
+    
 </project>
