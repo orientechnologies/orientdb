@@ -21,10 +21,11 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 /**
- * @author Artem Loginov (logart) logart2007@gmail.com Date: 5/17/12 Time: 5:33 PM
- *         <p/>
- *         This class is mmap manager singleton factory. It used for getting mmap manager instance from any part of the system. This
- *         locator know how to create mmap manager. If mmap manager already exist returns it.
+ * This class is mmap manager singleton factory. It used for getting mmap manager instance from any part of the system. This locator
+ * know how to create mmap manager. If mmap manager already exist returns it.
+ * 
+ * @author Artem Loginov (logart) logart2007@gmail.com
+ * 
  */
 public class OMMapManagerLocator {
 
@@ -53,10 +54,10 @@ public class OMMapManagerLocator {
   private static OMMapManager createInstance() {
     final OMMapManager localInstance;
     if (OGlobalConfiguration.FILE_MMAP_USE_OLD_MANAGER.getValueAsBoolean()) {
-      OLogManager.instance().info(null, "[OMMapManagerLocator.createInstance] Using old mmap manager!");
+      OLogManager.instance().config(null, "[OMMapManagerLocator.createInstance] Using old mmap manager!");
       localInstance = new OMMapManagerOld();
     } else {
-      OLogManager.instance().info(null, "[OMMapManagerLocator.createInstance] Using new mmap manager!");
+      OLogManager.instance().config(null, "[OMMapManagerLocator.createInstance] Using new mmap manager!");
       localInstance = new OMMapManagerNew();
     }
     return localInstance;

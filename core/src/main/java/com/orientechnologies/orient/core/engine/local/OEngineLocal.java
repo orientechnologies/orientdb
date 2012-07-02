@@ -60,8 +60,12 @@ public class OEngineLocal extends OEngineAbstract {
         Method lockMemory = MemoryLocker.getMethod("lockMemory", boolean.class);
         lockMemory.invoke(null, OGlobalConfiguration.JNA_DISABLE_USE_SYSTEM_LIBRARY.getValueAsBoolean());
       } catch (ClassNotFoundException e) {
-        OLogManager.instance().warn(null,
-            "[OEngineLocal.createStorage] Error on locking memory! It seems that orient-nio jar is not in classpath");
+        OLogManager
+            .instance()
+            .config(
+                null,
+                "[OEngineLocal.createStorage] Cannot lock virtual memory, the orientdb-nativeos.jar is not in classpath or there is not a native implementation for the current OS: "
+                    + System.getProperty("os.name") + " v." + System.getProperty("os.name"));
       } catch (NoSuchMethodException e) {
         throw new OMemoryLockException("Error while locking memory", e);
       } catch (InvocationTargetException e) {
