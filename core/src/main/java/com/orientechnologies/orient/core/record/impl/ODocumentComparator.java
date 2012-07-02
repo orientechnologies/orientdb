@@ -29,53 +29,56 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
  * 
  */
 public class ODocumentComparator implements Comparator<OIdentifiable> {
-	private List<OPair<String, String>>	orderCriteria;
+  private List<OPair<String, String>> orderCriteria;
 
-	public ODocumentComparator(final List<OPair<String, String>> iOrderCriteria) {
-		this.orderCriteria = iOrderCriteria;
-	}
+  public ODocumentComparator(final List<OPair<String, String>> iOrderCriteria) {
+    this.orderCriteria = iOrderCriteria;
+  }
 
-	@SuppressWarnings("unchecked")
-	public int compare(final OIdentifiable iDoc1, final OIdentifiable iDoc2) {
-		if (iDoc1 != null && iDoc1.equals(iDoc2))
-			return 0;
+  @SuppressWarnings("unchecked")
+  public int compare(final OIdentifiable iDoc1, final OIdentifiable iDoc2) {
+    if (iDoc1 != null && iDoc1.equals(iDoc2))
+      return 0;
 
-		Object fieldValue1;
-		Object fieldValue2;
+    Object fieldValue1;
+    Object fieldValue2;
 
-		int partialResult = 0;
+    int partialResult = 0;
 
-		for (OPair<String, String> field : orderCriteria) {
-			fieldValue1 = ((ODocument) iDoc1.getRecord()).field(field.getKey());
-			if (fieldValue1 == null)
-				return factor(-1, field.getValue());
+    for (OPair<String, String> field : orderCriteria) {
+      final String fieldName = field.getKey();
+      final String ordering = field.getValue();
 
-			fieldValue2 = ((ODocument) iDoc2.getRecord()).field(field.getKey());
-			if (fieldValue2 == null)
-				return factor(1, field.getValue());
+      fieldValue1 = ((ODocument) iDoc1.getRecord()).field(fieldName);
+      if (fieldValue1 == null)
+        return factor(Integer.MIN_VALUE, ordering);
 
-			if (!(fieldValue1 instanceof Comparable<?>))
-				throw new IllegalArgumentException("Cannot sort documents because the field '" + field.getKey() + "' is not comparable");
+      fieldValue2 = ((ODocument) iDoc2.getRecord()).field(fieldName);
+      if (fieldValue2 == null)
+        return factor(Integer.MAX_VALUE, ordering);
 
-			partialResult = ((Comparable<Object>) fieldValue1).compareTo(fieldValue2);
+      if (!(fieldValue1 instanceof Comparable<?>))
+        throw new IllegalArgumentException("Cannot sort documents because the field '" + fieldName + "' is not comparable");
 
-			partialResult = factor(partialResult, field.getValue());
+      partialResult = ((Comparable<Object>) fieldValue1).compareTo(fieldValue2);
 
-			if (partialResult != 0)
-				break;
+      partialResult = factor(partialResult, ordering);
 
-			// CONTINUE WITH THE NEXT FIELD
-		}
+      if (partialResult != 0)
+        break;
 
-		return partialResult;
-	}
+      // CONTINUE WITH THE NEXT FIELD
+    }
 
-	private int factor(final int partialResult, final String iOrdering) {
-		if (iOrdering.equals(OCommandExecutorSQLSelect.KEYWORD_DESC))
-			// INVERT THE ORDERING
-			return partialResult * -1;
+    return partialResult;
+  }
 
-		return partialResult;
-	}
+  private int factor(final int partialResult, final String iOrdering) {
+    if (iOrdering.equals(OCommandExecutorSQLSelect.KEYWORD_DESC))
+      // INVERT THE ORDERING
+      return partialResult * -1;
+
+    return partialResult;
+  }
 
 }
