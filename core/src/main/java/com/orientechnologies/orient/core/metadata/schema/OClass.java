@@ -76,7 +76,7 @@ public interface OClass extends Comparable<OClass> {
 
 	public int[] getClusterIds();
 
-	public OClass addClusterIdInternal(final int iId);
+	public OClass addClusterId(final int iId);
 
 	public OClass removeClusterId(final int iId);
 
