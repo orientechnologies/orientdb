@@ -23,49 +23,39 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
- * Returns the current date time. If no formatting is passed, then long format is used.
+ * Returns the current date time.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * @see OSQLFunctionDate
  * 
  */
 public class OSQLFunctionSysdate extends OSQLFunctionAbstract {
-	public static final String	NAME	= "sysdate";
+  public static final String NAME = "sysdate";
 
-	private final Date					now;
-	private SimpleDateFormat		format;
+  private final Date         now;
 
-	/**
-	 * Get the date at construction to have the same date for all the iteration.
-	 */
-	public OSQLFunctionSysdate() {
-		super(NAME, 0, 1);
-		now = new Date();
-	}
+  /**
+   * Get the date at construction to have the same date for all the iteration.
+   */
+  public OSQLFunctionSysdate() {
+    super(NAME, 0, 1);
+    now = new Date();
+  }
 
-	public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
-		if (iParameters.length == 0)
-			return now;
+  public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
+    return now;
+  }
 
-		if (format == null)
-			format = new SimpleDateFormat((String) iParameters[0]);
+  public boolean aggregateResults(final Object[] configuredParameters) {
+    return false;
+  }
 
-		synchronized (format) {
-			return format.format(now);
-		}
-	}
+  public String getSyntax() {
+    return "Syntax error: sysdate()";
+  }
 
-	public boolean aggregateResults(final Object[] configuredParameters) {
-		return false;
-	}
-
-	public String getSyntax() {
-		return "Syntax error: sysdate([<format>])";
-	}
-
-	@Override
-	public Object getResult() {
-		format = null;
-		return null;
-	}
+  @Override
+  public Object getResult() {
+    return null;
+  }
 }
