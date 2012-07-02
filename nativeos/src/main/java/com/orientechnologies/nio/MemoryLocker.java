@@ -94,10 +94,9 @@ public class MemoryLocker {
       }
 
     } catch (UnsatisfiedLinkError e) {
-      OLogManager
-          .instance()
-          .warn(null,
-              "[MemoryLocker.lockMemory] Error on locking memory! It seems that you operation system doesn't support native mlockall call!");
+      OLogManager.instance().config(null,
+          "[MemoryLocker.lockMemory] Cannot lock virtual memory. It seems that you OS (%s) doesn't support this feature",
+          System.getProperty("os.name"));
     }
   }
 }
