@@ -4,7 +4,7 @@
 	<!--parent> <groupId>com.orientechnologies</groupId> <artifactId>orientdb-parent</artifactId> <version>1.0rc9</version> </parent -->
 	<name>OrientDB JDBC Driver</name>
 	<groupId>com.orientechnologies</groupId>
-				<artifactId>orientdb-jdbc</artifactId>
+	<artifactId>orientdb-jdbc</artifactId>
 	<packaging>jar</packaging>
 	<version>1.0-SNAPSHOT</version>
 	<organization>
@@ -14,6 +14,19 @@
 	<properties>
 		<orient.version>1.1.0-SNAPSHOT</orient.version>
 	</properties>
+	<distributionManagement>
+		<repository>
+			<id>oss.sonatype.org</id>
+			<name>OrientDB Maven2 Repository</name>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+		</repository>
+		<snapshotRepository>
+			<id>oss.sonatype.org</id>
+			<name>OrientDB Maven2 Snapshot Repository</name>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+
+	</distributionManagement>
 	<repositories>
 		<repository>
 			<id>oss-sonatype</id>
@@ -55,7 +68,6 @@
 			<artifactId>orientdb-enterprise</artifactId>
 			<version>${orient.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>com.orientechnologies</groupId>
 			<artifactId>orient-commons</artifactId>
@@ -65,16 +77,6 @@
 			<groupId>com.orientechnologies</groupId>
 			<artifactId>orientdb-graphdb</artifactId>
 			<version>${orient.version}</version>
-<!-- 			<exclusions> -->
-<!-- 				<exclusion> -->
-<!-- 					<groupId>com.orientechnologies</groupId> -->
-<!-- 					<artifactId>orientdb-client</artifactId> -->
-<!-- 				</exclusion> -->
-<!-- 				<exclusion> -->
-<!-- 					<groupId>com.orientechnologies</groupId> -->
-<!-- 					<artifactId>orientdb-server</artifactId> -->
-<!-- 				</exclusion> -->
-<!-- 			</exclusions> -->
 		</dependency>
 		<dependency>
 			<groupId>com.orientechnologies</groupId>
