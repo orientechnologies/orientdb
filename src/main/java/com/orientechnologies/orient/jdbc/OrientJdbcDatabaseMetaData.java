@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 /**
  * @author Roberto Franchini (CELI srl - franchini--at--celi.it)
  * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci@gmail.com)
+ * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci@gmail.com)
  */
 public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 	private final OrientJdbcConnection connection;
@@ -203,7 +204,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
 	public String getIdentifierQuoteString() throws SQLException {
 
-		return null;
+		return " ";
 	}
 
 	public ResultSet getImportedKeys(String catalog, String schema, String table) throws SQLException {
@@ -421,7 +422,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
 	public String getStringFunctions() throws SQLException {
 
-		return null;
+		return "";
 	}
 
 	public ResultSet getSuperTables(String catalog, String schemaPattern, String tableNamePattern) throws SQLException {
@@ -436,7 +437,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
 	public String getSystemFunctions() throws SQLException {
 
-		return null;
+		return "";
 	}
 
 	public ResultSet getTablePrivileges(String catalog, String schemaPattern, String tableNamePattern) throws SQLException {
@@ -481,7 +482,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
 	public String getTimeDateFunctions() throws SQLException {
 
-		return null;
+		return "";
 	}
 
 	public ResultSet getTypeInfo() throws SQLException {

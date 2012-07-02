@@ -7,7 +7,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static java.lang.Class.forName;
@@ -29,8 +28,6 @@ public abstract class OrientJdbcBaseTest {
 		String dbUrl = "local:./working/db/test";
 		dbUrl = "memory:test";
 
-		ODatabaseDocumentPool.global().close();
-
 		ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
 
 		String username = "admin";
@@ -38,7 +35,7 @@ public abstract class OrientJdbcBaseTest {
 
 		if (db.exists()) {
 			db.open(username, password);
-			db.drop();
+			if (!db.isClosed()) db.drop();
 			db.close();
 		}
 
@@ -46,8 +43,6 @@ public abstract class OrientJdbcBaseTest {
 
 		createSchemaDB(db);
 		loadDB(db, 20);
-
-		db.close();
 
 		Properties info = new Properties();
 		info.put("user", username);

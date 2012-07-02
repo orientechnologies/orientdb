@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.jdbc;
 
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.junit.Test;
@@ -21,14 +19,6 @@ public class OrientJdbcConnectionTest extends OrientJdbcBaseTest {
 		Statement stmt = conn.createStatement();
 		assertNotNull(stmt);
 		stmt.close();
-	}
-
-	@Test
-	public void test() throws SQLException {
-
-		conn = (OrientJdbcConnection) DriverManager.getConnection("jdbc:orient:remote:artemide/bookmarks");
-
-		Statement createStatement = conn.createStatement();
 	}
 
 	@Test
