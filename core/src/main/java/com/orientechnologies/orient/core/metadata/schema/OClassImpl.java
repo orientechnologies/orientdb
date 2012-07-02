@@ -452,7 +452,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return polymorphicClusterIds;
   }
 
-  @Override
   public OClass addClusterId(final int iId) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
     final String cmd = String.format("alter class %s addcluster %d", name, iId);
@@ -474,7 +473,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return this;
   }
 
-  @Override
   public OClass removeClusterId(final int iId) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
     final String cmd = String.format("alter class %s removecluster %d", name, iId);
