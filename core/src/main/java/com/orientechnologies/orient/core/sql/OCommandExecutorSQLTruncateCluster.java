@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.sql;
 import java.io.IOException;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.command.OCommandDistributedRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -33,7 +34,7 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
  * @author Luca Garulli
  * 
  */
-public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLAbstract {
+public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLAbstract implements OCommandDistributedRequest {
   public static final String KEYWORD_TRUNCATE = "TRUNCATE";
   public static final String KEYWORD_CLUSTER  = "CLUSTER";
   private String             clusterName;

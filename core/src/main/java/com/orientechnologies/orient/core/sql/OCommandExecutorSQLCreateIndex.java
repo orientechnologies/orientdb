@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.command.OCommandDistributedRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -46,7 +47,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract {
+public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract implements OCommandDistributedRequest {
   public static final String KEYWORD_CREATE = "CREATE";
   public static final String KEYWORD_INDEX  = "INDEX";
   public static final String KEYWORD_ON     = "ON";

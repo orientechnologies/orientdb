@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.orientechnologies.orient.core.command.OCommandDistributedRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -38,7 +39,7 @@ import com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract {
+public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract implements OCommandDistributedRequest{
   public static final String KEYWORD_ALTER   = "ALTER";
   public static final String KEYWORD_CLUSTER = "CLUSTER";
 

@@ -71,4 +71,8 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract {
   public boolean isIdempotent() {
     return delegate.isIdempotent();
   }
+
+  public OCommandExecutorSQLAbstract getDelegate() {
+    return delegate;
+  }
 }

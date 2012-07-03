@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
@@ -106,8 +107,8 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
       getDatabaseSynchronizer(iDatabase.getName());
 
       if (iDatabase instanceof ODatabaseComplex<?>)
-        ((ODatabaseComplex<?>) iDatabase).replaceStorage(new ODistributedStorage(this, ((ODatabaseComplex<?>) iDatabase)
-            .getStorage()));
+        ((ODatabaseComplex<?>) iDatabase).replaceStorage(new ODistributedStorage(this,
+            (OStorageEmbedded) ((ODatabaseComplex<?>) iDatabase).getStorage()));
     }
   }
 

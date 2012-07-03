@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.sql;
 import java.util.Map;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.command.OCommandDistributedRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -37,7 +38,7 @@ import com.orientechnologies.orient.core.storage.OCluster;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract {
+public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract implements OCommandDistributedRequest {
   public static final String KEYWORD_DROP  = "DROP";
   public static final String KEYWORD_CLASS = "CLASS";
 

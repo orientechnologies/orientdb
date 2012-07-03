@@ -62,6 +62,10 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
     executor.setProgressListener(iCommand.getProgressListener());
     executor.parse(iCommand);
 
+    return executeCommand(iCommand, executor);
+  }
+
+  public Object executeCommand(final OCommandRequestText iCommand, final OCommandExecutor executor) {
     if (iCommand.isIdempotent() && !executor.isIdempotent())
       throw new OCommandExecutionException("Cannot execute non idempotent command");
 

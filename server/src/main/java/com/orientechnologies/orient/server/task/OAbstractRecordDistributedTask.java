@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
+import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
 import com.orientechnologies.orient.server.distributed.OServerOfflineException;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
@@ -76,26 +77,32 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
       throw new ODistributedException("Error on logging operation", e);
     }
 
-    // EXECUTE IT LOCALLY
-    final T result = executeOnLocalNode(dbSynchronizer);
-
+    ODistributedThreadLocal.INSTANCE.distributedExecution = true;
     try {
-      setAsCompleted(dbSynchronizer, operationLogOffset);
-    } catch (IOException e) {
-      OLogManager.instance().error(this, "DISTRIBUTED <-[%s] error on changing the log status for operation %s %s v.%d", e,
-          nodeSource, getName(), rid, version);
-      throw new ODistributedException("Error on changing the log status", e);
+      // EXECUTE IT LOCALLY
+      final T result = executeOnLocalNode(dbSynchronizer);
+
+      try {
+        setAsCompleted(dbSynchronizer, operationLogOffset);
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "DISTRIBUTED <-[%s] error on changing the log status for operation %s %s v.%d", e,
+            nodeSource, getName(), rid, version);
+        throw new ODistributedException("Error on changing the log status", e);
+      }
+
+      if (status == STATUS.DISTRIBUTE)
+        // SEND OPERATION ACROSS THE CLUSTER TO THE TARGET NODES
+        dbSynchronizer.distributeOperation(ORecordOperation.CREATED, rid, this);
+
+      if (mode != EXECUTION_MODE.FIRE_AND_FORGET)
+        return result;
+
+      // FIRE AND FORGET MODE: AVOID THE PAYLOAD AS RESULT
+      return null;
+      
+    } finally {
+      ODistributedThreadLocal.INSTANCE.distributedExecution = false;
     }
-
-    if (status == STATUS.DISTRIBUTE)
-      // SEND OPERATION ACROSS THE CLUSTER TO THE TARGET NODES
-      dbSynchronizer.distributeOperation(ORecordOperation.CREATED, rid, this);
-
-    if (mode != EXECUTION_MODE.FIRE_AND_FORGET)
-      return result;
-
-    // FIRE AND FORGET MODE: AVOID THE PAYLOAD AS RESULT
-    return null;
   }
 
   @Override

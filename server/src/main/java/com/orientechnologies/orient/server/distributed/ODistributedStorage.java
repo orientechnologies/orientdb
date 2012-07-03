@@ -22,21 +22,27 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
+import com.orientechnologies.orient.core.command.OCommandDistributedRequest;
+import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ODataSegment;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.task.OCreateRecordDistributedTask;
 import com.orientechnologies.orient.server.task.ODeleteRecordDistributedTask;
 import com.orientechnologies.orient.server.task.OReadRecordDistributedTask;
+import com.orientechnologies.orient.server.task.OSQLCommandDistributedTask;
 import com.orientechnologies.orient.server.task.OUpdateRecordDistributedTask;
 
 /**
@@ -47,19 +53,50 @@ import com.orientechnologies.orient.server.task.OUpdateRecordDistributedTask;
  */
 public class ODistributedStorage implements OStorage {
   protected ODistributedServerManager dManager;
-  protected OStorage                  wrapped;
+  protected OStorageEmbedded          wrapped;
   protected boolean                   eventuallyConsistent = true;
   protected EXECUTION_MODE            createRecordMode     = EXECUTION_MODE.SYNCHRONOUS;
   protected EXECUTION_MODE            updateRecordMode     = EXECUTION_MODE.SYNCHRONOUS;
   protected EXECUTION_MODE            deleteRecordMode     = EXECUTION_MODE.SYNCHRONOUS;
 
-  public ODistributedStorage(final ODistributedServerManager iCluster, final OStorage wrapped) {
+  public ODistributedStorage(final ODistributedServerManager iCluster, final OStorageEmbedded wrapped) {
     this.dManager = iCluster;
     this.wrapped = wrapped;
   }
 
-  public OPhysicalPosition createRecord(int iDataSegmentId, ORecordId iRecordId, byte[] iContent, int iRecordVersion,
-      byte iRecordType, int iMode, ORecordCallback<Long> iCallback) {
+  public Object command(final OCommandRequestText iCommand) {
+    ODistributedThreadLocal.INSTANCE.distributedExecution = true;
+    try {
+
+      final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
+
+      executor.setProgressListener(iCommand.getProgressListener());
+      executor.parse(iCommand);
+
+      // EXECUTE IT LOCALLY
+      final Object localResult = wrapped.executeCommand(iCommand, executor);
+
+      final OCommandExecutor cmd = executor instanceof OCommandExecutorSQLDelegate ? ((OCommandExecutorSQLDelegate) executor)
+          .getDelegate() : executor;
+
+      if (cmd instanceof OCommandDistributedRequest) {
+        final Collection<Object> distributedResult = dManager.sendOperation2Nodes(dManager.getRemoteNodeIds(),
+            new OSQLCommandDistributedTask(dManager.getLocalNodeId(), wrapped.getName(), createRecordMode, iCommand.getText()));
+
+      }
+      return localResult;
+
+    } finally {
+      ODistributedThreadLocal.INSTANCE.distributedExecution = false;
+    }
+  }
+
+  public OPhysicalPosition createRecord(final int iDataSegmentId, final ORecordId iRecordId, final byte[] iContent,
+      final int iRecordVersion, final byte iRecordType, final int iMode, final ORecordCallback<Long> iCallback) {
+    if (ODistributedThreadLocal.INSTANCE.distributedExecution)
+      // ALREADY DISTRIBUTED
+      return wrapped.createRecord(iDataSegmentId, iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
+
     Object result = null;
 
     try {
@@ -73,7 +110,12 @@ public class ODistributedStorage implements OStorage {
     return (OPhysicalPosition) result;
   }
 
-  public ORawBuffer readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache, ORecordCallback<ORawBuffer> iCallback) {
+  public ORawBuffer readRecord(final ORecordId iRid, final String iFetchPlan, final boolean iIgnoreCache,
+      final ORecordCallback<ORawBuffer> iCallback) {
+    if (ODistributedThreadLocal.INSTANCE.distributedExecution)
+      // ALREADY DISTRIBUTED
+      return wrapped.readRecord(iRid, iFetchPlan, iIgnoreCache, iCallback);
+
     if (eventuallyConsistent || dManager.isLocalNodeOwner(iRid))
       return wrapped.readRecord(iRid, iFetchPlan, iIgnoreCache, iCallback);
 
@@ -85,8 +127,12 @@ public class ODistributedStorage implements OStorage {
     }
   }
 
-  public int updateRecord(ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType, int iMode,
-      ORecordCallback<Integer> iCallback) {
+  public int updateRecord(final ORecordId iRecordId, final byte[] iContent, final int iVersion, final byte iRecordType,
+      final int iMode, final ORecordCallback<Integer> iCallback) {
+    if (ODistributedThreadLocal.INSTANCE.distributedExecution)
+      // ALREADY DISTRIBUTED
+      return wrapped.updateRecord(iRecordId, iContent, iVersion, iRecordType, iMode, iCallback);
+
     Object result = null;
 
     try {
@@ -101,7 +147,12 @@ public class ODistributedStorage implements OStorage {
     return (Integer) result;
   }
 
-  public boolean deleteRecord(ORecordId iRecordId, int iVersion, int iMode, ORecordCallback<Boolean> iCallback) {
+  public boolean deleteRecord(final ORecordId iRecordId, final int iVersion, final int iMode,
+      final ORecordCallback<Boolean> iCallback) {
+    if (ODistributedThreadLocal.INSTANCE.distributedExecution)
+      // ALREADY DISTRIBUTED
+      return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
+
     Object result = null;
 
     if (!dManager.isLocalNodeOwner(iRecordId))
@@ -116,23 +167,23 @@ public class ODistributedStorage implements OStorage {
     return (Boolean) result;
   }
 
-  public boolean existsResource(String iName) {
+  public boolean existsResource(final String iName) {
     return wrapped.existsResource(iName);
   }
 
-  public <T> T removeResource(String iName) {
+  public <T> T removeResource(final String iName) {
     return wrapped.removeResource(iName);
   }
 
-  public <T> T getResource(String iName, Callable<T> iCallback) {
+  public <T> T getResource(final String iName, final Callable<T> iCallback) {
     return wrapped.getResource(iName, iCallback);
   }
 
-  public void open(String iUserName, String iUserPassword, Map<String, Object> iProperties) {
+  public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
     wrapped.open(iUserName, iUserPassword, iProperties);
   }
 
-  public void create(Map<String, Object> iProperties) {
+  public void create(final Map<String, Object> iProperties) {
     wrapped.create(iProperties);
   }
 
@@ -152,7 +203,7 @@ public class ODistributedStorage implements OStorage {
     wrapped.close();
   }
 
-  public void close(boolean iForce) {
+  public void close(final boolean iForce) {
     wrapped.close(iForce);
   }
 
@@ -164,11 +215,11 @@ public class ODistributedStorage implements OStorage {
     return wrapped.getLevel2Cache();
   }
 
-  public void commit(OTransaction iTx) {
+  public void commit(final OTransaction iTx) {
     wrapped.commit(iTx);
   }
 
-  public void rollback(OTransaction iTx) {
+  public void rollback(final OTransaction iTx) {
     wrapped.rollback(iTx);
   }
 
@@ -192,31 +243,32 @@ public class ODistributedStorage implements OStorage {
     return wrapped.getClusterInstances();
   }
 
-  public int addCluster(String iClusterType, String iClusterName, String iLocation, String iDataSegmentName, Object... iParameters) {
+  public int addCluster(final String iClusterType, final String iClusterName, final String iLocation,
+      final String iDataSegmentName, final Object... iParameters) {
     return wrapped.addCluster(iClusterType, iClusterName, iLocation, iDataSegmentName, iParameters);
   }
 
-  public boolean dropCluster(String iClusterName) {
+  public boolean dropCluster(final String iClusterName) {
     return wrapped.dropCluster(iClusterName);
   }
 
-  public boolean dropCluster(int iId) {
+  public boolean dropCluster(final int iId) {
     return wrapped.dropCluster(iId);
   }
 
-  public int addDataSegment(String iDataSegmentName) {
+  public int addDataSegment(final String iDataSegmentName) {
     return wrapped.addDataSegment(iDataSegmentName);
   }
 
-  public int addDataSegment(String iSegmentName, String iDirectory) {
+  public int addDataSegment(final String iSegmentName, final String iDirectory) {
     return wrapped.addDataSegment(iSegmentName, iDirectory);
   }
 
-  public long count(int iClusterId) {
+  public long count(final int iClusterId) {
     return wrapped.count(iClusterId);
   }
 
-  public long count(int[] iClusterIds) {
+  public long count(final int[] iClusterIds) {
     return wrapped.count(iClusterIds);
   }
 
@@ -232,7 +284,7 @@ public class ODistributedStorage implements OStorage {
     return wrapped.getDefaultClusterId();
   }
 
-  public void setDefaultClusterId(int defaultClusterId) {
+  public void setDefaultClusterId(final int defaultClusterId) {
     wrapped.setDefaultClusterId(defaultClusterId);
   }
 
@@ -240,15 +292,15 @@ public class ODistributedStorage implements OStorage {
     return wrapped.getClusterIdByName(iClusterName);
   }
 
-  public String getClusterTypeByName(String iClusterName) {
+  public String getClusterTypeByName(final String iClusterName) {
     return wrapped.getClusterTypeByName(iClusterName);
   }
 
-  public String getPhysicalClusterNameById(int iClusterId) {
+  public String getPhysicalClusterNameById(final int iClusterId) {
     return wrapped.getPhysicalClusterNameById(iClusterId);
   }
 
-  public boolean checkForRecordValidity(OPhysicalPosition ppos) {
+  public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
     return wrapped.checkForRecordValidity(ppos);
   }
 
@@ -280,27 +332,23 @@ public class ODistributedStorage implements OStorage {
     return wrapped.removeUser();
   }
 
-  public Object command(OCommandRequestText iCommand) {
-    return wrapped.command(iCommand);
-  }
-
-  public long[] getClusterDataRange(int currentClusterId) {
+  public long[] getClusterDataRange(final int currentClusterId) {
     return wrapped.getClusterDataRange(currentClusterId);
   }
 
-  public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock) {
+  public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
     return wrapped.callInLock(iCallable, iExclusiveLock);
   }
 
-  public ODataSegment getDataSegmentById(int iDataSegmentId) {
+  public ODataSegment getDataSegmentById(final int iDataSegmentId) {
     return wrapped.getDataSegmentById(iDataSegmentId);
   }
 
-  public int getDataSegmentIdByName(String iDataSegmentName) {
+  public int getDataSegmentIdByName(final String iDataSegmentName) {
     return wrapped.getDataSegmentIdByName(iDataSegmentName);
   }
 
-  public boolean dropDataSegment(String iName) {
+  public boolean dropDataSegment(final String iName) {
     return wrapped.dropDataSegment(iName);
   }
 
