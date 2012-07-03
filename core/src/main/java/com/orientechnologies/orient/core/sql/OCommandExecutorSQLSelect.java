@@ -998,7 +998,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       final Map.Entry<String, Object> entry = projections.entrySet().iterator().next();
 
       if (entry.getValue() instanceof OSQLFunctionRuntime) {
-        if (((OSQLFunctionRuntime) entry.getValue()).function instanceof OSQLFunctionCount) {
+        final OSQLFunctionRuntime rf = (OSQLFunctionRuntime) entry.getValue();
+        if (rf.function instanceof OSQLFunctionCount && rf.configuredParameters.length == 1
+            && "*".equals(rf.configuredParameters[0])) {
           long count = 0;
 
           if (compiledFilter.getTargetClasses() != null) {
