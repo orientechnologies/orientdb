@@ -305,13 +305,13 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
         range[0], range[1]);
   }
 
-  protected void applyLimitAndSkip() { 
-    if (tempResult != null  && (limit > 0 || skip > 0)) {
+  protected void applyLimitAndSkip() {
+    if (tempResult != null && (limit > 0 || skip > 0)) {
       final List<OIdentifiable> newList = new ArrayList<OIdentifiable>();
 
       // APPLY LIMIT
       final int start = Math.min(skip, tempResult.size());
-      final int tot =  Math.min(limit + start, tempResult.size());
+      final int tot = Math.min(limit + start, tempResult.size());
       for (int i = start; i < tot; ++i)
         newList.add(tempResult.get(i));
 
@@ -322,12 +322,12 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
   /**
    * Optimizes the condition tree.
+   * 
+   * @return
    */
   protected void optimize() {
-    if (compiledFilter == null)
-      return;
-
-    optimizeBranch(null, compiledFilter.getRootCondition());
+    if (compiledFilter != null)
+      optimizeBranch(null, compiledFilter.getRootCondition());
   }
 
   /**

@@ -137,6 +137,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (limit == 0 || limit < -1) {
       throw new IllegalArgumentException("Limit must be > 0 or = -1 (no limit)");
     }
+
     return this;
   }
 
@@ -191,13 +192,15 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   public Object execute(final Map<Object, Object> iArgs) {
-    fetchLimit = getQueryFetchLimit();
-    
-    executeSearch(iArgs);
-    applyFlatten();
-    applyProjections();
-    applyOrderBy();
-    applyLimitAndSkip();
+    if (!optimizeExecution()) {
+      fetchLimit = getQueryFetchLimit();
+
+      executeSearch(iArgs);
+      applyFlatten();
+      applyProjections();
+      applyOrderBy();
+      applyLimitAndSkip();
+    }
     return handleResult();
   }
 
@@ -243,12 +246,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   protected boolean addResult(final OIdentifiable iRecord) {
     lastRecord = null;
-    
- 	if (orderedFields == null && skip > 0) {
+
+    if (orderedFields == null && skip > 0) {
       skip--;
       return true;
     }
-    
+
     lastRecord = iRecord instanceof ORecord<?> ? ((ORecord<?>) iRecord).copy() : iRecord.getIdentity().copy();
     lastRecord = applyProjections(lastRecord);
 
@@ -988,5 +991,35 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   @Override
   public String getSyntax() {
     return "SELECT [<Projections>] FROM <Target> [WHERE <Condition>*] [ORDER BY <Fields>* [ASC|DESC]*] [LIMIT <MaxRecords>]";
+  }
+
+  protected boolean optimizeExecution() {
+    if (compiledFilter != null & compiledFilter.getRootCondition() == null && projections != null && projections.size() == 1) {
+      final Map.Entry<String, Object> entry = projections.entrySet().iterator().next();
+
+      if (entry.getValue() instanceof OSQLFunctionRuntime) {
+        if (((OSQLFunctionRuntime) entry.getValue()).function instanceof OSQLFunctionCount) {
+          long count = 0;
+
+          if (compiledFilter.getTargetClasses() != null) {
+            final OClass cls = compiledFilter.getTargetClasses().keySet().iterator().next();
+            count = cls.count();
+          } else if (compiledFilter.getTargetClusters() != null) {
+            for (String cluster : compiledFilter.getTargetClusters().keySet()) {
+              count += getDatabase().countClusterElements(cluster);
+            }
+          } else if (compiledFilter.getTargetIndex() != null) {
+            count += getDatabase().getMetadata().getIndexManager().getIndex(compiledFilter.getTargetIndex()).getSize();
+          }
+
+          if (tempResult == null)
+            tempResult = new ArrayList<OIdentifiable>();
+          tempResult.add(new ODocument().field(entry.getKey(), count));
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 }
