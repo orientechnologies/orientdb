@@ -153,7 +153,7 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
    *          Key to find
    * @return The value found if any, otherwise null
    */
-  protected V search(final Comparable<? super K> iKey) {
+  protected V search(final K iKey) {
     tree.pageItemFound = false;
     int size = getSize();
     if (size == 0)
@@ -161,9 +161,9 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
 
     // CHECK THE LOWER LIMIT
     if (tree.comparator != null)
-      tree.pageItemComparator = tree.comparator.compare((K) iKey, getKeyAt(0));
+      tree.pageItemComparator = tree.comparator.compare(iKey, getKeyAt(0));
     else
-      tree.pageItemComparator = iKey.compareTo(getKeyAt(0));
+      tree.pageItemComparator = ((Comparable<? super K>)iKey).compareTo(getKeyAt(0));
 
     if (tree.pageItemComparator == 0) {
       // FOUND: SET THE INDEX AND RETURN THE NODE
@@ -181,7 +181,7 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
       if (tree.comparator != null)
         tree.pageItemComparator = tree.comparator.compare((K) iKey, getKeyAt(size - 1));
       else
-        tree.pageItemComparator = iKey.compareTo(getKeyAt(size - 1));
+        tree.pageItemComparator = ((Comparable<? super K>)iKey).compareTo(getKeyAt(size - 1));
 
       if (tree.pageItemComparator > 0) {
         // KEY OUT OF LAST ITEM: AVOID SEARCH AND RETURN THE LAST POSITION
@@ -204,7 +204,7 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
    * @return Value if found, otherwise null and the tree.pageIndex updated with the closest-after-first position valid for further
    *         inserts.
    */
-  private V linearSearch(final Comparable<? super K> iKey) {
+  private V linearSearch(final K iKey) {
     V value = null;
     int i = 0;
     tree.pageItemComparator = -1;
@@ -236,7 +236,7 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
    * @return Value if found, otherwise null and the tree.pageIndex updated with the closest-after-first position valid for further
    *         inserts.
    */
-  private V binarySearch(final Comparable<? super K> iKey) {
+  private V binarySearch(final K iKey) {
     int low = 0;
     int high = getSize() - 1;
     int mid = 0;
@@ -312,6 +312,9 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
       return -1;
     if (o.getSize() == 0)
       return 1;
+		if(tree.comparator != null)
+			return  tree.comparator.compare(getFirstKey(), o.getFirstKey());
+
     return ((Comparable<K>) getFirstKey()).compareTo(o.getFirstKey());
   }
 

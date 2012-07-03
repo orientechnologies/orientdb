@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.tx;
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -27,11 +28,14 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
+import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -288,27 +292,27 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
         if (indexEntryChanges == null)
           continue;
 
-				final OTransactionIndexChangesPerKey changesPerKey;
-				if(indexOperation.key != null)
-         changesPerKey = indexEntryChanges.getChangesPerKey(indexOperation.key);
-				else
-				 changesPerKey = indexEntryChanges.changesCrossKey;
+        final OTransactionIndexChangesPerKey changesPerKey;
+        if (indexOperation.key != null)
+          changesPerKey = indexEntryChanges.getChangesPerKey(indexOperation.key);
+        else
+          changesPerKey = indexEntryChanges.changesCrossKey;
 
-				updateChangesIdentity(oldRid, newRid, changesPerKey);
+        updateChangesIdentity(oldRid, newRid, changesPerKey);
       }
     }
   }
 
-	private void updateChangesIdentity(ORID oldRid, ORID newRid, OTransactionIndexChangesPerKey changesPerKey) {
-		if (changesPerKey == null)
-			return;
+  private void updateChangesIdentity(ORID oldRid, ORID newRid, OTransactionIndexChangesPerKey changesPerKey) {
+    if (changesPerKey == null)
+      return;
 
-		for (final OTransactionIndexEntry indexEntry : changesPerKey.entries)
-			if (indexEntry.value.getIdentity().equals(oldRid))
-				indexEntry.value = newRid;
-	}
+    for (final OTransactionIndexEntry indexEntry : changesPerKey.entries)
+      if (indexEntry.value.getIdentity().equals(oldRid))
+        indexEntry.value = newRid;
+  }
 
-	protected void checkTransaction() {
+  protected void checkTransaction() {
     if (status == TXSTATUS.INVALID)
       throw new OTransactionException("Invalid state of the transaction. The transaction must be begun.");
   }
@@ -316,16 +320,32 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   protected void serializeIndexChangeEntry(OTransactionIndexChangesPerKey entry, final ODocument indexDoc,
       final List<ODocument> entries) {
     // SERIALIZE KEY
-    final StringBuilder value = new StringBuilder();
-    if (entry.key != null) {
-      if (entry.key instanceof OCompositeKey) {
-        final List<Comparable<?>> keys = ((OCompositeKey) entry.key).getKeys();
-        ORecordSerializerStringAbstract.fieldTypeToString(value, OType.EMBEDDEDLIST, keys);
-      } else
-        ORecordSerializerStringAbstract.fieldTypeToString(value, OType.getTypeByClass(entry.key.getClass()), entry.key);
-    } else
-      value.append('*');
-    String key = value.toString();
+
+		final String key;
+		final ODocument keyContainer = new ODocument();
+
+		try {
+			if (entry.key != null) {
+				if (entry.key instanceof OCompositeKey) {
+					final List<Comparable<?>> keys = ((OCompositeKey) entry.key).getKeys();
+
+					keyContainer.field("key", keys, OType.EMBEDDEDLIST);
+					keyContainer.field("binary", false);
+				} else if (!(entry.key instanceof ORecordElement) && (entry.key instanceof OSerializableStream)) {
+					keyContainer.field("key", OStreamSerializerAnyStreamable.INSTANCE.toStream(entry.key), OType.BINARY);
+					keyContainer.field("binary", true);
+				} else {
+					keyContainer.field("key", entry.key);
+					keyContainer.field("binary", false);
+				}
+
+				key = ORecordSerializerSchemaAware2CSV.INSTANCE.toString(keyContainer, null).toString();
+			} else
+				key = "*";
+		} catch (IOException ioe) {
+			throw new OTransactionException("Error during index changes serialization. ", ioe);
+		}
+
 
     final List<ODocument> operations = new ArrayList<ODocument>();
 

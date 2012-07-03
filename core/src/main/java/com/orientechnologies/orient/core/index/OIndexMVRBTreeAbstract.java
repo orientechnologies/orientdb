@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog.Listener;
@@ -41,12 +42,13 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProviderAbstract;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Collections;
@@ -627,12 +629,28 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
       for (final ODocument entry : entries) {
         final String serializedKey = OStringSerializerHelper.decode((String) entry.field("k"));
 
-        final Object key;
-        if (serializedKey.startsWith("["))
-          key = new OCompositeKey((List<? extends Comparable<?>>) ORecordSerializerStringAbstract.fieldTypeFromStream(iDocument,
-              OType.EMBEDDEDLIST, OStringSerializerHelper.decode(serializedKey)));
-        else
-          key = ORecordSerializerStringAbstract.getTypeValue(serializedKey);
+				final Object key;
+
+				try {
+					if(serializedKey.equals("*"))
+						key = "*";
+					else  {
+						final ODocument keyContainer = new ODocument();
+						keyContainer.setLazyLoad(false);
+
+						keyContainer.fromString(serializedKey);
+
+						final Object storedKey = keyContainer.field("key");
+						if(storedKey instanceof List)
+							key = new OCompositeKey((List<? extends Comparable<?>>) storedKey);
+						else if(Boolean.TRUE.equals(keyContainer.field("binary"))) {
+							key = OStreamSerializerAnyStreamable.INSTANCE.fromStream((byte[])storedKey);
+						} else
+							key = storedKey;
+					}
+				} catch (IOException ioe) {
+					throw new OTransactionException("Error during index changes deserialization. ", ioe);
+				}
 
         final List<ODocument> operations = (List<ODocument>) entry.field("ops");
         if (operations != null) {
@@ -786,14 +804,14 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
     try {
 
       OLogManager.instance().debug(this,
-          "Forcing " + (iHardMode ? "hard" : "soft") + " optimization of Index %s (%d items). Found %d entries in memory...", name,
-          map.size(), map.getNumberOfNodesInCache());
+							"Forcing " + (iHardMode ? "hard" : "soft") + " optimization of Index %s (%d items). Found %d entries in memory...", name,
+							map.size(), map.getNumberOfNodesInCache());
 
       map.setOptimization(iHardMode ? 2 : 1);
       final int freed = map.optimize(iHardMode);
 
       OLogManager.instance().debug(this, "Completed! Freed %d entries and now %d entries reside in memory", freed,
-          map.getNumberOfNodesInCache());
+							map.getNumberOfNodesInCache());
 
     } finally {
       releaseExclusiveLock();

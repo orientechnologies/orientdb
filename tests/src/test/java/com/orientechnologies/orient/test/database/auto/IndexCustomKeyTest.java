@@ -15,29 +15,34 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.Arrays;
-
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OBinaryTypeSerializer;
+import com.orientechnologies.orient.core.tx.OTransaction;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
-import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OBinaryTypeSerializer;
+import java.util.Arrays;
 
 @Test(groups = { "index" })
 public class IndexCustomKeyTest {
 	private ODatabaseDocumentTx	database;
 	private OIndex<?>						index;
 
-	public static class ComparableBinary implements Comparable<ComparableBinary> {
+	public static class ComparableBinary implements Comparable<ComparableBinary>, OSerializableStream {
 		private byte[]	value;
+
+		public ComparableBinary() {
+		}
 
 		public ComparableBinary(byte[] buffer) {
 			value = buffer;
@@ -57,6 +62,15 @@ public class IndexCustomKeyTest {
 
 		public byte[] toByteArray() {
 			return value;
+		}
+
+		public byte[] toStream() throws OSerializationException {
+			return value;
+		}
+
+		public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
+			this.value = iStream;
+			return this;
 		}
 	}
 
@@ -93,17 +107,24 @@ public class IndexCustomKeyTest {
 		}
 	}
 
+	protected OIndex<?> getIndex() {
+		return database.getMetadata().getIndexManager().getIndex("custom-hash");
+	}
+
 	@BeforeMethod
 	public void beforeMethod() {
 		database.open("admin", "admin");
+		OIndex<?> index = getIndex();
 
 		if (index == null) {
 			OBinarySerializerFactory.INSTANCE.registerSerializer(new OHash256Serializer(), null);
 
 			index = database.getMetadata().getIndexManager()
-					.createIndex("custom-hash", "UNIQUE", new ORuntimeKeyIndexDefinition(OHash256Serializer.ID), null, null);
+							.createIndex("custom-hash", "UNIQUE", new ORuntimeKeyIndexDefinition(OHash256Serializer.ID), null, null);
+			this.index = index;
 		} else {
 			index = database.getMetadata().getIndexManager().getIndex("custom-hash");
+			this.index = index;
 		}
 	}
 
@@ -118,18 +139,78 @@ public class IndexCustomKeyTest {
 	}
 
 	public void testUsage() {
+		OIndex<?> index = getIndex();
 		ComparableBinary key1 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
-				3, 4, 5, 6, 7, 8, 9, 0, 1 });
+						3, 4, 5, 6, 7, 8, 9, 0, 1 });
 		ODocument doc1 = new ODocument().field("k", "key1");
 		index.put(key1, doc1);
 
 		ComparableBinary key2 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
-				3, 4, 5, 6, 7, 8, 9, 0, 2 });
+						3, 4, 5, 6, 7, 8, 9, 0, 2 });
 		ODocument doc2 = new ODocument().field("k", "key1");
 		index.put(key2, doc2);
 
 		Assert.assertEquals(index.get(key1), doc1);
 		Assert.assertEquals(index.get(key2), doc2);
+	}
+
+	public void testTransactionalUsageWorks() {
+		database.begin(OTransaction.TXTYPE.OPTIMISTIC);
+		//OIndex<?> index = getIndex();
+		ComparableBinary key3 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
+						3, 4, 5, 6, 7, 8, 9, 0, 3 });
+		ODocument doc1 = new ODocument().field("k", "key3");
+		index.put(key3, doc1);
+
+		ComparableBinary key4 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
+						3, 4, 5, 6, 7, 8, 9, 0, 4 });
+		ODocument doc2 = new ODocument().field("k", "key4");
+		index.put(key4, doc2);
+
+		database.commit();
+
+		Assert.assertEquals(index.get(key3), doc1);
+		Assert.assertEquals(index.get(key4), doc2);
+	}
+
+	@Test(dependsOnMethods = {"testTransactionalUsageWorks"})
+	public void testTransactionalUsageBreaks1() {
+		database.begin(OTransaction.TXTYPE.OPTIMISTIC);
+		OIndex<?> index = getIndex();
+		ComparableBinary key5 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
+						3, 4, 5, 6, 7, 8, 9, 0, 5 });
+		ODocument doc1 = new ODocument().field("k", "key5");
+		index.put(key5, doc1);
+
+		ComparableBinary key6 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
+						3, 4, 5, 6, 7, 8, 9, 0, 6 });
+		ODocument doc2 = new ODocument().field("k", "key6");
+		index.put(key6, doc2);
+
+		database.commit();
+
+		Assert.assertEquals(index.get(key5), doc1);
+		Assert.assertEquals(index.get(key6), doc2);
+	}
+
+	@Test(dependsOnMethods = {"testTransactionalUsageWorks"})
+	public void testTransactionalUsageBreaks2() {
+		OIndex<?> index = getIndex();
+		database.begin(OTransaction.TXTYPE.OPTIMISTIC);
+		ComparableBinary key7 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
+						3, 4, 5, 6, 7, 8, 9, 0, 7 });
+		ODocument doc1 = new ODocument().field("k", "key7");
+		index.put(key7, doc1);
+
+		ComparableBinary key8 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
+						3, 4, 5, 6, 7, 8, 9, 0, 8 });
+		ODocument doc2 = new ODocument().field("k", "key8");
+		index.put(key8, doc2);
+
+		database.commit();
+
+		Assert.assertEquals(index.get(key7), doc1);
+		Assert.assertEquals(index.get(key8), doc2);
 	}
 
 	public void testUsage2() {

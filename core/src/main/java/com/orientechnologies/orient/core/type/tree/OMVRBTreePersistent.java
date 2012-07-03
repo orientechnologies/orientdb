@@ -58,13 +58,18 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
   protected int                                            entryPointsSize;
 
   protected float                                          optimizeEntryPointsFactor;
-  private final TreeMap<K, OMVRBTreeEntryPersistent<K, V>> entryPoints        = new TreeMap<K, OMVRBTreeEntryPersistent<K, V>>();
+  private final TreeMap<K, OMVRBTreeEntryPersistent<K, V>> entryPoints;
   private final Map<ORID, OMVRBTreeEntryPersistent<K, V>>  cache              = new HashMap<ORID, OMVRBTreeEntryPersistent<K, V>>();
 
   private static final int                                 OPTIMIZE_MAX_RETRY = 10;
 
   public OMVRBTreePersistent(OMVRBTreeProvider<K, V> iProvider) {
     super();
+		if(comparator != null)
+			entryPoints = new TreeMap<K, OMVRBTreeEntryPersistent<K, V>>(comparator);
+		else
+			entryPoints = new TreeMap<K, OMVRBTreeEntryPersistent<K, V>>();
+
     pageLoadFactor = (Float) OGlobalConfiguration.MVRBTREE_LOAD_FACTOR.getValue();
     dataProvider = iProvider;
     config();

@@ -54,7 +54,7 @@ public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {
 	}
 
 	public int getObjectSize(byte[] stream, int startPosition) {
-		return  bytes2int(stream, startPosition);
+		return  bytes2int(stream, startPosition) + OIntegerSerializer.INT_SIZE;
 	}
 
 	public byte getId() {

@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
@@ -191,15 +191,26 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
 				final Object key;
 
-				if(entry.field("k").equals("*"))
-					key = null;
-				else {
-					final String serializedKey = OStringSerializerHelper.decode((String) entry.field("k"));
-					if (serializedKey.startsWith("["))
-						key = new OCompositeKey((List<? extends Comparable<?>>) ORecordSerializerStringAbstract.fieldTypeFromStream(indexDoc,
-										OType.EMBEDDEDLIST, OStringSerializerHelper.decode(serializedKey)));
-					else
-						key = ORecordSerializerStringAbstract.getTypeValue(serializedKey);
+				final String serializedKey = OStringSerializerHelper.decode((String) entry.field("k"));
+				try {
+					if(serializedKey.equals("*"))
+						key = null;
+					else  {
+						final ODocument keyContainer = new ODocument();
+						keyContainer.setLazyLoad(false);
+
+						keyContainer.fromString(serializedKey);
+
+						final Object storedKey = keyContainer.field("key");
+						if(storedKey instanceof List)
+							key = new OCompositeKey((List<? extends Comparable<?>>) storedKey);
+						else if(Boolean.TRUE.equals(keyContainer.field("binary"))) {
+							key = OStreamSerializerAnyStreamable.INSTANCE.fromStream((byte[])storedKey);
+						} else
+							key = storedKey;
+					}
+				} catch (IOException ioe) {
+					throw new OTransactionException("Error during index changes deserialization. ", ioe);
 				}
 
 				for (final ODocument op : operations) {

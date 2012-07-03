@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import com.orientechnologies.common.comparator.ODefaultComparator;
+
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -30,7 +32,9 @@ public class OTransactionIndexChanges {
     PUT, REMOVE, CLEAR
   }
 
-  public Map<Object, OTransactionIndexChangesPerKey> changesPerKey = new TreeMap<Object, OTransactionIndexChangesPerKey>();
+  public Map<Object, OTransactionIndexChangesPerKey> changesPerKey =
+					new TreeMap<Object, OTransactionIndexChangesPerKey>(new ODefaultComparator());
+
   public OTransactionIndexChangesPerKey              changesCrossKey;
   public boolean                                     cleared       = false;
 
