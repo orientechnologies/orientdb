@@ -81,7 +81,9 @@
 								<td valign="top" align="left">
 									<table>
 										<tr>
-											<td align="center"><h3>Properties</h2></td>
+											<td align="center"><h3>
+													Properties
+													</h2></td>
 										</tr>
 										<tr>
 											<td>
@@ -114,7 +116,9 @@
 								<td valign="top" align="left">
 									<table>
 										<tr>
-											<td align="center"><h3>Indexes</h2></td>
+											<td align="center"><h3>
+													Indexes
+													</h2></td>
 										</tr>
 										<tr>
 											<td>
@@ -139,22 +143,22 @@
 			</table>
 		</div>
 		<div id="tab-db-structure">
-			<table style="width: 100%;">
+			<table style="width: 100%;" cellpadding='5'>
 				<tr>
-					<td valign="top" width="500" class="help hidden-phone"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Cluster">Clusters</a> </b>
-						are sets of records grouped by a mean. Any mean you want to assign. You can use a Cluster like a Table of the Relational DBMS world, namely to
-						group records of the same type. Or you could want to group records by different logics. <br /> <br /> There are two kinds of clusters: <b><a
+					<td valign="top" class="help hidden-phone"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Cluster">Clusters</a> </b> are sets of
+						records grouped by a mean. Any mean you want to assign. You can use a Cluster like a Table of the Relational DBMS world, namely to group records
+						of the same type. Or you could want to group records by different logics. <br /> <br /> There are two kinds of clusters: <b><a
 							href="http://code.google.com/p/orient/wiki/Concepts#Local_Physical_Cluster">Physical</a> </b> and <b><a
 							href="http://code.google.com/p/orient/wiki/Concepts#In-Memory_cluster">In-memory</a> </b>. The first one is persistent, the second one is volatile.</td>
 				</tr>
 				<tr>
-					<td valign="top" width="500">
-						<table id="databaseClusters" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+					<td valign="top">
+						<table id="databaseClusters" style="width: 900px;" cellspacing="0" cellpadding="5" border="1">
 						</table>
 					</td>
 				</tr>
 				<tr>
-					<td valign="top" width="500" align="left">
+					<td valign="top" align="left">
 						<table>
 							<tr>
 								<td>
@@ -177,22 +181,21 @@
 					</td>
 				</tr>
 				<tr>
-					<td valign="top" width="500" class="help hidden-phone"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Data_Segment">Data
-								segments</a> </b> are the segments that contain data pointed by Clusters.</td>
+					<td valign="top" class="help hidden-phone"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Data_Segment">Data segments</a> </b>
+						are the segments that contain data pointed by Clusters.</td>
 				</tr>
 				<tr>
-					<td valign="top" width="500">
-						<table id="databaseDataSegments" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+					<td valign="top">
+						<table id="databaseDataSegments" style="width: 900px;" cellspacing="0" cellpadding="5" border="1">
 						</table>
 					</td>
 				</tr>
 				<tr>
-					<td valign="top" width="500" class="help hidden-phone"><b>Tx Segment</b> handles the transaction log for the entire database. It's used in
-						Transactions.</td>
+					<td valign="top" class="help hidden-phone"><b>Tx Segment</b> handles the transaction log for the entire database. It's used in Transactions.</td>
 				</tr>
 				<tr>
-					<td valign="top" width="500">
-						<table id="databaseTxSegment" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+					<td valign="top">
+						<table id="databaseTxSegment" style="width: 900px;" cellspacing="0" cellpadding="5" border="1">
 						</table>
 					</td>
 				</tr>
@@ -394,45 +397,41 @@
 		}, {
 			name : 'type',
 			index : 'type',
-			width : '80px',
+			width : '70px',
 			editable : false
 		}, {
 			name : 'records',
 			index : 'records',
-			width : '80px',
+			width : '70px',
 			editable : false
 		}, {
 			name : 'size',
 			index : 'size',
-			width : '80px',
+			width : '70px',
 			editable : false
 		}, {
 			name : 'filled',
 			index : 'filled',
-			width : '80px',
+			width : '70px',
 			editable : false
 		}, {
 			name : 'maxSize',
 			index : 'maxSize',
-			width : '80px',
+			width : '70px',
 			editable : false
 		}, {
 			name : 'files',
 			index : 'files',
-			width : '350px',
+			width : '400px',
 			editable : false
 		} ], databaseInfo['clusters'], {
+			width : '900px',
 			sortname : 'id',
 			editurl : getStudioURL('clusters')
 		});
 
 		$("#addPhysicalCluster").click(function() {
 			$("#databaseClusters").jqGrid('editGridRow', "new", {
-				height : 320,
-				reloadAfterSubmit : false,
-				closeOnEscape : true,
-				closeAfterAdd : true,
-				editData : [ selectedClassName ],
 				afterSubmit : function(response, postdata) {
 					$("#output").val(response.responseText);
 					return true;
@@ -445,7 +444,7 @@
 				reloadAfterSubmit : false,
 				closeOnEscape : true,
 				closeAfterAdd : true,
-				editData : [ selectedClassName ],
+				editData : [],
 				afterSubmit : function(response, postdata) {
 					$("#output").val(response.responseText);
 					return true;
@@ -512,38 +511,47 @@
 			width : '500px',
 			editable : false
 		} ], databaseInfo['dataSegments'], {
+			width : '900px',
 			height : '40px'
 		});
 
-		fillDynaTable($('#databaseTxSegment'), "Tx Segment", [ 'totalLogs',
-				'size', 'filled', 'maxSize', 'file' ], [ {
-			name : 'totalLogs',
-			index : 'Total Logs',
-			width : '100px',
-			editable : false
-		}, {
-			name : 'size',
-			index : 'Size',
-			width : '80px',
-			editable : false
-		}, {
-			name : 'filled',
-			index : 'Filled',
-			width : '80px',
-			editable : false
-		}, {
-			name : 'maxSize',
-			index : 'Max Size',
-			width : '80px',
-			editable : false
-		}, {
-			name : 'file',
-			index : 'File',
-			width : '550px',
-			editable : false
-		} ], databaseInfo['txSegment'], {
-			height : '25px'
-		});
+		fillDynaTable(
+				$('#databaseTxSegment'),
+				"Tx Segment",
+				[ 'totalLogs', 'size', 'filled', 'maxSize', 'file' ],
+				[ {
+					name : 'totalLogs',
+					index : 'Total Logs',
+					width : '70px',
+					editable : false
+				}, {
+					name : 'size',
+					index : 'Size',
+					width : '70px',
+					editable : false
+				}, {
+					name : 'filled',
+					index : 'Filled',
+					width : '70px',
+					editable : false
+				}, {
+					name : 'maxSize',
+					index : 'Max Size',
+					width : '70px',
+					editable : false
+				}, {
+					name : 'file',
+					index : 'File',
+					width : '450px',
+					editable : false
+				} ],
+				databaseInfo['txSegment'],
+				{
+					height : '55px',
+					onSelectRow : function(rowNum) {
+						selectedClusterName = databaseInfo['clusters'][rowNum - 1].name;
+					}
+				});
 
 		fillDynaTable($('#databaseUsers'), "Users", [ 'name', 'roles' ], null,
 				databaseInfo['users']);
