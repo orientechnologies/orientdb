@@ -22,9 +22,11 @@ import java.io.ObjectOutput;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
+import com.orientechnologies.orient.server.OServerMain;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
+import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
 
 /**
  * Distributed task used for synchronization.
@@ -33,9 +35,14 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
  * 
  */
 public class OSQLCommandDistributedTask extends OAbstractDistributedTask<Object> {
-  private static final long serialVersionUID = 1L;
+  private static final long               serialVersionUID = 1L;
+  private static OServerUserConfiguration replicatorUser;
 
-  protected String          text;
+  protected String                        text;
+
+  static {
+    replicatorUser = OServerMain.server().getUser(ODistributedAbstractPlugin.REPLICATOR_USER);
+  }
 
   public OSQLCommandDistributedTask() {
   }
@@ -54,10 +61,12 @@ public class OSQLCommandDistributedTask extends OAbstractDistributedTask<Object>
   public Object call() throws Exception {
     OLogManager.instance().debug(this, "DISTRIBUTED <- command: %s", text.toString());
 
-    final ODatabaseDocumentTx db = OSharedDocumentDatabase.acquire(databaseName, "admin", "admin");
+    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) OServerMain.server().openDatabase("document", databaseName,
+        replicatorUser.name, replicatorUser.password);
+
     ODistributedThreadLocal.INSTANCE.distributedExecution = true;
     try {
-      
+
       Object result = getStorage().command(new OCommandSQL(text));
 
       if (mode != EXECUTION_MODE.FIRE_AND_FORGET)
@@ -65,7 +74,7 @@ public class OSQLCommandDistributedTask extends OAbstractDistributedTask<Object>
 
       // FIRE AND FORGET MODE: AVOID THE PAYLOAD AS RESULT
       return null;
-      
+
     } finally {
       ODistributedThreadLocal.INSTANCE.distributedExecution = false;
       db.close();

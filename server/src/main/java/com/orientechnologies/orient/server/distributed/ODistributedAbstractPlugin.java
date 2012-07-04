@@ -39,6 +39,7 @@ import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
  */
 public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract implements ODistributedServerManager,
     ODatabaseLifecycleListener {
+  public static final String                  REPLICATOR_USER       = "replicator";
   protected OServer                           serverInstance;
   protected boolean                           enabled               = true;
   protected String                            alias                 = null;
@@ -73,6 +74,15 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
     if (!databaseConfiguration.containsKey("*"))
       throw new OConfigurationException(
           "Invalid cluster configuration: cannot find settings for the default synchronization as 'db.*'");
+
+    if (serverInstance.getUser(REPLICATOR_USER) == null)
+      // CREATE THE REPLICATOR USER
+      try {
+        serverInstance.addUser(REPLICATOR_USER, null, "database.passthrough");
+        serverInstance.saveConfiguration();
+      } catch (IOException e) {
+        throw new OConfigurationException("Error on creating 'replicator' user", e);
+      }
   }
 
   @Override
