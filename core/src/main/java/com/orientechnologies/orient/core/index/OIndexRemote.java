@@ -212,7 +212,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
     final OCommandRequest cmd = formatCommand(QUERY_REMOVE2, name, iKey, iRID.getIdentity());
 
-    final int deleted = getDatabase().command(cmd).execute(iKey, iRID);
+    final int deleted = (Integer) getDatabase().command(cmd).execute(iKey, iRID);
     return deleted > 0;
   }
 
