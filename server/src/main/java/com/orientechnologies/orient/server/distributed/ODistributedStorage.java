@@ -22,6 +22,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
+import com.orientechnologies.orient.core.command.OCommandDistributedConditionalReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
@@ -71,8 +72,15 @@ public class ODistributedStorage implements OStorage {
     executor.setProgressListener(iCommand.getProgressListener());
     executor.parse(iCommand);
 
-    final boolean distribute = (executor instanceof OCommandExecutorSQLDelegate ? ((OCommandExecutorSQLDelegate) executor)
-        .getDelegate() : executor) instanceof OCommandDistributedReplicateRequest;
+    final boolean distribute;
+    final OCommandExecutor exec = executor instanceof OCommandExecutorSQLDelegate ? ((OCommandExecutorSQLDelegate) executor)
+        .getDelegate() : executor;
+    if (exec instanceof OCommandDistributedConditionalReplicateRequest)
+      distribute = ((OCommandDistributedConditionalReplicateRequest) exec).isReplicated();
+    else if (exec instanceof OCommandDistributedReplicateRequest)
+      distribute = true;
+    else
+      distribute = false;
 
     if (distribute)
       ODistributedThreadLocal.INSTANCE.distributedExecution = true;

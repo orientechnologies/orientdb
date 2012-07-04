@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.command.OCommandDistributedConditionalReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -38,10 +39,10 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  * @author Luca Garulli
  * @author Johann Sorel (Geomatys)
  */
-public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware {
+public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware implements
+    OCommandDistributedConditionalReplicateRequest {
   public static final String        KEYWORD_INSERT = "INSERT";
   private static final String       KEYWORD_VALUES = "VALUES";
-  private static final String       KEYWORD_SET    = "SET";
   private String                    className      = null;
   private String                    clusterName    = null;
   private String                    indexName      = null;
@@ -203,9 +204,12 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware {
     }
   }
 
+  public boolean isReplicated() {
+    return indexName != null;
+  }
+
   @Override
   public String getSyntax() {
     return "INSERT INTO <Class>|cluster:<cluster>|index:<index> [(<field>[,]*) VALUES (<expression>[,]*)[,]*]|[SET <field> = <expression>[,]*]";
   }
-
 }

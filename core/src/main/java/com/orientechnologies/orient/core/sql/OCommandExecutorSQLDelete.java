@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.sql;
 
 import java.util.Map;
 
+import com.orientechnologies.orient.core.command.OCommandDistributedConditionalReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -39,7 +40,8 @@ import com.orientechnologies.orient.core.sql.query.OSQLQuery;
  * @author Luca Garulli
  * 
  */
-public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract implements OCommandResultListener {
+public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract implements
+    OCommandDistributedConditionalReplicateRequest, OCommandResultListener {
   public static final String   KEYWORD_DELETE  = "DELETE";
   private static final String  VALUE_NOT_FOUND = "_not_found_";
 
@@ -162,6 +164,10 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
       return true;
     }
     return false;
+  }
+
+  public boolean isReplicated() {
+    return indexName != null;
   }
 
   public String getSyntax() {
