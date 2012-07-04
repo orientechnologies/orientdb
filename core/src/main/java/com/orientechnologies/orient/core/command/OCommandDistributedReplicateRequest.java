@@ -20,5 +20,5 @@ package com.orientechnologies.orient.core.command;
  * 
  * @author Luca Garulli
  */
-public interface OCommandDistributedRequest {
+public interface OCommandDistributedReplicateRequest {
 }

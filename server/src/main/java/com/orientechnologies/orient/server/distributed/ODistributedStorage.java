@@ -22,7 +22,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
-import com.orientechnologies.orient.core.command.OCommandDistributedRequest;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -65,29 +65,34 @@ public class ODistributedStorage implements OStorage {
   }
 
   public Object command(final OCommandRequestText iCommand) {
-    ODistributedThreadLocal.INSTANCE.distributedExecution = true;
+
+    final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
+
+    executor.setProgressListener(iCommand.getProgressListener());
+    executor.parse(iCommand);
+
+    final boolean distribute = (executor instanceof OCommandExecutorSQLDelegate ? ((OCommandExecutorSQLDelegate) executor)
+        .getDelegate() : executor) instanceof OCommandDistributedReplicateRequest;
+
+    if (distribute)
+      ODistributedThreadLocal.INSTANCE.distributedExecution = true;
+
     try {
-
-      final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
-
-      executor.setProgressListener(iCommand.getProgressListener());
-      executor.parse(iCommand);
-
       // EXECUTE IT LOCALLY
       final Object localResult = wrapped.executeCommand(iCommand, executor);
 
-      final OCommandExecutor cmd = executor instanceof OCommandExecutorSQLDelegate ? ((OCommandExecutorSQLDelegate) executor)
-          .getDelegate() : executor;
+      if (distribute) {
 
-      if (cmd instanceof OCommandDistributedRequest) {
         final Collection<Object> distributedResult = dManager.sendOperation2Nodes(dManager.getRemoteNodeIds(),
             new OSQLCommandDistributedTask(dManager.getLocalNodeId(), wrapped.getName(), createRecordMode, iCommand.getText()));
-
       }
+
       return localResult;
 
     } finally {
-      ODistributedThreadLocal.INSTANCE.distributedExecution = false;
+
+      if (distribute)
+        ODistributedThreadLocal.INSTANCE.distributedExecution = false;
     }
   }
 
@@ -155,13 +160,12 @@ public class ODistributedStorage implements OStorage {
 
     Object result = null;
 
-    if (!dManager.isLocalNodeOwner(iRecordId))
-      try {
-        result = dManager.routeOperation2Node(iRecordId,
-            new ODeleteRecordDistributedTask(dManager.getLocalNodeId(), wrapped.getName(), updateRecordMode, iRecordId, iVersion));
-      } catch (ExecutionException e) {
-        throw new OStorageException("Cannot route UPDATE_RECORD operation to the distributed node", e);
-      }
+    try {
+      result = dManager.routeOperation2Node(iRecordId,
+          new ODeleteRecordDistributedTask(dManager.getLocalNodeId(), wrapped.getName(), updateRecordMode, iRecordId, iVersion));
+    } catch (ExecutionException e) {
+      throw new OStorageException("Cannot route UPDATE_RECORD operation to the distributed node", e);
+    }
 
     // DELETE LOCALLY
     return (Boolean) result;

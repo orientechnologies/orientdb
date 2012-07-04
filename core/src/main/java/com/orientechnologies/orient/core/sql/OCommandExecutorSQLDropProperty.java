@@ -21,7 +21,7 @@ import java.util.Map;
 
 import com.orientechnologies.common.util.OCaseIncentiveComparator;
 import com.orientechnologies.common.util.OCollections;
-import com.orientechnologies.orient.core.command.OCommandDistributedRequest;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -38,7 +38,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract  implements OCommandDistributedRequest {
+public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract  implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_DROP     = "DROP";
   public static final String KEYWORD_PROPERTY = "PROPERTY";
 
