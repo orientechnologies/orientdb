@@ -28,7 +28,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.cache.ODefaultCache;
-import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
+import com.orientechnologies.orient.core.storage.fs.OMMapManagerOld;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -185,7 +185,7 @@ public enum OGlobalConfiguration {
   FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", "Size of the memory mapped block, default is 1Mb", Integer.class, 1048576,
       new OConfigurationChangeCallback() {
         public void change(final Object iCurrentValue, final Object iNewValue) {
-          OMMapManagerLocator.getInstance().setBlockSize(((Number) iNewValue).intValue());
+          OMMapManagerOld.setBlockSize(((Number) iNewValue).intValue());
         }
       }),
 
@@ -197,7 +197,7 @@ public enum OGlobalConfiguration {
       "Max memory allocatable by memory mapping manager. Note that on 32bit operating systems, the limit is 2Gb but will vary between operating systems",
       Long.class, 134217728, new OConfigurationChangeCallback() {
         public void change(final Object iCurrentValue, final Object iNewValue) {
-          OMMapManagerLocator.getInstance().setMaxMemory(OFileUtils.getSizeAsNumber(iNewValue));
+          OMMapManagerOld.setMaxMemory(OFileUtils.getSizeAsNumber(iNewValue));
         }
       }),
 
@@ -206,7 +206,7 @@ public enum OGlobalConfiguration {
       "Strategy to use when a request overlaps in-memory buffers: 0 = Use the channel access, 1 = force the in-memory buffer and use the channel access, 2 = always create an overlapped in-memory buffer (default)",
       Integer.class, 2, new OConfigurationChangeCallback() {
         public void change(final Object iCurrentValue, final Object iNewValue) {
-          OMMapManagerLocator.getInstance().setOverlapStrategy((Integer) iNewValue);
+          OMMapManagerOld.setOverlapStrategy((Integer) iNewValue);
         }
       }),
 

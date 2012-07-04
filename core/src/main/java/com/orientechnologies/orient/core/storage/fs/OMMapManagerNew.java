@@ -37,7 +37,7 @@ public class OMMapManagerNew extends OMMapManagerAbstract implements OMMapManage
   private final ConcurrentHashMap<OFileMMap, OMMapBufferEntry[]>      bufferPoolPerFile       = new ConcurrentHashMap<OFileMMap, OMMapBufferEntry[]>();
   private final ConcurrentHashMap<OFileMMap, LastMMapEntrySearchInfo> mapEntrySearchInfo      = new ConcurrentHashMap<OFileMMap, LastMMapEntrySearchInfo>();
 
-  private final OLockManager<OFile, Runnable>                         lockManager             = new OLockManager<OFile, Runnable>(
+  private final OLockManager<OFileMMap, Runnable>                     lockManager             = new OLockManager<OFileMMap, Runnable>(
                                                                                                   OGlobalConfiguration.ENVIRONMENT_CONCURRENT
                                                                                                       .getValueAsBoolean(),
                                                                                                   OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT
@@ -170,51 +170,6 @@ public class OMMapManagerNew extends OMMapManagerAbstract implements OMMapManage
     }
     bufferPoolPerFile.clear();
     mapEntrySearchInfo.clear();
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Deprecated
-  public long getMaxMemory() {
-    return 0;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Deprecated
-  public void setMaxMemory(long iMaxMemory) {
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Deprecated
-  public long getTotalMemory() {
-    return 0;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Deprecated
-  public int getBlockSize() {
-    return 0;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Deprecated
-  public void setBlockSize(int blockSize) {
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Deprecated
-  public void setOverlapStrategy(int overlapStrategy) {
   }
 
   /**
@@ -407,7 +362,7 @@ public class OMMapManagerNew extends OMMapManagerAbstract implements OMMapManage
   /**
    * Removes the file.
    */
-  public void removeFile(final OFile iFile) {
+  public void removeFile(final OFileMMap iFile) {
     lockManager.acquireLock(Thread.currentThread(), iFile, OLockManager.LOCK.EXCLUSIVE);
     try {
       mapEntrySearchInfo.remove(iFile);

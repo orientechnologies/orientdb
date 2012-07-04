@@ -44,15 +44,6 @@ public interface OMMapManager {
   }
 
   /**
-   * Strategy that determine what should manager do if mmapped files overlaps. This API is deprecated and used only in old mmap
-   * manager.
-   */
-  @Deprecated
-  public enum OVERLAP_STRATEGY {
-    NO_OVERLAP_USE_CHANNEL, NO_OVERLAP_FLUSH_AND_USE_CHANNEL, OVERLAP
-  }
-
-  /**
    * This method tries to mmap file. If mapping is impossible method returns null.
    * 
    * @param iFile
@@ -88,7 +79,7 @@ public interface OMMapManager {
    * @param iFile
    *          that will be removed
    */
-  void removeFile(OFile iFile);
+  void removeFile(OFileMMap iFile);
 
   /**
    * This method is the same as flush but on single file. This method store all file content on disk from memory to prevent data
@@ -103,48 +94,4 @@ public interface OMMapManager {
    * This method flush all files and clear information about mmap from itself.
    */
   void shutdown();
-
-  /**
-   * This method has been used in old MMap manager. In future it will be removed.
-   */
-  @Deprecated
-  long getMaxMemory();
-
-  /**
-   * This method has been used in old MMap manager. In future it will be removed.
-   * 
-   * @param iMaxMemory
-   *          maximum memory that mmap manager will consume.
-   */
-  @Deprecated
-  void setMaxMemory(long iMaxMemory);
-
-  /**
-   * This method has been used in old MMap manager. In future it will be removed.
-   */
-  @Deprecated
-  long getTotalMemory();
-
-  /**
-   * This method has been used in old MMap manager. In future it will be removed.
-   */
-  @Deprecated
-  int getBlockSize();
-
-  /**
-   * This method has been used in old MMap manager. In future it will be removed.
-   * 
-   * @param blockSize
-   */
-  @Deprecated
-  void setBlockSize(int blockSize);
-
-  /**
-   * This method has been used in old MMap manager. In future it will be removed.
-   * 
-   * @param overlapStrategy
-   */
-  @Deprecated
-  void setOverlapStrategy(int overlapStrategy);
-
 }

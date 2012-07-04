@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManager {
 
   private static final long                             MIN_MEMORY        = 50000000;
-  private static OMMapManager.OVERLAP_STRATEGY          overlapStrategy;
+  private static OMMapManagerOld.OVERLAP_STRATEGY       overlapStrategy;
   private static OMMapManager.ALLOC_STRATEGY            lastStrategy;
   private static int                                    blockSize;
   private static long                                   maxMemory;
@@ -45,6 +45,13 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
 
   private static List<OMMapBufferEntry>                 bufferPoolLRU     = new ArrayList<OMMapBufferEntry>();
   private static Map<OFileMMap, List<OMMapBufferEntry>> bufferPoolPerFile = new HashMap<OFileMMap, List<OMMapBufferEntry>>();
+
+  /**
+   * Strategy that determine what should manager do if mmapped files overlaps.
+   */
+  public enum OVERLAP_STRATEGY {
+    NO_OVERLAP_USE_CHANNEL, NO_OVERLAP_FLUSH_AND_USE_CHANNEL, OVERLAP
+  }
 
   OMMapManagerOld() {
   }
@@ -325,7 +332,7 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
   /**
    * Removes the file.
    */
-  public void removeFile(final OFile iFile) {
+  public void removeFile(final OFileMMap iFile) {
     lock.writeLock().lock();
 
     try {
@@ -377,7 +384,7 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
     return maxMemory;
   }
 
-  public void setMaxMemory(final long iMaxMemory) {
+  public static void setMaxMemory(final long iMaxMemory) {
     maxMemory = iMaxMemory;
   }
 
@@ -389,7 +396,7 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
     return blockSize;
   }
 
-  public void setBlockSize(final int blockSize) {
+  public static void setBlockSize(final int blockSize) {
     OMMapManagerOld.blockSize = blockSize;
   }
 
@@ -397,7 +404,7 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
     return overlapStrategy;
   }
 
-  public void setOverlapStrategy(int overlapStrategy) {
+  public static void setOverlapStrategy(int overlapStrategy) {
     OMMapManagerOld.overlapStrategy = OVERLAP_STRATEGY.values()[overlapStrategy];
   }
 

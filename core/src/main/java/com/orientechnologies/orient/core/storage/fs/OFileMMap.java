@@ -54,6 +54,12 @@ public class OFileMMap extends OAbstractFile {
   private static OMMapManager.ALLOC_STRATEGY strategy;
 
   @Override
+  public void delete() throws IOException {
+    OMMapManagerLocator.getInstance().removeFile(this);
+    super.delete();
+  }
+
+  @Override
   public OFileMMap init(String iFileName, String iMode) {
     super.init(iFileName, iMode);
     BYTEBUFFER_POOLABLE_SIZE = OGlobalConfiguration.FILE_MMAP_BUFFER_SIZE.getValueAsInteger();
