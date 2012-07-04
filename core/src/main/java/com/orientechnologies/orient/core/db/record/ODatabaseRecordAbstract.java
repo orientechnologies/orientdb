@@ -62,6 +62,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 
@@ -112,7 +113,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
       recordFormat = DEF_RECORD_FORMAT;
 
-      if (getStorage() instanceof OStorageEmbedded) {
+      if (!(getStorage() instanceof OStorageProxy)) {
         user = getMetadata().getSecurity().authenticate(iUserName, iUserPassword);
         if (user != null) {
           final Set<ORole> roles = user.getRoles();
@@ -132,7 +133,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         registerHook(new OUserTrigger());
         registerHook(new OClassIndexManager());
       } else
-        // CREATE DUMMY USER
+        // REMOTE CREATE DUMMY USER
         user = new OUser(iUserName, OUser.encryptPassword(iUserPassword)).addRole(new ORole("passthrough", null,
             ORole.ALLOW_MODES.ALLOW_ALL_BUT));
 

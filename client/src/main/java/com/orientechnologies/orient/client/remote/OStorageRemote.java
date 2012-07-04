@@ -72,6 +72,7 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.enterprise.channel.binary.OAsynchChannelServiceThread;
@@ -83,7 +84,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEvent
 /**
  * This object is bound to each remote ODatabase instances.
  */
-public class OStorageRemote extends OStorageAbstract {
+public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private static final String              DEFAULT_HOST         = "localhost";
   private static final int                 DEFAULT_PORT         = 2424;
   private static final String              ADDRESS_SEPARATOR    = ";";

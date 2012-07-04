@@ -57,12 +57,16 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
     final String dbPooledName = iUserName + "@" + iURL;
 
     OResourcePool<String, DB> pool = pools.get(dbPooledName);
-    if (pool == null) {
+    if (pool == null)
+      // CREATE A NEW ONE
       pool = new OResourcePool<String, DB>(maxSize, this);
-      pools.putIfAbsent(dbPooledName, pool);
-    }
 
-    return pool.getResource(iURL, timeout, iUserName, iUserPassword, iOptionalParams);
+    final DB db = pool.getResource(iURL, timeout, iUserName, iUserPassword, iOptionalParams);
+
+    // PUT IN THE POOL MAP ONLY IF AUTHENTICATION SUCCEED
+    pools.putIfAbsent(dbPooledName, pool);
+
+    return db;
   }
 
   public void release(final DB iDatabase) {
