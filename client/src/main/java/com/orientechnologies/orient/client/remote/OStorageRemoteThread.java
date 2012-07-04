@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.storage.ODataSegment;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
@@ -43,7 +43,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEvent
  * Wrapper of OStorageRemote that maintains the sessionId. It's bound to the ODatabase and allow to use the shared OStorageRemote.
  */
 @SuppressWarnings("unchecked")
-public class OStorageRemoteThread implements OStorage {
+public class OStorageRemoteThread implements OStorageProxy {
   private static AtomicInteger sessionSerialId = new AtomicInteger(-1);
 
   private final OStorageRemote delegate;

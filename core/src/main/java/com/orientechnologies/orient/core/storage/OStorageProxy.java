@@ -21,5 +21,5 @@ package com.orientechnologies.orient.core.storage;
  * @author Luca Garulli
  * 
  */
-public interface OStorageProxy {
+public interface OStorageProxy extends OStorage {
 }
