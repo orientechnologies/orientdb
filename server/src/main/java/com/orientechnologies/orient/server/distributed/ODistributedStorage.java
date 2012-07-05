@@ -228,11 +228,11 @@ public class ODistributedStorage implements OStorage {
   }
 
   public void commit(final OTransaction iTx) {
-    wrapped.commit(iTx);
+    throw new ODistributedException("Transactions are not supported in distributed environment");
   }
 
   public void rollback(final OTransaction iTx) {
-    wrapped.rollback(iTx);
+    throw new ODistributedException("Transactions are not supported in distributed environment");
   }
 
   public OStorageConfiguration getConfiguration() {
