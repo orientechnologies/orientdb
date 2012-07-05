@@ -41,7 +41,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
 import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
@@ -67,7 +66,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
       final String databaseName = urlParts[1];
       final String storageMode = urlParts[2];
       final String url = getStoragePath(databaseName, storageMode);
-      final String type = urlParts[3];
+      final String type = urlParts.length > 3 ? urlParts[3] : "document";
       if (url != null) {
         final ODatabaseDocumentTx database = Orient.instance().getDatabaseFactory().createDatabase(type, url);
         if (database.exists())
@@ -139,7 +138,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
       json.beginCollection(1, false, "clusters");
       OCluster cluster;
       for (String clusterName : db.getClusterNames()) {
-        cluster = ((OStorageEmbedded) db.getStorage()).getClusterById(db.getClusterIdByName(clusterName));
+        cluster = db.getStorage().getClusterById(db.getClusterIdByName(clusterName));
 
         try {
           json.beginObject(2, true, null);
