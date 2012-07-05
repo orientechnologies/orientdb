@@ -1042,4 +1042,12 @@ public class OrientJdbcResultSet implements ResultSet {
 
 	public void clearWarnings() throws SQLException {
 	}
+
+	public <T> T getObject(int arg0, Class<T> arg1) throws SQLException {
+		return null;
+	}
+
+	public <T> T getObject(String arg0, Class<T> arg1) throws SQLException {
+		return null;
+	}
 }

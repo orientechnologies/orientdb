@@ -20,7 +20,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 /**
- * 
+ * @author Roberto Franchini (CELI Srl - franchini@celi.it)
  * @author Johann Sorel (Geomatys)
  */
 class OrientJdbcParameterMetadata implements ParameterMetaData {

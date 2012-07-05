@@ -35,6 +35,7 @@ import java.sql.Statement;
 import java.sql.Struct;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.Executor;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -42,6 +43,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 /**
  * TODO Add authors name
  * 
+ * @author Roberto Franchini()
  * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci@gmail.com)
  */
 public class OrientJdbcConnection implements Connection {
@@ -279,6 +281,31 @@ public class OrientJdbcConnection implements Connection {
 	public ODatabaseDocumentTx getDatabase() {
 
 		return database;
+	}
+
+	public void abort(Executor arg0) throws SQLException {
+		// TODO Auto-generated method stub
+
+	}
+
+	public int getNetworkTimeout() throws SQLException {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	public String getSchema() throws SQLException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public void setNetworkTimeout(Executor arg0, int arg1) throws SQLException {
+		// TODO Auto-generated method stub
+
+	}
+
+	public void setSchema(String arg0) throws SQLException {
+		// TODO Auto-generated method stub
+
 	}
 
 }

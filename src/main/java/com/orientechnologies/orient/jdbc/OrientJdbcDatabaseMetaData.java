@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 /**
  * @author Roberto Franchini (CELI srl - franchini--at--celi.it)
  * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci@gmail.com)
- * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci@gmail.com)
  */
 public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 	private final OrientJdbcConnection connection;
@@ -972,6 +971,14 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
 	public <T> T unwrap(Class<T> iface) throws SQLException {
 
+		return null;
+	}
+
+	public boolean generatedKeyAlwaysReturned() throws SQLException {
+		return false;
+	}
+
+	public ResultSet getPseudoColumns(String arg0, String arg1, String arg2, String arg3) throws SQLException {
 		return null;
 	}
 
