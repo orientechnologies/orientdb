@@ -25,10 +25,4 @@
 		<keep-alive-seconds>60</keep-alive-seconds>
 	</executor-service>
 
-	<!-- Add your own semaphore configurations here: <semaphore name="default"> <initial-permits>10</initial-permits> <semaphore-factory enabled="true"> <class-name>com.acme.MySemaphoreFactory</class-name> 
-		</semaphore-factory> </semaphore> -->
-
-	<!-- Add your own map merge policy implementations here: <merge-policies> <map-merge-policy name="MY_MERGE_POLICY"> <class-name>com.acme.MyOwnMergePolicy</class-name> 
-		</map-merge-policy> </merge-policies> -->
-
 </hazelcast>

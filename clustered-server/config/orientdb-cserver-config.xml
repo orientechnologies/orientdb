@@ -6,31 +6,8 @@
 			<parameters>
 				<!-- <parameter name="alias" value="europe1" /> -->
 				<parameter name="enabled" value="true" />
+				<parameter name="default.distributed.db" value="${ORIENTDB_HOME}/config/default-distributed-db.json" />
 				<parameter name="configuration" value="${ORIENTDB_HOME}/config/hazelcast.xml" />
-				<parameter name="db.*"
-					value="{
-					    'servers' : {
-					      '*' : {
-							'defaultCluster' : 2,
-							'synchronization' : true,
-							'clusters' : {
-							  '*' : {
-						        'synchronization' : true, 
-								'operations' : {
-						            'create' : { 'direction' : 'in-out', 'mode' : 'synchronous' },
-						            'read'   : { 'direction' : 'in' },
-						            'update' : { 'direction' : 'in-out', 'mode' : 'synchronous' },
-						            'delete' : { 'direction' : 'in-out', 'mode' : 'synchronous' }
-						        },
-                                'offlineMaxBuffer' : 1000000
-                                },
-								'internal' : { 'synchronization' : false },
-								'index' : { 'synchronization' : false }
-							},
-							'classes':{}
-							}
-						}
-					}" />
 			</parameters>
 		</handler>
 		<!-- AUTOMATIC BACKUP, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->

@@ -3,30 +3,10 @@
 	<handlers>
 		<handler class="com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin">
 			<parameters>
-				<parameter name="alias" value="europe1" />
+				<parameter value="europe1" name="alias" />
 				<parameter value="true" name="enabled" />
 				<parameter value="src/test/resources/hazelcast-1.xml" name="configuration" />
-				<parameter name="db.*"
-					value="{
-							'synchronization' : true,
-							'autoAlign' : true,
-							'autoDeploy' : true,
-							'clusters' : {
-                              'internal' : { 'synchronization' : false },
-                              'index' : { 'synchronization' : false },
-							  '*' : {
-						        'synchronization' : true, 
-                                'offlineMaxBuffer' : 1000000,
-								'operations' : {
-						            'record_create' : { 'strategy' : 'distributed', 'mode' : 'synchronous' },
-						            'record_read'   : { 'strategy' : 'local' },
-						            'record_update' : { 'strategy' : 'distributed', 'mode' : 'synchronous' },
-						            'record_delete' : { 'strategy' : 'distributed', 'mode' : 'synchronous' },
-						            'command'       : { 'strategy' : 'distributed', 'mode' : 'synchronous' }
-						        }
-                              }
-							}
-                          }" />
+				<parameter name="default.distributed.db" value="src/test/resources/default-distributed-db.json" />
 			</parameters>
 		</handler>
 		<handler class="com.orientechnologies.orient.server.handler.OAutomaticBackup">
@@ -74,9 +54,9 @@
 	<users>
 		<user resources="*" password="09725FA08AB11932720F67BF78907BCB3A3345624E0B93AEF773A8A79AFB1B6D" name="root" />
 		<user resources="connect,server.listDatabases" password="guest" name="guest" />
+		<user resources="database.passthrough" password="79498491C4D4F1360816D003E2004BC04606AA1C31B1A0E3BCF091A30EFDAB7D" name="replicator" />
 	</users>
 	<properties>
-		<!-- <entry value="com.orientechnologies.orient.server.hazelcast.OHazelcastCache" name="cache.level2.impl" /> -->
 		<entry value="info" name="log.console.level" />
 		<entry value="fine" name="log.file.level" />
 	</properties>

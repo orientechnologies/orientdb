@@ -17,8 +17,10 @@ package com.orientechnologies.orient.server.journal;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.log.OLogManager;
@@ -140,12 +142,12 @@ public class ODatabaseJournal {
   public Iterator<Long> browse(final long[] iRemoteLastOperationId) throws IOException {
     final LinkedList<Long> result = new LinkedList<Long>();
 
-    long[] localOperationId = getLastOperationId();
-
     lock.acquireExclusiveLock();
     try {
-
       long fileOffset = file.getFilledUpTo();
+
+      long[] localOperationId = getOperationId(fileOffset);
+
       while ((localOperationId[0] > iRemoteLastOperationId[0])
           || (localOperationId[0] == iRemoteLastOperationId[0] && localOperationId[1] > iRemoteLastOperationId[1])) {
 
@@ -163,8 +165,30 @@ public class ODatabaseJournal {
     }
   }
 
+  public List<ORecordId> getUncommittedOperations() throws IOException {
+    final List<ORecordId> uncommittedRecords = new ArrayList<ORecordId>();
+
+    // FIND LAST COMMITTED OPERATION
+    long fileOffset = file.getFilledUpTo();
+    while (fileOffset > 0) {
+      if (getOperationStatus(fileOffset))
+        break;
+
+      final OAbstractDistributedTask<?> op = getOperation(fileOffset);
+
+      OLogManager.instance().warn(this, "DISTRIBUTED Found uncommitted operation %s", op);
+
+      if (op instanceof OAbstractRecordDistributedTask<?>)
+        // COLLECT THE RECORD TO BE RETRIEVED FROM OTHER SERVERS
+        uncommittedRecords.add(((OAbstractRecordDistributedTask<?>) op).getRid());
+
+      fileOffset = getPreviousOperation(fileOffset);
+    }
+    return uncommittedRecords;
+  }
+
   /**
-   * Change the status of an operation
+   * Changes the status of an operation
    */
   public void changeOperationStatus(final long iOffsetEndOperation, final ORecordId iRid) throws IOException {
     lock.acquireExclusiveLock();
@@ -182,6 +206,24 @@ public class ODatabaseJournal {
         file.writeLong(offset + OFFSET_VARDATA + OBinaryProtocol.SIZE_SHORT, iRid.clusterPosition);
 
       file.synch();
+
+    } finally {
+      lock.releaseExclusiveLock();
+    }
+  }
+
+  /**
+   * Return the operation status.
+   * 
+   * @return true if the operation has been committed, otherwise false
+   */
+  public boolean getOperationStatus(final long iOffsetEndOperation) throws IOException {
+    lock.acquireExclusiveLock();
+    try {
+      final int varSize = file.readInt(iOffsetEndOperation - OFFSET_BACK_SIZE);
+      final long offset = iOffsetEndOperation - OFFSET_BACK_SIZE - varSize - OFFSET_VARDATA;
+
+      return file.readByte(offset + OFFSET_STATUS) == 1;
 
     } finally {
       lock.releaseExclusiveLock();

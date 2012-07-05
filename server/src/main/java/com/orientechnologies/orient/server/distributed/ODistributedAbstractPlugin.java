@@ -15,11 +15,15 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -39,13 +43,15 @@ import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
  */
 public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract implements ODistributedServerManager,
     ODatabaseLifecycleListener {
-  public static final String                  REPLICATOR_USER       = "replicator";
+  private static final String                 PAR_DEF_DISTRIB_DB_CONFIG  = "default.distributed.db";
+  private static final String                 FILE_DISTRIBUTED_DB_CONFIG = "distributed-config.json";
+  public static final String                  REPLICATOR_USER            = "replicator";
   protected OServer                           serverInstance;
-  protected boolean                           enabled               = true;
-  protected String                            alias                 = null;
-  protected long                              offlineBuffer         = -1;
-  protected Map<String, ODocument>            databaseConfiguration = new ConcurrentHashMap<String, ODocument>();
-  protected Map<String, OStorageSynchronizer> synchronizers         = new HashMap<String, OStorageSynchronizer>();
+  protected boolean                           enabled                    = true;
+  protected String                            alias                      = null;
+  protected long                              offlineBuffer              = -1;
+  protected Map<String, OStorageSynchronizer> synchronizers              = new HashMap<String, OStorageSynchronizer>();
+  protected Map<String, ODocument>            databaseConfiguration      = new HashMap<String, ODocument>();
 
   @Override
   public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
@@ -61,19 +67,15 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
         }
       } else if (param.name.equalsIgnoreCase("alias"))
         alias = param.value;
-      else if (param.name.startsWith("db."))
-        try {
-          databaseConfiguration.put(param.name.substring("db.".length()),
-              (ODocument) new ODocument().fromJSON(param.value.trim(), "noMap"));
-        } catch (Exception e) {
-          throw new OConfigurationException("Error on loading distributed configuration for database '" + param.name + "'", e);
-        }
+      else if (param.name.startsWith(PAR_DEF_DISTRIB_DB_CONFIG))
+        if (loadDatabaseConfiguration("*", OSystemVariableResolver.resolveSystemVariables(param.value)) == null)
+          throw new OConfigurationException("Error on loading distributed database configuration");
     }
 
     // CHECK THE CONFIGURATION
     if (!databaseConfiguration.containsKey("*"))
-      throw new OConfigurationException(
-          "Invalid cluster configuration: cannot find settings for the default synchronization as 'db.*'");
+      throw new OConfigurationException("Invalid cluster configuration: cannot find settings '" + PAR_DEF_DISTRIB_DB_CONFIG
+          + "' for the default database");
 
     if (serverInstance.getUser(REPLICATOR_USER) == null)
       // CREATE THE REPLICATOR USER
@@ -146,9 +148,17 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
   public ODocument getDatabaseConfiguration(final String iDatabaseName) {
     // NOT FOUND: GET BY CONFIGURATION ON LOCAL NODE
     ODocument cfg = databaseConfiguration.get(iDatabaseName);
-    if (cfg == null)
-      // NOT FOUND: GET THE DEFAULT ONE
-      cfg = databaseConfiguration.get("*");
+    if (cfg == null) {
+      // TRY LOADING THE DATABASE CONFIG FILE
+      cfg = loadDatabaseConfiguration(iDatabaseName, serverInstance.getDatabaseDirectory() + iDatabaseName + "/"
+          + FILE_DISTRIBUTED_DB_CONFIG);
+
+      if (cfg == null) {
+        // NOT FOUND: GET THE DEFAULT ONE
+        cfg = databaseConfiguration.get("*");
+        saveDatabaseConfiguration(iDatabaseName, cfg);
+      }
+    }
 
     return cfg;
   }
@@ -177,6 +187,55 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
         synchronizers.put(iDatabaseName, sync);
       }
       return sync;
+    }
+  }
+
+  protected ODocument loadDatabaseConfiguration(final String iDatabaseName, final String filePath) {
+    File file = new File(filePath);
+    if (!file.exists() || file.length() == 0)
+      return null;
+
+    OLogManager.instance().config(this, "Loading distributed configuration for database '%s'", iDatabaseName);
+
+    FileInputStream f = null;
+    try {
+      f = new FileInputStream(file);
+      final byte[] buffer = new byte[(int) file.length()];
+      f.read(buffer);
+
+      ODocument doc = (ODocument) new ODocument().fromJSON(new String(buffer), "noMap");
+      databaseConfiguration.put(iDatabaseName, doc);
+      return doc;
+
+    } catch (Exception e) {
+    } finally {
+      if (f != null)
+        try {
+          f.close();
+        } catch (IOException e) {
+        }
+    }
+    return null;
+  }
+
+  protected void saveDatabaseConfiguration(final String iDatabaseName, final ODocument cfg) {
+    File file = new File(serverInstance.getDatabaseDirectory() + iDatabaseName + "/" + FILE_DISTRIBUTED_DB_CONFIG);
+
+    databaseConfiguration.put(iDatabaseName, cfg);
+
+    OLogManager.instance().config(this, "Saving distributed configuration for database '%s'", iDatabaseName);
+
+    FileOutputStream f = null;
+    try {
+      f = new FileOutputStream(file);
+      f.write(cfg.toJSON().getBytes());
+    } catch (Exception e) {
+    } finally {
+      if (f != null)
+        try {
+          f.close();
+        } catch (IOException e) {
+        }
     }
   }
 }
