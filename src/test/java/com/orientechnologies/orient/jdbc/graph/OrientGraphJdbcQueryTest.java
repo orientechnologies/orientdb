@@ -41,6 +41,7 @@ import junit.framework.Assert;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -66,6 +67,7 @@ public class OrientGraphJdbcQueryTest extends OrientGraphJdbcBaseTest {
 	}
 
 	@Test
+	@Ignore
 	public void testQuery() {
 		String query = "select * from OGraphVertex where description like '%Production Cell%'";
 		System.out.println("Executing: " + query);
@@ -110,6 +112,7 @@ public class OrientGraphJdbcQueryTest extends OrientGraphJdbcBaseTest {
 	}
 
 	@Test
+	@Ignore
 	public void shouldLoadSingleBinaryData() throws FileNotFoundException, IOException, SQLException, NoSuchAlgorithmException {
 		File binary_file = new File("./working/output_binary.pdf");
 		binary_file.delete();
@@ -132,6 +135,7 @@ public class OrientGraphJdbcQueryTest extends OrientGraphJdbcBaseTest {
 	}
 
 	@Test
+	@Ignore
 	public void shouldLoadBlobFromMultipleBinaryData() throws FileNotFoundException, IOException, SQLException, NoSuchAlgorithmException {
 		File binaryFile = new File("./working/output_blob.pdf");
 		binaryFile.delete();
