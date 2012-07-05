@@ -351,6 +351,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       cfg = super.getDatabaseConfiguration(iDatabaseName);
       // STORE IT IN THE CLUSTER CONFIGURATION
       distributedConfiguration.put("db." + iDatabaseName, cfg);
+    } else {
+      // SAVE THE MOST RECENT CONFIG
+      saveDatabaseConfiguration(iDatabaseName, cfg);
     }
     return cfg;
   }
