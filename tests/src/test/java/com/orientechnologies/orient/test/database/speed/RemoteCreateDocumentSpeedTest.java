@@ -33,6 +33,7 @@ public class RemoteCreateDocumentSpeedTest extends OrientMonoThreadTest {
   private ODatabaseDocument database;
   private ODocument         record;
   private Date              date  = new Date();
+  private long              beginRecords;
   private final static long DELAY = 0;
 
   public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
@@ -41,7 +42,7 @@ public class RemoteCreateDocumentSpeedTest extends OrientMonoThreadTest {
   }
 
   public RemoteCreateDocumentSpeedTest() throws InstantiationException, IllegalAccessException {
-    super(1000000);
+    super(100000);
   }
 
   @Override
@@ -53,6 +54,9 @@ public class RemoteCreateDocumentSpeedTest extends OrientMonoThreadTest {
 
     database.declareIntent(new OIntentMassiveInsert());
     database.begin(TXTYPE.NOTX);
+
+    beginRecords = database.countClass("Account");
+    System.out.println("Total accounts: " + beginRecords);
   }
 
   @Override
@@ -82,6 +86,9 @@ public class RemoteCreateDocumentSpeedTest extends OrientMonoThreadTest {
 
   @Override
   public void deinit() {
+    final long endRecords = database.countClass("Account");
+    System.out.println("Total accounts: " + endRecords + ". Expected: " + (beginRecords + data.getCycles()));
+
     System.out.println(OProfiler.getInstance().dump());
 
     if (database != null)
