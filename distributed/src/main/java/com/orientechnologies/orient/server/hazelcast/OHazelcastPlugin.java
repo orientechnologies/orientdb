@@ -29,6 +29,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.locks.Lock;
 
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.core.DistributedTask;
@@ -37,7 +38,6 @@ import com.hazelcast.core.EntryListener;
 import com.hazelcast.core.ExecutionCallback;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.ILock;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MemberLeftException;
@@ -69,10 +69,7 @@ import com.orientechnologies.orient.server.task.OAlignRequestDistributedTask;
  * 
  */
 public class OHazelcastPlugin extends ODistributedAbstractPlugin implements MembershipListener, EntryListener<String, Object> {
-  /**
-   * 
-   */
-  private static final int                  SEND_RETRY_MAX     = 30;
+  private static final int                  SEND_RETRY_MAX     = 100;
   private int                               nodeNumber;
   private String                            localNodeId;
   private String                            configFile         = "hazelcast.xml";
@@ -80,7 +77,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   private long                              timeOffset;
   private long                              runId              = -1;
   private volatile String                   status             = "starting";
-  private Set<String>                       pendingAlignments  = new HashSet<String>();
+  private Map<String, Boolean>              pendingAlignments  = new HashMap<String, Boolean>();
 
   private volatile static HazelcastInstance hazelcastInstance;
 
@@ -88,8 +85,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   @Override
-  public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
-    super.config(oServer, iParams);
+  public void config(final OServer iServer, final OServerParameterConfiguration[] iParams) {
+    super.config(iServer, iParams);
 
     for (OServerParameterConfiguration param : iParams) {
       if (param.name.equalsIgnoreCase("configuration"))
@@ -170,10 +167,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     }
 
     final DistributedTask<Object> task = new DistributedTask<Object>((Callable<Object>) iTask, clusterMember);
-    hazelcastInstance.getExecutorService().execute(task);
 
     try {
-      return task.get();
+      return executeOperation(task, iTask.getMode(), null);
     } catch (Exception e) {
       OLogManager.instance().error(this, "DISTRIBUTED -> error on execution of operation", e);
       throw new ODistributedException("Error on executing remote operation against node '" + iNodeId + "'", e);
@@ -460,11 +456,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           try {
             final long[] lastOperationId = entry.getValue().getLog().getLastOperationId();
 
-            OLogManager.instance().warn(this, "DISTRIBUTED --> send align request for database %s", databaseName);
+            OLogManager.instance().warn(this, "DISTRIBUTED --> send align request in broadcast for database %s", databaseName);
 
             synchronized (pendingAlignments) {
               for (String node : remoteClusterNodes.keySet()) {
-                pendingAlignments.add(node + "/" + databaseName);
+                pendingAlignments.put(node + "/" + databaseName, Boolean.FALSE);
+
+                OLogManager.instance().info(this, "DISTRIBUTED ->[%s/%s] setting node in alignment state", node, databaseName);
               }
             }
 
@@ -482,13 +480,54 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   @Override
   public void endAlignment(final String iNode, final String iDatabaseName) {
     synchronized (pendingAlignments) {
-      if (!pendingAlignments.remove(iNode + "/" + iDatabaseName)) {
+      if (pendingAlignments.remove(iNode + "/" + iDatabaseName) == null) {
         OLogManager.instance().error(this,
             "DISTRIBUTED -> received response for an alignment against an unknown node %s database %s", iNode, iDatabaseName);
       }
 
       if (pendingAlignments.isEmpty())
         setStatus("online");
+      else {
+        // WAKE UP ALL THE POSTPONED ALIGNMENTS
+        for (Entry<String, Boolean> entry : pendingAlignments.entrySet()) {
+          if (entry.getValue()) {
+            final String[] parts = entry.getKey().split("/");
+            final String node = parts[0];
+            final String databaseName = parts[1];
+
+            final OStorageSynchronizer synch = synchronizers.get(databaseName);
+
+            long[] lastOperationId;
+
+            try {
+              lastOperationId = synch.getLog().getLastOperationId();
+
+              OLogManager.instance().info(this, "DISTRIBUTED ->[%s/%s] resend alignment request from %d:%d", node, databaseName,
+                  lastOperationId[0], lastOperationId[1]);
+
+              sendOperation2Node(node, new OAlignRequestDistributedTask(getLocalNodeId(), databaseName,
+                  EXECUTION_MODE.ASYNCHRONOUS, lastOperationId[0], lastOperationId[1]));
+
+            } catch (IOException e) {
+              OLogManager.instance().warn(this, "DISTRIBUTED -> error on retrieve last operation id from the log for db %s",
+                  databaseName);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @Override
+  public void postponeAlignment(final String iNode, final String iDatabaseName) {
+    synchronized (pendingAlignments) {
+      final String key = iNode + "/" + iDatabaseName;
+      if (!pendingAlignments.containsKey(key)) {
+        OLogManager.instance().error(this,
+            "DISTRIBUTED <-[%s/%s] received response to postpone an alignment against an unknown node", iNode, iDatabaseName);
+      }
+
+      pendingAlignments.put(key, Boolean.TRUE);
     }
   }
 
@@ -598,13 +637,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return getHazelcastInstance().getMap("orientdb");
   }
 
-  protected ILock getLock() {
-    return getHazelcastInstance().getLock("orientdb");
+  public Lock getLock(final String iName) {
+    return getHazelcastInstance().getLock(iName);
   }
 
   protected Object executeOperation(final DistributedTask<Object> task, final EXECUTION_MODE iMode,
       final ExecutionCallback<Object> callback) throws ExecutionException, InterruptedException {
-    if (iMode == EXECUTION_MODE.ASYNCHRONOUS)
+    if (iMode == EXECUTION_MODE.ASYNCHRONOUS && callback != null)
       task.setExecutionCallback(callback);
 
     hazelcastInstance.getExecutorService().execute(task);

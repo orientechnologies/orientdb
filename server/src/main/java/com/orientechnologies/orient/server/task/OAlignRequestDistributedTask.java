@@ -21,6 +21,7 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -56,7 +57,7 @@ public class OAlignRequestDistributedTask extends OAbstractDistributedTask<Integ
     OLogManager.instance().warn(this, "DISTRIBUTED <-[%s/%s] align request starting from %d.%d", nodeSource, databaseName,
         lastRunId, lastOperationId);
 
-    int aligned = 0;
+    int aligned;
 
     final ODistributedServerManager dManager = getDistributedServerManager();
 
@@ -65,31 +66,42 @@ public class OAlignRequestDistributedTask extends OAbstractDistributedTask<Integ
     final OStorageSynchronizer synchronizer = getDatabaseSynchronizer();
     final ODatabaseJournal log = synchronizer.getLog();
 
-    final OMultipleDistributedTasks tasks = new OMultipleDistributedTasks(localNode, databaseName, EXECUTION_MODE.SYNCHRONOUS);
-    final List<Long> positions = new ArrayList<Long>();
+    // GET THE DISTRIBUTED LOCK TO ALIGN THE DATABASE
+    final Lock alignmentLock = dManager.getLock("align." + databaseName);
+    if (alignmentLock.tryLock())
+      try {
+        aligned = 0;
+        final OMultipleDistributedTasks tasks = new OMultipleDistributedTasks(localNode, databaseName, EXECUTION_MODE.SYNCHRONOUS);
+        final List<Long> positions = new ArrayList<Long>();
 
-    for (Iterator<Long> it = log.browse(new long[] { lastRunId, lastOperationId }); it.hasNext();) {
-      final long pos = it.next();
+        for (Iterator<Long> it = log.browse(new long[] { lastRunId, lastOperationId }); it.hasNext();) {
+          final long pos = it.next();
 
-      final OAbstractDistributedTask<?> operation = log.getOperation(pos);
+          final OAbstractDistributedTask<?> operation = log.getOperation(pos);
 
-      OLogManager.instance().warn(this, "DISTRIBUTED ->[%s/%s] operation %s", nodeSource, databaseName, operation);
+          OLogManager.instance().warn(this, "DISTRIBUTED ->[%s/%s] operation %s", nodeSource, databaseName, operation);
 
-      operation.setNodeSource(localNode);
-      operation.setDatabaseName(databaseName);
-      operation.setMode(EXECUTION_MODE.SYNCHRONOUS);
+          operation.setNodeSource(localNode);
+          operation.setDatabaseName(databaseName);
+          operation.setMode(EXECUTION_MODE.SYNCHRONOUS);
 
-      tasks.addTask(operation);
-      positions.add(pos);
+          tasks.addTask(operation);
+          positions.add(pos);
 
-      if (tasks.getTasks() >= OP_BUFFER)
-        aligned += flushBufferedTasks(dManager, synchronizer, tasks, positions);
-    }
+          if (tasks.getTasks() >= OP_BUFFER)
+            aligned += flushBufferedTasks(dManager, synchronizer, tasks, positions);
+        }
 
-    if (tasks.getTasks() > 0)
-      aligned += flushBufferedTasks(dManager, synchronizer, tasks, positions);
+        if (tasks.getTasks() > 0)
+          aligned += flushBufferedTasks(dManager, synchronizer, tasks, positions);
 
-    OLogManager.instance().warn(this, "DISTRIBUTED ->[%s/%s] aligned %d operations", nodeSource, databaseName, aligned);
+        OLogManager.instance().warn(this, "DISTRIBUTED ->[%s/%s] aligned %d operations", nodeSource, databaseName, aligned);
+      } finally {
+        alignmentLock.unlock();
+      }
+    else
+      // SEND BACK -1 TO RESEND THE UPDATED ALIGNMENT REQUEST
+      aligned = -1;
 
     // SEND TO THE REQUESTER NODE THE TASK TO EXECUTE
     dManager.sendOperation2Node(nodeSource, new OAlignResponseDistributedTask(localNode, databaseName,

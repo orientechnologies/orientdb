@@ -40,8 +40,6 @@ public class ODeleteRecordDistributedTask extends OAbstractRecordDistributedTask
   public ODeleteRecordDistributedTask(final String nodeSource, final String iDbName, final EXECUTION_MODE iMode,
       final ORecordId iRid, final int iVersion) {
     super(nodeSource, iDbName, iMode, iRid, iVersion);
-    OLogManager.instance().warn(this, "DISTRIBUTED -> route DELETE RECORD db %s %s{%s} v.%d", nodeSource, databaseName, rid,
-        version);
   }
 
   public ODeleteRecordDistributedTask(final long iRunId, final long iOperationId, final ORecordId iRid, final int iVersion) {
@@ -50,7 +48,7 @@ public class ODeleteRecordDistributedTask extends OAbstractRecordDistributedTask
 
   @Override
   protected Boolean executeOnLocalNode(final OStorageSynchronizer dbSynchronizer) {
-    OLogManager.instance().warn(this, "DISTRIBUTED <- DELETE RECORD db %s %s{%s} v.%d", nodeSource, databaseName, rid, version);
+    OLogManager.instance().warn(this, "DISTRIBUTED <-[%s/%s] DELETE RECORD %s v.%d", nodeSource, databaseName, rid, version);
     return getStorage().deleteRecord(rid, version, 0, null);
   }
 

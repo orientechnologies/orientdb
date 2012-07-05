@@ -25,8 +25,10 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
+import com.orientechnologies.orient.server.distributed.OServerOfflineException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
+import com.orientechnologies.orient.server.task.OAbstractDistributedTask.STATUS;
 
 /**
  * Distributed task used for synchronization.
@@ -59,7 +61,12 @@ public class OSQLCommandDistributedTask extends OAbstractDistributedTask<Object>
 
   @Override
   public Object call() throws Exception {
-    OLogManager.instance().debug(this, "DISTRIBUTED <- command: %s", text.toString());
+    if (OLogManager.instance().isDebugEnabled())
+      OLogManager.instance().debug(this, "DISTRIBUTED <- command: %s", text.toString());
+
+    if (status != STATUS.ALIGN && !getDistributedServerManager().checkStatus("online"))
+      // NODE NOT ONLINE, REFUSE THE OEPRATION
+      throw new OServerOfflineException();
 
     final ODatabaseDocumentTx db = (ODatabaseDocumentTx) OServerMain.server().openDatabase("document", databaseName,
         replicatorUser.name, replicatorUser.password);

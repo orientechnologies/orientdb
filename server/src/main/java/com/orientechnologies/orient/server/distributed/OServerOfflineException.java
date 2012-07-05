@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-
 /**
  * Exception thrown during distributed operation and the server is not ready to execute an operation because it's not online.
  * 
@@ -26,17 +25,5 @@ public class OServerOfflineException extends ODistributedException {
   private static final long serialVersionUID = 1L;
 
   public OServerOfflineException() {
-  }
-
-  public OServerOfflineException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
-  public OServerOfflineException(String message) {
-    super(message);
-  }
-
-  public OServerOfflineException(Throwable cause) {
-    super(cause);
   }
 }

@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.distributed;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.locks.Lock;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.task.OAbstractDistributedTask;
@@ -83,5 +84,20 @@ public interface ODistributedServerManager {
 
   public OStorageSynchronizer getDatabaseSynchronizer(String iDatabaseName);
 
+  /**
+   * Communicates the alignment has been postponed. Current server will send an updated request of alignment against the postponed
+   * node.
+   */
+  public void postponeAlignment(String iNode, String iDatabaseName);
+
   public void endAlignment(String nodeSource, String databaseName);
+
+  /**
+   * Gets a distributed lock
+   * 
+   * @param iLockName
+   *          name of the lock
+   * @return
+   */
+  public Lock getLock(String iLockName);
 }

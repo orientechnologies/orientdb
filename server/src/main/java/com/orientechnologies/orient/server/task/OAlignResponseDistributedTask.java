@@ -44,11 +44,20 @@ public class OAlignResponseDistributedTask extends OAbstractDistributedTask<Inte
 
   @Override
   public Integer call() throws Exception {
-    OLogManager.instance().warn(this, "DISTRIBUTED <- alignment ended from %s database %s: %d operations", nodeSource,
-        databaseName, aligned);
-
     final ODistributedServerManager dManager = getDistributedServerManager();
-    dManager.endAlignment(nodeSource, databaseName);
+
+    if (aligned == -1) {
+      // ALIGNMENT POSTPONED
+      OLogManager.instance().warn(this, "DISTRIBUTED <-[%s/%s] alignment postponed", nodeSource, databaseName);
+
+      dManager.postponeAlignment(nodeSource, databaseName);
+
+    } else {
+      // ALIGNMENT DONE
+      OLogManager.instance().warn(this, "DISTRIBUTED <-[%s/%s] alignment ended: %d operation(s)", nodeSource, databaseName, aligned);
+
+      dManager.endAlignment(nodeSource, databaseName);
+    }
     return null;
   }
 

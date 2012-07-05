@@ -45,8 +45,6 @@ public class OUpdateRecordDistributedTask extends OAbstractRecordDistributedTask
     super(iNodeSource, iDbName, iMode, iRid, iVersion);
     content = iContent;
     recordType = iRecordType;
-    OLogManager.instance().warn(this, "DISTRIBUTED -> route UPDATE RECORD in %s mode to %s %s{%s} v.%d", iMode, nodeSource,
-        iDbName, iRid, iVersion);
   }
 
   public OUpdateRecordDistributedTask(final long iRunId, final long iOperationId, final ORecordId iRid, final byte[] iContent,
@@ -58,7 +56,7 @@ public class OUpdateRecordDistributedTask extends OAbstractRecordDistributedTask
 
   @Override
   public Integer executeOnLocalNode(final OStorageSynchronizer dbSynchronizer) {
-    OLogManager.instance().warn(this, "DISTRIBUTED <- UPDATE RECORD db %s %s{%s} v.%d", nodeSource, databaseName, rid, version);
+    OLogManager.instance().warn(this, "DISTRIBUTED <-[%s/%s] UPDATE RECORD %s v.%d", nodeSource, databaseName, rid, version);
     return getStorage().updateRecord(rid, content, version, recordType, 0, null);
   }
 

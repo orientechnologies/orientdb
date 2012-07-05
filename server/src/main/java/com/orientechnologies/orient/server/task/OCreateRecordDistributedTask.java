@@ -57,7 +57,7 @@ public class OCreateRecordDistributedTask extends OAbstractRecordDistributedTask
 
   @Override
   protected OPhysicalPosition executeOnLocalNode(final OStorageSynchronizer dbSynchronizer) {
-    OLogManager.instance().warn(this, "DISTRIBUTED <- CREATE RECORD db %s %s{%s} v.%d", nodeSource, databaseName, rid, version);
+    OLogManager.instance().warn(this, "DISTRIBUTED <-[%s/%s] CREATE RECORD %s v.%d", nodeSource, databaseName, rid, version);
     return getStorage().createRecord(0, rid, content, version, recordType, 0, null);
   }
 
