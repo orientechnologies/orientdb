@@ -72,7 +72,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   /**
    * 
    */
-  private static final int                  SEND_RETRY_MAX     = 100;
+  private static final int                  SEND_RETRY_MAX     = 30;
   private int                               nodeNumber;
   private String                            localNodeId;
   private String                            configFile         = "hazelcast.xml";
@@ -234,7 +234,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
               OLogManager.instance().warn(this, "DISTRIBUTED -> remote node %s is not online, retrying %d...", nodeId, retry + 1);
               // WAIT A BIT
               try {
-                Thread.sleep(200);
+                Thread.sleep(200 + (retry * 50));
               } catch (InterruptedException ex) {
                 Thread.interrupted();
               }
@@ -252,8 +252,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       } catch (Exception e) {
         OLogManager.instance().error(this, "DISTRIBUTED -> error on execution of operation in %s mode against node %s", e,
             EXECUTION_MODE.SYNCHRONOUS, nodeId);
-        throw new ExecutionException("error on execution of operation in " + EXECUTION_MODE.SYNCHRONOUS + " mode against node %s",
-            e);
+        throw new ExecutionException("error on execution of operation in " + EXECUTION_MODE.SYNCHRONOUS + " mode against node "
+            + nodeId, e);
       }
     }
 
@@ -318,7 +318,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           OLogManager.instance().warn(this, "DISTRIBUTED -> a remote node is not online, retrying %d...", retry + 1);
           // WAIT A BIT
           try {
-            Thread.sleep(200);
+            Thread.sleep(200 + (retry * 50));
           } catch (InterruptedException ex) {
             Thread.interrupted();
           }
