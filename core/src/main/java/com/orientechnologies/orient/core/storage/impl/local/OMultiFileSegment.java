@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
-import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 
 public class OMultiFileSegment extends OSegment {
   protected OStorageSegmentConfiguration config;
@@ -87,9 +86,9 @@ public class OMultiFileSegment extends OSegment {
     for (OFile file : files)
       if (!file.open()) {
         // LAST TIME THE FILE WAS NOT CLOSED IN SOFT WAY
-        OLogManager.instance().warn(this,
-            "segment file " + OFileUtils.getPath(file.getName()) + " was not closed correctly last time. Checking segments...");
-        OLogManager.instance().warn(this, "OK");
+        OLogManager.instance().warn(this, "segment file '%s' was not closed correctly last time",
+            OFileUtils.getPath(file.getName()));
+        // TODO VERIFY DATA?
       }
   }
 
