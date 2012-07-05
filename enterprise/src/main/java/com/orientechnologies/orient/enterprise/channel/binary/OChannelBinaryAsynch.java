@@ -40,7 +40,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
   private int                 currentSessionId;
   private final int           maxUnreadResponses;
 
-  private static final int    MAX_LENGTH_DEBUG = 100;
+  private static final int    MAX_LENGTH_DEBUG = 150;
 
   public OChannelBinaryAsynch(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
     super(iSocket, iConfig);
@@ -109,11 +109,8 @@ public class OChannelBinaryAsynch extends OChannelBinary {
             char c = (char) in.read();
             ++i;
 
-            if (dirtyBuffer.length() < MAX_LENGTH_DEBUG) {
-              if (dirtyBuffer.length() > 0)
-                dirtyBuffer.append('-');
+            if (dirtyBuffer.length() < MAX_LENGTH_DEBUG)
               dirtyBuffer.append(c);
-            }
           }
 
           OLogManager.instance().error(
