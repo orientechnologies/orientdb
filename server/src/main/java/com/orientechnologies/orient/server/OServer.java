@@ -535,7 +535,10 @@ public class OServer {
     if (iPermissions == null || iPermissions.length() == 0)
       throw new IllegalArgumentException("User permissions null or empty");
 
-    configuration.users = Arrays.copyOf(configuration.users, configuration.users.length + 1);
+    if (configuration.users == null)
+      configuration.users = new OServerUserConfiguration[1];
+    else
+      configuration.users = Arrays.copyOf(configuration.users, configuration.users.length + 1);
 
     if (iPassword == null)
       // AUTO GENERATE PASSWORD
