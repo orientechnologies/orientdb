@@ -155,10 +155,19 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   @SuppressWarnings("unchecked")
   public Object sendOperation2Node(final String iNodeId, final OAbstractDistributedTask<? extends Object> iTask) {
-    final Member clusterMember = remoteClusterNodes.get(iNodeId);
+    Member clusterMember = remoteClusterNodes.get(iNodeId);
+    if (clusterMember == null) {
+      // CHECK IF IS ENTERING IN THE CLUSTER AND HASN'T BEEN REGISTERED YET
+      for (Member m : hazelcastInstance.getCluster().getMembers()) {
+        if (getNodeId(m).equals(iNodeId)) {
+          clusterMember = m;
+          break;
+        }
+      }
 
-    if (clusterMember == null)
-      throw new ODistributedException("Remote node '" + iNodeId + "' is not configured");
+      if (clusterMember == null)
+        throw new ODistributedException("Remote node '" + iNodeId + "' is not configured");
+    }
 
     final DistributedTask<Object> task = new DistributedTask<Object>((Callable<Object>) iTask, clusterMember);
     hazelcastInstance.getExecutorService().execute(task);
@@ -518,8 +527,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   @Override
   public void memberAdded(final MembershipEvent iEvent) {
-//    final String nodeId = getNodeId(iEvent.getMember());
-//    remoteClusterNodes.put(nodeId, iEvent.getMember());
+    // final String nodeId = getNodeId(iEvent.getMember());
+    // remoteClusterNodes.put(nodeId, iEvent.getMember());
   }
 
   /**
