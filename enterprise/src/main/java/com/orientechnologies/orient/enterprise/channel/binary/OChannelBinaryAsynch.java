@@ -21,7 +21,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.orientechnologies.common.concur.OTimeoutException;
-import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -33,14 +32,12 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  * 
  */
 public class OChannelBinaryAsynch extends OChannelBinary {
-  private final ReentrantLock lockRead         = new ReentrantLock();
-  private final ReentrantLock lockWrite        = new ReentrantLock();
-  private boolean             channelRead      = false;
+  private final ReentrantLock lockRead    = new ReentrantLock();
+  private final ReentrantLock lockWrite   = new ReentrantLock();
+  private boolean             channelRead = false;
   private byte                currentStatus;
   private int                 currentSessionId;
   private final int           maxUnreadResponses;
-
-  private static final int    MAX_LENGTH_DEBUG = 150;
 
   public OChannelBinaryAsynch(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
     super(iSocket, iConfig);
@@ -102,23 +99,8 @@ public class OChannelBinaryAsynch extends OChannelBinary {
         if (iTimeout > 0 && (System.currentTimeMillis() - startClock) > iTimeout)
           throw new OTimeoutException("Timeout on reading response from the server for the request " + iRequesterId);
 
-        if (unreadResponse > maxUnreadResponses) {
-          final StringBuilder dirtyBuffer = new StringBuilder();
-          int i = 0;
-          while (in.available() > 0) {
-            char c = (char) in.read();
-            ++i;
-
-            if (dirtyBuffer.length() < MAX_LENGTH_DEBUG)
-              dirtyBuffer.append(c);
-          }
-
-          OLogManager.instance().error(
-              this,
-              "Received unread response from " + socket.getRemoteSocketAddress() + " for session=" + currentSessionId
-                  + ", probably corrupted data from the network connection. Cleared dirty data in the buffer (" + i + " bytes): ["
-                  + dirtyBuffer + (i > dirtyBuffer.length() ? "..." : "") + "]", OIOException.class);
-        }
+        if (unreadResponse > maxUnreadResponses)
+          clearInput();
 
         lockRead.unlock();
 
