@@ -518,8 +518,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   @Override
   public void memberAdded(final MembershipEvent iEvent) {
-    final String nodeId = getNodeId(iEvent.getMember());
-    remoteClusterNodes.put(nodeId, iEvent.getMember());
+//    final String nodeId = getNodeId(iEvent.getMember());
+//    remoteClusterNodes.put(nodeId, iEvent.getMember());
   }
 
   /**
