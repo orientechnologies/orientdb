@@ -29,7 +29,7 @@
 		  	<fileset dir="enterprise"       includes="build.xml" />
 		  	<fileset dir="client"           includes="build.xml" />
 		  	<fileset dir="server"           includes="build.xml" />
-		  	<fileset dir="clustered-server" includes="build.xml" />
+		  	<fileset dir="distributed"      includes="build.xml" />
 		  	<fileset dir="tools"            includes="build.xml" />
 		  	<fileset dir="tests"            includes="build.xml" />
 	    </subant>
