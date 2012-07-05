@@ -17,18 +17,21 @@ package com.orientechnologies.orient.server.distributed;
 
 import java.io.IOException;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal;
 import com.orientechnologies.orient.server.task.OAbstractDistributedTask;
 import com.orientechnologies.orient.server.task.OAbstractDistributedTask.STATUS;
+import com.orientechnologies.orient.server.task.OReadRecordDistributedTask;
 
 /**
  * Manages replication across clustered nodes.
@@ -52,6 +55,29 @@ public class OStorageSynchronizer {
         + iStorageName);
 
     log = new ODatabaseJournal(storage, logDirectory);
+
+    // RECOVER ALL THE UNCOMMITTED RECORDS ASKING TO THE CURRENT SERVERS FOR THEM
+    for (ORecordId rid : log.getUncommittedOperations()) {
+      try {
+        final ORawBuffer record = (ORawBuffer) iCluster.routeOperation2Node(rid,
+            new OReadRecordDistributedTask(iCluster.getLocalNodeId(), iStorageName, rid));
+
+        if (record == null)
+          // DELETE IT
+          storage.deleteRecord(rid, -1, 0, null);
+        else
+          // UPDATE IT
+          storage.updateRecord(rid, record.buffer, record.version, record.recordType, 0, null);
+
+      } catch (ExecutionException e) {
+        OLogManager
+            .instance()
+            .warn(
+                this,
+                "DISTRIBUTED Error on acquiring uncommitted record %s from other servers. The database could be unaligned with others!",
+                e, rid);
+      }
+    }
   }
 
   public void distributeOperation(final byte operation, final ORecordId rid, final OAbstractDistributedTask<?> iTask) {
