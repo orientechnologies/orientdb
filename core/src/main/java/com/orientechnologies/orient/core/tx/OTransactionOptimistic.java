@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
   private boolean              usingLog;
@@ -56,7 +57,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     checkTransaction();
     status = TXSTATUS.COMMITTING;
 
-    if (!(database.getStorage() instanceof OStorageEmbedded))
+    if (database.getStorage() instanceof OStorageProxy)
       database.getStorage().commit(this);
     else {
       final List<String> involvedIndexes = getInvolvedIndexes();

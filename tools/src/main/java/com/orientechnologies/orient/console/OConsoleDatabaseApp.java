@@ -83,7 +83,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.ODataHoleInfo;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.enterprise.command.OCommandExecutorScript;
@@ -1019,7 +1019,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           clusterId = currentDatabase.getClusterIdByName(clusterName);
           clusterType = currentDatabase.getClusterType(clusterName);
           count = currentDatabase.countClusterElements(clusterName);
-          if (currentDatabase.getStorage() instanceof OStorageEmbedded) {
+          if (!(currentDatabase.getStorage() instanceof OStorageProxy)) {
             size = currentDatabase.getClusterRecordSizeByName(clusterName);
             totalElements += count;
             totalSize += size;

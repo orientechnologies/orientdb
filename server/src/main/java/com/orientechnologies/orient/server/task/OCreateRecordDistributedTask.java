@@ -53,8 +53,6 @@ public class OCreateRecordDistributedTask extends OAbstractRecordDistributedTask
     super(nodeSource, iDbName, iMode, iRid, iVersion);
     content = iContent;
     recordType = iRecordType;
-    OLogManager.instance().warn(this, "DISTRIBUTED -> route CREATE RECORD in %s mode to %s %s{%s} v.%d", iMode, nodeSource,
-        iDbName, iRid, iVersion);
   }
 
   @Override

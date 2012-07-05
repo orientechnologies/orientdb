@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 /**
  * Shared security class. It's shared by all the database instances that point to the same storage.
@@ -53,7 +53,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
       if (user.getAccountStatus() != STATUSES.ACTIVE)
         throw new OSecurityAccessException(dbName, "User '" + iUserName + "' is not active");
 
-      if (getDatabase().getStorage() instanceof OStorageEmbedded) {
+      if (!(getDatabase().getStorage() instanceof OStorageProxy)) {
         // CHECK USER & PASSWORD
         if (!user.checkPassword(iUserPassword)) {
           // WAIT A BIT TO AVOID BRUTE FORCE

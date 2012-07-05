@@ -158,7 +158,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     connection.data.totalCommandExecutionTime += connection.data.lastCommandExecutionTime;
   }
 
-  protected void handleError(Exception e) {
+  protected void handleError(Throwable e) {
     if (OLogManager.instance().isDebugEnabled())
       OLogManager.instance().debug(this, "Caught exception", e);
 
@@ -209,12 +209,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
         }
 
         if (cause != null)
-          e = (Exception) cause;
+          e = cause;
       } while (cause != null);
     }
-
-    if (errorReason == null)
-      errorReason = OHttpUtils.STATUS_INTERNALERROR_DESCRIPTION;
 
     if (errorMessage == null) {
       // FORMAT GENERIC MESSAGE BY READING THE EXCEPTION STACK
@@ -227,6 +224,11 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
         cause = cause.getCause();
       }
       errorMessage = buffer.toString();
+    }
+
+    if (errorReason == null) {
+      errorReason = OHttpUtils.STATUS_INTERNALERROR_DESCRIPTION;
+      OLogManager.instance().error(this, "Internal server error", e);
     }
 
     try {

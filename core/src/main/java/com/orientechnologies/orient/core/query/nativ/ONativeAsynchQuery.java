@@ -27,101 +27,101 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 @SuppressWarnings("serial")
 public abstract class ONativeAsynchQuery<CTX extends OQueryContextNative> extends ONativeQuery<CTX> {
-	protected int									resultCount	= 0;
-	protected ORecordInternal<?>	record;
+  protected int                resultCount = 0;
+  protected ORecordInternal<?> record;
 
-	public ONativeAsynchQuery(final String iCluster, final CTX iQueryRecordImpl) {
-		this(iCluster, iQueryRecordImpl, null);
-	}
+  public ONativeAsynchQuery(final String iCluster, final CTX iQueryRecordImpl) {
+    this(iCluster, iQueryRecordImpl, null);
+  }
 
-	public ONativeAsynchQuery(final String iCluster, final CTX iQueryRecordImpl, final OCommandResultListener iResultListener) {
-		super(iCluster);
-		resultListener = iResultListener;
-		queryRecord = iQueryRecordImpl;
-		record = new ODocument();
-	}
+  public ONativeAsynchQuery(final String iCluster, final CTX iQueryRecordImpl, final OCommandResultListener iResultListener) {
+    super(iCluster);
+    resultListener = iResultListener;
+    queryRecord = iQueryRecordImpl;
+    record = new ODocument();
+  }
 
-	@Deprecated
-	public ONativeAsynchQuery(final ODatabaseRecord iDatabase, final String iCluster, final CTX iQueryRecordImpl,
-			final OCommandResultListener iResultListener) {
-		this(iCluster, iQueryRecordImpl, iResultListener);
-	}
+  @Deprecated
+  public ONativeAsynchQuery(final ODatabaseRecord iDatabase, final String iCluster, final CTX iQueryRecordImpl,
+      final OCommandResultListener iResultListener) {
+    this(iCluster, iQueryRecordImpl, iResultListener);
+  }
 
-	public boolean isAsynchronous() {
-		return resultListener != this;
-	}
+  public boolean isAsynchronous() {
+    return resultListener != this;
+  }
 
-	public boolean foreach(final ORecordInternal<?> iRecord) {
-		final ODocument record = (ODocument) iRecord;
-		queryRecord.setRecord(record);
+  public boolean foreach(final ORecordInternal<?> iRecord) {
+    final ODocument record = (ODocument) iRecord;
+    queryRecord.setRecord(record);
 
-		if (filter(queryRecord)) {
-			resultCount++;
-			resultListener.result(record.copy());
+    if (filter(queryRecord)) {
+      resultCount++;
+      resultListener.result(record.copy());
 
-			if (limit > -1 && resultCount == limit)
-				// BREAK THE EXECUTION
-				return false;
-		}
-		return true;
-	}
+      if (limit > -1 && resultCount == limit)
+        // BREAK THE EXECUTION
+        return false;
+    }
+    return true;
+  }
 
-	public List<ODocument> run(final Object... iArgs) {
-		final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
+  public List<ODocument> run(final Object... iArgs) {
+    final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
 
-		if (!(database.getStorage() instanceof OStorageEmbedded))
-			throw new OCommandExecutionException("Native queries can run only in embedded-local version. Not in the remote one.");
+    if (database.getStorage() instanceof OStorageProxy)
+      throw new OCommandExecutionException("Native queries can run only in embedded-local version. Not in the remote one.");
 
-		queryRecord.setSourceQuery(this);
+    queryRecord.setSourceQuery(this);
 
-		// CHECK IF A CLASS WAS CREATED
-		final OClass cls = database.getMetadata().getSchema().getClass(className);
-		if (cls == null)
-			throw new OCommandExecutionException("Class '" + className + "' was not found");
+    // CHECK IF A CLASS WAS CREATED
+    final OClass cls = database.getMetadata().getSchema().getClass(className);
+    if (cls == null)
+      throw new OCommandExecutionException("Class '" + className + "' was not found");
 
-		final ORecordIteratorClass<ORecordInternal<?>> target = new ORecordIteratorClass<ORecordInternal<?>>(database,
-				(ODatabaseRecordAbstract) database, className, isPolymorphic());
+    final ORecordIteratorClass<ORecordInternal<?>> target = new ORecordIteratorClass<ORecordInternal<?>>(database,
+        (ODatabaseRecordAbstract) database, className, isPolymorphic());
 
-		// BROWSE ALL THE RECORDS
-		for (OIdentifiable id : target) {
-			final ORecordInternal<?> record = (ORecordInternal<?>) id.getRecord();
+    // BROWSE ALL THE RECORDS
+    for (OIdentifiable id : target) {
+      final ORecordInternal<?> record = (ORecordInternal<?>) id.getRecord();
 
-			if (record != null && record.getRecordType() != ODocument.RECORD_TYPE)
-				// WRONG RECORD TYPE: JUMP IT
-				continue;
+      if (record != null && record.getRecordType() != ODocument.RECORD_TYPE)
+        // WRONG RECORD TYPE: JUMP IT
+        continue;
 
-			queryRecord.setRecord((ODocument) record);
+      queryRecord.setRecord((ODocument) record);
 
-			if (filter(queryRecord)) {
-				resultCount++;
-				resultListener.result(record.copy());
+      if (filter(queryRecord)) {
+        resultCount++;
+        resultListener.result(record.copy());
 
-				if (limit > -1 && resultCount == limit)
-					// BREAK THE EXECUTION
-					break;
-			}
-		}
+        if (limit > -1 && resultCount == limit)
+          // BREAK THE EXECUTION
+          break;
+      }
+    }
 
-		return null;
-	}
+    return null;
+  }
 
-	public ODocument runFirst(final Object... iArgs) {
-		setLimit(1);
-		execute();
-		return null;
-	}
+  public ODocument runFirst(final Object... iArgs) {
+    setLimit(1);
+    execute();
+    return null;
+  }
 
-	@Override
-	public OCommandResultListener getResultListener() {
-		return resultListener;
-	}
+  @Override
+  public OCommandResultListener getResultListener() {
+    return resultListener;
+  }
 
-	@Override
-	public void setResultListener(final OCommandResultListener resultListener) {
-		this.resultListener = resultListener;
-	}
+  @Override
+  public void setResultListener(final OCommandResultListener resultListener) {
+    this.resultListener = resultListener;
+  }
 }

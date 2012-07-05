@@ -16,7 +16,15 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.util.OCaseIncentiveComparator;
 import com.orientechnologies.common.util.OCollections;
@@ -34,7 +42,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 /**
@@ -364,15 +372,14 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     return customFields.get(iName);
   }
 
-	public void setCustomInternal(final String iName, final String iValue) {
-		if (customFields == null)
-			customFields = new HashMap<String, String>();
+  public void setCustomInternal(final String iName, final String iValue) {
+    if (customFields == null)
+      customFields = new HashMap<String, String>();
 
-		customFields.put(iName, iValue);
-	}
+    customFields.put(iName, iValue);
+  }
 
-
-	public OPropertyImpl setCustom(final String iName, final String iValue) {
+  public OPropertyImpl setCustom(final String iName, final String iValue) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
     final String cmd = String.format("alter property %s custom %s=%s", getFullName(), iName, iValue);
     getDatabase().command(new OCommandSQL(cmd)).execute();
@@ -380,13 +387,13 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     return this;
   }
 
-	public Map<String, String> getCustomInternal() {
-		if (customFields != null)
-			return Collections.unmodifiableMap(customFields);
-		return null;
-	}
+  public Map<String, String> getCustomInternal() {
+    if (customFields != null)
+      return Collections.unmodifiableMap(customFields);
+    return null;
+  }
 
-    /**
+  /**
    * Change the type. It checks for compatibility between the change of type.
    * 
    * @param iType
@@ -628,7 +635,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   public void saveInternal() {
-    if (getDatabase().getStorage() instanceof OStorageEmbedded)
+    if (!(getDatabase().getStorage() instanceof OStorageProxy))
       ((OSchemaProxy) getDatabase().getMetadata().getSchema()).saveInternal();
   }
 
