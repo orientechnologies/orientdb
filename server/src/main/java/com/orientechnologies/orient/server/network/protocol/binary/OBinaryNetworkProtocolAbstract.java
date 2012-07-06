@@ -15,6 +15,12 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.io.EOFException;
+import java.io.IOException;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.logging.Level;
+
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -46,12 +52,6 @@ import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolEx
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
-import java.io.EOFException;
-import java.io.IOException;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.logging.Level;
-
 /**
  * Abstract base class for binary network implementations.
  * 
@@ -59,11 +59,11 @@ import java.util.logging.Level;
  * 
  */
 public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
-  protected OChannelBinaryServer     channel;
-  protected int                      requestType;
-  protected int                      clientTxId;
-  private final Level                logClientExceptions;
-  private final boolean              logClientFullStackTrace;
+  protected OChannelBinaryServer channel;
+  protected int                  requestType;
+  protected int                  clientTxId;
+  private final Level            logClientExceptions;
+  private final boolean          logClientFullStackTrace;
 
   public OBinaryNetworkProtocolAbstract(final String iThreadName) {
     super(Orient.getThreadGroup(), iThreadName);
@@ -292,7 +292,6 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 
     return Orient.instance().getDatabaseFactory().createDatabase(iDbType, path);
   }
-
 
   protected int deleteRecord(final ODatabaseRecord iDatabase, final ORID rid, final int version) {
     final ORecordInternal<?> record = iDatabase.load(rid);

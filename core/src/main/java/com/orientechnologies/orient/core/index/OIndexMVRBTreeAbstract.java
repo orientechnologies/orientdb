@@ -15,6 +15,18 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map.Entry;
+import java.util.NoSuchElementException;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
@@ -48,18 +60,6 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProviderAbstract;
-
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map.Entry;
-import java.util.NoSuchElementException;
-import java.util.Set;
 
 /**
  * Handles indexing when records change.
@@ -457,39 +457,39 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   }
 
   public OIndex<T> clear() {
-		modificationLock.requestModificationLock();
+    modificationLock.requestModificationLock();
 
-		try {
-			acquireExclusiveLock();
-			try {
+    try {
+      acquireExclusiveLock();
+      try {
 
-				map.clear();
-				return this;
+        map.clear();
+        return this;
 
-			} finally {
-				releaseExclusiveLock();
-			}
-		} finally {
-			modificationLock.releaseModificationLock();
-		}
+      } finally {
+        releaseExclusiveLock();
+      }
+    } finally {
+      modificationLock.releaseModificationLock();
+    }
   }
 
   public OIndexInternal<T> delete() {
-		modificationLock.requestModificationLock();
+    modificationLock.requestModificationLock();
 
-		try {
-			acquireExclusiveLock();
+    try {
+      acquireExclusiveLock();
 
-			try {
-				map.delete();
-				return this;
+      try {
+        map.delete();
+        return this;
 
-			} finally {
-				releaseExclusiveLock();
-			}
-		} finally {
-			modificationLock.releaseModificationLock();
-		}
+      } finally {
+        releaseExclusiveLock();
+      }
+    } finally {
+      modificationLock.releaseModificationLock();
+    }
   }
 
   public OIndexInternal<T> lazySave() {
@@ -653,28 +653,28 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
       for (final ODocument entry : entries) {
         final String serializedKey = OStringSerializerHelper.decode((String) entry.field("k"));
 
-				final Object key;
+        final Object key;
 
-				try {
-					if(serializedKey.equals("*"))
-						key = "*";
-					else  {
-						final ODocument keyContainer = new ODocument();
-						keyContainer.setLazyLoad(false);
+        try {
+          if (serializedKey.equals("*"))
+            key = "*";
+          else {
+            final ODocument keyContainer = new ODocument();
+            keyContainer.setLazyLoad(false);
 
-						keyContainer.fromString(serializedKey);
+            keyContainer.fromString(serializedKey);
 
-						final Object storedKey = keyContainer.field("key");
-						if(storedKey instanceof List)
-							key = new OCompositeKey((List<? extends Comparable<?>>) storedKey);
-						else if(Boolean.TRUE.equals(keyContainer.field("binary"))) {
-							key = OStreamSerializerAnyStreamable.INSTANCE.fromStream((byte[])storedKey);
-						} else
-							key = storedKey;
-					}
-				} catch (IOException ioe) {
-					throw new OTransactionException("Error during index changes deserialization. ", ioe);
-				}
+            final Object storedKey = keyContainer.field("key");
+            if (storedKey instanceof List)
+              key = new OCompositeKey((List<? extends Comparable<?>>) storedKey);
+            else if (Boolean.TRUE.equals(keyContainer.field("binary"))) {
+              key = OStreamSerializerAnyStreamable.INSTANCE.fromStream((byte[]) storedKey);
+            } else
+              key = storedKey;
+          }
+        } catch (IOException ioe) {
+          throw new OTransactionException("Error during index changes deserialization. ", ioe);
+        }
 
         final List<ODocument> operations = (List<ODocument>) entry.field("ops");
         if (operations != null) {
@@ -828,14 +828,14 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
     try {
 
       OLogManager.instance().debug(this,
-							"Forcing " + (iHardMode ? "hard" : "soft") + " optimization of Index %s (%d items). Found %d entries in memory...", name,
-							map.size(), map.getNumberOfNodesInCache());
+          "Forcing " + (iHardMode ? "hard" : "soft") + " optimization of Index %s (%d items). Found %d entries in memory...", name,
+          map.size(), map.getNumberOfNodesInCache());
 
       map.setOptimization(iHardMode ? 2 : 1);
       final int freed = map.optimize(iHardMode);
 
       OLogManager.instance().debug(this, "Completed! Freed %d entries and now %d entries reside in memory", freed,
-							map.getNumberOfNodesInCache());
+          map.getNumberOfNodesInCache());
 
     } finally {
       releaseExclusiveLock();
@@ -871,23 +871,23 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
     return indexDefinition;
   }
 
-	public void freeze(boolean throwException) {
-		modificationLock.prohibitModifications(throwException);
-	}
+  public void freeze(boolean throwException) {
+    modificationLock.prohibitModifications(throwException);
+  }
 
-	public void release() {
-		modificationLock.allowModifications();
-	}
+  public void release() {
+    modificationLock.allowModifications();
+  }
 
-	public void acquireModificationLock() {
-		modificationLock.requestModificationLock();
-	}
+  public void acquireModificationLock() {
+    modificationLock.requestModificationLock();
+  }
 
-	public void releaseModificationLock() {
-		modificationLock.releaseModificationLock();
-	}
+  public void releaseModificationLock() {
+    modificationLock.releaseModificationLock();
+  }
 
-	@Override
+  @Override
   public boolean equals(final Object o) {
     if (this == o)
       return true;
@@ -901,7 +901,6 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 
     return true;
   }
-
 
   @Override
   public int hashCode() {

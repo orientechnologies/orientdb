@@ -25,10 +25,9 @@ import com.orientechnologies.orient.core.record.ORecord;
  * 
  */
 public interface ORecordHook {
-	public enum TYPE {
-		ANY, BEFORE_CREATE, BEFORE_READ, BEFORE_UPDATE, BEFORE_DELETE, AFTER_CREATE, AFTER_READ, AFTER_UPDATE, AFTER_DELETE,
-		UPDATE_FAILED, CREATE_FAILED, DELETE_FAILED
-	};
+  public enum TYPE {
+    ANY, BEFORE_CREATE, BEFORE_READ, BEFORE_UPDATE, BEFORE_DELETE, AFTER_CREATE, AFTER_READ, AFTER_UPDATE, AFTER_DELETE, UPDATE_FAILED, CREATE_FAILED, DELETE_FAILED
+  };
 
-	public boolean onTrigger(TYPE iType, ORecord<?> iRecord);
+  public boolean onTrigger(TYPE iType, ORecord<?> iRecord);
 }

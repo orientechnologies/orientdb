@@ -16,10 +16,6 @@
 
 package com.orientechnologies.orient.core.storage;
 
-import com.orientechnologies.common.concur.lock.OModificationLock;
-import junit.framework.Assert;
-import org.testng.annotations.Test;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -30,19 +26,25 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
+import junit.framework.Assert;
+
+import org.testng.annotations.Test;
+
+import com.orientechnologies.common.concur.lock.OModificationLock;
+
 /**
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 15.06.12
  */
 @Test
 public class StorageModificationLockTest {
-  private final static int               THREAD_COUNT     = 100;
-	private final static int 							 CYCLES_COUNT     = 20;
-  private final AtomicLong               counter          = new AtomicLong();
-  private final OModificationLock modificationLock = new OModificationLock();
-  private final ExecutorService          executorService  = Executors.newFixedThreadPool(THREAD_COUNT + 1);
-  private final List<Future<Void>>             futures          = new ArrayList<Future<Void>>(THREAD_COUNT);
-  private final CountDownLatch           countDownLatch   = new CountDownLatch(1);
+  private final static int         THREAD_COUNT     = 100;
+  private final static int         CYCLES_COUNT     = 20;
+  private final AtomicLong         counter          = new AtomicLong();
+  private final OModificationLock  modificationLock = new OModificationLock();
+  private final ExecutorService    executorService  = Executors.newFixedThreadPool(THREAD_COUNT + 1);
+  private final List<Future<Void>> futures          = new ArrayList<Future<Void>>(THREAD_COUNT);
+  private final CountDownLatch     countDownLatch   = new CountDownLatch(1);
 
   @Test
   public void testLock() throws Exception {
@@ -50,11 +52,11 @@ public class StorageModificationLockTest {
       futures.add(executorService.submit(new Counter()));
     }
 
-		Future<Void> prohibiter = executorService.submit(new Prohibiter());
+    Future<Void> prohibiter = executorService.submit(new Prohibiter());
     countDownLatch.countDown();
     prohibiter.get();
-		for(Future<Void> future : futures)
-			future.get();
+    for (Future<Void> future : futures)
+      future.get();
   }
 
   private final class Counter implements Callable<Void> {
@@ -93,7 +95,7 @@ public class StorageModificationLockTest {
         modificationLock.allowModifications();
         Thread.sleep(50);
       }
-			return null;
-		}
+      return null;
+    }
   }
 }

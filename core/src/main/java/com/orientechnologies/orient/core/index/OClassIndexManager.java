@@ -16,17 +16,6 @@
 
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -39,6 +28,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Handles indexing when records change.
@@ -77,22 +77,22 @@ public class OClassIndexManager extends ODocumentHookAbstract {
           index.put(key, rid);
       }
 
-			releaseModificationLock(iRecord);
-		}
+      releaseModificationLock(iRecord);
+    }
   }
 
-	@Override
-	public void onRecordCreateFailed(ODocument iDocument) {
-		releaseModificationLock(iDocument);
-	}
+  @Override
+  public void onRecordCreateFailed(ODocument iDocument) {
+    releaseModificationLock(iDocument);
+  }
 
-	@Override
+  @Override
   public boolean onRecordBeforeUpdate(ODocument iRecord) {
     iRecord = checkForLoading(iRecord);
 
     checkIndexedPropertiesOnUpdate(iRecord);
 
-		acquireModificationLock(iRecord);
+    acquireModificationLock(iRecord);
     return false;
   }
 
@@ -119,7 +119,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
       }
     }
 
-		releaseModificationLock(iRecord);
+    releaseModificationLock(iRecord);
 
     if (iRecord.isTrackingChanges()) {
       iRecord.setTrackingChanges(false);
@@ -127,12 +127,12 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     }
   }
 
-	@Override
-	public void onRecordUpdateFailed(ODocument iDocument) {
-		releaseModificationLock(iDocument);
-	}
+  @Override
+  public void onRecordUpdateFailed(ODocument iDocument) {
+    releaseModificationLock(iDocument);
+  }
 
-	@Override
+  @Override
   public boolean onRecordBeforeDelete(final ODocument iDocument) {
     final int version = iDocument.getVersion(); // Cache the transaction-provided value
     if (iDocument.fields() == 0) {
@@ -146,7 +146,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
                 + iDocument.getVersion() + " your=v" + version + ")", iDocument.getIdentity(), iDocument.getVersion(), version);
     }
 
-		acquireModificationLock(iDocument);
+    acquireModificationLock(iDocument);
     return false;
   }
 
@@ -191,7 +191,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
       }
     }
 
-		releaseModificationLock(iRecord);
+    releaseModificationLock(iRecord);
 
     if (iRecord.isTrackingChanges()) {
       iRecord.setTrackingChanges(false);
@@ -199,12 +199,12 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     }
   }
 
-	@Override
-	public void onRecordDeleteFailed(ODocument iDocument) {
-		releaseModificationLock(iDocument);
-	}
+  @Override
+  public void onRecordDeleteFailed(ODocument iDocument) {
+    releaseModificationLock(iDocument);
+  }
 
-	private void processCompositeIndexUpdate(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {
+  private void processCompositeIndexUpdate(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {
     final OIndexDefinition indexDefinition = index.getDefinition();
     final List<String> indexFields = indexDefinition.getFields();
     for (final String indexField : indexFields) {
@@ -408,8 +408,8 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
   private void releaseModificationLock(final ODocument iRecord) {
     final OClass cls = iRecord.getSchemaClass();
-		if (cls == null)
-			return;
+    if (cls == null)
+      return;
 
     final Collection<OIndex<?>> indexes = cls.getIndexes();
     for (final OIndex<?> index : indexes) {

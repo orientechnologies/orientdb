@@ -47,12 +47,12 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
   public void onRecordAfterCreate(final ODocument iDocument) {
   }
 
-	/**
-	 * It's called just after the document creation was failed.
-	 *
-	 * @param iDocument
-	 *          The document just created
-	 */
+  /**
+   * It's called just after the document creation was failed.
+   * 
+   * @param iDocument
+   *          The document just created
+   */
   public void onRecordCreateFailed(final ODocument iDocument) {
   }
 
@@ -94,13 +94,13 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
   public void onRecordAfterUpdate(final ODocument iDocument) {
   }
 
-	/**
-	 * It's called just after the document updated was failed.
-	 *
-	 * @param iDocument
-	 *          The document is going to be updated
-	 */
-	public void onRecordUpdateFailed(final ODocument iDocument) {
+  /**
+   * It's called just after the document updated was failed.
+   * 
+   * @param iDocument
+   *          The document is going to be updated
+   */
+  public void onRecordUpdateFailed(final ODocument iDocument) {
   }
 
   /**
@@ -123,13 +123,13 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
   public void onRecordAfterDelete(final ODocument iDocument) {
   }
 
-	/**
-	 * It's called just after the document deletion was failed.
-	 *
-	 * @param iDocument
-	 *          The document is going to be deleted
-	 */
-	public void onRecordDeleteFailed(final ODocument iDocument) {
+  /**
+   * It's called just after the document deletion was failed.
+   * 
+   * @param iDocument
+   *          The document is going to be deleted
+   */
+  public void onRecordDeleteFailed(final ODocument iDocument) {
   }
 
   public boolean onTrigger(final TYPE iType, final ORecord<?> iRecord) {

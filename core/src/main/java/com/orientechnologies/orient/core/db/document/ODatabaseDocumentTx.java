@@ -15,6 +15,13 @@
  */
 package com.orientechnologies.orient.core.db.document;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -35,13 +42,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
 
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabaseRecordTx> implements ODatabaseDocument {
@@ -95,67 +95,67 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
     }
   }
 
-	@Override
-	public void freeze(boolean throwException) {
-		if (!(getStorage() instanceof OStorageLocal)) {
-			OLogManager.instance().error(this, "We can not freeze non local storage. " +
-							"If you use remote client please use OServerAdmin instead.");
-
-			return;
-		}
-
-		final long startTime = OProfiler.getInstance().startChrono();
-
-		final Collection<? extends OIndex<?>> indexes = getMetadata().getIndexManager().getIndexes();
-		final List<OIndexMVRBTreeAbstract<?>> indexesToLock = prepareIndexesToFreeze(indexes);
-
-		freezeIndexes(indexesToLock, true);
-		flushIndexes(indexesToLock);
-
-		super.freeze(throwException);
-
-		OProfiler.getInstance().stopChrono("document.database.freeze", startTime);
-	}
-
-	@Override
-	public void freeze() {
+  @Override
+  public void freeze(boolean throwException) {
     if (!(getStorage() instanceof OStorageLocal)) {
-			OLogManager.instance().error(this, "We can not freeze non local storage. " +
-							"If you use remote client please use OServerAdmin instead.");
+      OLogManager.instance().error(this,
+          "We can not freeze non local storage. " + "If you use remote client please use OServerAdmin instead.");
 
-			return;
-		}
+      return;
+    }
 
-		final long startTime = OProfiler.getInstance().startChrono();
+    final long startTime = OProfiler.getInstance().startChrono();
 
     final Collection<? extends OIndex<?>> indexes = getMetadata().getIndexManager().getIndexes();
     final List<OIndexMVRBTreeAbstract<?>> indexesToLock = prepareIndexesToFreeze(indexes);
 
-		freezeIndexes(indexesToLock, false);
+    freezeIndexes(indexesToLock, true);
+    flushIndexes(indexesToLock);
+
+    super.freeze(throwException);
+
+    OProfiler.getInstance().stopChrono("document.database.freeze", startTime);
+  }
+
+  @Override
+  public void freeze() {
+    if (!(getStorage() instanceof OStorageLocal)) {
+      OLogManager.instance().error(this,
+          "We can not freeze non local storage. " + "If you use remote client please use OServerAdmin instead.");
+
+      return;
+    }
+
+    final long startTime = OProfiler.getInstance().startChrono();
+
+    final Collection<? extends OIndex<?>> indexes = getMetadata().getIndexManager().getIndexes();
+    final List<OIndexMVRBTreeAbstract<?>> indexesToLock = prepareIndexesToFreeze(indexes);
+
+    freezeIndexes(indexesToLock, false);
     flushIndexes(indexesToLock);
 
     super.freeze();
 
-		OProfiler.getInstance().stopChrono("document.database.freeze", startTime);
+    OProfiler.getInstance().stopChrono("document.database.freeze", startTime);
   }
 
-	@Override
+  @Override
   public void release() {
     if (!(getStorage() instanceof OStorageLocal)) {
-			OLogManager.instance().error(this, "We can not release non local storage. " +
-							"If you use remote client please use OServerAdmin instead.");
-			return;
-		}
+      OLogManager.instance().error(this,
+          "We can not release non local storage. " + "If you use remote client please use OServerAdmin instead.");
+      return;
+    }
 
-		final long startTime = OProfiler.getInstance().startChrono();
+    final long startTime = OProfiler.getInstance().startChrono();
 
-		super.release();
+    super.release();
 
-		Collection<? extends OIndex<?>> indexes = getMetadata().getIndexManager().getIndexes();
-		releaseIndexes(indexes);
+    Collection<? extends OIndex<?>> indexes = getMetadata().getIndexManager().getIndexes();
+    releaseIndexes(indexes);
 
-		OProfiler.getInstance().stopChrono("document.database.release", startTime);
-	}
+    OProfiler.getInstance().stopChrono("document.database.release", startTime);
+  }
 
   /**
    * Creates a new ODocument.

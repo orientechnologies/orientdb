@@ -15,6 +15,29 @@
  */
 package com.orientechnologies.orient.server;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.management.ManagementFactory;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.ReentrantLock;
+
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -46,28 +69,6 @@ import com.orientechnologies.orient.server.handler.OServerHandler;
 import com.orientechnologies.orient.server.managed.OrientServer;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectName;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.management.ManagementFactory;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class OServer {
   protected ReentrantLock                                  lock               = new ReentrantLock();
@@ -583,7 +584,7 @@ public class OServer {
     // OGlobalConfiguration.CACHE_LEVEL2_SIZE.setValue(0);
     // OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(Boolean.FALSE);
     // OGlobalConfiguration.CACHE_LEVEL1_SIZE.setValue(0);
-    //OGlobalConfiguration.FILE_LOCK.setValue(true);
+    // OGlobalConfiguration.FILE_LOCK.setValue(true);
     // OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.setValue(1);
     // OGlobalConfiguration.LAZYSET_WORK_ON_STREAM.setValue(false);
     OGlobalConfiguration.TX_USE_LOG.setValue(true);

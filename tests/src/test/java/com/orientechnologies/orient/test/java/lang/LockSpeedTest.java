@@ -24,7 +24,7 @@ public class LockSpeedTest {
   public static final void main(String[] args) {
 
     OSharedResourceExternal lock = new OSharedResourceExternal();
-		OModificationLock storageLock = new OModificationLock();
+    OModificationLock storageLock = new OModificationLock();
 
     long timer = System.currentTimeMillis();
     for (int i = 0; i < MAX; ++i) {
@@ -53,13 +53,13 @@ public class LockSpeedTest {
     }
     System.out.println("Simple Locks: " + (System.currentTimeMillis() - timer - fixed));
 
-		timer = System.currentTimeMillis();
+    timer = System.currentTimeMillis();
 
-		for (int i = 0; i < MAX; ++i) {
-			storageLock.requestModificationLock();
-			storageLock.releaseModificationLock();
-		}
+    for (int i = 0; i < MAX; ++i) {
+      storageLock.requestModificationLock();
+      storageLock.releaseModificationLock();
+    }
 
-		System.out.println("Storage Locks: " + (System.currentTimeMillis() - timer - fixed));
+    System.out.println("Storage Locks: " + (System.currentTimeMillis() - timer - fixed));
   }
 }

@@ -15,6 +15,10 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -28,10 +32,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Remote administration class of OrientDB Server instances.
@@ -636,15 +636,15 @@ public class OServerAdmin {
         }
 
         storage.beginResponse(network);
-				retry = false;
-				try {
+        retry = false;
+        try {
           return new ODocument(network.readBytes());
         } finally {
           storage.endResponse(network);
         }
       } catch (OModificationOperationProhibitedException ompe) {
-				retry = handleDBFreeze();
-			} catch(Exception e) {
+        retry = handleDBFreeze();
+      } catch (Exception e) {
         OLogManager.instance().exception("Error on executing '%s'", e, OStorageException.class, iActivity);
       }
     return null;

@@ -15,6 +15,13 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -57,13 +64,6 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecord {
@@ -659,34 +659,34 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
       final int dataSegmentId = dataSegmentStrategy.assignDataSegmentId(this, iRecord);
 
-			try {
-				// SAVE IT
-				final int version = underlying.save(dataSegmentId, rid, stream == null ? new byte[0] : stream, realVersion,
-								iRecord.getRecordType(), iMode.ordinal(), iCallback);
+      try {
+        // SAVE IT
+        final int version = underlying.save(dataSegmentId, rid, stream == null ? new byte[0] : stream, realVersion,
+            iRecord.getRecordType(), iMode.ordinal(), iCallback);
 
-				if (isNew) {
-					// UPDATE INFORMATION: CLUSTER ID+POSITION
-					((ORecordId) iRecord.getIdentity()).copyFrom(rid);
-					// NOTIFY IDENTITY HAS CHANGED
-					iRecord.onAfterIdentityChanged(iRecord);
-					// UPDATE INFORMATION: CLUSTER ID+POSITION
-					iRecord.fill(rid, version, stream, stream == null || stream.length == 0);
-				} else {
-					// UPDATE INFORMATION: VERSION
-					iRecord.fill(rid, version, stream, stream == null || stream.length == 0);
-				}
+        if (isNew) {
+          // UPDATE INFORMATION: CLUSTER ID+POSITION
+          ((ORecordId) iRecord.getIdentity()).copyFrom(rid);
+          // NOTIFY IDENTITY HAS CHANGED
+          iRecord.onAfterIdentityChanged(iRecord);
+          // UPDATE INFORMATION: CLUSTER ID+POSITION
+          iRecord.fill(rid, version, stream, stream == null || stream.length == 0);
+        } else {
+          // UPDATE INFORMATION: VERSION
+          iRecord.fill(rid, version, stream, stream == null || stream.length == 0);
+        }
 
-				if (iCallTriggers && stream != null && stream.length > 0)
-					callbackHooks(wasNew ? TYPE.AFTER_CREATE : TYPE.AFTER_UPDATE, iRecord);
+        if (iCallTriggers && stream != null && stream.length > 0)
+          callbackHooks(wasNew ? TYPE.AFTER_CREATE : TYPE.AFTER_UPDATE, iRecord);
 
-				if (stream != null && stream.length > 0)
-					// ADD/UPDATE IT IN CACHE IF IT'S ACTIVE
-					getLevel1Cache().updateRecord(iRecord);
-			} catch (Throwable t) {
-				if (iCallTriggers && stream != null && stream.length > 0)
-					callbackHooks(wasNew ? TYPE.CREATE_FAILED : TYPE.UPDATE_FAILED, iRecord);
-				throw t;
-			}
+        if (stream != null && stream.length > 0)
+          // ADD/UPDATE IT IN CACHE IF IT'S ACTIVE
+          getLevel1Cache().updateRecord(iRecord);
+      } catch (Throwable t) {
+        if (iCallTriggers && stream != null && stream.length > 0)
+          callbackHooks(wasNew ? TYPE.CREATE_FAILED : TYPE.UPDATE_FAILED, iRecord);
+        throw t;
+      }
     } catch (OException e) {
       // RE-THROW THE EXCEPTION
       throw e;
@@ -723,12 +723,12 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       // CHECK IF ENABLE THE MVCC OR BYPASS IT
       final int realVersion = mvcc ? iVersion : -1;
 
-			try{
-				underlying.delete(rid, realVersion, iRequired, (byte) iMode.ordinal());
-			}catch (Throwable t) {
-				if (iCallTriggers)
-					callbackHooks(TYPE.DELETE_FAILED, rec);
-			}
+      try {
+        underlying.delete(rid, realVersion, iRequired, (byte) iMode.ordinal());
+      } catch (Throwable t) {
+        if (iCallTriggers)
+          callbackHooks(TYPE.DELETE_FAILED, rec);
+      }
 
       if (iCallTriggers)
         callbackHooks(TYPE.AFTER_DELETE, rec);

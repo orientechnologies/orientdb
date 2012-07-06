@@ -15,6 +15,17 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.exception.OException;
@@ -49,17 +60,6 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 public class OStorageLocal extends OStorageEmbedded {
   private final int                     DELETE_MAX_RETRIES;
   private final int                     DELETE_WAIT_TIME;
@@ -79,7 +79,7 @@ public class OStorageLocal extends OStorageEmbedded {
   private final String                  PROFILER_UPDATE_RECORD;
   private final String                  PROFILER_DELETE_RECORD;
 
-  private OModificationLock modificationLock    = new OModificationLock();
+  private OModificationLock             modificationLock    = new OModificationLock();
 
   public OStorageLocal(final String iName, final String iFilePath, final String iMode) throws IOException {
     super(iName, iFilePath, iMode);
@@ -1050,10 +1050,10 @@ public class OStorageLocal extends OStorageEmbedded {
   }
 
   public void commit(final OTransaction iTx) {
-		modificationLock.requestModificationLock();
+    modificationLock.requestModificationLock();
     try {
-			lock.acquireExclusiveLock();
-			try {
+      lock.acquireExclusiveLock();
+      try {
         try {
           txManager.clearLogEntries(iTx);
           txManager.commitAllPendingRecords(iTx);
@@ -1079,10 +1079,10 @@ public class OStorageLocal extends OStorageEmbedded {
           }
         }
       } finally {
-				lock.releaseExclusiveLock();
-			}
+        lock.releaseExclusiveLock();
+      }
     } finally {
-			modificationLock.releaseModificationLock();
+      modificationLock.releaseModificationLock();
     }
   }
 
@@ -1700,45 +1700,44 @@ public class OStorageLocal extends OStorageEmbedded {
       iListener.onMessage(String.format(iMessage, iArgs));
   }
 
-	public void freeze(boolean throwException) {
-		modificationLock.prohibitModifications(throwException);
-		synch();
+  public void freeze(boolean throwException) {
+    modificationLock.prohibitModifications(throwException);
+    synch();
 
-		try {
-			for (OCluster cluster : clusters)
-				if (cluster != null)
-					cluster.setSoftlyClosed(true);
+    try {
+      for (OCluster cluster : clusters)
+        if (cluster != null)
+          cluster.setSoftlyClosed(true);
 
-			for (ODataLocal data : dataSegments)
-				if (data != null)
-					data.setSoftlyClosed(true);
+      for (ODataLocal data : dataSegments)
+        if (data != null)
+          data.setSoftlyClosed(true);
 
-			if (configuration != null)
-				configuration.setSoftlyClosed(true);
+      if (configuration != null)
+        configuration.setSoftlyClosed(true);
 
-		} catch (IOException e) {
-			throw new OStorageException("Error on freeze storage '" + name + "'", e);
-		}
-	}
+    } catch (IOException e) {
+      throw new OStorageException("Error on freeze storage '" + name + "'", e);
+    }
+  }
 
+  public void release() {
+    try {
+      for (OCluster cluster : clusters)
+        if (cluster != null)
+          cluster.setSoftlyClosed(false);
 
-	public void release() {
-		try {
-			for (OCluster cluster : clusters)
-				if (cluster != null)
-					cluster.setSoftlyClosed(false);
+      for (ODataLocal data : dataSegments)
+        if (data != null)
+          data.setSoftlyClosed(false);
 
-			for (ODataLocal data : dataSegments)
-				if (data != null)
-					data.setSoftlyClosed(false);
+      if (configuration != null)
+        configuration.setSoftlyClosed(false);
 
-			if (configuration != null)
-				configuration.setSoftlyClosed(false);
+    } catch (IOException e) {
+      throw new OStorageException("Error on release storage '" + name + "'", e);
+    }
 
-		} catch (IOException e) {
-			throw new OStorageException("Error on release storage '" + name + "'", e);
-		}
-
-		modificationLock.allowModifications();
+    modificationLock.allowModifications();
   }
 }

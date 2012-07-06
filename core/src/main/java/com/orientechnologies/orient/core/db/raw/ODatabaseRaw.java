@@ -15,6 +15,16 @@
  */
 package com.orientechnologies.orient.core.db.raw;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -35,16 +45,6 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
 
 /**
  * Lower level ODatabase implementation. It's extended or wrapped by all the others.
@@ -545,39 +545,39 @@ public class ODatabaseRaw implements ODatabase {
     return storage.getSize();
   }
 
-	public void freeze() {
-		final OStorageLocal storage;
-		if (getStorage() instanceof OStorageLocal)
-			storage = ((OStorageLocal) getStorage());
-		else {
-			OLogManager.instance().error(this, "We can not freeze non local storage.");
-			return;
-		}
+  public void freeze() {
+    final OStorageLocal storage;
+    if (getStorage() instanceof OStorageLocal)
+      storage = ((OStorageLocal) getStorage());
+    else {
+      OLogManager.instance().error(this, "We can not freeze non local storage.");
+      return;
+    }
 
-		storage.freeze(false);
-	}
+    storage.freeze(false);
+  }
 
-	public void freeze(boolean throwException) {
-		final OStorageLocal storage;
-		if (getStorage() instanceof OStorageLocal)
-			storage = ((OStorageLocal) getStorage());
-		else {
-			OLogManager.instance().error(this, "We can not freeze non local storage.");
-			return;
-		}
+  public void freeze(boolean throwException) {
+    final OStorageLocal storage;
+    if (getStorage() instanceof OStorageLocal)
+      storage = ((OStorageLocal) getStorage());
+    else {
+      OLogManager.instance().error(this, "We can not freeze non local storage.");
+      return;
+    }
 
-		storage.freeze(throwException);
-	}
+    storage.freeze(throwException);
+  }
 
-	public void release() {
-		final OStorageLocal storage;
-		if (getStorage() instanceof OStorageLocal)
-			storage = ((OStorageLocal) getStorage());
-		else {
-			OLogManager.instance().error(this, "We can not freeze non local storage.");
-			return;
-		}
+  public void release() {
+    final OStorageLocal storage;
+    if (getStorage() instanceof OStorageLocal)
+      storage = ((OStorageLocal) getStorage());
+    else {
+      OLogManager.instance().error(this, "We can not freeze non local storage.");
+      return;
+    }
 
-		storage.release();
-	}
+    storage.release();
+  }
 }

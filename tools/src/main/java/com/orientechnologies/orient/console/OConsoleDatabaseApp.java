@@ -15,6 +15,22 @@
  */
 package com.orientechnologies.orient.console;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Array;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Scanner;
+import java.util.Set;
+
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
@@ -70,22 +86,6 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.ODataHoleInfo;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.enterprise.command.OCommandExecutorScript;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Array;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Scanner;
-import java.util.Set;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
   protected ODatabaseDocument   currentDatabase;
@@ -551,50 +551,49 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     updateDatabaseInfo();
   }
 
-	@ConsoleCommand(description = "Freeze database and flush on the disk")
-	public void freezeDatabase() throws IOException {
-		checkForDatabase();
+  @ConsoleCommand(description = "Freeze database and flush on the disk")
+  public void freezeDatabase() throws IOException {
+    checkForDatabase();
 
-		final String dbName = currentDatabase.getName();
+    final String dbName = currentDatabase.getName();
 
-		if (currentDatabase.getURL().startsWith(OEngineRemote.NAME)) {
-			if (serverAdmin == null) {
-				out.println("\nCannot freeze a remote database without connecting to the server with a valid server's user");
-				return;
-			}
+    if (currentDatabase.getURL().startsWith(OEngineRemote.NAME)) {
+      if (serverAdmin == null) {
+        out.println("\nCannot freeze a remote database without connecting to the server with a valid server's user");
+        return;
+      }
 
-			new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).freezeDatabase();
-		} else {
-			// LOCAL CONNECTION
-			currentDatabase.freeze();
-		}
+      new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).freezeDatabase();
+    } else {
+      // LOCAL CONNECTION
+      currentDatabase.freeze();
+    }
 
-		out.println("\nDatabase '" + dbName + "' was frozen successfully");
-	}
+    out.println("\nDatabase '" + dbName + "' was frozen successfully");
+  }
 
-	@ConsoleCommand(description = "Release database after freeze")
-	public void releaseDatabase() throws IOException{
-		checkForDatabase();
+  @ConsoleCommand(description = "Release database after freeze")
+  public void releaseDatabase() throws IOException {
+    checkForDatabase();
 
-		final String dbName = currentDatabase.getName();
+    final String dbName = currentDatabase.getName();
 
-		if (currentDatabase.getURL().startsWith(OEngineRemote.NAME)) {
-			if (serverAdmin == null) {
-				out.println("\nCannot release a remote database without connecting to the server with a valid server's user");
-				return;
-			}
+    if (currentDatabase.getURL().startsWith(OEngineRemote.NAME)) {
+      if (serverAdmin == null) {
+        out.println("\nCannot release a remote database without connecting to the server with a valid server's user");
+        return;
+      }
 
-			new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).releaseDatabase();
-		} else {
-			// LOCAL CONNECTION
-			currentDatabase.release();
-		}
+      new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).releaseDatabase();
+    } else {
+      // LOCAL CONNECTION
+      currentDatabase.release();
+    }
 
-		out.println("\nDatabase '" + dbName + "' was released successfully");
-	}
+    out.println("\nDatabase '" + dbName + "' was released successfully");
+  }
 
-
-	@ConsoleCommand(splitInWords = false, description = "Alter a class in the database schema")
+  @ConsoleCommand(splitInWords = false, description = "Alter a class in the database schema")
   public void alterClass(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
     sqlCommand("alter", iCommandText, "\nClass updated successfully\n", false);
     updateDatabaseInfo();

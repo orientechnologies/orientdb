@@ -15,13 +15,6 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.cache.ODefaultCache;
-import com.orientechnologies.orient.core.storage.fs.OMMapManagerOld;
-
 import java.io.PrintStream;
 import java.lang.management.OperatingSystemMXBean;
 import java.util.Map;
@@ -29,6 +22,13 @@ import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
+
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.cache.ODefaultCache;
+import com.orientechnologies.orient.core.storage.fs.OMMapManagerOld;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -57,7 +57,7 @@ public enum OGlobalConfiguration {
       Boolean.class, Boolean.FALSE),
 
   STORAGE_RECORD_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record",
-      Integer.class, 50000000),
+      Integer.class, 5000),
 
   // CACHE
   CACHE_LEVEL1_ENABLED("cache.level1.enabled", "Use the level-1 cache", Boolean.class, true),
@@ -113,7 +113,7 @@ public enum OGlobalConfiguration {
       "Transaction mode used in TinkerPop Blueprints implementation. 0 = Automatic (default), 1 = Manual", Integer.class, 0),
 
   // TREEMAP
-  MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 5000000),
+  MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 5000),
 
   MVRBTREE_LAZY_UPDATES(
       "mvrbtree.lazyUpdates",
@@ -157,8 +157,7 @@ public enum OGlobalConfiguration {
   LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Upon add avoid unmarshalling set", Boolean.class, true),
 
   // FILE
-  FILE_LOCK("file.lock", "Locks files when used. Default is false",
-      boolean.class, false),
+  FILE_LOCK("file.lock", "Locks files when used. Default is false", boolean.class, false),
 
   FILE_DEFRAG_STRATEGY(
       "file.defrag.strategy",
@@ -221,9 +220,9 @@ public enum OGlobalConfiguration {
   // NETWORK
   NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", "TCP/IP Socket buffer size", Integer.class, 32768),
 
-  NETWORK_LOCK_TIMEOUT("network.lockTimeout", "Timeout in ms to acquire a lock against a channel", Integer.class, 1500000000),
+  NETWORK_LOCK_TIMEOUT("network.lockTimeout", "Timeout in ms to acquire a lock against a channel", Integer.class, 15000),
 
-  NETWORK_SOCKET_TIMEOUT("network.socketTimeout", "TCP/IP Socket timeout in ms", Integer.class, 1000000000),
+  NETWORK_SOCKET_TIMEOUT("network.socketTimeout", "TCP/IP Socket timeout in ms", Integer.class, 10000),
 
   NETWORK_SOCKET_RETRY("network.retry", "Number of times the client retries its connection to the server on failure",
       Integer.class, 5),
@@ -295,7 +294,7 @@ public enum OGlobalConfiguration {
   // CLIENT
   CLIENT_CHANNEL_MIN_POOL("client.channel.minPool", "Minimum pool size", Integer.class, 1),
 
-  CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool", "Maximum channel pool size", Integer.class, 8),
+  CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool", "Maximum channel pool size", Integer.class, 5),
 
   CLIENT_DB_RELEASE_WAIT_TIMEOUT("client.channel.dbReleaseWaitTimeout",
       "Delay in ms. after which data modification command will be resent if DB was frozen", Integer.class, 10000),

@@ -15,6 +15,14 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.io.IOException;
+import java.net.Socket;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -63,14 +71,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.handler.OServerHandler;
 import com.orientechnologies.orient.server.handler.OServerHandlerHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
-
-import java.io.IOException;
-import java.net.Socket;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -1252,8 +1252,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (connection.database.exists()) {
       OLogManager.instance().info(this, "Freezing database '%s'", connection.database.getURL());
 
-			if (connection.database.isClosed())
-				openDatabase(connection.database, connection.serverUser.name, connection.serverUser.password);
+      if (connection.database.isClosed())
+        openDatabase(connection.database, connection.serverUser.name, connection.serverUser.password);
 
       connection.database.freeze(true);
     } else {
@@ -1274,13 +1274,13 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkServerAccess("database.release");
 
-		connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, "local");
+    connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, "local");
 
     if (connection.database.exists()) {
       OLogManager.instance().info(this, "Realising database '%s'", connection.database.getURL());
 
-			if (connection.database.isClosed())
-				openDatabase(connection.database, connection.serverUser.name, connection.serverUser.password);
+      if (connection.database.isClosed())
+        openDatabase(connection.database, connection.serverUser.name, connection.serverUser.password);
 
       connection.database.release();
     } else {

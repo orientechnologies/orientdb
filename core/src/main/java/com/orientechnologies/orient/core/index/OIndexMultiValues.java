@@ -15,6 +15,14 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OMVRBTree;
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.common.listener.OProgressListener;
@@ -24,14 +32,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * Abstract index implementation that supports multi-values for the same key.
@@ -99,10 +99,10 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
       acquireExclusiveLock();
       try {
 
-				Set<OIdentifiable> recs = map.get(iKey);
+        Set<OIdentifiable> recs = map.get(iKey);
 
-				if (recs == null)
-					return false;
+        if (recs == null)
+          return false;
 
         if (recs.remove(iValue)) {
           if (recs.isEmpty())

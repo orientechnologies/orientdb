@@ -15,11 +15,11 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.Map.Entry;
+
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import java.util.Map.Entry;
 
 /**
  * Interface to handle index.
@@ -116,9 +116,8 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
    */
   public void acquireModificationLock();
 
-	/**
-	 * Is used to indicate that several index changes are going to be seen as single unit from users point of view
-	 * were completed.
-	 */
+  /**
+   * Is used to indicate that several index changes are going to be seen as single unit from users point of view were completed.
+   */
   public void releaseModificationLock();
 }

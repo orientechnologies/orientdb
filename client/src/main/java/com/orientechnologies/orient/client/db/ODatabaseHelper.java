@@ -15,6 +15,10 @@
  */
 package com.orientechnologies.orient.client.db;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
@@ -22,10 +26,6 @@ import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 
 public class ODatabaseHelper {
   public static void createDatabase(ODatabase database, final String iURL) throws IOException {
@@ -74,28 +74,27 @@ public class ODatabaseHelper {
     }
   }
 
-	public static void freezeDatabase(final ODatabase database) throws IOException {
-		if (database.getURL().startsWith("remote")) {
-			final OServerAdmin serverAdmin = new OServerAdmin(database.getURL());
-			serverAdmin.connect("root", getServerRootPassword()).freezeDatabase();
-			serverAdmin.close();
-		} else {
-			database.freeze();
-		}
-	}
+  public static void freezeDatabase(final ODatabase database) throws IOException {
+    if (database.getURL().startsWith("remote")) {
+      final OServerAdmin serverAdmin = new OServerAdmin(database.getURL());
+      serverAdmin.connect("root", getServerRootPassword()).freezeDatabase();
+      serverAdmin.close();
+    } else {
+      database.freeze();
+    }
+  }
 
-	public static void releaseDatabase(final ODatabase database) throws IOException {
-		if (database.getURL().startsWith("remote")) {
-			final OServerAdmin serverAdmin = new OServerAdmin(database.getURL());
-			serverAdmin.connect("root", getServerRootPassword()).releaseDatabase();
-			serverAdmin.close();
-		} else {
-			database.release();
-		}
-	}
+  public static void releaseDatabase(final ODatabase database) throws IOException {
+    if (database.getURL().startsWith("remote")) {
+      final OServerAdmin serverAdmin = new OServerAdmin(database.getURL());
+      serverAdmin.connect("root", getServerRootPassword()).releaseDatabase();
+      serverAdmin.close();
+    } else {
+      database.release();
+    }
+  }
 
-
-	protected static String getServerRootPassword() throws IOException {
+  protected static String getServerRootPassword() throws IOException {
     return getServerRootPassword("server");
   }
 

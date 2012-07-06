@@ -15,6 +15,28 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import java.io.IOException;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
+
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -59,27 +81,6 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClie
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
-
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-import java.io.IOException;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
 
 /**
  * This object is bound to each remote ODatabase instances.
@@ -814,24 +815,23 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
 
           if (iTx.getCurrentRecordEntries().iterator().hasNext()) {
-						while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
-							for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
-								tmpEntries.add(txEntry);
+            while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
+              for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
+                tmpEntries.add(txEntry);
 
-							iTx.clearRecordEntries();
+              iTx.clearRecordEntries();
 
-							if (tmpEntries.size() > 0)
-								for (ORecordOperation txEntry : tmpEntries) {
-									commitEntry(network, txEntry);
-									committedEntries.add(txEntry);
-								}
+              if (tmpEntries.size() > 0)
+                for (ORecordOperation txEntry : tmpEntries) {
+                  commitEntry(network, txEntry);
+                  committedEntries.add(txEntry);
+                }
 
-
-						}
-					} else if(committedEntries.size() > 0) {
-						for(ORecordOperation txEntry : committedEntries)
-							commitEntry(network, txEntry);
-					}
+            }
+          } else if (committedEntries.size() > 0) {
+            for (ORecordOperation txEntry : committedEntries)
+              commitEntry(network, txEntry);
+          }
 
           // END OF RECORD ENTRIES
           network.writeByte((byte) 0);
@@ -871,7 +871,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             }
           }
 
-					committedEntries.clear();
+          committedEntries.clear();
         } finally {
           endResponse(network);
         }

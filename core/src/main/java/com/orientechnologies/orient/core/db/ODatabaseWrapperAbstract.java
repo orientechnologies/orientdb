@@ -321,15 +321,15 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
       throw new ODatabaseException("Database '" + getURL() + "' is closed");
   }
 
-	public void freeze(boolean throwException) {
-		underlying.freeze(throwException);
-	}
+  public void freeze(boolean throwException) {
+    underlying.freeze(throwException);
+  }
 
-	public void freeze() {
-		underlying.freeze();
-	}
+  public void freeze() {
+    underlying.freeze();
+  }
 
-	public void release() {
-		underlying.release();
-	}
+  public void release() {
+    underlying.release();
+  }
 }
