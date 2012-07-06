@@ -68,6 +68,10 @@ public class SQLCreateVertexAndEdgeTest {
     Assert.assertEquals(v4.field("brand"), "fiat");
     Assert.assertEquals(v4.field("name"), "wow");
 
+    ODocument v5 = database.command(new OCommandSQL("create vertex V1 cluster v1")).execute();
+    Assert.assertEquals(v5.getClassName(), "V1");
+    Assert.assertEquals(v5.getIdentity().getClusterId(), database.getClusterIdByName("V1"));
+
     // EDGES
     ODocument e1 = database.command(new OCommandSQL("create edge from " + v1.getIdentity() + " to " + v2.getIdentity())).execute();
     Assert.assertEquals(e1.getClassName(), OGraphDatabase.EDGE_CLASS_NAME);
@@ -93,6 +97,10 @@ public class SQLCreateVertexAndEdgeTest {
     Assert.assertEquals(e4.field("out"), v2);
     Assert.assertEquals(e4.field("in"), v3);
     Assert.assertEquals(e4.field("weight"), 10);
+
+    ODocument e5 = database.command(new OCommandSQL("create edge e1 cluster e1")).execute();
+    Assert.assertEquals(e5.getClassName(), "E1");
+    Assert.assertEquals(e5.getIdentity().getClusterId(), database.getClusterIdByName("E1"));
 
     // database.command(new OCommandSQL("drop class E1")).execute();
     // database.command(new OCommandSQL("drop class V1")).execute();
