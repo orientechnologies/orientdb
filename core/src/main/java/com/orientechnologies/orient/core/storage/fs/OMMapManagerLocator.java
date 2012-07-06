@@ -15,10 +15,10 @@
  */
 package com.orientechnologies.orient.core.storage.fs;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * This class is mmap manager singleton factory. It used for getting mmap manager instance from any part of the system. This locator
@@ -38,11 +38,11 @@ public class OMMapManagerLocator {
    */
   public static OMMapManager getInstance() {
     if (instanceRef.get() == null) {
-			synchronized (instanceRef) {
-				if (instanceRef.compareAndSet(null, createInstance())) {
-					instanceRef.get().init();
-				}
-			}
+      synchronized (instanceRef) {
+        if (instanceRef.compareAndSet(null, createInstance())) {
+          instanceRef.get().init();
+        }
+      }
     }
     return instanceRef.get();
   }

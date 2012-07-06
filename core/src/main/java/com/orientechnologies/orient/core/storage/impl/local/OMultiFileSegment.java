@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import java.io.IOException;
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
@@ -23,8 +25,6 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
-
-import java.io.IOException;
 
 public class OMultiFileSegment extends OSegment {
   protected OStorageSegmentConfiguration config;
@@ -149,12 +149,12 @@ public class OMultiFileSegment extends OSegment {
     }
   }
 
-	public void setSoftlyClosed(boolean softlyClosed) throws IOException {
-		for (OFile file : files) {
-			if (file != null && file.isOpen())
-				file.setSoftlyClosed(softlyClosed);
-		}
-	}
+  public void setSoftlyClosed(boolean softlyClosed) throws IOException {
+    for (OFile file : files) {
+      if (file != null && file.isOpen())
+        file.setSoftlyClosed(softlyClosed);
+    }
+  }
 
   public OStorageSegmentConfiguration getConfig() {
     return config;

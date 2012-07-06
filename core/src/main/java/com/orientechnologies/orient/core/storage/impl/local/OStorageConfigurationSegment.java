@@ -15,13 +15,13 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import java.io.IOException;
+
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-
-import java.io.IOException;
 
 /**
  * Handles the database configuration in one big record.
@@ -99,8 +99,8 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
     segment.getFile().synch();
   }
 
-	@Override
-	public void setSoftlyClosed(boolean softlyClosed) throws IOException {
-		segment.getFile().setSoftlyClosed(softlyClosed);
-	}
+  @Override
+  public void setSoftlyClosed(boolean softlyClosed) throws IOException {
+    segment.getFile().setSoftlyClosed(softlyClosed);
+  }
 }

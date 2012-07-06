@@ -15,13 +15,13 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import java.io.IOException;
+
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.io.IOException;
 
 /**
  * Remote cluster implementation
@@ -266,14 +266,14 @@ public class OClusterRemote implements OCluster {
   public void synch() throws IOException {
   }
 
-	public void setSoftlyClosed(boolean softlyClosed) throws IOException {
-	}
+  public void setSoftlyClosed(boolean softlyClosed) throws IOException {
+  }
 
-	/*
-		 * (non-Javadoc)
-		 *
-		 * @see com.orientechnologies.orient.core.storage.OCluster#getName()
-		 */
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.orientechnologies.orient.core.storage.OCluster#getName()
+   */
   public String getName() {
     return name;
   }

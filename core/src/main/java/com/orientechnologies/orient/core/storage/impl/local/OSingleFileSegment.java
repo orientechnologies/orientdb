@@ -15,14 +15,14 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import java.io.IOException;
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
-
-import java.io.IOException;
 
 public class OSingleFileSegment {
   protected OStorageLocal             storage;
@@ -95,11 +95,11 @@ public class OSingleFileSegment {
     return file;
   }
 
-	public void synch() throws IOException {
-		file.synch();
-	}
+  public void synch() throws IOException {
+    file.synch();
+  }
 
-	public void setSoftlyClosed(boolean softlyClosed) throws IOException{
-		file.setSoftlyClosed(softlyClosed);
-	}
+  public void setSoftlyClosed(boolean softlyClosed) throws IOException {
+    file.setSoftlyClosed(softlyClosed);
+  }
 }

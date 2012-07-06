@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.fs;
 
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.io.OIOException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.common.util.OByteBufferUtils;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-
 import java.io.IOException;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
@@ -30,6 +22,14 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.io.OIOException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.util.OByteBufferUtils;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 
 /**
  * OFile implementation that use the Memory Mapping techniques to get faster access on read/write. The Memory Mapping is handled by
@@ -385,8 +385,8 @@ public class OFileMMap extends OAbstractFile {
   @Override
   public void synch() {
     OMMapManagerLocator.getInstance().flushFile(this);
-		flushHeader();
-	}
+    flushHeader();
+  }
 
   @Override
   public void writeHeaderLong(final int iPosition, final long iValue) {
@@ -406,12 +406,11 @@ public class OFileMMap extends OAbstractFile {
     super.close();
 
     OMMapManagerLocator.getInstance().flush();
-		if (headerBuffer != null) {
-			setSoftlyClosed(true);
-			headerBuffer = null;
-		}
+    if (headerBuffer != null) {
+      setSoftlyClosed(true);
+      headerBuffer = null;
+    }
   }
-
 
   public boolean isSoftlyClosed() {
     return headerBuffer.get(SOFTLY_CLOSED_OFFSET) == 1;

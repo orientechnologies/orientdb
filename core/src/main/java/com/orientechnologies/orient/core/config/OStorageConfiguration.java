@@ -210,7 +210,8 @@ public class OStorageConfiguration implements OSerializableStream {
     OStorageDataConfiguration data;
     for (int i = 0; i < size; ++i) {
       dataId = Integer.parseInt(read(values[index++]));
-      if (dataId == -1) continue;
+      if (dataId == -1)
+        continue;
       dataName = read(values[index++]);
 
       data = new OStorageDataConfiguration(this, dataName, dataId);
@@ -372,8 +373,8 @@ public class OStorageConfiguration implements OSerializableStream {
   public void synch() throws IOException {
   }
 
-	public void setSoftlyClosed(boolean softlyClosed) throws IOException {
-	}
+  public void setSoftlyClosed(boolean softlyClosed) throws IOException {
+  }
 
   public void close() throws IOException {
   }

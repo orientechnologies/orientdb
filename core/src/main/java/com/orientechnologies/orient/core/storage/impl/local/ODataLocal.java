@@ -15,6 +15,10 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -29,10 +33,6 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ODataSegment;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.fs.OFile;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Handle the table to resolve logical address to physical address.<br/>
@@ -141,7 +141,7 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
     acquireSharedLock();
     try {
 
-			holeSegment.synch();
+      holeSegment.synch();
       super.synch();
 
     } finally {
@@ -149,20 +149,20 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
     }
   }
 
-	@Override
-	public void setSoftlyClosed(boolean softlyClosed) throws IOException {
-		acquireExclusiveLock();
-		try {
+  @Override
+  public void setSoftlyClosed(boolean softlyClosed) throws IOException {
+    acquireExclusiveLock();
+    try {
 
-			holeSegment.setSoftlyClosed(softlyClosed);
-			super.setSoftlyClosed(softlyClosed);
+      holeSegment.setSoftlyClosed(softlyClosed);
+      super.setSoftlyClosed(softlyClosed);
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 
-	@Override
+  @Override
   public long getSize() {
     acquireSharedLock();
     try {

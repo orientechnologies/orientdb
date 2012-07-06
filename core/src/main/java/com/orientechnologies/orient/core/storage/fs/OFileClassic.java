@@ -204,7 +204,6 @@ public class OFileClassic extends OAbstractFile {
     return readData(HEADER_DATA_OFFSET + iPosition, OBinaryProtocol.SIZE_LONG).getLong();
   }
 
-
   public boolean isSoftlyClosed() throws IOException {
     return true;
   }
