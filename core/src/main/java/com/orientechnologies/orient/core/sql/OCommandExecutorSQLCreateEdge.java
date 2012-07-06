@@ -40,6 +40,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
   private String                        from;
   private String                        to;
   private OClass                        clazz;
+  private String                        clusterName;
   private LinkedHashMap<String, Object> fields;
 
   @SuppressWarnings("unchecked")
@@ -53,28 +54,39 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
 
     parserRequiredKeyword("CREATE");
     parserRequiredKeyword("EDGE");
-    String temp = parseRequiredWord(true);
-    if (temp != null && !temp.equals("FROM")) {
-      // CLASS NAME
-      className = temp;
-      parserRequiredKeyword("FROM");
-    } else
+
+    String temp = parseOptionalWord(true);
+
+    while (temp != null) {
+      if (temp.equals("CLUSTER")) {
+        clusterName = parseRequiredWord(false);
+
+      } else if (temp.equals("FROM")) {
+        from = parseRequiredWord(false);
+
+      } else if (temp.equals("TO")) {
+        to = parseRequiredWord(false);
+
+      } else if (temp.equals("SET")) {
+        fields = new LinkedHashMap<String, Object>();
+        parseSetFields(fields);
+
+      } else if (className == null && temp.length() > 0)
+        className = temp;
+
+      temp = parseOptionalWord(true);
+      if (parserIsEnded())
+        break;
+    }
+
+    if (className == null)
       // ASSIGN DEFAULT CLASS
       className = "E";
 
     // GET/CHECK CLASS NAME
     clazz = database.getMetadata().getSchema().getClass(className);
-
-    from = parseRequiredWord(false);
-    parserRequiredKeyword("TO");
-    to = parseRequiredWord(false);
-    final boolean set = parserOptionalKeyword("SET");
-
-    parserSkipWhiteSpaces();
-    if (!parserIsEnded() && set) {
-      fields = new LinkedHashMap<String, Object>();
-      parseSetFields(fields);
-    }
+    if (clazz == null)
+      throw new OCommandSQLParsingException("Class " + className + " was not found");
 
     return this;
   }
@@ -97,14 +109,14 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
 
     OSQLHelper.bindParameters(edge, fields, new OCommandParameters(iArgs));
 
-    edge.save();
+    edge.save(clusterName);
 
     return edge;
   }
 
   @Override
   public String getSyntax() {
-    return "CREATE EDGE [<class-name>] FROM <rid>|(<query>) TO <rid>|(<query>) [SET <field> = <expression>[,]*]";
+    return "CREATE EDGE [<class>] [CLUSTER <cluster>] FROM <rid>|(<query>) TO <rid>|(<query>) [SET <field> = <expression>[,]*]";
   }
 
 }

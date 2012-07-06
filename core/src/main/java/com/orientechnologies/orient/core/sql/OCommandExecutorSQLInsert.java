@@ -210,6 +210,6 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
 
   @Override
   public String getSyntax() {
-    return "INSERT INTO <Class>|cluster:<cluster>|index:<index> [(<field>[,]*) VALUES (<expression>[,]*)[,]*]|[SET <field> = <expression>[,]*]";
+    return "INSERT INTO [class:]<class>|cluster:<cluster>|index:<index> [(<field>[,]*) VALUES (<expression>[,]*)[,]*]|[SET <field> = <expression>[,]*]";
   }
 }

@@ -15,6 +15,23 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
@@ -28,22 +45,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @Test(groups = "sql-select")
 @SuppressWarnings("unchecked")
@@ -640,26 +641,26 @@ public class SQLSelectTest {
       Assert.assertEquals(page.get(i), result.get(10 + i));
     }
   }
-  
-  
+
   @Test
   public void queryPaginationWithOrderBySkipAndLimit() {
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile order by name")).execute();
 
-    List<ODocument> page = database.command(new OSQLSynchQuery<ODocument>("select from Profile order by name limit 10 skip 10")).execute();
+    List<ODocument> page = database.command(new OSQLSynchQuery<ODocument>("select from Profile order by name limit 10 skip 10"))
+        .execute();
     Assert.assertEquals(page.size(), 10);
 
     for (int i = 0; i < page.size(); ++i) {
       Assert.assertEquals(page.get(i), result.get(10 + i));
     }
   }
-  
-  
+
   @Test
   public void queryPaginationWithOrderByDescSkipAndLimit() {
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile order by name desc")).execute();
 
-    List<ODocument> page = database.command(new OSQLSynchQuery<ODocument>("select from Profile order by name desc limit 10 skip 10")).execute();
+    List<ODocument> page = database.command(
+        new OSQLSynchQuery<ODocument>("select from Profile order by name desc limit 10 skip 10")).execute();
     Assert.assertEquals(page.size(), 10);
 
     for (int i = 0; i < page.size(); ++i) {
@@ -1117,6 +1118,16 @@ public class SQLSelectTest {
       resultsList.remove(record.<Integer> field("id"));
     }
 
+  }
+
+  @Test
+  public void testEqualsNamedParameter() {
+
+    Map<String, Object> params = new HashMap<String, Object>();
+    params.put("id", 4);
+    final List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select * from company where id = :id"), params);
+
+    Assert.assertEquals(result.size(), 1);
   }
 
   @Test

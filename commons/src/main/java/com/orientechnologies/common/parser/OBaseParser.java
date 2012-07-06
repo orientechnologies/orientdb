@@ -71,21 +71,22 @@ public abstract class OBaseParser {
   protected String parseOptionalWord(final boolean iUpperCase, final String... iWords) {
     parserNextWord(iUpperCase);
 
-    if (parserLastWord.length() == 0)
-      return null;
+    if (iWords.length > 0) {
+      if (parserLastWord.length() == 0)
+        return null;
 
-    boolean found = false;
-    for (String w : iWords) {
-      if (parserLastWord.toString().equals(w)) {
-        found = true;
-        break;
+      boolean found = false;
+      for (String w : iWords) {
+        if (parserLastWord.toString().equals(w)) {
+          found = true;
+          break;
+        }
       }
+
+      if (!found)
+        throwSyntaxErrorException("Found unexpected keyword '" + parserLastWord + "' while it was expected '"
+            + Arrays.toString(iWords) + "'");
     }
-
-    if (!found)
-      throwSyntaxErrorException("Found unexpected keyword '" + parserLastWord + "' while it was expected '"
-          + Arrays.toString(iWords) + "'");
-
     return parserLastWord.toString();
   }
 

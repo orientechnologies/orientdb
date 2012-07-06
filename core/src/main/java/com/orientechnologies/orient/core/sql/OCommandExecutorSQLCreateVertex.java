@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware {
   public static final String            NAME = "CREATE VERTEX";
   private OClass                        clazz;
+  private String                        clusterName;
   private LinkedHashMap<String, Object> fields;
 
   @SuppressWarnings("unchecked")
@@ -50,14 +51,26 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
 
     parserRequiredKeyword("CREATE");
     parserRequiredKeyword("VERTEX");
-    String temp = parserOptionalWord(true);
-    boolean set = temp != null && temp.equals("SET");
 
-    if (temp != null && !set) {
-      // CLASS NAME
-      className = temp;
-      set = parserOptionalKeyword("SET");
-    } else
+    String temp = parseOptionalWord(true);
+
+    while (temp != null) {
+      if (temp.equals("CLUSTER")) {
+        clusterName = parseRequiredWord(false);
+
+      } else if (temp.equals("SET")) {
+        fields = new LinkedHashMap<String, Object>();
+        parseSetFields(fields);
+
+      } else if (className == null && temp.length() > 0 )
+        className = temp;
+
+      temp = parserOptionalWord(true);
+      if (parserIsEnded())
+        break;
+    }
+
+    if (className == null)
       // ASSIGN DEFAULT CLASS
       className = "V";
 
@@ -65,12 +78,6 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
     clazz = database.getMetadata().getSchema().getClass(className);
     if (clazz == null)
       throw new OCommandSQLParsingException("Class " + className + " was not found");
-
-    parserSkipWhiteSpaces();
-    if (!parserIsEnded() && set) {
-      fields = new LinkedHashMap<String, Object>();
-      parseSetFields(fields);
-    }
 
     return this;
   }
@@ -90,14 +97,14 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
 
     OSQLHelper.bindParameters(vertex, fields, new OCommandParameters(iArgs));
 
-    vertex.save();
+    vertex.save(clusterName);
 
     return vertex;
   }
 
   @Override
   public String getSyntax() {
-    return "CREATE VERTEX [<class-name>] [SET <field> = <expression>[,]*]";
+    return "CREATE VERTEX [<class>] [CLUSTER <cluster>] [SET <field> = <expression>[,]*]";
   }
 
 }
