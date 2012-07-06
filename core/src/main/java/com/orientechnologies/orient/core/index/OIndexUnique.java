@@ -34,30 +34,36 @@ public class OIndexUnique extends OIndexOneValue {
   }
 
   public OIndexOneValue put(final Object iKey, final OIdentifiable iSingleValue) {
-    acquireExclusiveLock();
-    try {
-      checkForKeyType(iKey);
+		modificationLock.requestModificationLock();
 
-      final OIdentifiable value = map.get(iKey);
+		try {
+			acquireExclusiveLock();
+			try {
+				checkForKeyType(iKey);
 
-      if (value != null) {
-        // CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
-        if (!value.equals(iSingleValue))
-          throw new OIndexException("Found duplicated key '" + iKey + "' on unique index '" + name + "' for record "
-              + iSingleValue.getIdentity() + ". The record already present in the index is " + value.getIdentity());
-        else
-          return this;
-      }
+				final OIdentifiable value = map.get(iKey);
 
-      if (!iSingleValue.getIdentity().isPersistent())
-        ((ORecord<?>) iSingleValue.getRecord()).save();
+				if (value != null) {
+					// CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
+					if (!value.equals(iSingleValue))
+						throw new OIndexException("Found duplicated key '" + iKey + "' on unique index '" + name + "' for record "
+										+ iSingleValue.getIdentity() + ". The record already present in the index is " + value.getIdentity());
+					else
+						return this;
+				}
 
-      map.put(iKey, iSingleValue.getIdentity());
-      return this;
+				if (!iSingleValue.getIdentity().isPersistent())
+					((ORecord<?>) iSingleValue.getRecord()).save();
 
-    } finally {
-      releaseExclusiveLock();
-    }
+				map.put(iKey, iSingleValue.getIdentity());
+				return this;
+
+			} finally {
+				releaseExclusiveLock();
+			}
+		} finally {
+			modificationLock.releaseModificationLock();
+		}
   }
 
 	public boolean canBeUsedInEqualityOperators() {

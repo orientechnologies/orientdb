@@ -15,12 +15,6 @@
  */
 package com.orientechnologies.orient.object.db;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javassist.util.proxy.Proxy;
-import javassist.util.proxy.ProxyObject;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -56,6 +50,11 @@ import com.orientechnologies.orient.object.entity.OObjectEntityClassHandler;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
+import javassist.util.proxy.Proxy;
+import javassist.util.proxy.ProxyObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Object Database instance. It's a wrapper to the class ODatabaseDocumentTx that handles conversion between ODocument instances and
@@ -596,4 +595,6 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 				rid2Records.remove(rid);
 		}
 	}
+
+
 }

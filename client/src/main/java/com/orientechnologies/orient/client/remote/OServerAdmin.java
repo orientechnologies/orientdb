@@ -15,10 +15,7 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
+import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -31,6 +28,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Remote administration class of OrientDB Server instances.
@@ -243,21 +244,25 @@ public class OServerAdmin {
    */
   public synchronized OServerAdmin dropDatabase() throws IOException {
     storage.checkConnection();
+    boolean retry = true;
 
-    try {
-
-      final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_DROP);
+    while (retry)
       try {
-        network.writeString(storage.getName());
-      } finally {
-        storage.endRequest(network);
+
+        final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_DROP);
+        try {
+          network.writeString(storage.getName());
+        } finally {
+          storage.endRequest(network);
+        }
+
+        storage.getResponse(network);
+        retry = false;
+      } catch (OModificationOperationProhibitedException oope) {
+        retry = handleDBFreeze();
+      } catch (Exception e) {
+        OLogManager.instance().exception("Cannot delete the remote storage: " + storage.getName(), e, OStorageException.class);
       }
-
-      storage.getResponse(network);
-
-    } catch (Exception e) {
-      OLogManager.instance().exception("Cannot delete the remote storage: " + storage.getName(), e, OStorageException.class);
-    }
 
     for (OStorage s : Orient.instance().getStorages()) {
       if (s.getURL().startsWith(getURL())) {
@@ -268,6 +273,59 @@ public class OServerAdmin {
     }
 
     ODatabaseRecordThreadLocal.INSTANCE.set(null);
+
+    return this;
+  }
+
+  private boolean handleDBFreeze() {
+    boolean retry;
+    OLogManager.instance().warn(this,
+        "DB is frozen will wait for " + OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT.getValue() + " ms. and then retry.");
+    retry = true;
+    try {
+      Thread.sleep(OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT.getValueAsInteger());
+    } catch (InterruptedException ie) {
+      retry = false;
+
+      Thread.currentThread().interrupt();
+    }
+    return retry;
+  }
+
+  public synchronized OServerAdmin freezeDatabase() throws IOException {
+    storage.checkConnection();
+    try {
+      final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_FREEZE);
+
+      try {
+        network.writeString(storage.getName());
+      } finally {
+        storage.endRequest(network);
+      }
+
+      storage.getResponse(network);
+    } catch (Exception e) {
+      OLogManager.instance().exception("Cannot freeze the remote storage: " + storage.getName(), e, OStorageException.class);
+    }
+
+    return this;
+  }
+
+  public synchronized OServerAdmin releaseDatabase() throws IOException {
+    storage.checkConnection();
+    try {
+      final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_RELEASE);
+
+      try {
+        network.writeString(storage.getName());
+      } finally {
+        storage.endRequest(network);
+      }
+
+      storage.getResponse(network);
+    } catch (Exception e) {
+      OLogManager.instance().exception("Cannot release the remote storage: " + storage.getName(), e, OStorageException.class);
+    }
 
     return this;
   }
@@ -566,25 +624,29 @@ public class OServerAdmin {
   }
 
   protected ODocument sendRequest(final byte iRequest, final ODocument iPayLoad, final String iActivity) {
-    try {
-
-      final OChannelBinaryClient network = storage.beginRequest(iRequest);
+    boolean retry = true;
+    while (retry)
       try {
-        network.writeBytes(iPayLoad.toStream());
-      } finally {
-        storage.endRequest(network);
-      }
 
-      storage.beginResponse(network);
-      try {
-        return new ODocument(network.readBytes());
-      } finally {
-        storage.endResponse(network);
-      }
+        final OChannelBinaryClient network = storage.beginRequest(iRequest);
+        try {
+          network.writeBytes(iPayLoad.toStream());
+        } finally {
+          storage.endRequest(network);
+        }
 
-    } catch (Exception e) {
-      OLogManager.instance().exception("Error on executing '%s'", e, OStorageException.class, iActivity);
-    }
+        storage.beginResponse(network);
+				retry = false;
+				try {
+          return new ODocument(network.readBytes());
+        } finally {
+          storage.endResponse(network);
+        }
+      } catch (OModificationOperationProhibitedException ompe) {
+				retry = handleDBFreeze();
+			} catch(Exception e) {
+        OLogManager.instance().exception("Error on executing '%s'", e, OStorageException.class, iActivity);
+      }
     return null;
   }
 }

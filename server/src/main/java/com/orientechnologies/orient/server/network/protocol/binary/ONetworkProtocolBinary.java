@@ -15,20 +15,13 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
-import java.io.IOException;
-import java.net.Socket;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -37,6 +30,7 @@ import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionAbortedException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
@@ -57,6 +51,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
 import com.orientechnologies.orient.server.OClientConnection;
@@ -69,12 +64,18 @@ import com.orientechnologies.orient.server.handler.OServerHandler;
 import com.orientechnologies.orient.server.handler.OServerHandlerHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 
+import java.io.IOException;
+import java.net.Socket;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
   protected OUser             account;
 
-  protected String            user;
-  protected String            passwd;
   private String              dbType;
 
   public ONetworkProtocolBinary() {
@@ -266,12 +267,54 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       configList();
       break;
 
+    case OChannelBinaryProtocol.REQUEST_DB_FREEZE:
+      freezeDatabase();
+      break;
+
+    case OChannelBinaryProtocol.REQUEST_DB_RELEASE:
+      releaseDatabase();
+      break;
+
     default:
       setDataCommandInfo("Command not supported");
       return false;
     }
 
     return true;
+  }
+
+  protected void checkServerAccess(final String iResource) {
+    if (connection.serverUser == null)
+      throw new OSecurityAccessException("Server user not authenticated.");
+
+    if (!OServerMain.server().authenticate(connection.serverUser.name, null, iResource))
+      throw new OSecurityAccessException("User '" + connection.serverUser.name + "' cannot access to the resource [" + iResource
+          + "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
+  }
+
+  protected ODatabaseComplex<?> openDatabase(final ODatabaseComplex<?> database, final String iUser, final String iPassword) {
+
+    if (database.isClosed())
+      if (database.getStorage() instanceof OStorageMemory && !database.exists())
+        database.create();
+      else {
+        try {
+          database.open(iUser, iPassword);
+        } catch (OSecurityException e) {
+          // TRY WITH SERVER'S USER
+          try {
+            connection.serverUser = OServerMain.server().serverLogin(iUser, iPassword, "database.passthrough");
+          } catch (OSecurityException ex) {
+            throw e;
+          }
+
+          // SERVER AUTHENTICATED, BYPASS SECURITY
+          database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
+          database.open(iUser, iPassword);
+        }
+      }
+
+    return database;
   }
 
   protected void addDataSegment() throws IOException {
@@ -433,8 +476,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (connection.data.protocolVersion >= 8)
       // READ DB-TYPE FROM THE CLIENT
       dbType = channel.readString();
-    user = channel.readString();
-    passwd = channel.readString();
+
+    final String user = channel.readString();
+    final String passwd = channel.readString();
 
     connection.database = (ODatabaseDocumentTx) OServerMain.server().openDatabase(dbType, dbURL, user, passwd);
     connection.rawDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
@@ -469,7 +513,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     readConnectionData();
 
-    serverUser = OServerMain.server().serverLogin(channel.readString(), channel.readString(), "connect");
+    connection.serverUser = OServerMain.server().serverLogin(channel.readString(), channel.readString(), "connect");
 
     beginResponse();
     try {
@@ -486,8 +530,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     OLogManager.instance().info(this, "Received shutdown command from the remote client %s:%d", channel.socket.getInetAddress(),
         channel.socket.getPort());
 
-    user = channel.readString();
-    passwd = channel.readString();
+    final String user = channel.readString();
+    final String passwd = channel.readString();
 
     if (OServerMain.server().authenticate(user, passwd, "shutdown")) {
       OLogManager.instance().info(this, "Remote client %s:%d authenticated. Starting shutdown of server...",
@@ -630,7 +674,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       OLogManager.instance().info(this, "Dropped database '%s'", connection.database.getName());
 
       if (connection.database.isClosed())
-        openDatabase(connection.database, serverUser.name, serverUser.password);
+        openDatabase(connection.database, connection.serverUser.name, connection.serverUser.password);
+
       connection.database.drop();
       connection.close();
     } else {
@@ -1191,6 +1236,60 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     try {
       sendOk(clientTxId);
       channel.writeBytes(iResponse != null ? iResponse.toStream() : null);
+    } finally {
+      endResponse();
+    }
+  }
+
+  protected void freezeDatabase() throws IOException {
+    setDataCommandInfo("Freeze database");
+    String dbName = channel.readString();
+
+    checkServerAccess("database.freeze");
+
+    connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, "local");
+
+    if (connection.database.exists()) {
+      OLogManager.instance().info(this, "Freezing database '%s'", connection.database.getURL());
+
+			if (connection.database.isClosed())
+				openDatabase(connection.database, connection.serverUser.name, connection.serverUser.password);
+
+      connection.database.freeze(true);
+    } else {
+      throw new OStorageException("Database with name '" + dbName + "' doesn't exits.");
+    }
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+    } finally {
+      endResponse();
+    }
+  }
+
+  protected void releaseDatabase() throws IOException {
+    setDataCommandInfo("Release database");
+    String dbName = channel.readString();
+
+    checkServerAccess("database.release");
+
+		connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, "local");
+
+    if (connection.database.exists()) {
+      OLogManager.instance().info(this, "Realising database '%s'", connection.database.getURL());
+
+			if (connection.database.isClosed())
+				openDatabase(connection.database, connection.serverUser.name, connection.serverUser.password);
+
+      connection.database.release();
+    } else {
+      throw new OStorageException("Database with name '" + dbName + "' doesn't exits.");
+    }
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
     } finally {
       endResponse();
     }

@@ -15,17 +15,17 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Basic interface to handle index.
@@ -112,8 +112,6 @@ public interface OIndex<T> {
 	 * 
 	 * @param iKey
 	 *          The entry's key to remove
-	 * @param iValue
-	 *          Entry's value as OIdentifiable instance
 	 * @return True if the entry has been found and removed, otherwise false
 	 */
 	public boolean remove(Object iKey, OIdentifiable iRID);

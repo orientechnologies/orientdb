@@ -15,28 +15,7 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
-
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-
+import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
@@ -81,6 +60,27 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
 
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+import java.io.IOException;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
+
 /**
  * This object is bound to each remote ODatabase instances.
  */
@@ -119,6 +119,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private Map<String, Object>              connectionOptions;
   private final String                     clientId;
 
+  private final int                        maxReadQueue;
+
   public OStorageRemote(final String iClientId, final String iURL, final String iMode) throws IOException {
     super(iURL, iURL, iMode);
     clientId = iClientId;
@@ -131,6 +133,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     parseServerURLs();
 
     asynchExecutor = Executors.newSingleThreadScheduledExecutor();
+
+    maxReadQueue = Runtime.getRuntime().availableProcessors() - 1;
   }
 
   public int getSessionId() {
@@ -359,6 +363,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         }
         return ppos;
 
+      } catch (OModificationOperationProhibitedException mope) {
+        handleDBFreeze();
       } catch (Exception e) {
         handleException("Error on create record in cluster: " + iRid.clusterId, e);
 
@@ -477,6 +483,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         }
         return iVersion;
 
+      } catch (OModificationOperationProhibitedException mope) {
+        handleDBFreeze();
       } catch (Exception e) {
         handleException("Error on update record " + iRid, e);
 
@@ -539,6 +547,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           }
         }
         return false;
+      } catch (OModificationOperationProhibitedException mope) {
+        handleDBFreeze();
       } catch (Exception e) {
         handleException("Error on delete record " + iRid, e);
 
@@ -773,6 +783,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           endResponse(network);
         }
 
+      } catch (OModificationOperationProhibitedException mope) {
+        handleDBFreeze();
       } catch (Exception e) {
         handleException("Error on executing command: " + iCommand, e);
 
@@ -787,6 +799,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   public void commit(final OTransaction iTx) {
     checkConnection();
 
+    final List<ORecordOperation> committedEntries = new ArrayList<ORecordOperation>();
     do {
       try {
         OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting = true;
@@ -800,17 +813,25 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
           final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
 
-          while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
-            for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
-              tmpEntries.add(txEntry);
+          if (iTx.getCurrentRecordEntries().iterator().hasNext()) {
+						while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
+							for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
+								tmpEntries.add(txEntry);
 
-            iTx.clearRecordEntries();
+							iTx.clearRecordEntries();
 
-            if (tmpEntries.size() > 0)
-              for (ORecordOperation txEntry : tmpEntries)
-                commitEntry(network, txEntry);
+							if (tmpEntries.size() > 0)
+								for (ORecordOperation txEntry : tmpEntries) {
+									commitEntry(network, txEntry);
+									committedEntries.add(txEntry);
+								}
 
-          }
+
+						}
+					} else if(committedEntries.size() > 0) {
+						for(ORecordOperation txEntry : committedEntries)
+							commitEntry(network, txEntry);
+					}
 
           // END OF RECORD ENTRIES
           network.writeByte((byte) 0);
@@ -849,6 +870,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               }
             }
           }
+
+					committedEntries.clear();
         } finally {
           endResponse(network);
         }
@@ -863,6 +886,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         break;
 
+      } catch (OModificationOperationProhibitedException mope) {
+        handleDBFreeze();
       } catch (Exception e) {
         handleException("Error on commit", e);
 
@@ -950,10 +975,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         } finally {
           endResponse(network);
         }
-
+      } catch (OModificationOperationProhibitedException mphe) {
+        handleDBFreeze();
       } catch (Exception e) {
         handleException("Error on add new cluster", e);
-
       }
     } while (true);
   }
@@ -992,6 +1017,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           endResponse(network);
         }
 
+      } catch (OModificationOperationProhibitedException mope) {
+        handleDBFreeze();
       } catch (Exception e) {
         handleException("Error on removing of cluster", e);
 
@@ -1025,6 +1052,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           endResponse(network);
         }
 
+      } catch (OModificationOperationProhibitedException mphe) {
+        handleDBFreeze();
       } catch (Exception e) {
         handleException("Error on add new data segment", e);
       }
@@ -1053,6 +1082,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           endResponse(network);
         }
 
+      } catch (OModificationOperationProhibitedException mope) {
+        handleDBFreeze();
       } catch (Exception e) {
         handleException("Error on remove data segment", e);
       }
@@ -1407,16 +1438,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           networkPoolCursor = 0;
 
         network = networkPool.get(networkPoolCursor);
+
+        networkPoolCursor++;
         if (network.getLockWrite().tryLock())
           break;
 
         network = null;
-
-        networkPoolCursor++;
-
-        if (networkPoolCursor >= networkPool.size())
-          // RESTART FROM THE FIRST ONE
-          networkPoolCursor = 0;
 
         if (networkPoolCursor == beginCursor) {
           // COMPLETE ROUND AND NOT FREE CONNECTIONS FOUND
@@ -1508,6 +1535,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
    */
   protected void beginResponse(final OChannelBinaryClient iNetwork) throws IOException {
     iNetwork.beginResponse(getSessionId());
+
+    if (iNetwork.getLockRead().getQueueLength() + 1 >= maxReadQueue)
+      synchronized (networkPool) {
+        if (networkPool.size() < maxPool) {
+          // CREATE NEW CONNECTION
+          final OChannelBinaryClient network = createNetworkConnection();
+          networkPool.add(network);
+        }
+      }
 
     if (debug)
       System.out.println("-> res: " + getSessionId());
@@ -1630,6 +1666,21 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       for (int i = networkPool.size(); i < minPool; ++i)
         networkPool.add(createNetworkConnection());
     }
+  }
+
+  private boolean handleDBFreeze() {
+    boolean retry;
+    OLogManager.instance().warn(this,
+        "DB is frozen will wait for " + OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT.getValue() + " ms. and then retry.");
+    retry = true;
+    try {
+      Thread.sleep(OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT.getValueAsInteger());
+    } catch (InterruptedException ie) {
+      retry = false;
+
+      Thread.currentThread().interrupt();
+    }
+    return retry;
   }
 
   private void readDatabaseInformation(final OChannelBinaryClient network) throws IOException {

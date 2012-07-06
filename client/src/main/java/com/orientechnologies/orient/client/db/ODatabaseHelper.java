@@ -74,7 +74,28 @@ public class ODatabaseHelper {
     }
   }
 
-  protected static String getServerRootPassword() throws IOException {
+	public static void freezeDatabase(final ODatabase database) throws IOException {
+		if (database.getURL().startsWith("remote")) {
+			final OServerAdmin serverAdmin = new OServerAdmin(database.getURL());
+			serverAdmin.connect("root", getServerRootPassword()).freezeDatabase();
+			serverAdmin.close();
+		} else {
+			database.freeze();
+		}
+	}
+
+	public static void releaseDatabase(final ODatabase database) throws IOException {
+		if (database.getURL().startsWith("remote")) {
+			final OServerAdmin serverAdmin = new OServerAdmin(database.getURL());
+			serverAdmin.connect("root", getServerRootPassword()).releaseDatabase();
+			serverAdmin.close();
+		} else {
+			database.release();
+		}
+	}
+
+
+	protected static String getServerRootPassword() throws IOException {
     return getServerRootPassword("server");
   }
 

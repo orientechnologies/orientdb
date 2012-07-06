@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.collection.OCompositeKey;
+import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
@@ -67,12 +68,14 @@ import java.util.Set;
  * 
  */
 public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveExternal implements OIndexInternal<T> {
-  protected static final String                  CONFIG_MAP_RID  = "mapRid";
-  protected static final String                  CONFIG_CLUSTERS = "clusters";
+  protected final OModificationLock              modificationLock = new OModificationLock();
+
+  protected static final String                  CONFIG_MAP_RID   = "mapRid";
+  protected static final String                  CONFIG_CLUSTERS  = "clusters";
   protected String                               name;
   protected String                               type;
   protected OMVRBTreeDatabaseLazySave<Object, T> map;
-  protected Set<String>                          clustersToIndex = new LinkedHashSet<String>();
+  protected Set<String>                          clustersToIndex  = new LinkedHashSet<String>();
   protected OIndexDefinition                     indexDefinition;
 
   @ODocumentInstance
@@ -427,45 +430,66 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   }
 
   public boolean remove(final Object iKey, final OIdentifiable iValue) {
-    return remove(iKey);
+    modificationLock.requestModificationLock();
+    try {
+      return remove(iKey);
+    } finally {
+      modificationLock.releaseModificationLock();
+    }
+
   }
 
   public boolean remove(final Object key) {
+    modificationLock.requestModificationLock();
 
-    acquireExclusiveLock();
     try {
+      acquireExclusiveLock();
+      try {
 
-      return map.remove(key) != null;
+        return map.remove(key) != null;
 
+      } finally {
+        releaseExclusiveLock();
+      }
     } finally {
-      releaseExclusiveLock();
+      modificationLock.releaseModificationLock();
     }
   }
 
   public OIndex<T> clear() {
+		modificationLock.requestModificationLock();
 
-    acquireExclusiveLock();
-    try {
+		try {
+			acquireExclusiveLock();
+			try {
 
-      map.clear();
-      return this;
+				map.clear();
+				return this;
 
-    } finally {
-      releaseExclusiveLock();
-    }
+			} finally {
+				releaseExclusiveLock();
+			}
+		} finally {
+			modificationLock.releaseModificationLock();
+		}
   }
 
   public OIndexInternal<T> delete() {
+		modificationLock.requestModificationLock();
 
-    acquireExclusiveLock();
+		try {
+			acquireExclusiveLock();
 
-    try {
-      map.delete();
-      return this;
+			try {
+				map.delete();
+				return this;
 
-    } finally {
-      releaseExclusiveLock();
-    }
+			} finally {
+				releaseExclusiveLock();
+			}
+		} finally {
+			modificationLock.releaseModificationLock();
+		}
   }
 
   public OIndexInternal<T> lazySave() {
@@ -847,7 +871,23 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
     return indexDefinition;
   }
 
-  @Override
+	public void freeze(boolean throwException) {
+		modificationLock.prohibitModifications(throwException);
+	}
+
+	public void release() {
+		modificationLock.allowModifications();
+	}
+
+	public void acquireModificationLock() {
+		modificationLock.requestModificationLock();
+	}
+
+	public void releaseModificationLock() {
+		modificationLock.releaseModificationLock();
+	}
+
+	@Override
   public boolean equals(final Object o) {
     if (this == o)
       return true;
@@ -861,6 +901,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 
     return true;
   }
+
 
   @Override
   public int hashCode() {

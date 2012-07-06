@@ -15,18 +15,8 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
+import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -59,6 +49,17 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 public class OStorageLocal extends OStorageEmbedded {
   private final int                     DELETE_MAX_RETRIES;
   private final int                     DELETE_WAIT_TIME;
@@ -77,6 +78,8 @@ public class OStorageLocal extends OStorageEmbedded {
   private final String                  PROFILER_READ_RECORD;
   private final String                  PROFILER_UPDATE_RECORD;
   private final String                  PROFILER_DELETE_RECORD;
+
+  private OModificationLock modificationLock    = new OModificationLock();
 
   public OStorageLocal(final String iName, final String iFilePath, final String iMode) throws IOException {
     super(iName, iFilePath, iMode);
@@ -905,16 +908,21 @@ public class OStorageLocal extends OStorageEmbedded {
     final ODataLocal dataSegment = getDataSegmentById(iDataSegmentId);
 
     final OPhysicalPosition ppos;
-    if (txManager.isCommitting()) {
-      ppos = txManager.createRecord(txManager.getCurrentTransaction().getId(), dataSegment, cluster, iRid, iContent,
-          iRecordVersion, iRecordType, iDataSegmentId);
-      iRid.clusterPosition = ppos.clusterPosition;
-    } else {
-      ppos = createRecord(dataSegment, cluster, iContent, iRecordType, iRid, iRecordVersion);
-      if (OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
-        synchRecordUpdate(cluster, ppos);
-      if (iCallback != null)
-        iCallback.call(iRid, ppos.clusterPosition);
+    modificationLock.requestModificationLock();
+    try {
+      if (txManager.isCommitting()) {
+        ppos = txManager.createRecord(txManager.getCurrentTransaction().getId(), dataSegment, cluster, iRid, iContent,
+            iRecordVersion, iRecordType, iDataSegmentId);
+        iRid.clusterPosition = ppos.clusterPosition;
+      } else {
+        ppos = createRecord(dataSegment, cluster, iContent, iRecordType, iRid, iRecordVersion);
+        if (OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
+          synchRecordUpdate(cluster, ppos);
+        if (iCallback != null)
+          iCallback.call(iRid, ppos.clusterPosition);
+      }
+    } finally {
+      modificationLock.releaseModificationLock();
     }
 
     return ppos;
@@ -932,20 +940,25 @@ public class OStorageLocal extends OStorageEmbedded {
 
     final OCluster cluster = getClusterById(iRid.clusterId);
 
-    if (txManager.isCommitting())
-      return txManager.updateRecord(txManager.getCurrentTransaction().getId(), cluster, iRid, iContent, iVersion, iRecordType);
-    else {
-      final OPhysicalPosition ppos = updateRecord(cluster, iRid, iContent, iVersion, iRecordType);
+    modificationLock.requestModificationLock();
+    try {
+      if (txManager.isCommitting()) {
+        return txManager.updateRecord(txManager.getCurrentTransaction().getId(), cluster, iRid, iContent, iVersion, iRecordType);
+      } else {
+        final OPhysicalPosition ppos = updateRecord(cluster, iRid, iContent, iVersion, iRecordType);
 
-      if (ppos != null && OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
-        synchRecordUpdate(cluster, ppos);
+        if (ppos != null && OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
+          synchRecordUpdate(cluster, ppos);
 
-      final int returnValue = (int) (ppos != null ? ppos.recordVersion : -1);
+        final int returnValue = (int) (ppos != null ? ppos.recordVersion : -1);
 
-      if (iCallback != null)
-        iCallback.call(iRid, returnValue);
+        if (iCallback != null)
+          iCallback.call(iRid, returnValue);
 
-      return returnValue;
+        return returnValue;
+      }
+    } finally {
+      modificationLock.releaseModificationLock();
     }
   }
 
@@ -954,19 +967,24 @@ public class OStorageLocal extends OStorageEmbedded {
 
     final OCluster cluster = getClusterById(iRid.clusterId);
 
-    if (txManager.isCommitting())
-      return txManager.deleteRecord(txManager.getCurrentTransaction().getId(), cluster, iRid.clusterPosition, iVersion);
-    else {
-      final OPhysicalPosition ppos = deleteRecord(cluster, iRid, iVersion);
-      if (ppos != null && OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
-        synchRecordUpdate(cluster, ppos);
+    modificationLock.requestModificationLock();
+    try {
+      if (txManager.isCommitting()) {
+        return txManager.deleteRecord(txManager.getCurrentTransaction().getId(), cluster, iRid.clusterPosition, iVersion);
+      } else {
+        final OPhysicalPosition ppos = deleteRecord(cluster, iRid, iVersion);
+        if (ppos != null && OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
+          synchRecordUpdate(cluster, ppos);
 
-      final boolean returnValue = ppos != null;
+        final boolean returnValue = ppos != null;
 
-      if (iCallback != null)
-        iCallback.call(iRid, returnValue);
+        if (iCallback != null)
+          iCallback.call(iRid, returnValue);
 
-      return returnValue;
+        return returnValue;
+      }
+    } finally {
+      modificationLock.releaseModificationLock();
     }
   }
 
@@ -1032,39 +1050,44 @@ public class OStorageLocal extends OStorageEmbedded {
   }
 
   public void commit(final OTransaction iTx) {
-    lock.acquireExclusiveLock();
+		modificationLock.requestModificationLock();
     try {
-
-      try {
-        txManager.clearLogEntries(iTx);
-        txManager.commitAllPendingRecords(iTx);
-
-        if (OGlobalConfiguration.TX_COMMIT_SYNCH.getValueAsBoolean())
-          synch();
-
-      } catch (RuntimeException e) {
-        // WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
-        rollback(iTx);
-        throw e;
-      } catch (IOException e) {
-        // WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
-        rollback(iTx);
-        throw new OException(e);
-      } finally {
+			lock.acquireExclusiveLock();
+			try {
         try {
           txManager.clearLogEntries(iTx);
-        } catch (Exception e) {
-          // XXX WHAT CAN WE DO HERE ? ROLLBACK IS NOT POSSIBLE
-          // IF WE THROW EXCEPTION, A ROLLBACK WILL BE DONE AT DB LEVEL BUT NOT AT STORAGE LEVEL
-          OLogManager.instance().error(this, "Clear tx log entries failed", e);
+          txManager.commitAllPendingRecords(iTx);
+
+          if (OGlobalConfiguration.TX_COMMIT_SYNCH.getValueAsBoolean())
+            synch();
+
+        } catch (RuntimeException e) {
+          // WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
+          rollback(iTx);
+          throw e;
+        } catch (IOException e) {
+          // WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
+          rollback(iTx);
+          throw new OException(e);
+        } finally {
+          try {
+            txManager.clearLogEntries(iTx);
+          } catch (Exception e) {
+            // XXX WHAT CAN WE DO HERE ? ROLLBACK IS NOT POSSIBLE
+            // IF WE THROW EXCEPTION, A ROLLBACK WILL BE DONE AT DB LEVEL BUT NOT AT STORAGE LEVEL
+            OLogManager.instance().error(this, "Clear tx log entries failed", e);
+          }
         }
-      }
+      } finally {
+				lock.releaseExclusiveLock();
+			}
     } finally {
-      lock.releaseExclusiveLock();
+			modificationLock.releaseModificationLock();
     }
   }
 
   public void rollback(final OTransaction iTx) {
+    modificationLock.requestModificationLock();
     try {
       txManager.getTxSegment().rollback(iTx);
       if (OGlobalConfiguration.TX_COMMIT_SYNCH.getValueAsBoolean())
@@ -1072,6 +1095,8 @@ public class OStorageLocal extends OStorageEmbedded {
     } catch (IOException ioe) {
       OLogManager.instance().error(this,
           "Error executing rollback for transaction with id '" + iTx.getId() + "' cause: " + ioe.getMessage(), ioe);
+    } finally {
+      modificationLock.releaseModificationLock();
     }
   }
 
@@ -1673,5 +1698,14 @@ public class OStorageLocal extends OStorageEmbedded {
       final Object... iArgs) {
     if (iVerbose)
       iListener.onMessage(String.format(iMessage, iArgs));
+  }
+
+	public void freeze(boolean throwException) {
+		modificationLock.prohibitModifications(throwException);
+	}
+
+
+	public void release() {
+    modificationLock.allowModifications();
   }
 }

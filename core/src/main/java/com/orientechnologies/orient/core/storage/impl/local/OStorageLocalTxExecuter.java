@@ -15,13 +15,10 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -33,6 +30,10 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class OStorageLocalTxExecuter {
   private final OStorageLocal storage;
@@ -97,6 +98,9 @@ public class OStorageLocalTxExecuter {
     try {
       // READ CURRENT RECORD CONTENT
       final ORawBuffer buffer = storage.readRecord(iClusterSegment, iRid, true);
+
+			if(buffer == null)
+				throw new ORecordNotFoundException("The record with id " + iRid + " was not found");
 
       // SAVE INTO THE LOG THE POSITION OF THE OLD RECORD JUST DELETED. IF TX FAILS AT THIS POINT AS ABOVE
       txSegment.addLog(OTxSegment.OPERATION_UPDATE, iTxId, iRid.clusterId, iRid.clusterPosition, iRecordType, buffer.version,

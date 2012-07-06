@@ -61,21 +61,26 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 	}
 
 	public int remove(final OIdentifiable iRecord) {
+		modificationLock.requestModificationLock();
 
-		acquireExclusiveLock();
 		try {
+			acquireExclusiveLock();
+			try {
 
-			int tot = 0;
-			for (final Entry<Object, OIdentifiable> entries : map.entrySet()) {
-				if (entries.getValue().equals(iRecord)) {
-					remove(entries.getKey(), iRecord);
-					++tot;
+				int tot = 0;
+				for (final Entry<Object, OIdentifiable> entries : map.entrySet()) {
+					if (entries.getValue().equals(iRecord)) {
+						remove(entries.getKey(), iRecord);
+						++tot;
+					}
 				}
-			}
 
-			return tot;
+				return tot;
+			} finally {
+				releaseExclusiveLock();
+			}
 		} finally {
-			releaseExclusiveLock();
+			modificationLock.releaseModificationLock();
 		}
 	}
 

@@ -15,15 +15,6 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -39,6 +30,15 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
   private boolean              usingLog;
@@ -75,7 +75,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
             if (lockedIndexes == null)
               lockedIndexes = new ArrayList<OIndexMVRBTreeAbstract<?>>();
 
-            index.acquireExclusiveLock();
+            index.acquireModificationLock();
             lockedIndexes.add(index);
           }
 
@@ -102,12 +102,15 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
               ODocument doc = (ODocument) record;
               if (!lockedIndexes.contains(index.getInternal()) && doc.getSchemaClass() != null && index.getDefinition() != null
                   && doc.getSchemaClass().isSubClassOf(index.getDefinition().getClassName())) {
-                ((OIndexMVRBTreeAbstract<?>) index.getInternal()).acquireExclusiveLock();
+                index.getInternal().acquireModificationLock();
                 lockedIndexes.add((OIndexMVRBTreeAbstract<?>) index.getInternal());
               }
             }
           }
         }
+
+        for (OIndexMVRBTreeAbstract<?> index : lockedIndexes)
+          index.acquireExclusiveLock();
 
         database.getStorage().callInLock(new Callable<Void>() {
 
@@ -129,11 +132,14 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         }, true);
       } finally {
         // RELEASE INDEX LOCKS IF ANY
-        if (lockedIndexes != null)
-          // DON'T USE GENERICS TO AVOID OpenJDK CRASH :-(
-          for (OIndexMVRBTreeAbstract<?> index : lockedIndexes) {
+        if (lockedIndexes != null) {
+          for (OIndexMVRBTreeAbstract<?> index : lockedIndexes)
             index.releaseExclusiveLock();
-          }
+
+          for (OIndexMVRBTreeAbstract<?> index : lockedIndexes)
+            index.releaseModificationLock();
+
+        }
       }
     }
   }

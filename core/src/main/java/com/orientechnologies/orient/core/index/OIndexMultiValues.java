@@ -54,7 +54,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
       if (values == null)
         return Collections.emptySet();
 
-      return values;
+      return new HashSet<OIdentifiable>(values);
 
     } finally {
       releaseExclusiveLock();
@@ -62,48 +62,62 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
   }
 
   public OIndexMultiValues put(final Object iKey, final OIdentifiable iSingleValue) {
+    modificationLock.requestModificationLock();
 
-    acquireExclusiveLock();
     try {
+      acquireExclusiveLock();
+      try {
 
-      checkForKeyType(iKey);
+        checkForKeyType(iKey);
 
-      Set<OIdentifiable> values = map.get(iKey);
+        Set<OIdentifiable> values = map.get(iKey);
 
-      if (values == null)
-        values = new OMVRBTreeRIDSet().setAutoConvert(false);
+        if (values == null)
+          values = new OMVRBTreeRIDSet().setAutoConvert(false);
 
-      if (!iSingleValue.getIdentity().isValid())
-        ((ORecord<?>) iSingleValue).save();
+        if (!iSingleValue.getIdentity().isValid())
+          ((ORecord<?>) iSingleValue).save();
 
-      values.add(iSingleValue.getIdentity());
+        values.add(iSingleValue.getIdentity());
 
-      map.put(iKey, values);
-      return this;
+        map.put(iKey, values);
+        return this;
 
+      } finally {
+        releaseExclusiveLock();
+      }
     } finally {
-      releaseExclusiveLock();
+      modificationLock.releaseModificationLock();
     }
   }
 
   @Override
   public boolean remove(final Object iKey, final OIdentifiable iValue) {
+    modificationLock.requestModificationLock();
 
-    acquireExclusiveLock();
     try {
+      acquireExclusiveLock();
+      try {
 
-      final Set<OIdentifiable> recs = get(iKey);
-      if (recs.remove(iValue)) {
-        if (recs.isEmpty())
-          map.remove(iKey);
-        else
-          map.put(iKey, recs);
-        return true;
+				Set<OIdentifiable> recs = map.get(iKey);
+
+				if (recs == null)
+					return false;
+
+        if (recs.remove(iValue)) {
+          if (recs.isEmpty())
+            map.remove(iKey);
+          else
+            map.put(iKey, recs);
+          return true;
+        }
+        return false;
+
+      } finally {
+        releaseExclusiveLock();
       }
-      return false;
-
     } finally {
-      releaseExclusiveLock();
+      modificationLock.releaseModificationLock();
     }
   }
 

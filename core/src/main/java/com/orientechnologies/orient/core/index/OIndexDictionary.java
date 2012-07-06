@@ -34,19 +34,25 @@ public class OIndexDictionary extends OIndexOneValue {
 	}
 
 	public OIndexOneValue put(final Object iKey, final OIdentifiable iSingleValue) {
-		acquireExclusiveLock();
+		modificationLock.requestModificationLock();
+
 		try {
-			checkForKeyType(iKey);
+			acquireExclusiveLock();
+			try {
+				checkForKeyType(iKey);
 
-			final OIdentifiable value = map.get(iKey);
+				final OIdentifiable value = map.get(iKey);
 
-			if (value == null || !value.equals(iSingleValue))
-				map.put(iKey, iSingleValue);
+				if (value == null || !value.equals(iSingleValue))
+					map.put(iKey, iSingleValue);
 
-			return this;
+				return this;
 
+			} finally {
+				releaseExclusiveLock();
+			}
 		} finally {
-			releaseExclusiveLock();
+			modificationLock.releaseModificationLock();
 		}
 	}
 

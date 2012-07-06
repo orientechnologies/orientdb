@@ -17,12 +17,15 @@ package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordWrapperAbstract;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexMVRBTreeAbstract;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -31,6 +34,14 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
 
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabaseRecordTx> implements ODatabaseDocument {
@@ -41,6 +52,110 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
   public ODatabaseDocumentTx(final ODatabaseRecordTx iSource) {
     super(iSource);
   }
+
+  private void freezeIndexes(final List<OIndexMVRBTreeAbstract<?>> indexesToFreeze, boolean throwException) {
+    if (indexesToFreeze != null) {
+      for (OIndexMVRBTreeAbstract<?> indexToLock : indexesToFreeze) {
+        indexToLock.freeze(throwException);
+      }
+    }
+  }
+
+  private void flushIndexes(List<OIndexMVRBTreeAbstract<?>> indexesToFlush) {
+    for (OIndexMVRBTreeAbstract<?> index : indexesToFlush) {
+      index.flush();
+    }
+  }
+
+  private List<OIndexMVRBTreeAbstract<?>> prepareIndexesToFreeze(Collection<? extends OIndex<?>> indexes) {
+    List<OIndexMVRBTreeAbstract<?>> indexesToFreeze = null;
+    if (indexes != null && !indexes.isEmpty()) {
+      indexesToFreeze = new ArrayList<OIndexMVRBTreeAbstract<?>>(indexes.size());
+      for (OIndex<?> index : indexes) {
+        indexesToFreeze.add((OIndexMVRBTreeAbstract<?>) index.getInternal());
+      }
+
+      Collections.sort(indexesToFreeze, new Comparator<OIndex<?>>() {
+        public int compare(OIndex<?> o1, OIndex<?> o2) {
+          return o1.getName().compareTo(o2.getName());
+        }
+      });
+
+    }
+    return indexesToFreeze;
+  }
+
+  private void releaseIndexes(Collection<? extends OIndex<?>> indexesToRelease) {
+    if (indexesToRelease != null) {
+      Iterator<? extends OIndex<?>> it = indexesToRelease.iterator();
+      while (it.hasNext()) {
+        it.next().getInternal().release();
+        it.remove();
+      }
+    }
+  }
+
+	@Override
+	public void freeze(boolean throwException) {
+		if (!(getStorage() instanceof OStorageLocal)) {
+			OLogManager.instance().error(this, "We can not freeze non local storage. " +
+							"If you use remote client please use OServerAdmin instead.");
+
+			return;
+		}
+
+		final long startTime = OProfiler.getInstance().startChrono();
+
+		final Collection<? extends OIndex<?>> indexes = getMetadata().getIndexManager().getIndexes();
+		final List<OIndexMVRBTreeAbstract<?>> indexesToLock = prepareIndexesToFreeze(indexes);
+
+		freezeIndexes(indexesToLock, true);
+		flushIndexes(indexesToLock);
+
+		super.freeze(throwException);
+
+		OProfiler.getInstance().stopChrono("document.database.freeze", startTime);
+	}
+
+	@Override
+	public void freeze() {
+    if (!(getStorage() instanceof OStorageLocal)) {
+			OLogManager.instance().error(this, "We can not freeze non local storage. " +
+							"If you use remote client please use OServerAdmin instead.");
+
+			return;
+		}
+
+		final long startTime = OProfiler.getInstance().startChrono();
+
+    final Collection<? extends OIndex<?>> indexes = getMetadata().getIndexManager().getIndexes();
+    final List<OIndexMVRBTreeAbstract<?>> indexesToLock = prepareIndexesToFreeze(indexes);
+
+		freezeIndexes(indexesToLock, false);
+    flushIndexes(indexesToLock);
+
+    super.freeze();
+
+		OProfiler.getInstance().stopChrono("document.database.freeze", startTime);
+  }
+
+	@Override
+  public void release() {
+    if (!(getStorage() instanceof OStorageLocal)) {
+			OLogManager.instance().error(this, "We can not release non local storage. " +
+							"If you use remote client please use OServerAdmin instead.");
+			return;
+		}
+
+		final long startTime = OProfiler.getInstance().startChrono();
+
+		super.release();
+
+		Collection<? extends OIndex<?>> indexes = getMetadata().getIndexManager().getIndexes();
+		releaseIndexes(indexes);
+
+		OProfiler.getInstance().stopChrono("document.database.release", startTime);
+	}
 
   /**
    * Creates a new ODocument.
@@ -81,7 +196,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * transaction will continue to see the record as modified, while others not. If a Pessimistic transaction is running, then an
    * exclusive lock is acquired against the record. Current transaction will continue to see the record as modified, while others
    * cannot access to it since it's locked.
-   * 
+   * <p/>
    * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
    * {@link OConcurrentModificationException} exception is thrown.Before to save the document it must be valid following the
    * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
@@ -89,12 +204,12 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * 
    * @param iRecord
    *          Record to save.
-   * @see #setMVCC(boolean), {@link #isMVCC()}
+   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    * @throws OConcurrentModificationException
    *           if the version of the document is different by the version contained in the database.
    * @throws OValidationException
    *           if the document breaks some validation constraints defined in the schema
-   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   * @see #setMVCC(boolean), {@link #isMVCC()}
    */
   @Override
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord) {
@@ -107,7 +222,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * transaction will continue to see the record as modified, while others not. If a Pessimistic transaction is running, then an
    * exclusive lock is acquired against the record. Current transaction will continue to see the record as modified, while others
    * cannot access to it since it's locked.
-   * 
+   * <p/>
    * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
    * {@link OConcurrentModificationException} exception is thrown.Before to save the document it must be valid following the
    * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
@@ -115,12 +230,12 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * 
    * @param iRecord
    *          Record to save.
-   * @see #setMVCC(boolean), {@link #isMVCC()}
+   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    * @throws OConcurrentModificationException
    *           if the version of the document is different by the version contained in the database.
    * @throws OValidationException
    *           if the document breaks some validation constraints defined in the schema
-   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   * @see #setMVCC(boolean), {@link #isMVCC()}
    */
   @Override
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode,
@@ -168,7 +283,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * changed at commit time. The current transaction will continue to see the record as modified, while others not. If a Pessimistic
    * transaction is running, then an exclusive lock is acquired against the record. Current transaction will continue to see the
    * record as modified, while others cannot access to it since it's locked.
-   * 
+   * <p/>
    * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
    * {@link OConcurrentModificationException} exception is thrown. Before to save the document it must be valid following the
    * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
@@ -178,12 +293,12 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    *          Record to save
    * @param iClusterName
    *          Cluster name where to save the record
-   * @see #setMVCC(boolean), {@link #isMVCC()}, ORecordSchemaAware#validate()
+   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    * @throws OConcurrentModificationException
    *           if the version of the document is different by the version contained in the database.
    * @throws OValidationException
    *           if the document breaks some validation constraints defined in the schema
-   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   * @see #setMVCC(boolean), {@link #isMVCC()}, ORecordSchemaAware#validate()
    */
   @Override
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final String iClusterName) {
@@ -196,7 +311,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * changed at commit time. The current transaction will continue to see the record as modified, while others not. If a Pessimistic
    * transaction is running, then an exclusive lock is acquired against the record. Current transaction will continue to see the
    * record as modified, while others cannot access to it since it's locked.
-   * 
+   * <p/>
    * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
    * {@link OConcurrentModificationException} exception is thrown. Before to save the document it must be valid following the
    * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
@@ -208,12 +323,12 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    *          Cluster name where to save the record
    * @param iMode
    *          Mode of save: synchronous (default) or asynchronous
-   * @see #setMVCC(boolean), {@link #isMVCC()}, ORecordSchemaAware#validate()
+   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    * @throws OConcurrentModificationException
    *           if the version of the document is different by the version contained in the database.
    * @throws OValidationException
    *           if the document breaks some validation constraints defined in the schema
-   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   * @see #setMVCC(boolean), {@link #isMVCC()}, ORecordSchemaAware#validate()
    */
   @Override
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, String iClusterName,
@@ -270,13 +385,13 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * transaction will continue to see the record as deleted, while others not. If a Pessimistic transaction is running, then an
    * exclusive lock is acquired against the record. Current transaction will continue to see the record as deleted, while others
    * cannot access to it since it's locked.
-   * 
+   * <p/>
    * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
    * {@link OConcurrentModificationException} exception is thrown.
    * 
    * @param iRecord
-   * @see #setMVCC(boolean), {@link #isMVCC()}
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   * @see #setMVCC(boolean), {@link #isMVCC()}
    */
   public ODatabaseDocumentTx delete(final ODocument iRecord) {
     if (iRecord == null)

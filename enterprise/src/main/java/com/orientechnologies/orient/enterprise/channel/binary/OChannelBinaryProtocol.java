@@ -15,12 +15,12 @@
  */
 package com.orientechnologies.orient.enterprise.channel.binary;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+
+import java.io.IOException;
 
 /**
  * The range of the requests is 1-79.
@@ -75,6 +75,11 @@ public class OChannelBinaryProtocol {
   public static final byte  REQUEST_REPLICATION           = 91; // SINCE 1.0
   public static final byte  REQUEST_CLUSTER               = 92; // SINCE 1.0
   public static final byte  REQUEST_DB_TRANSFER           = 93; // SINCE 1.0.2
+
+  // Lock + sync
+  public static final byte  REQUEST_DB_FREEZE             = 94; // SINCE 1.1.0
+  public static final byte  REQUEST_DB_RELEASE            = 95; // SINCE 1.1.0
+
 
   // INCOMING
   public static final byte  RESPONSE_STATUS_OK            = 0;

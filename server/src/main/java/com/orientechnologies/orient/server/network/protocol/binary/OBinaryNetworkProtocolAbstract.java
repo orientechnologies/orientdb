@@ -15,21 +15,13 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
-import java.io.EOFException;
-import java.io.IOException;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.logging.Level;
-
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -37,8 +29,6 @@ import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -49,15 +39,18 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
-import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerMain;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
+
+import java.io.EOFException;
+import java.io.IOException;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.logging.Level;
 
 /**
  * Abstract base class for binary network implementations.
@@ -69,7 +62,6 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   protected OChannelBinaryServer     channel;
   protected int                      requestType;
   protected int                      clientTxId;
-  protected OServerUserConfiguration serverUser;
   private final Level                logClientExceptions;
   private final boolean              logClientFullStackTrace;
 
@@ -301,39 +293,6 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     return Orient.instance().getDatabaseFactory().createDatabase(iDbType, path);
   }
 
-  protected void checkServerAccess(final String iResource) {
-    if (serverUser == null)
-      throw new OSecurityAccessException("Server user not authenticated.");
-
-    if (!OServerMain.server().authenticate(serverUser.name, null, iResource))
-      throw new OSecurityAccessException("User '" + serverUser.name + "' cannot access to the resource [" + iResource
-          + "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
-  }
-
-  protected ODatabaseComplex<?> openDatabase(final ODatabaseComplex<?> database, final String iUser, final String iPassword) {
-
-    if (database.isClosed())
-      if (database.getStorage() instanceof OStorageMemory && !database.exists())
-        database.create();
-      else {
-        try {
-          database.open(iUser, iPassword);
-        } catch (OSecurityException e) {
-          // TRY WITH SERVER'S USER
-          try {
-            serverUser = OServerMain.server().serverLogin(iUser, iPassword, "database.passthrough");
-          } catch (OSecurityException ex) {
-            throw e;
-          }
-
-          // SERVER AUTHENTICATED, BYPASS SECURITY
-          database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
-          database.open(iUser, iPassword);
-        }
-      }
-
-    return database;
-  }
 
   protected int deleteRecord(final ODatabaseRecord iDatabase, final ORID rid, final int version) {
     final ORecordInternal<?> record = iDatabase.load(rid);

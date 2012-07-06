@@ -17,11 +17,6 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -30,6 +25,11 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 /**
  * Fast index for full-text searches.
  * 
@@ -37,200 +37,216 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
  * 
  */
 public class OIndexFullText extends OIndexMultiValues {
-    
-    public static final String TYPE_ID = OClass.INDEX_TYPE.FULLTEXT.toString();
-    
-	private static final String	CONFIG_STOP_WORDS		= "stopWords";
-	private static final String	CONFIG_IGNORE_CHARS	= "ignoreChars";
 
-	private static String				DEF_IGNORE_CHARS		= " \r\n\t:;,.|+*/\\=!?[]()'\"";
-	private static String				DEF_STOP_WORDS			= "the in a at as and or for his her " + "him this that what which while "
-																											+ "up with be was is";
-	private final String				ignoreChars					= DEF_IGNORE_CHARS;
-	private final Set<String>		stopWords;
+  public static final String  TYPE_ID             = OClass.INDEX_TYPE.FULLTEXT.toString();
 
-	public OIndexFullText() {
-		super(TYPE_ID);
-		stopWords = new HashSet<String>(OStringSerializerHelper.split(DEF_STOP_WORDS, ' '));
-	}
+  private static final String CONFIG_STOP_WORDS   = "stopWords";
+  private static final String CONFIG_IGNORE_CHARS = "ignoreChars";
 
-	/**
-	 * Index an entire document field by field and save the index at the end.
-	 * 
-	 * @param iDocument
-	 *          The document to index
-	 */
-	public void indexDocument(final ODocument iDocument) {
-		Object fieldValue;
+  private static String       DEF_IGNORE_CHARS    = " \r\n\t:;,.|+*/\\=!?[]()'\"";
+  private static String       DEF_STOP_WORDS      = "the in a at as and or for his her " + "him this that what which while "
+                                                      + "up with be was is";
+  private final String        ignoreChars         = DEF_IGNORE_CHARS;
+  private final Set<String>   stopWords;
 
-		for (final String fieldName : iDocument.fieldNames()) {
-			fieldValue = iDocument.field(fieldName);
-			put(fieldValue, iDocument);
-		}
+  public OIndexFullText() {
+    super(TYPE_ID);
+    stopWords = new HashSet<String>(OStringSerializerHelper.split(DEF_STOP_WORDS, ' '));
+  }
 
-		acquireExclusiveLock();
-		try {
+  /**
+   * Index an entire document field by field and save the index at the end.
+   * 
+   * @param iDocument
+   *          The document to index
+   */
+  public void indexDocument(final ODocument iDocument) {
+    modificationLock.requestModificationLock();
 
-			map.save();
+    try {
+      Object fieldValue;
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+      for (final String fieldName : iDocument.fieldNames()) {
+        fieldValue = iDocument.field(fieldName);
+        put(fieldValue, iDocument);
+      }
 
-	/**
-	 * Indexes a value and save the index. Splits the value in single words and index each one. Save of the index is responsibility of
-	 * the caller.
-	 */
-	@Override
-	public OIndexFullText put(final Object iKey, final OIdentifiable iSingleValue) {
-		if (iKey == null)
-			return this;
+      acquireExclusiveLock();
+      try {
 
-		final List<String> words = splitIntoWords(iKey.toString());
+        map.save();
 
-		// FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
-		for (final String word : words) {
-			acquireExclusiveLock();
+      } finally {
+        releaseExclusiveLock();
+      }
+    } finally {
+      modificationLock.releaseModificationLock();
+    }
+  }
 
-			try {
-				Set<OIdentifiable> refs;
+  /**
+   * Indexes a value and save the index. Splits the value in single words and index each one. Save of the index is responsibility of
+   * the caller.
+   */
+  @Override
+  public OIndexFullText put(final Object iKey, final OIdentifiable iSingleValue) {
+    if (iKey == null)
+      return this;
 
-				// SEARCH FOR THE WORD
-				refs = map.get(word);
+    modificationLock.requestModificationLock();
 
-				if (refs == null)
-					// WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
-					refs = new OMVRBTreeRIDSet().setAutoConvert(false);
+    try {
+      final List<String> words = splitIntoWords(iKey.toString());
 
-				// ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
-				refs.add(iSingleValue);
+      // FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
+      for (final String word : words) {
+        acquireExclusiveLock();
 
-				// SAVE THE INDEX ENTRY
-				map.put(word, refs);
+        try {
+          Set<OIdentifiable> refs;
 
-			} finally {
-				releaseExclusiveLock();
-			}
-		}
-		return this;
-	}
+          // SEARCH FOR THE WORD
+          refs = map.get(word);
 
-	/**
-	 * Splits passed in key on several words and remove records with keys equals to any item of split result and values equals to
-	 * passed in value.
-	 * 
-	 * @param iKey
-	 *          Key to remove.
-	 * @param value
-	 *          Value to remove.
-	 * @return <code>true</code> if at least one record is removed.
-	 */
-	@Override
-	public boolean remove(final Object iKey, final OIdentifiable value) {
-		final List<String> words = splitIntoWords(iKey.toString());
-		boolean removed = false;
+          if (refs == null)
+            // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
+            refs = new OMVRBTreeRIDSet().setAutoConvert(false);
 
-		for (final String word : words) {
-			acquireExclusiveLock();
-			try {
+          // ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
+          refs.add(iSingleValue);
 
-				final Set<OIdentifiable> recs = get(word);
-				if (recs != null && !recs.isEmpty()) {
-					if (recs.remove(value)) {
-						if (recs.isEmpty())
-							map.remove(word);
-						else
-							map.put(word, recs);
-						removed = true;
-					}
-				}
-			} finally {
-				releaseExclusiveLock();
-			}
-		}
+          // SAVE THE INDEX ENTRY
+          map.put(word, refs);
 
-		return removed;
-	}
-
-    @Override
-    public OIndexInternal<?> create(String iName, OIndexDefinition iIndexDefinition, 
-    ODatabaseRecord iDatabase, String iClusterIndexName, int[] iClusterIdsToIndex, 
-    OProgressListener iProgressListener, OStreamSerializer iValueSerializer) {
-        
-        if (iIndexDefinition.getFields().size() > 1 ){
-			throw new OIndexException(TYPE_ID + " indexes cannot be used as composite ones.");
+        } finally {
+          releaseExclusiveLock();
         }
-        
-        return super.create(iName, iIndexDefinition, iDatabase, iClusterIndexName, 
-                iClusterIdsToIndex, iProgressListener, iValueSerializer);
+      }
+      return this;
+    } finally {
+      modificationLock.releaseModificationLock();
+    }
+  }
+
+  /**
+   * Splits passed in key on several words and remove records with keys equals to any item of split result and values equals to
+   * passed in value.
+   * 
+   * @param iKey
+   *          Key to remove.
+   * @param value
+   *          Value to remove.
+   * @return <code>true</code> if at least one record is removed.
+   */
+  @Override
+  public boolean remove(final Object iKey, final OIdentifiable value) {
+
+    modificationLock.requestModificationLock();
+
+    try {
+      final List<String> words = splitIntoWords(iKey.toString());
+      boolean removed = false;
+
+      for (final String word : words) {
+        acquireExclusiveLock();
+        try {
+
+          final Set<OIdentifiable> recs = map.get(word);
+          if (recs != null && !recs.isEmpty()) {
+            if (recs.remove(value)) {
+              if (recs.isEmpty())
+                map.remove(word);
+              else
+                map.put(word, recs);
+              removed = true;
+            }
+          }
+        } finally {
+          releaseExclusiveLock();
+        }
+      }
+
+      return removed;
+    } finally {
+      modificationLock.releaseModificationLock();
+    }
+  }
+
+  @Override
+  public OIndexInternal<?> create(String iName, OIndexDefinition iIndexDefinition, ODatabaseRecord iDatabase,
+      String iClusterIndexName, int[] iClusterIdsToIndex, OProgressListener iProgressListener, OStreamSerializer iValueSerializer) {
+
+    if (iIndexDefinition.getFields().size() > 1) {
+      throw new OIndexException(TYPE_ID + " indexes cannot be used as composite ones.");
     }
 
-    @Override
-    public OIndexMultiValues create(String iName, OIndexDefinition indexDefinition, 
-    ODatabaseRecord iDatabase, String iClusterIndexName, int[] iClusterIdsToIndex, 
-    OProgressListener iProgressListener) {
-        if (indexDefinition.getFields().size() > 1 ){
-			throw new OIndexException(TYPE_ID + " indexes cannot be used as composite ones.");
-        }
-        return super.create(iName, indexDefinition, iDatabase, iClusterIndexName, 
-                iClusterIdsToIndex, iProgressListener);
+    return super.create(iName, iIndexDefinition, iDatabase, iClusterIndexName, iClusterIdsToIndex, iProgressListener,
+        iValueSerializer);
+  }
+
+  @Override
+  public OIndexMultiValues create(String iName, OIndexDefinition indexDefinition, ODatabaseRecord iDatabase,
+      String iClusterIndexName, int[] iClusterIdsToIndex, OProgressListener iProgressListener) {
+    if (indexDefinition.getFields().size() > 1) {
+      throw new OIndexException(TYPE_ID + " indexes cannot be used as composite ones.");
     }
-    
-	@Override
-	public ODocument updateConfiguration() {
-		super.updateConfiguration();
-		configuration.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+    return super.create(iName, indexDefinition, iDatabase, iClusterIndexName, iClusterIdsToIndex, iProgressListener);
+  }
 
-		try {
-			configuration.field(CONFIG_IGNORE_CHARS, ignoreChars);
-			configuration.field(CONFIG_STOP_WORDS, stopWords);
+  @Override
+  public ODocument updateConfiguration() {
+    super.updateConfiguration();
+    configuration.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
-		} finally {
-			configuration.setInternalStatus(ORecordElement.STATUS.LOADED);
-		}
-		return configuration;
-	}
+    try {
+      configuration.field(CONFIG_IGNORE_CHARS, ignoreChars);
+      configuration.field(CONFIG_STOP_WORDS, stopWords);
 
-	private List<String> splitIntoWords(final String iKey) {
-		final List<String> result = new ArrayList<String>();
+    } finally {
+      configuration.setInternalStatus(ORecordElement.STATUS.LOADED);
+    }
+    return configuration;
+  }
 
-		final List<String> words = OStringSerializerHelper.split(iKey, ' ');
+  private List<String> splitIntoWords(final String iKey) {
+    final List<String> result = new ArrayList<String>();
 
-		final StringBuilder buffer = new StringBuilder();
-		// FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
+    final List<String> words = OStringSerializerHelper.split(iKey, ' ');
 
-		char c;
-		boolean ignore;
-		for (String word : words) {
-			buffer.setLength(0);
+    final StringBuilder buffer = new StringBuilder();
+    // FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
 
-			for (int i = 0; i < word.length(); ++i) {
-				c = word.charAt(i);
-				ignore = false;
-				for (int k = 0; k < ignoreChars.length(); ++k)
-					if (c == ignoreChars.charAt(k)) {
-						ignore = true;
-						break;
-					}
+    char c;
+    boolean ignore;
+    for (String word : words) {
+      buffer.setLength(0);
 
-				if (!ignore)
-					buffer.append(c);
-			}
+      for (int i = 0; i < word.length(); ++i) {
+        c = word.charAt(i);
+        ignore = false;
+        for (int k = 0; k < ignoreChars.length(); ++k)
+          if (c == ignoreChars.charAt(k)) {
+            ignore = true;
+            break;
+          }
 
-			word = buffer.toString();
+        if (!ignore)
+          buffer.append(c);
+      }
 
-			// CHECK IF IT'S A STOP WORD
-			if (stopWords.contains(word))
-				continue;
+      word = buffer.toString();
 
-			result.add(word);
-		}
+      // CHECK IF IT'S A STOP WORD
+      if (stopWords.contains(word))
+        continue;
 
-		return result;
-	}
+      result.add(word);
+    }
 
-	public boolean canBeUsedInEqualityOperators() {
-		return false;
-	}
+    return result;
+  }
+
+  public boolean canBeUsedInEqualityOperators() {
+    return false;
+  }
 }

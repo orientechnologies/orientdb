@@ -15,8 +15,8 @@
  */
 package com.orientechnologies.orient.test.java.lang;
 
+import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
-import com.orientechnologies.orient.core.storage.OStorageModificationLock;
 
 public class LockSpeedTest {
   private static final long MAX = 10000000;
@@ -24,7 +24,7 @@ public class LockSpeedTest {
   public static final void main(String[] args) {
 
     OSharedResourceExternal lock = new OSharedResourceExternal();
-		OStorageModificationLock storageLock = new OStorageModificationLock();
+		OModificationLock storageLock = new OModificationLock();
 
     long timer = System.currentTimeMillis();
     for (int i = 0; i < MAX; ++i) {

@@ -27,124 +27,164 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @see ORecordHook
  */
 public abstract class ODocumentHookAbstract implements ORecordHook {
-	/**
-	 * It's called just before to create the new document.
-	 * 
-	 * @param iDocument
-	 *          The document to create
-	 * @return True if the document has been modified and a new marshalling is required, otherwise false
-	 */
-	public boolean onRecordBeforeCreate(final ODocument iDocument) {
-		return false;
-	};
+  /**
+   * It's called just before to create the new document.
+   * 
+   * @param iDocument
+   *          The document to create
+   * @return True if the document has been modified and a new marshalling is required, otherwise false
+   */
+  public boolean onRecordBeforeCreate(final ODocument iDocument) {
+    return false;
+  }
+
+  /**
+   * It's called just after the document is created.
+   * 
+   * @param iDocument
+   *          The document is going to be created
+   */
+  public void onRecordAfterCreate(final ODocument iDocument) {
+  }
 
 	/**
-	 * It's called just after the document is created.
-	 * 
+	 * It's called just after the document creation was failed.
+	 *
 	 * @param iDocument
 	 *          The document just created
 	 */
-	public void onRecordAfterCreate(final ODocument iDocument) {
-	};
+  public void onRecordCreateFailed(final ODocument iDocument) {
+  }
+
+  /**
+   * It's called just before to read the document.
+   * 
+   * @param iDocument
+   *          The document to read
+   */
+  public void onRecordBeforeRead(final ODocument iDocument) {
+  }
+
+  /**
+   * It's called just after the document is read.
+   * 
+   * @param iDocument
+   *          The document just read
+   */
+  public void onRecordAfterRead(final ODocument iDocument) {
+  }
+
+  /**
+   * It's called just before to update the document.
+   * 
+   * @param iDocument
+   *          The document to update
+   * @return True if the document has been modified and a new marshalling is required, otherwise false
+   */
+  public boolean onRecordBeforeUpdate(final ODocument iDocument) {
+    return false;
+  }
+
+  /**
+   * It's called just after the document is updated.
+   * 
+   * @param iDocument
+   *          The document just updated
+   */
+  public void onRecordAfterUpdate(final ODocument iDocument) {
+  }
 
 	/**
-	 * It's called just before to read the document.
-	 * 
+	 * It's called just after the document updated was failed.
+	 *
 	 * @param iDocument
-	 *          The document to read
+	 *          The document is going to be updated
 	 */
-	public void onRecordBeforeRead(final ODocument iDocument) {
-	};
+	public void onRecordUpdateFailed(final ODocument iDocument) {
+  }
+
+  /**
+   * It's called just before to delete the document.
+   * 
+   * @param iDocument
+   *          The document to delete
+   * @return True if the document has been modified and a new marshalling is required, otherwise false
+   */
+  public boolean onRecordBeforeDelete(final ODocument iDocument) {
+    return false;
+  }
+
+  /**
+   * It's called just after the document is deleted.
+   * 
+   * @param iDocument
+   *          The document just deleted
+   */
+  public void onRecordAfterDelete(final ODocument iDocument) {
+  }
 
 	/**
-	 * It's called just after the document is read.
-	 * 
+	 * It's called just after the document deletion was failed.
+	 *
 	 * @param iDocument
-	 *          The document just read
+	 *          The document is going to be deleted
 	 */
-	public void onRecordAfterRead(final ODocument iDocument) {
-	};
+	public void onRecordDeleteFailed(final ODocument iDocument) {
+  }
 
-	/**
-	 * It's called just before to update the document.
-	 * 
-	 * @param iDocument
-	 *          The document to update
-	 * @return True if the document has been modified and a new marshalling is required, otherwise false
-	 */
-	public boolean onRecordBeforeUpdate(final ODocument iDocument) {
-		return false;
-	};
+  public boolean onTrigger(final TYPE iType, final ORecord<?> iRecord) {
+    if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && ODatabaseRecordThreadLocal.INSTANCE.get().getStatus() != STATUS.OPEN)
+      return false;
 
-	/**
-	 * It's called just after the document is updated.
-	 * 
-	 * @param iDocument
-	 *          The document just updated
-	 */
-	public void onRecordAfterUpdate(final ODocument iDocument) {
-	};
+    if (!(iRecord instanceof ODocument))
+      return false;
 
-	/**
-	 * It's called just before to delete the document.
-	 * 
-	 * @param iDocument
-	 *          The document to delete
-	 * @return True if the document has been modified and a new marshalling is required, otherwise false
-	 */
-	public boolean onRecordBeforeDelete(final ODocument iDocument) {
-		return false;
-	};
+    final ODocument document = (ODocument) iRecord;
 
-	/**
-	 * It's called just after the document is deleted.
-	 * 
-	 * @param iDocument
-	 *          The document just deleted
-	 */
-	public void onRecordAfterDelete(final ODocument iDocument) {
-	};
+    switch (iType) {
+    case BEFORE_CREATE:
+      return onRecordBeforeCreate(document);
 
-	public boolean onTrigger(final TYPE iType, final ORecord<?> iRecord) {
-		if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && ODatabaseRecordThreadLocal.INSTANCE.get().getStatus() != STATUS.OPEN)
-			return false;
+    case AFTER_CREATE:
+      onRecordAfterCreate(document);
+      break;
 
-		if (!(iRecord instanceof ODocument))
-			return false;
+    case CREATE_FAILED:
+      onRecordCreateFailed(document);
+      break;
 
-		final ODocument document = (ODocument) iRecord;
+    case BEFORE_READ:
+      onRecordBeforeRead(document);
+      break;
 
-		switch (iType) {
-		case BEFORE_CREATE:
-			return onRecordBeforeCreate(document);
+    case AFTER_READ:
+      onRecordAfterRead(document);
+      break;
 
-		case AFTER_CREATE:
-			onRecordAfterCreate(document);
-			break;
+    case BEFORE_UPDATE:
+      return onRecordBeforeUpdate(document);
 
-		case BEFORE_READ:
-			onRecordBeforeRead(document);
-			break;
+    case AFTER_UPDATE:
+      onRecordAfterUpdate(document);
+      break;
 
-		case AFTER_READ:
-			onRecordAfterRead(document);
-			break;
+    case UPDATE_FAILED:
+      onRecordUpdateFailed(document);
+      break;
 
-		case BEFORE_UPDATE:
-			return onRecordBeforeUpdate(document);
+    case BEFORE_DELETE:
+      return onRecordBeforeDelete(document);
 
-		case AFTER_UPDATE:
-			onRecordAfterUpdate(document);
-			break;
+    case AFTER_DELETE:
+      onRecordAfterDelete(document);
+      break;
 
-		case BEFORE_DELETE:
-			return onRecordBeforeDelete(document);
+    case DELETE_FAILED:
+      onRecordDeleteFailed(document);
+      break;
 
-		case AFTER_DELETE:
-			onRecordAfterDelete(document);
-			break;
-		}
+    }
 
-		return false;
-	}
+    return false;
+  }
 }

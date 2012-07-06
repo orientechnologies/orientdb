@@ -1,5 +1,22 @@
+/*
+ * Copyright 1999-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.orientechnologies.orient.core.storage;
 
+import com.orientechnologies.common.concur.lock.OModificationLock;
 import junit.framework.Assert;
 import org.testng.annotations.Test;
 
@@ -22,9 +39,9 @@ public class StorageModificationLockTest {
   private final static int               THREAD_COUNT     = 100;
 	private final static int 							 CYCLES_COUNT     = 20;
   private final AtomicLong               counter          = new AtomicLong();
-  private final OStorageModificationLock modificationLock = new OStorageModificationLock();
+  private final OModificationLock modificationLock = new OModificationLock();
   private final ExecutorService          executorService  = Executors.newFixedThreadPool(THREAD_COUNT + 1);
-  private final List<Future>             futures          = new ArrayList<Future>(THREAD_COUNT);
+  private final List<Future<Void>>             futures          = new ArrayList<Future<Void>>(THREAD_COUNT);
   private final CountDownLatch           countDownLatch   = new CountDownLatch(1);
 
   @Test
@@ -33,10 +50,10 @@ public class StorageModificationLockTest {
       futures.add(executorService.submit(new Counter()));
     }
 
-		Future prohibiter = executorService.submit(new Prohibiter());
+		Future<Void> prohibiter = executorService.submit(new Prohibiter());
     countDownLatch.countDown();
     prohibiter.get();
-		for(Future future : futures)
+		for(Future<Void> future : futures)
 			future.get();
   }
 
