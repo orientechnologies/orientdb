@@ -19,6 +19,7 @@ package com.orientechnologies.orient.object.enhancement;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -108,6 +109,64 @@ public class OObjectEntitySerializer {
 		} catch (IllegalAccessException e) {
 			throw new OSerializationException("Error serializing object of class " + o.getClass(), e);
 		}
+	}
+
+	/**
+	 * Method that attaches all data contained in the object to the associated document
+	 * 
+	 * @param <T>
+	 * @param o
+	 *          :- the object to attach
+	 * @param db
+	 *          :- the database instance
+	 * @return the object serialized or with attached data
+	 */
+	public static <T> T attach(T o, ODatabaseObject db) {
+		if (o instanceof Proxy) {
+			OObjectProxyMethodHandler handler = (OObjectProxyMethodHandler) ((ProxyObject) o).getHandler();
+			try {
+				handler.attach(o);
+			} catch (IllegalArgumentException e) {
+				throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+			} catch (IllegalAccessException e) {
+				throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+			} catch (NoSuchMethodException e) {
+				throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+			} catch (InvocationTargetException e) {
+				throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+			}
+			return o;
+		} else
+			return serializeObject(o, db);
+	}
+
+	/**
+	 * Method that detaches all fields contained in the document to the given object
+	 * 
+	 * @param <T>
+	 * @param o
+	 *          :- the object to detach
+	 * @param db
+	 *          :- the database instance
+	 * @return the object serialized or with detached data
+	 */
+	public static <T> T detach(T o, ODatabaseObject db) {
+		if (o instanceof Proxy) {
+			OObjectProxyMethodHandler handler = (OObjectProxyMethodHandler) ((ProxyObject) o).getHandler();
+			try {
+				handler.detach(o);
+			} catch (IllegalArgumentException e) {
+				throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+			} catch (IllegalAccessException e) {
+				throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+			} catch (NoSuchMethodException e) {
+				throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+			} catch (InvocationTargetException e) {
+				throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+			}
+			return o;
+		} else
+			return serializeObject(o, db);
 	}
 
 	/**

@@ -15,7 +15,13 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -23,9 +29,15 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.object.db.OObjectDatabasePool;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
+import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
+import com.orientechnologies.orient.test.domain.base.EnumTest;
+import com.orientechnologies.orient.test.domain.base.JavaAttachDetachTestClass;
 import com.orientechnologies.orient.test.domain.business.Account;
+import com.orientechnologies.orient.test.domain.business.Child;
 import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
@@ -285,6 +297,92 @@ public class ObjectDetachingTest {
 		database = new OObjectDatabaseTx(url).open("admin", "admin");
 		database.delete(profile);
 		database.delete(account);
+
+		database.close();
+	}
+
+	public void testAttachDetach() {
+		database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+		JavaAttachDetachTestClass attach = database.newInstance(JavaAttachDetachTestClass.class);
+		attach.text = "test";
+		attach.numberSimple = 12345;
+		attach.doubleSimple = 12.34d;
+		attach.floatSimple = 123.45f;
+		attach.longSimple = 12345678l;
+		attach.byteSimple = (byte) 1;
+		attach.flagSimple = true;
+		attach.enumeration = EnumTest.ENUM1;
+		Child c = database.newInstance(Child.class);
+		c.setName("Jesus");
+
+		attach.children = new HashMap<String, Child>();
+		attach.children.put("first", c);
+
+		attach.enumList = new ArrayList<EnumTest>();
+		attach.enumList.add(EnumTest.ENUM1);
+		attach.enumList.add(EnumTest.ENUM2);
+
+		attach.enumSet = new HashSet<EnumTest>();
+		attach.enumSet.add(EnumTest.ENUM1);
+		attach.enumSet.add(EnumTest.ENUM3);
+
+		attach.enumMap = new HashMap<String, EnumTest>();
+		attach.enumMap.put("1", EnumTest.ENUM2);
+		attach.enumMap.put("2", EnumTest.ENUM3);
+		OObjectEntitySerializer.attach(attach, database);
+		ODocument doc = database.getRecordByUserObject(attach, false);
+		Assert.assertEquals(doc.field("text"), "test");
+		Assert.assertEquals(doc.field("numberSimple"), 12345);
+		Assert.assertEquals(doc.field("doubleSimple"), 12.34d);
+		Assert.assertEquals(doc.field("floatSimple"), 123.45f);
+		Assert.assertEquals(doc.field("longSimple"), 12345678l);
+		Assert.assertEquals(doc.field("byteSimple"), (byte) 1);
+		Assert.assertEquals(doc.field("flagSimple"), true);
+		Assert.assertEquals(doc.field("enumeration"), EnumTest.ENUM1.toString());
+		Assert.assertTrue(doc.field("children") instanceof Map<?, ?>);
+		Assert.assertTrue(((Map<?, ?>) doc.field("children")).get("first") instanceof ODocument);
+		Assert.assertEquals(((ODocument) ((Map<?, ?>) doc.field("children")).get("first")).field("name"), "Jesus");
+		Assert.assertEquals(((List<?>) doc.field("enumList")).size(), 2);
+		Assert.assertEquals(((List<?>) doc.field("enumList")).get(0), EnumTest.ENUM1.toString());
+		Assert.assertEquals(((List<?>) doc.field("enumList")).get(1), EnumTest.ENUM2.toString());
+
+		Assert.assertEquals(((Set<?>) doc.field("enumSet")).size(), 2);
+		Iterator<?> it = ((Set<?>) doc.field("enumSet")).iterator();
+		Assert.assertEquals(it.next(), EnumTest.ENUM1.toString());
+		Assert.assertEquals(it.next(), EnumTest.ENUM3.toString());
+
+		Assert.assertEquals(((Map<?, ?>) doc.field("enumMap")).size(), 2);
+		Assert.assertEquals(((Map<?, ?>) doc.field("enumMap")).get("1"), EnumTest.ENUM2.toString());
+		Assert.assertEquals(((Map<?, ?>) doc.field("enumMap")).get("2"), EnumTest.ENUM3.toString());
+
+		JavaAttachDetachTestClass savedJavaObj = database.save(attach);
+
+		ORecordId id = (ORecordId) database.getRecordByUserObject(savedJavaObj, false).getIdentity();
+		database.close();
+
+		database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+		JavaAttachDetachTestClass loadedJavaObj = (JavaAttachDetachTestClass) database.load(id);
+		OObjectEntitySerializer.detach(loadedJavaObj, database);
+		Assert.assertEquals(loadedJavaObj.text, "test");
+		Assert.assertEquals(loadedJavaObj.numberSimple, 12345);
+		Assert.assertEquals(loadedJavaObj.doubleSimple, 12.34d);
+		Assert.assertEquals(loadedJavaObj.floatSimple, 123.45f);
+		Assert.assertEquals(loadedJavaObj.longSimple, 12345678l);
+		Assert.assertEquals(loadedJavaObj.byteSimple, (byte) 1);
+		Assert.assertEquals(loadedJavaObj.flagSimple, true);
+		Assert.assertEquals(loadedJavaObj.enumeration, EnumTest.ENUM1);
+		Assert.assertEquals(loadedJavaObj.enumList.size(), 2);
+		Assert.assertEquals(loadedJavaObj.enumList.get(0), EnumTest.ENUM1);
+		Assert.assertEquals(loadedJavaObj.enumList.get(1), EnumTest.ENUM2);
+
+		Assert.assertEquals(loadedJavaObj.enumSet.size(), 2);
+		it = loadedJavaObj.enumSet.iterator();
+		Assert.assertEquals(it.next(), EnumTest.ENUM1);
+		Assert.assertEquals(it.next(), EnumTest.ENUM3);
+
+		Assert.assertEquals(loadedJavaObj.enumMap.size(), 2);
+		Assert.assertEquals(loadedJavaObj.enumMap.get("1"), EnumTest.ENUM2);
+		Assert.assertEquals(loadedJavaObj.enumMap.get("2"), EnumTest.ENUM3);
 
 		database.close();
 	}

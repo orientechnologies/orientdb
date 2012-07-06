@@ -100,7 +100,7 @@ public class OObjectEnumLazySet<TYPE extends Enum> extends HashSet<TYPE> impleme
 		boolean modified = false;
 		setDirty();
 		for (Object o : c)
-			modified = modified || add((TYPE) o);
+			modified = add((TYPE) o) || modified;
 		return modified;
 	}
 

@@ -130,7 +130,7 @@ public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OLazyObjec
 	public boolean addAll(Collection<? extends TYPE> c) {
 		boolean dirty = false;
 		for (TYPE element : c) {
-			dirty = dirty || add(element);
+			dirty = add(element) || dirty;
 		}
 		if (dirty)
 			setDirty();

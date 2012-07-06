@@ -102,7 +102,7 @@ public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements O
 		boolean modified = false;
 		setDirty();
 		for (Object o : c)
-			modified = modified || add((TYPE) o);
+			modified = add((TYPE) o) || modified;
 		return modified;
 	}
 
