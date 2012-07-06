@@ -98,7 +98,9 @@ public class SQLCreateVertexAndEdgeTest {
     Assert.assertEquals(e4.field("in"), v3);
     Assert.assertEquals(e4.field("weight"), 10);
 
-    ODocument e5 = database.command(new OCommandSQL("create edge e1 cluster e1")).execute();
+    ODocument e5 = database.command(
+        new OCommandSQL("create edge e1 cluster e1 from " + v3.getIdentity() + " to " + v5.getIdentity() + " set weight = 17"))
+        .execute();
     Assert.assertEquals(e5.getClassName(), "E1");
     Assert.assertEquals(e5.getIdentity().getClusterId(), database.getClusterIdByName("E1"));
 
