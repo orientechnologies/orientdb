@@ -9,7 +9,7 @@
 	<property name="global.release"    value="../releases/orientdb-${version}" />
 	<property name="db.release"        value="../releases/orientdb-${version}" />
 	<property name="graph.release"     value="../releases/orientdb-graphed-${version}" />
-	<property name="clustered.release" value="../releases/orientdb-clustered-${version}" />
+	<property name="distrib.release"   value="../releases/orientdb-distributed-${version}" />
 	
 	<property name="env.ORIENTDB_HOME" value="${db.release}" />
 	
@@ -75,7 +75,7 @@
 	<mkdir dir="${db.release}" />
 	<mkdir dir="${db.release}/log" />
 	<mkdir dir="${graph.release}/log" />
-	<mkdir dir="${clustered.release}/log" />
+	<mkdir dir="${distrib.release}/log" />
 	<mkdir dir="${db.release}/databases" />
   </target>
 
@@ -206,37 +206,37 @@
 		</delete>
 	</target>
 
-	<target name="installc" depends="install">
+	<target name="installd" depends="install">
 		<subant target="install">
-		  <property name="global.lib" value="../${clustered.release}/lib"/>
+		  <property name="global.lib" value="../${distrib.release}/lib"/>
 		  <property name="version" value="${version}"/>
 		  
-			<fileset dir="clustered-server"      includes="build.xml" />
+			<fileset dir="distributed"      includes="build.xml" />
 		</subant>
 
-		<copy todir="${clustered.release}">
+		<copy todir="${distrib.release}">
 		  <fileset dir="${db.release}">
 			<exclude name="**/*.log.*"/>
 		  </fileset>
 		</copy>
 	  
-		<copy todir="${clustered.release}/bin/" flatten="true" overwrite="true">
-		  <fileset dir="clustered-server/script" includes="*.sh *.bat" />
+		<copy todir="${distrib.release}/bin/" flatten="true" overwrite="true">
+		  <fileset dir="distributed/script" includes="*.sh *.bat" />
 		  <filterset>
 			<filter token="VERSION" value="${version}"/>
 		  </filterset>
 		</copy>
 
-		<copy todir="${clustered.release}/config" flatten="true" overwrite="true">
-		  <fileset dir="clustered-server/config" includes="*.xml"/>
+		<copy todir="${distrib.release}/config" flatten="true" overwrite="true">
+		  <fileset dir="distributed/config" includes="*.xml *.json"/>
 		</copy>
 		
-		<copy todir="${clustered.release}/lib" flatten="true">
-		  <fileset dir="clustered-server/lib" includes="*.jar"/>
+		<copy todir="${distrib.release}/lib" flatten="true">
+		  <fileset dir="distributed/lib" includes="*.jar"/>
 		</copy>
 		
 		<delete includeEmptyDirs="true">
-		  <fileset dir="${clustered.release}/log/" includes="**/*"/>
+		  <fileset dir="${distrib.release}/log/" includes="**/*"/>
 		</delete>
 	</target>
 	
@@ -287,7 +287,7 @@
 		<delete file="../releases/orientdb-graphed-${version}.zip" />
 		<zip destfile="../releases/orientdb-graphed-${version}.zip" basedir="../releases" level="9" update="false" includes="orientdb-graphed-*/"  excludes="**/*.log.*" />
 		
-		<mkdir dir="${clustered.release}" />
+		<mkdir dir="${distrib.release}" />
 		<delete file="../releases/orientdb-clustered-${version}.zip" />
 		<zip destfile="../releases/orientdb-clustered-${version}.zip" basedir="../releases" level="9" update="false" includes="orientdb-clustered-*/"  excludes="**/*.log.*" />
 	</target>
