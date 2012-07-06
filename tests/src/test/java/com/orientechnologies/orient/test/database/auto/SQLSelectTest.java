@@ -498,6 +498,15 @@ public class SQLSelectTest {
   }
 
   @Test
+  public void queryWhereInpreparred() {
+    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select * from OUser where name in ( :name )"))
+        .execute("admin");
+
+    Assert.assertEquals(result.size(), 1);
+    Assert.assertEquals(((ODocument) result.get(0).getRecord()).field("name"), "admin");
+  }
+
+  @Test
   public void queryInAsParameter() {
     List<ODocument> roles = database.query(new OSQLSynchQuery<Object>("select from orole"));
     roles.remove(0);
