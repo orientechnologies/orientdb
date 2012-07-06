@@ -15,6 +15,14 @@
  */
 package com.orientechnologies.orient.core.storage.fs;
 
+import com.orientechnologies.common.concur.lock.OLockException;
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.io.OIOException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -23,14 +31,6 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
-
-import com.orientechnologies.common.concur.lock.OLockException;
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.io.OIOException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 
 /**
  * 
@@ -105,10 +105,6 @@ public abstract class OAbstractFile implements OFile {
   public abstract void writeByte(long iOffset, byte iValue) throws IOException;
 
   public abstract void write(long iOffset, byte[] iSourceBuffer) throws IOException;
-
-  protected abstract void setSoftlyClosed(boolean b) throws IOException;
-
-  protected abstract boolean isSoftlyClosed() throws IOException;
 
   protected abstract void init() throws IOException;
 

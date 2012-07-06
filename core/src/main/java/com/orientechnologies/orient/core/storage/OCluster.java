@@ -15,9 +15,9 @@
  */
 package com.orientechnologies.orient.core.storage;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+
+import java.io.IOException;
 
 /**
  * Handle the table to resolve logical address to physical address.<br/>
@@ -112,6 +112,8 @@ public interface OCluster {
   public int getId();
 
   public void synch() throws IOException;
+
+	public void setSoftlyClosed(boolean softlyClosed) throws IOException;
 
   public String getName();
 

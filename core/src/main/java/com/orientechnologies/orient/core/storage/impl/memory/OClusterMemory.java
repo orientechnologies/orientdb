@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.impl.memory;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
@@ -26,6 +22,10 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class OClusterMemory extends OSharedResourceAdaptive implements OCluster {
   public static final String      TYPE    = "MEMORY";
@@ -291,7 +291,10 @@ public class OClusterMemory extends OSharedResourceAdaptive implements OCluster 
   public void synch() {
   }
 
-  public void lock() {
+	public void setSoftlyClosed(boolean softlyClosed) throws IOException {
+	}
+
+	public void lock() {
     acquireSharedLock();
   }
 

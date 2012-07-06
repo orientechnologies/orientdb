@@ -288,7 +288,17 @@ public class ODataLocalHole extends OSingleFileSegment {
     return (file.getFilledUpTo() / RECORD_SIZE);
   }
 
-  private void loadHolesInMemory() throws IOException {
+	@Override
+	public synchronized void synch() throws IOException{
+		super.synch();
+	}
+
+	@Override
+	public synchronized void setSoftlyClosed(boolean softlyClosed) throws IOException {
+		super.setSoftlyClosed(softlyClosed);
+	}
+
+	private void loadHolesInMemory() throws IOException {
     final int holes = getHoles();
 
     for (int pos = 0; pos < holes; ++pos) {

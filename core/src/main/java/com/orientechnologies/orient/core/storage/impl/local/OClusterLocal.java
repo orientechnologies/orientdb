@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.File;
-import java.io.IOException;
-
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -32,6 +29,9 @@ import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OFile;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Handles the table to resolve logical address to physical address. Deleted records have negative versions. <br/>
@@ -496,13 +496,26 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     try {
 
       fileSegment.synch();
+			holeSegment.synch();
 
     } finally {
       releaseSharedLock();
     }
   }
 
-  public String getName() {
+	public void setSoftlyClosed(boolean softlyClosed) throws IOException {
+		acquireExclusiveLock();
+		try {
+
+			fileSegment.setSoftlyClosed(softlyClosed);
+			holeSegment.setSoftlyClosed(softlyClosed);
+
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
+	public String getName() {
     return name;
   }
 

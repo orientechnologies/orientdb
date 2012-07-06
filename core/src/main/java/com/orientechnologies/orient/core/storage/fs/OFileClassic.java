@@ -204,13 +204,12 @@ public class OFileClassic extends OAbstractFile {
     return readData(HEADER_DATA_OFFSET + iPosition, OBinaryProtocol.SIZE_LONG).getLong();
   }
 
-  @Override
+
   public boolean isSoftlyClosed() throws IOException {
     return true;
   }
 
-  @Override
-  protected void setSoftlyClosed(final boolean iValue) throws IOException {
+  public void setSoftlyClosed(final boolean iValue) throws IOException {
   }
 
   /**

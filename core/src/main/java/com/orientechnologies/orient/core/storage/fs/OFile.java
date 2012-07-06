@@ -97,6 +97,10 @@ public interface OFile {
 
 	public abstract void write(long iOffset, byte[] iSourceBuffer) throws IOException;
 
+	public abstract void setSoftlyClosed(boolean b) throws IOException;
+
+	public abstract boolean isSoftlyClosed() throws IOException;
+
 	public abstract void lock() throws IOException;
 
 	public FileLock lock(final long iRangeFrom, final long iRangeSize, final boolean iShared) throws IOException;

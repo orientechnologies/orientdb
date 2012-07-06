@@ -1702,10 +1702,43 @@ public class OStorageLocal extends OStorageEmbedded {
 
 	public void freeze(boolean throwException) {
 		modificationLock.prohibitModifications(throwException);
+		synch();
+
+		try {
+			for (OCluster cluster : clusters)
+				if (cluster != null)
+					cluster.setSoftlyClosed(true);
+
+			for (ODataLocal data : dataSegments)
+				if (data != null)
+					data.setSoftlyClosed(true);
+
+			if (configuration != null)
+				configuration.setSoftlyClosed(true);
+
+		} catch (IOException e) {
+			throw new OStorageException("Error on freeze storage '" + name + "'", e);
+		}
 	}
 
 
 	public void release() {
-    modificationLock.allowModifications();
+		try {
+			for (OCluster cluster : clusters)
+				if (cluster != null)
+					cluster.setSoftlyClosed(false);
+
+			for (ODataLocal data : dataSegments)
+				if (data != null)
+					data.setSoftlyClosed(false);
+
+			if (configuration != null)
+				configuration.setSoftlyClosed(false);
+
+		} catch (IOException e) {
+			throw new OStorageException("Error on release storage '" + name + "'", e);
+		}
+
+		modificationLock.allowModifications();
   }
 }

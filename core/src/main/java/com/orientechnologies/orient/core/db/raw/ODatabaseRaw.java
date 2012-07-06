@@ -555,7 +555,6 @@ public class ODatabaseRaw implements ODatabase {
 		}
 
 		storage.freeze(false);
-		storage.synch();
 	}
 
 	public void freeze(boolean throwException) {
@@ -568,7 +567,6 @@ public class ODatabaseRaw implements ODatabase {
 		}
 
 		storage.freeze(throwException);
-		storage.synch();
 	}
 
 	public void release() {
