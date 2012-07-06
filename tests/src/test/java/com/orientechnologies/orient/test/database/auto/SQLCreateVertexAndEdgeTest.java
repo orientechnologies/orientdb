@@ -70,7 +70,6 @@ public class SQLCreateVertexAndEdgeTest {
 
     ODocument v5 = database.command(new OCommandSQL("create vertex V1 cluster v1")).execute();
     Assert.assertEquals(v5.getClassName(), "V1");
-    Assert.assertEquals(v5.getIdentity().getClusterId(), database.getClusterIdByName("V1"));
 
     // EDGES
     ODocument e1 = database.command(new OCommandSQL("create edge from " + v1.getIdentity() + " to " + v2.getIdentity())).execute();
@@ -102,7 +101,6 @@ public class SQLCreateVertexAndEdgeTest {
         new OCommandSQL("create edge e1 cluster e1 from " + v3.getIdentity() + " to " + v5.getIdentity() + " set weight = 17"))
         .execute();
     Assert.assertEquals(e5.getClassName(), "E1");
-    Assert.assertEquals(e5.getIdentity().getClusterId(), database.getClusterIdByName("E1"));
 
     // database.command(new OCommandSQL("drop class E1")).execute();
     // database.command(new OCommandSQL("drop class V1")).execute();
