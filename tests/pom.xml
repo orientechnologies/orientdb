@@ -54,10 +54,10 @@
 			<type>jar</type>
 			<scope>compile</scope>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>com.orientechnologies</groupId>
-			<artifactId>orient-nio</artifactId>
+			<artifactId>orientdb-nativeos</artifactId>
 			<version>${project.version}</version>
 			<scope>test</scope>
 		</dependency>
