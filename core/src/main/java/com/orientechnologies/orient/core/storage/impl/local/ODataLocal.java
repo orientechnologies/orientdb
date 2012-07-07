@@ -68,6 +68,8 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
     super(iStorage, iConfig, DEF_EXTENSION, 0);
     id = iId;
 
+    OFileUtils.checkValidName(iConfig.name);
+
     iConfig.holeFile = new OStorageDataHoleConfiguration(iConfig, iConfig.getLocation() + "/" + name, iConfig.fileType,
         iConfig.maxSize);
     holeSegment = new ODataLocalHole(iStorage, iConfig.holeFile);

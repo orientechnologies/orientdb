@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
@@ -628,6 +629,8 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
 
   protected void init(final OStorage iStorage, final int iId, final String iClusterName, final String iLocation,
       final int iDataSegmentId, final Object... iParameters) throws IOException {
+    OFileUtils.checkValidName(iClusterName);
+    
     storage = (OStorageLocal) iStorage;
     ((OStoragePhysicalClusterConfiguration) config).setDataSegmentId(iDataSegmentId);
     config.id = iId;
