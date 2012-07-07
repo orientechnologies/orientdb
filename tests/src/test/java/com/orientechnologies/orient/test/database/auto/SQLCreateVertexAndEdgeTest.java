@@ -68,8 +68,9 @@ public class SQLCreateVertexAndEdgeTest {
     Assert.assertEquals(v4.field("brand"), "fiat");
     Assert.assertEquals(v4.field("name"), "wow");
 
-    ODocument v5 = database.command(new OCommandSQL("create vertex V1 cluster v1")).execute();
+    ODocument v5 = database.command(new OCommandSQL("create vertex V1 cluster default")).execute();
     Assert.assertEquals(v5.getClassName(), "V1");
+    Assert.assertEquals(v5.getIdentity().getClusterId(), database.getDefaultClusterId());
 
     // EDGES
     ODocument e1 = database.command(new OCommandSQL("create edge from " + v1.getIdentity() + " to " + v2.getIdentity())).execute();
@@ -98,9 +99,10 @@ public class SQLCreateVertexAndEdgeTest {
     Assert.assertEquals(e4.field("weight"), 10);
 
     ODocument e5 = database.command(
-        new OCommandSQL("create edge e1 cluster e1 from " + v3.getIdentity() + " to " + v5.getIdentity() + " set weight = 17"))
+        new OCommandSQL("create edge e1 cluster default from " + v3.getIdentity() + " to " + v5.getIdentity() + " set weight = 17"))
         .execute();
     Assert.assertEquals(e5.getClassName(), "E1");
+    Assert.assertEquals(e5.getIdentity().getClusterId(), database.getDefaultClusterId());
 
     // database.command(new OCommandSQL("drop class E1")).execute();
     // database.command(new OCommandSQL("drop class V1")).execute();
