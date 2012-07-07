@@ -321,7 +321,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 	public ODictionary<Object> getDictionary() {
 		checkOpeness();
 		if (dictionary == null)
-			dictionary = new ODictionaryWrapper(this);
+			dictionary = new ODictionaryWrapper(this,underlying.getDictionary().getIndex());
 
 		return dictionary;
 	}
