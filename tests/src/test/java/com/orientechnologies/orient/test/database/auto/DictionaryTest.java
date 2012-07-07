@@ -25,11 +25,13 @@ import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-import com.orientechnologies.orient.object.enhancement.ExactEntity;
 
 @Test(groups = "dictionary")
 public class DictionaryTest {
   private String url;
+
+  public DictionaryTest() {
+  }
 
   @Parameters(value = "url")
   public DictionaryTest(String iURL) {
@@ -129,14 +131,29 @@ public class DictionaryTest {
     database.close();
   }
 
+  public class ObjectDictionaryTest {
+    private String name;
+
+    public ObjectDictionaryTest() {
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public void setName(String name) {
+      this.name = name;
+    }
+  }
+
   @Test(dependsOnMethods = "testDictionaryMassiveCreate")
   public void testDictionaryWithPOJOs() throws IOException {
     OObjectDatabaseTx database = new OObjectDatabaseTx(url);
     database.open("admin", "admin");
-    database.getEntityManager().registerEntityClass(ExactEntity.class);
+    database.getEntityManager().registerEntityClass(ObjectDictionaryTest.class);
 
     Assert.assertNull(database.getDictionary().get("testKey"));
-    database.getDictionary().put("testKey", new ExactEntity());
+    database.getDictionary().put("testKey", new ObjectDictionaryTest());
     Assert.assertNotNull(database.getDictionary().get("testKey"));
 
     database.close();
