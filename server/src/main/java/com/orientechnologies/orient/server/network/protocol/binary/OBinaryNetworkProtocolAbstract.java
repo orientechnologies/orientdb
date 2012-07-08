@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -124,18 +125,30 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     } catch (EOFException e) {
       handleConnectionError(channel, e);
       sendShutdown();
+
+      OLogManager.instance().error(this, "Error on executing request", e);
     } catch (SocketException e) {
       handleConnectionError(channel, e);
       sendShutdown();
+
+      OLogManager.instance().error(this, "Error on executing request", e);
+    } catch (OConcurrentModificationException e) {
+      sendError(clientTxId, e);
+
+      OLogManager.instance().info(this, "Concurrent modification during record update", e);
     } catch (OException e) {
       sendError(clientTxId, e);
+
+      OLogManager.instance().error(this, "Error on executing request", e);
     } catch (RuntimeException e) {
       sendError(clientTxId, e);
-    } catch (Throwable t) {
-      OLogManager.instance().error(this, "Error on executing request", t);
-      sendError(clientTxId, t);
-    } finally {
 
+      OLogManager.instance().error(this, "Error on executing request", e);
+    } catch (Throwable t) {
+      sendError(clientTxId, t);
+
+      OLogManager.instance().error(this, "Error on executing request", t);
+    } finally {
       OSerializationThreadLocal.INSTANCE.get().clear();
     }
   }
