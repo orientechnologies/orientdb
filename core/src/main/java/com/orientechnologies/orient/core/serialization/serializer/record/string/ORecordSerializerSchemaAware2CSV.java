@@ -15,6 +15,14 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -34,14 +42,6 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstract {
   private static final long                            serialVersionUID = 1L;
   public static final String                           NAME             = "ORecordDocument2csv";
@@ -59,7 +59,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
   @Override
   protected StringBuilder toString(ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
-      OUserObject2RecordHandler iObjHandler, final Set<Integer> iMarshalledRecords, final boolean iOnlyDelta) {
+      OUserObject2RecordHandler iObjHandler, final Set<Integer> iMarshalledRecords, final boolean iOnlyDelta,
+      final boolean autoDetectCollectionType) {
     if (!(iRecord instanceof ODocument))
       throw new OSerializationException("Cannot marshall a record of type " + iRecord.getClass().getSimpleName() + " to CSV");
 
@@ -167,60 +168,61 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
               ((ORecordLazyMultiValue) fieldValue).setAutoConvertToRecord(false);
           }
 
-          if (size > 0) {
-            final Object firstValue = OMultiValue.getFirstValue(fieldValue);
+          if (autoDetectCollectionType)
+            if (size > 0) {
+              final Object firstValue = OMultiValue.getFirstValue(fieldValue);
 
-            if (firstValue != null) {
-              if (firstValue instanceof ORID) {
-                linkedClass = null;
-                linkedType = OType.LINK;
-                if (fieldValue instanceof Set<?>)
-                  type = OType.LINKSET;
-                else
-                  type = OType.LINKLIST;
-              } else if (ODatabaseRecordThreadLocal.INSTANCE.isDefined()
-                  && (firstValue instanceof ODocument && !((ODocument) firstValue).isEmbedded())
-                  && (firstValue instanceof ORecord<?> || (ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE
-                      .get().getDatabaseOwner()).getEntityManager().getEntityClass(getClassName(firstValue)) != null))) {
-                linkedClass = getLinkInfo(ODatabaseRecordThreadLocal.INSTANCE.get(), getClassName(firstValue));
-                if (type == null) {
-                  // LINK: GET THE CLASS
+              if (firstValue != null) {
+                if (firstValue instanceof ORID) {
+                  linkedClass = null;
                   linkedType = OType.LINK;
-
                   if (fieldValue instanceof Set<?>)
                     type = OType.LINKSET;
                   else
                     type = OType.LINKLIST;
-                } else
-                  linkedType = OType.EMBEDDED;
-              } else {
-                // EMBEDDED COLLECTION
-                if (firstValue instanceof ODocument
-                    && ((((ODocument) firstValue).hasOwners()) || type == OType.EMBEDDEDSET || type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDMAP))
-                  linkedType = OType.EMBEDDED;
-                else if (firstValue instanceof Enum<?>)
-                  linkedType = OType.STRING;
-                else {
-                  linkedType = OType.getTypeByClass(firstValue.getClass());
+                } else if (ODatabaseRecordThreadLocal.INSTANCE.isDefined()
+                    && (firstValue instanceof ODocument && !((ODocument) firstValue).isEmbedded())
+                    && (firstValue instanceof ORecord<?> || (ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE
+                        .get().getDatabaseOwner()).getEntityManager().getEntityClass(getClassName(firstValue)) != null))) {
+                  linkedClass = getLinkInfo(ODatabaseRecordThreadLocal.INSTANCE.get(), getClassName(firstValue));
+                  if (type == null) {
+                    // LINK: GET THE CLASS
+                    linkedType = OType.LINK;
 
-                  if (linkedType != OType.LINK) {
-                    // EMBEDDED FOR SURE SINCE IT CONTAINS JAVA TYPES
-                    if (linkedType == null) {
-                      linkedType = OType.EMBEDDED;
-                      // linkedClass = new OClass(firstValue.getClass());
+                    if (fieldValue instanceof Set<?>)
+                      type = OType.LINKSET;
+                    else
+                      type = OType.LINKLIST;
+                  } else
+                    linkedType = OType.EMBEDDED;
+                } else {
+                  // EMBEDDED COLLECTION
+                  if (firstValue instanceof ODocument
+                      && ((((ODocument) firstValue).hasOwners()) || type == OType.EMBEDDEDSET || type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDMAP))
+                    linkedType = OType.EMBEDDED;
+                  else if (firstValue instanceof Enum<?>)
+                    linkedType = OType.STRING;
+                  else {
+                    linkedType = OType.getTypeByClass(firstValue.getClass());
+
+                    if (linkedType != OType.LINK) {
+                      // EMBEDDED FOR SURE SINCE IT CONTAINS JAVA TYPES
+                      if (linkedType == null) {
+                        linkedType = OType.EMBEDDED;
+                        // linkedClass = new OClass(firstValue.getClass());
+                      }
                     }
                   }
-                }
 
-                if (type == null)
-                  if (fieldValue instanceof Set<?>)
-                    type = OType.EMBEDDEDSET;
-                  else
-                    type = OType.EMBEDDEDLIST;
+                  if (type == null)
+                    if (fieldValue instanceof Set<?>)
+                      type = OType.EMBEDDEDSET;
+                    else
+                      type = OType.EMBEDDEDLIST;
+                }
               }
-            }
-          } else if (type == null)
-            type = OType.EMBEDDEDLIST;
+            } else if (type == null)
+              type = OType.EMBEDDEDLIST;
 
           if (fieldValue instanceof ORecordLazyMultiValue && autoConvertLinks) {
             // REPLACE PREVIOUS SETTINGS
@@ -468,18 +470,18 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
     return iRecord;
   }
 
-	@Override
-	public byte[] toStream(ORecordInternal<?> iRecord, boolean iOnlyDelta) {
-		byte[] result = super.toStream(iRecord, iOnlyDelta);
-		if(result == null || result.length > 0)
-			return result;
+  @Override
+  public byte[] toStream(ORecordInternal<?> iRecord, boolean iOnlyDelta) {
+    byte[] result = super.toStream(iRecord, iOnlyDelta);
+    if (result == null || result.length > 0)
+      return result;
 
-		//Fix of nasty IBM JDK bug. In case of very depth recursive graph serialization
-		//ORecordSchemaAware#_source property may be initialized incorrectly.
-		final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware)iRecord;
-		if(recordSchemaAware.fields() > 0)
-			return null;
+    // Fix of nasty IBM JDK bug. In case of very depth recursive graph serialization
+    // ORecordSchemaAware#_source property may be initialized incorrectly.
+    final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware) iRecord;
+    if (recordSchemaAware.fields() > 0)
+      return null;
 
-		return result;
-	}
+    return result;
+  }
 }

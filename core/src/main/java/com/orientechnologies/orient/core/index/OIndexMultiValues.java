@@ -312,7 +312,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
   @SuppressWarnings({ "rawtypes", "unchecked" })
   public Collection<OIdentifiable> getValues(final Collection<?> iKeys, final int maxValuesToFetch) {
     final List<Object> sortedKeys = new ArrayList<Object>(iKeys);
-    Collections.sort(sortedKeys, new ODefaultComparator());
+    Collections.sort(sortedKeys, ODefaultComparator.INSTANCE);
 
     acquireExclusiveLock();
     try {
@@ -498,7 +498,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
   @SuppressWarnings({ "rawtypes", "unchecked" })
   public Collection<ODocument> getEntries(Collection<?> iKeys, int maxEntriesToFetch) {
     final List<Object> sortedKeys = new ArrayList<Object>(iKeys);
-    Collections.sort(sortedKeys, new ODefaultComparator());
+    Collections.sort(sortedKeys, ODefaultComparator.INSTANCE);
 
     acquireExclusiveLock();
     try {

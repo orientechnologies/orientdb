@@ -15,6 +15,16 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -34,16 +44,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   protected Map<ORID, ORecord<?>>                             temp2persistent       = new HashMap<ORID, ORecord<?>>();
@@ -321,31 +321,30 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       final List<ODocument> entries) {
     // SERIALIZE KEY
 
-		final String key;
-		final ODocument keyContainer = new ODocument();
+    final String key;
+    final ODocument keyContainer = new ODocument();
 
-		try {
-			if (entry.key != null) {
-				if (entry.key instanceof OCompositeKey) {
-					final List<Comparable<?>> keys = ((OCompositeKey) entry.key).getKeys();
+    try {
+      if (entry.key != null) {
+        if (entry.key instanceof OCompositeKey) {
+          final List<Object> keys = ((OCompositeKey) entry.key).getKeys();
 
-					keyContainer.field("key", keys, OType.EMBEDDEDLIST);
-					keyContainer.field("binary", false);
-				} else if (!(entry.key instanceof ORecordElement) && (entry.key instanceof OSerializableStream)) {
-					keyContainer.field("key", OStreamSerializerAnyStreamable.INSTANCE.toStream(entry.key), OType.BINARY);
-					keyContainer.field("binary", true);
-				} else {
-					keyContainer.field("key", entry.key);
-					keyContainer.field("binary", false);
-				}
+          keyContainer.field("key", keys, OType.EMBEDDEDLIST);
+          keyContainer.field("binary", false);
+        } else if (!(entry.key instanceof ORecordElement) && (entry.key instanceof OSerializableStream)) {
+          keyContainer.field("key", OStreamSerializerAnyStreamable.INSTANCE.toStream(entry.key), OType.BINARY);
+          keyContainer.field("binary", true);
+        } else {
+          keyContainer.field("key", entry.key);
+          keyContainer.field("binary", false);
+        }
 
-				key = ORecordSerializerSchemaAware2CSV.INSTANCE.toString(keyContainer, null).toString();
-			} else
-				key = "*";
-		} catch (IOException ioe) {
-			throw new OTransactionException("Error during index changes serialization. ", ioe);
-		}
-
+        key = ORecordSerializerSchemaAware2CSV.INSTANCE.toString(keyContainer, null, false).toString();
+      } else
+        key = "*";
+    } catch (IOException ioe) {
+      throw new OTransactionException("Error during index changes serialization. ", ioe);
+    }
 
     final List<ODocument> operations = new ArrayList<ODocument>();
 

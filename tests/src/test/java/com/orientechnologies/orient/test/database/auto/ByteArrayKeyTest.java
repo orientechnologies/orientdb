@@ -10,6 +10,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
@@ -40,6 +41,12 @@ public class ByteArrayKeyTest {
     byteArrayKeyTest.createProperty("byteArrayKey", OType.BINARY);
 
     byteArrayKeyTest.createIndex("byteArrayKeyIndex", OClass.INDEX_TYPE.UNIQUE, "byteArrayKey");
+
+    final OClass compositeByteArrayKeyTest = database.getMetadata().getSchema().createClass("CompositeByteArrayKeyTest");
+    compositeByteArrayKeyTest.createProperty("byteArrayKey", OType.BINARY);
+    compositeByteArrayKeyTest.createProperty("intKey", OType.INTEGER);
+
+    compositeByteArrayKeyTest.createIndex("compositeByteArrayKey", OClass.INDEX_TYPE.UNIQUE, "byteArrayKey", "intKey");
 
     database.getMetadata().getIndexManager()
         .createIndex("byte-array-manualIndex-notunique", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.BINARY), null, null);
@@ -101,6 +108,46 @@ public class ByteArrayKeyTest {
     OIndex<?> index = database.getMetadata().getIndexManager().getIndex("byteArrayKeyIndex");
     Assert.assertEquals(index.get(key1), doc1);
     Assert.assertEquals(index.get(key2), doc2);
+  }
+
+  public void testAutomaticCompositeUsage() {
+    byte[] key1 = new byte[] { 1, 2, 3 };
+    byte[] key2 = new byte[] { 4, 5, 6 };
+
+    ODocument doc1 = new ODocument("CompositeByteArrayKeyTest");
+    doc1.field("byteArrayKey", key1);
+    doc1.field("intKey", 1);
+    doc1.save();
+
+    ODocument doc2 = new ODocument("CompositeByteArrayKeyTest");
+    doc2.field("byteArrayKey", key2);
+    doc2.field("intKey", 2);
+    doc2.save();
+
+    OIndex<?> index = database.getMetadata().getIndexManager().getIndex("compositeByteArrayKey");
+    Assert.assertEquals(index.get(new OCompositeKey(key1, 1)), doc1);
+    Assert.assertEquals(index.get(new OCompositeKey(key2, 2)), doc2);
+  }
+
+  public void testAutomaticCompositeUsageInTX() {
+    byte[] key1 = new byte[] { 7, 8, 9 };
+    byte[] key2 = new byte[] { 10, 11, 12 };
+
+    database.begin();
+    ODocument doc1 = new ODocument("CompositeByteArrayKeyTest");
+    doc1.field("byteArrayKey", key1);
+    doc1.field("intKey", 1);
+    doc1.save();
+
+    ODocument doc2 = new ODocument("CompositeByteArrayKeyTest");
+    doc2.field("byteArrayKey", key2);
+    doc2.field("intKey", 2);
+    doc2.save();
+    database.commit();
+
+    OIndex<?> index = database.getMetadata().getIndexManager().getIndex("compositeByteArrayKey");
+    Assert.assertEquals(index.get(new OCompositeKey(key1, 1)), doc1);
+    Assert.assertEquals(index.get(new OCompositeKey(key2, 2)), doc2);
   }
 
   @Test(dependsOnMethods = { "testUsage" })

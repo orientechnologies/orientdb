@@ -15,10 +15,10 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import com.orientechnologies.common.comparator.ODefaultComparator;
-
 import java.util.Map;
 import java.util.TreeMap;
+
+import com.orientechnologies.common.comparator.ODefaultComparator;
 
 /**
  * Collects the changes to an index for a certain key
@@ -32,8 +32,8 @@ public class OTransactionIndexChanges {
     PUT, REMOVE, CLEAR
   }
 
-  public Map<Object, OTransactionIndexChangesPerKey> changesPerKey =
-					new TreeMap<Object, OTransactionIndexChangesPerKey>(new ODefaultComparator());
+  public Map<Object, OTransactionIndexChangesPerKey> changesPerKey = new TreeMap<Object, OTransactionIndexChangesPerKey>(
+                                                                       ODefaultComparator.INSTANCE);
 
   public OTransactionIndexChangesPerKey              changesCrossKey;
   public boolean                                     cleared       = false;

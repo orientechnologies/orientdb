@@ -247,7 +247,7 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
   @SuppressWarnings({ "rawtypes", "unchecked" })
   public Collection<OIdentifiable> getValues(final Collection<?> iKeys, final int maxValuesToSearch) {
     final List<Object> sortedKeys = new ArrayList<Object>(iKeys);
-    Collections.sort(sortedKeys, new ODefaultComparator());
+    Collections.sort(sortedKeys, ODefaultComparator.INSTANCE);
 
     acquireExclusiveLock();
 
@@ -403,7 +403,7 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public Collection<ODocument> getEntries(final Collection<?> iKeys, final int maxEntriesToFetch) {
     final List<Object> sortedKeys = new ArrayList<Object>(iKeys);
-    Collections.sort(sortedKeys, new ODefaultComparator());
+    Collections.sort(sortedKeys, ODefaultComparator.INSTANCE);
 
     acquireExclusiveLock();
 

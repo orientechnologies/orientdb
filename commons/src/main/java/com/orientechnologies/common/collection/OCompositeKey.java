@@ -18,8 +18,11 @@ package com.orientechnologies.common.collection;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+
+import com.orientechnologies.common.comparator.ODefaultComparator;
 
 /**
  * Container for the list of heterogeneous values that are going to be stored in {@link OMVRBTree} as composite keys.
@@ -32,32 +35,38 @@ import java.util.List;
  */
 @SuppressWarnings("rawtypes")
 public class OCompositeKey implements Comparable<OCompositeKey>, Serializable {
-  private static final long         serialVersionUID = 1L;
+  private static final long        serialVersionUID = 1L;
   /**
    * List of heterogeneous values that are going to be stored in {@link OMVRBTree}.
    */
-  private final List<Comparable<?>> keys;
+  private final List<Object>       keys;
 
-  public OCompositeKey(final List<? extends Comparable> keys) {
-    this.keys = new ArrayList<Comparable<?>>(keys.size());
-    for (final Comparable key : keys)
+  private final Comparator<Object> comparator;
+
+  public OCompositeKey(final List<?> keys) {
+    this.keys = new ArrayList<Object>(keys.size());
+    this.comparator = ODefaultComparator.INSTANCE;
+
+    for (final Object key : keys)
       addKey(key);
   }
 
-  public OCompositeKey(final Comparable... keys) {
-    this.keys = new ArrayList<Comparable<?>>(keys.length);
-    for (final Comparable key : keys)
+  public OCompositeKey(final Object... keys) {
+    this.keys = new ArrayList<Object>(keys.length);
+    this.comparator = ODefaultComparator.INSTANCE;
+    for (final Object key : keys)
       addKey(key);
   }
 
   public OCompositeKey() {
-    this.keys = new ArrayList<Comparable<?>>();
+    this.keys = new ArrayList<Object>();
+    this.comparator = ODefaultComparator.INSTANCE;
   }
 
   /**
    * @return List of heterogeneous values that are going to be stored in {@link OMVRBTree}.
    */
-  public List<Comparable<?>> getKeys() {
+  public List<Object> getKeys() {
     return Collections.unmodifiableList(keys);
   }
 
@@ -70,10 +79,10 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable {
    * @param key
    *          Key to add.
    */
-  public void addKey(final Comparable key) {
+  public void addKey(final Object key) {
     if (key instanceof OCompositeKey) {
       final OCompositeKey compositeKey = (OCompositeKey) key;
-      for (final Comparable inKey : compositeKey.keys) {
+      for (final Object inKey : compositeKey.keys) {
         addKey(inKey);
       }
     } else {
@@ -94,12 +103,12 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable {
    *         object.
    */
   public int compareTo(final OCompositeKey otherKey) {
-    final Iterator<Comparable<?>> inIter = keys.iterator();
-    final Iterator<Comparable<?>> outIter = otherKey.keys.iterator();
+    final Iterator<Object> inIter = keys.iterator();
+    final Iterator<Object> outIter = otherKey.keys.iterator();
 
     while (inIter.hasNext() && outIter.hasNext()) {
-      final Comparable inKey = inIter.next();
-      final Comparable outKey = outIter.next();
+      final Object inKey = inIter.next();
+      final Object outKey = outIter.next();
 
       if (outKey instanceof OAlwaysGreaterKey)
         return -1;
@@ -108,7 +117,7 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable {
         return 1;
 
       @SuppressWarnings("unchecked")
-      final int result = inKey.compareTo(outKey);
+      final int result = comparator.compare(inKey, outKey);
       if (result != 0)
         return result;
     }
