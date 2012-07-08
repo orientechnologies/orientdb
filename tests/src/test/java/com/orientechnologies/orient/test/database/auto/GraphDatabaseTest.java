@@ -72,6 +72,11 @@ public class GraphDatabaseTest {
   }
 
   @Test
+  public void alterDb() {
+    database.command(new OCommandSQL("alter database type graph")).execute();
+  }
+
+  @Test
   public void populate() {
     OClass vehicleClass = database.createVertexType("GraphVehicle");
     database.createVertexType("GraphCar", vehicleClass);
@@ -469,7 +474,7 @@ public class GraphDatabaseTest {
 
     String query = "select name, lat, long, distance(lat,long,51.5,0.08) as distance from (select flatten(out[label='owns'].in) from V where name = 'UK') order by distance";
     result = database.query(new OSQLSynchQuery<ODocument>(query));
-    
+
     Assert.assertEquals(result.size(), 2);
     for (int i = 0; i < result.size(); i++) {
       System.out.println("dos: " + result.get(i));

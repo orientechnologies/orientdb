@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.ODefaultDataSegmentStrategy;
+import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -806,6 +807,16 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
           getStorage().setDefaultClusterId(getStorage().getClusterIdByName(iValue.toString()));
       }
       break;
+    case TYPE:
+      if (stringValue.equalsIgnoreCase("graph")) {
+        if (getDatabaseOwner() instanceof OGraphDatabase)
+          ((OGraphDatabase) getDatabaseOwner()).checkForGraphSchema();
+        else
+          new OGraphDatabase(getURL()).checkForGraphSchema();
+      }
+      break;
+    default:
+      throw new IllegalArgumentException("Option '" + iAttribute + "' not supported on alter database");
     }
   }
 

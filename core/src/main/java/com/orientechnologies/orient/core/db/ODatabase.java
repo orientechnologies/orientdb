@@ -51,7 +51,7 @@ public interface ODatabase {
   }
 
   public static enum ATTRIBUTES {
-    STATUS, DEFAULTCLUSTERID
+    TYPE, STATUS, DEFAULTCLUSTERID
   }
 
   /**

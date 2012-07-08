@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -491,6 +492,16 @@ public class ODatabaseRaw implements ODatabase {
     switch (iAttribute) {
     case STATUS:
       return getStatus();
+    case DEFAULTCLUSTERID:
+      return getDefaultClusterId();
+    case TYPE:
+      ODatabaseRecord db;
+      if (getDatabaseOwner() instanceof ODatabaseRecord)
+        db = ((ODatabaseRecord) getDatabaseOwner());
+      else
+        db = new OGraphDatabase(url);
+
+      return db.getMetadata().getSchema().existsClass("OGraphVertex");
     }
 
     return null;
@@ -514,6 +525,18 @@ public class ODatabaseRaw implements ODatabase {
           storage.setDefaultClusterId(storage.getClusterIdByName(iValue.toString()));
       }
       break;
+    case TYPE:
+      if (stringValue.equalsIgnoreCase("graph")) {
+        if (getDatabaseOwner() instanceof OGraphDatabase)
+          ((OGraphDatabase) getDatabaseOwner()).checkForGraphSchema();
+        else
+          new OGraphDatabase(url).checkForGraphSchema();
+      }
+      break;
+
+    default:
+      throw new IllegalArgumentException("Option '" + iAttribute + "' not supported on alter database");
+
     }
 
     return (DB) this;
