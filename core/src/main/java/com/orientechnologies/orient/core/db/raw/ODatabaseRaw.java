@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
@@ -529,9 +530,13 @@ public class ODatabaseRaw implements ODatabase {
       if (stringValue.equalsIgnoreCase("graph")) {
         if (getDatabaseOwner() instanceof OGraphDatabase)
           ((OGraphDatabase) getDatabaseOwner()).checkForGraphSchema();
+        else if (getDatabaseOwner() instanceof ODatabaseRecordTx)
+          new OGraphDatabase((ODatabaseRecordTx) getDatabaseOwner()).checkForGraphSchema();
         else
           new OGraphDatabase(url).checkForGraphSchema();
-      }
+      } else
+        throw new IllegalArgumentException("Database type '" + stringValue + "' is not supported");
+
       break;
 
     default:

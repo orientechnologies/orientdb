@@ -76,7 +76,7 @@ public class GraphDatabaseTest {
     database.command(new OCommandSQL("alter database type graph")).execute();
   }
 
-  @Test
+  @Test(dependsOnMethods = "alterDb")
   public void populate() {
     OClass vehicleClass = database.createVertexType("GraphVehicle");
     database.createVertexType("GraphCar", vehicleClass);

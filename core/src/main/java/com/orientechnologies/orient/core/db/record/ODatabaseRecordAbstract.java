@@ -811,9 +811,15 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       if (stringValue.equalsIgnoreCase("graph")) {
         if (getDatabaseOwner() instanceof OGraphDatabase)
           ((OGraphDatabase) getDatabaseOwner()).checkForGraphSchema();
+        else if (this instanceof ODatabaseRecordTx)
+          new OGraphDatabase((ODatabaseRecordTx) this).checkForGraphSchema();
+        else if (getDatabaseOwner() instanceof ODatabaseRecordTx)
+          new OGraphDatabase((ODatabaseRecordTx) getDatabaseOwner()).checkForGraphSchema();
         else
           new OGraphDatabase(getURL()).checkForGraphSchema();
-      }
+      } else
+        throw new IllegalArgumentException("Database type '" + stringValue + "' is not supported");
+
       break;
     default:
       throw new IllegalArgumentException("Option '" + iAttribute + "' not supported on alter database");
