@@ -612,6 +612,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     try {
       final boolean wasNew = rid.isNew();
+      if (wasNew && rid.clusterId == -1 && iClusterName != null)
+        // ASSIGN THE CLUSTER ID
+        rid.clusterId = getClusterIdByName(iClusterName);
 
       // STREAM.LENGTH == 0 -> RECORD IN STACK: WILL BE SAVED AFTER
       byte[] stream = iRecord.toStream();
