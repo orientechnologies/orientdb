@@ -87,6 +87,16 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     if (parserIsEnded())
       throwSyntaxErrorException("Set of fields is missed. Example: (name, surname) or SET name = 'Bill'");
 
+    final String temp = parseOptionalWord(true);
+    if (temp.equals("CLUSTER")) {
+      clusterName = parseRequiredWord(false);
+
+      parserSkipWhiteSpaces();
+      if (parserIsEnded())
+        throwSyntaxErrorException("Set of fields is missed. Example: (name, surname) or SET name = 'Bill'");
+    } else
+      parserGoBack();
+
     newRecords = new ArrayList<Map<String, Object>>();
     if (parserGetCurrentChar() == '(') {
       parseBracesFields();

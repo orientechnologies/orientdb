@@ -31,189 +31,203 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 @Test(groups = "sql-insert")
 public class SQLInsertTest {
-	private ODatabaseDocument	database;
+  private ODatabaseDocument database;
 
-	@Parameters(value = "url")
-	public SQLInsertTest(String iURL) {
-		database = new ODatabaseDocumentTx(iURL);
-	}
+  @Parameters(value = "url")
+  public SQLInsertTest(String iURL) {
+    database = new ODatabaseDocumentTx(iURL);
+  }
 
-	@Test
-	public void insertOperator() {
-		database.open("admin", "admin");
+  @Test
+  public void insertOperator() {
+    database.open("admin", "admin");
 
-		int addressId = database.getMetadata().getSchema().getClass("Address").getDefaultClusterId();
+    int addressId = database.getMetadata().getSchema().getClass("Address").getDefaultClusterId();
 
-		ODocument doc = (ODocument) database.command(
-				new OCommandSQL("insert into Profile (name, surname, salary, location, dummy) values ('Luca','Smith', 109.9, #" + addressId
-						+ ":3, 'hooray')")).execute();
+    ODocument doc = (ODocument) database.command(
+        new OCommandSQL("insert into Profile (name, surname, salary, location, dummy) values ('Luca','Smith', 109.9, #" + addressId
+            + ":3, 'hooray')")).execute();
 
-		Assert.assertTrue(doc != null);
-		Assert.assertEquals(doc.field("name"), "Luca");
-		Assert.assertEquals(doc.field("surname"), "Smith");
-		Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 109.9f);
-		Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, 3));
-		Assert.assertEquals(doc.field("dummy"), "hooray");
+    Assert.assertTrue(doc != null);
+    Assert.assertEquals(doc.field("name"), "Luca");
+    Assert.assertEquals(doc.field("surname"), "Smith");
+    Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 109.9f);
+    Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, 3));
+    Assert.assertEquals(doc.field("dummy"), "hooray");
 
-		doc = (ODocument) database.command(
-				new OCommandSQL("insert into Profile SET name = 'Luca', surname = 'Smith', salary = 109.9, location = #" + addressId
-						+ ":3, dummy =  'hooray'")).execute();
+    doc = (ODocument) database.command(
+        new OCommandSQL("insert into Profile SET name = 'Luca', surname = 'Smith', salary = 109.9, location = #" + addressId
+            + ":3, dummy =  'hooray'")).execute();
 
-		database.delete(doc);
+    database.delete(doc);
 
-		Assert.assertTrue(doc != null);
-		Assert.assertEquals(doc.field("name"), "Luca");
-		Assert.assertEquals(doc.field("surname"), "Smith");
-		Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 109.9f);
-		Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, 3));
-		Assert.assertEquals(doc.field("dummy"), "hooray");
+    Assert.assertTrue(doc != null);
+    Assert.assertEquals(doc.field("name"), "Luca");
+    Assert.assertEquals(doc.field("surname"), "Smith");
+    Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 109.9f);
+    Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, 3));
+    Assert.assertEquals(doc.field("dummy"), "hooray");
 
-		database.close();
-	}
+    database.close();
+  }
 
-	@Test
-	public void insertWithWildcards() {
-		database.open("admin", "admin");
+  @Test
+  public void insertWithWildcards() {
+    database.open("admin", "admin");
 
-		int addressId = database.getMetadata().getSchema().getClass("Address").getDefaultClusterId();
+    int addressId = database.getMetadata().getSchema().getClass("Address").getDefaultClusterId();
 
-		ODocument doc = (ODocument) database.command(
-				new OCommandSQL("insert into Profile (name, surname, salary, location, dummy) values (?,?,?,?,?)")).execute("Marc",
-				"Smith", 120.0, new ORecordId(addressId, 3), "hooray");
+    ODocument doc = (ODocument) database.command(
+        new OCommandSQL("insert into Profile (name, surname, salary, location, dummy) values (?,?,?,?,?)")).execute("Marc",
+        "Smith", 120.0, new ORecordId(addressId, 3), "hooray");
 
-		Assert.assertTrue(doc != null);
-		Assert.assertEquals(doc.field("name"), "Marc");
-		Assert.assertEquals(doc.field("surname"), "Smith");
-		Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 120.0f);
-		Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, 3));
-		Assert.assertEquals(doc.field("dummy"), "hooray");
+    Assert.assertTrue(doc != null);
+    Assert.assertEquals(doc.field("name"), "Marc");
+    Assert.assertEquals(doc.field("surname"), "Smith");
+    Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 120.0f);
+    Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, 3));
+    Assert.assertEquals(doc.field("dummy"), "hooray");
 
-		database.delete(doc);
+    database.delete(doc);
 
-		doc = (ODocument) database.command(
-				new OCommandSQL("insert into Profile SET name = ?, surname = ?, salary = ?, location = ?, dummy = ?")).execute("Marc",
-				"Smith", 120.0, new ORecordId(addressId, 3), "hooray");
+    doc = (ODocument) database.command(
+        new OCommandSQL("insert into Profile SET name = ?, surname = ?, salary = ?, location = ?, dummy = ?")).execute("Marc",
+        "Smith", 120.0, new ORecordId(addressId, 3), "hooray");
 
-		Assert.assertTrue(doc != null);
-		Assert.assertEquals(doc.field("name"), "Marc");
-		Assert.assertEquals(doc.field("surname"), "Smith");
-		Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 120.0f);
-		Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, 3));
-		Assert.assertEquals(doc.field("dummy"), "hooray");
+    Assert.assertTrue(doc != null);
+    Assert.assertEquals(doc.field("name"), "Marc");
+    Assert.assertEquals(doc.field("surname"), "Smith");
+    Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 120.0f);
+    Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, 3));
+    Assert.assertEquals(doc.field("dummy"), "hooray");
 
-		database.close();
-	}
+    database.close();
+  }
 
-	@Test
-	@SuppressWarnings("unchecked")
-	public void insertMap() {
-		database.open("admin", "admin");
+  @Test
+  @SuppressWarnings("unchecked")
+  public void insertMap() {
+    database.open("admin", "admin");
 
-		ODocument doc = (ODocument) database
-				.command(
-						new OCommandSQL(
-								"insert into cluster:default (equaledges, name, properties) values ('no', 'circle', {'round':'eeee', 'blaaa':'zigzag'} )"))
-				.execute();
+    ODocument doc = (ODocument) database
+        .command(
+            new OCommandSQL(
+                "insert into cluster:default (equaledges, name, properties) values ('no', 'circle', {'round':'eeee', 'blaaa':'zigzag'} )"))
+        .execute();
 
-		Assert.assertTrue(doc != null);
+    Assert.assertTrue(doc != null);
 
-		doc = (ODocument) new ODocument(doc.getIdentity()).load();
+    doc = (ODocument) new ODocument(doc.getIdentity()).load();
 
-		Assert.assertEquals(doc.field("equaledges"), "no");
-		Assert.assertEquals(doc.field("name"), "circle");
-		Assert.assertTrue(doc.field("properties") instanceof Map);
+    Assert.assertEquals(doc.field("equaledges"), "no");
+    Assert.assertEquals(doc.field("name"), "circle");
+    Assert.assertTrue(doc.field("properties") instanceof Map);
 
-		Map<Object, Object> entries = ((Map<Object, Object>) doc.field("properties"));
-		Assert.assertEquals(entries.size(), 2);
+    Map<Object, Object> entries = ((Map<Object, Object>) doc.field("properties"));
+    Assert.assertEquals(entries.size(), 2);
 
-		Assert.assertEquals(entries.get("round"), "eeee");
-		Assert.assertEquals(entries.get("blaaa"), "zigzag");
+    Assert.assertEquals(entries.get("round"), "eeee");
+    Assert.assertEquals(entries.get("blaaa"), "zigzag");
 
-		database.delete(doc);
+    database.delete(doc);
 
-		doc = (ODocument) database
-				.command(
-						new OCommandSQL(
-								"insert into cluster:default SET equaledges = 'no', name = 'circle', properties = {'round':'eeee', 'blaaa':'zigzag'} "))
-				.execute();
+    doc = (ODocument) database
+        .command(
+            new OCommandSQL(
+                "insert into cluster:default SET equaledges = 'no', name = 'circle', properties = {'round':'eeee', 'blaaa':'zigzag'} "))
+        .execute();
 
-		Assert.assertTrue(doc != null);
+    Assert.assertTrue(doc != null);
 
-		doc = (ODocument) new ODocument(doc.getIdentity()).load();
+    doc = (ODocument) new ODocument(doc.getIdentity()).load();
 
-		Assert.assertEquals(doc.field("equaledges"), "no");
-		Assert.assertEquals(doc.field("name"), "circle");
-		Assert.assertTrue(doc.field("properties") instanceof Map);
+    Assert.assertEquals(doc.field("equaledges"), "no");
+    Assert.assertEquals(doc.field("name"), "circle");
+    Assert.assertTrue(doc.field("properties") instanceof Map);
 
-		entries = ((Map<Object, Object>) doc.field("properties"));
-		Assert.assertEquals(entries.size(), 2);
+    entries = ((Map<Object, Object>) doc.field("properties"));
+    Assert.assertEquals(entries.size(), 2);
 
-		Assert.assertEquals(entries.get("round"), "eeee");
-		Assert.assertEquals(entries.get("blaaa"), "zigzag");
-		database.close();
-	}
+    Assert.assertEquals(entries.get("round"), "eeee");
+    Assert.assertEquals(entries.get("blaaa"), "zigzag");
+    database.close();
+  }
 
-	@Test
-	@SuppressWarnings("unchecked")
-	public void insertList() {
-		database.open("admin", "admin");
+  @Test
+  @SuppressWarnings("unchecked")
+  public void insertList() {
+    database.open("admin", "admin");
 
-		ODocument doc = (ODocument) database.command(
-				new OCommandSQL(
-						"insert into cluster:default (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )"))
-				.execute();
+    ODocument doc = (ODocument) database.command(
+        new OCommandSQL(
+            "insert into cluster:default (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )"))
+        .execute();
 
-		Assert.assertTrue(doc != null);
+    Assert.assertTrue(doc != null);
 
-		doc = (ODocument) new ODocument(doc.getIdentity()).load();
+    doc = (ODocument) new ODocument(doc.getIdentity()).load();
 
-		Assert.assertEquals(doc.field("equaledges"), "yes");
-		Assert.assertEquals(doc.field("name"), "square");
-		Assert.assertTrue(doc.field("list") instanceof List);
+    Assert.assertEquals(doc.field("equaledges"), "yes");
+    Assert.assertEquals(doc.field("name"), "square");
+    Assert.assertTrue(doc.field("list") instanceof List);
 
-		List<Object> entries = ((List<Object>) doc.field("list"));
-		Assert.assertEquals(entries.size(), 4);
+    List<Object> entries = ((List<Object>) doc.field("list"));
+    Assert.assertEquals(entries.size(), 4);
 
-		Assert.assertEquals(entries.get(0), "bottom");
-		Assert.assertEquals(entries.get(1), "top");
-		Assert.assertEquals(entries.get(2), "left");
-		Assert.assertEquals(entries.get(3), "right");
+    Assert.assertEquals(entries.get(0), "bottom");
+    Assert.assertEquals(entries.get(1), "top");
+    Assert.assertEquals(entries.get(2), "left");
+    Assert.assertEquals(entries.get(3), "right");
 
-		database.delete(doc);
+    database.delete(doc);
 
-		doc = (ODocument) database.command(
-				new OCommandSQL(
-						"insert into cluster:default SET equaledges = 'yes', name = 'square', list = ['bottom', 'top','left','right'] "))
-				.execute();
+    doc = (ODocument) database.command(
+        new OCommandSQL(
+            "insert into cluster:default SET equaledges = 'yes', name = 'square', list = ['bottom', 'top','left','right'] "))
+        .execute();
 
-		Assert.assertTrue(doc != null);
+    Assert.assertTrue(doc != null);
 
-		doc = (ODocument) new ODocument(doc.getIdentity()).load();
+    doc = (ODocument) new ODocument(doc.getIdentity()).load();
 
-		Assert.assertEquals(doc.field("equaledges"), "yes");
-		Assert.assertEquals(doc.field("name"), "square");
-		Assert.assertTrue(doc.field("list") instanceof List);
+    Assert.assertEquals(doc.field("equaledges"), "yes");
+    Assert.assertEquals(doc.field("name"), "square");
+    Assert.assertTrue(doc.field("list") instanceof List);
 
-		entries = ((List<Object>) doc.field("list"));
-		Assert.assertEquals(entries.size(), 4);
+    entries = ((List<Object>) doc.field("list"));
+    Assert.assertEquals(entries.size(), 4);
 
-		Assert.assertEquals(entries.get(0), "bottom");
-		Assert.assertEquals(entries.get(1), "top");
-		Assert.assertEquals(entries.get(2), "left");
-		Assert.assertEquals(entries.get(3), "right");
+    Assert.assertEquals(entries.get(0), "bottom");
+    Assert.assertEquals(entries.get(1), "top");
+    Assert.assertEquals(entries.get(2), "left");
+    Assert.assertEquals(entries.get(3), "right");
 
-		database.close();
-	}
+    database.close();
+  }
 
-	@Test
-	public void insertWithNoSpaces() {
-		database.open("admin", "admin");
+  @Test
+  public void insertWithNoSpaces() {
+    database.open("admin", "admin");
 
-		ODocument doc = (ODocument) database.command(
-				new OCommandSQL("insert into cluster:default(id, title)values(10, 'NoSQL movement')")).execute();
+    ODocument doc = (ODocument) database.command(
+        new OCommandSQL("insert into cluster:default(id, title)values(10, 'NoSQL movement')")).execute();
 
-		Assert.assertTrue(doc != null);
+    Assert.assertTrue(doc != null);
 
-		database.close();
-	}
+    database.close();
+  }
+
+  @Test
+  public void insertCluster() {
+    database.open("admin", "admin");
+
+    ODocument doc = (ODocument) database.command(
+        new OCommandSQL("insert into Account cluster default (id, title) values (10, 'NoSQL movement')")).execute();
+
+    Assert.assertTrue(doc != null);
+    Assert.assertEquals(doc.getIdentity().getClusterId(), database.getDefaultClusterId());
+    Assert.assertEquals(doc.getClassName(), "Account");
+
+    database.close();
+  }
 }
