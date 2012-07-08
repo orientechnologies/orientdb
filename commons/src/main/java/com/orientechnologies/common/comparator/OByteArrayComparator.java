@@ -17,30 +17,31 @@ package com.orientechnologies.common.comparator;
 
 import java.util.Comparator;
 
+
 /**
- * Comparator for byte arrays comparison.
- *
+ * Comparator for byte arrays comparison. Bytes are compared like unsigned not like signed bytes.
+ * 
  * @author Andrey Lomakin
  * @since 03.07.12
  */
 public class OByteArrayComparator implements Comparator<byte[]> {
-	public static final OByteArrayComparator INSTANCE = new OByteArrayComparator();
+  public static final OByteArrayComparator INSTANCE = new OByteArrayComparator();
 
-	public int compare(final byte[] arrayOne,final byte[] arrayTwo) {
-		if(arrayOne.length < arrayTwo.length)
-			return -1;
+  public int compare(final byte[] arrayOne, final byte[] arrayTwo) {
+    final int lenDiff = arrayOne.length - arrayTwo.length;
 
-		if(arrayOne.length > arrayTwo.length)
-			return 1;
+    if (lenDiff != 0)
+      return lenDiff;
 
-		for(int i = 0; i < arrayOne.length; i++) {
-			if(arrayOne[i] > arrayTwo[i])
-				return 1;
+    for (int i = 0; i < arrayOne.length; i++) {
+      final int valOne = arrayOne[i] & 0xFF;
+      final int valTwo = arrayTwo[i] & 0xFF;
 
-			if(arrayOne[i] < arrayTwo[i])
-				return -1;
-		}
+      final int diff = valOne - valTwo;
+      if (diff != 0)
+        return diff;
+    }
 
-		return 0;
-	}
+    return 0;
+  }
 }
