@@ -31,6 +31,7 @@ import sun.misc.Unsafe;
  * @author Andrey Lomakin
  * @since 08.07.12
  */
+@SuppressWarnings("restriction")
 public class OUnsafeByteArrayComparator implements Comparator<byte[]> {
   private static final Unsafe  unsafe;
 
