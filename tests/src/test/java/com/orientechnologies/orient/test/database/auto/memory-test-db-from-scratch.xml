@@ -73,6 +73,7 @@
 			<class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetEntriesTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.LinkListIndexTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.LinkMapIndexTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.SQLIndexWithoutSchemaTest" />
 		</classes>
 	</test>
 	<test name="Dictionary">

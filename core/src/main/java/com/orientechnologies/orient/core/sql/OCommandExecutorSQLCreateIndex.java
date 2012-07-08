@@ -26,11 +26,12 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionFactory;
 import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -109,21 +110,13 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
         throw new OCommandSQLParsingException("No right bracket found. Use " + getSyntax(), text, oldPos);
       }
 
-      final String props = textUpperCase.substring(oldPos, pos).trim().substring(1);
+      final String props = text.substring(oldPos, pos).trim().substring(1);
 
       List<String> propList = new ArrayList<String>();
-      final List<OType> typeList = new ArrayList<OType>();
       for (String propToIndex : props.trim().split("\\s*,\\s*")) {
         checkMapIndexSpecifier(propToIndex, text, oldPos);
-        final String propName = propToIndex.split("\\s+")[0];
-
-        final OProperty property = oClass.getProperty(propName);
-
-        if (property == null)
-          throw new IllegalArgumentException("Property '" + propToIndex + "' was not found in class '" + oClass.getName() + "'");
 
         propList.add(propToIndex);
-        typeList.add(property.getType());
       }
 
       fields = new String[propList.size()];
@@ -133,9 +126,6 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
       pos = nextWord(text, textUpperCase, oldPos, word, true);
       if (pos == -1)
         throw new OCommandSQLParsingException("Index type requested. Use " + getSyntax(), text, oldPos + 1);
-
-      keyTypes = new OType[propList.size()];
-      typeList.toArray(keyTypes);
     } else {
       if (indexName.indexOf('.') > 0) {
         final String[] parts = indexName.split("\\.");
@@ -143,12 +133,8 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
         oClass = findClass(parts[0]);
         if (oClass == null)
           throw new OCommandExecutionException("Class " + parts[0] + " not found");
-        final OProperty prop = oClass.getProperty(parts[1]);
-        if (prop == null)
-          throw new IllegalArgumentException("Property '" + parts[1] + "' was not found in class '" + oClass.getName() + "'");
 
-        fields = new String[] { prop.getName() };
-        keyTypes = new OType[] { prop.getType() };
+        fields = new String[] { parts[1] };
       }
     }
 
@@ -173,15 +159,12 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
           keyTypeList.add(OType.valueOf(typeName));
         }
 
-        OType[] parsedKeyTypes = new OType[keyTypeList.size()];
-        keyTypeList.toArray(parsedKeyTypes);
+        keyTypes = new OType[keyTypeList.size()];
+        keyTypeList.toArray(keyTypes);
 
-        if (keyTypes == null) {
-          keyTypes = parsedKeyTypes;
-        } else {
-          if (!Arrays.deepEquals(keyTypes, parsedKeyTypes)) {
-            throw new OCommandSQLParsingException("Property type list not match with real property types", text, oldPos);
-          }
+        if (fields != null && fields.length != 0 && fields.length != keyTypes.length) {
+          throw new OCommandSQLParsingException("Count of fields doesn't match with count of property types. " + "Fields: "
+              + Arrays.toString(fields) + "; Types: " + Arrays.toString(keyTypes), text, oldPos);
         }
       }
     }
@@ -213,7 +196,15 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
       } else
         idx = database.getMetadata().getIndexManager().createIndex(indexName, indexType.toString(), null, null, null);
     } else {
-      idx = oClass.createIndex(indexName, indexType, fields);
+      if (keyTypes == null || keyTypes.length == 0) {
+        idx = oClass.createIndex(indexName, indexType, fields);
+      } else {
+        final OIndexDefinition idxDef = OIndexDefinitionFactory.createIndexDefinition(oClass, Arrays.asList(fields),
+            Arrays.asList(keyTypes));
+
+        idx = database.getMetadata().getIndexManager()
+            .createIndex(indexName, indexType.name(), idxDef, oClass.getPolymorphicClusterIds(), null);
+      }
     }
 
     if (idx != null)

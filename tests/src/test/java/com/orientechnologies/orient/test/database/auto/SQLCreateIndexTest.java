@@ -2,6 +2,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.util.Arrays;
 
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.*;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -172,7 +173,7 @@ public class SQLCreateIndexTest {
 							.assertTrue(e
 											.getMessage()
 											.contains(
-															"Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'PROP3 BY TTT'\n"
+															"Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 by ttt'\n"
 																			+ "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by ttt) UNIQUE\n"
 																			+ "--------------------------------------------------------------------------------------------^"));
 		}
@@ -193,7 +194,7 @@ public class SQLCreateIndexTest {
 							.assertTrue(e
 											.getMessage()
 											.contains(
-															"Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'PROP3 B VALUE'\n"
+															"Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 b value'\n"
 																			+ "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 b value) UNIQUE\n"
 																			+ "--------------------------------------------------------------------------------------------^"));
 		}
@@ -214,7 +215,7 @@ public class SQLCreateIndexTest {
 							.assertTrue(e
 											.getMessage()
 											.contains(
-															"Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'PROP3 BY VALUE T'\n"
+															"Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 by value t'\n"
 																			+ "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by value t) UNIQUE\n"
 																			+ "--------------------------------------------------------------------------------------------^"));
 		}
@@ -372,15 +373,14 @@ public class SQLCreateIndexTest {
 		try {
 			database.command(new OCommandSQL(query)).execute();
 			Assert.fail();
-		} catch (OCommandSQLParsingException e) {
-			Assert
-							.assertTrue(e
-											.getMessage()
-											.contains(
-															"Error on parsing command at position #91: Property type list not match with real property types\n"
-																			+ "Command: CREATE INDEX sqlCreateIndexCompositeIndex3 ON sqlCreateIndexTestClass (prop1, prop2) UNIQUE DOUBLE, DOUBLE\n"
-																			+ "---------------------------------------------------------------------------------------------------^"));
-		}
+    } catch (OCommandExecutionException e) {
+      Assert
+          .assertTrue(e
+              .getMessage()
+              .contains(
+                  "Error on execution of command: OCommandSQL [text=CREATE INDEX sqlCreateIndexCompositeIndex3 ON sqlCreateIndexTestClass (prop1, prop2) UNIQUE DOUBLE, DOUBLE]"));
+      Assert.assertEquals(e.getCause().getClass(), IllegalArgumentException.class);
+    }
 		final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
 						.getClassIndex("sqlCreateIndexCompositeIndex3");
 

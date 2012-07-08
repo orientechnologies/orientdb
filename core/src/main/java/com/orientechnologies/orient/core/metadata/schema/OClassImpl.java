@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,14 +37,11 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionFactory;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
-import com.orientechnologies.orient.core.index.OPropertyListIndexDefinition;
-import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -922,91 +918,28 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
 
     final Set<String> existingFieldNames = properties.keySet();
-    final List<String> fieldsToIndex = new LinkedList<String>();
 
     for (final String fieldToIndex : fields) {
-      final String fieldName = extractFieldName(fieldToIndex);
+      final String fieldName = OIndexDefinitionFactory.extractFieldName(fieldToIndex);
       if (!existingFieldNames.contains(fieldName.toLowerCase()))
         throw new OIndexException("Index with name : '" + iName + "' cannot be created on class : '" + name + "' because field: '"
             + fieldName + "' is absent in class definition.");
-
-      fieldsToIndex.add(fieldName);
     }
 
-    final OIndexDefinition indexDefinition;
-    if (fieldsToIndex.size() == 1) {
-      indexDefinition = createSingleFieldIndexDefinition(fields[0]);
-    } else {
-      indexDefinition = createMultipleFieldIndexDefinition(fieldsToIndex);
-    }
+    final OIndexDefinition indexDefinition = OIndexDefinitionFactory.createIndexDefinition(this, Arrays.asList(fields),
+        extractFieldTypes(fields));
 
-    final OIndex<?> index = getDatabase().getMetadata().getIndexManager()
-        .createIndex(iName, iType.toString(), indexDefinition, polymorphicClusterIds, iProgressListener);
-    return index;
+    return getDatabase().getMetadata().getIndexManager()
+        .createIndex(iName, iType, indexDefinition, polymorphicClusterIds, iProgressListener);
   }
 
-  private OIndexDefinition createMultipleFieldIndexDefinition(final List<String> fieldsToIndex) {
-    final OIndexDefinition indexDefinition;
-    final OCompositeIndexDefinition compositeIndex = new OCompositeIndexDefinition(name);
+  private List<OType> extractFieldTypes(String[] fieldNames) {
+    final List<OType> types = new ArrayList<OType>(fieldNames.length);
 
-    for (final String fieldName : fieldsToIndex) {
-      final OProperty propertyToIndex = properties.get(fieldName.toLowerCase());
-      final OType propertyType = propertyToIndex.getType();
-      if (propertyType.equals(OType.EMBEDDEDLIST) || propertyType.equals(OType.EMBEDDEDSET) || propertyType.equals(OType.LINKSET)
-          || propertyType.equals(OType.LINKLIST) || propertyType.equals(OType.EMBEDDEDMAP) || propertyType.equals(OType.LINKMAP))
-        throw new OIndexException("Collections are not supported in composite indexes");
-
-      final OPropertyIndexDefinition propertyIndex = new OPropertyIndexDefinition(name, propertyToIndex.getName(), propertyType);
-      compositeIndex.addIndex(propertyIndex);
+    for (String fieldName : fieldNames) {
+      types.add(properties.get(OIndexDefinitionFactory.extractFieldName(fieldName).toLowerCase()).getType());
     }
-
-    indexDefinition = compositeIndex;
-    return indexDefinition;
-  }
-
-  private OIndexDefinition createSingleFieldIndexDefinition(final String field) {
-    final String fieldName = extractFieldName(field);
-    final OIndexDefinition indexDefinition;
-
-    final OProperty propertyToIndex = properties.get(fieldName.toLowerCase());
-    final OType propertyToIndexType = propertyToIndex.getType();
-    final OType indexType;
-
-    if (propertyToIndexType == OType.EMBEDDEDMAP || propertyToIndexType == OType.LINKMAP) {
-      final OPropertyMapIndexDefinition.INDEX_BY indexBy = extractMapIndexSpecifier(field);
-
-      if (indexBy.equals(OPropertyMapIndexDefinition.INDEX_BY.KEY))
-        indexType = OType.STRING;
-      else {
-        if (propertyToIndexType == OType.LINKMAP)
-          indexType = OType.LINK;
-        else {
-          indexType = propertyToIndex.getLinkedType();
-          if (indexType == null)
-            throw new OIndexException("Linked type was not provided."
-                + " You should provide linked type for embedded collections that are going to be indexed.");
-        }
-
-      }
-
-      indexDefinition = new OPropertyMapIndexDefinition(name, propertyToIndex.getName(), indexType, indexBy);
-    } else if (propertyToIndexType.equals(OType.EMBEDDEDLIST) || propertyToIndexType.equals(OType.EMBEDDEDSET)
-        || propertyToIndexType.equals(OType.LINKLIST) || propertyToIndexType.equals(OType.LINKSET)) {
-      if (propertyToIndexType.equals(OType.LINKSET))
-        throw new OIndexException("LINKSET indexing is not supported.");
-      else if (propertyToIndexType.equals(OType.LINKLIST)) {
-        indexType = OType.LINK;
-      } else {
-        indexType = propertyToIndex.getLinkedType();
-        if (indexType == null)
-          throw new OIndexException("Linked type was not provided."
-              + " You should provide linked type for embedded collections that are going to be indexed.");
-      }
-
-      indexDefinition = new OPropertyListIndexDefinition(name, propertyToIndex.getName(), indexType);
-    } else
-      indexDefinition = new OPropertyIndexDefinition(name, propertyToIndex.getName(), propertyToIndexType);
-    return indexDefinition;
+    return types;
   }
 
   public boolean areIndexed(final String... fields) {
@@ -1067,36 +1000,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     result.addAll(superClass.getIndexes());
 
     return result;
-  }
-
-  private String extractFieldName(final String fieldName) {
-    String[] fieldNameParts = fieldName.split("\\s+");
-    if (fieldNameParts.length == 1)
-      return fieldName;
-    if (fieldNameParts.length == 3)
-      return fieldNameParts[0];
-
-    throw new IllegalArgumentException("Illegal field name format, should be '<property> [by key|value]' but was '" + fieldName
-        + "'");
-  }
-
-  private OPropertyMapIndexDefinition.INDEX_BY extractMapIndexSpecifier(final String fieldName) {
-    String[] fieldNameParts = fieldName.split("\\s+");
-    if (fieldNameParts.length == 1)
-      return OPropertyMapIndexDefinition.INDEX_BY.KEY;
-
-    if (fieldNameParts.length == 3) {
-      if ("by".equals(fieldNameParts[1].toLowerCase()))
-        try {
-          return OPropertyMapIndexDefinition.INDEX_BY.valueOf(fieldNameParts[2].toUpperCase());
-        } catch (IllegalArgumentException iae) {
-          throw new IllegalArgumentException("Illegal field name format, should be '<property> [by key|value]' but was '"
-              + fieldName + "'");
-        }
-    }
-
-    throw new IllegalArgumentException("Illegal field name format, should be '<property> [by key|value]' but was '" + fieldName
-        + "'");
   }
 
   private void setPolymorphicClusterIds(final int[] iClusterIds) {

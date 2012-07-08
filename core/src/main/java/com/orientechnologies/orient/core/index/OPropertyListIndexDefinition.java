@@ -96,4 +96,9 @@ public class OPropertyListIndexDefinition extends OAbstractIndexDefinitionMultiV
 			throw new IllegalArgumentException("Invalid change type : " + changeEvent.getChangeType());
 		}
 	}
+
+  @Override
+  public String toCreateIndexDDL(String indexName, String indexType) {
+    return createIndexDDLWithoutFieldType(indexName, indexType).toString();
+  }
 }

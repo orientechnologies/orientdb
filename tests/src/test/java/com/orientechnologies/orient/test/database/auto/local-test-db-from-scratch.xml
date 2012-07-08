@@ -82,7 +82,8 @@
 			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectByLinkedPropertyIndexReuseTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.LinkListIndexTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.LinkMapIndexTest" />
-		</classes>
+            <class name="com.orientechnologies.orient.test.database.auto.SQLIndexWithoutSchemaTest" />
+        </classes>
 	</test>
 	<test name="Dictionary">
 		<classes>

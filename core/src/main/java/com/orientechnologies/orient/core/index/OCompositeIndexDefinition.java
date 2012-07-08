@@ -242,7 +242,18 @@ public class OCompositeIndexDefinition extends ODocumentWrapperNoClass implement
         ddl.append(", ").append(fieldIterator.next());
       }
     }
-    ddl.append(" ) ").append(indexType);
+    ddl.append(" ) ").append(indexType).append(' ');
+
+    boolean first = true;
+    for (OType oType : getTypes()) {
+      if (first)
+        first = false;
+      else
+        ddl.append(", ");
+
+      ddl.append(oType.name());
+    }
+
     return ddl.toString();
   }
 
