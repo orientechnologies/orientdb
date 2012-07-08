@@ -423,6 +423,17 @@ public class SQLSelectTest {
         .execute();
     Assert.assertEquals(result.size(), 1);
 
+    result = database.command(
+        new OSQLSynchQuery<ODocument>(
+            "select * from cluster:animal where races containsall (name in ['European','Siamese']) LIMIT 1000 SKIP 0")).execute();
+    Assert.assertEquals(result.size(), 1);
+
+    result = database.command(
+        new OSQLSynchQuery<ODocument>(
+            "select * from cluster:animal where not ( races contains (name in ['European','Siamese']) ) LIMIT 20 SKIP 0"))
+        .execute();
+    Assert.assertEquals(result.size(), 0);
+
     record.delete();
   }
 
