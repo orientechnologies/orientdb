@@ -25,6 +25,7 @@ import java.util.Set;
 
 import com.orientechnologies.common.collection.OMVRBTree;
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
+import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -310,8 +311,8 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
   public Collection<OIdentifiable> getValues(final Collection<?> iKeys, final int maxValuesToFetch) {
-    final List<Comparable> sortedKeys = new ArrayList<Comparable>((Collection<? extends Comparable>) iKeys);
-    Collections.sort(sortedKeys);
+    final List<Object> sortedKeys = new ArrayList<Object>(iKeys);
+    Collections.sort(sortedKeys, new ODefaultComparator());
 
     acquireExclusiveLock();
     try {
@@ -496,8 +497,8 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
   public Collection<ODocument> getEntries(Collection<?> iKeys, int maxEntriesToFetch) {
-    final List<Comparable> sortedKeys = new ArrayList<Comparable>((Collection<? extends Comparable>) iKeys);
-    Collections.sort(sortedKeys);
+    final List<Object> sortedKeys = new ArrayList<Object>(iKeys);
+    Collections.sort(sortedKeys, new ODefaultComparator());
 
     acquireExclusiveLock();
     try {

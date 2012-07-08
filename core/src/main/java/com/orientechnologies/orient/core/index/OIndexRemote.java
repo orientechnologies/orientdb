@@ -60,12 +60,15 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   private final static String   QUERY_GET_VALUE_MINOR                             = "select FLATTEN( rid ) from index:%s where key < ?";
   private final static String   QUERY_GET_VALUE_MINOR_EQUALS                      = "select FLATTEN( rid ) from index:%s where key <= ?";
   private final static String   QUERY_GET_RANGE                                   = "select from index:%s where key between ? and ?";
+
   private final static String   QUERY_GET_VALUES                                  = "select FLATTEN( rid ) from index:%s where key in [%s]";
   private final static String   QUERY_GET_ENTRIES                                 = "select from index:%s where key in [%s]";
+
   private final static String   QUERY_GET_VALUE_RANGE                             = "select FLATTEN( rid ) from index:%s where key between ? and ?";
-  private final static String   QUERY_PUT                                         = "insert into index:%s (key,rid) values (%s,%s)";
-  private final static String   QUERY_REMOVE                                      = "delete from index:%s where key = %s";
-  private final static String   QUERY_REMOVE2                                     = "delete from index:%s where key = %s and rid = %s";
+
+  private final static String   QUERY_PUT                                         = "insert into index:%s (key,rid) values (?,?)";
+  private final static String   QUERY_REMOVE                                      = "delete from index:%s where key = ?";
+  private final static String   QUERY_REMOVE2                                     = "delete from index:%s where key = ? and rid = ?";
   private final static String   QUERY_REMOVE3                                     = "delete from index:%s where rid = ?";
   private final static String   QUERY_CONTAINS                                    = "select count(*) as size from index:%s where key = ?";
   private final static String   QUERY_SIZE                                        = "select count(*) as size from index:%s";
@@ -186,33 +189,29 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   public OIndexRemote<T> put(Object iKey, final OIdentifiable iValue) {
-    if (iKey instanceof String)
-      iKey = "'" + iKey + "'";
-
     if (iValue instanceof ORecord<?> && !iValue.getIdentity().isValid())
       // SAVE IT BEFORE TO PUT
       ((ORecord<?>) iValue).save();
 
-    final OCommandRequest cmd = formatCommand(QUERY_PUT, name, iKey, iValue.getIdentity());
-    getDatabase().command(cmd).execute();
+    final OCommandRequest cmd = formatCommand(QUERY_PUT, name);
+    getDatabase().command(cmd).execute(iKey, iValue.getIdentity());
     return this;
   }
 
   public boolean remove(Object iKey) {
-    if (iKey instanceof String)
-      iKey = "'" + iKey + "'";
-
-    final OCommandRequest cmd = formatCommand(QUERY_REMOVE, name, iKey);
+    final OCommandRequest cmd = formatCommand(QUERY_REMOVE, name);
     return Boolean.parseBoolean((String) getDatabase().command(cmd).execute(iKey));
   }
 
   public boolean remove(Object iKey, final OIdentifiable iRID) {
-    if (iKey instanceof String)
-      iKey = "'" + iKey + "'";
-
-    final OCommandRequest cmd = formatCommand(QUERY_REMOVE2, name, iKey, iRID.getIdentity());
-
-    final int deleted = (Integer) getDatabase().command(cmd).execute(iKey, iRID);
+    final int deleted;
+    if (iRID != null) {
+      final OCommandRequest cmd = formatCommand(QUERY_REMOVE2, name);
+      deleted = (Integer) getDatabase().command(cmd).execute(iKey, iRID);
+    } else {
+      final OCommandRequest cmd = formatCommand(QUERY_REMOVE, name);
+      deleted = (Integer) getDatabase().command(cmd).execute(iKey);
+    }
     return deleted > 0;
   }
 

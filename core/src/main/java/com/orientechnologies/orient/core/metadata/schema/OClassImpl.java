@@ -1004,10 +1004,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       }
 
       indexDefinition = new OPropertyListIndexDefinition(name, propertyToIndex.getName(), indexType);
-    } else if (propertyToIndexType == OType.BINARY) {
-
-      throw new IllegalArgumentException("Cannot create index against type: " + propertyToIndexType);
-
     } else
       indexDefinition = new OPropertyIndexDefinition(name, propertyToIndex.getName(), propertyToIndexType);
     return indexDefinition;

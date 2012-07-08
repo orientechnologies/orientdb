@@ -17,6 +17,7 @@ package com.orientechnologies.common.collection;
 
 import java.util.Map;
 
+
 @SuppressWarnings("unchecked")
 public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparable<OMVRBTreeEntry<K, V>> {
   protected OMVRBTree<K, V> tree;
@@ -163,7 +164,7 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
     if (tree.comparator != null)
       tree.pageItemComparator = tree.comparator.compare(iKey, getKeyAt(0));
     else
-      tree.pageItemComparator = ((Comparable<? super K>)iKey).compareTo(getKeyAt(0));
+      tree.pageItemComparator = ((Comparable<? super K>) iKey).compareTo(getKeyAt(0));
 
     if (tree.pageItemComparator == 0) {
       // FOUND: SET THE INDEX AND RETURN THE NODE
@@ -181,7 +182,7 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
       if (tree.comparator != null)
         tree.pageItemComparator = tree.comparator.compare((K) iKey, getKeyAt(size - 1));
       else
-        tree.pageItemComparator = ((Comparable<? super K>)iKey).compareTo(getKeyAt(size - 1));
+        tree.pageItemComparator = ((Comparable<? super K>) iKey).compareTo(getKeyAt(size - 1));
 
       if (tree.pageItemComparator > 0) {
         // KEY OUT OF LAST ITEM: AVOID SEARCH AND RETURN THE LAST POSITION
@@ -210,9 +211,9 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
     tree.pageItemComparator = -1;
     for (int s = getSize(); i < s; ++i) {
       if (tree.comparator != null)
-        tree.pageItemComparator = tree.comparator.compare(getKeyAt(i), (K) iKey);
+        tree.pageItemComparator = tree.comparator.compare(getKeyAt(i), iKey);
       else
-        tree.pageItemComparator = ((Comparable<? super K>) getKeyAt(i)).compareTo((K) iKey);
+        tree.pageItemComparator = ((Comparable<? super K>) getKeyAt(i)).compareTo(iKey);
 
       if (tree.pageItemComparator == 0) {
         // FOUND: SET THE INDEX AND RETURN THE NODE
@@ -243,12 +244,12 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
 
     while (low <= high) {
       mid = (low + high) >>> 1;
-      Comparable<Comparable<? super K>> midVal = (Comparable<Comparable<? super K>>) getKeyAt(mid);
+      Object midVal = getKeyAt(mid);
 
       if (tree.comparator != null)
-        tree.pageItemComparator = tree.comparator.compare((K) midVal, (K) iKey);
+        tree.pageItemComparator = tree.comparator.compare((K) midVal, iKey);
       else
-        tree.pageItemComparator = midVal.compareTo((Comparable<? super K>) iKey);
+        tree.pageItemComparator = ((Comparable<? super K>) midVal).compareTo(iKey);
 
       if (tree.pageItemComparator == 0) {
         // FOUND: SET THE INDEX AND RETURN THE NODE
@@ -312,8 +313,8 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
       return -1;
     if (o.getSize() == 0)
       return 1;
-		if(tree.comparator != null)
-			return  tree.comparator.compare(getFirstKey(), o.getFirstKey());
+    if (tree.comparator != null)
+      return tree.comparator.compare(getFirstKey(), o.getFirstKey());
 
     return ((Comparable<K>) getFirstKey()).compareTo(o.getFirstKey());
   }

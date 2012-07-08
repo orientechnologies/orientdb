@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityReso
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 
 /**
  * SQL INSERT command.
@@ -166,6 +167,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     if (newRecords == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
+    final OCommandParameters commandParameters = new OCommandParameters(iArgs);
     if (indexName != null) {
       final OIndex<?> index = getDatabase().getMetadata().getIndexManager().getIndex(indexName);
       if (index == null)
@@ -173,8 +175,9 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
 
       // BIND VALUES
       Map<String, Object> result = null;
+
       for (Map<String, Object> candidate : newRecords) {
-        index.put(candidate.get(KEYWORD_KEY), (OIdentifiable) candidate.get(KEYWORD_RID));
+        index.put(getIndexKeyValue(commandParameters, candidate), getIndexValue(commandParameters, candidate));
         result = candidate;
       }
 
@@ -186,7 +189,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
       final List<ODocument> docs = new ArrayList<ODocument>();
       for (Map<String, Object> candidate : newRecords) {
         final ODocument doc = className != null ? new ODocument(className) : new ODocument();
-        OSQLHelper.bindParameters(doc, candidate, new OCommandParameters(iArgs));
+        OSQLHelper.bindParameters(doc, candidate, commandParameters);
 
         if (clusterName != null) {
           doc.save(clusterName);
@@ -202,6 +205,34 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
         return docs;
       }
     }
+  }
+
+  private Object getIndexKeyValue(OCommandParameters commandParameters, Map<String, Object> candidate) {
+    final Object parsedKey = candidate.get(KEYWORD_KEY);
+    if (parsedKey instanceof OSQLFilterItemField) {
+      final OSQLFilterItemField f = (OSQLFilterItemField) parsedKey;
+      if (f.getRoot().equals("?"))
+        // POSITIONAL PARAMETER
+        return commandParameters.getNext();
+      else if (f.getRoot().startsWith(":"))
+        // NAMED PARAMETER
+        return commandParameters.getByName(f.getRoot().substring(1));
+    }
+    return parsedKey;
+  }
+
+  private OIdentifiable getIndexValue(OCommandParameters commandParameters, Map<String, Object> candidate) {
+    final Object parsedRid = candidate.get(KEYWORD_RID);
+    if (parsedRid instanceof OSQLFilterItemField) {
+      final OSQLFilterItemField f = (OSQLFilterItemField) parsedRid;
+      if (f.getRoot().equals("?"))
+        // POSITIONAL PARAMETER
+        return (OIdentifiable) commandParameters.getNext();
+      else if (f.getRoot().startsWith(":"))
+        // NAMED PARAMETER
+        return (OIdentifiable) commandParameters.getByName(f.getRoot().substring(1));
+    }
+    return (OIdentifiable) parsedRid;
   }
 
   public boolean isReplicated() {
