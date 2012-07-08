@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
@@ -107,7 +108,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   protected final List<String>             serverURLs           = new ArrayList<String>();
   private OCluster[]                       clusters             = new OCluster[0];
-  protected final Map<String, OCluster>    clusterMap           = new HashMap<String, OCluster>();
+  protected final Map<String, OCluster>    clusterMap           = new ConcurrentHashMap<String, OCluster>();
   private int                              defaultClusterId;
   private int                              minPool;
   private int                              maxPool;
