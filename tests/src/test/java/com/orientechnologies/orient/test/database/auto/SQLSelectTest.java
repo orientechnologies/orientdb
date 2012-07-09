@@ -364,6 +364,7 @@ public class SQLSelectTest {
     Collection<ODocument> races = new HashSet<ODocument>();
     races.add(((ODocument) database.newInstance("AnimalRace")).field("name", "European"));
     races.add(((ODocument) database.newInstance("AnimalRace")).field("name", "Siamese"));
+    record.field("age", 10);
     record.field("races", races);
     record.save();
 
@@ -424,15 +425,14 @@ public class SQLSelectTest {
     Assert.assertEquals(result.size(), 1);
 
     result = database.command(
-        new OSQLSynchQuery<ODocument>(
-            "select * from cluster:animal where races containsall (name in ['European','Siamese']) LIMIT 1000 SKIP 0")).execute();
-    Assert.assertEquals(result.size(), 1);
-
-    result = database.command(
-        new OSQLSynchQuery<ODocument>(
-            "select * from cluster:animal where not ( races contains (name in ['European','Siamese']) ) LIMIT 20 SKIP 0"))
+        new OSQLSynchQuery<ODocument>("select * from cluster:animal where races containsall (age < 100) LIMIT 1000 SKIP 0"))
         .execute();
     Assert.assertEquals(result.size(), 0);
+
+    result = database.command(
+        new OSQLSynchQuery<ODocument>("select * from cluster:animal where not ( races contains (age < 100) ) LIMIT 20 SKIP 0"))
+        .execute();
+    Assert.assertEquals(result.size(), 1);
 
     record.delete();
   }

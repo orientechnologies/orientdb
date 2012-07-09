@@ -212,7 +212,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
       if (words == null)
         break;
 
-      final int lastPosition = parserIsEnded() ? text.length()  : parserGetCurrentPosition();
+      final int lastPosition = parserIsEnded() ? text.length() : parserGetCurrentPosition();
 
       if (words[0].length() > 0 && words[0].charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN) {
         braces++;
@@ -280,8 +280,10 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
 
         if (words[1].endsWith(")")) {
           final int openParenthesis = words[1].indexOf('(');
-          if (openParenthesis == -1)
+          if (openParenthesis == -1) {
             words[1] = words[1].substring(0, words[1].length() - 1);
+            parserMoveCurrentPosition(-1);
+          }
         }
 
         result[i] = OSQLHelper.parseValue(this, this, words[1], context);
