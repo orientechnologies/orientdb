@@ -108,6 +108,11 @@ public abstract class OServerCommandAbstract implements OServerCommand {
     writeLine(iRequest, "Server: " + iRequest.data.serverInfo);
     writeLine(iRequest, "Connection: " + (iKeepAlive ? "Keep-Alive" : "close"));
 
+    // INCLUDE COMMON CUSTOM HEADERS
+    if (iRequest.executor.getAdditionalResponseHeaders() != null)
+      for (String h : iRequest.executor.getAdditionalResponseHeaders())
+        writeLine(iRequest, h);
+
     onAfterResponseHeader(iRequest);
   }
 
