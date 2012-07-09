@@ -311,7 +311,7 @@ public enum OGlobalConfiguration {
       Level.class, Level.FINE),
 
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE("server.log.dumpClientExceptionFullStackTrace",
-      "Dumps the full stack trace of the exception to sent to the client", Level.class, Boolean.FALSE);
+      "Dumps the full stack trace of the exception to sent to the client", Level.class, Boolean.TRUE);
 
   private final String                 key;
   private final Object                 defValue;
