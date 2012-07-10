@@ -182,9 +182,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     String nodeId = getOwnerNode(iKey);
 
-    if (isAligningNode(nodeId)) {
+    if (isOfflineNode(nodeId)) {
       OLogManager.instance().warn(this, "DISTRIBUTED -> node %s is aligning. Waiting for completition...", nodeId);
-      while (isAligningNode(nodeId)) {
+      while (isOfflineNode(nodeId)) {
         try {
           Thread.sleep(200);
         } catch (InterruptedException e) {
@@ -611,9 +611,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public void entryEvicted(EntryEvent<String, Object> event) {
   }
 
-  public boolean isAligningNode(final String iNodeId) {
+  public boolean isOfflineNode(final String iNodeId) {
     final ODocument cfg = getNodeConfiguration(iNodeId);
-    return cfg != null && cfg.field("status").equals("aligning");
+    return cfg == null || !cfg.field("status").equals("online");
   }
 
   public int getNodeNumber() {

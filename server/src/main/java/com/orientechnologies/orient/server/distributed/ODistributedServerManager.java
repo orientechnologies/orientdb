@@ -41,7 +41,7 @@ public interface ODistributedServerManager {
 
   public void setStatus(final String iStatus);
 
-  public boolean isAligningNode(final String iNodeId);
+  public boolean isOfflineNode(final String iNodeId);
 
   public boolean isLocalNodeOwner(final Object iKey);
 
