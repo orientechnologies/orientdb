@@ -23,6 +23,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -1055,7 +1057,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       long count;
       long size = 0;
       long totalSize = 0;
-      for (String clusterName : currentDatabase.getClusterNames()) {
+
+      List<String> clusters = new ArrayList<String>(currentDatabase.getClusterNames());
+      Collections.sort(clusters);
+
+      for (String clusterName : clusters) {
         try {
           clusterId = currentDatabase.getClusterIdByName(clusterName);
           clusterType = currentDatabase.getClusterType(clusterName);
@@ -1090,7 +1096,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
       long totalElements = 0;
       long count;
-      for (OClass cls : currentDatabase.getMetadata().getSchema().getClasses()) {
+      List<OClass> classes = new ArrayList<OClass>(currentDatabase.getMetadata().getSchema().getClasses());
+      Collections.sort(classes, new Comparator<OClass>() {
+        public int compare(OClass o1, OClass o2) {
+          return o1.getName().compareToIgnoreCase(o2.getName());
+        }
+      });
+
+      for (OClass cls : classes) {
         try {
           StringBuilder clusters = new StringBuilder();
           for (int i = 0; i < cls.getClusterIds().length; ++i) {
@@ -1328,38 +1341,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
       out.println("Cluster status:");
       out.println(serverAdmin.clusterStatus().toJSON("attribSameRow,alwaysFetchEmbedded,fetchPlan:*:0"));
-
-    } catch (Exception e) {
-      printError(e);
-    }
-  }
-
-  @ConsoleCommand(description = "Add a new server node to the current cluster")
-  public void clusterAddNode(
-      @ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iServerNode)
-      throws IOException {
-
-    checkForRemoteServer();
-    try {
-
-      out.println("Adding new server node '" + iServerNode + "' to the curret cluster...");
-      out.println(serverAdmin.clusterAddNode(iServerNode));
-
-    } catch (Exception e) {
-      printError(e);
-    }
-  }
-
-  @ConsoleCommand(description = "Remove a server node from the current cluster")
-  public void clusterRemoveNode(
-      @ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iServerNode)
-      throws IOException {
-
-    checkForRemoteServer();
-    try {
-
-      out.println("Removing server node '" + iServerNode + "' from the curret cluster...");
-      out.println(serverAdmin.clusterRemoveNode(iServerNode));
 
     } catch (Exception e) {
       printError(e);
