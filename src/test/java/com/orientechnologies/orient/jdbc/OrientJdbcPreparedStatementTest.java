@@ -7,9 +7,10 @@ import java.sql.SQLException;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -27,9 +28,23 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
 	@Test
 	public void shouldReturnEmptyResultSetOnEmptyQuery() throws SQLException {
 		PreparedStatement stmt = conn.prepareStatement("");
-		stmt.execute("");
-		assertNull(stmt.getResultSet());
-		assertTrue(!stmt.getMoreResults());
+		assertThat(stmt.execute(""), is(false));
+
+		assertThat(stmt.getResultSet(), is(nullValue()));
+		assertThat(stmt.getMoreResults(), is(false));
+	}
+
+	@Test
+	public void shouldExectuteSelectOne() throws SQLException {
+		PreparedStatement stmt = conn.prepareStatement("select 1");
+		assertThat(stmt.execute(), is(true));
+		assertNotNull(stmt.getResultSet());
+		ResultSet resultSet = stmt.getResultSet();
+		resultSet.first();
+		int one = resultSet.getInt("1");
+		assertThat(one, is(1));
+		assertThat(stmt.getMoreResults(), is(false));
+
 	}
 
 	@Test

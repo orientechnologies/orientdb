@@ -105,6 +105,16 @@
 					<fork>true</fork>
 				</configuration>
 			</plugin>
+			<plugin>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>${jar.manifest.mainclass}</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
 
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
@@ -123,16 +133,6 @@
 							</goals>
 						</execution>
 					</executions>
-				</configuration>
-			</plugin>
-			<plugin>
-				<artifactId>maven-jar-plugin</artifactId>
-				<configuration>
-					<archive>
-						<manifest>
-							<mainClass>${jar.manifest.mainclass}</mainClass>
-						</manifest>
-					</archive>
 				</configuration>
 			</plugin>
 		</plugins>

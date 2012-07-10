@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 import static java.util.Collections.emptyList;
 
@@ -89,49 +88,31 @@ public class OrientJdbcStatement implements Statement {
 
 	public boolean execute(final String sql) throws SQLException {
 		if ("".equals(sql)) return false;
-		query = new OCommandSQL(sql);
-		try {
 
-			rawResult = database.command(query).execute();
+		if (sql.equalsIgnoreCase("select 1")) {
+			documents = new ArrayList<ODocument>();
+			documents.add(new ODocument().field("1", 1));
+		} else {
+			query = new OCommandSQL(sql);
+			try {
 
-			if (rawResult instanceof List<?>) {
-				documents = (List<ODocument>) rawResult;
-				resultSet = new OrientJdbcResultSet(this, documents, resultSetType, resultSetConcurrency, resultSetHoldability);
-				return true;
+				rawResult = database.command(query).execute();
+				if (rawResult instanceof List<?>) {
+					documents = (List<ODocument>) rawResult;
+				} else return false;
+
+			} catch (OQueryParsingException e) {
+				throw new SQLSyntaxErrorException("Error on parsing the query", e);
 			}
-			return false;
-
-		} catch (OQueryParsingException e) {
-			throw new SQLSyntaxErrorException("Error on parsing the query", e);
 		}
+		resultSet = new OrientJdbcResultSet(this, documents, resultSetType, resultSetConcurrency, resultSetHoldability);
+		return true;
 
 	}
 
 	public ResultSet executeQuery(final String sql) throws SQLException {
-
-		// query = new OCommandSQL(sql);
-		OSQLSynchQuery<ODocument> queryTMP = new OSQLSynchQuery<ODocument>(sql);
-		query = queryTMP;
-		try {
-
-			/*
-			 * rawResult = database.command(query).execute();
-			 * 
-			 * if (rawResult instanceof List<?>) documents = (List<ODocument>)
-			 * rawResult; else throw new
-			 * SQLException("unable to create a valid resultSet: is query a SELECT?"
-			 * );
-			 */
-
-			documents = database.query(queryTMP);
-
-			resultSet = new OrientJdbcResultSet(this, documents, resultSetType, resultSetConcurrency, resultSetHoldability);
-			return resultSet;
-
-		} catch (OQueryParsingException e) {
-			throw new SQLSyntaxErrorException("Error on parsing the query", e);
-		}
-
+		if (execute(sql)) return resultSet;
+		else return null;
 	}
 
 	/*
