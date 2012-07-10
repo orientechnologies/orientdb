@@ -25,9 +25,7 @@ public abstract class OrientJdbcBaseTest {
 
 	@Before
 	public void prepareDatabase() throws Exception {
-		String dbUrl = "local:./working/db/test";
-		dbUrl = "memory:test";
-
+		String dbUrl = "memory:test";
 		ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
 
 		String username = "admin";

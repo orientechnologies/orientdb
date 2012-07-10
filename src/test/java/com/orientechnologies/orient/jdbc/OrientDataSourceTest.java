@@ -5,40 +5,25 @@ import java.sql.SQLException;
 
 import org.junit.Test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-public class OrientDataSourceTest {
+public class OrientDataSourceTest extends OrientJdbcBaseTest {
 
-    @Test
-    public void shouldConnect() throws SQLException {
-        String dbUrl = "memory:test";
+	@Test
+	public void shouldConnect() throws SQLException {
 
-        String username = "admin";
-        String password = "admin";
+		OrientDataSource ds = new OrientDataSource();
+		ds.setUrl("jdbc:orient:memory:test");
+		ds.setUsername("admin");
+		ds.setPassword("admin");
 
-        ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
-        if (db.exists()) {
-            db.open(username, password);
-            db.drop();
-            db.close();
-        }
+		Connection conn = ds.getConnection();
 
-        db.create();
+		assertNotNull(conn);
+		conn.close();
+		assertTrue(conn.isClosed());
 
-        OrientDataSource ds = new OrientDataSource();
-        ds.setUrl("jdbc:orient:memory:test");
-        ds.setUsername(username);
-        ds.setPassword(password);
-
-        Connection conn = ds.getConnection();
-
-        assertNotNull(conn);
-        conn.close();
-        assertTrue(conn.isClosed());
-
-    }
+	}
 
 }

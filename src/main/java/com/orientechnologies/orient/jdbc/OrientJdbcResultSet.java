@@ -139,11 +139,7 @@ public class OrientJdbcResultSet implements ResultSet {
 		}
 
 		cursor = iRowNumber;
-		// ODatabaseRecordThreadLocal.INSTANCE.set(document.getDatabase());
 		document = records.get(cursor);
-
-		// fieldNames = document.fieldNames();
-
 		return true;
 	}
 
