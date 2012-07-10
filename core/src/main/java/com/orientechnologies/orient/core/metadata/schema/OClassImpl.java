@@ -188,16 +188,16 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return this;
   }
 
-  public void setShortNameInternal(final String shortName) {
+  public void setShortNameInternal(final String iShortName) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
     if (this.shortName != null)
       // UNREGISTER ANY PREVIOUS SHORT NAME
-      owner.classes.remove(shortName);
+      owner.classes.remove(this.shortName);
 
-    this.shortName = shortName;
+    this.shortName = iShortName;
 
     // REGISTER IT
-    owner.classes.put(shortName.toLowerCase(), this);
+    owner.classes.put(iShortName.toLowerCase(), this);
   }
 
   public String getStreamableName() {
@@ -465,7 +465,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     clusterIds = OArrays.copyOf(clusterIds, clusterIds.length + 1);
     clusterIds[clusterIds.length - 1] = iId;
     Arrays.sort(clusterIds);
-    
+
     polymorphicClusterIds = OArrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length + 1);
     polymorphicClusterIds[polymorphicClusterIds.length - 1] = iId;
     Arrays.sort(polymorphicClusterIds);
