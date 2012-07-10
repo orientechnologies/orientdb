@@ -23,8 +23,11 @@ import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServerMain;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
@@ -42,13 +45,18 @@ public abstract class OAbstractDistributedTask<T> implements Callable<T>, Extern
     DISTRIBUTE, REMOTE_EXEC, ALIGN, LOCAL_EXEC
   }
 
-  protected String         nodeSource;
-  protected String         databaseName;
-  protected long           runId;
-  protected long           operationSerial;
+  protected String                          nodeSource;
+  protected String                          databaseName;
+  protected long                            runId;
+  protected long                            operationSerial;
 
-  protected EXECUTION_MODE mode;
-  protected STATUS         status;
+  protected EXECUTION_MODE                  mode;
+  protected STATUS                          status;
+
+  protected static OServerUserConfiguration replicatorUser;
+  static {
+    replicatorUser = OServerMain.server().getUser(ODistributedAbstractPlugin.REPLICATOR_USER);
+  }
 
   public abstract String getName();
 
@@ -177,5 +185,10 @@ public abstract class OAbstractDistributedTask<T> implements Callable<T>, Extern
 
   protected void setAsCompleted(final OStorageSynchronizer dbSynchronizer, long operationLogOffset) throws IOException {
     dbSynchronizer.getLog().changeOperationStatus(operationLogOffset, null);
+  }
+
+  protected ODatabaseDocumentTx getDatabase() {
+    return (ODatabaseDocumentTx) OServerMain.server().openDatabase("document", databaseName, replicatorUser.name,
+        replicatorUser.password);
   }
 }

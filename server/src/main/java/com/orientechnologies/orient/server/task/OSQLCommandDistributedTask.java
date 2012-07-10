@@ -25,10 +25,9 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
-import com.orientechnologies.orient.server.distributed.OServerOfflineException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
-import com.orientechnologies.orient.server.task.OAbstractDistributedTask.STATUS;
+import com.orientechnologies.orient.server.distributed.OServerOfflineException;
 
 /**
  * Distributed task used for synchronization.
@@ -37,14 +36,9 @@ import com.orientechnologies.orient.server.task.OAbstractDistributedTask.STATUS;
  * 
  */
 public class OSQLCommandDistributedTask extends OAbstractDistributedTask<Object> {
-  private static final long               serialVersionUID = 1L;
-  private static OServerUserConfiguration replicatorUser;
+  private static final long serialVersionUID = 1L;
 
-  protected String                        text;
-
-  static {
-    replicatorUser = OServerMain.server().getUser(ODistributedAbstractPlugin.REPLICATOR_USER);
-  }
+  protected String          text;
 
   public OSQLCommandDistributedTask() {
   }
@@ -68,9 +62,7 @@ public class OSQLCommandDistributedTask extends OAbstractDistributedTask<Object>
       // NODE NOT ONLINE, REFUSE THE OEPRATION
       throw new OServerOfflineException();
 
-    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) OServerMain.server().openDatabase("document", databaseName,
-        replicatorUser.name, replicatorUser.password);
-
+    final ODatabaseDocumentTx db = getDatabase();
     ODistributedThreadLocal.INSTANCE.distributedExecution = true;
     try {
 

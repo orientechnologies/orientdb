@@ -20,7 +20,10 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
@@ -57,7 +60,18 @@ public class OUpdateRecordDistributedTask extends OAbstractRecordDistributedTask
   @Override
   public Integer executeOnLocalNode(final OStorageSynchronizer dbSynchronizer) {
     OLogManager.instance().warn(this, "DISTRIBUTED <-[%s/%s] UPDATE RECORD %s v.%d", nodeSource, databaseName, rid, version);
-    return getStorage().updateRecord(rid, content, version, recordType, 0, null);
+    final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
+
+    final ODatabaseDocumentTx database = getDatabase();
+    try {
+      record.fill(rid, version, content, true);
+      record.save();
+
+      return record.getVersion();
+
+    } finally {
+      database.close();
+    }
   }
 
   @Override

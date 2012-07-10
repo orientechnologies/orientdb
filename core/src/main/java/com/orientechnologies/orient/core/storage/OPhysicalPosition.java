@@ -54,6 +54,11 @@ public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysi
     recordType = iRecordType;
   }
 
+  public OPhysicalPosition(final long iClusterPosition, final int iVersion) {
+    clusterPosition = iClusterPosition;
+    recordVersion = iVersion;
+  }
+
   public void copyTo(final OPhysicalPosition iDest) {
     iDest.clusterPosition = clusterPosition;
     iDest.dataSegmentId = dataSegmentId;

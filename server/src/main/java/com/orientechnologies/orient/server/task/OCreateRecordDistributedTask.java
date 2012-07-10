@@ -20,7 +20,10 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
@@ -58,7 +61,22 @@ public class OCreateRecordDistributedTask extends OAbstractRecordDistributedTask
   @Override
   protected OPhysicalPosition executeOnLocalNode(final OStorageSynchronizer dbSynchronizer) {
     OLogManager.instance().warn(this, "DISTRIBUTED <-[%s/%s] CREATE RECORD %s v.%d", nodeSource, databaseName, rid, version);
-    return getStorage().createRecord(0, rid, content, version, recordType, 0, null);
+    final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
+
+    final ODatabaseDocumentTx database = getDatabase();
+    try {
+      record.fill(rid, version, content, true);
+      if (rid.getClusterId() != -1)
+        record.save(database.getClusterNameById(rid.getClusterId()));
+      else
+        record.save();
+      
+      rid = (ORecordId) record.getIdentity();
+
+      return new OPhysicalPosition(rid.getClusterPosition(), record.getVersion());
+    } finally {
+      database.close();
+    }
   }
 
   @Override
