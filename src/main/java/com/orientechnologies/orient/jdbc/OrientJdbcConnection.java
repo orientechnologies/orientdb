@@ -37,20 +37,19 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.graph.OGraphDatabasePool;
 
 /**
- * TODO Add authors name
  * 
- * @author Roberto Franchini()
+ * @author Roberto Franchini (CELI Srl - franchini@celi.it)
  * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci@gmail.com)
  */
 public class OrientJdbcConnection implements Connection {
 
 	private final String dbUrl;
 	private final Properties info;
-	private ODatabaseDocumentTx database;
+	private OGraphDatabase database;
 	private boolean readOnly = false;
 	private boolean autoCommit;
 
@@ -62,7 +61,7 @@ public class OrientJdbcConnection implements Connection {
 		String username = iInfo.getProperty("user", "admin");
 		String password = iInfo.getProperty("password", "admin");
 
-		database = ODatabaseDocumentPool.global().acquire(dbUrl, username, password);
+		database = OGraphDatabasePool.global().acquire(dbUrl, username, password);
 
 	}
 
@@ -278,33 +277,27 @@ public class OrientJdbcConnection implements Connection {
 		return dbUrl;
 	}
 
-	public ODatabaseDocumentTx getDatabase() {
-
+	public OGraphDatabase getDatabase() {
 		return database;
 	}
 
 	public void abort(Executor arg0) throws SQLException {
-		// TODO Auto-generated method stub
 
 	}
 
 	public int getNetworkTimeout() throws SQLException {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	public String getSchema() throws SQLException {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	public void setNetworkTimeout(Executor arg0, int arg1) throws SQLException {
-		// TODO Auto-generated method stub
 
 	}
 
 	public void setSchema(String arg0) throws SQLException {
-		// TODO Auto-generated method stub
 
 	}
 
