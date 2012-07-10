@@ -55,7 +55,7 @@ public abstract class OrientConsole extends OConsoleApplication {
       return null;
 
     if (iValue.length() > iMaxSize)
-      return iValue.substring(0, iMaxSize);
+      return iValue.substring(0, iMaxSize - 3) + "...";
     return iValue;
   }
 }
