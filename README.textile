@@ -27,11 +27,16 @@ Do a
 
 <pre>mvn assembly:assembly</pre>
 
-to obtain a jar with dependency included. 
+to obtain a jar with dependency included under target directory.
 
-It is very usefull to include under applications such as DBvisualizer.
+Just copy orientdb-jdbc-1.0-SNAPSHOT-all.jar to your classpath.
+
+It is very usefull to include under applications such as DBVisualizer.
 
 *How can be used in my code?*
+
+The driver is registerd to the Java sql DriverManager and can be used to work with all the OrientDB database types: memory, local or remote.
+The driver's class is com.orientechnologies.orient.jdbc.OrientJdbcDriver.
 
 Use your knowledge of JDBC API to work against OrientDB.
 
