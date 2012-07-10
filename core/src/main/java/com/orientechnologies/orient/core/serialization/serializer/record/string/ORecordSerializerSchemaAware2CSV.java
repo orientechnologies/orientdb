@@ -462,8 +462,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
             record.setFieldType(fieldName, null);
         }
       } catch (Exception e) {
-        OLogManager.instance().exception("Error on unmarshalling field '%s' with value: ", e, OSerializationException.class,
-            fieldName, field);
+        OLogManager.instance().exception("Error on unmarshalling field '%s' in record %s with value: ", e,
+            OSerializationException.class, fieldName, iRecord.getIdentity(), field);
       }
     }
 
