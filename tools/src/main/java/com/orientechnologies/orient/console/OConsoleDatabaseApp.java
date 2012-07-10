@@ -1011,19 +1011,28 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
       int totalIndexes = 0;
       long totalRecords = 0;
-      for (final OIndex<?> index : currentDatabase.getMetadata().getIndexManager().getIndexes()) {
+
+      final List<OIndex<?>> indexes = new ArrayList<OIndex<?>>(currentDatabase.getMetadata().getIndexManager().getIndexes());
+      Collections.sort(indexes, new Comparator<OIndex<?>>() {
+        public int compare(OIndex<?> o1, OIndex<?> o2) {
+          return o1.getName().compareToIgnoreCase(o2.getName());
+        }
+      });
+
+      for (final OIndex<?> index : indexes) {
         try {
           final OIndexDefinition indexDefinition = index.getDefinition();
           if (indexDefinition == null || indexDefinition.getClassName() == null) {
-            out.printf(" %-45s| %-10s | %-22s| %-15s|%10d |\n", index.getName(), index.getType(), "", "", index.getSize());
+            out.printf(" %-45s| %-10s | %-22s| %-15s|%10d |\n", format(index.getName(), 45), format(index.getType(), 10), "", "",
+                index.getSize());
           } else {
             final List<String> fields = indexDefinition.getFields();
             if (fields.size() == 1) {
-              out.printf(" %-45s| %-10s | %-22s| %-15s|%10d |\n", index.getName(), index.getType(), indexDefinition.getClassName(),
-                  fields.get(0), index.getSize());
+              out.printf(" %-45s| %-10s | %-22s| %-15s|%10d |\n", format(index.getName(), 45), format(index.getType(), 10),
+                  format(indexDefinition.getClassName(), 22), format(fields.get(0), 10), index.getSize());
             } else {
-              out.printf(" %-45s| %-10s | %-22s| %-15s|%10d |\n", index.getName(), index.getType(), indexDefinition.getClassName(),
-                  fields.get(0), index.getSize());
+              out.printf(" %-45s| %-10s | %-22s| %-15s|%10d |\n", format(index.getName(), 45), format(index.getType(), 10),
+                  format(indexDefinition.getClassName(), 22), format(fields.get(0), 10), index.getSize());
               for (int i = 1; i < fields.size(); i++) {
                 out.printf(" %-45s| %-10s | %-22s| %-15s|%10s |\n", "", "", "", fields.get(i), "");
               }
@@ -1058,28 +1067,29 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       long size = 0;
       long totalSize = 0;
 
-      List<String> clusters = new ArrayList<String>(currentDatabase.getClusterNames());
+      final List<String> clusters = new ArrayList<String>(currentDatabase.getClusterNames());
       Collections.sort(clusters);
 
       for (String clusterName : clusters) {
         try {
           clusterId = currentDatabase.getClusterIdByName(clusterName);
           clusterType = currentDatabase.getClusterType(clusterName);
+
           count = currentDatabase.countClusterElements(clusterName);
+          totalElements += count;
+
           if (!(currentDatabase.getStorage() instanceof OStorageProxy)) {
-            size = currentDatabase.getClusterRecordSizeByName(clusterName);
-            totalElements += count;
             totalSize += size;
-            out.printf(" %-45s|%6d| %-20s|%10d |%10s |\n", clusterName, clusterId, clusterType, count,
+            out.printf(" %-45s|%6d| %-20s|%10d |%13s |\n", format(clusterName, 45), clusterId, clusterType, count,
                 OFileUtils.getSizeAsString(size));
           } else {
-            out.printf(" %-45s|%6d| %-20s|%10d |%10s |\n", clusterName, clusterId, clusterType, count, "Not supported");
+            out.printf(" %-45s|%6d| %-20s|%10d |%13s |\n", format(clusterName, 45), clusterId, clusterType, count, "Not supported");
           }
         } catch (Exception e) {
         }
       }
       out.println("----------------------------------------------+------+---------------------+-----------+--------------+");
-      out.printf(" TOTAL                                                                 %15d | %9s |\n", totalElements,
+      out.printf(" TOTAL                                                                 %15d |%13s |\n", totalElements,
           OFileUtils.getSizeAsString(totalSize));
       out.println("---------------------------------------------------------------------------------------+--------------+");
     } else
@@ -1096,7 +1106,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
       long totalElements = 0;
       long count;
-      List<OClass> classes = new ArrayList<OClass>(currentDatabase.getMetadata().getSchema().getClasses());
+
+      final List<OClass> classes = new ArrayList<OClass>(currentDatabase.getMetadata().getSchema().getClasses());
       Collections.sort(classes, new Comparator<OClass>() {
         public int compare(OClass o1, OClass o2) {
           return o1.getName().compareToIgnoreCase(o2.getName());
@@ -1115,7 +1126,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           count = currentDatabase.countClass(cls.getName());
           totalElements += count;
 
-          out.printf(" %-45s| %-20s|%10d |\n", cls.getName(), clusters, count);
+          out.printf(" %-45s| %-20s|%10d |\n", format(cls.getName(), 45), clusters.toString(), count);
         } catch (Exception e) {
         }
       }

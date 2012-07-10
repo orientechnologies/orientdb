@@ -19,34 +19,43 @@ import com.orientechnologies.common.console.OConsoleApplication;
 
 public abstract class OrientConsole extends OConsoleApplication {
 
-	public OrientConsole(String[] args) {
-		super(args);
-	}
+  public OrientConsole(String[] args) {
+    super(args);
+  }
 
-	@Override
-	protected void onException(Throwable e) {
-		Throwable current = e;
-		while (current != null) {
-			err.print("\nError: " + current.toString());
-			current = current.getCause();
-		}
-	}
+  @Override
+  protected void onException(Throwable e) {
+    Throwable current = e;
+    while (current != null) {
+      err.print("\nError: " + current.toString());
+      current = current.getCause();
+    }
+  }
 
-	@Override
-	protected void onBefore() {
-		printApplicationInfo();
-	}
+  @Override
+  protected void onBefore() {
+    printApplicationInfo();
+  }
 
-	protected void printApplicationInfo() {
-	}
+  protected void printApplicationInfo() {
+  }
 
-	@Override
-	protected void onAfter() {
-		out.println();
-	}
+  @Override
+  protected void onAfter() {
+    out.println();
+  }
 
-	@Override
-	public void help() {
-		super.help();
-	}
+  @Override
+  public void help() {
+    super.help();
+  }
+
+  protected String format(final String iValue, final int iMaxSize) {
+    if (iValue == null)
+      return null;
+
+    if (iValue.length() > iMaxSize)
+      return iValue.substring(0, iMaxSize);
+    return iValue;
+  }
 }
