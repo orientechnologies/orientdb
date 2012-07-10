@@ -465,6 +465,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     clusterIds = OArrays.copyOf(clusterIds, clusterIds.length + 1);
     clusterIds[clusterIds.length - 1] = iId;
     Arrays.sort(clusterIds);
+    
+    polymorphicClusterIds = OArrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length + 1);
+    polymorphicClusterIds[polymorphicClusterIds.length - 1] = iId;
+    Arrays.sort(polymorphicClusterIds);
+
     setDirty();
     return this;
   }
@@ -847,7 +852,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   /**
-   * Add different cluster ids to the "polymorphic cluster ids" array.
+   * Add different cluster id to the "polymorphic cluster ids" array.
    */
   private void addPolymorphicClusterIds(final OClassImpl iBaseClass) {
     boolean found;
