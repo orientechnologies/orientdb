@@ -89,6 +89,9 @@ public class ORuntimeKeyIndexDefinition<T> extends ODocumentWrapperNoClass imple
   protected void fromStream() {
     final byte keySerializerId = ((Number) document.field("keySerializerId")).byteValue();
     serializer = (OBinarySerializer<T>) OBinarySerializerFactory.INSTANCE.getObjectSerializer(keySerializerId);
+    if (serializer == null)
+      throw new OConfigurationException("Runtime index definition cannot find binary serializer with id=" + keySerializerId
+          + ". Assure to plug custom serializer into the server.");
   }
 
   public Object getDocumentValueToIndex(final ODocument iDocument) {
