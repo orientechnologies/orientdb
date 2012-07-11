@@ -33,12 +33,14 @@ import sun.misc.Unsafe;
  */
 @SuppressWarnings("restriction")
 public class OUnsafeByteArrayComparator implements Comparator<byte[]> {
-  private static final Unsafe  unsafe;
+  public static final OUnsafeByteArrayComparator INSTANCE     = new OUnsafeByteArrayComparator();
 
-  private static final int     BYTE_ARRAY_OFFSET;
-  private static final boolean littleEndian = ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN);
+  private static final Unsafe                    unsafe;
 
-  private static final int     LONG_SIZE    = Long.SIZE / Byte.SIZE;
+  private static final int                       BYTE_ARRAY_OFFSET;
+  private static final boolean                   littleEndian = ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN);
+
+  private static final int                       LONG_SIZE    = Long.SIZE / Byte.SIZE;
 
   static {
     unsafe = (Unsafe) AccessController.doPrivileged(new PrivilegedAction<Object>() {
@@ -69,7 +71,7 @@ public class OUnsafeByteArrayComparator implements Comparator<byte[]> {
       return 1;
 
     if (arrayOne.length < arrayTwo.length)
-      return 1;
+      return -1;
 
     final int WORDS = arrayOne.length / LONG_SIZE;
 
