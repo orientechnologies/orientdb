@@ -315,16 +315,18 @@ public class OStorageMemory extends OStorageEmbedded {
     final long timer = OProfiler.getInstance().startChrono();
 
     lock.acquireSharedLock();
+    
     try {
+    	
       lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
-
-      final long lastPos = iClusterSegment.getLastEntryPosition();
-
-      if (iRid.clusterPosition > lastPos)
-        throw new ORecordNotFoundException("Record " + iRid + " is outside cluster size. Valid range for cluster '"
-            + iClusterSegment.getName() + "' is 0-" + lastPos);
-
+        
       try {
+        final long lastPos = iClusterSegment.getLastEntryPosition();
+
+        if (iRid.clusterPosition > lastPos)
+        	throw new ORecordNotFoundException("Record " + iRid + " is outside cluster size. Valid range for cluster '"
+        			+ iClusterSegment.getName() + "' is 0-" + lastPos);
+          
         final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
 
         if (ppos == null)
