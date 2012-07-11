@@ -36,7 +36,6 @@ public class OUnsafeByteArrayComparator implements Comparator<byte[]> {
   private static final Unsafe  unsafe;
 
   private static final int     BYTE_ARRAY_OFFSET;
-  private static final int     BYTE_ARRAY_SCALE;
   private static final boolean littleEndian = ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN);
 
   private static final int     LONG_SIZE    = Long.SIZE / Byte.SIZE;
@@ -57,7 +56,12 @@ public class OUnsafeByteArrayComparator implements Comparator<byte[]> {
     });
 
     BYTE_ARRAY_OFFSET = unsafe.arrayBaseOffset(byte[].class);
-    BYTE_ARRAY_SCALE = unsafe.arrayIndexScale(byte[].class);
+
+    final int byteArrayScale = unsafe.arrayIndexScale(byte[].class);
+
+    if (byteArrayScale != 1)
+      throw new Error();
+
   }
 
   public int compare(byte[] arrayOne, byte[] arrayTwo) {
@@ -69,42 +73,19 @@ public class OUnsafeByteArrayComparator implements Comparator<byte[]> {
 
     final int WORDS = arrayOne.length / LONG_SIZE;
 
-    for (int i = 0; i < WORDS; i++) {
-      final long index = i * LONG_SIZE * BYTE_ARRAY_SCALE + BYTE_ARRAY_OFFSET;
+    for (int i = 0; i < WORDS * LONG_SIZE; i += LONG_SIZE) {
+      final long index = i + BYTE_ARRAY_OFFSET;
 
       final long wOne = unsafe.getLong(arrayOne, index);
       final long wTwo = unsafe.getLong(arrayTwo, index);
 
-      final long diff = wOne ^ wTwo;
-      if (diff == 0)
+      if (wOne == wTwo)
         continue;
 
-      if (!littleEndian)
-        return lessThanUnsigned(wOne, wTwo) ? -1 : 1;
+      if (littleEndian)
+        return lessThanUnsigned(Long.reverseBytes(wOne), Long.reverseBytes(wTwo)) ? -1 : 1;
 
-      // Use binary search
-      int n = 0;
-      int y;
-
-      int x = (int) diff;
-
-      if (x == 0) {
-        x = (int) (diff >>> 32);
-        n = 32;
-      }
-
-      y = x << 16;
-      if (y == 0) {
-        n += 16;
-      } else {
-        x = y;
-      }
-
-      y = x << 8;
-      if (y == 0) {
-        n += 8;
-      }
-      return (int) (((wOne >>> n) & 0xFFL) - ((wTwo >>> n) & 0xFFL));
+      return lessThanUnsigned(wOne, wTwo) ? -1 : 1;
     }
 
     for (int i = WORDS * LONG_SIZE; i < arrayOne.length; i++) {
