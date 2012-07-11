@@ -54,6 +54,12 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 
   protected void sendTextContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iHeaders,
       final String iContentType, final Object iContent, final boolean iKeepAlive) throws IOException {
+    sendTextContent(iRequest, iCode, iReason, iHeaders, iContentType, iContent, iKeepAlive, null);
+  }
+
+  protected void sendTextContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iHeaders,
+      final String iContentType, final Object iContent, final boolean iKeepAlive, final String[] iAdditionalHeaders)
+      throws IOException {
     final String content;
     final String contentType;
     if (iRequest.url.indexOf('?') > 0 && iRequest.url.indexOf(OHttpUtils.CALLBACK_PARAMETER_NAME, iRequest.url.indexOf('?')) > 0) {
@@ -73,6 +79,11 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 
     sendStatus(iRequest, empty && iCode == 200 ? 204 : iCode, iReason);
     sendResponseHeaders(iRequest, contentType, iKeepAlive);
+
+    if (iAdditionalHeaders != null)
+      for (String h : iAdditionalHeaders)
+        writeLine(iRequest, h);
+
     if (iHeaders != null)
       writeLine(iRequest, iHeaders);
 

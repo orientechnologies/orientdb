@@ -25,40 +25,41 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
 
 public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
-	private static final String[]	NAMES	= { "POST|document/*" };
+  private static final String[] NAMES = { "POST|document/*" };
 
-	@Override
-	public boolean execute(final OHttpRequest iRequest) throws Exception {
-		checkSyntax(iRequest.url, 2, "Syntax error: document/<database>");
+  @Override
+  public boolean execute(final OHttpRequest iRequest) throws Exception {
+    checkSyntax(iRequest.url, 2, "Syntax error: document/<database>");
 
-		iRequest.data.commandInfo = "Create document";
+    iRequest.data.commandInfo = "Create document";
 
-		ODatabaseDocumentTx db = null;
+    ODatabaseDocumentTx db = null;
 
-		ODocument doc = null;
+    ODocument doc = null;
 
-		try {
-			db = getProfiledDatabaseInstance(iRequest);
+    try {
+      db = getProfiledDatabaseInstance(iRequest);
 
-			doc = new ODocument().fromJSON(iRequest.content);
+      doc = new ODocument().fromJSON(iRequest.content);
 
-			// ASSURE TO MAKE THE RECORD ID INVALID
-			((ORecordId) doc.getIdentity()).clusterPosition = ORID.CLUSTER_POS_INVALID;
+      // ASSURE TO MAKE THE RECORD ID INVALID
+      ((ORecordId) doc.getIdentity()).clusterPosition = ORID.CLUSTER_POS_INVALID;
 
-			doc.save();
+      doc.save();
 
-		} finally {
-			if (db != null)
-				OSharedDocumentDatabase.release(db);
-		}
+    } finally {
+      if (db != null)
+        OSharedDocumentDatabase.release(db);
+    }
 
-		sendTextContent(iRequest, OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, null,
-				OHttpUtils.CONTENT_TEXT_PLAIN, doc.getIdentity());
-		return false;
-	}
+    sendTextContent(iRequest, OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, null,
+        OHttpUtils.CONTENT_TEXT_PLAIN, doc.getIdentity(), true, new String[] { "Location: " + "/document/" + db.getName() + "/"
+            + doc.getIdentity().toString().substring(1) });
+    return false;
+  }
 
-	@Override
-	public String[] getNames() {
-		return NAMES;
-	}
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
 }
