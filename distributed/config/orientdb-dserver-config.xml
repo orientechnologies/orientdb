@@ -8,6 +8,7 @@
 				<parameter name="enabled" value="true" />
 				<parameter name="default.distributed.db" value="${ORIENTDB_HOME}/config/default-distributed-db.json" />
 				<parameter name="configuration" value="${ORIENTDB_HOME}/config/hazelcast.xml" />
+				<parameter name="conflictResolved" value="com.orientechnologies.orient.server.distributed.conflict.ODefaultReplicationConflictResolver" />
 			</parameters>
 		</handler>
 		<!-- AUTOMATIC BACKUP, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
@@ -43,7 +44,7 @@
 					<parameter name="network.http.charset" value="utf-8" />
 					<!-- Define additional HTTP headers to always send as response -->
 					<!-- Allow cross-site scripting -->
-					<!-- parameter name="network.http.additionalResponseHeaders" value="Access-Control-Allow-Origin: *" /-->
+					<!-- parameter name="network.http.additionalResponseHeaders" value="Access-Control-Allow-Origin: *" / -->
 				</parameters>
 				<commands>
 					<command
