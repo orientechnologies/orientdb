@@ -68,13 +68,13 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OL
 	}
 
 	public boolean add(TYPE element) {
-		serializedList.add(element.toString());
+		serializedList.add(element.name());
 		return list.add(element);
 	}
 
 	public void add(int index, TYPE element) {
 		setDirty();
-		serializedList.add(index, element.toString());
+		serializedList.add(index, element.name());
 		list.add(index, element);
 	}
 
@@ -181,7 +181,7 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OL
 	}
 
 	public TYPE set(int index, TYPE element) {
-		serializedList.set(index, element.toString());
+		serializedList.set(index, element.name());
 		return (TYPE) list.set(index, element);
 	}
 

@@ -70,7 +70,7 @@ public class OObjectEnumLazyMap<TYPE extends Enum> extends HashMap<Object, Objec
 	@Override
 	public Object put(final Object iKey, final Object e) {
 		setDirty();
-		underlying.put(iKey, e.toString());
+		underlying.put(iKey, ((TYPE) e).name());
 		return super.put(iKey, e);
 	}
 

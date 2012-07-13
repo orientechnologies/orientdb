@@ -573,6 +573,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 							doc.field(fieldName, valueToSet);
 					}
 				}
+			} else if (valueToSet.getClass().isEnum()) {
+				doc.field(fieldName, ((Enum) valueToSet).name());
 			} else {
 				if (OObjectEntitySerializer.isToSerialize(valueToSet.getClass())) {
 					doc.field(fieldName,

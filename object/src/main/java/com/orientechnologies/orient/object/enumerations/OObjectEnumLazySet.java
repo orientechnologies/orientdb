@@ -79,7 +79,7 @@ public class OObjectEnumLazySet<TYPE extends Enum> extends HashSet<TYPE> impleme
 	}
 
 	public boolean add(final TYPE e) {
-		underlying.add(e.toString());
+		underlying.add(e.name());
 		return super.add(e);
 	}
 
