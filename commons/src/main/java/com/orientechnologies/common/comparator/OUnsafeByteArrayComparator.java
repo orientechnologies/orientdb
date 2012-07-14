@@ -99,11 +99,11 @@ public class OUnsafeByteArrayComparator implements Comparator<byte[]> {
     return 0;
   }
 
-  private boolean lessThanUnsigned(long longOne, long longTwo) {
+  private static boolean lessThanUnsigned(long longOne, long longTwo) {
     return (longOne + Long.MIN_VALUE) < (longTwo + Long.MIN_VALUE);
   }
 
-  private int compareUnsignedByte(byte byteOne, byte byteTwo) {
+  private static int compareUnsignedByte(byte byteOne, byte byteTwo) {
     final int valOne = byteOne & 0xFF;
     final int valTwo = byteTwo & 0xFF;
     return valOne - valTwo;
