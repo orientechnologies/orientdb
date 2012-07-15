@@ -133,6 +133,9 @@ public class ODistributedStorage implements OStorage {
       result = dManager.routeOperation2Node(getClusterNameFromRID(iRecordId), iRecordId,
           new OCreateRecordDistributedTask(dManager.getLocalNodeId(), wrapped.getName(), createRecordMode, iRecordId, iContent,
               iRecordVersion, iRecordType));
+
+      iRecordId.clusterPosition = ((OPhysicalPosition) result).clusterPosition;
+
     } catch (ExecutionException e) {
       throw new OStorageException("Cannot route CREATE_RECORD operation to the distributed node", e);
     }
