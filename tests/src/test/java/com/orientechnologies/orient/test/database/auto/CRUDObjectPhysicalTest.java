@@ -368,7 +368,7 @@ public class CRUDObjectPhysicalTest {
 
 		Assert.assertTrue(loaded.getEmbeddedDocument() instanceof ODocument);
 		Assert.assertEquals("testEmbeddedValue", loaded.getEmbeddedDocument().field("testEmbeddedField"));
-		Assert.assertTrue(!loaded.getEmbeddedDocument().getIdentity().isValid());
+		Assert.assertFalse(loaded.getEmbeddedDocument().getIdentity().isValid());
 
 		database.close();
 	}
