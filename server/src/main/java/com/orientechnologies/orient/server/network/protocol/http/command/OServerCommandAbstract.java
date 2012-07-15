@@ -62,12 +62,8 @@ public abstract class OServerCommandAbstract implements OServerCommand {
       throws IOException {
     final String content;
     final String contentType;
-    if (iRequest.url.indexOf('?') > 0 && iRequest.url.indexOf(OHttpUtils.CALLBACK_PARAMETER_NAME, iRequest.url.indexOf('?')) > 0) {
-      String callbackFunction = iRequest.url.substring(iRequest.url.indexOf(OHttpUtils.CALLBACK_PARAMETER_NAME,
-          iRequest.url.indexOf('?'))
-          + OHttpUtils.CALLBACK_PARAMETER_NAME.length());
-      if (callbackFunction.indexOf('&') > -1)
-        callbackFunction = callbackFunction.substring(0, callbackFunction.indexOf('&'));
+    if ((iRequest.parameters != null) && iRequest.parameters.containsKey(OHttpUtils.CALLBACK_PARAMETER_NAME)) {
+      final String callbackFunction = iRequest.parameters.get(OHttpUtils.CALLBACK_PARAMETER_NAME);
       content = callbackFunction + "(" + iContent + ")";
       contentType = "text/javascript";
     } else {

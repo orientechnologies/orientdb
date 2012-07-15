@@ -62,7 +62,7 @@ public class OHttpUtils {
   public static final String CONTENT_JAVASCRIPT                  = "text/javascript";
   public static final String CONTENT_GZIP                        = "application/x-gzip";
 
-  public static final String CALLBACK_PARAMETER_NAME             = "callback=";
+  public static final String CALLBACK_PARAMETER_NAME             = "callback";
 
   public static final int    STATUS_CREATED_CODE                 = 201;
   public static final String STATUS_CREATED_DESCRIPTION          = "Created";
