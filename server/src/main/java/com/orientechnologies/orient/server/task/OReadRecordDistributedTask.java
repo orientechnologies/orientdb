@@ -20,6 +20,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
@@ -47,7 +48,11 @@ public class OReadRecordDistributedTask extends OAbstractRecordDistributedTask<O
 
   @Override
   protected ORawBuffer executeOnLocalNode(final OStorageSynchronizer dbSynchronizer) {
-    return getStorage().readRecord(rid, null, false, null);
+    final ORecordInternal<?> record = getDatabase().load(rid);
+    if (record == null)
+      return null;
+
+    return new ORawBuffer(record);
   }
 
   @Override

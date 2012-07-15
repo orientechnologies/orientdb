@@ -16,41 +16,29 @@
 
 package com.orientechnologies.orient.server.distributed.conflict;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 /**
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
 public interface OReplicationConflictResolver {
+  public void startup(final ODistributedServerManager iDManager, String iStorageName);
 
-  /**
-   * @param iDatabase
-   * @return
-   */
-  ODocument getAllConflicts(ODatabaseRecord iDatabase);
+  public void shutdown();
 
-  /**
-   * @param iOperation
-   * @param iRecord
-   * @param iCurrentVersion
-   * @param iOtherVersion
-   */
-  void handleUpdateConflict(byte iOperation, ORecordInternal<?> iRecord, int iCurrentVersion, int iOtherVersion);
+  public ODocument getAllConflicts();
 
-  /**
-   * @param iOperation
-   * @param iRecord
-   * @param iOtherClusterPosition
-   */
-  void handleCreateConflict(byte iOperation, ORecordInternal<?> iRecord, long iOtherClusterPosition);
+  public void handleUpdateConflict(String iRemoteNodeId, ORecordId iCurrentRID, int iCurrentVersion, int iOtherVersion);
 
-  /**
-   * @param iOperation
-   * @param iRecord
-   */
-  void handleDeleteConflict(byte iOperation, ORecordInternal<?> iRecord);
+  public void handleCreateConflict(String iRemoteNodeId, ORecordId iCurrentRID, ORecordId iOtherRID);
 
+  public void handleDeleteConflict(String iRemoteNodeId, ORecordId iCurrentRID);
+
+  public void handleCommandConflict(String iRemoteNodeId, OCommandRequest iCommand, Object iLocalResult, Object iRemoteResult);
+
+  public boolean existConflictsForRecord(final ORecordId iRID);
 }

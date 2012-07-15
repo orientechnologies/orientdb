@@ -5,9 +5,11 @@
 			<parameters>
 				<parameter name="alias" value="europe3" />
 				<parameter value="true" name="enabled" />
-				<parameter value="src/test/resources/hazelcast-3.xml" name="configuration" />
-				<parameter name="conflictResolved" value="com.orientechnologies.orient.server.distributed.conflict.ODefaultReplicationConflictResolver" />
-				<parameter name="default.distributed.db" value="src/test/resources/default-distributed-db.json" />
+				<parameter value="src/test/resources/hazelcast-3.xml" name="configuration.hazelcast" />
+				<parameter name="alignment.startup" value="true" />
+				<parameter name="alignment.timer" value="120000" />
+				<parameter name="conflict.resolver.impl" value="com.orientechnologies.orient.server.distributed.conflict.ODefaultReplicationConflictResolver" />
+				<parameter name="configuration.db.default" value="src/test/resources/default-distributed-db-config.json" />
 			</parameters>
 		</handler>
 		<handler class="com.orientechnologies.orient.server.handler.OAutomaticBackup">

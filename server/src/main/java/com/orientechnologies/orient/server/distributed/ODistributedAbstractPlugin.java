@@ -19,8 +19,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -33,6 +38,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
 
 /**
@@ -43,16 +49,22 @@ import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
  */
 public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract implements ODistributedServerManager,
     ODatabaseLifecycleListener {
-  private static final String                 PAR_DEF_DISTRIB_DB_CONFIG  = "default.distributed.db";
-  private static final String                 FILE_DISTRIBUTED_DB_CONFIG = "distributed-config.json";
-  public static final String                  REPLICATOR_USER            = "replicator";
-  protected OServer                           serverInstance;
-  protected boolean                           enabled                    = true;
-  protected String                            alias                      = null;
-  protected long                              offlineBuffer              = -1;
-  protected Map<String, OStorageSynchronizer> synchronizers              = new HashMap<String, OStorageSynchronizer>();
-  protected Map<String, ODocument>            databaseConfiguration      = new HashMap<String, ODocument>();
+  public static final String                              REPLICATOR_USER            = "replicator";
 
+  protected static final String                           PAR_DEF_DISTRIB_DB_CONFIG  = "configuration.db.default";
+  protected static final String                           FILE_DISTRIBUTED_DB_CONFIG = "distributed-config.json";
+
+  protected OServer                                       serverInstance;
+  protected Map<String, OStorageSynchronizer>             synchronizers              = new HashMap<String, OStorageSynchronizer>();
+  protected Map<String, ODocument>                        databaseConfiguration      = new HashMap<String, ODocument>();
+
+  protected boolean                                       enabled                    = true;
+  protected String                                        alias                      = null;
+  protected Class<? extends OReplicationConflictResolver> confictResolverClass;
+  protected boolean                                       alignmentStartup;
+  protected int                                           alignmentTimer;
+
+  @SuppressWarnings("unchecked")
   @Override
   public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
     serverInstance = oServer;
@@ -67,9 +79,19 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
         }
       } else if (param.name.equalsIgnoreCase("alias"))
         alias = param.value;
-      else if (param.name.startsWith(PAR_DEF_DISTRIB_DB_CONFIG))
+      else if (param.name.startsWith(PAR_DEF_DISTRIB_DB_CONFIG)) {
         if (loadDatabaseConfiguration("*", OSystemVariableResolver.resolveSystemVariables(param.value)) == null)
           throw new OConfigurationException("Error on loading distributed database configuration");
+      } else if (param.name.equalsIgnoreCase("conflict.resolver.impl"))
+        try {
+          confictResolverClass = (Class<? extends OReplicationConflictResolver>) Class.forName(param.value);
+        } catch (ClassNotFoundException e) {
+          OLogManager.instance().error(this, "Cannot find the conflict resolver implementation '%s'", param.value, e);
+        }
+      else if (param.name.equalsIgnoreCase("alignment.startup"))
+        alignmentStartup = Boolean.parseBoolean(param.value);
+      else if (param.name.equalsIgnoreCase("alignment.timer"))
+        alignmentTimer = Integer.parseInt(param.value);
     }
 
     // CHECK THE CONFIGURATION
@@ -116,10 +138,10 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
 
     final Boolean synch = (Boolean) cfg.field("synchronization");
     if (synch == null || synch) {
-      getDatabaseSynchronizer(iDatabase.getName());
+      final OStorageSynchronizer dbSynchronizer = getDatabaseSynchronizer(iDatabase.getName());
 
       if (iDatabase instanceof ODatabaseComplex<?>)
-        ((ODatabaseComplex<?>) iDatabase).replaceStorage(new ODistributedStorage(this,
+        ((ODatabaseComplex<?>) iDatabase).replaceStorage(new ODistributedStorage(this, dbSynchronizer,
             (OStorageEmbedded) ((ODatabaseComplex<?>) iDatabase).getStorage()));
     }
   }
@@ -167,14 +189,6 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
     databaseConfiguration.put(iDatabaseName, iConfiguration);
   }
 
-  public long getOfflineBuffer() {
-    return offlineBuffer;
-  }
-
-  public void setOfflineBuffer(long offlineBuffer) {
-    this.offlineBuffer = offlineBuffer;
-  }
-
   public OStorageSynchronizer getDatabaseSynchronizer(final String iDatabaseName) {
     synchronized (synchronizers) {
       OStorageSynchronizer sync = synchronizers.get(iDatabaseName);
@@ -188,6 +202,76 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
       }
       return sync;
     }
+  }
+
+  public Collection<String> getSynchronousReplicaNodes(final String iDatabaseName, final String iClusterName, final Object iKey) {
+    return getReplicaNodes("synch-replicas", iDatabaseName, iClusterName, iKey);
+  }
+
+  public Collection<String> getAsynchronousReplicaNodes(final String iDatabaseName, final String iClusterName, final Object iKey) {
+    return getReplicaNodes("asynch-replicas", iDatabaseName, iClusterName, iKey);
+  }
+
+  @SuppressWarnings("unchecked")
+  protected Collection<String> getReplicaNodes(final String iMode, final String iDatabaseName, final String iClusterName,
+      final Object iKey) {
+    Object replicas = getDatabaseClusterConfiguration(iDatabaseName, iClusterName).field(iMode);
+    if (replicas == null)
+      // GET THE DEFAULT ONE
+      replicas = getDatabaseClusterConfiguration(iDatabaseName, "*").field(iMode);
+
+    if (replicas == null)
+      // NO REPLICAS CONFIGURED
+      return Collections.emptyList();
+
+    final Set<String> remoteNodes = getRemoteNodeIds();
+
+    final List<String> result = new ArrayList<String>();
+
+    if (replicas instanceof String || replicas instanceof Integer) {
+      // DYNAMIC NODES
+      int tot = 0;
+
+      if (replicas instanceof String) {
+        final String replicasAsText = (String) replicas;
+        if (replicasAsText.charAt(replicasAsText.length() - 1) == '%') {
+          // PERCENTAGE
+          final int perc = Integer.parseInt(replicasAsText.substring(0, replicasAsText.length() - 1));
+          tot = Math.round(perc * remoteNodes.size() / 100);
+        } else
+          // PUNCTUAL
+          tot = Integer.parseInt(replicasAsText);
+      } else
+        tot = (Integer) replicas;
+
+      for (String nodeId : remoteNodes) {
+        if (result.size() > tot)
+          break;
+        result.add(nodeId);
+      }
+    } else if (replicas instanceof Collection) {
+      // STATIC NODE LIST
+      final Collection<String> nodeCollection = (Collection<String>) replicas;
+      for (String nodeId : nodeCollection) {
+        if (remoteNodes.contains(nodeId))
+          result.add(nodeId);
+      }
+    }
+
+    return result;
+  }
+
+  protected ODocument getDatabaseClusterConfiguration(final String iDbName, final String iClusterName) {
+    final ODocument clusters = getDatabaseConfiguration(iDbName).field("clusters");
+
+    if (clusters == null)
+      throw new OConfigurationException("Cannot find 'clusters' in distributed database configuration");
+
+    ODocument cfg = clusters.field(iClusterName);
+    if (cfg == null)
+      cfg = clusters.field("*");
+
+    return cfg;
   }
 
   protected ODocument loadDatabaseConfiguration(final String iDatabaseName, final String filePath) {

@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
+import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
 /**
@@ -58,25 +59,45 @@ public class OCreateRecordDistributedTask extends OAbstractRecordDistributedTask
     recordType = iRecordType;
   }
 
+  public Object getDistributedKey() {
+    return rid;
+  }
+
   @Override
   protected OPhysicalPosition executeOnLocalNode(final OStorageSynchronizer dbSynchronizer) {
     OLogManager.instance().warn(this, "DISTRIBUTED <-[%s/%s] CREATE RECORD %s v.%d", nodeSource, databaseName, rid, version);
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
 
     final ODatabaseDocumentTx database = getDatabase();
+    rid.clusterPosition = -1;
     try {
       record.fill(rid, version, content, true);
       if (rid.getClusterId() != -1)
         record.save(database.getClusterNameById(rid.getClusterId()));
       else
         record.save();
-      
+
       rid = (ORecordId) record.getIdentity();
 
       return new OPhysicalPosition(rid.getClusterPosition(), record.getVersion());
     } finally {
       database.close();
     }
+  }
+
+  /**
+   * Handles conflict between local and remote execution results.
+   * 
+   * @param localResult
+   *          The result on local node
+   * @param remoteResult
+   *          the result on remote node
+   */
+  @Override
+  public void handleConflict(final String iRemoteNodeId, final Object localResult, final Object remoteResult) {
+    final OReplicationConflictResolver resolver = getDatabaseSynchronizer().getConflictResolver();
+    resolver.handleCreateConflict(iRemoteNodeId, rid, new ORecordId(rid.getClusterId(),
+        ((OPhysicalPosition) remoteResult).clusterPosition));
   }
 
   @Override

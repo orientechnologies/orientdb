@@ -17,6 +17,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -40,6 +41,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
+import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.task.OCreateRecordDistributedTask;
 import com.orientechnologies.orient.server.task.ODeleteRecordDistributedTask;
 import com.orientechnologies.orient.server.task.OReadRecordDistributedTask;
@@ -55,14 +57,18 @@ import com.orientechnologies.orient.server.task.OUpdateRecordDistributedTask;
 public class ODistributedStorage implements OStorage {
   protected ODistributedServerManager dManager;
   protected OStorageEmbedded          wrapped;
+  protected OStorageSynchronizer      dbSynchronizer;
+
   protected boolean                   eventuallyConsistent = true;
   protected EXECUTION_MODE            createRecordMode     = EXECUTION_MODE.SYNCHRONOUS;
   protected EXECUTION_MODE            updateRecordMode     = EXECUTION_MODE.SYNCHRONOUS;
   protected EXECUTION_MODE            deleteRecordMode     = EXECUTION_MODE.SYNCHRONOUS;
 
-  public ODistributedStorage(final ODistributedServerManager iCluster, final OStorageEmbedded wrapped) {
+  public ODistributedStorage(final ODistributedServerManager iCluster, final OStorageSynchronizer dbSynchronizer,
+      final OStorageEmbedded wrapped) {
     this.dManager = iCluster;
     this.wrapped = wrapped;
+    this.dbSynchronizer = dbSynchronizer;
   }
 
   public Object command(final OCommandRequestText iCommand) {
@@ -91,8 +97,19 @@ public class ODistributedStorage implements OStorage {
 
       if (distribute) {
 
-        final Collection<Object> distributedResult = dManager.sendOperation2Nodes(dManager.getRemoteNodeIds(),
+        final Map<String, Object> distributedResult = dManager.sendOperation2Nodes(dManager.getRemoteNodeIds(),
             new OSQLCommandDistributedTask(dManager.getLocalNodeId(), wrapped.getName(), createRecordMode, iCommand.getText()));
+
+        for (Entry<String, Object> entry : distributedResult.entrySet()) {
+          final Object remoteResult = entry.getValue();
+          if (localResult != remoteResult
+              && (localResult == null && remoteResult != null || localResult != null && remoteResult == null || remoteResult
+                  .equals(localResult))) {
+            // CONFLICT
+            final OReplicationConflictResolver resolver = dbSynchronizer.getConflictResolver();
+            resolver.handleCommandConflict(entry.getKey(), iCommand, localResult, remoteResult);
+          }
+        }
       }
 
       return localResult;
@@ -113,7 +130,7 @@ public class ODistributedStorage implements OStorage {
     Object result = null;
 
     try {
-      result = dManager.routeOperation2Node(iRecordId,
+      result = dManager.routeOperation2Node(getClusterNameFromRID(iRecordId), iRecordId,
           new OCreateRecordDistributedTask(dManager.getLocalNodeId(), wrapped.getName(), createRecordMode, iRecordId, iContent,
               iRecordVersion, iRecordType));
     } catch (ExecutionException e) {
@@ -123,18 +140,18 @@ public class ODistributedStorage implements OStorage {
     return (OPhysicalPosition) result;
   }
 
-  public ORawBuffer readRecord(final ORecordId iRid, final String iFetchPlan, final boolean iIgnoreCache,
+  public ORawBuffer readRecord(final ORecordId iRecordId, final String iFetchPlan, final boolean iIgnoreCache,
       final ORecordCallback<ORawBuffer> iCallback) {
     if (ODistributedThreadLocal.INSTANCE.distributedExecution)
       // ALREADY DISTRIBUTED
-      return wrapped.readRecord(iRid, iFetchPlan, iIgnoreCache, iCallback);
+      return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback);
 
-    if (eventuallyConsistent || dManager.isLocalNodeOwner(iRid))
-      return wrapped.readRecord(iRid, iFetchPlan, iIgnoreCache, iCallback);
+    if (eventuallyConsistent || dManager.isLocalNodeMaster(iRecordId))
+      return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback);
 
     try {
-      return (ORawBuffer) dManager.routeOperation2Node(iRid,
-          new OReadRecordDistributedTask(dManager.getLocalNodeId(), wrapped.getName(), iRid));
+      return (ORawBuffer) dManager.routeOperation2Node(getClusterNameFromRID(iRecordId), iRecordId, new OReadRecordDistributedTask(
+          dManager.getLocalNodeId(), wrapped.getName(), iRecordId));
     } catch (ExecutionException e) {
       throw new OStorageException("Cannot route READ_RECORD operation to the distributed node", e);
     }
@@ -149,7 +166,7 @@ public class ODistributedStorage implements OStorage {
     Object result = null;
 
     try {
-      result = dManager.routeOperation2Node(iRecordId,
+      result = dManager.routeOperation2Node(getClusterNameFromRID(iRecordId), iRecordId,
           new OUpdateRecordDistributedTask(dManager.getLocalNodeId(), wrapped.getName(), updateRecordMode, iRecordId, iContent,
               iVersion, iRecordType));
     } catch (ExecutionException e) {
@@ -169,7 +186,7 @@ public class ODistributedStorage implements OStorage {
     Object result = null;
 
     try {
-      result = dManager.routeOperation2Node(iRecordId,
+      result = dManager.routeOperation2Node(getClusterNameFromRID(iRecordId), iRecordId,
           new ODeleteRecordDistributedTask(dManager.getLocalNodeId(), wrapped.getName(), updateRecordMode, iRecordId, iVersion));
     } catch (ExecutionException e) {
       throw new OStorageException("Cannot route UPDATE_RECORD operation to the distributed node", e);
@@ -366,5 +383,9 @@ public class ODistributedStorage implements OStorage {
 
   public STATUS getStatus() {
     return wrapped.getStatus();
+  }
+
+  protected String getClusterNameFromRID(final ORecordId iRecordId) {
+    return OStorageSynchronizer.getClusterNameByRID(wrapped, iRecordId);
   }
 }

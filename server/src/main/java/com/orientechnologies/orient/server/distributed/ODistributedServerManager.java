@@ -16,11 +16,13 @@
 package com.orientechnologies.orient.server.distributed;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.Lock;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.task.OAbstractDistributedTask;
 
 /**
@@ -43,15 +45,19 @@ public interface ODistributedServerManager {
 
   public boolean isOfflineNode(final String iNodeId);
 
-  public boolean isLocalNodeOwner(final Object iKey);
+  public boolean isLocalNodeMaster(final Object iKey);
 
-  public String getOwnerNode(final Object iKey);
+  public String getMasterNode(final String iDatabaseName, final String iClusterName, final Object iKey);
 
-  public Object routeOperation2Node(Object iKey, OAbstractDistributedTask<?> iTask) throws ExecutionException;
+  public Collection<String> getSynchronousReplicaNodes(final String iDatabaseName, final String iClusterName, final Object iKey);
+
+  public Collection<String> getAsynchronousReplicaNodes(final String iDatabaseName, final String iClusterName, final Object iKey);
+
+  public Object routeOperation2Node(String iClusterName, Object iKey, OAbstractDistributedTask<?> iTask) throws ExecutionException;
 
   public Object sendOperation2Node(String iNodeId, OAbstractDistributedTask<?> iTask) throws ODistributedException;
 
-  public Collection<Object> sendOperation2Nodes(Set<String> iNodeIds, OAbstractDistributedTask<?> iTask)
+  public Map<String, Object> sendOperation2Nodes(Set<String> iNodeIds, OAbstractDistributedTask<?> iTask)
       throws ODistributedException;
 
   public String getLocalNodeId();
@@ -100,4 +106,6 @@ public interface ODistributedServerManager {
    * @return
    */
   public Lock getLock(String iLockName);
+
+  public Class<? extends OReplicationConflictResolver> getConfictResolverClass();
 }

@@ -344,32 +344,6 @@ public class OServerAdmin {
   }
 
   /**
-   * Adds a node in the cluster.
-   * 
-   * @return The current cluster status.
-   */
-  public ODocument clusterAddNode(final String iRemoteNode) {
-    final ODocument response = sendRequest(OChannelBinaryProtocol.REQUEST_CLUSTER, new ODocument().field("operation", "addNode")
-        .field("node", iRemoteNode), "Cluster add node");
-
-    OLogManager.instance().debug(this, "Added node '%s' to the cluster", iRemoteNode);
-    return response;
-  }
-
-  /**
-   * Removes a node from the cluster.
-   * 
-   * @return The current cluster status.
-   */
-  public ODocument clusterRemoveNode(final String iRemoteNode) {
-    final ODocument response = sendRequest(OChannelBinaryProtocol.REQUEST_CLUSTER, new ODocument().field("operation", "removeNode")
-        .field("node", iRemoteNode), "Cluster remove node");
-
-    OLogManager.instance().debug(this, "Removed node '%s' from the cluster", iRemoteNode);
-    return response;
-  }
-
-  /**
    * Starts the replication between two servers.
    * 
    * @param iDatabaseName

@@ -16,6 +16,8 @@
 package com.orientechnologies.orient.server.task;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -67,39 +69,62 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
 
     final OStorageSynchronizer dbSynchronizer = getDatabaseSynchronizer();
 
+    final OPERATION_TYPES opType = getOperationType();
+
     // LOG THE OPERATION BEFORE TO SEND TO OTHER NODES
     final long operationLogOffset;
-    try {
-      operationLogOffset = dbSynchronizer.getLog().journalOperation(runId, operationSerial, getOperationType(), this);
-    } catch (IOException e) {
-      OLogManager.instance().error(this, "DISTRIBUTED <-[%s] error on logging operation %s %s v.%d", e, nodeSource, getName(), rid,
-          version);
-      throw new ODistributedException("Error on logging operation", e);
-    }
+    if (opType != null)
+      try {
+        operationLogOffset = dbSynchronizer.getLog().journalOperation(runId, operationSerial, opType, this);
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "DISTRIBUTED <-[%s] error on logging operation %s %s v.%d", e, nodeSource, getName(),
+            rid, version);
+        throw new ODistributedException("Error on logging operation", e);
+      }
+    else
+      operationLogOffset = -1;
 
     ODistributedThreadLocal.INSTANCE.distributedExecution = true;
     try {
       // EXECUTE IT LOCALLY
-      final T result = executeOnLocalNode(dbSynchronizer);
+      final T localResult = executeOnLocalNode(dbSynchronizer);
 
-      try {
-        setAsCompleted(dbSynchronizer, operationLogOffset);
-      } catch (IOException e) {
-        OLogManager.instance().error(this, "DISTRIBUTED <-[%s] error on changing the log status for operation %s %s v.%d", e,
-            nodeSource, getName(), rid, version);
-        throw new ODistributedException("Error on changing the log status", e);
+      if (opType != null)
+        try {
+          setAsCompleted(dbSynchronizer, operationLogOffset);
+        } catch (IOException e) {
+          OLogManager.instance().error(this, "DISTRIBUTED <-[%s] error on changing the log status for operation %s %s v.%d", e,
+              nodeSource, getName(), rid, version);
+          throw new ODistributedException("Error on changing the log status", e);
+        }
+
+      // TODO
+
+      if (status == STATUS.DISTRIBUTE) {
+        // SEND OPERATION ACROSS THE CLUSTER TO THE TARGET NODES
+        final Map<String, Object> distributedResult = dbSynchronizer.distributeOperation(ORecordOperation.CREATED, rid, this);
+
+        if (distributedResult != null)
+          for (Entry<String, Object> entry : distributedResult.entrySet()) {
+            final String remoteNode = entry.getKey();
+            final Object remoteResult = entry.getValue();
+
+            if (localResult != remoteResult
+                && (localResult == null && remoteResult != null || localResult != null && remoteResult == null || remoteResult
+                    .equals(localResult))) {
+
+              // CONFLICT
+              handleConflict(remoteNode, localResult, remoteResult);
+            }
+          }
       }
 
-      if (status == STATUS.DISTRIBUTE)
-        // SEND OPERATION ACROSS THE CLUSTER TO THE TARGET NODES
-        dbSynchronizer.distributeOperation(ORecordOperation.CREATED, rid, this);
-
       if (mode != EXECUTION_MODE.FIRE_AND_FORGET)
-        return result;
+        return localResult;
 
       // FIRE AND FORGET MODE: AVOID THE PAYLOAD AS RESULT
       return null;
-      
+
     } finally {
       ODistributedThreadLocal.INSTANCE.distributedExecution = false;
     }

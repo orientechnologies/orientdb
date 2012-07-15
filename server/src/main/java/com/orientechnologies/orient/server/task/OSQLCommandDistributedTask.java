@@ -22,9 +22,6 @@ import java.io.ObjectOutput;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.server.OServerMain;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
 import com.orientechnologies.orient.server.distributed.OServerOfflineException;
@@ -66,7 +63,7 @@ public class OSQLCommandDistributedTask extends OAbstractDistributedTask<Object>
     ODistributedThreadLocal.INSTANCE.distributedExecution = true;
     try {
 
-      Object result = getStorage().command(new OCommandSQL(text));
+      Object result = getDatabase().command(new OCommandSQL(text));
 
       if (mode != EXECUTION_MODE.FIRE_AND_FORGET)
         return result;

@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
+import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
 /**
@@ -72,6 +73,20 @@ public class OUpdateRecordDistributedTask extends OAbstractRecordDistributedTask
     } finally {
       database.close();
     }
+  }
+
+  /**
+   * Handles conflict between local and remote execution results.
+   * 
+   * @param localResult
+   *          The result on local node
+   * @param remoteResult
+   *          the result on remote node
+   */
+  @Override
+  public void handleConflict(final String iRemoteNodeId, final Object localResult, final Object remoteResult) {
+    final OReplicationConflictResolver resolver = getDatabaseSynchronizer().getConflictResolver();
+    resolver.handleUpdateConflict(iRemoteNodeId, rid, version, (Integer) remoteResult);
   }
 
   @Override

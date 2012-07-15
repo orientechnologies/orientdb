@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -23,11 +24,11 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServerMain;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
+import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal;
 import com.orientechnologies.orient.server.task.OAbstractDistributedTask;
 import com.orientechnologies.orient.server.task.OAbstractDistributedTask.STATUS;
@@ -40,27 +41,36 @@ import com.orientechnologies.orient.server.task.OReadRecordDistributedTask;
  * 
  */
 public class OStorageSynchronizer {
-  private ODistributedServerManager cluster;
-  private String                    storageName;
-  private OStorage                  storage;
+  private ODistributedServerManager    cluster;
+  private String                       storageName;
+  private ODatabaseJournal             log;
+  private OReplicationConflictResolver resolver;
 
-  private ODatabaseJournal          log;
-
-  public OStorageSynchronizer(final ODistributedServerManager iCluster, final String iStorageName) throws IOException {
+  public OStorageSynchronizer(final ODistributedServerManager iCluster, final String storageName) throws IOException {
     cluster = iCluster;
-    storageName = iStorageName;
-    storage = openStorage(iStorageName);
+    final OStorage storage = openStorage(storageName);
+
+    try {
+      resolver = iCluster.getConfictResolverClass().newInstance();
+      resolver.startup(iCluster, storageName);
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "Cannot create the conflict resolver instance of class '%s'",
+          iCluster.getConfictResolverClass(), e);
+    }
 
     final String logDirectory = OSystemVariableResolver.resolveSystemVariables(OServerMain.server().getDatabaseDirectory() + "/"
-        + iStorageName);
+        + storageName);
 
     log = new ODatabaseJournal(storage, logDirectory);
 
     // RECOVER ALL THE UNCOMMITTED RECORDS ASKING TO THE CURRENT SERVERS FOR THEM
     for (ORecordId rid : log.getUncommittedOperations()) {
       try {
-        final ORawBuffer record = (ORawBuffer) iCluster.routeOperation2Node(rid,
-            new OReadRecordDistributedTask(iCluster.getLocalNodeId(), iStorageName, rid));
+        if (getConflictResolver().existConflictsForRecord(rid))
+          continue;
+
+        final ORawBuffer record = (ORawBuffer) iCluster.routeOperation2Node(getClusterNameByRID(storage, rid), rid,
+            new OReadRecordDistributedTask(iCluster.getLocalNodeId(), storageName, rid));
 
         if (record == null)
           // DELETE IT
@@ -80,23 +90,24 @@ public class OStorageSynchronizer {
     }
   }
 
-  public void distributeOperation(final byte operation, final ORecordId rid, final OAbstractDistributedTask<?> iTask) {
-    // CREATE THE RIGHT TASK
-    final String clusterName = storage.getClusterById(rid.getClusterId()).getName();
-    iTask.setMode(getOperationMode(clusterName, iTask.getName()));
+  public Map<String, Object> distributeOperation(final byte operation, final ORecordId rid, final OAbstractDistributedTask<?> iTask) {
     final Set<String> targetNodes = cluster.getRemoteNodeIdsBut(iTask.getNodeSource());
-
     if (!targetNodes.isEmpty()) {
       // RESET THE SOURCE TO AVOID LOOPS
       iTask.setNodeSource(cluster.getLocalNodeId());
       iTask.setStatus(STATUS.REMOTE_EXEC);
-
-      cluster.sendOperation2Nodes(targetNodes, iTask);
-
-      // TODO MANAGE CONFLICTS
-      for (String member : targetNodes) {
-      }
+      return cluster.sendOperation2Nodes(targetNodes, iTask);
     }
+    return null;
+  }
+
+  /**
+   * Returns the conflict resolver implementation
+   * 
+   * @return
+   */
+  public OReplicationConflictResolver getConflictResolver() {
+    return resolver;
   }
 
   public ODatabaseJournal getLog() {
@@ -108,29 +119,9 @@ public class OStorageSynchronizer {
     return storageName;
   }
 
-  private EXECUTION_MODE getOperationMode(final String iClusterName, final String iOperation) {
-    final ODocument clusters = cluster.getDatabaseConfiguration(storageName).field("clusters");
-
-    if (clusters == null)
-      return EXECUTION_MODE.SYNCHRONOUS;
-
-    ODocument cfg = clusters.field(iClusterName);
-    if (cfg == null)
-      cfg = clusters.field("*");
-
-    ODocument operations = cfg.field("operations");
-    if (operations == null)
-      return EXECUTION_MODE.SYNCHRONOUS;
-
-    final ODocument operation = operations.field(iOperation.toLowerCase());
-    if (operation == null)
-      return EXECUTION_MODE.SYNCHRONOUS;
-
-    final String mode = operation.field("mode");
-    if (mode == null)
-      return EXECUTION_MODE.SYNCHRONOUS;
-
-    return EXECUTION_MODE.valueOf(((String) mode).toUpperCase());
+  public static String getClusterNameByRID(final OStorage iStorage, final ORecordId iRid) {
+    final OCluster cluster = iStorage.getClusterById(iRid.clusterId);
+    return cluster != null ? cluster.getName() : "*";
   }
 
   protected OStorage openStorage(final String iName) {

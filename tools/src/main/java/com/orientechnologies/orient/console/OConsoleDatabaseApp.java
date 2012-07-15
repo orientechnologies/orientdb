@@ -1215,44 +1215,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
   }
 
-  @ConsoleCommand(description = "Start the replication of a database against a remote server")
-  public void replicationStart(
-      @ConsoleParameter(name = "db-name", description = "Name of the database") final String iDatabaseName,
-      @ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName)
-      throws IOException {
-
-    checkForRemoteServer();
-
-    try {
-      out.println("Starting replication for database '" + iDatabaseName + "' between server '" + serverAdmin.getURL() + "' and '"
-          + iRemoteName + "'...");
-
-      serverAdmin.replicationStart(iDatabaseName, iRemoteName);
-
-      out.println("Replication successfully started");
-
-    } catch (Exception e) {
-      printError(e);
-    }
-  }
-
-  @ConsoleCommand(description = "Stop the replication of a database against a remote server")
-  public void replicationStop(@ConsoleParameter(name = "db-name", description = "Name of the database") final String iDatabaseName,
-      @ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName)
-      throws IOException {
-
-    checkForRemoteServer();
-
-    try {
-      serverAdmin.replicationStop(iDatabaseName, iRemoteName);
-
-      out.println("Replication ended for database '" + iDatabaseName + "' against the server '" + iRemoteName + "'");
-
-    } catch (Exception e) {
-      printError(e);
-    }
-  }
-
   @ConsoleCommand(description = "Gets the replication journal for a database against a remote server")
   public void replicationGetJournal(
       @ConsoleParameter(name = "db-name", description = "Name of the database") final String iDatabaseName,
@@ -1312,8 +1274,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   @ConsoleCommand(description = "Gets the replication conflicts for a database against a remote server")
-  public void replicationGetConflicts(
-      @ConsoleParameter(name = "db-name", description = "Name of the database") final String iDatabaseName) throws IOException {
+  public void replicationGetConflicts(@ConsoleParameter(name = "db-name", description = "Name of the database") String iDatabaseName)
+      throws IOException {
 
     checkForRemoteServer();
 
@@ -1326,16 +1288,16 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       else {
         final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
-        out.println("Replication conflicts for database '" + iDatabaseName + "'\n");
-        out.printf("+---------------+-----------+-------------------------+--------------+---------------+-------------------+\n");
-        out.printf("| RECORD ID     | OPERATION | DATE                    | CURR VERSION | OTHER VERSION | OTHER CLUSTER POS |\n");
-        out.printf("+---------------+-----------+-------------------------+--------------+---------------+-------------------+\n");
+        out.println("Replication conflicts for database '" + iDatabaseName + "'. Found " + entries.size() + " entries.\n");
+        out.printf("+---------------+--------------------+----------+-------------------------+--------------+---------------+----------------+\n");
+        out.printf("| RECORD ID     | SERVER NODE        |OPERATION | DATE                    | CURR VERSION | OTHER VERSION | OTHER RID      |\n");
+        out.printf("+---------------+--------------------+----------+-------------------------+--------------+---------------+----------------+\n");
         for (ODocument doc : entries) {
-          out.printf("| %-14s| %-9s | %23s | %-12d | %-13d | %-17d |\n", doc.field("record", OType.LINK),
-              ORecordOperation.getName((Byte) doc.field("operation")), format.format((Date) doc.field("date")),
-              doc.field("currentVersion"), doc.field("otherVersion"), doc.field("otherClusterPos"));
+          out.printf("| %-14s| %18s | %-8s | %23s | %-12d | %-13d | %-14s |\n", doc.field("record", OType.LINK), doc.field("node"),
+              ORecordOperation.getName((Byte) doc.field("operation")), format.format(new Date((Long) doc.field("date"))),
+              doc.field("currentVersion"), doc.field("otherVersion"), doc.field("otherRID"));
         }
-        out.printf("+---------------+-----------+-------------------------+--------------+---------------+-------------------+\n");
+        out.printf("+---------------+--------------------+----------+-------------------------+--------------+---------------+----------------+\n");
       }
       out.println();
 
