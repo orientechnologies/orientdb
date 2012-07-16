@@ -127,8 +127,12 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
     return createVertex(null);
   }
 
+  public ODocument createVertex(final String iClassName) {
+    return createVertex(iClassName, (Object[]) null);
+  }
+
   @SuppressWarnings("unchecked")
-  public ODocument createVertex(String iClassName, final Object... iFields) {
+  public ODocument createVertex(final String iClassName, final Object... iFields) {
     final OClass cls = checkVertexClass(iClassName);
 
     final ODocument vertex = new ODocument(cls).setOrdered(true);
@@ -257,6 +261,10 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 
   public ODocument createEdge(final ODocument iSourceVertex, final ODocument iDestVertex) {
     return createEdge(iSourceVertex, iDestVertex, null);
+  }
+
+  public ODocument createEdge(final ODocument iOutVertex, final ODocument iInVertex, final String iClassName) {
+    return createEdge(iOutVertex, iInVertex, iClassName, (Object[]) null);
   }
 
   @SuppressWarnings("unchecked")
