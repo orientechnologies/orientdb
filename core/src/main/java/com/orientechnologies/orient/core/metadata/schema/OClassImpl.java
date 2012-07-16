@@ -766,16 +766,17 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       throw new IllegalArgumentException("attribute is null");
 
     final String stringValue = iValue != null ? iValue.toString() : null;
+    final boolean isNull = stringValue != null && stringValue.equalsIgnoreCase("NULL");
 
     switch (attribute) {
     case NAME:
       setNameInternal(stringValue);
       break;
     case SHORTNAME:
-      setShortNameInternal(stringValue);
+      setShortNameInternal(isNull ? null : stringValue);
       break;
     case SUPERCLASS:
-      setSuperClassInternal(getDatabase().getMetadata().getSchema().getClass(stringValue));
+      setSuperClassInternal(isNull ? null : getDatabase().getMetadata().getSchema().getClass(stringValue));
       break;
     case OVERSIZE:
       setOverSizeInternal(Float.parseFloat(stringValue.replace(',', '.')));
