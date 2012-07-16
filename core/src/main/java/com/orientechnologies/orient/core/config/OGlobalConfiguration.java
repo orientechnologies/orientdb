@@ -118,7 +118,7 @@ public enum OGlobalConfiguration {
   MVRBTREE_LAZY_UPDATES(
       "mvrbtree.lazyUpdates",
       "Configure the TreeMaps (indexes and dictionaries) as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
-      Integer.class, 20000),
+      Integer.class, 5000),
 
   MVRBTREE_NODE_PAGE_SIZE("mvrbtree.nodePageSize",
       "Page size of each node. 256 means that 256 entries can be stored inside each node", Integer.class, 256),
