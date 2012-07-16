@@ -16,7 +16,9 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.testng.Assert;
@@ -221,6 +223,25 @@ public class GraphDatabaseTest {
     database.createEdge(docA, docA).save();
 
     docA.reload();
+  }
+
+  public void testNewVertexAndEdgesWithFieldsInOneShoot() throws IOException {
+    ODocument docA = database.createVertex(null, "field1", "value1", "field2", "value2");
+
+    Map<String, Object> map = new HashMap<String, Object>();
+    map.put("field1", "value1");
+    map.put("field2", "value2");
+    ODocument docB = database.createVertex(null, map);
+
+    ODocument docC = database.createEdge(docA, docA, null, "edgeF1", "edgeV2").save();
+
+    Assert.assertEquals(docA.field("field1"), "value1");
+    Assert.assertEquals(docA.field("field2"), "value2");
+
+    Assert.assertEquals(docB.field("field1"), "value1");
+    Assert.assertEquals(docB.field("field2"), "value2");
+
+    Assert.assertEquals(docC.field("edgeF1"), "edgeV2");
   }
 
   public void testEdgesIterationInTX() {

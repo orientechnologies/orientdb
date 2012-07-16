@@ -601,7 +601,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   }
 
   /**
-   * Fill a document passing the field names/values
+   * Fills a document passing the field names/values.
    */
   public ODocument fields(final String iFieldName, final Object iFieldValue, final Object... iFields) {
     field(iFieldName, iFieldValue);
@@ -610,6 +610,17 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
         field(iFields[i].toString(), iFields[i + 1]);
       }
     return this;
+  }
+
+  /**
+   * Fills a document passing the field names/values as a Map<String,Object> where the keys are the field names and the values are
+   * the field values.
+   */
+  public void fields(final Map<String, Object> iMap) {
+    if (iMap != null) {
+      for (Entry<String, Object> entry : iMap.entrySet())
+        field(entry.getKey(), entry.getValue());
+    }
   }
 
   /**
