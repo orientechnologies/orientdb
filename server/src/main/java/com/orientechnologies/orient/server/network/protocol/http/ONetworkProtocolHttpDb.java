@@ -25,7 +25,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.delete.
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDocument;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteIndex;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteProperty;
-import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDropDatabase;
+import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetClass;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetCluster;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetConnect;
@@ -96,7 +96,7 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
     registerCommand(new OServerCommandPutIndex());
 
     registerCommand(new OServerCommandDeleteClass());
-    registerCommand(new OServerCommandDropDatabase());
+    registerCommand(new OServerCommandDeleteDatabase());
     registerCommand(new OServerCommandDeleteDocument());
     registerCommand(new OServerCommandDeleteProperty());
     registerCommand(new OServerCommandDeleteIndex());
