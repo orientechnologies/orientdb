@@ -1,7 +1,13 @@
 #!/bin/bash
 
-CP=$( echo `dirname $0`/../lib/*.jar . | sed 's/ /:/g')
-#echo $CP
+case `uname` in
+  CYGWIN*)
+    CP=$( echo `dirname $0`/../lib/*.jar . | sed 's/ /;/g')
+    ;;
+  *)
+    CP=$( echo `dirname $0`/../lib/*.jar . | sed 's/ /:/g')
+esac
+echo $CP
 
 # Find Java
 if [ "$JAVA_HOME" = "" ] ; then
@@ -12,7 +18,7 @@ fi
 
 # Set Java options
 if [ "$JAVA_OPTIONS" = "" ] ; then
-    JAVA_OPTIONS="-Xms32M -Xmx512M"
+    JAVA_OPTIONS="-Xms32m -Xmx512m"
 fi
 
 # Launch the application
@@ -26,12 +32,12 @@ if [ "$1" = "-e" ]; then
     done
   fi
 
-  eval "$JAVA" $JAVA_OPTIONS -cp $CP com.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngine $k
+  eval "$JAVA" $JAVA_OPTIONS -cp $CP:$CLASSPATH com.tinkerpop.gremlin.groovy.jsr223.ScriptExecutor $k
 else
   if [ "$1" = "-v" ]; then
-    "$JAVA" -server $JAVA_OPTIONS -cp $CP  com.tinkerpop.gremlin.Version
+    "$JAVA" -server $JAVA_OPTIONS -cp $CP:$CLASSPATH com.tinkerpop.gremlin.Version
   else
-    "$JAVA" -server $JAVA_OPTIONS -cp $CP com.tinkerpop.gremlin.groovy.console.Console
+    "$JAVA" -server $JAVA_OPTIONS -cp $CP:$CLASSPATH com.tinkerpop.gremlin.groovy.console.Console
   fi
 fi
 

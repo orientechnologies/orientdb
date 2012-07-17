@@ -20,6 +20,7 @@
 		<jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
 		<osgi.import>*</osgi.import>
 		<osgi.export>com.orientechnologies.orient.graph.*</osgi.export>
+		<blueprints.version>2.1.0-SNAPSHOT</blueprints.version>
 	</properties>
 
 	<dependencies>
@@ -57,13 +58,12 @@
 		<dependency>
 			<groupId>com.tinkerpop.blueprints</groupId>
 			<artifactId>blueprints-core</artifactId>
-			<version>2.1.0-SNAPSHOT</version>
+			<version>${blueprints.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.tinkerpop.blueprints</groupId>
 			<artifactId>blueprints-orient-graph</artifactId>
-			<version>2.1.0-SNAPSHOT</version>
-			<type>jar</type>
+			<version>${blueprints.version}</version>
 		</dependency>
 
 		<dependency>
