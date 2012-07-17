@@ -389,7 +389,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 		}
 	}
 
-	public Object detach(final Object iPojo) {
+	public <RET> RET detach(final Object iPojo) {
 		checkOpeness();
 
 		for (Field field : iPojo.getClass().getDeclaredFields()) {
@@ -398,7 +398,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 				((OLazyObjectMultivalueElement) value).detach();
 		}
 
-		return iPojo;
+		return (RET) iPojo;
 	}
 
 	/**
