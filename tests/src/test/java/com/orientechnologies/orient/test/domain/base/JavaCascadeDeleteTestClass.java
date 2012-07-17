@@ -23,7 +23,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Id;
+import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Version;
@@ -46,7 +48,7 @@ public class JavaCascadeDeleteTestClass {
 	@OneToOne(orphanRemoval = true)
 	private ORecordBytes				byteArray;
 	private String							name;
-	@OneToMany(orphanRemoval = true)
+	@ManyToMany(cascade = { CascadeType.REMOVE })
 	private Map<String, Child>	children	= new HashMap<String, Child>();
 	@OneToMany(orphanRemoval = true)
 	private List<Child>					list			= new ArrayList<Child>();
