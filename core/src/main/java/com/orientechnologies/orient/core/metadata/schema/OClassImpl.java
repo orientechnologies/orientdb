@@ -859,7 +859,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     boolean found;
     for (int i : iBaseClass.polymorphicClusterIds) {
       found = false;
-      for (int k : clusterIds) {
+      for (int k : polymorphicClusterIds) {
         if (i == k) {
           found = true;
           break;
